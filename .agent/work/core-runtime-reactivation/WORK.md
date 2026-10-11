@@ -5867,3 +5867,55 @@ real-Host report orders. Receipt:fixture-scope-green-v764.log. Independent
 fixture-scope-review-v764.md approves the boundary. This removes six unused setups
 per complete file execution; it is not measured speed improvement or a full
 suite/numeric PASS. Root retains final check/Git ownership and all v747 custody.
+
+### v765–v767 — own-counter lineage and actual CLI regression
+
+Checkpointf8d1925 passed the strict indexed precommit profile and was published
+to origin/main. Six blind Luna scopes reused the existing Babel inventory for
+16 selected small files; only documentation-clear.ts required a bounded inventory
+refresh. Stale static testcase links were not copied as current execution,
+assertion, scenario, property or mutation evidence. Separate blind reviews
+covered CLI/workspace, entrypoints/repair and persisted-contract/storage roles.
+
+Root found a real documentation CLEAR CLI regression while reviewing the failure
+callback: callable rejection values with a message property printed the function
+body instead of that message. The existing readCliErrorProperty owner already
+accepts object/function values and preserves Reflect.get receiver, getter and
+proxy behavior. The reporter now delegates to that owner, removing its duplicate
+object-only guard. No schema, loader or Runtime activation was changed.
+
+The regression invokes the actual CLI entrypoint in a fresh bounded Bun child,
+mocks only the documentation operation before import, and asserts known close,
+exit1, exact stderr, empty stdout, no timeout/error/signal or output truncation.
+The operation mock rejects before any Host/database/work effect and cannot leak
+into the parent test registry. Qualified causal RED0PASS1FAIL then the affected
+file GREEN7PASS38assertions/47ms. The initial zero-match filter is retained as an
+unqualified attempt, not RED evidence. Child behavior proves this regression,
+not parent instrumentation counters or formed-native Runtime acceptance.
+Receipts:documentation-error-red-v767-qualified.log and
+documentation-error-green-v767.log under typed-correction-v179.
+
+Official research: Bun module mocks (https://bun.com/docs/test/mocks) and
+ECMAScript Reflect.get/optional property access
+(https://tc39.es/ecma262/multipage/reflection.html). Each new diagnosed cause
+uses current primary references plus the actual pinned Bun receipt; unversioned
+documentation alone does not qualify the local runtime. No new package added.
+
+Root's mechanical frozen-cap check rejected applyReadOnlyDispatchRepair: current
+CC3 exceeds its own genuine b549951 allowance2. All three roles in that file are
+deferred, preserving the failed receipt and old cap; no arbitrary syntax split,
+current-derived increase or claimed removal. The remaining selected partition
+is139roles/15files:11retained128NEW, with prospective NEW10/10 and retained caps
+copied exactly from the admitted published seed. The separately measured old
+documentation catch and standalone loadFiles callbacks retain only their own
+allowances under their current named/moved callable roles. Unmatched global
+predecessors remain unreviewed. Independent lineage-join-review-v767.md approves
+the exact selected partition, unchanged prior rows, one-to-one identities,
+caps and addresses. The tracked partial now contains1084roles/57files:
+881retained203NEW1removed. This remains non-executable lineage, not numerical
+PASS; default crap-budgets.v1.json remains absent. The failed first static join
+and qualified139-role join receipts remain separately retained.
+
+Current full coverage, dynamic CRAP and assertion-confirmed mutation remain OPEN.
+The v747 UNKNOWN run and lock are preserved; no full suite retry, operational
+replay, installed unblock notice or formed-native Runtime run was performed.

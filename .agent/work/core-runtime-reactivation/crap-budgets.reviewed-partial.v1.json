@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 870,
-    "new": 75,
+    "retained": 881,
+    "new": 203,
     "removed": 1,
-    "current_roles": 945,
-    "source_files": 42
+    "current_roles": 1084,
+    "source_files": 57
   },
   "source_bindings": [
     {
@@ -184,6 +184,66 @@
     {
       "file": "src/runtime-initialization.ts",
       "sha256": "3a483a4e39b008ee9e17261172dbeaca57cb8796c44f6d5b86d2bdaed7cd311e"
+    },
+    {
+      "file": "bin/cli-error-properties.ts",
+      "sha256": "96bde03002bc9a471e894369d5e4b9ec2f19129f82241e86187db0913a5d025c"
+    },
+    {
+      "file": "bin/cli-command-contracts.ts",
+      "sha256": "3af4a73539352520da69267acfa27fd1ef254d054fa8779034ce2584986d2268"
+    },
+    {
+      "file": "bin/run-cli-options.ts",
+      "sha256": "02b6bcb41283e47583a42a9f2fd54b2b1c0f04ad56c5b24a0214c58e55a74537"
+    },
+    {
+      "file": "src/config/workspace-database.ts",
+      "sha256": "0c8a9a4b4eb35a222d2a78daf9d86f29698ef24ccf1fee10d8f2dbbd75a55dd2"
+    },
+    {
+      "file": "src/config/workspace-database-raw.ts",
+      "sha256": "d462fae662876a3b49e8eb9449463d42670053cd14624427f438059b9207db09"
+    },
+    {
+      "file": "bin/workspace-database-cli.ts",
+      "sha256": "ae61c28ad7e736913f5792e7ae7b94fde0e4bcbfd8412b7dee703f44bc19e897"
+    },
+    {
+      "file": "bin/project-upgrade-repair.ts",
+      "sha256": "57f0bf71d716197d39d39a0fae3e20ff23bbccc63081edffb46f64c4529f7768"
+    },
+    {
+      "file": "bin/repair-work-state.ts",
+      "sha256": "dcae835d33c9b9a062b0a1120f840ace0c9f137422d33574c172b38a91b01232"
+    },
+    {
+      "file": "bin/standalone.ts",
+      "sha256": "f37d567b414777f6ceddf903e4635900ca6a937e6b257cc3c241a0821bd7a7be"
+    },
+    {
+      "file": "bin/vida-agent.ts",
+      "sha256": "7efa1bde29d97fba5bd5da9e1b1e346f54f6c6b0b9a3b7aa231975f44dde7a7c"
+    },
+    {
+      "file": "bin/documentation-clear.ts",
+      "sha256": "2b91c7e4729ba55496d835bbe21bb025eb2fe21c6ee21e5bc1ad9f97c55a85cd"
+    },
+    {
+      "file": "src/orchestration/runtime-code-rebind-contract.ts",
+      "sha256": "26b9b653ed47c2943fb2443102213b44197c09c7a152ea4a9520e58d238e68bf"
+    },
+    {
+      "file": "src/config/host-persisted-row.ts",
+      "sha256": "cc9f0a9f9029fdc6ee4541ea222620619d27b45b7c5639e69ba1a590e0286d88"
+    },
+    {
+      "file": "src/config/project-upgrade-existing-storage-admission.ts",
+      "sha256": "b444f3c9bd692866fb42a5391661a9d0e7e77d3a966efb2801cf76447a9fbedf"
+    },
+    {
+      "file": "src/config/project-upgrade-storage.ts",
+      "sha256": "688a291d2cd0fa3bf2eb7fa6620070c933223456458e90a1c084142c44f783ed"
     }
   ],
   "baseline_functions": [
@@ -20082,6 +20142,237 @@
         "bodyEndLine": 179,
         "bodyEndColumn": 82
       }
+    },
+    {
+      "identity": "bin/repair-work-state.mjs#fn:requireRepair#0",
+      "current_identity": "bin/repair-work-state.ts#fn:requireRepair#0",
+      "file": "bin/repair-work-state.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Both are the work-state CLI local assertion helper, throwing the work-state repair error prefix when the condition is false. Exact predecessor source: packages/agent/bin/repair-work-state.mjs at b549951.",
+      "current_source_address": {
+        "line": 18,
+        "column": 0,
+        "start": 822,
+        "end": 965,
+        "bodyLine": 18,
+        "bodyColumn": 71,
+        "bodyEndLine": 20,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/repair-work-state.mjs#fn:runWorkStateRepair#0",
+      "current_identity": "bin/repair-work-state.ts#fn:runWorkStateRepair#0",
+      "file": "bin/repair-work-state.mjs",
+      "baseline_complexity": 17,
+      "baseline_coverage": 0,
+      "baseline_crap": 306,
+      "max_complexity": 17,
+      "max_crap": 306,
+      "rationale": "Both are the CLI entry operation: validate request, load project database context, select inspect/repair behavior and return results with database cleanup. Helper extraction and database adapter substitutions preserve the enclosing semantic role.",
+      "current_source_address": {
+        "line": 63,
+        "column": 7,
+        "start": 2647,
+        "end": 4237,
+        "bodyLine": 63,
+        "bodyColumn": 60,
+        "bodyEndLine": 99,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/standalone.mjs#fn:runStandalone#0",
+      "current_identity": "bin/standalone.ts#fn:runStandalone#0",
+      "file": "bin/standalone.mjs",
+      "baseline_complexity": 11,
+      "baseline_coverage": 0,
+      "baseline_crap": 132,
+      "max_complexity": 11,
+      "max_crap": 132,
+      "rationale": "Retains the exported runStandalone caller/API role, now delegating into internal routing. This parent keeps the published allowance; the extracted implementation below is classified NEW under the extraction rule.",
+      "current_source_address": {
+        "line": 49,
+        "column": 7,
+        "start": 1692,
+        "end": 1798,
+        "bodyLine": 49,
+        "bodyColumn": 75,
+        "bodyEndLine": 51,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/standalone.mjs#fn:runStandalone#0/binding:root/property:loadFiles#0",
+      "current_identity": "bin/standalone.ts#fn:runStandaloneExecution#0/binding:root/property:loadFiles#0",
+      "file": "bin/standalone.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same separately callable loadFiles callback role and archive-loading behavior in the materializeResources caller. Its parent changed through extraction, but callback responsibility and behavior remain the published callback's role; retain that callback's own allowance under the new parent.",
+      "current_source_address": {
+        "line": 97,
+        "column": 15,
+        "start": 3654,
+        "end": 3834,
+        "bodyLine": 97,
+        "bodyColumn": 27,
+        "bodyEndLine": 100,
+        "bodyEndColumn": 5
+      }
+    },
+    {
+      "identity": "bin/standalone.mjs#fn:runStandalone#0/binding:selectedIndex/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/standalone.ts#fn:runStandaloneExecution#0/binding:selectedIndex/closure:CallExpression:arguments[0]#0",
+      "file": "bin/standalone.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same nested filter predicate and caller role: retain only protected/discovery-owned resource paths. Current parent is the extracted execution helper corresponding to the old runStandalone execution body.",
+      "current_source_address": {
+        "line": 88,
+        "column": 19,
+        "start": 3221,
+        "end": 3295,
+        "bodyLine": 88,
+        "bodyColumn": 30,
+        "bodyEndLine": 88,
+        "bodyEndColumn": 93
+      }
+    },
+    {
+      "identity": "bin/vida-agent.mjs#binding:output/binding:output#0",
+      "current_identity": "bin/vida-agent.ts#binding:output/binding:output#0",
+      "file": "bin/vida-agent.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same output callback role and JSON line serialization used by the CLI dispatcher.",
+      "current_source_address": {
+        "line": 35,
+        "column": 15,
+        "start": 1537,
+        "end": 1620,
+        "bodyLine": 35,
+        "bodyColumn": 41,
+        "bodyEndLine": 37,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.mjs#binding:safeId/binding:safeId#0",
+      "current_identity": "bin/documentation-clear.ts#binding:safeId/binding:safeId#0",
+      "file": "bin/documentation-clear.mjs",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Same work-id validation helper used to build the documentation CLEAR input.",
+      "current_source_address": {
+        "line": 12,
+        "column": 15,
+        "start": 501,
+        "end": 661,
+        "bodyLine": 12,
+        "bodyColumn": 42,
+        "bodyEndLine": 15,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.mjs#closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/documentation-clear.ts#closure:CallExpression:arguments[0]#0",
+      "file": "bin/documentation-clear.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Current promise success callback retains published result JSON-line output role.",
+      "current_source_address": {
+        "line": 83,
+        "column": 10,
+        "start": 3568,
+        "end": 3631,
+        "bodyLine": 83,
+        "bodyColumn": 22,
+        "bodyEndLine": 83,
+        "bodyEndColumn": 73
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.mjs#fn:parse#0",
+      "current_identity": "bin/documentation-clear.ts#fn:parse#0",
+      "file": "bin/documentation-clear.mjs",
+      "baseline_complexity": 10,
+      "baseline_coverage": 0,
+      "baseline_crap": 110,
+      "max_complexity": 10,
+      "max_crap": 110,
+      "rationale": "Same argument parser/canonical input construction caller role. Current parser delegates repeated option handling and mode validation to explicit helpers and the shared command contract.",
+      "current_source_address": {
+        "line": 40,
+        "column": 0,
+        "start": 1527,
+        "end": 2710,
+        "bodyLine": 40,
+        "bodyColumn": 106,
+        "bodyEndLine": 61,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.mjs#closure:CallExpression:arguments[0]#1",
+      "current_identity": "bin/documentation-clear.ts#fn:reportDocumentationFailure#0",
+      "file": "bin/documentation-clear.mjs",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same separately measured failure-reporter callable role as the published .catch callback, now passed by direct reference. It reads the message through the shared readCliErrorProperty helper and preserves the prior callable-message behavior; retain this callback's own allowance on the reporter, with no transfer to runDocumentationClear.",
+      "current_source_address": {
+        "line": 69,
+        "column": 0,
+        "start": 2977,
+        "end": 3150,
+        "bodyLine": 69,
+        "bodyColumn": 58,
+        "bodyEndLine": 72,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.mjs#fn:runDocumentationClear#0",
+      "current_identity": "bin/documentation-clear.ts#fn:runDocumentationClear#0",
+      "file": "bin/documentation-clear.mjs",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same exported command entrypoint and execution role: parse CLI arguments, construct the input, invoke documentation CLEAR, and return its result.",
+      "current_source_address": {
+        "line": 63,
+        "column": 7,
+        "start": 2719,
+        "end": 2975,
+        "bodyLine": 63,
+        "bodyColumn": 69,
+        "bodyEndLine": 67,
+        "bodyEndColumn": 1
+      }
     }
   ],
   "new_functions": [
@@ -21234,6 +21525,2054 @@
         "bodyEndLine": 191,
         "bodyEndColumn": 9
       }
+    },
+    {
+      "identity": "bin/cli-error-properties.ts#fn:readCliErrorProperty#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. The current role safely reads a property from object/function error values and returns undefined for primitives. The b549951 CLI error result formats error.message inline in bin/cli-metadata.mjs; that inline property access is not an independently tracked helper role, and extraction into this helper does not inherit a parent cap.",
+      "current_source_address": {
+        "line": 2,
+        "column": 7,
+        "start": 74,
+        "end": 278,
+        "bodyLine": 2,
+        "bodyColumn": 75,
+        "bodyEndLine": 6,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/cli-command-contracts.ts#fn:freezeCliDeclaration#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. This recursively freezes declaration objects and returns the frozen value. No equivalent recursive declaration-freezing function exists in the inspected b549951 CLI sources.",
+      "current_source_address": {
+        "line": 2,
+        "column": 7,
+        "start": 88,
+        "end": 333,
+        "bodyLine": 2,
+        "bodyColumn": 53,
+        "bodyEndLine": 6,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/cli-command-contracts.ts#binding:cliCommands/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. This callback filters the declared command names to exclude help, instructions, and version before constructing the private command Set. The b549951 command Set is a static literal in bin/cli-metadata.mjs and has no corresponding callback role.",
+      "current_source_address": {
+        "line": 103,
+        "column": 51,
+        "start": 5758,
+        "end": 5819,
+        "bodyLine": 103,
+        "bodyColumn": 61,
+        "bodyEndLine": 103,
+        "bodyEndColumn": 112
+      }
+    },
+    {
+      "identity": "bin/cli-command-contracts.ts#binding:cliCommandSet/property:has#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. This current property function exposes membership checking over the private command Set. The inspected b549951 CLI sources do not define an equivalent exported command-set membership role.",
+      "current_source_address": {
+        "line": 104,
+        "column": 50,
+        "start": 5873,
+        "end": 5912,
+        "bodyLine": 104,
+        "bodyColumn": 68,
+        "bodyEndLine": 104,
+        "bodyEndColumn": 89
+      }
+    },
+    {
+      "identity": "bin/run-cli-options.ts#binding:runSpecialModeOptions/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. This callback maps special-mode declarations into delegated option contracts. The inspected b549951 run.mjs does not contain this declarative mapping role; its unrelated parser/dispatcher behavior is not a role match.",
+      "current_source_address": {
+        "line": 220,
+        "column": 27,
+        "start": 6655,
+        "end": 7018,
+        "bodyLine": 220,
+        "bodyColumn": 42,
+        "bodyEndLine": 228,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "bin/run-cli-options.ts#binding:runSpecialModeOptions/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. This nested map callback formats each special-mode option into its syntax fragment, including mode values and optional brackets. It is an extracted/current inline helper and has no separately tracked equivalent in b549951; no parent allowance transfers.",
+      "current_source_address": {
+        "line": 223,
+        "column": 11,
+        "start": 6758,
+        "end": 6992,
+        "bodyLine": 223,
+        "bodyColumn": 21,
+        "bodyEndLine": 226,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "bin/run-cli-options.ts#binding:runSpecialSelectors/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. This callback projects selectors from special-mode option declarations. The inspected b549951 run.mjs contains no selector projection callback with this semantic role.",
+      "current_source_address": {
+        "line": 230,
+        "column": 82,
+        "start": 7106,
+        "end": 7132,
+        "bodyLine": 230,
+        "bodyColumn": 100,
+        "bodyEndLine": 230,
+        "bodyEndColumn": 108
+      }
+    },
+    {
+      "identity": "bin/run-cli-options.ts#fn:runOptionDetails#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. This produces typed public option-detail records from current scalar and repeated run-option metadata. The b549951 run.mjs parser consumes argv and does not provide this option-details role; names or broad CLI purpose alone are insufficient lineage.",
+      "current_source_address": {
+        "line": 308,
+        "column": 7,
+        "start": 10184,
+        "end": 10558,
+        "bodyLine": 308,
+        "bodyColumn": 35,
+        "bodyEndLine": 318,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/run-cli-options.ts#fn:runOptionDetails#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW. This callback serializes one scalar option entry into the option-detail shape. It is an inline callback role in the current extracted module, with no exact separately tracked b549951 predecessor; no parent allowance transfers.",
+      "current_source_address": {
+        "line": 310,
+        "column": 49,
+        "start": 10274,
+        "end": 10395,
+        "bodyLine": 310,
+        "bodyColumn": 69,
+        "bodyEndLine": 314,
+        "bodyEndColumn": 5
+      }
+    },
+    {
+      "identity": "bin/workspace-database-cli.ts#fn:assertCanonicalAbsolutePath#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New CLI path-validation callable in a file absent at b549951; no same-role published callable. Its validation is distinct from HostState database-opening functions.",
+      "current_source_address": {
+        "line": 17,
+        "column": 0,
+        "start": 704,
+        "end": 1032,
+        "bodyLine": 17,
+        "bodyColumn": 73,
+        "bodyEndLine": 21,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/workspace-database-cli.ts#fn:databaseRelativePath#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New CLI repository-root to canonical relative-path conversion callable in a file absent at b549951; no same-role published callable.",
+      "current_source_address": {
+        "line": 23,
+        "column": 0,
+        "start": 1034,
+        "end": 1588,
+        "bodyLine": 23,
+        "bodyColumn": 84,
+        "bodyEndLine": 32,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/workspace-database-cli.ts#fn:openCliWorkspaceDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New CLI wrapper that converts the supplied absolute file and opens via existing-file admission. The existing HostState opener has different creation and authority semantics and is not an allowance predecessor.",
+      "current_source_address": {
+        "line": 34,
+        "column": 7,
+        "start": 1597,
+        "end": 2019,
+        "bodyLine": 40,
+        "bodyColumn": 12,
+        "bodyEndLine": 45,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/workspace-database-cli.ts#fn:openCliHostStateDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New CLI wrapper combining relative-path derivation and HostState opening; the lower-level openHostStateDatabase baseline function is only a called parent operation, not this newly callable role.",
+      "current_source_address": {
+        "line": 47,
+        "column": 7,
+        "start": 2028,
+        "end": 2361,
+        "bodyLine": 47,
+        "bodyColumn": 118,
+        "bodyEndLine": 52,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/workspace-database-cli.ts#fn:createCliHostStateStore#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New CLI store-construction adapter that merges connection-mode tracking into constructor context; no such callable existed in the published tree.",
+      "current_source_address": {
+        "line": 57,
+        "column": 7,
+        "start": 2526,
+        "end": 2807,
+        "bodyLine": 61,
+        "bodyColumn": 18,
+        "bodyEndLine": 64,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/workspace-database-cli.ts#fn:inspectCliHostWorkspaceDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New CLI adapter that derives the repository-relative path before inspection. Existing inspectHostWorkspaceDatabase performs the deeper inspection and remains a distinct baseline role.",
+      "current_source_address": {
+        "line": 66,
+        "column": 7,
+        "start": 2816,
+        "end": 3076,
+        "bodyLine": 66,
+        "bodyColumn": 115,
+        "bodyEndLine": 69,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/workspace-database-cli.ts#fn:withCliHostStateExclusiveTransaction#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New CLI adapter that derives the relative path and invokes the existing exclusive transaction operation; the lower-level transaction function is not this callable role.",
+      "current_source_address": {
+        "line": 71,
+        "column": 7,
+        "start": 3085,
+        "end": 3427,
+        "bodyLine": 76,
+        "bodyColumn": 5,
+        "bodyEndLine": 79,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:workspaceDatabaseFileIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New verified-identity accessor backed by a WeakMap in a file absent at b549951; no published callable predecessor.",
+      "current_source_address": {
+        "line": 13,
+        "column": 7,
+        "start": 501,
+        "end": 764,
+        "bodyLine": 13,
+        "bodyColumn": 97,
+        "bodyEndLine": 17,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:requireDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New module-local assertion helper; published requireState is a differently owned general HostState assertion and is not a same-role predecessor.",
+      "current_source_address": {
+        "line": 19,
+        "column": 0,
+        "start": 766,
+        "end": 919,
+        "bodyLine": 19,
+        "bodyColumn": 81,
+        "bodyEndLine": 21,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:queryWorkspaceRowsUnknown#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New typed raw row-query wrapper in a file absent at b549951; no same-role published callable.",
+      "current_source_address": {
+        "line": 27,
+        "column": 7,
+        "start": 1077,
+        "end": 1279,
+        "bodyLine": 31,
+        "bodyColumn": 13,
+        "bodyEndLine": 33,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:queryWorkspaceRowUnknown#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New typed raw single-row query wrapper in a file absent at b549951; no same-role published callable.",
+      "current_source_address": {
+        "line": 35,
+        "column": 7,
+        "start": 1288,
+        "end": 1487,
+        "bodyLine": 39,
+        "bodyColumn": 11,
+        "bodyEndLine": 41,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:regularDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New file-identity validation helper for this raw opener; no same-role published callable exists in the scoped predecessor tree.",
+      "current_source_address": {
+        "line": 43,
+        "column": 0,
+        "start": 1489,
+        "end": 1741,
+        "bodyLine": 43,
+        "bodyColumn": 70,
+        "bodyEndLine": 47,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:checkSidecars#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New SQLite sidecar safety helper for the raw opener; no same-role published callable.",
+      "current_source_address": {
+        "line": 49,
+        "column": 0,
+        "start": 1743,
+        "end": 2029,
+        "bodyLine": 49,
+        "bodyColumn": 43,
+        "bodyEndLine": 54,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:assertWorkspaceDatabaseRelativePath#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New canonical relative-path contract callable in a file absent at b549951; no same-role published callable.",
+      "current_source_address": {
+        "line": 56,
+        "column": 7,
+        "start": 2038,
+        "end": 2439,
+        "bodyLine": 56,
+        "bodyColumn": 99,
+        "bodyEndLine": 65,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:assertWorkspaceDatabaseRelativePath#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New predicate closure within the new path assertion; it is part of this newly callable implementation and has no published predecessor.",
+      "current_source_address": {
+        "line": 62,
+        "column": 32,
+        "start": 2324,
+        "end": 2390,
+        "bodyLine": 62,
+        "bodyColumn": 45,
+        "bodyEndLine": 62,
+        "bodyEndColumn": 98
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:openUnadmittedWorkspaceDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New explicitly unadmitted existing-file raw opener in a file absent at b549951; published HostState opening creates/configures its own DB and is not a same-role predecessor.",
+      "current_source_address": {
+        "line": 68,
+        "column": 7,
+        "start": 2551,
+        "end": 4335,
+        "bodyLine": 73,
+        "bodyColumn": 12,
+        "bodyEndLine": 110,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:openUnadmittedWorkspaceDatabase#0/binding:main/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New inline predicate closure in the raw opener's main-database identity check; no published callable predecessor.",
+      "current_source_address": {
+        "line": 97,
+        "column": 12,
+        "start": 3887,
+        "end": 3919,
+        "bodyLine": 97,
+        "bodyColumn": 23,
+        "bodyEndLine": 97,
+        "bodyEndColumn": 44
+      }
+    },
+    {
+      "identity": "src/config/workspace-database.ts#fn:openExistingWorkspaceDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New admitted existing-file opener that enforces project-upgrade and safe-repository gates before delegating; no same-role published callable in the absent scoped file.",
+      "current_source_address": {
+        "line": 20,
+        "column": 7,
+        "start": 675,
+        "end": 1230,
+        "bodyLine": 26,
+        "bodyColumn": 12,
+        "bodyEndLine": 32,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/project-upgrade-repair.ts#fn:requireRepair#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "No standalone project-upgrade repair CLI predecessor exists; generic validators in other commands are not counterparts.",
+      "current_source_address": {
+        "line": 9,
+        "column": 0,
+        "start": 269,
+        "end": 422,
+        "bodyLine": 9,
+        "bodyColumn": 79,
+        "bodyEndLine": 11,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/project-upgrade-repair.ts#fn:parseUpgradeOptions#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "No standalone option parser exists in this command at baseline; similar parsers elsewhere are not counterparts.",
+      "current_source_address": {
+        "line": 13,
+        "column": 0,
+        "start": 424,
+        "end": 1058,
+        "bodyLine": 13,
+        "bodyColumn": 78,
+        "bodyEndLine": 25,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/project-upgrade-repair.ts#fn:requiredOption#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "No standalone required-option accessor exists in this command at baseline; no cross-command name match is used.",
+      "current_source_address": {
+        "line": 27,
+        "column": 0,
+        "start": 1060,
+        "end": 1299,
+        "bodyLine": 27,
+        "bodyColumn": 88,
+        "bodyEndLine": 31,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/project-upgrade-repair.ts#fn:upgradeSelection#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "No standalone project-upgrade selection validator exists in this command at baseline.",
+      "current_source_address": {
+        "line": 33,
+        "column": 0,
+        "start": 1301,
+        "end": 2186,
+        "bodyLine": 33,
+        "bodyColumn": 69,
+        "bodyEndLine": 44,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/project-upgrade-repair.ts#fn:runProjectUpgradeRepair#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "No standalone launcher dispatching project-upgrade inspect, plan and resume exists at this baseline path.",
+      "current_source_address": {
+        "line": 47,
+        "column": 7,
+        "start": 2305,
+        "end": 3000,
+        "bodyLine": 47,
+        "bodyColumn": 71,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/repair-work-state.ts#fn:collectRepairArguments#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This standalone argument collector extracts the predecessor runWorkStateRepair inline loop. No standalone historical callable exists; inline extraction does not inherit its parent allowance.",
+      "current_source_address": {
+        "line": 22,
+        "column": 0,
+        "start": 967,
+        "end": 1584,
+        "bodyLine": 22,
+        "bodyColumn": 81,
+        "bodyEndLine": 34,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/repair-work-state.ts#fn:requireRepairMode#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This standalone mode assertion extracts checks that were inline in predecessor runWorkStateRepair. No standalone historical callable exists.",
+      "current_source_address": {
+        "line": 36,
+        "column": 0,
+        "start": 1586,
+        "end": 1867,
+        "bodyLine": 36,
+        "bodyColumn": 99,
+        "bodyEndLine": 41,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/repair-work-state.ts#fn:repairOperationInput#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "This standalone operation-input builder extracts inline identity and attribution checks from predecessor runWorkStateRepair. No standalone historical callable exists.",
+      "current_source_address": {
+        "line": 43,
+        "column": 0,
+        "start": 1869,
+        "end": 2556,
+        "bodyLine": 46,
+        "bodyColumn": 24,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/standalone.ts#fn:clearStandaloneEnvironment#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW helper extracted to clear inherited environment before standalone handoff; no standalone environment-clear function existed in published body.",
+      "current_source_address": {
+        "line": 110,
+        "column": 0,
+        "start": 4219,
+        "end": 4512,
+        "bodyLine": 110,
+        "bodyColumn": 44,
+        "bodyEndLine": 118,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/standalone.ts#fn:handleNativeIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW native identity inspection command path; published standalone had no identity option or handler.",
+      "current_source_address": {
+        "line": 62,
+        "column": 0,
+        "start": 2103,
+        "end": 2496,
+        "bodyLine": 62,
+        "bodyColumn": 64,
+        "bodyEndLine": 70,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/standalone.ts#fn:runStandaloneExecution#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW extracted helper from the published runStandalone inline body. The baseline allowance remains on runStandalone; do not transfer or increase it from current measurements.",
+      "current_source_address": {
+        "line": 72,
+        "column": 0,
+        "start": 2498,
+        "end": 4217,
+        "bodyLine": 72,
+        "bodyColumn": 110,
+        "bodyEndLine": 108,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/standalone.ts#fn:runStandaloneMain#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW routing helper split from the old exported function and expanded with native identity dispatch.",
+      "current_source_address": {
+        "line": 53,
+        "column": 0,
+        "start": 1800,
+        "end": 2101,
+        "bodyLine": 53,
+        "bodyColumn": 72,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/standalone.ts#fn:writeNativeIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW identity serialization and digest-validation function; no published predecessor behavior.",
+      "current_source_address": {
+        "line": 27,
+        "column": 0,
+        "start": 854,
+        "end": 1683,
+        "bodyLine": 27,
+        "bodyColumn": 63,
+        "bodyEndLine": 47,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/vida-agent.ts#fn:isCliPackageManifest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW manifest runtime type guard; published CLI parsed and trusted JSON directly.",
+      "current_source_address": {
+        "line": 18,
+        "column": 0,
+        "start": 849,
+        "end": 1234,
+        "bodyLine": 18,
+        "bodyColumn": 104,
+        "bodyEndLine": 29,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/vida-agent.ts#fn:isStringMap#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW bin-map type guard used by the new manifest validation.",
+      "current_source_address": {
+        "line": 13,
+        "column": 0,
+        "start": 610,
+        "end": 847,
+        "bodyLine": 13,
+        "bodyColumn": 70,
+        "bodyEndLine": 16,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/vida-agent.ts#fn:isStringMap#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW nested Object.values every predicate owned by NEW isStringMap.",
+      "current_source_address": {
+        "line": 15,
+        "column": 36,
+        "start": 807,
+        "end": 843,
+        "bodyLine": 15,
+        "bodyColumn": 47,
+        "bodyEndLine": 15,
+        "bodyEndColumn": 72
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.ts#fn:isDocumentationClearMode#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW typed mode validator, now reads the shared CLI command contract.",
+      "current_source_address": {
+        "line": 22,
+        "column": 0,
+        "start": 859,
+        "end": 1135,
+        "bodyLine": 22,
+        "bodyColumn": 83,
+        "bodyEndLine": 25,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.ts#fn:isDocumentationClearMode#0/binding:option/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW nested option-name predicate owned by the new typed mode validator.",
+      "current_source_address": {
+        "line": 23,
+        "column": 73,
+        "start": 1017,
+        "end": 1051,
+        "bodyLine": 23,
+        "bodyColumn": 84,
+        "bodyEndLine": 23,
+        "bodyEndColumn": 107
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.ts#fn:parse#0/binding:allowed/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW shared-contract option-name projection; no matching callback in the published parser.",
+      "current_source_address": {
+        "line": 42,
+        "column": 38,
+        "start": 1743,
+        "end": 1766,
+        "bodyLine": 42,
+        "bodyColumn": 50,
+        "bodyEndLine": 42,
+        "bodyEndColumn": 61
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.ts#fn:parse#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW required-option enumeration predicate from the shared contract; published code used a literal required-key loop.",
+      "current_source_address": {
+        "line": 45,
+        "column": 35,
+        "start": 1964,
+        "end": 1991,
+        "bodyLine": 45,
+        "bodyColumn": 47,
+        "bodyEndLine": 45,
+        "bodyEndColumn": 62
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.ts#fn:parse#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW required-option validation predicate from the shared contract; published code used a literal required-key loop.",
+      "current_source_address": {
+        "line": 45,
+        "column": 68,
+        "start": 1997,
+        "end": 2020,
+        "bodyLine": 45,
+        "bodyColumn": 80,
+        "bodyEndLine": 45,
+        "bodyEndColumn": 91
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.ts#fn:recordDocumentationArgument#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW extracted argument-pair validation and recording helper from the parser's inline loop.",
+      "current_source_address": {
+        "line": 27,
+        "column": 0,
+        "start": 1137,
+        "end": 1525,
+        "bodyLine": 32,
+        "bodyColumn": 8,
+        "bodyEndLine": 38,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "bin/documentation-clear.ts#fn:requiredOption#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "NEW required-value accessor extracted from inline parser checks.",
+      "current_source_address": {
+        "line": 16,
+        "column": 0,
+        "start": 663,
+        "end": 857,
+        "bodyLine": 16,
+        "bodyColumn": 77,
+        "bodyEndLine": 20,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:sqlText#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks that a persisted SQL value has text type. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 55,
+        "column": 0,
+        "start": 1896,
+        "end": 2060,
+        "bodyLine": 55,
+        "bodyColumn": 56,
+        "bodyEndLine": 58,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:sqlPositiveInteger#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks a positive safe integer in a persisted SQL row. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 60,
+        "column": 0,
+        "start": 2062,
+        "end": 2305,
+        "bodyLine": 60,
+        "bodyColumn": 67,
+        "bodyEndLine": 64,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:expectedProjection#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Returns the exact permitted SQL projection columns for a supported workspace table. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 66,
+        "column": 0,
+        "start": 2307,
+        "end": 2780,
+        "bodyLine": 66,
+        "bodyColumn": 73,
+        "bodyEndLine": 72,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:snapshotWorkspaceSqlProjection#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Snapshots own data properties from an exact SQL projection, rejecting accessors and unexpected keys. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 74,
+        "column": 7,
+        "start": 2789,
+        "end": 3665,
+        "bodyLine": 78,
+        "bodyColumn": 27,
+        "bodyEndLine": 95,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:snapshotWorkspaceSqlProjection#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Callback passed by snapshotWorkspaceSqlProjection#0 as call-argument closure 0; callback owns its predicate/iteration invocation and receives the call site's item argument. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 82,
+        "column": 14,
+        "start": 3083,
+        "end": 3115,
+        "bodyLine": 82,
+        "bodyColumn": 23,
+        "bodyEndLine": 82,
+        "bodyEndColumn": 46
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:snapshotWorkspaceSqlProjection#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Callback passed by snapshotWorkspaceSqlProjection#0 as call-argument closure 1; callback owns its predicate/iteration invocation and receives the call site's item argument. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 83,
+        "column": 14,
+        "start": 3134,
+        "end": 3178,
+        "bodyLine": 83,
+        "bodyColumn": 24,
+        "bodyEndLine": 83,
+        "bodyEndColumn": 58
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:snapshotWorkspaceSqlProjection#0/closure:CallExpression:arguments[0]#2",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Callback passed by snapshotWorkspaceSqlProjection#0 as call-argument closure 2; callback owns its predicate/iteration invocation and receives the call site's item argument. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 84,
+        "column": 25,
+        "start": 3219,
+        "end": 3247,
+        "bodyLine": 84,
+        "bodyColumn": 35,
+        "bodyEndLine": 84,
+        "bodyEndColumn": 53
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:sqlCounter#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Converts a valid nonnegative safe integer SQL counter, including bounded bigint values. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 97,
+        "column": 0,
+        "start": 3667,
+        "end": 3991,
+        "bodyLine": 97,
+        "bodyColumn": 59,
+        "bodyEndLine": 101,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:preflightPersistedJson#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Uses SQLite json_tree to enforce persisted JSON node and depth limits before materialization. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 103,
+        "column": 0,
+        "start": 3993,
+        "end": 5137,
+        "bodyLine": 103,
+        "bodyColumn": 108,
+        "bodyEndLine": 125,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:decodePayload#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks bounded text and raw bytes, strict UTF-8/text parity, optional database preflight, then parses JSON. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 127,
+        "column": 0,
+        "start": 5139,
+        "end": 6390,
+        "bodyLine": 133,
+        "bodyColumn": 18,
+        "bodyEndLine": 155,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:decodePayload#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Callback passed by decodePayload#0 as call-argument closure 0; callback owns its predicate/iteration invocation and receives the call site's item argument. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 149,
+        "column": 23,
+        "start": 6087,
+        "end": 6132,
+        "bodyLine": 149,
+        "bodyColumn": 40,
+        "bodyEndLine": 149,
+        "bodyEndColumn": 68
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:decodeWorkspaceSqlPayload#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Public payload decoder forwarding payload, bytes, table and optional database to decodePayload. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 157,
+        "column": 7,
+        "start": 6399,
+        "end": 6611,
+        "bodyLine": 162,
+        "bodyColumn": 18,
+        "bodyEndLine": 164,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:sqlColumns#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates and projects the table-specific primary-key columns from a SQL row. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 179,
+        "column": 0,
+        "start": 7191,
+        "end": 7933,
+        "bodyLine": 179,
+        "bodyColumn": 97,
+        "bodyEndLine": 197,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:integrityDigest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Computes the table-specific persisted integrity digest. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 199,
+        "column": 0,
+        "start": 7935,
+        "end": 8465,
+        "bodyLine": 199,
+        "bodyColumn": 118,
+        "bodyEndLine": 211,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:persistedNodeLimit#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Selects the larger node budget for coordination ledger rows and the ordinary budget for other rows. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 213,
+        "column": 0,
+        "start": 8467,
+        "end": 8656,
+        "bodyLine": 213,
+        "bodyColumn": 66,
+        "bodyEndLine": 215,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:decodeWorkspaceSqlRow#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks exact projection, workspace, revision, columns, payload and integrity before returning a typed persisted row. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 242,
+        "column": 7,
+        "start": 9437,
+        "end": 10387,
+        "bodyLine": 247,
+        "bodyColumn": 19,
+        "bodyEndLine": 258,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:readWorkspaceMastraSqlRow#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Reads one exact work/attempt Mastra session ledger row and decodes it. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 266,
+        "column": 7,
+        "start": 10862,
+        "end": 11428,
+        "bodyLine": 271,
+        "bodyColumn": 32,
+        "bodyEndLine": 280,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:readLatestWorkspaceMastraSqlRow#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Reads and decodes the latest Mastra session ledger row for a work ID. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 283,
+        "column": 7,
+        "start": 11527,
+        "end": 12087,
+        "bodyLine": 287,
+        "bodyColumn": 32,
+        "bodyEndLine": 296,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:readSelectedWorkspaceMastraSqlRow#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Reads an explicit attempt or delegates latest-row selection when attempt is omitted. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 299,
+        "column": 7,
+        "start": 12186,
+        "end": 12638,
+        "bodyLine": 304,
+        "bodyColumn": 32,
+        "bodyEndLine": 308,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/host-persisted-row.ts#fn:readWorkspaceStateSqlRow#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Reads and decodes one exact Host state row by workspace, kind and ID. Related persisted decoding existed inline in the published `packages/agent/src/orchestration/persistent-session-handoff.ts`; those inline operations belong to their parent callable and do not establish an exact standalone predecessor for this workspace SQL row contract. These extracted standalone roles are NEW and do not inherit a parent cap.",
+      "current_source_address": {
+        "line": 311,
+        "column": 7,
+        "start": 12722,
+        "end": 13235,
+        "bodyLine": 316,
+        "bodyColumn": 31,
+        "bodyEndLine": 325,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:invalid#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Shared rejection path for malformed runtime-code rebind contract data; throws the contract error. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 5,
+        "column": 0,
+        "start": 225,
+        "end": 315,
+        "bodyLine": 5,
+        "bodyColumn": 26,
+        "bodyEndLine": 7,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:exactKeys#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks that a record contains all required own keys and no keys outside required/optional sets. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 9,
+        "column": 0,
+        "start": 317,
+        "end": 668,
+        "bodyLine": 13,
+        "bodyColumn": 11,
+        "bodyEndLine": 19,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:exactKeys#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Callback passed by exactKeys#0 as call-argument closure 0; callback owns its predicate/iteration invocation and receives the call site's item argument. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 16,
+        "column": 15,
+        "start": 516,
+        "end": 602,
+        "bodyLine": 16,
+        "bodyColumn": 24,
+        "bodyEndLine": 16,
+        "bodyEndColumn": 101
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:exactKeys#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Callback passed by exactKeys#0 as call-argument closure 1; callback owns its predicate/iteration invocation and receives the call site's item argument. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 17,
+        "column": 19,
+        "start": 626,
+        "end": 660,
+        "bodyLine": 17,
+        "bodyColumn": 28,
+        "bodyEndLine": 17,
+        "bodyEndColumn": 53
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:boundedText#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates trimmed, nonempty, control-free bounded user-facing rebind text. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 21,
+        "column": 0,
+        "start": 670,
+        "end": 904,
+        "bodyLine": 21,
+        "bodyColumn": 70,
+        "bodyEndLine": 29,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:identityText#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks string type for work identity fields. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 31,
+        "column": 0,
+        "start": 906,
+        "end": 1000,
+        "bodyLine": 31,
+        "bodyColumn": 55,
+        "bodyEndLine": 33,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:focusedCorrectionPointer#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks nonempty trimmed correction pointer and its length bound. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 35,
+        "column": 0,
+        "start": 1002,
+        "end": 1159,
+        "bodyLine": 35,
+        "bodyColumn": 67,
+        "bodyEndLine": 37,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:parseWorkIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates and freezes repository/project/integration/work identity fields. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 39,
+        "column": 0,
+        "start": 1161,
+        "end": 1729,
+        "bodyLine": 39,
+        "bodyColumn": 57,
+        "bodyEndLine": 51,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:stringArray#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks an array whose entries are strings. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 53,
+        "column": 0,
+        "start": 1731,
+        "end": 1874,
+        "bodyLine": 53,
+        "bodyColumn": 56,
+        "bodyEndLine": 55,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:stringArray#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Callback passed by stringArray#0 as call-argument closure 0; callback owns its predicate/iteration invocation and receives the call site's item argument. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 54,
+        "column": 45,
+        "start": 1834,
+        "end": 1870,
+        "bodyLine": 54,
+        "bodyColumn": 56,
+        "bodyEndLine": 54,
+        "bodyEndColumn": 81
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:parseStateVersion#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates revision/digest persistence-version records and freezes the result. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 57,
+        "column": 0,
+        "start": 1876,
+        "end": 2296,
+        "bodyLine": 57,
+        "bodyColumn": 57,
+        "bodyEndLine": 68,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:parseRuntimeRebindStateVersion#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Applies canonical JSON ingress validation then parses the persisted rebind state version. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 70,
+        "column": 7,
+        "start": 2305,
+        "end": 2478,
+        "bodyLine": 70,
+        "bodyColumn": 77,
+        "bodyEndLine": 73,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:parseCorrectionPointer#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates exact focused-failure correction pointer record shape. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 75,
+        "column": 0,
+        "start": 2480,
+        "end": 2835,
+        "bodyLine": 75,
+        "bodyColumn": 93,
+        "bodyEndLine": 79,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:parseSynthesisCorrection#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates synthesis correction ID, digest and owner pointer record. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 81,
+        "column": 0,
+        "start": 2837,
+        "end": 3379,
+        "bodyLine": 81,
+        "bodyColumn": 112,
+        "bodyEndLine": 88,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:digestString#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks lowercase hexadecimal SHA-256 digest text. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 90,
+        "column": 0,
+        "start": 3381,
+        "end": 3504,
+        "bodyLine": 90,
+        "bodyColumn": 55,
+        "bodyEndLine": 92,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:parseCoreFields#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates and projects the required scalar and digest fields of a rebind request. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 94,
+        "column": 0,
+        "start": 3506,
+        "end": 4631,
+        "bodyLine": 94,
+        "bodyColumn": 57,
+        "bodyEndLine": 122,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:validRebindTextFields#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates the request text fields using the bounded-text predicate. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 124,
+        "column": 0,
+        "start": 4633,
+        "end": 4758,
+        "bodyLine": 124,
+        "bodyColumn": 68,
+        "bodyEndLine": 126,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:validRebindTextFields#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Callback passed by validRebindTextFields#0 as call-argument closure 0; callback owns its predicate/iteration invocation and receives the call site's item argument. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 125,
+        "column": 22,
+        "start": 4725,
+        "end": 4754,
+        "bodyLine": 125,
+        "bodyColumn": 33,
+        "bodyEndLine": 125,
+        "bodyEndColumn": 51
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:validRebindDigests#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates the request digest fields using digestString. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 128,
+        "column": 0,
+        "start": 4760,
+        "end": 4865,
+        "bodyLine": 128,
+        "bodyColumn": 65,
+        "bodyEndLine": 130,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:parseMaintenanceGeneration#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates optional nonnegative safe-integer maintenance generation. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 132,
+        "column": 0,
+        "start": 4867,
+        "end": 5086,
+        "bodyLine": 132,
+        "bodyColumn": 72,
+        "bodyEndLine": 136,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:validateVariant#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Selects exactly one supported no-call, focused-failure, or synthesis correction variant. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 138,
+        "column": 0,
+        "start": 5088,
+        "end": 5829,
+        "bodyLine": 140,
+        "bodyColumn": 109,
+        "bodyEndLine": 154,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/runtime-code-rebind-contract.ts#fn:parseRuntimeCodeRebindRequest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates canonical ingress, exact request keys and all nested fields, then returns frozen parsed rebind data without granting Host authority. This is a standalone parser/helper role for the current-v1 runtime-code rebind contract. The published tree has related but distinct `initial-source-frontier-code-rebind.ts` roles (`validateInitialSourceFrontierCodeRebindRequest`, `exactKeys`, `digest`, `text`, `version`); they validate the initial-source-frontier contract and are not exact one-to-one predecessors. Current `HostState.rebindRuntimeCode` remains the caller and invokes `parseRuntimeCodeRebindRequest`; that retained caller is context, not a second mapping for this parser role. The parser/helpers were extracted from parent inline validation, so their standalone NEW rows receive no parent callable allowance.",
+      "current_source_address": {
+        "line": 157,
+        "column": 7,
+        "start": 5936,
+        "end": 7201,
+        "bodyLine": 157,
+        "bodyColumn": 88,
+        "bodyEndLine": 196,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:requireAdmission#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 20,
+        "column": 0,
+        "start": 1018,
+        "end": 1150,
+        "bodyLine": 20,
+        "bodyColumn": 74,
+        "bodyEndLine": 22,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:sourceSidecarsAbsent#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 41,
+        "column": 0,
+        "start": 1697,
+        "end": 1989,
+        "bodyLine": 41,
+        "bodyColumn": 68,
+        "bodyEndLine": 45,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:closedImage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 47,
+        "column": 0,
+        "start": 1991,
+        "end": 3476,
+        "bodyLine": 47,
+        "bodyColumn": 74,
+        "bodyEndLine": 72,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:closedImageIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 74,
+        "column": 0,
+        "start": 3478,
+        "end": 3633,
+        "bodyLine": 74,
+        "bodyColumn": 57,
+        "bodyEndLine": 76,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withDatabaseClose#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 78,
+        "column": 0,
+        "start": 3635,
+        "end": 4077,
+        "bodyLine": 78,
+        "bodyColumn": 85,
+        "bodyEndLine": 94,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:checkpointAndClose#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 96,
+        "column": 0,
+        "start": 4079,
+        "end": 5170,
+        "bodyLine": 96,
+        "bodyColumn": 66,
+        "bodyEndLine": 130,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:fenceBindingMatches#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 132,
+        "column": 0,
+        "start": 5172,
+        "end": 5353,
+        "bodyLine": 132,
+        "bodyColumn": 106,
+        "bodyEndLine": 134,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 141,
+        "column": 7,
+        "start": 5657,
+        "end": 12195,
+        "bodyLine": 153,
+        "bodyColumn": 15,
+        "bodyEndLine": 282,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/binding:verifyCurrentFence/binding:verifyCurrentFence#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 164,
+        "column": 29,
+        "start": 7151,
+        "end": 8339,
+        "bodyLine": 164,
+        "bodyColumn": 53,
+        "bodyEndLine": 187,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/binding:verifyCurrentFence/binding:verifyCurrentFence#0/binding:store/property:verify#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 174,
+        "column": 16,
+        "start": 7450,
+        "end": 7460,
+        "bodyLine": 174,
+        "bodyColumn": 22,
+        "bodyEndLine": 174,
+        "bodyEndColumn": 26
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[2]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 216,
+        "column": 4,
+        "start": 9419,
+        "end": 9800,
+        "bodyLine": 216,
+        "bodyColumn": 10,
+        "bodyEndLine": 224,
+        "bodyEndColumn": 5
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[1]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 221,
+        "column": 8,
+        "start": 9692,
+        "end": 9722,
+        "bodyLine": 221,
+        "bodyColumn": 14,
+        "bodyEndLine": 221,
+        "bodyEndColumn": 38
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[3]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 225,
+        "column": 4,
+        "start": 9806,
+        "end": 12187,
+        "bodyLine": 225,
+        "bodyColumn": 20,
+        "bodyEndLine": 280,
+        "bodyEndColumn": 5
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[3]#0/binding:capability/method:assertActive#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 247,
+        "column": 8,
+        "start": 10837,
+        "end": 11088,
+        "bodyLine": 247,
+        "bodyColumn": 29,
+        "bodyEndLine": 251,
+        "bodyEndColumn": 9
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[3]#0/binding:capability/method:assertSourcesUnchanged#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 252,
+        "column": 8,
+        "start": 11098,
+        "end": 11721,
+        "bodyLine": 252,
+        "bodyColumn": 39,
+        "bodyEndLine": 264,
+        "bodyEndColumn": 9
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[3]#0/property:assertGateActive#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 267,
+        "column": 26,
+        "start": 11796,
+        "end": 11821,
+        "bodyLine": 267,
+        "bodyColumn": 32,
+        "bodyEndLine": 267,
+        "bodyEndColumn": 51
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:assertExistingStorageMergeCapability#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 285,
+        "column": 7,
+        "start": 12305,
+        "end": 12682,
+        "bodyLine": 285,
+        "bodyColumn": 118,
+        "bodyEndLine": 290,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:requireStorage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 66,
+        "column": 0,
+        "start": 2437,
+        "end": 2579,
+        "bodyLine": 66,
+        "bodyColumn": 80,
+        "bodyEndLine": 68,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:validateWorkspaceBootstrapBinding#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 71,
+        "column": 0,
+        "start": 2671,
+        "end": 2879,
+        "bodyLine": 71,
+        "bodyColumn": 86,
+        "bodyEndLine": 74,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:initializeBootstrapSentinel#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 76,
+        "column": 0,
+        "start": 2881,
+        "end": 3201,
+        "bodyLine": 76,
+        "bodyColumn": 99,
+        "bodyEndLine": 83,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:initializeBootstrapSentinel#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 77,
+        "column": 23,
+        "start": 3005,
+        "end": 3195,
+        "bodyLine": 77,
+        "bodyColumn": 29,
+        "bodyEndLine": 82,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:validateInitialWorkspaceDatabaseImage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 86,
+        "column": 7,
+        "start": 3303,
+        "end": 4134,
+        "bodyLine": 86,
+        "bodyColumn": 101,
+        "bodyEndLine": 101,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:databaseSchema#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 103,
+        "column": 0,
+        "start": 4136,
+        "end": 4434,
+        "bodyLine": 103,
+        "bodyColumn": 94,
+        "bodyEndLine": 109,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:assertEmptyInitialTables#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 111,
+        "column": 0,
+        "start": 4436,
+        "end": 5082,
+        "bodyLine": 115,
+        "bodyColumn": 8,
+        "bodyEndLine": 124,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:assertFreshWorkspaceDatabaseSchema#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 127,
+        "column": 7,
+        "start": 5216,
+        "end": 5750,
+        "bodyLine": 131,
+        "bodyColumn": 8,
+        "bodyEndLine": 139,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:retainInitialImage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 141,
+        "column": 0,
+        "start": 5752,
+        "end": 6282,
+        "bodyLine": 141,
+        "bodyColumn": 115,
+        "bodyEndLine": 153,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:closePreparedDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 155,
+        "column": 0,
+        "start": 6284,
+        "end": 6587,
+        "bodyLine": 159,
+        "bodyColumn": 17,
+        "bodyEndLine": 170,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:prepareInitialWorkspaceDatabaseImage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 173,
+        "column": 7,
+        "start": 6704,
+        "end": 7903,
+        "bodyLine": 173,
+        "bodyColumn": 115,
+        "bodyEndLine": 197,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:inspectInitialWorkspaceDatabaseImage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 200,
+        "column": 7,
+        "start": 8004,
+        "end": 9088,
+        "bodyLine": 204,
+        "bodyColumn": 32,
+        "bodyEndLine": 226,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:assertNoSidecars#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 228,
+        "column": 0,
+        "start": 9090,
+        "end": 9331,
+        "bodyLine": 228,
+        "bodyColumn": 80,
+        "bodyEndLine": 231,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:physicalImage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 233,
+        "column": 0,
+        "start": 9333,
+        "end": 9825,
+        "bodyLine": 233,
+        "bodyColumn": 65,
+        "bodyEndLine": 241,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:inspectClosedWorkspaceDatabaseImage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 244,
+        "column": 7,
+        "start": 9951,
+        "end": 10881,
+        "bodyLine": 247,
+        "bodyColumn": 32,
+        "bodyEndLine": 260,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:inspectWorkspaceBootstrapSentinel#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 263,
+        "column": 0,
+        "start": 10980,
+        "end": 12599,
+        "bodyLine": 267,
+        "bodyColumn": 32,
+        "bodyEndLine": 295,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:inspectWorkspaceBootstrapSentinel#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 288,
+        "column": 55,
+        "start": 12260,
+        "end": 12293,
+        "bodyLine": 288,
+        "bodyColumn": 64,
+        "bodyEndLine": 288,
+        "bodyEndColumn": 88
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:truncateCheckpoint#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 297,
+        "column": 0,
+        "start": 12601,
+        "end": 13359,
+        "bodyLine": 297,
+        "bodyColumn": 54,
+        "bodyEndLine": 315,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:checkpointAndCloseWorkspaceDatabase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
+      "current_source_address": {
+        "line": 318,
+        "column": 7,
+        "start": 13477,
+        "end": 14679,
+        "bodyLine": 323,
+        "bodyColumn": 32,
+        "bodyEndLine": 348,
+        "bodyEndColumn": 1
+      }
     }
   ],
   "removed_functions": [
@@ -21260,11 +23599,26 @@
     ".tmp/tooling-research/typed-correction-v179/root-reviewed-evidence-lineage-v730.json",
     ".tmp/tooling-research/typed-correction-v179/root-reviewed-admitted-lineage-v731.json",
     ".tmp/tooling-research/typed-correction-v179/root-reviewed-small-lineage-v736.json",
-    ".tmp/tooling-research/typed-correction-v179/policy-lineage-refresh-v740.json"
+    ".tmp/tooling-research/typed-correction-v179/policy-lineage-refresh-v740.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-cli-small-v765.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-workspace-v765.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-repair-cli-v765.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-entrypoints-v765.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-persisted-contracts-v765.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-upgrade-storage-v765.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-current-rows-v767.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-bindings-v767.json",
+    ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v767.md"
   ],
-  "current_source_commit": "3ef093d",
+  "current_source_commit": "f8d1925",
   "scope_review_v746": {
     "review": "Three blind reviews, Root callback role correction, independent complete partition/caps/address review approved114roles/12scopes. Static lineage only.",
     "input": ".tmp/tooling-research/typed-correction-v179/root-reviewed-next-small-lineage-v746.json"
+  },
+  "scope_review_v767": {
+    "status": "APPROVED_SELECTED_SOURCE_LINEAGE_NON_EXECUTABLE",
+    "review": "Six blind bounded proposals, three independent semantic reviews, Root own-counter correction, and independent v767139-role join review approve the selected partition, unchanged prior rows, exact genuine retained caps, prospective NEW10/10 and source addresses/bindings. Three read-only-dispatch roles deferred for CC3>frozen2. Global lineage remains incomplete. Parent commit f8d1925; explicit documentation-clear source binding governs the staged reporter bytes.",
+    "input": ".tmp/tooling-research/typed-correction-v179/root-reviewed-small-lineage-v767.json",
+    "independent_review": ".tmp/tooling-research/typed-correction-v179/lineage-join-review-v767.md"
   }
 }

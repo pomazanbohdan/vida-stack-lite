@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 import { cliCommandContracts } from './cli-command-contracts.ts';
+import { readCliErrorProperty } from './cli-error-properties.ts';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 type DocumentationClearMode = Parameters<
@@ -66,8 +67,7 @@ export async function runDocumentationClear(args: readonly string[]) {
 }
 
 function reportDocumentationFailure(error: unknown): void {
-  const message = error && typeof error === 'object' && 'message' in error ? error.message : undefined;
-  process.stderr.write(String(message ?? error) + '\n');
+  process.stderr.write(String(readCliErrorProperty(error, 'message') ?? error) + '\n');
   process.exitCode = 1;
 }
 

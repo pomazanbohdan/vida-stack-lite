@@ -1,7 +1,49 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { readCliErrorProperty } from '../bin/cli-error-properties.ts';
 import { standaloneDiscoveryFiles } from '../bin/cli-metadata.ts';
+import { pinnedEnvironment } from '../bin/bun.ts';
+import { runBoundedSubprocess } from './helpers/bounded-subprocess.ts';
+
+test('documentation-clear reports a callable rejection message through its actual CLI entrypoint', async () => {
+  const packageRoot = fileURLToPath(new URL('../', import.meta.url));
+  const entrypoint = fileURLToPath(new URL('../bin/documentation-clear.ts', import.meta.url));
+  const clearModule = fileURLToPath(new URL('../src/documentation/clear.ts', import.meta.url));
+  const script = `
+    import { mock } from 'bun:test';
+    mock.module(${JSON.stringify(clearModule)}, () => ({
+      executeDocumentationClearFromWork: async () => {
+        throw Object.assign(() => undefined, { message: 'controlled callable failure' });
+      },
+    }));
+    process.argv[1] = ${JSON.stringify(entrypoint)};
+    process.argv.splice(2, process.argv.length - 2,
+      '--mode', 'baseline',
+      '--project-root', ${JSON.stringify(packageRoot)},
+      '--repository', 'example',
+      '--project', 'agent',
+      '--work-id', 'controlled-work',
+      '--source-revision', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    );
+    await import(${JSON.stringify(entrypoint)});
+  `;
+  const result = await runBoundedSubprocess(process.execPath, ['--no-env-file', '--no-install', '--eval', script], {
+    cwd: packageRoot,
+    env: pinnedEnvironment(process.execPath, process.env, packageRoot),
+    timeoutMs: 3000,
+  });
+
+  expect(result.closeObserved).toBe(true);
+  expect(result.exitCode).toBe(1);
+  expect(result.signal).toBeNull();
+  expect(result.childError).toBeNull();
+  expect(result.timedOut).toBe(false);
+  expect(result.stdout.toString()).toBe('');
+  expect(result.stderr.toString()).toBe('controlled callable failure\n');
+  expect(result.stdoutTruncated).toBe(false);
+  expect(result.stderrTruncated).toBe(false);
+});
 
 test('caught error property reading denies primitives and preserves missing values', () => {
   for (const value of [null, undefined, false, true, 0, NaN, 1n, '', 'message', Symbol('message')]) {
