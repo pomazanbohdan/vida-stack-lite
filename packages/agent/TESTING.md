@@ -431,6 +431,18 @@ pending or GAP; delivery does not turn them into PASS or Runtime acceptance.
 Causal functional defects still require correction by their current owner.
 Preserve Source rights, CAS, UNKNOWN custody and required artifact integrity.
 
+For the current clean-project qualification task, the user's later explicit
+instruction requires all four exact coverage metrics at 100%, 100%
+assertion-confirmed Killed mutation qualification, and passing dynamic CRAP
+against frozen per-function budgets before the real formed-native Runtime run.
+This task-specific sequencing overrides the general minimum delivery profile
+above; it does not add suites to build/install. Development fixtures may run to
+close the gaps. Root owns final numerical outputs and the subsequent isolated
+Runtime phase. The current user instruction authorizes the separate final
+mutation qualification; an inventory or partial lineage checkpoint cannot pass it.
+Dynamic CRAP uses current complexity and current measured coverage in the formula
+below. Its allowances remain frozen; do not reset them from candidate results.
+
 Compute each function's CRAP as `CC^2 * (1 - coverage)^3 + CC`, with coverage
 expressed as a ratio. Report complexity, coverage and CRAP separately. At full
 coverage CRAP equals cyclomatic complexity, so a universal CRAP ceiling must not

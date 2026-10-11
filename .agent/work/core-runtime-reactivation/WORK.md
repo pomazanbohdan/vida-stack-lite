@@ -5632,3 +5632,86 @@ confirms two duplicate public ordinary/repair members: completed-source-report-
 recovery-cli.test.ts and completed-readonly-capture.test.ts. There are134literal
 members/132unique paths across the four public phases. Minimal duplicate removal
 is a concrete P1 follow-up; broad discovery still needs command-contract parity.
+
+
+### v741–v745 — numeric-before-native prerequisite and disjoint test phases
+
+Checkpoint3ef093d passed the strict staged gate and was pushed to origin/main.
+The latest explicit user instruction requires exact100% functions/lines/
+statements/branches, assertion-confirmed Killed100% and current dynamic CRAP
+against frozen per-function caps before real formed-native isolated Runtime
+qualification. TESTING, current plan and handoff now record the task-specific
+override of the general minimum-delivery profile; build/install run no suites.
+It supplies manual authorization for the final mutation qualification, not
+permission to accept timeouts/errors/NoCoverage or raise frozen allowances.
+
+Minimal ordinary-phase optimization removes completed-source-report-recovery-cli
+and completed-readonly-capture only from ordinary, retains both once in repair,
+and registers direct policy tests in ordinary. The four Bun process boundaries
+and ordinary typecheck prefix stay. Command-contract RED132unique/134members
+then selected2PASS, scoped typed lint0. Receipts ordinary-phase-red-v742.log,
+ordinary-phase-static-v743.log, ordinary-phase-green-v743.log in typed-correction-v179.
+
+Two blind writers supplied an empty-YAML-component denial case and a separate
+untrusted Host zero-effect case. Root inspected current contracts and executed
+the two affected files:15PASS191assertions/9.54s. Receipt configuration-binding-
+tests-v745.log. Pure parser N/A reasons concern stateful behaviors; the binding
+denial only establishes early authorization refusal, not successful binding,
+CAS or restart coverage. New binding/receipt files join ordinary membership;
+coverage already owns complete supported suffix discovery. Six further blind
+Luna scopes review unchanged frozen lineage, path/receipt tests and numeric
+inputs. Existing gates already enforce truthful reason-of-kill custody; no
+duplicate numeric gate or scan is needed. Exhaustive executable plan and current
+coverage/mutation receipts remain OPEN. No native/old-state access or replay.
+
+
+### v747–v751 — actual current measurement, retained UNKNOWN and bounded repairs
+
+Root executed the current coverage command on the frozen snapshot selecting168
+Bun test files and144 Source files. TS-only captured411 TypeScript files with0
+diagnostics; strict Source tsc passed. Run b41a06c4-5264-4373-aa1d-6afde18f4f71
+reached the existing1800-second timeout and terminated UNKNOWN. No per-process
+receipt or coverage-final.json exists. The owned lock and immutable run directory
+remain retained; no replay, cleanup or second full suite was issued. The log has
+122 observed failure records, not a terminal suite summary. Current coverage
+percentages and dynamic CRAP remain UNAVAILABLE, never zero or100 by inference.
+Actual mutation invocation stopped before execution on an unassigned Source;
+mutation score is NOT MEASURED. CRAP invocation rejected missing current report.
+Receipts: current-{coverage,crap,mutation}-measurement-v747.log in typed-correction-v179.
+
+Six blind readonly Luna diagnoses split failure contours without changing shared
+files or executing suites. Confirmed: selected tests import maintained tooling
+modules absent from the captured runtime module set; retain uncaptured-module
+denial and complete custody rather than loading live declared modules. SQLite
+row-budget observer loses the native Database receiver at its Proxy, so its
+transaction method fails before the intended row guard. CLEAR bundle tests lack
+VIDA_CLEAR_BUNDLE. TaskSource issue fixture literals conflict with required UUID.
+Governance module identity, context paths and shared package CAS contention need
+further causal verification; no brand, authorization, CAS or UNKNOWN guard change.
+Live runner output and failure-only diagnostics are proposed bounded tooling
+improvements; no timeout increase or accepted report from failed suite.
+
+Root assigns orchestration/read-only-dispatch-repair.ts to its existing
+bun-dispatch-repair partition. Existing inventory contract RED then GREEN1PASS/
+165assertions; receipt mutation-partition-{red,green}-v751.log. Pending upgrade/
+existing merge remains pending; assignment is not mutation qualification. The
+public existing-upgrade coordinator still explicitly refuses unproved legacy
+storage overlap; never flip that guard to manufacture positive coverage.
+
+Reviewed partial lineage grows to945 current roles/42 Source files:870retained,
+75new,1removed. The114-role/12-file addition has scoped current byte bindings,
+exact copied frozen retained allowances, fixed prospective new10/10 and an
+independent complete partition/address/cap review. Its status remains
+SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE. No default executable budget
+plan was created. Earlier affected test receipts:33PASS279assertions; separate
+command-contract cases2PASS. These are scoped Source evidence, not full-suite,
+mutation, CRAP or real formed-native Runtime PASS.
+
+
+Root repairs only the SQLite test observer receiver using the existing
+Reflect.apply-with-native-target pattern. The observed coverage assertion failed
+with Bun private Statement access before the row guard; the selected unchanged
+row-budget assertion now1PASS/5assertions in2.70s. Receipt sqlite-proxy-green-v751.log.
+No production SQLite/CAS/size guard change. Own coverage launcher/test PIDs were
+observed absent after UNKNOWN; this is not reconciliation of any spawned fixture
+operation. Run lock, snapshot and uncertain fixture custody remain untouched.

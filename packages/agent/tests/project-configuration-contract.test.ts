@@ -289,6 +289,12 @@ describe('project configuration component contracts', () => {
     const loneSurrogate = { project: '\ud800', agents: '', flows: '' };
     expect(() => projectConfigurationInputDigest(loneSurrogate)).toThrow(/invalid Unicode/);
   });
+
+  test('rejects an empty YAML document in each required component', () => {
+    for (const key of inputKeys) {
+      expect(() => composeProjectConfigurationInputs({ ...baseInputs, [key]: '' }), key).toThrow();
+    }
+  });
 });
 
 function independentDigest(inputs: Readonly<Record<'project' | 'agents' | 'flows', string>>): string {

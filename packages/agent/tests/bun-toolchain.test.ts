@@ -669,6 +669,52 @@ test('every public developer script enters the pinned bootstrap without recursio
   }
 });
 
+test('public test phases assign each literal test file to one phase', () => {
+  const manifest = JSON.parse(
+    readFileSync(path.resolve(import.meta.dirname, '../package.json'), 'utf8'),
+  ) as PackageManifest;
+  const aggregate = manifest.scripts.test;
+  assert.ok(aggregate, 'public test aggregate must exist');
+  const phaseNames = [...aggregate.matchAll(/run ([\w:-]+:pinned)/g)].map((match) => {
+    const phase = match[1];
+    assert.ok(phase, 'public test phase reference must include its name');
+    return phase;
+  });
+  assert.deepEqual(phaseNames, [
+    'test:pinned',
+    'test:repair:pinned',
+    'test:host-state:pinned',
+    'test:run-entrypoint:pinned',
+  ]);
+
+  const phaseMemberships = phaseNames.map((phase) => {
+    const script = manifest.scripts[phase];
+    assert.ok(script, `public test phase ${phase} must exist`);
+    const files = [...script.matchAll(/tests\/(\S+\.(?:test|spec)\.(?:ts|mts|cts|tsx))(?=\s|$)/gu)].map((match) => {
+      const file = match[1];
+      assert.ok(file, `public test phase ${phase} must contain complete test paths`);
+      return `tests/${file}`;
+    });
+    return { phase, files };
+  });
+  const memberships = phaseMemberships.flatMap(({ phase, files }) => files.map((file) => ({ phase, file })));
+  assert.equal(
+    new Set(memberships.map(({ file }) => file)).size,
+    memberships.length,
+    'a literal test file must belong to only one public test phase',
+  );
+
+  const phaseFiles = (phase: string): string[] =>
+    phaseMemberships.find((membership) => membership.phase === phase)?.files ?? [];
+  for (const file of [
+    'tests/completed-source-report-recovery-cli.test.ts',
+    'tests/completed-readonly-capture.test.ts',
+  ]) {
+    assert.equal(phaseFiles('test:repair:pinned').filter((candidate) => candidate === file).length, 1);
+  }
+  assert.equal(phaseFiles('test:pinned').filter((file) => file === 'tests/documentation-policy.test.ts').length, 1);
+});
+
 test('non-regular pin fails before package resolution, including Windows junctions', () => {
   const { root } = fixture();
   const file = path.join(root, '.bun-version');

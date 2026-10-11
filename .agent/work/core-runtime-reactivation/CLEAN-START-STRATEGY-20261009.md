@@ -1230,3 +1230,41 @@ only policy.ts's three rows/binding, preserving all allowances and other scopes.
 Ordinary phase literal membership remains a separate bounded P1 assessment;
 current final coverage selection already discovers the supported current test set.
 No duplicate full qualification, active schema/loader switch or old-state access.
+
+#### Current numerical prerequisite and phase optimization v741–v745
+
+Strict staged checkpoint3ef093d passed and was published to origin/main. Latest
+human instruction requires exact functions/lines/statements/branches100%,
+100% assertion-confirmed Killed and current dynamic CRAP against frozen budgets
+before real formed-native isolated Runtime qualification. Timeout, compile/runtime
+error and NoCoverage do not qualify as Killed. This task-specific order supersedes
+the general minimum-delivery permission to proceed with pending numeric evidence;
+build/install still execute no suites. Root is the sole final output owner.
+
+Bounded P1 phase correction removes two recovery test files from ordinary only,
+retains them exactly once in repair and adds the direct policy file to ordinary.
+Four Bun process boundaries and the ordinary typecheck prefix remain. Exact
+command-contract RED132unique/134members then selected2PASS; scoped typed lint0.
+New configuration empty-component and untrusted Host zero-effect tests joined:
+selected two files15PASS191assertions. Neither receipt is full numeric proof.
+Continue disjoint blind test-gap and frozen correspondence reviews using cached
+inventories and changed-scope refreshes; no default executable budget plan until
+the exhaustive old/current partitions and baseline custody are reviewed.
+
+
+### v751 — measurement-driven next wave
+
+Current numeric attempt ended retained UNKNOWN at the unchanged30-minute bound;
+no coverage/process receipt means current coverage/CRAP unavailable. Mutation
+assignment repair passed its existing contract; upgrade/merge remains pending.
+Use WORK v747–v751 for receipts and the six independent failure contours.
+Next: complete selected-test runtime module custody without another broad scan;
+repair verified test receivers/UUID contracts; qualify isolated bundle-only
+fixtures in their established lane; verify module identity and package-read CAS
+contention before changing behavior. Stream the single owned coverage child for
+progress without weakening timeout/UNKNOWN or receipt validation. Reconcile
+retained run custody explicitly before any new full numeric qualification.
+The partial945-role lineage stays non-executable; finish exhaustive reviewed
+correspondence and genuine baseline custody separately. Exact100% four metrics,
+assertion-confirmed Killed100% and dynamic frozen-cap CRAP still precede real
+formed-native isolated Runtime. No schema/loader cutover or unblock notices.

@@ -611,7 +611,12 @@ const partitions: MutationPartition[] = [
   {
     name: 'bun-dispatch-repair',
     environment: 'bun',
-    sources: ['bin/reconcile-artifacts.ts', 'bin/reconcile-readonly-dispatch.ts', 'bin/read-only-dispatch-repair.ts'],
+    sources: [
+      'bin/reconcile-artifacts.ts',
+      'bin/reconcile-readonly-dispatch.ts',
+      'bin/read-only-dispatch-repair.ts',
+      'src/orchestration/read-only-dispatch-repair.ts',
+    ],
     tests: [
       'tests/reconcile-readonly-dispatch.test.ts',
       'tests/read-only-dispatch-repair.test.ts',

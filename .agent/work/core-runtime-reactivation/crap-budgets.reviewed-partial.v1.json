@@ -10,12 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 802,
-    "new": 29,
+    "retained": 870,
+    "new": 75,
     "removed": 1,
-    "bound_current_functions": 831,
-    "current_files_with_selected_roles": 30,
-    "mechanical_errors": 0
+    "current_roles": 945,
+    "source_files": 42
   },
   "source_bindings": [
     {
@@ -137,6 +136,54 @@
     {
       "file": "src/documentation/policy.ts",
       "sha256": "e8b00f6567f34a07307624024b814cd9971b24679d73a61c23a934f0995a844f"
+    },
+    {
+      "file": "src/config/project-initialization-binding.ts",
+      "sha256": "d6780f9ce8844ad9e9db27dd23d7a3e9332841efa5a5ed6e07a34a5c0ab6c6e0"
+    },
+    {
+      "file": "src/config/project-configuration.ts",
+      "sha256": "9e0888839414d6b95c7e15e5ad7a567adfd54bdb575810c3436978cbc5c7b832"
+    },
+    {
+      "file": "src/config/project-configuration-rebind.ts",
+      "sha256": "1206220bdd5a54133c41a0d680f079f2ea63b3c88eff5c2306131d9e77e602a7"
+    },
+    {
+      "file": "src/config/project-initialization-record.ts",
+      "sha256": "6c2f7f421a4c98278d61167d74f855f2f46d1f471dd06e04e305b35a32e4abf4"
+    },
+    {
+      "file": "src/config/project-layout.ts",
+      "sha256": "a41d75a08c2c9c677643f33993c9d8c52a8dd1040c9f816d4e9fa672736c2840"
+    },
+    {
+      "file": "src/config/project-paths.ts",
+      "sha256": "a2b353967a792a24be7ff3415713ca0a386c38af315b4ad52c0a1ddb0e752267"
+    },
+    {
+      "file": "src/config/project-activation.ts",
+      "sha256": "43a5195129cb548367f76aec13b1ed56a0b51f31b48e6a325bd4a6e9356e0d26"
+    },
+    {
+      "file": "src/orchestration/configured-context.ts",
+      "sha256": "e33d49e9de76f7b44358e3a9c6556fa94464ace292c42b4f578c2d8f1d8fc688"
+    },
+    {
+      "file": "src/orchestration/observed-research-result.ts",
+      "sha256": "91c4bbfc706825a2cd4f9ded898a6a2ff5e7f8e8235315d26b5901f0dfe001fa"
+    },
+    {
+      "file": "src/orchestration/failed-prewriter-recovery.ts",
+      "sha256": "a1ff0db77f199b8c9f14aa8467d7b5b8e0e62298693873bf614d0b8b138efe7d"
+    },
+    {
+      "file": "src/orchestration/staged-runtime-witness.ts",
+      "sha256": "68bfc15024493dc9dbfeb3c6e86f1204c32cec1d2024fe3dd357c0e1239af084"
+    },
+    {
+      "file": "src/runtime-initialization.ts",
+      "sha256": "3a483a4e39b008ee9e17261172dbeaca57cb8796c44f6d5b86d2bdaed7cd311e"
     }
   ],
   "baseline_functions": [
@@ -18675,6 +18722,1366 @@
         "bodyEndLine": 41,
         "bodyEndColumn": 74
       }
+    },
+    {
+      "identity": "src/config/project-configuration.ts#fn:validator#0",
+      "current_identity": "src/config/project-configuration.ts#fn:validator#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same public validation/composition and migration roles. Parsing retains public ownership; separately extracted capture/composition and input-digest callables are new and never inherit the parser allowance.",
+      "current_source_address": {
+        "line": 89,
+        "column": 0,
+        "start": 3747,
+        "end": 4091,
+        "bodyLine": 89,
+        "bodyColumn": 61,
+        "bodyEndLine": 96,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration.ts#fn:compose#0",
+      "current_identity": "src/config/project-configuration.ts#fn:compose#0",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Same public validation/composition and migration roles. Parsing retains public ownership; separately extracted capture/composition and input-digest callables are new and never inherit the parser allowance.",
+      "current_source_address": {
+        "line": 99,
+        "column": 0,
+        "start": 4187,
+        "end": 5476,
+        "bodyLine": 105,
+        "bodyColumn": 32,
+        "bodyEndLine": 134,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration.ts#fn:parseProjectConfiguration#0",
+      "current_identity": "src/config/project-configuration.ts#fn:parseProjectConfiguration#0",
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "Same public validation/composition and migration roles. Parsing retains public ownership; separately extracted capture/composition and input-digest callables are new and never inherit the parser allowance.",
+      "current_source_address": {
+        "line": 163,
+        "column": 7,
+        "start": 6725,
+        "end": 7142,
+        "bodyLine": 167,
+        "bodyColumn": 30,
+        "bodyEndLine": 174,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration.ts#fn:splitRuntimeConfig#0",
+      "current_identity": "src/config/project-configuration.ts#fn:splitRuntimeConfig#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same public validation/composition and migration roles. Parsing retains public ownership; separately extracted capture/composition and input-digest callables are new and never inherit the parser allowance.",
+      "current_source_address": {
+        "line": 177,
+        "column": 7,
+        "start": 7247,
+        "end": 8176,
+        "bodyLine": 180,
+        "bodyColumn": 24,
+        "bodyEndLine": 202,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:migratedPath#0",
+      "current_identity": "src/config/project-layout.ts#fn:migratedPath#0",
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof.",
+      "current_source_address": {
+        "line": 50,
+        "column": 0,
+        "start": 1663,
+        "end": 1961,
+        "bodyLine": 50,
+        "bodyColumn": 45,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:migratedProfile#0",
+      "current_identity": "src/config/project-layout.ts#fn:migratedProfile#0",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof.",
+      "current_source_address": {
+        "line": 59,
+        "column": 0,
+        "start": 1963,
+        "end": 2432,
+        "bodyLine": 59,
+        "bodyColumn": 71,
+        "bodyEndLine": 72,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:nextRevision#0",
+      "current_identity": "src/config/project-layout.ts#fn:nextRevision#0",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof.",
+      "current_source_address": {
+        "line": 74,
+        "column": 0,
+        "start": 2434,
+        "end": 2679,
+        "bodyLine": 74,
+        "bodyColumn": 45,
+        "bodyEndLine": 79,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:requireManagedDestination#0",
+      "current_identity": "src/config/project-layout.ts#fn:requireManagedDestination#0",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof.",
+      "current_source_address": {
+        "line": 81,
+        "column": 0,
+        "start": 2681,
+        "end": 2946,
+        "bodyLine": 81,
+        "bodyColumn": 70,
+        "bodyEndLine": 86,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:requireProjectLayout#0",
+      "current_identity": "src/config/project-layout.ts#fn:requireProjectLayout#0",
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof.",
+      "current_source_address": {
+        "line": 88,
+        "column": 0,
+        "start": 2948,
+        "end": 3955,
+        "bodyLine": 88,
+        "bodyColumn": 64,
+        "bodyEndLine": 102,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:migratedProject#0",
+      "current_identity": "src/config/project-layout.ts#fn:migratedProject#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof.",
+      "current_source_address": {
+        "line": 104,
+        "column": 0,
+        "start": 3957,
+        "end": 4382,
+        "bodyLine": 104,
+        "bodyColumn": 114,
+        "bodyEndLine": 112,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:prepareVidaProjectConfiguration#0",
+      "current_identity": "src/config/project-layout.ts#fn:prepareVidaProjectConfiguration#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof.",
+      "current_source_address": {
+        "line": 115,
+        "column": 7,
+        "start": 4488,
+        "end": 7268,
+        "bodyLine": 117,
+        "bodyColumn": 2,
+        "bodyEndLine": 176,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:prepareVidaProjectConfiguration#0/binding:config/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/config/project-layout.ts#fn:prepareVidaProjectConfiguration#0/binding:registry/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof. Exact closure relocation reviewed by Root against published/current bodies and corrected by the blind reviewer.",
+      "current_source_address": {
+        "line": 130,
+        "column": 53,
+        "start": 5282,
+        "end": 5447,
+        "bodyLine": 130,
+        "bodyColumn": 78,
+        "bodyEndLine": 133,
+        "bodyEndColumn": 5
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:prepareVidaProjectConfiguration#0/binding:config/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/config/project-layout.ts#fn:prepareVidaProjectConfiguration#0/binding:config/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing migration and layout-validation roles retained, including registry-instruction and knowledge-source map callbacks relocated by their actual bodies; policy/root marker/registry digest changes are behavioral deltas, not unchanged-behavior proof. Exact closure relocation reviewed by Root against published/current bodies and corrected by the blind reviewer.",
+      "current_source_address": {
+        "line": 161,
+        "column": 46,
+        "start": 6691,
+        "end": 6826,
+        "bodyLine": 161,
+        "bodyColumn": 59,
+        "bodyEndLine": 164,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:controlWorkPath#0",
+      "current_identity": "src/config/project-paths.ts#fn:controlWorkPath#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "Existing legacy path-builder roles retained; source-brand mapping, operation paths and unified database routing are separately inventoried additions with caller authority retained outside these pure helpers.",
+      "current_source_address": {
+        "line": 61,
+        "column": 0,
+        "start": 2857,
+        "end": 3026,
+        "bodyLine": 61,
+        "bodyColumn": 75,
+        "bodyEndLine": 64,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:sessionHandoffDatabaseRelativePath#0",
+      "current_identity": "src/config/project-paths.ts#fn:sessionHandoffDatabaseRelativePath#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Existing legacy path-builder roles retained; source-brand mapping, operation paths and unified database routing are separately inventoried additions with caller authority retained outside these pure helpers.",
+      "current_source_address": {
+        "line": 74,
+        "column": 7,
+        "start": 3425,
+        "end": 3583,
+        "bodyLine": 74,
+        "bodyColumn": 87,
+        "bodyEndLine": 76,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:sessionBridgeDatabaseRelativePath#0",
+      "current_identity": "src/config/project-paths.ts#fn:sessionBridgeDatabaseRelativePath#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Existing legacy path-builder roles retained; source-brand mapping, operation paths and unified database routing are separately inventoried additions with caller authority retained outside these pure helpers.",
+      "current_source_address": {
+        "line": 78,
+        "column": 7,
+        "start": 3592,
+        "end": 3750,
+        "bodyLine": 78,
+        "bodyColumn": 86,
+        "bodyEndLine": 80,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:sessionHandoffDatabasePath#0",
+      "current_identity": "src/config/project-paths.ts#fn:sessionHandoffDatabasePath#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Existing legacy path-builder roles retained; source-brand mapping, operation paths and unified database routing are separately inventoried additions with caller authority retained outside these pure helpers.",
+      "current_source_address": {
+        "line": 82,
+        "column": 7,
+        "start": 3759,
+        "end": 3938,
+        "bodyLine": 82,
+        "bodyColumn": 103,
+        "bodyEndLine": 84,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:sessionBridgeDatabasePath#0",
+      "current_identity": "src/config/project-paths.ts#fn:sessionBridgeDatabasePath#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Existing legacy path-builder roles retained; source-brand mapping, operation paths and unified database routing are separately inventoried additions with caller authority retained outside these pure helpers.",
+      "current_source_address": {
+        "line": 86,
+        "column": 7,
+        "start": 3947,
+        "end": 4124,
+        "bodyLine": 86,
+        "bodyColumn": 102,
+        "bodyEndLine": 88,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:requireContext#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:requireContext#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 41,
+        "column": 0,
+        "start": 1410,
+        "end": 1562,
+        "bodyLine": 41,
+        "bodyColumn": 80,
+        "bodyEndLine": 43,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:canonicalList#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:canonicalList#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 45,
+        "column": 0,
+        "start": 1564,
+        "end": 2136,
+        "bodyLine": 45,
+        "bodyColumn": 84,
+        "bodyEndLine": 54,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:canonicalList#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:canonicalList#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 48,
+        "column": 17,
+        "start": 1799,
+        "end": 1878,
+        "bodyLine": 48,
+        "bodyColumn": 28,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 96
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:canonicalList#0/binding:sorted/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:canonicalList#0/binding:sorted/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 51,
+        "column": 34,
+        "start": 1966,
+        "end": 2025,
+        "bodyLine": 51,
+        "bodyColumn": 52,
+        "bodyEndLine": 51,
+        "bodyEndColumn": 92
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:canonicalSkillPath#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:canonicalSkillPath#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 56,
+        "column": 0,
+        "start": 2138,
+        "end": 2386,
+        "bodyLine": 56,
+        "bodyColumn": 51,
+        "bodyEndLine": 62,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:readLocal#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:readLocal#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 64,
+        "column": 0,
+        "start": 2388,
+        "end": 3856,
+        "bodyLine": 69,
+        "bodyColumn": 89,
+        "bodyEndLine": 94,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0",
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 97,
+        "column": 7,
+        "start": 3956,
+        "end": 6601,
+        "bodyLine": 101,
+        "bodyColumn": 21,
+        "bodyEndLine": 160,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0/binding:matches/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0/binding:matches/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 116,
+        "column": 52,
+        "start": 4944,
+        "end": 4972,
+        "bodyLine": 116,
+        "bodyColumn": 64,
+        "bodyEndLine": 116,
+        "bodyEndColumn": 80
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
+      "current_source_address": {
+        "line": 157,
+        "column": 15,
+        "start": 6324,
+        "end": 6419,
+        "bodyLine": 157,
+        "bodyColumn": 26,
+        "bodyEndLine": 157,
+        "bodyEndColumn": 109
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#binding:same/binding:same#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#binding:same/binding:same#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 9,
+        "column": 13,
+        "start": 553,
+        "end": 644,
+        "bodyLine": 9,
+        "bodyColumn": 48,
+        "bodyEndLine": 9,
+        "bodyEndColumn": 104
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:requireRecovery#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:requireRecovery#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 10,
+        "column": 0,
+        "start": 646,
+        "end": 806,
+        "bodyLine": 10,
+        "bodyColumn": 81,
+        "bodyEndLine": 12,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0",
+      "baseline_complexity": 56,
+      "baseline_coverage": 0,
+      "baseline_crap": 3192,
+      "max_complexity": 56,
+      "max_crap": 3192,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 15,
+        "column": 7,
+        "start": 909,
+        "end": 6068,
+        "bodyLine": 23,
+        "bodyColumn": 9,
+        "bodyEndLine": 120,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/binding:ticket/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/binding:ticket/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 44,
+        "column": 37,
+        "start": 2339,
+        "end": 2389,
+        "bodyLine": 44,
+        "bodyColumn": 47,
+        "bodyEndLine": 44,
+        "bodyEndColumn": 87
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/binding:claims/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/binding:claims/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 45,
+        "column": 38,
+        "start": 2430,
+        "end": 2508,
+        "bodyLine": 45,
+        "bodyColumn": 48,
+        "bodyEndLine": 45,
+        "bodyEndColumn": 116
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/binding:resources/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/binding:resources/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 48,
+        "column": 60,
+        "start": 2630,
+        "end": 2654,
+        "bodyLine": 48,
+        "bodyColumn": 70,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 84
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 74,
+        "column": 6,
+        "start": 3829,
+        "end": 3993,
+        "bodyLine": 75,
+        "bodyColumn": 8,
+        "bodyEndLine": 77,
+        "bodyEndColumn": 71
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 77,
+        "column": 28,
+        "start": 3950,
+        "end": 3992,
+        "bodyLine": 77,
+        "bodyColumn": 42,
+        "bodyEndLine": 77,
+        "bodyEndColumn": 70
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/closure:CallExpression:arguments[0]#1",
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 80,
+        "column": 8,
+        "start": 4040,
+        "end": 4344,
+        "bodyLine": 81,
+        "bodyColumn": 10,
+        "bodyEndLine": 84,
+        "bodyEndColumn": 83
+      }
+    },
+    {
+      "identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/closure:CallExpression:arguments[0]#1/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/failed-prewriter-recovery.ts#fn:validateFailedPrewriterRecoveryBasis#0/closure:CallExpression:arguments[0]#1/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing finite readonly failed-prewriter evidence/identity/resource/journal validation and predicates retain their actual roles.",
+      "current_source_address": {
+        "line": 84,
+        "column": 40,
+        "start": 4301,
+        "end": 4343,
+        "bodyLine": 84,
+        "bodyColumn": 54,
+        "bodyEndLine": 84,
+        "bodyEndColumn": 82
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#binding:sha256/binding:sha256#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#binding:sha256/binding:sha256#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 47,
+        "column": 15,
+        "start": 1560,
+        "end": 1635,
+        "bodyLine": 47,
+        "bodyColumn": 42,
+        "bodyEndLine": 47,
+        "bodyEndColumn": 90
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:requireResearch#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:requireResearch#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 57,
+        "column": 0,
+        "start": 2032,
+        "end": 2191,
+        "bodyLine": 57,
+        "bodyColumn": 81,
+        "bodyEndLine": 59,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:sorted#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:sorted#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 61,
+        "column": 0,
+        "start": 2193,
+        "end": 2287,
+        "bodyLine": 61,
+        "bodyColumn": 62,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:parsedObject#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:parsedObject#0",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 65,
+        "column": 0,
+        "start": 2289,
+        "end": 2673,
+        "bodyLine": 65,
+        "bodyColumn": 113,
+        "bodyEndLine": 74,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0",
+      "baseline_complexity": 46,
+      "baseline_coverage": 0,
+      "baseline_crap": 2162,
+      "max_complexity": 46,
+      "max_crap": 2162,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 104,
+        "column": 7,
+        "start": 3619,
+        "end": 9821,
+        "bodyLine": 104,
+        "bodyColumn": 96,
+        "bodyEndLine": 235,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 115,
+        "column": 67,
+        "start": 4260,
+        "end": 4298,
+        "bodyLine": 115,
+        "bodyColumn": 77,
+        "bodyEndLine": 115,
+        "bodyEndColumn": 105
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 162,
+        "column": 33,
+        "start": 6676,
+        "end": 6750,
+        "bodyLine": 162,
+        "bodyColumn": 42,
+        "bodyEndLine": 162,
+        "bodyEndColumn": 107
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#1",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 169,
+        "column": 31,
+        "start": 7023,
+        "end": 7096,
+        "bodyLine": 169,
+        "bodyColumn": 43,
+        "bodyEndLine": 169,
+        "bodyEndColumn": 104
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#2",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#2",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 170,
+        "column": 56,
+        "start": 7157,
+        "end": 7212,
+        "bodyLine": 170,
+        "bodyColumn": 68,
+        "bodyEndLine": 170,
+        "bodyEndColumn": 111
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#3",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#3",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 179,
+        "column": 18,
+        "start": 7674,
+        "end": 7737,
+        "bodyLine": 179,
+        "bodyColumn": 26,
+        "bodyEndLine": 179,
+        "bodyEndColumn": 81
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#3/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#3/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 179,
+        "column": 42,
+        "start": 7698,
+        "end": 7736,
+        "bodyLine": 179,
+        "bodyColumn": 54,
+        "bodyEndLine": 179,
+        "bodyEndColumn": 80
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#4",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#4",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 186,
+        "column": 18,
+        "start": 7983,
+        "end": 8072,
+        "bodyLine": 186,
+        "bodyColumn": 26,
+        "bodyEndLine": 186,
+        "bodyEndColumn": 107
+      }
+    },
+    {
+      "identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#4/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/observed-research-result.ts#fn:buildObservedResearchResult#0/closure:CallExpression:arguments[0]#4/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
+      "current_source_address": {
+        "line": 186,
+        "column": 68,
+        "start": 8033,
+        "end": 8071,
+        "bodyLine": 186,
+        "bodyColumn": 80,
+        "bodyEndLine": 186,
+        "bodyEndColumn": 106
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:requireWitness#0",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:requireWitness#0",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 46,
+        "column": 0,
+        "start": 1940,
+        "end": 2096,
+        "bodyLine": 46,
+        "bodyColumn": 80,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0",
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 51,
+        "column": 7,
+        "start": 2194,
+        "end": 11897,
+        "bodyLine": 58,
+        "bodyColumn": 34,
+        "bodyEndLine": 255,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0",
+      "baseline_complexity": 54,
+      "baseline_coverage": 0,
+      "baseline_crap": 2970,
+      "max_complexity": 54,
+      "max_crap": 2970,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 82,
+        "column": 112,
+        "start": 3893,
+        "end": 11893,
+        "bodyLine": 82,
+        "bodyColumn": 118,
+        "bodyEndLine": 254,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 127,
+        "column": 12,
+        "start": 6019,
+        "end": 6124,
+        "bodyLine": 127,
+        "bodyColumn": 22,
+        "bodyEndLine": 127,
+        "bodyEndColumn": 117
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#1",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 129,
+        "column": 38,
+        "start": 6179,
+        "end": 6201,
+        "bodyLine": 129,
+        "bodyColumn": 48,
+        "bodyEndLine": 129,
+        "bodyEndColumn": 60
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#2",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 144,
+        "column": 69,
+        "start": 6901,
+        "end": 6921,
+        "bodyLine": 144,
+        "bodyColumn": 79,
+        "bodyEndLine": 144,
+        "bodyEndColumn": 89
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/binding:observed/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/binding:observed/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 184,
+        "column": 54,
+        "start": 9010,
+        "end": 9030,
+        "bodyLine": 184,
+        "bodyColumn": 64,
+        "bodyEndLine": 184,
+        "bodyEndColumn": 74
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#3",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#3",
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 188,
+        "column": 10,
+        "start": 9116,
+        "end": 9638,
+        "bodyLine": 189,
+        "bodyColumn": 12,
+        "bodyEndLine": 196,
+        "bodyEndColumn": 70
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#4",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#4",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 202,
+        "column": 21,
+        "start": 9832,
+        "end": 9883,
+        "bodyLine": 202,
+        "bodyColumn": 31,
+        "bodyEndLine": 202,
+        "bodyEndColumn": 72
+      }
+    },
+    {
+      "identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/binding:journalObservations/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/staged-runtime-witness.ts#fn:createStagedRuntimeWitness#0/closure:CallExpression:arguments[1]#0/binding:journalObservations/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing witness output and validation roles retained; admitted workspace open/close and ledger-codec custody are behavioral deltas, never reasons to increase retained limits.",
+      "current_source_address": {
+        "line": 215,
+        "column": 45,
+        "start": 10327,
+        "end": 10353,
+        "bodyLine": 215,
+        "bodyColumn": 55,
+        "bodyEndLine": 215,
+        "bodyEndColumn": 71
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#class:RuntimeInitializationBindingError/method:constructor#0",
+      "current_identity": "src/runtime-initialization.ts#class:RuntimeInitializationBindingError/method:constructor#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 96,
+        "column": 2,
+        "start": 3537,
+        "end": 3693,
+        "bodyLine": 96,
+        "bodyColumn": 71,
+        "bodyEndLine": 99,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:fail#0",
+      "current_identity": "src/runtime-initialization.ts#fn:fail#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 102,
+        "column": 0,
+        "start": 3697,
+        "end": 3794,
+        "bodyLine": 102,
+        "bodyColumn": 38,
+        "bodyEndLine": 104,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:withBindingLock#0",
+      "current_identity": "src/runtime-initialization.ts#fn:withBindingLock#0",
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "baseline_crap": 56,
+      "max_complexity": 7,
+      "max_crap": 56,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 116,
+        "column": 0,
+        "start": 4236,
+        "end": 4970,
+        "bodyLine": 121,
+        "bodyColumn": 14,
+        "bodyEndLine": 140,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:CallExpression:arguments[2]#0",
+      "current_identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:CallExpression:arguments[2]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 125,
+        "column": 93,
+        "start": 4534,
+        "end": 4613,
+        "bodyLine": 125,
+        "bodyColumn": 105,
+        "bodyEndLine": 128,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "current_identity": "src/runtime-initialization.ts#fn:withBindingLock#0/closure:NewExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 137,
+        "column": 24,
+        "start": 4920,
+        "end": 4956,
+        "bodyLine": 137,
+        "bodyColumn": 37,
+        "bodyEndLine": 137,
+        "bodyEndColumn": 60
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0",
+      "current_identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0",
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 155,
+        "column": 7,
+        "start": 5498,
+        "end": 8389,
+        "bodyLine": 155,
+        "bodyColumn": 113,
+        "bodyEndLine": 209,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0/closure:CallExpression:arguments[2]#0",
+      "current_identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0/closure:CallExpression:arguments[2]#0",
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role.",
+      "current_source_address": {
+        "line": 170,
+        "column": 6,
+        "start": 6273,
+        "end": 8292,
+        "bodyLine": 170,
+        "bodyColumn": 18,
+        "bodyEndLine": 203,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0/closure:CallExpression:arguments[2]#0/binding:expectedProjects/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[0]#0/binding:expectedProjects/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Existing Host binding/lock and expected-project mapping roles retained. Current admitted read/retry/error and v1/v2 source-selection helpers are separate additions. Wrapper insertion relocates the expected-project map callback by role. Exact closure relocation reviewed by Root against published/current bodies and corrected by the blind reviewer.",
+      "current_source_address": {
+        "line": 179,
+        "column": 55,
+        "start": 6961,
+        "end": 6988,
+        "bodyLine": 179,
+        "bodyColumn": 66,
+        "bodyEndLine": 179,
+        "bodyEndColumn": 82
+      }
     }
   ],
   "new_functions": [
@@ -19091,6 +20498,742 @@
         "bodyEndLine": 60,
         "bodyEndColumn": 1
       }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:projectInitializationIdentityDigest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 43,
+        "column": 7,
+        "start": 1605,
+        "end": 2010,
+        "bodyLine": 43,
+        "bodyColumn": 97,
+        "bodyEndLine": 52,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:validateProjectActivation#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 55,
+        "column": 7,
+        "start": 2121,
+        "end": 2316,
+        "bodyLine": 55,
+        "bodyColumn": 77,
+        "bodyEndLine": 58,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:assertCompletedProjectActivationHistory#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 61,
+        "column": 7,
+        "start": 2442,
+        "end": 3411,
+        "bodyLine": 66,
+        "bodyColumn": 38,
+        "bodyEndLine": 83,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:assertHistoryPlan#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 85,
+        "column": 0,
+        "start": 3413,
+        "end": 4115,
+        "bodyLine": 89,
+        "bodyColumn": 27,
+        "bodyEndLine": 102,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:historyOutputs#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 104,
+        "column": 0,
+        "start": 4117,
+        "end": 5032,
+        "bodyLine": 104,
+        "bodyColumn": 107,
+        "bodyEndLine": 121,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:historyOutputs#0/binding:outputs/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 106,
+        "column": 28,
+        "start": 4369,
+        "end": 4732,
+        "bodyLine": 106,
+        "bodyColumn": 64,
+        "bodyEndLine": 114,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:historyOutputs#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 116,
+        "column": 24,
+        "start": 4766,
+        "end": 4787,
+        "bodyLine": 116,
+        "bodyColumn": 35,
+        "bodyEndLine": 116,
+        "bodyEndColumn": 45
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:historyOutputs#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 117,
+        "column": 36,
+        "start": 4853,
+        "end": 4893,
+        "bodyLine": 117,
+        "bodyColumn": 59,
+        "bodyEndLine": 117,
+        "bodyEndColumn": 75
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:assertHistoryInitialization#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 123,
+        "column": 0,
+        "start": 5034,
+        "end": 5872,
+        "bodyLine": 123,
+        "bodyColumn": 119,
+        "bodyEndLine": 135,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:assertHistoryInitialization#0/binding:entries/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 124,
+        "column": 33,
+        "start": 5188,
+        "end": 5241,
+        "bodyLine": 124,
+        "bodyColumn": 44,
+        "bodyEndLine": 124,
+        "bodyEndColumn": 86
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:prepareProjectUpgradeActivation#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 138,
+        "column": 7,
+        "start": 5989,
+        "end": 7348,
+        "bodyLine": 141,
+        "bodyColumn": 10,
+        "bodyEndLine": 168,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:prepareProjectUpgradeActivation#0/binding:file/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 142,
+        "column": 41,
+        "start": 6155,
+        "end": 6208,
+        "bodyLine": 142,
+        "bodyColumn": 52,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 94
+      }
+    },
+    {
+      "identity": "src/config/project-activation.ts#fn:prepareProjectUpgradeActivation#0/binding:activation/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 161,
+        "column": 31,
+        "start": 7148,
+        "end": 7278,
+        "bodyLine": 161,
+        "bodyColumn": 43,
+        "bodyEndLine": 164,
+        "bodyEndColumn": 7
+      }
+    },
+    {
+      "identity": "src/config/project-configuration-rebind.ts#fn:assertProjectRebind#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 51,
+        "column": 0,
+        "start": 2350,
+        "end": 2482,
+        "bodyLine": 51,
+        "bodyColumn": 85,
+        "bodyEndLine": 53,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration-rebind.ts#fn:projectInputTexts#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 54,
+        "column": 0,
+        "start": 2483,
+        "end": 2676,
+        "bodyLine": 54,
+        "bodyColumn": 96,
+        "bodyEndLine": 56,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration-rebind.ts#fn:validateInputSet#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 58,
+        "column": 0,
+        "start": 2678,
+        "end": 3359,
+        "bodyLine": 58,
+        "bodyColumn": 69,
+        "bodyEndLine": 67,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration-rebind.ts#fn:readOperation#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 69,
+        "column": 0,
+        "start": 3361,
+        "end": 5064,
+        "bodyLine": 73,
+        "bodyColumn": 25,
+        "bodyEndLine": 107,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration-rebind.ts#fn:valueWorkspaceId#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 109,
+        "column": 0,
+        "start": 5066,
+        "end": 5171,
+        "bodyLine": 109,
+        "bodyColumn": 49,
+        "bodyEndLine": 111,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration-rebind.ts#fn:assertCurrentProjectConfigurationBinding#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 114,
+        "column": 7,
+        "start": 5280,
+        "end": 8662,
+        "bodyLine": 120,
+        "bodyColumn": 8,
+        "bodyEndLine": 195,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration.ts#fn:projectConfigurationInputDigest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 61,
+        "column": 7,
+        "start": 2227,
+        "end": 3449,
+        "bodyLine": 61,
+        "bodyColumn": 73,
+        "bodyEndLine": 80,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-configuration.ts#fn:composeProjectConfigurationInputs#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 137,
+        "column": 7,
+        "start": 5580,
+        "end": 6616,
+        "bodyLine": 141,
+        "bodyColumn": 35,
+        "bodyEndLine": 160,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-binding.ts#fn:configurationInputs#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 16,
+        "column": 0,
+        "start": 878,
+        "end": 1249,
+        "bodyLine": 16,
+        "bodyColumn": 59,
+        "bodyEndLine": 22,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-binding.ts#fn:assertProjectReceiptConfiguration#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 24,
+        "column": 0,
+        "start": 1251,
+        "end": 2429,
+        "bodyLine": 24,
+        "bodyColumn": 118,
+        "bodyEndLine": 41,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-binding.ts#fn:assertProjectReceiptConfiguration#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 32,
+        "column": 46,
+        "start": 1840,
+        "end": 1871,
+        "bodyLine": 32,
+        "bodyColumn": 59,
+        "bodyEndLine": 32,
+        "bodyEndColumn": 77
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-binding.ts#fn:bindProjectInitialization#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 44,
+        "column": 7,
+        "start": 2541,
+        "end": 3638,
+        "bodyLine": 47,
+        "bodyColumn": 41,
+        "bodyEndLine": 65,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-binding.ts#fn:bindProjectInitialization#0/closure:CallExpression:arguments[2]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 51,
+        "column": 99,
+        "start": 2999,
+        "end": 3634,
+        "bodyLine": 51,
+        "bodyColumn": 111,
+        "bodyEndLine": 64,
+        "bodyEndColumn": 3
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-record.ts#binding:artifactPath/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 16,
+        "column": 4,
+        "start": 486,
+        "end": 644,
+        "bodyLine": 17,
+        "bodyColumn": 6,
+        "bodyEndLine": 19,
+        "bodyEndColumn": 84
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-record.ts#binding:artifactPath/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 19,
+        "column": 29,
+        "start": 589,
+        "end": 643,
+        "bodyLine": 19,
+        "bodyColumn": 39,
+        "bodyEndLine": 19,
+        "bodyEndColumn": 83
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-record.ts#fn:validateProjectInitializationReceipt#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 55,
+        "column": 7,
+        "start": 1947,
+        "end": 2577,
+        "bodyLine": 55,
+        "bodyColumn": 99,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-record.ts#fn:validateProjectInitializationReceipt#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 58,
+        "column": 33,
+        "start": 2199,
+        "end": 2265,
+        "bodyLine": 58,
+        "bodyColumn": 48,
+        "bodyEndLine": 58,
+        "bodyEndColumn": 99
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-record.ts#fn:validateProjectInitializationReceipt#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 60,
+        "column": 45,
+        "start": 2398,
+        "end": 2419,
+        "bodyLine": 60,
+        "bodyColumn": 56,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 66
+      }
+    },
+    {
+      "identity": "src/config/project-initialization-record.ts#fn:readProjectInitializationReceipt#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 66,
+        "column": 7,
+        "start": 2676,
+        "end": 3241,
+        "bodyLine": 69,
+        "bodyColumn": 2,
+        "bodyEndLine": 75,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-layout.ts#fn:prepareVidaProjectConfiguration#0/binding:registryWithoutDigest/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 135,
+        "column": 83,
+        "start": 5538,
+        "end": 5565,
+        "bodyLine": 135,
+        "bodyColumn": 94,
+        "bodyEndLine": 135,
+        "bodyEndColumn": 110
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:bindLoadedConfigurationSource#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 19,
+        "column": 7,
+        "start": 708,
+        "end": 870,
+        "bodyLine": 19,
+        "bodyColumn": 116,
+        "bodyEndLine": 21,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:runtimeConfigurationSourceFor#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 24,
+        "column": 7,
+        "start": 977,
+        "end": 1161,
+        "bodyLine": 24,
+        "bodyColumn": 102,
+        "bodyEndLine": 26,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:projectUpgradeHistoryPath#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 47,
+        "column": 7,
+        "start": 2136,
+        "end": 2451,
+        "bodyLine": 47,
+        "bodyColumn": 71,
+        "bodyEndLine": 51,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:projectConfigurationRebindPath#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 53,
+        "column": 7,
+        "start": 2460,
+        "end": 2855,
+        "bodyLine": 53,
+        "bodyColumn": 76,
+        "bodyEndLine": 59,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/project-paths.ts#fn:sessionDatabaseRelativePath#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 66,
+        "column": 0,
+        "start": 3028,
+        "end": 3317,
+        "bodyLine": 66,
+        "bodyColumn": 93,
+        "bodyEndLine": 71,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:configuredContextForStage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 162,
+        "column": 7,
+        "start": 6610,
+        "end": 7324,
+        "bodyLine": 168,
+        "bodyColumn": 28,
+        "bodyEndLine": 181,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:configuredContextForStage#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 169,
+        "column": 58,
+        "start": 6865,
+        "end": 6896,
+        "bodyLine": 169,
+        "bodyColumn": 69,
+        "bodyEndLine": 169,
+        "bodyEndColumn": 89
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:readRuntimeInitializationAuthority#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 54,
+        "column": 7,
+        "start": 1982,
+        "end": 3422,
+        "bodyLine": 57,
+        "bodyColumn": 34,
+        "bodyEndLine": 91,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:initializationBindingFailure#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 106,
+        "column": 0,
+        "start": 3796,
+        "end": 4139,
+        "bodyLine": 106,
+        "bodyColumn": 89,
+        "bodyEndLine": 112,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:readInitializationWithAdmission#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 143,
+        "column": 0,
+        "start": 5057,
+        "end": 5402,
+        "bodyLine": 143,
+        "bodyColumn": 97,
+        "bodyEndLine": 152,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:readInitializationWithAdmission#0/closure:NewExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 149,
+        "column": 24,
+        "start": 5352,
+        "end": 5388,
+        "bodyLine": 149,
+        "bodyColumn": 37,
+        "bodyEndLine": 149,
+        "bodyEndColumn": 60
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0/binding:selected/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 161,
+        "column": 59,
+        "start": 5911,
+        "end": 6023,
+        "bodyLine": 161,
+        "bodyColumn": 65,
+        "bodyEndLine": 164,
+        "bodyEndColumn": 5
+      }
+    },
+    {
+      "identity": "src/runtime-initialization.ts#fn:bindRuntimeInitialization#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
+      "current_source_address": {
+        "line": 171,
+        "column": 76,
+        "start": 6363,
+        "end": 7846,
+        "bodyLine": 171,
+        "bodyColumn": 82,
+        "bodyEndLine": 191,
+        "bodyEndColumn": 9
+      }
     }
   ],
   "removed_functions": [
@@ -19101,7 +21244,7 @@
   ],
   "review": {
     "owner": "Root integrator",
-    "independence": "Blind Luna selected-scope semantic reviews plus Root Source review and independent v736 join review. Policy predicate correction has separate v737/v739 review.",
+    "independence": "Blind Luna selected-scope semantic reviews plus Root Source review and independent v736 join review. Policy predicate correction has separate v737/v739 review. Three blind v746 selected-scope reviews, Root callback-role correction and independent v746 complete 114-role partition/caps/address review approve the twelve additional scopes.",
     "classification": "New inventoried callable is distinct from new engine capability. Original retained callers keep their allowances; only genuine callable relocations transfer a published identity.",
     "prospective_new_function_policy": "Fixed complexity/CRAP 10/10 before current measurement; no current-derived ceilings."
   },
@@ -19118,5 +21261,10 @@
     ".tmp/tooling-research/typed-correction-v179/root-reviewed-admitted-lineage-v731.json",
     ".tmp/tooling-research/typed-correction-v179/root-reviewed-small-lineage-v736.json",
     ".tmp/tooling-research/typed-correction-v179/policy-lineage-refresh-v740.json"
-  ]
+  ],
+  "current_source_commit": "3ef093d",
+  "scope_review_v746": {
+    "review": "Three blind reviews, Root callback role correction, independent complete partition/caps/address review approved114roles/12scopes. Static lineage only.",
+    "input": ".tmp/tooling-research/typed-correction-v179/root-reviewed-next-small-lineage-v746.json"
+  }
 }

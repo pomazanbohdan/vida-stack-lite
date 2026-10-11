@@ -3187,6 +3187,7 @@ test('compact config binding rejects an oversized row before fetching its payloa
           return observedQuery;
         }
         const value: unknown = Reflect.get(target, property, target);
+        if (typeof value === 'function') return (...args: unknown[]): unknown => Reflect.apply(value, target, args);
         return value;
       },
     });

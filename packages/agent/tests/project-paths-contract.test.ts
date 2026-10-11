@@ -45,6 +45,11 @@ function newTemporaryRoot(): string {
 const validatedConfig = validateRuntimeConfig(loadRuntimeConfig(repositoryRoot));
 
 describe('project path constants and public contracts', () => {
+  test('keeps exported path maps immutable after publication', () => {
+    expect(Object.isFrozen(PROJECT_CONFIGURATION_PATHS)).toBe(true);
+    expect(Object.isFrozen(INITIALIZED_PROJECT_PATHS)).toBe(true);
+  });
+
   test('keeps fixed configuration, initialization, and database pointers canonical', () => {
     expect(PROJECT_CONFIGURATION_PATHS).toEqual({
       project: '.vida/project.yaml',

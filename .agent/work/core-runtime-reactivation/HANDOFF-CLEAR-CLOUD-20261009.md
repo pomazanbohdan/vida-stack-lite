@@ -813,3 +813,40 @@ Frozen correspondence,
 exact coverage/CRAP/assertion-confirmed Killed and isolated formed native Runtime
 remain OPEN. No build/install, active schema/loader cutover, Runtime acceptance
 or old unblock notices. Current WORK owns exact receipts, mappings and limits.
+
+#### Current human numerical prerequisite and continuation v741–v745
+
+Checkpoint3ef093d passed the strict staged gate without bypass and is published
+to origin/main. The user's latest explicit instruction requires exact100% in
+functions, lines, statements and branches, 100% assertion-confirmed Killed and
+passing dynamic CRAP against frozen per-function ceilings BEFORE the real
+formed-native isolated Runtime qualification. Dynamic means current measured
+coverage/complexity, not recomputed allowances. Timeout, compile/runtime errors
+and NoCoverage remain gaps. Development fixtures are allowed to close them;
+build/install run no suites. Root owns final numerical and then native outputs.
+This specific task order supersedes the general minimum formation/install profile
+that permits pending numerical evidence. The current instruction authorizes the
+separate final mutation qualification, not a passing result or old fixture replay.
+
+Ordinary/repair duplicate removal is implemented with command-contract proof:
+two recovery files stay only in repair, direct policy tests join ordinary;
+the four public Bun process boundaries/typecheck prefix remain. New selected
+configuration/binding cases15PASS191assertions; static/command-contract receipts
+and limits are recorded in WORK. Six blind disjoint Luna scopes continue tests,
+frozen Source correspondence and numeric gate review. Exact final numeric gates,
+the exhaustive executable plan and real native qualification remain OPEN.
+
+
+### Current v751 evidence and next correction
+
+Actual current coverage attempt run b41a06c4-5264-4373-aa1d-6afde18f4f71 ended
+UNKNOWN after1800seconds, with0process receipts and no current final report.
+Preserve its lock/snapshot and failed fixtures; do not replay or infer numeric
+percentages. Static411TS/0diagnostics and strict Source tsc passed. Mutation
+Source assignment now passes its inventory contract, but pending upgrade/merge
+still blocks actual mutants. CRAP lacks qualified current coverage/exhaustive
+plan. Partial945roles/42files remains non-executable lineage only.
+Root owns repairs/checks/Git; six blind readonly reviews identified capture,
+fixture and scheduling contours. Follow WORK v747–v751 and current plan for exact
+receipts, confirmed causes versus hypotheses and ordered bounded corrections.
+No full-suite PASS, numeric PASS, installation or real Runtime acceptance claimed.
