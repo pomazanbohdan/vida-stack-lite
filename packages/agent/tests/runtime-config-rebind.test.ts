@@ -36,6 +36,7 @@ import {
   MAX_CANONICAL_BYTES,
   isPlainRecord,
 } from '../src/contracts/public-ingress.ts';
+import { MAX_CANONICAL_DEPTH } from '../src/contracts/canonical-json-core.ts';
 import { validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
 import {
   createHistoricalResearchActivationFixture,
@@ -3120,7 +3121,9 @@ test('compact config binding rejects malformed UTF-8 payload bytes with unchange
       work = checkedRecord(parseFixtureJson(checkedString(row.payload, 'work payload')), 'work payload'),
       replacement = String.fromCharCode(0xfffd),
       rowId = checkedSqliteInteger(row.rowid, 'work rowid');
-    checkedRecord(work.lifecycle, 'work lifecycle').next_action = `Trace ${replacement} the accepted work request.`;
+    const lifecycle = checkedRecord(work.lifecycle, 'work lifecycle');
+    lifecycle.next_action = `Trace ${replacement} the accepted work request.`;
+    work.lifecycle = lifecycle;
     const payload = json(work),
       validBytes = Buffer.from(payload, 'utf8'),
       replacementBytes = Buffer.from(replacement, 'utf8'),
@@ -3156,6 +3159,44 @@ test('compact config binding rejects malformed UTF-8 payload bytes with unchange
   expect(databaseState(f)).toEqual(before);
 });
 
+test('compact config binding rejects one persisted row beyond the JSON depth budget before digest validation', () => {
+  const f = fixture({ sourceMode: true });
+  seedState(f);
+  const config = loadRuntimeConfig(f.root),
+    payload = '['.repeat(MAX_CANONICAL_DEPTH + 1) + '0' + ']'.repeat(MAX_CANONICAL_DEPTH + 1);
+  expect(Buffer.byteLength(payload, 'utf8')).toBeLessThanOrEqual(MAX_CANONICAL_BYTES);
+  withDatabase(f, (db) => {
+    const row = requiredSqliteRow(
+      db
+        .query<HostStateRowIdPayload, [string]>(
+          "SELECT rowid,payload FROM agent_host_state WHERE workspace_id=? AND kind='work'",
+        )
+        .get(f.workspace),
+      'work row for JSON depth case',
+    );
+    // Keep the row's original digest as authentic stored metadata. The altered payload deliberately does not claim
+    // a matching digest: structural preflight must reject it before ordinary JSON parsing and digest validation.
+    db.query('UPDATE agent_host_state SET payload=CAST(? AS TEXT) WHERE rowid=?').run(payload, row.rowid);
+    const raw = requiredSqliteRow(
+      db
+        .query<HostStateRawPayloadRow, [number]>(
+          'SELECT payload,CAST(payload AS BLOB) AS raw_payload_bytes FROM agent_host_state WHERE rowid=?',
+        )
+        .get(row.rowid),
+      'stored over-depth work row',
+    );
+    expect(raw.payload).toBe(payload);
+    expect(Buffer.from(raw.raw_payload_bytes)).toEqual(Buffer.from(payload, 'utf8'));
+  });
+  const beforeRead = databaseState(f);
+  withDatabase(f, (db) =>
+    expect(() => currentState(db, f.workspace, f.root, config)).toThrow(
+      'workspace SQL agent_host_state JSON structural budget exceeded',
+    ),
+  );
+  expect(databaseState(f)).toEqual(beforeRead);
+});
+
 test('compact config binding accepts a row just below the canonical byte budget', () => {
   const f = fixture({ sourceMode: true });
   seedState(f);
@@ -3169,13 +3210,35 @@ test('compact config binding accepts a row just below the canonical byte budget'
           .get(f.workspace),
         'work row for canonical byte case',
       ),
-      work = checkedRecord(parseFixtureJson(checkedString(row.payload, 'work payload')), 'work payload'),
+      originalWork = checkedFixtureWork(parseFixtureJson(checkedString(row.payload, 'work payload')), f),
       rowId = checkedSqliteInteger(row.rowid, 'work rowid');
-    checkedRecord(work.lifecycle, 'work lifecycle').next_action = '';
     const targetBytes = MAX_CANONICAL_BYTES - 1024,
-      baseBytes = Buffer.byteLength(json(work), 'utf8');
-    checkedRecord(work.lifecycle, 'work lifecycle').next_action = 'x'.repeat(targetBytes - baseBytes);
-    const payload = json(work),
+      baseWork = originalWork,
+      baselinePayloadBytes = Buffer.byteLength(JSON.stringify(baseWork), 'utf8'),
+      existingResources = [...baseWork.binding.allowed_resources],
+      targetAdditionBytes = targetBytes - baselinePayloadBytes,
+      fullResourceCount = Math.floor(targetAdditionBytes / 2051),
+      fullResourceCost = fullResourceCount * 2051 - (existingResources.length === 0 ? 1 : 0),
+      remainingAdditionBytes = targetAdditionBytes - fullResourceCost,
+      fullResources = Array.from({ length: fullResourceCount }, (_, index) => {
+        const prefix = `fixture-resource-${index}-`;
+        return prefix + 'x'.repeat(2048 - prefix.length);
+      }),
+      partialPrefix = `fixture-resource-tail-${fullResourceCount}-`,
+      partialLength = remainingAdditionBytes - 3,
+      partialResource =
+        partialLength >= partialPrefix.length ? [partialPrefix + 'x'.repeat(partialLength - partialPrefix.length)] : [],
+      work = checkedFixtureWork(
+        {
+          ...baseWork,
+          binding: {
+            ...baseWork.binding,
+            allowed_resources: [...existingResources, ...fullResources, ...partialResource],
+          },
+        },
+        f,
+      ),
+      payload = JSON.stringify(work),
       payloadBytes = Buffer.byteLength(payload, 'utf8');
     expect(payloadBytes).toBeGreaterThan(MAX_CANONICAL_BYTES - 2048);
     expect(payloadBytes).toBeLessThanOrEqual(MAX_CANONICAL_BYTES);

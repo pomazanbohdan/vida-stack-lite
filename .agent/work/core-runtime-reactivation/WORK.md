@@ -5919,3 +5919,83 @@ and qualified139-role join receipts remain separately retained.
 Current full coverage, dynamic CRAP and assertion-confirmed mutation remain OPEN.
 The v747 UNKNOWN run and lock are preserved; no full suite retry, operational
 replay, installed unblock notice or formed-native Runtime run was performed.
+
+### v768–v771 — structural preflight wiring and Source-only CLEAR fixtures
+
+Checkpointc08305a was verified by the strict immutable-index hook and published
+to origin/main. Its first attempt correctly rejected an unused test import;
+Root removed it without disabling the rule. Both checkpoint receipts remain.
+Official Oxlint no-unused-vars guidance was checked; the rejected index did not
+become a successful checkpoint.
+
+Three fresh blind scopes reviewed persisted-row scenarios, runtime-code parser
+authority and the unset CLEAR test input. The parser finding was withdrawn:
+Host identityKey already rejects malformed project IDs before the transaction;
+the utility parser explicitly grants no authority. An extra parser guard would
+duplicate policy without an evidenced behavior or safety benefit. The repair
+adapter's configuration and digest checks also remain: supplied-config admission
+and producer-fenced filesystem reload protect distinct points. No cap increase
+or unnecessary Source rewrite.
+
+A new single-row depth65 regression exposed an actual Source omission:
+currentState -> checkedRows -> decodeCheckedWorkspaceRow called the shared
+decodeWorkspaceSqlRow without the active database. SQL structural preflight was
+therefore skipped, and canonical JSON depth rejection happened only after parse.
+Root threads the existing database through that adapter; projection/workspace/
+revision/UTF-8 guards retain their order, then existing row-local structural
+preflight precedes parse, integrity and domain-shape checks. No new validator,
+branch, helper or cache; CAS/authorization/UNKNOWN and read-only transaction
+ownership remain. The adapter is outside the reviewed partial's57bound files.
+
+The initial affected check is FAIL1PASS2FAIL, despite the scratch filename
+persisted-depth-green-v769.log. It preserves the qualified depth-regression RED
+and an independent old UTF-8 fixture failure. After DB threading, depth and
+metadata checks passed while that fixture still failed. Root disproved a
+serializer hypothesis with a tiny pinned-Bun probe: checkedRecord makes a
+snapshot, so mutating its returned lifecycle did not mutate the stored work.
+The sole assigned test writer now assigns that lifecycle back, preserving raw
+bytes, digest, exact rejection and unchanged DB assertions. No helper semantics
+were loosened. The v771 check then PASS4FAIL1: depth, UTF-8, oversized-before-fetch
+and aggregate>10k nodes pass; the now-effective near-byte case correctly hits the
+4096-character next_action schema cap. Its valid bounded fixture correction is
+required before checkpoint; passing cases are not rerun as another full suite.
+
+Official references for these diagnosed boundaries: SQLite JSON tree and bounded
+recursive CTE (https://www.sqlite.org/json1.html,
+https://www.sqlite.org/lang_with.html), JSON Schema maxLength
+(https://json-schema.org/understanding-json-schema/reference/string), and
+ECMAScript CopyDataProperties
+(https://tc39.es/ecma262/multipage/abstract-operations.html#sec-copydataproperties).
+The formatting command initially used the wrong working directory; Root corrected
+its explicit path without reinstalling anything. Exact Node24.19 module/path
+documentation informed that operational correction.
+
+CLEAR's built-bundle wording was not an actual artifact-provenance check: all
+four existing cases execute bin/documentation-clear.ts under Bun. An independent
+challenge/re-review confirmed this is Source CLI evidence. The helper now defaults
+to its own absolute package Source root, preserves the explicit absolute
+VIDA_CLEAR_BUNDLE override, and validates the selected path once before fixtures.
+No build/copy/install or assertion weakening. Exact first-case RED1FAIL with
+unset env, then the unchanged four-case behaviors PASS4/0FAIL38assertions/28.63s.
+Receipts:clear-source-cli-red-v770.log and
+clear-source-cli-completion-v770.log. Explicit overrides prove their selected
+path only; child behavior supplies no parent coverage counters or native Runtime
+acceptance. TESTING.md records that distinction. Blind clear-source-cli-review-
+v771.md approves the change, with that override limitation.
+
+Final numeric coverage, dynamic frozen CRAP, assertion-confirmed Killed mutation,
+exhaustive lineage and v747 UNKNOWN reconciliation remain OPEN. No original
+uncertain child, lock or operational fixture was retried, deleted or reclassified.
+
+v772 completion: near-byte fixture now pads unique bounded allowed_resources in
+an otherwise valid WorkState. It keeps the original lifecycle, uses compact JSON
+for exact entry-cost arithmetic, and performs two complete serializations rather
+than repeated full-array sizing. Root rejected the initial invalid empty
+next_action/pretty-JSON arithmetic before execution. Existing schema validation,
+canonical digest, actual stored byte assertions and currentState acceptance remain.
+Exact previously failed case PASS1/0FAIL6assertions/2.53s; its case body845ms.
+Receipt:near-byte-correction-v772.log. This resolves the one remaining v771 case;
+the four unchanged passing cases and prior metadata check retain their separate
+scoped receipts. It is not a new five-case full PASS or measured speedup.
+Independent persisted-depth-review-v769.md approves Source database threading
+and the regression design with static-only/Root-reported evidence distinctions.

@@ -15,15 +15,15 @@ interface RunResult {
 }
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const bundle = process.env.VIDA_CLEAR_BUNDLE;
+// Development CLI checks execute package Source; spawned children do not prove native formation or coverage.
+const bundle = process.env.VIDA_CLEAR_BUNDLE ?? packageRoot;
+if (!path.isAbsolute(bundle)) throw new Error('VIDA_CLEAR_BUNDLE must name an absolute CLI package root');
 const write = (root: string, relative: string, content: string): void => {
   const file = path.join(root, relative);
   mkdirSync(path.dirname(file), { recursive: true });
   writeFileSync(file, content);
 };
 const run = (root: string, mode: Mode): RunResult => {
-  if (!bundle || !path.isAbsolute(bundle))
-    throw new Error('VIDA_CLEAR_BUNDLE must name an absolute isolated built bundle');
   const result = spawnSync(
     process.execPath,
     [
@@ -128,7 +128,6 @@ test('public CLEAR uses package policy schema without local assets and rejects c
 }, 60_000);
 
 test('authorized new document passes baseline but closeout requires existence and typed init lineage', () => {
-  if (!bundle) throw new Error('VIDA_CLEAR_BUNDLE must name an isolated built bundle');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-create-'));
   try {
     initializeFixture(root);
@@ -207,7 +206,6 @@ test('authorized new document passes baseline but closeout requires existence an
 }, 60_000);
 
 test('public documentation CLEAR command binds baseline and closeout to current project files', () => {
-  if (!bundle) throw new Error('VIDA_CLEAR_BUNDLE must name an isolated built bundle');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-public-'));
   try {
     initializeFixture(root);
@@ -279,7 +277,6 @@ test('public documentation CLEAR command binds baseline and closeout to current 
 }, 60_000);
 
 test('deletion requires a typed event and removal of stale map links, then a new cycle verifies', () => {
-  if (!bundle) throw new Error('VIDA_CLEAR_BUNDLE must name an isolated built bundle');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-delete-'));
   try {
     initializeFixture(root);

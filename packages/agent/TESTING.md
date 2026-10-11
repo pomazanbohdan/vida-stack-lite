@@ -539,6 +539,14 @@ Source-only fixtures exclude the exact generated `dist/standalone` directory. Ke
 
 ### Public CLI and diagnostics
 
+`tests/documentation-clear.test.ts` executes the package Source TS CLI with the
+pinned Bun in isolated consumer roots. Its default CLI package root is this
+package; `VIDA_CLEAR_BUNDLE` remains an optional absolute package-root override.
+No build, package copy or installation is required. These are development CLI
+and package-schema checks, not native formation or installed Runtime acceptance.
+The coverage preload does not propagate to spawned CLI children, so their
+behavioral assertions do not establish instrumented function execution.
+
 Keep root help, per-command help and parsing declarations in parity. The CLI
 contract gate must detect an unlisted public command, alias or option, and a
 documented option that its parser cannot accept. Cover argument types, required

@@ -1930,11 +1930,11 @@ function readCheckedWorkspaceRows(db: RebindDatabase, table: RebindSqlTable, wor
     `SELECT ${projection} FROM ${table} WHERE workspace_id=? ORDER BY payload`,
     [workspace],
   );
-  return rows.map((unknownRow) => decodeCheckedWorkspaceRow(table, unknownRow, workspace));
+  return rows.map((unknownRow) => decodeCheckedWorkspaceRow(db, table, unknownRow, workspace));
 }
 
-function decodeCheckedWorkspaceRow(table: RebindSqlTable, unknownRow: unknown, workspace: string) {
-  const decoded = decodeWorkspaceSqlRow(table, unknownRow, workspace);
+function decodeCheckedWorkspaceRow(db: RebindDatabase, table: RebindSqlTable, unknownRow: unknown, workspace: string) {
+  const decoded = decodeWorkspaceSqlRow(table, unknownRow, workspace, db);
   if (decoded.table === 'agent_host_state' && decoded.kind === 'work') {
     if (!isCheckedWorkState(decoded.value)) throw new Error('Host Work payload does not match work-state.v1');
     return { ...decoded, value: decoded.value };
