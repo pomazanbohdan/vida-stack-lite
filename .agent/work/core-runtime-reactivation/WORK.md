@@ -5795,3 +5795,39 @@ mock now throws on recursive fallback rather than spinning a shared worker; its
 immutable real callable and synchronous semantics remain. These are scoped
 regressions; final numeric coverage/CRAP/mutation and old UNKNOWN reconciliation
 remain OPEN. No real native Runtime or schema/loader cutover was attempted.
+
+
+### v761–v762 — real capture closure blockers
+
+Checkpoint5ffa3c7 passed the strict indexed precommit profile and was published to
+origin/main before further work. Root then exercised current coverageInputs on
+the actual checkout without running a suite. Unlike synthetic closure fixtures,
+the real graph exposed Bun.Transpiler.scanImports rejecting leading CLI hashbangs,
+then the exact selected-test imports of package.json and stryker.config.ts.
+
+The scanner now hides only an offset-zero hashbang for import discovery, preserving
+its line terminator and every original captured byte for inventory/fingerprints.
+Scanner failures identify the importer and retain the original cause. ECMAScript's
+current HashbangComment grammar and official Bun Transpiler API informed this
+boundary; no input syntax or frozen Source byte identity was rewritten. Focused
+LF/CRLF regressions RED0PASS2FAIL then the file GREEN14PASS183assertions.
+
+Exact package.json resolves only from the existing captured byte map. Package-root
+*.config.ts developer configurations use the existing bounded capture reader and
+remain tooling, including their transitive helpers. Arbitrary root inputs retain
+the existing denial. The metadata/config regression RED0PASS1FAIL then the complete
+quality projections file GREEN15PASS188assertions/378ms, including the secret.json
+negative case. Actual current capture then PASS:144 Source,169 selected test files,
+430 unique runtime modules including nine exact repository-tooling modules.
+Receipts:current-capture-smoke-v760/v761/v762.log, hashbang-red/green-v761.log and
+root-metadata-red/green-v762.log in typed-correction-v179. This is capture evidence,
+not runtime coverage, dynamic CRAP, mutation qualification or native acceptance.
+
+Three fresh blind Luna read-only scopes investigate copied immutable fixture cost,
+CAS contention and bounded live runner output against current official docs. Root
+retains final check/Git ownership. The v747 UNKNOWN run, its lock and all uncertain
+operational fixture custody remain unchanged; no old operation is replayed.
+
+Independent capture-closure-v762-review.md found no blocker: scanner-only byte
+normalization, exact metadata/config admission, unchanged Source classification,
+bounded reader and published-baseline boundary, and unique digest/read reuse.

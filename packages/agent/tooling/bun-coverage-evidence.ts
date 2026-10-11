@@ -653,9 +653,13 @@ function importCandidates(packageRoot: string, importer: string, specifier: stri
   const resolved = canonicalCapturedModulePath(packageRoot, resolvedAbsolute);
   if (!resolved) throw new Error(`Local runtime import is outside admitted package roots: ${importer} -> ${specifier}`);
   const root = resolved.split('/')[0] ?? '';
+  const packageMetadata = resolved === 'package.json';
+  const packageDeveloperConfig = !resolved.includes('/') && /^[^/]+\.config\.ts$/u.test(resolved);
   if (
     !resolved.startsWith(`${repositoryToolingInputPrefix}/`) &&
-    ![...declaredRuntimeRoots, ...resourceRoots].includes(root)
+    ![...declaredRuntimeRoots, ...resourceRoots].includes(root) &&
+    !packageMetadata &&
+    !packageDeveloperConfig
   )
     throw new Error(`Local runtime import is outside admitted package roots: ${importer} -> ${specifier}`);
   const extension = path.posix.extname(resolved);
@@ -712,7 +716,16 @@ async function captureSelectedTestRuntimeClosure(
       scanners.set(loader, scanner);
     }
     const source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    const requests = scanner.scanImports(source);
+    // Bun's import scanner does not accept ECMAScript's location-sensitive hashbang comment.
+    // Hide only a hashbang at byte-decoded offset zero, leaving its line terminator and all
+    // captured bytes intact for every other inventory and fingerprint consumer.
+    const scanSource = source.startsWith('#!') ? source.replace(/^#![^\r\n\u2028\u2029]*/u, '') : source;
+    let requests: ReturnType<Bun.Transpiler['scanImports']>;
+    try {
+      requests = scanner.scanImports(scanSource);
+    } catch (cause) {
+      throw new Error(`Unable to scan captured runtime imports from ${importer}.`, { cause });
+    }
     if (requests.some((request) => request.path === 'vitest'))
       throw new Error(`Bun Test qualification cannot include a Vitest-owned test before migration: ${importer}`);
     for (const request of requests) {
@@ -732,6 +745,7 @@ async function captureSelectedTestRuntimeClosure(
           resolved = candidate;
           break;
         }
+        if (candidate === 'package.json') continue;
         const discovered = readDiscoveredRuntimeInput(root, candidate);
         if (discovered) {
           capturedBytes += discovered.byteLength;

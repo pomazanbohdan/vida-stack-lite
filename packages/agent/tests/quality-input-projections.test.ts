@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { mutationToolInputs } from '../tooling/mutation-evidence.js';
@@ -174,6 +175,65 @@ describe('final quality input projections', () => {
     );
     expect(projections.mutation.input_bytes['tooling/discovered-leaf.ts']).toBe(
       projections.guard.input_bytes['tooling/discovered-leaf.ts'],
+    );
+  });
+
+  test('admits captured package metadata and a named package-root developer config only', async () => {
+    const root = fixtureRoot();
+    writeFileSync(
+      path.join(root, 'tests/fixture.test.mjs'),
+      "import manifest from '../package.json' with { type: 'json' };\nimport config from '../stryker.config.ts';\nvoid manifest; void config;\n",
+    );
+    writeFileSync(
+      path.join(root, 'stryker.config.ts'),
+      "import { helper } from './tooling/stryker-helper.ts';\nexport default helper;\n",
+    );
+    writeFileSync(path.join(root, 'tooling/stryker-helper.ts'), 'export const helper = true;\n');
+
+    const { guard } = await qualityInputProjections(root, { coverage: [], mutation: [], guard: [] });
+    expect(guard.tool_inputs.map(({ path: file }) => file)).toContain('package.json');
+    expect(guard.tool_inputs.map(({ path: file }) => file)).toContain('stryker.config.ts');
+    expect(guard.tool_inputs.map(({ path: file }) => file)).toContain('tooling/stryker-helper.ts');
+    expect(guard.sources.map(({ path: file }) => file)).not.toContain('stryker.config.ts');
+    expect(guard.input_bytes['package.json']).toBeDefined();
+
+    const unrelatedRootInput = fixtureRoot();
+    writeFileSync(path.join(unrelatedRootInput, 'secret.json'), '{"secret": true}\n');
+    writeFileSync(path.join(unrelatedRootInput, 'tests/fixture.test.mjs'), "import '../secret.json';\n");
+    await expectRejected(
+      () => qualityInputProjections(unrelatedRootInput, { coverage: [], mutation: [], guard: [] }),
+      /outside admitted package roots/u,
+    );
+  });
+
+  test.each([
+    ['LF', '\n'],
+    ['CRLF', '\r\n'],
+  ] as const)('scans CLI imports after a hashbang while preserving captured %s bytes', async (_label, lineEnding) => {
+    const root = fixtureRoot();
+    const cliBytes = Buffer.from(
+      `#!/usr/bin/env node${lineEnding}import { leaf } from '../tooling/hashbang-leaf.ts';${lineEnding}export { leaf };${lineEnding}`,
+    );
+    writeFileSync(path.join(root, 'tests/fixture.test.mjs'), "import '../bin/vida-agent.ts';\n");
+    writeFileSync(path.join(root, 'bin/vida-agent.ts'), cliBytes);
+    writeFileSync(path.join(root, 'tooling/hashbang-leaf.ts'), 'export const leaf = true;\n');
+
+    const projections = await qualityInputProjections(root, { coverage: [], mutation: [], guard: [] });
+    for (const name of ['coverage', 'mutation', 'guard'] as const) {
+      const inputs = projections[name];
+      const cli = inputs.sources.find(({ path: file }) => file === 'bin/vida-agent.ts');
+      const leaf = inputs.tool_inputs.find(({ path: file }) => file === 'tooling/hashbang-leaf.ts');
+      expect(cli).toBeDefined();
+      expect(leaf).toBeDefined();
+      expect(inputs.input_bytes['bin/vida-agent.ts']).toEqual(cliBytes);
+      expect(cli?.sha256).toBe(createHash('sha256').update(cliBytes).digest('hex'));
+      expect(inputs.module_inputs.map(({ path: file }) => file)).toContain('tooling/hashbang-leaf.ts');
+    }
+    expect(projections.coverage.input_bytes['bin/vida-agent.ts']).toBe(
+      projections.mutation.input_bytes['bin/vida-agent.ts'],
+    );
+    expect(projections.mutation.input_bytes['bin/vida-agent.ts']).toBe(
+      projections.guard.input_bytes['bin/vida-agent.ts'],
     );
   });
 
