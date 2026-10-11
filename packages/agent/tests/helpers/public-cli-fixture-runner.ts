@@ -11,6 +11,27 @@ interface PublicCliFixtureRunnerOptions {
   readonly onUnknown: () => void;
 }
 
+/** Phase starts only: the final row never implies that its phase completed. */
+export function createPublicCliFixturePhaseMarker(diagnosticReceiptPath: string) {
+  const startedNs = process.hrtime.bigint();
+  let previousNs = startedNs;
+  mkdirSync(path.dirname(diagnosticReceiptPath), { recursive: true });
+  return (phase: string): void => {
+    const nowNs = process.hrtime.bigint();
+    appendFileSync(
+      diagnosticReceiptPath,
+      JSON.stringify({
+        schema: 'PrivatePublicCliFixturePhaseTiming/v1',
+        phase,
+        elapsed_ms: Number(nowNs - startedNs) / 1_000_000,
+        since_previous_ms: Number(nowNs - previousNs) / 1_000_000,
+      }) + '\n',
+      { mode: 0o600 },
+    );
+    previousNs = nowNs;
+  };
+}
+
 function operationFor(args: readonly string[]): string {
   if (args.includes('--issue-wave')) return 'issue-wave';
   if (args.includes('--report')) return 'report';

@@ -6136,3 +6136,63 @@ seed allowances copied, selected addresses/hashes bound. It is static lineage,
 not an exhaustive/default CRAP plan, dynamic CRAP value, test or Runtime proof.
 Final exact coverage, dynamic frozen CRAP, confirmedKilled mutation and both
 retained numerical/current corrective UNKNOWN reconciliations remain OPEN.
+
+
+### v778–v779 — parent test cost attribution and ordinary membership
+
+Prior reviewed inspection/lineage packet b10fb4a passed the strict staged hook
+and ordinary publication to origin/main (f57163a..b10fb4a), then HEAD/origin0/0;
+unrelated untracked root bun.lock remains preserved.
+
+Four blind Luna audits (phase-timing-plan, absorption-setup-cost,
+runtime-rebind-seed-cost, import-inventory-simplification v778) use focused
+Source and official references without suites, scans, old state or replay.
+The v777 cause review confirms the60s parent deadline killed the final child
+at427ms; four completed children cost24.4s and prior whole pass57.45s leaves
+2.55s margin. Setup has no attribution. Public children protect distinct
+transitions, initialization templates are read once in this scenario, and no
+measured immutable-seed benefit or safe live-check cache is established.
+Keep those mechanisms. One redundant File/Program unwrap is a tiny Source
+candidate, not a cure for the26/31 versus10 cap gaps; no unrelated Source change.
+
+Existing public CLI fixture timing helper gains one narrow phase-start writer,
+used before fixture construction and around coarse workflow/report/CLEAR/
+correction phases plus in-process run start/return. Same private NDJSON owner,
+fixed labels, monotonic total and previous interval only; no argv/body/env/
+success fields, no extra dependency or generalized layer. A final mark starts
+its phase and is not completion proof. Synchronous write overhead belongs to
+instrumented time. Bounds, public transitions/arguments/assertions and UNKNOWN
+retention remain unchanged. Timing write failure inside the scenario reaches
+its existing failure-and-cleanup path. TESTING documents this evidence boundary.
+
+Qualified helper RED0PASS2FAIL on missing marker export, then GREEN2PASS0FAIL/
+4assertions53ms. Whole real scenario is NOT replayed, rerun or claimed PASS;
+/tmp/vida-absorption-cIgIKa and v747 numeric UNKNOWN remain held. Receipts:
+parent-phase-red-v779.log and parent-phase-green-v779.log under current BASE.
+
+The new timing control and existing v774 CLEAR custody control were missing
+from ordinary literal phase membership. Add both exactly once to test:pinned;
+keep four process phases and their typecheck prefix. Extend the existing
+bun-toolchain phase contract, qualified RED0PASS1FAIL (missing membership),
+then GREEN1PASS0FAIL24ms. No duplicate full suite or AST/hash pass. Receipts:
+phase-membership-red-v779.log, phase-membership-green-v779.log.
+
+Independent parent-timing-custody-review-v779 APPROVES exact code/doc/membership
+diff. It also confirms a pre-existing runtime-rebind scenario early return
+skips its later f.close: new bounded test-harness correction next, not closed
+by these diagnostic changes. Source CC gaps, exhaustive frozen lineage,
+current exact coverage/CRAP and assertion-confirmed mutation remain OPEN.
+
+Official references: Bun test timeout/discovery (https://bun.com/docs/test/
+writing-tests and https://bun.com/docs/test/discovery), Node24.19 hrtime.bigint
+and appendFileSync (https://nodejs.org/download/release/v24.19.0/docs/api/
+process.html and /fs.html), Babel AST fields (https://babeljs.io/docs/babel-types).
+Docs establish primitives/semantics, not a local latency improvement. Current
+runtime pin remains qualified1.4.2; available1.4.3 is not installed/adopted here.
+
+Initial strict checkpoint-v779.log FAIL: typed lint flags no-unsafe-return on
+JSON.parse inside new test map; formatting and strict compiler passed before
+that lint stop. Root returns an explicitly unknown parsed value, retaining the
+same exact assertions without suppressions. Official rule researched:
+https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-unsafe-return .
+The rejected hook creates no commit; complete strict checkpoint correction next.

@@ -73,7 +73,10 @@ import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-sessi
 import { parseWorkflowSessionReservationData } from '../src/orchestration/workflow-session-reservation-contract.ts';
 import { issueObservedResearchActivation } from '../src/orchestration/observed-research-activation.ts';
 import type { ObservedResearchRecordPlan } from '../src/research-decision.ts';
-import { createNativeTsPublicCliFixtureRunner } from './helpers/public-cli-fixture-runner.ts';
+import {
+  createNativeTsPublicCliFixtureRunner,
+  createPublicCliFixturePhaseMarker,
+} from './helpers/public-cli-fixture-runner.ts';
 import type {
   TrustedWorkflowAssignment,
   WorkflowAssignmentRequest,
@@ -2761,16 +2764,19 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
     'public same-work correction after real report resume sync ' + scenario,
     async () => {
       const failureStage = ['runtime-rebind', 'success'].includes(scenario) ? 'validate' : scenario;
+      const diagnosticReceiptPath = path.resolve(
+        bundle,
+        '../../.tmp/tooling-research/root-public-cli-fixture-timing-v10/public-cli-' + scenario + '.ndjson',
+      );
+      const markPhase = createPublicCliFixturePhaseMarker(diagnosticReceiptPath);
+      markPhase('fixture_setup');
       const f = fixture(true, true);
       let failure: unknown,
         didFail = false,
         retainFixtureRootOnUnknown = false;
       const publicCli = createNativeTsPublicCliFixtureRunner({
         bundleRoot: bundle,
-        diagnosticReceiptPath: path.resolve(
-          bundle,
-          '../../.tmp/tooling-research/root-public-cli-fixture-timing-v10/public-cli-' + scenario + '.ndjson',
-        ),
+        diagnosticReceiptPath,
         fixtureRoot: f.root,
         onUnknown: () => {
           retainFixtureRootOnUnknown = true;
@@ -2792,7 +2798,9 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
       };
       // Setup uses the same run implementation in-process; public process-boundary assertions stay below.
       const runFixture = async (args: readonly string[]) => {
+        markPhase('in_process_run_start');
         const result = await run([...args]);
+        markPhase('in_process_run_returned');
         if (!isPlainRecord(result)) throw new Error('in-process fixture run result is malformed');
         return result;
       };
@@ -2908,6 +2916,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           work.lifecycle.scope.allowed_paths,
         );
 
+        markPhase('initial_workflow_setup');
         const fixtureHost = new HostStateStore(
           f.database,
           f.store.workspaceId,
@@ -3013,6 +3022,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
         ]);
         journal = sync();
         journal = requireSessionJournal(ledger.issueWave(id, 1, journal.version));
+        markPhase('initial_reports_and_block');
         const report = async (
           item: MastraSessionLedgerState['items'][number],
           summary: string,
@@ -3115,6 +3125,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           if (!deniedBridgeSnapshot) throw new Error('denied execution bridge snapshot is missing');
           expect(deniedBridgeSnapshot.status).toBe('suspended');
         }
+        markPhase('correction_clear_preparation');
         await bridge.close();
         const originalVersion = requireJournalVersion(f.store.readWorkSessionJournal(identity));
         const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
@@ -3389,6 +3400,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           return;
         }
 
+        markPhase('correction_prepare_and_inspect');
         // TEST-only accepted reports reached Host through the real configured session APIs above.
         // Prepare once, then observe the public Host authorization API in this same SQLite isolate.
         const beforeAuthorization = prepareLifecycleForCorrection({
@@ -3542,6 +3554,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
 
         // The CLI retry is a read-only retrieval: run.mjs calls retrieveCorrectiveAuthorization
         // first and returns that existing authorization before any preparation or write.
+        markPhase('public_authorize_deny_resume');
         const authorized = publicRun([
           ...args,
           '--correct',
@@ -3637,6 +3650,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             engine.close();
           }
         }
+        markPhase('public_issue_wave');
         const issued = publicRun([
           ...args,
           '--issue-wave',
@@ -3646,6 +3660,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           '--expected-digest',
           requireStateVersionValue(resumed.state_version).digest,
         ]);
+        markPhase('post_issue_recovery');
         const correctiveActions = requireUnknownRecordArray(issued.issued_actions, 'corrective issue-wave actions'),
           correctiveAction = correctiveActions[0];
         if (!correctiveAction || typeof correctiveAction.host_attempt_id !== 'string')
@@ -3798,6 +3813,7 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             expect(requireSessionJournal(ledger.resume(id, 1))).toEqual(before);
           }
         }
+        markPhase('terminal_assertions_cleanup');
       } catch (error) {
         failure = error;
         didFail = true;

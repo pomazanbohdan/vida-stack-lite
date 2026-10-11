@@ -712,7 +712,13 @@ test('public test phases assign each literal test file to one phase', () => {
   ]) {
     assert.equal(phaseFiles('test:repair:pinned').filter((candidate) => candidate === file).length, 1);
   }
-  assert.equal(phaseFiles('test:pinned').filter((file) => file === 'tests/documentation-policy.test.ts').length, 1);
+  for (const file of [
+    'tests/documentation-policy.test.ts',
+    'tests/public-cli-fixture-timing.test.ts',
+    'tests/documentation-clear-custody.test.ts',
+  ]) {
+    assert.equal(phaseFiles('test:pinned').filter((candidate) => candidate === file).length, 1);
+  }
 });
 
 test('non-regular pin fails before package resolution, including Windows junctions', () => {

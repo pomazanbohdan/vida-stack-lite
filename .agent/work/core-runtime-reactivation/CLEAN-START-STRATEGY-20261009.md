@@ -1303,3 +1303,18 @@ Research confirms Bun's parent timeout kills spawned children; evaluate actual
 setup/previous-CLI cost using current attributable timing, no redundant full run.
 Details/corrections/failed receipts: WORK v775–v777. Final numerical gates and
 clean formed-native qualification remain OPEN.
+
+
+#### Current test-cost attribution and phase custody v778–v779
+
+Four blind audits preserve distinct public CLI transitions and live guard
+reads; immutable fixture seeding remains unmeasured. Add parent phase starts
+through the existing private public CLI receipt owner to fill unmeasured setup
+and in-process intervals. Helper control2PASS and literal phase contract1PASS
+with qualified REDs; add this control and v774 CLEAR custody to ordinary once.
+Independent review approves; this is diagnostic readiness, no measured speedup
+or real corrective-flow PASS. Keep all bounds and retained UNKNOWN custody.
+Next bounded correction: reviewed pre-existing runtime-rebind test early return
+skips teardown. Root remains the sole check/Git owner. Frozen lineage1228roles/
+66files stays non-executable; current numerical prerequisites and clean native
+qualification remain OPEN, with no replay or duplicated full qualification.

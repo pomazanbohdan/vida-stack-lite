@@ -555,6 +555,18 @@ checks the actual CLEAR fixture cleanup and public runner receipts in isolated
 mocked-child namespaces; it does not qualify real process interruption or CLI
 coverage. Keep the existing child and case bounds.
 
+The same private public-CLI timing owner also records parent phase starts for
+the corrective fixtures, including setup and in-process runs, to attribute the
+intervals between CLI children. `PrivatePublicCliFixturePhaseTiming/v1` carries
+fixed caller labels and monotonic total/since-previous elapsed milliseconds;
+it records no arguments, bodies, environment or success status. A row starts
+its named phase: only the next row closes that interval, and the final row
+does not prove completion. Receipt writes are synchronous and their overhead
+is part of instrumented time. `tests/public-cli-fixture-timing.test.ts` checks
+ordered intervals and visible write failure without a real workflow/CLI run.
+Use these observations to locate cost, never as uninstrumented speed, coverage,
+mutation or Runtime evidence. Preserve failed/UNKNOWN custody and all bounds.
+
 Keep root help, per-command help and parsing declarations in parity. The CLI
 contract gate must detect an unlisted public command, alias or option, and a
 documented option that its parser cannot accept. Cover argument types, required
