@@ -756,6 +756,14 @@ reader absence uses the existing guarded path, never a cache or weaker reader.
 Opt-in read profiling distinguishes guarded and verified byte methods and
 reports only its actual JS filesystem scope, not native helper syscalls.
 
+For the runtime-package snapshot adapter, also verify fresh capture on every
+invocation, bound receiver and logical/physical paths, required missing-file
+denial without fallback, and unchanged mutable TaskSource and unsupported-provider
+reader selection. Reuse the qualified primitive race controls; the adapter's
+native controls must observe actual CAS/reclaim/quarantine/backup denial and
+retained identities. Scope zero-write/fsync claims to verified byte capture,
+not package identity, inventory, authorization or the complete admission flow.
+
 Keep root help, per-command help and parsing declarations in parity. The CLI
 contract gate must detect an unlisted public command, alias or option, and a
 documented option that its parser cannot accept. Cover argument types, required

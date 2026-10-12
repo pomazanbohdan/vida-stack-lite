@@ -152,6 +152,10 @@ or unknown outcomes. Check active CAS and recovery artifacts without changing
 their bytes/identities; verify accepted captures do no writes or fsync. Profile
 only the actual byte-method scope and distinguish diagnostic elapsed time from
 ordinary execution. Keep durable writers and every live bundle hash fence.
+For the runtime-package snapshot adapter, verify fresh captured bytes and
+missing-file denial without fallback; mutable declared-source snapshots retain
+their cooperative reader. Reuse the primitive race controls and separately
+check the adapter actually selects the qualified method.
 
 For each observed error or bottleneck, retain a bounded receipt, inspect the
 causal path and check current official documentation/upstream issues. Record

@@ -1,4 +1,5 @@
-import { expect, test } from 'bun:test';
+import { expect, spyOn, test } from 'bun:test';
+import * as fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import {
   existsSync,
@@ -57,14 +58,17 @@ test('stable source snapshots retain exact per-file aggregate and canonical path
 const linuxTest = test.skipIf(process.platform !== 'linux');
 function withNativeFixture(operation: (root: string, read: (target: string) => Buffer | null) => void): void {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-stable-source-read-'));
+  let observedSuccess = false;
   try {
     const access = requireSafeRepositoryAccess(root);
     expect(access.provider).toBe('linux-proc-fd');
     const readStable = access.readStableBytes;
     if (!readStable) throw new Error('Linux stable read capability is unavailable');
     operation(root, (target) => readStable.call(access, target, 'native stable Source read'));
+    observedSuccess = true;
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    if (observedSuccess) rmSync(root, { recursive: true, force: true });
+    else process.stderr.write('Retained failed or uncertain stable Source fixture: ' + root + '\n');
   }
 }
 
@@ -219,6 +223,203 @@ test('runtime snapshots retain logical bundle identities while forwarding stable
     'outside the configured package identity',
   );
   expect(calls).toEqual(['bin/a.ts']);
+});
+
+test('runtime snapshots prefer a fresh verified package read and bind it to the runtime reader', () => {
+  const calls: string[] = [];
+  let contents = Buffer.from('first package bytes');
+  const reader = {
+    fileExists(): boolean {
+      throw new Error('runtime verified capture must not check mutable existence');
+    },
+    readBytes(): Buffer {
+      throw new Error('runtime verified capture must not use mutable byte reads');
+    },
+    readStableBytes(): Buffer | null {
+      throw new Error('runtime verified capture must not take a cooperative stable read');
+    },
+    readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+      expect(this).toBe(reader);
+      calls.push(`${target}:${label}:${maxBytes ?? 'default'}`);
+      return contents;
+    },
+  };
+  const first = snapshotRuntimePackageSources(reader, 'runtime-package', ['runtime-package/bin/a.ts']);
+  contents = Buffer.from('changed package bytes');
+  const second = snapshotRuntimePackageSources(reader, 'runtime-package', ['runtime-package/bin/a.ts']);
+
+  expect(calls).toEqual(['bin/a.ts:scoped source stable read:default', 'bin/a.ts:scoped source stable read:default']);
+  expect(first.entries[0]).toMatchObject({ path: 'runtime-package/bin/a.ts', exists: true, bytes: 19 });
+  expect(second.entries[0]).toMatchObject({ path: 'runtime-package/bin/a.ts', exists: true, bytes: 21 });
+  expect(second.entries[0]?.sha256).not.toBe(first.entries[0]?.sha256);
+  expect(second.digest).not.toBe(first.digest);
+});
+
+test('declared source snapshots keep cooperative stable-read behavior when verified capture is available', () => {
+  const calls: string[] = [];
+  const reader = {
+    fileExists: () => true,
+    readBytes: () => Buffer.from('mutable bytes'),
+    readStableBytes(target: string): Buffer {
+      calls.push(target);
+      return Buffer.from('stable bytes');
+    },
+    readVerifiedCaptureBytes(): Buffer {
+      throw new Error('declared source snapshot must not use runtime verified capture');
+    },
+  };
+
+  const result = snapshotDeclaredSources(reader, ['task/source.ts']);
+  expect(calls).toEqual(['task/source.ts']);
+  expect(result.entries[0]).toMatchObject({ path: 'task/source.ts', exists: true, bytes: 12 });
+});
+
+test('runtime verified capture propagates missing and unsafe errors without mutable fallback', () => {
+  const calls: string[] = [];
+  let legacyCalls = 0;
+  const reader = {
+    fileExists(): boolean {
+      legacyCalls++;
+      return false;
+    },
+    readBytes(): Buffer {
+      legacyCalls++;
+      return Buffer.from('fallback');
+    },
+    readStableBytes(): Buffer | null {
+      legacyCalls++;
+      return null;
+    },
+    readVerifiedCaptureBytes(target: string): Buffer {
+      calls.push(target);
+      throw new Error(target === 'absent.ts' ? 'ENOENT verified absence' : 'unsafe verified capture');
+    },
+  };
+
+  expect(() => snapshotRuntimePackageSources(reader, 'runtime-package', ['runtime-package/absent.ts'])).toThrow(
+    'ENOENT verified absence',
+  );
+  expect(() => snapshotRuntimePackageSources(reader, 'runtime-package', ['runtime-package/link.ts'])).toThrow(
+    'unsafe verified capture',
+  );
+  expect(calls).toEqual(['absent.ts', 'link.ts']);
+  expect(legacyCalls).toBe(0);
+});
+
+test('runtime package verified reads retain per-file byte bounds', () => {
+  const tooLarge = Buffer.alloc(8 * 1024 * 1024 + 1);
+  let calls = 0;
+  const reader = {
+    fileExists: () => true,
+    readBytes: () => tooLarge,
+    readVerifiedCaptureBytes: () => {
+      calls++;
+      return tooLarge;
+    },
+  };
+  expect(() => snapshotRuntimePackageSources(reader, 'runtime-package', ['runtime-package/large.ts'])).toThrow(
+    'per-file byte limit',
+  );
+  expect(calls).toBe(1);
+});
+
+linuxTest('runtime package verified reads are read-only and fail closed around retained CAS recovery state', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-runtime-verified-capture-'));
+  const sourceBytes = Buffer.from('retained exact bytes');
+  let observedSuccess = false;
+  try {
+    writeFileSync(path.join(root, 'module.ts'), sourceBytes);
+    const access = requireSafeRepositoryAccess(root);
+    if (!access.readVerifiedCaptureBytes) throw new Error('Linux verified capture capability is unavailable');
+    const reader = {
+      ...access,
+      fileExists(): boolean {
+        throw new Error('runtime capture called fileExists');
+      },
+      readBytes(): Buffer {
+        throw new Error('runtime capture called readBytes');
+      },
+      readStableBytes(): Buffer | null {
+        throw new Error('runtime capture called readStableBytes');
+      },
+      readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+        return access.readVerifiedCaptureBytes!.call(access, target, label, maxBytes);
+      },
+    };
+    const capture = () => snapshotRuntimePackageSources(reader, 'runtime-package', ['runtime-package/module.ts']);
+    const snapshot = capture();
+    expect(snapshot.entries[0]).toMatchObject({
+      path: 'runtime-package/module.ts',
+      exists: true,
+      bytes: sourceBytes.length,
+    });
+    const rootEntries = readdirSync(root).sort();
+    const writes = spyOn(fs, 'writeSync');
+    const syncs = spyOn(fs, 'fsyncSync');
+    try {
+      expect(() => capture()).not.toThrow();
+      expect(writes).not.toHaveBeenCalled();
+      expect(syncs).not.toHaveBeenCalled();
+      expect(readdirSync(root).sort()).toEqual(rootEntries);
+
+      const lockPath = path.join(root, '.module.ts.cas.lock');
+      access.withExclusiveLock('.module.ts.cas', 'runtime capture retained active owner', () => {
+        const lockBytes = readFileSync(lockPath);
+        const lockIdentity = lstatSync(lockPath, { bigint: true });
+        expect(() => capture()).toThrow('active CAS writer');
+        expect(readFileSync(lockPath)).toEqual(lockBytes);
+        const lockAfter = lstatSync(lockPath, { bigint: true });
+        expect(lockAfter.dev).toBe(lockIdentity.dev);
+        expect(lockAfter.ino).toBe(lockIdentity.ino);
+      });
+
+      const guardPath = path.join(root, '.module.ts.cas.lock.reclaim');
+      mkdirSync(guardPath);
+      const ownerPath = path.join(guardPath, 'owner.json');
+      writeFileSync(ownerPath, '{"schema":"retained"}');
+      const guardIdentity = lstatSync(guardPath, { bigint: true });
+      const ownerBytes = readFileSync(ownerPath);
+      const ownerIdentity = lstatSync(ownerPath, { bigint: true });
+      expect(() => capture()).toThrow('CAS reclaim is active');
+      expect(readFileSync(ownerPath)).toEqual(ownerBytes);
+      const guardAfter = lstatSync(guardPath, { bigint: true });
+      const ownerAfter = lstatSync(ownerPath, { bigint: true });
+      expect(guardAfter.dev).toBe(guardIdentity.dev);
+      expect(guardAfter.ino).toBe(guardIdentity.ino);
+      expect(ownerAfter.dev).toBe(ownerIdentity.dev);
+      expect(ownerAfter.ino).toBe(ownerIdentity.ino);
+      rmSync(guardPath, { recursive: true });
+
+      const backupPath = path.join(root, '.module.ts.' + randomUUID() + '.cas-old');
+      writeFileSync(backupPath, 'retained backup bytes');
+      const backupBytes = readFileSync(backupPath);
+      const backupIdentity = lstatSync(backupPath, { bigint: true });
+      expect(() => capture()).toThrow('unresolved private backup');
+      expect(readFileSync(backupPath)).toEqual(backupBytes);
+      const backupAfter = lstatSync(backupPath, { bigint: true });
+      expect(backupAfter.dev).toBe(backupIdentity.dev);
+      expect(backupAfter.ino).toBe(backupIdentity.ino);
+      rmSync(backupPath);
+
+      const quarantinePath = path.join(root, '..module.ts.cas.lock.' + randomUUID() + '.reclaimed');
+      writeFileSync(quarantinePath, 'retained quarantine bytes');
+      const quarantineBytes = readFileSync(quarantinePath);
+      const quarantineIdentity = lstatSync(quarantinePath, { bigint: true });
+      expect(() => capture()).toThrow('quarantine');
+      expect(readFileSync(quarantinePath)).toEqual(quarantineBytes);
+      const quarantineAfter = lstatSync(quarantinePath, { bigint: true });
+      expect(quarantineAfter.dev).toBe(quarantineIdentity.dev);
+      expect(quarantineAfter.ino).toBe(quarantineIdentity.ino);
+      expect(readFileSync(path.join(root, 'module.ts'))).toEqual(sourceBytes);
+    } finally {
+      writes.mockRestore();
+      syncs.mockRestore();
+    }
+    observedSuccess = true;
+  } finally {
+    if (observedSuccess) rmSync(root, { recursive: true, force: true });
+    else process.stderr.write('Retained failed or uncertain runtime verified capture fixture: ' + root + '\n');
+  }
 });
 
 test('source snapshot fallback preserves appearance disappearance and byte drift rejection', () => {

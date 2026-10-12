@@ -6,10 +6,16 @@ import type { HostStateSnapshot, HostStateStore, WorkIdentity } from '../host-st
 import { expectedJavascriptFiles } from '../../tooling/maintained-source-inventory.js';
 
 type SourceReader = Pick<SafeRepositoryAccess, 'fileExists' | 'readBytes' | 'readStableBytes'>;
+type RuntimeSourceReader = SourceReader & Pick<SafeRepositoryAccess, 'readVerifiedCaptureBytes'>;
+
+function runtimePackageStableRead(reader: RuntimeSourceReader): SourceReader['readStableBytes'] {
+  const read = reader.readVerifiedCaptureBytes ?? reader.readStableBytes;
+  return read?.bind(reader);
+}
 
 /** Retain declared logical identities while reading runtime bytes from the installed package. */
 export function snapshotRuntimePackageSources(
-  reader: SourceReader,
+  reader: RuntimeSourceReader,
   bundlePath: string,
   paths: readonly string[],
 ): ScopedSourceSnapshot {
@@ -18,7 +24,7 @@ export function snapshotRuntimePackageSources(
     requireSnapshot(relative.startsWith(prefix), 'runtime source is outside the configured package identity');
     return relative.slice(prefix.length);
   };
-  const stableRead = reader.readStableBytes;
+  const stableRead = runtimePackageStableRead(reader);
   return snapshotDeclaredSources(
     {
       fileExists: (relative, purpose) => reader.fileExists(packagePath(relative), purpose),

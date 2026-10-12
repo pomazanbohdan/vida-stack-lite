@@ -8131,3 +8131,42 @@ immutable strings, avoiding alias rehash/decode; original bytes remain checked
 on each Source load. Independent blind patch review finds no actionable issue.
 This is tooling/custody qualification, not full current coverage or a measured
 speed improvement. Build/install suites not invoked.
+
+### 2026-10-12 — runtime-only verified package snapshot adapter
+
+Published0f90461 with ordinary hooks. Before next optimization, fresh exact
+absorption control on/tmp passes13assertions/body3565.26ms/5.14scommand; earlier
+6991.99ms failure is not a matched baseline. A new adapter preference control
+fails on the intended old stable-reader guard; mutable declared-source positive
+passes. Two mistaken qualification selections (wrong cwd and unmatched name)
+provided no RED evidence; corrected anchored two-case command supplies it.
+
+Runtime-only reader now selects verifiedcapture before oldstable and binds
+receiver. Mutable SourceReader/snapshotDeclaredSources unchanged; unsupported
+providers retain stable/fallback behavior. Required missing/unsafe capture
+throws without fallback. Every runtime file and later invocation remains fresh;
+no cached hashes, no skipped current code/CAS/auth/quarantine/durable fences.
+This is one-file observation, not coherent multi-file or hostile-UID exclusion.
+
+Scoped Babel inventory40existingroles preserve shape/order/complexity; one new
+helperCC2. First name-only diagnostic collapsed duplicate closure names; fixed
+comparison retains ordered projections and saves both inventories. This is
+local static nonregression, not exhaustive frozen lineage/global budget pass.
+Inventory discovery in runtimePackageCodePaths uses rawexistsSync today (no
+optional access argument); retract static claim it necessarily takes CAS locks.
+
+Four-file behavioral qualification gives65PASS/1FAIL/473assertions37.73s. New
+native test fixture incorrectly hardcoded19bytes instead of actual20; static
+also detects missing spyOn import. Corrected import using officialBun mocks
+docs and derived expected size from actual fixture bytes. Failed fresh roots
+remain retained; native requalification PASS with original5s default, no reuse.
+Exact absorption after controlPASS13assertions/body1209.99ms/3.08s two-file
+command (native fixture failure in same command); record body times rather than
+claiming aggregate speedup. Source and resource conditions are not a controlled
+benchmark. Existing native primitive/race, fallback and mutable-source controls
+remain qualified from the65passed cases; no unrelated repeat suite.
+
+Source97/maintained426TS staticchecks and lintPASS before last test-only size
+correction; ordinary final hook checks pending. Blind Source adapter review
+approves observational scope and failure propagation; independent global
+coverage/CRAP/mutation and actual Runtime acceptance remain pending.
