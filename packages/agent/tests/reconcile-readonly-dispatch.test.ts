@@ -14,6 +14,7 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import {
   observationSchema,
   requestSchema,
@@ -327,7 +328,7 @@ function fixture(): Fixture {
     const seededDatabase = database;
     if (!seededDatabase) throw new Error('fixture Host database was not opened');
     database = undefined;
-    seededDatabase.close();
+    closeWorkspaceDatabaseWithAdmission(seededDatabase);
     const common = ['--kind', 'readonly-dispatch', '--project-root', root, '--repair-id', 'fixture-dispatch'];
     const args = (mode: string): string[] => [
       '--mode',
@@ -357,7 +358,7 @@ function fixture(): Fixture {
     return { root, args, databasePath, workspaceId, workId, attempt, actionId, issueId };
   } catch (error) {
     try {
-      database?.close();
+      if (database) closeWorkspaceDatabaseWithAdmission(database);
     } catch (closeError) {
       console.error(`Retained read-only dispatch fixture root after setup and close failures: ${root}`);
       throw new AggregateError([error, closeError], 'read-only dispatch fixture setup and database close failed');

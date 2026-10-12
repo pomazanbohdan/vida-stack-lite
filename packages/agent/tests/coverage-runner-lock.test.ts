@@ -264,9 +264,9 @@ import { mock } from 'bun:test';
 import { writeFileSync } from 'node:fs';
 const run = original.spawnSync;
 mock.module('node:child_process', () => ({
-  spawnSync(command: string) {
+  spawnSync(command: string, args: string[], options: Record<string, unknown>) {
     const result = run(command, ['--eval', 'process.stdout.write(String(process.pid)); setInterval(() => {}, 1000);'], { encoding: 'utf8', timeout: 100, killSignal: 'SIGKILL' });
-    writeFileSync(${JSON.stringify(path.join(root, 'direct-child-outcome.json'))}, JSON.stringify({ pid: result.pid, status: result.status, signal: result.signal, error: String(result.error) }));
+    writeFileSync(${JSON.stringify(path.join(root, 'direct-child-outcome.json'))}, JSON.stringify({ pid: result.pid, status: result.status, signal: result.signal, error: String(result.error), stdio: options.stdio, suite_timeout: options.timeout, buffered_output: Object.hasOwn(options, 'maxBuffer'), test_timeout: args[args.indexOf('--timeout') + 1] }));
     return result;
   }
 }));
@@ -302,6 +302,12 @@ mock.module('node:child_process', () => ({
     expect(existsSync(path.join(outputRoot, 'coverage-final.json'))).toBe(false);
     const child: unknown = JSON.parse(readFileSync(path.join(root, 'direct-child-outcome.json'), 'utf8'));
     expect(child).toMatchObject({ status: null, signal: 'SIGKILL' });
+    expect(child).toMatchObject({
+      stdio: ['ignore', 'inherit', 'inherit'],
+      suite_timeout: 600000,
+      buffered_output: false,
+      test_timeout: '5000',
+    });
     if (typeof child !== 'object' || child === null || !('error' in child) || typeof child.error !== 'string')
       throw new Error('Expected child timeout error');
     expect(child.error).toContain('ETIMEDOUT');

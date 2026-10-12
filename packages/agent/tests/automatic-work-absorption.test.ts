@@ -5,14 +5,14 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 import acceptanceSchema from '../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
 import workStateSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
 import runtimeConfigSchema from '../schemas/agent-runtime-config.v1.schema.json' with { type: 'json' };
-import { mkdirSync, readFileSync, writeFileSync, rmSync, unlinkSync, linkSync, symlinkSync, existsSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, readFileSync, writeFileSync, unlinkSync, linkSync, symlinkSync, existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, type AgentRuntimeConfig, type WorkItemSelection } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { parseScopedSourceSnapshot, snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import {
   HostStateStore,
@@ -544,7 +544,7 @@ test('admission retains complete original entries and exact retry rejects a diff
       expect(admitLocalSessionWork({ ...input, store: restarted })).toEqual(admitted);
       expect(readFileSync(path.join(f.root, reference.path))).toEqual(bytes);
     } finally {
-      restartedDatabase.close();
+      closeWorkspaceDatabaseWithAdmission(restartedDatabase);
     }
     const before = f.store.readWorkspaceSnapshot();
     expect(() => admitLocalSessionWork({ ...input, context: { ...input.context, attempt: 2 } })).toThrow(
@@ -751,20 +751,9 @@ test(
       }
     }
     try {
-      f.database.close();
+      f.close({ retainRoot: didFail });
     } catch (error) {
       cleanupFailures.push(error);
-    }
-    if (path.dirname(f.root) !== path.resolve(tmpdir()) || !path.basename(f.root).startsWith('vida-absorption-')) {
-      cleanupFailures.push(new Error('unsafe producer selection fixture cleanup'));
-    } else {
-      try {
-        rmSync(f.root, { recursive: true, force: true });
-      } catch (error) {
-        if (error instanceof Error && 'code' in error && error.code === 'EBUSY')
-          console.error('Closed producer selection fixture retained (OS EBUSY): ' + f.root);
-        else cleanupFailures.push(error);
-      }
     }
     if (didFail && cleanupFailures.length > 0)
       throw new AggregateError(

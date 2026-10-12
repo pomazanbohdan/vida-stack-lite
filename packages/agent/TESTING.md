@@ -655,6 +655,20 @@ Do not enable bailout in final coverage or admit a missing process receipt.
 
 The launcher and ordinary test phases have no implicit aggregate deadline. Explicit caller, case, probe, repair, installation and cleanup bounds still apply. Do not turn an unbounded duration into an infinite native timeout value.
 
+The coverage test producer inherits stdout/stderr into its caller-owned log;
+the explicit user-selected iteration ceiling is ten minutes, with no in-memory
+output ceiling. An interrupted iteration remains UNKNOWN and cannot admit
+final coverage or mutation results. Keep its CLI
+`--timeout 5000` per individual test and documented case overrides. Temporary
+controller destinations must remain outside the editable repository target;
+do not set TMPDIR to a directory inside that target for the full suite.
+
+Close admitted workspace/Host database handles through
+`closeWorkspaceDatabaseWithAdmission` or the owning store/ledger/fixture close
+method. Raw SQLite `.close()` does not release the paired storage-admission
+gate lease. Keep the source-close then gate-close order and retain failed or
+uncertain fixtures under their existing custody owner.
+
 When a caller sets a parent deadline, every nested command uses its remaining allowance. Setup, sequential children and recovery do not restart that budget. Reject expired or malformed deadline metadata before launching another child. Preserve the original process-tree deadline through clock changes.
 
 Reserve cleanup and report time within the parent budget. A positive reserve gives cleanup at most its allocated half. A zero reserve keeps the existing unpartitioned behavior. No remaining cleanup time means an unattempted UNKNOWN outcome.

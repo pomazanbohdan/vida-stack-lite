@@ -18,6 +18,7 @@ import type { MastraSessionLedgerState } from '../src/orchestration/persistent-s
 import { prepareObservedResearchRecord, resumeHistoricalObservedResearchResult } from '../src/research-decision.ts';
 import { buildObservedResearchResult } from '../src/orchestration/observed-research-result.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { createHistoricalResearchFixture } from './helpers/historical-research-fixture.ts';
 
 type HistoricalFixture = ReturnType<typeof createHistoricalResearchFixture>;
@@ -227,7 +228,7 @@ function createHostMutationFixture(f: HistoricalFixture): HostMutationFixture {
     database,
     state,
     journalVersion: { revision: 1, digest: journalDigest },
-    close: () => database.close(),
+    close: () => closeWorkspaceDatabaseWithAdmission(database),
   };
 }
 

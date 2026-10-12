@@ -10,6 +10,7 @@ import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-co
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
 import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
@@ -198,7 +199,7 @@ function fixture(sourceWriter: boolean = false, publicStore: boolean = false) {
     store,
     prepare,
     close() {
-      database.close();
+      closeWorkspaceDatabaseWithAdmission(database);
       rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     },
   };

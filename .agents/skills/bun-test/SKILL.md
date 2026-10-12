@@ -194,6 +194,14 @@ cleaner measurement. Preserve live integrity, CAS, authorization and durable syn
 
 ## Maintain this reference
 
+For full coverage, stream the producer's output into the owned caller log and
+keep the five-second default per individual test. The explicit user-selected
+iteration ceiling is ten minutes; timeout remains UNKNOWN, never final numeric
+admission. No output-buffer ceiling applies. Place controller temporary data
+outside the editable target. Close admitted Host/workspace database handles
+with the admission-aware wrapper or their owning fixture/store close method,
+so the source connection closes before its paired gate lease.
+
 After a verified change to Bun Test practices, update the authoritative owner
 and this reference in the same correction packet. Validate linked paths,
 frontmatter and commands; use blind scenario exercises for changed guidance.

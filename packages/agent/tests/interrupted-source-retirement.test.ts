@@ -14,6 +14,7 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { openHostStateDatabase } from '../src/host-state.ts';
 import { sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
 import { openAdmittedSessionExecution } from '../src/orchestration/admitted-session-execution.ts';
@@ -869,7 +870,7 @@ test('interrupted Source retirement transaction rolls back the attempt downgrade
       expect(() => f.store.retireInterruptedSourceOwner(request)).toThrow('synthetic retirement fault');
     } finally {
       db.exec('DROP TRIGGER fail_retirement_ledger');
-      db.close();
+      closeWorkspaceDatabaseWithAdmission(db);
     }
     expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
     expect(requireValue(f.store.readWorkSessionJournal(f.identity), 'retirement journal').version).toEqual(
@@ -1134,7 +1135,7 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
     ).toBe('active');
     expect(() => repair('restore')).toThrow();
   } finally {
-    database?.close();
+    if (database) closeWorkspaceDatabaseWithAdmission(database);
     await f.close();
   }
 }, 60000);
@@ -1382,7 +1383,7 @@ test('interrupted correction defaults repair rejects partial authority and misma
     saveWork(correctiveHistory);
     expect(() => repair()).toThrow(/corrective history|correction_count|base generation/i);
   } finally {
-    database?.close();
+    if (database) closeWorkspaceDatabaseWithAdmission(database);
     await f.close();
   }
 }, 60000);

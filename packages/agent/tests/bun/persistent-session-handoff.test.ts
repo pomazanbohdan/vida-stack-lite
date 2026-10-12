@@ -7,6 +7,7 @@ import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-i
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import type { WorkItemSelection } from '../../src/config/runtime-config.ts';
 import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import type { Database } from 'bun:sqlite';
 import type {
   MastraLedgerItem,
@@ -489,7 +490,7 @@ describe('persistent advisory session handoff', () => {
         )
         .run(canonicalJson(old), canonicalJsonDigest(old), workspaceId, context.work_id, context.attempt);
     } finally {
-      tamper.close();
+      closeWorkspaceDatabaseWithAdmission(tamper);
     }
     expect(() => active.resume(context.work_id, context.attempt)).toThrow(/schema is invalid/);
   });

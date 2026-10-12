@@ -15,6 +15,7 @@ import {
   type WorkItemSelection,
 } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { openHostStateDatabase, inspectHostWorkspaceDatabase } from '../src/host-state.ts';
 import type { HostStateSnapshot, RetiredSourceCaptureRequest } from '../src/host-state.ts';
@@ -502,7 +503,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     try {
       return db.query('SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name').all();
     } finally {
-      db.close();
+      closeWorkspaceDatabaseWithAdmission(db);
     }
   };
   async function close(): Promise<void> {

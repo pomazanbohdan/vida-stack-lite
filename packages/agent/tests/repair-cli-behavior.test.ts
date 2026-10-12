@@ -27,6 +27,7 @@ import {
   type WorkArtifactReference,
   type WorkState,
 } from '../src/host-state.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { validateCoordinationLedgerV1, type CoordinationLedger } from '../src/contracts/envelopes.ts';
 import {
   observationSchema,
@@ -304,7 +305,7 @@ afterEach(() => {
     report('repair fixture retained', started, { roots: roots.length, databases: databases.length });
     return;
   }
-  for (const database of databases.splice(0)) database.close();
+  for (const database of databases.splice(0)) closeWorkspaceDatabaseWithAdmission(database);
   report('repair databases closed', started);
   const cleanup = performance.now();
   for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
@@ -1024,7 +1025,7 @@ function persisted(
     );
   };
   writeRows();
-  database.close();
+  closeWorkspaceDatabaseWithAdmission(database);
   return { item, work, state, ledger, identityKey, pathToRecord };
 }
 

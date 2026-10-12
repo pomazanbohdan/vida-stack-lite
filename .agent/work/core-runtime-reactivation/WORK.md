@@ -8005,3 +8005,48 @@ RuntimeTiming reports45.47ms for createRuntimeKernel against its unchanged2s
 target, which is not a measurement of the whole public flow. Static v1094 passes.
 Final packet review/format/hooks/publication remain pending; no global numeric
 coverage, CRAP or mutation score and no Runtime acceptance is inferred.
+
+### 2026-10-12 — current full coverage iteration and admission-aware fixture cleanup
+
+The current full selection at fc1a1dd captured176 test files/145 Source files
+under Bun1.4.3, run5b810ef7-2a8e-4611-a50c-05bbe0cea08d. Its legacy1800s
+producer deadline interrupted execution:121 PASS/19 FAIL rows are partial,
+producer effects UNKNOWN, no process coverage receipt/final numeric admission.
+The synchronously terminated producer's exact reservation was released;
+run snapshot/logs and uncertain fixtures remain retained. No archival operation
+was replayed. Evidence: .tmp/full-coverage-20261012-current/full-coverage.log.
+
+TMPDIR inside the editable repository caused a real controller destination
+denial and is a launch error, not a product defect. Future controller temporary
+data must be outside that target. Workspace overlay timings from this attempt
+are not comparable to earlier tmpfs qualifications. Two brief exec transport
+disconnects recovered with the same producer PIDs; observed OOM counters did
+not increase across the later check. No environment restart is inferred.
+
+The user now explicitly requests ten-minute iterations. The producer uses a
+600000ms suite bound separate from CLI5000ms per test and contract exceptions;
+stdout/stderr stream into the caller-owned log without a64MiB capture ceiling.
+Timeout remains UNKNOWN, never coverage admission or assertion-confirmed Killed.
+The existing reaped-timeout custody control now checks those exact spawn
+options and keeps lock/retained-run behavior. Both lock/custody files qualify:
+13 PASS/97 assertions/2.77s (see runner-ten-minute-qualification.log for exact
+elapsed time); no bounds or numeric gates were relaxed.
+
+A fresh native diagnostic confirms raw admitted DB.close leaves its gate FD
+live, while closeWorkspaceDatabaseWithAdmission releases it. Exact admitted
+handles in ten test files now use that owner wrapper; absorption producer
+cleanup reuses f.close with failed-root retention and existing error aggregation.
+The first diagnostic's invalid workspace digest was a probe setup failure;
+its fresh root is retained, and a separate valid fresh-root control succeeded.
+This proves a test-fixture lifetime defect, not a new product-API defect.
+
+Static qualification:425 TypeScript files, zero diagnostics; Source97-file
+typecheck PASS. TaskSource exact prepare/retry case PASS234.49ms. Absorption
+original-entries/restarted-retry case still FAIL default5s at6991.99ms; no
+assertion failure is reported. Do not raise its bound merely to green or replace
+whole-workspace no-effect assertions with a narrower Host/work snapshot.
+Remaining failed-root custody gaps in older teardown owners remain open.
+
+Blind Luna review approves the scoped stream/custody and admission-close packet.
+Full coverage, frozen CRAP plan admission, mutation score and real Runtime
+qualification remain pending. No loader/schema/runtime activation or notices.

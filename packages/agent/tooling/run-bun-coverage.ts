@@ -282,13 +282,12 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const result = spawnSync(process.execPath, invocation.args, {
       cwd: invocation.cwd,
       env: invocation.env,
-      encoding: 'utf8',
-      maxBuffer: 64 * 1024 * 1024,
-      timeout: 30 * 60 * 1000,
+      // Explicit user-owned iteration ceiling; individual test deadlines remain
+      // separate. Stream output so interrupted iterations retain useful logs.
+      stdio: ['ignore', 'inherit', 'inherit'],
+      timeout: 10 * 60 * 1000,
       windowsHide: true,
     });
-    if (result.stdout) process.stdout.write(result.stdout);
-    if (result.stderr) process.stderr.write(result.stderr);
     if (result.error || result.signal || !Number.isInteger(result.status))
       return {
         shard_id: 'bun-test',

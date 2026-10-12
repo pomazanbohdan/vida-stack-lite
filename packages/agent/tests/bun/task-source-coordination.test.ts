@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import {
   HostStateStore,
   openHostStateDatabase,
@@ -451,7 +452,7 @@ function createFixture({ expiresAt, policyVerifier }: FixtureOptions) {
     },
     close(removeRoot: boolean) {
       if (!removeRoot) console.error(`Retained failed TaskSource fixture: ${root}`);
-      database.close();
+      closeWorkspaceDatabaseWithAdmission(database);
       if (removeRoot) rmSync(root, { recursive: true, force: true });
     },
   };

@@ -6,6 +6,7 @@ import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, write
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import {
   HostStateStore,
   openHostStateDatabase,
@@ -1112,7 +1113,7 @@ describe('persisted TaskSource binding operations', () => {
   });
 
   afterEach(() => {
-    database?.close();
+    if (database) closeWorkspaceDatabaseWithAdmission(database);
     rmSync(root, { recursive: true, force: true });
   });
 
