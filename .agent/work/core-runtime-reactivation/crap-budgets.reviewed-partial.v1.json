@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 1004,
+    "retained": 1059,
     "new": 258,
     "removed": 1,
-    "current_roles": 1262,
-    "source_files": 68
+    "current_roles": 1317,
+    "source_files": 71
   },
   "source_bindings": [
     {
@@ -288,6 +288,18 @@
     {
       "file": "bin/init.ts",
       "sha256": "5018d0d61c020d345d6d06c4c921854a676edc8e623c9084995d358ab2297232"
+    },
+    {
+      "file": "src/authorization/cedar-boundary.ts",
+      "sha256": "8047e31df6bf6694b9ee4c13bfd29eab3a48097c55e220eab88b3f9a592aeecd"
+    },
+    {
+      "file": "src/governance/operation-policy.ts",
+      "sha256": "27cf51af032a2f22549e704ec7642382785037827127831747133a81e5dfa6d6"
+    },
+    {
+      "file": "bin/read-only-dispatch-repair.ts",
+      "sha256": "a07e6dfbb2a73dadcb9d0fdad2c5f7297b1c31076959e0ddcd413df5b6ef5ad1"
     }
   ],
   "baseline_functions": [
@@ -23000,6 +23012,2501 @@
         "bodyEndLine": 154,
         "bodyEndColumn": 1
       }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 78,
+        "column": 50,
+        "start": 2629,
+        "end": 6312,
+        "bodyLine": 78,
+        "bodyColumn": 119,
+        "bodyEndLine": 145,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 78,
+        "column": 50,
+        "start": 2629,
+        "end": 6312,
+        "bodyLine": 78,
+        "bodyColumn": 119,
+        "bodyEndLine": 145,
+        "bodyEndColumn": 1
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 6,
+      "baseline_coverage": 1,
+      "max_complexity": 6,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:authorizationAttempt"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "binding:authorizationAttempt",
+            "call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]"
+          ],
+          "enclosing_context_detail": [
+            "call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]{other:Identifier(name:\"errorMessage\")}"
+          ]
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:authorizationAttempt"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "binding:authorizationAttempt",
+            "call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]"
+          ],
+          "enclosing_context_detail": [
+            "call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]{other:Identifier(name:\"errorMessage\")}"
+          ]
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:claimValid/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:claimValid/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 95,
+        "column": 45,
+        "start": 3739,
+        "end": 3790,
+        "bodyLine": 95,
+        "bodyColumn": 58,
+        "bodyEndLine": 95,
+        "bodyEndColumn": 96
+      },
+      "current_source_address": {
+        "line": 95,
+        "column": 45,
+        "start": 3739,
+        "end": 3790,
+        "bodyLine": 95,
+        "bodyColumn": 58,
+        "bodyEndLine": 95,
+        "bodyEndColumn": 96
+      },
+      "name": "closure:OptionalCallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]",
+          "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
+          "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:claimValid"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "binding:claimValid",
+            "array-index:4",
+            "call:OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]",
+          "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
+          "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:claimValid"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "binding:claimValid",
+            "array-index:4",
+            "call:OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:claimValid/closure:OptionalCallExpression:arguments[0]#1",
+      "current_identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:claimValid/closure:OptionalCallExpression:arguments[0]#1",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 96,
+        "column": 45,
+        "start": 3847,
+        "end": 3906,
+        "bodyLine": 96,
+        "bodyColumn": 58,
+        "bodyEndLine": 96,
+        "bodyEndColumn": 104
+      },
+      "current_source_address": {
+        "line": 96,
+        "column": 45,
+        "start": 3847,
+        "end": 3906,
+        "bodyLine": 96,
+        "bodyColumn": 58,
+        "bodyEndLine": 96,
+        "bodyEndColumn": 104
+      },
+      "name": "closure:OptionalCallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]",
+          "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
+          "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:claimValid"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "binding:claimValid",
+            "array-index:5",
+            "call:OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]",
+          "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
+          "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:claimValid"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "binding:claimValid",
+            "array-index:5",
+            "call:OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 108,
+        "column": 18,
+        "start": 4536,
+        "end": 6155,
+        "bodyLine": 108,
+        "bodyColumn": 52,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 108,
+        "column": 18,
+        "start": 4536,
+        "end": 6155,
+        "bodyLine": 108,
+        "bodyColumn": 52,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 3
+      },
+      "name": "binding:execute",
+      "baseline_complexity": 3,
+      "baseline_coverage": 1,
+      "max_complexity": 3,
+      "baseline_crap": 3,
+      "max_crap": 3,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 132,
+        "column": 6,
+        "start": 5791,
+        "end": 5847,
+        "bodyLine": 132,
+        "bodyColumn": 12,
+        "bodyEndLine": 132,
+        "bodyEndColumn": 62
+      },
+      "current_source_address": {
+        "line": 132,
+        "column": 6,
+        "start": 5791,
+        "end": 5847,
+        "bodyLine": 132,
+        "bodyColumn": 12,
+        "bodyEndLine": 132,
+        "bodyEndColumn": 62
+      },
+      "name": "closure:ArrayExpression:elements[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]/callable:execute",
+          "callsite": null,
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "binding:diagnostics",
+            "array-index:0"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]/callable:execute",
+          "callsite": null,
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "binding:diagnostics",
+            "array-index:0"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[0]#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[0]#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 132,
+        "column": 37,
+        "start": 5822,
+        "end": 5846,
+        "bodyLine": 132,
+        "bodyColumn": 48,
+        "bodyEndLine": 132,
+        "bodyEndColumn": 61
+      },
+      "current_source_address": {
+        "line": 132,
+        "column": 37,
+        "start": 5822,
+        "end": 5846,
+        "bodyLine": 132,
+        "bodyColumn": 48,
+        "bodyEndLine": 132,
+        "bodyEndColumn": 61
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]/callable:execute/closure:ArrayExpression:elements[0]@binding:diagnostics>array-index:0",
+          "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:execute",
+            "binding:diagnostics"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]/callable:execute/closure:ArrayExpression:elements[0]@binding:diagnostics>array-index:0",
+          "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:execute",
+            "binding:diagnostics"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[1]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[1]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 133,
+        "column": 6,
+        "start": 5855,
+        "end": 5902,
+        "bodyLine": 133,
+        "bodyColumn": 12,
+        "bodyEndLine": 133,
+        "bodyEndColumn": 53
+      },
+      "current_source_address": {
+        "line": 133,
+        "column": 6,
+        "start": 5855,
+        "end": 5902,
+        "bodyLine": 133,
+        "bodyColumn": 12,
+        "bodyEndLine": 133,
+        "bodyEndColumn": 53
+      },
+      "name": "closure:ArrayExpression:elements[1]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]/callable:execute",
+          "callsite": null,
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "binding:diagnostics",
+            "array-index:1"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]/callable:execute",
+          "callsite": null,
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "binding:diagnostics",
+            "array-index:1"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:factories/closure:ArrayExpression:elements[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:factories/closure:ArrayExpression:elements[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 143,
+        "column": 21,
+        "start": 6178,
+        "end": 6261,
+        "bodyLine": 143,
+        "bodyColumn": 27,
+        "bodyEndLine": 143,
+        "bodyEndColumn": 104
+      },
+      "current_source_address": {
+        "line": 143,
+        "column": 21,
+        "start": 6178,
+        "end": 6261,
+        "bodyLine": 143,
+        "bodyColumn": 27,
+        "bodyEndLine": 143,
+        "bodyEndColumn": 104
+      },
+      "name": "closure:ArrayExpression:elements[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]",
+          "callsite": null,
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "binding:factories",
+            "array-index:0"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//closure:CallExpression:arguments[0]@binding:authorizationAttempt>call:MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))[argument:0]",
+          "callsite": null,
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "binding:factories",
+            "array-index:0"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:assertConfiguredCedarPolicy#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:assertConfiguredCedarPolicy#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 175,
+        "column": 7,
+        "start": 7309,
+        "end": 8139,
+        "bodyLine": 175,
+        "bodyColumn": 87,
+        "bodyEndLine": 191,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 175,
+        "column": 7,
+        "start": 7309,
+        "end": 8139,
+        "bodyLine": 175,
+        "bodyColumn": 87,
+        "bodyEndLine": 191,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:assertConfiguredCedarPolicy",
+      "baseline_complexity": 3,
+      "baseline_coverage": 1,
+      "max_complexity": 3,
+      "baseline_crap": 3,
+      "max_crap": 3,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:assertConfiguredCedarPolicy#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:assertConfiguredCedarPolicy#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 185,
+        "column": 42,
+        "start": 7921,
+        "end": 8048,
+        "bodyLine": 186,
+        "bodyColumn": 10,
+        "bodyEndLine": 186,
+        "bodyEndColumn": 114
+      },
+      "current_source_address": {
+        "line": 185,
+        "column": 42,
+        "start": 7921,
+        "end": 8048,
+        "bodyLine": 186,
+        "bodyColumn": 10,
+        "bodyEndLine": 186,
+        "bodyEndColumn": 114
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:assertConfiguredCedarPolicy",
+          "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationWarnings\"));property:Identifier(name:\"some\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationWarnings\"));property:Identifier(name:\"some\"))",
+          "argument_role": "argument:0",
+          "receivers": [],
+          "control": [
+            "logical(LogicalExpression(left:BinaryExpression(left:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"type\"));operator:\"===\";right:StringLiteral(value:\"failure\"));operator:\"||\";right:BinaryExpression(left:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationErrors\"));property:Identifier(name:\"length\"));operator:\">\";right:NumericLiteral(value:0)))||)"
+          ],
+          "enclosing_context": [
+            "call:Identifier(name:\"reject\")[argument:0]",
+            "array-index:0",
+            "logical:LogicalExpression(left:BinaryExpression(left:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"type\"));operator:\"===\";right:StringLiteral(value:\"failure\"));operator:\"||\";right:BinaryExpression(left:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationErrors\"));property:Identifier(name:\"length\"));operator:\">\";right:NumericLiteral(value:0)))||",
+            "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationWarnings\"));property:Identifier(name:\"some\"))[argument:0]"
+          ],
+          "enclosing_context_detail": [
+            "call:Identifier(name:\"reject\")[argument:0]{other:StringLiteral(value:\"configured Cedar policy/schema semantic validation failed\")}"
+          ]
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:assertConfiguredCedarPolicy",
+          "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationWarnings\"));property:Identifier(name:\"some\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationWarnings\"));property:Identifier(name:\"some\"))",
+          "argument_role": "argument:0",
+          "receivers": [],
+          "control": [
+            "logical(LogicalExpression(left:BinaryExpression(left:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"type\"));operator:\"===\";right:StringLiteral(value:\"failure\"));operator:\"||\";right:BinaryExpression(left:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationErrors\"));property:Identifier(name:\"length\"));operator:\">\";right:NumericLiteral(value:0)))||)"
+          ],
+          "enclosing_context": [
+            "call:Identifier(name:\"reject\")[argument:0]",
+            "array-index:0",
+            "logical:LogicalExpression(left:BinaryExpression(left:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"type\"));operator:\"===\";right:StringLiteral(value:\"failure\"));operator:\"||\";right:BinaryExpression(left:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationErrors\"));property:Identifier(name:\"length\"));operator:\">\";right:NumericLiteral(value:0)))||",
+            "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"validated\");property:Identifier(name:\"validationWarnings\"));property:Identifier(name:\"some\"))[argument:0]"
+          ],
+          "enclosing_context_detail": [
+            "call:Identifier(name:\"reject\")[argument:0]{other:StringLiteral(value:\"configured Cedar policy/schema semantic validation failed\")}"
+          ]
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:authorized#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:authorized#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 72,
+        "column": 0,
+        "start": 2378,
+        "end": 2480,
+        "bodyLine": 72,
+        "bodyColumn": 83,
+        "bodyEndLine": 74,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 72,
+        "column": 0,
+        "start": 2378,
+        "end": 2480,
+        "bodyLine": 72,
+        "bodyColumn": 83,
+        "bodyEndLine": 74,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:authorized",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:authorizeProject#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:authorizeProject#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 146,
+        "column": 7,
+        "start": 6336,
+        "end": 6770,
+        "bodyLine": 153,
+        "bodyColumn": 30,
+        "bodyEndLine": 162,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 146,
+        "column": 7,
+        "start": 6336,
+        "end": 6770,
+        "bodyLine": 153,
+        "bodyColumn": 30,
+        "bodyEndLine": 162,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:authorizeProject",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:createConfiguredProjectAuthorizer#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:createConfiguredProjectAuthorizer#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 163,
+        "column": 7,
+        "start": 6778,
+        "end": 7301,
+        "bodyLine": 166,
+        "bodyColumn": 21,
+        "bodyEndLine": 174,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 163,
+        "column": 7,
+        "start": 6778,
+        "end": 7301,
+        "bodyLine": 166,
+        "bodyColumn": 21,
+        "bodyEndLine": 174,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:createConfiguredProjectAuthorizer",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:createConfiguredProjectAuthorizer#0/closure:ReturnStatement:argument[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:createConfiguredProjectAuthorizer#0/closure:ReturnStatement:argument[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 172,
+        "column": 9,
+        "start": 7181,
+        "end": 7298,
+        "bodyLine": 173,
+        "bodyColumn": 4,
+        "bodyEndLine": 173,
+        "bodyEndColumn": 80
+      },
+      "current_source_address": {
+        "line": 172,
+        "column": 9,
+        "start": 7181,
+        "end": 7298,
+        "bodyLine": 173,
+        "bodyColumn": 4,
+        "bodyEndLine": 173,
+        "bodyEndColumn": 80
+      },
+      "name": "closure:ReturnStatement:argument[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:createConfiguredProjectAuthorizer",
+          "callsite": null,
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "return"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:createConfiguredProjectAuthorizer",
+          "callsite": null,
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "return"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:deniedByError#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:deniedByError#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 75,
+        "column": 0,
+        "start": 2481,
+        "end": 2578,
+        "bodyLine": 75,
+        "bodyColumn": 68,
+        "bodyEndLine": 77,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 75,
+        "column": 0,
+        "start": 2481,
+        "end": 2578,
+        "bodyLine": 75,
+        "bodyColumn": 68,
+        "bodyEndLine": 77,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:deniedByError",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:deny#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:deny#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 40,
+        "column": 0,
+        "start": 1208,
+        "end": 1329,
+        "bodyLine": 40,
+        "bodyColumn": 74,
+        "bodyEndLine": 42,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 40,
+        "column": 0,
+        "start": 1208,
+        "end": 1329,
+        "bodyLine": 40,
+        "bodyColumn": 74,
+        "bodyEndLine": 42,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:deny",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:entity#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:entity#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 34,
+        "column": 0,
+        "start": 980,
+        "end": 1120,
+        "bodyLine": 34,
+        "bodyColumn": 85,
+        "bodyEndLine": 36,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 34,
+        "column": 0,
+        "start": 980,
+        "end": 1120,
+        "bodyLine": 34,
+        "bodyColumn": 85,
+        "bodyEndLine": 36,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:entity",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:errorMessage#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:errorMessage#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 69,
+        "column": 0,
+        "start": 2263,
+        "end": 2377,
+        "bodyLine": 69,
+        "bodyColumn": 46,
+        "bodyEndLine": 71,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 69,
+        "column": 0,
+        "start": 2263,
+        "end": 2377,
+        "bodyLine": 69,
+        "bodyColumn": 46,
+        "bodyEndLine": 71,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:errorMessage",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:policySet#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:policySet#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 37,
+        "column": 0,
+        "start": 1121,
+        "end": 1207,
+        "bodyLine": 37,
+        "bodyColumn": 54,
+        "bodyEndLine": 39,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 37,
+        "column": 0,
+        "start": 1121,
+        "end": 1207,
+        "bodyLine": 37,
+        "bodyColumn": 54,
+        "bodyEndLine": 39,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:policySet",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:reject#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:reject#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 43,
+        "column": 0,
+        "start": 1330,
+        "end": 1485,
+        "bodyLine": 43,
+        "bodyColumn": 71,
+        "bodyEndLine": 47,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 43,
+        "column": 0,
+        "start": 1330,
+        "end": 1485,
+        "bodyLine": 43,
+        "bodyColumn": 71,
+        "bodyEndLine": 47,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:reject",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:reject#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:reject#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 44,
+        "column": 37,
+        "start": 1440,
+        "end": 1481,
+        "bodyLine": 44,
+        "bodyColumn": 43,
+        "bodyEndLine": 46,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 44,
+        "column": 37,
+        "start": 1440,
+        "end": 1481,
+        "bodyLine": 44,
+        "bodyColumn": 43,
+        "bodyEndLine": 46,
+        "bodyEndColumn": 3
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:reject",
+          "callsite": "MemberExpression(computed:false;object:CallExpression(arguments:[Identifier(name:\"Boolean\")];callee:MemberExpression(computed:false;object:Identifier(name:\"conditions\");property:Identifier(name:\"filter\")));property:Identifier(name:\"forEach\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:CallExpression(arguments:[Identifier(name:\"Boolean\")];callee:MemberExpression(computed:false;object:Identifier(name:\"conditions\");property:Identifier(name:\"filter\")));property:Identifier(name:\"forEach\"))",
+          "argument_role": "argument:0",
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "call:MemberExpression(computed:false;object:CallExpression(arguments:[Identifier(name:\"Boolean\")];callee:MemberExpression(computed:false;object:Identifier(name:\"conditions\");property:Identifier(name:\"filter\")));property:Identifier(name:\"forEach\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:reject",
+          "callsite": "MemberExpression(computed:false;object:CallExpression(arguments:[Identifier(name:\"Boolean\")];callee:MemberExpression(computed:false;object:Identifier(name:\"conditions\");property:Identifier(name:\"filter\")));property:Identifier(name:\"forEach\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:CallExpression(arguments:[Identifier(name:\"Boolean\")];callee:MemberExpression(computed:false;object:Identifier(name:\"conditions\");property:Identifier(name:\"filter\")));property:Identifier(name:\"forEach\"))",
+          "argument_role": "argument:0",
+          "receivers": [],
+          "control": [],
+          "enclosing_context": [
+            "call:MemberExpression(computed:false;object:CallExpression(arguments:[Identifier(name:\"Boolean\")];callee:MemberExpression(computed:false;object:Identifier(name:\"conditions\");property:Identifier(name:\"filter\")));property:Identifier(name:\"forEach\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 48,
+        "column": 7,
+        "start": 1493,
+        "end": 2108,
+        "bodyLine": 51,
+        "bodyColumn": 2,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 48,
+        "column": 7,
+        "start": 1493,
+        "end": 2108,
+        "bodyLine": 51,
+        "bodyColumn": 2,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:validateCedarPolicySet",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts/",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:failure/binding:failure#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:failure/binding:failure#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 54,
+        "column": 18,
+        "start": 1781,
+        "end": 1933,
+        "bodyLine": 54,
+        "bodyColumn": 77,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 54,
+        "column": 18,
+        "start": 1781,
+        "end": 1933,
+        "bodyLine": 54,
+        "bodyColumn": 77,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 3
+      },
+      "name": "binding:failure",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:validateCedarPolicySet",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:validateCedarPolicySet",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:failure/binding:failure#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:failure/binding:failure#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 56,
+        "column": 42,
+        "start": 1902,
+        "end": 1926,
+        "bodyLine": 56,
+        "bodyColumn": 53,
+        "bodyEndLine": 56,
+        "bodyEndColumn": 66
+      },
+      "current_source_address": {
+        "line": 56,
+        "column": 42,
+        "start": 1902,
+        "end": 1926,
+        "bodyLine": 56,
+        "bodyColumn": 53,
+        "bodyEndLine": 56,
+        "bodyEndColumn": 66
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:validateCedarPolicySet/callable:failure",
+          "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:failure",
+            "property:diagnostics"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "property:diagnostics",
+            "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "caller-context",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:validateCedarPolicySet/callable:failure",
+          "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
+          "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
+          "argument_role": "argument:0",
+          "receivers": [
+            "binding:failure",
+            "property:diagnostics"
+          ],
+          "control": [],
+          "enclosing_context": [
+            "property:diagnostics",
+            "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))[argument:0]"
+          ],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:success/binding:success#0",
+      "current_identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:success/binding:success#0",
+      "file": "src/authorization/cedar-boundary.ts",
+      "source_address": {
+        "line": 58,
+        "column": 18,
+        "start": 1953,
+        "end": 2045,
+        "bodyLine": 58,
+        "bodyColumn": 77,
+        "bodyEndLine": 58,
+        "bodyEndColumn": 109
+      },
+      "current_source_address": {
+        "line": 58,
+        "column": 18,
+        "start": 1953,
+        "end": 2045,
+        "bodyLine": 58,
+        "bodyColumn": 77,
+        "bodyEndLine": 58,
+        "bodyEndColumn": 109
+      },
+      "name": "binding:success",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Unique same-file lexical/caller-role match. Anonymous callbacks are anchored by their actual enclosing callable role, callee/receiver expression, argument position, receive target and enclosing control path where present; ordinals/body hashes were not used. Current captured Source differs only by a trailing type-only export; original published measured CC/CRAP ceilings remain unchanged.",
+      "role_proof": {
+        "baseline": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:validateCedarPolicySet",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "current": {
+          "kind": "lexical",
+          "owner_role": "file:src/authorization/cedar-boundary.ts//callable:validateCedarPolicySet",
+          "callsite": null,
+          "control": [],
+          "receiver_callee": null,
+          "argument_role": null,
+          "receivers": [],
+          "enclosing_context": [],
+          "enclosing_context_detail": []
+        },
+        "detail_disambiguated": false
+      }
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:constructor#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:constructor#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 43,
+        "column": 2,
+        "start": 1367,
+        "end": 1435,
+        "bodyLine": 43,
+        "bodyColumn": 33,
+        "bodyEndLine": 45,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 43,
+        "column": 2,
+        "start": 1360,
+        "end": 1428,
+        "bodyLine": 43,
+        "bodyColumn": 33,
+        "bodyEndLine": 45,
+        "bodyEndColumn": 3
+      },
+      "name": "method:constructor",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:getValue#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:getValue#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 46,
+        "column": 2,
+        "start": 1438,
+        "end": 1539,
+        "bodyLine": 46,
+        "bodyColumn": 55,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 46,
+        "column": 2,
+        "start": 1431,
+        "end": 1532,
+        "bodyLine": 46,
+        "bodyColumn": 55,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 3
+      },
+      "name": "method:getValue",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:setValue#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:setValue#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 49,
+        "column": 2,
+        "start": 1542,
+        "end": 1641,
+        "bodyLine": 49,
+        "bodyColumn": 61,
+        "bodyEndLine": 51,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 49,
+        "column": 2,
+        "start": 1535,
+        "end": 1634,
+        "bodyLine": 49,
+        "bodyColumn": 61,
+        "bodyEndLine": 51,
+        "bodyEndColumn": 3
+      },
+      "name": "method:setValue",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:deleteValue#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:deleteValue#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 52,
+        "column": 2,
+        "start": 1644,
+        "end": 1727,
+        "bodyLine": 52,
+        "bodyColumn": 49,
+        "bodyEndLine": 54,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 52,
+        "column": 2,
+        "start": 1637,
+        "end": 1720,
+        "bodyLine": 52,
+        "bodyColumn": 49,
+        "bodyEndLine": 54,
+        "bodyEndColumn": 3
+      },
+      "name": "method:deleteValue",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:incrementAttempts#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:incrementAttempts#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 55,
+        "column": 2,
+        "start": 1730,
+        "end": 1807,
+        "bodyLine": 55,
+        "bodyColumn": 45,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 55,
+        "column": 2,
+        "start": 1723,
+        "end": 1800,
+        "bodyLine": 55,
+        "bodyColumn": 45,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 3
+      },
+      "name": "method:incrementAttempts",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:attemptCount#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:attemptCount#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 58,
+        "column": 2,
+        "start": 1810,
+        "end": 1880,
+        "bodyLine": 58,
+        "bodyColumn": 40,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 58,
+        "column": 2,
+        "start": 1803,
+        "end": 1873,
+        "bodyLine": 58,
+        "bodyColumn": 40,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 3
+      },
+      "name": "method:attemptCount",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:executionCount#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:executionCount#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 61,
+        "column": 2,
+        "start": 1883,
+        "end": 1957,
+        "bodyLine": 61,
+        "bodyColumn": 42,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 61,
+        "column": 2,
+        "start": 1876,
+        "end": 1950,
+        "bodyLine": 61,
+        "bodyColumn": 42,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 3
+      },
+      "name": "method:executionCount",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:toolExecutionCount#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:toolExecutionCount#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 64,
+        "column": 2,
+        "start": 1960,
+        "end": 2060,
+        "bodyLine": 64,
+        "bodyColumn": 58,
+        "bodyEndLine": 66,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 64,
+        "column": 2,
+        "start": 1953,
+        "end": 2053,
+        "bodyLine": 64,
+        "bodyColumn": 58,
+        "bodyEndLine": 66,
+        "bodyEndColumn": 3
+      },
+      "name": "method:toolExecutionCount",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:consecutiveFailures#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:consecutiveFailures#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 67,
+        "column": 2,
+        "start": 2063,
+        "end": 2140,
+        "bodyLine": 67,
+        "bodyColumn": 47,
+        "bodyEndLine": 69,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 67,
+        "column": 2,
+        "start": 2056,
+        "end": 2133,
+        "bodyLine": 67,
+        "bodyColumn": 47,
+        "bodyEndLine": 69,
+        "bodyEndColumn": 3
+      },
+      "name": "method:consecutiveFailures",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:recordExecution#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:recordExecution#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 70,
+        "column": 2,
+        "start": 2143,
+        "end": 2360,
+        "bodyLine": 70,
+        "bodyColumn": 71,
+        "bodyEndLine": 74,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 70,
+        "column": 2,
+        "start": 2136,
+        "end": 2353,
+        "bodyLine": 70,
+        "bodyColumn": 71,
+        "bodyEndLine": 74,
+        "bodyEndColumn": 3
+      },
+      "name": "method:recordExecution",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "max_complexity": 3,
+      "baseline_crap": 12,
+      "max_crap": 12,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:PolicySession/method:batchGetCounters#0",
+      "current_identity": "src/governance/operation-policy.ts#class:PolicySession/method:batchGetCounters#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 75,
+        "column": 2,
+        "start": 2363,
+        "end": 2736,
+        "bodyLine": 75,
+        "bodyColumn": 103,
+        "bodyEndLine": 84,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 75,
+        "column": 2,
+        "start": 2356,
+        "end": 2729,
+        "bodyLine": 75,
+        "bodyColumn": 103,
+        "bodyEndLine": 84,
+        "bodyEndColumn": 3
+      },
+      "name": "method:batchGetCounters",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "max_complexity": 3,
+      "baseline_crap": 12,
+      "max_crap": 12,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:GovernanceDenied/method:constructor#0",
+      "current_identity": "src/governance/operation-policy.ts#class:GovernanceDenied/method:constructor#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 88,
+        "column": 2,
+        "start": 2788,
+        "end": 3028,
+        "bodyLine": 93,
+        "bodyColumn": 4,
+        "bodyEndLine": 96,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 88,
+        "column": 2,
+        "start": 2781,
+        "end": 3021,
+        "bodyLine": 93,
+        "bodyColumn": 4,
+        "bodyEndLine": 96,
+        "bodyEndColumn": 3
+      },
+      "name": "method:constructor",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:GovernanceToolError/method:constructor#0",
+      "current_identity": "src/governance/operation-policy.ts#class:GovernanceToolError/method:constructor#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 100,
+        "column": 2,
+        "start": 3083,
+        "end": 3180,
+        "bodyLine": 100,
+        "bodyColumn": 31,
+        "bodyEndLine": 103,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 100,
+        "column": 2,
+        "start": 3069,
+        "end": 3166,
+        "bodyLine": 100,
+        "bodyColumn": 31,
+        "bodyEndLine": 103,
+        "bodyEndColumn": 3
+      },
+      "name": "method:constructor",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#fn:isErrorResult#0",
+      "current_identity": "src/governance/operation-policy.ts#fn:isErrorResult#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 106,
+        "column": 0,
+        "start": 3184,
+        "end": 3454,
+        "bodyLine": 106,
+        "bodyColumn": 49,
+        "bodyEndLine": 110,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 106,
+        "column": 0,
+        "start": 3170,
+        "end": 3440,
+        "bodyLine": 106,
+        "bodyColumn": 49,
+        "bodyEndLine": 110,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:isErrorResult",
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "max_complexity": 5,
+      "baseline_crap": 30,
+      "max_crap": 30,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#fn:toolName#0",
+      "current_identity": "src/governance/operation-policy.ts#fn:toolName#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 112,
+        "column": 0,
+        "start": 3456,
+        "end": 3639,
+        "bodyLine": 112,
+        "bodyColumn": 39,
+        "bodyEndLine": 115,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 112,
+        "column": 0,
+        "start": 3442,
+        "end": 3625,
+        "bodyLine": 112,
+        "bodyColumn": 39,
+        "bodyEndLine": 115,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:toolName",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "max_complexity": 4,
+      "baseline_crap": 20,
+      "max_crap": 20,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:constructor#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:constructor#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 126,
+        "column": 2,
+        "start": 4070,
+        "end": 4309,
+        "bodyLine": 126,
+        "bodyColumn": 105,
+        "bodyEndLine": 129,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 126,
+        "column": 2,
+        "start": 4056,
+        "end": 4295,
+        "bodyLine": 126,
+        "bodyColumn": 105,
+        "bodyEndLine": 129,
+        "bodyEndColumn": 3
+      },
+      "name": "method:constructor",
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "max_complexity": 1,
+      "baseline_crap": 1,
+      "max_crap": 1,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:evaluate#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:evaluate#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 131,
+        "column": 2,
+        "start": 4313,
+        "end": 5562,
+        "bodyLine": 131,
+        "bodyColumn": 89,
+        "bodyEndLine": 168,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 131,
+        "column": 2,
+        "start": 4299,
+        "end": 5548,
+        "bodyLine": 131,
+        "bodyColumn": 89,
+        "bodyEndLine": 168,
+        "bodyEndColumn": 3
+      },
+      "name": "method:evaluate",
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "max_complexity": 7,
+      "baseline_crap": 56,
+      "max_crap": 56,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:run#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:run#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 170,
+        "column": 2,
+        "start": 5566,
+        "end": 6603,
+        "bodyLine": 174,
+        "bodyColumn": 22,
+        "bodyEndLine": 194,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 170,
+        "column": 2,
+        "start": 5552,
+        "end": 6589,
+        "bodyLine": 174,
+        "bodyColumn": 22,
+        "bodyEndLine": 194,
+        "bodyEndColumn": 3
+      },
+      "name": "method:run",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:run#0/binding:admitted/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:run#0/binding:admitted/closure:CallExpression:arguments[0]#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 178,
+        "column": 44,
+        "start": 5956,
+        "end": 5989,
+        "bodyLine": 178,
+        "bodyColumn": 50,
+        "bodyEndLine": 178,
+        "bodyEndColumn": 77
+      },
+      "current_source_address": {
+        "line": 178,
+        "column": 44,
+        "start": 5942,
+        "end": 5975,
+        "bodyLine": 178,
+        "bodyColumn": 50,
+        "bodyEndLine": 178,
+        "bodyEndColumn": 77
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:run#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:run#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 179,
+        "column": 25,
+        "start": 6017,
+        "end": 6597,
+        "bodyLine": 179,
+        "bodyColumn": 37,
+        "bodyEndLine": 193,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 179,
+        "column": 25,
+        "start": 6003,
+        "end": 6583,
+        "bodyLine": 179,
+        "bodyColumn": 37,
+        "bodyEndLine": 193,
+        "bodyEndColumn": 5
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:rejectPreparation#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:rejectPreparation#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 197,
+        "column": 2,
+        "start": 6698,
+        "end": 6877,
+        "bodyLine": 197,
+        "bodyColumn": 61,
+        "bodyEndLine": 202,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 197,
+        "column": 2,
+        "start": 6684,
+        "end": 6863,
+        "bodyLine": 197,
+        "bodyColumn": 61,
+        "bodyEndLine": 202,
+        "bodyEndColumn": 3
+      },
+      "name": "method:rejectPreparation",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:rejectPreparation#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:rejectPreparation#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 198,
+        "column": 34,
+        "start": 6793,
+        "end": 6871,
+        "bodyLine": 198,
+        "bodyColumn": 46,
+        "bodyEndLine": 201,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 198,
+        "column": 34,
+        "start": 6779,
+        "end": 6857,
+        "bodyLine": 198,
+        "bodyColumn": 46,
+        "bodyEndLine": 201,
+        "bodyEndColumn": 5
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#enqueueAdmission#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#enqueueAdmission#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 204,
+        "column": 2,
+        "start": 6881,
+        "end": 7099,
+        "bodyLine": 204,
+        "bodyColumn": 61,
+        "bodyEndLine": 211,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 204,
+        "column": 2,
+        "start": 6867,
+        "end": 7085,
+        "bodyLine": 204,
+        "bodyColumn": 61,
+        "bodyEndLine": 211,
+        "bodyEndColumn": 3
+      },
+      "name": "method:#enqueueAdmission",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#enqueueAdmission#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#enqueueAdmission#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 207,
+        "column": 6,
+        "start": 7028,
+        "end": 7043,
+        "bodyLine": 207,
+        "bodyColumn": 12,
+        "bodyEndLine": 207,
+        "bodyEndColumn": 21
+      },
+      "current_source_address": {
+        "line": 207,
+        "column": 6,
+        "start": 7014,
+        "end": 7029,
+        "bodyLine": 207,
+        "bodyColumn": 12,
+        "bodyEndLine": 207,
+        "bodyEndColumn": 21
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#enqueueAdmission#0/closure:CallExpression:arguments[1]#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#enqueueAdmission#0/closure:CallExpression:arguments[1]#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 208,
+        "column": 6,
+        "start": 7051,
+        "end": 7066,
+        "bodyLine": 208,
+        "bodyColumn": 12,
+        "bodyEndLine": 208,
+        "bodyEndColumn": 21
+      },
+      "current_source_address": {
+        "line": 208,
+        "column": 6,
+        "start": 7037,
+        "end": 7052,
+        "bodyLine": 208,
+        "bodyColumn": 12,
+        "bodyEndLine": 208,
+        "bodyEndColumn": 21
+      },
+      "name": "closure:CallExpression:arguments[1]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#recordAttempt#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#recordAttempt#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 213,
+        "column": 2,
+        "start": 7103,
+        "end": 7367,
+        "bodyLine": 213,
+        "bodyColumn": 64,
+        "bodyEndLine": 216,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 213,
+        "column": 2,
+        "start": 7089,
+        "end": 7353,
+        "bodyLine": 213,
+        "bodyColumn": 64,
+        "bodyEndLine": 216,
+        "bodyEndColumn": 3
+      },
+      "name": "method:#recordAttempt",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#admit#0",
+      "current_identity": "src/governance/operation-policy.ts#class:OperationPolicyGuard/method:#admit#0",
+      "file": "src/governance/operation-policy.ts",
+      "source_address": {
+        "line": 218,
+        "column": 2,
+        "start": 7371,
+        "end": 8365,
+        "bodyLine": 218,
+        "bodyColumn": 75,
+        "bodyEndLine": 237,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 218,
+        "column": 2,
+        "start": 7357,
+        "end": 8351,
+        "bodyLine": 218,
+        "bodyColumn": 75,
+        "bodyEndLine": 237,
+        "bodyEndColumn": 3
+      },
+      "name": "method:#admit",
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "max_complexity": 7,
+      "baseline_crap": 56,
+      "max_crap": 56,
+      "rationale": "same stable structural identity; captured current body text matches b549951 body. Whole-file diff contains only export modifier changes on PolicyRuleResult and GovernanceToolError. Named method/helper and anchored callback contracts are retained; no ordinal/body-hash-only correspondence. Original measured CC/CRAP ceilings remain unchanged."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0",
+      "current_identity": "bin/read-only-dispatch-repair.ts#fn:planReadOnlyDispatchRepair#0",
+      "file": "bin/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 89,
+        "column": 7,
+        "start": 4176,
+        "end": 10061,
+        "bodyLine": 103,
+        "bodyColumn": 3,
+        "bodyEndLine": 248,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 15,
+        "column": 7,
+        "start": 736,
+        "end": 1546,
+        "bodyLine": 17,
+        "bodyColumn": 30,
+        "bodyEndLine": 43,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:planReadOnlyDispatchRepair",
+      "baseline_complexity": 40,
+      "baseline_coverage": 0,
+      "max_complexity": 40,
+      "baseline_crap": 1640,
+      "max_crap": 1640,
+      "rationale": "Same exported planning operation and CLI route. At b549951 the function validates the exact repair request, reads authoritative work/ledger/session rows, validates one pending read-only issue and source/config bindings, then produces the repair plan. Current lines 14-42 assemble the same project/work/session snapshot and delegate plan construction to buildReadOnlyDispatchRepairPlan. The moved validation/decomposition preserves callable lineage; cap stays 40. Current CC 1 is within cap. Refreshed current Source includes bce02c8 shared requireRepair, keeping config-first short-circuit and exact error/transaction contract; apply now CC2, under original CC2 ceiling."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:applyReadOnlyDispatchRepair#0",
+      "current_identity": "bin/read-only-dispatch-repair.ts#fn:applyReadOnlyDispatchRepair#0",
+      "file": "bin/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 251,
+        "column": 7,
+        "start": 10163,
+        "end": 12401,
+        "bodyLine": 251,
+        "bodyColumn": 73,
+        "bodyEndLine": 306,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 46,
+        "column": 7,
+        "start": 1640,
+        "end": 2334,
+        "bodyLine": 54,
+        "bodyColumn": 31,
+        "bodyEndLine": 70,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:applyReadOnlyDispatchRepair",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Same exported apply operation and CLI route after MJS-to-TS boundary extraction. It verifies current configuration and exact plan integrity, and delegates the producer-fenced deterministic commit to HostStateStore. The shared requireRepair guard preserves config-first short-circuit and the original Error contract; current CC2 is within the unchanged original measured CC2 ceiling. No ordinal or body-hash-only pairing is used."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:applyReadOnlyDispatchRepair#0/closure:CallExpression:callee[0]#0",
+      "current_identity": "bin/read-only-dispatch-repair.ts#fn:applyReadOnlyDispatchRepair#0/closure:CallExpression:callee[0]#0",
+      "file": "bin/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 254,
+        "column": 43,
+        "start": 10351,
+        "end": 10389,
+        "bodyLine": 254,
+        "bodyColumn": 77,
+        "bodyEndLine": 254,
+        "bodyEndColumn": 81
+      },
+      "current_source_address": {
+        "line": 57,
+        "column": 43,
+        "start": 1999,
+        "end": 2037,
+        "bodyLine": 57,
+        "bodyColumn": 77,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 81
+      },
+      "name": "closure:CallExpression:callee[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "The closure removes the digest field before canonical plan hashing in both versions. The current expression at line 56 is the same concrete integrity-check operation as the baseline expression at line 254; its enclosing applier also has a one-to-one retained mapping. Keep cap 1 unchanged; current CC 1 is within cap. Refreshed current Source includes bce02c8 shared requireRepair, keeping config-first short-circuit and exact error/transaction contract; apply now CC2, under original CC2 ceiling."
     }
   ],
   "new_functions": [
@@ -27167,5 +29674,28 @@
     "scope": "Whole init 16 roles plus const-only refresh of 3 existing command-contract roles; metadata 32 inventoried but not admitted by this bounded join.",
     "input": ".tmp/tooling-research/typed-correction-v179/typed-init-lineage-v803.json",
     "review": ".tmp/tooling-research/typed-correction-v179/typed-init-lineage-review-v804.md"
+  },
+  "scope_review_v1033": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "source_commit": "5254d61",
+    "retained_added": 55,
+    "files": [
+      "src/authorization/cedar-boundary.ts",
+      "src/governance/operation-policy.ts",
+      "bin/read-only-dispatch-repair.ts"
+    ],
+    "reviews": [
+      "crap-review-cedar-boundary-v1001/review.json",
+      "crap-review-operation-policy-v1002/review.json",
+      "crap-review-dispatch-repair-v999/review.json"
+    ],
+    "independent_review_lanes": [
+      "frozen_cedar_join_v1028",
+      "frozen_policy_join_v1029",
+      "frozen_dispatch_join_v1030"
+    ],
+    "frozen_ceilings": "Exact original measured rows corroborated by original.baseline; never original.current or candidate CC.",
+    "historical_measurement": "measurement_admitted=true, suite_passed=false, quality_passed=false",
+    "numeric_status": "Current exhaustive coverage/CRAP/mutation qualification remains pending."
   }
 }

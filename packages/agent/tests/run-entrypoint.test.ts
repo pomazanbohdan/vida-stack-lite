@@ -15,7 +15,7 @@ import {
 } from '../src/orchestration/persistent-session-handoff.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { sessionBridgeRunId } from '../src/orchestration/mastra-session-bridge.ts';
-import { boundedSpawnSync, executionBudget, pinnedEnvironment } from '../bin/bun.ts';
+import { boundedSpawnSync, commandOutcomeUnknown, executionBudget, pinnedEnvironment } from '../bin/bun.ts';
 import { spawn, spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
@@ -244,6 +244,12 @@ function isTerminalUtf8SpawnResult(value: unknown): value is TerminalUtf8SpawnRe
     typeof value.stderr === 'string'
   );
 }
+
+type PublicRunChildOptions = {
+  readonly budget?: ReturnType<typeof executionBudget>;
+  readonly childTimeout?: number;
+  readonly onUnknown?: () => void;
+};
 
 interface QuerySpyHandle {
   mockRestore(): void;
@@ -1795,13 +1801,41 @@ const common = [
   'information_research',
 ];
 
-function invoke(args: readonly string[], env: NodeJS.ProcessEnv = {}, entrypoint = launcher): SpawnSyncReturns<string> {
-  return spawnSync(process.execPath, [entrypoint, ...args], {
-    cwd: packageRoot,
-    env: { ...process.env, ...env },
-    encoding: 'utf8',
-    windowsHide: true,
-  });
+function invoke(
+  args: readonly string[],
+  env: NodeJS.ProcessEnv = {},
+  entrypoint = launcher,
+  options: PublicRunChildOptions = {},
+): TerminalUtf8SpawnResult {
+  const budget = options.budget ?? executionBudget(5_000, 250);
+  const result = boundedSpawnSync(
+    spawnSync,
+    process.execPath,
+    [entrypoint, ...args],
+    {
+      cwd: packageRoot,
+      env: { ...process.env, ...env },
+      encoding: 'utf8',
+      windowsHide: true,
+      timeout: options.childTimeout ?? 5_000,
+      budget,
+    },
+    `public run ${path.basename(entrypoint)}`,
+  );
+  if (commandOutcomeUnknown(result) || !isTerminalUtf8SpawnResult(result)) {
+    options.onUnknown?.();
+    const tail = (value: unknown): string => {
+      if (typeof value === 'string') return value.slice(-2048);
+      if (value instanceof Uint8Array)
+        return Buffer.from(value.buffer, value.byteOffset, value.byteLength).toString('utf8').slice(-2048);
+      return '';
+    };
+    throw new Error(
+      `Public run child outcome is unknown (status=${result.status ?? 'null'} signal=${result.signal ?? 'none'} ` +
+        `error=${result.error?.code ?? 'none'}).\nstdout tail:\n${tail(result.stdout)}\nstderr tail:\n${tail(result.stderr)}`,
+    );
+  }
+  return result;
 }
 
 describe('vida-agent run entrypoint fast checks', () => {
@@ -1850,6 +1884,8 @@ describe('vida-agent run entrypoint fast checks', () => {
 
   test('selects an equal-root work path from one explicit project and fails closed on ambiguous or foreign roots', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-project-membership-'));
+    let preserveRoot = false;
+    const childBudget = executionBudget(60_000, 250);
     try {
       for (const directory of ['products/shared', 'products/foreign'])
         mkdirSync(path.join(root, directory), { recursive: true });
@@ -1883,12 +1919,14 @@ describe('vida-agent run entrypoint fast checks', () => {
         '--workflow',
         'unsupported-for-membership-check',
       ];
-      const invokeRoot = (args: readonly string[]) =>
-        spawnSync(process.execPath, [launcher, ...args], {
-          cwd: packageRoot,
-          encoding: 'utf8',
-          windowsHide: true,
+      const invokeRoot = (args: readonly string[]) => {
+        if (preserveRoot) throw new Error('Equal-root fixture is retained after an uncertain CLI outcome.');
+        return invoke(args, {}, launcher, {
+          budget: childBudget,
+          childTimeout: 60_000,
+          onUnknown: () => (preserveRoot = true),
         });
+      };
       const chosenEqualMember = invokeRoot([
         ...base,
         '--project',
@@ -1914,44 +1952,56 @@ describe('vida-agent run entrypoint fast checks', () => {
       const nestedForeign = invokeRoot([...base, '--project', 'broad', '--work-path', 'products/foreign/src/probe.ts']);
       expect(requireRecord(parseJsonUnknown(nestedForeign.stderr), 'CLI result').code).toBe('GAP-VIDA-RUN-CONTEXT-001');
     } finally {
-      rmSync(root, { recursive: true, force: true });
+      if (preserveRoot) process.stderr.write(`Retained uncertain public run fixture: ${root}\n`);
+      else rmSync(root, { recursive: true, force: true });
     }
   }, 60_000);
 });
 
 ordinaryDescribe('vida-agent run entrypoint', () => {
   test('requires every explicit argument and rejects raw authority inputs', () => {
-    const missing = invoke(common);
+    const childOptions = { budget: executionBudget(5_000, 250) };
+    const missing = invoke(common, {}, launcher, childOptions);
     expect(missing.status).toBe(1);
     expect(missing.stdout).toBe('');
     expect(missing.stderr).toContain('GAP-VIDA-RUN-CLI-001');
-    const rawThread = invoke([...common, '--workflow', 'information_research_light', '--thread-id', 'forged']);
+    const rawThread = invoke(
+      [...common, '--workflow', 'information_research_light', '--thread-id', 'forged'],
+      {},
+      launcher,
+      childOptions,
+    );
     expect(rawThread.status).toBe(1);
     expect(rawThread.stderr).toContain('GAP-VIDA-RUN-CLI-001');
-    const legacyTenant = invoke([
-      '--project-root',
-      repositoryRoot,
-      '--tenant',
-      'legacy-tenant',
-      '--project',
-      'fixture-project',
-      '--work-path',
-      'agent-runtime-new',
-      '--work-id',
-      'work-17',
-      '--attempt',
-      '2',
-      '--scope-digest',
-      'a'.repeat(64),
-      '--team',
-      'default-development',
-      '--kind',
-      'research',
-      '--intent',
-      'information_research',
-      '--workflow',
-      'information_research_light',
-    ]);
+    const legacyTenant = invoke(
+      [
+        '--project-root',
+        repositoryRoot,
+        '--tenant',
+        'legacy-tenant',
+        '--project',
+        'fixture-project',
+        '--work-path',
+        'agent-runtime-new',
+        '--work-id',
+        'work-17',
+        '--attempt',
+        '2',
+        '--scope-digest',
+        'a'.repeat(64),
+        '--team',
+        'default-development',
+        '--kind',
+        'research',
+        '--intent',
+        'information_research',
+        '--workflow',
+        'information_research_light',
+      ],
+      {},
+      launcher,
+      childOptions,
+    );
     expect(legacyTenant.status).toBe(1);
     expect(legacyTenant.stderr).toContain('GAP-VIDA-RUN-CLI-001');
   });
@@ -2598,8 +2648,13 @@ if (mutationMode || v8CoverageMode) {
     ];
     return { args, initialization, initializationPath, fixtureBundle, config };
   };
-  const invokeMutation = (args: readonly string[], expectedStatus = 0, entrypoint = launcher): TestRunPayload => {
-    const result = invoke(args, {}, entrypoint);
+  const invokeMutation = (
+    args: readonly string[],
+    expectedStatus = 0,
+    entrypoint = launcher,
+    options: PublicRunChildOptions = {},
+  ): TestRunPayload => {
+    const result = invoke(args, {}, entrypoint, options);
     expect(Number.isInteger(result.status)).toBe(true);
     expect(result.signal).toBeNull();
     expect(result.error).toBeUndefined();
@@ -2617,6 +2672,124 @@ if (mutationMode || v8CoverageMode) {
       expect(payload.message.length).toBeGreaterThan(0);
     }
     return payload;
+  };
+
+  const ownedMutationFixture = (root: string, caseTimeout: number, entrypoint = launcher) => {
+    const budget = executionBudget(caseTimeout, 250);
+    let unknown = false;
+    return {
+      invoke(args: readonly string[], status = 0, selectedEntrypoint = entrypoint): TestRunPayload {
+        if (unknown) throw new Error(`Refusing to reuse retained run fixture: ${root}`);
+        return invokeMutation(args, status, selectedEntrypoint, {
+          budget,
+          childTimeout: caseTimeout,
+          onUnknown: () => (unknown = true),
+        });
+      },
+      hasUnknown: () => unknown,
+    };
+  };
+
+  const prepareMutationIntake = (
+    args: readonly string[],
+    config: AgentRuntimeConfig,
+    options: { readonly sourcePath?: string } = {},
+  ) => {
+    const valueAfter = (flag: string) => {
+      const index = args.indexOf(flag);
+      const value = args[index + 1];
+      if (index < 0 || !value) throw new Error(`Mutation fixture is missing ${flag}.`);
+      return value;
+    };
+    const root = valueAfter('--project-root');
+    const workId = valueAfter('--work-id');
+    const projectId = valueAfter('--project');
+    const project = config.projects.find((candidate) => candidate.project_id === projectId);
+    if (!project) throw new Error(`Mutation fixture project is missing: ${projectId}`);
+    const projectRoot = path.resolve(root, project.project_root);
+    const sourcePath = options.sourcePath ?? path.relative(root, path.join(projectRoot, 'mutation-fixture-source.md'));
+    const sourceAbsolutePath = path.resolve(root, sourcePath);
+    if (!sourceAbsolutePath.startsWith(`${path.resolve(root)}${path.sep}`))
+      throw new Error('Mutation fixture source must be inside the repository root.');
+    mkdirSync(path.dirname(sourceAbsolutePath), { recursive: true });
+    if (!existsSync(sourceAbsolutePath)) writeFileSync(sourceAbsolutePath, '# Public CLI mutation fixture source\n');
+    const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), [sourcePath]);
+    const sourceEntry = source.entries[0];
+    if (!sourceEntry) throw new Error('Mutation fixture source snapshot entry is missing');
+    const workDir = path.join(root, '.agent', 'work', workId);
+    mkdirSync(workDir, { recursive: true });
+    const relative = (name: string) => `.agent/work/${workId}/${name}`;
+    const runtimePaths = runtimePackageCodePaths(config.runtime.bundle);
+    const scope = {
+      schema: 'ImplementationScope/v1',
+      scope_id: `scope-${workId}`,
+      work_id: workId,
+      source_revision: source.digest,
+      ac_ids: ['AC-CLI-1'],
+      allowed_paths: [sourcePath],
+      implementation_paths: [sourcePath],
+      documentation_paths: [],
+      changed_symbols: [],
+      non_goals: ['Source mutation'],
+      acceptance_trace: ['AC-CLI-1'],
+      behavior_trace: ['SR-CLI-1'],
+      test_trace: ['Public CLI mutation fixture'],
+      diagnostic_trace: ['Fixture'],
+      attribution: { thread_id: 'mutation-native-session', pointer: relative('intake.json') },
+      owner: 'fixture',
+      created_at: new Date().toISOString(),
+    };
+    const acceptance = {
+      schema: 'AcceptanceManifest/v1',
+      id: `acceptance-${workId}`,
+      version: 1,
+      ac_ids: scope.ac_ids,
+      source: sourcePath,
+      scope: scope.scope_id,
+      source_revision: source.digest,
+      contracts: [
+        {
+          id: 'AC-CLI-1',
+          definition: 'Keep public CLI state and report handling bound to this admitted attempt.',
+          sr: 'SR-CLI-1',
+          evidence: ['fixture'],
+        },
+      ],
+    };
+    const workItem: LocalWorkAdmissionInput['workItem'] = {
+      schema: 'WorkItem/v1',
+      id: workId,
+      provider: 'local',
+      provider_type: 'Research',
+      canonical_kind: 'research',
+      intent: 'information_research',
+      project_id: projectId,
+      title: 'Public CLI mutation fixture',
+      description: 'Exercise the public CLI with explicitly admitted work.',
+      risk_flags: [],
+      labels: [],
+    };
+    const intake = {
+      schema: 'VidaLocalSessionIntake/v1',
+      native_session_handle: 'mutation-native-session',
+      work_item: workItem,
+      scope_path: relative('scope.json'),
+      acceptance_path: relative('acceptance.json'),
+      runtime_code_paths: runtimePaths,
+      route: 'R2',
+      risk: 'low',
+      change_kind: 'fix',
+    };
+    writeFileSync(path.join(workDir, 'scope.json'), record(scope));
+    writeFileSync(path.join(workDir, 'acceptance.json'), record(acceptance));
+    const intakePath = path.join(workDir, 'intake.json');
+    writeFileSync(intakePath, record(intake));
+    const admittedArgs = args.map((value, index) => (args[index - 1] === '--scope-digest' ? source.digest : value));
+    return {
+      args: admittedArgs,
+      admissionArgs: [...admittedArgs, '--intake', intakePath],
+      sourceEntry,
+    };
   };
 
   test('public run handles delivered-work inspect, issue retry, report retry and conflict without opening the old engine', async () => {
@@ -2906,13 +3079,18 @@ if (mutationMode || v8CoverageMode) {
 
     test('rejects a changed scope for a persisted attempt before issuing its wave', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-persisted-'));
+      const fixture = ownedMutationFixture(root, 30_000);
+      let completed = false;
       try {
-        const { args } = createFixture(root);
-        const prepared = invokeMutation(args);
-        const changed = args.map((entry, index) => (args[index - 1] === '--scope-digest' ? 'b'.repeat(64) : entry));
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config);
+        const prepared = fixture.invoke(admitted.admissionArgs);
+        const changed = admitted.args.map((entry, index) =>
+          admitted.args[index - 1] === '--scope-digest' ? 'b'.repeat(64) : entry,
+        );
         const preparedVersion = requireStateVersion(prepared.state_version);
         expect(
-          invokeMutation(
+          fixture.invoke(
             [
               ...changed,
               '--expected-revision',
@@ -2929,9 +3107,14 @@ if (mutationMode || v8CoverageMode) {
           message:
             'The requested project context could not be bound. Next action: inspect the exact work and check its issued contract before retrying.',
         });
-        expect(requireStateVersion(invokeMutation(args).state_version)).toEqual(preparedVersion);
+        expect(requireStateVersion(fixture.invoke(admitted.args).state_version)).toEqual(preparedVersion);
+        completed = true;
       } finally {
-        rmSync(root, { recursive: true, force: true });
+        if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
+        else
+          process.stderr.write(
+            `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} public run fixture: ${root}\n`,
+          );
       }
     }, 30_000);
 
@@ -2997,10 +3180,13 @@ if (mutationMode || v8CoverageMode) {
 
     test('accepts the same configured project set in either receipt order', async () => {
       const root = mkdtempSync(path.join(tmpdir(), 'vida-run-project-set-'));
+      const fixture = ownedMutationFixture(root, 30_000);
+      let completed = false;
       try {
-        const { args, initialization, initializationPath } = createFixture(root, 'agent-runtime-new', true);
+        const { args, initialization, initializationPath, config } = createFixture(root, 'agent-runtime-new', true);
+        const admitted = prepareMutationIntake(args, config);
         expect(initialization.project_ids).toEqual(['alpha-project', 'mutation-project']);
-        expect(invokeMutation(args).status).toBe('prepared');
+        expect(fixture.invoke(admitted.admissionArgs).status).toBe('prepared');
         writeFileSync(
           initializationPath,
           record({ ...initialization, project_ids: [...initialization.project_ids].reverse() }),
@@ -3008,55 +3194,140 @@ if (mutationMode || v8CoverageMode) {
         const secondArgs = args.map((value, index) =>
           args[index - 1] === '--work-id' ? `mutation-run-${randomUUID()}` : value,
         );
-        expect(invokeMutation(secondArgs).status).toBe('prepared');
+        const secondAdmitted = prepareMutationIntake(secondArgs, config);
+        expect(fixture.invoke(secondAdmitted.admissionArgs).status).toBe('prepared');
+        completed = true;
       } finally {
-        rmSync(root, { recursive: true, force: true });
+        if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
+        else
+          process.stderr.write(
+            `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} public run fixture: ${root}\n`,
+          );
       }
     }, 30_000);
 
-    test('keeps CLI validation, workflow selection, CAS and report handling bound to one attempt', async () => {
-      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-mutation-'));
-      try {
-        const { args, initialization, initializationPath, config } = createFixture(root);
-        for (const changed of [
-          { repository_id: 'other-repository' },
-          { project_ids: ['other-project'] },
-          { integrations_digest: 'b'.repeat(64) },
-          { config_digest: 'b'.repeat(64) },
-          { workspace_id: 'other-workspace' },
-          { schema_sha256: 'b'.repeat(64) },
-        ]) {
-          writeFileSync(initializationPath, record({ ...initialization, ...changed }));
-          expect(invokeMutation(args, 1)).toMatchObject({
-            code: 'GAP-VIDA-RUN-CONTEXT-001',
-            message:
-              'Phase: context binding. Reason: configured context is unavailable or stale. Next action: Inspect project initialization and configured package resources before continuing.',
-          });
-        }
-        writeFileSync(initializationPath, record(initialization));
-        expect(invokeMutation(args.slice(0, -2), 1)).toMatchObject({
+    const contextDenials = [
+      {
+        name: 'stale repository identity',
+        changed: { repository_id: 'other-repository' },
+        expected: {
+          code: 'GAP-VIDA-RUN-CONTEXT-001',
+          message:
+            'Phase: context binding. Reason: configured context is unavailable or stale. Next action: Inspect project initialization and configured package resources before continuing.',
+        },
+      },
+      {
+        name: 'stale project identity',
+        changed: { project_ids: ['other-project'] },
+        expected: {
+          code: 'GAP-VIDA-RUN-CONTEXT-001',
+          message:
+            'Phase: context binding. Reason: configured context is unavailable or stale. Next action: Inspect project initialization and configured package resources before continuing.',
+        },
+      },
+      {
+        name: 'stale integrations digest',
+        changed: { integrations_digest: 'b'.repeat(64) },
+        expected: {
+          code: 'GAP-VIDA-RUN-CONTEXT-001',
+          message:
+            'Phase: context binding. Reason: configured context is unavailable or stale. Next action: Inspect project initialization and configured package resources before continuing.',
+        },
+      },
+      {
+        name: 'stale config digest',
+        changed: { config_digest: 'b'.repeat(64) },
+        expected: {
+          code: 'GAP-VIDA-RUN-CONTEXT-001',
+          message:
+            'Phase: context binding. Reason: configured context is unavailable or stale. Next action: Inspect project initialization and configured package resources before continuing.',
+        },
+      },
+      {
+        name: 'stale workspace identity',
+        changed: { workspace_id: 'other-workspace' },
+        expected: {
+          code: 'GAP-VIDA-RUN-CONTEXT-001',
+          message:
+            'Phase: context binding. Reason: configured context is unavailable or stale. Next action: Inspect project initialization and configured package resources before continuing.',
+        },
+      },
+      {
+        name: 'stale schema digest',
+        changed: { schema_sha256: 'b'.repeat(64) },
+        expected: {
+          code: 'GAP-VIDA-RUN-CONTEXT-001',
+          message:
+            'Phase: context binding. Reason: configured context is unavailable or stale. Next action: Inspect project initialization and configured package resources before continuing.',
+        },
+      },
+      {
+        name: 'incomplete CLI arguments',
+        candidate: (args: readonly string[]) => args.slice(0, -2),
+        expected: {
           code: 'GAP-VIDA-RUN-CLI-001',
           message:
             'Launcher arguments are incomplete or contain an unsupported option. Next action: inspect the exact work and check its issued contract before retrying.',
-        });
-        expect(invokeMutation([...args, '--thread-id', 'forged'], 1)).toMatchObject({
+        },
+      },
+      {
+        name: 'forged thread authority',
+        candidate: (args: readonly string[]) => [...args, '--thread-id', 'forged'],
+        expected: {
           code: 'GAP-VIDA-RUN-CLI-001',
           message:
             'Launcher arguments are incomplete or contain an unsupported option. Next action: inspect the exact work and check its issued contract before retrying.',
-        });
-        expect(invokeMutation(args.slice(0, -1).concat('task_execution'), 1)).toMatchObject({
+        },
+      },
+      {
+        name: 'unsupported workflow',
+        candidate: (args: readonly string[]) => args.slice(0, -1).concat('task_execution'),
+        expected: {
           code: 'GAP-VIDA-RUN-WORKFLOW-001',
           message:
             'The requested workflow is not configured for this selection. Next action: inspect the exact work and check its issued contract before retrying.',
-        });
-        const workId = args[args.indexOf('--work-id') + 1];
-        if (!workId) throw Error('mutation work identity is missing');
-        const workDir = path.join(root, '.agent', 'work', workId);
-        mkdirSync(workDir, { recursive: true });
-        const relative = (name: string) => `.agent/work/${workId}/${name}`;
-        const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']);
-        const sourceEntry = source.entries[0];
-        if (!sourceEntry) throw Error('mutation source snapshot entry is missing');
+        },
+      },
+    ] as const;
+    for (const denial of contextDenials) {
+      test(`rejects ${denial.name} without creating Work`, () => {
+        const root = mkdtempSync(path.join(tmpdir(), 'vida-run-negative-context-'));
+        const fixture = ownedMutationFixture(root, 5_000);
+        let completed = false;
+        try {
+          const { args, initialization, initializationPath, config } = createFixture(root);
+          if ('changed' in denial) writeFileSync(initializationPath, record({ ...initialization, ...denial.changed }));
+          const candidate = 'candidate' in denial ? denial.candidate(args) : args;
+          expect(fixture.invoke(candidate, 1)).toMatchObject(denial.expected);
+          const databasePath = sessionHandoffDatabasePath(root, config);
+          if (existsSync(databasePath)) {
+            const observed = inspectHostWorkspaceDatabase(
+              root,
+              path.relative(root, databasePath),
+              deriveWorkspaceId(config.repository.repository_id, root),
+            );
+            expect(observed.work).toEqual([]);
+            expect(observed.journals).toEqual([]);
+          }
+          completed = true;
+        } finally {
+          if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
+          else
+            process.stderr.write(
+              `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} public run fixture: ${root}\n`,
+            );
+        }
+      }, 5_000);
+    }
+
+    test('keeps CAS and report handling bound to one admitted attempt', async () => {
+      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-mutation-'));
+      const fixture = ownedMutationFixture(root, 60_000);
+      let completed = false;
+      try {
+        const { args, config } = createFixture(root);
+        const admitted = prepareMutationIntake(args, config, { sourcePath: 'AGENT.sidecar.md' });
+        const { sourceEntry } = admitted;
         const runtimePaths = runtimePackageCodePaths(config.runtime.bundle);
         const runtimeSnapshot = snapshotRuntimePackageSources(
           runtimePackageAccess(),
@@ -3064,71 +3335,7 @@ if (mutationMode || v8CoverageMode) {
           runtimePaths,
         );
         expect(runtimeSnapshot.entries.every((entry) => entry.exists)).toBe(true);
-        const workItem: LocalWorkAdmissionInput['workItem'] = {
-          schema: 'WorkItem/v1',
-          id: workId,
-          provider: 'local',
-          provider_type: 'Research',
-          canonical_kind: 'research',
-          intent: 'information_research',
-          project_id: 'mutation-project',
-          title: 'Public CLI mutation fixture',
-          description: 'Exercise CAS and report handling through the public CLI.',
-          risk_flags: [],
-          labels: [],
-        };
-        const scope = {
-          schema: 'ImplementationScope/v1',
-          scope_id: `scope-${workId}`,
-          work_id: workId,
-          source_revision: source.digest,
-          ac_ids: ['AC-CLI-1'],
-          allowed_paths: ['AGENT.sidecar.md'],
-          implementation_paths: ['AGENT.sidecar.md'],
-          documentation_paths: [],
-          changed_symbols: [],
-          non_goals: ['Source mutation'],
-          acceptance_trace: ['AC-CLI-1'],
-          behavior_trace: ['SR-CLI-1'],
-          test_trace: ['Public CLI CAS and report handling'],
-          diagnostic_trace: ['Fixture'],
-          attribution: { thread_id: 'mutation-native-session', pointer: relative('intake.json') },
-          owner: 'fixture',
-          created_at: new Date().toISOString(),
-        };
-        const acceptance = {
-          schema: 'AcceptanceManifest/v1',
-          id: `acceptance-${workId}`,
-          version: 1,
-          ac_ids: scope.ac_ids,
-          source: 'AGENT.sidecar.md',
-          scope: scope.scope_id,
-          source_revision: source.digest,
-          contracts: [
-            {
-              id: 'AC-CLI-1',
-              definition: 'Keep public CLI state and report handling bound to this admitted attempt.',
-              sr: 'SR-CLI-1',
-              evidence: ['fixture'],
-            },
-          ],
-        };
-        const intake = {
-          schema: 'VidaLocalSessionIntake/v1',
-          native_session_handle: 'mutation-native-session',
-          work_item: workItem,
-          scope_path: relative('scope.json'),
-          acceptance_path: relative('acceptance.json'),
-          runtime_code_paths: runtimePaths,
-          route: 'R2',
-          risk: 'low',
-          change_kind: 'fix',
-        };
-        writeFileSync(path.join(workDir, 'scope.json'), record(scope));
-        writeFileSync(path.join(workDir, 'acceptance.json'), record(acceptance));
-        writeFileSync(path.join(workDir, 'intake.json'), record(intake));
-        const admittedArgs = args.map((value, index) => (args[index - 1] === '--scope-digest' ? source.digest : value));
-        const prepared = invokeMutation([...admittedArgs, '--intake', path.join(workDir, 'intake.json')]);
+        const prepared = fixture.invoke(admitted.admissionArgs);
         expect(prepared.status).toBe('prepared');
         const preparedActions = requireNextActions(prepared);
         const preparedVersion = requireStateVersion(prepared.state_version);
@@ -3139,19 +3346,19 @@ if (mutationMode || v8CoverageMode) {
           '--expected-digest',
           version.digest,
         ];
-        const issued = invokeMutation([...admittedArgs, ...expected(preparedVersion), '--issue-wave', 'true']);
+        const issued = fixture.invoke([...admitted.args, ...expected(preparedVersion), '--issue-wave', 'true']);
         expect(issued.status).toBe('wave_issued');
         const issuedActions = requireIssuedActions(issued);
         const issuedVersion = requireStateVersion(issued.state_version);
         expect(issuedActions.map((item) => item.action.action_id)).toEqual(
           preparedActions.map((item) => item.request.action_id),
         );
-        invokeMutation([...admittedArgs, ...expected(preparedVersion), '--issue-wave', 'true'], 1);
+        fixture.invoke([...admitted.args, ...expected(preparedVersion), '--issue-wave', 'true'], 1);
         const reportFile = path.join(root, 'report.json');
         for (const invalid of ['', '{', 'x'.repeat(32769)]) {
           writeFileSync(reportFile, invalid);
           expect(
-            invokeMutation([...admittedArgs, ...expected(issuedVersion), '--report', reportFile], 1),
+            fixture.invoke([...admitted.args, ...expected(issuedVersion), '--report', reportFile], 1),
           ).toMatchObject({
             code: 'GAP-VIDA-RUN-REPORT-001',
             message:
@@ -3161,13 +3368,15 @@ if (mutationMode || v8CoverageMode) {
         writeFileSync(reportFile, '{}');
         const secondLink = path.join(root, 'report-hardlink.json');
         linkSync(reportFile, secondLink);
-        expect(invokeMutation([...admittedArgs, ...expected(issuedVersion), '--report', reportFile], 1)).toMatchObject({
-          code: 'GAP-VIDA-RUN-REPORT-001',
-          message:
-            'The session report is missing, unsafe, oversized, or invalid JSON. Next action: inspect the exact work and check its issued contract before retrying.',
-        });
+        expect(fixture.invoke([...admitted.args, ...expected(issuedVersion), '--report', reportFile], 1)).toMatchObject(
+          {
+            code: 'GAP-VIDA-RUN-REPORT-001',
+            message:
+              'The session report is missing, unsafe, oversized, or invalid JSON. Next action: inspect the exact work and check its issued contract before retrying.',
+          },
+        );
         unlinkSync(secondLink);
-        expect(requireStateVersion(invokeMutation(admittedArgs).state_version)).toEqual(issuedVersion);
+        expect(requireStateVersion(fixture.invoke(admitted.args).state_version)).toEqual(issuedVersion);
         let version = issuedVersion;
         for (const item of issuedActions) {
           const action = item.action;
@@ -3250,277 +3459,300 @@ if (mutationMode || v8CoverageMode) {
               evidence_refs: [sourceId],
             }),
           );
-          const result = invokeMutation([...admittedArgs, ...expected(version), '--report', reportFile]);
+          const result = fixture.invoke([...admitted.args, ...expected(version), '--report', reportFile]);
           version = requireStateVersion(result.state_version);
           if (item === issuedActions.at(-1)) {
             expect(result.resume_status).toBe('ready');
             expect(requireNextActions(result)[0]?.request.wave_index).toBe(1);
           }
         }
+        completed = true;
       } finally {
-        rmSync(root, { recursive: true, force: true });
+        if (completed && !fixture.hasUnknown()) rmSync(root, { recursive: true, force: true });
+        else
+          process.stderr.write(
+            `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} public run fixture: ${root}\n`,
+          );
       }
     }, 60_000);
 
-    test('binds admission to the selected journal and released maintenance proof', async () => {
-      const root = mkdtempSync(path.join(tmpdir(), 'vida-run-selected-'));
-      const dependenciesLink = path.join(root, 'vida-agent', 'node_modules');
-      try {
-        const { args, fixtureBundle } = createFixture(root, 'vida-agent');
-        const selectedLauncher = path.join(fixtureBundle, 'bin', 'run.ts');
-        const generation = `selected-${randomUUID()}`;
-        const generationRoot = path.join(root, '.agent', 'cutover', generation);
-        mkdirSync(generationRoot, { recursive: true });
-        const selectorIntent = {
-          schema: 'ActiveRuntimeSelector/v1',
-          generation,
-          runtime: 'vida-agent',
-          bundle_root: 'vida-agent',
-          config_path: 'agent-runtime.config.v1.yaml',
-          archive_manifest_sha256: 'a'.repeat(64),
-          plan_sha256: 'b'.repeat(64),
-          payload_manifest_sha256: 'c'.repeat(64),
-          state_policy: 'clean_start_no_ticket_transfer',
-        };
-        const evidence = Object.fromEntries(
-          ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime'].map((kind) => {
-            const relativePath = `.agent/cutover/${generation}/${kind}-evidence.json`;
-            const bytes = Buffer.from(record({ schema: 'FixtureCutoverEvidence/v1', kind }));
-            writeFileSync(path.join(root, ...relativePath.split('/')), bytes);
-            return [
-              kind,
-              {
-                actor: 'fixture',
-                path: relativePath,
-                pointer: `fixture:${kind}`,
-                sha256: createHash('sha256').update(bytes).digest('hex'),
-                status: 'passed',
-              },
-            ];
-          }),
-        );
-        const activationDecision = {
-          schema: 'VidaCutoverActivationDecision/v1',
-          actor: 'fixture',
-          cutover_id: generation,
-          evidence,
-          outcome: 'approved',
-          payload_manifest_sha256: selectorIntent.payload_manifest_sha256,
-          plan_sha256: selectorIntent.plan_sha256,
-          pointer: 'fixture:activation',
-          selector_intent_sha256: createHash('sha256').update(record(selectorIntent)).digest('hex'),
-        };
-        const activationDecisionSha256 = createHash('sha256').update(record(activationDecision)).digest('hex');
-        const selector = { ...selectorIntent, activation_decision_sha256: activationDecisionSha256 };
-        const selectorSha256 = createHash('sha256').update(record(selector)).digest('hex');
-        const selectorCommit = {
-          schema: 'VidaPreparedSelectorCommit/v1',
-          cutover_id: generation,
-          plan_sha256: selector.plan_sha256,
-          activation_decision_sha256: selector.activation_decision_sha256,
-          selector_sha256: selectorSha256,
-        };
-        const journal = {
-          schema: 'VidaPreparedInstallJournal/v1',
-          cutover_id: generation,
-          plan_sha256: selector.plan_sha256,
-          archive_manifest_sha256: selector.archive_manifest_sha256,
-          payload_manifest_sha256: selector.payload_manifest_sha256,
-          state_policy: selector.state_policy,
-          status: 'installing',
-        };
-        const ready = {
-          schema: 'VidaPreparedInstallReady/v1',
-          cutover_id: generation,
-          plan_sha256: selector.plan_sha256,
-          state_policy: selector.state_policy,
-          status: 'ready_for_selector',
-        };
-        const releasedLock = {
-          schema: 'VidaCutoverMaintenanceLock/v1',
-          cutover_id: generation,
-          operator: 'test',
-          attestation: 'old_runtime_quiesced',
-          plan_sha256: selector.plan_sha256,
-          archive_manifest_sha256: selector.archive_manifest_sha256,
-          payload_manifest_sha256: selector.payload_manifest_sha256,
-          expected_file_count: 0,
-          archive_manifest: { manifest_sha256: selector.archive_manifest_sha256 },
-          plan: { schema: 'VidaPreparedInstallPlan/v1', plan_sha256: selector.plan_sha256 },
-          state_policy: selector.state_policy,
-          activation_decision_path: `.agent/cutover/${generation}/activation-decision.v1.json`,
-          activation_decision_sha256: selector.activation_decision_sha256,
-        };
-        const release = {
-          schema: 'VidaCutoverMaintenanceRelease/v1',
-          cutover_id: generation,
-          operator: 'test',
-          lock_sha256: createHash('sha256').update(record(releasedLock)).digest('hex'),
-          status: 'released_by_explicit_operator_action',
-        };
-        const records: readonly (readonly [string, Record<string, unknown>, Record<string, unknown>])[] = [
-          ['prepared-install.json', journal, { plan_sha256: 'd'.repeat(64) }],
-          ['install-ready.json', ready, { status: 'not-ready' }],
-          ['maintenance-lock.released.v1.json', releasedLock, { cutover_id: 'other-generation' }],
-          ['maintenance-release.v1.json', release, { lock_sha256: 'd'.repeat(64) }],
-        ];
-        writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), record(selector));
-        for (const [name, value] of records) writeFileSync(path.join(generationRoot, name), record(value));
-        writeFileSync(path.join(generationRoot, 'activation-decision.v1.json'), record(activationDecision));
-        writeFileSync(path.join(generationRoot, 'selector-commit.json'), record(selectorCommit));
-        writeFileSync(
-          path.join(generationRoot, 'cutoff-witness.json'),
-          record({
-            schema: 'VidaNewWorkCutoffWitness/v1',
+    for (const selectorPhase of ['released', 'staged'] as const) {
+      test(`binds admission to the ${selectorPhase} journal and released maintenance proof`, async () => {
+        const root = mkdtempSync(path.join(tmpdir(), 'vida-run-selected-'));
+        const dependenciesLink = path.join(root, 'vida-agent', 'node_modules');
+        const fixture = ownedMutationFixture(root, 90_000);
+        let completed = false;
+        try {
+          const { args, fixtureBundle, config } = createFixture(root, 'vida-agent');
+          const admitted = prepareMutationIntake(args, config);
+          const selectedLauncher = path.join(fixtureBundle, 'bin', 'run.ts');
+          const generation = `selected-${randomUUID()}`;
+          const generationRoot = path.join(root, '.agent', 'cutover', generation);
+          mkdirSync(generationRoot, { recursive: true });
+          const selectorIntent = {
+            schema: 'ActiveRuntimeSelector/v1',
             generation,
-            selector_sha256: selectorSha256,
-            first_admitted_work_attempt: null,
-          }),
-        );
-        expect(invokeMutation(args, 0, selectedLauncher).runtime_selector_observed).toBe(true);
-        for (const [name, value, changed] of records) {
-          const file = path.join(generationRoot, name);
-          writeFileSync(file, record({ ...value, ...changed }));
-          expect(invokeMutation(args, 1, selectedLauncher)).toMatchObject({
-            code: 'GAP-VIDA-RUN-SELECTOR-001',
-            message:
-              'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
-          });
-          writeFileSync(file, record(value));
-        }
-        const retainedPath = path.join(generationRoot, 'maintenance-lock.released.v1.json');
-        const releasePath = path.join(generationRoot, 'maintenance-release.v1.json');
-        const lockFieldChanges: readonly (readonly [string, string])[] = [
-          ['cutover_id', 'other-generation'],
-          ['plan_sha256', 'd'.repeat(64)],
-          ['archive_manifest_sha256', 'd'.repeat(64)],
-          ['payload_manifest_sha256', 'd'.repeat(64)],
-        ];
-        for (const [field, value] of lockFieldChanges) {
-          const changedLock = { ...releasedLock, [field]: value };
-          writeFileSync(retainedPath, record(changedLock));
-          writeFileSync(
-            releasePath,
-            record({ ...release, lock_sha256: createHash('sha256').update(record(changedLock)).digest('hex') }),
+            runtime: 'vida-agent',
+            bundle_root: 'vida-agent',
+            config_path: 'agent-runtime.config.v1.yaml',
+            archive_manifest_sha256: 'a'.repeat(64),
+            plan_sha256: 'b'.repeat(64),
+            payload_manifest_sha256: 'c'.repeat(64),
+            state_policy: 'clean_start_no_ticket_transfer',
+          };
+          const evidence = Object.fromEntries(
+            ['parity', 'security', 'assurance', 'rollback', 'dev', 'staged_runtime'].map((kind) => {
+              const relativePath = `.agent/cutover/${generation}/${kind}-evidence.json`;
+              const bytes = Buffer.from(record({ schema: 'FixtureCutoverEvidence/v1', kind }));
+              writeFileSync(path.join(root, ...relativePath.split('/')), bytes);
+              return [
+                kind,
+                {
+                  actor: 'fixture',
+                  path: relativePath,
+                  pointer: `fixture:${kind}`,
+                  sha256: createHash('sha256').update(bytes).digest('hex'),
+                  status: 'passed',
+                },
+              ];
+            }),
           );
-          expect(invokeMutation(args, 1, selectedLauncher)).toMatchObject({
+          const activationDecision = {
+            schema: 'VidaCutoverActivationDecision/v1',
+            actor: 'fixture',
+            cutover_id: generation,
+            evidence,
+            outcome: 'approved',
+            payload_manifest_sha256: selectorIntent.payload_manifest_sha256,
+            plan_sha256: selectorIntent.plan_sha256,
+            pointer: 'fixture:activation',
+            selector_intent_sha256: createHash('sha256').update(record(selectorIntent)).digest('hex'),
+          };
+          const activationDecisionSha256 = createHash('sha256').update(record(activationDecision)).digest('hex');
+          const selector = { ...selectorIntent, activation_decision_sha256: activationDecisionSha256 };
+          const selectorSha256 = createHash('sha256').update(record(selector)).digest('hex');
+          const selectorCommit = {
+            schema: 'VidaPreparedSelectorCommit/v1',
+            cutover_id: generation,
+            plan_sha256: selector.plan_sha256,
+            activation_decision_sha256: selector.activation_decision_sha256,
+            selector_sha256: selectorSha256,
+          };
+          const journal = {
+            schema: 'VidaPreparedInstallJournal/v1',
+            cutover_id: generation,
+            plan_sha256: selector.plan_sha256,
+            archive_manifest_sha256: selector.archive_manifest_sha256,
+            payload_manifest_sha256: selector.payload_manifest_sha256,
+            state_policy: selector.state_policy,
+            status: 'installing',
+          };
+          const ready = {
+            schema: 'VidaPreparedInstallReady/v1',
+            cutover_id: generation,
+            plan_sha256: selector.plan_sha256,
+            state_policy: selector.state_policy,
+            status: 'ready_for_selector',
+          };
+          const releasedLock = {
+            schema: 'VidaCutoverMaintenanceLock/v1',
+            cutover_id: generation,
+            operator: 'test',
+            attestation: 'old_runtime_quiesced',
+            plan_sha256: selector.plan_sha256,
+            archive_manifest_sha256: selector.archive_manifest_sha256,
+            payload_manifest_sha256: selector.payload_manifest_sha256,
+            expected_file_count: 0,
+            archive_manifest: { manifest_sha256: selector.archive_manifest_sha256 },
+            plan: { schema: 'VidaPreparedInstallPlan/v1', plan_sha256: selector.plan_sha256 },
+            state_policy: selector.state_policy,
+            activation_decision_path: `.agent/cutover/${generation}/activation-decision.v1.json`,
+            activation_decision_sha256: selector.activation_decision_sha256,
+          };
+          const release = {
+            schema: 'VidaCutoverMaintenanceRelease/v1',
+            cutover_id: generation,
+            operator: 'test',
+            lock_sha256: createHash('sha256').update(record(releasedLock)).digest('hex'),
+            status: 'released_by_explicit_operator_action',
+          };
+          const records: readonly (readonly [string, Record<string, unknown>, Record<string, unknown>])[] = [
+            ['prepared-install.json', journal, { plan_sha256: 'd'.repeat(64) }],
+            ['install-ready.json', ready, { status: 'not-ready' }],
+            ['maintenance-lock.released.v1.json', releasedLock, { cutover_id: 'other-generation' }],
+            ['maintenance-release.v1.json', release, { lock_sha256: 'd'.repeat(64) }],
+          ];
+          writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), record(selector));
+          for (const [name, value] of records) writeFileSync(path.join(generationRoot, name), record(value));
+          writeFileSync(path.join(generationRoot, 'activation-decision.v1.json'), record(activationDecision));
+          writeFileSync(path.join(generationRoot, 'selector-commit.json'), record(selectorCommit));
+          writeFileSync(
+            path.join(generationRoot, 'cutoff-witness.json'),
+            record({
+              schema: 'VidaNewWorkCutoffWitness/v1',
+              generation,
+              selector_sha256: selectorSha256,
+              first_admitted_work_attempt: null,
+            }),
+          );
+          expect(fixture.invoke(admitted.admissionArgs, 0, selectedLauncher).runtime_selector_observed).toBe(true);
+          if (selectorPhase === 'released') {
+            for (const [name, value, changed] of records) {
+              const file = path.join(generationRoot, name);
+              writeFileSync(file, record({ ...value, ...changed }));
+              expect(fixture.invoke(admitted.args, 1, selectedLauncher)).toMatchObject({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message:
+                  'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
+              });
+              writeFileSync(file, record(value));
+            }
+            const retainedPath = path.join(generationRoot, 'maintenance-lock.released.v1.json');
+            const releasePath = path.join(generationRoot, 'maintenance-release.v1.json');
+            const lockFieldChanges: readonly (readonly [string, string])[] = [
+              ['cutover_id', 'other-generation'],
+              ['plan_sha256', 'd'.repeat(64)],
+              ['archive_manifest_sha256', 'd'.repeat(64)],
+              ['payload_manifest_sha256', 'd'.repeat(64)],
+            ];
+            for (const [field, value] of lockFieldChanges) {
+              const changedLock = { ...releasedLock, [field]: value };
+              writeFileSync(retainedPath, record(changedLock));
+              writeFileSync(
+                releasePath,
+                record({ ...release, lock_sha256: createHash('sha256').update(record(changedLock)).digest('hex') }),
+              );
+              expect(fixture.invoke(admitted.args, 1, selectedLauncher)).toMatchObject({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message:
+                  'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
+              });
+              writeFileSync(retainedPath, record(releasedLock));
+              writeFileSync(releasePath, record(release));
+            }
+            for (const changed of [{ cutover_id: 'other-generation' }, { status: 'not-released' }]) {
+              writeFileSync(releasePath, record({ ...release, ...changed }));
+              expect(fixture.invoke(admitted.args, 1, selectedLauncher)).toMatchObject({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message:
+                  'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
+              });
+              writeFileSync(releasePath, record(release));
+            }
+            const cutoffPath = path.join(generationRoot, 'cutoff-witness.json');
+            const witness = requireRecord(parseJsonUnknown(readFileSync(cutoffPath, 'utf8')), 'cutoff witness');
+            unlinkSync(cutoffPath);
+            expect(fixture.invoke(admitted.args, 1, selectedLauncher)).toMatchObject({
+              code: 'GAP-VIDA-RUN-CUTOFF-001',
+              message:
+                'The new-work cutoff witness could not be recorded. Next action: inspect the exact work and check its issued contract before retrying.',
+            });
+            for (const changed of [
+              { generation: 'other-generation' },
+              { selector_sha256: 'd'.repeat(64) },
+              { first_admitted_work_attempt: '' },
+              { first_admitted_work_attempt: 0 },
+            ]) {
+              writeFileSync(cutoffPath, record({ ...witness, ...changed }));
+              expect(fixture.invoke(admitted.args, 1, selectedLauncher)).toMatchObject({
+                code: 'GAP-VIDA-RUN-CUTOFF-001',
+                message:
+                  'The new-work cutoff witness could not be recorded. Next action: inspect the exact work and check its issued contract before retrying.',
+              });
+            }
+            writeFileSync(cutoffPath, record(witness));
+            const cutoffLock = path.join(generationRoot, 'cutoff-witness.lock');
+            writeFileSync(cutoffLock, 'held');
+            expect(fixture.invoke(admitted.args, 1, selectedLauncher)).toMatchObject({
+              code: 'GAP-VIDA-RUN-CUTOFF-001',
+              message:
+                'The new-work cutoff witness could not be recorded. Next action: inspect the exact work and check its issued contract before retrying.',
+            });
+            unlinkSync(cutoffLock);
+          }
+          writeFileSync(
+            path.join(root, '.agent', 'active-runtime-selector.v1.json'),
+            record({
+              ...selector,
+              plan_sha256: 'd'.repeat(64),
+            }),
+          );
+          expect(fixture.invoke(admitted.args, 1, selectedLauncher)).toMatchObject({
             code: 'GAP-VIDA-RUN-SELECTOR-001',
             message:
               'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
           });
-          writeFileSync(retainedPath, record(releasedLock));
-          writeFileSync(releasePath, record(release));
+          if (selectorPhase === 'staged') {
+            const stagedGeneration = `staged-${randomUUID()}`;
+            const stagedRoot = path.join(root, '.agent', 'cutover', stagedGeneration);
+            mkdirSync(stagedRoot);
+            const stagedSelector: Record<string, unknown> = { ...selector, generation: stagedGeneration };
+            delete stagedSelector.payload_manifest_sha256;
+            delete stagedSelector.state_policy;
+            delete stagedSelector.activation_decision_sha256;
+            const stagedJournal = {
+              schema: 'VidaCutoverStageJournal/v1',
+              cutover_id: stagedGeneration,
+              plan_sha256: stagedSelector.plan_sha256,
+              archive_manifest_sha256: stagedSelector.archive_manifest_sha256,
+              selector_sha256: createHash('sha256').update(record(stagedSelector)).digest('hex'),
+              status: 'staged',
+            };
+            const stagedLock: Record<string, unknown> = { ...releasedLock, cutover_id: stagedGeneration };
+            delete stagedLock.payload_manifest_sha256;
+            const stagedReceipt = {
+              ...release,
+              cutover_id: stagedGeneration,
+              lock_sha256: createHash('sha256').update(record(stagedLock)).digest('hex'),
+            };
+            const stagedJournalPath = path.join(stagedRoot, 'journal.json');
+            writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), record(stagedSelector));
+            writeFileSync(stagedJournalPath, record(stagedJournal));
+            writeFileSync(path.join(stagedRoot, 'maintenance-lock.released.v1.json'), record(stagedLock));
+            writeFileSync(path.join(stagedRoot, 'maintenance-release.v1.json'), record(stagedReceipt));
+            writeFileSync(
+              path.join(stagedRoot, 'cutoff-witness.json'),
+              record({
+                schema: 'VidaNewWorkCutoffWitness/v1',
+                generation: stagedGeneration,
+                selector_sha256: stagedJournal.selector_sha256,
+                first_admitted_work_attempt: null,
+              }),
+            );
+            const stagedArgs = args.map((value, index) =>
+              args[index - 1] === '--work-id' ? `mutation-run-${randomUUID()}` : value,
+            );
+            const stagedAdmitted = prepareMutationIntake(stagedArgs, config);
+            expect(fixture.invoke(stagedAdmitted.admissionArgs, 0, selectedLauncher).runtime_selector_observed).toBe(
+              true,
+            );
+            for (const changed of [
+              { cutover_id: 'other-generation' },
+              { plan_sha256: 'd'.repeat(64) },
+              { archive_manifest_sha256: 'd'.repeat(64) },
+              { selector_sha256: 'd'.repeat(64) },
+              { status: 'not-staged' },
+            ]) {
+              writeFileSync(stagedJournalPath, record({ ...stagedJournal, ...changed }));
+              expect(fixture.invoke(stagedAdmitted.args, 1, selectedLauncher)).toMatchObject({
+                code: 'GAP-VIDA-RUN-SELECTOR-001',
+                message:
+                  'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
+              });
+            }
+          }
+          completed = true;
+        } finally {
+          if (completed && !fixture.hasUnknown()) {
+            if (existsSync(dependenciesLink)) unlinkSync(dependenciesLink);
+            rmSync(root, { recursive: true, force: true });
+          } else
+            process.stderr.write(
+              `Retained ${fixture.hasUnknown() ? 'uncertain' : 'failed'} public run fixture and dependency link: ${root}\n`,
+            );
         }
-        for (const changed of [{ cutover_id: 'other-generation' }, { status: 'not-released' }]) {
-          writeFileSync(releasePath, record({ ...release, ...changed }));
-          expect(invokeMutation(args, 1, selectedLauncher)).toMatchObject({
-            code: 'GAP-VIDA-RUN-SELECTOR-001',
-            message:
-              'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
-          });
-          writeFileSync(releasePath, record(release));
-        }
-        const cutoffPath = path.join(generationRoot, 'cutoff-witness.json');
-        const witness = requireRecord(parseJsonUnknown(readFileSync(cutoffPath, 'utf8')), 'cutoff witness');
-        unlinkSync(cutoffPath);
-        expect(invokeMutation(args, 1, selectedLauncher)).toMatchObject({
-          code: 'GAP-VIDA-RUN-CUTOFF-001',
-          message:
-            'The new-work cutoff witness could not be recorded. Next action: inspect the exact work and check its issued contract before retrying.',
-        });
-        for (const changed of [
-          { generation: 'other-generation' },
-          { selector_sha256: 'd'.repeat(64) },
-          { first_admitted_work_attempt: '' },
-          { first_admitted_work_attempt: 0 },
-        ]) {
-          writeFileSync(cutoffPath, record({ ...witness, ...changed }));
-          expect(invokeMutation(args, 1, selectedLauncher)).toMatchObject({
-            code: 'GAP-VIDA-RUN-CUTOFF-001',
-            message:
-              'The new-work cutoff witness could not be recorded. Next action: inspect the exact work and check its issued contract before retrying.',
-          });
-        }
-        writeFileSync(cutoffPath, record(witness));
-        const cutoffLock = path.join(generationRoot, 'cutoff-witness.lock');
-        writeFileSync(cutoffLock, 'held');
-        expect(invokeMutation(args, 1, selectedLauncher)).toMatchObject({
-          code: 'GAP-VIDA-RUN-CUTOFF-001',
-          message:
-            'The new-work cutoff witness could not be recorded. Next action: inspect the exact work and check its issued contract before retrying.',
-        });
-        unlinkSync(cutoffLock);
-        writeFileSync(
-          path.join(root, '.agent', 'active-runtime-selector.v1.json'),
-          record({
-            ...selector,
-            plan_sha256: 'd'.repeat(64),
-          }),
-        );
-        expect(invokeMutation(args, 1, selectedLauncher)).toMatchObject({
-          code: 'GAP-VIDA-RUN-SELECTOR-001',
-          message:
-            'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
-        });
-        const stagedGeneration = `staged-${randomUUID()}`;
-        const stagedRoot = path.join(root, '.agent', 'cutover', stagedGeneration);
-        mkdirSync(stagedRoot);
-        const stagedSelector: Record<string, unknown> = { ...selector, generation: stagedGeneration };
-        delete stagedSelector.payload_manifest_sha256;
-        delete stagedSelector.state_policy;
-        delete stagedSelector.activation_decision_sha256;
-        const stagedJournal = {
-          schema: 'VidaCutoverStageJournal/v1',
-          cutover_id: stagedGeneration,
-          plan_sha256: stagedSelector.plan_sha256,
-          archive_manifest_sha256: stagedSelector.archive_manifest_sha256,
-          selector_sha256: createHash('sha256').update(record(stagedSelector)).digest('hex'),
-          status: 'staged',
-        };
-        const stagedLock: Record<string, unknown> = { ...releasedLock, cutover_id: stagedGeneration };
-        delete stagedLock.payload_manifest_sha256;
-        const stagedReceipt = {
-          ...release,
-          cutover_id: stagedGeneration,
-          lock_sha256: createHash('sha256').update(record(stagedLock)).digest('hex'),
-        };
-        const stagedJournalPath = path.join(stagedRoot, 'journal.json');
-        writeFileSync(path.join(root, '.agent', 'active-runtime-selector.v1.json'), record(stagedSelector));
-        writeFileSync(stagedJournalPath, record(stagedJournal));
-        writeFileSync(path.join(stagedRoot, 'maintenance-lock.released.v1.json'), record(stagedLock));
-        writeFileSync(path.join(stagedRoot, 'maintenance-release.v1.json'), record(stagedReceipt));
-        writeFileSync(
-          path.join(stagedRoot, 'cutoff-witness.json'),
-          record({
-            schema: 'VidaNewWorkCutoffWitness/v1',
-            generation: stagedGeneration,
-            selector_sha256: stagedJournal.selector_sha256,
-            first_admitted_work_attempt: null,
-          }),
-        );
-        const stagedArgs = args.map((value, index) =>
-          args[index - 1] === '--work-id' ? `mutation-run-${randomUUID()}` : value,
-        );
-        expect(invokeMutation(stagedArgs, 0, selectedLauncher).runtime_selector_observed).toBe(true);
-        for (const changed of [
-          { cutover_id: 'other-generation' },
-          { plan_sha256: 'd'.repeat(64) },
-          { archive_manifest_sha256: 'd'.repeat(64) },
-          { selector_sha256: 'd'.repeat(64) },
-          { status: 'not-staged' },
-        ]) {
-          writeFileSync(stagedJournalPath, record({ ...stagedJournal, ...changed }));
-          expect(invokeMutation(stagedArgs, 1, selectedLauncher)).toMatchObject({
-            code: 'GAP-VIDA-RUN-SELECTOR-001',
-            message:
-              'The active runtime selector or cutover journal is invalid. Next action: inspect the exact work and check its issued contract before retrying.',
-          });
-        }
-      } finally {
-        if (existsSync(dependenciesLink)) unlinkSync(dependenciesLink);
-        rmSync(root, { recursive: true, force: true });
-      }
-    }, 90_000);
+      }, 90_000);
+    }
   });
 }
 

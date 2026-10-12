@@ -117,6 +117,15 @@ issued prewriter stage before exercising writer denial; reuse existing typed
 preparation/report owners and one observer value for both records. Derive
 synthetic package version and file sizes from their actual fixture bytes.
 
+Public CLI fixtures distinguish first admission from persisted operations.
+Prepare actual intake, scope and acceptance bytes; pass `--intake` only to
+admission, never a changing or inspect mode. Keep independent pre-admission
+denials in fresh5s cases, and the positive attempt's CAS/report sequence together.
+Check actual Work and journal rows with the read-only workspace inspector;
+bootstrap directory/database creation alone is not admitted Work. Share setup
+code for separate released/staged selector roots, retain their explicit bounds
+and all original assertions, and do not infer aggregate speed from a case split.
+
 Historical coverage-consumer tests reconstruct the original declared snapshot
 closure rather than today's tooling paths. Bind a single canonical evidence
 provider to its observed digest; distinguish synthetic structural admission

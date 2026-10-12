@@ -71,6 +71,13 @@ one-to-one and exhaustive. Unpaired current functions require new-function
 budgets, and unpaired published functions require removal dispositions. Do not
 infer correspondence from matching ordinals or body hashes.
 
+Historical static inventory artifacts can contain both `baseline` and `current`
+arrays. Only the original `baseline` array, corroborated by the published
+measurement and original Source, establishes a frozen retained ceiling. A row
+present only in `current` cannot establish a published counterpart or budget.
+Review absent-original roles under the unchanged new-function policy; do not
+introduce extra closures to satisfy a ceiling inferred from candidate data.
+
 Published CRAP evidence uses the standard Bun coverage report with its run
 manifest, immutable input snapshot, and process receipts. The evidence must bind
 the published Source, selected tests, pinned runtime, and exact coverage-tool
@@ -143,6 +150,17 @@ qualifies emitted SDK behavior. Form the SDK separately before this regression;
 build/install do not run suites. External dependency bytes remain outside
 snapshot custody. This join proves selected input freshness and output integrity,
 not authenticated formation origin or Native Runtime acceptance.
+
+Public run fixtures prepare real intake, scope and acceptance bytes before the
+first admission. Keep admission arguments separate from persisted invocation
+arguments; changing modes reject `--intake`. Test independent pre-admission
+denials on fresh fixtures with the5s default, preserving exact CLI envelopes.
+Inspect existing Work and journal rows through the read-only workspace API:
+an empty bootstrap directory or database does not establish admitted Work.
+Keep a positive attempt's preparation, issuance, CAS and reports together.
+Released and staged selector cases use separate fresh roots and shared setup;
+retain their existing integration deadline and every denial/custody assertion.
+Splitting cases alone does not establish an aggregate speed improvement.
 
 The final CLEAR P0–P1 regression scope includes these distinct contracts:
 

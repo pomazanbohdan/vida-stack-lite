@@ -7709,3 +7709,101 @@ sidecar. A fresh current-module observation through ordinary existing readBytes
 safely performed its normal dead-owner path; no manual deletion/replay. Preserve
 the original failed diagnostics and remaining UNKNOWN effects. CLI budgets/
 retention and those fixture corrections are still unfinished and unstaged.
+
+### Follow-up — retained lineage joins and corrected candidate classification
+
+5254d61 is published after normal strict hooks. Three remaining initialization
+controls pass14assertions in12.24s: missing configured instructions, maximal
+identities and an incomplete installed selector; the selector integration keeps
+its existing explicit exception. The known initialization failure contour is
+now rechecked, including the supported replacement for the retired Node launch.
+Three distinct rebind controls pass24assertions in8.94s; the broader rebind
+contour still needs its remaining scenarios. Known priority test-file remainder
+is7, rather than a claim that all176maintained test files finished audit.
+
+Five blind frozen-lineage lanes reuse the existing bounded Source capture,
+published measured inventory and original static inventory. Cedar25roles and
+operation-policy27roles are exhaustive in their own files, absent from the
+existing partial plan, and independently retain their exact caller contracts.
+Read-only dispatch adds3retained MJS→TS operation/callback roles after its
+already-qualified applyCC2 correction. Root refreshes only that changed file's
+Babel inventory; unchanged Cedar/policy inventories reuse identical Source hashes.
+Each original measured CC/coverage/CRAP row is corroborated by original.baseline,
+with unchanged CC/CRAP ceilings and unique old/current identities. The reviewed
+non-executable partial now has1059retained +258new +1removed dispositions,
+1317current roles across71Source files. This55role join is lineage progress,
+not exhaustive numeric quality or executable-plan activation. All original
+historical FAIL flags remain unchanged.
+
+Reader review initially conflated original.current with original.baseline in
+the cached static artifact and proposed a false CC2 retained ceiling for
+readRepositoryTextImage. Root's explicit branch lookup confirms no such row in
+original.baseline or the genuine measured historical functions; original b549951
+Source also lacks it (96087bytes, SHA b24a5b969289746596a972b58591891b6a394346c4e9fdd151c9e8a577266b89).
+The reviewer retracted that classification and four-closure simplification.
+The actual new function has currentCC4 under unchanged prospective cap10.
+Keep its current stable-read precedence, nullable absence, strict UTF-8/BOM
+semantics; no product change is needed to escape a nonexistent old ceiling.
+Module anchor and import-binding review still records its extraction/caller
+and stale-queue cardinality gaps; queue-only closures are not baseline removals.
+
+The seven-file test remainder is a prioritized known-problem queue, not a
+complete all-file refactoring census. Exact current coverage, CRAP and
+assertion-confirmed mutation scores remain pending.
+
+Fresh explicit strict CLI check now PASS: bun check --project bin/tsconfig.json
+checks144files with0type errors (strict-cli-current-v1033.log). The old1271
+diagnostic checkpoint is superseded by this actual current check, not by
+inference from scoped Source lint. No Runtime unblock is inferred.
+
+### v1039–v1051 — real CLI admission, bounded lifecycle and isolated denials
+
+Blind Luna review and the actual CLI exposed two fixture defects: missing
+accepted intake, then supplying intake together with a changing mode. A shared
+prepareMutationIntake builder writes actual work/scope/acceptance/intake bytes
+and returns separate first-admission and persisted arguments. All four positive
+paths retain fresh work/project/source bindings, runtime inventory checks,
+CAS/report assertions and failed/UNKNOWN custody. Scope/project controls pass
+2cases/24assertions in21.61s. This is fixture repair, not a product defect claim.
+
+The old aggregate CAS/report case exhausted60s at its last report; selector
+exhausted90s at its final staged denial. Retain the original logs and roots
+/tmp/vida-run-mutation-7O3znf and /tmp/vida-run-selected-QWHwih as UNKNOWN.
+Nine independent pre-admission CLI denials now use fresh5s fixtures, with the
+same exact envelopes and no admitted Work/journal rows. All9pass65assertions
+in19.69s; observed bodies are about1.7–2.6s. Directory absence was an invalid
+extra assertion for workflow denial: its ordinary selection reader initializes
+an empty workspace. The supported readonly inspector proves actual empty rows.
+The admitted CAS/report sequence passes at46.85s under its unchanged60s bound.
+No total-time improvement percentage is inferred from the changed selection.
+
+Released/staged selector cases share code but have separate fresh roots and
+their existing90s integration exception. The staged case preserves the first
+released admission, malformed-selector denial and fresh staged work admission.
+All original lock/release/cutoff/journal checks remain. Both pass152assertions
+in100.06s (bodies67.08s/30.75s). This isolates contracts; it does not claim a
+faster aggregate pool. Nine affected ordinary CLI/budget controls pass32assertions
+in25.06s, including the existing equal-root integration exception. Controls are
+in run-intake-scope-projects-v1042, run-intake-split-qualified-v1047,
+run-intake-denials-qualified-v1048, run-selector-phases-qualified-v1050 and
+run-shared-budgets-qualified-v1051 logs. Earlier failures remain failures.
+
+Current static quality v1049 passes425maintained TS/97stricter Source with
+zero type/lint diagnostics. Bound diagnostic tails decode exact Uint8Array
+views, avoiding arbitrary object coercion. The readonly lineage validator
+v1045 checks all retained original measured/static ceilings, unique identities,
+counts and the three fresh selected Source bindings: PASS partial lineage only.
+The attempted repeat of the mutating join refused its existing private output;
+it changed no tracked lineage. Reuse the readonly validator, not the join.
+Official Bun test writing reference https://bun.com/docs/test/writing-tests
+was retrieved; the old /docs/test/timeouts address returned404. Per-test timeout
+and child-budget boundaries remain distinct. Exact current coverage/CRAP and
+assertion-confirmed mutation scores are still pending; no Runtime update/unblock.
+
+Final blind packet review v1052 found no actionable correctness/custody/parity
+issue. Fresh reference application v1053 resolves admission/persisted arguments,
+empty-bootstrap versus actual Work and separate-case timing correctly without
+reading the implementation. It addresses the earlier actual agent fixture
+mistakes; no broad wording benchmark or second product policy owner is added.
+Strict CLI v1053 also passes144files/0errors. Source fetch confirms no incoming
+or local committed divergence before ordinary reviewed publication.
