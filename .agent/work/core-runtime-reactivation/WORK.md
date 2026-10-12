@@ -7510,3 +7510,78 @@ replay or manual reclaim. The verified one-file package-reader optimization is
 still private and inactive. Its current design leaves all current bundle hash
 fences and durable CAS writes intact; root-replacement and retained-recovery
 controls plus descriptor cleanup review are required before Source activation.
+
+### Follow-up — verified package byte capture and interrupted upgrade
+
+Implemented the optional Linux readVerifiedCaptureBytes owner inside existing
+safe-repository-access. It reuses bounded reads, no-follow directory walking,
+CAS namespace naming, retained quarantine and orphan-backup checks. It captures
+one file with exact EOF, single-link/type checks, seven BigInt file metadata
+fields, reopened root/ancestor identities and before/after observational writer
+state. It creates no read-side locks, writes or fsync and never reclaims state.
+Both descriptor closes are attempted; Windows keeps the guarded fallback. This
+is a one-file observation, not coherent multi-file or hostile same-UID exclusion.
+Only project-upgrade bundleDigest uses the capability; all current full-path
+hash passes, ownership/effect fences and durable CAS writes remain unchanged.
+
+Root first observed the missing API RED. Ten new reader controls pass76assertions
+in7.93s: exact BOM/binary/8MiB, overflow, file kinds, actual writer lock,
+private backup, reclaim directory, retained double-dot quarantine, and actual
+read-boundary leaf/inode/ancestor/root changes in isolated children. Review
+caught wrong quarantine naming, a hardlink shadowing size denial and missing
+descriptor cleanup; all corrected before Source use. Replaced-root failures log
+both old moved and replacement roots. Accepted captures explicitly check zero
+writeSync/fsync calls. The full affected reader/access regression passes44cases/
+322assertions in6.99s with per-test5000ms; existing guarded readers pass unchanged.
+
+The first upgraded interruption control initially denies a Source CAS lock
+left by the prior terminated child257432, now kernel-observed zombie. The normal
+existing readBytes API safely completes its ordinary stale-owner path while
+performing a fresh Source observation; no manual sidecar deletion, state restore
+or old consumer resume. Keep /tmp/project-upgrade-lifecycle-mzY0ft and all prior
+UNKNOWN consumer fixtures. Fresh qualification then passes first publication
+stop/ordinary same-ID resume54assertions, body49.53s incl30s real quarantine;
+resume child11.45s rather than the previous45s timeout. Profile records9328fresh
+verified package reads taking4.46s, with0observed read-side fsync/writeFileSync.
+Scope is inclusive JS filesystem calls inside package byte reads; native helper
+syscalls are unobserved, durable writer calls remain outside that scope.
+
+Separate last-publication/closure qualification without byte profiling passes
+2cases/87assertions in46.35s. Last interruption body42.03s, resume child6.16s;
+both exact plan/token/afterimage/inode and no-replay checks remain. Restore the
+original90s per-case parent bounds rather than keeping the investigative120s
+exception; child45s and protocol30s quarantine stay unchanged. Shared test read
+observation covers both byte methods without duplicating the timing logic.
+TESTING, specification and bun-test reference record the qualified narrow
+contract. Current Source static checks pass422files plus97stricter Source files,
+0diagnostics. Blind reader review found no remaining functional defect after
+fixture custody fixes. New helper functions have targeted inventory evidence;
+bundleDigest is an existing reviewed new role, CC2 under unchanged new cap10;
+linuxAccess retains originalCC1. Exhaustive plan/other lineage gaps remain open.
+
+Independent stopped-source test changes are still unfinished and excluded from
+this correction packet. Their new wrapper now preserves failed/in-flight roots
+until body outcome and immutable-package checks complete. Real writer completion
+uses the admitted lease, issued Host receipt, actual Source edit and matching
+ledger report; independent review confirms no fake SQL/Host/Journal bypass.
+Root causal run fails before public resume: its in-process setup reaches64.42s
+and exhausts the existing case execution budget; total97.98s includes31.17s
+contained prepare+verify. Retain /tmp/vida-stopped-source-FXGgEn and
+/tmp/vida-contained-tests-LVtFRw, never replay. Do not enlarge that budget as a
+fix. Existing immutable package/caller Source reads are the next causal lane.
+
+Five blind static lineage reviews reuse one bounded seven-file capture and
+targeted Babel inventory; no repeated full scan. Cedar25retained roles preserve
+their frozen values. Other selected CLI/operation roles remain private candidates
+with explicit stale-queue/new-source/ceiling gaps. Review finds read-only dispatch
+applyCC3against originalCC2: reuse its existing assertion owner while preserving
+config-first short-circuit and exact error, rather than weaken the guard or
+raise the frozen allowance. Current full coverage/CRAP/mutation remain pending;
+no percentage or numerical PASS is inferred from these focused qualifications.
+
+Strict publication checks require awaiting the child module-mock installation
+and replacing its unchecked dynamic-path import with the literal typed Source
+import after that installation. The four real read-interposition race controls
+still pass32assertions; fresh case timings160-165ms, total847ms. This is an
+observed targeted run, not an attributed whole-suite speedup. No production
+reader or its tested boundaries changed in that child-tooling correction.

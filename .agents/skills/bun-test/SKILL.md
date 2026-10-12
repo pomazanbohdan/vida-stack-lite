@@ -125,6 +125,14 @@ For synthetic child receipts, capture runtime bytes once per fixture and reuse
 that buffer for the executable hash and retained-file copy. Required test inputs
 exist at their declared snapshot paths as well as in a published fixture tree.
 
+For verified package captures, interpose a real descriptor read in an isolated
+child to exercise file/inode/ancestor/root replacement and require an observed
+mutation plus its specific denial. Retain moved and replacement roots on failed
+or unknown outcomes. Check active CAS and recovery artifacts without changing
+their bytes/identities; verify accepted captures do no writes or fsync. Profile
+only the actual byte-method scope and distinguish diagnostic elapsed time from
+ordinary execution. Keep durable writers and every live bundle hash fence.
+
 For each observed error or bottleneck, retain a bounded receipt, inspect the
 causal path and check current official documentation/upstream issues. Record
 documented support separately from local qualification.

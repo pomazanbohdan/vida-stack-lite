@@ -317,6 +317,8 @@ export interface SafeRepositoryAccess {
   readonly readBytes: (target: string, label: string) => Buffer;
   /** No-follow bounded byte capture without CAS locks or writes; not a stable or multi-file snapshot. */
   readonly readCapturedBytes: (target: string, label: string, maxBytes?: number) => Buffer;
+  /** Optional verified one-file observation without writes; not CAS ownership or a multi-file snapshot. */
+  readonly readVerifiedCaptureBytes?: (target: string, label: string, maxBytes?: number) => Buffer;
   /** Optional cooperative stable read under one per-file CAS lock; null is twice-observed absence. */
   readonly readStableBytes?: (target: string, label: string) => Buffer | null;
   readonly fileExists: (target: string, label: string) => boolean;
@@ -1149,6 +1151,117 @@ function openFile(
     );
   }
 }
+type CaptureFileIdentity = Pick<BigIntStats, 'dev' | 'ino' | 'mode' | 'nlink' | 'size' | 'ctimeNs' | 'mtimeNs'>;
+type CaptureDirectoryIdentity = Pick<BigIntStats, 'dev' | 'ino' | 'mode'>;
+
+function sameCaptureFile(left: CaptureFileIdentity, right: CaptureFileIdentity): boolean {
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.mode === right.mode &&
+    left.nlink === right.nlink &&
+    left.size === right.size &&
+    left.ctimeNs === right.ctimeNs &&
+    left.mtimeNs === right.mtimeNs
+  );
+}
+function sameCaptureDirectory(left: CaptureDirectoryIdentity, right: CaptureDirectoryIdentity): boolean {
+  return left.dev === right.dev && left.ino === right.ino && left.mode === right.mode;
+}
+function captureDirectoryChain(
+  root: string,
+  directories: readonly string[],
+  label: string,
+): CaptureDirectoryIdentity[] {
+  const chain: CaptureDirectoryIdentity[] = [];
+  let rootRecorded = false;
+  const finalFd = walkDirectories(root, directories, label, (parentFd, segment) => {
+    if (!rootRecorded) {
+      const rootStat = fstatSync(parentFd, { bigint: true });
+      reject(!rootStat.isDirectory(), label + ' root must be a directory');
+      chain.push(rootStat);
+      rootRecorded = true;
+    }
+    const childFd = openSync(childPath(parentFd, segment), fsConstants.O_RDONLY | directoryFlag | noFollow);
+    try {
+      const stats = fstatSync(childFd, { bigint: true });
+      reject(!stats.isDirectory(), label + ' ancestor must be a directory');
+      chain.push(stats);
+      return childFd;
+    } catch (error) {
+      closeQuietly(childFd);
+      throw error;
+    }
+  });
+  try {
+    if (!rootRecorded) {
+      const rootStat = fstatSync(finalFd, { bigint: true });
+      reject(!rootStat.isDirectory(), label + ' root must be a directory');
+      chain.push(rootStat);
+    }
+    return chain;
+  } finally {
+    closeQuietly(finalFd);
+  }
+}
+function assertCaptureIdle(parentFd: number, targetName: string, label: string): void {
+  const lockName = linuxCasLockName(targetName);
+  reject(linuxFileExistsAtParent(parentFd, lockName), label + ' has an active CAS writer');
+  reject(reclaimGuardStats(parentFd, lockName + '.reclaim', label) !== null, label + ' CAS reclaim is active');
+  rejectRetainedLockQuarantine(parentFd, lockName, label, 'admission');
+  rejectLinuxOrphanBackups(parentFd, targetName, label);
+}
+function linuxReadVerifiedCaptureBytes(
+  root: string,
+  target: string,
+  label: string,
+  limit = maxRepositoryReadBytes,
+): Buffer {
+  reject(!linuxHandleProvider, label + ' requires a native directory-handle no-follow provider');
+  const maximum = captureReadLimit(limit);
+  const segments = safeRelative(root, target, label);
+  const beforeChain = captureDirectoryChain(root, segments.slice(0, -1), label);
+  const parent = openParent(root, segments, label);
+  let fd = -1;
+  try {
+    const openedParent = fstatSync(parent.fd, { bigint: true });
+    assertCaptureIdle(parent.fd, parent.name, label);
+    fd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
+    const beforeFd = fstatSync(fd, { bigint: true });
+    const beforePath = lstatSync(childPath(parent.fd, parent.name), { bigint: true });
+    regularFile(beforeFd, label);
+    regularFile(beforePath, label);
+    reject(!sameCaptureFile(beforeFd, beforePath), label + ' pathname changed before capture');
+    const expectedSize = boundedStatSize(beforeFd, maximum, label);
+    const bytes = readBoundedBuffer(fd, label, maximum, false, expectedSize);
+    const afterFd = fstatSync(fd, { bigint: true });
+    const afterPath = lstatSync(childPath(parent.fd, parent.name), { bigint: true });
+    regularFile(afterFd, label);
+    regularFile(afterPath, label);
+    reject(
+      !sameCaptureFile(beforeFd, afterFd) || !sameCaptureFile(beforePath, afterPath),
+      label + ' changed during capture',
+    );
+    reject(bytes.length !== Number(afterFd.size), label + ' did not reach the exact file EOF');
+    reject(!sameFileIdentity(afterFd, afterPath), label + ' pathname no longer names the captured file');
+    assertCaptureIdle(parent.fd, parent.name, label);
+    const afterChain = captureDirectoryChain(root, segments.slice(0, -1), label);
+    reject(
+      beforeChain.length !== afterChain.length ||
+        beforeChain.some((item, i) => !sameCaptureDirectory(item, afterChain[i]!)) ||
+        !sameCaptureDirectory(openedParent, afterChain.at(-1)!),
+      label + ' root or parent-chain identity changed during capture',
+    );
+    return bytes;
+  } finally {
+    try {
+      if (fd >= 0) closeQuietly(fd);
+    } finally {
+      closeQuietly(parent.fd);
+    }
+  }
+}
+
 function readBytesUnlocked(root: string, target: string, label: string, limit = maxRepositoryReadBytes): Buffer {
   const parent = openParent(root, safeRelative(root, target, label), label);
   try {
@@ -2752,6 +2865,8 @@ function linuxAccess(root: string): SafeRepositoryAccess {
     readBytes: (target, label) => readBytes(root, target, label),
     readCapturedBytes: (target, label, limit = maxRepositoryReadBytes) =>
       readBytesUnlocked(root, target, label, captureReadLimit(limit)),
+    readVerifiedCaptureBytes: (target, label, limit = maxRepositoryReadBytes) =>
+      linuxReadVerifiedCaptureBytes(root, target, label, limit),
     readStableBytes: (target, label) => linuxReadStableBytes(root, target, label),
     fileExists: (target, label) => linuxFileExists(root, target, label),
     listFiles: (target, label) => linuxListFiles(root, target, label),

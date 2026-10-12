@@ -1,12 +1,25 @@
 import { expect, spyOn, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import type { BufferView, NonSharedBuffer } from 'node:buffer';
 import { fileURLToPath } from 'node:url';
 import * as fs from 'node:fs';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  linkSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.js';
+import { runBoundedSubprocess, subprocessFailure } from './helpers/bounded-subprocess.ts';
 
 const maximumReadBytes = 8 * 1024 * 1024;
 
@@ -829,3 +842,222 @@ test.skipIf(process.platform !== 'linux')(
     }
   },
 );
+
+const linuxTest = test.skipIf(process.platform !== 'linux');
+const repositoryRoot = path.resolve(import.meta.dir, '../../..');
+const childFile = fileURLToPath(new URL('./helpers/verified-package-capture-child.ts', import.meta.url));
+
+async function withRoot(run: (root: string) => void | Promise<void>): Promise<void> {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-package-capture-'));
+  const retainedRoot = root + '-retained';
+  let observedSuccess = false;
+  try {
+    await run(root);
+    observedSuccess = true;
+  } finally {
+    if (observedSuccess) {
+      rmSync(root, { recursive: true, force: true });
+      rmSync(retainedRoot, { recursive: true, force: true });
+    } else {
+      process.stderr.write('Retained failed or uncertain package-capture fixture: ' + root + '\n');
+      if (existsSync(retainedRoot))
+        process.stderr.write('Retained original package-capture root: ' + retainedRoot + '\n');
+    }
+  }
+}
+
+function capture(root: string, target: string, limit?: number): Buffer {
+  const access = requireSafeRepositoryAccess(root);
+  if (typeof access.readVerifiedCaptureBytes !== 'function')
+    throw new Error('Linux verified capture capability is absent');
+  return access.readVerifiedCaptureBytes(target, 'package capture candidate', limit);
+}
+
+function assertCaptureAvailable(root: string): void {
+  const access = requireSafeRepositoryAccess(root);
+  expect(typeof access.readVerifiedCaptureBytes).toBe('function');
+}
+
+function expectRejectedWith(root: string, target: string, fragment: string, limit?: number): void {
+  expect(() => capture(root, target, limit)).toThrow(fragment);
+}
+
+async function raceCapture(
+  root: string,
+  race: 'rename' | 'inplace' | 'ancestor' | 'root',
+): Promise<Record<string, unknown>> {
+  const child = await runBoundedSubprocess(process.execPath, ['--no-env-file', '--no-install', childFile, root, race], {
+    cwd: repositoryRoot,
+    timeoutMs: 5000,
+    stdoutLimitBytes: 8192,
+    stderrLimitBytes: 8192,
+  });
+  expect(child.closeObserved).toBe(true);
+  expect(child.timedOut).toBe(false);
+  expect(child.exitCode, subprocessFailure('verified capture ' + race + ' race child', child)).toBe(0);
+  const value: unknown = JSON.parse(child.stdout.toString('utf8'));
+  if (value === null || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Verified capture child result must be an object.');
+  return value as Record<string, unknown>;
+}
+
+linuxTest('verified capture returns BOM-identical bytes, accepts 8 MiB, rejects overflow, and leaves no sidecars', () =>
+  withRoot((root) => {
+    assertCaptureAvailable(root);
+    const expected = Buffer.from('\uFEFFУкраїна', 'utf8');
+    const edge = Buffer.alloc(8 * 1024 * 1024, 0x5a);
+    const oversize = Buffer.alloc(edge.length + 1, 0x6b);
+    writeFileSync(path.join(root, 'module.ts'), expected);
+    writeFileSync(path.join(root, 'edge.bin'), edge);
+    writeFileSync(path.join(root, 'oversize.bin'), oversize);
+    const before = readdirSync(root).sort();
+    const syncs = spyOn(fs, 'fsyncSync');
+    const writes = spyOn(fs, 'writeSync');
+    try {
+      expect(capture(root, 'module.ts')).toEqual(expected);
+      expect(capture(root, 'edge.bin')).toEqual(edge);
+      expectRejectedWith(root, 'edge.bin', 'exceeds the bounded repository read size', edge.length - 1);
+      expectRejectedWith(root, 'oversize.bin', 'exceeds the bounded repository read size');
+      expect(readdirSync(root).sort()).toEqual(before);
+      expect(syncs).not.toHaveBeenCalled();
+      expect(writes).not.toHaveBeenCalled();
+    } finally {
+      syncs.mockRestore();
+      writes.mockRestore();
+    }
+  }),
+);
+
+linuxTest('candidate rejects FIFO, symbolic link, hard link, missing ancestor, and oversize', () =>
+  withRoot((root) => {
+    assertCaptureAvailable(root);
+    writeFileSync(path.join(root, 'source.ts'), 'protected');
+    writeFileSync(path.join(root, 'bounded.ts'), 'source');
+    symlinkSync(path.join(root, 'source.ts'), path.join(root, 'symbolic.ts'));
+    linkSync(path.join(root, 'source.ts'), path.join(root, 'hard.ts'));
+    const fifo = path.join(root, 'pipe.ts');
+    const made = spawnSync('mkfifo', [fifo], { encoding: 'utf8', timeout: 1000, killSignal: 'SIGKILL' });
+    expect(made.error).toBeUndefined();
+    expect(made.status).toBe(0);
+    expectRejectedWith(root, 'pipe.ts', 'regular single-link file');
+    expectRejectedWith(root, 'symbolic.ts', 'ELOOP');
+    expectRejectedWith(root, 'hard.ts', 'regular single-link file');
+    expectRejectedWith(root, 'missing/child.ts', 'ENOENT');
+    expectRejectedWith(root, 'bounded.ts', 'exceeds the bounded repository read size', 5);
+    expect(readFileSync(path.join(root, 'source.ts'), 'utf8')).toBe('protected');
+  }),
+);
+
+linuxTest('candidate rejects an actual exclusive CAS writer without changing its lock', () =>
+  withRoot((root) => {
+    assertCaptureAvailable(root);
+    writeFileSync(path.join(root, 'source.ts'), 'protected');
+    const access = requireSafeRepositoryAccess(root);
+    const lockPath = path.join(root, '.source.ts.cas.lock');
+    access.withExclusiveLock('.source.ts.cas', 'candidate writer fence', () => {
+      const lockBytes = readFileSync(lockPath);
+      const identity = lstatSync(lockPath, { bigint: true });
+      expectRejectedWith(root, 'source.ts', 'active CAS writer');
+      expect(readFileSync(lockPath)).toEqual(lockBytes);
+      const after = lstatSync(lockPath, { bigint: true });
+      expect(after.dev).toBe(identity.dev);
+      expect(after.ino).toBe(identity.ino);
+      expect(readFileSync(path.join(root, 'source.ts'), 'utf8')).toBe('protected');
+    });
+    expect(existsSync(lockPath)).toBe(false);
+  }),
+);
+
+linuxTest('candidate rejects orphan backup and leaves its bytes and identity unchanged', () =>
+  withRoot((root) => {
+    assertCaptureAvailable(root);
+    writeFileSync(path.join(root, 'source.ts'), 'protected');
+    const backup = path.join(root, '.source.ts.' + randomUUID() + '.cas-old');
+    writeFileSync(backup, 'unresolved private bytes');
+    const bytes = readFileSync(backup);
+    const identity = lstatSync(backup, { bigint: true });
+    expectRejectedWith(root, 'source.ts', 'unresolved private backup');
+    expect(readFileSync(backup)).toEqual(bytes);
+    const after = lstatSync(backup, { bigint: true });
+    expect(after.dev).toBe(identity.dev);
+    expect(after.ino).toBe(identity.ino);
+    expect(readFileSync(path.join(root, 'source.ts'), 'utf8')).toBe('protected');
+  }),
+);
+
+linuxTest('candidate rejects a reclaim directory and preserves its identity and owner bytes', () =>
+  withRoot((root) => {
+    assertCaptureAvailable(root);
+    writeFileSync(path.join(root, 'source.ts'), 'protected');
+    const guard = path.join(root, '.source.ts.cas.lock.reclaim');
+    mkdirSync(guard);
+    const owner = path.join(guard, 'owner.json');
+    const ownerBytes = Buffer.from('{"schema":"retained candidate owner"}');
+    writeFileSync(owner, ownerBytes);
+    const guardIdentity = lstatSync(guard, { bigint: true });
+    const ownerIdentity = lstatSync(owner, { bigint: true });
+    expectRejectedWith(root, 'source.ts', 'CAS reclaim is active');
+    expect(readFileSync(owner)).toEqual(ownerBytes);
+    const afterGuard = lstatSync(guard, { bigint: true });
+    const afterOwner = lstatSync(owner, { bigint: true });
+    expect(afterGuard.dev).toBe(guardIdentity.dev);
+    expect(afterGuard.ino).toBe(guardIdentity.ino);
+    expect(afterGuard.mode).toBe(guardIdentity.mode);
+    expect(afterOwner.dev).toBe(ownerIdentity.dev);
+    expect(afterOwner.ino).toBe(ownerIdentity.ino);
+    expect(afterOwner.mode).toBe(ownerIdentity.mode);
+    expect(readdirSync(root).sort()).toEqual(['.source.ts.cas.lock.reclaim', 'source.ts']);
+  }),
+);
+
+linuxTest('candidate rejects a retained lock quarantine and preserves its bytes and identity', () =>
+  withRoot((root) => {
+    assertCaptureAvailable(root);
+    writeFileSync(path.join(root, 'source.ts'), 'protected');
+    const quarantine = path.join(root, '..source.ts.cas.lock.' + randomUUID() + '.reclaimed');
+    const retainedBytes = Buffer.from('retained lock quarantine bytes');
+    writeFileSync(quarantine, retainedBytes);
+    const identity = lstatSync(quarantine, { bigint: true });
+    expectRejectedWith(root, 'source.ts', 'quarantine');
+    expect(readFileSync(quarantine)).toEqual(retainedBytes);
+    const after = lstatSync(quarantine, { bigint: true });
+    expect(after.dev).toBe(identity.dev);
+    expect(after.ino).toBe(identity.ino);
+    expect(readdirSync(root).sort()).toEqual([path.basename(quarantine), 'source.ts'].sort());
+  }),
+);
+
+for (const race of ['rename', 'inplace', 'ancestor', 'root'] as const) {
+  linuxTest('candidate rejects controlled ' + race + ' drift in an isolated module-mocked child', async () =>
+    withRoot(async (root) => {
+      assertCaptureAvailable(root);
+      const directory = race === 'ancestor' ? path.join(root, 'nested') : root;
+      if (race === 'ancestor') mkdirSync(directory);
+      const file = path.join(directory, 'module.ts');
+      writeFileSync(file, Buffer.alloc(256 * 1024, 0x41));
+      const originalInode = lstatSync(file, { bigint: true }).ino;
+      const result = await raceCapture(root, race);
+      const reason =
+        race === 'rename'
+          ? 'changed during capture'
+          : race === 'inplace'
+            ? 'changed during capture'
+            : 'root or parent-chain identity changed during capture';
+      expect(result).toMatchObject({ schema: 'VerifiedCaptureRace/v1', race, denied: true, mutation_applied: true });
+      expect(result.denial_message).toContain(reason);
+      if (race === 'rename') {
+        expect(readFileSync(path.join(root, 'renamed-original.ts'))).toEqual(Buffer.alloc(256 * 1024, 0x41));
+        expect(readFileSync(file)).toEqual(Buffer.alloc(256 * 1024, 0x42));
+      } else if (race === 'inplace') {
+        expect(readFileSync(file)).toEqual(Buffer.alloc(256 * 1024, 0x42));
+        expect(lstatSync(file, { bigint: true }).ino).toBe(originalInode);
+      } else if (race === 'ancestor') {
+        expect(readFileSync(path.join(root, 'nested-moved/module.ts'))).toEqual(Buffer.alloc(256 * 1024, 0x41));
+        expect(readFileSync(path.join(root, 'nested/module.ts'))).toEqual(Buffer.alloc(256 * 1024, 0x42));
+      } else {
+        expect(readFileSync(path.join(root + '-retained', 'module.ts'))).toEqual(Buffer.alloc(256 * 1024, 0x41));
+        expect(readFileSync(path.join(root, 'module.ts'))).toEqual(Buffer.alloc(256 * 1024, 0x42));
+      }
+    }),
+  );
+}

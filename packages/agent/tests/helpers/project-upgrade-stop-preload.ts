@@ -69,9 +69,9 @@ function readStats(): ReadStats {
   return { ...preparationStats(), bytes: 0 };
 }
 const childReads = {
-  package: { readBytes: readStats(), readText: readStats() },
-  consumer: { readBytes: readStats(), readText: readStats() },
-  other: { readBytes: readStats(), readText: readStats() },
+  package: { readBytes: readStats(), readText: readStats(), readVerifiedCaptureBytes: readStats() },
+  consumer: { readBytes: readStats(), readText: readStats(), readVerifiedCaptureBytes: readStats() },
+  other: { readBytes: readStats(), readText: readStats(), readVerifiedCaptureBytes: readStats() },
 };
 const packageRoot = path.resolve(import.meta.dir, '../..');
 let packageAccessCalls = 0;
@@ -169,7 +169,8 @@ function recordChildTiming(terminal = false): void {
         last_consumer_access: lastConsumerAccess,
         ...(filesystemTimingEnabled
           ? {
-              filesystem_api_scope: 'inclusive JS fs calls within package readBytes; native helper syscalls unobserved',
+              filesystem_api_scope:
+                'inclusive JS fs calls within package byte reads; native helper syscalls unobserved',
               filesystem_api: filesystemTiming,
             }
           : {}),
@@ -309,7 +310,9 @@ function observedAccess(access: SafeRepositoryAccess): SafeRepositoryAccess {
           const rootClass =
             access.repository_root === root ? 'consumer' : access.repository_root === packageRoot ? 'package' : 'other';
           const stats =
-            childTimingEnabled && (key === 'readBytes' || key === 'readText') ? childReads[rootClass][key] : undefined;
+            childTimingEnabled && (key === 'readBytes' || key === 'readText' || key === 'readVerifiedCaptureBytes')
+              ? childReads[rootClass][key]
+              : undefined;
           if (stats) {
             stats.calls++;
             stats.in_flight++;
@@ -341,7 +344,9 @@ function observedAccess(access: SafeRepositoryAccess): SafeRepositoryAccess {
           };
           try {
             const result: unknown = observedFilesystemRead(
-              filesystemTimingEnabled && rootClass === 'package' && key === 'readBytes',
+              filesystemTimingEnabled &&
+                rootClass === 'package' &&
+                (key === 'readBytes' || key === 'readVerifiedCaptureBytes'),
               (): unknown => Reflect.apply(value, this, args),
             );
             if (isPromise(result))

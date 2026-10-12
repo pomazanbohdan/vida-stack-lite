@@ -67,6 +67,29 @@ function emptyBundleReadTiming(): BundleReadTiming {
 }
 let bundleReadTiming = { package: emptyBundleReadTiming(), fixture: emptyBundleReadTiming() };
 let packageBundleReadCalls = 0;
+function observeBundleRead(repositoryRoot: string, read: actualAccess.SafeRepositoryAccess['readBytes']) {
+  return (target: string, accessLabel: string): Buffer => {
+    if (accessLabel !== 'VIDA project upgrade') return read(target, accessLabel);
+    if (repositoryRoot === packageRoot) packageBundleReadCalls += 1;
+    if (!bundleTimingEnabled) return read(target, accessLabel);
+    const stats = repositoryRoot === packageRoot ? bundleReadTiming.package : bundleReadTiming.fixture;
+    const started = performance.now();
+    stats.calls++;
+    try {
+      const result = read(target, accessLabel);
+      stats.completed++;
+      stats.bytes += result.byteLength;
+      return result;
+    } catch (error) {
+      stats.failed++;
+      throw error;
+    } finally {
+      const elapsed = performance.now() - started;
+      stats.total_ms += elapsed;
+      stats.max_ms = Math.max(stats.max_ms, elapsed);
+    }
+  };
+}
 type ReleaseMaintenanceFence = HostStateStore['releaseMaintenanceFence'];
 const releaseDescriptor = Object.getOwnPropertyDescriptor(HostStateStore.prototype, 'releaseMaintenanceFence');
 if (typeof releaseDescriptor?.value !== 'function') throw new Error('Host fence release method is missing');
@@ -79,29 +102,10 @@ void mock.module(accessModule, () => ({
     const access = originalRequireSafeRepositoryAccess(repositoryRoot);
     const observed = {
       ...access,
-      readBytes(target: string, accessLabel: string): Buffer {
-        if (accessLabel !== 'VIDA project upgrade') return access.readBytes(target, accessLabel);
-        if (repositoryRoot === packageRoot) packageBundleReadCalls += 1;
-        if (!bundleTimingEnabled) return access.readBytes(target, accessLabel);
-        const stats = repositoryRoot === packageRoot ? bundleReadTiming.package : bundleReadTiming.fixture;
-        const started = performance.now();
-        stats.calls++;
-        try {
-          const result = access.readBytes(target, accessLabel);
-          const elapsed = performance.now() - started;
-          stats.completed++;
-          stats.total_ms += elapsed;
-          stats.max_ms = Math.max(stats.max_ms, elapsed);
-          stats.bytes += result.byteLength;
-          return result;
-        } catch (error) {
-          const elapsed = performance.now() - started;
-          stats.failed++;
-          stats.total_ms += elapsed;
-          stats.max_ms = Math.max(stats.max_ms, elapsed);
-          throw error;
-        }
-      },
+      readBytes: observeBundleRead(repositoryRoot, access.readBytes),
+      ...(access.readVerifiedCaptureBytes
+        ? { readVerifiedCaptureBytes: observeBundleRead(repositoryRoot, access.readVerifiedCaptureBytes) }
+        : {}),
     };
     const fault = faults.get(repositoryRoot);
     if (!fault) return observed;
@@ -2185,7 +2189,13 @@ test.each(['first', 'last'] as const)(
         token: planned.plan.token,
         mode: 'after',
       });
-      expect(stopped).toMatchObject({ status: 86, signal: null, error: null, timedOut: false, outputExceeded: false });
+      expect(stopped).toMatchObject({
+        status: 86,
+        signal: null,
+        error: null,
+        timedOut: false,
+        outputExceeded: false,
+      });
       const receipt = parseFixtureStop(stopped.stderr);
       expect(receipt).toMatchObject({
         schema: 'ProjectUpgradeFixtureStop/v1',
@@ -2239,7 +2249,7 @@ test.each(['first', 'last'] as const)(
 
       // This is the ordinary public same-ID resume. The lock owner was a dead
       // child; normal safe-repository quarantine/reacquisition remains the only
-      // lock transition. Keep the existing 45s child and 90s parent bounds.
+      // lock transition. Keep the existing 45s child cap.
       const resumed = await runFreshBunResume(root, planned.plan.operation_id);
       expect(resumed).toMatchObject({ status: 0, signal: null, error: null, timedOut: false, outputExceeded: false });
       const completed = await assertCompleteHistory(root, planned);

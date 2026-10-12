@@ -222,6 +222,17 @@ The source repository contains exactly `agent=packages/agent` and
 `plugin=packages/plugin`. Existing Git history and origin are preserved.
 Predecessor framework code is inactive provenance, never an active fallback.
 
+Project-upgrade bundle identity is recomputed from every current package code
+path at each existing ownership and effect fence. Linux may use a verified
+one-file byte observation without creating read-side CAS artifacts: bounded
+no-follow, single-link capture must reject changed file metadata, changed root
+or ancestor identity, and observed CAS/reclaim/quarantine/backup custody. These
+checks are observational and never reclaim or repair state. Unsupported
+providers retain the existing guarded reader. Write ownership, durable syncs,
+authorization and UNKNOWN recovery stay unchanged. This observation does not
+establish a coherent multi-file snapshot or exclude a hostile same-UID writer;
+callers retain all current bundle hash and freshness checks.
+
 The only public agent distribution is one native `vida-agent` executable per qualified
 OS/CPU target, embedding the exact Source-selected Bun. Direct installation, public commands and first
 run require no external Node, npm or Bun executable and no first-run network

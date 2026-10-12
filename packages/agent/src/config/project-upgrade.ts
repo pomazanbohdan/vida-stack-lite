@@ -192,12 +192,13 @@ function image(access: SafeRepositoryAccess, file: string): string | null {
 
 function bundleDigest(): string {
   const access = runtimePackageAccess();
+  const read = access.readVerifiedCaptureBytes ?? access.readBytes;
   const prefix = 'runtime-package/';
   const files = runtimePackageCodePaths('runtime-package', access);
   return canonicalJsonDigest(
     files.map((file) => ({
       path: file,
-      digest: new Bun.CryptoHasher('sha256').update(access.readBytes(file.slice(prefix.length), label)).digest('hex'),
+      digest: new Bun.CryptoHasher('sha256').update(read(file.slice(prefix.length), label)).digest('hex'),
     })),
   );
 }

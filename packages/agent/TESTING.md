@@ -662,6 +662,21 @@ are candidate attribution, not invocation counts or reliable wall/CPU self
 time. Keep actual phase/child elapsed receipts separate. No profiling result
 waives live checks, durable syncs, custody or numerical gates.
 
+For upgrade package-byte optimization, qualify the optional Linux verified
+reader separately from guarded reads. Check exact BOM/binary bytes, the 8 MiB
+boundary, overflow, unsafe file kinds and paths, actual CAS ownership,
+reclaim/quarantine/private backups with unchanged bytes and identities, and
+controlled leaf/inode/ancestor/root drift during a real descriptor read. Retain
+both original moved root and replacement root on failure. Accepted captures
+perform no writes or fsync; existing write/recovery providers remain unchanged.
+Use isolated child module mocks for read-boundary mutation, require that the
+mutation actually happened and assert the specific denial boundary. Then check
+real interrupted first/last publication and ordinary same-ID resume with their
+existing quarantine/child limits. Every bundle digest remains fresh; optional
+reader absence uses the existing guarded path, never a cache or weaker reader.
+Opt-in read profiling distinguishes guarded and verified byte methods and
+reports only its actual JS filesystem scope, not native helper syscalls.
+
 Keep root help, per-command help and parsing declarations in parity. The CLI
 contract gate must detect an unlisted public command, alias or option, and a
 documented option that its parser cannot accept. Cover argument types, required
