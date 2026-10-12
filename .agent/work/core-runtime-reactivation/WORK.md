@@ -7834,3 +7834,101 @@ v1058 freed750989312bytes on /tmp and1800413184bytes on workspace; /tmp has717Mi
 available and workspace about13GiB. Receipts are obsolete-cache-cleanup-v1058.json
 and .log. The actual package-binding owner includes node_modules, so retained
 controller dependency trees were explicitly excluded from this cleanup.
+
+### v1065–v1079 — current execution plan and parallel ownership
+
+The user's current Superpowers direction optimizes the active CLEAR P0–P1
+execution; it does not restart historical operations or create a second plan.
+Use the existing self-development protocol and Bun Test reference. Root owns
+shared Source integration and all runtime/numeric checks; blind Luna agents
+inspect independent contours and review. No agent runs a competing full suite,
+AST/hash scan, mutation run or build/install suite.
+
+Goal: close reproducible current blockers, then obtain exact current quality
+evidence. Architecture remains Babel inventory -> function/test links -> reviewed
+scenario matrices -> Ajv -> Bun coverage, frozen complexity/CRAP ceilings and
+assertion-confirmed mutation. Default remains5s per individual case with explicit
+existing integration exceptions; no timeout/compile/runtime result is a Killed.
+
+- [ ] First correction packet: `bin/run.ts` readonly release canonical JSON
+      comparison and `tests/stopped-source-capture.test.ts` consumer custody. Use the
+      existing canonical comparator, strict request/observation parsers and engine
+      completion checks. Qualify positive admission before engine tampering, retained
+      failure roots and cleanup-error accounting; independent review, ordinary hooks,
+      commit and non-force push. Do not declare the mixed three-writer60s case closed.
+- [ ] Parallel bounded findings: null-prototype JSON comparisons, automatic work
+      absorption and task-source binding each have one read-only Luna owner; lifecycle
+      selection has another. Each returns exact current producer/fixture evidence and
+      a minimal selected-case command. Root gives a disjoint writer scope only after
+      confirming the cause. Group shared causes instead of one patch per symptom.
+- [ ] Recheck only changed/unresolved contract selections. Preserve earlier
+      failures and UNKNOWN roots; use fresh fixtures, unchanged fences and deadlines.
+      Prioritize proven P0 failures before P1 structural CPU work. The runtime writer
+      package snapshots occur at separate admission/reservation boundaries; neither
+      durable fsync removal nor a copied-package shortcut is an accepted optimization.
+- [ ] After functional blockers settle on stable Source, one final-check owner
+      refreshes affected inventory/source bindings once and runs the existing exact
+      coverage, frozen complexity/CRAP and manually launched mutation pipeline.
+      Generated scenarios remain unreviewed until checked; N/A requires reasoning.
+      Only admitted complete results establish percentages. The isolated real-runtime
+      flow follows those gates; installation alone grants no Runtime acceptance.
+
+Reassign a completed agent to a newly evidenced independent scope; do not keep
+idle agents or duplicate reviewers solely to fill slots. Keep current results
+when inputs are unchanged. A failed positive control stops downstream scenarios
+until its actual cause is identified; a synthetic custody fault is harness
+qualification, not a successful product run or mutation kill.
+
+Current evidence for the first packet: v1073 reproduces a genuine readonly
+release blocker in a fresh positive Root API control. All action predicates
+except parsed/stored request and observation equality pass. The persisted ledger
+codec deliberately makes null-prototype records; Zod returns ordinary records.
+Official https://nodejs.org/api/util.html#utilisdeepstrictequalval1-val2-options
+documents default prototype/constructor comparison, and https://zod.dev/api
+documents strict object parsing. Reuse the route's existing canonical JSON
+comparator for nonoptional wire values, retain strict schemas and parsed-versus-
+original checks. Normalize only persisted corrective execution through the
+existing strict request parser; parsed-versus-parsed optionals retain their
+original comparisons. Bounded pattern review finds no additional confirmed
+crossing: other engine/bridge owners already parse before strict comparison.
+
+v1075 positive diagnostic passes; v1076 passes2cases/18assertions (missing/null
+engine completion and started/UNKNOWN writer denial). v1080 passes2cases/
+17assertions (inert frontier inspect/plan/apply and package/Source drift). Those
+are focused behavior evidence, not numeric gates. A first normalization variant
+increased local CC; the accepted refinement restores every one of529run.ts
+function complexities and identities relative to860617c. The existing inventory
+owner produced readonly-release-complexity-v1082.json; frozen ceilings were not
+edited or globally admitted. Final four-case recheck v1083 passes35assertions
+in95.64s with preparation21.81s and bodies13.18/28.26/17.23/11.89s under existing
+60s exceptions. Consumer and contained-package cleanup complete. These are
+ordinary focused results, without profiling or predicate injection; no speed
+percentage is inferred from earlier selections.
+
+Source-only custody control v1069 reaches all19original assertions, then injects
+one explicit post-assertion fault; /tmp/vida-stopped-source-2dqWv0 and actual
+database/Source bytes remain. The synthetic fault stays an expected FAIL, not a
+product pass or mutation kill. Two fresh cleanup roots in v1070 remain after an
+exact-root removal fault but originally omit the unattempted-root receipt;
+v1071 verifies both retained byte images and explicit unattempted-root reporting.
+Their raw failure logs/roots remain. Project TESTING and Bun skill now describe
+the verified custody mechanism. Independent Luna review finds no actionable
+parity, guard or custody issue. v1082 passes current425TS/97Source type/lint;
+strict CLI v1081 passes144files. Final publication/hook result remains pending.
+
+Temporary disposal v1065 removes six additional unbound caches after6548symlink
+checks find no external cache links and no active test/install/build producer.
+Actual freed space is26693632bytes; hardlinks/shared storage make directory
+sizes unsuitable as freed-byte evidence. Current dependencies resolve physically
+outside the removed caches; source changes and failed/UNKNOWN custody remain.
+
+Next findings remain diagnostic targets, not admitted defects: automatic-work
+absorption's data-only live-context fixture may lack configured task-source read
+context; task-source-binding failures belong to the retained UNKNOWN partial
+capture;21unqualified lifecycle cases share pre-behavior package CAS contention
+in that old capture. Fresh serial representative checks must identify an actual
+cause before code changes. Qualified first/last abrupt publication and closure
+are excluded from the next lifecycle selection. The mixed stopped-source writer
+case still exhausts60s; its213-file runtime capture is checked four times across
+distinct boundaries (five with HITL), so neither fsync deletion nor cached effect
+proofs are authorized shortcuts. Global coverage/CRAP/mutation remain pending.

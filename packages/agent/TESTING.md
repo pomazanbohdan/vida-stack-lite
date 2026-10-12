@@ -221,8 +221,11 @@ Run the final applicable behavior check before numeric checks on stable Source. 
 Separate shared contained-package preparation into a bounded hook for the cases
 that require it; keep Source-only cases outside that suite. Bun's unlabelled
 `describe(() => ...)` preserves exact test-name filters. An empty string label
-adds a separator to the full name. Track pending contained bodies through their
-terminal custody checks; file cleanup retains the fixture while any remain.
+adds a separator to the full name. Track every pending body, including
+Source-only cases, through its terminal custody checks. Keep failed consumer
+roots even when no contained package was prepared; file cleanup retains fixtures
+while a body remains in flight. If one consumer cleanup fails, report that root
+and every remaining unattempted root.
 A parent timeout does not prove that an asynchronous body has stopped.
 
 Use current generated SDK outputs only when their inputs match. Missing or stale output is a GAP. Do not start a local build to make a test command pass.
@@ -444,26 +447,26 @@ While fixing lint, capture complete machine-readable diagnostics in the owned ig
 
 Use the current scripts for the applicable completion checks.
 
-| Check                         | Command                                                                                |
-| ----------------------------- | -------------------------------------------------------------------------------------- |
+| Check                         | Command                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
 | Toolchain and input layout    | `bun bin/bun.ts run test:toolchain:pinned` and `bun bin/bun.ts run preflight:pinned` |
-| Configuration                 | `bun bin/bun.ts run test:config:pinned`                                               |
-| Ordinary agent phase          | `bun bin/bun.ts run test:pinned`                                                      |
-| Repair and recovery           | `bun bin/bun.ts run test:repair:pinned`                                               |
-| HostState and lifecycle       | `bun bin/bun.ts run test:host-state:pinned`                                           |
-| Public run entrypoint         | `bun bin/bun.ts run test:run-entrypoint:pinned`                                       |
-| Resource integrity            | `bun bin/bun.ts run test:resources:pinned`                                            |
-| Fuzz                          | `bun bin/bun.ts run test:fuzz:pinned`                                                 |
-| ZOMBIES                       | `bun bin/bun.ts run test:zombies:pinned`                                              |
-| Deep properties               | `bun bin/bun.ts run test:deep:pinned`                                                 |
-| Static quality                | `bun bin/bun.ts run quality:static:pinned`                                            |
-| Full Source types             | `bun bin/bun.ts run typecheck:source:pinned`                                          |
-| Coverage and CRAP             | `bun bin/bun.ts run test:coverage:pinned`                                             |
-| Saved coverage report         | `bun bin/bun.ts run coverage:gate:pinned`                                             |
-| Saved CRAP budget report      | `bun bin/bun.ts run crap:pinned`                                                      |
-| Format                        | `bun bin/bun.ts run format:check:pinned`                                              |
-| Final applicable local matrix | `bun bin/bun.ts run local:candidate:pinned`                                           |
-| Portable local subset         | `bun bin/bun.ts run verify:portable:pinned`                                           |
+| Configuration                 | `bun bin/bun.ts run test:config:pinned`                                              |
+| Ordinary agent phase          | `bun bin/bun.ts run test:pinned`                                                     |
+| Repair and recovery           | `bun bin/bun.ts run test:repair:pinned`                                              |
+| HostState and lifecycle       | `bun bin/bun.ts run test:host-state:pinned`                                          |
+| Public run entrypoint         | `bun bin/bun.ts run test:run-entrypoint:pinned`                                      |
+| Resource integrity            | `bun bin/bun.ts run test:resources:pinned`                                           |
+| Fuzz                          | `bun bin/bun.ts run test:fuzz:pinned`                                                |
+| ZOMBIES                       | `bun bin/bun.ts run test:zombies:pinned`                                             |
+| Deep properties               | `bun bin/bun.ts run test:deep:pinned`                                                |
+| Static quality                | `bun bin/bun.ts run quality:static:pinned`                                           |
+| Full Source types             | `bun bin/bun.ts run typecheck:source:pinned`                                         |
+| Coverage and CRAP             | `bun bin/bun.ts run test:coverage:pinned`                                            |
+| Saved coverage report         | `bun bin/bun.ts run coverage:gate:pinned`                                            |
+| Saved CRAP budget report      | `bun bin/bun.ts run crap:pinned`                                                     |
+| Format                        | `bun bin/bun.ts run format:check:pinned`                                             |
+| Final applicable local matrix | `bun bin/bun.ts run local:candidate:pinned`                                          |
+| Portable local subset         | `bun bin/bun.ts run verify:portable:pinned`                                          |
 
 `bun run test` selects four disjoint agent phases: ordinary tests, repair, HostState and run entrypoint. It does not build or install. `verify` is a local subset. It does not install dependencies or a bundle. `ci:pinned` is delivery preparation; run it only through the delivery lane.
 

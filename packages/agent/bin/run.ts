@@ -5328,7 +5328,7 @@ async function releaseCompletedReadonly(args: string[]) {
     if (!isReadonlyReleaseEngineSnapshot(snapshot)) throw Error('Readonly release original engine binding differs');
     const parseRunState = (/** @type {unknown} */ value: unknown) => {
         const parsed = parseSessionBridgeRunState(value);
-        if (!isDeepStrictEqual(parsed, value)) throw Error('Readonly release actual engine completion differs');
+        if (!equal(parsed, value)) throw Error('Readonly release actual engine completion differs');
         return parsed;
       },
       input = parseRunState(snapshot.context.input),
@@ -5372,7 +5372,13 @@ async function releaseCompletedReadonly(args: string[]) {
       baseRunId = sessionBridgeRunId(request.workspace_id, context, input.workflow_id);
     if (
       frontierRequests.some((entry) => !isDeepStrictEqual(entry.corrective_execution, correctiveExecution)) ||
-      !isDeepStrictEqual(state.corrective_execution ?? undefined, correctiveExecution) ||
+      !isDeepStrictEqual(
+        parseSessionBridgeRequest({
+          ...firstFrontierRequest,
+          corrective_execution: state.corrective_execution ?? undefined,
+        }).corrective_execution,
+        correctiveExecution,
+      ) ||
       baseRunId !== work.execution.run_id
     )
       throw Error('Readonly release original engine binding differs');
@@ -5404,8 +5410,8 @@ async function releaseCompletedReadonly(args: string[]) {
       const issued = parseSessionBridgeRequest(item.request),
         observed = parseSessionBridgeObservation(item.observation);
       if (
-        !isDeepStrictEqual(issued, item.request) ||
-        !isDeepStrictEqual(observed, item.observation) ||
+        !equal(issued, item.request) ||
+        !equal(observed, item.observation) ||
         !isDeepStrictEqual(issued.corrective_execution, correctiveExecution) ||
         item.issue_id === null ||
         observed.status !== 'reported_complete' ||
@@ -5439,24 +5445,24 @@ async function releaseCompletedReadonly(args: string[]) {
         throw Error('Readonly release actual engine completion differs');
       const waveInput = parseRunState(step.payload);
       if (
-        !isDeepStrictEqual(waveInput, priorState) ||
+        !equal(waveInput, priorState) ||
         waveInput.work_id !== input.work_id ||
         waveInput.attempt !== input.attempt ||
         waveInput.workflow_id !== input.workflow_id ||
         waveInput.config_digest !== input.config_digest ||
         waveInput.scope_digest !== input.scope_digest ||
-        !isDeepStrictEqual(waveInput.selection, input.selection)
+        !equal(waveInput.selection, input.selection)
       )
         throw Error('Readonly release actual engine completion differs');
       const resumePayload = step.resumePayload;
       if (!isRecord(resumePayload) || !Array.isArray(resumePayload.observations))
         throw Error('Readonly release actual engine completion differs');
       const resumeObservations = parseReadonlyReleaseArray(resumePayload.observations, parseSessionBridgeObservation);
-      if (!isDeepStrictEqual(resumePayload, { observations: resumeObservations }))
+      if (!equal(resumePayload, { observations: resumeObservations }))
         throw Error('Readonly release actual engine completion differs');
       const output = parseRunState(step.output),
         expectedOutput = { ...waveInput, observations: [...waveInput.observations, ...resumeObservations] };
-      if (!isDeepStrictEqual(output, expectedOutput)) throw Error('Readonly release actual engine completion differs');
+      if (!equal(output, expectedOutput)) throw Error('Readonly release actual engine completion differs');
       const actions = sessionActionsForWave(
         config,
         waveInput.selection,
@@ -5497,8 +5503,8 @@ async function releaseCompletedReadonly(args: string[]) {
         const match = requireOneReadonlyReleaseMatch(matches),
           engineMatch = requireOneReadonlyReleaseMatch(engineMatches);
         if (
-          !isDeepStrictEqual(match.issued, expected) ||
-          !isDeepStrictEqual(engineMatch, match.observed) ||
+          !equal(match.issued, expected) ||
+          !equal(engineMatch, match.observed) ||
           engineMatch.issue_id !== match.item.issue_id
         )
           throw Error('Readonly release actual engine completion differs');
@@ -5510,13 +5516,13 @@ async function releaseCompletedReadonly(args: string[]) {
       throw Error('Readonly release actual engine completion differs');
     const frontierInput = parseRunState(frontierStep.payload);
     if (
-      !isDeepStrictEqual(frontierInput, priorState) ||
+      !equal(frontierInput, priorState) ||
       frontierInput.work_id !== input.work_id ||
       frontierInput.attempt !== input.attempt ||
       frontierInput.workflow_id !== input.workflow_id ||
       frontierInput.config_digest !== input.config_digest ||
       frontierInput.scope_digest !== input.scope_digest ||
-      !isDeepStrictEqual(frontierInput.selection, input.selection)
+      !equal(frontierInput.selection, input.selection)
     )
       throw Error('Readonly release actual engine frontier differs');
     const frontierActions = sessionActionsForWave(
@@ -5554,7 +5560,7 @@ async function releaseCompletedReadonly(args: string[]) {
     const inertRequests = inertItems.map((item) => {
       const issued = parseSessionBridgeRequest(item.request);
       if (
-        !isDeepStrictEqual(issued, item.request) ||
+        !equal(issued, item.request) ||
         item.issue_id !== null ||
         item.observation !== null ||
         item.host_reservation ||
@@ -5566,8 +5572,8 @@ async function releaseCompletedReadonly(args: string[]) {
     });
     if (
       !expectedFrontier.length ||
-      !isDeepStrictEqual(frontierRequests, expectedFrontier) ||
-      !isDeepStrictEqual(inertRequests, expectedFrontier)
+      !equal(frontierRequests, expectedFrontier) ||
+      !equal(inertRequests, expectedFrontier)
     )
       throw Error('Readonly release actual engine frontier differs');
   } finally {

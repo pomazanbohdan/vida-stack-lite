@@ -73,8 +73,11 @@ cardinality matters; keep that invocation bound to its actual manifest.
 Use unlabelled `describe(() => ...)` for selective setup without changing exact
 test names; `describe('', ...)` adds a full-name separator and can break anchored
 filters. Verify selection with inert marker controls. Keep preparation and case
-budgets distinct. Track all pending bodies through terminal custody checks;
-retain before file cleanup if a timed-out body remains active. Bun snapshots
+budgets distinct. Track all pending bodies through terminal custody checks,
+including Source-only cases that prepare no contained package. Defer consumer
+deletion until assertions and owned checks succeed; keep failed roots. If cleanup
+fails, report the failed root and every remaining unattempted root. Retain before
+file cleanup if a timed-out body remains active. Bun snapshots
 hook timeout options at registration; later object mutation does not change them.
 
 For a Bun-only SDK subject, use the current executable rather than an unrelated
@@ -116,6 +119,14 @@ Keep required writer fields strict. Workflow fixtures consume the currently
 issued prewriter stage before exercising writer denial; reuse existing typed
 preparation/report owners and one observer value for both records. Derive
 synthetic package version and file sizes from their actual fixture bytes.
+
+Persisted journal parsing can return frozen null-prototype JSON records while
+Zod returns ordinary objects. Inspect the producer before treating strict
+prototype inequality as a value mismatch. Reuse the existing canonical JSON
+comparator for validated wire values; retain strict schema and parsed-versus-
+original checks that reject unknown fields. Normalize nullable optional fields
+only at their declared boundary through the existing parser. Do not apply this
+rule to opaque capabilities or identity-bearing filesystem objects.
 
 Public CLI fixtures distinguish first admission from persisted operations.
 Prepare actual intake, scope and acceptance bytes; pass `--intake` only to

@@ -32,6 +32,7 @@ import { suspendLocalWork, suspendCompletedReadOnlyWork } from '../src/orchestra
 import { run } from '../bin/run.ts';
 import { bindControlledRuntimeInitialization } from './helpers/controlled-runtime-initialization-fixture.ts';
 import { runTaskSynthesisPublicActions, runSourcePrewriterPublicActions } from './helpers/public-prewriter-fixture.ts';
+import { createPublicCliFixturePhaseMarker } from './helpers/public-cli-fixture-runner.ts';
 import { containedControllerFixture, type ContainedControllerFixture } from './contained-controller-fixture.ts';
 import { snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.ts';
 
@@ -141,8 +142,13 @@ let containedPackage: ContainedControllerFixture | undefined;
 let candidateBinding: string | undefined;
 const cleanupHookOptions: { timeout: number } = { timeout: 15000 };
 let caseBudget: ExecutionBudget | undefined;
-let checkedAfterCase = false;
 let containedCasesInFlight = 0;
+let deferFixtureCleanup = false;
+let activeConsumerRoots: string[] = [];
+const successfulConsumerRoots: string[] = [];
+const retainedConsumerRoots: string[] = [];
+const phaseReceipt = process.env.VIDA_STOPPED_SOURCE_PHASE_LOG;
+const markPhase = phaseReceipt === undefined ? undefined : createPublicCliFixturePhaseMarker(phaseReceipt);
 function candidateBindingValue(): string {
   if (!candidateBinding) throw new Error('Contained controller binding is unavailable.');
   return candidateBinding;
@@ -160,59 +166,88 @@ function test(
   timeout: number,
   { sourceOnly = false }: { sourceOnly?: boolean } = {},
 ): void {
+  const ownedBody = async () => {
+    containedCasesInFlight += 1;
+    const priorDeferCleanup = deferFixtureCleanup,
+      priorActiveRoots = activeConsumerRoots,
+      caseRoots: string[] = [];
+    deferFixtureCleanup = true;
+    activeConsumerRoots = caseRoots;
+    try {
+      let primaryFailure: unknown;
+      let hasPrimaryFailure = false;
+      try {
+        await body();
+      } catch (error) {
+        primaryFailure = error;
+        hasPrimaryFailure = true;
+      }
+      let cleanupFailure: unknown;
+      let hasCleanupFailure = false;
+      try {
+        if (!sourceOnly) ensureContainedPackage().assertUnchanged();
+      } catch (error) {
+        cleanupFailure = error;
+        hasCleanupFailure = true;
+      }
+      const keep = hasPrimaryFailure || hasCleanupFailure || (!sourceOnly && ensureContainedPackage().retained);
+      if (keep) {
+        if (!sourceOnly && (hasCleanupFailure || ensureContainedPackage().retained)) ensureContainedPackage().retain();
+        retainedConsumerRoots.push(...caseRoots);
+        for (const root of caseRoots) console.warn('Failed or uncertain consumer fixture retained: ' + root);
+      } else {
+        successfulConsumerRoots.push(...caseRoots);
+      }
+      if (hasPrimaryFailure && hasCleanupFailure)
+        throw new AggregateError([primaryFailure, cleanupFailure], 'Test body and package custody check both failed.');
+      if (hasPrimaryFailure) throw primaryFailure;
+      if (hasCleanupFailure) throw cleanupFailure;
+    } finally {
+      containedCasesInFlight -= 1;
+      deferFixtureCleanup = priorDeferCleanup;
+      activeConsumerRoots = priorActiveRoots;
+    }
+  };
   if (sourceOnly) {
-    bunTest(name, body, timeout);
+    bunTest(name, ownedBody, timeout);
     return;
   }
   describe(() => {
     beforeAll(() => {
       const fixturePackage = ensureContainedPackage();
       caseBudget = fixturePackage.caseBudget();
-      checkedAfterCase = false;
       fixturePackage.assertUnchanged();
       caseBudgetValue().remaining();
     }, 60000);
-    bunTest(
-      name,
-      async () => {
-        containedCasesInFlight += 1;
-        try {
-          let primaryFailure: unknown;
-          let hasPrimaryFailure = false;
-          try {
-            await body();
-          } catch (error) {
-            primaryFailure = error;
-            hasPrimaryFailure = true;
-          }
-          let cleanupFailure: unknown;
-          let hasCleanupFailure = false;
-          if (!checkedAfterCase) {
-            try {
-              ensureContainedPackage().assertUnchanged();
-            } catch (error) {
-              cleanupFailure = error;
-              hasCleanupFailure = true;
-            }
-          }
-          if (hasPrimaryFailure && hasCleanupFailure)
-            throw new AggregateError(
-              [primaryFailure, cleanupFailure],
-              'Test body and package custody check both failed.',
-            );
-          if (hasPrimaryFailure) throw primaryFailure;
-          if (hasCleanupFailure) throw cleanupFailure;
-        } finally {
-          containedCasesInFlight -= 1;
-        }
-      },
-      timeout,
-    );
+    bunTest(name, ownedBody, timeout);
   });
 }
 afterAll(() => {
-  if (containedCasesInFlight > 0) containedPackage?.retain();
-  return containedPackage?.close();
+  if (containedCasesInFlight > 0) {
+    containedPackage?.retain();
+    for (const root of activeConsumerRoots) console.warn('Timed-out consumer fixture retained: ' + root);
+    for (const root of successfulConsumerRoots)
+      console.warn('Consumer fixture retained while a case is in flight: ' + root);
+    return containedPackage?.close();
+  }
+  if (retainedConsumerRoots.length > 0) {
+    containedPackage?.retain();
+    for (const root of retainedConsumerRoots) console.warn('Consumer fixture retained for failure review: ' + root);
+  }
+  return (async () => {
+    for (const [index, root] of successfulConsumerRoots.entries()) {
+      try {
+        await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      } catch (error) {
+        containedPackage?.retain();
+        console.error('Successful consumer fixture cleanup failed; retained: ' + root, error);
+        for (const pendingRoot of successfulConsumerRoots.slice(index + 1))
+          console.warn('Consumer fixture cleanup not attempted; retained: ' + pendingRoot);
+        throw error;
+      }
+    }
+    await containedPackage?.close();
+  })();
 }, cleanupHookOptions);
 function copiedRun(args: string[]): JsonRecord {
   if (!containedPackage) throw new Error('Contained controller fixture is unavailable.');
@@ -234,7 +269,9 @@ const writeJson = (root: string, file: string, value: unknown): void => {
 };
 
 async function fixture({ writer = true }: { writer?: boolean } = {}) {
+  markPhase?.('fixture:start');
   const root = mkdtempSync(path.join(tmpdir(), 'vida-stopped-source-'));
+  if (deferFixtureCleanup) activeConsumerRoots.push(root);
   writeFileSync(
     path.join(root, 'agent-runtime.config.v1.yaml'),
     readFileSync(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
@@ -272,6 +309,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     labels: [],
   };
   function admission(id: string = 'stopped', file: string = 'AGENT.sidecar.md', thread: string = 'synthetic-owner') {
+    markPhase?.('admission:' + id + ':setup');
     const source = snapshotDeclaredSources(requireSafeRepositoryAccess(root), [file]),
       scopePath = `.agent/work/${id}/scope.json`,
       acceptancePath = `.agent/work/${id}/acceptance.json`,
@@ -368,6 +406,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
       risk: input.risk,
       change_kind: input.changeKind,
     });
+    markPhase?.('admission:' + id + ':admit');
     const admitted = admitLocalSessionWork(input),
       work = required(admitted.host.work, 'Admitted Host work'),
       identity = {
@@ -376,6 +415,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
         integrations_digest: work.binding.integrations_digest,
         work_id: id,
       };
+    markPhase?.('admission:' + id + ':end');
     return { input, source, identity, admitted };
   }
   const extraBridges: MastraSessionBridge[] = [];
@@ -426,7 +466,9 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     attempt: input.context.attempt,
     work: required(original.admitted.host.work, 'Admitted public fixture work'),
   };
+  markPhase?.('fixture:bind-runtime');
   await bindControlledRuntimeInitialization(root, config, store);
+  markPhase?.('fixture:task-synthesis');
   let journal = await runTaskSynthesisPublicActions(publicFixture);
   const readonlyObservation = required(
     at(journal.state.completed, 0, 'Completed readonly wave').items[0]?.observation,
@@ -434,7 +476,9 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
   );
   let reservation: WorkflowReservation | undefined;
   if (writer) {
+    markPhase?.('fixture:source-prewriter');
     journal = await runSourcePrewriterPublicActions(publicFixture);
+    markPhase?.('fixture:issue-wave');
     await publicRun([
       ...args,
       '--issue-wave',
@@ -450,6 +494,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
       throw new Error('Public fixture did not issue its configured writer');
     reservation = required(item.host_reservation, 'Kernel-produced writer reservation');
   }
+  markPhase?.('fixture:ready');
   const databasePath = sessionHandoffDatabaseRelativePath(config);
   const inspect = () => inspectHostWorkspaceDatabase(root, databasePath, workspace);
   const ddl = () => {
@@ -461,23 +506,10 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     }
   };
   async function close(): Promise<void> {
-    let packageError: unknown;
     for (const extra of extraBridges) await extra.close();
     await bridge.close();
     ledger.close();
-    if (containedPackage) {
-      try {
-        containedPackage.assertUnchanged();
-        checkedAfterCase = true;
-      } catch (error) {
-        packageError = error;
-      }
-    }
-    if (containedPackage?.retained) {
-      console.warn('Consumer retained after package drift or unknown child outcome: ' + root);
-      if (packageError) throw packageError;
-      return;
-    }
+    if (deferFixtureCleanup) return;
     try {
       await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
     } catch (error) {
@@ -486,8 +518,10 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     }
   }
   async function laterWriter(id: string, file: string) {
+    markPhase?.('later-writer:' + id + ':start');
     if (file !== 'AGENT.sidecar.md') writeFileSync(path.join(root, file), 'Synthetic disjoint source');
     const next = admission(id, file, 'synthetic-' + id);
+    markPhase?.('later-writer:' + id + ':bridge-open');
     const nextBridge = await MastraSessionBridge.open({
       ledger,
       projectIds: [selection.project],
@@ -533,8 +567,11 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
         attempt: 1,
         work: required(next.admitted.host.work, 'Later public fixture work'),
       };
+    markPhase?.('later-writer:' + id + ':task-synthesis');
     let nextJournal = await runTaskSynthesisPublicActions(nextPublicFixture);
+    markPhase?.('later-writer:' + id + ':source-prewriter');
     nextJournal = await runSourcePrewriterPublicActions(nextPublicFixture);
+    markPhase?.('later-writer:' + id + ':issue-wave');
     await publicRun([
       ...nextPublicFixture.args,
       '--issue-wave',
@@ -546,6 +583,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     ]);
     nextJournal = nextSync();
     const host = completeHost(store.readHostStateSnapshot(next.identity));
+    markPhase?.('later-writer:' + id + ':acquire-source-lease');
     acquireLocalSourceWriterLease({
       repositoryRoot: root,
       config,
@@ -558,9 +596,11 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
       expectedLedger: host.ledgerVersion,
       expectedSessionJournal: { attempt: 1, version: nextJournal.version },
     });
+    markPhase?.('later-writer:' + id + ':end');
     return { ...next, journal: nextJournal };
   }
   function captureInput({ containedReviews = true }: { containedReviews?: boolean } = {}) {
+    markPhase?.('capture-input:start');
     const host = completeHost(store.readHostStateSnapshot(identity)),
       current = currentJournal(ledger, 'stopped', 1),
       pending = at(current.state.items, 0, 'Pending stopped-source action');
@@ -655,6 +695,7 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
       const terminal: unknown = JSON.parse(readFileSync(path.join(root, terminalRef), 'utf8'));
       expect(isRecord(terminal) ? terminal.actor : undefined).toBe(observation.agent_id);
     };
+    markPhase?.('capture-input:end');
     return {
       operation,
       requestRef,
@@ -1505,6 +1546,20 @@ test('completed readonly release rejects absent and null engine completion evide
         },
         requestRef = '.agent/work/stopped/readonly-request.json';
       writeJson(f.root, requestRef, request);
+      expect(
+        (
+          await publicRun([
+            '--release-completed-readonly',
+            'true',
+            '--mode',
+            'inspect',
+            '--project-root',
+            f.root,
+            '--request',
+            requestRef,
+          ])
+        ).status,
+      ).toBe('readonly_release_inspected');
       const engine = new Database(sessionBridgeDatabasePath(f.root, f.config), { strict: true });
       try {
         const row = engine
@@ -1577,10 +1632,13 @@ test('exact stopped capture retry permits disjoint progress but rejects later ov
   const f = await fixture();
   try {
     const c = f.captureInput();
+    markPhase?.('stopped-capture:plan');
     c.cli('plan');
+    markPhase?.('stopped-capture:apply');
     c.cli('apply');
     const settled = completeHost(f.store.readHostStateSnapshot(f.identity));
     await f.laterWriter('disjoint', 'disjoint.txt');
+    markPhase?.('stopped-capture:disjoint-resume');
     expect(c.cli('resume').work_version).toEqual(settled.workVersion);
     const overlap = await f.laterWriter('overlap', 'AGENT.sidecar.md');
     const active = f.inspect();
@@ -1588,11 +1646,64 @@ test('exact stopped capture retry permits disjoint progress but rejects later ov
       'newer scope grant',
     );
     expect(f.inspect()).toEqual(active);
-    const host = completeHost(f.store.readHostStateSnapshot(overlap.identity));
+    const pendingJournal = currentJournal(f.ledger, 'overlap', 1),
+      activeHost = completeHost(f.store.readHostStateSnapshot(overlap.identity));
+    expect(() =>
+      suspendLocalWork({
+        store: f.store,
+        identity: overlap.identity,
+        journal: pendingJournal,
+        expectedWork: activeHost.workVersion,
+        expectedLedger: activeHost.ledgerVersion,
+        nativeSessionHandle: overlap.input.nativeSessionHandle,
+        userRequestPointer: 'synthetic-deny-unreported-overlap',
+        requestIntent: 'linked_correction',
+        documentationContext: {
+          repository_root: f.root,
+          repository_id: overlap.identity.repository_id,
+          project_id: 'sample',
+          work_id: 'overlap',
+        },
+        config: f.config,
+      }),
+    ).toThrow('source observation is not an authoritative completed host result');
+    expect(f.inspect()).toEqual(active);
+    const pendingItem = at(pendingJournal.state.items, 0, 'Later overlapping writer action'),
+      reservation = required(pendingItem.host_reservation, 'Later overlapping writer Host reservation'),
+      summary = 'Completed the issued overlapping source write';
+    writeFileSync(path.join(f.root, 'AGENT.sidecar.md'), 'Synthetic completed overlapping source write');
+    const updatedScope = snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), ['AGENT.sidecar.md']),
+      observation: SessionObservation = {
+        schema: 'VidaSessionObservation/v1',
+        action_id: pendingItem.request.action_id,
+        issue_id: required(pendingItem.issue_id, 'Later overlapping writer issue'),
+        host_attempt_id: reservation.receipt.attempt.attempt_id,
+        agent_id: 'synthetic-later-overlap-writer',
+        tool_call_ref: 'local:synthetic-later-overlap-writer',
+        status: 'reported_complete',
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        changed_paths: ['AGENT.sidecar.md'],
+        evidence_refs: ['local:synthetic-later-overlap-writer'],
+      };
+    f.store.completeWorkflowAttempt(reservation.receipt, observation);
+    const completedJournal = f.ledger.report('overlap', 1, pendingJournal.version, observation, updatedScope),
+      host = completeHost(f.store.readHostStateSnapshot(overlap.identity));
+    expect(completedJournal.state.items[0]?.observation).toEqual(observation);
+    expect(
+      host.work.execution.assignment_attempts.find(
+        (attempt) => attempt.attempt_id === reservation.receipt.attempt.attempt_id,
+      ),
+    ).toMatchObject({
+      attempt_id: reservation.receipt.attempt.attempt_id,
+      status: 'completed',
+      result: observation,
+      result_digest: canonicalJsonDigest(observation),
+    });
     suspendLocalWork({
       store: f.store,
       identity: overlap.identity,
-      journal: overlap.journal,
+      journal: completedJournal,
       expectedWork: host.workVersion,
       expectedLedger: host.ledgerVersion,
       nativeSessionHandle: overlap.input.nativeSessionHandle,
