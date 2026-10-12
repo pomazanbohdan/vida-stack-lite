@@ -6085,8 +6085,15 @@ export async function run(args: string[] = process.argv.slice(2)) {
   const selector = values.export_staged_witness ? null : activeSelector(values.project_root);
   assertNoActiveCutoverMaintenance(selector);
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
-  const { loadRuntimeConfig, runtimeConfigDigest, runtimePackageAccess, runtimePackageCodePaths, selectWorkflow } =
-    await import('../src/config/runtime-config.ts');
+  const {
+    loadRuntimeConfig,
+    readRuntimePackageResourceBytes,
+    readRuntimePackageResourceText,
+    runtimeConfigDigest,
+    runtimePackageAccess,
+    runtimePackageCodePaths,
+    selectWorkflow,
+  } = await import('../src/config/runtime-config.ts');
   const { workflowWorkItemSchema } = await import('../src/orchestration/workflow-session-reservation-contract.ts');
   const { resolveSelectedProjectForRepositoryPath } = await import('../src/config/project-context.ts');
   const pin = readPin(bundleRoot);
@@ -6529,7 +6536,8 @@ export async function run(args: string[] = process.argv.slice(2)) {
               );
           }
           const schema = digest(
-            runtimePackageAccess().readBytes(
+            readRuntimePackageResourceBytes(
+              runtimePackageAccess(),
               'schemas/agent-runtime-config.v1.schema.json',
               'expired lease recovery schema',
             ),
@@ -6567,9 +6575,11 @@ export async function run(args: string[] = process.argv.slice(2)) {
     const { Ajv2020 } = await import('ajv/dist/2020.js');
     const validateScope = new Ajv2020({ strict: true, allErrors: true }).compile(
       JSON.parse(
-        runtimePackageAccess()
-          .readBytes('schemas/implementation-scope.v1.schema.json', 'renew scope schema')
-          .toString('utf8'),
+        readRuntimePackageResourceText(
+          runtimePackageAccess(),
+          'schemas/implementation-scope.v1.schema.json',
+          'renew scope schema',
+        ),
       ),
     );
     const project = loadProjectSetContext(values.project_root, config, values.repository, values.projects);
@@ -6724,7 +6734,11 @@ export async function run(args: string[] = process.argv.slice(2)) {
             inventory,
           );
           const schema = digest(
-            runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'lease renewal schema'),
+            readRuntimePackageResourceBytes(
+              runtimePackageAccess(),
+              'schemas/agent-runtime-config.v1.schema.json',
+              'lease renewal schema',
+            ),
           );
           if (
             runtime.digest !== work.binding.runtime_code_digest ||

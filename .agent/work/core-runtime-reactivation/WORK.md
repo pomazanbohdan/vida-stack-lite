@@ -8590,3 +8590,61 @@ delta review exposes a broad rejection oracle, tightened to the owned source
 label before final focused qualification. Final review requests explicit lineage;
 the table above records it with pending association review. Async supervision,
 real reader overlap/caller closure and global numeric qualification stay open.
+
+### 2026-10-12 — remaining package-schema reader substitutions
+
+After ca94b7c publication, blind audit isolates four immutable package-resource
+callers. Reuse existing bytes/text helpers at the same call positions with a
+fresh runtimePackageAccess each time. Do not hoist/cache accesses or alter
+mutable project/intake/Source readers, ownership, authorization, CAS or UNKNOWN.
+
+| Caller | Resource / existing label | Shared owner |
+| --- | --- | --- |
+| runtime-code-rebind.ts continuation request | config schema / current config schema | readRuntimePackageResourceBytes then existing sha |
+| run.ts expired recovery callback | config schema / expired lease recovery schema | readRuntimePackageResourceBytes then existing digest |
+| run.ts renewal before project/ledger loading | implementation scope schema / renew scope schema | readRuntimePackageResourceText then existing JSON/Ajv |
+| run.ts renewal callback | config schema / lease renewal schema | readRuntimePackageResourceBytes then existing digest |
+
+One real renewal caller control reuses the owned admission and controlled
+initialization fixtures. Its injected schema contains malformed UTF-8 inside a
+JSON comment string, which permissive replacement decoding accepts. Temporarily
+restoring only the original renewal reader yields meaningful RED: the expected
+UTF-8 denial instead reaches lease renewal journal CAS. Keep that failed root
+vida-absorption-j9eac0 and the raw log; restore the production shared reader.
+The control observes verified1/raw0, exact fatal decoding, unchanged database
+table contents and no further project-context calls after the schema boundary.
+Earlier context reads are lawful prerequisites, so overall-zero-call assertions
+are invalid. First candidate13PASS/1FAIL on that oracle is retained with root
+vida-absorption-YjEbLI. Correct the checkpoint; final14PASS/0FAIL/87assertions
+over2files4.60s, new renewal case877ms, no per-case timeout increase.
+
+Development static first catches two wrong raw readBytes delegation arguments;
+restore its actual two-argument signature. Then lint catches awaiting Bun's
+void-typed rejects matcher; reuse existing expectRejection to await the real
+operation before fixture inspection/cleanup. Qualified static435capturedTS,
+combined434files0errors, Source97files0errors and scoped lint PASS. The final
+phase-checkpoint test edit receives ordinary strict precommit validation.
+Logs remain .tmp/coverage-iteration-ca94b7c/.
+
+Blind source review accepts the four substitutions and their package-only scope.
+Its quoted tautological assertion is absent from actual file/diff and excluded;
+actual static/runtime findings above take precedence. Only the renewal text
+caller is directly qualified by the new control. The other three caller paths,
+broader family closure, source/scenario/frozen correspondence and global numeric
+gates remain pending. The two-reader control still proves coordinated correctness
+only; retain the common package resource and do not claim fewer calls or speedup.
+
+Official Bun child-process docs moved from /docs/api/spawn.md (404) to
+https://bun.com/docs/runtime/child-process.md. Current docs and installed types
+describe Bun.spawn timeout/killSignal/exited and Linux cgroup support. This host
+reports a writable cgroup2 mount, but no owned group launch/quiescence provider
+is qualified. Do not infer descendant/effect safety from the capability or mount.
+Async runner analysis confirms reuse of executionBudget and one existing owner,
+not a new deadline framework. Keep async missing-PID ENOENT distinct from the
+qualified synchronous0/null/null tuple; no adapter normalization or activation.
+
+First ordinary commit gate rejects the final test checkpoint's optional-number
+toBe argument: Bun's matcher overload requires explicit TypeScript narrowing;
+toBeDefined does not provide it. Use the actual undefined guard rather than a
+type assertion. Preserve the rejected hook log. Fresh final typed qualification
+14PASS/0FAIL/86assertions4.44s, renewal609ms; no broader timing or numeric claim.

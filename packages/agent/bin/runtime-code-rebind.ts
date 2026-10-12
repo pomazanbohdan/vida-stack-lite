@@ -13,6 +13,7 @@ import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-sessi
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import {
   loadRuntimeConfig,
+  readRuntimePackageResourceBytes,
   runtimeConfigDigest,
   runtimePackageAccess,
   runtimePackageCodePaths,
@@ -1919,7 +1920,11 @@ async function planDeliveredWorkContinuation({
     priorConfigDigest: work.binding.config_digest,
     targetConfigDigest,
     targetSchemaDigest: sha(
-      runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current config schema'),
+      readRuntimePackageResourceBytes(
+        runtimePackageAccess(),
+        'schemas/agent-runtime-config.v1.schema.json',
+        'current config schema',
+      ),
     ),
     targetProjectContextDigest: project.project_context_digest,
     priorRuntimeCodeDigest: work.binding.runtime_code_digest,
