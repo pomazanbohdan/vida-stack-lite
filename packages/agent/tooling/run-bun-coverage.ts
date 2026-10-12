@@ -22,14 +22,7 @@ import {
 } from './published-baseline-reference.js';
 import { validateIstanbulFileCoverage as validateFileCoverage } from './coverage-counters.js';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from './coverage-run-lock.js';
-import {
-  coverageInputs,
-  instrumentSource,
-  isExternalModulePath,
-  qualityFingerprint,
-  readBunPin,
-  sha256,
-} from './bun-coverage-evidence.ts';
+import { coverageInputs, instrumentSource, isExternalModulePath, readBunPin, sha256 } from './bun-coverage-evidence.ts';
 
 import type { FileCoverageData } from 'istanbul-lib-instrument';
 import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
@@ -90,7 +83,6 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   const selectionMode = args.length ? 'published-baseline-bun-native' : 'current';
   const pinnedBun = await readBunPin(root);
   if (process.versions.bun !== pinnedBun) throw new Error(`Unified coverage requires Bun ${pinnedBun}.`);
-  const preflightInputs = await coverageInputs(root, selectionMode);
 
   function isRecord(value: unknown): value is Record<string, unknown> {
     return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -325,8 +317,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   let executionError: unknown;
   try {
     const lockedInputs = await coverageInputs(root, selectionMode);
-    if (qualityFingerprint(preflightInputs) !== qualityFingerprint(lockedInputs))
-      throw new Error('Coverage inputs changed between preflight and locked capture.');
+    const capturedPin = lockedInputs.input_bytes['.bun-version'];
+    if (!capturedPin || new TextDecoder('utf-8', { fatal: true }).decode(capturedPin).trim() !== pinnedBun)
+      throw new Error('Captured Bun version differs from the selected runtime pin.');
     const runId = randomUUID();
     const { input_bytes: inputBytes, ...evidence } = lockedInputs;
     const runDirectory = path.join(outputRoot, 'runs', runId);

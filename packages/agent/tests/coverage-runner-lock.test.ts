@@ -66,6 +66,51 @@ function createRunnerCandidate(): string {
   }
 }
 
+function writeCaptureProbe(root: string, callbackBody: string): string {
+  const markerPath = path.join(root, 'coverage-capture-probe.json');
+  const preload = path.join(root, 'tooling', 'coverage-capture-probe-preload.ts');
+  write(
+    root,
+    'tooling/coverage-capture-probe-preload.ts',
+    `import * as evidence from './bun-coverage-evidence.ts';
+import { mock } from 'bun:test';
+import { existsSync, lstatSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const marker = ${JSON.stringify(markerPath)};
+mock.module('./bun-coverage-evidence.ts', () => ({
+  ...evidence,
+  async coverageInputs() {
+    const outputRoot = path.join(root, 'coverage/bun-unified');
+    const lockPath = path.join(outputRoot, 'coverage-run.lock');
+    const lock = lstatSync(lockPath, { bigint: true });
+    const prior = existsSync(marker) ? JSON.parse(readFileSync(marker, 'utf8')) : { calls: 0 };
+    const observation = { calls: prior.calls + 1, dev: String(lock.dev), ino: String(lock.ino) };
+    writeFileSync(marker, JSON.stringify(observation));
+    ${callbackBody}
+  },
+}));
+`,
+  );
+  return preload;
+}
+
+function launchRunner(root: string, preload?: string) {
+  return spawnSync(
+    process.execPath,
+    [...(preload ? ['--preload', preload] : []), path.join(root, 'tooling', 'run-bun-coverage.ts')],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 60_000,
+      maxBuffer: 2 * 1024 * 1024,
+      windowsHide: true,
+      env: { ...process.env, BUN_OPTIONS: '' },
+    },
+  );
+}
+
 test('real Bun coverage runner preserves a foreign lock and artifacts before staging a run', () => {
   const root = createRunnerCandidate();
   let passed = false;
@@ -89,14 +134,8 @@ test('real Bun coverage runner preserves a foreign lock and artifacts before sta
     const artifactIdentities = [reportPath, stagingPath, lockPath].map((file) => lstatSync(file, { bigint: true }));
     const priorRuns = readdirSync(runs).sort();
 
-    const result = spawnSync(process.execPath, [path.join(root, 'tooling', 'run-bun-coverage.ts')], {
-      cwd: root,
-      encoding: 'utf8',
-      timeout: 60_000,
-      maxBuffer: 2 * 1024 * 1024,
-      windowsHide: true,
-      env: { ...process.env, BUN_OPTIONS: '' },
-    });
+    const preload = writeCaptureProbe(root, "throw new Error('capture should not run under a foreign lock');");
+    const result = launchRunner(root, preload);
 
     expect(result.error).toBeUndefined();
     expect(result.signal).toBeNull();
@@ -113,6 +152,7 @@ test('real Bun coverage runner preserves a foreign lock and artifacts before sta
       expect(after.ino).toBe(before.ino);
     }
     expect(readdirSync(runs).sort()).toEqual(priorRuns);
+    expect(existsSync(path.join(root, 'coverage-capture-probe.json'))).toBe(false);
     expect(existsSync(path.join(outputRoot, '.coverage-final.json.tmp-' + process.pid))).toBe(false);
     passed = true;
   } finally {
@@ -121,83 +161,94 @@ test('real Bun coverage runner preserves a foreign lock and artifacts before sta
   }
 });
 
-test('real Bun coverage runner rejects source drift between preflight and locked capture', () => {
+test('real Bun coverage runner captures once under its owned lock and cleans up after capture failure', () => {
   const root = createRunnerCandidate();
   let passed = false;
   try {
     const outputRoot = path.join(root, 'coverage', 'bun-unified');
-    const runs = path.join(outputRoot, 'runs');
-    mkdirSync(runs, { recursive: true });
-    const priorRun = path.join(runs, 'preexisting-run');
-    mkdirSync(priorRun);
-    writeFileSync(path.join(priorRun, 'sentinel'), 'preserve prior run\n');
-
-    const reportPath = path.join(outputRoot, 'coverage-final.json');
-    const stagingPath = path.join(outputRoot, '.coverage-final-foreign.staging.json');
-    const reportBytes = Buffer.from('existing report bytes\n');
-    const stagingBytes = Buffer.from('foreign staging bytes\n');
-    writeFileSync(reportPath, reportBytes);
-    writeFileSync(stagingPath, stagingBytes);
-    const priorRuns = readdirSync(runs).sort();
-
-    write(
-      root,
-      'tooling/coverage-lock-drift-preload.ts',
-      `import * as original from './coverage-run-lock.js';
-import { mock } from 'bun:test';
-import { writeFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const acquire = original.acquireCoverageRunLock;
-const release = original.releaseCoverageRunLock;
-let changed = false;
-mock.module('./coverage-run-lock.js', () => ({
-  acquireCoverageRunLock(outputRoot: string) {
-    const lock = acquire(outputRoot);
-    if (!changed) {
-      changed = true;
-      writeFileSync(path.join(root, 'src/host-state.ts'), 'export const changedAfterPreflight = true;\\n');
-    }
-    return lock;
-  },
-  releaseCoverageRunLock: release,
-}));
-`,
-    );
-
-    const result = spawnSync(
-      process.execPath,
-      [
-        '--preload',
-        path.join(root, 'tooling', 'coverage-lock-drift-preload.ts'),
-        path.join(root, 'tooling', 'run-bun-coverage.ts'),
-      ],
-      {
-        cwd: root,
-        encoding: 'utf8',
-        timeout: 60_000,
-        maxBuffer: 2 * 1024 * 1024,
-        windowsHide: true,
-        env: { ...process.env, BUN_OPTIONS: '' },
-      },
-    );
-
+    const preload = writeCaptureProbe(root, "throw new Error('controlled capture failure');");
+    const result = launchRunner(root, preload);
     expect(result.error).toBeUndefined();
     expect(result.signal).toBeNull();
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain('Coverage inputs changed between preflight and locked capture.');
-    expect(readFileSync(path.join(root, 'src/host-state.ts'), 'utf8')).toBe(
-      'export const changedAfterPreflight = true;\n',
-    );
-    expect(readFileSync(reportPath)).toEqual(reportBytes);
-    expect(readFileSync(stagingPath)).toEqual(stagingBytes);
-    expect(readdirSync(runs).sort()).toEqual(priorRuns);
+    expect(result.stderr).toContain('controlled capture failure');
+    const observation: unknown = JSON.parse(readFileSync(path.join(root, 'coverage-capture-probe.json'), 'utf8'));
+    expect(observation).toMatchObject({ calls: 1 });
+    if (typeof observation !== 'object' || observation === null || !('dev' in observation) || !('ino' in observation))
+      throw new Error('Owned lock observation is missing.');
     expect(existsSync(path.join(outputRoot, 'coverage-run.lock'))).toBe(false);
+    expect(existsSync(path.join(outputRoot, 'runs'))).toBe(false);
+    expect(readdirSync(outputRoot)).toEqual([]);
     passed = true;
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });
-    else console.error(`Preserved failed coverage input-race fixture at ${root}`);
+    else console.error(`Preserved failed coverage single-capture fixture at ${root}`);
+  }
+});
+
+test('real Bun coverage runner preserves a foreign replacement lock after capture failure', () => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    const outputRoot = path.join(root, 'coverage', 'bun-unified');
+    const foreignPath = path.join(root, 'foreign-lock.json');
+    const foreignBytes = Buffer.from('{"schema":"foreign-replacement"}\n');
+    const preload = writeCaptureProbe(
+      root,
+      `unlinkSync(lockPath);
+    writeFileSync(lockPath, ${JSON.stringify(foreignBytes.toString('utf8'))}, { flag: 'wx' });
+    const foreign = lstatSync(lockPath, { bigint: true });
+    writeFileSync(${JSON.stringify(foreignPath)}, JSON.stringify({ dev: String(foreign.dev), ino: String(foreign.ino) }));
+    throw new Error('capture failed after foreign lock replacement');`,
+    );
+    const result = launchRunner(root, preload);
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('capture failed after foreign lock replacement');
+    expect(result.stderr).toContain('Coverage lock path no longer identifies the owned lock; preserve it.');
+    const lockPath = path.join(outputRoot, 'coverage-run.lock');
+    expect(readFileSync(lockPath)).toEqual(foreignBytes);
+    const foreignIdentity: unknown = JSON.parse(readFileSync(foreignPath, 'utf8'));
+    const current = lstatSync(lockPath, { bigint: true });
+    if (
+      typeof foreignIdentity !== 'object' ||
+      foreignIdentity === null ||
+      !('dev' in foreignIdentity) ||
+      typeof foreignIdentity.dev !== 'string' ||
+      !('ino' in foreignIdentity) ||
+      typeof foreignIdentity.ino !== 'string'
+    )
+      throw new Error('Foreign replacement identity is missing.');
+    expect(String(current.dev)).toBe(foreignIdentity.dev);
+    expect(String(current.ino)).toBe(foreignIdentity.ino);
+    expect(existsSync(path.join(outputRoot, 'runs'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Preserved failed coverage foreign-swap fixture at ${root}`);
+  }
+});
+
+test('real Bun coverage runner rejects captured pin drift before staging', () => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    const outputRoot = path.join(root, 'coverage', 'bun-unified');
+    const preload = writeCaptureProbe(root, "return { input_bytes: { '.bun-version': Buffer.from('0.0.0\\n') } };");
+    const result = launchRunner(root, preload);
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Captured Bun version differs from the selected runtime pin.');
+    const observation: unknown = JSON.parse(readFileSync(path.join(root, 'coverage-capture-probe.json'), 'utf8'));
+    expect(observation).toMatchObject({ calls: 1 });
+    expect(existsSync(path.join(outputRoot, 'coverage-run.lock'))).toBe(false);
+    expect(existsSync(path.join(outputRoot, 'runs'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Preserved failed coverage pin fixture at ${root}`);
   }
 });
 

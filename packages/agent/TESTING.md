@@ -108,6 +108,28 @@ min/mean/p95/max; setup and collection need their separate elapsed evidence.
 
 ## Local execution policy
 
+Coverage captures its input closure once under the owned output lock. The
+captured Bun pin must match the selected runtime before staging. Instrumentation,
+snapshot files and manifest identities use those same captured bytes. Final
+report admission still compares current inputs and validates snapshot custody;
+the single capture does not waive Source drift checks.
+
+Mutation partition descriptors bind the exact sorted Source subset and its
+original captured digests to the parent Source fingerprint. Stryker rewrites
+the sandbox subject, so those original digests are metadata bindings, not
+expected hashes of rewritten sandbox files. Test/tool byte checks and parent
+before/after current-input checks remain required. Binding predicate tests do
+not establish real mutation execution or assertion-confirmed Killed.
+
+The distributed SDK regression joins a fresh selected formation input map to
+the complete receipt input inventory, then captures the exact four emitted
+JavaScript members. It executes copies of those captured outputs, preserving
+the SDK subject. Stale or missing formation receipts deny; no Source fallback
+qualifies emitted SDK behavior. Form the SDK separately before this regression;
+build/install do not run suites. External dependency bytes remain outside
+snapshot custody. This join proves selected input freshness and output integrity,
+not authenticated formation origin or Native Runtime acceptance.
+
 The final CLEAR P0–P1 regression scope includes these distinct contracts:
 
 - A valid ledger and its records can exceed one ingress message's node count.

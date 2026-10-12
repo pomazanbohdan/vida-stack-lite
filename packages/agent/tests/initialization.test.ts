@@ -453,32 +453,31 @@ v8CoverageTest(
 );
 
 v8CoverageTest(
-  'published initializer launched by Node delegates to the pinned Bun runtime',
+  'published initializer launched through the pinned Bun launcher initializes explicit identity',
   async (budget) => {
     const result = await run(
       budget,
       [
+        path.join(bundle, 'bin/bun.ts'),
         path.join(bundle, 'bin/init.ts'),
         '--project-root',
         root,
         '--repository',
-        'node-repository',
+        'delegated-repository',
         '--project',
-        'node-project',
+        'delegated-project',
       ],
       {},
       root,
-      'node',
     );
     expect(result.exitCode, result.stderr).toBe(0);
-    expect(stringField(parseJsonRecord(result.stdout, 'Node initializer output'), 'status', 'Node output')).toBe(
-      'initialized',
-    );
+    expect(outputStatus(result.stdout, 'delegated initializer output')).toBe('initialized');
     const config = parseRuntimeConfigYaml(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8'));
     expect(config.runtime.bundle).toBe('tools/agents');
+    expect(config.repository.repository_id).toBe('delegated-repository');
     const firstProject = config.projects[0];
     if (!firstProject) throw new Error('Initialized configuration has no project.');
-    expect(firstProject.project_id).toBe('node-project');
+    expect(firstProject.project_id).toBe('delegated-project');
   },
   60_000,
 );

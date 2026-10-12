@@ -7,6 +7,7 @@ import { parse } from '@babel/parser';
 import type { schema } from '@stryker-mutator/api/core';
 import { checkManifest, pinnedEnvironment, readPin } from '../bin/bun.ts';
 import { maintainedSourceInventory } from './maintained-source-inventory.ts';
+import { mutationPartitionSourceBinding } from './mutation-command-runner.ts';
 import { qualityInputs, qualityFingerprint, sha256 } from './bun-coverage-evidence.ts';
 import {
   buildMutationTestCommand,
@@ -259,6 +260,8 @@ async function runCapturedStryker(
   stderrFile: string,
   deadlineMs: number,
   inputFingerprint: string,
+  partitionSources: string[],
+  partitionSourceFingerprint: string,
 ): Promise<MutationRunnerResult> {
   if (!Number.isSafeInteger(deadlineMs) || deadlineMs < 1 || deadlineMs > maximumStrykerDeadlineMs)
     throw new Error('Trusted Stryker partition deadline is outside the supported finite bound.');
@@ -281,6 +284,8 @@ async function runCapturedStryker(
     command_sha256: sha256(JSON.stringify(command)),
     input_fingerprint: inputFingerprint,
     input_descriptor_file: `${partition}.inputs.json`,
+    partition_sources: partitionSources,
+    partition_source_fingerprint: partitionSourceFingerprint,
     started_at: new Date(startedAt).toISOString(),
     deadline_unix_ms: deadlineAt,
     completed_at: new Date().toISOString(),
@@ -297,6 +302,8 @@ async function confirmRunnerReceipt(
   tests: string[],
   inputs: QualityInputs,
   fingerprint: string,
+  partitionSources: string[],
+  partitionSourceFingerprint: string,
 ): Promise<ReceiptOutcome> {
   try {
     const junitFile = junitName(partition, mutantId);
@@ -339,6 +346,12 @@ async function confirmRunnerReceipt(
       })
     )
       throw new Error('Runner receipt does not bind the active mutant to the current parent snapshot.');
+    if (
+      !record(receipt) ||
+      receipt.partition_source_fingerprint !== partitionSourceFingerprint ||
+      JSON.stringify(receipt.partition_sources) !== JSON.stringify(partitionSources)
+    )
+      throw new Error('Runner receipt does not bind the current owned partition sources.');
     const junitBytes = await readBoundedEvidence(reportDirectory, receipt.junit_file);
     if (sha256(junitBytes) !== receipt.junit_sha256 || receipt.junit_bytes !== junitBytes.length)
       throw new Error('JUnit output does not match the runner receipt.');
@@ -1019,6 +1032,15 @@ if (!evidenceRootInfo.isDirectory() || evidenceRootInfo.isSymbolicLink())
 const reportDirectory = await mkdtemp(path.join(evidenceRoot, `mutation-evidence-${runId}-`));
 const mutationTools = mutationToolInputs;
 const inputs = await qualityInputs(root, mutationTools);
+const sourceBindings = new Map(
+  partitions.map(
+    (partition) =>
+      [
+        partition.name,
+        mutationPartitionSourceBinding(partition.name, partitionSources(partition), inputs.sources),
+      ] as const,
+  ),
+);
 const fingerprint = qualityFingerprint(inputs);
 async function assertCurrentInputs(boundary: string): Promise<void> {
   if (qualityFingerprint(await qualityInputs(root, mutationTools)) !== fingerprint)
@@ -1033,11 +1055,20 @@ async function assertCurrentInputs(boundary: string): Promise<void> {
     const reportName = partition.report;
     const testFiles = partition.tests;
     if (!reportName || !testFiles) throw new Error(`Mutation partition is incomplete: ${partition.name}`);
+    const sourceBinding = sourceBindings.get(partition.name);
+    if (!sourceBinding) {
+      provenanceErrors.push({ partition: partition.name, error: 'Mutation partition source binding is incomplete.' });
+      break;
+    }
     try {
       await assertCurrentInputs(`${partition.name}:before`);
       const descriptor = {
-        schema: 'MutationInputDescriptor/v1',
+        schema: 'MutationInputDescriptor/v2',
         partition: partition.name,
+        partition_sources: sourceBinding.sources,
+        partition_source_inputs: sourceBinding.sourceInputs,
+        partition_source_fingerprint: sourceBinding.fingerprint,
+        source_fingerprint: inputs.source_fingerprint,
         tests: testFiles,
         test_inputs: inputs.test_inputs,
         tool_inputs: inputs.tool_inputs,
@@ -1063,6 +1094,8 @@ async function assertCurrentInputs(boundary: string): Promise<void> {
       AGENT_RUNTIME_MUTATION_SANDBOX_ROOT: path.join(reportDirectory, 'stryker-tmp'),
       AGENT_RUNTIME_MUTATION_REPORT: reportName,
       AGENT_RUNTIME_MUTATION_PARTITION: partition.name,
+      AGENT_RUNTIME_MUTATION_SOURCES: JSON.stringify(sourceBinding.sources),
+      AGENT_RUNTIME_MUTATION_PARTITION_SOURCE_FINGERPRINT: sourceBinding.fingerprint,
       AGENT_RUNTIME_MUTATION_RUN_ID: runId,
       AGENT_RUNTIME_INPUT_FINGERPRINT: fingerprint,
       AGENT_RUNTIME_SOURCE_FINGERPRINT: inputs.source_fingerprint,
@@ -1091,6 +1124,8 @@ async function assertCurrentInputs(boundary: string): Promise<void> {
       path.join(reportDirectory, `stryker-${partition.name}.stderr.log`),
       strykerPartitionDeadlineMs,
       fingerprint,
+      sourceBinding.sources,
+      sourceBinding.fingerprint,
     );
     runs.push({ ...partition, report: reportName, result });
     try {
@@ -1118,10 +1153,27 @@ async function assertCurrentInputs(boundary: string): Promise<void> {
 
   const baselineChecks = new Map<string, ReceiptOutcome>();
   const baselineErrors: Array<{ partition: string } & ReceiptOutcome> = [];
-  for (const { name, tests, result } of reports) {
+  for (const { name, tests, result, sources, requiredReportedSource } of reports) {
+    const sourceBinding = mutationPartitionSourceBinding(
+      name,
+      sources ?? (requiredReportedSource ? [requiredReportedSource] : []),
+      inputs.sources,
+    );
     const outcome: ReceiptOutcome =
       result.exitCode === 0 && !result.timed_out && !result.signalCode && result.output_complete
-        ? await confirmRunnerReceipt(reportDirectory, runId, name, null, tests ?? [], inputs, fingerprint)
+        ? sourceBinding
+          ? await confirmRunnerReceipt(
+              reportDirectory,
+              runId,
+              name,
+              null,
+              tests ?? [],
+              inputs,
+              fingerprint,
+              sourceBinding.sources,
+              sourceBinding.fingerprint,
+            )
+          : { status: 'unknown', reason: 'Partition source binding is incomplete.' }
         : { status: 'unknown', reason: 'Stryker partition did not exit cleanly inside its trusted deadline.' };
     baselineChecks.set(name, outcome);
     if (outcome.status !== 'passed') baselineErrors.push({ partition: name, ...outcome });
@@ -1173,6 +1225,7 @@ async function assertCurrentInputs(boundary: string): Promise<void> {
           confirmation = 'NoCoverage';
           confirmationReason = 'Stryker did not execute tests for this mutant.';
         } else if (typeof mutant.id === 'string' && ['Killed', 'Survived'].includes(mutant.status)) {
+          const sourceBinding = sourceBindings.get(name);
           const baseline = baselineChecks.get(name);
           const observed =
             result.exitCode === 0 &&
@@ -1180,7 +1233,19 @@ async function assertCurrentInputs(boundary: string): Promise<void> {
             !result.signalCode &&
             result.output_complete &&
             baseline?.status === 'passed'
-              ? await confirmRunnerReceipt(reportDirectory, runId, name, mutant.id, tests ?? [], inputs, fingerprint)
+              ? sourceBinding
+                ? await confirmRunnerReceipt(
+                    reportDirectory,
+                    runId,
+                    name,
+                    mutant.id,
+                    tests ?? [],
+                    inputs,
+                    fingerprint,
+                    sourceBinding.sources,
+                    sourceBinding.fingerprint,
+                  )
+                : { status: 'unknown', reason: 'Partition source binding is incomplete.' }
               : (baseline ?? { status: 'unknown', reason: 'Partition baseline is missing.' });
           if (baseline?.status !== 'passed') {
             confirmationReason = 'Partition baseline did not pass; mutant failure is not attributable.';
@@ -1262,6 +1327,22 @@ async function assertCurrentInputs(boundary: string): Promise<void> {
     source_inputs: inputs.sources,
     test_inputs: inputs.test_inputs,
     tool_inputs: inputs.tool_inputs,
+    partition_source_bindings: partitions.map((partition) => {
+      const binding = sourceBindings.get(partition.name);
+      return binding
+        ? {
+            partition: partition.name,
+            sources: binding.sources,
+            source_inputs: binding.sourceInputs,
+            source_fingerprint: binding.fingerprint,
+          }
+        : {
+            partition: partition.name,
+            sources: partitionSources(partition),
+            source_inputs: [],
+            source_fingerprint: null,
+          };
+    }),
     provenance_errors: provenanceErrors,
     source_mismatches: sourceMismatches,
     baseline_errors: baselineErrors,

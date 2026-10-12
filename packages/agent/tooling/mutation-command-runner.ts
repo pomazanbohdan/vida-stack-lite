@@ -19,8 +19,12 @@ const activeMutant = process.env.__STRYKER_ACTIVE_MUTANT__;
 
 type MutationInputDigest = { path: string; sha256: string };
 type MutationInputDescriptor = {
-  schema: 'MutationInputDescriptor/v1';
+  schema: 'MutationInputDescriptor/v2';
   partition: string;
+  partition_sources: string[];
+  partition_source_inputs: MutationInputDigest[];
+  partition_source_fingerprint: string;
+  source_fingerprint: string;
   tests: string[];
   test_inputs: MutationInputDigest[];
   tool_inputs: MutationInputDigest[];
@@ -33,6 +37,9 @@ type MutationRunnerConfig = {
   partition: string;
   reportDirectory: string;
   tests: string[];
+  sources: string[];
+  partitionSourceFingerprint: string;
+  sourceFingerprint: string;
   runId: string;
 };
 type MutationProcessResult = import('./mutation-evidence.ts').MutationProcessResult;
@@ -41,6 +48,61 @@ type RunnerIdentity = Awaited<ReturnType<typeof collectExecutionIdentity>>;
 
 function digest(value: string): string {
   return createHash('sha256').update(value).digest('hex');
+}
+
+export function mutationPartitionSourceBinding(
+  partition: string,
+  sources: readonly string[],
+  sourceInputs: readonly MutationInputDigest[],
+): { sources: string[]; sourceInputs: MutationInputDigest[]; fingerprint: string } | null {
+  if (!/^[a-z0-9-]+$/u.test(partition) || !sources.length || !sources.every((source) => typeof source === 'string'))
+    return null;
+  const orderedSources = [...sources].sort();
+  const inputByPath = new Map<string, MutationInputDigest>();
+  for (const rawEntry of sourceInputs as readonly unknown[]) {
+    if (!inputDigest(rawEntry)) return null;
+    const entry = rawEntry;
+    if ((!entry.path.startsWith('src/') && !entry.path.startsWith('bin/')) || inputByPath.has(entry.path)) return null;
+    inputByPath.set(entry.path, entry);
+  }
+  if (
+    new Set(orderedSources).size !== orderedSources.length ||
+    orderedSources.some(
+      (source) => !safeInputPath(source) || (!source.startsWith('src/') && !source.startsWith('bin/')),
+    ) ||
+    orderedSources.some((source) => !inputByPath.has(source))
+  )
+    return null;
+  const scopedInputs = orderedSources.map((source) => inputByPath.get(source) as MutationInputDigest);
+  const canonical = canonicalJson({ partition, sources: orderedSources, source_inputs: scopedInputs });
+  if (canonical === undefined) return null;
+  return { sources: orderedSources, sourceInputs: scopedInputs, fingerprint: sha256(canonical) };
+}
+
+export function mutationPartitionSourceBindingMatches(
+  value: unknown,
+  expected: { partition: string; sources: string[]; sourceInputs: MutationInputDigest[]; fingerprint: string },
+): boolean {
+  if (!record(value) || value.schema !== 'MutationInputDescriptor/v2') return false;
+  if (
+    !Array.isArray(value.partition_sources) ||
+    !value.partition_sources.every((source) => typeof source === 'string') ||
+    !Array.isArray(value.partition_source_inputs) ||
+    !value.partition_source_inputs.every(inputDigest)
+  )
+    return false;
+  const actualBinding = mutationPartitionSourceBinding(
+    expected.partition,
+    value.partition_sources,
+    value.partition_source_inputs,
+  );
+  return (
+    value.partition === expected.partition &&
+    canonicalJson(value.partition_sources) === canonicalJson(expected.sources) &&
+    canonicalJson(value.partition_source_inputs) === canonicalJson(expected.sourceInputs) &&
+    value.partition_source_fingerprint === expected.fingerprint &&
+    actualBinding?.fingerprint === expected.fingerprint
+  );
 }
 
 function required(value: string | undefined, name: string): string {
@@ -202,7 +264,11 @@ function descriptorHasExactKeys(value: Record<string, unknown>): boolean {
   const expected = [
     'input_fingerprint',
     'partition',
+    'partition_source_fingerprint',
+    'partition_source_inputs',
+    'partition_sources',
     'schema',
+    'source_fingerprint',
     'test_fingerprint',
     'test_inputs',
     'tests',
@@ -216,7 +282,7 @@ function descriptorHasExactKeys(value: Record<string, unknown>): boolean {
 function descriptorHasValidSelection(value: Record<string, unknown>): boolean {
   const tests = value.tests;
   return (
-    value.schema === 'MutationInputDescriptor/v1' &&
+    value.schema === 'MutationInputDescriptor/v2' &&
     typeof value.partition === 'string' &&
     Array.isArray(tests) &&
     tests.length > 0 &&
@@ -228,12 +294,20 @@ function descriptorHasValidDigests(value: Record<string, unknown>): boolean {
   return (
     inputDigests(value.test_inputs) &&
     inputDigests(value.tool_inputs) &&
+    inputDigests(value.partition_source_inputs) &&
     typeof value.input_fingerprint === 'string' &&
     /^[0-9a-f]{64}$/u.test(value.input_fingerprint) &&
     typeof value.test_fingerprint === 'string' &&
     /^[0-9a-f]{64}$/u.test(value.test_fingerprint) &&
     typeof value.tool_fingerprint === 'string' &&
-    /^[0-9a-f]{64}$/u.test(value.tool_fingerprint)
+    /^[0-9a-f]{64}$/u.test(value.tool_fingerprint) &&
+    typeof value.source_fingerprint === 'string' &&
+    /^[0-9a-f]{64}$/u.test(value.source_fingerprint) &&
+    typeof value.partition_source_fingerprint === 'string' &&
+    /^[0-9a-f]{64}$/u.test(value.partition_source_fingerprint) &&
+    Array.isArray(value.partition_sources) &&
+    value.partition_sources.length > 0 &&
+    value.partition_sources.every((source) => typeof source === 'string' && safeInputPath(source))
   );
 }
 
@@ -246,10 +320,20 @@ function mutationInputDescriptor(value: unknown): value is MutationInputDescript
   );
 }
 
-function descriptorMatchesParent(descriptor: MutationInputDescriptor, partition: string, tests: string[]): boolean {
+function descriptorMatchesParent(
+  descriptor: MutationInputDescriptor,
+  partition: string,
+  tests: string[],
+  sources: string[],
+  partitionSourceFingerprint: string,
+  sourceFingerprint: string,
+): boolean {
   return (
     descriptor.partition === partition &&
     JSON.stringify(descriptor.tests) === JSON.stringify(tests) &&
+    JSON.stringify(descriptor.partition_sources) === JSON.stringify(sources) &&
+    descriptor.partition_source_fingerprint === partitionSourceFingerprint &&
+    descriptor.source_fingerprint === sourceFingerprint &&
     descriptor.test_fingerprint === required(process.env.AGENT_RUNTIME_TEST_FINGERPRINT, 'test fingerprint') &&
     descriptor.tool_fingerprint === required(process.env.AGENT_RUNTIME_TOOL_FINGERPRINT, 'tool fingerprint') &&
     descriptor.input_fingerprint === required(process.env.AGENT_RUNTIME_INPUT_FINGERPRINT, 'input fingerprint')
@@ -280,10 +364,30 @@ async function verifyInputDescriptor(
   reportDirectory: string,
   partition: string,
   tests: string[],
+  sources: string[],
+  partitionSourceFingerprint: string,
+  sourceFingerprint: string,
 ): Promise<MutationInputDescriptor> {
   const value = await readInputDescriptor(reportDirectory, partition);
-  if (!mutationInputDescriptor(value) || !descriptorMatchesParent(value, partition, tests))
+  if (
+    !mutationInputDescriptor(value) ||
+    !descriptorMatchesParent(value, partition, tests, sources, partitionSourceFingerprint, sourceFingerprint)
+  )
     throw new Error('Mutation input descriptor does not match its parent partition.');
+  const expectedBinding = mutationPartitionSourceBinding(partition, sources, value.partition_source_inputs);
+  if (
+    !expectedBinding ||
+    !mutationPartitionSourceBindingMatches(value, {
+      partition,
+      sources: expectedBinding.sources,
+      sourceInputs: expectedBinding.sourceInputs,
+      fingerprint: partitionSourceFingerprint,
+    })
+  )
+    throw new Error('Mutation input descriptor source binding is invalid.');
+  // Stryker rewrites the active source in its sandbox. This binding attests the
+  // original parent capture, so compare its metadata with the parent digest and
+  // verify test/tool files here without rereading the mutated subject.
   await verifyDescriptorFiles(root, value.test_inputs);
   await verifyDescriptorFiles(root, value.tool_inputs);
   if (!descriptorFingerprintsMatch(value, tests)) throw new Error('Mutation input descriptor fingerprint is invalid.');
@@ -298,6 +402,8 @@ function mutationTestEnvironment(logs: RunnerLogs): Record<string, string> {
     'AGENT_RUNTIME_MUTATION_REPORT',
     'AGENT_RUNTIME_MUTATION_RUN_ID',
     'AGENT_RUNTIME_MUTATION_SOURCE',
+    'AGENT_RUNTIME_MUTATION_SOURCES',
+    'AGENT_RUNTIME_MUTATION_PARTITION_SOURCE_FINGERPRINT',
     'AGENT_RUNTIME_MUTATION_TESTS',
     'AGENT_RUNTIME_MUTATION_SANDBOX_ROOT',
   ])
@@ -360,10 +466,40 @@ function runnerConfig(): MutationRunnerConfig {
   const partition = required(process.env.AGENT_RUNTIME_MUTATION_PARTITION, 'partition');
   const reportDirectory = path.resolve(required(process.env.AGENT_RUNTIME_MUTATION_DIRECTORY, 'report directory'));
   const tests = selectedTests(required(process.env.AGENT_RUNTIME_MUTATION_TESTS, 'tests'));
+  const rawSources = required(process.env.AGENT_RUNTIME_MUTATION_SOURCES, 'sources');
+  const sources: unknown = JSON.parse(rawSources);
+  if (!Array.isArray(sources) || !sources.length || sources.some((source) => typeof source !== 'string'))
+    throw new Error('Mutation runner received an invalid source selection.');
+  const orderedSources = [...(sources as string[])].sort();
+  if (
+    new Set(orderedSources).size !== orderedSources.length ||
+    orderedSources.some((source) => !safeInputPath(source)) ||
+    JSON.stringify(orderedSources) !== rawSources
+  )
+    throw new Error('Mutation runner received an invalid source selection.');
+  const partitionSourceFingerprint = required(
+    process.env.AGENT_RUNTIME_MUTATION_PARTITION_SOURCE_FINGERPRINT,
+    'partition source fingerprint',
+  );
+  const sourceFingerprint = required(process.env.AGENT_RUNTIME_SOURCE_FINGERPRINT, 'source fingerprint');
   const runId = required(process.env.AGENT_RUNTIME_MUTATION_RUN_ID, 'run ID');
-  if (!/^[a-z0-9-]+$/u.test(partition) || !/^[0-9a-f-]{36}$/u.test(runId))
+  if (
+    !/^[a-z0-9-]+$/u.test(partition) ||
+    !/^[0-9a-f-]{36}$/u.test(runId) ||
+    !/^[0-9a-f]{64}$/u.test(partitionSourceFingerprint) ||
+    !/^[0-9a-f]{64}$/u.test(sourceFingerprint)
+  )
     throw new Error('Mutation runner received an invalid partition or run ID.');
-  return { root, partition, reportDirectory, tests, runId };
+  return {
+    root,
+    partition,
+    reportDirectory,
+    tests,
+    sources: orderedSources,
+    partitionSourceFingerprint,
+    sourceFingerprint,
+    runId,
+  };
 }
 
 async function runnerIdentity(
@@ -406,6 +542,8 @@ function runnerReceipt(
     test_files: tests,
     input_fingerprint: required(process.env.AGENT_RUNTIME_INPUT_FINGERPRINT, 'input fingerprint'),
     source_fingerprint: required(process.env.AGENT_RUNTIME_SOURCE_FINGERPRINT, 'source fingerprint'),
+    partition_sources: config.sources,
+    partition_source_fingerprint: config.partitionSourceFingerprint,
     test_fingerprint: descriptor?.test_fingerprint ?? '',
     tool_fingerprint: descriptor?.tool_fingerprint ?? '',
     command: recordedMutationCommand(command),
@@ -429,7 +567,15 @@ async function run(): Promise<void> {
   const command = buildMutationTestCommand(process.execPath, config.tests, paths.junit);
   let descriptor: MutationInputDescriptor | null = null;
   try {
-    descriptor = await verifyInputDescriptor(config.root, config.reportDirectory, config.partition, config.tests);
+    descriptor = await verifyInputDescriptor(
+      config.root,
+      config.reportDirectory,
+      config.partition,
+      config.tests,
+      config.sources,
+      config.partitionSourceFingerprint,
+      config.sourceFingerprint,
+    );
   } catch {
     descriptor = null;
   }
@@ -469,9 +615,11 @@ async function run(): Promise<void> {
   if (custody?.terminationObserved === false && !custody.unrefCalled) process.exit(1);
 }
 
-try {
-  await run();
-} catch (error) {
-  process.stderr.write(`Mutation runner could not persist evidence: ${errorCode(error)}\n`);
-  process.exitCode = 1;
+if (import.meta.main) {
+  try {
+    await run();
+  } catch (error) {
+    process.stderr.write(`Mutation runner could not persist evidence: ${errorCode(error)}\n`);
+    process.exitCode = 1;
+  }
 }

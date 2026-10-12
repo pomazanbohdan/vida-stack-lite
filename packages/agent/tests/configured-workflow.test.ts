@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { boundedSpawnSync, executionBudget, requireTerminalCommand } from '../bin/bun.ts';
 import { tmpdir } from 'node:os';
@@ -9,6 +9,8 @@ import { stringify } from 'yaml';
 import { randomUUID } from 'node:crypto';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { createInitializationBundle } from './helpers/init-bundle.ts';
+import { captureSelectedSdkJavascriptOutputs } from '../tooling/sdk-artifact-capture.ts';
+import { captureSdkFormationInputs } from '../tooling/build-package.ts';
 import { selectCorrectiveEvidence } from '../src/orchestration/final-assurance.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
@@ -1188,6 +1190,20 @@ describe('semantic current-v1 work context and live permits (unit authority adap
   test('distributed runtime denies implicit governance even with test process flags', async () => {
     retainedSdkFixtureRoots.add(root);
     const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
+    const selectedInputs = await captureSdkFormationInputs(packageRoot);
+    const emitted = await captureSelectedSdkJavascriptOutputs(packageRoot, selectedInputs);
+    const sdkSubject = path.join(root, 'sdk-subject');
+    for (const relative of emitted.paths) {
+      const destination = path.join(sdkSubject, relative);
+      await mkdir(path.dirname(destination), { recursive: true });
+      await writeFile(destination, emitted.readBytes(relative), { flag: 'wx' });
+    }
+    await writeFile(path.join(sdkSubject, 'package.json'), '{"type":"module"}\n', { flag: 'wx' });
+    await symlink(
+      path.join(packageRoot, 'node_modules'),
+      path.join(sdkSubject, 'node_modules'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
     const bindings = {
       repositoryRoot: root,
       repositoryId: config.repository.repository_id,
@@ -1213,7 +1229,7 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       process.execPath,
       ['-e', script],
       {
-        cwd: packageRoot,
+        cwd: sdkSubject,
         env: { ...process.env, NODE_ENV: 'test', BUN_TEST: '1', VITEST: 'true' },
         windowsHide: true,
         encoding: 'utf8',
@@ -1230,7 +1246,7 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       throw new Error('SDK child UTF-8 output is unavailable.');
     expect(result.stderr).toBe('');
     expect(result.stdout.trim()).toBe('distributed authentication denial verified');
-    const bundled = await readFile(path.join(packageRoot, 'dist/src/runtime.js'), 'utf8');
+    const bundled = emitted.readBytes('dist/src/runtime.js').toString('utf8');
     expect(
       /requireCondition\d*\(false, "test-only trusted host issuer is unavailable outside a test process"\)/.test(
         bundled,

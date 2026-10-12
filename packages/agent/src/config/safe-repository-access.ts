@@ -1153,20 +1153,23 @@ function openFile(
 }
 type CaptureFileIdentity = Pick<BigIntStats, 'dev' | 'ino' | 'mode' | 'nlink' | 'size' | 'ctimeNs' | 'mtimeNs'>;
 type CaptureDirectoryIdentity = Pick<BigIntStats, 'dev' | 'ino' | 'mode'>;
+const captureFileFields = [
+  'dev',
+  'ino',
+  'mode',
+  'nlink',
+  'size',
+  'ctimeNs',
+  'mtimeNs',
+] as const satisfies readonly (keyof CaptureFileIdentity)[];
+const captureDirectoryFields = ['dev', 'ino', 'mode'] as const satisfies readonly (keyof CaptureDirectoryIdentity)[];
 
-function sameCaptureFile(left: CaptureFileIdentity, right: CaptureFileIdentity): boolean {
-  return (
-    left.dev === right.dev &&
-    left.ino === right.ino &&
-    left.mode === right.mode &&
-    left.nlink === right.nlink &&
-    left.size === right.size &&
-    left.ctimeNs === right.ctimeNs &&
-    left.mtimeNs === right.mtimeNs
-  );
-}
-function sameCaptureDirectory(left: CaptureDirectoryIdentity, right: CaptureDirectoryIdentity): boolean {
-  return left.dev === right.dev && left.ino === right.ino && left.mode === right.mode;
+function sameCaptureMetadata<Field extends keyof BigIntStats>(
+  left: Pick<BigIntStats, Field>,
+  right: Pick<BigIntStats, Field>,
+  fields: readonly Field[],
+): boolean {
+  return fields.every((field) => left[field] === right[field]);
 }
 function captureDirectoryChain(
   root: string,
@@ -1231,7 +1234,7 @@ function linuxReadVerifiedCaptureBytes(
     const beforePath = lstatSync(childPath(parent.fd, parent.name), { bigint: true });
     regularFile(beforeFd, label);
     regularFile(beforePath, label);
-    reject(!sameCaptureFile(beforeFd, beforePath), label + ' pathname changed before capture');
+    reject(!sameCaptureMetadata(beforeFd, beforePath, captureFileFields), label + ' pathname changed before capture');
     const expectedSize = boundedStatSize(beforeFd, maximum, label);
     const bytes = readBoundedBuffer(fd, label, maximum, false, expectedSize);
     const afterFd = fstatSync(fd, { bigint: true });
@@ -1239,7 +1242,8 @@ function linuxReadVerifiedCaptureBytes(
     regularFile(afterFd, label);
     regularFile(afterPath, label);
     reject(
-      !sameCaptureFile(beforeFd, afterFd) || !sameCaptureFile(beforePath, afterPath),
+      !sameCaptureMetadata(beforeFd, afterFd, captureFileFields) ||
+        !sameCaptureMetadata(beforePath, afterPath, captureFileFields),
       label + ' changed during capture',
     );
     reject(bytes.length !== Number(afterFd.size), label + ' did not reach the exact file EOF');
@@ -1248,8 +1252,8 @@ function linuxReadVerifiedCaptureBytes(
     const afterChain = captureDirectoryChain(root, segments.slice(0, -1), label);
     reject(
       beforeChain.length !== afterChain.length ||
-        beforeChain.some((item, i) => !sameCaptureDirectory(item, afterChain[i]!)) ||
-        !sameCaptureDirectory(openedParent, afterChain.at(-1)!),
+        beforeChain.some((item, i) => !sameCaptureMetadata(item, afterChain[i]!, captureDirectoryFields)) ||
+        !sameCaptureMetadata(openedParent, afterChain.at(-1)!, captureDirectoryFields),
       label + ' root or parent-chain identity changed during capture',
     );
     return bytes;

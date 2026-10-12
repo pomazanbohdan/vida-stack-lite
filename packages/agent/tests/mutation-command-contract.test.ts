@@ -5,6 +5,10 @@ import { expect, test } from 'bun:test';
 import { readPin } from '../bin/bun.ts';
 import strykerConfig from '../stryker.config.ts';
 import { buildMutationTestCommand } from '../tooling/mutation-evidence.js';
+import {
+  mutationPartitionSourceBinding,
+  mutationPartitionSourceBindingMatches,
+} from '../tooling/mutation-command-runner.ts';
 import { maintainedSourceInventory } from '../tooling/maintained-source-inventory.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -49,6 +53,65 @@ test('configured mutation adapter builds worker argv from the already selected p
     '--reporter=junit',
     '--reporter-outfile=/reports/worker.xml',
   ]);
+});
+
+test('mutation partition descriptor binds the owned source list to its captured source subset', () => {
+  const allSourceInputs = [
+    { path: 'src/a.ts', sha256: 'a'.repeat(64) },
+    { path: 'src/b.ts', sha256: 'b'.repeat(64) },
+    { path: 'src/c.ts', sha256: 'c'.repeat(64) },
+  ];
+  const binding = mutationPartitionSourceBinding('owned-partition', ['src/b.ts', 'src/a.ts'], allSourceInputs);
+  expect(binding).not.toBeNull();
+  if (!binding) throw new Error('Expected a complete partition source binding.');
+  const descriptor = {
+    schema: 'MutationInputDescriptor/v2',
+    partition: 'owned-partition',
+    partition_sources: binding.sources,
+    partition_source_inputs: binding.sourceInputs,
+    partition_source_fingerprint: binding.fingerprint,
+  };
+  const expected = {
+    partition: 'owned-partition',
+    sources: binding.sources,
+    sourceInputs: binding.sourceInputs,
+    fingerprint: binding.fingerprint,
+  };
+  expect(mutationPartitionSourceBindingMatches(descriptor, expected)).toBe(true);
+  expect(
+    mutationPartitionSourceBinding(
+      'owned-partition',
+      ['src/a.ts', 'src/b.ts'],
+      [...allSourceInputs, { path: 'src/a.ts', sha256: 'a'.repeat(64) }],
+    ),
+  ).toBeNull();
+  expect(
+    mutationPartitionSourceBinding('owned-partition', ['src/a.ts'], [{ path: 'src/a.ts', sha256: 'not-a-digest' }]),
+  ).toBeNull();
+  expect(mutationPartitionSourceBindingMatches({ ...descriptor, partition: 'foreign-partition' }, expected)).toBe(
+    false,
+  );
+  expect(mutationPartitionSourceBindingMatches({ ...descriptor, partition_sources: ['src/a.ts'] }, expected)).toBe(
+    false,
+  );
+  expect(
+    mutationPartitionSourceBindingMatches(
+      { ...descriptor, partition_sources: [...binding.sources, 'src/c.ts'], partition_source_inputs: allSourceInputs },
+      expected,
+    ),
+  ).toBe(false);
+  expect(
+    mutationPartitionSourceBindingMatches(
+      {
+        ...descriptor,
+        partition_source_inputs: [{ ...binding.sourceInputs[0], sha256: 'd'.repeat(64) }, binding.sourceInputs[1]],
+      },
+      expected,
+    ),
+  ).toBe(false);
+  expect(
+    mutationPartitionSourceBindingMatches({ ...descriptor, partition_source_fingerprint: 'e'.repeat(64) }, expected),
+  ).toBe(false);
 });
 
 test('mutation inventory assigns maintained sources and exposes pending upgrade qualification', () => {

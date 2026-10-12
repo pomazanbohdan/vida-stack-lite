@@ -7610,3 +7610,62 @@ pause, native handle, uncertain assignment and foreign actor/release provenance.
 Current joined static checking passes422files plus97stricter Source files with
 0diagnostics. This is a scoped complexity/behavior repair, not the exhaustive
 CRAP gate, current full coverage or assertion-confirmed mutation PASS.
+
+### Follow-up — parallel pattern corrections and selected SDK qualification
+
+Six disjoint Luna lanes implemented or reviewed coverage capture, mutation
+partition binding, emitted SDK input/output custody, initializer/rebind child
+contracts and stopped-source timing. Independent reviews checked each other's
+tooling. Three further blind contour reviews found no demonstrated merge/admission
+or scoped Source defect; they are review results, not numeric qualification.
+
+Coverage now captures once under its genuine output lock instead of two complete
+captures. The captured pin is checked before staging; snapshot authority and all
+final current-input validation remain. Root controls cover foreign lock/no scan,
+single capture failure, captured pin drift and foreign replacement custody.
+Bun's AggregateError printer exposes constituent errors, so the foreign-swap
+control asserts both actual causes and unchanged foreign bytes/device/inode.
+
+Mutation descriptors v2 join the exact sorted partition paths and original
+captured hashes to the global Source fingerprint, using existing captured
+metadata. Independent review caught an invalid sandbox Source reread: Stryker
+rewrites that subject. Remove that reread, retain parent before/after freshness,
+test/tool sandbox checks and exact descriptor/receipt bindings. Reject malformed,
+duplicate, missing, extra, stale and foreign partition metadata. The binding-only
+predicate does not claim full descriptor validation. Root's26contract/classifier
+controls pass257assertions in943ms. No mutation engine qualification is claimed;
+the project-upgrade partition remains pending and function/scenario joins remain
+open. Error/timeout/no-coverage still cannot qualify Killed.
+
+Shared verified-reader metadata comparison keeps exact seven-file/three-directory
+field sets; bounded reader controls pass unchanged. Eleven coverage/SDK capture
+controls pass74assertions in2.38s. The selected SDK join checks the complete
+formation input inventory, not just public entrypoints; retained output buffers
+are copied on exposure. Tests cover transitive drift, missing/extra/duplicate/
+malformed receipt rows, wrong output inventory/digest/size and linked output.
+
+Root separately formed the current SDK under Bun1.4.3, without suites or install.
+The actual receipt has143inputs,123outputs,31schemas and exactly four JS members;
+SHA256 f3e78171f612274e6a563c89a31d5a2425455eac3d915c84a4fca41b41d35440.
+Prior generated dist is retained by original device/inode outside maintained
+package roots in .tmp/complex-quality-20261012-WfxQXq; the initial package-local
+archive placement correctly tripped TS-only and was relocated without adding
+an exclusion. The real emitted SDK regression passes4assertions, body2.85s and
+whole command5.38s. This proves the stated library boundary, not native install
+or Runtime acceptance. Receipt and logs remain local generated evidence.
+
+The obsolete external-Node initializer case now executes the actual initializer
+through its pinned Bun launcher with explicit repository/project identities.
+Seven related initializer controls pass38assertions in13s; unchanged multi-project
+contracts pass instead of cascading from ENOENT. Two actual public rebind CLI
+controls pass26assertions in16.99s with bounded child diagnostics and unchanged
+result/guard expectations. These targeted runs do not close the entire165-case
+rebind file or establish whole-suite percentages.
+
+The denial-contract observer now sees optional verified package reads through
+one common byte/text wrapper. Fresh four-worker measurement has1PASS/3FAIL at
+unchanged4.5s child bounds; planning alone takes2.1–2.2s in timed-out variants.
+Keep new failed/UNKNOWN roots and logs; no replay or manual CAS cleanup. Investigate
+fixture/setup cost before changing this contour. Stopped-source custody/timing
+changes remain unfinished and separate. Full current coverage, exhaustive frozen
+CRAP correspondence and assertion-confirmed mutation100 remain pending.

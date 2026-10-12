@@ -20,7 +20,8 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import { spawnSync, type SpawnSyncOptionsWithStringEncoding } from 'node:child_process';
+import { spawnSync, type SpawnSyncOptionsWithStringEncoding, type SpawnSyncReturns } from 'node:child_process';
+import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.ts';
 import { runReconcileArtifacts as reconcileEntrypoint } from '../bin/reconcile-artifacts.ts';
 import { run as runEntrypoint } from '../bin/run.ts';
 import { readPin } from '../bin/bun.ts';
@@ -565,6 +566,18 @@ function checkedString(value: unknown, label: string): string {
 }
 function requiredCliString(value: CliObject, key: string, label: string): string {
   return checkedString(value[key], label);
+}
+function cliChildDiagnostic(label: string, result: SpawnSyncReturns<string>): string {
+  const outcome = isUnknownSynchronousChild(result)
+    ? 'UNKNOWN'
+    : result.status === 0
+      ? 'success'
+      : 'terminal nonzero exit';
+  return (
+    `${label}: outcome=${outcome}; status=${result.status}; signal=${result.signal ?? 'none'}; ` +
+    `error=${result.error?.message ?? 'none'}; stderr_tail=${JSON.stringify(result.stderr.slice(-4000))}; ` +
+    `stdout_tail=${JSON.stringify(result.stdout.slice(-4000))}`
+  );
 }
 function requiredCliObject(value: CliObject, key: string, label: string): CliObject {
   return checkedCliObject(value[key], label);
@@ -3350,7 +3363,7 @@ test('inspect/plan are read-only for YAML/receipt/database; fenced apply precede
     [path.join(source, 'bin/reconcile-artifacts.ts'), ...f.args('inspect')],
     cliOptions,
   );
-  expect(cli.status).toBe(0);
+  expect(cli.status, cliChildDiagnostic('reconcile-artifacts inspect child', cli)).toBe(0);
   expect(
     requiredCliString(checkedCliObject(parseFixtureJson(cli.stdout), 'reconcile CLI result'), 'status', 'CLI status'),
   ).toBe('inspect_ready_unauthorized');
@@ -4617,8 +4630,8 @@ test('public historical inspect runs from unrelated cwd while the ordinary recei
     windowsHide: true,
     timeout: 30000,
   });
-  expect(actual.status).toBe(0);
-  expect(actual.error).toBeUndefined();
+  expect(actual.status, cliChildDiagnostic('historical inspect child', actual)).toBe(0);
+  expect(actual.error, cliChildDiagnostic('historical inspect child', actual)).toBeUndefined();
   expect(checkedCliObject(parseFixtureJson(actual.stdout), 'historical CLI result').status).toBe(
     'historical_owner_release_inspected',
   );
