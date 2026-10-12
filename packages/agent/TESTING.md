@@ -696,6 +696,9 @@ Batch resource-free files to retain import/JIT reuse rather than starting a
 process per file. Balance file counts with stable path/index ties initially;
 use duration weights only after complete same-scope per-file timing evidence.
 Partial reporter body sums are not those weights or proof of speedup.
+Partial PASS/FAIL rows may appear in a dated progress record only with their
+incomplete scope and terminal FAIL/UNKNOWN status. They establish neither final
+suite success nor coverage, CRAP or mutation admission.
 
 Eligibility binds captured test SHA plus the source/test/tool/config/runtime,
 platform/provider and package-owner review scope. Source or dependency drift
@@ -713,6 +716,22 @@ CAS locks. Keep the shared runtime-package owner resource until package-only
 verified reads and actual overlapping-reader controls qualify. Preserve mutable
 consumer/Source readers, identity/freshness/bounds, authorization, CAS, recovery
 and durable writes. Package copies alone do not redirect module-derived roots.
+
+Shared fixture helpers export an explicit hook-registration function; each test
+file calls it once in its own top-level or owning suite scope. With
+`--no-isolate`, imported modules are cached across files: a module-level
+"already registered" guard can leave later files without their hooks. Keep
+shared helper definitions reusable while registering each file's hooks locally.
+Qualify this with two explicit test files in one serial child, checking that both
+files receive setup/cleanup; a one-file pass is insufficient.
+
+Route every asynchronous fixture operation, including preparation and recovery,
+through its existing pending-call owner. While a call remains unresolved, retain
+its root and the shared PATH/native-runtime/mock state it may still consume.
+Prevent another case from entering that same shared state. Restore state only
+after terminal accounting permits it; retaining the directory while resetting
+process state is incomplete custody. Verify both pending retention/next-case
+denial and settled cleanup without wrapping or duplicating the scenario matrix.
 
 Direct-producer termination and coverage-reservation release are separate from
 resource-wave advancement. Apply the exact existing direct reservation predicates.
@@ -767,6 +786,14 @@ after owned connection cleanup. Retain/report incomplete roots, attempt all
 owned closes, and preserve both body and cleanup errors. Native Linux missing
 file errors may expose a proc-fd leaf path; distinguish provider details from
 required configured-context diagnostics and keep exact denial/no-effect proofs.
+
+[Bun lifecycle documentation](https://bun.com/docs/test/lifecycle.md) places
+`onTestFinished` after all `afterEach` hooks and excludes concurrent tests.
+Its documented callback supplies no test-success status. Neither this callback
+nor reaching `afterEach` proves successful assertions, absence of pending work
+or permission to delete. Require the existing explicit success/deadline/custody
+evidence; record unsupported legacy cleanup as a gap until qualified. Hook
+registration controls alone do not establish failure-retention correctness.
 
 Close admitted workspace/Host database handles through
 `closeWorkspaceDatabaseWithAdmission` or the owning store/ledger/fixture close

@@ -145,6 +145,11 @@ read [TESTING's parallel contract](packages/agent/TESTING.md#parallel-testing-cu
 and its linked design/implementation plan. Include this bootstrap pointer in
 delegation. A scheduler/control pass does not activate parallel coverage; current
 serial commands remain until protocol, custody and pilot qualification.
+For shared test-helper extraction or cleanup changes, also load that contract's
+per-file hook registration and pending process-state rules. Delegation identifies
+the writer's exact files, affected checks and qualification owner; keep one writer
+per shared file and one final numeric owner. Guidance changes do not activate a
+pending runner or establish numeric evidence.
 
 Author self-development automation in TypeScript and execute it with qualified
 Bun. For inventory/report processing, reuse the package-owned TS tools or an

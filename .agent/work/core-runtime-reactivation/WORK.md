@@ -8321,3 +8321,70 @@ reports no remaining contract blocker. This is guidance qualification only.
 Ordinary pre-commit Knip rejects two unused exported intermediate types. Keep
 assignment/wave shapes private until an actual protocol consumer needs them;
 no hook bypass, ignores or dummy consumers. Public plan/review API remains.
+
+### 2026-10-12 — goal continuation: full7da7cb8 and parallel prerequisites
+
+Commit7da7cb8 published to origin/main with ordinary Knip/format/typecheck hooks.
+Fresh current full coverage run547366cd-4933-4b21-a09b-28434ac24951 terminates
+UNKNOWN at the existing600000ms producer ceiling;175PASS/0FAIL partial reporter
+rows, no final numeric report. Exact direct reservation released; no active Bun
+producer observed afterwards, retained roots and effects remain unreconciled.
+Log .tmp/coverage-iteration-7da7cb8/full-coverage.log and terminal-summary.json.
+The unchanged native test waits are not overridden. Partial project-upgrade
+lifecycle24rows report381223ms body sum, controller26178ms and retirement early
+rows remain incomplete timing evidence, not complete suite throughput or weights.
+Cgroup max events218528→221149; OOM2/kill1 unchanged. New temp root is outside
+the editable target; old FAIL/UNKNOWN roots are neither deleted nor replayed.
+
+Blind read-only analysis maps versioned receipt/preload/validator assumptions,
+existing package-source verified adapter and case/helper domains. Native lifecycle
+waits deliberately prove unchanged30s dead-owner quarantine and lock identity;
+preserve them. Cached helpers need explicit cleanup registration in each test
+file, not one module-cached guard. Static97registration sites are distinct from
+expanded runtime case cardinality; preserve each matrix/loop/callback/timeout.
+
+Ruling: honor the user's disjoint parallel development instruction over the
+skill's generic one-implementer scheduling default. Protocol/tooling, package
+reader Source and test-helper writers own separate files; Root alone owns
+package/docs/Git and runtime/numeric checks. Cross-contour input changes can
+invalidate broad qualification, so Root holds writers before those checks.
+Current WORK/plan remain the durable ledger, avoiding a duplicate workflow store.
+
+Root observed meaningful RED: package adapter8FAIL/8assert609ms; pure shard
+contract1PASS/5FAIL/6assert321ms; cached helper cleanup0PASS/1FAIL/3assert33ms
+on qualified Bun1.4.3. No generic missing import/unimplemented throw substitutes
+for the assertion defect. These are development controls, not mutation admission.
+One helper writer ran an inert1.4.2 control contrary to the Root-only command
+brief; its retained subject is not admitted evidence and Root reproduced with
+the qualified executable. Root clarified that no further worker runtime is allowed.
+
+Package reader preliminaryGREEN27PASS/143assert2.44s across fresh required-data,
+existing stable/mutable snapshot controls and owned-access reuse. Common resource
+removal still pending actual two-reader overlap/caller scope qualification.
+Independent reader review and broad static gates remain pending. Shared protocol
+and helper extraction are in progress; current commands remain serial. No final
+coverage/frozen correspondence/mutation or Runtime acceptance claim.
+
+### 2026-10-12 — testing instruction follow-through
+
+User requests that the testing instructions retain the latest parallel-testing
+findings. TESTING.md remains the policy owner; project bun-test skill and
+AGENT.sidecar bootstrap point to it. Blind baseline retrieval identifies missing
+explicit per-file hook registration, pending PATH/native/mock-state restoration
+ordering and onTestFinished status semantics. Current official Bun lifecycle
+and parallel references are retained in the existing iteration evidence.
+
+Add explicit registration once per owning test-file/suite, a two-file serial
+control, tracking of preparation/recovery through existing pending-call custody,
+retention of shared process state and denial of the next shared-state case while
+unresolved. Hook callbacks alone grant no deletion rights; unsupported legacy
+failure-retention remains a gap. Partial reporter counts may be dated progress
+only with incomplete scope and terminal FAIL/UNKNOWN, never numeric admission
+or duration weights. Preserve all existing gates and current/pending distinctions.
+
+Fresh blind Luna application resolves all five scenarios correctly and finds no
+contradiction in serial/pending parallel or per-case/current/planned deadline
+semantics. Local owner/link/anchor and skill frontmatter checks PASS; diff check
+PASS. Documentation qualification does not qualify the uncommitted product,
+protocol or helper changes. Publish this documentation-only packet separately,
+preserving all pending Source/test changes and unrelated untracked files.

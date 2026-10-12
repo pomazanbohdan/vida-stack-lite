@@ -207,6 +207,12 @@ Use this recipe for the [pending explicit-shard design](../../../.agent/work/cor
 
 No per-worker full AST/scan/hash pass, duplicate full suite or build/install test.
 
+Apply TESTING's shared-helper rules: register hooks explicitly in every owning
+test file, account for preparation/recovery calls, and retain shared process
+state while work is pending. `onTestFinished` has no documented success status;
+hook execution alone cannot authorize fixture deletion. Qualify registration,
+pending-state retention and successful cleanup separately.
+
 Completion flags do not prevent cleanup after a timed-out body settles late.
 Before deleting a fixture, require a finite unexpired monotonic deadline after
 owned closes, as well as successful assertions. Attempt all owned resource
