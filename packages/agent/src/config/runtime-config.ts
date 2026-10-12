@@ -30,6 +30,10 @@ import { assertCurrentProjectConfigurationBinding } from './project-configuratio
 import { validateProjectInitializationReceipt } from './project-initialization-record.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue, isPlainRecord } from '../contracts/public-ingress.js';
 import { isCanonicalJsonNumber } from '../contracts/canonical-json-core.js';
+import {
+  MAX_RUNTIME_PACKAGE_RESOURCE_BYTES,
+  readRuntimePackageSourceResourceBytes,
+} from '../orchestration/scoped-source-snapshot.js';
 import researchResultSchema from '../../schemas/research-result.v1.schema.json' with { type: 'json' };
 import researchSynthesisSchema from '../../schemas/research-synthesis.v1.schema.json' with { type: 'json' };
 
@@ -96,9 +100,36 @@ const RUNTIME_PACKAGE_ROOT = existsSync(path.join(resourceRoot, 'package.json'))
 /** Package resources are owned by the executing npm package, never the consumer. */
 export function runtimePackageAccess(): SafeRepositoryAccess {
   const access = requireSafeRepositoryAccess(RUNTIME_PACKAGE_ROOT);
-  const manifest = JSON.parse(access.readText('package.json', 'runtime package identity')) as { name?: unknown };
+  const manifest = JSON.parse(readRuntimePackageResourceText(access, 'package.json', 'runtime package identity')) as {
+    name?: unknown;
+  };
   assertCondition(manifest.name === 'vida-agent', 'runtime package identity differs');
   return access;
+}
+
+/** Read one immutable resource from the executing package through its verified byte reader. */
+export function readRuntimePackageResourceBytes(
+  access: SafeRepositoryAccess,
+  target: string,
+  label: string,
+  maxBytes = MAX_RUNTIME_PACKAGE_RESOURCE_BYTES,
+): Buffer {
+  assertCondition(
+    path.resolve(access.repository_root) === realpathSync(RUNTIME_PACKAGE_ROOT),
+    'runtime package access root differs',
+  );
+  return readRuntimePackageSourceResourceBytes(access, target, label, maxBytes);
+}
+
+/** Decode one immutable executing-package resource as strict UTF-8 text. */
+export function readRuntimePackageResourceText(
+  access: SafeRepositoryAccess,
+  target: string,
+  label: string,
+  maxBytes = MAX_RUNTIME_PACKAGE_RESOURCE_BYTES,
+): string {
+  const bytes = readRuntimePackageResourceBytes(access, target, label, maxBytes);
+  return new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
 }
 /** Logical inventory paths never expose a developer home or consumer checkout. */
 export function runtimePackageCodePaths(
@@ -903,7 +934,11 @@ function assertRequiredRepositoryReferences(config: AgentRuntimeConfig, reposito
   files.forEach((value) => {
     const packagePrefix = config.runtime.bundle + '/';
     if (value.startsWith(packagePrefix))
-      runtimePackageAccess().readText(value.slice(packagePrefix.length), 'required package reference ' + value);
+      readRuntimePackageResourceText(
+        runtimePackageAccess(),
+        value.slice(packagePrefix.length),
+        'required package reference ' + value,
+      );
     else {
       const target = resolveConfigPath(repositoryRoot, value, 'required reference ' + value);
       access.readText(target, 'required reference ' + value);

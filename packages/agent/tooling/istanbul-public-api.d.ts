@@ -50,6 +50,7 @@ declare module 'istanbul-lib-coverage' {
     branches: CoverageMetricSummary;
   }
   export interface CoverageFile extends FileCoverageData {
+    toJSON(): FileCoverageData;
     toSummary(): { toJSON(): CoverageSummaryData };
   }
   export interface CoverageMap {

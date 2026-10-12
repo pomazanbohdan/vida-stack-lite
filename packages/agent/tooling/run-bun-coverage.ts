@@ -13,7 +13,6 @@ import { randomUUID } from 'node:crypto';
 import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import coverageApi from 'istanbul-lib-coverage';
 import { assertCoverageSnapshotBytes } from './bun-coverage-report-validator.js';
 import { assertPublishedFixtureChildren, assertPublishedFixtureProcess } from './published-coverage-inputs.js';
 import {
@@ -21,7 +20,7 @@ import {
   historicalReferenceJUnit,
   parseHistoricalReference,
 } from './published-baseline-reference.js';
-import { validateIstanbulFileCoverage as validateFileCoverage } from './coverage-counters.js';
+import { mergeCoverageShardCounters } from './coverage-shard-evidence.js';
 import {
   instrumentedArtifactPath,
   maxInstrumentedArtifactBytes,
@@ -30,13 +29,15 @@ import {
 } from './coverage-instrumented-sources.ts';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from './coverage-run-lock.js';
 import { coverageInputs, instrumentSource, isExternalModulePath, readBunPin, sha256 } from './bun-coverage-evidence.ts';
+import type { CoverageShardPlan } from './coverage-shard-plan.ts';
+import type { CoverageShardInvocation } from './coverage-shard-evidence.ts';
 
 import type { FileCoverageData } from 'istanbul-lib-instrument';
 import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
 
 type SourceDigest = InputDigest;
 type RunManifest = {
-  schema: 'VidaBunCoverageRun/v2';
+  schema: 'VidaBunCoverageRun/v2' | 'VidaBunCoverageRun/v3';
   run_id: string;
   bun_version: string;
   snapshot_directory: string;
@@ -54,6 +55,10 @@ type RunManifest = {
   sources: SourceDigest[];
   source_maps: Record<string, FileCoverageData>;
   instrumented_sources: InstrumentedSourceDigest[];
+  /** Present only for a future, separately qualified current-only shard run. */
+  coverage_plan?: CoverageShardPlan;
+  assignment_plan_sha256?: string;
+  shard_invocations?: CoverageShardInvocation[];
 };
 type ChildOutcome = {
   shard_id: 'bun-test';
@@ -81,7 +86,6 @@ export function coverageProducerReservationSafeToRelease(
   return result.pid === 0 && result.status === null && result.signal === null && errorCode === 'ENOENT';
 }
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const { createCoverageMap } = coverageApi;
 const outputRoot = path.join(root, 'coverage', 'bun-unified');
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   const args = process.argv.slice(2);
@@ -453,7 +457,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       .filter((file) => file.endsWith('.json'))
       .sort();
     if (!reportFiles.length) throw new Error('Bun coverage run produced no per-process reports.');
-    const merged = createCoverageMap(structuredClone(manifest.source_maps));
+    const childCoverageMaps: Record<string, unknown>[] = [];
     const processReceipts: { file: string; pid: number; shard_id: 'bun-test'; sha256: string }[] = [];
     const expectedPaths = evidence.sources.map((entry) => path.resolve(root, entry.path)).sort();
     const manifestDigest = sha256(readFileSync(manifestPath));
@@ -490,13 +494,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         .sort();
       if (paths.some((file) => !expectedPaths.includes(file)))
         throw new Error('Per-process report contains an unexpected source: ' + name);
-      for (const file of paths)
-        validateFileCoverage(
-          file,
-          record(coverage[file], `${name}.${file}`),
-          record(manifest.source_maps[file], `manifest.${file}`),
-        );
-      merged.merge(coverage);
+      childCoverageMaps.push(coverage);
       processReceipts.push({
         file: name,
         pid: report.pid,
@@ -504,8 +502,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         sha256: sha256(processBytes),
       });
     }
-    const mergedPaths = merged
-      .files()
+    const mergedCoverage = mergeCoverageShardCounters(manifest.source_maps, childCoverageMaps);
+    const mergedPaths = Object.keys(mergedCoverage)
       .map((file) => path.resolve(file))
       .sort();
     if (JSON.stringify(mergedPaths) !== JSON.stringify(expectedPaths))
@@ -549,7 +547,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       runtime_executable_sha256: manifest.runtime_executable_sha256,
       shards: [outcome],
       processes: processReceipts,
-      coverage: merged.toJSON(),
+      coverage: mergedCoverage,
     };
     const finalPath = path.join(outputRoot, 'coverage-final.json');
     writeAtomic(finalPath, finalReport);

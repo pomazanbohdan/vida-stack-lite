@@ -105,6 +105,7 @@ export const coverageToolInputs: string[] = [
   'tooling/coverage-math.ts',
   'tooling/coverage-counters.ts',
   'tooling/coverage-shard-plan.ts',
+  'tooling/coverage-shard-evidence.ts',
   'tooling/coverage-run-lock.ts',
   'tooling/published-coverage-inputs.ts',
   'tooling/published-baseline-reference.ts',
@@ -117,6 +118,16 @@ export const coverageToolInputs: string[] = [
 
 export const sha256 = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 export const canonicalJson = (value: unknown): string | undefined => JSON.stringify(value);
+/** Match Bun test's documented NODE_ENV default while binding every other string environment value exactly. */
+export function coverageEnvironmentSha256(environment: NodeJS.ProcessEnv): string {
+  const values = Object.fromEntries(
+    Object.entries(environment).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  );
+  if (values.NODE_ENV === undefined) values.NODE_ENV = 'test';
+  if (values.TZ === undefined) values.TZ = 'Etc/UTC';
+  const selected = Object.fromEntries(Object.entries(values).sort(([left], [right]) => left.localeCompare(right)));
+  return sha256(canonicalJson(selected) ?? '');
+}
 export const repositoryToolingInputPrefix = '_repository/tooling/agent';
 
 export function repositoryRootForPackage(packageRoot: string): string | null {

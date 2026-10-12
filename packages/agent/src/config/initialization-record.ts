@@ -2,7 +2,7 @@ import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
 import initializationSchema from '../../schemas/runtime-initialization.v1.schema.json' with { type: 'json' };
 import { freezeJsonValue } from '../contracts/public-ingress.js';
-import { runtimePackageAccess, snapshotRuntimeConfig } from './runtime-config.js';
+import { readRuntimePackageResourceText, runtimePackageAccess, snapshotRuntimeConfig } from './runtime-config.js';
 import type { SafeRepositoryAccess } from './safe-repository-access.js';
 import { RUNTIME_INITIALIZATION_PATH } from './project-paths.js';
 
@@ -64,7 +64,8 @@ export function readRuntimeInitializationReceipt(access: SafeRepositoryAccess): 
   const bytes = access.readBytes(RUNTIME_INITIALIZATION_PATH, 'runtime initialization receipt');
   const text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
   const value: unknown = JSON.parse(text);
-  const schema = runtimePackageAccess().readText(
+  const schema = readRuntimePackageResourceText(
+    runtimePackageAccess(),
     'schemas/runtime-initialization.v1.schema.json',
     'initialization schema',
   );

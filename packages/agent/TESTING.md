@@ -293,7 +293,7 @@ maintained product Source inventory or qualify JSX runtime execution.
 For a focused check, use:
 
 ```text
-node bin/bun.ts test tests/FILE.test.ts --test-name-pattern "CASE_PATTERN"
+bun bin/bun.ts test ./tests/FILE.test.ts --test-name-pattern "CASE_PATTERN"
 ```
 
 The published fixture protocol is owned by
@@ -667,8 +667,10 @@ do not set TMPDIR to a directory inside that target for the full suite.
 
 Parallel coverage remains pending; it is not a supported flag override. The pure
 `tooling/coverage-shard-plan.ts` scheduler does not activate parallel production.
-Current preload/process receipts require the whole selected set per process;
-historical references also bind one PID and fixture-child observations. Native
+The deployed serial v2 run/v1 process receipts require the whole selected set
+per process. Versioned v3 run/v2 process primitives are a separate foundation,
+not activation of the producer or supervisor. Historical references also bind
+one PID and fixture-child observations. Native
 Bun worker/JUnit merging does not satisfy these contracts. Keep current and
 historical commands serial until the versioned protocol, custody and bounded
 pilot qualify. Keep historical baseline execution serial after current-mode
@@ -700,6 +702,23 @@ Partial PASS/FAIL rows may appear in a dated progress record only with their
 incomplete scope and terminal FAIL/UNKNOWN status. They establish neither final
 suite success nor coverage, CRAP or mutation admission.
 
+Seal shard invocations to the approved serial argument grammar, including
+explicit assigned paths and captured configuration/preload/report destinations.
+Name filters, discovery filters, retries/repeats, bailout and unknown modifiers
+cannot qualify the complete assignment. A name filter is valid for a separately
+labelled focused development check only. Loading every assigned file and exit0
+do not prove that every intended test body ran.
+
+For the v3 contract, bind the effective child environment through the shared
+environment-digest owner. Missing NODE_ENV and TZ use Bun Test's documented
+defaults `test` and `Etc/UTC`; explicitly supplied values remain bound. Apply
+defaults before the final canonical key sort. Qualified serial
+`--parallel=1 --no-isolate` children expose both BUN_TEST_WORKER_ID and
+JEST_WORKER_ID as `1`: seal and verify those values rather than ignoring the
+keys. Worker1 is local to each child and cannot identify a global shard;
+use the run/shard/PID receipt join. Nonempty ambient BUN_OPTIONS denies this
+contract. Do not log raw environment values while diagnosing hash differences.
+
 Eligibility binds captured test SHA plus the source/test/tool/config/runtime,
 platform/provider and package-owner review scope. Source or dependency drift
 invalidates unchanged-test reviews too. Omitted reviews default to singleton
@@ -716,6 +735,17 @@ CAS locks. Keep the shared runtime-package owner resource until package-only
 verified reads and actual overlapping-reader controls qualify. Preserve mutable
 consumer/Source readers, identity/freshness/bounds, authorization, CAS, recovery
 and durable writes. Package copies alone do not redirect module-derived roots.
+
+Treat child elapsed clocks as local evidence. On qualified Bun1.4.3,
+`process.hrtime()` has a process-relative origin; timestamps from different
+children cannot establish interval overlap. Bun documents `Bun.nanoseconds()`
+as process uptime too. Measure the pool from its coordinator, and require
+causal evidence at the actual read boundary before claiming read overlap.
+Two READY/GO handshakes, simultaneous process lifetime or successful native
+reads without writes qualify only their stated coordination/correctness checks.
+Keep the package resource shared until the stronger overlap and affected-caller
+closure checks qualify; do not force a green timing assertion with sleeps or
+retries.
 
 Shared fixture helpers export an explicit hook-registration function; each test
 file calls it once in its own top-level or owning suite scope. With
@@ -759,6 +789,12 @@ stale, duplicate, foreign, failed or UNKNOWN evidence.
 An absent Source key adds no counter increments; an unloaded seeded Source keeps
 zero counters and still faces every exact coverage gate. Absence cannot replace
 required receipt or loaded-module evidence; retain existing per-process checks.
+
+Adversarial receipt fixtures preserve all valid prerequisite rows and sibling
+receipts while changing the targeted claim and its dependent custody rows/hashes. Assert
+the intended denial boundary. An earlier load/decoder error cannot qualify an
+ownership or counter control merely because the report was rejected. Malformed
+output-role sets still need an explicit structural denial.
 
 The planned600000ms pinned-command deadline covers typecheck, preparation,
 waves, custody, report validation and nested CRAP. The current600000ms ceiling

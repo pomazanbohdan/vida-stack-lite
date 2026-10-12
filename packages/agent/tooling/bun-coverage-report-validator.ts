@@ -7,6 +7,18 @@ import {
 } from './published-baseline-reference.js';
 import coverageApi from 'istanbul-lib-coverage';
 import { validateIstanbulFileCoverage as validateFileCoverage } from './coverage-counters.js';
+import {
+  decodeCoverageShardInvocations,
+  decodeCoverageShardPlan,
+  decodeCoverageShardProcessEvidence,
+  mergeCoverageShardCounters,
+  validateCoverageShardEvidence,
+  type CoverageShardInvocation,
+  type CoverageShardProcessEvidence,
+  type CoverageShardRunBinding,
+  type CoverageShardTerminalEvidence,
+} from './coverage-shard-evidence.js';
+import type { CoverageShardPlan } from './coverage-shard-plan.js';
 import { lstatSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parsePublishedFixtureIdentity } from './published-coverage-inputs.js';
@@ -62,6 +74,9 @@ type RunManifest = {
   active_argv: unknown;
   source_maps: Record<string, FileCoverageData>;
   instrumented_sources?: unknown;
+  coverage_plan?: CoverageShardPlan;
+  assignment_plan_sha256?: string;
+  shard_invocations?: import('./coverage-shard-evidence.js').CoverageShardInvocation[];
 };
 type CoverageReport = {
   published_reference?: PublishedBaselineReference;
@@ -155,6 +170,7 @@ function record(value: unknown, label: string): Record<string, unknown> {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) throw new Error(`Invalid record: ${label}`);
   return value as Record<string, unknown>;
 }
+
 function requireFull(
   metric: keyof CoverageSummaryData,
   value: CoverageSummaryData[keyof CoverageSummaryData],
@@ -176,7 +192,9 @@ function isRunManifest(value: unknown): value is DecodedManifest {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
   const manifest = value as Record<string, unknown>;
   return (
-    (manifest.schema === 'VidaBunCoverageRun/v1' || manifest.schema === 'VidaBunCoverageRun/v2') &&
+    (manifest.schema === 'VidaBunCoverageRun/v1' ||
+      manifest.schema === 'VidaBunCoverageRun/v2' ||
+      manifest.schema === 'VidaBunCoverageRun/v3') &&
     typeof manifest.run_id === 'string' &&
     typeof manifest.snapshot_directory === 'string' &&
     Array.isArray(manifest.sources) &&
@@ -538,8 +556,13 @@ function verifyLoadedInputs(
     [...current.sources, ...current.test_inputs, ...current.tool_inputs].map((entry) => [entry.path, entry.sha256]),
   );
   const observed = loadedInputPaths(child.loaded_inputs, expected);
-  for (const test of current.tests)
+  const requiredTests =
+    manifest.schema === 'VidaBunCoverageRun/v3'
+      ? stringArray(child.assigned_tests, 'coverage process assigned tests')
+      : current.tests;
+  for (const test of requiredTests)
     if (!observed.has(test)) throw new Error('Selected test did not execute from captured bytes: ' + test);
+  if (manifest.schema === 'VidaBunCoverageRun/v3') assertNoSiblingTestLoads(observed, current.tests, requiredTests);
   let evidenceProvider = 'tooling/bun-coverage-evidence.ts';
   if (current.test_selection.mode === 'published-baseline-bun-native') {
     const providers = current.tool_inputs.filter(
@@ -551,11 +574,20 @@ function verifyLoadedInputs(
   for (const required of [
     'tooling/bun-coverage-preload.ts',
     evidenceProvider,
-    ...(manifest.schema === 'VidaBunCoverageRun/v2' ? ['tooling/coverage-instrumented-sources.ts'] : []),
+    ...(manifest.schema !== 'VidaBunCoverageRun/v1' ? ['tooling/coverage-instrumented-sources.ts'] : []),
     'tooling/source-instrumentation.ts',
     'tooling/maintained-source-inventory.ts',
+    ...(manifest.schema === 'VidaBunCoverageRun/v3'
+      ? ['tooling/coverage-shard-evidence.ts', 'tooling/coverage-counters.ts']
+      : []),
   ])
     if (!observed.has(required)) throw new Error('Snapshot bootstrap dependency was not attested: ' + required);
+}
+
+function stringArray(value: unknown, label: string): string[] {
+  if (!Array.isArray(value) || value.some((entry) => typeof entry !== 'string'))
+    throw new Error(`Coverage ${label} are malformed.`);
+  return value as string[];
 }
 
 function verifyLoadedIdentity(
@@ -564,10 +596,21 @@ function verifyLoadedIdentity(
   manifest: DecodedManifest,
   report: DecodedReport,
 ) {
+  let shardInvocation: CoverageShardInvocation | undefined;
+  if (manifest.schema === 'VidaBunCoverageRun/v3') {
+    const invocations = decodeCoverageShardInvocations(manifest.shard_invocations);
+    if (!invocations || typeof child.shard_id !== 'string')
+      throw new Error('Versioned coverage process invocation binding is malformed.');
+    shardInvocation = invocations.find((entry) => entry.shard_id === child.shard_id);
+    if (!shardInvocation) throw new Error('Versioned coverage process has no shard invocation binding.');
+  }
+  const expectedArgv = shardInvocation?.argv ?? manifest.active_argv;
   if (
     JSON.stringify(child.module_inputs) !== JSON.stringify(current.module_inputs) ||
     JSON.stringify(child.execution_scope) !== JSON.stringify(manifest.execution_scope) ||
-    JSON.stringify(child.active_argv) !== JSON.stringify(manifest.active_argv) ||
+    JSON.stringify(child.active_argv) !== JSON.stringify(expectedArgv) ||
+    (manifest.schema === 'VidaBunCoverageRun/v3' &&
+      (child.cwd !== shardInvocation?.cwd || child.environment_sha256 !== shardInvocation?.environment_sha256)) ||
     JSON.stringify(child.module_inputs) !== JSON.stringify(report.module_inputs)
   )
     throw new Error('Coverage process snapshot metadata differs from the captured run.');
@@ -612,6 +655,13 @@ function loadedInputPaths(values: unknown, expected: Map<string, string>) {
     observed.add(entry.path);
   }
   return observed;
+}
+
+function assertNoSiblingTestLoads(loaded: Set<string>, selected: readonly string[], assigned: readonly string[]) {
+  const assignedSet = new Set(assigned);
+  for (const test of selected)
+    if (!assignedSet.has(test) && loaded.has(test))
+      throw new Error('Coverage shard loaded a sibling test outside its assignment: ' + test);
 }
 
 function processCoverage(
@@ -671,7 +721,8 @@ function hasReceiptFields(value: Record<string, unknown>): value is Record<strin
     value.pid > 0 &&
     typeof value.sha256 === 'string' &&
     /^[0-9a-f]{64}$/u.test(value.sha256) &&
-    value.shard_id === 'bun-test'
+    typeof value.shard_id === 'string' &&
+    /^[A-Za-z0-9_-]+$/u.test(value.shard_id)
   );
 }
 
@@ -681,12 +732,18 @@ function readProcessReceipt(
   value: unknown,
   receiptNames: Set<string>,
   receiptPids: Set<number>,
+  versioned = false,
 ) {
   const raw = record(value, 'process receipt');
   if (!hasReceiptFields(raw)) throw new Error('Coverage process receipt identity is invalid.');
+  const expectedFilename = versioned
+    ? new RegExp(`^${raw.shard_id}/${report.run_id}\\.${raw.shard_id}\\.${raw.pid}\\.[0-9a-f-]{36}\\.json$`, 'u')
+    : new RegExp('^' + report.run_id + '\\.bun-test\\.\\d+\\.[0-9a-f-]{36}\\.json$', 'u');
   if (
     receiptNames.has(raw.file) ||
-    !new RegExp('^' + report.run_id + '\\.bun-test\\.\\d+\\.[0-9a-f-]{36}\\.json$', 'u').test(raw.file)
+    !expectedFilename.test(raw.file) ||
+    (!versioned && path.basename(raw.file) !== raw.file) ||
+    (versioned && (raw.file.includes('\\') || path.posix.normalize(raw.file) !== raw.file))
   )
     throw new Error('Coverage process receipt filename is invalid or duplicated.');
   if (receiptPids.has(raw.pid)) throw new Error('Duplicate coverage process identity.');
@@ -756,6 +813,88 @@ function mergeProcessCoverage(
   runtimeExecutableSha256: string,
 ) {
   const historical = validateHistoricalReference(root, report, manifest, current);
+  if (manifest.schema === 'VidaBunCoverageRun/v3') {
+    if (current.test_selection.mode !== 'full-current-test-set')
+      throw new Error('Versioned coverage shard evidence is current-selection only.');
+    if (historical) throw new Error('Historical coverage cannot use versioned shard evidence.');
+    const plan = decodeCoverageShardPlan(manifest.coverage_plan);
+    const invocations = decodeCoverageShardInvocations(manifest.shard_invocations);
+    if (!plan || typeof manifest.assignment_plan_sha256 !== 'string' || !invocations)
+      throw new Error('Versioned coverage manifest has no assignment plan or invocation bindings.');
+    const selectedTestSet = new Set(current.tests);
+    const selectedTestInputs = current.test_inputs.filter(({ path: file }) => selectedTestSet.has(file));
+    const binding: CoverageShardRunBinding = {
+      schema: 'VidaBunCoverageRun/v3',
+      run_id: report.run_id,
+      source_fingerprint: current.source_fingerprint,
+      test_fingerprint: current.test_fingerprint,
+      tool_fingerprint: current.tool_fingerprint,
+      runtime_executable_sha256: runtimeExecutableSha256,
+      assignment_plan_sha256: manifest.assignment_plan_sha256,
+      tests: current.tests,
+      selected_test_inputs: selectedTestInputs,
+      shard_invocations: invocations,
+      snapshot_directory: path.resolve(root, ...manifest.snapshot_directory.split('/')),
+    };
+    const runDirectory = path.join(root, 'coverage', 'bun-unified', 'runs', report.run_id);
+    for (const invocation of invocations) {
+      const shardRoot = path.join(runDirectory, 'shards', invocation.shard_id);
+      const expectedOutputs = {
+        coverage_directory: path.join(shardRoot, 'coverage'),
+        junit_file: path.join(shardRoot, 'suite.junit.xml'),
+        log_file: path.join(shardRoot, 'child.log'),
+        receipt_directory: path.join(runDirectory, 'processes', invocation.shard_id),
+        temp_directory: path.join(shardRoot, 'tmp'),
+      };
+      if (JSON.stringify(invocation.output_paths) !== JSON.stringify(expectedOutputs))
+        throw new Error('Coverage shard output paths are not disjoint canonical run-owned paths.');
+    }
+    const processes: CoverageShardProcessEvidence[] = [];
+    const terminals: CoverageShardTerminalEvidence[] = [];
+    const receiptNames = new Set<string>();
+    const receiptPids = new Set<number>();
+    for (const rawReceipt of report.processes) {
+      const { receipt, child } = readProcessReceipt(root, report, rawReceipt, receiptNames, receiptPids, true);
+      requireSameTestSelection(child.test_selection, current.test_selection);
+      if (JSON.stringify(child.sources) !== JSON.stringify(current.sources))
+        throw new Error('Coverage process source inventory differs from the captured source inventory.');
+      verifyLoadedInputs(root, child, current, manifest, report);
+      const processEvidence = decodeCoverageShardProcessEvidence(child);
+      if (!processEvidence) throw new Error('Versioned coverage process receipt fields are malformed.');
+      if (processEvidence.pid !== receipt.pid || processEvidence.shard_id !== receipt.shard_id)
+        throw new Error('Coverage process receipt does not join its shard and PID.');
+      processes.push(processEvidence);
+    }
+    for (const value of report.shards) {
+      const terminal = record(value, 'coverage shard terminal receipt');
+      if (
+        typeof terminal.run_id !== 'string' ||
+        typeof terminal.shard_id !== 'string' ||
+        typeof terminal.pid !== 'number' ||
+        !Number.isSafeInteger(terminal.pid) ||
+        (typeof terminal.status !== 'number' && terminal.status !== null) ||
+        (typeof terminal.signal !== 'string' && terminal.signal !== null) ||
+        (typeof terminal.error !== 'string' && terminal.error !== null) ||
+        typeof terminal.unknown !== 'boolean'
+      )
+        throw new Error('Coverage shard terminal receipt is malformed.');
+      terminals.push({
+        run_id: terminal.run_id,
+        shard_id: terminal.shard_id,
+        pid: terminal.pid,
+        status: terminal.status,
+        signal: terminal.signal,
+        error: terminal.error,
+        unknown: terminal.unknown,
+      });
+    }
+    validateCoverageShardEvidence({ run: binding, plan, processes, terminals });
+    const sparseMaps = processes.map((entry) => record(entry.coverage, `coverage shard ${entry.shard_id} counters`));
+    const mergedMaps = mergeCoverageShardCounters(expectedSourceMaps, sparseMaps);
+    if (JSON.stringify(mergedMaps) !== JSON.stringify(report.coverage))
+      throw new Error('Final counters do not equal the checked global shard merge.');
+    return createCoverageMap(mergedMaps);
+  }
   requireCleanShard(report, historical !== undefined);
   if (!report.processes.length) throw new Error('Coverage process receipts are missing.');
 

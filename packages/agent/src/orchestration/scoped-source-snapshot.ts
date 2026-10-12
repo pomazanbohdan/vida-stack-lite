@@ -7,10 +7,36 @@ import { expectedJavascriptFiles } from '../../tooling/maintained-source-invento
 
 type SourceReader = Pick<SafeRepositoryAccess, 'fileExists' | 'readBytes' | 'readStableBytes'>;
 type RuntimeSourceReader = SourceReader & Pick<SafeRepositoryAccess, 'readVerifiedCaptureBytes'>;
+export const MAX_RUNTIME_PACKAGE_RESOURCE_BYTES = 8 * 1024 * 1024;
 
-function runtimePackageStableRead(reader: RuntimeSourceReader): SourceReader['readStableBytes'] {
+function runtimePackageStableRead(
+  reader: RuntimeSourceReader,
+): ((target: string, label: string, maxBytes?: number) => Buffer | null) | undefined {
   const read = reader.readVerifiedCaptureBytes ?? reader.readStableBytes;
   return read?.bind(reader);
+}
+
+/** Read required bytes from one package resource, keeping unsupported readers on the CAS path. */
+export function readRuntimePackageSourceResourceBytes(
+  reader: RuntimeSourceReader,
+  target: string,
+  label: string,
+  maxBytes = MAX_RUNTIME_PACKAGE_RESOURCE_BYTES,
+): Buffer {
+  canonicalPaths([target]);
+  requireSnapshot(
+    Number.isSafeInteger(maxBytes) && maxBytes > 0 && maxBytes <= MAX_RUNTIME_PACKAGE_RESOURCE_BYTES,
+    'runtime package resource byte limit is invalid',
+  );
+  const stableRead = runtimePackageStableRead(reader);
+  const bytes =
+    stableRead === undefined ? reader.readBytes(target, label) : stableRead.call(reader, target, label, maxBytes);
+  requireSnapshot(bytes !== null, 'required runtime package resource is absent');
+  requireSnapshot(
+    Buffer.isBuffer(bytes) && bytes.length <= maxBytes,
+    'per-file byte limit exceeded for runtime package resource',
+  );
+  return bytes;
 }
 
 /** Retain declared logical identities while reading runtime bytes from the installed package. */
@@ -33,7 +59,7 @@ export function snapshotRuntimePackageSources(
         ? {}
         : {
             readStableBytes: (relative: string, purpose: string) =>
-              stableRead.call(reader, packagePath(relative), purpose),
+              stableRead.call(reader, packagePath(relative), purpose, MAX_RUNTIME_PACKAGE_RESOURCE_BYTES),
           }),
     },
     paths,
@@ -185,7 +211,7 @@ export function snapshotRuntimeManifestSources(
         typeof input.path === 'string' &&
         Number.isSafeInteger(input.bytes) &&
         (input.bytes as number) >= 0 &&
-        (input.bytes as number) <= 8 * 1024 * 1024 &&
+        (input.bytes as number) <= MAX_RUNTIME_PACKAGE_RESOURCE_BYTES &&
         typeof input.sha256 === 'string' &&
         sourceHash.test(input.sha256),
       'runtime manifest input shape is invalid',
@@ -235,7 +261,7 @@ export function compareRuntimeEndpointSnapshots(
         if (
           !Number.isSafeInteger(entry.bytes) ||
           (entry.bytes as number) < 0 ||
-          (entry.bytes as number) > 8 * 1024 * 1024 ||
+          (entry.bytes as number) > MAX_RUNTIME_PACKAGE_RESOURCE_BYTES ||
           typeof entry.sha256 !== 'string' ||
           !sourceHash.test(entry.sha256)
         )
@@ -399,7 +425,7 @@ function readScopedSourceBytes(reader: SourceReader, relativePath: string, remai
   }
   if (first === null) return null;
   requireSnapshot(
-    Buffer.isBuffer(first) && first.length <= 8 * 1024 * 1024,
+    Buffer.isBuffer(first) && first.length <= MAX_RUNTIME_PACKAGE_RESOURCE_BYTES,
     'scoped source exceeds per-file byte limit',
   );
   requireSnapshot(first.length <= remainingBytes, 'scoped source exceeds total byte limit');

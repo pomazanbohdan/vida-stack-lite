@@ -54,6 +54,16 @@ tasks2–5 remain pending.
 - [ ] Require all assigned inputs in that shard, exact global union and valid terminal receipts. Allow sparse child source keys, validating every observed canonical map entry and counter shape with no foreign key and checked nonnegative safe-integer sums. Seed the aggregate from the full sealed map and require exact expected aggregate Source domain; perform existing canonical Source validation once globally.
 - [ ] Root qualifies lifecycle/custody/legacy controls; independent review; publish. No historical parallel mode.
 
+Foundation status: the v3/v2 decoders, assignment/terminal joins, exact output
+roles, sealed argv/environment and sparse checked merge have focused structural
+and native preload controls. Existing serial production still emits v2/v1;
+Task2 remains partial until the supervised producer uses the qualified bindings.
+Do not restart the completed primitive work or treat it as Task3 activation.
+Bun serial worker IDs are child-local1, not shard identity. Config/preload/JUnit
+options bind exact captured destinations and appear at most once; filters,
+bailout, unknown options and bare positional values deny complete assignments.
+The current TESTING owner retains the environment/default and clock rules.
+
 ## Task3: Async direct-producer supervision and global budget
 
 **Files:** run-bun-coverage.ts, package.json test:coverage:pinned command and existing bounded-subprocess / coverage-run custody owners and tests. Same protocol writer owns runner; a separate writer may own disjoint adversarial tests.
@@ -85,11 +95,18 @@ One writer owns the shared reader/call sites; separate reviewer checks scope.
 - [ ] Qualify fresh bytes after drift, unsafe/missing/oversized data, active lock/recovery, no write/fsync, strict UTF-8 and existing identity/schema/template digests. Reuse already captured resource rows; do not add a product test seam or stale cache.
 - [ ] Qualify actual two-reader overlap and unchanged package sidecars/current fences. Unsupported/unqualified provider contours keep the common conflict tag; publish before removing it.
 
+Reader status: the package-only verified adapter and selected configuration,
+initialization/context/rebind callers have focused qualification. The native
+two-child READY/GO control proves coordinated correct reads and no write/fsync,
+not actual read overlap. Its former cross-child hrtime comparison is excluded:
+qualified Bun1.4.3 origins are process-relative. Actual overlap, broader caller
+closure and common-resource removal remain pending; keep the conflict tag.
+
 **Files:** tests/runtime-config-rebind.test.ts; new tests/runtime-config-rebind-source.test.ts, runtime-config-rebind-delivery.test.ts, runtime-config-rebind-readonly.test.ts, runtime-config-rebind-history.test.ts, runtime-config-rebind-limits.test.ts; shared tests/helpers/runtime-config-rebind-fixture.ts; package.json phase membership and test associations.
 
 **Interfaces:** Preserve existing fixture constructors/inspection types as a test-helper module; every invocation creates fresh owned state. Keep exact test names, assertions, case bounds and operation IDs. Retain source-policy/mutation semantics; no new product seam.
 
-- [ ] Capture case identities/cardinality from existing inventory/selection before moves; identify fixture-global mock/clock ownership. Export helpers once under one writer before parallel file work.
+- [x] Capture case identities/cardinality from existing inventory/selection before moves; identify fixture-global mock/clock ownership. Export helpers once under one writer before parallel file work. Ordered AST lineage preserves97 original registration expressions, including callbacks/assertions/timeouts; focused runtime checks are not a complete165-case pass. Explicit per-file hooks and pending-call process-state custody are qualified; legacy assertion-failure/late-timeout retention remains a gap.
 - [ ] Assign one writer per destination contour; move smaller independent groups first. Do not execute original and moved copies in the same phase.
 - [ ] Update exact test-ID/association lineage and captured inputs; preserve scenario review/N/A status. Prove every original case appears once, no assertion loss and no shared mutable root/DB.
 - [ ] Root qualifies changed contours once; blind reviews; publish. Admit parallel resource eligibility only after fixture/mocking independence controls.

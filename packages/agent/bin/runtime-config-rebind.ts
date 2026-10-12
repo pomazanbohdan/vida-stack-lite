@@ -19,6 +19,8 @@ import {
   parseRuntimeConfigYaml,
   runtimeConfigDigest,
   runtimePackageAccess,
+  readRuntimePackageResourceBytes,
+  readRuntimePackageResourceText,
   validateRuntimeConfigRepairTargetBytes,
 } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -1246,9 +1248,11 @@ function parse(args: readonly string[]): Record<string, string> {
 
 function assertInitializationReceipt(value: unknown): asserts value is RebindInitializationReceipt {
   const schemaValue = parseJsonUnknown(
-    runtimePackageAccess()
-      .readBytes('schemas/runtime-initialization.v1.schema.json', 'initialization schema')
-      .toString('utf8'),
+    readRuntimePackageResourceText(
+      runtimePackageAccess(),
+      'schemas/runtime-initialization.v1.schema.json',
+      'initialization schema',
+    ),
   );
   requireRebind(isPlainRecord(schemaValue), 'initialization schema must be a JSON object');
   const schema = /** @type {import('ajv/dist/2020.js').AnySchemaObject} */ (schemaValue);
@@ -1417,9 +1421,11 @@ function exactPrewriterTemplateDelta(oldConfig: RebindAgentRuntimeConfig, target
     const project = oldConfig.projects[0];
     if (!project) return false;
     const projectId = project.project_id,
-      templateYaml = runtimePackageAccess()
-        .readBytes('templates/agent-runtime.config.template.v1.yaml', 'maintained prewriter workflow template')
-        .toString('utf8')
+      templateYaml = readRuntimePackageResourceText(
+        runtimePackageAccess(),
+        'templates/agent-runtime.config.template.v1.yaml',
+        'maintained prewriter workflow template',
+      )
         .replaceAll('{{REPOSITORY}}', oldConfig.repository.repository_id)
         .replaceAll('{{PROJECT}}', projectId)
         .replaceAll('{{BUNDLE}}', oldConfig.runtime.bundle);
@@ -1540,7 +1546,13 @@ export function inspectHistoricalOwnerContext(
   const runtime = runtimeBinding(access, config);
   requireRebind(
     receipt.value.schema_sha256 ===
-      sha(runtimePackageAccess().readBytes('schemas/runtime-initialization.v1.schema.json', 'initialization schema')),
+      sha(
+        readRuntimePackageResourceBytes(
+          runtimePackageAccess(),
+          'schemas/runtime-initialization.v1.schema.json',
+          'initialization schema',
+        ),
+      ),
     'historical initialization schema differs',
   );
   if (runtimeConfigDigest(current) !== runtimeConfigDigest(config)) targetConfig(access, root, config, configPath);
@@ -3153,7 +3165,8 @@ function frozenPlan(
   );
   const binding = runtimeBinding(access, config);
   const target = targetConfig(access, root, config, requireRebindPath(values['--target-config'], 'target config'));
-  const schema = runtimePackageAccess().readBytes(
+  const schema = readRuntimePackageResourceBytes(
+    runtimePackageAccess(),
     'schemas/runtime-initialization.v1.schema.json',
     'initialization schema',
   );
@@ -3301,7 +3314,11 @@ export function readAppliedRuntimeConfigRebind(root: string, config: RebindAgent
     receipt,
     release,
     targetSchemaDigest: sha(
-      runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current config schema'),
+      readRuntimePackageResourceBytes(
+        runtimePackageAccess(),
+        'schemas/agent-runtime-config.v1.schema.json',
+        'current config schema',
+      ),
     ),
   };
 }
@@ -4393,7 +4410,8 @@ function sourceCorrectionRequest({
             json({ ...baselineReceipt, config_digest: plan.target_config_digest }))),
     'source correction configuration or receipt differs from the frozen operation',
   );
-  const initSchema = runtimePackageAccess().readBytes(
+  const initSchema = readRuntimePackageResourceBytes(
+      runtimePackageAccess(),
       'schemas/runtime-initialization.v1.schema.json',
       'initialization schema',
     ),
@@ -4711,7 +4729,8 @@ function validateSourceCorrectionWithdrawal({
     currentYamlBytes = access.readBytes(configPath, 'current authored configuration'),
     currentYaml = currentYamlBytes.toString('utf8'),
     yamlState = currentYaml === plan.baseline_yaml ? 'baseline' : currentYaml === plan.target_yaml ? 'target' : null,
-    schemaBytes = runtimePackageAccess().readBytes(
+    schemaBytes = readRuntimePackageResourceBytes(
+      runtimePackageAccess(),
       'schemas/runtime-initialization.v1.schema.json',
       'initialization schema',
     ),
@@ -5463,7 +5482,11 @@ function exactContext(
       runtimeConfigDigest(target) === plan.target_config_digest &&
       binding.selector_digest === plan.selector_digest &&
       sha(
-        runtimePackageAccess().readBytes('schemas/runtime-initialization.v1.schema.json', 'initialization schema'),
+        readRuntimePackageResourceBytes(
+          runtimePackageAccess(),
+          'schemas/runtime-initialization.v1.schema.json',
+          'initialization schema',
+        ),
       ) === plan.initialization_schema_digest &&
       currentStateDigest === plan.state_digest,
     'current selector/schema/global state differs from plan',
@@ -5613,7 +5636,8 @@ function frozenProjectPlan(
     },
   });
   const binding = runtimeBinding(access, baseline.config),
-    schema = runtimePackageAccess().readBytes(
+    schema = readRuntimePackageResourceBytes(
+      runtimePackageAccess(),
       'schemas/runtime-initialization.v2.schema.json',
       'project initialization schema',
     ),
@@ -5737,7 +5761,8 @@ function assertProjectRebindPlan(
   requireRebind(
     plan.initialization_schema_digest ===
       sha(
-        runtimePackageAccess().readBytes(
+        readRuntimePackageResourceBytes(
+          runtimePackageAccess(),
           'schemas/runtime-initialization.v2.schema.json',
           'project initialization schema',
         ),

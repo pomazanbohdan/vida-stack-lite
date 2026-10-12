@@ -207,6 +207,21 @@ Use this recipe for the [pending explicit-shard design](../../../.agent/work/cor
 
 No per-worker full AST/scan/hash pass, duplicate full suite or build/install test.
 
+Apply TESTING's sealed invocation/environment rules: focused name filters do not
+qualify complete shards; reject bailout and unapproved modifiers. Use the shared
+effective-environment digest, including missing NODE_ENV/TZ defaults before key
+sorting and both serial worker IDs sealed as1. Worker IDs are child-local;
+global identity comes from run/shard/PID. Diagnose differences with key names,
+never raw environment values. Nonempty ambient BUN_OPTIONS denies v3 admission.
+
+Keep child elapsed clocks local. Qualified Bun1.4.3's `process.hrtime()` and
+documented `Bun.nanoseconds()` use process-relative origins; compare pool time
+at the coordinator. READY/GO plus correct native reads proves coordination,
+not read-boundary overlap. Preserve the common package resource until actual
+overlap and caller closure qualify. For adversarial fixtures, retain valid
+prerequisites/sibling receipts and assert the targeted rejection rather than an
+earlier unrelated load/decoder error.
+
 Apply TESTING's shared-helper rules: register hooks explicitly in every owning
 test file, account for preparation/recovery calls, and retain shared process
 state while work is pending. `onTestFinished` has no documented success status;

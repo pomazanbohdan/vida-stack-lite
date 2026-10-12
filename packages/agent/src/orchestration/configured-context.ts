@@ -2,7 +2,12 @@ import type { SessionHandoffContext } from './session-handoff.js';
 import { requireBridge } from './mastra-session-bridge-contract.js';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { assertLoadedRuntimeConfig, runtimePackageAccess, type AgentRuntimeConfig } from '../config/runtime-config.js';
+import {
+  assertLoadedRuntimeConfig,
+  readRuntimePackageResourceBytes,
+  runtimePackageAccess,
+  type AgentRuntimeConfig,
+} from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 
@@ -67,7 +72,10 @@ function readConfiguredBytes(
   relative: string,
   label: string,
   contextualMissing: boolean,
+  packageResourceAccess?: SafeRepositoryAccess,
 ): Buffer {
+  if (packageResourceAccess)
+    return readRuntimePackageResourceBytes(packageResourceAccess, relative, label, MAX_FILE_BYTES);
   try {
     return access.readBytes(target, label);
   } catch (error) {
@@ -84,9 +92,17 @@ function readLocal(
   relative: string,
   usedBytes: { value: number },
   contextualMissing = false,
+  packageResourceAccess?: SafeRepositoryAccess,
 ): Pick<ConfiguredContextEntry, 'status' | 'sha256' | 'bytes' | 'content' | 'truncated'> {
   const target = path.join(root, relative);
-  const first = readConfiguredBytes(access, target, relative, `configured context ${relative}`, contextualMissing);
+  const first = readConfiguredBytes(
+    access,
+    target,
+    relative,
+    `configured context ${relative}`,
+    contextualMissing,
+    packageResourceAccess,
+  );
   requireContext(first.length <= MAX_FILE_BYTES, `${relative} exceeds the per-file limit`);
   usedBytes.value += first.length;
   requireContext(usedBytes.value <= MAX_TOTAL_BYTES, 'local content exceeds the total limit');
@@ -96,6 +112,7 @@ function readLocal(
     relative,
     `configured context stable read ${relative}`,
     contextualMissing,
+    packageResourceAccess,
   );
   requireContext(first.equals(second), `${relative} changed during read`);
   const content = new TextDecoder('utf-8', { fatal: true }).decode(first);
@@ -159,14 +176,24 @@ export function buildConfiguredContext(
       /^[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/.test(source.location) && !source.location.split('/').includes('..'),
       `local source path is unsafe: ${id}`,
     );
+    const packageResource = source.location.startsWith(config.runtime.bundle + '/');
+    const packageAccess = packageResource ? runtimePackageAccess() : undefined;
+    const localContext = packageAccess
+      ? readLocal(
+          packageAccess,
+          '',
+          source.location.slice(config.runtime.bundle.length + 1),
+          usedBytes,
+          false,
+          packageAccess,
+        )
+      : readLocal(access, root, source.location, usedBytes);
     entries.push({
       id,
       kind: 'local',
       location: source.location,
       title: source.title,
-      ...(source.location.startsWith(config.runtime.bundle + '/')
-        ? readLocal(runtimePackageAccess(), '', source.location.slice(config.runtime.bundle.length + 1), usedBytes)
-        : readLocal(access, root, source.location, usedBytes)),
+      ...localContext,
     });
   }
   for (const location of skillRefs) {

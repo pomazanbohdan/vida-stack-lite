@@ -17,7 +17,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.js';
 import { readRepositoryTextImage, requireSafeRepositoryAccess } from '../src/config/safe-repository-access.js';
-import { snapshotDeclaredSources, snapshotRuntimePackageSources } from '../src/orchestration/scoped-source-snapshot.js';
+import {
+  MAX_RUNTIME_PACKAGE_RESOURCE_BYTES,
+  snapshotDeclaredSources,
+  snapshotRuntimePackageSources,
+} from '../src/orchestration/scoped-source-snapshot.js';
 
 test('source snapshots use one stable read per canonical path and retain absent entries', () => {
   const calls: string[] = [];
@@ -251,7 +255,10 @@ test('runtime snapshots prefer a fresh verified package read and bind it to the 
   const second = snapshotRuntimePackageSources(reader, 'runtime-package', ['runtime-package/bin/a.ts']);
 
   expect(stableCalls).toBe(0);
-  expect(calls).toEqual(['bin/a.ts:scoped source stable read:default', 'bin/a.ts:scoped source stable read:default']);
+  expect(calls).toEqual([
+    `bin/a.ts:scoped source stable read:${MAX_RUNTIME_PACKAGE_RESOURCE_BYTES}`,
+    `bin/a.ts:scoped source stable read:${MAX_RUNTIME_PACKAGE_RESOURCE_BYTES}`,
+  ]);
   expect(first.entries[0]).toMatchObject({ path: 'runtime-package/bin/a.ts', exists: true, bytes: 19 });
   expect(second.entries[0]).toMatchObject({ path: 'runtime-package/bin/a.ts', exists: true, bytes: 21 });
   expect(second.entries[0]?.sha256).not.toBe(first.entries[0]?.sha256);
@@ -334,6 +341,7 @@ linuxTest('runtime package verified reads are read-only and fail closed around r
     writeFileSync(path.join(root, 'module.ts'), sourceBytes);
     const access = requireSafeRepositoryAccess(root);
     if (!access.readVerifiedCaptureBytes) throw new Error('Linux verified capture capability is unavailable');
+    const limits: Array<number | undefined> = [];
     const reader = {
       ...access,
       fileExists(): boolean {
@@ -346,6 +354,7 @@ linuxTest('runtime package verified reads are read-only and fail closed around r
         throw new Error('runtime capture called readStableBytes');
       },
       readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+        limits.push(maxBytes);
         return access.readVerifiedCaptureBytes!.call(access, target, label, maxBytes);
       },
     };
@@ -414,6 +423,8 @@ linuxTest('runtime package verified reads are read-only and fail closed around r
       expect(quarantineAfter.dev).toBe(quarantineIdentity.dev);
       expect(quarantineAfter.ino).toBe(quarantineIdentity.ino);
       expect(readFileSync(path.join(root, 'module.ts'))).toEqual(sourceBytes);
+      expect(limits.length).toBeGreaterThan(0);
+      expect(limits.every((limit) => limit === MAX_RUNTIME_PACKAGE_RESOURCE_BYTES)).toBe(true);
     } finally {
       writes.mockRestore();
       syncs.mockRestore();

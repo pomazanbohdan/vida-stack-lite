@@ -9,6 +9,7 @@ import {
   capturedModuleInputs,
   capturedModuleRequestPath,
   canonicalCapturedModulePath,
+  coverageEnvironmentSha256,
   repositoryRootForPackage,
 } from './bun-coverage-evidence.ts';
 import {
@@ -38,6 +39,21 @@ type RunManifest = {
   sources: SourceDigest[];
   source_maps: Record<string, FileCoverageData>;
   instrumented_sources: InstrumentedSourceDigest[];
+  coverage_plan?: import('./coverage-shard-plan.ts').CoverageShardPlan;
+  assignment_plan_sha256?: string;
+  shard_invocations?: Array<{
+    shard_id: string;
+    argv: string[];
+    cwd: string;
+    environment_sha256: string;
+    output_paths: {
+      coverage_directory: string;
+      junit_file: string;
+      log_file: string;
+      receipt_directory: string;
+      temp_directory: string;
+    };
+  }>;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -48,6 +64,9 @@ const root = path.resolve(process.env.VIDA_BUN_COVERAGE_ROOT ?? process.cwd());
 const repositoryRoot = repositoryRootForPackage(root);
 const preloadPath = fileURLToPath(import.meta.url);
 const digest = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+function environmentDigest(environment: NodeJS.ProcessEnv): string {
+  return coverageEnvironmentSha256(environment);
+}
 const manifestPath = process.env.VIDA_BUN_COVERAGE_MANIFEST;
 const reportDirectory = process.env.VIDA_BUN_COVERAGE_REPORT_DIRECTORY;
 const snapshotDirectory = process.env.VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY;
@@ -56,13 +75,17 @@ if (!manifestPath || !reportDirectory || !snapshotDirectory)
 const manifestValue: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
 if (!isRecord(manifestValue)) throw new Error('Bun coverage manifest must be an object.');
 const manifest = manifestValue as RunManifest;
+const preverifiedVersionedBootstrap = new Map<string, SourceDigest>();
+let coverageOutputPathsSha256ForReceipt:
+  | ((paths: import('./coverage-shard-evidence.ts').CoverageShardInvocation['output_paths']) => string)
+  | undefined;
 if (
   typeof manifest.snapshot_directory !== 'string' ||
   path.resolve(snapshotDirectory) !== path.resolve(root, ...manifest.snapshot_directory.split('/'))
 )
   throw new Error('Bun coverage snapshot path differs from the run manifest.');
 if (
-  manifest.schema !== 'VidaBunCoverageRun/v2' ||
+  (manifest.schema !== 'VidaBunCoverageRun/v2' && manifest.schema !== 'VidaBunCoverageRun/v3') ||
   manifest.run_id !== process.env.VIDA_BUN_COVERAGE_RUN_ID ||
   manifest.source_fingerprint !== process.env.VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT ||
   manifest.test_fingerprint !== process.env.VIDA_BUN_COVERAGE_TEST_FINGERPRINT ||
@@ -72,9 +95,76 @@ if (
   manifest.tool_fingerprint !== process.env.VIDA_BUN_COVERAGE_TOOL_FINGERPRINT ||
   !/^[0-9a-f]{64}$/u.test(manifest.runtime_executable_sha256) ||
   manifest.runtime_executable_sha256 !== digest(readFileSync(process.execPath)) ||
-  JSON.stringify(manifest.active_argv) !== process.env.VIDA_BUN_COVERAGE_ACTIVE_ARGV
+  (manifest.schema === 'VidaBunCoverageRun/v2' &&
+    JSON.stringify(manifest.active_argv) !== process.env.VIDA_BUN_COVERAGE_ACTIVE_ARGV)
 )
   throw new Error('Bun coverage preload received stale or mismatched run identity.');
+if (manifest.schema === 'VidaBunCoverageRun/v3') {
+  if ((process.env.BUN_OPTIONS ?? '').trim().length > 0)
+    throw new Error('Ambient BUN_OPTIONS are unsupported for versioned coverage.');
+  if (
+    manifest.test_selection.mode !== 'full-current-test-set' ||
+    !manifest.coverage_plan ||
+    !manifest.shard_invocations ||
+    !Array.isArray(manifest.coverage_plan.waves)
+  )
+    throw new Error('Versioned coverage preload requires a current test assignment plan.');
+  const shardId = process.env.VIDA_BUN_COVERAGE_SHARD_ID;
+  const invocation = manifest.shard_invocations.find((entry) => entry.shard_id === shardId);
+  const assignedRaw = process.env.VIDA_BUN_COVERAGE_ASSIGNED_TESTS;
+  const assignedValue: unknown = assignedRaw ? JSON.parse(assignedRaw) : null;
+  if (typeof shardId !== 'string' || shardId.length === 0)
+    throw new Error('Versioned coverage preload has no shard identity.');
+  if (process.env.BUN_TEST_WORKER_ID !== '1' || process.env.JEST_WORKER_ID !== '1')
+    throw new Error('Versioned serial coverage preload requires worker identity 1.');
+  if (!invocation) throw new Error('Versioned coverage preload has no sealed shard invocation.');
+  if (JSON.stringify(invocation.argv) !== process.env.VIDA_BUN_COVERAGE_ACTIVE_ARGV)
+    throw new Error('Versioned coverage preload argv differs from the sealed shard invocation.');
+  if (invocation.cwd !== process.cwd())
+    throw new Error('Versioned coverage preload cwd differs from the sealed shard invocation.');
+  if (invocation.environment_sha256 !== environmentDigest(process.env))
+    throw new Error('Versioned coverage preload environment differs from the sealed shard invocation.');
+  if (
+    invocation.output_paths.receipt_directory !== reportDirectory ||
+    invocation.output_paths.coverage_directory !== process.env.VIDA_BUN_COVERAGE_OUTPUT_COVERAGE_DIRECTORY ||
+    invocation.output_paths.junit_file !== process.env.VIDA_BUN_COVERAGE_JUNIT_FILE ||
+    invocation.output_paths.log_file !== process.env.VIDA_BUN_COVERAGE_LOG_FILE ||
+    invocation.output_paths.temp_directory !== process.env.VIDA_BUN_COVERAGE_TEMP_DIRECTORY
+  )
+    throw new Error('Versioned coverage preload outputs differ from the sealed shard invocation.');
+  if (!Array.isArray(assignedValue) || assignedValue.some((entry) => typeof entry !== 'string'))
+    throw new Error('Versioned coverage preload assigned tests are malformed.');
+  if (!Array.isArray(manifest.tool_inputs)) throw new Error('Versioned coverage tooling custody is missing.');
+  for (const file of ['tooling/coverage-shard-evidence.ts', 'tooling/coverage-counters.ts']) {
+    const expected = manifest.tool_inputs.find((entry) => entry.path === file)?.sha256;
+    if (!expected) throw new Error('Versioned coverage bootstrap input is absent: ' + file);
+    const bytes = readFileSync(path.join(path.resolve(snapshotDirectory), ...file.split('/')));
+    if (digest(bytes) !== expected) throw new Error('Versioned coverage bootstrap bytes differ: ' + file);
+    preverifiedVersionedBootstrap.set(file, { path: file, sha256: expected });
+  }
+  const shardEvidence = await import('./coverage-shard-evidence.ts');
+  coverageOutputPathsSha256ForReceipt = shardEvidence.coverageOutputPathsSha256;
+  const validateCoverageShardPreloadAssignment = shardEvidence.validateCoverageShardPreloadAssignment;
+  validateCoverageShardPreloadAssignment({
+    run: {
+      schema: 'VidaBunCoverageRun/v3',
+      run_id: manifest.run_id,
+      source_fingerprint: manifest.source_fingerprint,
+      test_fingerprint: manifest.test_fingerprint,
+      tool_fingerprint: manifest.tool_fingerprint,
+      runtime_executable_sha256: manifest.runtime_executable_sha256,
+      assignment_plan_sha256: manifest.assignment_plan_sha256 ?? '',
+      tests: manifest.tests,
+      selected_test_inputs: manifest.test_inputs.filter((entry) => manifest.tests.includes(entry.path)),
+      shard_invocations: manifest.shard_invocations,
+      snapshot_directory: path.resolve(root, ...manifest.snapshot_directory.split('/')),
+    },
+    plan: manifest.coverage_plan,
+    shard_id: shardId,
+    assigned_tests: assignedValue,
+    shard_selection_sha256: process.env.VIDA_BUN_COVERAGE_SHARD_SELECTION_SHA256 ?? '',
+  });
+}
 if (!Array.isArray(manifest.sources) || manifest.sources.length === 0 || !Array.isArray(manifest.module_inputs))
   throw new Error('Bun coverage source manifest is empty.');
 const declaredModuleRoots = ['src', 'bin', 'tests', 'tooling'];
@@ -144,10 +234,13 @@ const bootstrapInputs = [
   'tooling/maintained-source-inventory.ts',
   'tooling/published-coverage-inputs.ts',
   'tooling/fixture-child-observation.ts',
+  ...(manifest.schema === 'VidaBunCoverageRun/v3'
+    ? ['tooling/coverage-shard-evidence.ts', 'tooling/coverage-counters.ts']
+    : []),
 ].map((file) => {
   const expectedHash = toolDigests.get(file);
   if (!expectedHash) throw new Error('Coverage bootstrap dependency is absent from tooling custody: ' + file);
-  snapshotBytes(file, expectedHash);
+  if (!preverifiedVersionedBootstrap.has(file)) snapshotBytes(file, expectedHash);
   return { path: file, sha256: expectedHash };
 });
 // Fixture children are subjects; observe direct APIs without granting counters
@@ -188,6 +281,14 @@ const capturedPaths = new Set([
 const expectedInputDigests = new Map(
   [...manifest.sources, ...manifest.test_inputs, ...manifest.tool_inputs].map((entry) => [entry.path, entry.sha256]),
 );
+const selectedTestPaths = new Set(manifest.tests);
+const shardAssignedTests =
+  manifest.schema === 'VidaBunCoverageRun/v3'
+    ? (JSON.parse(process.env.VIDA_BUN_COVERAGE_ASSIGNED_TESTS ?? 'null') as unknown[]).filter(
+        (entry): entry is string => typeof entry === 'string',
+      )
+    : manifest.tests;
+const shardAssignedTestSet = new Set(shardAssignedTests);
 const expectedModules = capturedModuleInputs({
   sources: manifest.sources,
   test_inputs: manifest.test_inputs,
@@ -270,6 +371,11 @@ function loadFixtureModule(file: string, relative: string) {
 }
 
 function loadSnapshotModule(file: string) {
+  const selectedTest = canonicalCapturedModulePath(root, file);
+  if (manifest.schema === 'VidaBunCoverageRun/v3' && selectedTest && selectedTestPaths.has(selectedTest)) {
+    if (!shardAssignedTestSet.has(selectedTest))
+      throw new Error('Coverage shard requested a sibling test outside its assignment: ' + selectedTest);
+  }
   if (fixtureRoot && file.startsWith(fixtureRoot + path.sep))
     return loadFixtureModule(file, path.relative(fixtureRoot, file).replaceAll('\\', '/'));
   const relative = path.relative(root, file).replaceAll('\\', '/');
@@ -344,7 +450,7 @@ function loadedInputReceipt(): SourceDigest[] {
     .sort((left, right) => left.path.localeCompare(right.path));
 }
 function requireSelectedTestsLoaded() {
-  for (const test of manifest.tests)
+  for (const test of shardAssignedTests)
     if (!loadedInputs.has(test)) throw new Error('Selected test was not loaded from the private snapshot: ' + test);
 }
 
@@ -361,8 +467,13 @@ afterAll(() => {
     const target = path.join(reportDirectory, fileName);
     const temporary = target + '.tmp';
     requireSelectedTestsLoaded();
+    const invocation =
+      manifest.schema === 'VidaBunCoverageRun/v3'
+        ? manifest.shard_invocations?.find((entry) => entry.shard_id === shardId)
+        : undefined;
+    const assignedTests = manifest.schema === 'VidaBunCoverageRun/v3' ? shardAssignedTests : undefined;
     const report = {
-      schema: 'VidaBunCoverageProcess/v1',
+      schema: manifest.schema === 'VidaBunCoverageRun/v3' ? 'VidaBunCoverageProcess/v2' : 'VidaBunCoverageProcess/v1',
       run_id: manifest.run_id,
       shard_id: shardId,
       pid: process.pid,
@@ -385,9 +496,22 @@ afterAll(() => {
         .map(([file, sha256]) => ({ path: file, sha256, classification: 'live-generated-local-module' }))
         .sort((left, right) => left.path.localeCompare(right.path)),
       preload_input: { path: 'tooling/bun-coverage-preload.ts', sha256: preloadDigest },
-      active_argv: manifest.active_argv,
+      active_argv: invocation?.argv ?? manifest.active_argv,
       execution_scope: manifest.execution_scope,
       runtime_executable_sha256: manifest.runtime_executable_sha256,
+      ...(manifest.schema === 'VidaBunCoverageRun/v3'
+        ? {
+            assignment_plan_sha256: manifest.assignment_plan_sha256,
+            assigned_tests: assignedTests,
+            shard_selection_sha256: process.env.VIDA_BUN_COVERAGE_SHARD_SELECTION_SHA256,
+            cwd: process.cwd(),
+            environment_sha256: invocation?.environment_sha256,
+            output_paths_sha256:
+              invocation && coverageOutputPathsSha256ForReceipt
+                ? coverageOutputPathsSha256ForReceipt(invocation.output_paths)
+                : undefined,
+          }
+        : {}),
       sources: manifest.sources,
       coverage: Object.fromEntries([...loadedFiles].sort().map((file) => [file, coverage[file]])),
     };

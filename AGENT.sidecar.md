@@ -150,6 +150,9 @@ per-file hook registration and pending process-state rules. Delegation identifie
 the writer's exact files, affected checks and qualification owner; keep one writer
 per shared file and one final numeric owner. Guidance changes do not activate a
 pending runner or establish numeric evidence.
+Shard reviews apply the same contract's sealed argv/environment, child-local
+clock and targeted-negative-control rules. A coordinated reader correctness
+check does not qualify removal of the common package resource.
 
 Author self-development automation in TypeScript and execute it with qualified
 Bun. For inventory/report processing, reuse the package-owned TS tools or an

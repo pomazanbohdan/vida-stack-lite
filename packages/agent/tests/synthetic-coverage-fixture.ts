@@ -10,6 +10,12 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { coverageToolInputs, coverageInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
+import { planCoverageShards } from '../tooling/coverage-shard-plan.ts';
+import {
+  coverageAssignmentPlanSha256,
+  coverageOutputPathsSha256,
+  mergeCoverageShardCounters,
+} from '../tooling/coverage-shard-evidence.ts';
 
 type InstrumentedFile = ReturnType<typeof instrumentSource>['fileCoverage'];
 type CoverageMap = Record<string, InstrumentedFile>;
@@ -57,7 +63,7 @@ function clone<T>(value: T): T {
 }
 
 export async function createSyntheticCoverageFixture(
-  options: { legacyManifest?: boolean } = {},
+  options: { legacyManifest?: boolean; versionedShards?: boolean } = {},
 ): Promise<SyntheticFixture> {
   const root = mkdtempSync(path.join(os.tmpdir(), 'untrusted-coverage-validator-'));
   let succeeded = false;
@@ -69,7 +75,13 @@ export async function createSyntheticCoverageFixture(
     write(root, 'package.json', JSON.stringify({ files: ['src/**', 'bin/**'], scripts: {} }));
     for (const source of sourcePaths) write(root, source, 'export const fixture = true;\n');
     write(root, 'bin/cli-metadata.ts', 'export const fixture = true;\n');
-    write(root, 'tests/fixture.test.mjs', "import { test } from 'bun:test'; test('inert fixture', () => {});\n");
+    write(root, 'tests/fixture.test.ts', "import { test } from 'bun:test'; test('inert fixture', () => {});\n");
+    if (options.versionedShards)
+      write(
+        root,
+        'tests/fixture-extra.spec.ts',
+        "import { test } from 'bun:test'; test('second inert fixture', () => {});\n",
+      );
     for (const file of coverageToolInputs) {
       if (file === '.bun-version' || file === 'package.json') continue;
       write(root, file, 'UNTRUSTED SYNTHETIC TOOL INPUT\n');
@@ -81,7 +93,6 @@ export async function createSyntheticCoverageFixture(
     // Exactly one capture supplies all fingerprints, bytes, and child bindings.
     const inputs = await coverageInputs(root);
     const runId = randomUUID();
-    const receiptNonce = randomUUID();
     const pid = process.pid;
     const runRelative = path.posix.join('coverage/bun-unified/runs', runId);
     const snapshotRelative = path.posix.join(runRelative, 'snapshot');
@@ -117,8 +128,38 @@ export async function createSyntheticCoverageFixture(
     const coverage: CoverageMap = clone(sourceMaps);
     const runtimeHash = sha256(readFileSync(process.execPath));
     const manifestPath = path.posix.join(runRelative, 'manifest.json');
+    const testsInputRows = inputs.test_inputs.filter(({ path: file }) => inputs.tests.includes(file));
+    const coveragePlan = options.versionedShards
+      ? planCoverageShards(testsInputRows, [], 2, '9'.repeat(64))
+      : undefined;
+    const shardInvocations = coveragePlan?.waves.flatMap((wave) =>
+      wave.assignments.map((assignment) => ({
+        shard_id: assignment.shard_id,
+        argv: [
+          'test',
+          '--parallel=1',
+          '--no-isolate',
+          '--timeout',
+          '5000',
+          ...assignment.tests.map((file) => `./${file}`),
+        ],
+        cwd: root,
+        environment_sha256: '8'.repeat(64),
+        output_paths: {
+          coverage_directory: path.join(root, ...runRelative.split('/'), 'shards', assignment.shard_id, 'coverage'),
+          junit_file: path.join(root, ...runRelative.split('/'), 'shards', assignment.shard_id, 'suite.junit.xml'),
+          log_file: path.join(root, ...runRelative.split('/'), 'shards', assignment.shard_id, 'child.log'),
+          receipt_directory: path.join(root, ...runRelative.split('/'), 'processes', assignment.shard_id),
+          temp_directory: path.join(root, ...runRelative.split('/'), 'shards', assignment.shard_id, 'tmp'),
+        },
+      })),
+    );
     const manifest: JsonRecord = {
-      schema: options.legacyManifest ? 'VidaBunCoverageRun/v1' : 'VidaBunCoverageRun/v2',
+      schema: options.legacyManifest
+        ? 'VidaBunCoverageRun/v1'
+        : options.versionedShards
+          ? 'VidaBunCoverageRun/v3'
+          : 'VidaBunCoverageRun/v2',
       run_id: runId,
       bun_version: new TextDecoder().decode(pinBytes).trim(),
       runtime_executable_sha256: runtimeHash,
@@ -133,9 +174,16 @@ export async function createSyntheticCoverageFixture(
       tool_fingerprint: inputs.tool_fingerprint,
       module_inputs: inputs.module_inputs,
       execution_scope: executionScope,
-      active_argv: activeArgv,
+      active_argv: options.versionedShards ? [] : activeArgv,
       source_maps: sourceMaps,
       ...(options.legacyManifest ? {} : { instrumented_sources: instrumentedSources }),
+      ...(coveragePlan
+        ? {
+            coverage_plan: coveragePlan,
+            assignment_plan_sha256: coverageAssignmentPlanSha256(coveragePlan, shardInvocations ?? []),
+            shard_invocations: shardInvocations,
+          }
+        : {}),
     };
     const manifestBytes = Buffer.from(JSON.stringify(manifest));
     write(root, manifestPath, manifestBytes);
@@ -150,27 +198,90 @@ export async function createSyntheticCoverageFixture(
       if (!digest) throw new Error(`Fixture capture omitted loaded input binding: ${file}`);
       return { path: file, sha256: digest };
     });
-    const child: JsonRecord = {
-      schema: 'VidaBunCoverageProcess/v1',
-      run_id: runId,
-      shard_id: 'bun-test',
-      source_fingerprint: inputs.source_fingerprint,
-      test_fingerprint: inputs.test_fingerprint,
-      tool_fingerprint: inputs.tool_fingerprint,
-      runtime_executable_sha256: runtimeHash,
-      test_selection: inputs.test_selection,
-      pid,
-      sources: inputs.sources,
-      module_inputs: inputs.module_inputs,
-      execution_scope: executionScope,
-      active_argv: activeArgv,
-      preload_input: { path: preload.path, sha256: preload.sha256 },
-      external_module_inputs: [],
-      loaded_inputs: loadedInputs,
-      coverage,
-    };
-    const receiptName = `${runId}.bun-test.1.${receiptNonce}.json`;
-    const processPath = path.join(root, ...runRelative.split('/'), 'processes', receiptName);
+    const children: JsonRecord[] = coveragePlan
+      ? coveragePlan.waves.flatMap((wave, index) =>
+          wave.assignments.map((assignment) => {
+            const invocation = shardInvocations!.find(({ shard_id }) => shard_id === assignment.shard_id)!;
+            const assignedLoadedInputs = [
+              ...new Set([
+                ...assignment.tests,
+                ...bootstrapPaths,
+                'tooling/coverage-shard-evidence.ts',
+                'tooling/coverage-counters.ts',
+              ]),
+            ].map((file) => {
+              const digest = boundByPath.get(file);
+              if (!digest) throw new Error(`Fixture capture omitted versioned bootstrap input: ${file}`);
+              return { path: file, sha256: digest };
+            });
+            const sparseCoverage: CoverageMap = {
+              [Object.keys(sourceMaps)[index === 0 ? 0 : sourcePaths.length - 1]!]:
+                Object.values(sourceMaps)[index === 0 ? 0 : sourcePaths.length - 1]!,
+            };
+            return {
+              schema: 'VidaBunCoverageProcess/v2',
+              run_id: runId,
+              shard_id: assignment.shard_id,
+              source_fingerprint: inputs.source_fingerprint,
+              test_fingerprint: inputs.test_fingerprint,
+              tool_fingerprint: inputs.tool_fingerprint,
+              runtime_executable_sha256: runtimeHash,
+              test_selection: inputs.test_selection,
+              pid: pid + index,
+              sources: inputs.sources,
+              module_inputs: inputs.module_inputs,
+              execution_scope: executionScope,
+              active_argv: invocation.argv,
+              preload_input: { path: 'tooling/bun-coverage-preload.ts', sha256: preload.sha256 },
+              external_module_inputs: [],
+              loaded_inputs: assignedLoadedInputs,
+              assignment_plan_sha256: manifest.assignment_plan_sha256,
+              assigned_tests: [...assignment.tests],
+              shard_selection_sha256: assignment.selection_sha256,
+              cwd: invocation.cwd,
+              environment_sha256: invocation.environment_sha256,
+              output_paths_sha256: coverageOutputPathsSha256(invocation.output_paths),
+              coverage: sparseCoverage,
+            };
+          }),
+        )
+      : [
+          {
+            schema: 'VidaBunCoverageProcess/v1',
+            run_id: runId,
+            shard_id: 'bun-test',
+            source_fingerprint: inputs.source_fingerprint,
+            test_fingerprint: inputs.test_fingerprint,
+            tool_fingerprint: inputs.tool_fingerprint,
+            runtime_executable_sha256: runtimeHash,
+            test_selection: inputs.test_selection,
+            pid,
+            sources: inputs.sources,
+            module_inputs: inputs.module_inputs,
+            execution_scope: executionScope,
+            active_argv: activeArgv,
+            preload_input: { path: preload.path, sha256: preload.sha256 },
+            external_module_inputs: [],
+            loaded_inputs: loadedInputs,
+            coverage,
+          },
+        ];
+    const child = children[0]!;
+    const processPaths = children.map((child) => {
+      const childPid = child.pid;
+      const shardId = child.shard_id;
+      if (typeof childPid !== 'number' || !Number.isSafeInteger(childPid) || typeof shardId !== 'string')
+        throw new Error('Synthetic coverage process identity is malformed.');
+      const nonce = randomUUID();
+      const receiptName = `${runId}.${shardId}.${childPid}.${nonce}.json`;
+      const relativeReceiptName = options.versionedShards ? `${shardId}/${receiptName}` : receiptName;
+      return {
+        child,
+        receiptName: relativeReceiptName,
+        processPath: path.join(root, ...runRelative.split('/'), 'processes', relativeReceiptName),
+      };
+    });
+    const processPath = processPaths[0]!.processPath;
     const reportPath = path.join(root, 'untrusted-report.json');
     const report: JsonRecord = {
       schema: 'VidaBunCoverageReport/v1',
@@ -188,18 +299,36 @@ export async function createSyntheticCoverageFixture(
       test_fingerprint: inputs.test_fingerprint,
       tool_fingerprint: inputs.tool_fingerprint,
       execution_scope: executionScope,
-      active_argv: activeArgv,
+      active_argv: options.versionedShards ? [] : activeArgv,
       source_maps: sourceMaps,
-      shards: [{ shard_id: 'bun-test', status: 0, signal: null, error: null, unknown: false }],
+      shards: coveragePlan
+        ? processPaths.map(({ child }) => ({
+            run_id: runId,
+            shard_id: child.shard_id,
+            pid: child.pid,
+            status: 0,
+            signal: null,
+            error: null,
+            unknown: false,
+          }))
+        : [{ shard_id: 'bun-test', status: 0, signal: null, error: null, unknown: false }],
       processes: [],
       coverage,
     };
 
     const writeChildAndReceipt = (): Uint8Array => {
-      const childBytes = Buffer.from(JSON.stringify(child));
-      write(root, path.relative(root, processPath).replaceAll(path.sep, '/'), childBytes);
-      report.processes = [{ file: receiptName, pid, shard_id: 'bun-test', sha256: sha256(childBytes) }];
-      report.coverage = clone(child.coverage);
+      const receipts = processPaths.map(({ child, receiptName, processPath: target }) => {
+        const childBytes = Buffer.from(JSON.stringify(child));
+        write(root, path.relative(root, target).replaceAll(path.sep, '/'), childBytes);
+        return { file: receiptName, pid: child.pid, shard_id: child.shard_id, sha256: sha256(childBytes) };
+      });
+      report.processes = receipts;
+      report.coverage = coveragePlan
+        ? mergeCoverageShardCounters(
+            sourceMaps,
+            processPaths.map(({ child }) => child.coverage as CoverageMap),
+          )
+        : clone(children[0]!.coverage);
       return Buffer.from(JSON.stringify(report));
     };
     writeChildAndReceipt();

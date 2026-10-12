@@ -1,0 +1,545 @@
+import { expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import {
+  runtimePackageAccess,
+  readRuntimePackageResourceBytes,
+  readRuntimePackageResourceText,
+} from '../src/config/runtime-config.js';
+import { safeRepositoryProviderAvailable } from '../src/config/safe-repository-access.js';
+import { runBoundedSubprocess } from './helpers/bounded-subprocess.ts';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+test('package resource bytes prefer a fresh verified observation and preserve its receiver', () => {
+  const access = runtimePackageAccess();
+  const calls: string[] = [];
+  let image = Buffer.from('first image');
+  const reader = {
+    ...access,
+    readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+      expect(this).toBe(reader);
+      calls.push(`${target}:${label}:${maxBytes}`);
+      return image;
+    },
+    readStableBytes(): Buffer | null {
+      throw new Error('verified package read must not use cooperative fallback');
+    },
+    readBytes(): Buffer {
+      throw new Error('verified package read must not use mutable fallback');
+    },
+  };
+
+  expect(readRuntimePackageResourceBytes(reader, 'schemas/example.json', 'test schema', 4096)).toBe(image);
+  image = Buffer.from('changed image');
+  expect(readRuntimePackageResourceBytes(reader, 'schemas/example.json', 'test schema', 4096)).toBe(image);
+  expect(calls).toEqual(['schemas/example.json:test schema:4096', 'schemas/example.json:test schema:4096']);
+});
+
+test('package resource bytes retain cooperative fallback only when verified reads are unavailable', () => {
+  const access = runtimePackageAccess();
+  const { readVerifiedCaptureBytes: ignoredVerifiedReader, ...withoutVerifiedReader } = access;
+  void ignoredVerifiedReader;
+  const calls: string[] = [];
+  const bytes = Buffer.from('cooperative image');
+  const reader = {
+    ...withoutVerifiedReader,
+    readStableBytes(target: string, label: string): Buffer {
+      expect(this).toBe(reader);
+      calls.push(`stable:${target}:${label}`);
+      return bytes;
+    },
+    readBytes(target: string, label: string): Buffer {
+      calls.push(`bytes:${target}:${label}`);
+      return bytes;
+    },
+  };
+
+  expect(readRuntimePackageResourceBytes(reader, 'templates/example.yaml', 'test template')).toBe(bytes);
+  expect(calls).toEqual(['stable:templates/example.yaml:test template']);
+});
+
+test('package resource reads use the existing CAS reader when verified and stable methods are unavailable', () => {
+  const access = runtimePackageAccess();
+  const { readVerifiedCaptureBytes: ignoredVerifiedReader, ...withoutVerifiedReader } = access;
+  const { readStableBytes: ignoredStableReader, ...withoutStableReader } = withoutVerifiedReader;
+  void ignoredVerifiedReader;
+  void ignoredStableReader;
+  const calls: string[] = [];
+  const bytes = Buffer.from('CAS image');
+  const reader = {
+    ...withoutStableReader,
+    readBytes(target: string, label: string): Buffer {
+      expect(this).toBe(reader);
+      calls.push(`${target}:${label}`);
+      return bytes;
+    },
+  };
+
+  expect(readRuntimePackageResourceBytes(reader, 'schemas/example.json', 'CAS schema')).toBe(bytes);
+  expect(calls).toEqual(['schemas/example.json:CAS schema']);
+});
+
+test('package resource failures fail closed without retrying another reader', () => {
+  const access = runtimePackageAccess();
+  const calls: string[] = [];
+  const reader = {
+    ...access,
+    readVerifiedCaptureBytes(target: string): Buffer {
+      calls.push(`verified:${target}`);
+      throw new Error('verified resource unavailable');
+    },
+    readStableBytes(target: string): Buffer {
+      calls.push(`stable:${target}`);
+      return Buffer.from('fallback must not be used');
+    },
+    readBytes(target: string): Buffer {
+      calls.push(`bytes:${target}`);
+      return Buffer.from('fallback must not be used');
+    },
+  };
+
+  expect(() => readRuntimePackageResourceBytes(reader, 'schemas/missing.json', 'required schema')).toThrow(
+    'verified resource unavailable',
+  );
+  expect(calls).toEqual(['verified:schemas/missing.json']);
+});
+
+test('package resource bounds reject an oversized verified image', () => {
+  const access = runtimePackageAccess();
+  let calls = 0;
+  const reader = {
+    ...access,
+    readVerifiedCaptureBytes(_target: string, _label: string, maxBytes?: number): Buffer {
+      calls++;
+      expect(maxBytes).toBe(3);
+      return Buffer.from('four');
+    },
+  };
+  expect(() => readRuntimePackageResourceBytes(reader, 'schemas/large.json', 'bounded schema', 3)).toThrow(
+    'per-file byte limit',
+  );
+  expect(calls).toBe(1);
+});
+
+test('required package resources deny stable absence', () => {
+  const access = runtimePackageAccess();
+  const { readVerifiedCaptureBytes: ignoredVerifiedReader, ...withoutVerifiedReader } = access;
+  void ignoredVerifiedReader;
+  const calls: string[] = [];
+  const reader = {
+    ...withoutVerifiedReader,
+    readStableBytes(target: string, label: string): Buffer | null {
+      calls.push(`${target}:${label}`);
+      return null;
+    },
+  };
+  expect(() => readRuntimePackageResourceBytes(reader, 'schemas/missing.json', 'required schema')).toThrow();
+  expect(calls).toEqual(['schemas/missing.json:required schema']);
+});
+
+test('package resource reads reject a foreign access root before invoking its provider', () => {
+  const access = runtimePackageAccess();
+  let calls = 0;
+  const reader = {
+    ...access,
+    repository_root: access.repository_root + '-foreign',
+    readVerifiedCaptureBytes(): Buffer {
+      calls++;
+      return Buffer.from('foreign bytes');
+    },
+  };
+  expect(() => readRuntimePackageResourceBytes(reader, 'schemas/example.json', 'root binding')).toThrow();
+  expect(calls).toBe(0);
+});
+
+test('package resource reads reject malformed targets and invalid bounds before provider calls', () => {
+  const access = runtimePackageAccess();
+  let calls = 0;
+  const reader = {
+    ...access,
+    readVerifiedCaptureBytes(): Buffer {
+      calls++;
+      return Buffer.from('valid');
+    },
+  };
+  expect(() => readRuntimePackageResourceBytes(reader, '../outside.json', 'unsafe target')).toThrow();
+  expect(() => readRuntimePackageResourceBytes(reader, 'schemas/example.json', 'invalid bound', 0)).toThrow();
+  expect(calls).toBe(0);
+});
+
+test('package resource text uses strict UTF-8 decoding', () => {
+  const access = runtimePackageAccess();
+  const valid = {
+    ...access,
+    readVerifiedCaptureBytes: () => Buffer.from('\uFEFFУкраїна', 'utf8'),
+  };
+  expect(readRuntimePackageResourceText(valid, 'schemas/text.json', 'strict schema')).toBe('\uFEFFУкраїна');
+  const reader = {
+    ...access,
+    readVerifiedCaptureBytes: () => Buffer.from([0xc3, 0x28]),
+  };
+  expect(() => readRuntimePackageResourceText(reader, 'schemas/invalid.json', 'strict schema')).toThrow();
+});
+
+// This coordinated correctness control does not qualify real read overlap or common-resource removal.
+test.skipIf(process.platform !== 'linux' || !safeRepositoryProviderAvailable)(
+  'two cold package readers coordinate verified package resource correctness',
+  async () => {
+    const deadlineAt = performance.now() + 5_000;
+    const assertBeforeDeadline = (phase: string): void => {
+      if (performance.now() >= deadlineAt)
+        throw new Error(`Package-reader control exceeded its deadline during ${phase}`);
+    };
+    const access = runtimePackageAccess();
+    if (access.provider !== 'linux-proc-fd' || !access.readVerifiedCaptureBytes)
+      throw new Error('Linux verified package reader is unavailable');
+    const packageRoot = path.resolve(access.repository_root);
+    const resources = [
+      { path: 'package.json', label: 'runtime package identity' },
+      { path: 'schemas/agent-runtime-config.v1.schema.json', label: 'runtime configuration schema' },
+      { path: 'templates/agent-runtime.config.template.v1.yaml', label: 'runtime configuration template' },
+    ];
+    const expected = resources.map(({ path: target, label }) => {
+      const bytes = readRuntimePackageResourceBytes(access, target, label, 1024 * 1024);
+      const text = readRuntimePackageResourceText(access, target, label, 1024 * 1024);
+      return {
+        path: target,
+        bytes: bytes.length,
+        sha256: createHash('sha256').update(bytes).digest('hex'),
+        textSha256: createHash('sha256').update(Buffer.from(text, 'utf8')).digest('hex'),
+      };
+    });
+    const targets = resources.map(({ path: target }) => target);
+    const casPaths = targets.map((target) => {
+      const absolute = path.join(packageRoot, target);
+      return path.join(path.dirname(absolute), `.${path.basename(absolute)}.cas.lock`);
+    });
+    const sidecarsBefore = casPaths.map((file) => existsSync(file));
+    expect(sidecarsBefore).toEqual([false, false, false]);
+
+    const roots: string[] = [];
+    let cleanupAllowed = false;
+    try {
+      roots.push(mkdtempSync(path.join(tmpdir(), 'vida-package-reader-a-')));
+      roots.push(mkdtempSync(path.join(tmpdir(), 'vida-package-reader-b-')));
+      const runtimeConfigUrl = new URL('../src/config/runtime-config.js', import.meta.url).href;
+      const readerSource = `
+import { mock } from 'bun:test';
+import { createHash } from 'node:crypto';
+import * as fs from 'node:fs';
+const nativeFs = { ...fs };
+let packageWriteSyncs = 0;
+let packageFsyncs = 0;
+await mock.module('node:fs', () => ({
+  ...nativeFs,
+  writeSync(fd, ...args) {
+    if (typeof fd === 'number' && fd > 2) packageWriteSyncs++;
+    return nativeFs.writeSync(fd, ...args);
+  },
+  fsyncSync(fd) { packageFsyncs++; return nativeFs.fsyncSync(fd); },
+}));
+const { runtimePackageAccess, readRuntimePackageResourceBytes, readRuntimePackageResourceText } = await import(${JSON.stringify(runtimeConfigUrl)});
+const id = process.env.VIDA_PACKAGE_READER_ID;
+const consumerRoot = process.env.VIDA_PACKAGE_CONSUMER_ROOT;
+if (process.cwd() !== consumerRoot) throw new Error('reader did not use its fresh consumer root');
+process.stdout.write(JSON.stringify({ kind: 'ready', id, cwd: process.cwd() }) + '\\n');
+await new Promise((resolve, reject) => {
+  process.stdin.setEncoding('utf8');
+  process.stdin.once('data', (chunk) => {
+    process.stdin.pause();
+    if (chunk.includes('GO')) resolve(); else reject(new Error('shared start signal missing'));
+  });
+  process.stdin.once('error', reject);
+});
+const started = process.hrtime.bigint().toString();
+const access = runtimePackageAccess();
+if (access.provider !== 'linux-proc-fd' || !access.readVerifiedCaptureBytes || access.repository_root !== ${JSON.stringify(packageRoot)})
+  throw new Error('reader did not select the actual verified runtime package');
+const resources = ${JSON.stringify(resources)};
+const observations = resources.map(({ path, label }) => {
+  const bytes = readRuntimePackageResourceBytes(access, path, label, 1024 * 1024);
+  const text = readRuntimePackageResourceText(access, path, label, 1024 * 1024);
+  const textBytes = Buffer.from(text, 'utf8');
+  if (!textBytes.equals(bytes)) throw new Error('strict text and byte views differ');
+  return {
+    path,
+    bytes: bytes.length,
+    sha256: createHash('sha256').update(bytes).digest('hex'),
+    textSha256: createHash('sha256').update(textBytes).digest('hex'),
+  };
+});
+const manifest = JSON.parse(readRuntimePackageResourceText(access, 'package.json', 'runtime package identity', 1024 * 1024));
+const ended = process.hrtime.bigint().toString();
+process.stdout.write(JSON.stringify({
+  kind: 'done', id, cwd: process.cwd(), repositoryRoot: access.repository_root,
+  packageName: manifest.name, started, ended, resources: observations,
+  packageWriteSyncs, packageFsyncs,
+}) + '\\n');
+`;
+      const orchestrator = `
+import { spawn } from 'node:child_process';
+const configs = ${JSON.stringify(roots.map((root, index) => ({ id: `reader-${index + 1}`, root })))};
+const source = ${JSON.stringify(readerSource)};
+const states = [];
+function observe(child, config) {
+  const state = { ...config, child, messages: [], waiters: [], close: null, childError: null };
+  const publish = (message) => {
+    state.messages.push(message);
+    for (const waiter of [...state.waiters]) {
+      if (waiter.kind === message.kind) {
+        state.waiters.splice(state.waiters.indexOf(waiter), 1);
+        waiter.resolve(message);
+      }
+    }
+  };
+  let output = '';
+  child.stdout.setEncoding('utf8');
+  child.stdout.on('data', (chunk) => {
+    output += chunk;
+    for (;;) {
+      const end = output.indexOf('\\n');
+      if (end < 0) break;
+      const line = output.slice(0, end); output = output.slice(end + 1);
+      try { publish(JSON.parse(line)); } catch { state.childError = 'invalid reader protocol line'; }
+    }
+  });
+  child.stderr.setEncoding('utf8');
+  let stderr = '';
+  child.stderr.on('data', (chunk) => { stderr += chunk; if (stderr.length > 8192) stderr = stderr.slice(-8192); });
+  state.waitFor = (kind) => {
+    const existing = state.messages.find((message) => message.kind === kind);
+    if (existing) return Promise.resolve(existing);
+    return new Promise((resolve) => state.waiters.push({ kind, resolve }));
+  };
+  state.stderr = () => stderr;
+  state.terminal = new Promise((resolve) => child.once('close', (exitCode, signal) => {
+    state.close = { closeObserved: true, exitCode, signal };
+    resolve(state.close);
+  }));
+  child.once('error', (error) => { state.childError = String(error); });
+  child.stdin.on('error', (error) => { state.childError = String(error); });
+  states.push(state);
+  return state;
+}
+const readerPoolDeadline = performance.now() + 3000;
+function bounded(promise, label) {
+  const remaining = Math.floor(readerPoolDeadline - performance.now());
+  if (remaining <= 0) return Promise.reject(new Error(label + ' deadline; reader pool budget spent'));
+  let timer;
+  return Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(label + ' deadline')), remaining); })])
+    .finally(() => clearTimeout(timer));
+}
+let failure = null;
+try {
+  if (performance.now() >= readerPoolDeadline) throw new Error('reader pool budget spent before child launch');
+  for (const config of configs) {
+    const child = spawn(process.execPath, ['--no-env-file', '--no-install', '--eval', source], {
+      cwd: config.root, env: { ...process.env, VIDA_PACKAGE_READER_ID: config.id, VIDA_PACKAGE_CONSUMER_ROOT: config.root },
+      stdio: ['pipe', 'pipe', 'pipe'], windowsHide: true,
+    });
+    observe(child, config);
+  }
+  const ready = await bounded(Promise.all(states.map((state) => state.waitFor('ready'))), 'reader readiness');
+  for (let index = 0; index < states.length; index++) states[index].child.stdin.write('GO\\n');
+  const done = await bounded(Promise.all(states.map((state) => state.waitFor('done'))), 'reader completion');
+  const terminal = await bounded(Promise.all(states.map((state) => state.terminal)), 'reader terminal receipts');
+  if (terminal.some((receipt) => !receipt.closeObserved || receipt.exitCode !== 0 || receipt.signal !== null))
+    throw new Error('reader terminal receipt was unsuccessful');
+  const durations = done.map(({ id, started, ended }) => {
+    const durationNs = BigInt(ended) - BigInt(started);
+    if (durationNs <= 0n) throw new Error('reader-local active duration was not positive');
+    return { id, durationNs: durationNs.toString() };
+  });
+  process.stdout.write(JSON.stringify({
+    protocol: 'package-reader-coordinated-read/v1',
+    ready: ready.map(({ id, cwd }) => ({ id, cwd })),
+    durations,
+    receipts: states.map((state, index) => ({ id: state.id, ...terminal[index], childError: state.childError, stderr: state.stderr() })),
+    observations: done,
+  }) + '\\n');
+} catch (error) {
+  failure = String(error);
+  for (const state of states) if (!state.close) { try { state.child.kill('SIGKILL'); } catch {} }
+  let cleanupTimer;
+  await Promise.race([
+    Promise.all(states.map((state) => state.terminal)),
+    new Promise((resolve) => { cleanupTimer = setTimeout(resolve, 700); }),
+  ]).finally(() => clearTimeout(cleanupTimer));
+  process.stdout.write(JSON.stringify({
+    protocol: 'package-reader-coordinated-read/v1', failure,
+    ready: states.flatMap((state) => state.messages.filter((message) => message.kind === 'ready')),
+    receipts: states.map((state) => ({ id: state.id, ...(state.close ?? { closeObserved: false, exitCode: null, signal: null }), childError: state.childError, stderr: state.stderr() })),
+    done: states.flatMap((state) => state.messages.filter((message) => message.kind === 'done')),
+  }) + '\\n');
+  process.exitCode = 1;
+}
+`;
+      const subprocessTimeoutMs = Math.min(4_000, Math.floor(deadlineAt - performance.now() - 1_000));
+      if (subprocessTimeoutMs <= 0) throw new Error('Insufficient deadline remains to start package-reader children');
+      const result = await runBoundedSubprocess(
+        process.execPath,
+        ['--no-env-file', '--no-install', '--eval', orchestrator],
+        { cwd: packageRoot, timeoutMs: subprocessTimeoutMs, stdoutLimitBytes: 128 * 1024, stderrLimitBytes: 32 * 1024 },
+      );
+      if (
+        !result.closeObserved ||
+        result.timedOut ||
+        result.exitCode !== 0 ||
+        result.signal !== null ||
+        result.childError !== null
+      ) {
+        process.stderr.write(
+          `Package-reader control custody evidence: ${JSON.stringify({
+            roots,
+            closeObserved: result.closeObserved,
+            timedOut: result.timedOut,
+            exitCode: result.exitCode,
+            signal: result.signal,
+            childError: result.childError,
+            terminationRequestConfirmed: result.terminationRequestConfirmed,
+            terminationError: result.terminationError,
+            stdout: result.stdout.toString('utf8'),
+            stderr: result.stderr.toString('utf8'),
+          })}\n`,
+        );
+      }
+      expect(result.closeObserved).toBe(true);
+      expect(result.timedOut).toBe(false);
+      expect(result.childError).toBeNull();
+      expect(result.exitCode).toBe(0);
+      expect(result.signal).toBeNull();
+      let parsedReport: unknown;
+      try {
+        parsedReport = JSON.parse(result.stdout.toString('utf8').trim());
+      } catch (error) {
+        throw new Error(`Malformed package-reader report (${String(error)}); output=${result.stdout.toString('utf8')}`);
+      }
+      if (!isRecord(parsedReport)) throw new Error('Package-reader report is not an object');
+      const report = parsedReport;
+      if (report.protocol !== 'package-reader-coordinated-read/v1')
+        throw new Error('Unexpected package-reader report protocol');
+      if (report.failure !== undefined) {
+        if (typeof report.failure !== 'string') throw new Error('Package-reader failure receipt is not text');
+        throw new Error(`Package-reader orchestrator reported failure: ${report.failure}`);
+      }
+      if (
+        !Array.isArray(report.ready) ||
+        !Array.isArray(report.durations) ||
+        !Array.isArray(report.receipts) ||
+        !Array.isArray(report.observations)
+      )
+        throw new Error('Package-reader report is missing required arrays');
+      const ready = report.ready.map((row) => {
+        if (!isRecord(row) || typeof row.id !== 'string' || typeof row.cwd !== 'string')
+          throw new Error('Malformed package-reader readiness receipt');
+        return { id: row.id, cwd: row.cwd };
+      });
+      const durations = report.durations.map((row) => {
+        if (!isRecord(row) || typeof row.id !== 'string' || typeof row.durationNs !== 'string')
+          throw new Error('Malformed package-reader local duration');
+        return { id: row.id, durationNs: row.durationNs };
+      });
+      const receipts = report.receipts.map((row) => {
+        if (
+          !isRecord(row) ||
+          typeof row.id !== 'string' ||
+          typeof row.closeObserved !== 'boolean' ||
+          (row.exitCode !== null && typeof row.exitCode !== 'number') ||
+          (row.signal !== null && typeof row.signal !== 'string') ||
+          (row.childError !== null && typeof row.childError !== 'string') ||
+          typeof row.stderr !== 'string'
+        )
+          throw new Error('Malformed package-reader terminal receipt');
+        return row;
+      });
+      const observations = report.observations.map((row) => {
+        if (
+          !isRecord(row) ||
+          typeof row.id !== 'string' ||
+          typeof row.cwd !== 'string' ||
+          typeof row.repositoryRoot !== 'string' ||
+          typeof row.packageName !== 'string' ||
+          !Array.isArray(row.resources) ||
+          typeof row.packageWriteSyncs !== 'number' ||
+          typeof row.packageFsyncs !== 'number'
+        )
+          throw new Error('Malformed package-reader observation');
+        const observedResources = row.resources.map((resource) => {
+          if (
+            !isRecord(resource) ||
+            typeof resource.path !== 'string' ||
+            typeof resource.bytes !== 'number' ||
+            typeof resource.sha256 !== 'string' ||
+            typeof resource.textSha256 !== 'string'
+          )
+            throw new Error('Malformed package resource observation');
+          return {
+            path: resource.path,
+            bytes: resource.bytes,
+            sha256: resource.sha256,
+            textSha256: resource.textSha256,
+          };
+        });
+        return {
+          id: row.id,
+          cwd: row.cwd,
+          repositoryRoot: row.repositoryRoot,
+          packageName: row.packageName,
+          resources: observedResources,
+          packageWriteSyncs: row.packageWriteSyncs,
+          packageFsyncs: row.packageFsyncs,
+        };
+      });
+      expect(ready.map(({ cwd }) => cwd)).toEqual(roots);
+      expect(durations).toHaveLength(2);
+      for (const duration of durations) expect(BigInt(duration.durationNs) > 0n).toBe(true);
+      expect(receipts).toHaveLength(2);
+      for (const receipt of receipts) {
+        expect(receipt.closeObserved).toBe(true);
+        expect(receipt.exitCode).toBe(0);
+        expect(receipt.signal).toBeNull();
+        expect(receipt.childError).toBeNull();
+        expect(receipt.stderr).toBe('');
+      }
+      expect(observations).toHaveLength(2);
+      for (let index = 0; index < observations.length; index++) {
+        const observation = observations[index];
+        if (!observation) throw new Error(`Missing package-reader observation ${index}`);
+        const consumerRoot = roots[index];
+        if (!consumerRoot) throw new Error(`Missing consumer root ${index}`);
+        expect(observation.id).toBe(`reader-${index + 1}`);
+        expect(observation.cwd).toBe(consumerRoot);
+        expect(observation.repositoryRoot).toBe(packageRoot);
+        expect(observation.packageName).toBe('vida-agent');
+        expect(observation.resources).toEqual(expected);
+        expect(observation.packageWriteSyncs).toBe(0);
+        expect(observation.packageFsyncs).toBe(0);
+      }
+      for (let index = 0; index < resources.length; index++) {
+        const resource = resources[index];
+        const expectedResource = expected[index];
+        if (!resource || !expectedResource) throw new Error(`Missing expected package resource ${index}`);
+        const { path: target, label } = resource;
+        const current = readRuntimePackageResourceBytes(access, target, label, 1024 * 1024);
+        expect(current.length).toBe(expectedResource.bytes);
+        expect(createHash('sha256').update(current).digest('hex')).toBe(expectedResource.sha256);
+      }
+      expect(casPaths.map((file) => existsSync(file))).toEqual(sidecarsBefore);
+      assertBeforeDeadline('post-close assertions');
+      cleanupAllowed = true;
+    } finally {
+      if (cleanupAllowed && performance.now() < deadlineAt) {
+        for (const root of roots) rmSync(root, { recursive: true, force: true });
+        expect(roots.map((root) => existsSync(root))).toEqual(roots.map(() => false));
+      } else {
+        process.stderr.write(`Retained package-reader roots after incomplete custody: ${roots.join(', ')}\n`);
+      }
+    }
+  },
+  { timeout: 5_000 },
+);

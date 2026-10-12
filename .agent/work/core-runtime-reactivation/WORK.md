@@ -8388,3 +8388,69 @@ semantics. Local owner/link/anchor and skill frontmatter checks PASS; diff check
 PASS. Documentation qualification does not qualify the uncommitted product,
 protocol or helper changes. Publish this documentation-only packet separately,
 preserving all pending Source/test changes and unrelated untracked files.
+
+### 2026-10-12 — qualified protocol/reader/helper foundation and guidance
+
+Continue the standing goal after published instruction checkpoint0eb55bc.
+Disjoint blind Luna writers supply package-reader Source, versioned protocol and
+shared rebind fixtures; Root remains the runtime/static/Git owner. Native Source
+package loader, schemas, operational state and installed runtime are not switched.
+
+Package-owned identity/schema/template/context reads reuse the existing bounded
+verified primitive, preserving required absence, fail-closed provider selection,
+receiver, strict UTF-8 and fresh two-read configured-context equality. Mutable
+consumer/Source readers and durable CAS writers retain their owners. Native
+coordination control10PASS/69assertions verifies both actual executing-package
+readers, owned roots, byte/text digests, no writes/fsync/sidecars and terminal
+custody; this does not qualify actual overlap or broader caller closure.
+
+Excluded overlap evidence: previous control compared process.hrtime.bigint values
+across Bun children. Inert qualified1.4.3 probe proves process-relative origins
+(child roughly2ms while parent roughly312ms). Current official Bun nanoseconds
+guide documents process uptime; inspected upstream process binding also reads
+the VM origin timer. Retain failed roots a-qZ2NCY/b-R0VQGe under
+/dev/shm/vida-focused-ddcaf54 and the original failure log. Replace the invalid
+cross-process assertion with an honestly scoped native correctness control,
+without sleeps/retries or resource untagging. Actual read-overlap stays pending.
+
+Shared rebind helper extraction preserves97 ordered registration ASTs, including
+original callbacks/assertions/timeouts, before and after formatting. Previous
+selected runtime invocation14PASS/121assertions with151filtered cases is not a
+complete165-case pass. Two-file explicit hook registration and pending-call
+root/PATH/native-state retention/next-case denial plus settled cleanup qualify
+the extracted helper; legacy assertion-failure/late-deadline retention and domain
+moves remain open. No scenario is copied into another ordinary phase.
+
+Protocol foundation adds typed unknown decoders, exact global/local selection,
+receipt/terminal run-shard-PID joins, physical output-role disjointness and one
+sparse checked canonical merge. Root-backed Istanbul toJSON declaration reflects
+the installed public implementation. Production remains serialv2/processv1;
+v3/v2 primitives and synthetic admission do not activate parallel supervision.
+
+Final blind review finds and closes argv name-filter, bare5000, duplicate-option
+and foreign config/preload/JUnit-path gaps. Bailout remains denied. Environment
+hashing applies documented missing NODE_ENV/TZ defaults before canonical sorting;
+qualified serial children seal both Bun/Jest worker IDs1, distinct from global
+shard identity. Diagnose environment differences with key names only. A sibling
+claim control now coherently binds its captured loaded row; a separate sibling-
+load control keeps exact assignments and rejects the foreign load. Typed array
+copy changes must be written back before hashing the modified receipt.
+
+Root final protocol qualification58PASS/184assertions across3files,18.41s;
+additional targeted sibling-load1PASS/2assertions,722ms. The first new focused
+invocation used a wrong anchored name and selected0tests; excluded, corrected
+to the exact registered name before qualification. Earlier combined120PASS/
+1FAIL remains retained, not promoted to full success. Static433capturedTS,
+combined432files0errors, Source97files0errors and scoped lint PASS. Logs and
+inert official-reference diagnostics remain .tmp/coverage-iteration-0eb55bc/.
+
+Instruction baseline exposes missing environment/argv details. TESTING.md,
+project bun-test skill and sidecar now retain sealed invocation/environment,
+child-local clocks, targeted-negative controls and deployed-versus-foundation
+status. Fresh blind application correctly resolves all6scenarios; local17links/
+anchors and skill frontmatter PASS. No duplicate instruction owner or .vida
+skill mirror. Full current coverage still UNKNOWN; exhaustive frozen CC/CRAP,
+assertion-confirmed mutation and real isolated Runtime exercise remain pending.
+Task2 foundation is partial, Task3 supervisor/global entry budget pending, and
+Task4 package-resource removal/domain eligibility not admitted. Preserve all
+FAIL/UNKNOWN custody; publish the exact verified packet with ordinary hooks.

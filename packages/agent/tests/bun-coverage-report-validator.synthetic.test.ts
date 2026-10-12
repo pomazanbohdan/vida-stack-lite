@@ -80,6 +80,100 @@ async function withFixture(action: (fixture: SyntheticFixture) => Promise<void>)
   }
 }
 
+async function withVersionedFixture(action: (fixture: SyntheticFixture) => Promise<void>): Promise<void> {
+  const fixture = await createSyntheticCoverageFixture({ versionedShards: true });
+  let passed = false;
+  try {
+    await action(fixture);
+    passed = true;
+  } finally {
+    if (passed) fixture.remove();
+    else console.error(`Preserved failed versioned synthetic coverage fixture at ${fixture.root}`);
+  }
+}
+
+test('accepts an UNTRUSTED v3 run with two exact v2 shard receipts and one sparse checked merge', async () => {
+  await withVersionedFixture(async (fixture) => {
+    const result = await validateCoverageReport(fixture.reportPath, fixture.root, {
+      reportBytes: fixture.reportBytes(),
+      requireFullCoverage: false,
+    });
+    expect(result.manifest.schema).toBe('VidaBunCoverageRun/v3');
+    expect(result.processes).toBe(2);
+    expect(fixture.report.tests).toEqual(fixture.manifest.tests);
+    expect(JSON.stringify(result.canonical_source_maps)).toBe(JSON.stringify(fixture.report.source_maps));
+  });
+});
+
+test('rejects a v3 child that claims its sibling test while retaining both shard receipts', async () => {
+  await withVersionedFixture(async (fixture) => {
+    const selected = unknownArray(fixture.report.tests);
+    if (!selected || selected.length !== 2 || typeof selected[0] !== 'string' || typeof selected[1] !== 'string')
+      throw new Error('Versioned synthetic fixture needs exactly two selected tests.');
+    const bytes = fixture.rewriteChildAndReceiptHash((child) => {
+      const claimed = unknownArray(child.assigned_tests);
+      const digestRows = unknownArray(fixture.manifest.test_inputs);
+      const childTest = claimed?.[0];
+      const siblingTest = selected.find((test) => test !== childTest);
+      if (typeof childTest !== 'string' || !siblingTest || !digestRows)
+        throw new Error('Versioned synthetic sibling-claim fixture is malformed.');
+      child.assigned_tests = [siblingTest];
+      const loaded = unknownArray(child.loaded_inputs);
+      const loadedIndex = loaded?.findIndex((entry) => record(entry, 'loaded test input').path === childTest) ?? -1;
+      const siblingDigest = digestRows.find(
+        (entry) => record(entry, 'global selected test digest').path === siblingTest,
+      );
+      if (!loaded || loadedIndex < 0 || !siblingDigest)
+        throw new Error('Versioned synthetic sibling test digest is missing.');
+      loaded[loadedIndex] = { path: siblingTest, sha256: record(siblingDigest, 'sibling digest').sha256 };
+      child.loaded_inputs = loaded;
+    });
+    await rejects(fixture, bytes, /assigned test claim differs/u);
+  });
+});
+
+test('rejects a v3 child that loads its sibling test while retaining its assigned claim and sibling receipt', async () => {
+  await withVersionedFixture(async (fixture) => {
+    const selected = unknownArray(fixture.report.tests);
+    if (!selected || selected.length !== 2 || typeof selected[0] !== 'string' || typeof selected[1] !== 'string')
+      throw new Error('Versioned synthetic fixture needs exactly two selected tests.');
+    const bytes = fixture.rewriteChildAndReceiptHash((child) => {
+      const claimed = unknownArray(child.assigned_tests);
+      const loaded = unknownArray(child.loaded_inputs);
+      const digestRows = unknownArray(fixture.manifest.test_inputs);
+      const assignedTest = claimed?.[0];
+      const siblingTest = selected.find((test) => test !== assignedTest);
+      const siblingDigest = digestRows?.find(
+        (entry) => record(entry, 'global selected test digest').path === siblingTest,
+      );
+      if (typeof assignedTest !== 'string' || !siblingTest || !loaded || !siblingDigest)
+        throw new Error('Versioned synthetic sibling-load fixture is malformed.');
+      loaded.push({ path: siblingTest, sha256: record(siblingDigest, 'sibling digest').sha256 });
+      child.loaded_inputs = loaded;
+    });
+    await rejects(fixture, bytes, /Coverage shard loaded a sibling test outside its assignment/u);
+  });
+});
+
+function unknownArray(value: unknown): unknown[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const entries: unknown[] = [];
+  for (let index = 0; index < value.length; index++) {
+    const entry: unknown = value[index];
+    entries.push(entry);
+  }
+  return entries;
+}
+
+test('rejects a v3 child with a foreign source inventory while retaining its valid sibling receipt', async () => {
+  await withVersionedFixture(async (fixture) => {
+    const bytes = fixture.rewriteChildAndReceiptHash((child) => {
+      child.sources = [];
+    });
+    await rejects(fixture, bytes, /source inventory differs/u);
+  });
+});
+
 function manifestBytes(fixture: SyntheticFixture): Uint8Array {
   const bytes = Buffer.from(JSON.stringify(fixture.manifest));
   writeFileSync(path.join(fixture.root, String(fixture.report.manifest_path)), bytes);
