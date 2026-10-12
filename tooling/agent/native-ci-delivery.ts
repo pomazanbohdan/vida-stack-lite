@@ -11,8 +11,9 @@ import {
   releaseDirectory,
   releaseSourceBinding,
 } from '../../packages/agent/bin/local-release-artifacts.ts';
-import { runCommand, parsePackOutput } from './release-local.ts';
-import { checkManifest, findNpmCli, readPin } from '../../packages/agent/bin/bun.ts';
+import { runCommand } from './release-local.ts';
+import { checkManifest, readPin } from '../../packages/agent/bin/bun.ts';
+import { readBunPackMetadata } from '../../packages/agent/tooling/bun-pack-metadata.ts';
 import {
   ciArchiveLimit,
   ciTransportLimit,
@@ -168,7 +169,19 @@ function isNativeCIRequest(value: unknown): value is NativeCIRequest {
   );
 }
 function isPackedFile(value: unknown): value is PackedFile {
-  return isRecord(value) && typeof value.path === 'string' && typeof value.size === 'number';
+  return (
+    isRecord(value) &&
+    typeof value.path === 'string' &&
+    value.path.length > 0 &&
+    !value.path.includes('\\') &&
+    !value.path.includes('\0') &&
+    !path.posix.isAbsolute(value.path) &&
+    path.posix.normalize(value.path) === value.path &&
+    value.path.split('/').every((part) => part !== '' && part !== '.' && part !== '..') &&
+    typeof value.size === 'number' &&
+    Number.isSafeInteger(value.size) &&
+    value.size >= 0
+  );
 }
 function isPackMetadata(value: unknown): value is PackMetadata {
   return (
@@ -177,7 +190,8 @@ function isPackMetadata(value: unknown): value is PackMetadata {
     typeof value.version === 'string' &&
     typeof value.filename === 'string' &&
     Array.isArray(value.files) &&
-    value.files.every(isPackedFile)
+    value.files.every(isPackedFile) &&
+    new Set(value.files.map((file: PackedFile) => file.path)).size === value.files.length
   );
 }
 function isNativeAsset(value: unknown): value is NativeAsset {
@@ -261,11 +275,6 @@ function readPackageManifest(root: string): { version: string; engines: { bun: s
     'CI package manifest is malformed',
   );
   return { version: value.version, engines: { bun: value.engines.bun, node: value.engines.node } };
-}
-function readPackMetadata(text: string): PackMetadata[] {
-  const value: unknown = parsePackOutput(text);
-  requireCI(Array.isArray(value) && value.every(isPackMetadata), 'CI pack metadata is malformed');
-  return value;
 }
 function readNativeManifest(bytes: Buffer): NativeManifest {
   const value = parseUnknownJSON(bytes.toString('utf8'));
@@ -691,10 +700,7 @@ function runner(ctx: NativeCIContext, phase: string): NativeCICommandRunner {
   return createNativeCICommandRunner(ctx, phase);
 }
 async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner): Promise<void> {
-  const node = realpathSync(requiredEnv(process.env, 'VIDA_CI_NODE_EXECUTABLE'));
-  requireCI((await invoke(node, ['--version'])).trim() === 'v' + ctx.manifest.engines.node, 'CI Node pin differs');
-  const npm = findNpmCli(node);
-  requireCI((await invoke(node, [npm, '--version'])).trim() === '11.17.0', 'CI npm pin differs');
+  requireCI((await invoke(process.execPath, ['--version'])).trim() === ctx.manifest.engines.bun, 'CI Bun pin differs');
   try {
     await invoke(process.execPath, ['run', 'ci:pinned'], { cwd: ctx.packageRoot });
   } catch (error) {
@@ -702,13 +708,18 @@ async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner):
     throw error;
   }
   releaseDirectory(ctx.root, 'output');
-  const packed = readPackMetadata(
-    await invoke(
-      node,
-      [npm, 'pack', '--ignore-scripts', '--json', '--pack-destination', path.join(ctx.root, 'output')],
-      { cwd: ctx.packageRoot },
-    ),
+  const filename = 'vida-agent-' + ctx.request.version + '.tgz';
+  await invoke(
+    process.execPath,
+    ['pm', 'pack', '--ignore-scripts', '--filename', path.join(ctx.root, 'output', filename)],
+    { cwd: ctx.packageRoot },
   );
+  const packed = await readBunPackMetadata({
+    archive: path.join(ctx.root, 'output', filename),
+    name: 'vida-agent',
+    version: ctx.request.version,
+    filename,
+  });
   requireCI(packed.length === 1, 'CI pack metadata cardinality differs');
   const packedEntry = packed[0];
   requireCI(

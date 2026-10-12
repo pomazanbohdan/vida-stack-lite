@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { cliCommandContracts } from './cli-command-contracts.ts';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -129,7 +129,11 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         root: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
         cwd: process.cwd(),
       });
-    } else process.stdout.write(`${JSON.stringify(await inspectScope(process.argv.slice(2)))}\n`);
+    } else {
+      const { resolvePinnedBun } = await import('./bun.ts');
+      resolvePinnedBun({ root: path.resolve(import.meta.dirname, '..'), executable: process.execPath });
+      process.stdout.write(`${JSON.stringify(await inspectScope(process.argv.slice(2)))}\n`);
+    }
   } catch (error) {
     process.stderr.write(
       `${JSON.stringify({ schema: 'VidaAgentCommandResult/v1', status: 'blocked', code: 'GAP-VIDA-SCOPE-001', message: error instanceof Error ? error.message : String(error) })}\n`,

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { developmentControllerContract } from './cli-command-contracts.ts';
 import { cliCommandEntrypoint } from './cli-metadata.ts';
 import {
@@ -712,11 +712,13 @@ function validateControllerOptions(modeContract: ModeContract, options: Record<s
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   if (typeof Bun === 'undefined')
     process.exitCode = runPinnedBun([fileURLToPath(import.meta.url), ...process.argv.slice(2)]);
-  else
+  else {
+    resolvePinnedBun({ executable: process.execPath });
     main(process.argv.slice(2)).catch((error: unknown) => {
       process.stderr.write(
         record({ status: 'blocked', code: 'GAP-DEVELOPMENT-CONTROLLER-001', message: errorMessage(error) }),
       );
       process.exitCode = 1;
     });
+  }
 }

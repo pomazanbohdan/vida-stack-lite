@@ -277,6 +277,7 @@ interface InstallOptions {
   runBun?: typeof runPinnedBun;
   bunExecutable?: string;
   bunTimeoutMs?: number;
+  env?: NodeJS.ProcessEnv;
 }
 
 /** @param {readonly string[]} args @param {InstallOptions} [options] */
@@ -315,6 +316,70 @@ export function install(args: readonly string[], options: InstallOptions = {}): 
     return {
       status: 'embedded_runtime_valid',
       bun_pin: readPin(root),
+      initialization: init.length ? 'delegated_successfully' : 'not_requested',
+      runtime_activation: 'not_performed',
+    };
+  }
+  if (options.node === undefined && options.nodeVersion === undefined) {
+    const pin = readPin(root);
+    checkManifest(root, pin);
+    const bunVersion = process.versions.bun;
+    if (bunVersion !== pin) {
+      throw new Error(`Bun version must equal package.json and .bun-version: ${pin}`);
+    }
+    const executable = options.bunExecutable ?? process.execPath;
+    if (!path.isAbsolute(executable)) throw new Error('Bun executable must be an absolute path.');
+    const unchanged = () => {
+      if (snapshot(root) !== before) throw new Error('Installer inputs changed; stop and reconcile before retrying.');
+    };
+    unchanged();
+    if (check)
+      return {
+        status: 'prerequisites_valid',
+        bun: bunVersion,
+        bun_executable: process.execPath,
+        bun_pin: pin,
+        runtime: 'bun',
+        bun_resolution: 'not_checked',
+        dependencies: 'not_checked',
+        initialization: 'not_requested',
+      };
+    const run = options.runBun ?? runPinnedBun;
+    const bunOptions: Parameters<typeof runPinnedBun>[1] = {
+      root,
+      cwd: root,
+      executable,
+      timeoutMs: options.bunTimeoutMs ?? 300_000,
+      ...(options.spawn ? { spawn: options.spawn } : {}),
+      ...(options.env ? { env: options.env } : {}),
+    };
+    const resolutionProgram =
+      "import { statSync } from 'node:fs'; import { fileURLToPath } from 'node:url'; for (const dependency of JSON.parse(process.argv[1])) { if (!statSync(fileURLToPath(import.meta.resolve(dependency))).isFile()) throw new Error('Dependency entrypoint must be a file.'); }";
+    const dependencyCheck = run(
+      [
+        '--no-env-file',
+        '--no-install',
+        `--config=${path.join(root, 'bunfig.toml')}`,
+        '--eval',
+        resolutionProgram,
+        JSON.stringify(Object.keys(manifest.dependencies ?? {})),
+      ],
+      bunOptions,
+    );
+    requireSuccess({ status: dependencyCheck }, 'Bun dependency entrypoint check');
+    unchanged();
+    if (init.length) {
+      let status: number;
+      try {
+        status = run([path.join(root, 'bin/init.ts'), ...init], bunOptions);
+      } finally {
+        unchanged();
+      }
+      requireSuccess({ status }, 'Project initialization');
+    }
+    return {
+      status: 'bun_dependencies_valid',
+      bun_pin: pin,
       initialization: init.length ? 'delegated_successfully' : 'not_requested',
       runtime_activation: 'not_performed',
     };

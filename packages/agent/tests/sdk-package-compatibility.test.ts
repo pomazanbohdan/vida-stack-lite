@@ -60,7 +60,7 @@ test('SDK compatibility manifest accepts npm whole-major x-ranges', () => {
   }
 });
 
-test('SDK compatibility manifest rejects malformed npm engine ranges before package checks', () => {
+test('SDK compatibility manifest rejects malformed consumer engine metadata before package checks', () => {
   const temporary = mkdtempSync(path.join(tmpdir(), 'vida-sdk-engine-range-'));
   try {
     const versions = sourceVersions();
@@ -68,25 +68,19 @@ test('SDK compatibility manifest rejects malformed npm engine ranges before pack
       writeManifest(temporary, versions, specification);
       expect(() => sdkCompatibilityManifest({ root: temporary })).toThrow(/engines\.npm/);
     }
+    writeManifest(temporary, { ...versions, node: '26.x' }, versions.npm);
+    expect(() => sdkCompatibilityManifest({ root: temporary })).toThrow(/engines\.node/);
   } finally {
     rmSync(temporary, { recursive: true, force: true });
   }
 });
 
-test('SDK verification checks a mismatched npm major before package artifacts', async () => {
+test('SDK verification treats Node and npm engine declarations as consumer metadata', async () => {
   const versions = sourceVersions();
-  const mismatch = `${Number(versions.npm.slice(0, versions.npm.indexOf('.'))) + 1}.x`;
-  const root = packageFixture(mismatch, versions.node);
-  try {
-    await expectRejection(verifySdkPackage({ root }), new RegExp(`requires npm matching ${mismatch}`));
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
-});
-
-test('SDK verification accepts the current npm major before reporting missing artifacts', async () => {
-  const versions = sourceVersions();
-  const root = packageFixture(versions.npm, versions.node);
+  const differentNodeVersion = versions.node.split('.');
+  differentNodeVersion[2] = String(Number(differentNodeVersion[2]) + 1);
+  const npmMajor = Number(versions.npm.slice(0, versions.npm.indexOf('.')));
+  const root = packageFixture(`${npmMajor + 1}.x`, differentNodeVersion.join('.'));
   try {
     await expectRejection(verifySdkPackage({ root }), /public exports are incomplete/);
   } finally {
@@ -94,15 +88,15 @@ test('SDK verification accepts the current npm major before reporting missing ar
   }
 });
 
-test('SDK verification checks pinned Node after matching npm and before package artifacts', async () => {
+test('SDK verification checks the exact Bun pin before package artifacts', async () => {
   const versions = sourceVersions();
-  const nodeParts = versions.node.split('.');
-  const patch = Number(nodeParts[2]);
-  nodeParts[2] = String(patch + 1);
-  const mismatchedNode = nodeParts.join('.');
-  const root = packageFixture(versions.npm, mismatchedNode);
+  const root = packageFixture(versions.npm, versions.node);
   try {
-    await expectRejection(verifySdkPackage({ root }), /requires pinned Node/);
+    writeFileSync(
+      path.join(root, 'package.json'),
+      readFileSync(path.join(root, 'package.json'), 'utf8').replace(`bun@${versions.bun}`, 'bun@0.0.0'),
+    );
+    await expectRejection(verifySdkPackage({ root }), /Bun manifest mirrors differ/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

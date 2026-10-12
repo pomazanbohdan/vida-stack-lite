@@ -56,6 +56,14 @@ function correspondence. Similar syntax alone is insufficient reason to merge.
 
 ## Runtime and distribution
 
+Repository development, verification, build and packaging commands use the
+package-selected Bun. Do not add external `node`, `npm` or `npx` execution to
+these commands or call retained Node-owned compatibility adapters from them.
+Compatible `node:` imports and SDK consumer engine declarations remain valid.
+This is a repository tooling rule, not a deployment-environment requirement:
+do not require Node to be absent, uninstall it on consumer hosts or prohibit
+other applications from using it.
+
 - Source package: `packages/agent`, npm name `vida-agent`.
 - Primary consumer installation is one native executable per supported OS/CPU,
   embedding the exact package-selected Bun. Direct installation and first run require no

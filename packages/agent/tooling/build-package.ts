@@ -3,10 +3,10 @@ import { lstatSync, mkdirSync, mkdtempSync, symlinkSync, writeFileSync } from 'n
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { fileURLToPath } from 'node:url';
 import { expectedJavascriptFiles, isInventorySourceEntry } from './maintained-source-inventory.ts';
 import { captureRuntimeInputClosure, readQualityInputs, sha256 } from './bun-coverage-evidence.ts';
-import { checkManifest, readPin, requireTerminalCommand } from '../bin/bun.ts';
+import { checkManifest, pinnedEnvironment, readPin, requireTerminalCommand } from '../bin/bun.ts';
 import { resourceDirectory } from '../bin/standalone-resources.ts';
 import { ownedDirectoryIdentity, removeOwnedDirectoryOrThrow } from './owned-staging.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
@@ -53,15 +53,17 @@ async function formCapturedPackage(candidateRoot: string) {
     typeof packageValue.engines.node !== 'string'
   )
     throw new Error('candidate package manifest engines.node must be a string');
+  const bunVersion = Bun.version;
+  if (bunVersion !== readPin(candidateRoot))
+    throw new Error('SDK declaration emission requires the package-selected Bun.');
+  checkManifest(candidateRoot, bunVersion);
+  const typescriptCli = path.join(candidateRoot, 'node_modules/typescript/bin/tsc');
   const declarationResult = spawnSync(
-    'node',
+    process.execPath,
     [
-      '--input-type=module',
-      '-e',
-      `if(process.version!==${JSON.stringify('v' + packageValue.engines.node)})throw new Error('SDK declaration emission requires pinned Node');
-   process.argv=[process.argv[0],${JSON.stringify(path.join(candidateRoot, 'node_modules/typescript/bin/tsc'))},...process.argv.slice(1)];
-   await import(${JSON.stringify(pathToFileURL(path.join(candidateRoot, 'node_modules/typescript/bin/tsc')).href)});`,
-      '--',
+      'run',
+      '--bun',
+      typescriptCli,
       '--ignoreConfig',
       '--target',
       'ES2024',
@@ -93,7 +95,12 @@ async function formCapturedPackage(candidateRoot: string) {
       'src/trusted-host.ts',
       'src/runtime-kernel.ts',
     ],
-    { cwd: candidateRoot, encoding: 'utf8', windowsHide: true },
+    {
+      cwd: candidateRoot,
+      env: pinnedEnvironment(process.execPath, process.env, candidateRoot),
+      encoding: 'utf8',
+      windowsHide: true,
+    },
   );
   requireTerminalCommand(declarationResult, 'captured SDK declaration emission');
   if (declarationResult.status !== 0)
@@ -249,7 +256,9 @@ async function formCapturedPackage(candidateRoot: string) {
   return {
     schema: 'CandidatePackageBuild/v1',
     version: packageValue.version,
-    node_version: packageValue.engines.node,
+    declared_node_engine: packageValue.engines.node,
+    declaration_runtime: 'bun',
+    bun_version: bunVersion,
     production_entrypoints: ['dist/src/index.js', 'dist/src/trusted-host.js'],
     test_issuers_shipped: false,
     schemas: schemaNames.length,

@@ -15,7 +15,7 @@ export function fixtureGit(root: string, args: readonly string[]): string {
 
 export function formatPrecommitFixture(root: string, files: readonly string[]): void {
   const pkg = path.join(root, 'packages/agent');
-  const result = spawnSync('node', [
+  const result = spawnSync(process.execPath, [
     path.join(packageRoot, 'node_modules/oxfmt/bin/oxfmt'),
     '--config',
     path.join(pkg, '.oxfmtrc.json'),

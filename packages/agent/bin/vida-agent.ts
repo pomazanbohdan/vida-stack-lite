@@ -1,9 +1,9 @@
-#!/usr/bin/env node
+#!/usr/bin/env bun
 import { readFileSync, lstatSync, realpathSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { runPinnedBun, standaloneRuntime } from './bun.ts';
+import { resolvePinnedBun, runPinnedBun, standaloneRuntime } from './bun.ts';
 import { commands, cliMetadataResult, cliErrorResult, cliCommandEntrypoint, type CliManifest } from './cli-metadata.ts';
 import { cliCommandContracts } from './cli-command-contracts.ts';
 
@@ -37,6 +37,7 @@ const output = (value: unknown): void => {
 };
 
 try {
+  if (!embedded) resolvePinnedBun({ root: packageRoot, executable: process.execPath });
   const metadata = cliMetadataResult([command, ...args], manifest);
   if (metadata) output(metadata);
   else if (command === 'instructions') {

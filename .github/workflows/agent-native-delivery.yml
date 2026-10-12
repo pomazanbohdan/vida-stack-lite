@@ -46,11 +46,6 @@ jobs:
           persist-credentials: false
           submodules: false
           lfs: false
-      - name: node
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
-        with:
-          node-version-file: packages/agent/package.json
-          package-manager-cache: false
       - name: bun
         id: bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
@@ -103,10 +98,7 @@ jobs:
             [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($target)) | Out-Null
             [IO.File]::Copy($source, $target, $false)
           }
-          $node = & node -p 'process.execPath'
-          if ($LASTEXITCODE -ne 0 -or -not [IO.Path]::IsPathFullyQualified($node)) { throw 'Pinned Node path unavailable' }
           "VIDA_CI_SOURCE_ROOT=$mirror" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
-          "VIDA_CI_NODE_EXECUTABLE=$node" | Out-File -LiteralPath $env:GITHUB_ENV -Encoding utf8 -Append
       - id: save-bun-dependency-cache
         name: save-bun-dependency-cache
         if: ${{ steps.bun-dependency-cache.outputs.cache-hit != 'true' }}
@@ -126,12 +118,14 @@ jobs:
           REF: ${{ github.ref }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:CACHE_KEY -cnotmatch '^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-1\.4\.2-[a-f0-9]{64}$') { throw 'Exact dependency cache key is missing or invalid' }
+          $pin = (Get-Content -LiteralPath 'packages/agent/.bun-version' -Raw).Trim()
+          if ($pin -cnotmatch '^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$') { throw 'Selected Bun pin is invalid' }
+          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-' + [regex]::Escape($pin) + '-[a-f0-9]{64}$'
+          if ($env:CACHE_KEY -cnotmatch $keyPattern) { throw 'Exact dependency cache key is missing or invalid' }
           $cache = Join-Path $env:RUNNER_TEMP 'vida-bun-install-cache'
           if (-not (Test-Path -LiteralPath $cache -PathType Container)) { throw 'Bun dependency cache directory is absent' }
           $entry = Get-ChildItem -LiteralPath $cache -File -Recurse -Force | Select-Object -First 1
           if (-not $entry) { throw 'Bun dependency cache is empty after frozen install' }
-          $keyPattern = '^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-1\.4\.2-[a-f0-9]{64}$'
           $keyNamespace = $env:CACHE_KEY.Substring(0, $env:CACHE_KEY.Length - 64)
           if ($env:CACHE_MATCHED_KEY -and ($env:CACHE_MATCHED_KEY -cnotmatch $keyPattern -or -not $env:CACHE_MATCHED_KEY.StartsWith($keyNamespace, [StringComparison]::Ordinal))) { throw 'Restore matched key is outside the selected Bun/platform namespace' }
           if ($env:CACHE_HIT -ceq 'true' -and $env:CACHE_MATCHED_KEY -ceq $env:CACHE_KEY -and $env:CACHE_SAVE_OUTCOME -ceq 'skipped') {

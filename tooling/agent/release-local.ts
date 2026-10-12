@@ -41,7 +41,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { homedir } from 'node:os';
 import { sdkCompatibilityManifest } from '../../packages/agent/tooling/pack-sdk.ts';
-import { checkManifest, findNpmCli, readPin } from '../../packages/agent/bin/bun.ts';
+import { checkManifest, readPin } from '../../packages/agent/bin/bun.ts';
 
 import {
   readNativeRetargetCandidate,
@@ -721,7 +721,7 @@ async function verifyPackAfterimage(
   const archive = selectedTarball(metadata, path.join(root, '.tmp/releases', operation), state.version);
   const archiveDigest = sha(readFileSync(archive));
   if (archiveDigest !== archiveSha256) throw new Error('Same-operation package afterimage differs.');
-  await verifyPackedSources(root, metadata, archive, findNpmCli(), sdkManifest(root));
+  await verifyPackedSources(root, metadata, archive, undefined, sdkManifest(root));
   return {
     phase: state.status === 'awaiting_assurance' ? 'terminal' : 'prepared',
     evidence_digest: releaseEvidenceDigest(state, archiveDigest),
@@ -751,7 +751,7 @@ async function verifyInterruptedPack(
   const metadata = parsePackOutput(prior.stdout);
   const archive = selectedTarball(metadata, folder, state.version);
   const archiveDigest = sha(readFileSync(archive));
-  await verifyPackedSources(root, metadata, archive, findNpmCli(), sdkManifest(root));
+  await verifyPackedSources(root, metadata, archive, undefined, sdkManifest(root));
   const logDigest = sha(readFileSync(log));
   return {
     phase: 'prepared',
@@ -834,7 +834,7 @@ async function verifyReleaseWorkerProof(
   const expectedManifest = packMetadata[0].files.some((file) => file.path === 'tooling/pack-sdk.ts')
     ? sdkManifest(root)
     : undefined;
-  await verifyPackedSources(root, packMetadata, archive, findNpmCli(), expectedManifest);
+  await verifyPackedSources(root, packMetadata, archive, undefined, expectedManifest);
   if (current.install_started === true) {
     const installed = verifyInstalledReleaseReceipt(root, current);
     return {
@@ -3494,7 +3494,6 @@ export async function executeRelease({
     throw new Error('Release distribution invalid.');
   if (packOnly && distribution !== 'npm')
     throw Error('Native formation belongs to the CI producer; import its exact candidate through supported staging.');
-  if (distribution === 'npm') npmCli ??= findNpmCli();
   const folder = directory(root, `.tmp/releases/${operation}`);
   const stateFile = journalFile(root, operation);
   let state = releaseState(stateFile);
@@ -3537,7 +3536,7 @@ export async function executeRelease({
       tarball = selectedTarball(packedMetadata, folder, value.version);
       const archiveDigest = requireString(state.tarball_sha256, 'Pending tarball digest is missing.');
       if (sha(readFileSync(tarball)) !== archiveDigest) throw new Error('Pending tarball changed.');
-      if (changed) await verifyPackedSources(root, packedMetadata, tarball, npmCli, expectedManifest);
+      if (changed) await verifyPackedSources(root, packedMetadata, tarball, undefined, expectedManifest);
     } else {
       if (!packOnly) throw new Error('Candidate must be packed after tests and before independent assurance.');
       let packArgs: string[];
@@ -3568,7 +3567,7 @@ export async function executeRelease({
       const metadata = parsePackOutput(output);
       packedMetadata = metadata;
       tarball = selectedTarball(metadata, folder, value.version);
-      if (existsSync(priorLog)) await verifyPackedSources(root, metadata, tarball, npmCli, expectedManifest);
+      if (existsSync(priorLog)) await verifyPackedSources(root, metadata, tarball, undefined, expectedManifest);
       const current = await qualify({ root, operation, version: value.version, ci });
       assertQualifiedSourceBinding(current);
       if (current.source_binding !== qualification.source_binding)
@@ -3589,7 +3588,7 @@ export async function executeRelease({
         ? await Promise.resolve(sdkManifest(root))
         : undefined);
     if (installedManifestBytes)
-      await verifyPackedSources(root, releaseMetadata, releaseTarball, npmCli, installedManifestBytes);
+      await verifyPackedSources(root, releaseMetadata, releaseTarball, undefined, installedManifestBytes);
     if (packOnly) {
       update('awaiting_assurance');
       return state;

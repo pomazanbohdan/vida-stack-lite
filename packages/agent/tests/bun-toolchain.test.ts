@@ -169,6 +169,7 @@ test('npm-resolved version mismatch, malformed probe and install failure fail cl
         runPinnedBun(['test'], {
           root,
           env: { PATH: path.join(root, 'no-PATH-bun') },
+          node: '/fixture-node',
           npmCli: '/npm-cli.js',
           spawn: () => {
             assert.ok(index < responses.length, 'must not run command after failure');
@@ -208,6 +209,36 @@ test('matching PATH Bun avoids npm resolution and preserves arguments and status
   assert.equal(calls[1]!.command, executable);
   assert.deepEqual(calls[1]!.argv, args);
   assert.ok(calls.every((call) => !call.options.shell));
+});
+
+test('default Bun host qualifies its actual executable before PATH and rejects a wrong pin', () => {
+  const { root, pin } = fixture();
+  assert.equal(process.versions.bun, pin);
+  const calls: LauncherCall[] = [];
+  assert.equal(
+    runPinnedBun(['--version'], {
+      root,
+      env: { PATH: '' },
+    }),
+    0,
+  );
+
+  assert.throws(
+    () =>
+      runPinnedBun(['run', 'tool'], {
+        root,
+        env: { PATH: '' },
+        spawn(command, argv, options) {
+          calls.push({ command, argv, options });
+          return success('0.0.0');
+        },
+      }),
+    /requires/,
+  );
+  assert.deepEqual(
+    calls.map(({ command, argv }) => [command, argv]),
+    [[process.execPath, ['--version']]],
+  );
 });
 
 test('wrong-version PATH Bun falls back to npm exact pin and npm mismatch remains fatal', () => {
@@ -657,8 +688,8 @@ test('every public developer script enters the pinned bootstrap without recursio
     assert.equal(
       manifest.scripts[task],
       task === 'test'
-        ? 'node bin/bun.ts run test:pinned && node bin/bun.ts run test:repair:pinned && node bin/bun.ts run test:host-state:pinned && node bin/bun.ts run test:run-entrypoint:pinned'
-        : `node bin/bun.ts run ${task}:pinned`,
+        ? 'bun bin/bun.ts run test:pinned && bun bin/bun.ts run test:repair:pinned && bun bin/bun.ts run test:host-state:pinned && bun bin/bun.ts run test:run-entrypoint:pinned'
+        : `bun bin/bun.ts run ${task}:pinned`,
     );
     assert.equal(script.includes(`run ${task} `), false);
     for (const [, dependency] of script.matchAll(/\bbun run ([\w:-]+)/g)) {

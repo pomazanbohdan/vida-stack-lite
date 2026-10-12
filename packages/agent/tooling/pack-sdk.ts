@@ -18,7 +18,8 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkManifest, findNpmCli, pinnedEnvironment, readPin, resolvePinnedBun } from '../bin/bun.ts';
+import { checkManifest, pinnedEnvironment, readPin, resolvePinnedBun } from '../bin/bun.ts';
+import { readBunPackMetadata, type BunPackEntry } from './bun-pack-metadata.ts';
 import { resourceDirectory } from '../bin/standalone-resources.ts';
 import { assertRuntimePackageExports, runtimeExecutableInventory } from './maintained-source-inventory.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
@@ -43,14 +44,6 @@ type PackageManifest = Record<string, unknown> & {
   dependencies: Record<string, string>;
 };
 
-type NpmPackFile = { path: string };
-type NpmPackEntry = {
-  name: string;
-  version: string;
-  filename: string;
-  integrity: string;
-  files: NpmPackFile[];
-};
 type TarModule = typeof import('tar');
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -130,7 +123,7 @@ async function verifySdkArchive(input: {
   archive: string;
   root: string;
   manifestBytes: Buffer;
-  entry: NpmPackEntry;
+  entry: BunPackEntry;
   tar: TarModule;
 }): Promise<Set<string>> {
   const { archive, root, manifestBytes, entry, tar } = input;
@@ -175,9 +168,9 @@ function assertSameExistingArchive(archive: string, identity: OwnedDirectoryIden
   );
 }
 
-function firstNpmPackEntry(entries: NpmPackEntry[]): NpmPackEntry {
+function firstBunPackEntry(entries: BunPackEntry[]): BunPackEntry {
   const entry = entries[0];
-  if (entry === undefined) throw new Error('npm pack returned no metadata entry');
+  if (entry === undefined) throw new Error('Bun pack returned no metadata entry');
   return entry;
 }
 
@@ -188,29 +181,6 @@ function sdkPackArguments(args: string[]): { root: string; destination: string }
   const destination = args[4];
   if (root === undefined || destination === undefined) throw new Error('SDK pack paths are missing');
   return { root, destination };
-}
-
-function npmPackEntries(value: unknown): NpmPackEntry[] {
-  if (!Array.isArray(value)) throw new Error('npm pack metadata must be an array');
-  const result: NpmPackEntry[] = [];
-  for (const entry of value) {
-    const metadata = record(entry, 'npm pack metadata entry');
-    const files = metadata.files;
-    if (!Array.isArray(files)) throw new Error('npm pack metadata files must be an array');
-    const paths: NpmPackFile[] = [];
-    for (const file of files) {
-      const item = record(file, 'npm pack metadata file');
-      paths.push({ path: stringProperty(item, 'path', 'npm pack metadata file') });
-    }
-    result.push({
-      name: stringProperty(metadata, 'name', 'npm pack metadata entry'),
-      version: stringProperty(metadata, 'version', 'npm pack metadata entry'),
-      filename: stringProperty(metadata, 'filename', 'npm pack metadata entry'),
-      integrity: stringProperty(metadata, 'integrity', 'npm pack metadata entry'),
-      files: paths,
-    });
-  }
-  return result;
 }
 
 function absoluteRoot(root: string): string {
@@ -235,15 +205,12 @@ function npmEngineMajor(specification: string): number {
   return major;
 }
 
-function npmVersionMajor(version: string): number {
+function nodeEngineVersion(specification: string): void {
   assert.match(
-    version,
+    specification,
     /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/,
-    'installed npm version must be a stable semantic version',
+    'package manifest.engines.node must be a stable semantic version',
   );
-  const major = Number(version.slice(0, version.indexOf('.')));
-  assert.ok(Number.isSafeInteger(major), 'installed npm version major must be a safe integer');
-  return major;
 }
 
 export function sdkCompatibilityManifest(input: { root: string }): { value: PackageManifest; bytes: Buffer } {
@@ -252,13 +219,16 @@ export function sdkCompatibilityManifest(input: { root: string }): { value: Pack
   const value = manifestAt(root);
   assert.equal(value.name, 'vida-agent');
   npmEngineMajor(value.engines.npm);
+  nodeEngineVersion(value.engines.node);
   value.files = value.files.filter((entry) => !/standalone|release-notes|release-publish/.test(entry));
   for (const name of Object.keys(value.scripts))
     if (/standalone|^test:resources/.test(name)) delete value.scripts[name];
   delete value.bin;
-  value.files = [...new Set([...value.files, 'tooling/pack-sdk.ts', 'tooling/owned-staging.ts'])];
+  value.files = [
+    ...new Set([...value.files, 'tooling/pack-sdk.ts', 'tooling/owned-staging.ts', 'tooling/bun-pack-metadata.ts']),
+  ];
   value.files.push('!tests/standalone.test.ts');
-  value.scripts.prepack = 'node bin/bun.ts tooling/pack-sdk.ts --verify';
+  value.scripts.prepack = 'bun bin/bun.ts tooling/pack-sdk.ts --verify';
   value.scripts['prepack:pinned'] = 'bun tooling/pack-sdk.ts --verify';
   return { value, bytes: Buffer.from(JSON.stringify(value, null, 2) + '\n') };
 }
@@ -282,10 +252,9 @@ function run(command: string, args: string[], root: string, env: NodeJS.ProcessE
   return result.stdout;
 }
 
-function tools(root: string): { node: string; bun: string; env: NodeJS.ProcessEnv } {
-  const node = process.versions.bun ? run('node', ['-p', 'process.execPath'], root).trim() : process.execPath;
-  const bun = resolvePinnedBun({ root, node });
-  return { node, bun, env: pinnedEnvironment(bun, process.env, root) };
+function tools(root: string): { bun: string; env: NodeJS.ProcessEnv } {
+  const bun = resolvePinnedBun({ root });
+  return { bun, env: pinnedEnvironment(bun, process.env, root) };
 }
 
 function regular(root: string, relative: string): Buffer {
@@ -308,17 +277,7 @@ export async function verifySdkPackage(input: { root: string }): Promise<void> {
   const { root } = input;
   absoluteRoot(root);
   const manifest = sdkCompatibilityManifest({ root }).value;
-  const { node, bun, env } = tools(root);
-  assert.equal(
-    npmVersionMajor(run(node, [findNpmCli(node), '--version'], root, env).trim()),
-    npmEngineMajor(manifest.engines.npm),
-    `SDK packaging requires npm matching ${manifest.engines.npm}`,
-  );
-  assert.equal(
-    run(node, ['--version'], root, env).trim(),
-    'v' + manifest.engines.node,
-    'SDK packaging requires pinned Node',
-  );
+  const { bun, env } = tools(root);
   const pin = readPin(root);
   checkManifest(root, pin);
   assertRuntimePackageExports(root);
@@ -391,9 +350,10 @@ export function packSdkCompatibility(input: { root: string; destination: string 
 async function packSdkCompatibilityOperation(input: {
   root: string;
   destination: string;
-}): Promise<{ archive: string; metadata: NpmPackEntry[]; manifest: { value: PackageManifest; bytes: Buffer } }> {
+}): Promise<{ archive: string; metadata: BunPackEntry[]; manifest: { value: PackageManifest; bytes: Buffer } }> {
   const { root, destination } = input;
   absoluteRoot(root);
+  const { bun: pinnedBun, env: rootEnv } = tools(root);
   assert.ok(
     typeof destination === 'string' && path.isAbsolute(destination),
     'SDK archive destination must be absolute',
@@ -439,20 +399,23 @@ async function packSdkCompatibilityOperation(input: {
       path.join(stage, 'node_modules'),
       process.platform === 'win32' ? 'junction' : 'dir',
     );
-    const { node, env } = tools(stage);
-    const npm = findNpmCli(node);
-    assert.equal(
-      run(node, [npm, 'config', 'get', 'ignore-scripts'], stage, env).trim(),
-      'false',
-      'SDK npm lifecycle scripts must be enabled',
-    );
+    const env = pinnedEnvironment(pinnedBun, rootEnv, stage);
+    if (process.platform !== 'win32' && path.basename(pinnedBun) !== 'bun') {
+      const launcherDirectory = path.join(temporary, 'bun-bin');
+      mkdirSync(launcherDirectory);
+      symlinkSync(pinnedBun, path.join(launcherDirectory, 'bun'));
+      env.PATH = `${launcherDirectory}${path.delimiter}${env.PATH ?? ''}`;
+    }
     const expected = path.join(archiveDirectory, finalName);
-    const metadataValue: unknown = JSON.parse(
-      run(node, [npm, 'pack', '--json', '--ignore-scripts=false', '--pack-destination', archiveDirectory], stage, env),
-    );
-    const metadata = npmPackEntries(metadataValue);
+    run(pinnedBun, ['pm', 'pack', '--filename', expected], stage, env);
+    const metadata = await readBunPackMetadata({
+      archive: expected,
+      name: manifest.value.name,
+      version: manifest.value.version,
+      filename: finalName,
+    });
     assert.equal(metadata.length, 1);
-    const entry = firstNpmPackEntry(metadata);
+    const entry = firstBunPackEntry(metadata);
     assert.equal(entry.name, manifest.value.name);
     assert.equal(entry.version, manifest.value.version);
     assert.equal(entry.filename, path.basename(expected));
@@ -464,6 +427,7 @@ async function packSdkCompatibilityOperation(input: {
     const listed = new Set(entry.files.map((file) => file.path));
     assert.ok(listed.has('tooling/pack-sdk.ts'));
     assert.ok(listed.has('tooling/owned-staging.ts'));
+    assert.ok(listed.has('tooling/bun-pack-metadata.ts'));
     const tarValue: unknown = createRequire(import.meta.url)('tar');
     const tar = loadTarModule(tarValue);
     await verifySdkArchive({ archive: expected, root, manifestBytes: manifest.bytes, entry, tar });

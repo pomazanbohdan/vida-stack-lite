@@ -2298,9 +2298,11 @@ artifact credit or Runtime acceptance. Foreign bytes, altered lineage, changed
 bindings and event-without-record state remain denied.
 
 The pinned Bun launcher validates package metadata and the exact pin before
-checking an absolute realpath executable from PATH. Only an exact version is
-used; absent, malformed or mismatched PATH candidates fall back to the existing
-npm pinned resolver. Explicit executable overrides retain strict checks. For
+qualifying its current Bun executable or an absolute realpath executable from
+PATH. Only an exact version is used. The normal Bun-hosted route requires an
+already provisioned exact runtime and performs no Node/npm download fallback.
+Explicit Node-owned compatibility callers retain their existing resolver;
+explicit executable overrides retain strict checks. For
 nested shell commands, the launcher uses npm's `.bin` directory only when the
 alias resolves to that same pinned executable; otherwise it prepends the
 executable's own directory. This supports npm's Linux `bun.exe` payload without
@@ -2706,16 +2708,23 @@ qualification exist, normal npm packaging describes only the implemented SDK
 compatibility payload and verifies that payload. An absent native builder cannot
 be a working default prepack dependency or be replaced by an unverified archive.
 
-SDK package verification selects Node and the supported npm major from the
-validated package engines. Check those tools before SDK artifact validation or
-package preflight execution. Malformed version ranges, unstable npm versions,
-and a mismatched Node or npm version deny verification; successful tool selection
-does not establish artifact freshness or Runtime acceptance.
+SDK package verification selects the exact Bun pin before artifact validation
+or package preflight execution. Node/npm engine declarations describe SDK
+consumer compatibility; they do not require those tools on the formation host.
+Malformed declared npm ranges remain denied. Bun packing runs the supported
+lifecycle scripts. A shared archive reader derives regular-file inventory,
+sizes and full integrity from the produced archive, checks its manifest identity
+and rejects unsafe or duplicate entries. It does not parse human CLI summaries.
+Existing SDK payload-byte checks, no-replace publication, ownership and cleanup
+remain required; tool selection does not establish freshness or Runtime acceptance.
 
 SDK formation captures a finite Source/configuration/schema/build-tool closure
 once through the same bounded byte reader as quality capture. It performs no
 test discovery. Declaration emission and both Bun builds consume that one
-materialized tree, with the exact Source-selected Bun and Node. The receipt
+materialized tree, with the exact Source-selected Bun. The installed TypeScript
+CLI emits declarations under Bun with the existing compiler options. The receipt
+distinguishes the declared Node consumer engine from the executed Bun runtime.
+The receipt
 binds captured input/output bytes, version and virtual runtime entry; external
 dependency bytes remain a declared trust limit behind captured manifest/lock.
 The bootstrap builder executes from Source, as a captured declared tool input;

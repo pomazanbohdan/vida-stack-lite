@@ -365,6 +365,35 @@ async function confirmRunnerReceipt(
 const pin = readPin(root);
 checkManifest(root, pin);
 if (process.versions.bun !== pin) throw new Error('Mutation gate requires the pinned Bun executable.');
+async function installedStrykerCli(): Promise<string> {
+  const declaredBin: (typeof import('@stryker-mutator/core/package.json'))['bin']['stryker'] = 'bin/stryker.js';
+  const packageRoot = path.join(root, 'node_modules/@stryker-mutator/core');
+  const packageBytes = await readFile(path.join(packageRoot, 'package.json'));
+  const installed: unknown = JSON.parse(packageBytes.toString('utf8'));
+  const declared: unknown = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+  if (!record(installed) || installed.name !== '@stryker-mutator/core' || !record(declared))
+    throw new Error('Installed Stryker Core package owner is invalid.');
+  const dependencies = record(declared.devDependencies)
+    ? declared.devDependencies
+    : record(declared.dependencies)
+      ? declared.dependencies
+      : null;
+  if (
+    !dependencies ||
+    typeof dependencies['@stryker-mutator/core'] !== 'string' ||
+    !/^\d+\.\d+\.\d+$/u.test(dependencies['@stryker-mutator/core']) ||
+    installed.version !== dependencies['@stryker-mutator/core'] ||
+    !record(installed.bin) ||
+    installed.bin.stryker !== declaredBin
+  )
+    throw new Error('Installed Stryker Core does not match its exact package owner and CLI entry.');
+  const cli = path.join(packageRoot, installed.bin.stryker);
+  const cliInfo = await lstat(cli);
+  if (!cliInfo.isFile() || cliInfo.isSymbolicLink())
+    throw new Error('Installed Stryker Core CLI must be a regular file.');
+  return cli;
+}
+const strykerCli = await installedStrykerCli();
 const commonTests = ['tests/coverage-completeness.test.ts'];
 const mainSlices: MutationPartition[] = [
   {
@@ -1052,7 +1081,7 @@ async function assertCurrentInputs(boundary: string): Promise<void> {
       delete environment.AGENT_RUNTIME_MUTATION_SOURCE;
     }
     const result = await runCapturedStryker(
-      [process.execPath, 'x', 'stryker', 'run', 'stryker.config.ts'],
+      [process.execPath, strykerCli, 'run', 'stryker.config.ts'],
       root,
       pinnedEnvironment(process.execPath, environment),
       reportDirectory,

@@ -46,7 +46,7 @@ execution; no controller readiness is established by this documentation.
 ## SDK library and Source tooling
 
 SDK exports and declarations remain maintained for in-process integrations.
-Source build and package tools may use Node, npm and pinned Bun, but public
+Source build and package tools use the package-selected Bun, while public
 agent installation uses only the qualified standalone executable. Do not install
 the SDK/npm archive as a substitute for that executable.
 
@@ -70,7 +70,7 @@ Installation records the selected installed bytes, version and effective PATH. N
 
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
-For Source and SDK library tooling only, Node and npm versions come from package engines. Bun comes only from the exact package pin; declarations use their independently published, locked version. The Source pinned launcher may resolve or fetch its build-time runtime and namespaces the transpiler cache outside the package. These development operations are not an offline guarantee or a public installation route. The delivered executable supplies its own pinned Bun and qualified resources.
+For Source tooling, provision the exact Bun package pin before invoking commands. The default launcher qualifies its running Bun and performs no Node/npm download fallback. Explicit legacy Node-owned compatibility callers remain separately scoped. Node/npm engine declarations describe SDK consumer compatibility. Declarations use the locked TypeScript CLI under Bun. The transpiler cache stays outside the package. These development operations are not a public installation route; dependency installation can still download packages. The delivered executable supplies its own pinned Bun and qualified resources.
 
 Neutral configuration uses local integration metadata for the explicit product set. Real provider, tenant, namespace, credentials and paths remain project-owned data. They do not select identity or grant authority.
 
@@ -90,7 +90,7 @@ is a checkout boundary: alternate spellings of the same canonical root reuse it,
 while another clone has a different value. Runtime state uses this bound
 workspace identity, not a caller-provided workspace value.
 
-For Source dependency tooling only, a failed prerequisite or dependency check never delegates initialization. Downloads or node_modules changes can remain after failure; a later initialization failure does not undo development dependencies. The Source bootstrap requires trusted Node/npm and does not attest that toolchain. These development prerequisites are not requirements for the standalone agent. Filesystem checks reject linked bundle ancestors and input files but do not provide atomic containment against a concurrently hostile filesystem. Run the owned payload in its owner-controlled workspace.
+For Source dependency tooling only, a failed prerequisite or dependency check never delegates initialization. Downloads or node_modules changes can remain after failure; a later initialization failure does not undo development dependencies. The Source bootstrap requires the exact provisioned Bun and does not attest that toolchain. These development prerequisites are not requirements for the standalone agent. Filesystem checks reject linked bundle ancestors and input files but do not provide atomic containment against a concurrently hostile filesystem. Run the owned payload in its owner-controlled workspace.
 
 Dependency installation alone does not switch the active runtime selector, launch a lifecycle, transfer unfinished tasks, grant write authority, replace project policy, or establish user Runtime acceptance. When a selector is present, the public run entrypoint verifies that it selects this installed bundle and has a complete cutover journal and cutoff witness before admitting new work. The orchestrating agent session invokes built-in collaboration tools and observes their results; the CLI does not invoke those tools or authenticate a caller-supplied report.
 

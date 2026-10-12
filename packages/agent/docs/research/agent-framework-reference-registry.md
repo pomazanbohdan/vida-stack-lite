@@ -1292,7 +1292,8 @@ Use one finite Source/schema/config/tool byte projection through the existing
 bounded reader and runtime import closure. It avoids a full test/inventory scan
 for formation. Declaration emission and both Bun builds consume its materialized
 tree; external dependency bytes remain outside custody behind manifest/lock.
-The completion receipt records selected version, Node/Bun, exact inputs/outputs
+The completion receipt records selected version, declared Node engine, executed
+Bun runtime, exact inputs/outputs
 and virtual entry. Actual formed-artifact qualification and its join to tests
 remain pending; capture tests and static checks are not that evidence.
 
@@ -1304,3 +1305,30 @@ byte/ownership checks precede the completion receipt; failed partial output is
 retained. This does not promise an atomic directory transaction, Source-name
 CAS, hostile same-user isolation or crash durability. Existing Runtime activation
 and UNKNOWN rules keep their owners and are not replaced by SDK publication.
+
+## External Node replacement research — 2026-10-12
+
+The selected Bun is1.4.3; TypeScript7.0.2, Knip6.41.0, Oxfmt0.72.0,
+Oxlint1.87.0 and Stryker Core10.0.0 remain independently locked. Bun's
+[Node compatibility](https://bun.com/docs/runtime/nodejs-compat) is broad,
+not complete. Compatible `node:` imports do not require an external Node process.
+
+| Contour         | Evidence and accepted change                                                                                                                                                                                                                           | Qualification limit                                                                                                                                                |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Source launcher | Qualify actual Bun before PATH; no default npm download. Developer scripts and Source shebangs use Bun. Explicit legacy Node-owned resolver remains scoped.                                                                                            | Exact pin/standalone/UNKNOWN controls remain. No native cutover.                                                                                                   |
+| Declarations    | Actual TS CLI positive fixture and TS2322 negative match Node diagnostics/exit under `bun run --bun`, with original flags. Execute declarations under Bun; receipt separates declared Node engine.                                                     | Full captured SDK formation and other hosts pending. Bun transpilation does not emit declarations.                                                                 |
+| Quality         | Dedicated Knip `knip-bun` rejects an unused dependency; Oxfmt clean/dirty and Oxlint clean/unused controls run directly under Bun. The Node-absent staged regression exposed tsgolint's Node shebang; use its installed native executable instead.     | Keep type-aware lint, zero findings and staged CAS. CLI help alone is insufficient.                                                                                |
+| SDK pack        | Tiny Bun/npm12.2.0 fixtures agree on paths, nested ignores and prepack→prepare→postpack. Bun preserves manifest whitespace; npm compacts it. Bun has no JSON pack interface, and observed npm12 JSON is name-keyed rather than the old expected array. | Replace CLI parsing with bounded actual archive metadata and existing payload checks. Full SDK archive qualification pending.                                      |
+| CI/release      | Use Bun and the shared archive metadata owner; remove the stale npm11.17.0 guard. Bind CI cache namespace to the selected Bun pin rather than literal1.4.2.                                                                                            | No release operation, replay, CI run or installation is evidence from this Source change.                                                                          |
+| Mutation engine | A bounded direct-Bun Core/worker pilot ran a Bun test in its sandbox and reported2Killed with no timeout/errors. Direct installed CLI avoids Bunx's Node shebang routing.                                                                              | This is fixture compatibility, not native Bun test-runner integration or VIDA assertion-confirmed Killed. One deprecated pilot concurrency flag emitted a warning. |
+
+Official [Bun runtime](https://bun.com/docs/runtime),
+[Bun pack](https://bun.com/docs/cli/pm),
+[npm pack](https://docs.npmjs.com/cli/v12/commands/npm-pack/),
+[npm lifecycle](https://docs.npmjs.com/cli/using-npm/scripts/), and
+[Stryker plugins](https://stryker-mutator.io/docs/stryker-js/plugins/)
+define the supported interfaces. Knip's dedicated Bun entry is installed-package
+evidence; published Node engine ranges for TS/Stryker are not an upstream Bun
+certification. No duplicate suite/AST/hash pass or tests in build/install are added.
+Whole coverage, frozen correspondence/CRAP and confirmed mutation remain separate
+open gates; local engine support never promotes those results.

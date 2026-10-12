@@ -7136,3 +7136,78 @@ the existing Bun expectRejection owner, preserving awaited sync/async rejection
 and case names. Root completion25PASS249asserts covers both affected files;
 these are behavior checks, not admitted mutation Killed or exact coverage.
 The final correction review and strict Source checkpoint remain Root-owned.
+
+### v947–v955 — research and remove external Node from current tooling
+
+Human-authorized per-contour research covers Source bootstrap, declarations,
+quality, SDK packing, CI/release and Stryker. Official interface/local controls
+and limits are recorded in the package research registry, with behavior in the
+system specification. One writer owns each contour; Root joins final checks.
+Default scripts/Source CLI and installer use exact provisioned Bun. Explicit
+legacy Node-owned compatibility APIs remain, but repository commands do not
+invoke them. The project sidecar forbids external Node/npm/npx execution in
+repository tooling; this does not require Node absence or removal on consumer
+hosts. SDK consumer engine metadata and compatible node: imports remain valid.
+
+TS7 declaration controls match positive emission and TS2322 diagnostics under
+Bun. The builder now executes that CLI under Bun, with the existing captured
+tree/options and sanitized pinned environment. Receipt Node text is explicitly
+declared_node_engine; executed runtime is Bun. No actual SDK build or native
+cutover occurred. Direct installed Stryker Core avoids Bunx shebang routing;
+its bounded worker/sandbox pilot reports2Killed, not VIDA assertion-confirmed
+mutation qualification or a native Bun test-runner plugin.
+
+Knip uses its declared knip-bun entry; Oxfmt/Oxlint run through qualified Bun.
+The Node-absent regression exposed the tsgolint JS shebang twice. Official
+OXLINT_TSGOLINT_PATH selects the locked platform native helper, including its
+wrapper dependency edge. Keep zero issues, type-aware rules, focus guard,
+staged bytes/index CAS and cleanup. The standalone lint leaf shares the exact
+Oxlint runner instead of duplicating flags. Windows absence regression remains
+unqualified; its POSIX fixture intentionally skips Windows symlink privileges.
+
+Fix pack contracts rather than toggling commands: Bun has no JSON metadata;
+npm12's observed name-keyed response does not match the old array parser, and
+CI's npm11.17.0 literal was stale. Shared bounded archive metadata derives actual
+regular file paths/sizes and SHA512 from one stable captured byte image, checks
+manifest identity and rejects duplicate/unsafe entries. SDK retains payload-byte,
+ownership, exact retry/no-replace and cleanup guards. CI uses that owner after
+confirmed Bun formation/pack, with lifecycle disabled as before. Cache namespace
+validates the selected package pin rather than literal1.4.2. SDK lifecycle uses
+default-enabled scripts and absolute --filename only; Bun rejects combined
+--destination and --ignore-scripts=false. Joined inert actual pack under Bun-only
+PATH confirms prepack→prepare→postpack and exact generated file inventory/sizes.
+No uncertain command outcome is promoted from an archive's mere existence.
+
+Root joined behavior completion62PASS1919assertions/7files includes139CLI help
+children, actual Node-absent staged gates, native-helper edge rejection, SDK
+capture/metadata guards and the default install child with empty PATH. Three
+focused CI/release receipt controls also PASS. All run under qualified Bun1.4.3
+with no Node/npm PATH. Temporary installed Node was removed; root-owned Codex
+service binaries cannot be removed by this user and remain outside command PATH.
+This host action is session-specific, not a deployment policy.
+
+Final blind installer review identifies empty-dependency proof as insufficient.
+Replace that control with a real local declared dependency and add a missing
+dependency denial. Affected3PASS confirms both resolution and zero dependency
+installation/root-tree/lock changes on failure, with an empty PATH. No suite
+rerun after this local correction. Final CI candidate metadata admission also
+requires canonical unique paths and nonnegative safe integer file sizes.
+
+Function correspondence changes need explicit final frozen review: removed npm
+metadata/parser/version helpers and the PATH Node lookup; retain caller lineage
+for Source resolver/installer, SDK formation/pack and CI nativeBuild. New native
+helper validation/shared lint leaf and archive reader callbacks require new
+function budgets; do not map by ordinal/hash or activate partial frozen data.
+Whole current coverage/CRAP/confirmed mutation, captured SDK artifact-to-test join
+and real isolated native flows remain OPEN. Static staged publication is next;
+no installation, Runtime acceptance, replay or owner notice is claimed.
+
+Strict publication first rejects dynamic tool usage as unused dependencies and
+a redundant precommit entry. Remove only that redundant entry and bind installed
+tool metadata to its actual published JSON types/owner resolution; no dependency
+ignore is added. Knip then passes. Next gate finds an unused observed-pin value
+and Bun matcher typing warnings. Assert the actual pin and await the existing
+shared rejection helper, with reason-specific failure checks; do not remove
+await or suppress type-aware rules. Affected archive4PASS25assertions and host
+pin1PASS. Current staged Bun check reports421files/0type errors; the final hook
+must complete after this correction. No full behavioral suite repeat.

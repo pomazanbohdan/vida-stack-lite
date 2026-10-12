@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { rejects } from 'node:assert/strict';
-import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
   createPrecommitFixture as fixture,
@@ -27,6 +28,31 @@ test('accepts a clean staged fixture while preserving a broken unstaged version'
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test.skipIf(process.platform === 'win32')(
+  'runs all staged gates with Bun and Git available when Node is absent from PATH',
+  async () => {
+    const root = fixture();
+    const commandDirectory = mkdtempSync(path.join(tmpdir(), 'vida-bun-only-path-'));
+    const originalPath = process.env.PATH;
+    try {
+      const git = Bun.which('git');
+      if (git === null) throw new Error('git is required by the staged fixture');
+      symlinkSync(git, path.join(commandDirectory, 'git'));
+      process.env.PATH = commandDirectory;
+      let guarded = false;
+      await check(root, () => {
+        guarded = true;
+      });
+      expect(guarded).toBe(true);
+    } finally {
+      if (originalPath === undefined) delete process.env.PATH;
+      else process.env.PATH = originalPath;
+      rmSync(commandDirectory, { recursive: true, force: true });
+      rmSync(root, { recursive: true, force: true });
+    }
+  },
+);
 
 test('blocks staged Knip findings and missing pins before later gates, without changing the index', async () => {
   const root = fixture();
@@ -73,6 +99,31 @@ test('rejects a parser lock mismatch before invoking the focused-test guard', as
         guarded = true;
       }),
       /lock does not agree with the @babel\/parser manifest pin/u,
+    );
+    expect(guarded).toBe(false);
+    expect(readFileSync(path.join(root, '.git/index'))).toEqual(index);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('rejects a native lint helper without its locked wrapper dependency edge before later gates', async () => {
+  const root = fixture();
+  try {
+    const file = path.join(root, 'packages/agent/bun.lock');
+    const lock = JSON.parse(readFileSync(file, 'utf8')) as { packages: Record<string, unknown[]> };
+    const wrapper = lock.packages['oxlint-tsgolint'];
+    if (!wrapper) throw new Error('fixture lint wrapper is missing');
+    wrapper[2] = { optionalDependencies: {} };
+    writeFileSync(file, JSON.stringify(lock));
+    git(root, ['add', '--', 'packages/agent/bun.lock']);
+    const index = readFileSync(path.join(root, '.git/index'));
+    let guarded = false;
+    await rejects(
+      check(root, () => {
+        guarded = true;
+      }),
+      /lock does not bind oxlint-tsgolint/u,
     );
     expect(guarded).toBe(false);
     expect(readFileSync(path.join(root, '.git/index'))).toEqual(index);

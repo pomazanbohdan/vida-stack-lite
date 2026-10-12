@@ -8,9 +8,9 @@
     "packages/plugin"
   ],
   "scripts": {
-    "agent:build": "npm --workspace vida-agent run build",
-    "agent:test": "npm --workspace vida-agent test",
-    "agent:pack": "npm --workspace vida-agent pack",
-    "release:local": "node tooling/agent/release-local.ts"
+    "agent:build": "bun --cwd packages/agent run build",
+    "agent:test": "bun --cwd packages/agent run test",
+    "agent:pack": "bun --cwd packages/agent run pack:sdk",
+    "release:local": "bun tooling/agent/release-local.ts"
   }
 }

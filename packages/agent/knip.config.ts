@@ -25,7 +25,6 @@ const config = {
         'bin/scope.ts',
         'bin/development-controller.ts',
         // Explicit child/preload paths and compiler/declaration inputs.
-        'tooling/knip-precommit.ts',
         'tooling/git-quality-hooks.ts',
         'tooling/development-controller-qualification.ts',
         'tooling/bun-coverage-preload.ts',

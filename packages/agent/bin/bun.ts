@@ -491,8 +491,22 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
   checkManifest(root, pin);
   const spawn = options.spawn ?? spawnSync;
   const env = options.env ?? process.env;
-  const node = options.node ?? process.execPath;
   const cleanup = options.cleanup ?? defaultTimeoutCleanup;
+  if (!options.executable && options.node === undefined && typeof process.versions.bun === 'string') {
+    const version = succeeded(
+      boundedSpawnSync(
+        spawn,
+        process.execPath,
+        ['--version'],
+        { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true, budget: options.budget },
+        'Bun host version check',
+        cleanup,
+      ),
+      'Bun host version check',
+    );
+    if (version !== pin) throw new Error(`Bun host is ${version}; .bun-version requires ${pin}.`);
+    return process.execPath;
+  }
   if (!options.executable) {
     const pathKey = environmentVariableKey(env, 'PATH', process.platform === 'win32');
     const extensionKey = environmentVariableKey(env, 'PATHEXT', true);
@@ -541,14 +555,17 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
       }
     }
   }
+  if (options.node === undefined && !options.executable) {
+    throw new Error('No Bun runtime matching .bun-version was found; run this launcher with the pinned Bun runtime.');
+  }
   const executable = options.executable
     ? String(options.executable).trim()
     : succeeded(
         boundedSpawnSync(
           spawn,
-          node,
+          options.node!,
           [
-            options.npmCli ?? findNpmCli(node),
+            options.npmCli ?? findNpmCli(options.node!),
             'exec',
             '--yes',
             '--package',

@@ -372,7 +372,7 @@ Missing function/file/statement coverage stays uncovered. Keep source-fingerprin
 checks, exact function mapping and nested statement ownership. A clean lint or
 type result for the gate does not prove that product coverage or CRAP passed.
 
-The precommit checks use pinned Bun, Node-hosted Knip, Oxfmt `--check`, one strict TypeScript program with `--noEmit` for every maintained staged TS root, including Source, CLI/tooling, native tests and helpers, type-aware Oxlint and the shared AST guard for focused tests. Knip runs once with all-code workspace/test entries, zero allowed issues, and configuration/tag hints treated as errors. Do not use production/strict mode to drop tests or dev dependencies, blanket ignores, issue baselines, cache-based freshness, autofix, or `--no-exit-code`. Public SDK entry exports remain supported API roots.
+The precommit checks use pinned Bun, Bun-hosted Knip and Oxfmt `--check`, one strict TypeScript program with `--noEmit` for every maintained staged TS root, including Source, CLI/tooling, native tests and helpers, type-aware Oxlint with its locked native tsgolint helper and the shared AST guard for focused tests. Knip runs once with all-code workspace/test entries, zero allowed issues, and configuration/tag hints treated as errors. Do not use production/strict mode to drop tests or dev dependencies, blanket ignores, issue baselines, cache-based freshness, autofix, or `--no-exit-code`. Public SDK entry exports remain supported API roots.
 
 Capture the active Git index once and materialize its raw object bytes in one owned temporary tree. Reuse it for every precommit check; create its exclusive compiler config inside the same identity-checked temporary owner, outside the raw tree; do not read changed worktree bytes, run checkout filters, format files, or invoke `git add`. Valid partial staging is supported. Preserve indexed paths and modes, including assume-unchanged/skip-worktree entries and staged deletions. Reject conflicts, links, unsafe paths, missing tools/config, or any check failure. Compare the live index with its captured bytes and identity after checks, including failures; preserve concurrent index/worktree changes. Cleanup must prove temporary-root ownership and fail closed on uncertain cleanup. The focused-test guard detects Bun `test.only` and aliases while allowing comments and strings. Include root instructions, sidecar, YAML, attributes and package manifests/configuration in the common staged tree.
 
@@ -952,9 +952,16 @@ qualification, native qualification or Runtime acceptance.
 
 SDK toolchain guard tests use small owned package fixtures without generated
 artifacts. Derive valid Node/npm declarations and the Bun pin from Source.
-Check malformed npm ranges, npm mismatch before artifacts, matching npm reaching
-the missing-artifact gate, and Node mismatch. Await actual rejected operations
+Check malformed declared npm ranges, exact Bun qualification before artifacts,
+and valid consumer declarations reaching the missing-artifact gate without
+requiring host Node/npm. Await actual rejected operations
 with the shared rejection helper. These guard checks do not qualify SDK output.
+
+The pack metadata adapter reads actual bounded archive bytes and derives file
+sizes and full SHA-512 integrity. Its inert fixtures cover identity, unsafe
+paths, duplicate entries and non-regular members. Lifecycle parity is checked
+on a tiny package; it does not qualify the full SDK. Native CI uses the same
+adapter with scripts disabled after formation. Do not parse CLI display text.
 
 SDK capture tests use inert Source/config/schema/tool fixtures. Assert exact
 retained bytes after live changes, transitive tooling closure and aliases/cycles,
