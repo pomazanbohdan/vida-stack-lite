@@ -518,6 +518,29 @@ deny. Current mode rejects historical-reference metadata. This does not supply
 a passing mutation baseline or runtime acceptance, change any original test or
 derive candidate budgets. The implementation and genuine admission remain
 required; this policy change supplies neither.
+The current CRAP consumer may validate retained historical evidence without
+executing its runtime. Require exact published-baseline selection/reference,
+historical package pin and retained regular runtime bytes matching the report
+and manifest. Keep all snapshot, input, process, child, JUnit, terminal and
+counter checks. The current producer remains bound to the current pinned Bun.
+Original measurement-tool hashes stay bound to their original captured inputs;
+they need not equal later consumer bytes. Consumer compatibility requires full
+canonical map regeneration matching report and manifest, original process-counter
+validation/merging, exhaustive unique function joins and exact frozen baseline
+CC, coverage and CRAP equality. Non-current published tooling still matches
+b549951. None of this changes frozen budgets or the historical suite failure.
+Use the declared original snapshot closure through the existing bounded,
+no-follow input reader; never rediscover current tooling paths in that archived
+tree or insert replacement tools there.
+Bootstrap evidence uses exactly one declared canonical evidence provider
+(`tooling/bun-coverage-evidence.ts` or its original `.mjs` counterpart) and its
+observed captured digest. Missing or duplicate providers fail closed; current
+mode still requires the exact `.ts` path. Other bootstrap paths stay exact.
+The CRAP plan's cross-version runtime
+reference stays inside the Source repository and rejects symlinked components.
+An absent reference retains the strict current-executable hash/pin check, which
+can succeed only for an exactly matching runtime. The read-only validator's
+direct caller owns its retained artifact path; the CLI owns repository containment.
 Outside that bounded fixture role, do not execute baseline tools. Missing genuine report or plan stays
 a GAP. The current candidate report must continue to meet exact 100% in every
 coverage metric.

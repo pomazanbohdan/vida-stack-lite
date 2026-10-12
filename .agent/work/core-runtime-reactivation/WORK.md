@@ -7457,3 +7457,56 @@ original sealed closure through existing bounded no-follow input readers;
 never install new tools into that retained tree or recapture it. SDK capture
 self-consistency likewise cannot claim selected formation freshness. These
 pending Source changes are not part of the two-test correction publication.
+
+### Follow-up — retained baseline consumer qualification
+
+The current read-only consumer now validates original run
+fe54f83c-6a70-4223-9872-f43f1ac784e9 without executing Bun1.4.2, replaying the
+archived suite or inserting current tools into its retained producer tree.
+Original report SHA256 is
+ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb;
+retained runtime SHA256 is
+a83d263767d839e4d2649ca8e35d07159c7afc99afdc96d731ced29e056dda0c.
+Root's private readonly diagnostic verifies unchanged report, manifest, package
+pin, runtime, JUnit and process receipts in finally. Genuine validation passes;
+its status remains measurement_admitted, suite_passed=false, quality_passed=false,
+shard status1. Log: historical-bootstrap-genuine.log in the existing private
+complex-quality-20261012-WfxQXq directory. This is baseline measurement admission,
+not a current coverage, CRAP, mutation or Runtime PASS.
+
+The historical input reader consumes the original declared finite closure once
+through readQualityInputs, checks original fingerprints/digests and reconstructs
+the original module projection. Shared map regeneration, process/child/JUnit
+validation, counter merging and exact final counters remain mandatory. A
+historical bootstrap has exactly one canonical TS/MJS evidence provider bound to
+its observed captured hash. Current mode retains its exact TS requirement; other
+bootstrap paths stay unchanged. CLI runtime references remain contained with
+every component checked against symlinks, including missing and wrong-type
+denials. An absent historical runtime reference preserves strict current hash
+and package-pin binding, not a cross-version fallback.
+
+Four new public-entrypoint synthetic controls pass: original MJS provider,
+missing provider, duplicate TS/MJS provider, and foreign unbound loaded path.
+The original early RED identified missing synthetic test bytes in their declared
+snapshot paths; correcting setup reaches the intended bootstrap boundary.
+Root's complete affected three-file qualification passes36cases/145assertions
+in11.45s with the per-test5000ms default. Synthetic results are structural units,
+not genuine provenance. Joined static checking passes421 maintained files plus
+97 stricter Source files with zero diagnostics. Blind review found no concrete
+false-admission or current-gate weakening. TESTING and bun-test technique guidance
+carry the same evidence distinctions. Frozen exhaustive correspondence/plan and
+current final coverage/mutation remain open.
+
+Strict publication lint catches Bun's void-typed rejects assertion chains.
+Reuse the existing expectRejection owner to await the actual operation before
+checking denial and disposing its fixture; no new assertion framework. The
+affected10historical controls pass20assertions in2.33s after this correction.
+
+Independent upgrade profile is retained in upgrade-first-read-cost-causal.log:
+the fresh resume child makes6977package readBytes calls (36.8s inclusive JS time),
+with41862observed fsyncSync calls (27.2s), then reaches its45s child deadline.
+Keep /tmp/project-upgrade-lifecycle-F2C3UC and the earlier UNKNOWN fixture; no
+replay or manual reclaim. The verified one-file package-reader optimization is
+still private and inactive. Its current design leaves all current bundle hash
+fences and durable CAS writes intact; root-replacement and retained-recovery
+controls plus descriptor cleanup review are required before Source activation.

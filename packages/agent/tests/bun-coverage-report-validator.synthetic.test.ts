@@ -169,3 +169,13 @@ test('current synthetic coverage rejects a known failed suite without historical
     await rejects(fixture, fixture.reportBytes(), /did not finish with a clean terminal result/u);
   });
 });
+
+test('shared public entrypoint denies altered process receipt custody', async () => {
+  await withFixture(async (fixture) => {
+    const receipts = fixture.report.processes;
+    if (!Array.isArray(receipts) || typeof receipts[0] !== 'object' || receipts[0] === null)
+      throw new Error('Synthetic process receipt is missing.');
+    Reflect.set(receipts[0], 'file', 'foreign-process.json');
+    await rejects(fixture, fixture.reportBytes(), /Coverage process receipt filename is invalid or duplicated/u);
+  });
+});

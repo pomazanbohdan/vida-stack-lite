@@ -26,7 +26,23 @@ function unitCounters(file: string, source: string): FileCoverageData {
 // Controlled post-validation CLI units: Git and the report validator are mocked
 // in an isolated child. These counters are synthetic unit data, never accepted
 // current/published coverage, frozen budgets, or mutation evidence.
-for (const scenario of ['rename', 'removal', 'plan-byte-swap', 'uncovered', 'frozen-ceiling', 'missing-map'] as const) {
+for (const scenario of [
+  'rename',
+  'removal',
+  'plan-byte-swap',
+  'uncovered',
+  'frozen-ceiling',
+  'missing-map',
+  'baseline-cc-drift',
+  'runtime-valid',
+  'runtime-ancestor-symlink',
+  'runtime-final-symlink',
+  'runtime-traversal',
+  'runtime-absolute',
+  'runtime-nonstring',
+  'runtime-missing-file',
+  'runtime-directory',
+] as const) {
   test(`CRAP correspondence and byte custody after validated-input boundary: ${scenario}`, () => {
     const root = mkdtempSync(path.join(os.tmpdir(), 'crap-correspondence-unit-'));
     let passed = false;
@@ -34,7 +50,9 @@ for (const scenario of ['rename', 'removal', 'plan-byte-swap', 'uncovered', 'fro
       const candidate = path.join(root, 'packages/agent');
       const baseline = path.join(root, 'baseline/packages/agent');
       const oldFile = 'src/old.ts';
-      const file = ['plan-byte-swap', 'uncovered', 'frozen-ceiling', 'missing-map'].includes(scenario)
+      const file = ['plan-byte-swap', 'uncovered', 'frozen-ceiling', 'missing-map', 'baseline-cc-drift'].includes(
+        scenario,
+      )
         ? oldFile
         : 'src/new.ts';
       const source = 'export function compute(): number { return 1; }\n';
@@ -85,11 +103,39 @@ for (const scenario of ['rename', 'removal', 'plan-byte-swap', 'uncovered', 'fro
         coverage: { [path.join(candidate, file)]: currentData },
       };
       const currentInputs = { ...oldInputs, input_bytes: { [file]: newSource } };
+      const runtimeScenario = scenario.startsWith('runtime-');
+      const retainedRuntimePath = path.join(root, 'retained-runtime', 'bun');
+      const outsideRuntimePath = path.join(root, 'outside-runtime', 'bun');
+      let runtimeReference: unknown;
+      if (scenario === 'runtime-valid') {
+        write(retainedRuntimePath, 'synthetic retained runtime');
+        runtimeReference = path.relative(root, retainedRuntimePath);
+      } else if (scenario === 'runtime-ancestor-symlink') {
+        write(outsideRuntimePath, 'synthetic retained runtime');
+        symlinkSync(path.dirname(outsideRuntimePath), path.join(root, 'retained-runtime-link'), 'dir');
+        runtimeReference = 'retained-runtime-link/bun';
+      } else if (scenario === 'runtime-final-symlink') {
+        write(outsideRuntimePath, 'synthetic retained runtime');
+        symlinkSync(outsideRuntimePath, path.join(root, 'retained-runtime-link'));
+        runtimeReference = 'retained-runtime-link';
+      } else if (scenario === 'runtime-traversal') {
+        runtimeReference = '../outside-runtime/bun';
+      } else if (scenario === 'runtime-absolute') {
+        runtimeReference = outsideRuntimePath;
+      } else if (scenario === 'runtime-nonstring') {
+        runtimeReference = { path: 'retained-runtime/bun' };
+      } else if (scenario === 'runtime-missing-file') {
+        runtimeReference = 'retained-runtime/missing-bun';
+      } else if (scenario === 'runtime-directory') {
+        mkdirSync(path.dirname(retainedRuntimePath), { recursive: true });
+        runtimeReference = path.relative(root, path.dirname(retainedRuntimePath));
+      }
       const plan = {
         schema: 'VidaCrapBudgetPlan/v1',
         baseline_ref: 'b549951',
         baseline_coverage_report_ref: path.relative(root, baselinePath),
         baseline_coverage_report_sha256: sha256(baselineBytes),
+        ...(runtimeScenario ? { baseline_runtime_executable_ref: runtimeReference } : {}),
         baseline_functions:
           scenario === 'removal'
             ? []
@@ -97,11 +143,11 @@ for (const scenario of ['rename', 'removal', 'plan-byte-swap', 'uncovered', 'fro
                 {
                   identity: oldRow.identity,
                   current_identity: newRow.identity,
-                  baseline_complexity: 1,
+                  baseline_complexity: scenario === 'baseline-cc-drift' ? 2 : 1,
                   baseline_coverage: 1,
-                  baseline_crap: 1,
-                  max_complexity: 1,
-                  max_crap: 1,
+                  baseline_crap: scenario === 'baseline-cc-drift' ? 2 : 1,
+                  max_complexity: scenario === 'baseline-cc-drift' ? 2 : 1,
+                  max_crap: scenario === 'baseline-cc-drift' ? 2 : 1,
                   rationale: 'reviewed unit correspondence',
                 },
               ],
@@ -129,6 +175,8 @@ for (const scenario of ['rename', 'removal', 'plan-byte-swap', 'uncovered', 'fro
             ? {}
             : { [path.join(candidate, file)]: instrumentSource(path.join(candidate, file), newSource).fileCoverage },
         planPath,
+        runtimeScenario,
+        expectedHistoricalRuntimePath: scenario === 'runtime-valid' ? retainedRuntimePath : null,
         replacement: JSON.stringify({ ...plan, schema: 'changed-after-plan-read' }),
         swap: scenario === 'plan-byte-swap',
         gitFiles: { 'package.json': JSON.stringify({ files: ['src/**'] }), [oldFile]: source, [testFile]: testSource },
@@ -141,6 +189,7 @@ for (const scenario of ['rename', 'removal', 'plan-byte-swap', 'uncovered', 'fro
 import { readFileSync, writeFileSync } from 'node:fs';
 const data = JSON.parse(readFileSync(new URL('./unit-payload.json', import.meta.url), 'utf8'));
 const gitCalls = new Map<string, number>();
+const historicalRuntimeCalls: string[] = [];
 const actual = await import('node:child_process');
 mock.module('node:child_process', () => ({ ...actual, spawnSync(command: string, args: string[], options: {encoding?: string}) {
   if (command !== 'git') throw new Error('Unexpected unit command: ' + command);
@@ -162,8 +211,15 @@ mock.module(new URL('./tooling/bun-coverage-report-validator.ts', import.meta.ur
     return { report: data.baselineReport, inputs: data.oldInputs };
   }
   return { report: data.currentReport, canonical_source_maps: data.canonicalSourceMaps, inputs: { ...data.currentInputs, input_bytes: Object.fromEntries(Object.entries(data.currentInputs.input_bytes).map(([file, text]) => [file, Buffer.from(text as string)])) } };
+}, async validateHistoricalBaselineCoverageReport(reportPath: string, _packageRoot: string, runtimePath: string) {
+  historicalRuntimeCalls.push(runtimePath);
+  if (reportPath !== data.baselinePath) throw new Error('Historical runtime override used for the wrong report.');
+  return { report: data.baselineReport, inputs: data.oldInputs };
 } }));
-process.on('exit', () => writeFileSync(new URL('./unit-git-calls.json', import.meta.url), JSON.stringify([...gitCalls])));
+process.on('exit', () => {
+  writeFileSync(new URL('./unit-git-calls.json', import.meta.url), JSON.stringify([...gitCalls]));
+  writeFileSync(new URL('./unit-historical-runtime-calls.json', import.meta.url), JSON.stringify(historicalRuntimeCalls));
+});
 `,
       );
       const result = spawnSync(process.execPath, ['--preload', preload, path.join(candidate, 'tooling/crap-gate.ts')], {
@@ -177,15 +233,42 @@ process.on('exit', () => writeFileSync(new URL('./unit-git-calls.json', import.m
       write(path.join(root, 'child.stderr'), result.stderr);
       expect(result.error).toBeUndefined();
       expect(result.signal).toBeNull();
-      if (scenario === 'uncovered' || scenario === 'frozen-ceiling' || scenario === 'missing-map') {
+      if (
+        scenario === 'uncovered' ||
+        scenario === 'frozen-ceiling' ||
+        scenario === 'missing-map' ||
+        scenario === 'baseline-cc-drift' ||
+        (scenario.startsWith('runtime-') && scenario !== 'runtime-valid')
+      ) {
         expect(result.status).toBe(1);
-        expect(result.stderr).toContain(
+        const denial =
           scenario === 'uncovered'
             ? 'Coverage is not exact 100%'
             : scenario === 'missing-map'
               ? 'Canonical Source coverage map is missing'
-              : 'Existing function exceeds its frozen complexity/CRAP budget',
-        );
+              : scenario === 'baseline-cc-drift'
+                ? 'Frozen baseline values differ from actual coverage evidence'
+                : scenario === 'runtime-traversal'
+                  ? 'Historical baseline runtime must remain inside the Source repository.'
+                  : scenario === 'runtime-nonstring'
+                    ? 'Historical baseline runtime reference is invalid.'
+                    : scenario === 'runtime-absolute'
+                      ? 'Historical baseline runtime reference is invalid.'
+                      : scenario === 'runtime-missing-file'
+                        ? 'ENOENT'
+                        : scenario.startsWith('runtime-')
+                          ? 'Historical baseline runtime must be an in-repository regular file, not a symlink.'
+                          : 'Existing function exceeds its frozen complexity/CRAP budget';
+        expect(result.stderr).toContain(denial);
+        if (scenario.startsWith('runtime-')) {
+          const calls: unknown = JSON.parse(
+            readFileSync(path.join(candidate, 'unit-historical-runtime-calls.json'), 'utf8'),
+          );
+          expect(calls).toEqual([]);
+          const errorLines = result.stderr.split('\n').filter((line) => /^(?:error: |ENOENT: )/u.test(line));
+          expect(errorLines).toHaveLength(1);
+          expect(errorLines[0]).toContain(denial);
+        }
       } else {
         expect(result.status).toBe(0);
         const report: unknown = JSON.parse(result.stdout);
@@ -207,6 +290,17 @@ process.on('exit', () => writeFileSync(new URL('./unit-git-calls.json', import.m
           expect.arrayContaining([[JSON.stringify(['show', 'b549951:packages/agent/' + oldFile]), 1]]),
         );
         if (scenario === 'plan-byte-swap') expect(readFileSync(planPath, 'utf8')).toBe(payload.replacement);
+        if (scenario === 'runtime-valid') {
+          const calls: unknown = JSON.parse(
+            readFileSync(path.join(candidate, 'unit-historical-runtime-calls.json'), 'utf8'),
+          );
+          expect(calls).toEqual([payload.expectedHistoricalRuntimePath]);
+        }
+      }
+      if (scenario === 'baseline-cc-drift') {
+        expect(readFileSync(baselinePath)).toEqual(Buffer.from(baselineBytes));
+        expect(plan.baseline_functions[0]?.baseline_complexity).toBe(2);
+        expect(sha256(readFileSync(baselinePath))).toBe(plan.baseline_coverage_report_sha256);
       }
       passed = true;
     } finally {

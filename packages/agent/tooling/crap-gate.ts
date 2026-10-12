@@ -1,12 +1,12 @@
 import { spawnSync } from 'node:child_process';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { lstat, readFile, realpath, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import coverageApi from 'istanbul-lib-coverage';
 import { maintainedSourceInventory, selectMaintainedSourcePaths } from './maintained-source-inventory.js';
 import { canonicalTestSelection, sha256 } from './bun-coverage-evidence.ts';
 import { functionInventory } from './function-inventory.js';
-import { validateCoverageReport } from './bun-coverage-report-validator.js';
+import { validateCoverageReport, validateHistoricalBaselineCoverageReport } from './bun-coverage-report-validator.js';
 import { baselineFunctionEvidenceForSource, exactFullCoverage, validateCoverageLocations } from './coverage-math.js';
 
 type FunctionRow = import('./function-inventory.js').FunctionRow;
@@ -128,6 +128,41 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     return evidencePath;
   }
 
+  async function historicalRuntimePathForPlan(value: Record<string, unknown>): Promise<string | undefined> {
+    const reference = value.baseline_runtime_executable_ref;
+    if (reference === undefined) return undefined;
+    if (typeof reference !== 'string' || reference.trim().length < 8 || path.isAbsolute(reference))
+      throw new Error('Historical baseline runtime reference is invalid.');
+    const executablePath = path.resolve(repoRoot, reference);
+    const relativePath = path.relative(repoRoot, executablePath).replaceAll('\\', '/');
+    if (!relativePath || relativePath === '..' || relativePath.startsWith('../') || path.isAbsolute(relativePath))
+      throw new Error('Historical baseline runtime must remain inside the Source repository.');
+    const resolvedRoot = await realpath(repoRoot);
+    let componentPath = repoRoot;
+    let finalMetadata: Awaited<ReturnType<typeof lstat>> | undefined;
+    const components = relativePath.split('/');
+    for (const [index, component] of components.entries()) {
+      componentPath = path.join(componentPath, component);
+      const metadata = await lstat(componentPath);
+      if (metadata.isSymbolicLink() || (index < components.length - 1 && !metadata.isDirectory()))
+        throw new Error('Historical baseline runtime must be an in-repository regular file, not a symlink.');
+      finalMetadata = metadata;
+    }
+    const resolvedPath = await realpath(executablePath);
+    if (!finalMetadata) throw new Error('Historical baseline runtime path is empty.');
+    const resolvedRelative = path.relative(resolvedRoot, resolvedPath).replaceAll('\\', '/');
+    if (
+      !finalMetadata.isFile() ||
+      finalMetadata.isSymbolicLink() ||
+      !resolvedRelative ||
+      resolvedRelative === '..' ||
+      resolvedRelative.startsWith('../') ||
+      path.isAbsolute(resolvedRelative)
+    )
+      throw new Error('Historical baseline runtime must be an in-repository regular file, not a symlink.');
+    return executablePath;
+  }
+
   function requirePlanArrays(value: Record<string, unknown>) {
     if (
       !Array.isArray(value.baseline_functions) ||
@@ -230,14 +265,15 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     verifyPublishedTestSelection(report, inputs);
     for (const entry of inputs.tool_inputs) {
       if (isCurrentQualityTool(entry.path, inputs.test_selection)) {
-        const current = await readFile(path.join(root, entry.path));
-        if (sha256(current) !== entry.sha256)
-          throw new Error(`Published baseline used different quality tooling: ${entry.path}`);
-      } else {
-        const source = baselineSource(entry.path);
-        if (source === null || sha256(Buffer.from(source, 'utf8')) !== entry.sha256)
-          throw new Error(`Published baseline tool input differs from the selected commit: ${entry.path}`);
+        // The report validator already binds original producer tools to its
+        // manifest, run snapshot, and process receipts. Current semantic
+        // compatibility is established below by canonical map regeneration
+        // and exhaustive equality with frozen baseline CC/coverage/CRAP.
+        continue;
       }
+      const source = baselineSource(entry.path);
+      if (source === null || sha256(Buffer.from(source, 'utf8')) !== entry.sha256)
+        throw new Error(`Published baseline tool input differs from the selected commit: ${entry.path}`);
     }
     for (const key of [
       'sources',
@@ -268,11 +304,15 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const bytes = await readFile(evidencePath);
     if (sha256(bytes) !== value.baseline_coverage_report_sha256)
       throw new Error('Baseline coverage evidence fingerprint differs from the frozen plan.');
-    const validation = await validateCoverageReport(evidencePath, packageRoot, {
+    const options = {
       requireFullCoverage: false,
-      testSelectionMode: 'published-baseline-bun-native',
+      testSelectionMode: 'published-baseline-bun-native' as const,
       reportBytes: bytes,
-    });
+    };
+    const runtimeExecutablePath = await historicalRuntimePathForPlan(value);
+    const validation = runtimeExecutablePath
+      ? await validateHistoricalBaselineCoverageReport(evidencePath, packageRoot, runtimeExecutablePath, options)
+      : await validateCoverageReport(evidencePath, packageRoot, options);
     return { report: validation.report, packageRoot, inputs: validation.inputs };
   }
 

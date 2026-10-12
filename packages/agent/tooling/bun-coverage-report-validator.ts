@@ -7,16 +7,20 @@ import {
 } from './published-baseline-reference.js';
 import coverageApi from 'istanbul-lib-coverage';
 import { validateIstanbulFileCoverage as validateFileCoverage } from './coverage-counters.js';
-import { readFileSync } from 'node:fs';
+import { lstatSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { parsePublishedFixtureIdentity } from './published-coverage-inputs.js';
 import {
+  canonicalJson,
   canonicalTestSelection,
   capturedModuleAbsolutePath,
+  capturedModuleInputs,
   coverageInputs,
   instrumentSource,
   isExternalModulePath,
   qualityInputProjections,
   readBunPin,
+  readQualityInputs,
   sha256,
   type FinalQualityProjectionInputs,
 } from './bun-coverage-evidence.ts';
@@ -203,7 +207,37 @@ function readCoverageManifest(root: string, report: DecodedReport) {
   return manifestValue;
 }
 
-async function validateRuntimeBinding(root: string, report: DecodedReport, manifest: DecodedManifest) {
+async function assertHistoricalRuntimeArtifact(
+  root: string,
+  report: Record<string, unknown>,
+  manifest: Record<string, unknown>,
+  historicalRuntimeExecutablePath: string,
+): Promise<string> {
+  const absolutePath = path.resolve(historicalRuntimeExecutablePath);
+  const runtimeStat = lstatSync(absolutePath);
+  if (!runtimeStat.isFile() || runtimeStat.isSymbolicLink())
+    throw new Error('Historical runtime artifact must be an owned regular file, not a symlink.');
+  const runtimeExecutableSha256 = sha256(readFileSync(absolutePath));
+  const historicalPin = await readBunPin(root);
+  if (
+    manifest.bun_version !== historicalPin ||
+    typeof manifest.runtime_executable_sha256 !== 'string' ||
+    !/^[0-9a-f]{64}$/u.test(manifest.runtime_executable_sha256) ||
+    manifest.runtime_executable_sha256 !== runtimeExecutableSha256 ||
+    report.runtime_executable_sha256 !== runtimeExecutableSha256
+  )
+    throw new Error('Historical coverage report is not bound to its retained package-pinned Bun runtime.');
+  return runtimeExecutableSha256;
+}
+
+async function validateRuntimeBinding(
+  root: string,
+  report: DecodedReport,
+  manifest: DecodedManifest,
+  historicalRuntimeExecutablePath?: string,
+) {
+  if (historicalRuntimeExecutablePath !== undefined)
+    return assertHistoricalRuntimeArtifact(root, report, manifest, historicalRuntimeExecutablePath);
   const runtimeExecutableSha256 = sha256(readFileSync(process.execPath));
   if (
     manifest.bun_version !== (await readBunPin(root)) ||
@@ -216,10 +250,15 @@ async function validateRuntimeBinding(root: string, report: DecodedReport, manif
   return runtimeExecutableSha256;
 }
 
-async function readCoverageRun(reportPath: string, root: string, reportBytes?: Uint8Array) {
+async function readCoverageRun(
+  reportPath: string,
+  root: string,
+  reportBytes?: Uint8Array,
+  historicalRuntimeExecutablePath?: string,
+) {
   const { report, coverage } = readCoverageReport(reportPath, reportBytes);
   const manifest = readCoverageManifest(root, report);
-  const runtimeExecutableSha256 = await validateRuntimeBinding(root, report, manifest);
+  const runtimeExecutableSha256 = await validateRuntimeBinding(root, report, manifest, historicalRuntimeExecutablePath);
   return { report, coverage, manifest, runtimeExecutableSha256 };
 }
 
@@ -233,6 +272,112 @@ async function captureRunInputs(
   verifyInputBindings(report, manifest, current);
   verifySnapshotFiles(root, report, manifest, current);
   return current;
+}
+
+async function historicalSnapshotInputs(
+  root: string,
+  report: DecodedReport,
+  manifest: DecodedManifest,
+): Promise<CoverageInputs> {
+  // A historical consumer must use the producer's frozen input closure. Calling
+  // qualityInputs here would rediscover files with today's inventory code and
+  // fail when the archived producer's tooling implementation is absent.
+  const readDigests = (value: unknown, label: string): Digest[] => {
+    if (!Array.isArray(value)) throw new Error(`Historical coverage ${label} are missing.`);
+    const seen = new Set<string>();
+    return value.map((item) => {
+      const entry = record(item, `historical ${label} entry`);
+      const file = entry.path;
+      const digest = entry.sha256;
+      if (typeof file !== 'string' || typeof digest !== 'string' || !/^[0-9a-f]{64}$/u.test(digest) || seen.has(file))
+        throw new Error(`Historical coverage ${label} entry is invalid.`);
+      seen.add(file);
+      return { path: file, sha256: digest };
+    });
+  };
+  const sources = readDigests(manifest.sources, 'sources');
+  const testInputs = readDigests(manifest.test_inputs, 'test inputs');
+  const toolInputs = readDigests(manifest.tool_inputs, 'tool inputs');
+  const tests = manifest.tests;
+  const rawSelection = manifest.test_selection;
+  if (canonicalTestSelection(rawSelection) === null) throw new Error('Historical coverage test selection is invalid.');
+  const selection = record(rawSelection, 'test selection');
+  if (
+    !Array.isArray(tests) ||
+    !tests.every((entry) => typeof entry === 'string') ||
+    selection.mode !== 'published-baseline-bun-native' ||
+    !Array.isArray(selection.tests) ||
+    !selection.tests.every((entry) => typeof entry === 'string') ||
+    JSON.stringify(selection.tests) !== JSON.stringify(tests)
+  )
+    throw new Error('Historical coverage test selection is invalid.');
+  const parsedFixture =
+    selection.published_fixture === undefined ? undefined : parsePublishedFixtureIdentity(selection.published_fixture);
+  const parsedContractInputs =
+    selection.published_contract_inputs === undefined
+      ? undefined
+      : readDigests(selection.published_contract_inputs, 'published contract inputs');
+  const parsedSelection = {
+    ...selection,
+    ...(parsedFixture ? { published_fixture: parsedFixture } : {}),
+    ...(parsedContractInputs ? { published_contract_inputs: parsedContractInputs } : {}),
+  };
+  const sourceJson = canonicalJson(sources);
+  const testJson = canonicalJson({ selection: parsedSelection, files: testInputs });
+  const toolJson = canonicalJson(toolInputs);
+  if (
+    sourceJson === undefined ||
+    testJson === undefined ||
+    toolJson === undefined ||
+    manifest.source_fingerprint !== sha256(sourceJson) ||
+    manifest.test_fingerprint !== sha256(testJson) ||
+    manifest.tool_fingerprint !== sha256(toolJson)
+  )
+    throw new Error('Historical coverage input fingerprints are invalid.');
+  const expectedModules = capturedModuleInputs({ sources, test_inputs: testInputs, tool_inputs: toolInputs });
+
+  const snapshotRelative = path.posix.join('coverage/bun-unified/runs', report.run_id, 'snapshot');
+  if (manifest.snapshot_directory !== snapshotRelative) throw new Error('Coverage snapshot path is not canonical.');
+  const snapshotDigests = new Map<string, string>();
+  for (const entry of [...sources, ...testInputs, ...toolInputs]) {
+    const prior = snapshotDigests.get(entry.path);
+    if (prior !== undefined && prior !== entry.sha256)
+      throw new Error(`Historical coverage input digest conflicts across categories: ${entry.path}`);
+    snapshotDigests.set(entry.path, entry.sha256);
+  }
+  for (const entry of parsedFixture?.inputs ?? []) {
+    const file = `${parsedFixture?.directory}/${entry.path}`;
+    const prior = snapshotDigests.get(file);
+    if (prior !== undefined && prior !== entry.sha256)
+      throw new Error(`Historical fixture input digest conflicts with measurement inputs: ${file}`);
+    snapshotDigests.set(file, entry.sha256);
+  }
+  for (const entry of parsedContractInputs ?? []) {
+    const bound = [...sources, ...testInputs, ...toolInputs].find((input) => input.path === entry.path);
+    if (!bound || bound.sha256 !== entry.sha256)
+      throw new Error(`Historical published contract input is not bound by the tool closure: ${entry.path}`);
+  }
+  const snapshotRoot = path.join(root, ...snapshotRelative.split('/'));
+  const snapshotBytes = await readQualityInputs(snapshotRoot, [...snapshotDigests.keys()]);
+  const inputBytes: Record<string, Buffer> = {};
+  for (const [file, digest] of snapshotDigests) {
+    const bytes = snapshotBytes.get(file);
+    if (!bytes) throw new Error(`Coverage input is missing from its snapshot: ${file}`);
+    if (sha256(bytes) !== digest) throw new Error(`Coverage input differs from its snapshot: ${file}`);
+    inputBytes[file] = bytes;
+  }
+  return {
+    sources,
+    source_fingerprint: manifest.source_fingerprint as string,
+    tests: tests as string[],
+    test_selection: parsedSelection as CoverageInputs['test_selection'],
+    test_inputs: testInputs,
+    test_fingerprint: manifest.test_fingerprint as string,
+    tool_inputs: toolInputs,
+    tool_fingerprint: manifest.tool_fingerprint as string,
+    module_inputs: expectedModules,
+    input_bytes: inputBytes,
+  };
 }
 
 function validatedCoverageSummary(
@@ -354,9 +499,17 @@ function verifyLoadedInputs(
   const observed = loadedInputPaths(child.loaded_inputs, expected);
   for (const test of current.tests)
     if (!observed.has(test)) throw new Error('Selected test did not execute from captured bytes: ' + test);
+  let evidenceProvider = 'tooling/bun-coverage-evidence.ts';
+  if (current.test_selection.mode === 'published-baseline-bun-native') {
+    const providers = current.tool_inputs.filter(
+      (entry) => entry.path === evidenceProvider || entry.path === 'tooling/bun-coverage-evidence.mjs',
+    );
+    if (providers.length !== 1) throw new Error('Coverage bootstrap role is missing or ambiguous: coverage evidence');
+    evidenceProvider = providers[0]!.path;
+  }
   for (const required of [
     'tooling/bun-coverage-preload.ts',
-    'tooling/bun-coverage-evidence.ts',
+    evidenceProvider,
     'tooling/source-instrumentation.ts',
     'tooling/maintained-source-inventory.ts',
   ])
@@ -529,7 +682,11 @@ function validateHistoricalReference(
   manifest: DecodedManifest,
   current: CoverageInputs,
 ) {
-  if (report.published_reference === undefined) return undefined;
+  if (report.published_reference === undefined) {
+    if (current.test_selection.mode === 'published-baseline-bun-native')
+      throw new Error('Historical baseline report has no typed measurement admission.');
+    return undefined;
+  }
   const fixture = current.test_selection.published_fixture;
   if (current.test_selection.mode !== 'published-baseline-bun-native' || !fixture)
     throw new Error('Current coverage cannot adopt historical reference admission.');
@@ -607,21 +764,37 @@ function validateCoverageReportInternal(
   options: CoverageOptions,
   finalProjections: FinalProjections,
 ): Promise<CoverageResultWithInputs>;
+function validateCoverageReportInternal(
+  reportPath: string,
+  root: string,
+  options: CoverageOptions,
+  finalProjections: undefined,
+  historicalRuntimeExecutablePath: string,
+): Promise<CoverageResult>;
 async function validateCoverageReportInternal(
   reportPath: string,
   root: string,
   options: CoverageOptions,
   finalProjections?: FinalProjections,
+  historicalRuntimeExecutablePath?: string,
 ) {
   const selectionMode = checkedSelectionMode(options);
   if (finalProjections && selectionMode !== 'current')
     throw new Error('Final quality input projections require the current test selection.');
-  const run = await readCoverageRun(reportPath, root, options.reportBytes);
+  const run = await readCoverageRun(reportPath, root, options.reportBytes, historicalRuntimeExecutablePath);
   const inputProjections = finalProjections ? await qualityInputProjections(root, finalProjections) : undefined;
-  const current = inputProjections?.coverage ?? (await captureRunInputs(root, run.report, run.manifest, selectionMode));
+  const current =
+    inputProjections?.coverage ??
+    (historicalRuntimeExecutablePath
+      ? await historicalSnapshotInputs(root, run.report, run.manifest)
+      : await captureRunInputs(root, run.report, run.manifest, selectionMode));
   if (inputProjections) {
     verifyInputBindings(run.report, run.manifest, current);
     verifySnapshotFiles(root, run.report, run.manifest, current);
+  } else if (historicalRuntimeExecutablePath) {
+    // Historical closure reconstruction binds original declared inputs while
+    // preserving the common report/manifest input agreement guard.
+    verifyInputBindings(run.report, run.manifest, current);
   }
   const { summary, perFile, sourceMaps } = validatedCoverageSummary(
     root,
@@ -646,6 +819,24 @@ async function validateCoverageReportInternal(
 
 export async function validateCoverageReport(reportPath: string, root: string, options: CoverageOptions = {}) {
   return validateCoverageReportInternal(reportPath, root, options);
+}
+
+/** Consume an already admitted historical measurement while current tools remain the admission authority. */
+export async function validateHistoricalBaselineCoverageReport(
+  reportPath: string,
+  historicalPackageRoot: string,
+  historicalRuntimeExecutablePath: string,
+  options: CoverageOptions = {},
+) {
+  if (options.testSelectionMode !== undefined && options.testSelectionMode !== 'published-baseline-bun-native')
+    throw new Error('Historical baseline consumer cannot use the current test selection.');
+  return validateCoverageReportInternal(
+    reportPath,
+    historicalPackageRoot,
+    { ...options, testSelectionMode: 'published-baseline-bun-native' },
+    undefined,
+    historicalRuntimeExecutablePath,
+  );
 }
 
 export async function validateCurrentCoverageReportWithInputs(

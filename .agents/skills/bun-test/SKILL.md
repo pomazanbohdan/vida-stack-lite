@@ -117,6 +117,14 @@ issued prewriter stage before exercising writer denial; reuse existing typed
 preparation/report owners and one observer value for both records. Derive
 synthetic package version and file sizes from their actual fixture bytes.
 
+Historical coverage-consumer tests reconstruct the original declared snapshot
+closure rather than today's tooling paths. Bind a single canonical evidence
+provider to its observed digest; distinguish synthetic structural admission
+from genuine measurement. A retained historical suite failure stays a failure.
+For synthetic child receipts, capture runtime bytes once per fixture and reuse
+that buffer for the executable hash and retained-file copy. Required test inputs
+exist at their declared snapshot paths as well as in a published fixture tree.
+
 For each observed error or bottleneck, retain a bounded receipt, inspect the
 causal path and check current official documentation/upstream issues. Record
 documented support separately from local qualification.
