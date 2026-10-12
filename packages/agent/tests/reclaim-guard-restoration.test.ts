@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import {
   lstatSync,
@@ -8,6 +9,7 @@ import {
   readdirSync,
   readlinkSync,
   symlinkSync,
+  unlinkSync,
   utimesSync,
   writeFileSync,
 } from 'node:fs';
@@ -58,6 +60,7 @@ function failRestoreFor(
   binding: NativeBinding,
   guardName: string,
   failure: Error,
+  afterQuarantine: (quarantineName: string) => void = () => undefined,
 ): {
   readonly restore: () => void;
   readonly quarantineNames: () => readonly string[];
@@ -67,6 +70,16 @@ function failRestoreFor(
   let injected = false;
   const replacement = (...args: NativePathArgs): void => {
     const [, sourceRelPath, , targetRelPath] = args;
+    if (
+      !injected &&
+      sourceRelPath === guardName &&
+      targetRelPath.startsWith('.' + guardName + '.') &&
+      targetRelPath.endsWith('.reclaimed')
+    ) {
+      original(...args);
+      afterQuarantine(targetRelPath);
+      return;
+    }
     if (
       !injected &&
       targetRelPath === guardName &&
@@ -108,10 +121,17 @@ function errorChain(error: unknown): readonly unknown[] {
   return chain;
 }
 
-function liveStaleOwner(): string {
+function endedOwnedChildPid(): number {
+  const child = spawnSync(process.execPath, ['-e', 'process.exit(0)'], { encoding: 'utf8' });
+  if (child.error || child.status !== 0 || child.pid === undefined)
+    throw new Error('ended owned child did not provide a dead PID for reclaim guard evidence');
+  return child.pid;
+}
+
+function staleDeadOwner(): string {
   return JSON.stringify({
     schema: 'SafeRepositoryAccessReclaimGuard/v1',
-    owner_pid: process.pid,
+    owner_pid: endedOwnedChildPid(),
     owner_token: '4'.repeat(36),
     acquired_at: staleTime.toISOString(),
   });
@@ -121,7 +141,7 @@ function createForeignGuard(parent: string, guardName: string): { readonly owner
   const guardPath = path.join(parent, guardName);
   mkdirSync(guardPath, { mode: 0o700 });
   const ownerPath = path.join(guardPath, 'owner.json');
-  const bytes = liveStaleOwner();
+  const bytes = staleDeadOwner();
   writeFileSync(ownerPath, bytes, { mode: 0o600 });
   utimesSync(ownerPath, staleTime, staleTime);
   utimesSync(guardPath, staleTime, staleTime);
@@ -134,6 +154,7 @@ function expectRetainedQuarantinedGuard(
   quarantineName: string,
   expectedIdentity: Identity,
   expectedOwnerBytes: string,
+  expectedAfterimage = false,
 ): void {
   expect(quarantineName).toMatch(
     new RegExp('^[.]' + guardName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[.].+[.]reclaimed$'),
@@ -141,6 +162,13 @@ function expectRetainedQuarantinedGuard(
   const quarantinePath = path.join(parent, quarantineName);
   expect(identity(quarantinePath)).toEqual(expectedIdentity);
   expect(readFileSync(path.join(quarantinePath, 'owner.json'), 'utf8')).toBe(expectedOwnerBytes);
+  expect(lstatSync(path.join(quarantinePath, 'afterimage'), { throwIfNoEntry: false }) !== undefined).toBe(
+    expectedAfterimage,
+  );
+}
+
+function addAfterimage(parent: string, quarantineName: string): void {
+  writeFileSync(path.join(parent, quarantineName, 'afterimage'), 'arrived after quarantine');
 }
 
 linuxTest('does not admit a callback after foreign reclaim-guard restoration fails', () => {
@@ -153,7 +181,7 @@ linuxTest('does not admit a callback after foreign reclaim-guard restoration fai
   const guard = createForeignGuard(parent, guardName);
   const guardIdentity = identity(path.join(parent, guardName));
   const restoreFailure = Object.assign(new Error('injected guard restore EIO'), { code: 'EIO' });
-  const fault = failRestoreFor(nativeBinding(), guardName, restoreFailure);
+  const fault = failRestoreFor(nativeBinding(), guardName, restoreFailure, (name) => addAfterimage(parent, name));
   let callbackCalls = 0;
   let returned = false;
   let operationError: unknown;
@@ -181,7 +209,7 @@ linuxTest('does not admit a callback after foreign reclaim-guard restoration fai
   expect(errorChain(operationError).includes(restoreFailure)).toBe(true);
   const quarantineName = fault.quarantineNames()[0];
   if (quarantineName === undefined) throw new Error('failed guard restoration did not retain quarantine identity');
-  expectRetainedQuarantinedGuard(parent, guardName, quarantineName, guardIdentity, guard.bytes);
+  expectRetainedQuarantinedGuard(parent, guardName, quarantineName, guardIdentity, guard.bytes, true);
   expect(operationError).toMatchObject({ code: 'SAFE_REPOSITORY_LOCK_RESTORE_INCOMPLETE' });
   expect(lstatSync(path.join(parent, 'admission.lock'), { throwIfNoEntry: false })).toBeUndefined();
 
@@ -205,7 +233,7 @@ linuxTest('does not admit a callback after foreign reclaim-guard restoration fai
     name: 'SafeRepositoryLockPendingQuarantineError',
     code: 'SAFE_REPOSITORY_LOCK_CONTENTION',
   });
-  expectRetainedQuarantinedGuard(parent, guardName, quarantineName, guardIdentity, guard.bytes);
+  expectRetainedQuarantinedGuard(parent, guardName, quarantineName, guardIdentity, guard.bytes, true);
   expect(lstatSync(path.join(parent, 'admission.lock'), { throwIfNoEntry: false })).toBeUndefined();
 });
 
@@ -217,7 +245,7 @@ linuxTest('reports failed foreign guard restoration as incomplete release and wi
   const lockName = 'release.lock';
   const guardName = lockName + '.reclaim';
   const restoreFailure = Object.assign(new Error('injected guard restore EIO'), { code: 'EIO' });
-  const fault = failRestoreFor(nativeBinding(), guardName, restoreFailure);
+  const fault = failRestoreFor(nativeBinding(), guardName, restoreFailure, (name) => addAfterimage(parent, name));
   let callbackCalls = 0;
   let returned = false;
   let operationError: unknown;
@@ -259,7 +287,7 @@ linuxTest('reports failed foreign guard restoration as incomplete release and wi
   expect(identity(path.join(parent, 'release.lock'))).toEqual(lockIdentity);
   const quarantineName = fault.quarantineNames()[0];
   if (quarantineName === undefined) throw new Error('failed guard restoration did not retain quarantine identity');
-  expectRetainedQuarantinedGuard(parent, guardName, quarantineName, guardIdentity, guardBytes);
+  expectRetainedQuarantinedGuard(parent, guardName, quarantineName, guardIdentity, guardBytes, true);
 });
 
 linuxTest('preserves an unsafe foreign owner failure when restoring its guard also fails', () => {
@@ -273,15 +301,21 @@ linuxTest('preserves an unsafe foreign owner failure when restoring its guard al
   mkdirSync(guardPath, { mode: 0o700 });
   const ownerPath = path.join(guardPath, 'owner.json');
   const targetPath = path.join(parent, 'foreign-owner-target.json');
-  const targetBytes = liveStaleOwner();
+  const targetBytes = staleDeadOwner();
   writeFileSync(targetPath, targetBytes, { mode: 0o600 });
   utimesSync(targetPath, staleTime, staleTime);
-  symlinkSync(targetPath, ownerPath);
+  writeFileSync(ownerPath, targetBytes, { mode: 0o600 });
+  utimesSync(ownerPath, staleTime, staleTime);
   utimesSync(guardPath, staleTime, staleTime);
   const guardIdentity = identity(guardPath);
-  const ownerLinkIdentity = identity(ownerPath);
+  let ownerLinkIdentity: Identity | undefined;
   const restoreFailure = Object.assign(new Error('injected unsafe guard restore EIO'), { code: 'EIO' });
-  const fault = failRestoreFor(nativeBinding(), guardName, restoreFailure);
+  const fault = failRestoreFor(nativeBinding(), guardName, restoreFailure, (name) => {
+    const movedOwner = path.join(parent, name, 'owner.json');
+    unlinkSync(movedOwner);
+    symlinkSync(targetPath, movedOwner);
+    ownerLinkIdentity = identity(movedOwner);
+  });
   let callbackCalls = 0;
   let operationError: unknown;
 
@@ -313,6 +347,7 @@ linuxTest('preserves an unsafe foreign owner failure when restoring its guard al
     throw new Error('failed unsafe-owner restoration did not retain quarantine identity');
   const quarantinePath = path.join(parent, quarantineName);
   expect(identity(quarantinePath)).toEqual(guardIdentity);
+  if (ownerLinkIdentity === undefined) throw new Error('quarantined owner symlink identity was not captured');
   expect(identity(path.join(quarantinePath, 'owner.json'))).toEqual(ownerLinkIdentity);
   expect(readFileSync(targetPath)).toEqual(Buffer.from(targetBytes));
   expect(readlinkSync(path.join(quarantinePath, 'owner.json'))).toBe(targetPath);

@@ -7421,3 +7421,39 @@ custody; do not recapture it. Current Bun1.4.3 must consume the admitted origina
 Bun1.4.2 measurement without executing the old runtime or changing its failed
 suite status. Executable exhaustive frozen CRAP plan, mutation partition
 admission and current final coverage remain open. No numeric PASS is claimed.
+
+### Follow-up — restoration and actual SQLite exclusion controls
+
+e8a310c is published via ordinary strict hooks. The first hook rejected changed
+Git index identity; unchanged staged bytes passed on retry with index-refresh
+operations held. Do not bypass those guards. Read-only status uses
+GIT_OPTIONAL_LOCKS=0 during publication to avoid refreshing the index.
+
+Three restoration fixtures previously used the live test PID, so the new
+pre-move dead-owner guard correctly prevented their injected restore faults.
+Use an actual owned, known-terminal child PID and introduce the conflicting
+afterimage or owner symlink only after the real quarantine move. Root qualifies
+all three controls at8.40/7.52/7.44ms. Original guard/owner identity, callback
+denial, restore error and retained quarantined bytes remain checked. This is
+fixture correction; live-owner refusal is preserved, not changed in Source.
+
+The recovery race control now observes the actual Host-state read inside its
+SQLite immediate transaction, asserts inTransaction and attempts the real peer
+producer. It passes1.63s. Cutoff child observation initially exposes a known
+startup failure (Host workspace identity invalid), rather than another10s
+readiness timeout. Its embedded call used the retired path-only API signature.
+Serialize a compiler-checked current repository/database-relative/workspace
+input, emit readiness before blocking, await the original close promise under
+a separate bounded cleanup deadline, and retain any failed/nonterminal fixture.
+Root fresh qualification passes1case/6assertions/5.26s total, body3.25s. Retain
+the prior failed /tmp/vida-cutoff-process-SOp6i3; do not replay or delete it.
+
+Historical consumer remains an explicit unfinished lane. Current strict-mode
+and synthetic runtime/manifest/process denials pass, as do seven post-validation
+CLI correspondence controls, including exact frozen baseline CC drift. Genuine
+retained evidence now passes runtime binding but fails because the consumer
+rediscovers today's TS tooling paths in an old producer tree. Reconstruct the
+original sealed closure through existing bounded no-follow input readers;
+never install new tools into that retained tree or recapture it. SDK capture
+self-consistency likewise cannot claim selected formation freshness. These
+pending Source changes are not part of the two-test correction publication.

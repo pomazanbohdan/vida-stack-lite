@@ -1471,7 +1471,7 @@ describe('unprepared recovery', () => {
       }
     }
   });
-  test('producer reservation cannot race the engine census held by recovery apply', () => {
+  test("producer reservation cannot race recovery apply's Host-state writer fence", () => {
     const f = unpreparedRecoveryFixture();
     let peer: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
     let spy: QuerySpyHandle | undefined;
@@ -1483,8 +1483,9 @@ describe('unprepared recovery', () => {
       if (!originalRunId) throw Error('recovery run identity is missing');
       let attempted = false;
       spy = observeDatabaseQuery(f.db, (sql) => {
-        if (sql.startsWith('SELECT count(*) AS count,') && !attempted) {
+        if (sql.startsWith('SELECT workspace_id,kind,id,revision,digest,') && !attempted) {
           attempted = true;
+          expect(f.db.inTransaction).toBe(true);
           expect(() =>
             activePeer.beginSessionProducer({
               projectIds: ['project'],
@@ -1616,6 +1617,29 @@ test('durable controller publication cleans only its own pending file when publi
 test('cutoff SQLite exclusion rejects a live owner and recovers after process termination without an orphan marker', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-cutoff-process-'));
   let child: ReturnType<typeof spawn> | undefined;
+  let childCloseObserved = false;
+  let childTerminationRequested = false;
+  let assertionsPassed = false;
+  let preserveRoot = false;
+  let stdout = '';
+  let stderr = '';
+  let childError: string | null = null;
+  let closed: Promise<{ readonly code: number | null; readonly signal: NodeJS.Signals | null }> | null = null;
+  let closeWaitAttempted = false;
+  let closeWaitResult: { readonly code: number | null; readonly signal: NodeJS.Signals | null } | null = null;
+  const waitForChildClose = async () => {
+    const childClosed = closed;
+    if (!childClosed || closeWaitAttempted) return closeWaitResult;
+    closeWaitAttempted = true;
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
+    const result = await Promise.race([
+      childClosed,
+      new Promise<null>((resolve) => (closeTimer = setTimeout(() => resolve(null), 5000))),
+    ]);
+    if (closeTimer) clearTimeout(closeTimer);
+    closeWaitResult = result;
+    return result;
+  };
   try {
     for (const file of ['agent-runtime.config.v1.yaml', 'AGENTS.md', 'AGENT.sidecar.md'])
       writeFileSync(path.join(root, file), readFileSync(path.join(repositoryRoot, file)));
@@ -1642,32 +1666,63 @@ test('cutoff SQLite exclusion rejects a live owner and recovers after process te
     mkdirSync(path.join(root, config.control.work_root), { recursive: true });
     const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
     const sourceUrl = pathToFileURL(path.join(packageRoot, 'src', 'host-state.ts')).href;
+    const transactionInput: Parameters<typeof import('../src/host-state.ts').withHostStateExclusiveTransaction>[0] = {
+      repositoryRoot: root,
+      databaseRelativePath: path.relative(root, databasePath).replaceAll('\\', '/'),
+      workspaceId: deriveWorkspaceId(config.repository.repository_id, root),
+    };
     const runningChild = spawn(
       process.execPath,
       [
         '-e',
-        `import {withHostStateExclusiveTransaction} from ${JSON.stringify(sourceUrl)};
-    withHostStateExclusiveTransaction(${JSON.stringify(databasePath)},()=>{process.stdout.write('locked\\n');
+        `import {writeSync} from 'node:fs';
+    import {withHostStateExclusiveTransaction} from ${JSON.stringify(sourceUrl)};
+    writeSync(1,'opening\\n');
+    withHostStateExclusiveTransaction(${JSON.stringify(transactionInput)},()=>{writeSync(1,'locked\\n');
     Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0);});`,
       ],
       { cwd: packageRoot, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] },
     );
     child = runningChild;
-    const exited = new Promise<{ readonly code: number | null; readonly signal: NodeJS.Signals | null }>((resolve) =>
-      runningChild.once('exit', (code, signal) => resolve({ code, signal })),
+    let resolveReady!: () => void;
+    const ready = new Promise<void>((resolve) => (resolveReady = resolve));
+    closed = new Promise<{ readonly code: number | null; readonly signal: NodeJS.Signals | null }>((resolve) =>
+      runningChild.once('close', (code, signal) => {
+        childCloseObserved = true;
+        resolve({ code, signal });
+      }),
     );
-    await new Promise<void>((resolve, reject) => {
-      const timer = setTimeout(() => reject(Error('fixture writer did not acquire SQLite exclusion')), 10000);
-      runningChild.stdout.once('data', (bytes: Buffer) => {
-        clearTimeout(timer);
-        if (bytes.toString().includes('locked')) resolve();
-        else reject(Error('unexpected child output'));
-      });
-      runningChild.once('error', (error) => {
-        clearTimeout(timer);
-        reject(error);
-      });
+    runningChild.stdout.on('data', (bytes: Buffer) => {
+      stdout += bytes.toString();
+      if (stdout.includes('locked')) {
+        resolveReady();
+      }
     });
+    runningChild.stderr.on('data', (bytes: Buffer) => {
+      stderr += bytes.toString();
+    });
+    runningChild.once('error', (error) => {
+      childError = error.message;
+    });
+    let readinessTimer: ReturnType<typeof setTimeout> | undefined;
+    const readiness = await Promise.race([
+      ready.then(() => ({ kind: 'ready' as const })),
+      closed.then((receipt) => ({ kind: 'closed' as const, receipt })),
+      new Promise<{ readonly kind: 'timeout' }>(
+        (resolve) => (readinessTimer = setTimeout(() => resolve({ kind: 'timeout' }), 10000)),
+      ),
+    ]);
+    if (readinessTimer) clearTimeout(readinessTimer);
+    if (readiness.kind !== 'ready') {
+      const terminal =
+        readiness.kind === 'closed'
+          ? `exit=${readiness.receipt.code ?? 'null'} signal=${readiness.receipt.signal ?? 'none'}`
+          : 'readiness deadline expired; child terminal state pending';
+      throw Error(
+        `fixture writer did not report SQLite exclusion (${terminal}; spawnError=${childError ?? 'none'})` +
+          `\nstdout:\n${stdout}\nstderr:\n${stderr}`,
+      );
+    }
     const selector: ActiveSelectorState = {
       generationRoot,
       generation: 'fixture-generation',
@@ -1691,16 +1746,30 @@ test('cutoff SQLite exclusion rejects a live owner and recovers after process te
     expect(
       requireRecord(parseJsonUnknown(readFileSync(witnessPath, 'utf8')), 'cutoff witness').first_admitted_work_attempt,
     ).toBeNull();
-    runningChild.kill('SIGKILL');
-    await exited;
+    childTerminationRequested = true;
+    expect(runningChild.kill('SIGKILL')).toBe(true);
+    const stopped = await waitForChildClose();
+    if (!stopped) throw Error(`fixture writer close was not observed after termination request\n${stderr}`);
+    expect(stopped.signal).toBe('SIGKILL');
     await advanceCutoff(selector, values);
     expect(
       requireRecord(parseJsonUnknown(readFileSync(witnessPath, 'utf8')), 'cutoff witness').first_admitted_work_attempt,
     ).toBe('fixture-repository/new-work/1/' + values.scope_digest);
     expect(existsSync(path.join(generationRoot, 'cutoff-witness.lock'))).toBe(false);
+    assertionsPassed = true;
   } finally {
-    if (child?.exitCode === null && child?.signalCode === null) child.kill('SIGKILL');
-    rmSync(root, { recursive: true, force: true });
+    if (child && !childCloseObserved && !childTerminationRequested) {
+      childTerminationRequested = true;
+      child.kill('SIGKILL');
+    }
+    if (child && !childCloseObserved && !closeWaitAttempted) await waitForChildClose();
+    preserveRoot = !assertionsPassed || (child !== undefined && !childCloseObserved);
+    if (preserveRoot)
+      process.stderr.write(
+        `Retained failed or nonterminal cutoff fixture: ${root}\n` +
+          `childCloseObserved=${childCloseObserved} childError=${childError ?? 'none'}\nstdout:\n${stdout}\nstderr:\n${stderr}\n`,
+      );
+    else rmSync(root, { recursive: true, force: true });
   }
 }, 20000);
 const common = [

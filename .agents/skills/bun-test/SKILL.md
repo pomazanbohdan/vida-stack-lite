@@ -91,6 +91,13 @@ that positive control is insufficient. Platform doubles may simulate responses,
 but must observe real child startup separately; an unconfirmed request stays
 UNKNOWN rather than proving cleanup.
 
+Build arguments for an embedded child API call as a typed parent value before
+serializing it, so the compiler catches signature drift. Observe stderr and
+`close` alongside readiness; fail on known early termination rather than waiting
+for the readiness deadline. Reuse the original close promise for bounded cleanup
+and retain failed/nonterminal fixtures. A child that immediately blocks its event
+loop should emit readiness synchronously with `writeSync` before blocking.
+
 Test SDK Source capture with inert files and tool imports, without forming an
 SDK. Verify retained bytes after live changes, aliases/cycles, omitted tests/
 generated files and existing boundary limits. Reuse the bounded quality reader
