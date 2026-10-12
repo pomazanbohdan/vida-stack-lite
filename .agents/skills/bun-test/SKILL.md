@@ -1,6 +1,6 @@
 ---
 name: bun-test
-description: Use when writing, migrating, reviewing, running or optimizing TypeScript tests with Bun in this repository, or diagnosing timeouts, missing profiles, fixture leaks and mock pollution.
+description: Use when writing, migrating, reviewing, running or optimizing TypeScript tests with Bun in this repository, or diagnosing timeouts, parallel resource conflicts, missing profiles, fixture leaks and mock pollution.
 ---
 
 # Bun Test development
@@ -168,15 +168,44 @@ same case and instrumentation under the same resource conditions. Report
 operation-count reductions separately from elapsed-time improvements; nested
 reporter rows and partial runs do not establish whole-suite percentiles.
 
-For parallel test design, consult [Bun file workers/isolation/sharding](https://bun.com/docs/test/parallel.md).
-`--parallel` distributes files; `test.concurrent` shares a thread/global within
-a file. Global mocks, clocks, environment or mutable fixture state need explicit
-independence proof. Native coverage/JUnit merging is not VIDA receipt admission.
-Our proposed [explicit-shard design](../../../.agent/work/core-runtime-reactivation/PARALLEL-TESTING-DESIGN-20261012.md)
-is pending: one captured snapshot/maps, two direct serial producers, exact
-assignment union, exclusive resource waves and Root's one global validation.
-Keep current/historical serial commands until its custody/pilot checks qualify.
-No additional per-worker AST/scan/hash passes or full-suite duplicates.
+For parallel work, read [TESTING's parallel contract](../../../packages/agent/TESTING.md#parallel-testing-current-status-and-required-contract)
+and [Bun file workers/isolation/sharding](https://bun.com/docs/test/parallel.md).
+Use this recipe for the [pending explicit-shard design](../../../.agent/work/core-runtime-reactivation/PARALLEL-TESTING-DESIGN-20261012.md):
+
+1. Reuse one captured inventory/input snapshot/maps and one final owner. The pure
+   scheduler does not activate parallel coverage. Keep current commands serial
+   until protocol/custody/pilots qualify; historical baseline stays serial.
+2. Review resource ownership against current test SHA and global input/runtime/
+   provider/package-owner scope. Missing review means singleton exclusive; stale
+   or malformed review denies. Derive canonical namespace/digest resource IDs
+   from captured physical owners, not alternate path strings. Private consumer
+   roots still share package identity/schema/template reads and their CAS locks;
+   keep that resource until package-only reader overlap qualification.
+3. Batch reviewed files into two direct serial Bun assignments with explicit
+   `./` paths, `--parallel=1 --no-isolate` and5000ms per test. Same-resource files
+   may share one serial assignment; overlapping resources across assignments
+   require later waves. Concurrent bodies/global flags invalidate this contract.
+   Review mocks/clocks/env/module order independently. Count balance is neutral;
+   partial reporter sums cannot provide measured duration weights or speedup.
+4. Give every shard disjoint owned outputs. Require exact selected union, local
+   input evidence and receipt/terminal run-shard-PID joins before one checked
+   counter merge/global validation. Native JUnit/coverage aggregation is not
+   admission. Keep proof kinds and exact/frozen/mutation gates distinct.
+5. Separate direct reservation release from resource-wave advancement.
+   The one run lock releases only after every launched direct producer is
+   accounted for; an unknown sibling holds it. Not-started accounts only for its
+   own launch. Next resource use needs descendant/effect quiescence evidence;
+   PASS/exit, released
+   lock, absent PID/marker or a cleanup signal is insufficient. Stop successors
+   and retain UNKNOWN on missing proof; do not retry under a new operation ID.
+6. Preserve one remaining pinned-command budget including planned typecheck,
+   preparation, waves and nested CRAP; the deployed ceiling is still child-only.
+   Spent allowance means no launch, never native timeout0. Compare bounded
+   synthetic pilots with distinct run IDs/output roots over identical captured
+   inputs; they qualify mechanics, not global metrics or adversarial test trust.
+   Preserve every case/assertion/test-ID when extracting domains.
+
+No per-worker full AST/scan/hash pass, duplicate full suite or build/install test.
 
 Completion flags do not prevent cleanup after a timed-out body settles late.
 Before deleting a fixture, require a finite unexpired monotonic deadline after

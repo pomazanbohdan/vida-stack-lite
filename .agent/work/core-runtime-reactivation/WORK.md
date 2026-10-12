@@ -8268,3 +8268,56 @@ Review resolved all architecture blockers; implementation/pilot remains pending.
 Current runtime producer still has600000ms child-only ceiling; do not claim the
 planned end-to-end budget as deployed. Exact coverage, exhaustive frozen budgets,
 assertion-confirmed mutation100 and actual Runtime acceptance remain pending.
+
+### 2026-10-12 — parallel scheduler and persistent testing instructions
+
+User requested iterative architecture optimization and persistent instructions.
+Compared native shared/isolated workers, concurrent bodies, explicit direct
+shards, resource waves, domain splitting, package copies and package-only reads.
+Fourth iteration compares resource components with ordered batched waves:
+initial count-balanced two-shard batches retain import/JIT reuse, a resource
+bridge flushes a wave, unknown/global-exclusive files run alone. No measured
+speedup or optimal makespan claim. Complete same-scope durations remain pending;
+partial reporter body sums are not scheduling weights.
+
+Pure scheduler uses captured InputDigest rows and canonical resource owner IDs,
+rejects stale/foreign/duplicate reviews, binds test bytes and global review scope,
+and emits exact disjoint selected union with serial same-resource batches.
+No filesystem scan/read or duplicate AST pass. Package phase/file ownership and
+existing coverage tool-input list include scheduler/test once. A real omission
+of the scheduler tool row assertion-fails the new fingerprint control; original
+subject restored. This is a behavioral regression proof, not mutation admission.
+
+Root qualification32PASS/292assertions across scheduler and quality projections,
+465ms final focused process, default5000ms per test.428maintainedTS0diagnostics,
+Source97 and scoped lint PASS. Initial strict check exposed readonly matcher
+typing; lint then exposed Array.isArray's any[] narrowing, corrected without
+suppressions. Logs: .tmp/coverage-iteration-72eefda/shard-plan-qualified-final.log,
+shard-plan-static-qualified.log and shard-tool-binding-red.log. Documentation
+policy controls PASS; skill frontmatter/section anchor/five changed links PASS.
+
+Blind architecture review separates direct producer/reservation disposition from
+resourceSafeToAdvance descendant/effect custody. Missing resource proof stops
+successors with UNKNOWN. Design/plan now specify disjoint physical shard outputs,
+checked counter/source-map merge, distinct comparison run IDs over identical
+immutable inputs and synthetic-pilot trust limits. No parallel producer enabled.
+
+TESTING.md owns the complete required contract; bun-test reference points to it,
+and sidecar bootstrap/delegation points to both. Baseline instruction application
+found shared-package and serial-batch gaps. A fresh blind Luna application after
+the update correctly answers all9 resource/custody/union/deadline/status/timing/
+trust/freshness scenarios and finds the bootstrap links, with no contradictions.
+No .vida skill mirror. Root remains sole numeric/runtime owner. Parallel protocol,
+supervisor/global deadline, package-reader/domain qualification and complete
+coverage/frozen correspondence/assertion-confirmed mutation remain pending.
+
+Final blind review also requires one run-level reservation release only after
+every launched direct producer is accounted; no per-shard release and no passing
+sibling masking UNKNOWN. Sparse child counters retain canonical per-key checks,
+global full-map zero seed and exact aggregate Source domain; unloaded rows never
+gain positive proof. Additional blind instruction scenarios correctly apply
+shared-lock/not-started, descendant reuse and sparse merge distinctions. Reviewer
+reports no remaining contract blocker. This is guidance qualification only.
+Ordinary pre-commit Knip rejects two unused exported intermediate types. Keep
+assignment/wave shapes private until an actual protocol consumer needs them;
+no hook bypass, ignores or dummy consumers. Public plan/review API remains.

@@ -140,6 +140,12 @@ is a maintained technique reference; those existing owners retain all policy,
 gate and command authority. Update the reference with verified changes in the
 same correction packet. Keep its original only in `.agents/skills`.
 
+Before changing test concurrency, eligibility, coverage receipts or the runner,
+read [TESTING's parallel contract](packages/agent/TESTING.md#parallel-testing-current-status-and-required-contract)
+and its linked design/implementation plan. Include this bootstrap pointer in
+delegation. A scheduler/control pass does not activate parallel coverage; current
+serial commands remain until protocol, custody and pilot qualification.
+
 Author self-development automation in TypeScript and execute it with qualified
 Bun. For inventory/report processing, reuse the package-owned TS tools or an
 owned temporary `.ts` diagnostic. Use `apply_patch` for exact document edits.

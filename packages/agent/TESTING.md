@@ -663,18 +663,102 @@ final coverage or mutation results. Keep its CLI
 controller destinations must remain outside the editable repository target;
 do not set TMPDIR to a directory inside that target for the full suite.
 
-Parallel coverage is a pending protocol change, not a supported flag override.
-Current preload/process receipts require the whole selected test set per
-process; historical references additionally bind one PID and fixture-child
-observations. Native Bun worker/JUnit merging does not satisfy these contracts.
-See `.agent/work/core-runtime-reactivation/PARALLEL-TESTING-DESIGN-20261012.md`
-and its implementation plan. The proposed current-mode path uses two direct
-serial shards over one captured snapshot, exact disjoint assignment/union,
-resource-exclusive waves and one final verifier. Keep historical mode serial.
-Do not enable it before bounded custody/provenance and same-input performance
-qualification. The planned pinned-command deadline includes typecheck and the
-currently nested CRAP gate; the present ten-minute limit covers the test
-producer only. Never report the planned behavior as already implemented.
+### Parallel testing: current status and required contract
+
+Parallel coverage remains pending; it is not a supported flag override. The pure
+`tooling/coverage-shard-plan.ts` scheduler does not activate parallel production.
+Current preload/process receipts require the whole selected set per process;
+historical references also bind one PID and fixture-child observations. Native
+Bun worker/JUnit merging does not satisfy these contracts. Keep current and
+historical commands serial until the versioned protocol, custody and bounded
+pilot qualify. Keep historical baseline execution serial after current-mode
+parallelism qualifies. Read the maintained
+[design](../../.agent/work/core-runtime-reactivation/PARALLEL-TESTING-DESIGN-20261012.md)
+and [implementation plan](../../.agent/work/core-runtime-reactivation/PARALLEL-TESTING-IMPLEMENTATION-20261012.md)
+before changing the runner or parallel eligibility.
+
+The target is one final-check owner, one run/reservation, one captured input
+snapshot and instrumented map set, and initially two direct Bun producers.
+Prepare the Babel inventory, associations, reviewed scenarios and digests once.
+Reuse captured bytes/maps across shards; validate and merge globally once.
+Do not add per-worker full AST/scan/hash passes, competing full suites or tests
+in build/install. Preserve existing exact coverage, frozen CC/CRAP, function
+correspondence and assertion-confirmed Killed gates. Static links, execution,
+coverage, assertions, properties and mutation remain distinct evidence.
+
+Each assignment batches explicit `./` test paths in one serial Bun child with
+`--parallel=1 --no-isolate` and `--timeout 5000`. A shared-resource file may run
+after another in that same assignment. This requires serial test bodies too:
+global `--concurrent`, `test.concurrent` and concurrent describes invalidate the
+initial assignment contract. Mocks, clocks, environment and module ordering need
+their own review; fresh filesystem roots do not prove global independence.
+Batch resource-free files to retain import/JIT reuse rather than starting a
+process per file. Balance file counts with stable path/index ties initially;
+use duration weights only after complete same-scope per-file timing evidence.
+Partial reporter body sums are not those weights or proof of speedup.
+
+Eligibility binds captured test SHA plus the source/test/tool/config/runtime,
+platform/provider and package-owner review scope. Source or dependency drift
+invalidates unchanged-test reviews too. Omitted reviews default to singleton
+exclusive waves; stale, duplicate, foreign or malformed reviews deny planning.
+Use canonical `namespace:<64 lowercase hex>` resource IDs derived from already
+captured physical-owner identity, not alternative raw path spellings. The pure
+scheduler performs no filesystem discovery. Resource IDs shared by concurrent
+assignments are forbidden. A file joining resources from both assignments starts
+a later wave. Global-exclusive files run alone between settled waves.
+
+Private consumer roots do not isolate runtime package resources. Package identity,
+schema and template reads may still use one executing package root and read-side
+CAS locks. Keep the shared runtime-package owner resource until package-only
+verified reads and actual overlapping-reader controls qualify. Preserve mutable
+consumer/Source readers, identity/freshness/bounds, authorization, CAS, recovery
+and durable writes. Package copies alone do not redirect module-derived roots.
+
+Direct-producer termination and coverage-reservation release are separate from
+resource-wave advancement. Apply the exact existing direct reservation predicates.
+The run has one acquired reservation, released once by its owner only after all
+launched direct producers are accounted for under those predicates. An unknown
+or unobserved producer keeps the shared reservation held despite passing siblings.
+An exact not-started result accounts only for its own launch, never another child.
+A successor also needs reviewed descendant/effect quiescence for resources it
+will reuse. Direct PASS/exit, a released lock, missing PID/marker or issued signal
+cannot establish this. Missing custody proof stops successors and retains UNKNOWN
+evidence. Never retry an uncertain operation under another ID.
+
+Every shard owns disjoint physical coverage/JUnit/log/receipt/temp outputs.
+Reject aliases, output collisions and writes into the shared immutable snapshot
+before launch. Bind run/shard/PID, exact argv/cwd/env, global inputs and local
+assigned tests in the new protocol; preserve serial readers. Admission requires
+exact disjoint assignment union, exact assigned-input load evidence, no sibling
+claims, and valid process receipts joined to known successful supervisor outcomes.
+Child counter evidence may be sparse: validate every observed source key against
+its exact canonical map entry, deny foreign keys and invalid counter shapes,
+and check safe-integer sums. Seed the global result once from the full captured
+map; require the merged domain to equal the complete expected Source set. This
+does not require every shard to load every Source. PASS siblings cannot mask missing,
+stale, duplicate, foreign, failed or UNKNOWN evidence.
+An absent Source key adds no counter increments; an unloaded seeded Source keeps
+zero counters and still faces every exact coverage gate. Absence cannot replace
+required receipt or loaded-module evidence; retain existing per-process checks.
+
+The planned600000ms pinned-command deadline covers typecheck, preparation,
+waves, custody, report validation and nested CRAP. The current600000ms ceiling
+still covers the test producer only. Use one monotonic remaining allowance;
+reserve cleanup/report time and clamp CRAP's existing300000ms upper bound.
+Spent allowance prevents launch; native timeout0 may disable a timeout.
+Per-test5000ms defaults and justified case overrides remain separate. Mutation
+is separately invoked; the ten-minute target does not qualify its whole campaign.
+
+Qualify pure assignment controls first, then bounded two-file/failure pilots
+through the existing explicitly untrusted synthetic-fixture owner. A pilot proves
+fixture behavior/receipt mechanics, not full trusted Source coverage or protection
+against adversarial in-process test code. Compare serial and parallel over the
+same immutable inputs/pin/maps/resource scope, with distinct run IDs and outputs.
+Record actual wall/test-file tails, memory, child count and retained roots.
+Stop expansion on custody, provenance, collisions, lost cases/assertions or resource
+regressions. Split large files by domain only with exact case/name/test-ID lineage,
+reviewed associations and fresh owned roots/DBs per case. Expand opt-in contours
+before one complete current selection; publish verified correction packets.
 
 For fixture teardown after asynchronous bodies, completion alone is insufficient:
 a timed-out body may reach its final assertions later. Permit removal only with

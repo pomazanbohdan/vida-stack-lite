@@ -218,6 +218,25 @@ describe('final quality input projections', () => {
     );
   });
 
+  test('binds scheduler bytes into every quality projection and retains the previous snapshot after drift', async () => {
+    const root = fixtureRoot();
+    const selection = { coverage: [], mutation: [], guard: [] };
+    const before = await qualityInputProjections(root, selection);
+    const planner = 'tooling/coverage-shard-plan.ts';
+    writeFileSync(path.join(root, planner), 'export const schedulerRevision = 2;\n');
+    const after = await qualityInputProjections(root, selection);
+
+    for (const kind of ['coverage', 'mutation', 'guard'] as const) {
+      expect(before[kind].tool_inputs.map(({ path: file }) => file)).toContain(planner);
+      expect(before[kind].input_bytes[planner]).toEqual(Buffer.from('fixture\n'));
+      expect(after[kind].input_bytes[planner]).toEqual(Buffer.from('export const schedulerRevision = 2;\n'));
+      expect(after[kind].source_fingerprint).toBe(before[kind].source_fingerprint);
+      expect(after[kind].test_fingerprint).toBe(before[kind].test_fingerprint);
+      expect(after[kind].tool_fingerprint).not.toBe(before[kind].tool_fingerprint);
+      expect(qualityFingerprint(after[kind])).not.toBe(qualityFingerprint(before[kind]));
+    }
+  });
+
   test('admits captured package metadata and a named package-root developer config only', async () => {
     const root = fixtureRoot();
     writeFileSync(

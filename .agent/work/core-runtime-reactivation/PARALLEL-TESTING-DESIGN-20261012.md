@@ -1,6 +1,7 @@
 # Parallel testing architecture — reviewed design candidate
 
-Status: design; parallel coverage is not implemented or qualified. Current
+Status: design with scheduler implementation in progress; parallel coverage
+is not implemented or qualified. Current
 serial/historical protocols remain authoritative. User requested iterative
 comparison and autonomous testing-architecture work; no new approval pause is
 introduced. Root owns this document and final runtime/numeric verification.
@@ -89,7 +90,20 @@ test claim, one valid terminal process receipt per shard, unique producer PID,
 unchanged shared map/artifact bindings and known successful child outcomes.
 Coverage-process receipts and supervisor terminal records remain distinct:
 validate their run/shard/PID join; a coverage JSON file is not a terminal proof.
-Required counters are merged once. Missing/foreign/stale/duplicate evidence,
+Each shard exclusively owns physical coverage/JUnit/log/receipt/temp output
+paths beneath its run/shard root. Before launch, reject aliases, collisions and
+paths into the common immutable snapshot/maps or another shard's outputs.
+Child evidence may have sparse source keys: every observed key must match its
+exact common instrumented map entry, with no foreign key, valid counter shapes,
+finite nonnegative safe integers and checked sums without overflow. Seed the
+global result once from the full sealed source map; merge each bound source key
+across accepted shards, require exact full expected aggregate Source domain and
+run global canonical validation once. No per-shard full Source loading is required.
+Required counters are merged once.
+Absent Source keys add no increments; unloaded seeded Source keeps zero counters
+and still faces exact coverage gates. Preserve required per-process receipt and
+loaded-module checks; absent data is not positive evidence.
+Missing/foreign/stale/duplicate evidence,
 failure or UNKNOWN prevents numeric admission. Module-load evidence remains
 distinct from execution, coverage, assertions, properties and mutation results.
 
@@ -110,10 +124,23 @@ same-input measurements show lower wall time without worse tails, failures,
 UNKNOWN, memory pressure or retention growth. Independent shard processes still
 may spawn CLI children; monitor aggregate resources, not only shard count.
 
-Use one bounded, deterministic assignment plan, longest measured files first
-with path/shard-index tie breaks. Unmeasured files use a neutral scheduling
-weight, explicitly not a duration estimate. Partial/old timings may guide
-ordering but cannot establish complete performance or quality admission.
+Use one bounded, deterministic assignment plan. The first scheduler sorts paths
+and balances eligible file counts, with shard-index tie breaks; file counts are
+not duration estimates. A later optional longest-file-first schedule needs
+complete, same-scope per-file timing evidence. Partial reporter body sums cannot
+provide those weights or establish performance/quality admission.
+
+Fourth iteration compares resource-connected components against greedy ordered
+waves. A component-only partition minimizes producer startup but unnecessarily
+serializes independent files when a later file joins two resources.
+The first scheduler keeps two serial batches and flushes a wave when a new file
+would join resource owners from both batches. This preserves available overlap
+without concurrent resource reuse. It is deterministic, not a proof of minimal
+makespan. No timed optimizer, search engine or adaptive worker controller is
+needed before the first qualified comparison. Resource-free files share batches
+instead of launching a new process per file. Unknown files remain separate
+exclusive pilot waves until review permits batching/parallel admission; do not
+use a mostly unknown plan to claim a full-suite speed improvement.
 
 Eligibility is opt-in and review-backed. Unknown resource ownership stays in
 the exclusive wave. An exclusive file blocks other files that share its resource;
@@ -128,8 +155,21 @@ a resource review after Source or dependency/provider behavior changes.
 The plan has ordered waves; each wave contains nonconflicting shard assignments.
 Unknown/global-exclusive files form singleton waves, with all other producers
 settled before launch. The supervisor advances a wave only after accounting its
-children; no second shard can overlap a singleton exclusive wave.
+children and proving the affected resources safe to reuse; no second shard can
+overlap a singleton exclusive wave. Keep separate predicates for direct producer
+termination/coverage reservation release and resource-wave advancement. A passing
+exit, released coverage lock, absent PID/marker or issued cleanup signal cannot
+prove descendant/effect quiescence. Missing resource custody proof stops wave
+advancement and retains UNKNOWN; do not broaden the direct reservation's scope.
 Assignments with overlapping shared resource IDs cannot occupy the same wave.
+Tests sharing a resource may be batched inside one assignment because its Bun
+producer runs every test serially. Enabling internal concurrent scheduling would
+invalidate that assignment contract. Resource IDs use `namespace:<sha256>`:
+a lowercase bounded namespace and lowercase64-hex digest of the canonical
+physical owner identity from existing captured metadata. Caller derives identity
+from the qualified owner, rather than hashing arbitrary path spellings; raw path
+IDs are denied. Review scope still binds provider/platform and package-root
+identity. The pure scheduler performs no new filesystem identity/hash pass.
 
 Third review iteration found an actual shared read-side resource: runtimePackageAccess
 derives the current package root from module URLs and reads package.json via
@@ -137,7 +177,7 @@ readText. Linux readBytes acquires an exclusive CAS sidecar and rejects overlapp
 readers. The preload currently preserves original module paths/resolveDir; private
 consumer roots do not isolate this package root. runtime-config-rebind also reads
 its package initialization schema and prewriter template. Tag affected contours
-with `runtime-package-root:<canonical-root>` and serialize them initially.
+with `runtime-package-root:<owner-sha256>` and serialize them initially.
 
 Before widening eligibility, qualify a shared package-only reader using the
 existing verified-capture primitive: no read-side CAS writes, fresh bounded bytes,
@@ -177,6 +217,10 @@ campaign. Record public Bun bootstrap and pinned-command durations separately;
 do not claim a caller-level ten-minute pass merely from child elapsed time.
 
 Await and record every direct child terminal outcome; stream per-shard logs.
+The single acquired run reservation releases once only after every launched
+direct producer is accounted for under TESTING's exact predicates. An unknown/
+unobserved producer keeps it held despite passing siblings. An exact not-started
+result accounts for that launch alone, never for an already launched child.
 Known direct termination is distinct from success, descendant/effect cleanup
 and reservation release. Reuse TESTING's exact release predicates; unknown
 termination must not free a conflicting reservation. Account all siblings on
@@ -205,8 +249,12 @@ replacement is insufficient. No archival UNKNOWN replay.
 Stop expansion on provenance gaps, collision, changed assertions/case set,
 memory/timeout regressions or unaccounted descendants. Retain serial mode; do
 not quietly rerun failed shards or admit an incomplete union. Compare serial
-and parallel using identical captured inputs/pin/instrumentation/resources;
+and parallel using identical immutable captured input bytes/pin/instrumentation/
+resource scope but distinct run IDs and disjoint output roots;
 report observed wall, per-file/test tails and resource costs without projections.
+The synthetic pilot qualifies only assignment, child custody and receipt/merge
+mechanics in that fixture. It cannot authenticate counters against adversarial
+in-process test code or establish trusted general Source measurement.
 
 References: https://bun.com/docs/test/parallel.md,
 https://bun.com/docs/test/runtime-behavior.md,
