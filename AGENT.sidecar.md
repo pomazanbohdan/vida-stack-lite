@@ -154,6 +154,13 @@ Shard reviews apply the same contract's sealed argv/environment, child-local
 clock and targeted-negative-control rules. A coordinated reader correctness
 check does not qualify removal of the common package resource.
 
+Before async launch or reservation changes, also load
+[direct-producer accounting](packages/agent/TESTING.md#direct-producer-accounting-before-resource-reuse).
+Delegation names the final-check owner and forbids worker runtime/compiler,
+build/install and Git mutations during the owner's frozen measurement.
+Async missing-PID observations and budget-spent unattempted launches remain
+distinct; direct reservation release does not authorize a resource successor.
+
 Author self-development automation in TypeScript and execute it with qualified
 Bun. For inventory/report processing, reuse the package-owned TS tools or an
 owned temporary `.ts` diagnostic. Use `apply_patch` for exact document edits.

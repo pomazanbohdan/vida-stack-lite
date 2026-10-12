@@ -826,6 +826,46 @@ Spent allowance prevents launch; native timeout0 may disable a timeout.
 Per-test5000ms defaults and justified case overrides remain separate. Mutation
 is separately invoked; the ten-minute target does not qualify its whole campaign.
 
+#### Direct-producer accounting before resource reuse
+
+For async supervisor work, record each prepared invocation's shard ID, whether
+launch was attempted, observed PID/status/signal/error, direct terminal proof
+and group reservation disposition. Validate and snapshot the complete bounded
+invocation group before launching any child. Reuse the existing execution budget;
+check its remaining allowance immediately before each launch. Never create a
+new deadline per sibling or wave. Await accounting for every attempted sibling,
+including when another launch fails or its allowance is spent.
+
+| Observation | Direct reservation disposition | Measurement and resource reuse |
+| --- | --- | --- |
+| Qualified positive PID with observed direct terminal exit or signal | May account for that producer only | Nonzero, signal, timeout or error denies success; descendant/effect proof remains separate. |
+| Qualified synchronous PID0/null status/null signal/ENOENT | Accounts only for that exact not-started launch | Retain UNKNOWN evidence; no resource-quiescence claim. |
+| Async missing PID with ENOENT, including close status-2 | Unaccounted under the existing predicates; retain the acquired reservation | UNKNOWN. Do not rewrite it into the synchronous tuple. |
+| Shared allowance exhausted before an attempted launch | Record unattempted; adds no launched producer to account for | No measurement success. Earlier attempted siblings still require accounting. |
+| Direct producer exits while a descendant remains live or effects are unresolved | Direct accounting alone may permit reservation release | `resourceSafeToAdvance=false`; stop resource successors and retain evidence. |
+
+Preserve raw observations and distinguish a recorded error from a qualified
+terminal proof. For an acquired group reservation, release once only when every
+attempted producer is accounted for and every unattempted launch has explicit
+budget-spent evidence. This permits release of an already acquired reservation
+for a group wholly unattempted due solely to observed budget exhaustion. That
+fact proves neither a successful run nor safe resource reuse. An unexpected
+error without qualified accounting does not satisfy this rule.
+Do not acquire or synthesize another reservation to evade an
+unaccounted attempted launch. Issued kill/unref requests are not terminal proof.
+
+Qualify changes with bounded native controls for two producers, nonzero exit,
+timeout with a still-running sibling, signal, async no-start ambiguity, spent
+prelaunch allowance, invalid descriptors before any launch, and direct exit with
+a live descendant. Keep FAIL/UNKNOWN roots and logs. READY/GO markers prove only
+their stated coordination; missing markers or PIDs do not prove quiescence.
+OS capability documentation or writable cgroup mounts do not qualify a provider:
+verify actual owned creation authority before launching its control children.
+
+The async supervisor foundation is pending static, native and caller integration
+qualification. Keep current coverage serial and historical execution synchronous;
+these instructions do not activate shards, resource waves or a cgroup provider.
+
 Qualify pure assignment controls first, then bounded two-file/failure pilots
 through the existing explicitly untrusted synthetic-fixture owner. A pilot proves
 fixture behavior/receipt mechanics, not full trusted Source coverage or protection

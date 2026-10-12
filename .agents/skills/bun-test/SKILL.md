@@ -267,11 +267,20 @@ neither invocation counts nor reliable wall/CPU self time. Keep phase and child
 receipts as separate timing evidence. Use no inherited profiling environment.
 
 Preserve FAIL/UNKNOWN fixture custody and original operation IDs. A missing
-PID is not proof of cleanup. Qualified Bun 1.4.3's exact PID0/null status/null
-signal/ENOENT result proves only that a producer did not start. The coverage
+PID is not proof of cleanup. Qualified Bun 1.4.3's exact synchronous
+PID0/null status/null signal/ENOENT result proves only that a producer did not start. The coverage
 owner may release its exact reservation while retaining UNKNOWN/run evidence;
 other ambiguous spawn errors remain held. Never replay an uncertain operation to obtain a
 cleaner measurement. Preserve live integrity, CAS, authorization and durable syncs.
+
+For async work, apply [direct-producer accounting](../../../packages/agent/TESTING.md#direct-producer-accounting-before-resource-reuse).
+Preserve async missing-PID/ENOENT and raw close status-2; they do not qualify the
+synchronous no-start tuple. Record attempted versus budget-spent unattempted
+launches and account for every attempted sibling. One inherited allowance and
+one acquired group reservation remain owned by the runner. A live descendant
+or unresolved effects keep `resourceSafeToAdvance=false`, even after direct
+termination. The supervisor foundation remains pending qualification; these
+controls do not activate parallel shards or waves.
 
 ## Official references
 

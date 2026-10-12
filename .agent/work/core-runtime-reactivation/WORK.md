@@ -8679,3 +8679,43 @@ bounded async direct-producer foundation. Keep shared package conflict, current
 serial production and historical serial mode. Do not duplicate preparation,
 invent a new deadline owner or normalize async missing-PID ENOENT to the
 qualified synchronous no-start tuple.
+
+### 2026-10-12 — testing instruction accounting clarification
+
+The user's instruction to carry the current testing lessons forward updates the
+existing TESTING owner, project bun-test reference and sidecar bootstrap pointer.
+Keep the implementation plan's pending async foundation separate from this
+documentation packet. No producer, shard, cgroup provider, loader or schema is
+activated by these instruction changes.
+
+Blind baseline guidance exercise identifies the concrete gap: existing owners
+prohibit missing-PID inference but do not spell out exhausted-before-attempt
+group settlement or the async ENOENT/close-2 distinction. Record attempted versus
+unattempted invocations, raw async observations, all-attempted-sibling accounting
+and the separate descendant/effect proof. Explicitly unattempted budget-spent
+launches add no direct producer, but establish no measurement or resource-safe
+success. Preserve the qualified synchronous exact0/null/null/ENOENT predicate;
+async missing-PID ENOENT stays unaccounted/UNKNOWN without normalization.
+
+The maintained subsection defines bounded native control categories and reuses
+the existing deadline, reservation and final-check owner. READY/GO coordination
+and cgroup mount flags alone establish neither read overlap nor delegated
+provider authority. Preserve five seconds per case, ten minutes per coverage
+entry including current checks/preparation/CRAP, terminal/report reserve and all
+exact coverage/frozen-budget/assertion-confirmed mutation gates.
+
+Scoped documentation check validates19relative links/heading targets and project
+skill frontmatter with no errors; git diff --check passes. The ignored owned
+TypeScript diagnostic is .tmp/coverage-iteration-ca94b7c/testing-instructions-links.ts.
+Current unrelated async implementation remains uncommitted and unqualified:
+its last static check reports exactOptionalPropertyTypes at the optional launch
+maximum_duration_ms snapshot. No full suite or numerical admission is claimed.
+
+A fresh blind application exercise correctly separates all five scenarios:
+async ambiguity with an active sibling, wholly unattempted spent allowance,
+direct exit with a live descendant, exact synchronous no-start and a proposed
+fresh sibling deadline/control-only activation. It confirms the per-test versus
+entry budgets and pending status. Tighten its one wording edge by stating that
+each unattempted launch must carry explicit budget-spent evidence; unexpected
+unaccounted errors do not qualify group release. No new runtime proof follows
+from this guidance exercise.
