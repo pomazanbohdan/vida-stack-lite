@@ -8648,3 +8648,34 @@ toBe argument: Bun's matcher overload requires explicit TypeScript narrowing;
 toBeDefined does not provide it. Use the actual undefined guard rather than a
 type assertion. Preserve the rejected hook log. Fresh final typed qualification
 14PASS/0FAIL/86assertions4.44s, renewal609ms; no broader timing or numeric claim.
+
+### 2026-10-12 — next bounded supervision and caller controls
+
+Published66ad566 ordinary strict hook/434-file typecheck and push qualify the
+reader packet. The isolated cgroup mechanism probe cannot create its exclusive
+group: EACCES before any child launch. Actual namespace membership is0::/;
+current uid1000 has no delegated creation authority at the root-owned755
+cgroup2 mount. Writable mount flags alone were insufficient. Keep the ignored
+typed diagnostic .tmp/coverage-iteration-ca94b7c/cgroup-probe.json;
+resourceSafeToAdvance remains false. No group was created, no child launched,
+no provider activation, environment requirement or effect-quiescence claim.
+
+Blind caller follow-up finds an existing real same-attempt expired execution-
+lease recovery case in tests/initial-source-continuation.test.ts. Extend its
+actual caller provider observation for expired lease recovery schema and verify
+the existing bound digest/unchanged mutable Source; do not substitute a helper
+unit control. The later lease renewal schema needs valid current journal CAS,
+not the early-denial test's placeholder. Delivered-work planner fixture setup
+still lacks the protected intake/authorization/transition/current lineage;
+the public parse-only case and direct supplied-plan apply do not reach it.
+
+Blind alternative assessment: private immutable child images must actually own
+executing module URLs and runtimePackageAccess, not merely copied bytes/cwd.
+Current v3 binds one captured module root and has no qualified child-image/
+module-owner mapping. A pilot would require explicit physical-to-logical input
+and global-map bindings plus additional provenance/collision controls. Defer
+this protocol expansion; first close supported reader callers and the planned
+bounded async direct-producer foundation. Keep shared package conflict, current
+serial production and historical serial mode. Do not duplicate preparation,
+invent a new deadline owner or normalize async missing-PID ENOENT to the
+qualified synchronous no-start tuple.
