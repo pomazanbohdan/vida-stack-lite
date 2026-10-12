@@ -7669,3 +7669,43 @@ Keep new failed/UNKNOWN roots and logs; no replay or manual CAS cleanup. Investi
 fixture/setup cost before changing this contour. Stopped-source custody/timing
 changes remain unfinished and separate. Full current coverage, exhaustive frozen
 CRAP correspondence and assertion-confirmed mutation100 remain pending.
+
+### Follow-up — amortized denial worker and descendant cause gap
+
+8ba4185 is published after normal strict hooks; Source remains Bun-only. Fresh
+read-count diagnostic records1472package reads/~660ms, while the one-case worker
+takes4.92s. It does not justify a new batch reader or deleting async/effect hash
+fences. A blind batch design review recommends no product reader change without
+actual dominant-cost evidence. The prior generated SDK archive remains outside
+maintained roots, without relaxing TS-only.
+
+A fresh one-worker pilot runs all four original denial cases sequentially:
+4PASS/49assertions,12.89s total, individual cases2.24–3.58s including setup.
+One worker safely shares the module import/mock while each case has a fresh
+repository and root-keyed one-shot fault state. The production boundaries,
+individual5000ms limits and all inner assertions stay unchanged. Replace four
+cold child launches with one named coordinator,18s hard pool bound derived from
+four prior4.5s child limits, and20s completion/reporting parent exception. Require
+all four exact named results, complete4PASS/0FAIL counters and four distinct
+known-pending root records. Fresh coordinator qualification passes in12.32s,
+body12.15s, and surfaces its four retained root identities. The operation count
+is4child launches→1; no comparable all-pass baseline proves a percentage speedup.
+
+Independent mutation review finds a concrete false-Killed path: a nested test
+timeout/compile/runtime failure could make a parent exit-status assertion fail,
+whose adapter then reports assertion_cause=true. There is no bound nested JUnit/
+body receipt in that path. The denial coordinator now throws ordinary errors
+for every child health/report failure before any parent assertion; ordinary
+FAIL and custody remain, while such failures cannot qualify Killed. Its inner
+behavior assertions are unchanged. Broader descendant cause binding remains a
+P0 mutation-proof GAP; retain the pending upgrade partition until that evidence
+is implemented and reviewed. Do not equate the49inner behavior assertions or
+coordinator health success with mutation qualification.
+
+An exploratory admission-mode run uncovered three terminal context-binding
+fixture denials and one newly narrowed5s CLI child timeout. Its timing overlapped
+a separate diagnostic; no speed claim uses it. The timeout left a Source CAS
+sidecar. A fresh current-module observation through ordinary existing readBytes
+safely performed its normal dead-owner path; no manual deletion/replay. Preserve
+the original failed diagnostics and remaining UNKNOWN effects. CLI budgets/
+retention and those fixture corrections are still unfinished and unstaged.

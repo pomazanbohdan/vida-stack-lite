@@ -143,6 +143,33 @@ function recordPackageRead(
     console.error('denial package read totals', { worker: workerCase, target, ...packageReadTotals });
 }
 
+function observePackageRead<TResult extends Buffer | string, TArgs extends [string, string, ...unknown[]]>(
+  kind: 'readBytes' | 'readText',
+  original: (this: unknown, ...args: TArgs) => TResult,
+): (this: unknown, ...args: TArgs) => TResult {
+  return function (this: unknown, ...args: TArgs): TResult {
+    const [target, label] = args;
+    const started = performance.now();
+    if (tracePackageReads) console.error('denial package read start', { worker: workerCase, target });
+    try {
+      const value = Reflect.apply(original, this, args);
+      recordPackageRead(target, started, kind, value.length, false);
+      return value;
+    } catch (error: unknown) {
+      recordPackageRead(target, started, kind, 0, true);
+      if (process.env.VIDA_PROJECT_UPGRADE_DENIAL_TIMING === '1')
+        console.error('denial package read failure', {
+          worker: workerCase,
+          target,
+          label,
+          elapsed_ms: performance.now() - started,
+          code: error instanceof Error && 'code' in error ? error.code : undefined,
+        });
+      throw error;
+    }
+  };
+}
+
 const faults = new Map<string, MoveFault>();
 const roots = new Map<string, RootDisposition>();
 if (workerCase !== undefined) {
@@ -153,46 +180,11 @@ if (workerCase !== undefined) {
       if (repositoryRoot === packageRoot) {
         return {
           ...access,
-          readBytes(target: string, label: string) {
-            const started = performance.now();
-            if (tracePackageReads) console.error('denial package read start', { worker: workerCase, target });
-            try {
-              const bytes = access.readBytes(target, label);
-              recordPackageRead(target, started, 'readBytes', bytes.length, false);
-              return bytes;
-            } catch (error: unknown) {
-              recordPackageRead(target, started, 'readBytes', 0, true);
-              if (process.env.VIDA_PROJECT_UPGRADE_DENIAL_TIMING === '1')
-                console.error('denial package read failure', {
-                  worker: workerCase,
-                  target,
-                  label,
-                  elapsed_ms: performance.now() - started,
-                  code: error instanceof Error && 'code' in error ? error.code : undefined,
-                });
-              throw error;
-            }
-          },
-          readText(target: string, label: string) {
-            const started = performance.now();
-            if (tracePackageReads) console.error('denial package read start', { worker: workerCase, target });
-            try {
-              const text = access.readText(target, label);
-              recordPackageRead(target, started, 'readText', text.length, false);
-              return text;
-            } catch (error: unknown) {
-              recordPackageRead(target, started, 'readText', 0, true);
-              if (process.env.VIDA_PROJECT_UPGRADE_DENIAL_TIMING === '1')
-                console.error('denial package read failure', {
-                  worker: workerCase,
-                  target,
-                  label,
-                  elapsed_ms: performance.now() - started,
-                  code: error instanceof Error && 'code' in error ? error.code : undefined,
-                });
-              throw error;
-            }
-          },
+          readBytes: observePackageRead('readBytes', access.readBytes),
+          ...(access.readVerifiedCaptureBytes
+            ? { readVerifiedCaptureBytes: observePackageRead('readBytes', access.readVerifiedCaptureBytes) }
+            : {}),
+          readText: observePackageRead('readText', access.readText),
         };
       }
       const fault = faults.get(repositoryRoot);
@@ -355,25 +347,71 @@ const workerTitles = {
 } as const;
 
 if (workerCase === undefined) {
-  for (const [caseId, title] of Object.entries(workerTitles)) {
-    test(`isolates ${title}`, async () => {
+  test(
+    'runs all four denial contract cases in one bounded sequential worker',
+    async () => {
       const result = await runBoundedSubprocess(
         process.execPath,
-        ['test', '--no-env-file', '--no-install', '--test-name-pattern', `${title}$`, fileURLToPath(import.meta.url)],
+        [
+          'test',
+          '--no-env-file',
+          '--no-install',
+          '--parallel=1',
+          '--timeout=5000',
+          '--test-name-pattern',
+          'denial worker:',
+          fileURLToPath(import.meta.url),
+        ],
         {
           cwd: packageRoot,
-          env: { ...process.env, VIDA_PROJECT_UPGRADE_DENIAL_WORKER: caseId, VIDA_PROJECT_UPGRADE_DENIAL_TIMING: '1' },
-          timeoutMs: 4_500,
+          env: {
+            ...process.env,
+            VIDA_PROJECT_UPGRADE_DENIAL_WORKER: 'all',
+            VIDA_PROJECT_UPGRADE_DENIAL_TIMING: '1',
+          },
+          // The four existing 4.5s child limits define this shared worker pool;
+          // 5s remains the individual Bun test deadline after cold-start amortization.
+          timeoutMs: 18_000,
         },
       );
-      expect(result.timedOut, subprocessFailure(title, result)).toBe(false);
-      expect(result.signal, subprocessFailure(title, result)).toBeNull();
-      expect(result.exitCode, subprocessFailure(title, result)).toBe(0);
+      const diagnostic = subprocessFailure('all four denial contract cases', result);
       const output = `${result.stdout.toString()}\n${result.stderr.toString()}`;
-      expect(output, subprocessFailure(title, result)).toContain(title);
-      expect(output, subprocessFailure(title, result)).toMatch(/\b1 pass\b/);
-    });
-  }
+      const custodyLines = output.match(/^Retained upgrade denial fixture \(known-pending\): .*$/gm) ?? [];
+      const passCounts = [...output.matchAll(/\b(\d+) pass\b/g)];
+      const failCounts = [...output.matchAll(/\b(\d+) fail\b/g)];
+      const healthProblems: string[] = [];
+      // Child infrastructure failures are not assertion-confirmed mutant kills.
+      // Nested assertion causality remains pending until it has bound child evidence.
+      if (!result.closeObserved) healthProblems.push('child close was not observed');
+      if (result.timedOut) healthProblems.push('child exceeded the 18s orchestration bound');
+      if (result.signal !== null) healthProblems.push(`child exited on signal ${result.signal}`);
+      if (result.childError !== null) healthProblems.push(`child process error: ${result.childError}`);
+      if (result.exitCode !== 0) healthProblems.push(`child exit code was ${String(result.exitCode)}`);
+      if (result.stdoutTruncated || result.stderrTruncated) healthProblems.push('child output was truncated');
+      if (result.terminationError !== null) healthProblems.push(`child termination error: ${result.terminationError}`);
+      if (result.stderrForwardingError !== null)
+        healthProblems.push(`child stderr forwarding error: ${result.stderrForwardingError}`);
+      for (const title of Object.values(workerTitles)) {
+        const count = output.split(title).length - 1;
+        if (count !== 1) healthProblems.push(`expected one result for ${JSON.stringify(title)}, found ${count}`);
+      }
+      if (passCounts.length !== 1 || passCounts[0]?.[1] !== '4')
+        healthProblems.push(
+          `expected exactly one "4 pass" counter, found ${passCounts.map((match) => match[0]).join(', ') || 'none'}`,
+        );
+      if (failCounts.length !== 1 || failCounts[0]?.[1] !== '0')
+        healthProblems.push(
+          `expected exactly one "0 fail" counter, found ${failCounts.map((match) => match[0]).join(', ') || 'none'}`,
+        );
+      if (custodyLines.length !== 4 || new Set(custodyLines).size !== 4)
+        healthProblems.push(`expected four distinct retained-root custody lines, found ${custodyLines.length}`);
+      if (healthProblems.length > 0)
+        throw new Error(`${diagnostic}\nChild runner health/report failure:\n- ${healthProblems.join('\n- ')}`);
+
+      for (const line of custodyLines) console.error(line);
+    },
+    { timeout: 20_000 },
+  );
 } else {
   afterAll(() => {
     for (const [root, disposition] of roots) {

@@ -121,6 +121,20 @@ expected hashes of rewritten sandbox files. Test/tool byte checks and parent
 before/after current-input checks remain required. Binding predicate tests do
 not establish real mutation execution or assertion-confirmed Killed.
 
+Child runner health must fail with an ordinary error before behavior assertions.
+A parent assertion about child exit status, timeout or reporter integrity cannot
+prove that the child's own failure was caused by an assertion. Bind and classify
+child test/body evidence before qualifying nested failures as Killed; until then
+keep that mutation scope pending. Preserve ordinary test failures and UNKNOWN.
+
+The four upgrade denial scenarios share one sequential worker to amortize
+module loading. Each inner Bun test keeps its5000ms deadline and fresh repository.
+The coordinator has an18s pool deadline, derived from the four prior4.5s child
+limits, and a20s integration-case exception for completion/report checks. This
+does not apply an18s deadline to individual tests. Check all four named results,
+terminal process status, complete counters and four distinct retained-root
+records. Keep every original provider, journal, UNKNOWN and no-replay assertion.
+
 The distributed SDK regression joins a fresh selected formation input map to
 the complete receipt input inventory, then captures the exact four emitted
 JavaScript members. It executes copies of those captured outputs, preserving
