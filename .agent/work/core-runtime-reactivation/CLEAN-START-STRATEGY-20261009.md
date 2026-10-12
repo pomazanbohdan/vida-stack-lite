@@ -1448,3 +1448,23 @@ Root publishes after strict checkpoint. Next: actual stale-dist/controller and
 interruption failures, shared-owner P1 and exhaustive frozen correspondence;
 no repeated full suite or UNKNOWN replay. Exact numerical/native gates remain
 open. Details/failed and current receipts: WORKv822–v830.
+
+#### Current SDK build and authentication checkpoint v833–v842
+
+SDK declaration-root blocker TS6059 is repaired by package-root mapping,
+preserving four public dist/src declarations, strict flags and runtime build
+ownership. Correction0cfb3b7 is strict-published. Isolated detached formation
+at that exact Source passes with31schemas/no test issuers; build runs no suite,
+original dist and Runtime loaders remain untouched. A borrowed dependency link
+is rejected by TS-only; independent regular dependency copy resolves the setup
+without weakening that gate or installing packages.
+Existing SDK oracle drops compiler ordinal2 dependence, preserves constant false
+and exact denial message, and uses bounded boolean diagnostics. Actual5s/30s
+parent/child timeout remains UNKNOWN; new current-Bun direct child uses4s/250ms
+within unchanged parent limit and retains failed fixtures before launch.
+Final SDK plus adjacent kernel denial2PASS6assertions4.23s; three scoped current
+reviews approve. Root publishes after strict checkpoint. SDK freshness joining
+the whole coverage lane remains GAP despite isolated success. Next: that single
+owner-bound join, actual controller/interruption failures, shared P1/frozen
+correspondence. Full exact numerical and native gates remain open; no replay or
+Runtime acceptance claim. Details: WORKv833–v842.

@@ -876,6 +876,19 @@ file, report or version string does not grant Runtime acceptance.
 Coverage refuses nonempty ambient `BUN_OPTIONS`; all Bun execution options must
 come from the recorded runner selection and its pinned preload.
 
+The distributed SDK authentication case consumes a freshly formed SDK artifact,
+with Source and artifact identity retained by the formation owner. It preserves
+the production guard and public proof/export assertions; Source imports or
+stale generated output are not substitutes. It runs the current Bun executable
+directly, using the existing bounded subprocess owner with a four-second budget
+and 250ms cleanup reserve inside the unchanged five-second case limit. Preserve
+its failed or UNKNOWN fixture before launch and clear that retention only after
+all assertions pass. Generated helper ordinals are compiler details: require
+the constant-false production guard and exact denial message without fixing a
+numeric suffix or dumping the entire bundle on failure. Artifact formation
+and installation run no suites; this scoped SDK check is not Source numerical
+qualification, native qualification or Runtime acceptance.
+
 The captured loader resolves a Bun query alias only to an already captured
 physical path. Exact manifest filenames take precedence, including literal
 `?` and `#`; no percent decoding, fragment removal or path-spelling rewrite is

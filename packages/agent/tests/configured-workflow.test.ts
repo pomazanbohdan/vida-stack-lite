@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { spawnSync } from 'node:child_process';
+import { boundedSpawnSync, executionBudget, requireTerminalCommand } from '../bin/bun.ts';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -401,6 +401,7 @@ const {
 
 const bundle = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 let root: string;
+const retainedSdkFixtureRoots = new Set<string>();
 let yaml: string;
 let config: AgentRuntimeConfig;
 let calls: TrustedWorkflowAssignment[];
@@ -497,7 +498,8 @@ beforeEach(async () => {
 
 afterEach(async () => {
   configuredWorkflowTestDoublesActive = false;
-  if (root) await rm(root, { recursive: true, force: true });
+  if (retainedSdkFixtureRoots.has(root)) console.error('Retained failed SDK fixture: ' + root);
+  else if (root) await rm(root, { recursive: true, force: true });
 });
 
 function publicPacketInput(
@@ -1184,6 +1186,7 @@ describe('semantic current-v1 work context and live permits (unit authority adap
   });
 
   test('distributed runtime denies implicit governance even with test process flags', async () => {
+    retainedSdkFixtureRoots.add(root);
     const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
     const bindings = {
       repositoryRoot: root,
@@ -1205,18 +1208,35 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       assert.equal(Object.keys(distributed).some((name) => name.startsWith('createTest')), false);
       console.log('distributed authentication denial verified');
     `;
-    const result = await promisify(execFile)('node', [path.join(packageRoot, 'bin/bun.ts'), '-e', script], {
-      cwd: packageRoot,
-      env: { ...process.env, NODE_ENV: 'test', BUN_TEST: '1', VITEST: 'true' },
-      windowsHide: true,
-      timeout: 30_000,
-    });
+    const result = boundedSpawnSync(
+      spawnSync,
+      process.execPath,
+      ['-e', script],
+      {
+        cwd: packageRoot,
+        env: { ...process.env, NODE_ENV: 'test', BUN_TEST: '1', VITEST: 'true' },
+        windowsHide: true,
+        encoding: 'utf8',
+        maxBuffer: 128 * 1024,
+        timeout: 4_000,
+        budget: executionBudget(4_000, 250),
+        diagnostics: true,
+      },
+      'distributed SDK authentication denial',
+    );
+    requireTerminalCommand(result, 'distributed SDK authentication denial');
+    expect(result.status).toBe(0);
+    if (typeof result.stdout !== 'string' || typeof result.stderr !== 'string')
+      throw new Error('SDK child UTF-8 output is unavailable.');
     expect(result.stderr).toBe('');
     expect(result.stdout.trim()).toBe('distributed authentication denial verified');
     const bundled = await readFile(path.join(packageRoot, 'dist/src/runtime.js'), 'utf8');
-    expect(bundled).toMatch(
-      /requireCondition2\(false, "test-only trusted host issuer is unavailable outside a test process"\)/,
-    );
+    expect(
+      /requireCondition\d*\(false, "test-only trusted host issuer is unavailable outside a test process"\)/.test(
+        bundled,
+      ),
+    ).toBe(true);
+    retainedSdkFixtureRoots.delete(root);
   });
 
   test('a rejected provider result leaves the effect uncertain and blocks replay', async () => {

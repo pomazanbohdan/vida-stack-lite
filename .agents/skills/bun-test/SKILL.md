@@ -32,6 +32,7 @@ strict typecheck success.
 | Inventory/report processing | Reuse TS tools or an owned temporary `.ts` diagnostic with qualified Bun; validate JSON before reading fields. |
 | Measurement reservation | Separate qualified direct producer termination from measurement success and UNKNOWN test effects; apply the existing TESTING custody owner. |
 | Captured module query | Keep Bun instance identity distinct from the exact manifest path; use the existing captured-loader owner and assert canonical receipts plus unbound denial. |
+| SDK artifact oracle | Bind the emitted artifact, preserve public authentication/production guards and ignore compiler-generated name ordinals; boolean assertions keep large generated-code diagnostics bounded. |
 
 Run from `packages/agent`, using the existing pinned launcher:
 
@@ -49,6 +50,12 @@ In isolated fixtures containing copied snapshot tests, pass explicit `./` paths
 for child test subjects. Bare names can act as discovery filters and select
 both originals and copies. Assert the exact child test-file count when fixture
 cardinality matters; keep that invocation bound to its actual manifest.
+
+For a Bun-only SDK subject, use the current executable rather than an unrelated
+Node launcher. Keep launcher verification with its existing owner. Child and
+cleanup budgets must fit the parent case limit; use the shared bounded child
+owner, await terminal evidence and mark fixture retention before launch. Clear
+retention only after all assertions pass. Formation does not launch these tests.
 
 ## Diagnose and optimize
 

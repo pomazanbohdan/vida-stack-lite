@@ -6702,3 +6702,52 @@ sdk-build-gate-review-v835.md. Root strict-checkpoints/publishes this script
 repair before later SDK formation. Full artifact freshness, quality metrics,
 frozen correspondence, interrupted flows and native qualification stay open.
 Unrelated bun.lock and root ..vida.cas.lock/reclaim custody remain untouched.
+
+### v836–v842 — isolated SDK formation and bounded authentication oracle
+
+Declaration repair0cfb3b7 passes strict checkpoint-v836 and publishesdde2b8a..
+0cfb3b7. Root creates detached SDK worktree BASE/sdk-formation-v837 at that exact
+published Source. Original dist and all Runtime selectors remain untouched.
+First standard build stops at TS-only gate because borrowed node_modules is a
+symlink; no dist exists. Root removes only its exact owned link and copies
+independent regular dependency files without installing/upgrading packages.
+The gate stays strict. Standard build:pinned then completes terminal0/v838:
+31schemas, production index/trusted-host entrypoints, no test issuers shipped.
+No test suite runs during formation. This is SDK artifact availability, not
+native or Runtime qualification.
+
+Existing exact SDK casev839 passes public proof denial/no-test-export assertions
+and exact child output, then fails a compiler-ordinal-dependent bundled guard
+assertion: current artifact has requireCondition3(false, exact denial message),
+not requireCondition2. Root preserves constant false/exact message, permits
+only generated numeric suffix variation and asserts a boolean to avoid dumping
+megabytes of generated code. Same artifact is reused; no repeated SDK build.
+v840 does not pass: outer Bun case has5s but old async Node launcher child30s;
+the case times out, Bun kills a dangling Node child/SIGTERM, empty stdout/stderr,
+and unhandled error. Keep that failed/UNKNOWN receipt and original identity.
+The former unconditional unit hook could remove its failed fixture; no old
+fixture is restored/reconstructed or replayed to repair this evidence.
+
+Root removes unrelated Node/bin-bun delegation from this SDK library case and
+uses actual parent Bun executable plus existing boundedSpawnSync. Four-second
+budget/250ms cleanup reserve gives observed3749ms direct-child bound under
+unchanged5s parent; no timeout increase. Require known terminal/status0 and
+UTF8/exact stdout/stderr. Mark SDK fixture retained before launch; afterEach
+always deactivates test doubles but preserves failed/UNKNOWN SDK roots. Clear
+retention only after all assertions pass. Ordinary unit roots keep their existing
+cleanup. Final existing SDK case plus neighboring production fallback denial
+pass2tests6assertions4.23s v842; SDK direct child2163ms/status0/no signal/error.
+Three independent current-input reviews approve this bounded oracle/custody
+change. TESTING owns its limits; Bun skill links verified technique.
+
+Receipts under BASE: sdk-formation-build-v837.log (link denial),
+sdk-formation-build-regular-deps-v838.log (actual formation),
+sdk-distributed-auth-focused-v839.log (ordinal failure/large diagnostic),
+sdk-distributed-auth-corrected-v840.log (UNKNOWN timeout),
+sdk-distributed-auth-budgeted-v842.log (focused pass),
+sdk-{distributed-oracle,auth-oracle,output-diagnostic}-review-v841.md amended
+to final inputs. Worktree/artifacts/dependencies remain retained. Original Root
+dist remains stale; current whole-run SDK freshness orchestration is still GAP,
+not hidden by isolated success. Exact coverage/CRAP, frozen correspondence,
+assertion-confirmed mutation, interruption flows and native qualification stay
+open. Root strict-checkpoints and publishes the test-tooling correction next.
