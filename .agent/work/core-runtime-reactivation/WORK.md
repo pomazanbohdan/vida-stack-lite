@@ -7585,3 +7585,28 @@ import after that installation. The four real read-interposition race controls
 still pass32assertions; fresh case timings160-165ms, total847ms. This is an
 observed targeted run, not an attributed whole-suite speedup. No production
 reader or its tested boundaries changed in that child-tooling correction.
+
+### Follow-up — shared repair assertion preserves frozen complexity
+
+afbfd1f is published after ordinary strict formatting/TS/lint/Knip hooks. Keep
+unfinished stopped-source-capture test changes separate. Blind lineage review
+finds applyReadOnlyDispatchRepair CC3 versus original retainedCC2. Reuse the
+existing typed requireRepair assertion in the same orchestration module that
+the CLI already imports; its implementation stays unchanged, with no new helper
+or module edge. The CLI passes the positive config/digest conjunction instead
+of a negated disjunction plus local throw. Caller config still evaluates first,
+plan digest/body remain short-circuited on mismatch, and Error prefix/message,
+Host reload/rebuild, producer transaction, CAS and publication stay exact.
+No budget was raised or reconstructed from candidate complexity.
+
+Root's targeted Babel inventory confirms exact retained apply identity atCC2.
+A new behavioral control passes before and after the refactor: a mismatched
+configuration cannot read a trapped plan digest; a matching configuration with
+bad plan digest gets the exact denial and records no repair row. All12existing/
+new repair controls pass56assertions in5.71s, with each case below5000ms. The
+same test file covers idempotent one-generation publication, current Source/
+configuration drift, maintenance generation, Work/Ledger/Journal CAS, cooperative
+pause, native handle, uncertain assignment and foreign actor/release provenance.
+Current joined static checking passes422files plus97stricter Source files with
+0diagnostics. This is a scoped complexity/behavior repair, not the exhaustive
+CRAP gate, current full coverage or assertion-confirmed mutation PASS.

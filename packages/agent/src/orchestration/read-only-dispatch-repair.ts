@@ -70,7 +70,7 @@ export interface ReadOnlyDispatchRepairPlan {
   readonly digest: string;
 }
 
-const requireRepair: (condition: unknown, message: string) => asserts condition = (condition, message) => {
+export const requireRepair: (condition: unknown, message: string) => asserts condition = (condition, message) => {
   if (!condition) throw new Error(`vida read-only dispatch repair: ${message}`);
 };
 const identifier = /^[a-z0-9][a-z0-9._-]{0,79}$/;

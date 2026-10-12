@@ -4,6 +4,7 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { runtimeConfigDigest, type AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import {
   buildReadOnlyDispatchRepairPlan,
+  requireRepair,
   type ReadOnlyDispatchRepairInput,
   type ReadOnlyDispatchRepairPlan,
 } from '../src/orchestration/read-only-dispatch-repair.ts';
@@ -51,11 +52,11 @@ export function applyReadOnlyDispatchRepair({
   plan: ReadOnlyDispatchRepairPlan;
   current: { repositoryRoot: string; config: AgentRuntimeConfig };
 }): ReadOnlyDispatchRepairPlan {
-  if (
-    runtimeConfigDigest(current.config) !== plan.config_digest ||
-    plan.digest !== canonicalJsonDigest((({ digest: _digest, ...body }) => body)(plan))
-  )
-    throw new Error('vida read-only dispatch repair: repair plan digest or current configuration invalid');
+  requireRepair(
+    runtimeConfigDigest(current.config) === plan.config_digest &&
+      plan.digest === canonicalJsonDigest((({ digest: _digest, ...body }) => body)(plan)),
+    'repair plan digest or current configuration invalid',
+  );
   const store = createCliHostStateStore(
     database,
     plan.workspace_id,

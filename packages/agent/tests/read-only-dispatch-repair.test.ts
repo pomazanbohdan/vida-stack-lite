@@ -537,6 +537,39 @@ test('read-only dispatch repair rejects a correctly digested plan from another m
   }
 });
 
+test('read-only dispatch repair validates caller config before plan digest without recording', () => {
+  const value = fixture();
+  let passed = false;
+  try {
+    const plan = planReadOnlyDispatchRepair(value.input);
+    let digestReads = 0;
+    const staleConfigPlan = {
+      ...plan,
+      config_digest: '0'.repeat(64),
+      get digest(): string {
+        digestReads++;
+        throw new Error('A mismatched config must not evaluate the plan digest');
+      },
+    };
+    const message = 'vida read-only dispatch repair: repair plan digest or current configuration invalid';
+    expect(() =>
+      applyReadOnlyDispatchRepair({ database: value.database, plan: staleConfigPlan, current: value.input }),
+    ).toThrow(message);
+    expect(digestReads).toBe(0);
+    expect(() =>
+      applyReadOnlyDispatchRepair({
+        database: value.database,
+        plan: { ...plan, digest: '0'.repeat(64) },
+        current: value.input,
+      }),
+    ).toThrow(message);
+    expect(readRepairRows(value.database)).toEqual([]);
+    passed = true;
+  } finally {
+    closeFixture(value, !passed);
+  }
+});
+
 test('read-only dispatch repair denies stale report and source/config drift', () => {
   const value = fixture();
   let passed = false;
