@@ -6774,3 +6774,53 @@ to NewExpression identity assertion before narrowing. Root moves the actual
 fixture-kind guard before the assertion; no cast/any/suppression or product
 change. Recheck only that affected identity case and repeat the required strict
 checkpoint on amended inputs. Original v855 failure remains retained.
+
+### v857–v865 — published shared shape and readable controller failure bytes
+
+Shared shape4b0b8fb passes amended strict v857 and publishesc2b3b43..4b0b8fb,
+remote0/0. Root resumes and fetches same main; unrelated untracked root files
+and reservations remain untouched. Human reiterates Superpowers dispatch,
+official/upstream research, simplification and execution-cost reduction.
+
+Blind SDK plan confirms native formation schema is not an SDK receipt owner;
+do not couple SDK provenance to native/provider/installer operations. SDK build
+and pack owners lack current Source-to-dist binding; quality capture already
+owns Source digests. This remains GAP pending a minimal reused-input join,
+not justification for a second full scan/build or active loader switch.
+
+Historical contained diagnosis proposes the wrong current test: retired capture
+is now sourceOnly:true. Root's fresh v859 confirms that Source case1PASS20asserts
+27.52s, without controller qualification; no such qualification is claimed.
+Root checks current flags and selects first actual contained case v860: public
+stopped capture preserves failure/rollback/retry. Fresh root
+/tmp/vida-contained-tests-bhz8ws is retained; no archived fixture/state is replayed.
+Install/snapshot complete, qualification child exits1 in4.81s, outercase fails
+7.24s. No timeout/signal and no nested repair receipts. Observation reservation
+and effects stay UNKNOWN even though direct child capture is complete.
+
+Only that new fixture's existing raw receipts are read through owned TS diagnostic
+v861. stderr is actually772bytes: requireControllerRunPacket rejects first
+in-process run result at qualification.ts:263. Exact returned packet remains
+unknown; no public producer/consumer field mismatch is statically proven.
+The supposedly empty failure text has a separate proven cause: renderDiagnosticValue
+accepts only strings/scalars while observed spawn uses byte streams. Buffer and
+Uint8Array are discarded. Root fixes one guard to reuse existing capturedOutputText
+before the unchanged sanitizer/cap; no new decoding helper or authority framework.
+
+New byte-domain regression v862 is genuinelyRED (expected stderr vs empty).
+Corrected text+byte casesv8632PASS25asserts38ms. Test review adds distinct secret
+prefix/suffix outside the selected view; finalv8652PASS27assertions. Controls cover
+UTF8, Buffer, Uint8Array view offset/length, empty streams, redaction before4096
+character cap, status and unchanged child_failure_effects_unknown. Raw observation
+bytes remain independently retained. Three blind current reviews approve the
+bounded decoding fix; TESTING and Bun skill record verified practice. Official
+Node Buffer docs confirm UTF8/typed-array conversion; Bun entrypoint references
+inform diagnosis but establish no particular run-packet cause.
+
+Receipts under BASE: controller-first-boundary-v859.log,
+controller-contained-boundary-v860.log, controller-owned-receipts-v861.ts/jsonl,
+controller-buffer-diagnostic-{red-v862,green-v863,final-v865}.log and
+controller-diagnostic-{security,tests,architecture}-v864.md. Root strict-checkpoints
+and publishes the diagnostic fix before the next qualification correction.
+Run-packet qualification, SDK freshness, frozen correspondence, exact numeric
+and native flow gates remain open; failed controller is not reused or unblocked.

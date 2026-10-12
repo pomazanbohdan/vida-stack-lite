@@ -55,6 +55,38 @@ test('controller failure diagnostics preserve bounded sanitized terminal fields 
   expect(diagnostic.outcome).toBe('child_failure_effects_unknown');
 });
 
+test('controller failure diagnostics decode buffers and byte views before redaction', () => {
+  const stdout = Buffer.from(`Bearer private-value\n${'x'.repeat(5000)}`);
+  const stderr = Buffer.from('packet refused: token=private-value\n\u041f\u043e\u043c\u0438\u043b\u043a\u0430');
+  const prefix = Buffer.from('outside-view-prefix');
+  const suffix = Buffer.from('outside-view-suffix');
+  const backing = new Uint8Array(prefix.length + stderr.length + suffix.length);
+  backing.set(prefix);
+  backing.set(stderr, prefix.length);
+  backing.set(suffix, prefix.length + stderr.length);
+  for (const streams of [
+    { stdout, stderr },
+    { stdout: new Uint8Array(stdout), stderr: backing.subarray(prefix.length, prefix.length + stderr.length) },
+  ]) {
+    const diagnostic = developmentControllerChildDiagnostic({ status: 1, signal: null, ...streams }, 12);
+    expect(diagnostic.status).toBe(1);
+    expect(diagnostic.stderr.text).toBe('packet refused: token=[redacted]\n\u041f\u043e\u043c\u0438\u043b\u043a\u0430');
+    expect(diagnostic.stdout.text.startsWith('Bearer [redacted]\n')).toBe(true);
+    expect(diagnostic.stdout.text.length).toBe(4096);
+    expect(diagnostic.stdout.truncated).toBe(true);
+    expect(diagnostic.stderr.truncated).toBe(false);
+    expect(JSON.stringify(diagnostic)).not.toContain('private-value');
+    expect(JSON.stringify(diagnostic)).not.toContain('outside-view-');
+    expect(diagnostic.outcome).toBe('child_failure_effects_unknown');
+  }
+  const empty = developmentControllerChildDiagnostic(
+    { status: 1, signal: null, stdout: Buffer.alloc(0), stderr: new Uint8Array(0) },
+    0,
+  );
+  expect(empty.stdout).toEqual({ text: '', truncated: false });
+  expect(empty.stderr).toEqual({ text: '', truncated: false });
+});
+
 test('qualified development controller preserves Source identity and accepts a scoped new target bin through unchanged current code', async () => {
   const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-'));
   try {

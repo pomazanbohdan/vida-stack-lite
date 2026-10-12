@@ -322,6 +322,7 @@ function childErrorDiagnostic(error: unknown, sanitize: (value: unknown) => { te
   return sanitize(isRecord(error) && typeof error.message === 'string' ? error.message : error);
 }
 function renderDiagnosticValue(value: unknown) {
+  if (Buffer.isBuffer(value) || value instanceof Uint8Array) return capturedOutputText(value);
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   return '';

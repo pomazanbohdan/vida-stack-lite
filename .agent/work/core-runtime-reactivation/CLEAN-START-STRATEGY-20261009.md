@@ -1481,3 +1481,17 @@ exceeds its NEW10 cap. No budget is raised/reclassified; full frozen/coverage/
 CRAP/confirmed mutation remain GAP. Root strict-checkpoints and publishes.
 Context packet c2b3b43 is already strict-published. Finish Source and fresh
 inventory/correspondence before final SDK formation and single numeric owner.
+
+#### Controller failure decoding v859–v865
+
+Shared shape4b0b8fb is strict-published. Current contained reproducer is the
+public stopped-capture rollback/retry case; retired capture is Source-only.
+Fresh contained fixture fails qualification run-packet shape, retains effects
+and reservation UNKNOWN. Raw stderr772bytes was hidden by the string-only
+diagnostic formatter. One guard reuses existing UTF8 decoder for Buffer/Uint8Array;
+redaction and4096cap stay unchanged. GenuineRED then final2PASS27asserts with
+view containment/secret/Unicode/empty controls and three independent reviews.
+Publish this correction after strict gate. Next: expose exact returned packet
+reason at the current qualification owner without dumping payload or inventing
+frameworks; preserve original failed root, no replay/budget increase. SDK and
+all final numeric/native gates remain GAP. Details: WORKv857–v865.

@@ -60,6 +60,10 @@ retention only after all assertions pass. Formation does not launch these tests.
 
 ## Diagnose and optimize
 
+For child diagnostics, check Buffer and offset Uint8Array views with Unicode
+and distinct secret bytes inside/outside the view. Decode through the existing
+output owner before sanitizing/capping; retain raw receipt custody separately.
+
 For each observed error or bottleneck, retain a bounded receipt, inspect the
 causal path and check current official documentation/upstream issues. Record
 documented support separately from local qualification.

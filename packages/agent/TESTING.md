@@ -823,6 +823,13 @@ Check restart, failure and affected-proof invalidation. Metadata, copying and a 
 
 ### Controller child observations
 
+Decode Buffer and Uint8Array diagnostic streams through the existing UTF-8
+output owner before redaction and the 4096-character cap. Respect byte-view
+offset/length; never decode its entire backing storage. Preserve byte-exact raw
+receipts separately. Check empty streams, Unicode, secrets and truncation.
+Readable failure output still carries UNKNOWN effect semantics and grants no
+reissue or qualification authority.
+
 The controller writes sensitive controller-owned operator evidence under the
 fixed `<controllerRoot>/observations/` directory. Each receipt retains the exact
 command, parent and child working directories, pinned runtime context, times,
