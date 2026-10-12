@@ -7001,3 +7001,85 @@ No new helper framework, duplicate full suite/AST/hash pass or tests in build/
 install. Installed system Runtime is unchanged. SDK Source/artifact join,
 exhaustive frozen correspondence, exact coverage/dynamic frozen CRAP/confirmed
 Killed100% and real clean native flows remain OPEN; no unblock notices.
+
+### v923–v925 — current Source module facts and SDK toolchain readiness
+
+Dependency cohort9133f31 is strict-published; fresh origin/main and HEAD0/0.
+Unowned root bun.lock, BASE research and original FAIL/UNKNOWN custody remain.
+Use Superpowers planning/parallel bounded roles under the standing autonomous
+P0–P1 directive. Existing shared URL shape4b0b8fb and issued readonly context
+c2b3b43 are completed; do not reimplement them from v791/v796 provenance.
+
+Whole dependency-ready Source correction: one invocation-owned direct-module
+fact inventory replaces repeated URL/require binding, decoder import and anchor
+declaration body scans. Reuse runtime-import-bindings and exact URL-shape owners;
+pass the same facts through scanner runtime imports and resources. Preserve all
+type-only/ambient/value distinctions, alias rules, original AST nodes, module
+root allowlist and recursive resource error/order policy. One writer owns those
+three Source files and their caller tests. SDK packer has a disjoint writer:
+its remaining literal npm11 guard blocks current npm12 and must follow validated
+manifest.engines.npm without a build/test-suite side effect.
+
+Root's scoped existing Babel inventory over exact Git9133f31 bytes records
+runtime-import-bindings6roles (main CC26), module-directory-anchors3roles (main
+CC17), forward-candidate-admission40roles. Receipt module-facts-published-v925
+is static only, not coverage or a frozen-budget activation. Desired NEW10 cap
+and exhaustive accepted correspondence remain distinct required evidence.
+The historical1262-role/68-file partial packet binds f8d1925 and remains
+non-executable/non-exhaustive. Apparent historical five deferrals recount44,
+so the recorded5/58 cohort is unresolved; do not quote it as current completion.
+
+Independent SDK plan refines v911: capture finite formation inputs once through
+the existing byte owner; declaration emission and both Bun builds consume that
+materialized captured tree. Formation/pack owner binds exact outputs, generated
+entry bytes and declared tool/dependency identities. Coverage/tests consume an
+explicit validated four-member SDK artifact snapshot, never build it or fall
+back to checkout dist. Dependency links remain declared trust limits, not byte
+custody. Implement this join after remaining Source corrections, and form the
+final SDK only after Source settles. No active consumer schema/loader switch,
+numeric waiver, archived replay or Runtime acceptance follows this planning.
+
+### v928–v939 — shared module facts and qualified Bun no-emit checks
+
+The final module-facts scoped inventory records14/1/40 roles in binding,
+anchor and admission files. New helpers are CC8 or less; the anchor is CC10
+instead of17. Existing larger admission roles remain unchanged. One parse and
+one module-body scan feed exact binding/import/initializer facts; foreign
+Program identity denies reuse. Root completionv931: admission and SDK guard
+71PASS214asserts. SDK npm major follows validated Source engines before expensive
+artifact checks. Blind module/SDK reviews have no actionable findings. This is
+not exhaustive frozen correspondence, current coverage or dynamic CRAP proof.
+
+Replace current/staged no-emit TypeScript subprocesses with qualified Bun1.4.3
+check; preserve explicit captured roots, strict options and stronger Source
+profile. Keep TypeScript7.0.2 for declaration emission and semantic consumers.
+One parity capturev932 passed both engines over418 explicit roots (8031.48ms
+TSC,1713.13ms Bun in this invocation). v933 list-files includes all418; the
+summary excludes one declaration from its displayed count. No root dropped.
+Rootv934 gate/custody24PASS87asserts; v936 Source97files no errors. Final
+compiler-fixture migrationv9392PASS5asserts accepts TSX/native extensions and
+rejects strict nullability. Blind checker review has no actionable findings.
+Do not add duplicate operation --check, test suites in build/install or claim
+general product speed gains. Current research and Bun Test owners record
+applied, deferred and N/A release capabilities, including Ajv codegen conflict.
+
+Actual Bun1.4.3 inert failed-spawnv935 yields PID0/null status/null signal/
+ENOENT. Coverage's prior positive-PID termination gate unnecessarily retained
+that reservation. Separate not-started dispositionv937 admits only this exact
+shape; termination stays false, measurement/effects stay UNKNOWN, run evidence
+stays retained and only the exact owned lock can release. Both Bun Test and
+captured CRAP paths use it; timeout/buffer/other spawn errors remain conservative.
+Worker8PASS45asserts includes actual spawn and replacement-lock denial. Root
+owns final static checks/publication; no whole numerical rerun or native build.
+SDK captured formation and explicit artifact join remain next; old SDK outputs,
+partial frozen lineage and archived UNKNOWN are not current acceptance evidence.
+
+Root custody completion11PASS80asserts includes the actual runner timeout,
+foreign lock and locked-capture drift controls. Blind v939 review finds no
+actionable defect; lock-ownership test is a boundary control, not an end-to-end
+failed-spawn runner proof. Guidance exercise resolves current/Source checks,
+declaration emission and rejected duplicate --check correctly. First strict
+commit denies Knip's unlisted check subcommand/fake fixture binary and an unused
+type export. Apply the exact Bun subcommand exception only, remove the unused
+export and resolve the inert nonexistent executable to an absolute fixture
+path. No blanket ignore or hook bypass. Affected two spawn checks2PASS16asserts.

@@ -1232,8 +1232,8 @@ current checks and publication belong to WORK and the strict Source gate.
 
 Official [Bun1.4.3 notes](https://bun.com/blog/bun-v1.4.3) document pipe-error
 reporting, subprocess fixes and built-in typecheck. Local inert SQLite control
-observes3.53.4; no SQLite3.54 claim. Built-in typecheck is not yet substituted
-for the existing TypeScript compiler gate. [Babel8 API migration](https://babeljs.io/docs/v8-migration-api)
+observes3.53.4; no SQLite3.54 claim. The built-in no-emit checker adoption is
+recorded below. [Babel8 API migration](https://babeljs.io/docs/v8-migration-api)
 documents AST changes; real private-method and import-attribute execution checks
 qualify the changed instrumentation surface, not the entire numerical producer.
 [fs-safe0.26.2](https://github.com/openclaw/fs-safe/releases/tag/v0.26.2) provides
@@ -1253,3 +1253,35 @@ same-object declaration. Source-correction schema now compiles strictly with
 v1 cache prohibition/v2 cache requirement. No strict option is disabled and
 active consumer schemas/loaders remain unchanged. Bounded receipts and open
 SDK/frozen/numeric/native gates are recorded in the current WORK.
+
+## Bun 1.4.3 capability fit — 2026-10-12
+
+The official [release](https://bun.com/blog/bun-v1.4.3) and
+[checker documentation](https://bun.com/docs/runtime/check) distinguish
+`bun check` from operation commands with `--check`. Adopt the native no-emit
+checker by replacing the existing subprocess, with the same explicit captured
+roots/options and qualified pin. Keep stricter Source checks and declaration
+emission separate. Local parity on one 418-root project passed both locked
+TypeScript7.0.2 and Bun1.4.3; the list-files witness contains all 418 roots,
+including the declaration file omitted from the summary count. This establishes
+that checked configuration, not future-version parity or numerical assurance.
+Inert negative fixtures denied run/test/build effects before execution.
+
+| Capability                                             | Current decision and boundary                                                                                                                                                                                                |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native checker                                         | Adopt for current and staged no-emit checks; no duplicate `--check` operation or suite. TypeScript still emits SDK declarations.                                                                                             |
+| Subprocess fixes                                       | Qualify caller result shapes; explicit failed spawn must stay UNKNOWN, with reservation disposal separate from result acceptance. Missing PID alone proves nothing.                                                          |
+| Profile-guided bytecode order                          | Defer until representative isolated native flows and immutable profile custody exist. Bind workload/profile/tool/target/output and compare useful startup/memory effects before adoption.                                    |
+| Split-import metafile attribution and shortened hashes | N/A for the current unsplit SDK and single native entry. Preserve four public SDK filenames, export completeness and output-byte identity.                                                                                   |
+| FetchSession                                           | Defer: the actual release-CI fetch adapter supports Node and global-fetch fixtures. An extra fallback/injection layer has no evidenced benefit. API credentials must remain separate from validated signed storage requests. |
+| Experimental ModuleGraph                               | Do not replace the existing module identity/captured loader. Documented isolation is not a security sandbox or custody proof.                                                                                                |
+| Strict string-codegen prohibition                      | Do not enable: installed Ajv compiles maintained validators with `new Function`. No weakening of schema validation or speculative replacement.                                                                               |
+| CompressionStream levels and HTTP server features      | N/A: no maintained stream-compression/server caller. Existing Bun.Archive is a different API.                                                                                                                                |
+| JSC, JSON, promises and applicable runtime fixes       | Receive through the selected runtime. No product speed claim from upstream benchmarks.                                                                                                                                       |
+| No-lock install tarball optimization                   | N/A to the current frozen-lock workflow; keep exact lock/SRI.                                                                                                                                                                |
+
+The Source launcher, standalone builder and CI already select the same Bun pin.
+This research and focused checks do not establish current SDK formation,
+native installation, exact coverage, frozen CRAP or assertion-confirmed Killed.
+The existing final-check owner retains those gates; active consumer loaders
+and schemas remain unchanged.

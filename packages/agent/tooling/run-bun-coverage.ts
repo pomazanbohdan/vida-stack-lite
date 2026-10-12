@@ -68,6 +68,17 @@ export function coverageProducerTerminalKnown(
 ): boolean {
   return Number.isInteger(result.pid) && result.pid > 0 && (Number.isInteger(result.status) || Boolean(result.signal));
 }
+/** A definite spawn-time failure permits reservation disposal without proving child termination or effects. */
+export function coverageProducerReservationSafeToRelease(
+  result: Pick<SpawnSyncReturns<unknown>, 'pid' | 'status' | 'signal' | 'error'>,
+): boolean {
+  const error = result.error;
+  const errorCode =
+    error !== null && typeof error === 'object' && 'code' in error && typeof error.code === 'string'
+      ? error.code
+      : null;
+  return result.pid === 0 && result.status === null && result.signal === null && errorCode === 'ENOENT';
+}
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { createCoverageMap } = coverageApi;
 const outputRoot = path.join(root, 'coverage', 'bun-unified');
@@ -267,7 +278,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     manifestPath: string,
     reportDirectory: string,
     invocation: { args: string[]; env: NodeJS.ProcessEnv; cwd: string },
-  ): ChildOutcome & { producerTerminalKnown: boolean } {
+  ): ChildOutcome & { producerTerminalKnown: boolean; reservationSafeToRelease: boolean } {
     const result = spawnSync(process.execPath, invocation.args, {
       cwd: invocation.cwd,
       env: invocation.env,
@@ -286,6 +297,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         error: String(result.error ?? 'unknown terminal outcome'),
         unknown: true,
         producerTerminalKnown: coverageProducerTerminalKnown(result),
+        reservationSafeToRelease:
+          coverageProducerTerminalKnown(result) || coverageProducerReservationSafeToRelease(result),
       };
     return {
       shard_id: 'bun-test',
@@ -294,6 +307,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       error: null,
       unknown: false,
       producerTerminalKnown: coverageProducerTerminalKnown(result),
+      reservationSafeToRelease: coverageProducerTerminalKnown(result),
     };
   }
 
@@ -377,7 +391,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     manifest.active_argv = invocation.args;
     writeAtomic(manifestPath, manifest);
     chmodSync(runDirectory, 0o500);
-    const { producerTerminalKnown, ...outcome } = runBunTests(
+    const { producerTerminalKnown, reservationSafeToRelease, ...outcome } = runBunTests(
       evidence.tests,
       manifest,
       manifestPath,
@@ -385,11 +399,13 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       invocation,
     );
     if (outcome.unknown) {
-      terminalKnown = producerTerminalKnown;
+      terminalKnown = reservationSafeToRelease;
       throw new Error(
         producerTerminalKnown
           ? 'Bun Test outcome is UNKNOWN; direct coverage producer terminated; preserve run directory and test-effect custody.'
-          : 'Bun Test outcome is UNKNOWN; preserve lock and run directory.',
+          : reservationSafeToRelease
+            ? 'Bun Test outcome is UNKNOWN; producer did not start; preserve run directory and test-effect custody.'
+            : 'Bun Test outcome is UNKNOWN; preserve lock and run directory.',
       );
     }
     if (outcome.status !== 0 && !(publishedFixture && outcome.status === 1))
@@ -526,11 +542,15 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       process.stdout.write(gate.stdout ?? '');
       process.stderr.write(gate.stderr ?? '');
       if (gate.error || gate.signal || gate.status === null) {
-        terminalKnown = coverageProducerTerminalKnown(gate);
+        const producerTerminalKnown = coverageProducerTerminalKnown(gate);
+        const reservationSafeToRelease = producerTerminalKnown || coverageProducerReservationSafeToRelease(gate);
+        terminalKnown = reservationSafeToRelease;
         throw new Error(
-          terminalKnown
+          producerTerminalKnown
             ? `${gateScript} outcome is UNKNOWN; direct gate producer terminated; preserve run evidence.`
-            : `${gateScript} outcome is UNKNOWN; preserve the run lock for reconciliation.`,
+            : reservationSafeToRelease
+              ? `${gateScript} outcome is UNKNOWN; gate producer did not start; preserve run evidence.`
+              : `${gateScript} outcome is UNKNOWN; preserve the run lock for reconciliation.`,
         );
       }
       if (gate.status !== 0) throw new Error(`${gateScript} failed.`);

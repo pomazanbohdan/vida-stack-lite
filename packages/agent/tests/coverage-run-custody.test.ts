@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { spawnSync } from 'node:child_process';
 import {
   existsSync,
   lstatSync,
@@ -13,7 +14,10 @@ import {
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from '../tooling/coverage-run-lock.ts';
-import { coverageProducerTerminalKnown } from '../tooling/run-bun-coverage.ts';
+import {
+  coverageProducerReservationSafeToRelease,
+  coverageProducerTerminalKnown,
+} from '../tooling/run-bun-coverage.ts';
 
 function fixture(): string {
   return mkdtempSync(path.join(tmpdir(), 'vida-coverage-custody-'));
@@ -38,6 +42,79 @@ test('coverage producer termination stays separate from result success and unobs
   expect(coverageProducerTerminalKnown({ pid: 0, status: null, signal: null })).toBe(false);
   expect(coverageProducerTerminalKnown({ pid: -1, status: 0, signal: null })).toBe(false);
   expect(coverageProducerTerminalKnown({ pid: NaN, status: 0, signal: null })).toBe(false);
+});
+
+test('only a qualified explicit not-started spawn failure may release producer reservation', () => {
+  const missing = spawnSync(path.join(tmpdir(), 'vida-coverage-custody-missing-executable-v937'), [], {
+    encoding: 'utf8',
+  });
+  expect(missing.pid).toBe(0);
+  expect(missing.status).toBeNull();
+  expect(missing.signal).toBeNull();
+  expect(missing.error && 'code' in missing.error ? missing.error.code : undefined).toBe('ENOENT');
+  expect(coverageProducerTerminalKnown(missing)).toBe(false);
+  expect(coverageProducerReservationSafeToRelease(missing)).toBe(true);
+
+  expect(coverageProducerReservationSafeToRelease({ pid: 0, status: null, signal: null })).toBe(false);
+  expect(
+    coverageProducerReservationSafeToRelease({
+      pid: 0,
+      status: null,
+      signal: null,
+      error: Object.assign(new Error('permission denied'), { code: 'EACCES' }),
+    }),
+  ).toBe(false);
+  expect(
+    coverageProducerReservationSafeToRelease({
+      pid: 0,
+      status: null,
+      signal: null,
+      error: Object.assign(new Error('buffer limit'), { code: 'ENOBUFS' }),
+    }),
+  ).toBe(false);
+  expect(
+    coverageProducerReservationSafeToRelease({
+      pid: 0,
+      status: null,
+      signal: null,
+      error: Object.assign(new Error('timeout'), { code: 'ETIMEDOUT' }),
+    }),
+  ).toBe(false);
+  expect(
+    coverageProducerReservationSafeToRelease({
+      pid: -1,
+      status: null,
+      signal: null,
+      error: Object.assign(new Error('missing executable'), { code: 'ENOENT' }),
+    }),
+  ).toBe(false);
+  expect(
+    coverageProducerReservationSafeToRelease({
+      pid: 0,
+      status: 1,
+      signal: null,
+      error: Object.assign(new Error('missing executable'), { code: 'ENOENT' }),
+    }),
+  ).toBe(false);
+});
+
+test('a qualified not-started result releases only its exact owned coverage reservation', () => {
+  const outputRoot = fixture();
+  cleanupAfterPass(outputRoot, () => {
+    const owned = acquireCoverageRunLock(outputRoot);
+    const missing = spawnSync(path.join(outputRoot, 'missing-executable'), [], { encoding: 'utf8' });
+    expect(coverageProducerReservationSafeToRelease(missing)).toBe(true);
+    expect(releaseCoverageRunLock(owned)).toBe(true);
+
+    const replacementOwner = acquireCoverageRunLock(outputRoot);
+    const foreignBytes = Buffer.from('replacement owner custody\n');
+    const lockPath = path.join(outputRoot, 'coverage-run.lock');
+    const replacedPath = path.join(outputRoot, 'replacement-lock');
+    renameSync(lockPath, replacedPath);
+    writeFileSync(lockPath, foreignBytes);
+    expect(() => releaseCoverageRunLock(replacementOwner)).toThrow(/no longer identifies the owned lock/);
+    expect(readFileSync(lockPath)).toEqual(foreignBytes);
+  });
 });
 
 test('a foreign coverage lock denies acquisition without changing report, staging bytes, or lock custody', () => {

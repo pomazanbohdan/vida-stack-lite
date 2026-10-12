@@ -100,7 +100,7 @@ test('rejects staged native TypeScript helper errors while preserving a valid un
       check(root, () => {
         guarded = true;
       }),
-      /tsc failed/u,
+      /check failed/u,
     );
 
     expect(guarded).toBe(true);

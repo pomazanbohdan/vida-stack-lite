@@ -2706,6 +2706,12 @@ qualification exist, normal npm packaging describes only the implemented SDK
 compatibility payload and verifies that payload. An absent native builder cannot
 be a working default prepack dependency or be replaced by an unverified archive.
 
+SDK package verification selects Node and the supported npm major from the
+validated package engines. Check those tools before SDK artifact validation or
+package preflight execution. Malformed version ranges, unstable npm versions,
+and a mismatched Node or npm version deny verification; successful tool selection
+does not establish artifact freshness or Runtime acceptance.
+
 Runtime initialization retries bounded lock-acquisition contention on Linux and
 Windows, rereading the receipt under the acquired lock. Once the protected
 operation starts, an error is returned without retrying its possibly completed

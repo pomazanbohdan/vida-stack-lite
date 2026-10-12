@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scanMaintainedSources } from './ts-only-source-gate.js';
+import { readPin } from '../bin/bun.ts';
 
 function repositoryRootFromModule(): string {
   return path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -42,6 +43,8 @@ function run(): number {
   }
 
   const packageRoot = path.join(repositoryRoot, 'packages/agent');
+  if (process.versions.bun !== readPin(packageRoot))
+    throw new Error('Current quality checks require the package-selected Bun.');
   const rootNames = report.typescriptFiles.map((file) => path.resolve(repositoryRoot, file));
   const temporaryDirectory = mkdtempSync(path.join(os.tmpdir(), 'vida-agent-quality-'));
   const configPath = path.join(temporaryDirectory, 'tsconfig.json');
@@ -51,8 +54,7 @@ function run(): number {
       `${JSON.stringify(createCompilerProject(packageRoot, repositoryRoot, rootNames), null, 2)}\n`,
       { flag: 'wx', mode: 0o600 },
     );
-    const compiler = path.join(packageRoot, 'node_modules/typescript/bin/tsc');
-    const result = spawnSync(process.execPath, [compiler, '--project', configPath, '--pretty', 'false'], {
+    const result = spawnSync(process.execPath, ['check', '--project', configPath, '--no-pretty'], {
       cwd: packageRoot,
       encoding: 'utf8',
       windowsHide: true,

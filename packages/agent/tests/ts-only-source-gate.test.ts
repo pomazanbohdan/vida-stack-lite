@@ -29,8 +29,7 @@ function compileFiles(packageRoot: string, root: string, files: readonly string[
     flag: 'wx',
     mode: 0o600,
   });
-  const compiler = path.join(packageRoot, 'node_modules/typescript/bin/tsc');
-  return spawnSync(process.execPath, [compiler, '--project', configPath, '--pretty', 'false'], {
+  return spawnSync(process.execPath, ['check', '--project', configPath, '--no-pretty'], {
     cwd: packageRoot,
     encoding: 'utf8',
     windowsHide: true,

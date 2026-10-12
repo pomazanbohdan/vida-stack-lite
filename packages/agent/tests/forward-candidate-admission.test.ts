@@ -5,6 +5,12 @@ import path from 'node:path';
 import { scanAdmittedRuntimeImports } from '../bin/forward-candidate-admission.ts';
 import { moduleDirectoryAnchorCalls } from '../bin/module-directory-anchors.ts';
 import { isImportMetaProperty, isNamedIdentifier, moduleUrlResourceShape } from '../bin/module-url-resource-shape.ts';
+import {
+  hasExactValueImportBinding,
+  moduleDeclarationFacts,
+  moduleHasValueBinding,
+  runtimeBindingNames,
+} from '../bin/runtime-import-bindings.ts';
 
 test('module URL shape preserves parsed node identity and exact literal spelling', () => {
   const node = parser.parseExpression("new URL('../file%20name.json?raw#fragment', import.meta.url)", {
@@ -91,6 +97,153 @@ test('directory anchor set owns only the original parsed URL locator node', () =
   expect(anchors.size).toBe(1);
   expect(anchors.has(url)).toBe(true);
   expect(anchors.has({ ...url })).toBe(false);
+});
+test('directory anchor facts retain every same-name const candidate in source order', () => {
+  const tree = parser.parse(
+    "import { fileURLToPath } from 'node:url'; const bundleRoot=fileURLToPath(new URL('../',import.meta.url)); const otherRoot=fileURLToPath(new URL('../',import.meta.url));",
+    { sourceType: 'module' },
+  );
+  const first = tree.program.body[1];
+  const second = tree.program.body[2];
+  if (first?.type !== 'VariableDeclaration' || second?.type !== 'VariableDeclaration')
+    throw new Error('Expected same-name locator candidates.');
+  const firstUrl = first.declarations[0]?.init;
+  const secondUrl = second.declarations[0]?.init;
+  if (firstUrl?.type !== 'CallExpression' || secondUrl?.type !== 'CallExpression')
+    throw new Error('Expected decoder calls.');
+  const firstNode = firstUrl.arguments[0];
+  const secondNode = secondUrl.arguments[0];
+  if (firstNode?.type !== 'NewExpression' || secondNode?.type !== 'NewExpression')
+    throw new Error('Expected URL locator nodes.');
+  second.declarations[0]!.id = first.declarations[0]!.id;
+
+  const facts = moduleDeclarationFacts(tree);
+  expect(facts.constIdentifierInitializers.get('bundleRoot')).toHaveLength(2);
+  const anchors = moduleDirectoryAnchorCalls(tree, 'vida-agent/bin/bun.ts', facts);
+  expect(anchors.size).toBe(2);
+  expect([...anchors][0]).toBe(firstNode);
+  expect([...anchors][1]).toBe(secondNode);
+});
+test('directory anchor facts deny a foreign Program and reuse the same Program facts', () => {
+  const source =
+    "import { fileURLToPath } from 'node:url'; const bundleRoot=fileURLToPath(new URL('../',import.meta.url));";
+  const tree = parser.parse(source, { sourceType: 'module' });
+  const foreignTree = parser.parse(source, { sourceType: 'module' });
+  const facts = moduleDeclarationFacts(tree);
+
+  expect(moduleDeclarationFacts(tree, facts)).toBe(facts);
+  expect(moduleDeclarationFacts(tree.program, facts)).toBe(facts);
+  expect(moduleDirectoryAnchorCalls(tree, 'vida-agent/bin/bun.ts', facts).size).toBe(1);
+  expect(moduleDirectoryAnchorCalls(foreignTree, 'vida-agent/bin/bun.ts', facts).size).toBe(0);
+  expect(moduleDeclarationFacts(parser.parseExpression('bundleRoot'), facts).program).toBeNull();
+});
+test('admitted import scan reads direct module declarations once per parsed invocation', () => {
+  let directModuleBodyScans = 0;
+  const countingParser = {
+    ...parser,
+    parse: (...args: Parameters<typeof parser.parse>) => {
+      const tree = parser.parse(...args);
+      const body = new Proxy(tree.program.body, {
+        get(target, property, receiver) {
+          if (property === Symbol.iterator || property === 'some') directModuleBodyScans += 1;
+          const value: unknown = Reflect.get(target, property, receiver);
+          return value;
+        },
+      });
+      Object.defineProperty(tree.program, 'body', {
+        configurable: true,
+        value: body,
+      });
+      return tree;
+    },
+  } as typeof parser;
+
+  expect(
+    scanAdmittedRuntimeImports(
+      "import { fileURLToPath } from 'node:url'; const bundleRoot=fileURLToPath(new URL('../',import.meta.url)); require('node:fs');",
+      countingParser,
+      'vida-agent/bin/bun.ts',
+    ),
+  ).toEqual(['node:url', 'node:fs']);
+  expect(directModuleBodyScans).toBe(1);
+});
+test('module value binding facts keep roots, runtime declarations, patterns and erased declarations distinct', () => {
+  const has = (source: string, name = 'URL') =>
+    moduleHasValueBinding(parser.parse(source, { sourceType: 'module', plugins: ['typescript'] }), name);
+
+  const pattern = parser.parse('const { nested: { URL }, values: [first, ...rest], defaulted = fallback } = input;', {
+    sourceType: 'module',
+    plugins: ['typescript'],
+  }).program.body[0];
+  if (pattern?.type !== 'VariableDeclaration') throw new Error('Expected binding pattern fixture.');
+  expect(runtimeBindingNames(pattern.declarations[0]!.id)).toEqual(['URL', 'first', 'rest', 'defaulted']);
+
+  expect(has("import { URL as Renamed } from 'source';")).toBe(false);
+  expect(has("import { Other as URL } from 'source';")).toBe(true);
+  expect(has("import type { URL } from 'source';")).toBe(false);
+  expect(has("import { type URL } from 'source';")).toBe(false);
+  expect(has('declare const URL: unknown;')).toBe(false);
+  expect(has('declare function URL(): void;')).toBe(false);
+  expect(has('declare class URL {}')).toBe(false);
+  expect(has('declare enum URL { Value }')).toBe(false);
+  expect(has('declare namespace URL {}')).toBe(false);
+  expect(has('const { nested: { URL } } = input;')).toBe(true);
+  expect(has('function URL() {}')).toBe(true);
+  expect(has('class URL {}')).toBe(true);
+  expect(has('enum URL { Value }')).toBe(true);
+  expect(has('namespace URL {}')).toBe(true);
+  expect(has("import URL = require('source');")).toBe(true);
+  expect(has("import type URL = require('source');")).toBe(false);
+  expect(has('function outer() { const URL = foreignURL; }')).toBe(false);
+
+  const importFacts = moduleDeclarationFacts(
+    parser.parse(
+      "import defaultThing, { fileURLToPath, fileURLToPath as decode, type URL } from 'node:url'; import * as namespace from 'other'; import type { URL as TypesURL } from 'types';",
+      { sourceType: 'module', plugins: ['typescript'] },
+    ),
+  );
+  expect([...importFacts.valueBindings]).toEqual(['defaultThing', 'fileURLToPath', 'decode', 'namespace']);
+  expect(importFacts.namedImports).toEqual([
+    { source: 'node:url', importedName: 'fileURLToPath', localName: 'fileURLToPath' },
+    { source: 'node:url', importedName: 'fileURLToPath', localName: 'decode' },
+  ]);
+  expect(hasExactValueImportBinding(importFacts, 'node:url', 'fileURLToPath', 'fileURLToPath')).toBe(true);
+  expect(hasExactValueImportBinding(importFacts, 'other', 'fileURLToPath', 'fileURLToPath')).toBe(false);
+  const aliasedImportFacts = moduleDeclarationFacts(
+    parser.parse("import { fileURLToPath as decode } from 'node:url';", { sourceType: 'module' }),
+  );
+  expect(hasExactValueImportBinding(aliasedImportFacts, 'node:url', 'fileURLToPath', 'decode')).toBe(true);
+  expect(hasExactValueImportBinding(aliasedImportFacts, 'node:url', 'fileURLToPath', 'fileURLToPath')).toBe(false);
+
+  const parsed = parser.parse('const URL = 1;', { sourceType: 'module' });
+  expect(moduleHasValueBinding(parsed.program, 'URL')).toBe(true);
+  expect(moduleHasValueBinding(parser.parseExpression('URL'), 'URL')).toBe(false);
+});
+test('type-only and aliased URL imports do not suppress owned module directory anchors', () => {
+  for (const [declaration, imports] of [
+    ["import type { URL } from 'source';", ['node:url']],
+    ["import { type URL } from 'source';", ['node:url']],
+    ["import { URL as Renamed } from 'source';", ['node:url', 'source']],
+    ['declare const URL: unknown;', ['node:url']],
+  ] as const)
+    expect(
+      scanAdmittedRuntimeImports(
+        "import { fileURLToPath } from 'node:url'; " +
+          declaration +
+          " const bundleRoot=fileURLToPath(new URL('../',import.meta.url));",
+        parser,
+        'vida-agent/bin/bun.ts',
+      ),
+    ).toEqual([...imports]);
+
+  expect(
+    scanAdmittedRuntimeImports(
+      "import { fileURLToPath } from 'node:url'; import { Other as URL } from 'source'; " +
+        "const bundleRoot=fileURLToPath(new URL('../',import.meta.url));",
+      parser,
+      'vida-agent/bin/bun.ts',
+    ),
+  ).toEqual(['node:url', 'source', '../']);
 });
 test('sealed admission ignores type-only imports and comments while retaining literal runtime imports', () => {
   const imports = scanAdmittedRuntimeImports(

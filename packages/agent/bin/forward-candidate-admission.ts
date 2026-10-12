@@ -6,7 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { verifyForwardReviewSet } from './forward-review-proof.ts';
 import { createFsSafeNativeImportBoundary } from './fs-safe-native-import-boundary.ts';
-import { moduleHasValueBinding } from './runtime-import-bindings.ts';
+import { moduleDeclarationFacts } from './runtime-import-bindings.ts';
+import type { ModuleDeclarationFacts } from './runtime-import-bindings.ts';
 import { moduleDirectoryAnchorCalls } from './module-directory-anchors.ts';
 import { isImportMetaProperty, isNamedIdentifier, moduleUrlResourceShape } from './module-url-resource-shape.ts';
 import type { Node as BabelNode, VariableDeclarator as BabelVariableDeclarator } from '@babel/types';
@@ -82,8 +83,8 @@ function visitBabelChildren(node: BabelNode, visit: (child: BabelNode) => void):
     else if (isBabelNode(child)) visit(child);
   }
 }
-function resources(tree: BabelNode, file: string): string[] {
-  const directoryAnchors = moduleDirectoryAnchorCalls(tree, file);
+function resources(tree: BabelNode, file: string, facts: ModuleDeclarationFacts): string[] {
+  const directoryAnchors = moduleDirectoryAnchorCalls(tree, file, facts);
   const found: string[] = [];
   const meta = (node: unknown): boolean =>
     isBabelNode(node) &&
@@ -100,12 +101,12 @@ function resources(tree: BabelNode, file: string): string[] {
   visit(tree);
   return found;
 }
-function runtimeImports(tree: BabelNode, file: string): string[] {
+function runtimeImports(tree: BabelNode, file: string, facts: ModuleDeclarationFacts): string[] {
   const imports: string[] = [];
   const constructors = new Set<string>(),
     loaders = new Set<string>(),
     declarations: BabelVariableDeclarator[] = [];
-  if (!moduleHasValueBinding(tree, 'require')) loaders.add('require');
+  if (!facts.valueBindings.has('require')) loaders.add('require');
   const boundary =
     file === 'vida-agent/src/config/safe-repository-access.ts' ? createFsSafeNativeImportBoundary(tree, file) : null;
   const discover = (node: BabelNode): void => {
@@ -206,7 +207,8 @@ function runtimeImports(tree: BabelNode, file: string): string[] {
 }
 export function scanAdmittedRuntimeImports(source: string, parser: BabelParserModule, file = 'source'): string[] {
   const tree = parser.parse(source, { sourceType: 'module', plugins: ['typescript'] });
-  return [...runtimeImports(tree, file), ...resources(tree, file)];
+  const facts = moduleDeclarationFacts(tree);
+  return [...runtimeImports(tree, file, facts), ...resources(tree, file, facts)];
 }
 function isUnknownArray(value: unknown): value is unknown[] {
   return Array.isArray(value);

@@ -326,8 +326,8 @@ Oxlint type-aware analysis needs a declared TypeScript project for each file. So
 
 Type shared fixture state and helpers with the existing production contracts. Give SQLite results the exact selected row type and check missing rows. Preserve deliberately invalid test inputs with separate malformed values; do not present them as valid production data.
 
-Check changed shared MJS helpers with strict `checkJs --noEmit` as well as lint.
-A zero-lint result does not prove that their TypeScript contracts compile.
+Maintained Source and tests are TypeScript-only. A zero-lint result does not
+prove that their TypeScript contracts compile.
 The mandatory full typecheck first rejects any maintained JS/MJS, then compiles
 the captured maintained TypeScript files in one strict project, including CLI,
 tooling and tests. It also checks the Source project, which owns `src/**/*.ts`
@@ -336,6 +336,14 @@ During migration, use `tsconfig.checked-js.json` for one combined strict CLI/
 tooling check; it also remains mandatory for the staged precommit snapshot.
 The separate CLI and tooling commands remain available for focused checks.
 Do not add another full CLI/tooling pass to a successful all-maintained check.
+Bun 1.4.3's `bun check --project ... --no-pretty` owns these no-emit checks,
+including the explicit all-maintained root list and staged snapshot project.
+Require the Source-selected Bun before executing the gate. Its embedded
+TypeScript 7 compiler replaces the previous no-emit subprocess; it does not
+replace Babel inventory, semantic consumers or TypeScript declaration emission.
+Keep `tsc --emitDeclarationOnly` in SDK formation. Do not add `--check` to
+test/run/build after the existing checker: successful commands would execute
+their operation and duplicate typechecking. Build/install still run no suites.
 Keep mutable test seeds separate from readonly production snapshots. Use the
 complete current Work contract for valid research fixtures, and check nullable
 Host state, journal versions and original request pointers before use.
@@ -387,7 +395,7 @@ Use the current scripts for the applicable completion checks.
 | ZOMBIES                       | `node bin/bun.ts run test:zombies:pinned`                                              |
 | Deep properties               | `node bin/bun.ts run test:deep:pinned`                                                 |
 | Static quality                | `node bin/bun.ts run quality:static:pinned`                                            |
-| Full Source types             | `node bin/bun.ts node_modules/typescript/bin/tsc --project tsconfig.json --noEmit`     |
+| Full Source types             | `node bin/bun.ts run typecheck:source:pinned`                                          |
 | Coverage and CRAP             | `node bin/bun.ts run test:coverage:pinned`                                             |
 | Saved coverage report         | `node bin/bun.ts run coverage:gate:pinned`                                             |
 | Saved CRAP budget report      | `node bin/bun.ts run crap:pinned`                                                      |
@@ -942,6 +950,12 @@ numeric suffix or dumping the entire bundle on failure. Artifact formation
 and installation run no suites; this scoped SDK check is not Source numerical
 qualification, native qualification or Runtime acceptance.
 
+SDK toolchain guard tests use small owned package fixtures without generated
+artifacts. Derive valid Node/npm declarations and the Bun pin from Source.
+Check malformed npm ranges, npm mismatch before artifacts, matching npm reaching
+the missing-artifact gate, and Node mismatch. Await actual rejected operations
+with the shared rejection helper. These guard checks do not qualify SDK output.
+
 The captured loader resolves a Bun query alias only to an already captured
 physical path. Exact manifest filenames take precedence, including literal
 `?` and `#`; no percent decoding, fragment removal or path-spelling rewrite is
@@ -957,11 +971,15 @@ tests are not rediscovered as additional test subjects.
 The final CRAP subprocess executes the captured tooling closure against the original package root. Its five-minute hard deadline and unknown termination retain the run lock for explicit reconciliation. Runtime plugin path admission accepts both Windows and POSIX separators. These are static implementation guarantees pending the final Bun behavior checks.
 
 Coverage reservation custody follows the direct measurement producer's lifetime,
-separately from test-result and fixture-effect custody. On qualified Bun 1.4.2,
+separately from test-result and fixture-effect custody. On qualified Bun 1.4.3,
 a synchronous child return with a positive PID and an exit status or terminating
 signal observes that direct producer's completion. A timeout/error still denies
 measurement success; keep its run, diagnostics and UNKNOWN test effects. Release
-only the genuine acquired lock handle after known producer termination. A live,
+only the genuine acquired lock handle after known producer termination, or an
+explicit not-started result: exactly PID0, null status/signal and spawn error
+code ENOENT. The latter is not producer termination or successful measurement;
+keep UNKNOWN effects and run evidence. Do not infer it from a missing PID or
+broaden it to timeout, buffer-limit or unqualified spawn errors. A live,
 unobserved or replaced producer reservation remains held. Apply the same rule to
 the captured CRAP subprocess; never classify these failures as Killed mutants.
 

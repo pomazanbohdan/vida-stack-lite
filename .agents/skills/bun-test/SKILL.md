@@ -21,6 +21,12 @@ use the selected `.bun-version` and manifest/lock declarations, without embeddin
 the current runtime version in tests. An emitted native entry binds its selected
 pin; fixtures for prior operations keep their original pin and bytes.
 
+Use the package-owned `bun check --project ... --no-pretty` no-emit gate on
+qualified Bun 1.4.3. Preserve the explicit maintained roots, staged snapshot
+and stricter Source project. Declaration emission still uses TypeScript's
+compiler. Never append `test/run/build --check` to a passed checker: success
+executes that operation. Keep build/install free of test suites.
+
 ## Quick reference
 
 | Need                        | Technique                                                                                                                                                                                  |
@@ -107,7 +113,10 @@ neither invocation counts nor reliable wall/CPU self time. Keep phase and child
 receipts as separate timing evidence. Use no inherited profiling environment.
 
 Preserve FAIL/UNKNOWN fixture custody and original operation IDs. A missing
-PID is not proof of cleanup. Never replay an uncertain operation to obtain a
+PID is not proof of cleanup. Qualified Bun 1.4.3's exact PID0/null status/null
+signal/ENOENT result proves only that a producer did not start. The coverage
+owner may release its exact reservation while retaining UNKNOWN/run evidence;
+other ambiguous spawn errors remain held. Never replay an uncertain operation to obtain a
 cleaner measurement. Preserve live integrity, CAS, authorization and durable syncs.
 
 ## Maintain this reference

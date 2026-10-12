@@ -1,5 +1,5 @@
 import type { NewExpression, Node } from '@babel/types';
-import { moduleHasValueBinding } from './runtime-import-bindings.ts';
+import { hasExactValueImportBinding, moduleDeclarationFacts } from './runtime-import-bindings.ts';
 import { isNamedIdentifier, moduleUrlResourceShape } from './module-url-resource-shape.ts';
 
 const anchors = new Map<string, readonly [string, string]>([
@@ -14,31 +14,18 @@ const anchors = new Map<string, readonly [string, string]>([
 // These declarations locate their module's default filesystem scope. They do
 // not name resource bytes. Their code is still sealed; runtime root ownership
 // and filesystem access remain governed by the callers' existing contracts.
-export function moduleDirectoryAnchorCalls(tree: Node, file: string): ReadonlySet<NewExpression> {
+export function moduleDirectoryAnchorCalls(
+  tree: Node,
+  file: string,
+  sharedFacts?: ReturnType<typeof moduleDeclarationFacts>,
+): ReadonlySet<NewExpression> {
   const found = new Set<NewExpression>();
   const anchor = anchors.get(file);
-  const program = tree.type === 'File' ? tree.program : tree.type === 'Program' ? tree : null;
-  if (!anchor || !program || moduleHasValueBinding(tree, 'URL')) return found;
-  const ownsDecoder = program.body.some(
-    (node) =>
-      node.type === 'ImportDeclaration' &&
-      node.importKind !== 'type' &&
-      node.source.value === 'node:url' &&
-      node.specifiers.some(
-        (specifier) =>
-          specifier.type === 'ImportSpecifier' &&
-          specifier.importKind !== 'type' &&
-          isNamedIdentifier(specifier.imported, 'fileURLToPath') &&
-          specifier.local.name === 'fileURLToPath',
-      ),
-  );
-  if (!ownsDecoder) return found;
-  for (const entry of program.body) {
-    const node = entry.type === 'ExportNamedDeclaration' ? entry.declaration : entry;
-    if (node?.type !== 'VariableDeclaration' || node.kind !== 'const' || node.declarations.length !== 1) continue;
-    const declaration = node.declarations[0];
-    if (!isNamedIdentifier(declaration?.id, anchor[0])) continue;
-    const init = declaration?.init;
+  if (!anchor) return found;
+  const facts = moduleDeclarationFacts(tree, sharedFacts);
+  if (facts.valueBindings.has('URL')) return found;
+  if (!hasExactValueImportBinding(facts, 'node:url', 'fileURLToPath', 'fileURLToPath')) return found;
+  for (const init of facts.constIdentifierInitializers.get(anchor[0]) ?? []) {
     if (
       init?.type !== 'CallExpression' ||
       !isNamedIdentifier(init.callee, 'fileURLToPath') ||

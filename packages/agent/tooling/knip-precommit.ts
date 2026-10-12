@@ -95,7 +95,6 @@ interface Toolchain {
   readonly oxfmt: string;
   readonly oxlint: string;
   readonly oxlintTypeAware: string;
-  readonly tsc: string;
 }
 
 function lockedToolVersion(name: string, manifest: PackageManifest, lock: Lockfile): string {
@@ -134,12 +133,12 @@ function installedTool(root: string, name: string, manifest: PackageManifest, lo
 function toolchain(root: string, manifest: PackageManifest): Toolchain {
   const lock = Bun.JSONC.parse(readFileSync(path.join(root, 'packages/agent/bun.lock'), 'utf8')) as Lockfile;
   installedPackage(root, '@babel/parser', manifest, lock);
+  installedTool(root, 'typescript', manifest, lock);
   return {
     knip: installedTool(root, 'knip', manifest, lock),
     oxfmt: installedTool(root, 'oxfmt', manifest, lock),
     oxlint: installedTool(root, 'oxlint', manifest, lock),
     oxlintTypeAware: installedTool(root, 'oxlint-tsgolint', manifest, lock),
-    tsc: installedTool(root, 'typescript', manifest, lock),
   };
 }
 
@@ -154,6 +153,7 @@ function isTestFile(file: string): boolean {
 function runStaticGates(
   root: string,
   node: string,
+  bunExecutable: string,
   env: NodeJS.ProcessEnv,
   tools: Toolchain,
   trackedFiles: readonly string[],
@@ -181,7 +181,7 @@ function runStaticGates(
     flag: 'wx',
     mode: 0o600,
   });
-  execute(node, [tools.tsc, '--project', configPath, '--noEmit'], pkg, env);
+  execute(bunExecutable, ['check', '--project', configPath, '--no-pretty'], pkg, env);
   execute(
     node,
     [
@@ -242,7 +242,7 @@ export async function runPreCommit(options: KnipPrecommitOptions): Promise<void>
       );
       const testFiles = trackedFiles.filter(isTestFile).map((file) => path.join(snapshotRoot, file));
       await options.rejectFocusedTests(packageRoot, testFiles);
-      runStaticGates(snapshotRoot, node, env, tools, trackedFiles);
+      runStaticGates(snapshotRoot, node, bunExecutable, env, tools, trackedFiles);
     },
   });
 }

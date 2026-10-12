@@ -39,7 +39,7 @@ type PackageManifest = Record<string, unknown> & {
   exports: unknown;
   main: string;
   types: string;
-  engines: Record<string, unknown> & { node: string };
+  engines: Record<string, unknown> & { node: string; npm: string };
   dependencies: Record<string, string>;
 };
 
@@ -103,7 +103,11 @@ function packageManifest(text: string, label: string): PackageManifest {
     exports: value.exports,
     main: stringProperty(value, 'main', label),
     types: stringProperty(value, 'types', label),
-    engines: { ...engines, node: stringProperty(engines, 'node', `${label}.engines`) },
+    engines: {
+      ...engines,
+      node: stringProperty(engines, 'node', `${label}.engines`),
+      npm: stringProperty(engines, 'npm', `${label}.engines`),
+    },
     dependencies: stringRecord(value.dependencies, `${label}.dependencies`),
   };
 }
@@ -220,11 +224,34 @@ function manifestAt(root: string): PackageManifest {
   return packageManifest(readFileSync(path.join(root, 'package.json'), 'utf8'), 'package manifest');
 }
 
+function npmEngineMajor(specification: string): number {
+  assert.match(
+    specification,
+    /^(0|[1-9]\d*)\.x$/,
+    'package manifest.engines.npm must be a whole-major x-range such as 12.x',
+  );
+  const major = Number(specification.slice(0, specification.indexOf('.')));
+  assert.ok(Number.isSafeInteger(major), 'package manifest.engines.npm major must be a safe integer');
+  return major;
+}
+
+function npmVersionMajor(version: string): number {
+  assert.match(
+    version,
+    /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/,
+    'installed npm version must be a stable semantic version',
+  );
+  const major = Number(version.slice(0, version.indexOf('.')));
+  assert.ok(Number.isSafeInteger(major), 'installed npm version major must be a safe integer');
+  return major;
+}
+
 export function sdkCompatibilityManifest(input: { root: string }): { value: PackageManifest; bytes: Buffer } {
   const { root } = input;
   absoluteRoot(root);
   const value = manifestAt(root);
   assert.equal(value.name, 'vida-agent');
+  npmEngineMajor(value.engines.npm);
   value.files = value.files.filter((entry) => !/standalone|release-notes|release-publish/.test(entry));
   for (const name of Object.keys(value.scripts))
     if (/standalone|^test:resources/.test(name)) delete value.scripts[name];
@@ -281,6 +308,17 @@ export async function verifySdkPackage(input: { root: string }): Promise<void> {
   const { root } = input;
   absoluteRoot(root);
   const manifest = sdkCompatibilityManifest({ root }).value;
+  const { node, bun, env } = tools(root);
+  assert.equal(
+    npmVersionMajor(run(node, [findNpmCli(node), '--version'], root, env).trim()),
+    npmEngineMajor(manifest.engines.npm),
+    `SDK packaging requires npm matching ${manifest.engines.npm}`,
+  );
+  assert.equal(
+    run(node, ['--version'], root, env).trim(),
+    'v' + manifest.engines.node,
+    'SDK packaging requires pinned Node',
+  );
   const pin = readPin(root);
   checkManifest(root, pin);
   assertRuntimePackageExports(root);
@@ -334,7 +372,6 @@ export async function verifySdkPackage(input: { root: string }): Promise<void> {
     regular(root, 'bun.lock'),
     'SDK portable frozen lock differs',
   );
-  const { node, bun, env } = tools(root);
   run(bun, ['run', 'preflight:pinned'], root, env);
   run(
     bun,
@@ -344,18 +381,6 @@ export async function verifySdkPackage(input: { root: string }): Promise<void> {
     ],
     root,
     env,
-  );
-  assert.equal(
-    run(node, [findNpmCli(node), '--version'], root, env)
-      .trim()
-      .split('.')[0],
-    '11',
-    'SDK packaging requires supported npm 11',
-  );
-  assert.equal(
-    run(node, ['--version'], root, env).trim(),
-    'v' + manifest.engines.node,
-    'SDK packaging requires pinned Node',
   );
 }
 

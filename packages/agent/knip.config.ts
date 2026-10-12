@@ -18,9 +18,9 @@ const config = {
       project: ['tooling/agent/' + codeFiles, 'tests/agent/' + codeFiles],
     },
     'packages/agent': {
-      // POSIX system utility for bounded, owned FIFO fixtures; not an npm dependency.
-      // This exact binary exception does not suppress files, exports or dependencies.
-      ignoreBinaries: ['mkfifo'],
+      // POSIX FIFO utility and Bun's built-in check subcommand are not npm binaries.
+      // These exact exceptions do not suppress files, exports or dependencies.
+      ignoreBinaries: ['mkfifo', 'check'],
       entry: [
         'bin/scope.ts',
         'bin/development-controller.ts',
