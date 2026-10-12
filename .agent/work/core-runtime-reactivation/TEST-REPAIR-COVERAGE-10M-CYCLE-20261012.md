@@ -93,3 +93,23 @@ Ruling: parallel independent writers are authorized by the user's explicit dispa
 dbfa40c is published. Its iteration log is .tmp/coverage-iteration-dbfa40c/full-coverage.log; result UNKNOWN with77PASS/8FAIL partial rows. The prior1800s attempt is UNKNOWN with121PASS/19FAIL and no coverage receipt. Neither is a global gate pass.
 
 Next packet: malformed-process-output parser controls3PASS/7assertions; controller opt-in start/settled diagnostics cover setup and public calls, parent62function complexities unchanged. Fresh controller controlsPASS17assertions at27.55s and31.07s command; diagnostic receipts retained in workspace before exact verified successful fixture cleanup. Setup~0.8s, largest issue-wave~6.1s in that fresh tmpfs control; workspace full measurements are not a matched benchmark. Further Source/runtime-package cost attribution remains open, no safe freshness shortcut admitted.
+
+## Next reviewed P1 packet: retain the existing transform result
+
+The producer currently discards generated code from its map transform; the
+preload transforms loaded sources again. New manifests use VidaBunCoverageRun/v2
+with exhaustive ordered instrumented_sources binding source path/hash to a
+canonical private artifact path/hash. Retain code and map from the existing
+producer pass, write artifacts before snapshot sealing, and verify original
+source plus executed artifact bytes in preload without regeneration fallback.
+The validator reuses code returned by its existing canonical transform to
+check artifacts, including unloaded sources. Genuine legacyv1 report reading
+remains explicit; new preload acceptsv2 only. Original fingerprints, maps,
+module closure and report/process schemas keep their existing meaning.
+
+One core writer owns runner/preload/validator/evidence/shared artifact helper;
+one fixture writer owns lifecycle/synthetic fixtures; one assertion writer
+owns synthetic denials and real producer custody controls. Root reviews and
+runs focused qualification after all writes settle. Tamper, row bijection,
+path/symlink, canonical code, legacy-reader and query identity controls precede
+publication. No measured speed improvement is claimed from static analysis.

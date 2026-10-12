@@ -99,8 +99,28 @@ for (const outcome of [
           path.join(snapshot, 'tooling/bun-coverage-preload.ts'),
           ...tests.map((file) => './' + file),
         ];
+        const instrumentedSources = [
+          { path: 'src/fixture.ts', source },
+          { path: 'src/other.ts', source: otherSource },
+        ].map(({ path: sourcePath, source: sourceText }) => {
+          const instrumented = instrumentSource(path.join(root, sourcePath), sourceText);
+          const artifactPath = `__coverage_instrumented__/${sourcePath}`;
+          const artifactBytes = Buffer.from(instrumented.code);
+          const target = path.join(snapshot, artifactPath);
+          mkdirSync(path.dirname(target), { recursive: true });
+          writeFileSync(target, artifactBytes);
+          return {
+            row: {
+              path: sourcePath,
+              source_sha256: sha256(Buffer.from(sourceText)),
+              artifact_path: artifactPath,
+              artifact_sha256: sha256(artifactBytes),
+            },
+            fileCoverage: instrumented.fileCoverage,
+          };
+        });
         const manifest = {
-          schema: 'VidaBunCoverageRun/v1',
+          schema: 'VidaBunCoverageRun/v2',
           run_id: runId,
           snapshot_directory: snapshotRelative,
           source_fingerprint: sha256(JSON.stringify(sources)),
@@ -115,12 +135,10 @@ for (const outcome of [
           test_selection: { mode: 'full-current-test-set', tests },
           active_argv: argv,
           execution_scope: { qualification: 'isolated-lifecycle-owner-only' },
-          source_maps: {
-            [path.join(root, 'src/fixture.ts')]: instrumentSource(path.join(root, 'src/fixture.ts'), source)
-              .fileCoverage,
-            [path.join(root, 'src/other.ts')]: instrumentSource(path.join(root, 'src/other.ts'), otherSource)
-              .fileCoverage,
-          },
+          instrumented_sources: instrumentedSources.map(({ row }) => row),
+          source_maps: Object.fromEntries(
+            instrumentedSources.map(({ row, fileCoverage }) => [path.join(root, row.path), fileCoverage]),
+          ),
         };
         writeFileSync(manifestPath, JSON.stringify(manifest));
         if (outcome === 'query-import')

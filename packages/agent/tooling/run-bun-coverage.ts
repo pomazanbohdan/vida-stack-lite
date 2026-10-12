@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import {
   chmodSync,
   mkdirSync,
@@ -21,6 +22,12 @@ import {
   parseHistoricalReference,
 } from './published-baseline-reference.js';
 import { validateIstanbulFileCoverage as validateFileCoverage } from './coverage-counters.js';
+import {
+  instrumentedArtifactPath,
+  maxInstrumentedArtifactBytes,
+  maxInstrumentedArtifactsBytes,
+  type InstrumentedSourceDigest,
+} from './coverage-instrumented-sources.ts';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from './coverage-run-lock.js';
 import { coverageInputs, instrumentSource, isExternalModulePath, readBunPin, sha256 } from './bun-coverage-evidence.ts';
 
@@ -29,7 +36,7 @@ import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
 
 type SourceDigest = InputDigest;
 type RunManifest = {
-  schema: 'VidaBunCoverageRun/v1';
+  schema: 'VidaBunCoverageRun/v2';
   run_id: string;
   bun_version: string;
   snapshot_directory: string;
@@ -46,6 +53,7 @@ type RunManifest = {
   tests: string[];
   sources: SourceDigest[];
   source_maps: Record<string, FileCoverageData>;
+  instrumented_sources: InstrumentedSourceDigest[];
 };
 type ChildOutcome = {
   shard_id: 'bun-test';
@@ -232,6 +240,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     for (const required of [
       'tooling/bun-coverage-preload.ts',
       'tooling/bun-coverage-evidence.ts',
+      'tooling/coverage-instrumented-sources.ts',
       'tooling/maintained-source-inventory.ts',
     ])
       if (!seen.has(required)) throw new Error('Snapshot bootstrap dependency was not attested: ' + required);
@@ -340,21 +349,42 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       : [];
     if (fixtureDependencyLink) symlinkSync(path.join(root, 'node_modules'), fixtureDependencyLink, 'dir');
     for (const directory of fixtureOutputs) mkdirSync(directory, { recursive: true, mode: 0o700 });
-    sealSnapshotTree(snapshotDirectory, fixtureDependencyLink, fixtureRoot);
-    // Published tests intentionally write coverage-subject scratch here. These
-    // Outputs carry no measurement authority; captured files are byte-checked.
-    for (const directory of fixtureOutputs) chmodSync(directory, 0o700);
-    const sourceMapEntries: [string, FileCoverageData][] = evidence.sources.map((entry): [string, FileCoverageData] => {
+    const sourceMapEntries: [string, FileCoverageData][] = [];
+    const instrumentedSources: InstrumentedSourceDigest[] = [];
+    let instrumentedTotalBytes = 0;
+    for (const entry of evidence.sources) {
       const absolute = path.resolve(root, entry.path);
       const bytes = inputBytes[entry.path];
       if (!bytes) throw new Error(`Immutable source snapshot is missing: ${entry.path}`);
       const source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-      return [absolute, instrumentSource(absolute, source).fileCoverage];
-    });
+      const transformed = instrumentSource(absolute, source);
+      const artifactBytes = Buffer.from(transformed.code, 'utf8');
+      if (
+        artifactBytes.length > maxInstrumentedArtifactBytes ||
+        instrumentedTotalBytes + artifactBytes.length > maxInstrumentedArtifactsBytes
+      )
+        throw new Error('Coverage instrumented artifacts exceed configured byte limits.');
+      instrumentedTotalBytes += artifactBytes.length;
+      const artifactPath = instrumentedArtifactPath(entry.path);
+      const artifactTarget = path.join(snapshotDirectory, ...artifactPath.split('/'));
+      mkdirSync(path.dirname(artifactTarget), { recursive: true, mode: 0o700 });
+      writeFileSync(artifactTarget, artifactBytes, { flag: 'wx', mode: 0o400 });
+      instrumentedSources.push({
+        path: entry.path,
+        source_sha256: entry.sha256,
+        artifact_path: artifactPath,
+        artifact_sha256: sha256(artifactBytes),
+      });
+      sourceMapEntries.push([absolute, transformed.fileCoverage]);
+    }
+    sealSnapshotTree(snapshotDirectory, fixtureDependencyLink, fixtureRoot);
+    // Published tests intentionally write coverage-subject scratch here. These
+    // Outputs carry no measurement authority; captured files are byte-checked.
+    for (const directory of fixtureOutputs) chmodSync(directory, 0o700);
     const sourceMaps: Record<string, FileCoverageData> = Object.fromEntries(sourceMapEntries);
     const snapshotRelative = path.relative(root, snapshotDirectory).replaceAll('\\', '/');
     const manifest: RunManifest = {
-      schema: 'VidaBunCoverageRun/v1',
+      schema: 'VidaBunCoverageRun/v2',
       run_id: runId,
       bun_version: pinnedBun,
       runtime_executable_sha256: sha256(readFileSync(process.execPath)),
@@ -362,6 +392,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       ...evidence,
       test_selection: evidence.test_selection,
       source_maps: sourceMaps,
+      instrumented_sources: instrumentedSources,
       execution_scope: {
         ...(publishedFixture
           ? {

@@ -8089,3 +8089,45 @@ to workspace/full instrumentation. No fsync/quarantine/current Source/CAS/auth
 boundary was suppressed. Blind review approves fixes and timing error paths.
 425TSfiles/0diagnostics, Source97typecheckPASS. New plan:
 TEST-REPAIR-COVERAGE-10M-CYCLE-20261012.md. Numeric gates/runtime remain pending.
+
+### 2026-10-12 — published repair and next bounded producer
+
+Published6f5f9de through ordinary hooks/nonforce push. Hook initially found two
+unused diagnostic return bindings; removed them and retried successfully.
+Fresh run876c9c44-61a6-468a-bbbb-ff792c6ce214, Source/HEAD fixed, stopped at
+600000ms UNKNOWN with80PASS/8FAIL partial rows, no coverage-final report or
+numeric admission. No live Bun producer remains; reservation released. Failed
+controller root vida-controller-mLrKk3 retained outside editable repository.
+Its first kernel starts~83s into child lifetime but processing355ms; child
+ends SIGTERM/ETIMEDOUT120s, not a kernel2s budget failure. Audit now surfaces
+unknown child outcome correctly rather than JSON parsing. Further TaskSource
+and correction-defaults cases still exceed their individual bounds.
+
+An8s bounded syscall diagnostic attached to the already-failing run's audit
+child observed3084fsync/1027writes and many file operations. Thread syscall
+sums are not wall-time attribution; profiling can perturb execution, so this
+run is not a performance benchmark. The audit descendant later became zombie;
+no effect success/no replay inferred. All old failed/UNKNOWN roots retained.
+
+Blind analysis/review confirms producer map pass discards code and preload
+repeats transforms. Reviewed v2 artifact-custody design is recorded in current
+cycle plan and assigned to disjoint core/fixture/assertion writers. Actual
+qualification and performance evidence pending; no global gates weakened.
+
+Explicitly applied .agents/skills/bun-test/SKILL.md. Official Bun index resolves
+runtime-behavior/lifecycle/code-coverage/plugins pages after two guessed URL404s.
+Docs confirm CLI5000ms default applies per-test, and native statements threshold
+is not enforced. Keep existing four-metric instrumented admission. Updated
+skill references, not a runtime-support claim beyond qualified selected pin.
+
+V2 derived-artifact packet qualification:426maintainedTS files/0diagnostics,
+Source97-file checkerPASS and scoped lintPASS. Four owned test files qualify
+35PASS/163assertions/14.54s, including real producer/preload/validator join,
+query-instance identity, malformed artifacts/path rows, coherent tampering,
+legacyv1 and v1-with-v2-metadata denial. Review caught conditional legacy
+bootstrap receipt requirement and an unchecked canonical-code lookup; Root
+corrected both, plus unused Source read binding. Cache retains only verified
+immutable strings, avoiding alias rehash/decode; original bytes remain checked
+on each Source load. Independent blind patch review finds no actionable issue.
+This is tooling/custody qualification, not full current coverage or a measured
+speed improvement. Build/install suites not invoked.

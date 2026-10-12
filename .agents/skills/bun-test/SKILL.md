@@ -192,6 +192,20 @@ owner may release its exact reservation while retaining UNKNOWN/run evidence;
 other ambiguous spawn errors remain held. Never replay an uncertain operation to obtain a
 cleaner measurement. Preserve live integrity, CAS, authorization and durable syncs.
 
+## Official references
+
+Use the current [Bun documentation index](https://bun.com/docs/llms.txt)
+to resolve pages rather than guessing URLs. Consult
+[runtime behavior and per-test timeouts](https://bun.com/docs/test/runtime-behavior.md),
+[lifecycle hooks](https://bun.com/docs/test/lifecycle.md),
+[mock restoration](https://bun.com/docs/test/mocks.md),
+[coverage limitations](https://bun.com/docs/test/code-coverage.md), and
+[runtime plugin loading](https://bun.com/docs/runtime/plugins.md) for the affected boundary.
+Documented support is separate from qualification on the selected Bun pin.
+Bun currently documents that its `statements` threshold is not enforced;
+its native thresholds therefore cannot replace the repository's exact
+functions/lines/statements/branches admission.
+
 ## Maintain this reference
 
 For full coverage, stream the producer's output into the owned caller log and

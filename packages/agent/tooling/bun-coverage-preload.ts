@@ -9,9 +9,14 @@ import {
   capturedModuleInputs,
   capturedModuleRequestPath,
   canonicalCapturedModulePath,
-  instrumentSource,
   repositoryRootForPackage,
 } from './bun-coverage-evidence.ts';
+import {
+  maxInstrumentedArtifactsBytes,
+  parseInstrumentedSourceDigests,
+  readInstrumentedArtifact,
+  type InstrumentedSourceDigest,
+} from './coverage-instrumented-sources.ts';
 
 type FileCoverageData = import('istanbul-lib-instrument').FileCoverageData;
 type SourceDigest = { path: string; sha256: string };
@@ -32,6 +37,7 @@ type RunManifest = {
   execution_scope: Record<string, unknown>;
   sources: SourceDigest[];
   source_maps: Record<string, FileCoverageData>;
+  instrumented_sources: InstrumentedSourceDigest[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -56,7 +62,7 @@ if (
 )
   throw new Error('Bun coverage snapshot path differs from the run manifest.');
 if (
-  manifest.schema !== 'VidaBunCoverageRun/v1' ||
+  manifest.schema !== 'VidaBunCoverageRun/v2' ||
   manifest.run_id !== process.env.VIDA_BUN_COVERAGE_RUN_ID ||
   manifest.source_fingerprint !== process.env.VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT ||
   manifest.test_fingerprint !== process.env.VIDA_BUN_COVERAGE_TEST_FINGERPRINT ||
@@ -80,6 +86,32 @@ const expected = new Map(
   }),
 );
 if (expected.size !== manifest.sources.length) throw new Error('Bun coverage source manifest contains duplicates.');
+const capturedInputPaths = new Set(
+  [...manifest.sources, ...manifest.test_inputs, ...manifest.tool_inputs].map((entry) => entry.path),
+);
+const instrumentedSources = parseInstrumentedSourceDigests(
+  manifest.instrumented_sources,
+  manifest.sources,
+  capturedInputPaths,
+);
+const instrumentedBySource = new Map(instrumentedSources.map((entry) => [entry.path, entry] as const));
+const instrumentedContents = new Map<string, string>();
+let loadedArtifactBytes = 0;
+function instrumentedCode(sourcePath: string) {
+  const entry = instrumentedBySource.get(sourcePath);
+  if (!entry) throw new Error('Coverage source has no paired instrumented artifact: ' + sourcePath);
+  const cached = instrumentedContents.get(sourcePath);
+  if (cached !== undefined) return cached;
+  const artifact = readInstrumentedArtifact(snapshotRoot, entry);
+  if (digest(artifact) !== entry.artifact_sha256)
+    throw new Error('Coverage instrumented artifact digest differs: ' + sourcePath);
+  loadedArtifactBytes += artifact.length;
+  if (loadedArtifactBytes > maxInstrumentedArtifactsBytes)
+    throw new Error('Coverage instrumented artifacts exceed total byte limit.');
+  const code = new TextDecoder('utf-8', { fatal: true }).decode(artifact);
+  instrumentedContents.set(sourcePath, code);
+  return code;
+}
 const snapshotRoot = path.resolve(snapshotDirectory);
 const fixture =
   manifest.test_selection.mode === 'published-baseline-bun-native'
@@ -105,6 +137,7 @@ snapshotBytes('tooling/bun-coverage-preload.ts', preloadDigest);
 const bootstrapInputs = [
   'tooling/bun-coverage-preload.ts',
   'tooling/bun-coverage-evidence.ts',
+  'tooling/coverage-instrumented-sources.ts',
   'tooling/source-instrumentation.ts',
   'tooling/captured-json-module.ts',
   'tooling/captured-module-contents.ts',
@@ -224,7 +257,7 @@ function loadFixtureModule(file: string, relative: string) {
   const sourceHash = expected.get(sourceFile);
   if (sourceHash) {
     if (sourceHash !== hash) throw new Error('Published fixture source differs from measured bytes: ' + relative);
-    const { code } = instrumentSource(sourceFile, new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    const code = instrumentedCode(relative);
     loadedFiles.add(sourceFile);
     loadedInputs.set(relative, hash);
     return { contents: code, loader: moduleLoader(file), resolveDir: path.dirname(file) };
@@ -242,8 +275,8 @@ function loadSnapshotModule(file: string) {
   const relative = path.relative(root, file).replaceAll('\\', '/');
   const sourceHash = expected.get(file);
   if (sourceHash) {
-    const bytes = snapshotBytes(relative, sourceHash);
-    const { code } = instrumentSource(file, new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    snapshotBytes(relative, sourceHash);
+    const code = instrumentedCode(relative);
     loadedFiles.add(file);
     loadedInputs.set(relative, sourceHash);
     return { contents: code, loader: moduleLoader(file), resolveDir: path.dirname(file) };

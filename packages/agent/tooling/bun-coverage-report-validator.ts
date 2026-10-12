@@ -24,6 +24,12 @@ import {
   sha256,
   type FinalQualityProjectionInputs,
 } from './bun-coverage-evidence.ts';
+import {
+  maxInstrumentedArtifactBytes,
+  maxInstrumentedArtifactsBytes,
+  parseInstrumentedSourceDigests,
+  readInstrumentedArtifact,
+} from './coverage-instrumented-sources.ts';
 
 type CoverageSummaryData = import('istanbul-lib-coverage').CoverageSummaryData;
 type FileCoverageData = import('istanbul-lib-instrument').FileCoverageData;
@@ -55,6 +61,7 @@ type RunManifest = {
   execution_scope: unknown;
   active_argv: unknown;
   source_maps: Record<string, FileCoverageData>;
+  instrumented_sources?: unknown;
 };
 type CoverageReport = {
   published_reference?: PublishedBaselineReference;
@@ -169,7 +176,7 @@ function isRunManifest(value: unknown): value is DecodedManifest {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
   const manifest = value as Record<string, unknown>;
   return (
-    manifest.schema === 'VidaBunCoverageRun/v1' &&
+    (manifest.schema === 'VidaBunCoverageRun/v1' || manifest.schema === 'VidaBunCoverageRun/v2') &&
     typeof manifest.run_id === 'string' &&
     typeof manifest.snapshot_directory === 'string' &&
     Array.isArray(manifest.sources) &&
@@ -386,7 +393,8 @@ function validatedCoverageSummary(
   current: CoverageInputs,
   requireFullCoverage: boolean,
 ) {
-  const sourceMaps = expectedSourceMaps(root, current);
+  const { maps: sourceMaps, code } = expectedSourceInstrumentation(root, current);
+  validateInstrumentedArtifacts(root, run, current, code);
   if (
     JSON.stringify(run.manifest.source_maps) !== JSON.stringify(sourceMaps) ||
     JSON.stringify(run.report.source_maps) !== JSON.stringify(sourceMaps)
@@ -455,16 +463,49 @@ export function assertCoverageSnapshotBytes(
   }
 }
 
-function expectedSourceMaps(root: string, current: CoverageInputs) {
+function expectedSourceInstrumentation(root: string, current: CoverageInputs) {
   const maps: Record<string, FileCoverageData> = {};
+  const code: Record<string, Buffer> = {};
   for (const source of current.sources) {
     const absolute = path.resolve(root, source.path);
     const bytes = current.input_bytes[source.path];
     if (!bytes) throw new Error(`Coverage source bytes are missing: ${source.path}`);
     const content = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    maps[absolute] = instrumentSource(absolute, content).fileCoverage;
+    const transformed = instrumentSource(absolute, content);
+    maps[absolute] = transformed.fileCoverage;
+    code[source.path] = Buffer.from(transformed.code, 'utf8');
   }
-  return maps;
+  return { maps, code };
+}
+
+function validateInstrumentedArtifacts(
+  root: string,
+  run: CoverageRun,
+  current: CoverageInputs,
+  canonicalCode: Record<string, Buffer>,
+) {
+  if (run.manifest.schema === 'VidaBunCoverageRun/v1') {
+    if (run.manifest.instrumented_sources !== undefined)
+      throw new Error('Coverage instrumented-source metadata requires a v2 manifest.');
+    return;
+  }
+  const captured = new Set(
+    [...current.sources, ...current.test_inputs, ...current.tool_inputs].map((entry) => entry.path),
+  );
+  const rows = parseInstrumentedSourceDigests(run.manifest.instrumented_sources, current.sources, captured);
+  const snapshotRoot = path.join(root, ...run.manifest.snapshot_directory.split('/'));
+  let total = 0;
+  for (const row of rows) {
+    const actual = readInstrumentedArtifact(snapshotRoot, row);
+    total += actual.length;
+    if (actual.length > maxInstrumentedArtifactBytes || total > maxInstrumentedArtifactsBytes)
+      throw new Error('Coverage instrumented artifacts exceed configured byte limits.');
+    if (sha256(actual) !== row.artifact_sha256)
+      throw new Error('Coverage instrumented artifact digest differs: ' + row.path);
+    const expected = canonicalCode[row.path];
+    if (expected === undefined || !actual.equals(expected))
+      throw new Error('Coverage instrumented artifact differs from canonical instrumentation: ' + row.path);
+  }
 }
 
 function verifyLoadedInputs(
@@ -510,6 +551,7 @@ function verifyLoadedInputs(
   for (const required of [
     'tooling/bun-coverage-preload.ts',
     evidenceProvider,
+    ...(manifest.schema === 'VidaBunCoverageRun/v2' ? ['tooling/coverage-instrumented-sources.ts'] : []),
     'tooling/source-instrumentation.ts',
     'tooling/maintained-source-inventory.ts',
   ])

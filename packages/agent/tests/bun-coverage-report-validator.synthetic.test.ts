@@ -5,7 +5,8 @@
  * provenance, executed coverage, or numeric coverage qualification.
  */
 import { expect, test } from 'bun:test';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { sha256 } from '../tooling/bun-coverage-evidence.ts';
 import path from 'node:path';
 import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
 import {
@@ -79,6 +80,26 @@ async function withFixture(action: (fixture: SyntheticFixture) => Promise<void>)
   }
 }
 
+function manifestBytes(fixture: SyntheticFixture): Uint8Array {
+  const bytes = Buffer.from(JSON.stringify(fixture.manifest));
+  writeFileSync(path.join(fixture.root, String(fixture.report.manifest_path)), bytes);
+  fixture.report.manifest_sha256 = sha256(bytes);
+  return fixture.reportBytes();
+}
+
+function instrumentedRows(fixture: SyntheticFixture): Array<Record<string, unknown>> {
+  const rows = fixture.manifest.instrumented_sources;
+  if (!Array.isArray(rows)) throw new Error('Synthetic instrumented source rows are missing.');
+  if (rows.length === 0) throw new Error('Synthetic instrumented source rows are empty.');
+  for (const row of rows) record(row, 'instrumented source row');
+  return rows as Array<Record<string, unknown>>;
+}
+
+function artifactPath(fixture: SyntheticFixture, row: Record<string, unknown>): string {
+  if (typeof row.artifact_path !== 'string') throw new Error('Synthetic artifact path is missing.');
+  return path.join(fixture.root, String(fixture.manifest.snapshot_directory), row.artifact_path);
+}
+
 test('accepts a coherent UNTRUSTED synthetic report with full coverage disabled', async () => {
   await withFixture(async (fixture) => {
     const result = await validateCoverageReport(fixture.reportPath, fixture.root, {
@@ -88,6 +109,7 @@ test('accepts a coherent UNTRUSTED synthetic report with full coverage disabled'
     const expectedRunId = fixture.report.run_id;
     if (typeof expectedRunId !== 'string') throw new Error('Synthetic run identity is missing.');
     expect(result.report.run_id).toBe(expectedRunId);
+    expect(result.manifest.schema).toBe('VidaBunCoverageRun/v2');
     expect(result.processes).toBe(1);
     expect(result.maintained_sources.map(({ path: source }) => source)).toEqual(expectedFixtureSources);
     // The downstream gate receives Source-generated maps, never a decoded
@@ -101,6 +123,110 @@ test('accepts a coherent UNTRUSTED synthetic report with full coverage disabled'
       expectedFixtureSources.map((source) => path.resolve(fixture.root, source)).sort(),
     );
     // Deliberately make no percentage or coverage qualification assertion.
+  });
+});
+
+test('rejects missing, extra, reordered, or duplicate v2 instrumented source rows', async () => {
+  for (const mutate of [
+    (_fixture: SyntheticFixture, rows: Array<Record<string, unknown>>) => rows.splice(0, 1),
+    (_fixture: SyntheticFixture, rows: Array<Record<string, unknown>>) => rows.push({ ...rows[0]! }),
+    (_fixture: SyntheticFixture, rows: Array<Record<string, unknown>>) => rows.reverse(),
+    (_fixture: SyntheticFixture, rows: Array<Record<string, unknown>>) => (rows[1] = { ...rows[0]! }),
+  ]) {
+    await withFixture(async (fixture) => {
+      mutate(fixture, instrumentedRows(fixture));
+      await rejects(fixture, manifestBytes(fixture), /instrumented-source|instrumented artifact/u);
+    });
+  }
+});
+
+test('rejects v2 rows bound to a wrong Source digest or noncanonical artifact path', async () => {
+  for (const mutate of [
+    (row: Record<string, unknown>) => (row.source_sha256 = '0'.repeat(64)),
+    (row: Record<string, unknown>) => (row.artifact_path = '../src/host-state.ts'),
+    (row: Record<string, unknown>) => (row.artifact_path = '__coverage_instrumented__/src/alias.ts'),
+    (row: Record<string, unknown>) => (row.artifact_path = '__coverage_instrumented__/src/./host-state.ts'),
+    (row: Record<string, unknown>) => (row.artifact_path = '__coverage_instrumented__/src/../src/host-state.ts'),
+  ]) {
+    await withFixture(async (fixture) => {
+      mutate(instrumentedRows(fixture)[0]!);
+      await rejects(fixture, manifestBytes(fixture), /instrumented-source|instrumented artifact/u);
+    });
+  }
+});
+
+test('rejects missing, truncated, tampered, and symlinked v2 instrumented artifacts', async () => {
+  for (const mode of ['missing', 'truncated', 'tampered', 'symlink'] as const) {
+    await withFixture(async (fixture) => {
+      const target = artifactPath(fixture, instrumentedRows(fixture)[0]!);
+      if (mode === 'missing') {
+        rmSync(target);
+      } else if (mode === 'symlink') {
+        const outside = path.join(fixture.root, 'outside-instrumented.ts');
+        writeFileSync(outside, 'export const outside = true;\n');
+        rmSync(target);
+        symlinkSync(outside, target);
+      } else {
+        const bytes = readFileSync(target);
+        writeFileSync(
+          target,
+          mode === 'truncated'
+            ? bytes.subarray(0, Math.max(0, bytes.length - 1))
+            : Buffer.concat([bytes, Buffer.from('\n/* tampered */')]),
+        );
+      }
+      await rejects(fixture, fixture.reportBytes(), /instrumented artifact/u);
+    });
+  }
+});
+
+test('rejects cross-swapped instrumented artifacts even when row and manifest hashes are rebound', async () => {
+  await withFixture(async (fixture) => {
+    const rows = instrumentedRows(fixture);
+    const first = artifactPath(fixture, rows[0]!);
+    const second = artifactPath(fixture, rows[1]!);
+    const firstBytes = readFileSync(first);
+    const secondBytes = readFileSync(second);
+    writeFileSync(first, secondBytes);
+    writeFileSync(second, firstBytes);
+    rows[0]!.artifact_sha256 = sha256(secondBytes);
+    rows[1]!.artifact_sha256 = sha256(firstBytes);
+    await rejects(fixture, manifestBytes(fixture), /instrumented artifact differs from canonical instrumentation/u);
+  });
+});
+
+test('rejects coherently rewritten v2 artifact bytes against canonical Source transformation', async () => {
+  await withFixture(async (fixture) => {
+    const row = instrumentedRows(fixture)[0]!;
+    const target = artifactPath(fixture, row);
+    const rewritten = Buffer.from('export const attackerControlled = true;\n');
+    writeFileSync(target, rewritten);
+    row.artifact_sha256 = sha256(rewritten);
+    await rejects(fixture, manifestBytes(fixture), /instrumented artifact differs from canonical instrumentation/u);
+  });
+});
+
+test('accepts explicit v1 synthetic map-only reader compatibility as untrusted data', async () => {
+  const fixture = await createSyntheticCoverageFixture({ legacyManifest: true });
+  let passed = false;
+  try {
+    const result = await validateCoverageReport(fixture.reportPath, fixture.root, {
+      reportBytes: fixture.reportBytes(),
+      requireFullCoverage: false,
+    });
+    expect(result.manifest.schema).toBe('VidaBunCoverageRun/v1');
+    expect(result).toHaveProperty('canonical_source_maps', expect.any(Object));
+    passed = true;
+  } finally {
+    if (passed) fixture.remove();
+    else console.error(`Preserved failed synthetic legacy coverage fixture at ${fixture.root}`);
+  }
+});
+
+test('rejects instrumented artifact metadata declared under a v1 manifest', async () => {
+  await withFixture(async (fixture) => {
+    fixture.manifest.schema = 'VidaBunCoverageRun/v1';
+    await rejects(fixture, manifestBytes(fixture), /instrumented-source metadata requires a v2 manifest/u);
   });
 });
 

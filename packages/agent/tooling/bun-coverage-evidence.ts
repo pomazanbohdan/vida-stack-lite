@@ -94,6 +94,7 @@ export const coverageToolInputs: string[] = [
   'bunfig.toml',
   'package.json',
   'tooling/bun-coverage-evidence.ts',
+  'tooling/coverage-instrumented-sources.ts',
   'tooling/source-instrumentation.ts',
   'tooling/coverage-gate.ts',
   'tooling/bun-coverage-preload.ts',

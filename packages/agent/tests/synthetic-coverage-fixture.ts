@@ -25,6 +25,7 @@ const sourcePaths = [
 const bootstrapPaths = [
   'tooling/bun-coverage-preload.ts',
   'tooling/bun-coverage-evidence.ts',
+  'tooling/coverage-instrumented-sources.ts',
   'tooling/source-instrumentation.ts',
   'tooling/maintained-source-inventory.ts',
 ];
@@ -55,7 +56,9 @@ function clone<T>(value: T): T {
   return structuredClone(value);
 }
 
-export async function createSyntheticCoverageFixture(): Promise<SyntheticFixture> {
+export async function createSyntheticCoverageFixture(
+  options: { legacyManifest?: boolean } = {},
+): Promise<SyntheticFixture> {
   const root = mkdtempSync(path.join(os.tmpdir(), 'untrusted-coverage-validator-'));
   let succeeded = false;
   try {
@@ -86,18 +89,36 @@ export async function createSyntheticCoverageFixture(): Promise<SyntheticFixture
     for (const [file, bytes] of Object.entries(inputs.input_bytes)) write(snapshotDirectory, file, bytes);
 
     const sourceMaps: CoverageMap = {};
+    const instrumentedSources: Array<{
+      path: string;
+      source_sha256: string;
+      artifact_path: string;
+      artifact_sha256: string;
+    }> = [];
     for (const source of inputs.sources) {
       const bytes = inputs.input_bytes[source.path];
       if (!bytes) throw new Error(`Fixture capture omitted source bytes: ${source.path}`);
       const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
       const absolute = path.resolve(root, source.path);
-      sourceMaps[absolute] = instrumentSource(absolute, text).fileCoverage;
+      const instrumented = instrumentSource(absolute, text);
+      sourceMaps[absolute] = instrumented.fileCoverage;
+      if (!options.legacyManifest) {
+        const artifactPath = `__coverage_instrumented__/${source.path}`;
+        const artifactBytes = Buffer.from(instrumented.code);
+        write(snapshotDirectory, artifactPath, artifactBytes);
+        instrumentedSources.push({
+          path: source.path,
+          source_sha256: source.sha256,
+          artifact_path: artifactPath,
+          artifact_sha256: sha256(artifactBytes),
+        });
+      }
     }
     const coverage: CoverageMap = clone(sourceMaps);
     const runtimeHash = sha256(readFileSync(process.execPath));
     const manifestPath = path.posix.join(runRelative, 'manifest.json');
     const manifest: JsonRecord = {
-      schema: 'VidaBunCoverageRun/v1',
+      schema: options.legacyManifest ? 'VidaBunCoverageRun/v1' : 'VidaBunCoverageRun/v2',
       run_id: runId,
       bun_version: new TextDecoder().decode(pinBytes).trim(),
       runtime_executable_sha256: runtimeHash,
@@ -114,6 +135,7 @@ export async function createSyntheticCoverageFixture(): Promise<SyntheticFixture
       execution_scope: executionScope,
       active_argv: activeArgv,
       source_maps: sourceMaps,
+      ...(options.legacyManifest ? {} : { instrumented_sources: instrumentedSources }),
     };
     const manifestBytes = Buffer.from(JSON.stringify(manifest));
     write(root, manifestPath, manifestBytes);

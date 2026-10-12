@@ -4,7 +4,7 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageToolInputs } from '../tooling/bun-coverage-evidence.ts';
+import { coverageToolInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
 import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
 import { restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
 
@@ -62,7 +62,30 @@ test('real producer and consumer preserve pristine initialization maps while mer
     const reportPath = path.join(root, 'coverage/bun-unified/coverage-final.json');
     const report = record(JSON.parse(readFileSync(reportPath, 'utf8')));
     const manifest = record(JSON.parse(readFileSync(path.join(root, String(report.manifest_path)), 'utf8')));
+    expect(manifest.schema).toBe('VidaBunCoverageRun/v2');
     expect(report.source_maps).toEqual(manifest.source_maps);
+    const rows = manifest.instrumented_sources;
+    expect(Array.isArray(rows)).toBe(true);
+    if (!Array.isArray(rows)) throw new Error('Producer instrumented source rows are missing.');
+    expect(rows.map((entry) => record(entry).path)).toEqual(
+      (manifest.sources as Array<{ path: string }>).map(({ path: sourcePath }) => sourcePath),
+    );
+    const snapshotRoot = path.join(root, String(manifest.snapshot_directory));
+    for (const entry of manifest.sources as Array<{ path: string; sha256: string }>) {
+      const row = rows.map((value) => record(value)).find((value) => value.path === entry.path);
+      if (!row || typeof row.artifact_path !== 'string' || typeof row.artifact_sha256 !== 'string')
+        throw new Error('Producer instrumented source artifact binding is missing.');
+      expect(row.source_sha256).toBe(entry.sha256);
+      expect(row.artifact_path).toBe(`__coverage_instrumented__/${entry.path}`);
+      const artifactBytes = readFileSync(path.join(snapshotRoot, row.artifact_path));
+      expect(sha256(artifactBytes)).toBe(row.artifact_sha256);
+      const sourceBytes = readFileSync(path.join(root, entry.path));
+      const canonicalCode = Buffer.from(
+        instrumentSource(path.join(root, entry.path), new TextDecoder('utf-8', { fatal: true }).decode(sourceBytes))
+          .code,
+      );
+      expect(artifactBytes.equals(canonicalCode)).toBe(true);
+    }
     const source = path.join(root, 'src/sum.ts');
     const initialization = record(record(report.source_maps)[source]);
     const executed = record(record(report.coverage)[source]);
