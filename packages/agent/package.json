@@ -285,7 +285,7 @@
     "typecheck": "node bin/bun.ts run typecheck:pinned",
     "typecheck:pinned": "bun run quality:current:pinned && bun run typecheck:source:pinned",
     "build": "node bin/bun.ts run build:pinned",
-    "build:pinned": "bun run quality:ts-only:pinned && bun run preflight:pinned && bun run clean:dist:pinned && tsc --ignoreConfig --target ES2024 --lib ES2024 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --exactOptionalPropertyTypes --verbatimModuleSyntax --isolatedModules --resolveJsonModule --esModuleInterop --forceConsistentCasingInFileNames --skipLibCheck --types node,bun --rootDir src --outDir dist/src --declaration --emitDeclarationOnly src/index.ts src/config/index.ts src/trusted-host.ts src/runtime-kernel.ts && bun tooling/build-package.ts",
+    "build:pinned": "bun run quality:ts-only:pinned && bun run preflight:pinned && bun run clean:dist:pinned && tsc --ignoreConfig --target ES2024 --lib ES2024 --module NodeNext --moduleResolution NodeNext --strict --noUncheckedIndexedAccess --exactOptionalPropertyTypes --verbatimModuleSyntax --isolatedModules --resolveJsonModule --esModuleInterop --forceConsistentCasingInFileNames --skipLibCheck --types node,bun --rootDir . --outDir dist --declaration --emitDeclarationOnly src/index.ts src/config/index.ts src/trusted-host.ts src/runtime-kernel.ts && bun tooling/build-package.ts",
     "prepack": "node bin/bun.ts run prepack:pinned",
     "prepack:pinned": "bun tooling/pack-sdk.ts --verify && bun tooling/build-standalone.ts --build --quiet",
     "test:config": "node bin/bun.ts run test:config:pinned",

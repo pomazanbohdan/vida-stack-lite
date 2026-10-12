@@ -6665,3 +6665,40 @@ work; no repeat full suite or UNKNOWN measurement admission. Remaining actual
 dist/controller/interruption failures, exhaustive frozen plan, exact coverage,
 assertion-confirmed mutation and native qualification stay open.
 Reference: https://bun.sh/docs/runtime/plugins.
+
+### v831–v835 — published query correction and SDK declaration-root repair
+
+Query correctiondde2b8a passes strict checkpoint-v831 and publishes52be80b..
+dde2b8a; numerical/current native gates remain open. A fresh blind SDK diagnosis
+confirms the distributed workflow case tests the emitted public SDK boundary,
+including production-folded denial despite test flags. Replacing its dist import
+with Source would weaken that contract. Existing dist is stale; keep the actual
+failure, do not add historical mjs aliases, implicit Source fallback or suites
+to build/install. SDK formation freshness remains a separate owner-bound GAP.
+
+Root's static reproduction of the exact declaration closure exits1/TS6059:
+rootDir src cannot contain imported tooling/maintained-source-inventory.ts.
+This is a current supported build blocker. The minimum script correction uses
+rootDir . and outDir dist, preserving all strict compiler flags, the same four
+entry roots, declaration-only emit and subsequent build-package owner. Actual
+candidate compiler emission into new owned BASE/sdk-declarations-v834 completes
+with observed terminal0/no diagnostics. All four public declarations retain
+src/index.d.ts, src/config/index.d.ts, src/trusted-host.d.ts and
+src/runtime-kernel.d.ts relative paths. The imported helper emits under tooling;
+fresh emitted src declarations have no tooling/helper module references, so no
+public SDK declaration dependency on that unlisted output is observed. An
+unrelated tooling_root property is not a module dependency. Public runtime JS
+formation remains with build-package.ts; no product runtime or export change.
+
+Three independent current-input reviews validate path layout, package declaration
+closure and strict/build/test separation. One initial review calls the empty
+diagnostic log an exit-code source; Root corrects the distinction: terminal0
+comes from actual completed controller session32212, not stdout/log contents.
+No new mirrored string test or repeated full compiler/suite is added. Exact
+receipts under BASE: sdk-declaration-noemit-v833.log (failed),
+sdk-declaration-emitter-v834.log (no diagnostics), fresh sdk-declarations-v834/,
+sdk-declaration-root-review-v835.md, sdk-declaration-layout-review-v835.md and
+sdk-build-gate-review-v835.md. Root strict-checkpoints/publishes this script
+repair before later SDK formation. Full artifact freshness, quality metrics,
+frozen correspondence, interrupted flows and native qualification stay open.
+Unrelated bun.lock and root ..vida.cas.lock/reclaim custody remain untouched.
