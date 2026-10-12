@@ -830,6 +830,18 @@ receipts separately. Check empty streams, Unicode, secrets and truncation.
 Readable failure output still carries UNKNOWN effect semantics and grants no
 reissue or qualification authority.
 
+Controller qualification follows the currently configured prewriter frontier
+before testing writer authorization. Report every issued planner/security
+prewriter using the existing preparation schema, current work/scope/config/AC
+bindings, and the same observer as its outer report. Keep optional in-process
+host attempt fields compatible with the producer's own undefined value; require
+the actual nonempty writer attempt when writing and reporting Source. Assert
+the specific approval denial before any declared or undeclared file appears.
+Preparation advances lifecycle to PLAN. Synthetic native-repair fixtures bind
+to the current package version, typed Source dependency paths, required workflow
+and actual pack-file byte sizes. These development fixtures prove their bounded
+flows only; they do not pass production numeric gates or real native acceptance.
+
 The controller writes sensitive controller-owned operator evidence under the
 fixed `<controllerRoot>/observations/` directory. Each receipt retains the exact
 command, parent and child working directories, pinned runtime context, times,

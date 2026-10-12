@@ -6800,7 +6800,7 @@ and effects stay UNKNOWN even though direct child capture is complete.
 
 Only that new fixture's existing raw receipts are read through owned TS diagnostic
 v861. stderr is actually772bytes: requireControllerRunPacket rejects first
-in-process run result at qualification.ts:263. Exact returned packet remains
+issue-wave run result at qualification.ts:263. Exact returned packet remains
 unknown; no public producer/consumer field mismatch is statically proven.
 The supposedly empty failure text has a separate proven cause: renderDiagnosticValue
 accepts only strings/scalars while observed spawn uses byte streams. Buffer and
@@ -6824,3 +6824,66 @@ controller-diagnostic-{security,tests,architecture}-v864.md. Root strict-checkpo
 and publishes the diagnostic fix before the next qualification correction.
 Run-packet qualification, SDK freshness, frozen correspondence, exact numeric
 and native flow gates remain open; failed controller is not reused or unblocked.
+
+### v866–v877 — current contained qualification flow and repair fixture
+
+Byte diagnostic2cd6228 passes strictv866 and publishes4b0b8fb..2cd6228 remote0/0.
+Root continues the actual failed qualification. v867 bounded-message probe adds
+no useful reason: packet has no message. It is removed from final code, avoiding
+an unnecessary import/diagnostic branch. Line263 is the second issue-wave call,
+not initial intake; earlier narrative is corrected. The initial ready packet
+passes. describeIssuedAction emits own host_attempt_id:undefined for readonly
+actions; qualifier's hasOwn+string check wrongly rejects it. The validator/type
+now accepts absent/own undefined while retaining null/non-string denial and
+the positive writer-attempt assertion. Current MDN hasOwn and TypeScript exact
+optional-property documentation substantiate this distinction.
+
+v868 advances past packet validation but old assert.rejects fires before writer:
+configured review_source_prewrite is legitimately issued. Read-only SQLite
+inspection of that fresh owned Q0egik fixture v869 shows prewriter pending,
+no Host assignment/reservation. No state is restored/replayed or mutated.
+Root follows existing initial-source-continuation fixture/report schema: issue
+all current prewriter actions, report typed source_plan/implementation_policy
+mechanics with current scope/config/AC/work binding, then test writer denial.
+The loop uses current packet state_version on every report. Roles remain generic
+in global packet parsing and finite only in prewriter kind selection.
+
+v870 fails an observer mismatch introduced in the fixture; Root corrects it by
+one shared observer constant for inner preparation and outer report. Review's
+initial global finite-role suggestion would reject writer/intake and is declined;
+review is amended. v872 passes prewriter, exact Source approval denial and actual
+scoped writer/report, then exposes old INTAKE expectation. Source preparation
+owner explicitly transitions INTAKE→TRACE→PLAN, so assertion becomes PLAN.
+Authorization denial is narrowed to workflow approval denied, and both declared
+and undeclared files must remain absent before restoring exact authorization.
+New target/helper paths are TS; no config stage or Source gate is disabled.
+
+v873 exposes synthetic repair manifest0.1.2 vs current Source package0.1.3;
+owned nested receipt v874 confirms original-operation ineligible. Bind that
+manifest to packageMetadata.version, replace forward proof.mjs with current.ts,
+and include the declared workflow Source dependency. v875 then exposes missing
+pack file size; v876 reads only its exact own nested receipt. The current release
+parser requires safe nonnegative integer size. Bind it to actual manifest
+Buffer.byteLength, preserving all release eligibility, custody and schema guards.
+Synthetic targets are isolated; no old release or UNKNOWN operation is restored.
+
+Final v877 existing public stopped-capture rollback/retry case passes1test25Bun
+assertions58.57s, body56.17s inside unchanged60s bound. Contained preparation+
+verification terminal0 takes22.69s; declared nested inspect/plan/apply all finish.
+Own successful root NGAnIN cleanup is explicitly completed. This runs actual
+immutable current-controller qualification, approval denial, scoped writer,
+accepted report and outer fault/rollback/idempotent retry. No runtime installation,
+native qualification, human unblock, global numeric/coverage/mutation claim.
+All earlier failed roots/reservations remain UNKNOWN and retained.
+
+Three blind current security/contract/test reviews are amended to exact final
+inputs and v877 evidence; notes controller-flow-*-v871.md. TESTING/Bun skill own
+the verified practices. Receipts under BASE: controller-packet-reason-v867.log,
+controller-optional-attempt-v868.log, controller-owned-state-v869.ts/jsonl,
+controller-prewriter-current-flow-v870.log, controller-prewriter-observer-v872.log,
+controller-prewriter-plan-v873.log, controller-repair-inspect-v874.ts/jsonl,
+controller-current-repair-fixture-v875.log, controller-current-inspect-v876.ts/jsonl,
+controller-current-pack-metadata-v877.log. Root strict-checkpoints and publishes
+this current-fixture correction; final SDK freshness, frozen mapping, numeric
+gates and real formed-native isolated flows stay open. No repeated full suite,
+whole AST/hash scan or tests in build/install are added.

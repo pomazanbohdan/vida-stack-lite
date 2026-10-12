@@ -1495,3 +1495,18 @@ Publish this correction after strict gate. Next: expose exact returned packet
 reason at the current qualification owner without dumping payload or inventing
 frameworks; preserve original failed root, no replay/budget increase. SDK and
 all final numeric/native gates remain GAP. Details: WORKv857–v865.
+
+#### Current contained-controller correction v866–v877
+
+Byte diagnostic2cd6228 is strict-published. Qualifier accepts the producer's
+own undefined optional attempt field, follows current typed prewriter reports
+before writer approval denial, and binds inner/outer observer once. Keep exact
+writer attempt, CAS and denied/no-file checks. Observed preparation correctly
+leaves lifecycle PLAN. Synthetic repair uses current Source version0.1.3 and
+TS/workflow closure with measured manifest byte size. Final existing case
+1PASS25assertions58.57s, controllerprepareverify22.69s and confirmed ownedcleanup
+under unchanged bounds. Original failures and UNKNOWN roots are retained.
+Three independent current reviews; Root strict-checkpoints/publishes this fix.
+This closes the scoped shared setup defect, not all interrupted flows or numeric/
+native gates. Next: exhaustive frozen mapping and remaining actual failure
+contours, then single current Source/artifact join and final numeric owner.

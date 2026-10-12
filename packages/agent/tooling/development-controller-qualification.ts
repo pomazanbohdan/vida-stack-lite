@@ -12,6 +12,7 @@ import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
+import { lifecyclePreparationObservationSchema } from '../src/orchestration/final-assurance.ts';
 import packageMetadata from '../package.json' with { type: 'json' };
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
@@ -26,9 +27,9 @@ const save = (file: string, value: unknown): void => {
 };
 type ControllerStateVersion = { readonly revision: number; readonly digest: string };
 type ControllerIssuedAction = {
-  readonly request: { readonly action_id: string; readonly stage_id: string };
+  readonly request: { readonly action_id: string; readonly stage_id: string; readonly role: string };
   readonly issue_id: string;
-  readonly host_attempt_id?: string;
+  readonly host_attempt_id?: string | undefined;
 };
 type ControllerRunPacket = {
   readonly status: string;
@@ -65,7 +66,8 @@ function isControllerRunPacket(value: unknown): value is ControllerRunPacket {
       isRecord(item.request) &&
       typeof item.request.action_id === 'string' &&
       typeof item.request.stage_id === 'string' &&
-      (!Object.hasOwn(item, 'host_attempt_id') || typeof item.host_attempt_id === 'string'),
+      typeof item.request.role === 'string' &&
+      (item.host_attempt_id === undefined || typeof item.host_attempt_id === 'string'),
   );
 }
 function requireControllerRunPacket(value: unknown): ControllerRunPacket {
@@ -137,7 +139,7 @@ try {
   assert.equal(sourceInit.status, 'reconciled_existing');
   const config = loadRuntimeConfig(root);
   assert.equal(config.runtime.bundle, 'packages/agent');
-  const newPath = 'packages/agent/bin/controller-qualified-addition.mjs';
+  const newPath = 'packages/agent/bin/controller-qualified-addition.ts';
   mkdirSync(path.join(resources, 'bin'));
   const inspected = await inspectScope([
     '--project-root',
@@ -154,7 +156,8 @@ try {
   assert.match(scopeDigest, /^[a-f0-9]{64}$/);
   const work = 'controller-qualified-task',
     session = 'controller-qualification-session',
-    pointer = 'fixture:actual-controller-qualification';
+    pointer = 'fixture:actual-controller-qualification',
+    observer = 'actual-local-fixture-executor';
   const relative = (name: string): string => `.agent/work/${work}/${name}`;
   const scope = {
     schema: 'ImplementationScope/v1',
@@ -274,7 +277,7 @@ try {
       schema: 'VidaSessionObservation/v1',
       action_id: item.request.action_id,
       issue_id: item.issue_id,
-      agent_id: 'actual-local-fixture-executor',
+      agent_id: observer,
       tool_call_ref: 'local-qualification:' + item.request.action_id,
       status: 'reported_complete',
       summary,
@@ -288,10 +291,73 @@ try {
     intakeAction,
     'Actual scoped task synthesis: add the declared bin file; no external research claim.',
   );
+  packet = requireControllerRunPacket(await run([...base, ...expected(packet.state_version), '--issue-wave', 'true']));
+  const prewriterActions = packet.issued_actions;
+  assert.ok(prewriterActions.length > 0);
+  for (const action of prewriterActions) {
+    assert.equal(action.request.stage_id, 'review_source_prewrite');
+    assert.equal(action.host_attempt_id, undefined);
+    const kind =
+      action.request.role === 'source-planner'
+        ? 'source_plan'
+        : action.request.role === 'security-prewriter'
+          ? 'implementation_policy'
+          : null;
+    assert.ok(kind, 'Configured prewriter role must have a supported preparation kind.');
+    const evidenceRef = 'local://controller-prewriter/' + action.issue_id;
+    const observations =
+      kind === 'source_plan'
+        ? [
+            { mechanic: 'scope_acceptance_trace', actual: `Only ${newPath} is scoped to AC-CONTROLLER.` },
+            {
+              mechanic: 'verification_rollback',
+              actual: 'Observe the new export; rollback removes only the owned new file.',
+            },
+          ]
+        : [
+            { mechanic: 'root_cause_owner', actual: 'The immutable controller owns this isolated new-module check.' },
+            { mechanic: 'affected_callers', actual: 'The new isolated export has no existing callers.' },
+            {
+              mechanic: 'existing_primitives',
+              actual: 'Use current Host issue/report CAS and scoped Source authorization.',
+            },
+            {
+              mechanic: 'prewriter_security_gate',
+              actual: 'Deny altered authorization before issuing the Source writer.',
+            },
+          ];
+    const preparation = lifecyclePreparationObservationSchema.parse({
+      schema: 'LifecyclePreparationObservation/v1',
+      record_id: kind + '-' + action.request.action_id,
+      kind,
+      work_id: work,
+      attempt: 1,
+      source_revision: scopeDigest,
+      scope_id: scope.scope_id,
+      config_digest: runtimeConfigDigest(config),
+      ac_ids: scope.ac_ids,
+      observed_at: new Date().toISOString(),
+      observer_id: observer,
+      status: 'pass',
+      evidence_refs: [evidenceRef],
+      observations: observations.map((observation) => ({ ...observation, evidence_ref: evidenceRef })),
+      gaps: [],
+    });
+    const summary = JSON.stringify(preparation);
+    packet = await report(action, summary, {
+      output_digest: canonicalJsonDigest(summary),
+      evidence_refs: preparation.evidence_refs,
+    });
+  }
   // Changing the approval's paths cannot grant an undeclared target write.
   const exactAuthorization = readFileSync(authorizationFile);
-  save(authorizationFile, { ...authorization, implementation_paths: ['packages/agent/bin/undeclared.mjs'] });
-  await assert.rejects(() => run([...base, ...expected(packet.state_version), '--issue-wave', 'true']));
+  save(authorizationFile, { ...authorization, implementation_paths: ['packages/agent/bin/undeclared.ts'] });
+  await assert.rejects(
+    () => run([...base, ...expected(packet.state_version), '--issue-wave', 'true']),
+    /workflow approval denied/,
+  );
+  assert.equal(existsSync(path.join(root, newPath)), false);
+  assert.equal(existsSync(path.join(root, 'packages/agent/bin/undeclared.ts')), false);
   writeFileSync(authorizationFile, exactAuthorization);
   packet = requireControllerRunPacket(await run([...base, ...expected(packet.state_version), '--issue-wave', 'true']));
   const writer = packet.issued_actions[0];
@@ -328,7 +394,7 @@ try {
     'completed',
   );
   assert.equal(host.work.execution.status, 'active');
-  assert.equal(host.work.lifecycle.phase, 'INTAKE');
+  assert.equal(host.work.lifecycle.phase, 'PLAN');
   assert.ok(
     host.ledger.claims
       .filter((c) => c.status === 'active' && c.work_id === work)
@@ -350,8 +416,10 @@ try {
     'tooling/agent/release-assurance.ts': 'export const fixture = true;\n',
     'tooling/agent/release-ci-evidence.ts': 'export const fixture = true;\n',
     'tooling/agent/native-ci-delivery.ts': 'export const fixture = true;\n',
-    'tooling/agent/controllers/forward-review-proof.mjs': 'export const fixture = true;\n',
-    'packages/agent/package.json': JSON.stringify({ name: 'vida-agent', version: '0.1.2', private: true }) + '\n',
+    'tooling/agent/controllers/forward-review-proof.ts': 'export const fixture = true;\n',
+    'packages/agent/package.json':
+      JSON.stringify({ name: 'vida-agent', version: packageMetadata.version, private: true }) + '\n',
+    '.github/workflows/agent-native-delivery.yml': 'name: Synthetic repair fixture\n',
   };
   for (const [relative, contents] of Object.entries(repairSources)) {
     const file = path.join(repairRoot, relative);
@@ -372,7 +440,7 @@ try {
       version,
       filename: `vida-agent-${version}.tgz`,
       integrity: 'sha512-' + createHash('sha512').update(archive).digest('base64'),
-      files: [{ path: 'package/package.json' }],
+      files: [{ path: 'package/package.json', size: Buffer.byteLength(repairSources['packages/agent/package.json']) }],
     },
   ];
   const oldEntries = [{ path: 'AGENT.sidecar.md', sha256: sha('older source') }],

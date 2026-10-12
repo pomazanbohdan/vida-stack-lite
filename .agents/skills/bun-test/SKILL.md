@@ -64,6 +64,13 @@ For child diagnostics, check Buffer and offset Uint8Array views with Unicode
 and distinct secret bytes inside/outside the view. Decode through the existing
 output owner before sanitizing/capping; retain raw receipt custody separately.
 
+In-process result validators follow the actual producer contract: an optional
+property may be present with undefined even though JSON serialization omits it.
+Keep required writer fields strict. Workflow fixtures consume the currently
+issued prewriter stage before exercising writer denial; reuse existing typed
+preparation/report owners and one observer value for both records. Derive
+synthetic package version and file sizes from their actual fixture bytes.
+
 For each observed error or bottleneck, retain a bounded receipt, inspect the
 causal path and check current official documentation/upstream issues. Record
 documented support separately from local qualification.
