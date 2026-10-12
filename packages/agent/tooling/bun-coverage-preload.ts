@@ -7,6 +7,7 @@ import { parsePublishedFixtureIdentity } from './published-coverage-inputs.js';
 import {
   capturedModuleAbsolutePath,
   capturedModuleInputs,
+  capturedModuleRequestPath,
   canonicalCapturedModulePath,
   instrumentSource,
   repositoryRootForPackage,
@@ -147,6 +148,10 @@ const moduleInputs = new Map(
 );
 if (moduleInputs.size !== manifest.module_inputs.length)
   throw new Error('Captured module inputs contain duplicate paths.');
+const capturedPaths = new Set([
+  ...moduleInputs.keys(),
+  ...(fixtureRoot ? [...fixtureModules.keys()].map((file) => path.resolve(fixtureRoot, file)) : []),
+]);
 const expectedInputDigests = new Map(
   [...manifest.sources, ...manifest.test_inputs, ...manifest.tool_inputs].map((entry) => [entry.path, entry.sha256]),
 );
@@ -291,7 +296,12 @@ const repositoryModuleFilter = repositoryRoot
 Bun.plugin({
   name: 'vida-agent-unified-istanbul-snapshot',
   setup(build) {
-    build.onLoad({ filter: repositoryModuleFilter }, (args) => loadSnapshotModule(path.resolve(args.path)));
+    build.onLoad({ filter: repositoryModuleFilter }, (args) => {
+      const file = capturedModuleRequestPath(args.path, capturedPaths);
+      if (args.path.includes('?') && !capturedPaths.has(file))
+        throw new Error('Uncaptured query-bearing module input requested by test execution: ' + args.path);
+      return loadSnapshotModule(path.resolve(file));
+    });
   },
 });
 

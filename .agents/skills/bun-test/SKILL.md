@@ -31,6 +31,7 @@ strict typecheck success.
 | Missing profile | Check capability on an inert control before another expensive case. |
 | Inventory/report processing | Reuse TS tools or an owned temporary `.ts` diagnostic with qualified Bun; validate JSON before reading fields. |
 | Measurement reservation | Separate qualified direct producer termination from measurement success and UNKNOWN test effects; apply the existing TESTING custody owner. |
+| Captured module query | Keep Bun instance identity distinct from the exact manifest path; use the existing captured-loader owner and assert canonical receipts plus unbound denial. |
 
 Run from `packages/agent`, using the existing pinned launcher:
 
@@ -43,6 +44,11 @@ Read scripts for ordinary phase membership. Add each maintained test once to
 its owner; build/install run no suites. The final-check owner alone collects
 coverage, CRAP and mutation outputs. Reuse Babel inventory, hashes, reviewed
 matrices and existing fixture helpers.
+
+In isolated fixtures containing copied snapshot tests, pass explicit `./` paths
+for child test subjects. Bare names can act as discovery filters and select
+both originals and copies. Assert the exact child test-file count when fixture
+cardinality matters; keep that invocation bound to its actual manifest.
 
 ## Diagnose and optimize
 

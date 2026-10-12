@@ -1431,3 +1431,20 @@ Next: scoped causal repairs for actual stale fixture paths, query-bearing module
 capture and contained-controller failures; no repeated full suite, timeout
 increase or retained operation replay. Independent ready shared-owner P1 work
 continues after this measurement's input freeze. Details/receipts: WORKv812–v813.
+
+#### Current coverage causal corrections v822–v830
+
+Initializer harness fixes52be80b are strict-published: exact executing Bun and
+maintained copied init.ts replace stale PATH/.mjs assumptions; focused2PASS.
+Captured loader keeps exact physical manifest identity separate from Bun query
+instances. Actual inert RED proves suffix denial, then query path-segment
+redirection to a captured sibling/unbound false admission. Raw query matching
+now precedes normalization; unmatched queries deny before live fallback.
+Hardened23PASS65assertions4.99s prove snapshot bytes despite live drift, distinct
+instances, canonical counters/receipts and exact fixture file cardinality.
+Three independent current-input reviews approve the bounded correction;
+Windows spelling controls do not establish Windows native qualification.
+Root publishes after strict checkpoint. Next: actual stale-dist/controller and
+interruption failures, shared-owner P1 and exhaustive frozen correspondence;
+no repeated full suite or UNKNOWN replay. Exact numerical/native gates remain
+open. Details/failed and current receipts: WORKv822–v830.

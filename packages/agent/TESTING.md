@@ -876,6 +876,18 @@ file, report or version string does not grant Runtime acceptance.
 Coverage refuses nonempty ambient `BUN_OPTIONS`; all Bun execution options must
 come from the recorded runner selection and its pinned preload.
 
+The captured loader resolves a Bun query alias only to an already captured
+physical path. Exact manifest filenames take precedence, including literal
+`?` and `#`; no percent decoding, fragment removal or path-spelling rewrite is
+allowed. Bun retains the original request's module-instance identity. Snapshot
+reads, counters and loaded-input receipts retain the canonical captured path
+and digest. Match the raw request before filesystem normalization; unbound
+query-bearing requests deny before query path segments can redirect a lookup
+or reach a live-file fallback. An unbound request under a declared root still
+denies. Isolated
+preload lifecycle fixtures select explicit `./` test paths so copied snapshot
+tests are not rediscovered as additional test subjects.
+
 The final CRAP subprocess executes the captured tooling closure against the original package root. Its five-minute hard deadline and unknown termination retain the run lock for explicit reconciliation. Runtime plugin path admission accepts both Windows and POSIX separators. These are static implementation guarantees pending the final Bun behavior checks.
 
 Coverage reservation custody follows the direct measurement producer's lifetime,

@@ -172,6 +172,17 @@ export function capturedModuleAbsolutePath(packageRoot: string, logicalPath: str
   return absolute;
 }
 
+/** Preserve exact captured filenames; a Bun query alias may select only captured bytes. */
+export function capturedModuleRequestPath(request: string, capturedPaths: ReadonlySet<string>): string {
+  if (capturedPaths.has(request)) return request;
+  for (let query = request.lastIndexOf('?'); query >= 0; query = request.lastIndexOf('?', query - 1)) {
+    const file = request.slice(0, query);
+    if (capturedPaths.has(file)) return file;
+    if (query === 0) break;
+  }
+  return request;
+}
+
 export function isExternalModulePath(value: unknown): boolean {
   if (typeof value !== 'string' || value.length === 0) return false;
   if (path.posix.isAbsolute(value) || path.win32.isAbsolute(value) || /[\\\0]/u.test(value)) return false;

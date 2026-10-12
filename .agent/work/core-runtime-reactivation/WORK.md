@@ -6614,3 +6614,54 @@ query-bearing module request capture, contained-controller failure provenance.
 Keep the physical captured-file identity distinct from Bun module-instance query
 identity; no speculative suffix stripping or live Source fallback is applied.
 Current exact coverage, CRAP, mutation and native qualification remain GAP.
+
+### v826–v830 — captured query identities and path-segment denial
+
+Initializer corrections52be80b pass strict checkpoint-v825 and are published.
+Independent diagnosis traces v813's query-bearing module failure to using the
+entire Bun request as a captured-file lookup key. Bun's plugin reference names
+args.path as a module path but does not define query/fragment encoding; actual
+qualified Bun1.4.2 controls supply the missing local evidence. Root adds an
+inert real-preload query regression: two distinct module instances must execute
+the captured Source and retain canonical counters/input receipt. Exact-selection
+causalREDv826 denies the already captured file with its query suffix. Earlier
+fixture discovery selected original plus snapshot copies; explicit ./test
+arguments remove that independent fixture duplication, with actual child counts.
+Failed fresh inert roots and diagnostics remain; no retained product replay.
+
+Shared tooling owner capturedModuleRequestPath checks exact captured names first,
+then longest matching captured prefix before ?. Literal ?/#, percent spelling
+and native path spelling remain; no decode or fragment rewrite. Its finite
+leading-question loop control avoids the negative-position lastIndexOf clamp.
+Captured physical keys are built once from existing module closure plus the
+optional bound fixture; no additional AST/scan/hash pass or runtime dependency.
+Initial focused21PASS58assertionsv827 qualifies the ordinary suffix, not all
+paths. Independent review finds that path.resolve still precedes alias lookup;
+actual segmentREDv829 proves a captured alias executes sibling hit2 instead of1,
+and an unbound query falsely admits that captured sibling/status0. Root moves
+raw-request matching before normalization and denies unmatched query-bearing
+inputs before any filesystem resolution/live fallback. The actual Bun request
+identity remains untouched; snapshot reads/receipts/counters use only bound base.
+
+Technique review precision gaps are corrected: query fixture's live Source now
+returns99 while its sealed snapshot returns1; a second captured sibling returns2.
+The testcase checks distinct instances, snapshot1 and canonical function count4.
+Actual child cardinality is asserted: two selected files/two cases normally;
+report-write-failure adds its intentional failing afterAll case, yielding three
+cases across the same two files. Initial cardinality-v828 incorrectly expects
+two for that error path and remains failed evidence; Root corrects the expected
+afterAll contribution without suppressing its failure. Hardened-v830 passes
+23tests65assertions4.99s, including14pure request controls and5real-preload
+lifecycle controls. Windows spelling is a pure string control, not Windows
+native qualification. TESTING owns the binding/denial contract; skill links the
+technique and explicit fixture selection. Product src/bin roles/caps unchanged.
+
+Receipts under BASE: coverage-query-exact-red-v826.log, final-v827.log,
+cardinality-v828.log, segment-red-v829.log, hardened-v830.log, and three fresh
+coverage-query-source-review-v828.md, boundary-review-v830.md and
+technique-review-v828.md with current-input disposition. Root completes strict
+checkpoint and publication before later numerical
+work; no repeat full suite or UNKNOWN measurement admission. Remaining actual
+dist/controller/interruption failures, exhaustive frozen plan, exact coverage,
+assertion-confirmed mutation and native qualification stay open.
+Reference: https://bun.sh/docs/runtime/plugins.

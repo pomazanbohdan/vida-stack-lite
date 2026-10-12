@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { capturedModuleContents } from '../tooling/captured-module-contents.js';
+import { capturedModuleRequestPath } from '../tooling/bun-coverage-evidence.ts';
 
 const value = 'unicode-é東京 🧪';
 let directory = '';
@@ -52,4 +53,30 @@ test('malformed UTF-8 is rejected before parsing captured text', () => {
 test('binary modules retain their exact byte buffer', () => {
   const bytes = Uint8Array.of(0xff, 0x00, 0xfe);
   for (const loader of ['file', 'napi', 'wasm'] as const) expect(capturedModuleContents(bytes, loader)).toBe(bytes);
+});
+
+test.each([
+  ['/src/file.ts', '/src/file.ts'],
+  ['/src/file.ts?fresh=1', '/src/file.ts'],
+  ['/src/file.ts?fresh=1?extra', '/src/file.ts'],
+  ['/src/file.ts?fresh=1/../other.ts', '/src/file.ts'],
+  ['/src/file.ts?literal', '/src/file.ts?literal'],
+  ['/src/file.ts?literal?fresh=1', '/src/file.ts?literal'],
+  ['/src/file.ts#literal', '/src/file.ts#literal'],
+  ['/src/file.ts#fresh', '/src/file.ts#fresh'],
+  ['/src/file%3Fname.ts?fresh=1', '/src/file%3Fname.ts'],
+  ['/src/file?name.ts?fresh=1', '/src/file?name.ts?fresh=1'],
+  ['/src/unbound.ts?fresh=1', '/src/unbound.ts?fresh=1'],
+  ['?unbound', '?unbound'],
+  ['C:\\src\\file.ts?fresh=1', 'C:\\src\\file.ts'],
+  ['C:\\src\\file.ts?fresh=1\\..\\other.ts', 'C:\\src\\file.ts'],
+] as const)('captured request preserves custody for %s', (request, expected) => {
+  const captured = new Set([
+    '/src/file.ts',
+    '/src/file.ts?literal',
+    '/src/file.ts#literal',
+    '/src/file%3Fname.ts',
+    'C:\\src\\file.ts',
+  ]);
+  expect(capturedModuleRequestPath(request, captured)).toBe(expected);
 });
