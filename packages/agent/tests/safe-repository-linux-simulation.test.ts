@@ -123,6 +123,10 @@ if (!isolated && !underStryker) {
   let copyCleanupFault = false;
   let substituteRestoredTarget = false;
   let substituteTargetBeforePublication: string | undefined;
+  let substituteTargetWithSameContents = false;
+  let boundaryIdentityAssignments = new Map<string, bigint>();
+  let nextBoundaryIdentity = 0n;
+  const boundaryIdentityBase = 9_007_199_254_740_992n;
   let replaceCloneTargetAfterSuccess = false;
   let failRecoveryCloneAfterRenameFailure = false;
   let rootIdentityMismatchRemaining = 0;
@@ -140,6 +144,7 @@ if (!isolated && !underStryker) {
   let cooperatingReaderAttempted = false;
   let cooperatingReaderError: unknown;
   let renameReplaceFailureMode: 'remove-target' | 'after-effect' | undefined;
+  let renameNoReplaceAfterEffectFault = false;
   let recoveryProbeFailureAt = 0;
   let recoveryProbeCalls = 0;
   let recoveryProbeArmed = false;
@@ -262,9 +267,36 @@ if (!isolated && !underStryker) {
     if (substituteTargetBeforePublication && file && path.basename(file).endsWith('.tmp')) {
       const target = substituteTargetBeforePublication;
       substituteTargetBeforePublication = undefined;
+      const originalContents = substituteTargetWithSameContents ? realFs.readFileSync(target) : undefined;
       realFs.renameSync(target, target + '.displaced');
-      realFs.writeFileSync(target, 'foreign');
+      realFs.writeFileSync(target, originalContents ?? 'foreign');
+      if (substituteTargetWithSameContents) {
+        const displaced = realFs.lstatSync(target + '.displaced', { bigint: true });
+        const replacement = realFs.lstatSync(target, { bigint: true });
+        boundaryIdentityAssignments.set(`${displaced.dev}:${displaced.ino}`, boundaryIdentityBase);
+        boundaryIdentityAssignments.set(`${replacement.dev}:${replacement.ino}`, boundaryIdentityBase + 1n);
+        substituteTargetWithSameContents = false;
+      }
     }
+  }
+
+  function simulatedBoundaryStat<T extends Stats | BigIntStats>(stats: T): T {
+    if (!substituteTargetWithSameContents && boundaryIdentityAssignments.size === 0) return stats;
+    const key = `${stats.dev}:${stats.ino}`;
+    let exactIno = boundaryIdentityAssignments.get(key);
+    if (exactIno === undefined) {
+      exactIno = boundaryIdentityBase + 1024n + nextBoundaryIdentity;
+      nextBoundaryIdentity += 1n;
+      boundaryIdentityAssignments.set(key, exactIno);
+    }
+    return new Proxy(stats, {
+      get(target, property) {
+        if (property === 'dev')
+          return typeof target.dev === 'bigint' ? boundaryIdentityBase : Number(boundaryIdentityBase);
+        if (property === 'ino') return typeof target.ino === 'bigint' ? exactIno : Number(exactIno);
+        return Reflect.get(target, property, target);
+      },
+    });
   }
 
   const fakeFs = {
@@ -272,6 +304,9 @@ if (!isolated && !underStryker) {
     constants: { ...realFs.constants, O_NOFOLLOW: simulatedNoFollow, O_DIRECTORY: simulatedDirectory },
     openSync: trackedOpen,
     closeSync: trackedClose,
+    fstatSync(fd: number, options?: { bigint?: boolean }): Stats | BigIntStats {
+      return simulatedBoundaryStat(realFs.fstatSync(fd, options));
+    },
     writeSync(
       fd: number,
       buffer: NodeJS.ArrayBufferView,
@@ -316,7 +351,8 @@ if (!isolated && !underStryker) {
       return resolved;
     },
     lstatSync(value: PathLike, options?: { bigint?: boolean }): Stats | BigIntStats | undefined {
-      return realFs.lstatSync(translatedPath(value), options);
+      const stats = realFs.lstatSync(translatedPath(value), options);
+      return stats && simulatedBoundaryStat(stats);
     },
     mkdirSync(value: PathLike, options?: number | { recursive?: boolean; mode?: number | string }): string | undefined {
       return realFs.mkdirSync(translatedPath(value), options);
@@ -412,7 +448,16 @@ if (!isolated && !underStryker) {
     const target = path.join(targetRoot, ...targetRelPath.split('/'));
     if (realFs.existsSync(target))
       throw Object.assign(new Error('simulated no-replace rename target exists'), { code: 'EEXIST' });
+    const substituteAfterEffect =
+      renameNoReplaceAfterEffectFault && sourceRelPath === 'source.bin' && targetRelPath === 'target.bin';
+    const movedContents = substituteAfterEffect ? realFs.readFileSync(source) : undefined;
     realFs.renameSync(source, target);
+    if (substituteAfterEffect) {
+      renameNoReplaceAfterEffectFault = false;
+      realFs.renameSync(target, target + '.displaced');
+      realFs.writeFileSync(target, movedContents!);
+      throw Object.assign(new Error('simulated no-replace error after same-content substitution'), { code: 'EIO' });
+    }
   }
 
   function renameReplace(
@@ -442,6 +487,7 @@ if (!isolated && !underStryker) {
     }
     const failureMode = renameReplaceFailureMode;
     renameReplaceFailureMode = undefined;
+    renameNoReplaceAfterEffectFault = false;
     if (failureMode === 'remove-target') {
       realFs.unlinkSync(target);
       recoveryProbeArmed = recoveryProbeFailureAt > 0;
@@ -545,6 +591,9 @@ if (!isolated && !underStryker) {
     copyCleanupFault = false;
     substituteRestoredTarget = false;
     substituteTargetBeforePublication = undefined;
+    substituteTargetWithSameContents = false;
+    boundaryIdentityAssignments = new Map();
+    nextBoundaryIdentity = 0n;
     replaceCloneTargetAfterSuccess = false;
     failRecoveryCloneAfterRenameFailure = false;
     rootIdentityMismatchRemaining = 0;
@@ -936,6 +985,29 @@ if (!isolated && !underStryker) {
         status: 'applied',
       });
       expect(access.readText('data/value.txt', 'value file')).toBe('final');
+    });
+
+    test('keeps a same-content replacement after a move error in UNKNOWN custody', async () => {
+      const repositoryRoot = temporaryRoot();
+      const access = linuxSafe.requireSafeRepositoryAccess(repositoryRoot);
+      access.ensureDirectory('move', 'move directory');
+      access.writeExclusive('move/source.bin', 'same bytes', 'move source');
+      renameNoReplaceAfterEffectFault = true;
+
+      let failure: unknown;
+      try {
+        await access.moveNoReplaceAsync('move/source.bin', 'move/target.bin', hash('same bytes'), 'move test');
+      } catch (error) {
+        failure = error;
+      }
+
+      expect(errorCode(failure)).toBe('SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN');
+      expect(errorMessage(failure)).toContain('destination identity was not verified');
+      expect(errorCode((failure as { cause?: unknown } | undefined)?.cause)).toBe('EIO');
+      expect(realFs.existsSync(path.join(repositoryRoot, 'move/source.bin'))).toBe(false);
+      expect(realFs.readFileSync(path.join(repositoryRoot, 'move/target.bin'), 'utf8')).toBe('same bytes');
+      expect(realFs.readFileSync(path.join(repositoryRoot, 'move/target.bin.displaced'), 'utf8')).toBe('same bytes');
+      // This Linux simulation covers the shared hash-only shortcut. It does not qualify Windows native behavior.
     });
 
     test('locks an existing payload without changing it and excludes other holders', async () => {
@@ -1372,6 +1444,20 @@ if (!isolated && !underStryker) {
         .find((name) => name.startsWith('.unlinked-temp.txt.') && name.endsWith('.cas-old'));
       if (!preservedBackup) throw new Error('prepublication backup was not retained');
       expect(realFs.readFileSync(path.join(data, preservedBackup), 'utf8')).toBe('before');
+
+      const identityBoundaryPath = path.join(data, 'identity-boundary.txt');
+      access.writeExclusive('data/identity-boundary.txt', 'same bytes', 'large identity boundary');
+      const originalBoundaryStat = realFs.lstatSync(identityBoundaryPath, { bigint: true });
+      boundaryIdentityAssignments.set(`${originalBoundaryStat.dev}:${originalBoundaryStat.ino}`, boundaryIdentityBase);
+      substituteTargetBeforePublication = identityBoundaryPath;
+      substituteTargetWithSameContents = true;
+      expect(() =>
+        access.replaceAtomic('data/identity-boundary.txt', hash('same bytes'), 'new bytes', 'large identity boundary'),
+      ).toThrow(/path or content changed/);
+      expect(realFs.readFileSync(identityBoundaryPath, 'utf8')).toBe('same bytes');
+      // Keep the synthetic adjacent IDs scoped to this regression case.
+      boundaryIdentityAssignments = new Map();
+      nextBoundaryIdentity = 0n;
 
       access.writeExclusive('data/committed-before-error.txt', 'before', 'committed before error');
       renameReplaceFailureMode = 'after-effect';

@@ -3,7 +3,7 @@ import type { AgentExtractArchiveModule } from '../../packages/agent/tooling/rel
 // Repository-owned CI producer. Importing this module never builds or installs.
 import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   releaseDigest as sha,
   releaseJSON as json,
@@ -12,7 +12,7 @@ import {
   releaseSourceBinding,
 } from '../../packages/agent/bin/local-release-artifacts.ts';
 import { runCommand, parsePackOutput } from './release-local.ts';
-import { findNpmCli } from '../../packages/agent/bin/bun.ts';
+import { checkManifest, findNpmCli, readPin } from '../../packages/agent/bin/bun.ts';
 import {
   ciArchiveLimit,
   ciTransportLimit,
@@ -333,8 +333,11 @@ export function validateNativeCIInvocation({
     env.CI === 'true' && env.GITHUB_ACTIONS === 'true' && env.VIDA_NATIVE_CI_ENABLED === 'true',
     'CI producer is dormant',
   );
+  const executingPackageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../packages/agent'),
+    executingPin = readPin(executingPackageRoot);
+  checkManifest(executingPackageRoot, executingPin);
   requireCI(
-    platform === 'win32' && arch === 'x64' && bun === '1.4.2',
+    platform === 'win32' && arch === 'x64' && bun === process.versions.bun && bun === executingPin,
     'qualified Windows x64 pinned producer required',
   );
   requireCI(
@@ -448,9 +451,12 @@ function context(): NativeCIContext {
       releaseSourceBinding(tree).source_binding === identity.request.source_binding,
       'CI Source differs from current request',
     );
+  const packageRoot = path.join(source, 'packages/agent'),
+    pin = readPin(packageRoot);
+  checkManifest(packageRoot, pin);
   const manifest = readPackageManifest(source);
   requireCI(
-    manifest.version === identity.request.version && manifest.engines.bun === '1.4.2',
+    manifest.version === identity.request.version && manifest.engines.bun === pin,
     'CI package identity differs',
   );
   return {
@@ -471,7 +477,7 @@ function candidateFor(ctx: NativeCIContext): NativeCandidate {
       candidate.version === ctx.request.version &&
       candidate.source_binding === ctx.request.source_binding &&
       candidate.manifest.target === ctx.request.target &&
-      candidate.manifest.pin === '1.4.2',
+      candidate.manifest.pin === ctx.manifest.engines.bun,
     'CI candidate identity differs',
   );
   const pack = candidate.pack_metadata[0];
@@ -735,7 +741,7 @@ async function nativeBuild(ctx: NativeCIContext, invoke: NativeCICommandRunner):
   requireCI(
     manifest.schema === 'VidaStandaloneBuild/v1' &&
       manifest.version === ctx.request.version &&
-      manifest.pin === '1.4.2' &&
+      manifest.pin === ctx.manifest.engines.bun &&
       manifest.target === ctx.request.target &&
       manifest.inputs.length > 0,
     'native manifest differs',
@@ -801,7 +807,7 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
     candidate.manifest?.schema === 'VidaStandaloneBuild/v1' &&
       candidate.manifest.version === ctx.request.version &&
       candidate.manifest.target === ctx.request.target &&
-      candidate.manifest.pin === '1.4.2' &&
+      candidate.manifest.pin === ctx.manifest.engines.bun &&
       candidate.manifest.asset?.file === 'vida-agent-bun-windows-x64.exe',
     'CI native build manifest identity differs',
   );
@@ -816,7 +822,7 @@ async function emitBuild(ctx: NativeCIContext): Promise<void> {
     manifest.schema === 'VidaStandaloneBuild/v1' &&
       manifest.version === ctx.request.version &&
       manifest.target === ctx.request.target &&
-      manifest.pin === '1.4.2' &&
+      manifest.pin === ctx.manifest.engines.bun &&
       manifest.asset.file === 'vida-agent-bun-windows-x64.exe' &&
       manifestBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/manifest.json', 8 * 1024 * 1024)) &&
       assetBytes.equals(physical(ctx.source, 'packages/agent/dist/standalone/' + manifest.asset.file)),

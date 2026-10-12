@@ -16,6 +16,7 @@ import {
   releasePath,
   releaseDirectory,
   releaseIdPattern,
+  parseReleaseVersion,
   releaseState,
   readReleaseBytes as read,
   parseReleasePackMetadata as packMetadata,
@@ -319,7 +320,7 @@ function nativeInputs(value: unknown): StandaloneManifest['inputs'] {
   return inputs;
 }
 
-function nativeManifest(value: unknown, version: string): StandaloneManifest {
+function nativeManifest(value: unknown, version: string, pin: string): StandaloneManifest {
   keys(value, ['schema', 'version', 'pin', 'target', 'inputs', 'payloadId', 'asset']);
   const manifest = {
     schema: nativeString(value, 'schema', 'candidate native manifest fields invalid'),
@@ -332,7 +333,7 @@ function nativeManifest(value: unknown, version: string): StandaloneManifest {
   };
   require(manifest.schema === 'VidaStandaloneBuild/v1' &&
     manifest.version === version &&
-    manifest.pin === '1.4.2' &&
+    manifest.pin === pin &&
     /^bun-(windows|linux|darwin)-(x64|arm64)(-baseline)?$/.test(manifest.target), 'candidate native manifest differs');
   require(/^[a-f0-9]{64}$/.test(manifest.payloadId), 'candidate build input inventory differs');
   require(manifest.asset.file ===
@@ -396,7 +397,14 @@ export function readNativeRetargetCandidate({
   const manifestBytes = read(root, manifestPath);
   /* @type {unknown} */
   const manifestValue: unknown = JSON.parse(manifestBytes.toString('utf8'));
-  const manifest = nativeManifest(manifestValue, seal.version);
+  const pin = read(root, folder + '/payload/.bun-version')
+    .toString('utf8')
+    .trim();
+  require(parseReleaseVersion(pin) !== null &&
+    isRecord(packageManifest.engines) &&
+    packageManifest.engines.bun === pin &&
+    packageManifest.packageManager === `bun@${pin}`, 'candidate source Bun pin differs');
+  const manifest = nativeManifest(manifestValue, seal.version, pin);
   assertNativeBuildInputs(releasePath(root, folder + '/payload'), manifest, folder, observations);
   const relative = 'dist/standalone/' + releaseRelative(manifest.asset?.file);
   const assetPath = folder + '/payload/' + relative;
@@ -553,7 +561,15 @@ export async function stageNativeRetargetCandidate({
       require(sha(read(root, 'packages/agent/' + relative, binaryLimit)) ===
         entry.sha256, 'candidate packaged Source differs');
   }
-  const native = nativeManifest(object(root, folder + '/payload/dist/standalone/manifest.json'), candidate.version);
+  const pin = read(root, folder + '/payload/.bun-version')
+    .toString('utf8')
+    .trim();
+  require(parseReleaseVersion(pin) !== null, 'candidate source Bun pin differs');
+  const native = nativeManifest(
+    object(root, folder + '/payload/dist/standalone/manifest.json'),
+    candidate.version,
+    pin,
+  );
   assertNativeBuildInputs(path.join(root, 'packages/agent'), native, folder, payload);
   const asset = payload.find(
     (entry) => entry.path === folder + '/payload/dist/standalone/' + releaseRelative(native.asset?.file),

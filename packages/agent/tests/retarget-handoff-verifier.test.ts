@@ -48,7 +48,9 @@ function metadata(bytes: Buffer, files: Array<{ path: string; size: number }>) {
   ];
 }
 
-async function fixture(): Promise<{ root: string; input: ReleaseInput; oldBytes: Buffer; bytes: Buffer }> {
+async function fixture(
+  options: { payloadPin?: string } = {},
+): Promise<{ root: string; input: ReleaseInput; oldBytes: Buffer; bytes: Buffer }> {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-retarget-verifier-'));
   const manifest = {
     name: 'vida-agent',
@@ -111,6 +113,7 @@ async function fixture(): Promise<{ root: string; input: ReleaseInput; oldBytes:
     ...expectedJavascriptFiles.map((file) => 'dist/src/' + file),
   ])
     write(root, 'packages/agent/' + file, 'inert fixture bytes\n');
+  write(root, 'packages/agent/.bun-version', '1.4.2\n');
   for (const directory of ['instructions', 'templates', 'schemas'])
     write(root, 'packages/agent/' + directory + '/fixture-resource.txt', 'inert fixture resource bytes\n');
   const inputs = standaloneBuildInputInventory(path.join(root, 'packages/agent')).map((file) => {
@@ -122,7 +125,7 @@ async function fixture(): Promise<{ root: string; input: ReleaseInput; oldBytes:
   const native = {
     schema: 'VidaStandaloneBuild/v1',
     version,
-    pin: '1.4.2',
+    pin: options.payloadPin ?? '1.4.2',
     target: 'bun-linux-x64',
     payloadId: digest('inert embedded payload'),
     inputs,
@@ -152,6 +155,19 @@ async function fixture(): Promise<{ root: string; input: ReleaseInput; oldBytes:
   });
   return { root, input: { root, operation }, oldBytes, bytes };
 }
+
+test('retarget staging rejects a stable payload pin that differs from captured Source', async () => {
+  const value = await fixture({ payloadPin: '1.4.3' });
+  try {
+    await assert.rejects(
+      stageNativeRetargetCandidate({ root: value.root, operation, candidateFile: '.tmp/candidate.json' }),
+      /candidate native manifest differs/,
+    );
+    assert.equal(existsSync(path.join(value.root, folder, 'retarget/candidate.json')), false);
+  } finally {
+    rmSync(value.root, { recursive: true, force: true });
+  }
+});
 
 test('absent plan returns null for an inflight operation without changing its journal', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-retarget-verifier-inflight-'));

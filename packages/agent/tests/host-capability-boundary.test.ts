@@ -104,7 +104,7 @@ describe('host capability provider boundary', () => {
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => ({
         provider: 'fs-safe-windows',
-        package: { name: '@openclaw/fs-safe', version: '0.25.0', integrity: 'package-integrity' },
+        package: { name: '@openclaw/fs-safe', version: '0.26.2', integrity: 'package-integrity' },
         residual_risks: malformedResidualRisks,
         attested: false,
       }),
@@ -123,7 +123,7 @@ describe('host capability provider boundary', () => {
       containment: 'best-effort',
       assurance_profile: 'windows-best-effort-v1',
       filesystem: 'unknown',
-      package: { name: '@openclaw/fs-safe', version: '0.25.0', integrity: 'package-integrity' },
+      package: { name: '@openclaw/fs-safe', version: '0.26.2', integrity: 'package-integrity' },
       attested: false,
     });
     expect(host.nativeNoFollowAvailable).toBe(false);

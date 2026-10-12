@@ -16,7 +16,10 @@ Resolve the repository root. Read `AGENTS.md` → `AGENT.sidecar.md`, then
 These owners define gates, authorization, custody and commands; this reference
 does not replace them. Check the executing Bun against `.bun-version`; availability
 of a newer release is not qualification. Bun executes TS without establishing
-strict typecheck success.
+strict typecheck success. Runtime and declaration versions are independent:
+use the selected `.bun-version` and manifest/lock declarations, without embedding
+the current runtime version in tests. An emitted native entry binds its selected
+pin; fixtures for prior operations keep their original pin and bytes.
 
 ## Quick reference
 
@@ -52,6 +55,13 @@ for child test subjects. Bare names can act as discovery filters and select
 both originals and copies. Assert the exact child test-file count when fixture
 cardinality matters; keep that invocation bound to its actual manifest.
 
+Use unlabelled `describe(() => ...)` for selective setup without changing exact
+test names; `describe('', ...)` adds a full-name separator and can break anchored
+filters. Verify selection with inert marker controls. Keep preparation and case
+budgets distinct. Track all pending bodies through terminal custody checks;
+retain before file cleanup if a timed-out body remains active. Bun snapshots
+hook timeout options at registration; later object mutation does not change them.
+
 For a Bun-only SDK subject, use the current executable rather than an unrelated
 Node launcher. Keep launcher verification with its existing owner. Child and
 cleanup budgets must fit the parent case limit; use the shared bounded child
@@ -74,6 +84,14 @@ synthetic package version and file sizes from their actual fixture bytes.
 For each observed error or bottleneck, retain a bounded receipt, inspect the
 causal path and check current official documentation/upstream issues. Record
 documented support separately from local qualification.
+
+For dependency migrations, keep runtime/declaration versions independent and
+exercise real transforms/provider boundaries. Use an identical-content,
+different-inode control when testing identity; a content mismatch alone cannot
+prove that fence. Native rename errors retain UNKNOWN until exact identity is
+verified. Mark unavailable native platforms with test.skip. For retained custody,
+test the accepted byte bound in admission and resume, ancestor aliases and
+unchanged Host state; do not increase generic limits to fit a dedicated subject.
 
 On qualified Bun 1.4.2, `bun test --cpu-prof` can pass without writing a profile
 ([upstream](https://github.com/oven-sh/bun/issues/40184)). Programmatic

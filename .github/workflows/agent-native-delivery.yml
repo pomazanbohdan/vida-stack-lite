@@ -49,20 +49,21 @@ jobs:
       - name: node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
         with:
-          node-version: 24.19.0
+          node-version-file: packages/agent/package.json
           package-manager-cache: false
       - name: bun
+        id: bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
-          bun-version: 1.4.2
+          bun-version-file: packages/agent/.bun-version
       - name: bun-dependency-cache
         id: bun-dependency-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: ${{ runner.temp }}/vida-bun-install-cache
-          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-1.4.2-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
+          key: vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-${{ steps.bun.outputs.bun-version }}-${{ hashFiles('packages/agent/.bun-version', 'packages/agent/bun.lock', 'packages/agent/package.json') }}
           restore-keys: |
-            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-1.4.2-
+            vida-bun-install-v1-${{ runner.os }}-${{ runner.arch }}-bun-${{ steps.bun.outputs.bun-version }}-
       - name: isolated-source
         run: |
           $ErrorActionPreference = 'Stop'

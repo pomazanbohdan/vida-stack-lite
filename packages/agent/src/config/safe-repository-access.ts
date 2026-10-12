@@ -15,6 +15,7 @@ import {
   rmdirSync,
   realpathSync,
   lstatSync,
+  type BigIntStats,
   type Stats,
 } from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
@@ -475,7 +476,7 @@ type ReclaimGuard = {
   readonly guardName: string;
   readonly ownerToken: string;
 };
-type LockRemovalPredicate = (stats: Stats, ownerPid: number | null) => boolean;
+type LockRemovalPredicate = (stats: BigIntStats, ownerPid: number | null) => boolean;
 const reclaimGuardOwnerFile = 'owner.json';
 const reclaimGuardSchema = 'SafeRepositoryAccessReclaimGuard/v1';
 function reclaimGuardPath(parentFd: number, guardName: string): string {
@@ -484,9 +485,19 @@ function reclaimGuardPath(parentFd: number, guardName: string): string {
 function reclaimGuardOwnerPath(guardPath: string): string {
   return guardPath + '/' + reclaimGuardOwnerFile;
 }
-function reclaimGuardStats(parentFd: number, guardName: string, label: string): Stats | null {
+function statMtimeMilliseconds(stats: BigIntStats): number {
+  const wholeMilliseconds = stats.mtimeNs / 1_000_000n;
+  const fractionalNanoseconds = stats.mtimeNs % 1_000_000n;
+  const safeBound = BigInt(Number.MAX_SAFE_INTEGER);
+  reject(
+    wholeMilliseconds > safeBound || wholeMilliseconds < -safeBound,
+    'file timestamp exceeds the safe millisecond range',
+  );
+  return Number(wholeMilliseconds) + Number(fractionalNanoseconds) / 1_000_000;
+}
+function reclaimGuardStats(parentFd: number, guardName: string, label: string): BigIntStats | null {
   try {
-    const stats = lstatSync(reclaimGuardPath(parentFd, guardName));
+    const stats = lstatSync(reclaimGuardPath(parentFd, guardName), { bigint: true });
     reject(any(stats.isSymbolicLink(), !stats.isDirectory()), label + ' reclaim guard is unsafe');
     return stats;
   } catch (error) {
@@ -496,20 +507,20 @@ function reclaimGuardStats(parentFd: number, guardName: string, label: string): 
 }
 function readReclaimGuardOwner(guardPath: string, label: string): ReclaimGuardOwnerState {
   const ownerPath = reclaimGuardOwnerPath(guardPath);
-  let ownerStats: Stats;
+  let ownerStats: BigIntStats;
   try {
-    ownerStats = lstatSync(ownerPath);
+    ownerStats = lstatSync(ownerPath, { bigint: true });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { present: false, owner: null, mtimeMs: 0 };
     throw error;
   }
   reject(
-    any(ownerStats.isSymbolicLink(), !ownerStats.isFile(), ownerStats.nlink !== 1, ownerStats.size > 4096),
+    any(ownerStats.isSymbolicLink(), !ownerStats.isFile(), ownerStats.nlink !== 1n, ownerStats.size > 4096n),
     label + ' reclaim guard owner is unsafe',
   );
   const fd = openSync(ownerPath, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
   try {
-    const opened = fstatSync(fd);
+    const opened = fstatSync(fd, { bigint: true });
     reject(!sameFileIdentity(ownerStats, opened), label + ' reclaim guard owner identity changed');
     try {
       const value: unknown = JSON.parse(readBoundedText(fd, label + ' reclaim guard owner'));
@@ -527,10 +538,11 @@ function readReclaimGuardOwner(guardPath: string, label: string): ReclaimGuardOw
       return {
         present: true,
         owner: valid ? { owner_pid: record.owner_pid as number, owner_token: record.owner_token as string } : null,
-        mtimeMs: ownerStats.mtimeMs,
+        mtimeMs: statMtimeMilliseconds(ownerStats),
       };
     } catch (error) {
-      if (error instanceof SyntaxError) return { present: true, owner: null, mtimeMs: ownerStats.mtimeMs };
+      if (error instanceof SyntaxError)
+        return { present: true, owner: null, mtimeMs: statMtimeMilliseconds(ownerStats) };
       throw error;
     }
   } finally {
@@ -597,7 +609,7 @@ function reclaimStaleReclaimGuard(parentFd: number, name: string, label: string)
       const entries = readdirSync(quarantinePath);
       if (entries.some((entry) => entry !== reclaimGuardOwnerFile)) return false;
       const ownerState = readReclaimGuardOwner(quarantinePath, label);
-      const referenceTime = Math.max(movedStats.mtimeMs, ownerState.mtimeMs);
+      const referenceTime = Math.max(statMtimeMilliseconds(movedStats), ownerState.mtimeMs);
       if (
         !ownerState.owner ||
         Date.now() - referenceTime < staleLockAgeMs ||
@@ -759,7 +771,7 @@ function moveAndRemovePinnedLock(
   parentFd: number,
   name: string,
   label: string,
-  expected: Stats,
+  expected: BigIntStats,
   predicate: LockRemovalPredicate,
   readOwner = true,
   pinnedReadFd?: number,
@@ -784,19 +796,19 @@ function moveAndRemovePinnedLock(
       }
       const quarantinePath = childPath(parentFd, quarantineName);
       return withPinnedLockRead(quarantinePath, pinnedReadFd, (quarantineFd) => {
-        const movedStats = fstatSync(quarantineFd);
-        const pathStats = lstatSync(quarantinePath);
+        const movedStats = fstatSync(quarantineFd, { bigint: true });
+        const pathStats = lstatSync(quarantinePath, { bigint: true });
         const owner = readOwner ? lockOwnerPid(quarantineFd) : null;
         const stillPinned = all(
           sameFileIdentity(expected, movedStats),
           sameFileIdentity(movedStats, pathStats),
           !pathStats.isSymbolicLink(),
-          movedStats.nlink === 1,
+          movedStats.nlink === 1n,
           predicate(movedStats, owner),
         );
         if (!stillPinned) return false;
-        const beforeUnlink = lstatSync(quarantinePath);
-        if (!all(sameFileIdentity(movedStats, beforeUnlink), beforeUnlink.nlink === 1, !beforeUnlink.isSymbolicLink()))
+        const beforeUnlink = lstatSync(quarantinePath, { bigint: true });
+        if (!all(sameFileIdentity(movedStats, beforeUnlink), beforeUnlink.nlink === 1n, !beforeUnlink.isSymbolicLink()))
           return false;
         unlinkSync(quarantinePath);
         removed = true;
@@ -819,19 +831,19 @@ function reclaimStaleLock(parentFd: number, name: string, label: string, removal
 }
 function removeStaleLock(parentFd: number, name: string, label: string): boolean {
   const target = childPath(parentFd, name);
-  let before: Stats;
+  let before: BigIntStats;
   try {
-    before = lstatSync(target);
+    before = lstatSync(target, { bigint: true });
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false;
     throw error;
   }
   return choose(
-    all(before.isFile(), before.nlink === 1, Date.now() - before.mtimeMs >= staleLockAgeMs),
+    all(before.isFile(), before.nlink === 1n, Date.now() - statMtimeMilliseconds(before) >= staleLockAgeMs),
     () => {
       const fd = openSync(target, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
       try {
-        const opened = fstatSync(fd);
+        const opened = fstatSync(fd, { bigint: true });
         const owner = lockOwnerPid(fd);
         reject(!sameFileIdentity(before, opened), 'lock identity changed');
         reject(any(owner === null, processIsAlive(owner as number)), 'lock owner is alive');
@@ -846,8 +858,8 @@ function removeStaleLock(parentFd: number, name: string, label: string): boolean
             (stats, ownerPid) =>
               all(
                 stats.isFile(),
-                stats.nlink === 1,
-                Date.now() - stats.mtimeMs >= staleLockAgeMs,
+                stats.nlink === 1n,
+                Date.now() - statMtimeMilliseconds(stats) >= staleLockAgeMs,
                 ownerPid !== null && !processIsAlive(ownerPid),
               ),
             true,
@@ -925,12 +937,12 @@ function resourceLockName(resourceName: string): string {
 function releaseExclusiveLock(parentFd: number, name: string, fd: number): void {
   const guard = requireReclaimGuard(parentFd, name, 'exclusive lock release', 'release');
   try {
-    const owner = fstatSync(fd);
+    const owner = fstatSync(fd, { bigint: true });
     try {
       const currentFd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
       try {
         choose(
-          all(sameFileIdentity(owner, fstatSync(currentFd)), lockOwnerPid(currentFd) === process.pid),
+          all(sameFileIdentity(owner, fstatSync(currentFd, { bigint: true })), lockOwnerPid(currentFd) === process.pid),
           () => {
             moveAndRemovePinnedLock(
               parentFd,
@@ -1028,8 +1040,13 @@ function safeRelative(root: string, target: string, label: string): string[] {
 function closeQuietly(fd: number): void {
   closeSync(fd);
 }
-function regularFile(stats: Stats, label: string): void {
-  reject(any(!stats.isFile(), stats.nlink !== 1), `${label} must be a regular single-link file`);
+function regularFile(stats: BigIntStats, label: string): void {
+  reject(any(!stats.isFile(), stats.nlink !== 1n), `${label} must be a regular single-link file`);
+}
+function boundedStatSize(stats: BigIntStats, limit: number, label: string): number {
+  const maximum = BigInt(limit);
+  reject(stats.size > maximum, label + ' exceeds the bounded repository read size');
+  return Number(stats.size);
 }
 function directoryHandle(root: string, label: string): number {
   reject(!linuxHandleProvider, `${label} requires a native directory-handle no-follow provider`);
@@ -1118,10 +1135,9 @@ function readBytesUnlocked(root: string, target: string, label: string, limit = 
 function readBytesAtParent(parentFd: number, name: string, label: string, limit = maxRepositoryReadBytes): Buffer {
   const fd = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
   try {
-    const stats = fstatSync(fd);
+    const stats = fstatSync(fd, { bigint: true });
     regularFile(stats, label);
-    reject(stats.size > limit, label + ' exceeds the bounded repository read size');
-    return readBoundedBuffer(fd, label, limit, false, stats.size);
+    return readBoundedBuffer(fd, label, limit, false, boundedStatSize(stats, limit, label));
   } finally {
     closeQuietly(fd);
   }
@@ -1441,15 +1457,15 @@ function copyBoundedDescriptors(sourceFd: number, targetFd: number, label: strin
   }
 }
 function copyFileExclusiveAt(sourceFd: number, parentFd: number, name: string, label: string): number {
-  const sourceStats = fstatSync(sourceFd);
+  const sourceStats = fstatSync(sourceFd, { bigint: true });
   regularFile(sourceStats, label + ' copy source');
-  reject(sourceStats.size > maxRepositoryReadBytes, label + ' copy source exceeds the bounded repository read size');
+  boundedStatSize(sourceStats, maxRepositoryReadBytes, label + ' copy source');
   const fd = openSync(
     childPath(parentFd, name),
     fsConstants.O_RDWR | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow,
     0o600,
   );
-  const created = fstatSync(fd);
+  const created = fstatSync(fd, { bigint: true });
   try {
     regularFile(created, label + ' copy target');
     copyBoundedDescriptors(sourceFd, fd, label);
@@ -1462,7 +1478,7 @@ function copyFileExclusiveAt(sourceFd: number, parentFd: number, name: string, l
         name,
         label + ' failed copy cleanup',
         created,
-        (stats) => all(stats.isFile(), stats.nlink === 1),
+        (stats) => all(stats.isFile(), stats.nlink === 1n),
         false,
       );
     } finally {
@@ -1474,11 +1490,11 @@ function copyFileExclusiveAt(sourceFd: number, parentFd: number, name: string, l
 function readableClonedFile(fd: number, parentFd: number, name: string, label: string): number {
   let opened = -1;
   try {
-    const cloned = fstatSync(fd);
+    const cloned = fstatSync(fd, { bigint: true });
     regularFile(cloned, label + ' clone target');
     fsyncSync(fd);
     opened = openSync(childPath(parentFd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
-    const current = fstatSync(opened);
+    const current = fstatSync(opened, { bigint: true });
     regularFile(current, label + ' clone target');
     reject(!sameFileIdentity(cloned, current), label + ' clone target identity changed');
     return opened;
@@ -1512,13 +1528,13 @@ function verifyLinuxTargetPath(
   name: string,
   label: string,
   expectedHashes: readonly string[],
-  expectedIdentity?: Stats,
+  expectedIdentity?: BigIntStats,
 ): void {
   const target = childPath(parentFd, name);
   const fd = openSync(target, fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
   try {
-    const opened = fstatSync(fd);
-    const pathStats = lstatSync(target);
+    const opened = fstatSync(fd, { bigint: true });
+    const pathStats = lstatSync(target, { bigint: true });
     regularFile(opened, label + ' restored target');
     const contentHash = rawHash(readBoundedBuffer(fd, label));
     reject(
@@ -1545,8 +1561,8 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
   const tempName = '.' + siblingStem + '.' + randomUUID() + '.tmp';
   const backupName = '.' + siblingStem + '.' + randomUUID() + (siblingStem === name ? '.cas-old' : '.cas-old-hashed');
   let tempFd = -1;
-  let tempIdentity: Stats | undefined;
-  let backupIdentity: Stats | undefined;
+  let tempIdentity: BigIntStats | undefined;
+  let backupIdentity: BigIntStats | undefined;
   let lockFd = -1;
   let operationFailed = false;
   let operationError: unknown;
@@ -1555,15 +1571,18 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
     lockFd = openExclusiveLockAt(parent.fd, lockName, label).fd;
     recoverLinuxOrphanBackup(native as LinuxNativeBinding, parent.fd, name, expectedHash, desiredHash, label);
     const currentFd = openSync(childPath(parent.fd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
-    const initialStats = fstatSync(currentFd);
+    const initialStats = fstatSync(currentFd, { bigint: true });
     try {
-      const stats = fstatSync(currentFd);
+      const stats = initialStats;
       regularFile(stats, label);
-      reject(stats.size > maxRepositoryReadBytes, label + ' exceeds the bounded repository read size');
-      reject(rawHash(readBoundedBuffer(currentFd, label)) !== expectedHash, label + ' expected content hash is stale');
+      const initialSize = boundedStatSize(stats, maxRepositoryReadBytes, label);
+      reject(
+        rawHash(readBoundedBuffer(currentFd, label, maxRepositoryReadBytes, false, initialSize)) !== expectedHash,
+        label + ' expected content hash is stale',
+      );
       const backupFd = cloneOrCopyExclusive(native as LinuxNativeBinding, currentFd, parent.fd, backupName, label);
       try {
-        backupIdentity = fstatSync(backupFd);
+        backupIdentity = fstatSync(backupFd, { bigint: true });
         regularFile(backupIdentity, label + ' private backup');
         reject(
           rawHash(readBoundedBuffer(backupFd, label)) !== expectedHash,
@@ -1581,7 +1600,7 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
       fsConstants.O_RDWR | fsConstants.O_CREAT | fsConstants.O_EXCL | noFollow,
       0o600,
     );
-    tempIdentity = fstatSync(tempFd);
+    tempIdentity = fstatSync(tempFd, { bigint: true });
     regularFile(tempIdentity, label + ' staged replacement');
     writeFileSync(tempFd, desiredBytes);
     fsyncSync(tempFd);
@@ -1594,7 +1613,7 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
     fsyncSync(parent.fd);
     const afterFd = openSync(childPath(parent.fd, name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
     try {
-      const afterStats = fstatSync(afterFd);
+      const afterStats = fstatSync(afterFd, { bigint: true });
       regularFile(afterStats, label);
       reject(!sameFileIdentity(tempIdentity, afterStats), label + ' post-commit identity or hash verification failed');
       reject(
@@ -1611,7 +1630,7 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
           backupName,
           label + ' private backup cleanup',
           backupIdentity,
-          (stats) => all(stats.isFile(), stats.nlink === 1),
+          (stats) => all(stats.isFile(), stats.nlink === 1n),
           false,
         ),
       label + ' private backup identity changed before cleanup',
@@ -1634,7 +1653,7 @@ function replaceAtomicLinux(root: string, target: string, expectedHash: string, 
                     tempName,
                     label + ' staged replacement recovery cleanup',
                     tempIdentity,
-                    (stats) => all(stats.isFile(), stats.nlink === 1),
+                    (stats) => all(stats.isFile(), stats.nlink === 1n),
                     false,
                   ),
                 label + ' staged replacement identity is unknown or changed during recovery',
@@ -1694,7 +1713,7 @@ function recoverLinuxOrphanBackup(
   desiredHash: string,
   label: string,
 ): void {
-  let restoredTargetIdentity: Stats | undefined;
+  let restoredTargetIdentity: BigIntStats | undefined;
   const names = linuxOrphanBackupNames(parentFd, targetName);
   choose(
     names.length === 0,
@@ -1704,18 +1723,15 @@ function recoverLinuxOrphanBackup(
       const backupName = names[0]!;
       const backupFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
       try {
-        const backupIdentity = fstatSync(backupFd);
+        const backupIdentity = fstatSync(backupFd, { bigint: true });
         regularFile(backupIdentity, label + ' private backup');
-        reject(
-          backupIdentity.size > maxRepositoryReadBytes,
-          label + ' private backup exceeds the bounded repository read size',
-        );
+        const backupSize = boundedStatSize(backupIdentity, maxRepositoryReadBytes, label + ' private backup');
         const checkFd = openSync(childPath(parentFd, backupName), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
         try {
           reject(
             any(
-              !sameFileIdentity(backupIdentity, fstatSync(checkFd)),
-              rawHash(readBoundedBuffer(checkFd, label)) !== expectedHash,
+              !sameFileIdentity(backupIdentity, fstatSync(checkFd, { bigint: true })),
+              rawHash(readBoundedBuffer(checkFd, label, maxRepositoryReadBytes, false, backupSize)) !== expectedHash,
             ),
             label + ' private backup content is not the expected original',
           );
@@ -1729,7 +1745,7 @@ function recoverLinuxOrphanBackup(
               fsConstants.O_RDONLY | noFollow | nonBlockingFlag,
             );
             try {
-              const targetStats = fstatSync(targetFd);
+              const targetStats = fstatSync(targetFd, { bigint: true });
               regularFile(targetStats, label);
               return rawHash(readBoundedBuffer(targetFd, label));
             } finally {
@@ -1758,7 +1774,7 @@ function recoverLinuxOrphanBackup(
             const restoredFd = cloneOrCopyExclusive(native, backupFd, parentFd, targetName, label);
             try {
               fsyncSync(restoredFd);
-              const restoredStats = fstatSync(restoredFd);
+              const restoredStats = fstatSync(restoredFd, { bigint: true });
               regularFile(restoredStats, label);
               reject(
                 rawHash(readBoundedBuffer(restoredFd, label)) !== expectedHash,
@@ -1778,7 +1794,7 @@ function recoverLinuxOrphanBackup(
         );
         try {
           reject(
-            !sameFileIdentity(backupIdentity, fstatSync(currentBackupFd)),
+            !sameFileIdentity(backupIdentity, fstatSync(currentBackupFd, { bigint: true })),
             label + ' private backup identity changed during recovery',
           );
           verifyLinuxTargetPath(parentFd, targetName, label, [expectedHash, desiredHash], restoredTargetIdentity);
@@ -1788,7 +1804,7 @@ function recoverLinuxOrphanBackup(
               backupName,
               label + ' private backup recovery cleanup',
               backupIdentity,
-              (stats) => all(stats.isFile(), stats.nlink === 1),
+              (stats) => all(stats.isFile(), stats.nlink === 1n),
               false,
             ),
             label + ' private backup identity changed before recovery cleanup',
@@ -2202,9 +2218,9 @@ function windowsMoveNoReplaceAsync(
         from.basename,
         windowsNativeOpenFlags(fsConstants.O_RDONLY),
       ).fd;
-      const sourceIdentity = windowsNativeBinding!.fstatIdentity(sourceFd);
+      const sourceIdentity = fstatSync(sourceFd, { bigint: true });
       reject(
-        !sourceIdentity.isFile || sourceIdentity.nlink !== 1,
+        !sourceIdentity.isFile() || sourceIdentity.nlink !== 1n,
         label + ' source must be a regular single-link file',
       );
       reject(
@@ -2215,7 +2231,12 @@ function windowsMoveNoReplaceAsync(
         windowsNativeBinding!.renameNoReplace(from.parentFd, from.basename, to.parentFd, to.basename);
       } catch (error) {
         const after = probe();
-        if (after === 'target') return 'moved';
+        if (after === 'target')
+          throw new SafeRepositoryMoveError(
+            'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
+            label + ' move may have occurred, but destination identity was not verified; reconcile before retry',
+            { cause: error },
+          );
         if (after === 'source')
           throw new SafeRepositoryMoveError(
             'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
@@ -2233,10 +2254,10 @@ function windowsMoveNoReplaceAsync(
         to.basename,
         windowsNativeOpenFlags(fsConstants.O_RDONLY),
       ).fd;
-      const targetIdentity = windowsNativeBinding!.fstatIdentity(targetFd);
+      const targetIdentity = fstatSync(targetFd, { bigint: true });
       reject(
-        !targetIdentity.isFile ||
-          targetIdentity.nlink !== 1 ||
+        !targetIdentity.isFile() ||
+          targetIdentity.nlink !== 1n ||
           targetIdentity.dev !== sourceIdentity.dev ||
           targetIdentity.ino !== sourceIdentity.ino ||
           rawHash(readBoundedBuffer(targetFd, label + ' target')) !== expectedHash,
@@ -2246,7 +2267,6 @@ function windowsMoveNoReplaceAsync(
     } catch (error) {
       if (error instanceof SafeRepositoryMoveError) throw error;
       const after = probe();
-      if (after === 'target') return 'moved';
       if (after === 'source')
         throw new SafeRepositoryMoveError(
           'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
@@ -2255,7 +2275,9 @@ function windowsMoveNoReplaceAsync(
         );
       throw new SafeRepositoryMoveError(
         'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
-        label + ' move outcome is unknown; reconcile hashes before retry',
+        after === 'target'
+          ? label + ' move occurred but post-move verification failed; reconcile hashes before retry'
+          : label + ' move outcome is unknown; reconcile hashes before retry',
         { cause: error },
       );
     } finally {
@@ -2368,7 +2390,7 @@ function linuxRemoveFile(root: string, target: string, label: string): void {
       let targetFd = -1;
       try {
         targetFd = openSync(childPath(parent.fd, parent.name), fsConstants.O_RDONLY | noFollow | nonBlockingFlag);
-        const stats = fstatSync(targetFd);
+        const stats = fstatSync(targetFd, { bigint: true });
         regularFile(stats, label + ' remove target');
         reject(
           !moveAndRemovePinnedLock(
@@ -2376,7 +2398,7 @@ function linuxRemoveFile(root: string, target: string, label: string): void {
             parent.name,
             label,
             stats,
-            (movedStats) => all(movedStats.isFile(), movedStats.nlink === 1),
+            (movedStats) => all(movedStats.isFile(), movedStats.nlink === 1n),
             false,
           ),
           label + ' remove target changed during removal',
@@ -2435,7 +2457,7 @@ async function linuxMoveNoReplaceAsync(
       let targetFd = -1;
       try {
         sourceFd = openSync(childPath(from.fd, from.name), fsConstants.O_RDONLY | noFollow);
-        const sourceStats = fstatSync(sourceFd);
+        const sourceStats = fstatSync(sourceFd, { bigint: true });
         regularFile(sourceStats, label + ' source');
         reject(
           rawHash(readBoundedBuffer(sourceFd, label + ' source')) !== expectedHash,
@@ -2446,7 +2468,12 @@ async function linuxMoveNoReplaceAsync(
         } catch (error) {
           const sourceAfter = probe(source);
           const targetAfter = probe(target);
-          if (sourceAfter === null && targetAfter === expectedHash) return 'moved';
+          if (sourceAfter === null && targetAfter === expectedHash)
+            throw new SafeRepositoryMoveError(
+              'SAFE_REPOSITORY_MOVE_OUTCOME_UNKNOWN',
+              label + ' move may have occurred, but destination identity was not verified; reconcile before retry',
+              { cause: error },
+            );
           if (sourceAfter === expectedHash && targetAfter === null)
             throw new SafeRepositoryMoveError(
               'SAFE_REPOSITORY_MOVE_NOT_APPLIED',
@@ -2460,7 +2487,7 @@ async function linuxMoveNoReplaceAsync(
           );
         }
         targetFd = openSync(childPath(to.fd, to.name), fsConstants.O_RDONLY | noFollow);
-        const targetStats = fstatSync(targetFd);
+        const targetStats = fstatSync(targetFd, { bigint: true });
         regularFile(targetStats, label + ' target');
         reject(
           !sameFileIdentity(sourceStats, targetStats),
@@ -2471,7 +2498,8 @@ async function linuxMoveNoReplaceAsync(
           label + ' moved target digest differs',
         );
         fsyncSync(from.fd);
-        if (!sameFileIdentity(fstatSync(from.fd), fstatSync(to.fd))) fsyncSync(to.fd);
+        if (!sameFileIdentity(fstatSync(from.fd, { bigint: true }), fstatSync(to.fd, { bigint: true })))
+          fsyncSync(to.fd);
         return 'moved';
       } catch (error) {
         if (error instanceof SafeRepositoryMoveError) throw error;

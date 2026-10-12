@@ -98,7 +98,7 @@ export function standaloneRuntime(env: NodeJS.ProcessEnv = process.env): { root:
   const executable = env.VIDA_STANDALONE_EXECUTABLE;
   if (root === undefined && executable === undefined) return null;
   if (
-    process.versions.bun !== '1.4.2' ||
+    typeof process.versions.bun !== 'string' ||
     env.BUN_BE_BUN !== '1' ||
     typeof root !== 'string' ||
     !path.isAbsolute(root) ||

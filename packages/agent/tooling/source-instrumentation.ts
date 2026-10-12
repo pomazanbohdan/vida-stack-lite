@@ -35,7 +35,7 @@ export function instrumentSource(file: string, source: string): { code: string; 
     parserOpts: {
       sourceType: 'module',
       allowReturnOutsideFunction: false,
-      plugins: ['typescript', 'importAttributes'],
+      plugins: ['typescript'],
     },
     plugins: [
       (api: { types: typeof types }) => {

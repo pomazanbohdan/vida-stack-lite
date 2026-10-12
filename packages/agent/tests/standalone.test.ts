@@ -169,12 +169,23 @@ test('native metadata commands reuse the public CLI contract without touching re
     for (const command of ['version', 'help', '--help']) {
       process.argv = [argv[0]!, 'TEST SETUP compiled entry', command];
       output = '';
+      const mismatched = {
+        payload: 'must not read this missing payload',
+        index: [],
+        payloadId: 'unused',
+        resourceIndexDigest: 'unused',
+        version: '0.1.2',
+        pin: '9.8.7',
+      };
+      await assert.rejects(runStandalone(mismatched), /Standalone runtime pin differs/);
+      assert.equal(output, '', 'pin mismatch must fail before metadata or resource access');
       await runStandalone({
         payload: 'must not read this missing payload',
         index: [],
         payloadId: 'unused',
         resourceIndexDigest: 'unused',
         version: '0.1.2',
+        pin: Bun.version,
       });
       assert.deepEqual(JSON.parse(output), cliMetadataResult([command], { name: 'vida-agent', version: '0.1.2' }));
     }
@@ -255,12 +266,7 @@ test('resources drain disjoint writes before releasing the owned lock on a faile
     assert.equal(nextBatchStarted, false);
     assert.equal(readdirSync(value.cache).filter((name) => name.endsWith('.lock')).length, 0);
     const pending = readdirSync(value.cache).filter((name) => name.startsWith('.pending-'));
-    assert.equal(pending.length, 1);
-    const stage = path.join(value.cache, pending[0]!);
-    const writtenFiles = ['0.md', '1.md', '2.md', '4.md', '5.md', '6.md', '7.md'];
-    assert.deepEqual(readdirSync(path.join(stage, 'instructions')).sort(), writtenFiles);
-    for (const name of writtenFiles)
-      assert.equal(readFileSync(path.join(stage, 'instructions', name), 'utf8'), bytes.toString());
+    assert.deepEqual(pending, [], 'owned prepublication stage is removed after the failed batch drains');
     assert.equal(
       lstatSync(path.join(value.cache, value.version + '-' + resourceDigest(JSON.stringify(entries))), {
         throwIfNoEntry: false,
@@ -308,7 +314,14 @@ test('runtime and initialization routes retain the complete payload outside the 
         '); process.argv=[process.execPath,"TEST SETUP owned entry",...' +
         JSON.stringify(args) +
         ']; await runStandalone(' +
-        JSON.stringify({ payload, index, payloadId, resourceIndexDigest: payloadId, version: value.version }) +
+        JSON.stringify({
+          payload,
+          index,
+          payloadId,
+          resourceIndexDigest: payloadId,
+          version: value.version,
+          pin: Bun.version,
+        }) +
         ');';
       const child = spawnSync(
         process.execPath,

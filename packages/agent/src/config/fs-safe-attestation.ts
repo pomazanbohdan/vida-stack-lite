@@ -1,7 +1,7 @@
 // Pinned published runtime closure and native packages; registry SRI evidence in WORK.
-export const fsSafeVersion = '0.25.0' as const;
+export const fsSafeVersion = '0.26.2' as const;
 export const fsSafeIntegrity =
-  'sha512-/8XzfW0zulV1BPzjnkD7vRG12u0u517w00rIuAGmW4GU07fxatYSkLHc1GaFCSX/WuLwGPzoxjPSKuRloBprIQ==';
+  'sha512-BubxKwauBAL5kMHZ+ijgYDT1EoStCbt6gqJW7flWPIKU4ikJmLaNcNWh7jUe50AxT4x3FVzNpBxc/WSyZULLVQ==';
 export const fsSafePackageManifest = [
   'dist/absolute-path.js',
   'dist/advanced.js',
@@ -43,6 +43,8 @@ export const fsSafePackageManifest = [
   'dist/config.js',
   'dist/containment.js',
   'dist/copy-file-input.js',
+  'dist/copy-link.js',
+  'dist/copy-metadata.js',
   'dist/copy-path-admission.js',
   'dist/copy-policy.js',
   'dist/copy-publication.js',
@@ -52,6 +54,7 @@ export const fsSafePackageManifest = [
   'dist/create-owned-file.js',
   'dist/create.js',
   'dist/creation-boundary.js',
+  'dist/darwin-acl.js',
   'dist/deny-mutation-match.js',
   'dist/deny-mutations.js',
   'dist/device-path.js',
@@ -66,6 +69,7 @@ export const fsSafePackageManifest = [
   'dist/entry-publication.js',
   'dist/error-detail.js',
   'dist/errors.js',
+  'dist/exact-identity.js',
   'dist/exclusive-create.js',
   'dist/file-cleanup.js',
   'dist/file-contents.js',
@@ -91,6 +95,7 @@ export const fsSafePackageManifest = [
   'dist/file-store-sync-write.js',
   'dist/file-store.js',
   'dist/file-sync.js',
+  'dist/file-write-lease.js',
   'dist/filename.js',
   'dist/fs.js',
   'dist/guarded-mkdir.js',
@@ -98,6 +103,7 @@ export const fsSafePackageManifest = [
   'dist/guest-dispatch-python.js',
   'dist/guest-native-python.js',
   'dist/guest.js',
+  'dist/hardlink-fallback.js',
   'dist/home-dir.js',
   'dist/index.js',
   'dist/install-path.js',
@@ -131,6 +137,7 @@ export const fsSafePackageManifest = [
   'dist/native-policy-parent-windows.js',
   'dist/native-policy-parent.js',
   'dist/native-rename-outcome.js',
+  'dist/native-staged-file-metadata.js',
   'dist/native-staged-file.js',
   'dist/native-staged-symlink.js',
   'dist/native.js',
@@ -162,6 +169,7 @@ export const fsSafePackageManifest = [
   'dist/pinned-write-staged.js',
   'dist/pinned-write-types.js',
   'dist/pinned-write.js',
+  'dist/pipe.js',
   'dist/positional-read.js',
   'dist/private-directory.js',
   'dist/private-producer-handoff-sync.js',
@@ -192,6 +200,7 @@ export const fsSafePackageManifest = [
   'dist/retained-file.js',
   'dist/root-boundary.js',
   'dist/root-context.js',
+  'dist/root-copy.js',
   'dist/root-create-input.js',
   'dist/root-create-native.js',
   'dist/root-directory-creation.js',
@@ -294,19 +303,20 @@ export const fsSafePackageManifest = [
   'dist/windows-owner.js',
   'dist/windows-path-alias.js',
   'dist/windows-path-syntax.js',
-  'dist/windows-security-bridge.cs',
-  'dist/windows-security-bridge.ps1',
   'dist/windows-security-command.js',
   'dist/windows-security-facts.js',
+  'dist/windows-security-helper.exe',
+  'dist/windows-security-helper.js',
+  'dist/windows-test-hooks.js',
   'dist/write-file-handle.js',
   'dist/write-open-flags.js',
   'dist/write-queue.js',
   'package.json',
 ] as const;
 export const fsSafePackageTreeSha256ByNativeTarget: Readonly<Record<string, string>> = {
-  'win32-x64-msvc': '3624682c930e3c160bb18de2bca1ac69fa6fc44bd16ef3402017016ab9dcd2b8',
-  'linux-x64-gnu': '7acf3764b7f6eb42f1254adaa54a4203234ffb0088cb10e2447462a2eaa40dc2',
-  'linux-x64-musl': 'da99681a7d985ff2b88f8ae43d141da40e2a152ea30a39ad6fc4e528ef3737f7',
-  'linux-arm64-gnu': 'c1fa9cb17852ad73faef42065fdb11d626a37e4c00979ab85beb8222fd7b7671',
-  'linux-arm64-musl': '19b8146309091f3dbaa144f3657beee290aeb19f1bb651ccb32b9189deee3852',
+  'win32-x64-msvc': 'a4fe198d2f47d518daa2ff6e43fb9280faffafc4e788bf96c11eabf3c0507d35',
+  'linux-x64-gnu': '2a5e7b759db4fb344646997d34d33d17b28ba6e884ed0a4c223e3330fc8edbc4',
+  'linux-x64-musl': '54a0db695faa549a799317b7191798702e04e1eadfdc5dfd1546d56e9803f302',
+  'linux-arm64-gnu': '55e50f68eab25a1e69b880da3bb7a65151c7fcbf5a99724e2672309d10fdf620',
+  'linux-arm64-musl': '87cf730e16897c8460791f39c4f72314d23f9262d330ebff9cdbc17264e367b7',
 };

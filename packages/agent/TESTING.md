@@ -156,6 +156,13 @@ unrelated files; see the official [Bun test runner guide](https://bun.sh/docs/te
 
 Run the final applicable behavior check before numeric checks on stable Source. Keep one writer for coverage, CRAP and mutation outputs. For a case timeout during concurrent heavy runs, inspect its child outcome and run that exact case alone before changing its bound. Preserve the original failed or UNKNOWN result.
 
+Separate shared contained-package preparation into a bounded hook for the cases
+that require it; keep Source-only cases outside that suite. Bun's unlabelled
+`describe(() => ...)` preserves exact test-name filters. An empty string label
+adds a separator to the full name. Track pending contained bodies through their
+terminal custody checks; file cleanup retains the fixture while any remain.
+A parent timeout does not prove that an asynchronous body has stopped.
+
 Use current generated SDK outputs only when their inputs match. Missing or stale output is a GAP. Do not start a local build to make a test command pass.
 
 Use supported temporary directories or explicit owned fixture roots. Keep Source-workspace scratch in ignored `.tmp`, outside the package payload. Preserve fixtures when a child outcome is UNKNOWN.
@@ -169,7 +176,17 @@ Tests and comments describe current supported behavior. Do not include narrative
 
 ## Commands and pins
 
-Run commands from `packages/agent`. Use the pinned launcher and frozen lockfile. The launcher must select Bun 1.4.2. A global Bun version must not change the pin.
+For dependency updates, compare current official stable metadata once, qualify
+the affected owners and keep exact manifest/lock bindings. Babel Core 8 supplies
+its native declarations and parses standard import attributes without the old
+plugin name. Exercise generated code and original function counters, separately
+from inventory or typecheck. fs-safe identity guards use direct bigint captures
+or exact receipt companions; never convert rounded IDs to bigint. A matching
+hash after a rename error does not prove the destination's identity. Keep UNKNOWN
+and the original error when exact verification is unavailable. Off-platform
+native cases are explicit skips, with target qualification still pending.
+
+Run commands from `packages/agent`. Use the pinned launcher and frozen lockfile. The launcher must select the exact stable version in `.bun-version`, mirrored by `packageManager` and `engines.bun`. A global Bun version must not change the pin. Update that owner after current official release research and affected qualification; do not duplicate runtime version literals in validators, current tests or CI. Historical receipts retain their original version.
 
 The frozen `b549951` CRAP baseline uses the four-file Bun native coverage set
 declared by that commit's `test:coverage:pinned` command and
@@ -305,7 +322,7 @@ execution, coverage, assertions, reviewed applicability or mutation outcomes.
 
 Fix every lint error and warning. Do not disable rules, lower severity, add suppression comments or accept a baseline to hide a defect. Use `--max-warnings 0` for the final lint gate and the approved precommit checks.
 
-Oxlint type-aware analysis needs a declared TypeScript project for each file. Source uses the package `tsconfig.json`. The standard nested projects in `tests/tsconfig.json` and `tooling/tsconfig.json` include MJS files with `allowJs`, `checkJs` and `noEmit`. An import-resolution flag does not place an excluded file in a typed project. Keep the Bun/Node declarations and exact pins current; the Bun runtime and current Bun declarations are 1.4.2.
+Oxlint type-aware analysis needs a declared TypeScript project for each file. Source uses the package `tsconfig.json`; maintained TypeScript tests and tooling use their standard nested projects. An import-resolution flag does not place an excluded file in a typed project. Keep the Bun/Node declarations and exact pins current. Runtime and declaration packages have independent published versions: read `.bun-version` for execution and the manifest/lock for declarations; do not require artificial version parity.
 
 Type shared fixture state and helpers with the existing production contracts. Give SQLite results the exact selected row type and check missing rows. Preserve deliberately invalid test inputs with separate malformed values; do not present them as valid production data.
 

@@ -181,7 +181,7 @@ and maintenance owner. A migration declares its exact supported input and output
 versions, dependencies and affected files. The operation inspects once, freezes
 a plan, records its intent and beforeimages, prepares and validates outputs, then
 activates them under the maintenance fence. Initial intent publication uses the
-pinned `@openclaw/fs-safe` 0.25.0 `Root.create()` no-replace operation. It exposes
+pinned, attested `@openclaw/fs-safe` `Root.create()` no-replace operation. It exposes
 the complete frozen intent or no target on a successful publication, within the
 provider's declared containment profile. Linux uses the attested native
 descriptor-relative provider; Windows retains `windows-best-effort-v1`. This
@@ -223,7 +223,7 @@ The source repository contains exactly `agent=packages/agent` and
 Predecessor framework code is inactive provenance, never an active fallback.
 
 The only public agent distribution is one native `vida-agent` executable per qualified
-OS/CPU target, embedding Bun 1.4.2. Direct installation, public commands and first
+OS/CPU target, embedding the exact Source-selected Bun. Direct installation, public commands and first
 run require no external Node, npm or Bun executable and no first-run network
 bootstrap. Every existing public SDK export remains a maintained library
 interface; an executable does not replace in-process imports or declarations.

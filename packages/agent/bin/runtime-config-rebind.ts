@@ -672,6 +672,7 @@ const selectorPath = '.agent/active-runtime-selector.v1.json';
 const operationName = 'runtime-config-rebind-operation.v1.json';
 const deliveryOperationName = 'runtime-config-delivery-operation.v1.json';
 const sourceCorrectionName = 'runtime-config-source-correction-repair.v1.json';
+const sourceCustodyByteLimit = 96 * 1024 * 1024;
 const identifier = /^[a-z0-9][a-z0-9._-]{0,79}$/;
 const stableVersion = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/;
 const ajv = new Ajv2020({ strict: true, allErrors: true });
@@ -3310,7 +3311,7 @@ export function readAppliedRuntimeConfigRebind(root: string, config: RebindAgent
   };
 }
 
-function readExternalBytes(file: string, maximum: number, label: string): Buffer {
+function readExternalBytes(file: string, maximum: number, label: string, root?: string): Buffer {
   requireRebind(
     typeof file === 'string' &&
       file.length > 0 &&
@@ -3320,44 +3321,58 @@ function readExternalBytes(file: string, maximum: number, label: string): Buffer
       !hasNulOrLineBreak(file),
     `${label} path invalid`,
   );
-  const flags = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0),
-    fd = openSync(file, flags);
+  const flags = constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0);
+  const opened =
+    root === undefined
+      ? undefined
+      : openRootFileSync({
+          absolutePath: file,
+          rootPath: root,
+          boundaryLabel: label,
+          maxBytes: maximum,
+          rejectHardlinks: true,
+          rejectSymlinks: true,
+          allowedType: 'file',
+        });
+  if (opened !== undefined) requireRebind(opened.ok, `${label} is not a safe root-bound file`);
+  const fd = opened === undefined ? openSync(file, flags) : opened.fd;
   try {
-    const before = fstatSync(fd),
-      namedBefore = lstatSync(file);
+    const before = fstatSync(fd, { bigint: true }),
+      namedBefore = lstatSync(file, { bigint: true });
     requireRebind(
       before.isFile() &&
         namedBefore.isFile() &&
         !namedBefore.isSymbolicLink() &&
-        before.nlink === 1 &&
-        namedBefore.nlink === 1 &&
+        before.nlink === 1n &&
+        namedBefore.nlink === 1n &&
         before.dev === namedBefore.dev &&
         before.ino === namedBefore.ino &&
         before.size === namedBefore.size &&
-        before.size <= maximum,
+        before.size <= BigInt(maximum) &&
+        (opened === undefined || sameFileIdentity(opened, before)),
       `${label} is not a bounded regular file`,
     );
-    const bytes = Buffer.alloc(before.size);
+    const bytes = Buffer.alloc(Number(before.size));
     let offset = 0;
     while (offset < bytes.length) {
       const count = readSync(fd, bytes, offset, bytes.length - offset, offset);
       requireRebind(count > 0, `${label} ended during read`);
       offset += count;
     }
-    const after = fstatSync(fd),
-      namedAfter = lstatSync(file),
+    const after = fstatSync(fd, { bigint: true }),
+      namedAfter = lstatSync(file, { bigint: true }),
       extra = Buffer.alloc(1);
     requireRebind(
       after.isFile() &&
         namedAfter.isFile() &&
         !namedAfter.isSymbolicLink() &&
-        after.nlink === 1 &&
-        namedAfter.nlink === 1 &&
+        after.nlink === 1n &&
+        namedAfter.nlink === 1n &&
         before.dev === after.dev &&
         before.ino === after.ino &&
         before.size === after.size &&
-        before.mtimeMs === after.mtimeMs &&
-        before.ctimeMs === after.ctimeMs &&
+        before.mtimeNs === after.mtimeNs &&
+        before.ctimeNs === after.ctimeNs &&
         after.dev === namedAfter.dev &&
         after.ino === namedAfter.ino &&
         after.size === namedAfter.size &&
@@ -3568,7 +3583,7 @@ export function currentNativeSelfAttestation() {
   const runtime = standaloneRuntime();
   if (!runtime) return null;
   requireRebind(
-    process.versions.bun === '1.4.2' &&
+    typeof process.versions.bun === 'string' &&
       path.isAbsolute(runtime.root) &&
       path.resolve(runtime.root) === runtime.root &&
       path.isAbsolute(runtime.executable) &&
@@ -3592,7 +3607,7 @@ export function currentNativeSelfAttestation() {
   requireRebind(
     packageManifest.name === 'vida-agent' &&
       stableVersionParts(packageManifest.version) !== null &&
-      pin === '1.4.2' &&
+      pin === process.versions.bun &&
       executableBytes.length === stat.size &&
       /^[a-f0-9]{64}$/.test(payloadId),
     'native executable, package, pin or resource payload identity differs',
@@ -3649,24 +3664,32 @@ function streamedNativeAssetDigest(
     });
   requireRebind(opened.ok, 'native installation source asset is unsafe');
   try {
-    const initialDescriptor = fstatSync(opened.fd),
-      initialName = lstatSync(absolutePath);
+    const openedMetadata = fstatSync(opened.fd),
+      initialDescriptor = fstatSync(opened.fd, { bigint: true }),
+      initialName = lstatSync(absolutePath, { bigint: true });
 
-    const sameVersion = (left: import('node:fs').Stats, right: import('node:fs').Stats) =>
+    const sameVersion = (left: import('node:fs').BigIntStats, right: import('node:fs').BigIntStats) =>
       sameFileIdentity(left, right) &&
       left.isFile() &&
       right.isFile() &&
       !left.isSymbolicLink() &&
       !right.isSymbolicLink() &&
-      left.nlink === 1 &&
-      right.nlink === 1 &&
+      left.nlink === 1n &&
+      right.nlink === 1n &&
       left.size === right.size &&
-      left.mtimeMs === right.mtimeMs &&
-      left.ctimeMs === right.ctimeMs;
+      left.mtimeNs === right.mtimeNs &&
+      left.ctimeNs === right.ctimeNs;
     requireRebind(
-      sameVersion(opened.stat, initialDescriptor) &&
+      sameFileIdentity(opened, initialDescriptor) &&
+        opened.stat.isFile() &&
+        !opened.stat.isSymbolicLink() &&
+        opened.stat.nlink === 1 &&
+        openedMetadata.nlink === 1 &&
+        opened.stat.size === openedMetadata.size &&
+        opened.stat.mtimeMs === openedMetadata.mtimeMs &&
+        opened.stat.ctimeMs === openedMetadata.ctimeMs &&
         sameVersion(initialDescriptor, initialName) &&
-        initialDescriptor.size === expectedBytes,
+        initialDescriptor.size === BigInt(expectedBytes),
       'native installation source asset changed before read',
     );
     const hash = createHash('sha256'),
@@ -3680,8 +3703,8 @@ function streamedNativeAssetDigest(
       requireRebind(bytesRead <= expectedBytes, 'native installation source asset grew beyond its declared size');
       hash.update(chunk.subarray(0, count));
     }
-    const finalDescriptor = fstatSync(opened.fd),
-      finalName = lstatSync(absolutePath);
+    const finalDescriptor = fstatSync(opened.fd, { bigint: true }),
+      finalName = lstatSync(absolutePath, { bigint: true });
     requireRebind(
       bytesRead === expectedBytes &&
         sameVersion(initialDescriptor, finalDescriptor) &&
@@ -3727,7 +3750,7 @@ function validateSourceCorrectionReport(
       completeReport.original_plan_digest === request.original_operation.plan_digest &&
       completeReport.source_snapshot_digest === request.new_source.digest &&
       manifest.version === selfAttestation.package_version &&
-      manifest.pin === '1.4.2' &&
+      manifest.pin === selfAttestation.bun_version &&
       manifest.target === target &&
       manifest.payloadId === selfAttestation.resource_payload_id &&
       manifest.asset.file === `vida-agent-${target}${process.platform === 'win32' ? '.exe' : ''}` &&
@@ -4026,6 +4049,18 @@ function projectRelativeExternalPath(root: string, absolutePath: string, label: 
   return relative;
 }
 
+function readRetainedSourceCustody(access: RebindSafeRepositoryAccess, relative: string): Buffer {
+  const label = 'retained source custody';
+  return access.withExclusiveLock(relative, label, () =>
+    readExternalBytes(
+      path.join(access.repository_root, relative),
+      sourceCustodyByteLimit,
+      label,
+      access.repository_root,
+    ),
+  );
+}
+
 function sourceBeforeimageBinding({
   access,
   root,
@@ -4053,15 +4088,10 @@ function sourceBeforeimageBinding({
       relative.split('/').every((part) => part && part !== '.' && part !== '..'),
     'retained source custody path is not canonical',
   );
-  const bytes = frozen
-    ? access.readBytes(relative, 'retained source custody')
-    : readExternalBytes(
-        requireRebindPath(beforeimagePath, 'retained source custody'),
-        96 * 1024 * 1024,
-        'retained source custody',
-      );
+  const bytes = readRetainedSourceCustody(access, relative);
   requireRebind(
-    bytes.length <= 96 * 1024 * 1024 && (!frozen || (bytes.length === frozen.bytes && sha(bytes) === frozen.sha256)),
+    bytes.length <= sourceCustodyByteLimit &&
+      (!frozen || (bytes.length === frozen.bytes && sha(bytes) === frozen.sha256)),
     'retained source custody bytes changed',
   );
   let value;
@@ -4814,7 +4844,7 @@ function originalSourceDeliveryOperation({
   readonly operation: SourceCorrectionOperationView;
   readonly request: SourceCorrectionRequestView;
 }): { readonly bytes: Buffer; readonly value: SourceCorrectionOperationView } {
-  const beforeimageBytes = access.readBytes(request.source_beforeimages.path, 'retained source custody');
+  const beforeimageBytes = readRetainedSourceCustody(access, request.source_beforeimages.path);
   requireRebind(
     beforeimageBytes.length === request.source_beforeimages.bytes &&
       sha(beforeimageBytes) === request.source_beforeimages.sha256,

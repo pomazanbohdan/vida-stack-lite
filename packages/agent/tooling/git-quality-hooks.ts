@@ -222,7 +222,11 @@ function installedBun(pkg: string, env: Environment): string {
   const manifest = requireRecord(manifestValue, 'Bun pin/manifest mismatch.');
   const engines = optionalRecord(manifest.engines);
   const bunVersion = engines?.bun;
-  if (pin !== '1.4.2' || manifest.packageManager !== `bun@${pin}` || bunVersion !== pin)
+  if (
+    !/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(pin) ||
+    manifest.packageManager !== `bun@${pin}` ||
+    bunVersion !== pin
+  )
     throw new Error('Bun pin/manifest mismatch.');
   if (process.versions.bun === pin) return realpathSync(process.execPath);
   for (const directory of environmentPath(env).split(path.delimiter).filter(Boolean)) {
@@ -337,10 +341,24 @@ async function main(mode: string | undefined): Promise<void> {
   const before = stableInputs(root, true);
   const bun = installedBun(pkg, env);
   const prePushEnv = prependEnvironmentPath(env, path.dirname(bun));
-  installedTool(pkg, 'typescript', '7.0.2');
-  installedPackage(pkg, 'istanbul-lib-coverage', '3.2.2');
-  installedPackage(pkg, 'istanbul-lib-instrument', '6.0.3');
-  installedPackage(pkg, '@babel/parser', '8.0.7');
+  const manifest = requireRecord(
+    JSON.parse(readFileSync(path.join(pkg, 'package.json'), 'utf8')),
+    'Malformed package manifest.',
+  );
+  const dependencies = requireRecord(manifest.dependencies, 'Malformed dependencies.');
+  const devDependencies = requireRecord(manifest.devDependencies, 'Malformed development dependencies.');
+  installedTool(pkg, 'typescript', requireString(devDependencies.typescript, 'Missing TypeScript pin.'));
+  installedPackage(
+    pkg,
+    'istanbul-lib-coverage',
+    requireString(devDependencies['istanbul-lib-coverage'], 'Missing coverage pin.'),
+  );
+  installedPackage(
+    pkg,
+    'istanbul-lib-instrument',
+    requireString(devDependencies['istanbul-lib-instrument'], 'Missing instrumenter pin.'),
+  );
+  installedPackage(pkg, '@babel/parser', requireString(dependencies['@babel/parser'], 'Missing parser pin.'));
   const gitDirectory = path.resolve(root, git(root, ['rev-parse', '--git-common-dir']).trim());
   const lock = path.join(gitDirectory, 'vida-quality-run.lock');
   mkdirSync(lock);

@@ -379,6 +379,7 @@ function assertManifest(value: unknown): asserts value is CIDeliveryManifest {
     typeof value.schema === 'string' &&
       typeof value.version === 'string' &&
       typeof value.pin === 'string' &&
+      parseReleaseVersion(value.pin) !== null &&
       typeof value.target === 'string' &&
       typeof value.payloadId === 'string' &&
       Array.isArray(value.inputs) &&
@@ -542,10 +543,10 @@ function profileMatches(request: CIDeliveryRequest, profile: CIDeliveryProfile):
 function assertDependencyCache(value: unknown): asserts value is DependencyCache {
   exact(value, ['id', 'key', 'ref', 'version', 'size_in_bytes', 'restore', 'matched_key', 'save', 'save_action']);
   check(isPositiveSafeInteger(value.id), 'dependency cache ID is invalid');
-  check(
-    typeof value.key === 'string' && /^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-1\.4\.2-[a-f0-9]{64}$/.test(value.key),
-    'dependency cache key is invalid',
-  );
+  const key = value.key;
+  check(typeof key === 'string', 'dependency cache key is invalid');
+  const cacheKey = /^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-(\d+\.\d+\.\d+)-[a-f0-9]{64}$/.exec(key);
+  check(cacheKey !== null && parseReleaseVersion(cacheKey[1] ?? '') !== null, 'dependency cache key is invalid');
   check(
     typeof value.ref === 'string' && /^refs\/heads\/[A-Za-z0-9._/-]+$/.test(value.ref),
     'dependency cache ref is invalid',
@@ -563,16 +564,22 @@ function assertDependencyCache(value: unknown): asserts value is DependencyCache
   check(isPositiveSafeInteger(value.size_in_bytes), 'dependency cache size is invalid');
   check(value.save === 'confirmed', 'dependency cache API row is unconfirmed');
   if (value.restore === 'hit') {
-    check(value.save_action === 'skipped' && value.matched_key === value.key, 'dependency cache hit differs');
+    check(value.save_action === 'skipped' && value.matched_key === key, 'dependency cache hit differs');
   } else {
+    const matchedKey = value.matched_key;
+    const matchedCacheKey =
+      typeof matchedKey === 'string'
+        ? /^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-(\d+\.\d+\.\d+)-[a-f0-9]{64}$/.exec(matchedKey)
+        : null;
     check(
       value.restore === 'miss' &&
         value.save_action === 'success' &&
-        (value.matched_key === null ||
-          (typeof value.matched_key === 'string' &&
-            /^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-1\.4\.2-[a-f0-9]{64}$/.test(value.matched_key) &&
-            value.matched_key.startsWith(value.key.slice(0, -64)) &&
-            value.matched_key !== value.key)),
+        (matchedKey === null ||
+          (typeof matchedKey === 'string' &&
+            matchedCacheKey !== null &&
+            parseReleaseVersion(matchedCacheKey[1] ?? '') !== null &&
+            matchedKey.startsWith(key.slice(0, -64)) &&
+            matchedKey !== key)),
       'dependency cache save observation differs',
     );
   }
@@ -619,6 +626,10 @@ function validateResult(args: {
     'result run identity differs',
   );
   validateChecks(result.checks, profile);
+  const cachePinMatches =
+    result.dependency_cache === undefined ||
+    /^vida-bun-install-v1-[A-Za-z0-9_-]+-bun-(\d+\.\d+\.\d+)-[a-f0-9]{64}$/.exec(result.dependency_cache.key)?.[1] ===
+      candidate.manifest.pin;
   exact(result.asset, ['file', 'bytes', 'sha256']);
   check(
     result.schema === 'VidaCIDeliveryResult/v2' &&
@@ -626,7 +637,8 @@ function validateResult(args: {
       candidate.version === request.version &&
       candidate.source_binding === request.source_binding &&
       candidate.manifest.target === request.target &&
-      candidate.manifest.pin === '1.4.2' &&
+      parseReleaseVersion(candidate.manifest.pin) !== null &&
+      cachePinMatches &&
       hex.test(candidate.manifest.payloadId) &&
       candidate.manifest.inputs.length > 0 &&
       result.archive_sha256 === candidate.archive_sha256 &&
@@ -863,7 +875,7 @@ export function validateCIDeliveryFormationMembers(args: {
       equal(candidate.manifest, manifest) &&
       manifest.schema === 'VidaStandaloneBuild/v1' &&
       manifest.version === request.version &&
-      manifest.pin === '1.4.2' &&
+      parseReleaseVersion(manifest.pin) !== null &&
       manifest.target === request.target &&
       hex.test(manifest.payloadId) &&
       manifest.inputs.length > 0 &&

@@ -41,7 +41,7 @@ import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { homedir } from 'node:os';
 import { sdkCompatibilityManifest } from '../../packages/agent/tooling/pack-sdk.ts';
-import { findNpmCli } from '../../packages/agent/bin/bun.ts';
+import { checkManifest, findNpmCli, readPin } from '../../packages/agent/bin/bun.ts';
 
 import {
   readNativeRetargetCandidate,
@@ -1753,8 +1753,9 @@ function isPackageManifestRecord(value: unknown): value is PackageManifestRecord
     !isRecord(value.bin) ||
     value.bin['vida-agent'] !== './bin/vida-agent.ts' ||
     !isRecord(value.engines) ||
-    value.engines.bun !== '1.4.2' ||
-    value.packageManager !== 'bun@1.4.2' ||
+    typeof value.engines.bun !== 'string' ||
+    parseReleaseVersion(value.engines.bun) === null ||
+    value.packageManager !== `bun@${value.engines.bun}` ||
     typeof value.version !== 'string' ||
     parseReleaseVersion(value.version) === null
   )
@@ -1767,7 +1768,11 @@ function manifest(root: string): { file: string; value: PackageManifestRecord } 
   const file = path.join(root, 'packages/agent/package.json');
   const value = read(file);
   if (!isPackageManifestRecord(value))
-    throw new Error('Local release requires vida-agent with a valid MAJOR.MINOR.PATCH version and Bun 1.4.2.');
+    throw new Error('Local release requires vida-agent with a valid MAJOR.MINOR.PATCH version and stable Bun pin.');
+  const packageRoot = path.dirname(file);
+  const pin = readPin(packageRoot);
+  checkManifest(packageRoot, pin);
+  if (value.engines.bun !== pin) throw new Error('Bun manifest differs from the selected Source pin.');
   return { file, value };
 }
 /** @param {string} left @param {string} right @returns {-1|0|1} */
@@ -3405,7 +3410,7 @@ async function installNativeRelease({
     parseJson(await invoke(['install', '--check'], 'native-check')),
     'Installed native prerequisite response is malformed.',
   );
-  if (check.status !== 'prerequisites_valid' || check.bun_pin !== '1.4.2' || check.runtime !== 'embedded')
+  if (check.status !== 'prerequisites_valid' || check.bun_pin !== value.engines.bun || check.runtime !== 'embedded')
     throw new Error('Installed native prerequisite check differs.');
   if (process.platform === 'win32') {
     const powershell = path.join(

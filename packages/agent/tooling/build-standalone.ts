@@ -218,10 +218,11 @@ export function standaloneEntrySource(input: {
   readonly payloadId: string;
   readonly resourceIndexDigest: string;
   readonly version: string;
+  readonly pin: string;
 }): string {
-  const { root, index, payloadId, resourceIndexDigest, version } = input;
+  const { root, index, payloadId, resourceIndexDigest, version, pin } = input;
   const entry = path.join(root, 'bin/standalone.ts').replaceAll('\\', '/');
-  return `import payload from './payload.tar.gz' with {type:'file'}; import {runStandalone} from ${JSON.stringify(entry)}; await runStandalone({payload,index:${JSON.stringify(index)},payloadId:${JSON.stringify(payloadId)},resourceIndexDigest:${JSON.stringify(resourceIndexDigest)},version:${JSON.stringify(version)}});`;
+  return `import payload from './payload.tar.gz' with {type:'file'}; import {runStandalone} from ${JSON.stringify(entry)}; await runStandalone({payload,index:${JSON.stringify(index)},payloadId:${JSON.stringify(payloadId)},resourceIndexDigest:${JSON.stringify(resourceIndexDigest)},version:${JSON.stringify(version)},pin:${JSON.stringify(pin)}});`;
 }
 
 export async function verifyStandalone(input: {
@@ -238,7 +239,7 @@ export async function verifyStandalone(input: {
     manifest = standaloneManifest(manifestBytes);
   assert.equal(manifest.schema, 'VidaStandaloneBuild/v1');
   assert.equal(manifest.version, packageDependencies(root).version);
-  assert.equal(manifest.pin, '1.4.2');
+  assert.equal(manifest.pin, Bun.version);
   assert.equal(manifest.target, targetName());
   assert.deepEqual(
     manifest.inputs,
@@ -289,7 +290,7 @@ export async function verifyStandalone(input: {
 export async function buildStandalone(input: { readonly root: string }): Promise<BuildResult> {
   const { root } = input;
   resourceDirectory(root);
-  assert.equal(Bun.version, '1.4.2');
+  assert.equal(Bun.version, readPin(root));
   checkManifest(root, Bun.version);
   assert.ok(
     (process.platform === 'win32' && process.arch === 'x64') ||
@@ -378,7 +379,14 @@ export async function buildStandalone(input: { readonly root: string }): Promise
     const entry = path.join(stage, 'entry.mjs');
     writeFileSync(
       entry,
-      standaloneEntrySource({ root, index: entries, payloadId, resourceIndexDigest, version: manifest.version }),
+      standaloneEntrySource({
+        root,
+        index: entries,
+        payloadId,
+        resourceIndexDigest,
+        version: manifest.version,
+        pin: Bun.version,
+      }),
     );
     const output = path.join(stage, 'output');
     mkdirSync(output);

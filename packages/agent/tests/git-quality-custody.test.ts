@@ -14,6 +14,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { stableInputs, verifyStagedObjects } from '../tooling/git-quality-hooks.js';
 import { prependEnvironmentPath } from '../tooling/environment-path.js';
+import { readPin } from '../bin/bun.ts';
+import packageMetadata from '../package.json' with { type: 'json' };
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const repositoryRoot = path.resolve(packageRoot, '../..');
@@ -55,7 +57,13 @@ function fixture(): string {
   mkdirSync(path.join(pkg, 'src'), { recursive: true });
   mkdirSync(path.join(pkg, 'tooling'));
   mkdirSync(path.join(root, '.githooks'));
-  for (const file of ['git-quality-hooks.ts', 'function-inventory.ts', 'focused-test-guard.ts', 'environment-path.ts'])
+  for (const file of [
+    'git-quality-hooks.ts',
+    'function-inventory.ts',
+    'focused-test-guard.ts',
+    'environment-path.ts',
+    'babel-syntax.ts',
+  ])
     copyFileSync(path.join(packageRoot, 'tooling', file), path.join(pkg, 'tooling', file));
   for (const file of ['pre-commit', 'pre-push'])
     copyFileSync(path.join(repositoryRoot, '.githooks', file), path.join(root, '.githooks', file));
@@ -66,13 +74,16 @@ function fixture(): string {
   );
   writeFileSync(path.join(root, '.gitignore'), 'packages/agent/node_modules\n');
   writeFileSync(path.join(pkg, 'bunfig.toml'), '');
-  writeFileSync(path.join(pkg, '.bun-version'), '1.4.2\n');
+  const pin = readPin();
+  writeFileSync(path.join(pkg, '.bun-version'), `${pin}\n`);
   writeFileSync(
     path.join(pkg, 'package.json'),
     JSON.stringify({
       type: 'module',
-      packageManager: 'bun@1.4.2',
-      engines: { bun: '1.4.2' },
+      packageManager: `bun@${pin}`,
+      engines: { bun: pin },
+      dependencies: packageMetadata.dependencies,
+      devDependencies: packageMetadata.devDependencies,
       scripts: { 'test:coverage:pinned': 'bun tooling/collection-fixture.ts' },
     }),
   );

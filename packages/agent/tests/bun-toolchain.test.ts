@@ -89,7 +89,7 @@ function success(stdout = ''): CommandResult {
 
 test('one pin owns the checked package metadata', () => {
   const pin = readPin();
-  assert.equal(pin, '1.4.2');
+  assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
   assert.equal(Bun.version, pin, 'toolchain tests must run under the selected pinned Bun');
   assert.doesNotThrow(() => checkManifest(path.resolve(import.meta.dirname, '..'), pin));
 });

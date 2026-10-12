@@ -18,6 +18,27 @@ test('instrumentation rejects invalid syntax and previously instrumented Source 
   assert.deepEqual(instrumentSource(file, source).fileCoverage, result.fileCoverage);
 });
 
+test('instrumentation preserves standard import attributes with the selected Babel parser', async () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'vida-import-attributes-'));
+  const file = path.join(root, 'attributes.ts');
+  const source = 'import data from "./data.json" with { type: "json" }; export function read() { return data.value; }';
+  const result = instrumentSource(file, source);
+  const coverage = globalThis as unknown as Record<string, Record<string, typeof result.fileCoverage>>;
+  try {
+    writeFileSync(path.join(root, 'data.json'), '{"value":42}');
+    writeFileSync(file, result.code);
+    const loaded = (await import(pathToFileURL(file).href)) as { read(): number };
+    assert.equal(loaded.read(), 42);
+    const executed = coverage.__vidaAgentCoverage__?.[file];
+    assert.ok(executed);
+    assert.deepEqual(Object.values(executed.f), [1]);
+    assert.equal(Object.keys(executed.fnMap).length, functionInventory(source, 'src/attributes.ts').length);
+  } finally {
+    if (coverage.__vidaAgentCoverage__) delete coverage.__vidaAgentCoverage__[file];
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('private method instrumentation retains exact inventory and unexecuted function counters', async () => {
   const source = 'class Box { #called() { return 2; } #unused() { return 3; } run() { return this.#called(); } }';
   const root = mkdtempSync(path.join(os.tmpdir(), 'vida-private-method-'));

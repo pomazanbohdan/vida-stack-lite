@@ -70,7 +70,7 @@ Installation records the selected installed bytes, version and effective PATH. N
 
 The installed package root comes from the running module; the explicit consumer root anchors YAML, product paths and operational state. Schemas, templates, instructions and agent code stay in the package. Initialization accepts unique, normalized, non-overlapping product mappings. A lone project ID is shorthand for the monoproject root. Repeated initialization preserves existing files; adopting an existing configuration uses `--reconcile-existing` without copying templates over owner values.
 
-For Source and SDK library tooling only, Node and npm versions come from package engines. Bun comes only from the exact package pin and matching declarations. The Source pinned launcher may resolve or fetch its build-time runtime and namespaces the transpiler cache outside the package. These development operations are not an offline guarantee or a public installation route. The delivered executable supplies its own pinned Bun and qualified resources.
+For Source and SDK library tooling only, Node and npm versions come from package engines. Bun comes only from the exact package pin; declarations use their independently published, locked version. The Source pinned launcher may resolve or fetch its build-time runtime and namespaces the transpiler cache outside the package. These development operations are not an offline guarantee or a public installation route. The delivered executable supplies its own pinned Bun and qualified resources.
 
 Neutral configuration uses local integration metadata for the explicit product set. Real provider, tenant, namespace, credentials and paths remain project-owned data. They do not select identity or grant authority.
 

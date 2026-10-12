@@ -1510,3 +1510,24 @@ Three independent current reviews; Root strict-checkpoints/publishes this fix.
 This closes the scoped shared setup defect, not all interrupted flows or numeric/
 native gates. Next: exhaustive frozen mapping and remaining actual failure
 contours, then single current Source/artifact join and final numeric owner.
+
+#### Latest package and exact identity correction v880–v918
+
+Update the six current registry deltas as one qualified dependency cohort;
+retain exact lock/SRI and derive active runtime pins from their existing owner.
+Bun1.4.3/declarations1.4.2 are independently current; Source host tools select
+latest stable Node26.11.1/npm12.2.0, and CI reads both runtime owners. Keep archived pins bound
+to their original Source/operation; do not replace them with the latest checkout.
+Current Source fixes include strict source-correction schema compilation,
+cache fallback pin handling, exact bigint identities and UNKNOWN after a rename
+error without inode proof. One shared private Root/CAS custody reader uses the
+already declared96MiB bound across admission/resume, preserving generic8MiB
+repository limits. Current scoped tests are recorded in WORK. The contained
+controller passes on the new cohort after selective bounded setup is separated
+from its unchanged60s body. An in-flight counter now retains the fixture after
+timeout even if another case finishes; inert ordered controls qualify that fence.
+Final strict publication belongs to Root. No installed Runtime or active loader
+switch, final numerical evidence or Windows/NTFS qualification is inferred.
+After publication, continue the Source/artifact SDK join using a single actual
+byte-capture owner, then remaining frozen/numerical/clean-native work. No duplicate
+whole scans/suites or tests during formation/install.

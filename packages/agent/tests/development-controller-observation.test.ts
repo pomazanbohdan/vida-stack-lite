@@ -14,6 +14,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, test } from 'bun:test';
+import { readPin } from '../bin/bun.ts';
 import { invokeObservedControllerChild } from '../bin/development-controller-observation.ts';
 
 type ChildInvocation = Parameters<typeof invokeObservedControllerChild>[0];
@@ -235,7 +236,7 @@ test('retains exact raw streams and command context outside a cleaned qualificat
   assert.equal(stored.parent_cwd, packageRoot);
   assert.equal(stored.child_cwd, packageRoot);
   const runtime = asRecord(stored.runtime, 'runtime context');
-  assert.equal(runtime.pinned_bun_version, '1.4.2');
+  assert.equal(runtime.pinned_bun_version, readPin(packageRoot));
   assert.deepEqual(Buffer.from(asString(stored.stdout_base64, 'stdout base64'), 'base64'), stdout);
   assert.deepEqual(Buffer.from(asString(stored.stderr_base64, 'stderr base64'), 'base64'), stderr);
   assert.equal(existsSync(path.join(latestRun(controllerRoot), 'parent-complete.json')), true);

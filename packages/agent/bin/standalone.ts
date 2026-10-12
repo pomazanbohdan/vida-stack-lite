@@ -9,12 +9,8 @@ import { cliMetadataResult, cliErrorResult } from './cli-metadata.ts';
 // The build injects only its owned payload and inventory. These are not approval markers.
 const nativeIdentityOption = '--vida-internal-native-identity-v1';
 
-interface StandaloneInput {
+interface StandaloneInput extends NativeIdentityInput {
   payload: string;
-  index: readonly ResourceIndexEntry[];
-  payloadId: string;
-  resourceIndexDigest: string;
-  version: string;
 }
 
 interface NativeIdentityInput {
@@ -22,6 +18,7 @@ interface NativeIdentityInput {
   payloadId: string;
   resourceIndexDigest: string;
   version: string;
+  pin: string;
 }
 
 function writeNativeIdentity(input: NativeIdentityInput): void {
@@ -51,7 +48,7 @@ export async function runStandalone(input: StandaloneInput): Promise<void> {
 }
 
 async function runStandaloneMain(input: StandaloneInput): Promise<void> {
-  if (process.versions.bun !== '1.4.2') throw Error('Standalone runtime pin differs');
+  if (process.versions.bun !== input.pin) throw Error('Standalone runtime pin differs');
   if (process.argv[2] === nativeIdentityOption) {
     handleNativeIdentity(input);
     return;

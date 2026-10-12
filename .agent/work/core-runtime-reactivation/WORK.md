@@ -6887,3 +6887,117 @@ controller-current-pack-metadata-v877.log. Root strict-checkpoints and publishes
 this current-fixture correction; final SDK freshness, frozen mapping, numeric
 gates and real formed-native isolated flows stay open. No repeated full suite,
 whole AST/hash scan or tests in build/install are added.
+
+### v880–v917 — latest dependency cohort and causal Source corrections
+
+Human directive: update all Agent/Core dependencies, do not remain attached to
+old versions, research actual errors and simplify. Fresh origin/main is e903a56,
+HEAD divergence0/0. Unowned root bun.lock and ..vida.cas.lock* remain untouched.
+One concurrent registry pass finds six deltas among30 direct packages:
+Mastra core1.75→1.76/libsql1.25.1→1.26 together, fs-safe0.25→0.26.2,
+Zod4.6.5→4.6.6, Babel core7.29.7→8.0.7, tsgolint7.0.2003→7.0.2004.
+Bun1.4.3 is the current stable release; declarations' latest remains1.4.2.
+Babel8 has native types, so redundant @types/babel__core7 is removed.
+Prepared dependencies installed with ignore-scripts in a fresh /tmp candidate;
+canonical prior dependencies retained under BASE/dependencies-pre-v887.
+Canonical package lock updated; no root workspace lock overwrite. Local Source
+launcher/manifest selects1.4.3; SQLite inert control observes3.53.4, not3.54.
+Separate host audit finds Node24.19/npm11.9 stale: latest stable Node26.11.1
+and npm12.2.0 are prepared in /tmp/vida-host-tools-v916, preserving original
+host tools. Manifest selects Node26.11.1/npm12.x; ast-grep0.50.0 is current.
+Official latest Node24 LTS24.21 differs from the accepted latest-stable choice.
+The immutable setup-node action's actual util.ts reads engines.node from the
+package.json input; workflow now uses node-version-file, removing its literal.
+Supported findNpmCli resolves prepared npm12 at its standard lib/node_modules
+location. v917 launcher/Git custody33PASS2files48asserts3.09s under new host Node
+and Bun. Final strict publication remains pending here.
+
+Current execution/build/controller/CI gates derive validated package/source
+pins. The emitted native entry carries its Source-selected pin; historical
+retarget/repair records bind their captured payload/source or attested runtime.
+CI formed metadata accepts strict stable pins, keeps Source/provider/request/
+asset bindings and cache-pin equality when cache exists. Historical optional
+cache remains optional; formation/v2 still require cache. Actual fallback
+regression is RED with the old1.4.2 pattern, then GREEN. Workflow reads the pin
+file through the existing immutable setup-bun action and keys cache by its
+actual output. No floating latest execution, old receipt rewrite or new gates.
+
+fs-safe attestation regenerates309 runtime paths and five supported target
+hashes from six exact SRI-verified official tarballs. Linux installed GNU/musl
+tree tests pass; Windows hashes are byte evidence only. Identity-authorizing
+stat pairs use directly captured BigIntStats; bounded sizes/fractional age
+remain numeric at their existing boundaries. Adjacent synthetic IDs2^53 and
+2^53+1 distinguish identical-content substitution. No pre-edit RED claimed
+for that initial adaptation. Actual additional P0: Linux/Windows rename-error
+paths could report moved from hashes without inode proof. Both now retain typed
+UNKNOWN and cause. Linux after-effect same-bytes/foreign-inode EIO regression
+has genuine RED/GREEN. New Windows-only test explicitly skips on Linux.
+
+Babel8 parser removes the obsolete importAttributes plugin option; real JSON
+attribute import executes and preserves function counters. Actual Source P0
+v896: strict Ajv cannot compile source-correction conditional dependency_cache.
+Same-object branch declarations fix it without disabling strictness; v1 cache
+forbidden/v2 required and stable metadata controls pass. Source-only schema
+repair is not an active consumer schema/loader switch.
+Next actual P0 v900: initial custody permits96MiB, frozen/resume reader used
+generic8MiB. Shared private custody read now uses the existing96MiB limit,
+resource CAS and Root-bound no-follow read for initial/frozen/postrepair phases.
+Generic repository/capture bounds remain8MiB. Bigint identity and before/after
+metadata/EOF fences remain; reviewed initial ancestor escape is denied too.
+
+Actual bounded evidence under Bun1.4.3 (BASE=typed-correction-v179):
+v891 producer/ledger/cleanup/controller observations43PASS8files3264expects8.13s;
+v894 Git custody7PASS48expects1.53s after adding missing existing Babel-syntax
+closure; v901 repository pre-push10PASS8filtered3.16s after declaring its actual
+coverage tools; v907 Source repair/custody2PASS68expects19.86s, including
+
+retained custody above8MiB, synthetic native asset above64MiB, size/digest/hardlink and
+ancestor denials, unchanged Host rows and successful apply. v908 schema/version/
+retarget/identity31PASS1WindowsSKIP92expects4.32s. Earlier failed receipts and
+fixtures remain original; no UNKNOWN runtime effect is replayed. v905 captured
+417TS/0diagnostics, later final strict commit verification pending.
+Fresh contained controller v908 FAIL: preparation29.207s was charged inside
+the60s test body, while its separately created case budget began after setup.
+The parent timed out and its async body continued into afterAll cleanup; the
+owned controller root /tmp/vida-contained-tests-EbltVq was deleted before the
+late custody check. This harness custody loss is explicit, not successful
+retention. Consumer /tmp/vida-stopped-source-ClnpqT remains UNKNOWN; no replay.
+v910 separates bounded selective preparation from the unchanged60s case body.
+v912 FAIL selected zero tests: an empty describe label adds a fullName separator,
+breaking the anchored filter. The zero-test run supplies no behavioral proof.
+Supported unlabelled describe preserves exact anchored names and skips preparation
+for Source-only selections; inert controls prove both. Fresh v913 is1PASS25asserts:
+preparation23.47s, case47.65s under its unchanged60s bound, whole73.63s, cleanup
+of /tmp/vida-contained-tests-xi4pJk explicitly completed. Earlier failed roots
+are not reused. The demonstrated v908 late-body deletion now has a small
+in-flight counter through body and terminal custody check; afterAll retains
+before close if any remain. Inert v914 timeout proves deletion before/retention
+after; v915 first-timeout/second-terminal control proves a boolean would lose
+the first pending body, while the counter retains it. Expected timeout failures
+remain failures, not PASS or mutation evidence. Actual normal v913 behavior is
+reused; no duplicate contained run is added for the retention-only branch.
+Bun snapshots hook options at registration; the later Object.assign was a no-op
+and is removed. Original reserve30s/cleanup max15s and registered15s remain.
+Final schema JSON decode validates $defs without a TypeScript assertion; v915
+affected schema2PASS14asserts. CI dormant guard still precedes Source-pin reads.
+v918 exact dormant-invocation1PASS confirms the restored guard order. First
+strict commit v919 denied four await-thenable lint diagnostics in new tests;
+no hook bypass. Reuse the existing expectRejection helper for actual awaited
+repair denials and await native move before its scalar assertions. v920 affected
+repair2PASS70asserts24.47s with unchanged Host/custody checks. Windows remains
+an explicit target skip. Root stages this correction and records the final
+strict commit/push receipts; full numerical/native gates remain open below.
+Do not reuse v877's old-toolchain result as proof.
+Three blind amended reviews cover version/
+cache/contracts, instrumentation/attestation, and identity/custody; final review
+and strict commit/push remain with Root.
+
+Official facts are retained in dependency-current-v880, bun-upgrade-v880,
+babel-fssafe-upgrade-v882, fs-safe-attestation-v884, release-pin-binding-v883,
+fssafe-exact-identity-v886 and source-correction-schema-v897 notes. Published
+Mastra1.76/1.26 changelogs include atomic workflow-state/result writes and busy
+connection fixes; durable-agent recovery is still P2 and is not enabled here.
+No new helper framework, duplicate full suite/AST/hash pass or tests in build/
+install. Installed system Runtime is unchanged. SDK Source/artifact join,
+exhaustive frozen correspondence, exact coverage/dynamic frozen CRAP/confirmed
+Killed100% and real clean native flows remain OPEN; no unblock notices.

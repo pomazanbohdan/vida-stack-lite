@@ -18,6 +18,8 @@ import { validateCIDeliveryFormationMembers } from '../../../tooling/agent/relea
 
 type CIDeliveryRequest = Parameters<typeof normalizeLegacyReleaseDispatchIntent>[0]['request'];
 type CIDeliveryRequestBody = Omit<CIDeliveryRequest, 'request_id'>;
+const selectedBunPin = '1.4.3';
+const historicalBunPin = '1.4.2';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -150,8 +152,8 @@ test('a confirmed pending build keeps its operation and version on default and e
       name: 'vida-agent',
       version: pending.version,
       bin: { 'vida-agent': './bin/vida-agent.ts' },
-      engines: { bun: '1.4.2' },
-      packageManager: 'bun@1.4.2',
+      engines: { bun: selectedBunPin },
+      packageManager: `bun@${selectedBunPin}`,
     };
     const requestBody: CIDeliveryRequestBody = {
       schema: 'VidaCIDeliveryRequest/v1',
@@ -196,6 +198,7 @@ test('a confirmed pending build keeps its operation and version on default and e
     };
 
     writeFixture(root, 'packages/agent/package.json', packageManifest);
+    writeFixture(root, 'packages/agent/.bun-version', Buffer.from(`${selectedBunPin}\n`));
     writeFixture(root, `.agent/work/agent-local-release/${installed.operation_id}/release.json`, installed);
     writeFixture(root, '.agent/work/agent-local-release/successful.json', installed);
     writeFixture(root, `.agent/work/agent-local-release/${pending.operation_id}/release.json`, pending);
@@ -214,6 +217,15 @@ test('a confirmed pending build keeps its operation and version on default and e
       ...formationBody,
       digest: digest(json(formationBody)),
     });
+    writeFixture(root, 'packages/agent/.bun-version', Buffer.from(`${historicalBunPin}\n`));
+    await Promise.resolve(assert.rejects(prepareRelease(root), /Bun manifest mirrors differ from \.bun-version/));
+    writeFixture(root, 'packages/agent/.bun-version', Buffer.from(`${selectedBunPin}\n`));
+    writeFixture(root, 'packages/agent/package.json', {
+      ...packageManifest,
+      packageManager: `bun@${historicalBunPin}`,
+    });
+    await Promise.resolve(assert.rejects(prepareRelease(root), /stable Bun pin/));
+    writeFixture(root, 'packages/agent/package.json', packageManifest);
     const unchangedFiles = [
       'packages/agent/package.json',
       '.agent/work/agent-local-release/pending.json',
@@ -264,7 +276,7 @@ test('fresh formation derives the canonical result from actual native artifact m
   const manifest = {
     schema: 'VidaStandaloneBuild/v1',
     version: request.version,
-    pin: '1.4.2',
+    pin: selectedBunPin,
     target: request.target,
     inputs: [{ path: 'package.json', bytes: 123, sha256: 'f'.repeat(64) }],
     payloadId: 'c'.repeat(64),
@@ -295,7 +307,7 @@ test('fresh formation derives the canonical result from actual native artifact m
     manifest,
   };
   const candidateBytes = Buffer.from(JSON.stringify(candidate));
-  const cacheKey = `vida-bun-install-v1-main-bun-1.4.2-${'a'.repeat(64)}`;
+  const cacheKey = `vida-bun-install-v1-main-bun-${selectedBunPin}-${'a'.repeat(64)}`;
   const nativeBuildReceipt = {
     schema: 'VidaCIPhaseResult/v2',
     request_id: request.request_id,
@@ -356,6 +368,26 @@ test('fresh formation derives the canonical result from actual native artifact m
     checks: [{ id: 'native-build', status: 'passed' }],
     dependency_cache: nativeBuildReceipt.dependency_cache,
   });
+  const missKey = `vida-bun-install-v1-main-bun-${selectedBunPin}-${'c'.repeat(64)}`;
+  const fallbackKey = `${missKey.slice(0, -64)}${'d'.repeat(64)}`;
+  const cacheMissReceipt = {
+    ...nativeBuildReceipt,
+    dependency_cache: {
+      ...nativeBuildReceipt.dependency_cache,
+      key: missKey,
+      matched_key: fallbackKey,
+      restore: 'miss',
+      save_action: 'success',
+    },
+  };
+  assert.doesNotThrow(() =>
+    validateCIDeliveryFormationMembers({
+      request,
+      members: { ...members, native_build_result_bytes: Buffer.from(JSON.stringify(cacheMissReceipt)) },
+      providerObservation,
+      profile,
+    }),
+  );
   for (const status of ['failed', 'UNKNOWN']) {
     assert.throws(
       () =>
@@ -380,6 +412,41 @@ test('fresh formation derives the canonical result from actual native artifact m
         profile,
       }),
     /candidate, manifest, archive or request differs/,
+  );
+  assert.throws(
+    () =>
+      validateCIDeliveryFormationMembers({
+        request,
+        members: {
+          ...members,
+          manifest_bytes: Buffer.from(JSON.stringify({ ...manifest, pin: `${selectedBunPin}-rc.1` })),
+        },
+        providerObservation,
+        profile,
+      }),
+    /native manifest shape invalid/,
+  );
+  assert.throws(
+    () =>
+      validateCIDeliveryFormationMembers({
+        request,
+        members: {
+          ...members,
+          native_build_result_bytes: Buffer.from(
+            JSON.stringify({
+              ...nativeBuildReceipt,
+              dependency_cache: {
+                ...nativeBuildReceipt.dependency_cache,
+                key: `vida-bun-install-v1-main-bun-${historicalBunPin}-${'a'.repeat(64)}`,
+                matched_key: `vida-bun-install-v1-main-bun-${historicalBunPin}-${'a'.repeat(64)}`,
+              },
+            }),
+          ),
+        },
+        providerObservation,
+        profile,
+      }),
+    /CI candidate archive\/manifest\/payload differs/,
   );
 });
 

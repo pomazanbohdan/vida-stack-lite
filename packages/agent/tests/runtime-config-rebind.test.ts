@@ -1,4 +1,5 @@
 import { afterEach, test, expect, mock } from 'bun:test';
+import { expectRejection } from './helpers/expect-rejection.ts';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { Ajv2020 } from 'ajv/dist/2020.js';
@@ -15,12 +16,14 @@ import {
   symlinkSync,
   copyFileSync,
   linkSync,
+  unlinkSync,
 } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { spawnSync, type SpawnSyncOptionsWithStringEncoding } from 'node:child_process';
 import { runReconcileArtifacts as reconcileEntrypoint } from '../bin/reconcile-artifacts.ts';
 import { run as runEntrypoint } from '../bin/run.ts';
+import { readPin } from '../bin/bun.ts';
 import {
   cooperativeReadonlyAssignments,
   currentState,
@@ -1660,7 +1663,8 @@ function sourceCorrectionNativeFixture(
   version: string,
   executableBytes = Buffer.from('synthetic native executable for consistency test'),
 ) {
-  const payloadId = sha(Buffer.from(randomUUID())),
+  const pin = readPin(),
+    payloadId = sha(Buffer.from(randomUUID())),
     packageRelative = `.tmp/native-test/${version}-${payloadId}`,
     executableRelative = `${packageRelative}/vida-agent.exe`,
     executable = path.join(f.root, executableRelative),
@@ -1670,17 +1674,18 @@ function sourceCorrectionNativeFixture(
     json({
       name: 'vida-agent',
       version,
-      packageManager: 'bun@1.4.2',
-      engines: { bun: '1.4.2' },
+      packageManager: `bun@${pin}`,
+      engines: { bun: pin },
     }),
   );
-  f.put(`${packageRelative}/.bun-version`, '1.4.2\n');
+  f.put(`${packageRelative}/.bun-version`, `${pin}\n`);
   f.put(executableRelative, executableBytes);
   return {
     runtime: { root: runtimeRoot, executable },
     executableRelative,
     executableBytes,
     payloadId,
+    pin,
   };
 }
 
@@ -1698,7 +1703,7 @@ function sourceCorrectionExternalReport(
     manifest = {
       schema: 'VidaStandaloneBuild/v1',
       version: request.new_source_manifest.version,
-      pin: '1.4.2',
+      pin: native.pin,
       target,
       inputs: request.new_source.entries
         .map((entry) => ({
@@ -1915,6 +1920,26 @@ test('public source repair freezes original beforeimages, prior update and held-
   expect(databaseState(f)).toEqual(beforeStaleVersionInspect);
   f.put(sourceManifestPath, json(sourceManifest));
 
+  const custodyParent = path.join(f.root, '.tmp');
+  const outside = mkdtempSync(path.join(tmpdir(), 'vida-source-admission-outside-'));
+  const relocated = path.join(outside, 'retained');
+  const beforeAdmission = databaseState(f);
+  const custodyBytes = readFileSync(path.join(custodyParent, 'original-source-beforeimages.json'));
+  renameSync(custodyParent, relocated);
+  try {
+    symlinkSync(relocated, custodyParent, process.platform === 'win32' ? 'junction' : 'dir');
+    await expectRejection(runReconcileArtifacts(repairArgs('repair-inspect')), /ENOTDIR|ELOOP|unsafe|link|reparse/i);
+    expect(databaseState(f)).toEqual(beforeAdmission);
+    expect(readFileSync(path.join(relocated, 'original-source-beforeimages.json'))).toEqual(custodyBytes);
+    expect(
+      existsSync(path.join(f.root, '.agent/work/fixture-rebind/runtime-config-source-correction-repair.v1.json')),
+    ).toBe(false);
+  } finally {
+    if (existsSync(custodyParent)) unlinkSync(custodyParent);
+    renameSync(relocated, custodyParent);
+    rmSync(outside, { recursive: true });
+  }
+
   const beforeRepair = databaseState(f),
     inspected = await runReconcileArtifacts(repairArgs('repair-inspect'));
   expect(inspected.status).toBe('inspect_ready_unauthorized');
@@ -2128,6 +2153,25 @@ test('source correction streams inert native assets above the generic read cap a
   await denyAssetPath(linkedPath);
   await denyAssetPath(shortPath);
   await denyAssetPath(mismatchedPath);
+  const custodyParent = path.dirname(fixtureContext.sourceBeforeimagesPath);
+  const outside = mkdtempSync(path.join(tmpdir(), 'vida-source-custody-outside-'));
+  const relocated = path.join(outside, 'retained');
+  const custodyBytes = readFileSync(fixtureContext.sourceBeforeimagesPath);
+  expect(custodyBytes.length).toBeGreaterThan(8 * 1024 * 1024);
+  f.put('.tmp/source-correction-report.json', json(report));
+  renameSync(custodyParent, relocated);
+  try {
+    symlinkSync(relocated, custodyParent, process.platform === 'win32' ? 'junction' : 'dir');
+    await expectRejection(runReconcileArtifacts(applyArgs), /ENOTDIR|unsafe|link|symlink/i);
+    expect(databaseState(f)).toEqual(before);
+    expect(readFileSync(path.join(relocated, path.basename(fixtureContext.sourceBeforeimagesPath)))).toEqual(
+      custodyBytes,
+    );
+  } finally {
+    if (existsSync(custodyParent)) unlinkSync(custodyParent);
+    renameSync(relocated, custodyParent);
+    rmSync(outside, { recursive: true });
+  }
   f.put('.tmp/source-correction-report.json', json(report));
   expect((await runReconcileArtifacts(applyArgs)).status).toBe('applied');
   expect(databaseState(f)).toEqual(before);

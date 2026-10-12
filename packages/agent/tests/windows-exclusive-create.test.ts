@@ -27,6 +27,7 @@ type Fixture = {
 };
 
 const roots: string[] = [];
+const windowsOnlyTest = process.platform === 'win32' ? test : test.skip;
 function fixture(): Fixture {
   const root = realpathSync(mkdtempSync(path.join(tmpdir(), 'runtime-exclusive-')));
   roots.push(root);
@@ -84,6 +85,23 @@ test('exclusive creation preserves collisions and arbitrates competing creators'
     await holder;
     expect(readdirSync(path.join(root, 'nested/data'))).not.toContain('held.lock');
   }
+});
+
+windowsOnlyTest('Windows no-replace move verifies the opened source and destination descriptors', async () => {
+  const { root, access } = fixture();
+  expect(access.attested).toBe(true);
+  access.ensureDirectory('move', 'move directory');
+  access.writeExclusive('move/source.bin', 'payload', 'move source');
+  const expectedHash = createHash('sha256').update('payload').digest('hex');
+
+  expect(await access.moveNoReplaceAsync('move/source.bin', 'move/target.bin', expectedHash, 'identity move')).toBe(
+    'moved',
+  );
+  expect(existsSync(path.join(root, 'move/source.bin'))).toBe(false);
+  expect(readFileSync(path.join(root, 'move/target.bin'), 'utf8')).toBe('payload');
+  expect(await access.moveNoReplaceAsync('move/source.bin', 'move/target.bin', expectedHash, 'identity move')).toBe(
+    'already_moved',
+  );
 });
 
 test('unsafe ancestors, outside targets and non-directory parents cannot receive writes', async () => {

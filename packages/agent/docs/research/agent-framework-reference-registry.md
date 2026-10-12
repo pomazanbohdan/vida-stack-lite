@@ -12,16 +12,16 @@ grant local approval. Verify the relevant official source when its behavior
 affects a change. An unavailable source is a research GAP. Vendor mechanics
 remain separate from approved local requirements.
 
-| Family                              | Official references                                                                                                                                                                                                                                                          | Supported mechanics                                                                                                                                                                                            |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OpenAI Agents SDK                   | [Orchestration](https://developers.openai.com/api/docs/guides/agents/orchestration), [running agents](https://developers.openai.com/api/docs/guides/agents/running-agents), [observability](https://developers.openai.com/api/docs/guides/agents/integrations-observability) | Manager ownership versus specialist handoff; run continuation; traces of calls, handoffs and guardrails.                                                                                                       |
-| OpenAI Codex                        | [Built-in subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)                                                                                                                                                                                           | Bounded specialists, parent aggregation, status inspection and shared parent permission mode. Actual session tools require actual calls and observed results.                                                  |
-| Claude Agent SDK                    | [Subagents](https://code.claude.com/docs/en/agent-sdk/subagents), [permissions](https://code.claude.com/docs/en/agent-sdk/permissions)                                                                                                                                       | Context-isolated bounded workers, final results and tool limits; explicit permission controls.                                                                                                                 |
-| LangChain / LangGraph               | [LangChain agents](https://docs.langchain.com/oss/python/langchain/agents), [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence), [error and workflow design](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph)     | LangChain's agent tool loop uses LangGraph primitives; checkpoints and thread resume; separate transient retry, agent recovery, human pause and unexpected failure.                                            |
-| Microsoft Agent Framework           | [Overview](https://learn.microsoft.com/en-us/agent-framework/overview/)                                                                                                                                                                                                      | Explicit workflows for defined processes; documented successor of AutoGen and Semantic Kernel.                                                                                                                 |
-| Google ADK                          | [Workflow agents](https://adk.dev/agents/workflow-agents/)                                                                                                                                                                                                                   | Deterministic sequential, parallel and loop workflows; the page distinguishes Python/Go ADK 2.0 graph and dynamic workflows.                                                                                   |
-| Mastra                              | [Agentic workflows](https://mastra.ai/articles/agentic-workflows), [snapshots](https://mastra.ai/docs/workflows/snapshots)                                                                                                                                           | The workflow article supports persistence, parallel execution and suspend/resume. Direct snapshots documentation verified on 2026-10-11 describes serializable step state, completed outputs, execution path and retrieval on resume. This informs retained evidence; VIDA Host authorization, CAS and UNKNOWN policy stay authoritative. |
-| Temporal, a durable workflow system | [Tasks](https://docs.temporal.io/tasks), [workflow definitions](https://docs.temporal.io/workflow-definition)                                                                                                                                                                | History replay, task versus business-execution failure, and separate external/non-deterministic activities.                                                                                                    |
+| Family                              | Official references                                                                                                                                                                                                                                                          | Supported mechanics                                                                                                                                                                                                                                                                                                                       |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OpenAI Agents SDK                   | [Orchestration](https://developers.openai.com/api/docs/guides/agents/orchestration), [running agents](https://developers.openai.com/api/docs/guides/agents/running-agents), [observability](https://developers.openai.com/api/docs/guides/agents/integrations-observability) | Manager ownership versus specialist handoff; run continuation; traces of calls, handoffs and guardrails.                                                                                                                                                                                                                                  |
+| OpenAI Codex                        | [Built-in subagents](https://learn.chatgpt.com/docs/agent-configuration/subagents)                                                                                                                                                                                           | Bounded specialists, parent aggregation, status inspection and shared parent permission mode. Actual session tools require actual calls and observed results.                                                                                                                                                                             |
+| Claude Agent SDK                    | [Subagents](https://code.claude.com/docs/en/agent-sdk/subagents), [permissions](https://code.claude.com/docs/en/agent-sdk/permissions)                                                                                                                                       | Context-isolated bounded workers, final results and tool limits; explicit permission controls.                                                                                                                                                                                                                                            |
+| LangChain / LangGraph               | [LangChain agents](https://docs.langchain.com/oss/python/langchain/agents), [LangGraph persistence](https://docs.langchain.com/oss/python/langgraph/persistence), [error and workflow design](https://docs.langchain.com/oss/javascript/langgraph/thinking-in-langgraph)     | LangChain's agent tool loop uses LangGraph primitives; checkpoints and thread resume; separate transient retry, agent recovery, human pause and unexpected failure.                                                                                                                                                                       |
+| Microsoft Agent Framework           | [Overview](https://learn.microsoft.com/en-us/agent-framework/overview/)                                                                                                                                                                                                      | Explicit workflows for defined processes; documented successor of AutoGen and Semantic Kernel.                                                                                                                                                                                                                                            |
+| Google ADK                          | [Workflow agents](https://adk.dev/agents/workflow-agents/)                                                                                                                                                                                                                   | Deterministic sequential, parallel and loop workflows; the page distinguishes Python/Go ADK 2.0 graph and dynamic workflows.                                                                                                                                                                                                              |
+| Mastra                              | [Agentic workflows](https://mastra.ai/articles/agentic-workflows), [snapshots](https://mastra.ai/docs/workflows/snapshots)                                                                                                                                                   | The workflow article supports persistence, parallel execution and suspend/resume. Direct snapshots documentation verified on 2026-10-11 describes serializable step state, completed outputs, execution path and retrieval on resume. This informs retained evidence; VIDA Host authorization, CAS and UNKNOWN policy stay authoritative. |
+| Temporal, a durable workflow system | [Tasks](https://docs.temporal.io/tasks), [workflow definitions](https://docs.temporal.io/workflow-definition)                                                                                                                                                                | History replay, task versus business-execution failure, and separate external/non-deterministic activities.                                                                                                                                                                                                                               |
 
 ## Packet-text screening applicability
 
@@ -127,8 +127,8 @@ contracts and validate external JSON as `unknown`. Do not suppress unsafe-value
 diagnostics. References: [Oxlint type-aware linting](https://oxc.rs/docs/guide/usage/linter/type-aware.html)
 and [TypeScript checkJs](https://www.typescriptlang.org/tsconfig/checkJs.html).
 
-The official [Bun 1.4.2 release](https://bun.sh/blog/bun-v1.4.2) matches the
-current runtime pin. HostState already uses `bun:sqlite`; package and native
+The current runtime is selected by `.bun-version` and qualified against the
+official release; see the latest dependency cohort below. HostState already uses `bun:sqlite`; package and native
 formation already use `Bun.build`, and embedded tar resources use `Bun.Archive`.
 These are existing implementations, not new migration work.
 
@@ -1212,3 +1212,44 @@ phases before Journal creation from phases after it. The fresh cardinality case
 observed two reads per acquisition/settlement before correction and requires one
 per transaction. Fewer reads establish that bounded property; whole-frontier
 speed and delivered Runtime qualification remain separate pending evidence.
+
+## Latest stable Source dependency correction — 2026-10-12
+
+One current registry pass and affected local qualification select Bun1.4.3,
+Mastra Core1.76/libsql1.26, fs-safe0.26.2, Zod4.6.6, Babel Core8.0.7 and
+tsgolint7.0.2004. Exact manifest/lock/SRI remain authoritative for execution;
+this is Source tooling evidence, not an installed native Runtime upgrade.
+Declarations @types/bun1.4.2 are independently latest. Babel8's native types
+replace the redundant Babel7 DefinitelyTyped package.
+
+Separate official host-tool metadata selects [Node26.11.1 Current](https://github.com/nodejs/node/releases/tag/v26.11.1)
+and [npm12.2.0](https://github.com/npm/cli/releases/tag/v12.2.0). Latest Node24
+LTS is24.21.0; the current latest-stable policy selects26.11.1. The maintained
+setup-node action reads `engines.node` through `node-version-file`; no second
+workflow literal is needed. npm12.2.0 admits this Node in its engine range.
+ast-grep0.50.0 remains current. Available/prepared versions are not qualification;
+current checks and publication belong to WORK and the strict Source gate.
+
+Official [Bun1.4.3 notes](https://bun.com/blog/bun-v1.4.3) document pipe-error
+reporting, subprocess fixes and built-in typecheck. Local inert SQLite control
+observes3.53.4; no SQLite3.54 claim. Built-in typecheck is not yet substituted
+for the existing TypeScript compiler gate. [Babel8 API migration](https://babeljs.io/docs/v8-migration-api)
+documents AST changes; real private-method and import-attribute execution checks
+qualify the changed instrumentation surface, not the entire numerical producer.
+[fs-safe0.26.2](https://github.com/openclaw/fs-safe/releases/tag/v0.26.2) provides
+exact identity receipts; caller comparisons capture bigint stats directly.
+Five target tarball hashes are registry byte evidence; Windows behavior is GAP.
+
+Official Mastra [Core changelog](https://github.com/mastra-ai/mastra/blob/main/packages/core/CHANGELOG.md)
+and [libsql changelog](https://github.com/mastra-ai/mastra/blob/main/stores/libsql/CHANGELOG.md)
+record1.76/1.26 atomic workflow-state/results, SQLite busy connection recovery,
+and durable run fencing/new tables. VIDA's existing workflow/ledger surface is
+tested; durable agents remain P2. Do not import recovery operations or enable
+new engine features from these release notes.
+
+[Ajv strictRequired](https://ajv.js.org/strict-mode.html#defined-required-properties)
+explains why a required property through a referenced conditional needs a
+same-object declaration. Source-correction schema now compiles strictly with
+v1 cache prohibition/v2 cache requirement. No strict option is disabled and
+active consumer schemas/loaders remain unchanged. Bounded receipts and open
+SDK/frozen/numeric/native gates are recorded in the current WORK.

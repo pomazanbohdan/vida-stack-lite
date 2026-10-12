@@ -280,8 +280,11 @@ function packageIdentity(root: string): PackageManifest {
     candidate = candidateValue;
   if (!packageIdentityMatches(candidate, manifest))
     throw new Error('Development controller requires the actual current vida-agent candidate package.');
-  checkManifest(root, readPin(root));
-  if (readPin(root) !== '1.4.2') throw new Error('Development controller Bun pin differs.');
+  const pin = readPin(executingRoot),
+    targetPin = readPin(root);
+  if (targetPin !== pin) throw new Error('Development controller Bun pin differs.');
+  checkManifest(executingRoot, pin);
+  checkManifest(root, pin);
   assertRuntimePackageExports(root);
   return manifest;
 }

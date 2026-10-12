@@ -7,7 +7,7 @@ import { LibSQLStore } from '@mastra/libsql';
 import z from 'zod';
 import { pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { pinnedEnvironment, boundedSpawnSync, executionBudget } from '../bin/bun.ts';
+import { pinnedEnvironment, boundedSpawnSync, executionBudget, readPin } from '../bin/bun.ts';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -3281,7 +3281,7 @@ const {mkdirSync}=fs; const data=JSON.parse(fs.readFileSync(process.env.VIDA_FRO
 ${requireFixtureValue.toString()}
 ${createOriginalFrontierEngine.toString()}
 await createOriginalFrontierEngine(data.root,{control:{work_root:data.workRoot}},{receipt:data.receipt,prewriterBinding:{selection:data.selection}}); process.exit(0);`;
-  expect(process.versions.bun).toBe('1.4.2');
+  expect(process.versions.bun).toBe(readPin());
   const executable = process.execPath;
   const result = boundedSpawnSync(
     spawnSync,

@@ -1,5 +1,5 @@
 import { expectRejection } from './helpers/expect-rejection.ts';
-import { test as bunTest, expect, afterAll } from 'bun:test';
+import { test as bunTest, expect, afterAll, beforeAll, describe } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { cpSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -142,6 +142,7 @@ let candidateBinding: string | undefined;
 const cleanupHookOptions: { timeout: number } = { timeout: 15000 };
 let caseBudget: ExecutionBudget | undefined;
 let checkedAfterCase = false;
+let containedCasesInFlight = 0;
 function candidateBindingValue(): string {
   if (!candidateBinding) throw new Error('Contained controller binding is unavailable.');
   return candidateBinding;
@@ -150,7 +151,6 @@ function ensureContainedPackage(): ContainedControllerFixture {
   if (!containedPackage) {
     containedPackage = containedControllerFixture(bundle);
     candidateBinding = containedPackage.binding;
-    Object.assign(cleanupHookOptions, containedPackage.cleanupHookOptions);
   }
   return containedPackage;
 }
@@ -160,43 +160,60 @@ function test(
   timeout: number,
   { sourceOnly = false }: { sourceOnly?: boolean } = {},
 ): void {
-  bunTest(
-    name,
-    async () => {
-      if (!sourceOnly) {
-        const fixturePackage = ensureContainedPackage();
-        caseBudget = fixturePackage.caseBudget();
-        checkedAfterCase = false;
-        fixturePackage.assertUnchanged();
-        caseBudgetValue().remaining();
-      }
-      let primaryFailure: unknown;
-      let hasPrimaryFailure = false;
-      try {
-        await body();
-      } catch (error) {
-        primaryFailure = error;
-        hasPrimaryFailure = true;
-      }
-      let cleanupFailure: unknown;
-      let hasCleanupFailure = false;
-      if (!sourceOnly && !checkedAfterCase) {
+  if (sourceOnly) {
+    bunTest(name, body, timeout);
+    return;
+  }
+  describe(() => {
+    beforeAll(() => {
+      const fixturePackage = ensureContainedPackage();
+      caseBudget = fixturePackage.caseBudget();
+      checkedAfterCase = false;
+      fixturePackage.assertUnchanged();
+      caseBudgetValue().remaining();
+    }, 60000);
+    bunTest(
+      name,
+      async () => {
+        containedCasesInFlight += 1;
         try {
-          ensureContainedPackage().assertUnchanged();
-        } catch (error) {
-          cleanupFailure = error;
-          hasCleanupFailure = true;
+          let primaryFailure: unknown;
+          let hasPrimaryFailure = false;
+          try {
+            await body();
+          } catch (error) {
+            primaryFailure = error;
+            hasPrimaryFailure = true;
+          }
+          let cleanupFailure: unknown;
+          let hasCleanupFailure = false;
+          if (!checkedAfterCase) {
+            try {
+              ensureContainedPackage().assertUnchanged();
+            } catch (error) {
+              cleanupFailure = error;
+              hasCleanupFailure = true;
+            }
+          }
+          if (hasPrimaryFailure && hasCleanupFailure)
+            throw new AggregateError(
+              [primaryFailure, cleanupFailure],
+              'Test body and package custody check both failed.',
+            );
+          if (hasPrimaryFailure) throw primaryFailure;
+          if (hasCleanupFailure) throw cleanupFailure;
+        } finally {
+          containedCasesInFlight -= 1;
         }
-      }
-      if (hasPrimaryFailure && hasCleanupFailure)
-        throw new AggregateError([primaryFailure, cleanupFailure], 'Test body and package custody check both failed.');
-      if (hasPrimaryFailure) throw primaryFailure;
-      if (hasCleanupFailure) throw cleanupFailure;
-    },
-    timeout,
-  );
+      },
+      timeout,
+    );
+  });
 }
-afterAll(() => containedPackage?.close(), cleanupHookOptions);
+afterAll(() => {
+  if (containedCasesInFlight > 0) containedPackage?.retain();
+  return containedPackage?.close();
+}, cleanupHookOptions);
 function copiedRun(args: string[]): JsonRecord {
   if (!containedPackage) throw new Error('Contained controller fixture is unavailable.');
   const result = containedPackage.run(args, caseBudgetValue());

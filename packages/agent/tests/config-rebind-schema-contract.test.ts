@@ -11,6 +11,28 @@ const parsedSchema: unknown = JSON.parse(
 if (parsedSchema === null || typeof parsedSchema !== 'object' || Array.isArray(parsedSchema))
   throw new Error('Configuration rebind schema must be a JSON object.');
 const validateOperation = new Ajv2020({ strict: true, allErrors: false }).compile(parsedSchema);
+const parsedSourceCorrectionSchema: unknown = JSON.parse(
+  readFileSync(path.resolve(here, '../schemas/runtime-config-source-correction-repair.v1.schema.json'), 'utf8'),
+);
+if (
+  parsedSourceCorrectionSchema === null ||
+  typeof parsedSourceCorrectionSchema !== 'object' ||
+  Array.isArray(parsedSourceCorrectionSchema)
+)
+  throw new Error('Source correction schema must be a JSON object.');
+const validateSourceCorrection = new Ajv2020({ strict: true, allErrors: false }).compile(parsedSourceCorrectionSchema);
+if (
+  !('$defs' in parsedSourceCorrectionSchema) ||
+  parsedSourceCorrectionSchema.$defs === null ||
+  typeof parsedSourceCorrectionSchema.$defs !== 'object' ||
+  Array.isArray(parsedSourceCorrectionSchema.$defs)
+)
+  throw new Error('Source correction definitions must be a JSON object.');
+const validateSourceCorrectionCiResult = new Ajv2020({ strict: true, allErrors: false }).compile({
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $defs: parsedSourceCorrectionSchema.$defs,
+  $ref: '#/$defs/ciResult',
+});
 const hash = 'a'.repeat(64);
 
 function inputSet() {
@@ -71,6 +93,41 @@ function projectSplitOperation(planOverrides: Record<string, unknown> = {}) {
   });
 }
 
+function ciResult(schema: 'VidaCIDeliveryResult/v1' | 'VidaCIDeliveryResult/v2', version = '1.4.3') {
+  return {
+    schema,
+    request_id: 'request-1',
+    operation_id: 'build-1',
+    version,
+    repository_id: 'vida-repo',
+    project_ids: ['agent'],
+    target: 'bun-linux-x64',
+    source_binding: hash,
+    archive_sha256: hash,
+    manifest_sha256: hash,
+    payload_id: hash,
+    asset: { file: 'vida-agent', bytes: 1, sha256: hash },
+    issuer: 'github-actions',
+    run_id: '1',
+    run_attempt: 1,
+    checks: [{ id: 'native-build', status: 'passed' }],
+  } as Record<string, unknown>;
+}
+
+function dependencyCache(version: string): Record<string, unknown> {
+  return {
+    id: 1,
+    key: `vida-bun-install-v1-linux-bun-${version}-${hash}`,
+    ref: 'refs/heads/main',
+    version: 'bun 1.4.3',
+    size_in_bytes: 1,
+    restore: 'miss',
+    matched_key: null,
+    save: 'confirmed',
+    save_action: 'success',
+  };
+}
+
 test('strictly compiled schema accepts the legacy and project-split-v2 plan images', () => {
   expect(validateOperation(operation())).toBe(true);
   expect(validateOperation(projectSplitOperation())).toBe(true);
@@ -122,4 +179,61 @@ test('schema rejects mixed, incomplete, unknown, empty, malformed-digest, and ou
 test('runtime-config and the package root import with strict project rebind validation enabled', async () => {
   await import('../src/config/runtime-config.ts');
   await import('../src/index.ts');
+});
+
+test('source correction CI result keeps v1 cache-free and requires a valid cache for v2', () => {
+  expect(validateSourceCorrectionCiResult(ciResult('VidaCIDeliveryResult/v1'))).toBe(true);
+  expect(
+    validateSourceCorrectionCiResult({
+      ...ciResult('VidaCIDeliveryResult/v1'),
+      dependency_cache: dependencyCache('1.4.3'),
+    }),
+  ).toBe(false);
+
+  for (const version of ['1.4.2', '1.4.3']) {
+    expect(
+      validateSourceCorrectionCiResult({
+        ...ciResult('VidaCIDeliveryResult/v2', version),
+        dependency_cache: dependencyCache(version),
+      }),
+    ).toBe(true);
+  }
+
+  expect(validateSourceCorrectionCiResult(ciResult('VidaCIDeliveryResult/v2'))).toBe(false);
+  for (const version of ['latest', '1.4.3-beta.1', '01.4.3', '1.04.3']) {
+    expect(
+      validateSourceCorrectionCiResult({
+        ...ciResult('VidaCIDeliveryResult/v2'),
+        dependency_cache: dependencyCache(version),
+      }),
+    ).toBe(false);
+  }
+  const cacheHit = dependencyCache('1.4.3');
+  cacheHit.restore = 'hit';
+  cacheHit.matched_key = `vida-bun-install-v1-linux-bun-1.4.2-${hash}`;
+  cacheHit.save_action = 'skipped';
+  expect(
+    validateSourceCorrectionCiResult({
+      ...ciResult('VidaCIDeliveryResult/v2'),
+      dependency_cache: cacheHit,
+    }),
+  ).toBe(true);
+  const invalidMatchedKey = { ...cacheHit, matched_key: `vida-bun-install-v1-linux-bun-01.4.2-${hash}` };
+  expect(
+    validateSourceCorrectionCiResult({
+      ...ciResult('VidaCIDeliveryResult/v2'),
+      dependency_cache: invalidMatchedKey,
+    }),
+  ).toBe(false);
+  expect(
+    validateSourceCorrectionCiResult({
+      ...ciResult('VidaCIDeliveryResult/v2'),
+      dependency_cache: { ...dependencyCache('1.4.3'), unknown: true },
+    }),
+  ).toBe(false);
+  expect(validateSourceCorrectionCiResult({ ...ciResult('VidaCIDeliveryResult/v2'), unknown: true })).toBe(false);
+});
+
+test('the complete source correction schema compiles under Ajv strict mode', () => {
+  expect(validateSourceCorrection({})).toBe(false);
 });

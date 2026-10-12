@@ -22,6 +22,8 @@ import {
   stableInputs,
   verifyStagedObjects,
 } from '../../packages/agent/tooling/git-quality-hooks.ts';
+import { readPin } from '../../packages/agent/bin/bun.ts';
+import packageMetadata from '../../packages/agent/package.json' with { type: 'json' };
 import {
   checkPrecommitFixture,
   createPrecommitFixture,
@@ -283,6 +285,7 @@ function pipelineFixture(t: TestContext, outcome: PipelineOutcome = 'pass'): str
     'tooling/focused-test-guard.ts',
     'tooling/function-inventory.ts',
     'tooling/environment-path.ts',
+    'tooling/babel-syntax.ts',
   ]) {
     const target = path.join(pkg, file);
     mkdirSync(path.dirname(target), { recursive: true });
@@ -304,8 +307,15 @@ function pipelineFixture(t: TestContext, outcome: PipelineOutcome = 'pass'): str
     ...scriptsValue,
     'test:coverage:pinned': 'bun tooling/fixture-coverage.mjs',
   };
+  const devDependencies = manifestValue.devDependencies;
+  if (!isRecord(devDependencies)) throw new Error('Fixture development dependencies must be an object.');
+  manifestValue.devDependencies = {
+    ...devDependencies,
+    'istanbul-lib-coverage': packageMetadata.devDependencies['istanbul-lib-coverage'],
+    'istanbul-lib-instrument': packageMetadata.devDependencies['istanbul-lib-instrument'],
+  };
   writeFileSync(path.join(pkg, 'package.json'), JSON.stringify(manifestValue));
-  writeFileSync(path.join(pkg, '.bun-version'), '1.4.2\n');
+  writeFileSync(path.join(pkg, '.bun-version'), `${readPin()}\n`);
   writeFileSync(
     path.join(pkg, 'tooling/maintained-source-inventory.ts'),
     "export function maintainedSourceInventory() { return { mutationSources: ['src/initial.ts'] }; }\n",

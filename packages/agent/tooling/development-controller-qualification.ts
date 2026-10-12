@@ -13,6 +13,7 @@ import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-co
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { openConfiguredMastraSessionLedger } from '../src/orchestration/persistent-session-handoff.ts';
 import { lifecyclePreparationObservationSchema } from '../src/orchestration/final-assurance.ts';
+import { readPin } from '../bin/bun.ts';
 import packageMetadata from '../package.json' with { type: 'json' };
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
@@ -86,7 +87,7 @@ function childErrorMessage(stderr: Buffer | Uint8Array | string | null): string 
 }
 let ledger: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
 try {
-  assert.equal(Bun.version, '1.4.2');
+  assert.equal(Bun.version, readPin(packageRoot));
   // Actual external-package initializer has its supported portable logical bundle.
   const initRoot = path.join(scratch, 'external-init');
   mkdirSync(initRoot);

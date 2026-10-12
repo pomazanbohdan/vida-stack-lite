@@ -58,7 +58,7 @@ function correspondence. Similar syntax alone is insufficient reason to merge.
 
 - Source package: `packages/agent`, npm name `vida-agent`.
 - Primary consumer installation is one native executable per supported OS/CPU,
-  embedding pinned Bun 1.4.2. Direct installation and first run require no
+  embedding the exact package-selected Bun. Direct installation and first run require no
   external Node, npm or Bun and no runtime download. This executable is the only
   public agent delivery. Existing public SDK exports remain library interfaces;
   Public agent CLI installation through npm is not supported; npm artifacts

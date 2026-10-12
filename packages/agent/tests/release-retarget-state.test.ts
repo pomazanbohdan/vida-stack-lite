@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { afterEach, test as baseTest } from 'bun:test';
 import type JSZipConstructor from 'jszip';
-import { pinnedEnvironment } from '../bin/bun.ts';
+import { pinnedEnvironment, readPin } from '../bin/bun.ts';
 import {
   releaseDigest as sha,
   releaseJSON as json,
@@ -613,7 +613,8 @@ const ciContext = { schema: 'ProjectContext/v1', repository_id: 'vida-agent', pr
 test('CI dormant invocation binds exact repository job published commit and native target', async () => {
   const value = await fixture();
   const request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' });
-  const commit = sha('inert published commit').slice(0, 40);
+  const commit = sha('inert published commit').slice(0, 40),
+    executingPin = readPin();
   const env = {
     CI: 'true',
     GITHUB_ACTIONS: 'true',
@@ -628,7 +629,7 @@ test('CI dormant invocation binds exact repository job published commit and nati
     GITHUB_WORKFLOW_REF: 'pomazanbohdan/vida-stack-lite/.github/workflows/agent-native-delivery.yml@refs/heads/main',
     CI_REQUEST: JSON.stringify(request),
     VIDA_CI_CACHE_ID: '1',
-    VIDA_CI_CACHE_KEY: 'vida-bun-install-v1-lock-bun-1.4.2-' + 'a'.repeat(64),
+    VIDA_CI_CACHE_KEY: 'vida-bun-install-v1-lock-bun-' + executingPin + '-' + 'a'.repeat(64),
     VIDA_CI_CACHE_REF: 'refs/heads/main',
     VIDA_CI_CACHE_VERSION: 'inert fixture cache version',
     VIDA_CI_CACHE_BYTES: '1',
@@ -637,7 +638,7 @@ test('CI dormant invocation binds exact repository job published commit and nati
     VIDA_CI_CACHE_SAVE: 'confirmed',
     VIDA_CI_CACHE_SAVE_ACTION: 'success',
   };
-  const input = { env, platform: 'win32', arch: 'x64', bun: '1.4.2' };
+  const input = { env, platform: 'win32', arch: 'x64', bun: executingPin };
   assert.deepEqual(validateNativeCIInvocation(input).request, request);
   for (const [key, bad] of [
     ['VIDA_NATIVE_CI_ENABLED', 'false'],
@@ -651,7 +652,10 @@ test('CI dormant invocation binds exact repository job published commit and nati
       /GAP-VIDA-CI-DELIVERY-001/,
     );
   assert.throws(() => validateNativeCIInvocation({ ...input, platform: 'linux' }), /pinned producer/);
-  assert.throws(() => validateNativeCIInvocation({ ...input, bun: '1.4.1' }), /pinned producer/);
+  assert.throws(
+    () => validateNativeCIInvocation({ ...input, bun: executingPin === '1.4.2' ? '1.4.3' : '1.4.2' }),
+    /pinned producer/,
+  );
 });
 
 test('CI emission requires all seven exact ordered terminal receipts and known denials', async () => {
