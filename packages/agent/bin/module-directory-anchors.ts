@@ -1,7 +1,8 @@
 import type { NewExpression, Node } from '@babel/types';
 import { moduleHasValueBinding } from './runtime-import-bindings.ts';
+import { isNamedIdentifier, moduleUrlResourceShape } from './module-url-resource-shape.ts';
 
-const anchors = new Map([
+const anchors = new Map<string, readonly [string, string]>([
   ['vida-agent/bin/bun.mjs', ['bundleRoot', '../']],
   ['vida-agent/bin/bun.ts', ['bundleRoot', '../']],
   ['vida-agent/bin/install.mjs', ['bundleRoot', '../']],
@@ -27,8 +28,7 @@ export function moduleDirectoryAnchorCalls(tree: Node, file: string): ReadonlySe
         (specifier) =>
           specifier.type === 'ImportSpecifier' &&
           specifier.importKind !== 'type' &&
-          specifier.imported.type === 'Identifier' &&
-          specifier.imported.name === 'fileURLToPath' &&
+          isNamedIdentifier(specifier.imported, 'fileURLToPath') &&
           specifier.local.name === 'fileURLToPath',
       ),
   );
@@ -37,37 +37,16 @@ export function moduleDirectoryAnchorCalls(tree: Node, file: string): ReadonlySe
     const node = entry.type === 'ExportNamedDeclaration' ? entry.declaration : entry;
     if (node?.type !== 'VariableDeclaration' || node.kind !== 'const' || node.declarations.length !== 1) continue;
     const declaration = node.declarations[0];
-    if (declaration?.id.type !== 'Identifier' || declaration.id.name !== anchor[0]) continue;
-    const init = declaration.init;
+    if (!isNamedIdentifier(declaration?.id, anchor[0])) continue;
+    const init = declaration?.init;
     if (
       init?.type !== 'CallExpression' ||
-      init.callee.type !== 'Identifier' ||
-      init.callee.name !== 'fileURLToPath' ||
+      !isNamedIdentifier(init.callee, 'fileURLToPath') ||
       init.arguments.length !== 1
     )
       continue;
-    const url = init.arguments[0];
-    if (
-      url?.type !== 'NewExpression' ||
-      url.callee.type !== 'Identifier' ||
-      url.callee.name !== 'URL' ||
-      url.arguments.length !== 2
-    )
-      continue;
-    const relative = url.arguments[0],
-      base = url.arguments[1];
-    if (
-      relative?.type === 'StringLiteral' &&
-      relative.value === anchor[1] &&
-      base?.type === 'MemberExpression' &&
-      !base.computed &&
-      base.property.type === 'Identifier' &&
-      base.property.name === 'url' &&
-      base.object.type === 'MetaProperty' &&
-      base.object.meta.name === 'import' &&
-      base.object.property.name === 'meta'
-    )
-      found.add(url);
+    const url = moduleUrlResourceShape(init.arguments[0]);
+    if (url?.specifier === anchor[1]) found.add(url.node);
   }
   return found;
 }

@@ -811,6 +811,14 @@ Use an immutable current-candidate controller outside editable Source. Verify pr
 
 Require pinned SDK exports, dependencies, filesystem/native support and resource integrity. Check actual isolated scope/admission and own-target report behavior. Deny tampering, wrong package or pin, missing dependency and undeclared target writes. Expected target edits continue the same attempt under unchanged controller code.
 
+Shared Babel URL recognition owns only exact shape and original expression
+identity. Resource admission retains its recursive import-meta candidate
+selection and malformed-resource denial; directory anchors retain file,
+declaration, decoder and shadowing policies. Check all six locator mappings,
+adjacent/nested resources, identity, wrong argument/callee/literal/base shapes,
+and exact names. Keep Babel node imports type-only and preserve the existing
+absent-computed-field behavior. Shared extraction alone proves no frozen budget.
+
 Check restart, failure and affected-proof invalidation. Metadata, copying and a small probe do not prove ready capability. Construction and qualified readiness are separate. The controller supplies no global PATH, production selector or Runtime acceptance.
 
 ### Controller child observations

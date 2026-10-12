@@ -6723,3 +6723,54 @@ AST/hash scan, build/install, baseline replay or gate relaxation is added.
 TESTING and the project Bun skill retain the verified epoch/commit distinction.
 Strict checkpoint/publication follows; exhaustive frozen correspondence, exact
 coverage/CRAP, confirmed mutation and native/runtime flow qualification stay open.
+
+### v848–v854 — strict-published context and shared Babel URL recognition
+
+Context packet c2b3b43 passes strict checkpoint v848 and publishes a39e77a..
+c2b3b43, remote0/0. No hook bypass; unrelated root custody/files remain. SDK
+freshness remains GAP; no old artifact promotion or active loader change.
+
+Root applies accepted shared URL design v792 plus type-only/named guard review
+v818/v821: new bin/module-url-resource-shape.ts owns isNamedIdentifier,
+isImportMetaProperty and moduleUrlResourceShape. Both anchor detection and
+admission use the exact shared predicate and original NewExpression identity.
+The helper extracts StringLiteral.value, as explicitly designed; it does not
+need an additional literal-node identity field. Manual guards import Babel
+types only; no new runtime package, traversal or duplicate scan is introduced.
+The package manifest registers the helper once. Anchor map gains exact tuple
+typing at its existing owner. Candidate selection remains broader than shape:
+recursive import.meta occurrence still selects malformed expressions for the
+same unsealed error. File/declaration/import/shadow/relative anchor policies,
+resource ordering and absent computed-field semantics remain unchanged.
+
+Original caller characterization v849:54PASS112assertions883ms. Existing test
+owner gains direct helper/name/arity/type/identity/nullability/wrapper controls,
+recursive malformed resource denial and missing bun.ts/install.ts map cases.
+v850 completion61PASS157assertions961ms. Final optional declaration access is
+a TypeScript narrowing correction; unchanged runtime denial. Final current
+Source v853 caller check61PASS157assertions928ms. Blind review additionally
+requests numeric/template literal kinds; add them to the existing parameter
+matrix and rerun only its changed case v854:1PASS18assertions44ms. Prior
+unaffected evidence remains.
+
+Scoped existing functionInventory v852 reads only the three changed files.
+Genuinely new shared roles and proposed unchanged NEW ceilings10/10:
+bin/module-url-resource-shape.ts#fn:isNamedIdentifier#0 (CC2),
+bin/module-url-resource-shape.ts#fn:isImportMetaProperty#0 (CC3),
+bin/module-url-resource-shape.ts#fn:moduleUrlResourceShape#0 (CC9).
+These are a shared domain owner used across callers, not score-only splits.
+Existing anchor role remains retained, measuredCC17 and still above NEW10;
+do not reclassify/raise its budget or claim frozen/CRAP closure. Old global
+inventory and SDK input equivalence are invalidated by this new Source file.
+Three independent security/test/architecture reviews validate exact policy
+composition. A proposed literal-node requirement is rejected after checking
+accepted v792 contract, and review is corrected. TESTING records current scope.
+Logs/scoped inventory/reviews: BASE/shared-url-*. No baseline replay, broad
+suite, numerical measurement, native flow or build/install is launched.
+Root strict-checkpoints/publishes next; Source quality gates remain open.
+
+Strict v855 rejects one test matcher TS2769: parser expression union was passed
+to NewExpression identity assertion before narrowing. Root moves the actual
+fixture-kind guard before the assertion; no cast/any/suppression or product
+change. Recheck only that affected identity case and repeat the required strict
+checkpoint on amended inputs. Original v855 failure remains retained.

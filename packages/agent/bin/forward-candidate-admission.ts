@@ -8,6 +8,7 @@ import { verifyForwardReviewSet } from './forward-review-proof.ts';
 import { createFsSafeNativeImportBoundary } from './fs-safe-native-import-boundary.ts';
 import { moduleHasValueBinding } from './runtime-import-bindings.ts';
 import { moduleDirectoryAnchorCalls } from './module-directory-anchors.ts';
+import { isImportMetaProperty, isNamedIdentifier, moduleUrlResourceShape } from './module-url-resource-shape.ts';
 import type { Node as BabelNode, VariableDeclarator as BabelVariableDeclarator } from '@babel/types';
 type JsonRecord = Record<string, unknown>;
 type BabelParserModule = typeof import('@babel/parser');
@@ -86,32 +87,13 @@ function resources(tree: BabelNode, file: string): string[] {
   const found: string[] = [];
   const meta = (node: unknown): boolean =>
     isBabelNode(node) &&
-    ((node.type === 'MetaProperty' && node.meta.name === 'import' && node.property.name === 'meta') ||
+    (isImportMetaProperty(node) ||
       Object.values(node).some((child) => (Array.isArray(child) ? child.some(meta) : meta(child))));
   const visit = (node: BabelNode): void => {
-    if (
-      node.type === 'NewExpression' &&
-      node.callee.type === 'Identifier' &&
-      node.callee.name === 'URL' &&
-      node.arguments.some(meta)
-    ) {
-      const file = node.arguments[0];
-      const base = node.arguments[1];
-      if (
-        node.arguments.length !== 2 ||
-        !file ||
-        file.type !== 'StringLiteral' ||
-        !base ||
-        base.type !== 'MemberExpression' ||
-        base.computed ||
-        base.property.type !== 'Identifier' ||
-        base.property.name !== 'url' ||
-        base.object.type !== 'MetaProperty' ||
-        base.object.meta.name !== 'import' ||
-        base.object.property.name !== 'meta'
-      )
-        throw new Error('forward candidate admission: computed module resource is unsealed');
-      if (!directoryAnchors.has(node)) found.push(file.value);
+    if (node.type === 'NewExpression' && isNamedIdentifier(node.callee, 'URL') && node.arguments.some(meta)) {
+      const resource = moduleUrlResourceShape(node);
+      if (!resource) throw new Error('forward candidate admission: computed module resource is unsealed');
+      if (!directoryAnchors.has(resource.node)) found.push(resource.specifier);
     }
     visitBabelChildren(node, visit);
   };

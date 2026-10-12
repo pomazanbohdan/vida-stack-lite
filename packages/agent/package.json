@@ -59,6 +59,7 @@
     "bin/fs-safe-native-import-boundary.ts",
     "bin/runtime-import-bindings.ts",
     "bin/module-directory-anchors.ts",
+    "bin/module-url-resource-shape.ts",
     "bin/capture-completed-readonly.ts",
     "bin/repair-research-records.ts",
     "bin/repair-work-state.ts",

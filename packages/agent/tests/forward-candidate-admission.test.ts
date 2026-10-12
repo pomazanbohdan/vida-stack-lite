@@ -3,6 +3,95 @@ import * as parser from '@babel/parser';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { scanAdmittedRuntimeImports } from '../bin/forward-candidate-admission.ts';
+import { moduleDirectoryAnchorCalls } from '../bin/module-directory-anchors.ts';
+import { isImportMetaProperty, isNamedIdentifier, moduleUrlResourceShape } from '../bin/module-url-resource-shape.ts';
+
+test('module URL shape preserves parsed node identity and exact literal spelling', () => {
+  const node = parser.parseExpression("new URL('../file%20name.json?raw#fragment', import.meta.url)", {
+    sourceType: 'module',
+  });
+  if (node.type !== 'NewExpression' || node.arguments[1]?.type !== 'MemberExpression')
+    throw new Error('Expected parsed URL member fixture.');
+  const resource = moduleUrlResourceShape(node);
+  expect(resource?.node).toBe(node);
+  expect(resource?.specifier).toBe('../file%20name.json?raw#fragment');
+  // Existing callers admit absent computed flags in internally supplied ASTs.
+  expect(Reflect.deleteProperty(node.arguments[1], 'computed')).toBe(true);
+  expect(moduleUrlResourceShape(node)?.node).toBe(node);
+});
+
+test('module URL shape refuses nonliteral, computed, wrapped and incomplete forms', () => {
+  expect(moduleUrlResourceShape(undefined)).toBeNull();
+  expect(moduleUrlResourceShape(null)).toBeNull();
+  for (const source of [
+    'URL',
+    "URL('../file.json', import.meta.url)",
+    "new Other('../file.json', import.meta.url)",
+    "new api.URL('../file.json', import.meta.url)",
+    'new URL()',
+    "new URL('../file.json')",
+    "new URL('../file.json', import.meta.url, 0)",
+    'new URL(dynamic, import.meta.url)',
+    'new URL(1, import.meta.url)',
+    'new URL(`../file.json`, import.meta.url)',
+    'new URL(...paths, import.meta.url)',
+    "new URL('../file.json', import.meta['url'])",
+    "new URL('../file.json', import.meta.other)",
+    "new URL('../file.json', base.url)",
+    "new URL('../file.json', import.meta)",
+    "new URL(('../file.json' as string), import.meta.url)",
+  ])
+    expect(
+      moduleUrlResourceShape(parser.parseExpression(source, { sourceType: 'module', plugins: ['typescript'] })),
+    ).toBeNull();
+});
+
+test('shared identifier and import-meta guards require exact node kinds and names', () => {
+  const identifier = parser.parseExpression('URL');
+  expect(isNamedIdentifier(identifier, 'URL')).toBe(true);
+  expect(isNamedIdentifier(identifier, 'url')).toBe(false);
+  expect(isNamedIdentifier(parser.parseExpression("'URL'"), 'URL')).toBe(false);
+  expect(isNamedIdentifier(undefined, 'URL')).toBe(false);
+  expect(isNamedIdentifier(null, 'URL')).toBe(false);
+  const meta = parser.parseExpression('import.meta', { sourceType: 'module' });
+  expect(isImportMetaProperty(meta)).toBe(true);
+  expect(isImportMetaProperty(identifier)).toBe(false);
+  expect(isImportMetaProperty(undefined)).toBe(false);
+  expect(isImportMetaProperty(null)).toBe(false);
+  if (meta.type !== 'MetaProperty') throw new Error('Expected parsed import-meta fixture.');
+  expect(isImportMetaProperty({ ...meta, meta: { ...meta.meta, name: 'new' } })).toBe(false);
+  expect(isImportMetaProperty({ ...meta, property: { ...meta.property, name: 'other' } })).toBe(false);
+});
+
+test('shared URL shape retains recursive malformed resource denial', () => {
+  for (const source of [
+    'new URL(String(import.meta.url), ordinaryBase)',
+    "new URL('../file.json', wrap(import.meta.url))",
+    "new URL('../file.json', import.meta.url, 0)",
+    "new URL('../file.json', import.meta)",
+  ])
+    expect(() => scanAdmittedRuntimeImports(source, parser)).toThrow(
+      'forward candidate admission: computed module resource is unsealed',
+    );
+  expect(scanAdmittedRuntimeImports("new Other('../file.json', import.meta.url)", parser)).toEqual([]);
+});
+
+test('directory anchor set owns only the original parsed URL locator node', () => {
+  const tree = parser.parse(
+    "import { fileURLToPath } from 'node:url'; const bundleRoot=fileURLToPath(new URL('../',import.meta.url));",
+    { sourceType: 'module' },
+  );
+  const declaration = tree.program.body[1];
+  if (declaration?.type !== 'VariableDeclaration') throw new Error('Expected locator declaration fixture.');
+  const init = declaration.declarations[0]?.init;
+  if (init?.type !== 'CallExpression') throw new Error('Expected locator decoder fixture.');
+  const url = init.arguments[0];
+  if (url?.type !== 'NewExpression') throw new Error('Expected locator URL fixture.');
+  const anchors = moduleDirectoryAnchorCalls(tree, 'vida-agent/bin/bun.ts');
+  expect(anchors.size).toBe(1);
+  expect(anchors.has(url)).toBe(true);
+  expect(anchors.has({ ...url })).toBe(false);
+});
 test('sealed admission ignores type-only imports and comments while retaining literal runtime imports', () => {
   const imports = scanAdmittedRuntimeImports(
     `import type {Foo} from './unexecuted.ts'; type Bar=import('./query-only.ts').Bar;
@@ -244,7 +333,9 @@ test('new review rejects a foreign caller of the computed native resolver', () =
 
 for (const [file, declaration, relative] of [
   ['vida-agent/bin/bun.mjs', 'const bundleRoot', '../'],
+  ['vida-agent/bin/bun.ts', 'const bundleRoot', '../'],
   ['vida-agent/bin/install.mjs', 'const bundleRoot', '../'],
+  ['vida-agent/bin/install.ts', 'const bundleRoot', '../'],
   ['vida-agent/bin/local-release-artifacts.mjs', 'export const releaseRootDefault', '../../../'],
   ['vida-agent/bin/local-release-artifacts.ts', 'export const releaseRootDefault', '../../../'],
 ] as const)

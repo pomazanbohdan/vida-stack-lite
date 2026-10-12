@@ -1469,3 +1469,15 @@ publishes this Source packet; frozen per-function and numeric closure remain GAP
 SDK input freshness joining is still required after Source stabilizes; earlier
 isolated artifact formation is invalidated by subsequent product changes. Keep
 old dist/active loaders and failed/UNKNOWN custody untouched, no duplicate suites.
+
+#### Shared URL shape correction v849–v854
+
+Two consumers share exact type-only Babel recognition while retaining their
+recursive candidate/error and directory-anchor ownership policies. Package
+registration and original AST identity stay explicit. Existing caller suite
+54PASS becomes61PASS157assertions; additional review literal-kind controls use
+only the affected case. Scoped new functions CC2/3/9; retained anchor CC17 still
+exceeds its NEW10 cap. No budget is raised/reclassified; full frozen/coverage/
+CRAP/confirmed mutation remain GAP. Root strict-checkpoints and publishes.
+Context packet c2b3b43 is already strict-published. Finish Source and fresh
+inventory/correspondence before final SDK formation and single numeric owner.
