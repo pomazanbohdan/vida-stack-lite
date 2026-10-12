@@ -1285,3 +1285,22 @@ This research and focused checks do not establish current SDK formation,
 native installation, exact coverage, frozen CRAP or assertion-confirmed Killed.
 The existing final-check owner retains those gates; active consumer loaders
 and schemas remain unchanged.
+
+## SDK formation capture boundary — 2026-10-12
+
+Use one finite Source/schema/config/tool byte projection through the existing
+bounded reader and runtime import closure. It avoids a full test/inventory scan
+for formation. Declaration emission and both Bun builds consume its materialized
+tree; external dependency bytes remain outside custody behind manifest/lock.
+The completion receipt records selected version, Node/Bun, exact inputs/outputs
+and virtual entry. Actual formed-artifact qualification and its join to tests
+remain pending; capture tests and static checks are not that evidence.
+
+Official [fs-safe0.26.2 entry publication](https://github.com/openclaw/fs-safe/blob/v0.26.2/docs/entry-publication.md)
+requires native no-replace support and excludes overlay filesystems. The current
+workspace is observed as overlayfs. Do not add this filesystem restriction as a
+new SDK build prerequisite. Exclusive output-directory/file creation and exact
+byte/ownership checks precede the completion receipt; failed partial output is
+retained. This does not promise an atomic directory transaction, Source-name
+CAS, hostile same-user isolation or crash durability. Existing Runtime activation
+and UNKNOWN rules keep their owners and are not replaced by SDK publication.

@@ -7083,3 +7083,56 @@ commit denies Knip's unlisted check subcommand/fake fixture binary and an unused
 type export. Apply the exact Bun subcommand exception only, remove the unused
 export and resolve the inert nonexistent executable to an absolute fixture
 path. No blanket ignore or hook bypass. Affected two spawn checks2PASS16asserts.
+
+### v940–v944 — captured SDK formation implementation
+
+fafae35 passed the ordinary strict staged Knip/Oxfmt/Bun-check/Oxlint/focused
+test guards and is published; HEAD/origin0/0, unowned BASE and root bun.lock
+preserved. Prior hook failures also exposed malformed Error literals and a
+Reflect.get any return in regression controls. Use real Error objects and an
+unknown return value; keep assertions. No hook bypass. Fresh affected cases
+pass. No native/system Runtime update, whole coverage or mutation claim.
+
+Expose existing secured readQualityInputs for finite declared inputs: validate
+the whole canonical list before reads, deduplicate/sort once and reuse resolved
+paths/boundaries. Preserve4MiB/file128MiBtotal20kpaths and exact handle identity.
+Share the existing runtime closure under captureRuntimeInputClosure; body and
+quality classification stay unchanged, with explicit function-name lineage.
+Root quality-projection18PASS191asserts after caller join; worker SDK capture
+6PASS uses inert files only. Source pin fixtures derive from the actual owner.
+Affected pin/CAS controls pass; current final static/source publication remains
+with Root. No repeated full AST/hash pass or tests in formation/install.
+
+SDK builder captures finite Source/schemas/config and its tool closure without
+walking tests/generated output. Declaration emission moved from the package
+script into that captured tree, alongside both Bun builds. The Node guard runs
+in the same compiler process. Preserve fixed four JS names/public export and
+issuer guards. Input/output/virtual-entry identities and declared dependency
+custody are retained in the completion receipt. The Source bootstrap tool is
+declared captured input, not hostile-concurrency isolation; node_modules bytes
+remain outside captured custody. Runtime schemas/loaders are unchanged.
+
+Reject the proposed new fs-safe directory-publication dependency: official0.26.2
+excludes overlay, observed on this workspace. Existing exclusive directory/file
+creation, byte roundtrip and ownership checks are sufficient for SDK completion;
+its receipt is exposed last. Do not claim atomic Runtime activation or a durable
+directory transaction. Failure/UNKNOWN retains staging/partial output and never
+overwrites a foreign destination. Source CAS control sidecars are excluded by
+the existing inventory owner. Exact SDK artifact-to-test snapshot join, actual
+formation, exhaustive frozen correspondence and final numeric/native flows remain
+OPEN. Three bounded blind reviews are selected for this implementation; final
+changed publication/shared-capture reviews are pending, earlier review excludes
+later publication corrections. Follow-on capture/loader join must still deny
+checkout-dist fallback and keep generated JS outside Source coverage sources.
+
+Final blind shared-capture review finds root readdir can follow a linked src/
+schemas before secured file rejection. Add real-directory/lstat admission before
+every tree enumeration; fresh negative controls cover both roots and wrong types.
+Publication review finds owned cleanup could fail after the completion receipt.
+Move known owned cleanup before that receipt; partial output remains retained
+and diagnostics distinguish removed staging from retained staging. Do not add
+a new retry journal or hide cleanup failure. Shared negative assertions now use
+the existing Bun expectRejection owner, preserving awaited sync/async rejection
+and case names. Root completion25PASS249asserts covers both affected files;
+these are behavior checks, not admitted mutation Killed or exact coverage.
+The final correction review and strict Source checkpoint remain Root-owned.

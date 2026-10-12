@@ -1,15 +1,17 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { mutationToolInputs } from '../tooling/mutation-evidence.js';
 import { orchestrationDeadline, remainingChildTimeoutMs } from '../tooling/quality-final.js';
+import { expectRejection } from './helpers/expect-rejection.ts';
 import {
   capturedModuleInputs,
   coverageToolInputs,
   qualityFingerprint,
   qualityInputProjections,
+  readQualityInputs,
 } from '../tooling/bun-coverage-evidence.ts';
 
 const temporaryRoots: string[] = [];
@@ -45,14 +47,7 @@ afterEach(() => {
   for (const root of temporaryRoots.splice(0)) rmSync(root, { recursive: true, force: true });
 });
 async function expectRejected(action: () => Promise<unknown>, expected: RegExp): Promise<void> {
-  let error: unknown;
-  try {
-    await action();
-  } catch (caught) {
-    error = caught;
-  }
-  if (!(error instanceof Error) || !expected.test(error.message))
-    throw new Error(`Expected rejection matching ${expected}; received ${String(error)}.`);
+  await expectRejection(Promise.resolve().then(action), expected);
 }
 
 describe('final quality deadlines', () => {
@@ -72,6 +67,51 @@ describe('final quality deadlines', () => {
 });
 
 describe('final quality input projections', () => {
+  test('captures explicit package bytes once per canonical sorted path and retains the snapshot', async () => {
+    const root = fixtureRoot();
+    const selected = ['tooling/quality-final.ts', 'package.json', 'tooling/quality-final.ts'];
+    const bytes = await readQualityInputs(root, selected);
+    expect([...bytes.keys()]).toEqual(['package.json', 'tooling/quality-final.ts']);
+    expect(bytes.get('tooling/quality-final.ts')).toEqual(Buffer.from('fixture\n'));
+    writeFileSync(path.join(root, 'tooling/quality-final.ts'), 'changed live bytes\n');
+    expect(bytes.get('tooling/quality-final.ts')).toEqual(Buffer.from('fixture\n'));
+  });
+
+  test('rejects all invalid explicit paths before reading valid package paths', async () => {
+    await expectRejected(
+      () => readQualityInputs('/does-not-exist', ['package.json', '../outside']),
+      /malformed|outside admitted roots/u,
+    );
+  });
+
+  test('fails closed for missing files, links, hardlinks, escapes and bounded input limits', async () => {
+    const root = fixtureRoot();
+    await expectRejected(() => readQualityInputs(root, ['tooling/missing.ts']), /missing/u);
+
+    writeFileSync(path.join(root, 'tooling/target.ts'), 'target\n');
+    symlinkSync(path.join(root, 'tooling/target.ts'), path.join(root, 'tooling/symlink.ts'));
+    await expectRejected(() => readQualityInputs(root, ['tooling/symlink.ts']), /rejected/u);
+
+    linkSync(path.join(root, 'tooling/target.ts'), path.join(root, 'tooling/hardlink.ts'));
+    await expectRejected(() => readQualityInputs(root, ['tooling/hardlink.ts']), /rejected|limit/u);
+
+    await expectRejected(
+      () => readQualityInputs(root, ['../outside-quality-input.ts']),
+      /malformed|outside admitted roots/u,
+    );
+
+    writeFileSync(path.join(root, 'tooling/oversized.ts'), Buffer.alloc(4 * 1024 * 1024 + 1));
+    await expectRejected(() => readQualityInputs(root, ['tooling/oversized.ts']), /limit|rejected/u);
+    await expectRejected(
+      () =>
+        readQualityInputs(
+          root,
+          Array.from({ length: 20_001 }, () => 'package.json'),
+        ),
+      /path limit/u,
+    );
+  });
+
   test('excludes declaration suffixes from runtime modules regardless of basename', () => {
     const declarationPaths = ['word', 'edge-name', 'nested.name', 'їм’я'].flatMap((name) =>
       ['ts', 'mts', 'cts'].map((extension) => `tooling/${name}.d.${extension}`),

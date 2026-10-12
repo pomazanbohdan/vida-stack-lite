@@ -596,17 +596,25 @@ function verifyPublishedBaselineInputs(
   }
 }
 
-async function readQualityInputs(root: string, files: string[]): Promise<Map<string, Buffer>> {
-  if (files.length > maxInputPaths) throw new Error('Coverage input path limit exceeded.');
+export async function readQualityInputs(root: string, files: readonly string[]): Promise<Map<string, Buffer>> {
+  if (!Array.isArray(files) || files.length > maxInputPaths) throw new Error('Coverage input path limit exceeded.');
+  // Validate the complete finite selection before opening any path. Sorting and
+  // deduplication make a repeated selection share one retained byte capture.
+  const declared: readonly unknown[] = files;
+  const selected = [...new Set(declared)]
+    .map((file) => {
+      if (typeof file !== 'string') throw new Error('Captured module path must be a string.');
+      return {
+        file,
+        absolute: capturedModuleAbsolutePath(root, file),
+        boundary: capturedModuleBoundaryRoot(root, file),
+      };
+    })
+    .sort((left, right) => left.file.localeCompare(right.file));
   const result = new Map<string, Buffer>();
   let total = 0;
-  for (const file of files) {
-    const bytes = readBoundedInput(
-      capturedModuleAbsolutePath(root, file),
-      capturedModuleBoundaryRoot(root, file),
-      'Coverage input',
-      false,
-    );
+  for (const { file, absolute, boundary } of selected) {
+    const bytes = readBoundedInput(absolute, boundary, 'Coverage input', false);
     if (!bytes) throw new Error(`Coverage input is missing: ${file}`);
     total += bytes.byteLength;
     if (total > maxInputBytes) throw new Error('Coverage input aggregate byte limit exceeded.');
@@ -699,9 +707,9 @@ function readDiscoveredRuntimeInput(packageRoot: string, logicalPath: string): B
   );
 }
 
-async function captureSelectedTestRuntimeClosure(
+export async function captureRuntimeInputClosure(
   root: string,
-  selectedTests: readonly string[],
+  entrypoints: readonly string[],
   sourcePaths: readonly string[],
   testPaths: readonly string[],
   inputBytes: Map<string, Buffer>,
@@ -710,7 +718,7 @@ async function captureSelectedTestRuntimeClosure(
   const sources = new Set(sourcePaths);
   const tests = new Set(testPaths);
   const visited = new Set<string>();
-  const queued = [...selectedTests];
+  const queued = [...entrypoints];
   const runtimeTools = new Set<string>();
   let capturedBytes = [...inputBytes.values()].reduce((total, bytes) => total + bytes.byteLength, 0);
   while (queued.length) {
@@ -849,7 +857,7 @@ async function captureQualityInputBase(
     verifyPublishedBaselineInputs(root, inputBytes, sources, testInputsAll);
   const runtimeToolPaths =
     selectionMode === 'current'
-      ? await captureSelectedTestRuntimeClosure(root, testSelection.tests, sources, testInputsAll, inputBytes)
+      ? await captureRuntimeInputClosure(root, testSelection.tests, sources, testInputsAll, inputBytes)
       : [];
   const digestPaths = [...new Set([...sources, ...testInputsAll, ...tools, ...runtimeToolPaths])];
   const inputDigests = new Map(

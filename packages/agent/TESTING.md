@@ -956,6 +956,17 @@ Check malformed npm ranges, npm mismatch before artifacts, matching npm reaching
 the missing-artifact gate, and Node mismatch. Await actual rejected operations
 with the shared rejection helper. These guard checks do not qualify SDK output.
 
+SDK capture tests use inert Source/config/schema/tool fixtures. Assert exact
+retained bytes after live changes, transitive tooling closure and aliases/cycles,
+omitted tests/generated output, unsafe paths/links and existing byte/tree limits.
+Importing the builder must not execute formation. These tests never build an
+SDK. Formation owns declaration emission and both Bun builds on one captured
+tree; it emits the exact completion receipt after output-byte/ownership checks.
+Keep external dependency custody explicit. Failed/UNKNOWN partial output stays
+retained; staging stays until known owned cleanup completes. Qualifying the actual formed SDK and joining its four
+JS members to test capture remain separate pending checks, with no checkout
+dist fallback allowed as qualification evidence.
+
 The captured loader resolves a Bun query alias only to an already captured
 physical path. Exact manifest filenames take precedence, including literal
 `?` and `#`; no percent decoding, fragment removal or path-spelling rewrite is

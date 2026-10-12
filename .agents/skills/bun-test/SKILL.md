@@ -74,6 +74,12 @@ cleanup budgets must fit the parent case limit; use the shared bounded child
 owner, await terminal evidence and mark fixture retention before launch. Clear
 retention only after all assertions pass. Formation does not launch these tests.
 
+Test SDK Source capture with inert files and tool imports, without forming an
+SDK. Verify retained bytes after live changes, aliases/cycles, omitted tests/
+generated files and existing boundary limits. Reuse the bounded quality reader
+and runtime closure owner. Captured SDK output is separate artifact evidence;
+its execution does not measure Source coverage.
+
 ## Diagnose and optimize
 
 For child diagnostics, check Buffer and offset Uint8Array views with Unicode

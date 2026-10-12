@@ -2712,6 +2712,26 @@ package preflight execution. Malformed version ranges, unstable npm versions,
 and a mismatched Node or npm version deny verification; successful tool selection
 does not establish artifact freshness or Runtime acceptance.
 
+SDK formation captures a finite Source/configuration/schema/build-tool closure
+once through the same bounded byte reader as quality capture. It performs no
+test discovery. Declaration emission and both Bun builds consume that one
+materialized tree, with the exact Source-selected Bun and Node. The receipt
+binds captured input/output bytes, version and virtual runtime entry; external
+dependency bytes remain a declared trust limit behind captured manifest/lock.
+The bootstrap builder executes from Source, as a captured declared tool input;
+this is cooperative Source custody, not isolation from concurrent hostile
+same-user writers. Preserve the four published JS names and public guards.
+
+Create the SDK output directory exclusively and expose only captured output
+bytes through exclusive file creation. Check output bytes and owned directory
+identity and complete known owned cleanup before exposing the completion receipt
+last. Interrupted partial outputs remain retained; staging remains until known
+owned cleanup completes. No receipt means no completed
+formation. This is not atomic activation or crash-durable Runtime acceptance.
+Do not overwrite a foreign output directory or replay an uncertain formation.
+The explicit validated SDK artifact-to-test snapshot join remains pending;
+checkout `dist` alone is not current qualification evidence.
+
 Runtime initialization retries bounded lock-acquisition contention on Linux and
 Windows, rereading the receipt under the acquired lock. Once the protected
 operation starts, an error is returned without retrying its possibly completed
