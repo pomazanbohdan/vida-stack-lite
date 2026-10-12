@@ -731,6 +731,15 @@ paths, while every other `inputs` array remains string-only.
 
 Optional journal absence is read-only only for fresh contexts with no retained Host assignment. A missing journal for a started or uncertain effect fails closed. It does not prove quiescence or permit ownership release.
 
+Read-only dispatch planning reuses its factory-issued project context for the
+coherent Host snapshot and plan builder. Validate issuance, root, exact ordered
+project IDs, repository and config digest; keep the direct builder's context-free
+fallback. A planning context is not commit authority: rebuild from current
+configuration, context and declared sources inside the Host producer fence.
+Check identical plan bytes, forged/foreign/stale context denial, noncanonical
+project sets, and config or declared-source drift between plan and apply with
+no repair row published. Preserve original UNKNOWN issues and CAS checks.
+
 For unprepared recovery, check the accepted baseline, exact repository/project/integration/storage identity and current registry. Preserve the original Work binding, run and intake. Check inspect, apply, reopen and identical lost-acknowledgement retry. Require a calendar-valid RFC3339 timestamp and exact renewed-at equality. Deny impossible dates and identity drift with all Host, engine and YAML state unchanged.
 
 Use actual SQLite JSONB fixtures. Cover unrelated valid state, matching run ID, same-work alias, malformed BLOB, NULL and JSON5. A record within the 8 MiB storage bound whose decoded JSON exceeds 8 MiB must deny before projected payload fetch. Preserve physical/count preflight and bounded decoding. Text-only records do not prove store-codec behavior.

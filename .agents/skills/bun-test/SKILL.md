@@ -20,19 +20,20 @@ strict typecheck success.
 
 ## Quick reference
 
-| Need | Technique |
-| --- | --- |
-| Regression | Map contract and scenarios to function/test IDs; assert actual outcomes at the owned boundary. |
-| Focused check | Explicit test file plus anchored `--test-name-pattern`; inspect exit code and assertions. |
-| Isolation | Scope hooks to the cases needing fixtures; await work and restore mocks/resources in `finally`. |
-| Early return | Put owned teardown in `finally`; preserve original and cleanup errors. |
-| Timeout | Separate parent elapsed time, child receipt and phase intervals before changing implementation. |
-| Repeated computation | Reuse within the invocation; test output parity, changed inputs and deterministic operation counts. |
-| Missing profile | Check capability on an inert control before another expensive case. |
-| Inventory/report processing | Reuse TS tools or an owned temporary `.ts` diagnostic with qualified Bun; validate JSON before reading fields. |
-| Measurement reservation | Separate qualified direct producer termination from measurement success and UNKNOWN test effects; apply the existing TESTING custody owner. |
-| Captured module query | Keep Bun instance identity distinct from the exact manifest path; use the existing captured-loader owner and assert canonical receipts plus unbound denial. |
-| SDK artifact oracle | Bind the emitted artifact, preserve public authentication/production guards and ignore compiler-generated name ordinals; boolean assertions keep large generated-code diagnostics bounded. |
+| Need                        | Technique                                                                                                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Regression                  | Map contract and scenarios to function/test IDs; assert actual outcomes at the owned boundary.                                                                                             |
+| Focused check               | Explicit test file plus anchored `--test-name-pattern`; inspect exit code and assertions.                                                                                                  |
+| Isolation                   | Scope hooks to the cases needing fixtures; await work and restore mocks/resources in `finally`.                                                                                            |
+| Early return                | Put owned teardown in `finally`; preserve original and cleanup errors.                                                                                                                     |
+| Timeout                     | Separate parent elapsed time, child receipt and phase intervals before changing implementation.                                                                                            |
+| Repeated computation        | Reuse within the invocation; test output parity, changed inputs and deterministic operation counts.                                                                                        |
+| Issued context handoff      | Use real issued/forged/foreign contexts and exact plan parity; controlled disk drift distinguishes reuse from fresh fenced commit, without module mocks or a product test seam.            |
+| Missing profile             | Check capability on an inert control before another expensive case.                                                                                                                        |
+| Inventory/report processing | Reuse TS tools or an owned temporary `.ts` diagnostic with qualified Bun; validate JSON before reading fields.                                                                             |
+| Measurement reservation     | Separate qualified direct producer termination from measurement success and UNKNOWN test effects; apply the existing TESTING custody owner.                                                |
+| Captured module query       | Keep Bun instance identity distinct from the exact manifest path; use the existing captured-loader owner and assert canonical receipts plus unbound denial.                                |
+| SDK artifact oracle         | Bind the emitted artifact, preserve public authentication/production guards and ignore compiler-generated name ordinals; boolean assertions keep large generated-code diagnostics bounded. |
 
 Run from `packages/agent`, using the existing pinned launcher:
 

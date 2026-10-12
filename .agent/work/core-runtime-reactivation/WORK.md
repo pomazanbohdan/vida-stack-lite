@@ -240,16 +240,16 @@ or operational rights follow from a receipt or activation file alone.
 tooling/CLI orchestration. Root приймає findings з точними file:line,
 простеженою причиною та перевіркою наслідку. Припущення не є дефектом.
 
-| Категорія | Що перевіряємо | Критерій корекції |
-| --- | --- | --- |
-| Семантичне дублювання | Однакові parsers, codecs, inventories у різних owners | Один shared owner без розширення прав |
-| Drift контрактів | Help/parser/schema/type мають різні options або поля | Дані й типи походять з одного перевіреного контракту |
-| Зайві запити | Повторні SQL/FS/API читання в одному незмінному контексті | Потрібна проєкція або bounded snapshot; CAS межі збережено |
-| Повторна validation | Перевірені immutable дані parsing знову | Повна ingress validation, приватний brand, явне invalidation |
-| Складність функцій | Змішані parsing/authority/effects, вкладені state branches | Cohesive functions у frozen budgets без прихованих branches |
-| Зайві кроки tooling | Дубльовані lanes, subprocesses, discovery й orchestration | Один runner/inventory; build/install не запускають suites |
-| Хибний доказ | Неповний scope, stale reports, невідомі mutant outcomes | Exact source/test/tool fingerprints, fail closed на GAP |
-| Повторення ефектів | Resume/recovery повторює issued або UNKNOWN операцію | Тільки same-operation exact-afterimage reconciliation |
+| Категорія             | Що перевіряємо                                             | Критерій корекції                                            |
+| --------------------- | ---------------------------------------------------------- | ------------------------------------------------------------ |
+| Семантичне дублювання | Однакові parsers, codecs, inventories у різних owners      | Один shared owner без розширення прав                        |
+| Drift контрактів      | Help/parser/schema/type мають різні options або поля       | Дані й типи походять з одного перевіреного контракту         |
+| Зайві запити          | Повторні SQL/FS/API читання в одному незмінному контексті  | Потрібна проєкція або bounded snapshot; CAS межі збережено   |
+| Повторна validation   | Перевірені immutable дані parsing знову                    | Повна ingress validation, приватний brand, явне invalidation |
+| Складність функцій    | Змішані parsing/authority/effects, вкладені state branches | Cohesive functions у frozen budgets без прихованих branches  |
+| Зайві кроки tooling   | Дубльовані lanes, subprocesses, discovery й orchestration  | Один runner/inventory; build/install не запускають suites    |
+| Хибний доказ          | Неповний scope, stale reports, невідомі mutant outcomes    | Exact source/test/tool fingerprints, fail closed на GAP      |
+| Повторення ефектів    | Resume/recovery повторює issued або UNKNOWN операцію       | Тільки same-operation exact-afterimage reconciliation        |
 
 Пріоритет: P0 для порушення чинної поведінки/прав/CAS/UNKNOWN або блокування;
 P1 для спрощення підтримуваного механізму. Нові engine можливості — P2.
@@ -265,19 +265,19 @@ Behavior/coverage/CRAP/mutation доказ цієї корекції ще pendin
 `.tmp/tooling-research/audit-{duplication-shared,queries-snapshots,tooling-steps}.md`.
 Вони є статичними findings, не proof performance або qualification.
 
-| Finding | CLEAR | Поточна корекція / dependency |
-| --- | --- | --- |
-| Нові CLI registry imports відсутні у package `files` | P0 | Додати всі registry modules до bundle inventory до інтеграції help |
-| Release readers мають різні bounded/stable-read гарантії | P0 | Інтегровано один descriptor-owned `readReleaseBytes`; final fault cases pending |
-| Persisted SQL rows/ledger декодують різні owners | P0–P1 | Інтегровано exact SQL projection/raw-byte codec та shared current ledger parser; contextual Host identity/rights/CAS збережено |
-| Upgrade output set читається всередині кожного кроку | P1 | Boundary-local map прибрав повторне target read; повна closure й post-effect checks збережено |
-| Native repair closure повторно читає release record | P1 | Інтегровано synchronous eligible/observation reuse; cache через lock/await відсутній |
-| Retained engine readers дублюють opener pre-stat | P1 | П'ять readers беруть opener-owned immutable dev/ino; final post-read stat збережено |
-| UNKNOWN error custody і strict text image reader дублюються | P1 | Інтегровано shared failure-custody helper і strict nullable repository text reader |
-| CLI help/parser/options мають різні inventories | P1 | Інтегровано shared registry/help/parser; install/scope спрощено; final parity cases pending |
-| Coverage selection, AST inventory і hashing мають дубльованих owners | P1 | Інтегровано один Bun coverage selection/snapshot і AST owner; mutation використовує той самий fingerprint owner |
-| Static scripts пропускають bin; CRAP gate не відповідає frozen policy | P1 | Named Source/CLI/tooling lanes інтегровано; reviewed frozen baseline/evidence ще GAP |
-| `:built:` aliases і final matrix повторюють однакові suites | P1 | Прибрано identical built aliases; один final applicable execution DAG; перевірка поведінки pending |
+| Finding                                                               | CLEAR | Поточна корекція / dependency                                                                                                  |
+| --------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Нові CLI registry imports відсутні у package `files`                  | P0    | Додати всі registry modules до bundle inventory до інтеграції help                                                             |
+| Release readers мають різні bounded/stable-read гарантії              | P0    | Інтегровано один descriptor-owned `readReleaseBytes`; final fault cases pending                                                |
+| Persisted SQL rows/ledger декодують різні owners                      | P0–P1 | Інтегровано exact SQL projection/raw-byte codec та shared current ledger parser; contextual Host identity/rights/CAS збережено |
+| Upgrade output set читається всередині кожного кроку                  | P1    | Boundary-local map прибрав повторне target read; повна closure й post-effect checks збережено                                  |
+| Native repair closure повторно читає release record                   | P1    | Інтегровано synchronous eligible/observation reuse; cache через lock/await відсутній                                           |
+| Retained engine readers дублюють opener pre-stat                      | P1    | П'ять readers беруть opener-owned immutable dev/ino; final post-read stat збережено                                            |
+| UNKNOWN error custody і strict text image reader дублюються           | P1    | Інтегровано shared failure-custody helper і strict nullable repository text reader                                             |
+| CLI help/parser/options мають різні inventories                       | P1    | Інтегровано shared registry/help/parser; install/scope спрощено; final parity cases pending                                    |
+| Coverage selection, AST inventory і hashing мають дубльованих owners  | P1    | Інтегровано один Bun coverage selection/snapshot і AST owner; mutation використовує той самий fingerprint owner                |
+| Static scripts пропускають bin; CRAP gate не відповідає frozen policy | P1    | Named Source/CLI/tooling lanes інтегровано; reviewed frozen baseline/evidence ще GAP                                           |
+| `:built:` aliases і final matrix повторюють однакові suites           | P1    | Прибрано identical built aliases; один final applicable execution DAG; перевірка поведінки pending                             |
 
 Нові engine можливості сюди не додаються. Однакові aliases підтримуваного
 tooling — P1 спрощення, а не нова P2 можливість. Під час реалізації виконуються
@@ -322,19 +322,19 @@ Final mutation вже дозволено прямим людським дору�
 release/upgrade, ledger/SQL і CLI/tooling contours. Ignored reports містять exact
 file hashes, causal execution і remedy; старі findings не є поточними передумовами.
 
-| Current finding | Priority | Code / remaining proof |
-| --- | --- | --- |
-| Archive integrity перевірявся до пізнішого staging copy | P0 | Descriptor-owned read + integrity фактично staged bytes до extract; final fault cases pending |
-| Host authority могла застаріти до upgrade barrier move | P0 | Повторна genuine authority перевірка після staging перед no-replace publication; final race cases pending |
-| Hostile array prototype міг викликати serialization hooks | P0 | Canonical ingress відхиляє нестандартний array prototype; no hook execution; final cases pending |
-| Producer parser failure був поза claim cleanup | P0 | Parsing всередині post-claim catch; failed abort зберігає обидві причини; final fault cases pending |
-| Typed journal повторно cloned/parsed у callers | P1 | Immutable Host snapshot і typed state reuse; contextual Work/rights/CAS checks збережено |
-| Install scalar option викликав ReferenceError | P0 | Один shared option lookup; bounded typed parser; final valid/invalid argv cases pending |
-| Init/install mapping validators відрізнялися | P1 | Один extracted init mapping parser для обох callers; owner values/order збережено |
-| Fresh upgrade API не мав bundle-owned CLI entry | P0 | Додано project-upgrade reconcile handler і shared help/option contract; active loader лишається legacy, final qualification pending |
-| Mutation partitions могли змішувати різні кандидати | P0 | Shared source/test/tool/contract fingerprint, live checks між partitions, report Source byte equality; confirmation runner pending |
-| Generic Stryker command exit міг рахувати infrastructure error як Killed | P0 | Незалежний runner candidate має підтверджувати test failures та зберігати UNKNOWN; gate ще не qualified |
-| Storage admission lease не містив root/workspace ownership | P0 | Виявлено до інтеграції; agent коригує private metadata, cleanup custody та shared open helper |
+| Current finding                                                          | Priority | Code / remaining proof                                                                                                              |
+| ------------------------------------------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| Archive integrity перевірявся до пізнішого staging copy                  | P0       | Descriptor-owned read + integrity фактично staged bytes до extract; final fault cases pending                                       |
+| Host authority могла застаріти до upgrade barrier move                   | P0       | Повторна genuine authority перевірка після staging перед no-replace publication; final race cases pending                           |
+| Hostile array prototype міг викликати serialization hooks                | P0       | Canonical ingress відхиляє нестандартний array prototype; no hook execution; final cases pending                                    |
+| Producer parser failure був поза claim cleanup                           | P0       | Parsing всередині post-claim catch; failed abort зберігає обидві причини; final fault cases pending                                 |
+| Typed journal повторно cloned/parsed у callers                           | P1       | Immutable Host snapshot і typed state reuse; contextual Work/rights/CAS checks збережено                                            |
+| Install scalar option викликав ReferenceError                            | P0       | Один shared option lookup; bounded typed parser; final valid/invalid argv cases pending                                             |
+| Init/install mapping validators відрізнялися                             | P1       | Один extracted init mapping parser для обох callers; owner values/order збережено                                                   |
+| Fresh upgrade API не мав bundle-owned CLI entry                          | P0       | Додано project-upgrade reconcile handler і shared help/option contract; active loader лишається legacy, final qualification pending |
+| Mutation partitions могли змішувати різні кандидати                      | P0       | Shared source/test/tool/contract fingerprint, live checks між partitions, report Source byte equality; confirmation runner pending  |
+| Generic Stryker command exit міг рахувати infrastructure error як Killed | P0       | Незалежний runner candidate має підтверджувати test failures та зберігати UNKNOWN; gate ще не qualified                             |
+| Storage admission lease не містив root/workspace ownership               | P0       | Виявлено до інтеграції; agent коригує private metadata, cleanup custody та shared open helper                                       |
 
 Fresh Source TS і scoped typed lint Host/release/init/help/quality owner: PASS,
 zero diagnostics. All-root strict CLI: FAIL, 2303 diagnostics at the captured
@@ -360,11 +360,11 @@ fingerprint `d12b50f18855d0a586f45e8242bdecfe49025c0479c38c006375c8ae8ee959b3`.
 Root briefly holds product Source stable while independent reviewers inspect it;
 ignored typing candidates remain preserved and parallel implementation continues.
 
-| Independent contour | Current patterns / acceptance |
-| --- | --- |
-| Storage and CLI callers | Gate-before-open/create, exact root/workspace/file, full connection lifetime, source-before-lease close, strong cleanup custody; no fake old-bundle exclusion |
-| Ledger, SQL and canonical ingress | One exact parser/projection owner, bounded ingress without hooks, immutable reuse, producer/parser parity, original issued references; data does not grant authority |
-| Upgrade, activation and recovery | Durable intent/token before effects, real authority after awaits, exact byte CAS, atomic no-replace publication, same-operation UNKNOWN afterimage only, complete prepared closure |
+| Independent contour               | Current patterns / acceptance                                                                                                                                                      |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Storage and CLI callers           | Gate-before-open/create, exact root/workspace/file, full connection lifetime, source-before-lease close, strong cleanup custody; no fake old-bundle exclusion                      |
+| Ledger, SQL and canonical ingress | One exact parser/projection owner, bounded ingress without hooks, immutable reuse, producer/parser parity, original issued references; data does not grant authority               |
+| Upgrade, activation and recovery  | Durable intent/token before effects, real authority after awaits, exact byte CAS, atomic no-replace publication, same-operation UNKNOWN afterimage only, complete prepared closure |
 
 Every report binds its scope hashes to the snapshot and rechecks them at finish.
 Required finding fields: actual/expected behavior, concrete trigger and causal
@@ -704,7 +704,7 @@ numeric gates, active schema/loader switching and Runtime notices remain pending
 Cycle 18 mutation confirms an undeclared fast-xml-parser import in the ignored
 runner/evidence candidate. Its claimed missing mutant-ID environment wiring is
 false: pinned Stryker 10 CommandTestRunner supplies the API-declared
-__STRYKER_ACTIVE_MUTANT__ for every mutant and leaves dry-run unset. Root checked
+**STRYKER_ACTIVE_MUTANT** for every mutant and leaves dry-run unset. Root checked
 the exact installed library implementation. An independent maintained-Source
 complexity comparison also found new CC 11/18 parsers and an existing closure
 increase 1 to 2; ignored v4 functions cannot serve as the accepted baseline.
@@ -1396,7 +1396,6 @@ Runtime update/unblock and one-time notices remain pending. No suites, tests,
 build/install, active existing storage/layout migration, Runtime update,
 publication, CI formation, UNKNOWN replay or notices ran in this segment.
 
-
 ### 2026-10-10: scoped workflow projection integrated
 
 Fresh blind93 verified336 immutable upgrade inputs and found no new grounded
@@ -1438,7 +1437,6 @@ current quality evidence custody. Reviewers receive no history or prior findings
 No tests/suites/build/install, runtime effects, Source publication, CI formation,
 UNKNOWN replay, active existing layout/storage switch or notices ran.
 
-
 Blind96 verified336 inputs and reported writable Istanbul counters as P1. Root
 read the complete cause and actual caller chain using receiving-code-review,
 then checked the already-declared TESTING.md trust boundary: selected captured
@@ -1452,7 +1450,6 @@ in final testing; no coverage PASS follows from this disposition. The blind
 report is preserved unchanged. Neutral future criteria now cite the existing
 trust boundary without describing or seeding any expected finding.
 
-
 Blind95 verified331 inputs and established a supported corrective retry cause:
 retrieveCorrectiveAuthorization directly materializes unbounded journal TEXT,
 then parses/hash-checks it and calls a second Host #read without a coherent
@@ -1465,7 +1462,6 @@ the current stored journal. Preserve that same-operation version semantics.
 Owner uniqueness scan remains necessary; no index saving or filtered corruption
 check bypass is accepted. Behavior proof remains pending.
 
-
 Fresh blind97 reviewed the current declared quality trust contract independently,
 verified336 hashes before/after and found no supported P0/P1. Root reverified
 all336 sealed inputs. Four exact metrics, bounded input/selection/module receipts,
@@ -1473,7 +1469,6 @@ frozen baseline/function partition and assertion-bound Killed checks are preserv
 statically. This scoped review is not execution, coverage, CRAP, mutation or numeric
 PASS. Real Bun interception and complete final evidence remain pending. Maintained
 git diff --check passed with empty output; staged bytes remain untouched.
-
 
 Function-role tooling v4 identified three true retained low-CC growth pairs
 previous identity-only comparisons did not pair: withoutFileBindings1->2, moved
@@ -1488,7 +1483,6 @@ plan. Fresh blind98 independently verified333 inputs and found caller-owned
 selection/context captured by bridge callbacks plus repeated per-wave compile.
 Root verified constructor/open lifetimes and dispatched coherent private input
 snapshots/projector reuse while retaining per-wave loaded-config admission.
-
 
 2026-10-10 continued blind analysis cycles 100-105:
 All newly dispatched analysis agents are fresh fork_turns:none Luna/high, with
@@ -1532,7 +1526,6 @@ No exhaustive numeric partition, coverage or mutation PASS is claimed.
 No tests, builds, installs, runtime updates, replay, cutover, publication or
 TeamLead/owner notices executed. Existing-client exclusion remains a real GAP.
 
-
 2026-10-10 cycle107 and maintained retry cleanup integration:
 Fresh blind107 independently verified334 immutable inputs before/after and found
 no supported P0/P1. Root verified all declared bytes and guarded four maintained
@@ -1567,7 +1560,6 @@ Standalone v2 candidate consolidates descriptor construction and captured Source
 payload bytes, with three genuine source scans instead of five; fresh blind108
 review pending. No Source publication, tests, build/install, Runtime acceptance
 or unblock/notification has occurred.
-
 
 2026-10-10 current cycle109 latest Journal correction integrated:
 Blind109 verified331 declared inputs before/after, no supported P0/P1. Root
@@ -1642,7 +1634,6 @@ and does not convert unresolved labels or file absence into budget proof.
 - Fresh blind120343 hashes identifies current custody candidate child admission single1000ms contention and final handle-close cause masking. Root checked supported paths and requested private v5 finite BUSY wait plus honest unresolved launch custody and tagged multi-error cleanup. No service custody integrated or existing-storage exclusion changed.
 - Human requests a script showing per-function test presence and necessary scenario patterns. Dedicated single writer prepares small read-only AST audit using existing function inventory, exact Source/test fingerprints, binding-aware direct case links and optional explicit reviewed scenario matrix. Direct references, unresolved indirect cases, missing-in-scanned-scope, structural assertion hints and genuine measured coverage remain distinct; no function-name regex PASS or inferred semantics. Candidate has own focused fixtures/static checks and must pass fresh blind review before Root integration.
 
-
 ### 2026-10-10 — current TS-only, quality-library and scenario-matrix continuation
 
 - Full current tracked CLEAR handoff was reread. Actual branch is `work`; fetched HEAD/origin/main remain `b5499511e64b2165a8c97ae3d2b455b25b1ac5b6`. Local/staged changes remain preserved; no ff integration was needed. No archived effects/state restored.
@@ -1658,7 +1649,6 @@ and does not convert unresolved labels or file absence into budget proof.
 - Blind130 verified341 gate-v2 inputs: actual quality wiring/compiler-selection gaps remain pending Root integration, no core walker defect found. Root v3 also covers whole package roots so handwritten root configs cannot bypass TS-only; private nativeTS tests7 PASS/18 assertions, strict TSC and configured typed lint2/zero PASS. Runtime/all-source migration remains FAIL, never converted to green by these fixtures.
 - No final four-metric coverage, frozen CRAP/budget or confirmed mutation PASS; no Source publication, formation/install, system runtime update, verified unblock or duplicate owner notices.
 
-
 ### 2026-10-10 — gate repair joined, genuine denial continuation and optimized profile candidate
 
 - Root reviewed blind131's proposed exclusive-creation-only requirement against interruption behavior. An exact zero-byte coordinator left before metadata publication is not a persisted source DB. Rejecting it solely because this invocation did not create it would strand interrupted/racing creation; creation timing is not authority. Private v2 states the current coordinator boundary precisely and adds existing-zero-byte completion/source DB absence regression. Malformed nonzero empty SQLite and unexpected sidecars remain denied; product UNKNOWN is neither settled nor replayed.
@@ -1669,7 +1659,6 @@ and does not convert unresolved labels or file absence into budget proof.
 - Blind132 verified349 final-v5 inputs. Root confirmed adjacent aggregate union capture + validator-owned coverage capture at post-coverage/final report boundaries; private v6 composes validator-owned current capture safely, not caller-provided verified JSON or removed checks across real child/report transitions. Actual legacy MJS owners remain explicit migration FAIL, although the new aggregate/test are nativeTS. No final suites invoked.
 - Blind135 source-gate wiring review exposed compiler selection omitting accepted .mts/.cts/.tsx and missing default test caller; private v5 fixes both, enumerates whole packages + repo adapters + .githooks, and preserves exact generated exclusions. Separate Source typecheck remains purposeful: Source forbids TS extension imports/allowJS, transitional mixed CLI/tooling/tests permits existing TS extension imports/checkJs. Different compiler-option contracts cannot be removed merely to reduce process count. Combined quality project selects all maintained directory source extensions in one CLI/tooling/test pass. Gate migration remains FAIL until legacy eliminated; hooks activation held. New blind136 reviews corrected snapshot.
 - No final100% coverage/CRAP/mutation, Source publication, artifact build/install, runtime acceptance, developer unblock or owner notices.
-
 
 ### 2026-10-10 — latest dependency refresh and strict Knip pre-commit gate
 
@@ -1698,7 +1687,6 @@ and does not convert unresolved labels or file absence into budget proof.
 - Strict Knip now has7 findings, still FAIL without suppression: four preserved preexisting local src-check files, two unresolved legacy coverage/provenance test producers, and the CI formation observer without a qualified caller. Narrow two-case replacements were rejected because they lose meaningful legacy scenarios; no obsolete producer or guessed ambient CI authority was introduced. The active pre-commit still checks the exact preserved index, whose SHA/dev/ino remain unchanged.
 - Reviewed removal correspondence contains17 runtime-function identities:16 occur in published b549951 Source and one is an unpublished shim. Retained233 scoped complexities are unchanged. This is a reviewable removal candidate, not admission to the authoritative frozen budget/coverage baseline; no baseline reset or numeric PASS. Full TS-only migration, full tooling/test lint, exact four-metric coverage, frozen CRAP and assertion-confirmed Killed remain open.
 - Existing service-custody-v8 work resumes from actual current bytes with both fresh and merge producers. Root remains the maintained writer and final verifier; independent Luna reviewers receive no history. Private static evidence is not runtime/behavior proof. No database/lease restoration, archived UNKNOWN replay, build/install suites, release effects, system update or unblock notices.
-
 
 ### 2026-10-10 — Superpowers dispatch, custody and current test-tool joins
 
@@ -1764,14 +1752,13 @@ and does not convert unresolved labels or file absence into budget proof.
 ### 2026-10-10 — native contract completion and honest baseline/public gaps
 
 - Root serialized affected native contract/PATH/queue control checks:22 PASS/86 assertions across four exact files. Both contract migrations preserve original cases, rejected IDs and assertion intent; actual native scoped TSC/type-aware lint exit0. Windows prepend uses the effective lexical winner, removes duplicate spellings in a copied environment and preserves POSIX case-distinct variables. Actual broad static closure exposed legacy hook debt; reviewed strict hook repair is joined separately, not hidden by the native-only passing scope.
-- Captured JSON runtime-object module parity:9 PASS/14 assertions; strict TSC/type-aware lint exit0. Native object named exports/default collisions/own __proto__/__esModule plus scalar, array, null and malformed JSON/UTF-8 are checked. Each new helper is fingerprinted in both tool inputs and bootstrap receipts; imports occur only after captured digest checks. No product loader/schema activation.
+- Captured JSON runtime-object module parity:9 PASS/14 assertions; strict TSC/type-aware lint exit0. Native object named exports/default collisions/own **proto**/__esModule plus scalar, array, null and malformed JSON/UTF-8 are checked. Each new helper is fingerprinted in both tool inputs and bootstrap receipts; imports occur only after captured digest checks. No product loader/schema activation.
 - Corrected original frozen-lock baseline environment uses its own installed dependencies. A tool-only alias exposes the original lock-installed transitive istanbul-lib-coverage3.2.2; Source package/lock bytes remain published. Original JSON errors are resolved, but actual v12 baseline FAILS:273 PASS/1 SKIP/14 FAIL/2022 assertions,67.34s. Twelve failures concern old fixture coverage protocol; mutation inventory and Unicode transformation are separate. No admitted baseline/report/process receipts were produced; partial builtin numbers remain inadmissible. Earlier v11 dependency-resolution failure is retained too.
 - Correction to the earlier Unicode diagnosis: the published fixture bytes are valid UTF-8. Pinned Bun's plugin treats captured Buffer text as Latin-1; Root bounded probe reproduces correct `unicode-é東京` becoming mojibake. Added shared fatal UTF-8 text decoding, preserving exact binary buffers. Actual native JS/TS parity plus malformed-text/binary controls:4 PASS/8 assertions; strict TSC/type-aware lint exit0. This fixes the proven Unicode capture defect, not the independent old fixture protocol conflict. No baseline suite rerun solely for this single correction while the other known blockers persist.
 - Public CLI controlled fixture now records each real child timing and retains the root on UNKNOWN. Normal namespace cache experiment still FAILS at unchanged60s:issue12.997s,report11.429s,writer25.741s/SIGTERM/statusnull (parent timeout). No ETIMEDOUT error was observed; receipt therefore does not assert a child timeout. Root `/tmp/vida-absorption-jIwMSa` retained. Runtime kernel itself took95.368ms after a21.425s start offset; no unsupported claim that transpilation explains that offset. Receipts: `root-public-cli-fixture-timing-v10`.
 - Retarget test migration retains27 literal templates/44 expanded cases and additional CI null/malformed observation controls. Actual maintained strict TSC/type-aware lint exit0 after fixture JSON unknown-boundary and installed JSZip declaration corrections. Actual behavioral run:2 PASS/42 FAIL (missing current Source workflow fixture); after that precise correction:14 PASS/30 FAIL, revealing remaining current build-inventory/receipt/ZIP/CLI fixture deficits. A sole private writer repairs the complete current fixture contract before further behavioral collection. No legacy worker rejection is misrepresented as initialized-worker qualification.
 - Reviewed Git hook strict typing narrows parsed manifests/reports and reuses one report read/parse. Independent review found a retained non-finite budget-ceiling weakness; actual regression RED reproduced acceptance of NaN/Infinity. Root added finite ceiling validation through a small helper; native measured-maxima checks GREEN. Pre-push remains unactivated. Existing legacy root hook test imports obsolete baseline API; not treated as passing or silently skipped. Receipts: `root-git-hooks-type-integration-v12`.
 - Execution plan now batches frozen private packet→review→single maintained join→shared static check→affected behavior. Root alone owns maintained shared writers and serial behavioral/numeric runs; agents have private disjoint scopes, no inherited history. Unchanged passing full suites/scans are not duplicated. Exact gates, frozen baseline/budgets and assertion-confirmed Killed remain GAP, with no runtime/install/unblock notices.
-
 
 ### 2026-10-10 — optimized private dispatch and qualified causal deltas
 
@@ -1922,7 +1909,6 @@ Adapter/preload migrated together to native TS; per-test generated adapters use 
 - Migration count snapshot at14:19 UTC: last3h9 full JS/MJS-to-TS migrations and3 partial extractions, excluding newly added TS and edits of existing TS.169 live working JS/MJS remain (tests/fixtures89, CLI43, tooling15, root config2, repository adapters20); current broad filename policy also sees157 package scratch copies. Whole TS-only gate remains FAIL. These are file counts, not accepted task percentages.
 - User requests percentages and delta from the previous percentage report. No previous numeric table found in accessible current WORK/strategy/backlog or visible conversation; app thread-history retrieval is unavailable. No historical percentages, percentage-point deltas, or weighted total closure may be reconstructed from bounded PASS results. Full exact coverage/frozen CC/CRAP/assertion-confirmed Killed and actual updated-runtime unblock remain pending. No Git index mutation, build/install, runtime update or unblock notices.
 
-
 ### 2026-10-10 — native properties, prelaunch published binding and validator v68–v69
 
 - v68 adds three native fast-check codec properties with 128 generated cases each, independently projected expected state, detached/frozen collections, serialization/idempotence, required/unknown fields and attempt boundaries. Fixed seeds and paired scenario/shrink-path replay inputs retain reproducibility. This packet does not qualify nested nonempty item/corrective/source records, Host restart, CAS or external replay. No package installation. Scoped strict TS/typed lint0. Joined affected native run18 PASS/0 FAIL/3276 assertions/2.31s. Receipt `.tmp/tooling-research/root-codec-baseline-v68/`.
@@ -1982,7 +1968,6 @@ Scoped strict TS/typed lint0. Fresh replacement stop case1 PASS/0 FAIL/60 assert
 
 At the user's explicit `git push` instruction, Root executed `git push origin HEAD:main`: exit0, `Everything up-to-date`. Committed HEAD remains b549951; local/staged bytes are preserved and no commit, force push or hook bypass is made. This does not publish the uncommitted implementation or update the system Runtime, and supplies no unblock/owner notice evidence.
 
-
 ### 2026-10-10 — requested ast-grep installation, qualification and project skill v86–v87
 
 At the explicit user request, @ast-grep/cli0.50.0 is globally installed as a development tool. No Agent/Core dependency, package lock or product Source changes. The complete TS scratch pilot has46 CLI contract cases. Initial failure was a Bun adapter assumption (no signal is undefined, not null); after correction the whole run44 PASS/2 FAIL. Rule snapshots deliberately omit the rule-level diagnostic message; explicit JSON verifies it separately and actual span drift/noisy/missing controls reject. Changed snapshot case then1 PASS/22 assertions; unchanged passing cases are reused. Current combined CLI status45 PASS/1 FAIL: SARIF output has top-level version0.50.0 instead of standard2.1.0. This standards contract remains FAIL, with raw output and upstream root cause retained. No false full-green, type/binding/dataflow, TS7 grammar completeness or coverage/assertion/mutation claim. Bounded TS/CTS/MTS/TSX, optional/generic/private calls, Unicode/CRLF byte positions, JSON modes, error-severity/config/path controls, parser recovery, owned-fixture rewrite preview/application/idempotence, selection/symlinks, nested traversal, outline and10,000-match/thread determinism are observed. Scoped strict TS/typed lint0.
@@ -1991,18 +1976,15 @@ Plugin Creator local skills workflow installs the pinned ast-grep/agent-skill re
 
 Two blind Luna reviews confirm the known limitations and no material installation/instruction blocker. Native DocFlow baseline cannot inventory the preexisting absent packages/plugin/docs canonical root; this remains an explicit documentation GAP, with no placeholder, policy weakening or successful CLEAR checkpoint fabricated. The user's explicit sidecar instruction is implemented locally without claiming documentation readiness. Product Source and raw Git index remain byte-identical; all prior local/staged changes are retained. No whole Source suite/build/runtime install, commit/staging/push, UNKNOWN replay, runtime unblock or owner notice. Packet .tmp/tooling-research/root-ast-grep-validation-v87 contains retained failures, focused results, preimages, lineage, inputs and qualification-summary.json. This developer-tool outcome closes no numerical P0/P1 or system-runtime qualification gate.
 
-
 ### 2026-10-10 — user-directed original skill location v88
 
 The user explicitly removes .vida/skills and requires originals in .agents/skills. Root moves both upstream skill directories and the provenance manifest to .agents/skills, replaces the two discovery symlinks with the actual directories and removes only the emptied owned .vida/skills directory (and empty created .vida root). Upstream skill/reference bytes and pin/license are retained; manifest file keys and sidecar links/ownership text reflect the direct project location. One sidecar migrate-links event appends to preserved lineage. Filesystem verification confirms two non-symlink directories, all three exact upstream files, readable skill references, no .vida/skills, no stale sidecar links and raw Git index unchanged. No CLI tests repeat for a location-only change; prior v87 layout proof is historical, not current direct-layout evidence. Existing SARIF and missing-plugin-docs DocFlow gaps remain open. No product/runtime/gate/schema/dependency/Git publication change. Receipt .tmp/tooling-research/root-ast-grep-skill-location-v88/verification.json.
-
 
 ### 2026-10-10 — explicit search-tool bootstrap v89
 
 At the user's instruction, AGENT.sidecar.md now places the four-purpose tool map directly below its introduction: rg for filenames/symbols/messages/config text; ast-grep run/scan for syntax candidates; outline for navigation; existing Babel inventory and TypeScript for identities/types/semantics. All delegated agents, including blind workers, receive the repository root and bootstrap pointer, load the structural policy, read relevant project skills before use and report missing/version-drifting CLI instead of claiming a check. The generic AGENTS.md already mandates immediate sidecar read before planning/editing/dispatch, so no generic template duplication is added.
 
 A fresh blind Luna reader correctly returns all four choices, project skill paths, missing/version fallback and the distinct syntax/evidence boundaries. Its note distinguishes resolving source locations from opening only task-relevant bodies; these are compatible steps under existing AGENTS guidance. Direct checks pass for bootstrap chain, current skill paths, unchanged raw index and schema-valid appended lineage; git diff --check passes. No product test suite repeats for this instruction-only change. Existing missing packages/plugin/docs DocFlow GAP and numerical/runtime gaps remain open. Receipt .tmp/tooling-research/root-search-bootstrap-v89/verification.json.
-
 
 ### 2026-10-10 — lexical binding audit, native scope and strict imports v91–v93
 
@@ -2016,7 +1998,6 @@ The whole current strict Source project exposes four TS5097 import errors. Corre
 
 Frozen v3 images/manifest, RED/green logs, semantic controls and verification.json live under .tmp/tooling-research/root-scope-lexical-v91/. All selected hashes and actual raw Git index match. Four independent contour/review outcomes are recorded; property-callback linkage, legacy-root hook disposition, exact coverage, frozen per-function correspondence/CRAP and confirmed-Killed gates remain OPEN. No active loader/schema switch, live-state copy, runtime install/unblock/notice, build, staging or Git publication.
 
-
 ### 2026-10-10 — native project mapping and initializer owner v94–v97
 
 Project mapping moves from MJS to native TS, preserving explicit roots, first-equals parsing, sorting, duplicate ID rejection and whole input-shape error precedence. Actual regressions demonstrate sparse arrays, inherited numeric entries, caller map overrides and accessor getters. One own-data capture pass copies only own string data entries before parsing, so input methods/getters cannot fabricate accepted mappings. Windows drive roots reject consistently with the downstream portable-root contract; this is earlier rejection, not a runtime escape claim. Hostile Proxy/ambient prototype isolation is not qualified.
@@ -2026,7 +2007,6 @@ The old initializer owner moves to native Bun TS with no declaration wrapper; pu
 Scoped strict TS and typed lint exit0/0 diagnostics; final affected native pair56 PASS/0 FAIL/136 assertions/2.07s. Whole Source and combined CLI/tooling types passed earlier in the packet; final whole-current recheck remains owned by the subsequent stable cleanup batch. Failed intermediate fixtures and real RED logs are retained, including the clearly labelled immutable pre-fix reconstruction for inherited-index behavior. Frozen v4 packet and verification.json live under .tmp/tooling-research/root-project-mapping-v94/. Its Knip input is subsequently changed by v98 legitimate preload entries; other selected hashes still match at receipt formation. The raw Git index remains unchanged.
 
 Fresh blind review finds no material remaining mapping/init blocker. This proves these contracts only: exact coverage, frozen per-function correspondence/CC/CRAP, assertion-confirmed mutation, complete upgrade/repair and installed Runtime unblock remain OPEN. No suites in build/install, live state restoration, activation, staging or publication occurred.
-
 
 ### 2026-10-10 — strict cleanup, current report contracts and timeout custody v98–v102
 
@@ -2039,7 +2019,6 @@ Six blind Luna lanes identified exact mapping and assertion gaps. All five unass
 New native rebind tests use real SafeAccess and direct Bun assertions over initial/completed binding and hash-rebound semantic denials; wrappers were removed so Source links stay audit-visible. The unchanged rebind owner passed11 cases in contracts-v1. Corrected fs-safe/real-runner-lock/inventory owners passed7 cases/198 assertions/0.863s in contracts-v2. fs-safe independently binds version/SRI/runtime manifest and both physically installed Linux x64 target-tree digests; foreign Windows/arm64 digest byte proof remains a GAP. Real current coverage runner foreign-lock denial preserves report/staging/lock bytes and inodes and prior runs without launching a suite. Five synthetic report validator cases passed/11 assertions/1.71s, proving current input binding, live/snapshot drift and malformed counter denials only; synthetic receipts confer no child execution or numeric proof.
 
 Lifecycle fixture custody is registered before the first await, including creation; only explicitly passed/settled/unretained roots are removed. Pending/failed roots and root-owned faults remain permanently retained even after late success; module/prototype restoration waits until registered callbacks settle. Direct Bun registrations/names/timeouts are unchanged. Blind review found no current latch/restoration defect; a helper rejecting before returning a created path remains its own diagnostic limitation. The isolated previously failing retirement case still timed out at the unchanged60s limit (89.89s elapsed), but its root/history/flows/activation artifacts were retained, historyphase=retiring, and prior missing-intent cleanup error did not recur. This proves retention for that failure, not product completion or a timing root cause. Evidence/receipts .tmp/tooling-research/upgrade-custody-v102; legacy v98 failed batch and preimages remain preserved. Raw Git index hash remains unchanged. No build/install, live state replay, active schema switch, publication or unblock notices.
-
 
 ### 2026-10-10 — native unified coverage runner closure v102–v103
 
@@ -2129,7 +2108,6 @@ Four added Linux public readBytes scenarios use the real target descriptor ident
 
 The demonstrated allocation inefficiency is corrected inside the private reader: chunks.concat copied the entire prior chunk-reference array per syscall. The sole owned Buffer[] now appends with push; no live byte cache, altered cap/EOF probe, syscall offset, guard order, ownership/CAS, callback count or branch structure. This removes quadratic reference copying; it does not establish a measured runtime speedup. Actual affected bounded/ancestor/stable Source readers20PASS/0FAIL/83assertions/2.25s; Source and owner compiler and typed lint0, strict Knip0. Blind review finds no ownership or restoration defect. Exact frozen function correspondence/CC/CRAP still requires the final evidence owner. Evidence: safe-read-short-syscalls-v124, retained preimage and before/after logs. No unchanged macro upgrade run, build/install, active schema/loader switch, old-state replay or unblock notice.
 
-
 ### 2026-10-10 — authorized historical measurement admission and mutation parser repair v125
 
 The user's direct reply authorizes removing obsolete instruction blockers and
@@ -2192,7 +2170,6 @@ wording is stale: safe domain/canonical snapshot/revision boundaries and native
 cases already exist, so no duplicate implementation. Runtime, legacy opener
 exclusion,60s repair, final current coverage/budgets/mutation, delivery and notices
 remain OPEN. No loader/schema switch, old-state replay, build/install or notices.
-
 
 ### 2026-10-10 — genuine consumer admission, map custody and private counters v126
 
@@ -2268,7 +2245,6 @@ Packet: .tmp/tooling-research/published-reference-v125/. Raw index remains
 
 The corrected genuine v126 run completed:286PASS/1skip/1FAIL/2025assertions,75.69s,exit1. Matching consumer admits run fe54f83c-6a70-4223-9872-f43f1ac784e9, report SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb,108 sources/one observed process, then completes5701 historical function rows from captured Source bytes/counters. Private counters add92 functions relative to the previous5609 denominator; no row is dropped. Historical4170 functions are unexecuted; maxCC501/maxCRAP251502 are measured historical facts, not new-function allowances. No budgets/correspondence or current quality/runtime are claimed. One current structural function/test queue audit starts from actual maintained scope for next ownership dispatch; generated profiles/scenarios remain unreviewed.
 
-
 ## v127–130 — strict structural audit repair and one-pass helper resolution
 
 Latest attributable user instruction authorizes removing obsolete test-architecture
@@ -2320,7 +2296,6 @@ notices remain OPEN. No active loader/schema switch, state/UNKNOWN replay,
 staging, discard or publication. Raw index remains
 09a341c413d9c72c258555bc3bb74eae0f11c29ea8c62197865657998a24afa2.
 
-
 ### v131 — reuse selected test-module export subjects
 
 Actual public RED reproduced imports from already selected test modules being
@@ -2334,7 +2309,6 @@ full scan until the next causal boundary is ready. Two fresh blind Luna reviewer
 prepare independent repository-only and JSON/config closure designs. Root retains
 all writes and final verification. Numeric gates, frozen correspondence and
 Runtime remain open.
-
 
 ### v132–133 — JSON/config data resolution and lossless UTF-8 custody
 
@@ -2366,7 +2340,6 @@ virtual repo tooling keys normalize test-origin ../../../tooling/agent imports
 to ../../tooling/agent, physically under repository tooling/agent; any next
 implementation must bind that explicit boundary and forbid links/escape, not
 use a guessed third-parent physical path. No Source/runtime numeric acceptance.
-
 
 ### v134–137 — bounded repository resolution, read-only capture and manifest custody
 
@@ -2451,7 +2424,6 @@ qualified unblock notices remain OPEN. Packets: .tmp/tooling-research/
 audit-type-space-v127 and native-cli-contract-v138. Raw index unchanged:
 09a341c413d9c72c258555bc3bb74eae0f11c29ea8c62197865657998a24afa2.
 
-
 ### v139–140 — bounded activation/lock regression and native CLI help/options
 
 User authorization to remove obsolete baseline-tool prohibitions is already
@@ -2529,7 +2501,6 @@ lease/DB/release or archival UNKNOWN replay, full numeric/mutation suite or
 qualified unblock notice. Frozen correspondence, current exact100 all-four
 coverage, confirmed100 Killed, fresh lifecycle timing, existing-opener exclusion,
 remaining P1 and delivery/runtime qualification remain OPEN.
-
 
 Continuation ready: fresh origin/main fetch exits0 and equals currentHEAD
 b5499511e64b2165a8c97ae3d2b455b25b1ac5b6; no ff or checkout is needed. Dirty
@@ -3500,7 +3471,6 @@ PASS or a measured current migration count. Do not weaken selection or create
 legacy exceptions to hide actual maintained JS/MJS. Resolve work-data placement
 and connected TS packets while retaining existing receipts and UNKNOWN custody.
 
-
 ### 2026-10-11 — parallel native test corrections v178–v184
 
 Published unfinished Source checkpoint e09ab999330799bf38de015771b79bf0922d6336
@@ -4010,7 +3980,6 @@ format. This is mixed-preimage receipt-repair evidence, not qualification of a
 fully historical reservation with every copy stripped. No Source repair scope
 or authorization is expanded to satisfy that broader unsupported inference.
 
-
 ## 2026-10-11 v270–v283 — connected test packets and actual repair P0
 
 Root integrates three qualified TS migrations: audit-core-regressions,
@@ -4111,7 +4080,6 @@ alone checks/integrates; no agent suites/compiler/AST/hash/Git or shared writes.
 All exact coverage, frozen budgets/correspondence, confirmed Killed, functional
 upgrade completion, publication and Runtime/update/unblock/notices remain OPEN.
 
-
 ### Current continuation v296–v338: size-ordered joins and causal repair
 
 The active category queue is v335, ordered by actual original byte size within
@@ -4195,7 +4163,6 @@ was successful. Final stable Bun behavior, exact coverage/CRAP/frozen mapping/
 assertion-confirmed mutation gates remain OPEN. No active loader/schema cutover,
 system update, verified unblock or notices.
 
-
 ### 2026-10-11 continuation v340–v354: connected contours and causal P0
 
 Current handoff continuation is updated to v340–v354. Latest filename receipt
@@ -4239,7 +4206,6 @@ receipt; this does not attribute cause, establish a target denial or permit repl
 Source stayed stable during this timed check. Fresh origin fetch0/0 at e09ab999.
 Index unchanged; no new stage/commit/push, build/install, active cutover or notices.
 Exact final numerical/frozen mapping/Runtime gates remain OPEN.
-
 
 ### 2026-10-11 continuation v355–v382: smaller contours, honest scenario evidence
 
@@ -4309,7 +4275,6 @@ strictTS/lint0. Two continuation prefix failures remain; private Luna investigat
 their fixture/contract correspondence read-only. No migration closure claimed.
 Initial v400 behavioral invocation used wrong runner path and executed no tests;
 failed receipt retained, corrected v401 actual Bun run supplies proof.
-
 
 ## 2026-10-11 continuation v399–v432 — qualified joins, real writer setup and SQLite boundary
 
@@ -4486,7 +4451,6 @@ independent blind review finds no actionable parity difference. It remains
 unjoined, pending path/caller closure and focused exact-image tests. Other
 private native TS candidates have central feedback pending. No build/install,
 Git mutation, hook bypass, archived operation replay or owner unblock notice.
-
 
 ### 2026-10-11 — release preparation and connected CLI migration v465–v484
 
@@ -4688,7 +4652,6 @@ Plan v527 blind Luna read-only review approved the current CLEAR/backlog/handoff
 sections: no actionable conflict or missing requirement found; one queue, shared
 writer, stable-input verifier and completed/ready/pending distinctions retained.
 This is plan consistency evidence, not a Source numerical quality gate.
-
 
 ### 2026-10-11 — native next CLI closure v528–v532
 
@@ -4935,7 +4898,6 @@ active loader/schema switch, runtime update, unblock/notices, new commit/push
 or broader hook bypass. Frozen correspondence/CRAP plan and final exact coverage/
 assertion-confirmed Killed remain OPEN; genuine historical admission v126 is reused.
 
-
 ### Continuation v599–v613: afterimage proof, delivered TS and terminal custody
 
 v600 interrupted-afterimage Source case PASS51assert/87.519s at unchanged90s;
@@ -4997,7 +4959,6 @@ new staging/commit/push or expanded hook bypass. Exact final coverage, reviewed
 exhaustive frozen correspondence/CRAP budget plan and assertion-confirmed Killed
 remain OPEN. Reuse genuine historical admission v126; do not recapture baseline.
 
-
 v614–v618 connected closure: four repository tests are now maintained TS and
 both documentary controllers TS, exact old MJS preimages archived v610 before
 removal. Current consumers/Knip forward-lifecycle-clear entry joined; frozen
@@ -5029,7 +4990,6 @@ UNKNOWN boundary: existing fake before-delegate tests do not prove native
 opened.create was never invoked. Keep UNKNOWN until typed/provider-boundary
 causal proof exists; do not relabel conservative result as NOT_APPLIED.
 
-
 v619 dispatch used six blind Luna jobs for the next dependency-ready Source
 closure: three bootstrap entry proposals; Bun/install; development controller;
 payload/doc-phase pair; forward plan/prepare/finalize; exact bootstrap consumer
@@ -5041,7 +5001,6 @@ runnable artifacts and frozen inputs stay distinct from maintained TS Source.
 Do not transplant private package-root expressions or infer Node direct TS
 support/native publishability from compiler PASS. Current active remainder
 stays v61721JS until a full connected join and required scoped checks.
-
 
 ### v625–v633 forward/bootstrap connected Source continuation
 
@@ -5100,7 +5059,6 @@ result typing and unchecked dynamic module/JSON boundaries remain. Do not count
 private draft filenames as Source migrations. No new stage/commit/push/hook bypass,
 build/install, active loader/schema change, Runtime update/unblock or notices.
 
-
 ### v634–v643 — three connected adapters, concrete compiler-led CLI correction
 
 Joined native TS `tooling/agent/{combined-public-steps,release-assurance,native-ci-delivery}.ts` with current Source consumers, CI invocation, source-binding inventory and maintained instruction pointers. Exact MJS preimages retained under typed-correction-v179/archive/{small-adapters-v634,native-ci-v635}. Frozen external/published fixture inputs are not rewritten. Combined steps use the actual owner signatures and a narrow result projection; no duplicate receipt validator or claim of full receipt validation was added.
@@ -5114,7 +5072,6 @@ Remaining active MJS files: six CLI implementations and release-local (seven). L
 Dispatch now assigns exact compiler diagnostics and concrete native signature segments to existing blind Luna workers, reusing their loaded context. Root remains sole maintained Source/check/Git writer. No repeated baseline, full behavior suite, AST/hash census or test in build/install. Private proposals are incomplete until strict typing, lint, semantic review and affected behavior qualify their connected callers. Runtime-config, synthesis and run work remains in progress; repair-native-delivery-evidence still needs its candidate.
 
 Fresh origin/main fetch0/0 at e09ab999330799bf38de015771b79bf0922d6336; existing dirty work and empty index preserved. No new stage/commit/push/hook bypass, package installation, build/install, active loader/schema switch, Runtime update/unblock or notices. Frozen exhaustive correspondence/CC/CRAP, exact coverage, assertion-confirmed mutation and actual native qualification remain OPEN. Retained failed/UNKNOWN roots remain unopened/unreplayed.
-
 
 ### v644–v661 — native Source migration joined; all-maintained compiler PASS
 
@@ -5130,13 +5087,11 @@ Root selected v661 native behavior cases are in progress; preserve terminal rece
 
 No new stage/commit/push/hook bypass, package install, build/install, Runtime update or notices yet. Existing dirty work remains intact; retained failed/UNKNOWN roots remain unopened and unreplayed. Next concrete work: finish selected native behavior, join resulting defects once, then reviewed mapping and unresolved bundle boundary matrix under one final-check owner. Do not restart bootstrap/audit loops for unchanged Source.
 
-
 ### v662–v663 — one current audit, corrected native recovery negative fixture
 
 v662 shared Babel audit/test-link/queue capture completed:7563functions,320present,2647no-direct-reference,4596unresolved,0diagnostics,127review jobs. Structural present is not execution/assertion/coverage/mutation proof; all generated patterns remain unreviewed. Reuse current-v662-audit-queue.json for dispatch; native Source unchanged since its capture. Its test binding will be stale for the following changed test only.
 
 v661 selected native behavior6PASS/1FAIL/125expects/50.14s. Root initially misread a truncated log as a duplicate begin failure; full log1159 and two independent read-only comparisons show repeated begin correctly denied. Actual failure was an old fixture expecting first terminal FAIL to reject where PASS and FAIL are both explicitly supported. No product/native migration bug found. Corrected only that denial input to a foreign caller_session, preserving expected rejection and final unchanged DB assertion. Existing adjacent parameterized PASS/FAIL acceptance remains. v663 exact changed case is in progress on a fresh fixture; prior failed root is not opened/replayed. No unchanged6PASS rerun or gate relaxation.
-
 
 ### Current human decision — clean isolated Runtime qualification (2026-10-11)
 
@@ -5146,7 +5101,6 @@ OPEN final task: qualify the exact formed native executable in an unrelated fres
 
 Root remains sole final-check owner. Reuse already qualified unchanged Source tests/numeric evidence. Build/install run no suites; the isolated native execution task is a distinct qualification phase after formation. Preserve exact coverage/frozen CC-CRAP/assertion-confirmed Killed gates and product CAS/ownership/authorization/UNKNOWN. Clean-project qualification does not authorize removing guards or changing active schemas/loaders before bundle repair is ready. Completion requires the actual isolated execution receipts; installation/version text alone is insufficient.
 
-
 ### v663–v666 — qualified recovery fixture correction; concrete remaining caller cost
 
 v663 exact corrected foreign caller observation denial PASS1/12expects/16.27s; no product guard change, no replay. v665 scoped lint config/recovery tests PASS0. v665 format-check found runtime-config only; v666 formatter applied formatting only after all behavior children terminated. Config Source hash in v662 is now stale; retain its inventory as provenance for that module and do not dispatch/final-gate against its obsolete byte binding. Other unchanged scoped function maps retain their source bindings; the changed recovery test hash also requires final refresh. Do not duplicate a whole AST pass merely for formatting now.
@@ -5155,13 +5109,11 @@ v665 helper completion1PASS/1FAIL/47expects/88.33s. Retired Source capture throu
 
 Bounded v664 frozen correspondence proposals are PRIVATE/non-executable: bootstrap bun/init30retained,20new,3published callback mappings unresolved; CLI options/contracts1candidate-new,57unresolved. Root review and exact exhaustive mapping remain GAP; do not activate allowance seed or classify missing TS files as automatically new. Upgrade review identifies actual remaining process-death boundaries after activation move/before activated save and after final file/before files_published CAS, plus unresolved actual existing-storage old-opener exclusion. Do not flip its false guard. These are ordered next P0 test/implementation tasks, not another generic audit cycle. New clean isolated Runtime task above is the final qualification owner; old user unblock/recovery/notices are superseded.
 
-
 ### v667–v668 — shared transaction-scoped history inventory correction
 
 Causal review locates3metadata probes: initial qualified-history existence, full stored-history load bypassed by supplied validated receipts, then projected Work history reload. Root archived exact host-state preimage at archive/history-cache-v667. Existing no-history-write fenced operation scope now shares one live all-history table inventory between the qualified-row read and full history loader. The existing per-work history cache accepts supplied freshly validated qualified receipts and reuses an existing value only if the supplied list matches; mismatch reloads. Overlay bypass, scope finally restoration, actual qualified row verification, repeated Work/current-file validation, Host/Journal/ledger CAS and authorization remain. No cross-operation table/history cache or schema switch.
 
 v667 Source compiler/scoped typed lint PASS0, formatter PASS. Independent delta review is pending. v668 only originally failed same-work validate case is running on a fresh fixture. Do not weaken expected1 metadata query or replay v665 failure. Host-state source binding in v662 is now stale; private unaffected-module correspondence still reusable, final whole inventory waits for Source stability.
-
 
 ### v668–v670 — final publication interruption proof; next explicit caller blocker
 
@@ -5173,7 +5125,6 @@ v670 ONLY newly added last-file abrupt stop case PASS1/68expects/78.020s (79.73s
 
 Current instruction remains clean isolated native Runtime qualification rather than old unblock/notices. No stage/commit/push/hook bypass or active Runtime/schema/loader change. Source/test edits invalidate their affected v662 byte bindings; unaffected scoped private maps reusable. Final mapping/numeric/native qualification remains OPEN; no whole AST/suite rerun merely for this checkpoint.
 
-
 ### v671–v674 — causal corrective inspection repair and activation death fixture
 
 v671 fresh private actual run/main diagnostic exposed the existing public corrective retry cause: local session inspection rejects different Work/base and authorized Journal/engine run IDs. The private launcher used unchanged run/main and public sanitizer; after the child reached terminal FAIL (35 assertions/57.132s), Root restored the maintained public CLI launcher to bin/run.ts. No old failed fixture or UNKNOWN root was opened/replayed. Exact diagnostic preimage/log retained in typed-correction-v179.
@@ -5183,7 +5134,6 @@ v672 Root reuses final-assurance validateWorkSessionBinding for a schema-validat
 v673 private activation process-death patch joined after independent contract review. Initial helper syntax omission caught by formatter/lint and corrected before any behavior run; retained failed static log is not a PASS. v674 explicitly includes the child-only preload in connected compiler scope: compiler, scoped typed lint and formatter PASS0. Fresh selected activation-move process-death behavior run is pending. It delegates the actual no-replace move, proves exact staging/target dev+inode/bytes, exits86 before checkpoint, then uses same-operation public API resume with an observed zero additional move count. Original45s child/90s parent bounds retained.
 
 Clean isolated native Runtime task remains the current final owner instead of old unblock/notices. Private matrix-v672 is UNREVIEWED and under corrections for physical Source unavailability and native-vs-SDK alias surfaces; no runtime execution claimed. Private frozen mappings remain non-executable; existing genuine baseline positions are reused, not recaptured. Root is sole Source/Git/final-check writer. No stage/commit/push/hook bypass, native formation/install, active loader/schema change or Runtime acceptance.
-
 
 ### v675–v680 — bounded fixture optimization; exact corrective prototype cause
 
@@ -5200,7 +5150,6 @@ The clean isolated native Runtime task is saved in the current CLEAR plan, hando
 v681 terminal receipt: full validate case FAILED unchanged60s parent deadline (59expects,60.029s;64.72s runner), before the corrected resume boundary. Setup variance consumed the budget; unchanged first corrective retrieval passed, the following retry child received SIGTERM. This run neither confirms nor disproves the prototype repair behavior. Private timing receipt retains UNKNOWN fixture /tmp/vida-absorption-V5aYPk; do not open/replay it. Maintained launcher is bin/run.ts and the owned test runner is terminal. Next verification is a bounded actual engine-reader regression reusing existing fixture contracts, plus causal setup optimization, not another identical whole-case retry or timeout increase. An independent private test draft is assigned; no mock-based Runtime qualification.
 
 Independent read-only review confirms the clean isolated Runtime decision is consistent across plan/WORK/handoff/backlog with no material scope omission. Exact option joins and actual execution remain OPEN; this is task-scope validation only.
-
 
 ### v682–v686 — qualified corrective reader regression and bounded parallel closures
 
@@ -5233,7 +5182,6 @@ Blind architectural review rejects whole-public-invocation package read-lock own
 Private upgrade Runtime matrix v696 identifies the actual nested route `reconcile-artifacts --kind project-upgrade`; there is no top-level upgrade command/run selector. Root review resolves the shared apply/resume handler as shared same-operation state-machine implementation, not evidence of a bug. Distinct options remain: only resume admits explicit UNKNOWN reconciliation. Latest clean Runtime acceptance does not require old existing-consumer unblock. The current existing-storage success path is intentionally blocked by declaration/owner; its positive success is N/A under that current contract, while a documented denial is a required candidate on a NEW disposable owned fixture only. The false legacy-opener guard and separately tracked Source architectural gap remain unchanged/OPEN. No old operation/database access or replay is authorized. Agent is correcting its private proposal accordingly; all rows remain UNREVIEWED/NOT_EXECUTED.
 
 Added corrective boundary cases for null authorization and unknown string fields, preserving strict-schema rejection after own-data detachment. v697 compiler/lint PASS0, behavior FAIL due to an expected human message being JSON-escaped in Zod's error envelope; assertion now checks stable unrecognized_keys code rather than display quoting. v698 focused actual-reader case PASS1/18expects/2.33s; no rerun of unchanged4 prior passing cases. v699 exact connected compiler and scoped typed lint PASS0 on the corrected current test. No final coverage, frozen CC/CRAP, mutation, native formation/install or Runtime acceptance claimed. No Git staging/commit/push or hook bypass.
-
 
 ### v700–v701 — reviewed unchanged function lineage; bounded fixture-cost assessment
 
@@ -5272,7 +5220,6 @@ timeout relaxation implemented. v695 real move/exit86 remains proved, same-ID
 post-quarantine completion OPEN, and retained UNKNOWN root remains unopened.
 The saved clean isolated native Runtime task replaces old unblock/notices; this
 Source assessment is not its execution evidence.
-
 
 ### v702–v705 — Bun import capture correction; actual activation death/resume PASS
 
@@ -5331,7 +5278,6 @@ UNKNOWN root is unopened. Receipts/logs: ignored
 This is captured Source behavior proof only: no installed/native Runtime,
 power-loss durability or final coverage/CRAP/mutation qualification. Final native
 clean-project matrix and remaining product/shared optimization stay OPEN.
-
 
 ### v706–v718 — strict static closure batch and two causal P0 corrections
 
@@ -5404,7 +5350,6 @@ Existing v662 correspondence must use per-scope freshness; no duplicate full
 inventory because of dirty Git paths. Final full numeric/mutation/clean isolated
 native Runtime gates remain OPEN. Old unblock/notices remain superseded.
 
-
 ### v719 — terminal static and corrective diagnostic update
 
 Root collected full stable typed lint: 383 files, 110 rules, diagnostics[]
@@ -5427,7 +5372,6 @@ Optimization analysis is partial: current shared binding and capture scanner
 corrections are verified, but repeated product package reads and exhaustive
 all-file refactoring, frozen numeric/mutation gates and clean native Runtime
 qualification remain OPEN. Private tmpfs acceleration does not close product I/O.
-
 
 ### v720–v723 — authenticated planning evidence and linear shared join
 
@@ -5469,6 +5413,7 @@ children. Blind review found no distinct required acceptance lost. v723 advanced
 through tester issue but parent60s interrupted its final report at75 assertions.
 These are FAIL/UNKNOWN, not whole-flow PASS; bounds were not enlarged. Preserve
 without inspection/replay/cleanup:
+
 - /dev/shm/vida-source-v722-D3s15o/fixtures/vida-absorption-3PWm6V
 - /dev/shm/vida-source-v723-HgQVN3/fixtures/vida-absorption-poyh5S
 
@@ -5633,7 +5578,6 @@ recovery-cli.test.ts and completed-readonly-capture.test.ts. There are134literal
 members/132unique paths across the four public phases. Minimal duplicate removal
 is a concrete P1 follow-up; broad discovery still needs command-contract parity.
 
-
 ### v741–v745 — numeric-before-native prerequisite and disjoint test phases
 
 Checkpoint3ef093d passed the strict staged gate and was pushed to origin/main.
@@ -5663,7 +5607,6 @@ Luna scopes review unchanged frozen lineage, path/receipt tests and numeric
 inputs. Existing gates already enforce truthful reason-of-kill custody; no
 duplicate numeric gate or scan is needed. Exhaustive executable plan and current
 coverage/mutation receipts remain OPEN. No native/old-state access or replay.
-
 
 ### v747–v751 — actual current measurement, retained UNKNOWN and bounded repairs
 
@@ -5707,7 +5650,6 @@ plan was created. Earlier affected test receipts:33PASS279assertions; separate
 command-contract cases2PASS. These are scoped Source evidence, not full-suite,
 mutation, CRAP or real formed-native Runtime PASS.
 
-
 Root repairs only the SQLite test observer receiver using the existing
 Reflect.apply-with-native-target pattern. The observed coverage assertion failed
 with Bun private Statement access before the row guard; the selected unchanged
@@ -5715,7 +5657,6 @@ row-budget assertion now1PASS/5assertions in2.70s. Receipt sqlite-proxy-green-v7
 No production SQLite/CAS/size guard change. Own coverage launcher/test PIDs were
 observed absent after UNKNOWN; this is not reconciliation of any spawned fixture
 operation. Run lock, snapshot and uncertain fixture custody remain untouched.
-
 
 ### v752–v758 — scoped test optimization and causal repairs
 
@@ -5775,7 +5716,6 @@ native research report; Root keeps the Source research admission guard and fixes
 only test material construction. No old operational fixture was read/replayed.
 Current numeric coverage, dynamic CRAP and mutation score remain unavailable.
 
-
 v759–v760 completion delta: the first strict checkpoint rejected an overbroad
 Bun.Loader annotation (CSS is not a transpiler JavaScript loader); Root narrowed
 to the four documented actual JS/TS loaders. The second rejected unsafe generic
@@ -5795,7 +5735,6 @@ mock now throws on recursive fallback rather than spinning a shared worker; its
 immutable real callable and synchronous semantics remain. These are scoped
 regressions; final numeric coverage/CRAP/mutation and old UNKNOWN reconciliation
 remain OPEN. No real native Runtime or schema/loader cutover was attempted.
-
 
 ### v761–v762 — real capture closure blockers
 
@@ -5831,7 +5770,6 @@ operational fixture custody remain unchanged; no old operation is replayed.
 Independent capture-closure-v762-review.md found no blocker: scanner-only byte
 normalization, exact metadata/config admission, unchanged Source classification,
 bounded reader and published-baseline boundary, and unique digest/read reuse.
-
 
 ### v763–v764 — scoped fixture setup and remaining bottlenecks
 
@@ -6000,7 +5938,6 @@ scoped receipts. It is not a new five-case full PASS or measured speedup.
 Independent persisted-depth-review-v769.md approves Source database threading
 and the regression design with static-only/Root-reported evidence distinctions.
 
-
 ### v773–v774 — test optimization audit and synchronous-child custody correction
 
 User asks to optimize tests and research each actual error/bottleneck. Four blind
@@ -6060,7 +5997,6 @@ UNKNOWN, mutation is not measured, exhaustive frozen lineage remains OPEN.
 Partial1084roles57files stays non-executable. No new full numeric run, old-root
 access/replay, lock reclamation, build/install suite or native acceptance claim.
 Continue dependency-ready reviewed lineage and evidenced P0/P1 corrections.
-
 
 v774 publication: strict indexed checkpoint f57163a PASS without bypass, ordinary
 push origin/main succeeds, exact0/0 after fetch/push. Only unrelated root bun.lock
@@ -6137,7 +6073,6 @@ not an exhaustive/default CRAP plan, dynamic CRAP value, test or Runtime proof.
 Final exact coverage, dynamic frozen CRAP, confirmedKilled mutation and both
 retained numerical/current corrective UNKNOWN reconciliations remain OPEN.
 
-
 ### v778–v779 — parent test cost attribution and ordinary membership
 
 Prior reviewed inspection/lineage packet b10fb4a passed the strict staged hook
@@ -6197,7 +6132,6 @@ same exact assertions without suppressions. Official rule researched:
 https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-unsafe-return .
 The rejected hook creates no commit; complete strict checkpoint correction next.
 
-
 ### v780 — early-return fixture teardown and first attributed cost
 
 Diagnostic/membership checkpoint01f70ed passed the complete strict hook after
@@ -6243,7 +6177,6 @@ one instrumented observation, no speedup/baseline claim. Runtime-rebind's tail
 phase lacks a closing mark due to its return; actual test/cleanup PASS supplies
 separate outcome proof. New blind v781 audits target that measured callchain and
 reuse of existing timing owners, no speculative cache or duplicate broad scan.
-
 
 ### v781–v790 — qualified profiling, local glob reuse and project Bun Test skill
 
@@ -6329,7 +6262,6 @@ Exhaustive frozen lineage, current exact four coverage metrics, dynamic CRAP
 and assertion-confirmed mutation100 remain OPEN. v747/v776 UNKNOWN custody
 remains held; no native qualification/cutover/unblock notice. Complete strict
 checkpoint and ordinary publication of this exact packet next.
-
 
 ### v791–v795 — portable prefix owner and next reviewed lineage partition
 
@@ -6751,3 +6683,43 @@ dist remains stale; current whole-run SDK freshness orchestration is still GAP,
 not hidden by isolated success. Exact coverage/CRAP, frozen correspondence,
 assertion-confirmed mutation, interruption flows and native qualification stay
 open. Root strict-checkpoints and publishes the test-tooling correction next.
+
+### v844–v847 — one issued read-only planning context, fresh fenced commit
+
+Root resumes published a39e77a; fetch origin/main retains that same checkpoint.
+Untracked root bun.lock and ..vida.cas.lock/reclaim remain untouched. Blind
+Luna SDK review confirms no existing formation-to-coverage freshness join:
+the SDK case still consumes canonical dist, not the isolated formed artifact.
+Do not promote that artifact or switch active loaders merely to satisfy a test.
+Finish Source corrections before final formation to avoid rebuilding for each
+packet; subsequent product changes invalidate earlier SDK input equivalence.
+
+Independent P1 context review confirms duplicate loadProjectSetContext across
+bin/read-only-dispatch-repair.ts and the Source plan builder. Root adds optional
+factory-issued ProjectContext only to the builder, forwards the wrapper's exact
+object used for its Host snapshot, validates private issuance/root binding plus
+repository, exact ordered projects and configuration digest. Omission preserves
+the current loader fallback. One invocation reuses its config digest for context,
+work and request checks. Host commit still reloads config and context and rebuilds
+under its producer fence; no context is serialized, cached across invocations,
+or used as execution authority. CAS, maintenance and original UNKNOWN stay intact.
+
+New genuine controls fail on original code v844: ignored forged context yields
+a plan and the second resolution rejects a changed disk config. Corrected v845
+passes11cases47assertions. Added foreign-root issuance and empty/duplicate/
+unsorted project sets pass in affected file completion v846:11PASS51assertions
+4.03s. Same-context/fallback/wrapper plan equality and no publication after disk
+drift are checked on actual owned SQLite fixtures. These prove behavior, not an
+exact loader invocation count or numeric quality. Failed fixture roots remain.
+
+Blind test review identifies missing source drift between valid planning and
+apply. Root extends the existing source/config test: fenced apply of the original
+plan now rejects changed declared Source and creates no repair row. Only that
+affected case reruns v847:1PASS5assertions4.50s. Other unchanged v846 results
+remain current. Three fresh independent security/test/architecture reviews
+validate current inputs; their notes and red/green/completion logs are in BASE
+.tmp/tooling-research/typed-correction-v179/readonly-context-*. No full suite,
+AST/hash scan, build/install, baseline replay or gate relaxation is added.
+TESTING and the project Bun skill retain the verified epoch/commit distinction.
+Strict checkpoint/publication follows; exhaustive frozen correspondence, exact
+coverage/CRAP, confirmed mutation and native/runtime flow qualification stay open.

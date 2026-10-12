@@ -38,7 +38,7 @@ export function planReadOnlyDispatchRepair(
     },
     input.attempt,
   );
-  return buildReadOnlyDispatchRepairPlan({ ...input, snapshot });
+  return buildReadOnlyDispatchRepairPlan({ ...input, snapshot, projectContext: project });
 }
 
 /** Host owns the producer-fenced commit and repeats only synchronous validation. */

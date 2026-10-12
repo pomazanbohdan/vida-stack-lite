@@ -1,5 +1,9 @@
 import { canonicalJsonDigest, isPlainRecord as isRecord } from '../contracts/public-ingress.js';
-import { loadProjectSetContext } from '../config/project-context.js';
+import {
+  loadProjectSetContext,
+  validateProjectContextBinding,
+  type ProjectContext,
+} from '../config/project-context.js';
 import { runtimeConfigDigest, type AgentRuntimeConfig } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { snapshotDeclaredSources } from './scoped-source-snapshot.js';
@@ -200,7 +204,11 @@ export function buildReadOnlyDispatchRepairPlan({
   repairId,
   actor,
   timestamp,
-}: ReadOnlyDispatchRepairInput & { snapshot: HostWorkSessionSnapshot }): ReadOnlyDispatchRepairPlan {
+  projectContext,
+}: ReadOnlyDispatchRepairInput & {
+  snapshot: HostWorkSessionSnapshot;
+  projectContext?: ProjectContext;
+}): ReadOnlyDispatchRepairPlan {
   requireRepair(
     identifier.test(repairId) &&
       workIdentifier.test(workId) &&
@@ -221,7 +229,17 @@ export function buildReadOnlyDispatchRepairPlan({
     'repair request invalid',
   );
   requireRepair(isSortedUniqueProjectIds(projectIds), 'project set must be exact sorted unique IDs');
-  const project = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds);
+  const configDigest = runtimeConfigDigest(config);
+  const project =
+    projectContext === undefined
+      ? loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, projectIds)
+      : validateProjectContextBinding(projectContext, repositoryRoot);
+  requireRepair(
+    project.repository_id === config.repository.repository_id &&
+      canonicalJsonDigest(project.project_ids) === canonicalJsonDigest(projectIds) &&
+      project.config_digest === configDigest,
+    'repair project context differs',
+  );
   const host = snapshot.host;
   requireCompleteHostSnapshot(host);
   const workValue = host.work;
@@ -242,7 +260,7 @@ export function buildReadOnlyDispatchRepairPlan({
       work.value.binding.lifecycle_work_id === workId &&
       canonicalJsonDigest(work.value.binding.project_ids) === canonicalJsonDigest(projectIds) &&
       work.value.binding.integrations_digest === project.integrations_digest &&
-      work.value.binding.config_digest === runtimeConfigDigest(config),
+      work.value.binding.config_digest === configDigest,
     'work authority differs',
   );
   requireRepair(
@@ -303,7 +321,7 @@ export function buildReadOnlyDispatchRepairPlan({
     'issued assignment is not configured cooperative read-only work',
   );
   requireRepair(
-    request.config_digest === runtimeConfigDigest(config) &&
+    request.config_digest === configDigest &&
       request.scope_digest === state.source_scope?.digest &&
       work.value.binding.work_source_revision === state.source_scope.digest,
     'issued source or configuration binding differs',

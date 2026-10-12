@@ -8,6 +8,7 @@ import { planReadOnlyDispatchRepair, applyReadOnlyDispatchRepair } from '../bin/
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
+import { buildReadOnlyDispatchRepairPlan } from '../src/orchestration/read-only-dispatch-repair.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import type { MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
@@ -329,6 +330,116 @@ function closeFixture(value: ReturnType<typeof fixture>, retainRoot: boolean): v
   if (!retainRoot) rmSync(value.repositoryRoot, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
 }
 
+function repairSnapshot(value: ReturnType<typeof fixture>) {
+  const projectContext = loadProjectSetContext(
+    value.repositoryRoot,
+    value.input.config,
+    value.input.config.repository.repository_id,
+    value.input.projectIds,
+  );
+  const store = new HostStateStore(
+    value.database,
+    value.input.workspaceId,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    value.repositoryRoot,
+  );
+  const snapshot = store.readWorkSessionSnapshot(
+    {
+      repository_id: projectContext.repository_id,
+      project_ids: projectContext.project_ids,
+      integrations_digest: projectContext.integrations_digest,
+      work_id: value.input.workId,
+    },
+    value.input.attempt,
+  );
+  return { projectContext, snapshot };
+}
+
+test('read-only repair context handoff preserves plan bytes and refuses forged or mismatched contexts', () => {
+  const value = fixture();
+  let foreignRoot: string | undefined;
+  let passed = false;
+  try {
+    const { projectContext, snapshot } = repairSnapshot(value);
+    const input = { ...value.input, snapshot };
+    const expected = planReadOnlyDispatchRepair(value.input);
+    expect(buildReadOnlyDispatchRepairPlan(input)).toEqual(expected);
+    expect(buildReadOnlyDispatchRepairPlan({ ...input, projectContext })).toEqual(expected);
+    expect(() => buildReadOnlyDispatchRepairPlan({ ...input, projectContext: { ...projectContext } })).toThrow(
+      /project context must be issued/,
+    );
+    expect(() =>
+      buildReadOnlyDispatchRepairPlan({
+        ...input,
+        projectContext,
+        config: { ...input.config, repository: { ...input.config.repository, title: 'changed title' } },
+      }),
+    ).toThrow(/repair project context differs/);
+    copyFileSync(
+      path.join(value.repositoryRoot, 'AGENT.sidecar.md'),
+      path.join(value.repositoryRoot, 'packages/plugin/AGENT.sidecar.md'),
+    );
+    const otherProjects = loadProjectSetContext(
+      value.repositoryRoot,
+      input.config,
+      input.config.repository.repository_id,
+      ['agent', 'plugin'],
+    );
+    expect(() => buildReadOnlyDispatchRepairPlan({ ...input, projectContext: otherProjects })).toThrow(
+      /repair project context differs/,
+    );
+    foreignRoot = makeFixtureRoot();
+    const foreignContext = loadProjectSetContext(
+      foreignRoot,
+      input.config,
+      input.config.repository.repository_id,
+      input.projectIds,
+    );
+    expect(() => buildReadOnlyDispatchRepairPlan({ ...input, projectContext: foreignContext })).toThrow(
+      /resolved path profile identity is invalid/,
+    );
+    for (const projectIds of [[], ['agent', 'agent'], ['plugin', 'agent']])
+      expect(() => buildReadOnlyDispatchRepairPlan({ ...input, projectContext, projectIds })).toThrow(
+        /project set must be exact sorted unique IDs/,
+      );
+    expect(readRepairRows(value.database)).toEqual([]);
+    passed = true;
+  } finally {
+    closeFixture(value, !passed);
+    if (passed && foreignRoot !== undefined) rmSync(foreignRoot, { recursive: true, force: true });
+  }
+});
+
+test('read-only repair context handoff reuses its planning epoch while fenced commit rejects disk drift', () => {
+  const value = fixture();
+  let passed = false;
+  try {
+    const { projectContext, snapshot } = repairSnapshot(value);
+    const input = { ...value.input, snapshot };
+    const expected = buildReadOnlyDispatchRepairPlan(input);
+    writeFileSync(
+      path.join(value.repositoryRoot, 'agent-runtime.config.v1.yaml'),
+      canonicalJson({
+        ...input.config,
+        repository: { ...input.config.repository, title: 'changed planning epoch' },
+      }),
+    );
+    const plan = buildReadOnlyDispatchRepairPlan({ ...input, projectContext });
+    expect(plan).toEqual(expected);
+    expect(() => buildReadOnlyDispatchRepairPlan(input)).toThrow(/runtime config snapshot is stale or forged/);
+    expect(() => applyReadOnlyDispatchRepair({ database: value.database, plan, current: value.input })).toThrow(
+      /work authority differs/,
+    );
+    expect(readRepairRows(value.database)).toEqual([]);
+    passed = true;
+  } finally {
+    closeFixture(value, !passed);
+  }
+});
+
 test('read-only dispatch repair binds old unknown issue and idempotently prepares one generation', () => {
   const value = fixture();
   let passed = false;
@@ -460,6 +571,9 @@ test('read-only dispatch repair denies stale report and source/config drift', ()
     expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(/source or configuration binding differs/);
     replaceJournalRow(value.database, value.input.workspaceId, value.input.workId, value.input.attempt, 9, value.state);
     writeFileSync(path.join(value.repositoryRoot, 'AGENT.sidecar.md'), 'Changed declared fixture source.\n');
+    expect(() => applyReadOnlyDispatchRepair({ database: value.database, plan, current: value.input })).toThrow(
+      /declared source drift/,
+    );
     expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(/declared source drift/);
     expect(readRepairRows(value.database)).toEqual([]);
     passed = true;
