@@ -7807,3 +7807,30 @@ reading the implementation. It addresses the earlier actual agent fixture
 mistakes; no broad wording benchmark or second product policy owner is added.
 Strict CLI v1053 also passes144files/0errors. Source fetch confirms no incoming
 or local committed divergence before ordinary reviewed publication.
+
+### v1054–v1058 — published CLI packet and authorized temporary-cache disposal
+
+ddbb8ec is published to origin/main after ordinary strict staged hooks. The
+remaining delivered-work CLI control passes21assertions at2.40s body/5.92s command;
+original engine snapshot/bridge are never opened. Known run fixture causes are
+rechecked; this is not a full176-file audit or numeric completion.
+
+Stopped-source v1056 failed before body with ENOSPC: separate /tmp filesystem
+was full, while workspace had free capacity. Its failed contained preparation
+/tmp/vida-contained-tests-6z58pX remains. A fresh TMPDIR workspace run v1057
+then exceeded the existing60s preparation hook; Bun reported SIGTERM and a
+dangling-process stop. Retain its UNKNOWN root
+.tmp/runtime-tests-v1057/vida-contained-tests-By6BFT and original raw logs; no
+body/phase timing or cleanup success is inferred, and no operation is replayed.
+
+The user's direct current instruction authorizes obsolete temporary-file
+cleanup. A bounded dependency/link/process inspection found no current use of
+the selected old preparation candidate and four old dependency backups. Removed
+those dependency trees and nine unbound Bun transpiler caches only. Canonical
+directories were checked before removal; receipt records exact targets and
+before/after space. No current dependency/toolchain, measured baseline, Source,
+DB/lease/attempt/operation record or failed/UNKNOWN fixture/log was deleted.
+v1058 freed750989312bytes on /tmp and1800413184bytes on workspace; /tmp has717MiB
+available and workspace about13GiB. Receipts are obsolete-cache-cleanup-v1058.json
+and .log. The actual package-binding owner includes node_modules, so retained
+controller dependency trees were explicitly excluded from this cleanup.
