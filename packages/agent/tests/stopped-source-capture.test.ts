@@ -691,7 +691,10 @@ async function fixture({ writer = true }: { writer?: boolean } = {}) {
     const requestRef = '.agent/work/stopped/capture-request.json';
     writeJson(root, requestRef, { workspace_id: workspace, ...operation });
     const verifyCurrent = () => {
-      expect(snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md'])).toEqual(candidate);
+      expect(
+        snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENT.sidecar.md']),
+        'Synthetic stopped-source candidate differs',
+      ).toEqual(candidate);
       expect(loadRuntimeConfig(root)).toEqual(config);
       const terminal: unknown = JSON.parse(readFileSync(path.join(root, terminalRef), 'utf8'));
       expect(isRecord(terminal) ? terminal.actor : undefined).toBe(observation.agent_id);
@@ -1719,9 +1722,42 @@ test('exact stopped capture retry permits disjoint progress but rejects later ov
       config: f.config,
     });
     const released = f.inspect();
-    expect(() => f.store.captureStoppedSourceObservation({ ...c.operation, verifyCurrent: c.verifyCurrent })).toThrow(
-      'newer scope grant',
-    );
+    const originalCandidate = c.operation.candidateSnapshot.entries,
+      liveCandidate = updatedScope.entries.map((entry) => ({
+        path: entry.path,
+        sha256: required(entry.sha256, 'Updated source digest'),
+        size: required(entry.bytes, 'Updated source size'),
+      }));
+    expect(liveCandidate).not.toEqual(originalCandidate);
+    let originalVerifierInvoked = false,
+      originalVerifierCompleted = false;
+    expect(() =>
+      f.store.captureStoppedSourceObservation({
+        ...c.operation,
+        verifyCurrent: () => {
+          originalVerifierInvoked = true;
+          c.verifyCurrent();
+          originalVerifierCompleted = true;
+        },
+      }),
+    ).toThrow('Synthetic stopped-source candidate differs');
+    expect(originalVerifierInvoked).toBe(true);
+    expect(originalVerifierCompleted).toBe(false);
+    expect(f.inspect()).toEqual(released);
+
+    // This low-level verifier isolates the released-rights guard. It does not
+    // establish original-candidate authorization or public-route acceptance.
+    expect(() =>
+      f.store.captureStoppedSourceObservation({
+        ...c.operation,
+        verifyCurrent: () => {
+          expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), ['AGENT.sidecar.md'])).toEqual(
+            updatedScope,
+          );
+          expect(loadRuntimeConfig(f.root)).toEqual(f.config);
+        },
+      }),
+    ).toThrow('newer scope grant');
     expect(f.inspect()).toEqual(released);
   } finally {
     await f.close();

@@ -1959,12 +1959,16 @@ describe('vida-agent run entrypoint fast checks', () => {
 });
 
 ordinaryDescribe('vida-agent run entrypoint', () => {
-  test('requires every explicit argument and rejects raw authority inputs', () => {
+  test('requires every explicit argument', () => {
     const childOptions = { budget: executionBudget(5_000, 250) };
     const missing = invoke(common, {}, launcher, childOptions);
     expect(missing.status).toBe(1);
     expect(missing.stdout).toBe('');
     expect(missing.stderr).toContain('GAP-VIDA-RUN-CLI-001');
+  });
+
+  test('rejects a raw thread authority input', () => {
+    const childOptions = { budget: executionBudget(5_000, 250) };
     const rawThread = invoke(
       [...common, '--workflow', 'information_research_light', '--thread-id', 'forged'],
       {},
@@ -1973,6 +1977,10 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
     );
     expect(rawThread.status).toBe(1);
     expect(rawThread.stderr).toContain('GAP-VIDA-RUN-CLI-001');
+  });
+
+  test('rejects a legacy tenant authority input', () => {
+    const childOptions = { budget: executionBudget(5_000, 250) };
     const legacyTenant = invoke(
       [
         '--project-root',

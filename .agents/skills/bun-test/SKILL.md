@@ -64,6 +64,8 @@ per-test default independently. Do not shorten real quarantine or change the
 2-second product operation target. On qualified Bun 1.4.3, local controls found
 TOML test timeout ineffective and bailout skipping preload `afterAll`; use the
 CLI default and keep final coverage free of `--bail`.
+Apply TESTING's case-budget rule: independent CLI denials get separate tests;
+dependent calls share one case deadline without per-child budget resets.
 
 In isolated fixtures containing copied snapshot tests, pass explicit `./` paths
 for child test subjects. Bare names can act as discovery filters and select
@@ -226,6 +228,9 @@ not read-boundary overlap. Preserve the common package resource until actual
 overlap and caller closure qualify. For adversarial fixtures, retain valid
 prerequisites/sibling receipts and assert the targeted rejection rather than an
 earlier unrelated load/decoder error.
+Apply the same prerequisite rule to Source and authorization retries: retain
+the real drift denial separately; a current-snapshot callback used to isolate
+a later Host guard does not authorize the original candidate or public route.
 
 Apply TESTING's shared-helper rules: register hooks explicitly in every owning
 test file, account for preparation/recovery calls, and retain shared process

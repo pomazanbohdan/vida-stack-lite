@@ -640,6 +640,11 @@ Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
 
+Keep independent CLI denial scenarios in separate tests, each with its own
+case budget. Dependent calls within one scenario share its parent budget;
+do not restart that budget for each child. Splitting independent cases preserves
+the per-test default; it does not prove faster execution of the whole selection.
+
 The TaskSource public prepare-and-issue integration case has an explicit20s
 exception: it checks two independently initialized public calls, current Source
 authority, policy evaluation, persisted Host CAS, the prepared public result and
@@ -790,11 +795,16 @@ An absent Source key adds no counter increments; an unloaded seeded Source keeps
 zero counters and still faces every exact coverage gate. Absence cannot replace
 required receipt or loaded-module evidence; retain existing per-process checks.
 
-Adversarial receipt fixtures preserve all valid prerequisite rows and sibling
-receipts while changing the targeted claim and its dependent custody rows/hashes. Assert
-the intended denial boundary. An earlier load/decoder error cannot qualify an
-ownership or counter control merely because the report was rejected. Malformed
-output-role sets still need an explicit structural denial.
+Negative controls preserve the valid prerequisites of the targeted guard.
+Adversarial receipt fixtures preserve prerequisite rows and sibling receipts
+while changing the targeted claim and its dependent custody rows/hashes. Assert
+the intended denial boundary; an earlier load, decoder or Source-freshness error
+cannot qualify a later ownership or counter guard merely because the request
+was rejected. Keep the real drift denial as a separate assertion when isolating
+a later low-level guard with a current-snapshot verification callback. That
+callback does not establish authorization of the original candidate or public
+route acceptance. Check unchanged authoritative state after each denial.
+Malformed output-role sets still need an explicit structural denial.
 
 The maintained coverage aliases launch `tooling/run-bun-coverage.ts` directly
 through the pinned bootstrap, with one600000ms outer wall allowance beginning

@@ -8528,3 +8528,65 @@ accepts the first-packet scope; retained numeric metrics remain UNKNOWN/pending.
 Update TESTING and bun-test reference with this verified budget status in the
 same packet, publish with ordinary hooks, then continue supervision and the
 bounded full current correction cycle. No installed-runtime/unblock claim.
+
+### 2026-10-12 — current coverage correction and testing guidance
+
+Current published ef23451 run587259e2-d407-4ef3-a75b-9284692edf78, exec5850,
+terminates exit1/UNKNOWN under the qualified entry allowance. Its log contains
+472 completed partial PASS and3FAIL rows; the complete selection and final
+coverage/CRAP/mutation are not admitted. The exact terminal message observes
+direct coverage-producer termination; the reservation is absent afterward.
+Neither observation establishes descendant/effect quiescence. Retain the run,
+contained package, failed consumer and unknown recovery roots; no replay or
+successor-resource admission. Cgroup OOM2/kill1 remain unchanged, max222777.
+Raw log and diagnostic-only terminal-summary.json remain under
+.tmp/coverage-iteration-ef23451/.
+
+Two independent defects are test controls, not demonstrated product bugs.
+Stopped capture's original verifier correctly rejects changed candidate bytes
+before the later released-rights guard. Preserve that drift denial with an owned
+assertion label, callback invoked/noncompleted markers and unchanged Host state.
+Separately isolate the persisted released-rights guard using a fresh snapshot
+and configuration verifier, retaining exact operation fields and the specific
+newer-scope denial. This callback does not authorize the original candidate or
+prove public-route acceptance; production guard order remains unchanged.
+
+Three independent malformed-input native CLI denials shared one5000ms budget;
+the second call exhausted it, leaving the third unobserved. Split the cases,
+preserving their exact arguments and all seven assertions, one fresh5000ms/
+250ms-reserve budget per case. Do not reset dependent workflow budgets or raise
+timeouts. The information_research_light recovery failure occurs with about
+6.7s of inherited global allowance left; it is not separately qualified as an
+independent defect and remains unchanged.
+
+The existing audit owner represents test identities as file/name tuples. This
+explicit lineage all belongs to tests/run-entrypoint.test.ts:
+
+| Previous case name | Current case name | Preserved negative control |
+| --- | --- | --- |
+| requires every explicit argument and rejects raw authority inputs | requires every explicit argument | Missing workflow; status1, empty stdout, CLI GAP |
+| requires every explicit argument and rejects raw authority inputs | rejects a raw thread authority input | Forged thread-id; status1 and CLI GAP |
+| requires every explicit argument and rejects raw authority inputs | rejects a legacy tenant authority input | Legacy tenant; status1 and CLI GAP |
+
+The stopped-capture case name/file remains unchanged. Generated association and
+scenario slices need fresh review against the changed test bytes; do not carry
+forward an old reviewed stamp. Source function identities remain unchanged.
+
+Root first qualification4PASS/0FAIL/27assertions,2files82.07s; native argument
+cases2.92–3.23s each. A later focused stopped-capture qualification after adding
+the precise owned label gives1PASS/0FAIL/20assertions,73.53s including package
+preparation. Its original60s case exception remains; these are scoped results,
+not whole-selection timings or speedup. Qualified Bun's custom expect message
+is retained by toThrow in one inert7ms control; no dependency on formatted
+matcher internals. Initial oxfmt invocation rejects a parent-traversal path;
+corrected to the absolute skill path and four selected files format successfully.
+
+TESTING remains the policy owner. Its existing budget and negative-control
+sections now distinguish independent cases from dependent-flow deadlines and
+Source drift from later authorization guards; the project bun-test reference
+points to the same rules. Sidecar already loads these owners during blind
+delegation. Fresh blind audit accepts all seven bootstrap/application scenarios;
+delta review exposes a broad rejection oracle, tightened to the owned source
+label before final focused qualification. Final review requests explicit lineage;
+the table above records it with pending association review. Async supervision,
+real reader overlap/caller closure and global numeric qualification stay open.
