@@ -7974,3 +7974,34 @@ logs retention and close/removal failures without adding effects or retrying an
 uncertain cleanup. Bounded search finds no other eligible duplicated full-context
 lookup in this file; the other runtime/Source checks test actual drift/rebinding.
 The focused optimization packet's final static/hooks/publication remain pending.
+
+### v1091–v1095 — published optimization and current TaskSource evidence
+
+5e78af4 is published after ordinary strict staged hooks and non-force push;
+HEAD/origin divergence is zero. Current425TS/97Source type/lint checks pass.
+Unrelated BASE/ and root bun.lock remain untouched.
+
+v1093 uses an owned preload only to retain the five fresh fixture roots after
+handle close; it does not change product calls, assertions or defaults. Four
+cases pass under5s: both source-planner/security report orders with exact retry,
+high-risk packet under low lifecycle risk and retained GAP/TRACE behavior. The
+public prepare/issue case reaches all its output assertions but exceeds default5s
+at16.638s; /tmp/vida-task-source-real-host-fxPiN5 stays retained with its original
+log. This is a deadline failure, not the old CAS setup failure or a mutant kill.
+
+Bounded review finds no safe duplicate: the two actual public calls independently
+validate config, initialization, exports and current Source authority, then
+exercise separate prepared/issued Host CAS and policy boundaries. The user's
+default5s with justified exceptions applies to this integration contract. Only
+this case has an explicit20s limit, documented with its current TESTING owner;
+all guards, both calls and original wire/unchanged-journal assertions remain.
+The existing close owner accepts optional failed-root retention and reports any
+close/removal failure; successful cases retain ordinary cleanup.
+
+v1095 ordinary exact public-case qualification passes5assertions at8.498s body/
+9.78s command. Different selection/preload means no speedup percentage is
+claimed; it qualifies the complete supported contract under the explicit bound.
+RuntimeTiming reports45.47ms for createRuntimeKernel against its unchanged2s
+target, which is not a measurement of the whole public flow. Static v1094 passes.
+Final packet review/format/hooks/publication remain pending; no global numeric
+coverage, CRAP or mutation score and no Runtime acceptance is inferred.

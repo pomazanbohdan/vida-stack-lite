@@ -719,10 +719,16 @@ function makePrewriterHostFixture({
     actions,
     ledger,
     store,
-    close() {
-      ledger.close();
-      configuredDatabase.close();
-      rmSync(repositoryRoot, { recursive: true, force: true });
+    close({ retainRoot = false }: { readonly retainRoot?: boolean } = {}) {
+      try {
+        ledger.close();
+        configuredDatabase.close();
+        if (retainRoot) console.warn(`Retained task-source fixture root after incomplete case: ${repositoryRoot}`);
+        else rmSync(repositoryRoot, { recursive: true, force: true });
+      } catch (error) {
+        console.error(`Task-source fixture cleanup failed; root retained or uncertain: ${repositoryRoot}`, error);
+        throw error;
+      }
     },
   };
 }
@@ -2583,8 +2589,10 @@ test('low lifecycle risk still attaches security policy when the admitted packet
   }
 });
 
+// Both public calls re-enter the full initialized runtime and verify persisted policy, wire output, and Host CAS.
 test('public run awaits configured TaskSource policy and serializes the persisted Host issue result', async () => {
   const fixture = makePrewriterHostFixture({ includeSourceAuthorization: true });
+  let completed = false;
   try {
     const journal = fixture.ledger.resume(fixture.workId, 1);
     assert.ok(journal);
@@ -2702,10 +2710,11 @@ test('public run awaits configured TaskSource policy and serializes the persiste
     const finalJournal = fixture.ledger.resume(workId, 1);
     assert.ok(finalJournal);
     expect(finalJournal.version).toEqual(currentJournal.version);
+    completed = true;
   } finally {
-    fixture.close();
+    fixture.close({ retainRoot: !completed });
   }
-});
+}, 20_000);
 
 test('a reported GAP source plan is retained in TRACE and does not advance lifecycle or attach policy', async () => {
   const fixture = makePrewriterHostFixture();

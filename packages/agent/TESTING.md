@@ -640,6 +640,14 @@ Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
 
+The TaskSource public prepare-and-issue integration case has an explicit20s
+exception: it checks two independently initialized public calls, current Source
+authority, policy evaluation, persisted Host CAS, the prepared public result and
+the issued wire result in one attempt. The related independent report/GAP/high-
+risk cases retain the5s default.
+This classifies the supported integration contract; it establishes no processing
+speed improvement and does not relax the2s product target or freshness checks.
+
 On the qualified Bun 1.4.3, a local inert control showed that `[test] timeout`
 in TOML did not enforce the requested timeout; use the CLI option. Another
 control showed `--bail=1` skips preload `afterAll` finalization on first failure.
