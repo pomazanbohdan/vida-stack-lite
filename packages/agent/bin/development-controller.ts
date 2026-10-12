@@ -584,6 +584,7 @@ export async function verifyDevelopmentController({ controllerRoot }: { readonly
     additionalEnv: {
       VIDA_CONTROLLER_QUALIFICATION_TARGET: state.target,
       VIDA_CONTROLLER_QUALIFICATION_BINDING: state.package_binding.digest,
+      VIDA_CONTROLLER_DIAGNOSTICS: String(process.env.VIDA_CONTROLLER_DIAGNOSTICS === 'true'),
     },
     nestedChildren: qualificationChildren,
   });

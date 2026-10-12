@@ -118,16 +118,60 @@ function rowValue(rows: readonly { readonly kind: string; readonly value: unknow
 }
 
 function parseInvocation(result: SpawnSyncReturns<string>): ChildResult {
+  if (result.error !== undefined || result.signal !== null || !Number.isInteger(result.status))
+    throw new Error('child process outcome is unknown');
   const stdout = result.stdout;
   const stderr = result.stderr;
   const output = result.status === 0 ? stdout : stderr;
   const lastLine = output.trim().split(/\r?\n/).at(-1);
-  if (lastLine === undefined) throw new Error('child process returned no JSON result');
-  const payload: unknown = JSON.parse(lastLine);
+  if (lastLine === undefined) throw new Error('child process returned invalid JSON result');
+  let payload: unknown;
+  try {
+    payload = JSON.parse(lastLine);
+  } catch {
+    throw new Error('child process returned invalid JSON result');
+  }
   return { status: result.status, stdout, stderr, payload };
 }
 
+function invocationResult(overrides: Partial<SpawnSyncReturns<string>> = {}): SpawnSyncReturns<string> {
+  return {
+    pid: 1,
+    output: [null, '', ''],
+    stdout: '',
+    stderr: '',
+    status: 0,
+    signal: null,
+    ...overrides,
+  };
+}
+
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+test('audit invocation rejects unknown process outcomes before reading output', () => {
+  const secret = 'private-timeout-output';
+  for (const result of [
+    invocationResult({ status: null, signal: 'SIGTERM', stderr: secret }),
+    invocationResult({ status: 1, signal: 'SIGTERM', stderr: secret }),
+    invocationResult({ status: null, stderr: secret }),
+    invocationResult({ status: 1, error: new Error(secret), stderr: secret }),
+  ]) {
+    expect(() => parseInvocation(result)).toThrow('child process outcome is unknown');
+  }
+});
+
+test('audit invocation rejects terminal malformed JSON without exposing stderr', () => {
+  const secret = 'private-malformed-output';
+  expect(() => parseInvocation(invocationResult({ status: 1, stderr: secret }))).toThrow(
+    'child process returned invalid JSON result',
+  );
+});
+
+test('audit invocation accepts a terminal status-one JSON denial from stderr', () => {
+  const result = parseInvocation(invocationResult({ status: 1, stderr: '{"status":"blocked"}\n' }));
+  expect(result.status).toBe(1);
+  expect(result.payload).toEqual({ status: 'blocked' });
+});
 
 test('audit diagnostics distinguish expiry, CAS and artifact validation without exposing supplied secrets', async () => {
   const publicFailure = async (error: Error): Promise<PublicFailure> => {

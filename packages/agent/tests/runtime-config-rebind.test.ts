@@ -6287,12 +6287,15 @@ test('readonly bookkeeping config rebind rejects a coherent distinct released ti
     if (!claim || !release) throw Error('Fixture release custody is incomplete');
     const distinctTicket = { ...structuredClone(ticket), ticket_id: distinctTicketId, claim_ids: [distinctClaimId] },
       distinctClaim = { ...structuredClone(claim), claim_id: distinctClaimId, ticket_id: distinctTicketId };
+    distinctTicket.sequence = ledger.next_sequence;
+    ledger.next_sequence += 1;
     expect(ticket.status).toBe('released');
     expect(claim.status).toBe('released');
     expect(distinctTicketId).not.toBe(activationBinding.lease_ticket_id);
     ledger.tickets.push(distinctTicket);
     ledger.claims.push(distinctClaim);
     release.ticket_id = distinctTicketId;
+    expect(validateCoordinationLedgerV1(ledger).ok).toBe(true);
     const payload = json(ledger),
       digest = canonicalJsonDigest(ledger);
     db.query('UPDATE agent_host_state SET payload=?,digest=? WHERE rowid=?').run(payload, digest, row.rowid);

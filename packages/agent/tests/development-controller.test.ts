@@ -89,6 +89,7 @@ test('controller failure diagnostics decode buffers and byte views before redact
 
 test('qualified development controller preserves Source identity and accepts a scoped new target bin through unchanged current code', async () => {
   const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-'));
+  let completed = false;
   try {
     const controllerRoot = path.join(scratch, 'controller');
     const prepared = await prepareDevelopmentController({ target: sourceRoot, controllerRoot });
@@ -190,8 +191,11 @@ test('qualified development controller preserves Source identity and accepts a s
     writeFileSync(depFile, '{}');
     await Promise.resolve(expect(inspectDevelopmentController({ controllerRoot })).rejects.toThrow('drift'));
     writeFileSync(depFile, dep);
+    completed = true;
   } finally {
-    cleanupOwnedFixture(scratch);
+    if (completed && process.env.VIDA_CONTROLLER_DIAGNOSTICS !== 'true') cleanupOwnedFixture(scratch);
+    else if (completed) console.error(`Retained diagnostic controller fixture: ${scratch}`);
+    else console.error(`Retained failed or uncertain controller fixture: ${scratch}`);
   }
 }, 180000);
 

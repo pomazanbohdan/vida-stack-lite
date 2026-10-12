@@ -7,7 +7,7 @@ import { invokeNestedObservedControllerChild } from '../bin/development-controll
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { initializeProject } from '../bin/init.ts';
 import { inspectScope } from '../bin/scope.ts';
-import { run } from '../bin/run.ts';
+import { run as executeRun } from '../bin/run.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
@@ -17,6 +17,43 @@ import { readPin } from '../bin/bun.ts';
 import packageMetadata from '../package.json' with { type: 'json' };
 
 const packageRoot = path.resolve(import.meta.dirname, '..');
+const diagnosticsEnabled = process.env.VIDA_CONTROLLER_DIAGNOSTICS === 'true';
+const diagnosticLimit = 64;
+let diagnosticCount = 0;
+function diagnosticRecord(value: Record<string, string | number>): void {
+  if (!diagnosticsEnabled || diagnosticCount >= diagnosticLimit) return;
+  diagnosticCount += 1;
+  process.stderr.write(JSON.stringify({ schema: 'DevelopmentControllerQualificationTiming/v1', ...value }) + '\n');
+}
+function diagnosticStart(phase: string): bigint {
+  const started = process.hrtime.bigint();
+  diagnosticRecord({ event: 'start', phase });
+  return started;
+}
+function diagnosticEnd(phase: string, started: bigint): void {
+  const elapsed_ms = Number(process.hrtime.bigint() - started) / 1_000_000;
+  diagnosticRecord({ event: 'settled', phase, elapsed_ms });
+}
+async function timed<T>(phase: string, operation: () => Promise<T>): Promise<T> {
+  const started = diagnosticStart(phase);
+  try {
+    return await operation();
+  } finally {
+    diagnosticEnd(phase, started);
+  }
+}
+let publicRunCount = 0;
+function run(args: string[]): Promise<unknown> {
+  const phase =
+    publicRunCount++ === 0
+      ? 'public-run-initial-intake'
+      : args.includes('--report')
+        ? 'public-run-report'
+        : args.includes('--issue-wave')
+          ? 'public-run-issue-wave'
+          : 'public-run-command';
+  return timed(phase, () => executeRun(args));
+}
 const parent = path.dirname(packageRoot),
   before = process.env.VIDA_CONTROLLER_QUALIFICATION_BINDING;
 if (typeof before !== 'string' || !/^[a-f0-9]{64}$/.test(before))
@@ -91,175 +128,193 @@ try {
   // Actual external-package initializer has its supported portable logical bundle.
   const initRoot = path.join(scratch, 'external-init');
   mkdirSync(initRoot);
-  const initialized = await initializeProject({
-    projectRoot: initRoot,
-    repository: 'controller-init',
-    projectMappings: ['agent=.'],
-  });
+  const initialized = await timed('initialize-external-project', () =>
+    initializeProject({
+      projectRoot: initRoot,
+      repository: 'controller-init',
+      projectMappings: ['agent=.'],
+    }),
+  );
   assert.equal(initialized.status, 'initialized');
   assert.equal(loadRuntimeConfig(initRoot).runtime.bundle, 'vida-agent');
   // A Source-shaped disposable target adopts current owner integrations through
   // supported reconciliation; the initialization receipt is never hand-written.
   const original = process.env.VIDA_CONTROLLER_QUALIFICATION_TARGET;
   if (!original || !path.isAbsolute(original)) throw new Error('Qualification target binding is missing.');
-  const root = path.join(scratch, 'source');
-  mkdirSync(root);
-  const copiedRootEntries: readonly string[] = [
-    'AGENTS.md',
-    'AGENT.sidecar.md',
-    'agent-runtime.config.v1.yaml',
-    'docs',
-  ];
-  for (const name of copiedRootEntries) cpSync(path.join(original, name), path.join(root, name), { recursive: true });
-  const resources = path.join(root, 'packages/agent');
-  mkdirSync(resources, { recursive: true });
-  const copiedPackageEntries: readonly string[] = [
-    'templates',
-    'schemas',
-    'instructions',
-    'package.json',
-    'TESTING.md',
-  ];
-  for (const name of copiedPackageEntries)
-    cpSync(path.join(packageRoot, name), path.join(resources, name), { recursive: true });
-  const originalConfig = loadRuntimeConfig(original);
-  for (const project of originalConfig.projects) {
-    mkdirSync(path.join(root, project.project_root), { recursive: true });
-    const docs = path.join(original, project.project_root, 'docs');
-    if (existsSync(docs)) cpSync(docs, path.join(root, project.project_root, 'docs'), { recursive: true });
-  }
-  const sourceInit = await initializeProjectFromBundle(
-    {
-      projectRoot: root,
-      repository: originalConfig.repository.repository_id,
-      projectMappings: originalConfig.projects.map((p) => p.project_id + '=' + p.project_root),
-      reconcileExisting: true,
+  const { root, resources, originalConfig } = await timed(
+    'copy-root-docs-config-templates-schemas-instructions',
+    async () => {
+      const root = path.join(scratch, 'source');
+      mkdirSync(root);
+      const copiedRootEntries: readonly string[] = [
+        'AGENTS.md',
+        'AGENT.sidecar.md',
+        'agent-runtime.config.v1.yaml',
+        'docs',
+      ];
+      for (const name of copiedRootEntries)
+        cpSync(path.join(original, name), path.join(root, name), { recursive: true });
+      const resources = path.join(root, 'packages/agent');
+      mkdirSync(resources, { recursive: true });
+      const copiedPackageEntries: readonly string[] = [
+        'templates',
+        'schemas',
+        'instructions',
+        'package.json',
+        'TESTING.md',
+      ];
+      for (const name of copiedPackageEntries)
+        cpSync(path.join(packageRoot, name), path.join(resources, name), { recursive: true });
+      const originalConfig = loadRuntimeConfig(original);
+      for (const project of originalConfig.projects) {
+        mkdirSync(path.join(root, project.project_root), { recursive: true });
+        const docs = path.join(original, project.project_root, 'docs');
+        if (existsSync(docs)) cpSync(docs, path.join(root, project.project_root, 'docs'), { recursive: true });
+      }
+      return { root, resources, originalConfig };
     },
-    resources,
+  );
+  const sourceInit = await timed('initialize-project-from-bundle', () =>
+    initializeProjectFromBundle(
+      {
+        projectRoot: root,
+        repository: originalConfig.repository.repository_id,
+        projectMappings: originalConfig.projects.map((p) => p.project_id + '=' + p.project_root),
+        reconcileExisting: true,
+      },
+      resources,
+    ),
   );
   assert.equal(sourceInit.status, 'reconciled_existing');
-  const config = loadRuntimeConfig(root);
-  assert.equal(config.runtime.bundle, 'packages/agent');
-  const newPath = 'packages/agent/bin/controller-qualified-addition.ts';
-  mkdirSync(path.join(resources, 'bin'));
-  const inspected = await inspectScope([
-    '--project-root',
-    root,
-    '--repository',
-    config.repository.repository_id,
-    '--project',
-    'agent',
-    '--path',
-    newPath,
-  ]);
+  const { config, newPath, inspected } = await timed('load-config-and-inspect-scope', async () => {
+    const config = loadRuntimeConfig(root);
+    assert.equal(config.runtime.bundle, 'packages/agent');
+    const newPath = 'packages/agent/bin/controller-qualified-addition.ts';
+    mkdirSync(path.join(resources, 'bin'));
+    const inspected = await inspectScope([
+      '--project-root',
+      root,
+      '--repository',
+      config.repository.repository_id,
+      '--project',
+      'agent',
+      '--path',
+      newPath,
+    ]);
+    return { config, newPath, inspected };
+  });
   const source = inspected;
   const scopeDigest = source.digest;
   assert.match(scopeDigest, /^[a-f0-9]{64}$/);
-  const work = 'controller-qualified-task',
-    session = 'controller-qualification-session',
-    pointer = 'fixture:actual-controller-qualification',
-    observer = 'actual-local-fixture-executor';
-  const relative = (name: string): string => `.agent/work/${work}/${name}`;
-  const scope = {
-    schema: 'ImplementationScope/v1',
-    scope_id: work + '-scope',
-    work_id: work,
-    source_revision: scopeDigest,
-    ac_ids: ['AC-CONTROLLER'],
-    allowed_paths: [newPath],
-    implementation_paths: [newPath],
-    documentation_paths: [],
-    changed_symbols: [],
-    non_goals: ['Physical isolation', 'Runtime acceptance'],
-    acceptance_trace: ['AC-CONTROLLER'],
-    behavior_trace: ['SR-CONTROLLER'],
-    test_trace: ['controller qualification'],
-    diagnostic_trace: ['controller qualification'],
-    attribution: { thread_id: session, pointer },
-    owner: 'qualification-fixture',
-    created_at: new Date().toISOString(),
-  };
-  save(path.join(root, relative('scope.json')), scope);
-  save(path.join(root, relative('acceptance.json')), {
-    schema: 'AcceptanceManifest/v1',
-    id: work + '-acceptance',
-    version: 1,
-    ac_ids: scope.ac_ids,
-    source: 'fixture:controller',
-    scope: scope.scope_id,
-    source_revision: scopeDigest,
-    contracts: [
-      {
-        id: 'AC-CONTROLLER',
-        definition: 'Observe the allowed new bin addition through unchanged controller.',
-        sr: 'SR-CONTROLLER',
-        evidence: ['qualification'],
+  const fixture = await timed('fixture-seed-before-first-public-run', async () => {
+    const work = 'controller-qualified-task',
+      session = 'controller-qualification-session',
+      pointer = 'fixture:actual-controller-qualification',
+      observer = 'actual-local-fixture-executor';
+    const relative = (name: string): string => `.agent/work/${work}/${name}`;
+    const scope = {
+      schema: 'ImplementationScope/v1',
+      scope_id: work + '-scope',
+      work_id: work,
+      source_revision: scopeDigest,
+      ac_ids: ['AC-CONTROLLER'],
+      allowed_paths: [newPath],
+      implementation_paths: [newPath],
+      documentation_paths: [],
+      changed_symbols: [],
+      non_goals: ['Physical isolation', 'Runtime acceptance'],
+      acceptance_trace: ['AC-CONTROLLER'],
+      behavior_trace: ['SR-CONTROLLER'],
+      test_trace: ['controller qualification'],
+      diagnostic_trace: ['controller qualification'],
+      attribution: { thread_id: session, pointer },
+      owner: 'qualification-fixture',
+      created_at: new Date().toISOString(),
+    };
+    save(path.join(root, relative('scope.json')), scope);
+    save(path.join(root, relative('acceptance.json')), {
+      schema: 'AcceptanceManifest/v1',
+      id: work + '-acceptance',
+      version: 1,
+      ac_ids: scope.ac_ids,
+      source: 'fixture:controller',
+      scope: scope.scope_id,
+      source_revision: scopeDigest,
+      contracts: [
+        {
+          id: 'AC-CONTROLLER',
+          definition: 'Observe the allowed new bin addition through unchanged controller.',
+          sr: 'SR-CONTROLLER',
+          evidence: ['qualification'],
+        },
+      ],
+    });
+    const authorization = {
+      schema: 'LocalSourceWriteAuthorization/v1',
+      action: 'source.write',
+      user_instruction_ref: pointer,
+      work_id: work,
+      attempt: 1,
+      scope_digest: scopeDigest,
+      config_digest: runtimeConfigDigest(config),
+      workflow_id: 'task_execution',
+      stage_ids: ['develop_task'],
+      implementation_paths: [newPath],
+      native_session_handle: session,
+    };
+    const authorizationFile = path.join(root, relative('authorization.json'));
+    save(authorizationFile, authorization);
+    save(path.join(root, relative('intake.json')), {
+      schema: 'VidaLocalSessionIntake/v1',
+      native_session_handle: session,
+      work_item: {
+        schema: 'WorkItem/v1',
+        id: work,
+        provider: 'local',
+        provider_type: 'Task',
+        canonical_kind: 'task',
+        intent: 'task_execution',
+        project_id: 'agent',
+        title: 'Controller own-target bin addition qualification',
+        description: 'An actual local fixture task, not a human Runtime approval.',
+        labels: [],
+        risk_flags: [],
       },
-    ],
+      scope_path: relative('scope.json'),
+      acceptance_path: relative('acceptance.json'),
+      source_authorization_path: relative('authorization.json'),
+      runtime_code_paths: ['packages/agent/bin/run.ts'],
+      route: 'R2',
+      risk: 'medium',
+      change_kind: 'fix',
+    });
+    const base = [
+      '--project-root',
+      root,
+      '--repository',
+      config.repository.repository_id,
+      '--project',
+      'agent',
+      '--work-path',
+      'packages/agent',
+      '--work-id',
+      work,
+      '--attempt',
+      '1',
+      '--scope-digest',
+      scopeDigest,
+      '--team',
+      'default-development',
+      '--kind',
+      'task',
+      '--intent',
+      'task_execution',
+      '--workflow',
+      'task_execution',
+    ];
+    return { work, observer, relative, scope, authorization, authorizationFile, base };
   });
-  const authorization = {
-    schema: 'LocalSourceWriteAuthorization/v1',
-    action: 'source.write',
-    user_instruction_ref: pointer,
-    work_id: work,
-    attempt: 1,
-    scope_digest: scopeDigest,
-    config_digest: runtimeConfigDigest(config),
-    workflow_id: 'task_execution',
-    stage_ids: ['develop_task'],
-    implementation_paths: [newPath],
-    native_session_handle: session,
-  };
-  const authorizationFile = path.join(root, relative('authorization.json'));
-  save(authorizationFile, authorization);
-  save(path.join(root, relative('intake.json')), {
-    schema: 'VidaLocalSessionIntake/v1',
-    native_session_handle: session,
-    work_item: {
-      schema: 'WorkItem/v1',
-      id: work,
-      provider: 'local',
-      provider_type: 'Task',
-      canonical_kind: 'task',
-      intent: 'task_execution',
-      project_id: 'agent',
-      title: 'Controller own-target bin addition qualification',
-      description: 'An actual local fixture task, not a human Runtime approval.',
-      labels: [],
-      risk_flags: [],
-    },
-    scope_path: relative('scope.json'),
-    acceptance_path: relative('acceptance.json'),
-    source_authorization_path: relative('authorization.json'),
-    runtime_code_paths: ['packages/agent/bin/run.ts'],
-    route: 'R2',
-    risk: 'medium',
-    change_kind: 'fix',
-  });
-  const base = [
-    '--project-root',
-    root,
-    '--repository',
-    config.repository.repository_id,
-    '--project',
-    'agent',
-    '--work-path',
-    'packages/agent',
-    '--work-id',
-    work,
-    '--attempt',
-    '1',
-    '--scope-digest',
-    scopeDigest,
-    '--team',
-    'default-development',
-    '--kind',
-    'task',
-    '--intent',
-    'task_execution',
-    '--workflow',
-    'task_execution',
-  ];
+  const { work, observer, relative, scope, authorization, authorizationFile, base } = fixture;
   let packet: ControllerRunPacket = requireControllerRunPacket(
     await run([...base, '--intake', path.join(root, relative('intake.json'))]),
   );

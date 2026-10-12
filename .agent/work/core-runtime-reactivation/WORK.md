@@ -8050,3 +8050,42 @@ Remaining failed-root custody gaps in older teardown owners remain open.
 Blind Luna review approves the scoped stream/custody and admission-close packet.
 Full coverage, frozen CRAP plan admission, mutation score and real Runtime
 qualification remain pending. No loader/schema/runtime activation or notices.
+
+### 2026-10-12 — ten-minute repair cycle, coherent rebind fixture and observable controller
+
+dbfa40c was ordinarily committed/pushed after strict hooks. Its full current
+iteration streams output, hits600000ms with77PASS/8FAIL partial rows and ends
+UNKNOWN without coverage receipt. Exact producer reservation released; no
+global numeric result. A controller fixture was found deleted by its legacy
+unconditional finally after child UNKNOWN; do not claim all older fixtures
+retained. That test now retains failed/uncertain roots and opt-in successful
+diagnostic roots; ordinary successful cleanup remains.
+
+The distinct released-ticket negative fixture previously reused sequence1,
+so the product correctly rejected an invalid ledger before intended UNKNOWN
+denial. It now allocates next_sequence/increments it and asserts valid ledger;
+exact denial and whole-DB equality remain. Both denied and adjacent coherent
+older-history controlsPASS30assertions at3698.05/3710.89ms (10.55s command).
+
+Audit parser rejects error/signal/noninteger status before reading wire output,
+distinguishes terminal malformed JSON with a constant nonsecret error, and
+still accepts legitimate status1 JSON denial. Three pure controlsPASS7assertions
+1.84s command. Host fixture tracks exact admitted handles in WeakSet and closes
+them through the existing admission owner; raw/ledger-owned handles retain
+their close semantics. Close/reopen controlPASS5assertions322.29ms body.
+
+Controller diagnostics propagate existing true flag and emit bounded fixed
+phase start/settled events on stderr; errors/calls/order/authority unchanged.
+Per-file existing Babel inventory verifies all62parent function complexities
+unchanged fromdbfa40c, not global budget admission. Fresh tmpfs full controller
+controlsPASS17assertions at27.55s and31.07s command; prepare1326ms/verify24271ms
+in retained probe. Observations copied to owned workspace, all root children
+confirmed complete/exit0/not timed out before removing only passed diagnostic
+root. Failed/UNKNOWN roots not pruned or replayed.
+
+Setup in that control totals~0.8s; largest issue-wave6058.91ms, report phases
+1917.73/2495.82/3134.31ms. These are phase observations, not a speedup comparison
+to workspace/full instrumentation. No fsync/quarantine/current Source/CAS/auth
+boundary was suppressed. Blind review approves fixes and timing error paths.
+425TSfiles/0diagnostics, Source97typecheckPASS. New plan:
+TEST-REPAIR-COVERAGE-10M-CYCLE-20261012.md. Numeric gates/runtime remain pending.

@@ -70,6 +70,7 @@ import {
   computeEdictumWorkflowApprovalEvidenceDigest,
   createHostOperationReservationStore,
 } from '../../src/governance/edictum-boundary.ts';
+import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 
 const workspace = 'a'.repeat(64);
 const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -105,6 +106,7 @@ let database!: Database;
 let store!: HostStateStore;
 let preserveHostFixtureRoot = false;
 const handles: Database[] = [];
+const admittedHostDatabases = new WeakSet<Database>();
 const children: import('node:child_process').ChildProcess[] = [];
 const producerRoots: string[] = [];
 const clone = <T>(value: T): DeepMutable<T> => structuredClone(value) as DeepMutable<T>;
@@ -1612,6 +1614,7 @@ beforeEach(async () => {
     sourceLeaseConfig = loadRuntimeConfig(root);
     databasePath = path.join(root, 'authority.db');
     database = openHostStateDatabase(root, 'authority.db', workspace);
+    admittedHostDatabases.add(database);
     handles.push(database);
     store = new HostStateStore(database, workspace);
   } catch (error) {
@@ -1622,7 +1625,10 @@ beforeEach(async () => {
 afterEach(async () => {
   identity.integrations_digest = 'e'.repeat(64);
   for (const child of children.splice(0)) if (child.exitCode === null) child.kill();
-  for (const handle of handles.splice(0)) handle.close();
+  for (const handle of handles.splice(0)) {
+    if (admittedHostDatabases.has(handle)) closeWorkspaceDatabaseWithAdmission(handle);
+    else handle.close();
+  }
   for (const fixtureRoot of producerRoots.splice(0)) {
     if (
       path.dirname(fixtureRoot) !== path.resolve(tmpdir()) ||
@@ -2137,7 +2143,7 @@ test(
         },
       ]);
     } finally {
-      database.close();
+      closeWorkspaceDatabaseWithAdmission(database);
       await bridge.close();
     }
   },
@@ -2490,9 +2496,10 @@ function verifiedWorkflowApproval(
   return { ...unsigned, evidence_digest: computeEdictumWorkflowApprovalEvidenceDigest(unsigned) };
 }
 function reopenStore() {
-  database.close();
+  closeWorkspaceDatabaseWithAdmission(database);
   handles.pop();
   database = openHostStateDatabase(root, 'authority.db', workspace);
+  admittedHostDatabases.add(database);
   handles.push(database);
   store = new HostStateStore(database, workspace);
 }
@@ -4308,7 +4315,7 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       const saved = readPresentSnapshot(store, identity);
       expect(saved.ledgerVersion).toEqual(original.ledgerVersion);
       expect(saved.work.execution.assignment_attempts).toHaveLength(expected.length);
-      database.close();
+      closeWorkspaceDatabaseWithAdmission(database);
       handles.pop();
       database = new Database(databasePath, { strict: true });
       handles.push(database);
@@ -5200,6 +5207,7 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       ['documentation', 'd'],
     ] as const) {
       const handle = openHostStateDatabase(root, `reset-${changeKind}.db`, workspace);
+      admittedHostDatabases.add(handle);
       handles.push(handle);
       const localStore = new HostStateStore(handle, workspace);
       const seed = fixture();
@@ -5688,7 +5696,7 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     expect(Object.isFrozen(saved.work.binding)).toBe(true);
     expect(saved.work.binding.provider_work_item_id).not.toBe(saved.work.binding.lifecycle_work_id);
     expect(() => commitHostState(input)).toThrow(/compare-and-swap/);
-    database.close();
+    closeWorkspaceDatabaseWithAdmission(database);
     handles.pop();
     const reopened = new Database(databasePath, { strict: true });
     handles.push(reopened);
