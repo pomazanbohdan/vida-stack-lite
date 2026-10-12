@@ -31,7 +31,7 @@
 
 **Files:** Create packages/agent/tooling/coverage-shard-plan.ts and tests/coverage-shard-plan.test.ts; modify package.json phase/input ownership once.
 
-**Interfaces:** `ReviewedTestResource {test_file:string; test_sha256:string; shared_resources:readonly string[]; exclusive_run:boolean; reviewer_ref:string}`; `CoverageShardAssignment {shard_id:string; tests:readonly string[]; selection_sha256:string; shared_resources:readonly string[]}`; `CoverageShardWave {exclusive:boolean; assignments:readonly CoverageShardAssignment[]}`; `CoverageShardPlan {schema:'VidaCoverageShardPlan/v1'; concurrency:2; waves:readonly CoverageShardWave[]}`. `planCoverageShards(tests:readonly string[], eligibility:readonly ReviewedTestResource[], concurrency:2):CoverageShardPlan`. Review digests bind captured test bytes; unknown files form singleton exclusive waves. Other waves contain at most two nonconflicting assignments. Use existing canonical digest/path validators.
+**Interfaces:** `ReviewedTestResource {test_file:string; test_sha256:string; review_scope_sha256:string; shared_resources:readonly string[]; exclusive_run:boolean; reviewer_ref:string}`; `CoverageShardAssignment {shard_id:string; tests:readonly string[]; selection_sha256:string; shared_resources:readonly string[]}`; `CoverageShardWave {exclusive:boolean; assignments:readonly CoverageShardAssignment[]}`; `CoverageShardPlan {schema:'VidaCoverageShardPlan/v1'; concurrency:2; waves:readonly CoverageShardWave[]}`. `planCoverageShards(tests:readonly InputDigest[], eligibility:readonly ReviewedTestResource[], concurrency:2, reviewScopeSha256:string):CoverageShardPlan`, using existing InputDigest from bun-coverage-evidence.ts. Caller projects selected test rows from already captured test_inputs; no rehash. The review scope digest binds already collected source/test/tool/config/runtime fingerprints and execution platform/package root metadata; no extra file pass. Compare both review scope and test_sha256 before admitting parallel eligibility; Source/dependency/provider changes invalidate stale reviews. Unknown files form singleton exclusive waves. Other waves contain at most two nonconflicting assignments. Use existing canonical digest/path validators.
 
 - [ ] RED controls: omitted/duplicate/foreign path; deterministic ties; invalid resource review; exclusive-resource overlap forbidden; every selected file occurs once.
 - [ ] Pin the conflict rule: overlapping shared_resources IDs cannot share a wave; global-exclusive files never overlap any assignment.
@@ -63,6 +63,22 @@
 - [ ] Preserve original serial/historical path. Root runs bounded real child controls; reviewer audits failure/UNKNOWN/release behavior; publish.
 
 ## Task4: Domain extraction for the measured largest contour
+
+Prerequisite to private CLI/Host parallel eligibility: shared package-resource
+reads are not private merely because consumer roots differ. runtimePackageAccess
+reads package.json using a read-side CAS lock; schema/template reads share that
+executing package root. Keep `runtime-package-root:<canonical-root>` resource
+conflict until the following P1 contour qualifies.
+
+**Package-reader files:** src/config/runtime-config.ts and existing package-reader
+consumers in bin/runtime-config-rebind.ts, initialization/configured-context owners;
+tests/runtime-package-access-reuse.test.ts and the existing native capture controls.
+One writer owns the shared reader/call sites; separate reviewer checks scope.
+
+- [ ] Reproduce overlapping package reads with real fresh isolated consumer roots and bounded readiness markers; retain actual collision/UNKNOWN evidence, no retry of archived operations.
+- [ ] Use the existing verified-capture byte primitive for package-owned immutable resources only, preserving identity, byte bounds, active CAS/recovery denial, strict decoding and original causes. Keep every mutable consumer reader unchanged.
+- [ ] Qualify fresh bytes after drift, unsafe/missing/oversized data, active lock/recovery, no write/fsync, strict UTF-8 and existing identity/schema/template digests. Reuse already captured resource rows; do not add a product test seam or stale cache.
+- [ ] Qualify actual two-reader overlap and unchanged package sidecars/current fences. Unsupported/unqualified provider contours keep the common conflict tag; publish before removing it.
 
 **Files:** tests/runtime-config-rebind.test.ts; new tests/runtime-config-rebind-source.test.ts, runtime-config-rebind-delivery.test.ts, runtime-config-rebind-readonly.test.ts, runtime-config-rebind-history.test.ts, runtime-config-rebind-limits.test.ts; shared tests/helpers/runtime-config-rebind-fixture.ts; package.json phase membership and test associations.
 

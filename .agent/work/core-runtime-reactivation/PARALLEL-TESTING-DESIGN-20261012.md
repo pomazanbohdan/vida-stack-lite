@@ -32,6 +32,8 @@ distribute its cases. No variant makes an individual blocking case faster.
 | Global `--concurrent` / `test.concurrent` | Can overlap independent async I/O within a file | Shared mocks, clocks, environment, fixtures and case-local assertion state; no CPU parallelism | Reject as global setting; later narrow opt-in only |
 | Explicit disjoint shards, direct serial Bun children, concurrency2 | Assignments bound before launch; one process/receipt per shard; shared immutable snapshot/maps; existing serial preload lifecycle | Requires async child supervision and a versioned shard/merge contract; shared output conflicts and cross-file ordering still need qualification | Recommended first implementation candidate |
 | Explicit shards + resource exclusivity + domain-file split | Distributes the observed large contour; fences shared resources; limits RAM/child fan-out | Domain extraction must preserve every case and fresh fixture ownership; no throughput guarantee before measurement | Target architecture, delivered incrementally |
+| Per-shard package clone | Can isolate package resource locks if execution roots also change | Current logical module paths still resolve original package root; copies alone do not isolate reads. Root remapping needs new custody/module qualification and adds delivery/setup cost | Defer; do not copy merely to claim isolation |
+| Explicit shards + qualified package-owned verified reads | Removes a demonstrated common read-side CAS writer while retaining fresh one-file observation | Requires focused data-reader qualification and existing resource digest/freshness fences; unsupported providers stay exclusive | Prerequisite before expanding private CLI/Host parallel eligibility |
 
 Official docs establish Bun support, not VIDA qualification. Bun documents
 replacement workers taking remaining files after a crash; do not assume automatic
@@ -120,11 +122,30 @@ roots/DBs/outputs are owned per case. Shared package outputs, Git worktrees,
 published fixture coverage directories and runtime activation require exclusivity
 until disjointness is qualified. Mock/global ordering dependencies need separate
 controls; filesystem exclusivity does not prove module isolation.
+Eligibility binds captured test bytes plus the existing global input/runtime/
+platform/package-root review scope. Unchanged test bytes alone cannot preserve
+a resource review after Source or dependency/provider behavior changes.
 The plan has ordered waves; each wave contains nonconflicting shard assignments.
 Unknown/global-exclusive files form singleton waves, with all other producers
 settled before launch. The supervisor advances a wave only after accounting its
 children; no second shard can overlap a singleton exclusive wave.
 Assignments with overlapping shared resource IDs cannot occupy the same wave.
+
+Third review iteration found an actual shared read-side resource: runtimePackageAccess
+derives the current package root from module URLs and reads package.json via
+readText. Linux readBytes acquires an exclusive CAS sidecar and rejects overlapping
+readers. The preload currently preserves original module paths/resolveDir; private
+consumer roots do not isolate this package root. runtime-config-rebind also reads
+its package initialization schema and prewriter template. Tag affected contours
+with `runtime-package-root:<canonical-root>` and serialize them initially.
+
+Before widening eligibility, qualify a shared package-only reader using the
+existing verified-capture primitive: no read-side CAS writes, fresh bounded bytes,
+single-link/no-follow/root/file identity and active-lock/recovery checks preserved.
+Mutable consumer config/Source readers remain unchanged. Reuse existing captured
+tool-input digests for schemas/templates/instructions and current package identity/
+resource fences; no extra scan/hash rebuild or cross-invocation stale cache.
+This is pending work, not evidence that private CLI cases already overlap safely.
 
 Candidate waves: pure contracts/math/codecs/properties; static inventory/matrix
 tooling; private config/CLI/Host fixtures; bounded native FS/recovery fixtures.
