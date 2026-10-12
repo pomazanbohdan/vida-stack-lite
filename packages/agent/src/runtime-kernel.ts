@@ -971,7 +971,6 @@ export function requireLiveLocalSessionAdmission(input: {
       lease &&
       ticket &&
       claim &&
-      work.binding.config_digest === runtimeConfigDigest(loadRuntimeConfig(repositoryRoot)) &&
       work.binding.repository_id === identity.repository_id &&
       canonicalJsonDigest(work.binding.project_ids) === canonicalJsonDigest(identity.project_ids) &&
       work.binding.integrations_digest === identity.integrations_digest &&
@@ -991,7 +990,8 @@ export function requireLiveLocalSessionAdmission(input: {
           claim.resources.includes(ticket.exclusive_resources[0]) &&
           ticket.active_resources.includes(ticket.exclusive_resources[0])) &&
       Date.parse(ticket.expires_at ?? '') > Date.now() &&
-      Date.parse(claim.lease_expires_at) > Date.now(),
+      Date.parse(claim.lease_expires_at) > Date.now() &&
+      work.binding.config_digest === runtimeConfigDigest(loadRuntimeConfig(repositoryRoot)),
     ),
     'local workflow admission or exact-path lease is stale',
   );

@@ -596,7 +596,7 @@ export function buildMutationTestCommand(executable: string, tests: string[], ju
     'test',
     ...tests,
     '--timeout',
-    '15000',
+    '5000',
     '--preload=./tooling/mutation-test-preload.ts',
     '--reporter=junit',
     `--reporter-outfile=${junitFile}`,

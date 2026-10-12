@@ -56,6 +56,15 @@ its owner; build/install run no suites. The final-check owner alone collects
 coverage, CRAP and mutation outputs. Reuse Babel inventory, hashes, reviewed
 matrices and existing fixture helpers.
 
+Use `bun test --timeout 5000` for the 5-second default per individual test.
+The default does not limit the whole file, phase or pool. Keep explicit justified
+case exceptions and aggregate child/cleanup/report budgets separate. A wrapper
+observing a full child pool needs its own exception; set the child runner's
+per-test default independently. Do not shorten real quarantine or change the
+2-second product operation target. On qualified Bun 1.4.3, local controls found
+TOML test timeout ineffective and bailout skipping preload `afterAll`; use the
+CLI default and keep final coverage free of `--bail`.
+
 In isolated fixtures containing copied snapshot tests, pass explicit `./` paths
 for child test subjects. Bare names can act as discovery filters and select
 both originals and copies. Assert the exact child test-file count when fixture

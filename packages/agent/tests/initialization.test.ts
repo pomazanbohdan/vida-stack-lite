@@ -21,6 +21,7 @@ const outputPaths = [
   'agent-runtime.config.v1.yaml',
   'docs',
   '.agent',
+  '.vida',
   '.tmp',
 ] as const;
 

@@ -40,6 +40,13 @@ function isLauncher(value: unknown): value is Launcher {
   return typeof value === 'function';
 }
 
+function requireModuleExports(value: unknown, label: string): Record<string, unknown> {
+  // Keep the looser object check local to values returned by trusted imports.
+  if (typeof value !== 'object' || value === null || Array.isArray(value))
+    throw new Error(`${label} is not a module namespace.`);
+  return value as Record<string, unknown>;
+}
+
 function requireLaunchers(
   mainModule: unknown,
   reconcileModule: unknown,
@@ -47,13 +54,26 @@ function requireLaunchers(
   run: Launcher;
   runReconcileArtifacts: Launcher;
 } {
-  const main = requireRecord(mainModule, 'Launcher module');
-  const reconcile = requireRecord(reconcileModule, 'Reconciliation module');
+  const main = requireModuleExports(mainModule, 'Launcher module');
+  const reconcile = requireModuleExports(reconcileModule, 'Reconciliation module');
   const run = main.run;
   const runReconcileArtifacts = reconcile.runReconcileArtifacts;
   if (!isLauncher(run) || !isLauncher(runReconcileArtifacts)) throw new Error('Fixture launchers are unavailable.');
   return { run, runReconcileArtifacts };
 }
+
+test('launcher module namespaces require callable named exports', async () => {
+  const mainUrl = 'data:text/javascript,export const run = async () => undefined';
+  const reconcileUrl = 'data:text/javascript,export const runReconcileArtifacts = async () => undefined';
+  const invalidUrl = 'data:text/javascript,export const run = "not a launcher"';
+  const main = requireModuleExports(await import(mainUrl), 'Control main module');
+  const reconcile = requireModuleExports(await import(reconcileUrl), 'Control reconciliation module');
+  const launchers = requireLaunchers(main, reconcile);
+  expect(main.run).toBe(launchers.run);
+  expect(reconcile.runReconcileArtifacts).toBe(launchers.runReconcileArtifacts);
+  const invalid: unknown = await import(invalidUrl);
+  expect(() => requireLaunchers(invalid, reconcile)).toThrow('Fixture launchers are unavailable.');
+});
 
 function assertOwnerSnapshot(snapshot: OwnerSnapshot): asserts snapshot is OwnerSnapshot & {
   work: NonNullable<OwnerSnapshot['work']>;

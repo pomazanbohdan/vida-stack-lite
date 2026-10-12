@@ -30,7 +30,11 @@ import {
   inspectHistoricalOwnerContext,
 } from '../bin/runtime-config-rebind.ts';
 import { readAppliedRuntimeConfigRebind } from '../bin/runtime-config-rebind.ts';
-import { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
+import {
+  inspectHistoricalOwnerWork,
+  suspendHistoricalOwnerWork,
+  suspendLocalWork,
+} from '../src/orchestration/suspend-local-work.ts';
 import { loadRuntimeConfig, parseRuntimeConfigYaml, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import {
@@ -991,8 +995,8 @@ function fixtureJournalWithInvalidItemField(
     const request = entry.request;
     return isPlainRecord(request) && request.action_id === actionId;
   });
-  const item = checkedRecord(rawItem, 'synthetic journal item');
-  item[field] = {};
+  if (!isPlainRecord(rawItem)) throw Error('Synthetic journal item is missing');
+  rawItem[field] = {};
   return value;
 }
 function requiredWorkflow(
@@ -3969,9 +3973,69 @@ function seedReadonlyUnknown(
   withDatabase(f, (db) => {
     const reservationTarget = hostReservation ? state.items.find((item) => item.issue_id !== null) : undefined;
     if (hostReservation && !reservationTarget) throw Error('Reservation fixture has no issued action');
+    if (hostReservation) {
+      const storedWork = readHostStateSqlRow(db, "SELECT * FROM agent_host_state WHERE kind='work'"),
+        currentWork = checkedFixtureWork(parseFixtureJson(storedWork.payload), f),
+        activeWork: WorkState = {
+          ...currentWork,
+          binding: { ...currentWork.binding, work_source_revision: scope.digest },
+          execution: { ...currentWork.execution, run_id: run, status: 'active' },
+          lifecycle: { ...currentWork.lifecycle, source_revision: scope.digest },
+        },
+        storedLedger = readHostStateSqlRow(db, "SELECT * FROM agent_host_state WHERE kind='ledger'"),
+        currentLedger = checkedFixtureLedger(parseFixtureJson(storedLedger.payload)),
+        activeLedger: CoordinationLedger = {
+          ...currentLedger,
+          tickets: currentLedger.tickets.map((ticket) => ({ ...ticket, source_revision: scope.digest })),
+        };
+      db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'").run(
+        json(activeWork),
+        canonicalJsonDigest(activeWork),
+      );
+      db.query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'").run(
+        json(activeLedger),
+        canonicalJsonDigest(activeLedger),
+      );
+    }
     const reservation = reservationTarget
       ? persistedFixtureReservationData(f, db, identity, config, selection, reservationTarget.request)
       : undefined;
+    if (hostReservation) {
+      if (!reservation || !reservationTarget?.issue_id)
+        throw Error('Reservation fixture did not retain its issued action');
+      const summary = 'Synthetic completed host result for reservation fixture';
+      state.items = state.items.map((item) => {
+        if (item === reservationTarget) {
+          const observation = parseSessionBridgeObservation({
+            schema: 'VidaSessionObservation/v1',
+            action_id: item.request.action_id,
+            host_attempt_id: reservation.receipt.attempt.attempt_id,
+            issue_id: reservationTarget.issue_id,
+            agent_id: 'fixture-' + item.request.role,
+            tool_call_ref: 'fixture:' + item.request.action_id,
+            status: 'reported_complete',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: [],
+          });
+          new HostStateStore(db, f.workspace).completeWorkflowAttempt(reservation.receipt, observation);
+          return { ...item, host_reservation: reservation, observation };
+        }
+        if (item.issue_id === null) return item;
+        const observation = parseSessionBridgeObservation({
+          schema: 'VidaSessionObservation/v1',
+          action_id: item.request.action_id,
+          issue_id: item.issue_id,
+          agent_id: 'fixture-' + item.request.role,
+          tool_call_ref: 'fixture:' + item.request.action_id,
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: [],
+        });
+        return { ...item, observation };
+      });
+    }
     let persistedState: unknown = state;
     if (mutate) {
       const replacement = mutate(state, snapshot, reservation);
@@ -3996,6 +4060,60 @@ function seedReadonlyUnknown(
       ).resume(identity.work_id, 1);
       if (resumed === null) throw Error('Validated fixture ledger could not be resumed');
       expect(resumed.state).toEqual(expectedState);
+    }
+    if (hostReservation) {
+      const store = new HostStateStore(db, f.workspace),
+        host = store.readHostStateSnapshot(identity),
+        journal = new MastraSessionLedger(db, f.workspace, config, f.root, store).resume(identity.work_id, 1);
+      if (!host.workVersion || !host.ledgerVersion || !journal)
+        throw Error('Released reservation fixture requires current Host and Journal snapshots');
+      suspendLocalWork({
+        store,
+        identity,
+        journal,
+        expectedWork: host.workVersion,
+        expectedLedger: host.ledgerVersion,
+        expectedMaintenanceGeneration: host.maintenanceGeneration,
+        nativeSessionHandle: 'fixture-thread',
+        userRequestPointer: 'TEST SETUP: release completed reservation before pending-Journal corruption',
+        requestIntent: 'next_work',
+        documentationContext: {
+          repository_root: f.root,
+          repository_id: identity.repository_id,
+          project_id: requiredElement(identity.project_ids, 0, 'reservation fixture project id'),
+          work_id: identity.work_id,
+        },
+      });
+      const row = readSessionLedgerSqlRow(
+          db,
+          'SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          f.workspace,
+          identity.work_id,
+          1,
+        ),
+        releasedJournal = parseMastraSessionLedgerState(parseFixtureJson(row.payload)),
+        pendingItems = releasedJournal.items.map((item) =>
+          item.request.action_id === reservationTarget!.request.action_id ? { ...item, observation: null } : item,
+        ),
+        pendingState = { ...releasedJournal, items: pendingItems };
+      db.query(
+        'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+      ).run(
+        row.revision + 1,
+        json(pendingState),
+        canonicalJsonDigest(pendingState),
+        row.workspace_id,
+        row.work_id,
+        row.attempt,
+        row.revision,
+        row.digest,
+      );
+      const released = store.readHostStateSnapshot(identity);
+      expect(released.work?.lease).toBeNull();
+      expect(released.work?.execution.status).toBe('suspended');
+      expect(released.work?.execution.assignment_attempts.every((attempt) => attempt.status === 'completed')).toBe(
+        true,
+      );
     }
   });
   const native = new Database(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'), {
@@ -7543,7 +7661,7 @@ for (const [name, mutation] of readonlySnapshotMutations) {
   }, 30000);
 }
 
-const readonlyJournalMutations: readonly [string, SyntheticStateMutation, boolean, boolean][] = [
+const readonlyJournalMutations: readonly [string, SyntheticStateMutation, boolean, boolean, string][] = [
   [
     'host reservation',
     (state, _snapshot, reservation) => {
@@ -7555,6 +7673,7 @@ const readonlyJournalMutations: readonly [string, SyntheticStateMutation, boolea
     },
     true,
     true,
+    'issued native outcome is pending/unknown',
   ],
   [
     'activation without complete authority',
@@ -7565,6 +7684,7 @@ const readonlyJournalMutations: readonly [string, SyntheticStateMutation, boolea
     },
     false,
     false,
+    'Mastra research activation shape is invalid',
   ],
   [
     'normalization without complete authority',
@@ -7575,18 +7695,17 @@ const readonlyJournalMutations: readonly [string, SyntheticStateMutation, boolea
     },
     false,
     false,
+    'observed binding must be a plain object',
   ],
 ];
-for (const [name, mutation, validateFixture, hostReservation] of readonlyJournalMutations) {
+for (const [name, mutation, validateFixture, hostReservation, expectedError] of readonlyJournalMutations) {
   test(`readonly unknown denies ${name} without changing records`, async () => {
     const f = fixture();
     seedReadonlyUnknown(f, mutation, { validateFixture, hostReservation });
     const before = databaseState(f);
-    await Promise.resolve(
-      expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow('issued native outcome is pending/unknown'),
-    );
+    await Promise.resolve(expect(runReconcileArtifacts(f.args('inspect'))).rejects.toThrow(expectedError));
     expect(databaseState(f)).toEqual(before);
-  }, 30000);
+  }, 5000);
 }
 
 test('readonly unknown denies original configured source writer despite lease-null owner', async () => {

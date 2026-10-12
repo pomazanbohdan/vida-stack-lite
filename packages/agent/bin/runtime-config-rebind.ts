@@ -3009,13 +3009,8 @@ export function currentState(
             [...completedItems, ...row.value.items].every(isActivationFreeUnknownItem),
             'generic readonly UNKNOWN requires activation-free Journal history',
           );
-          const {
-            research_activation: _activation,
-            research_normalization: _normalization,
-            host_reservation: _reservation,
-            ...activationFreeItem
-          } = item;
-          frozen.push(readonlyUnknown(root, boundConfig, row, activationFreeItem, hostRows));
+          // Preserve the original pending item's reservation for the UNKNOWN authority guard.
+          frozen.push(readonlyUnknown(root, boundConfig, row, item, hostRows));
         } catch (error) {
           requireRebind(
             false,

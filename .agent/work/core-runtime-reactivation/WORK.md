@@ -7296,3 +7296,66 @@ The next staged check passes421file types but rejects the generic spy return
 annotation as any under typed lint. Bind Mock to the actual safe-access function
 signature; retain unconditional spy restoration and fixture cleanup. No lint
 suppression or behavior change. Failed staged attempts remain in session evidence.
+
+## 2026-10-12 — per-test timeout and causal coverage corrections
+
+The human clarified that 5 seconds is the default for each individual test,
+with justified exceptions, never the entire pool. Current ordinary Bun Test
+scripts, current coverage invocation and mutation test command select
+`--timeout 5000`. Preserve published-baseline argv unchanged. An isolated lock
+custody pool selects that default for its child cases; its original 120s process
+and 150s observer budgets remain separate aggregate exceptions. A mistaken
+4s child-pool deadline was corrected before publication. Final coverage still
+has its separate aggregate deadline; no product/quarantine bound is changed.
+Blind Luna timeout review found no aggregate/default conflation in these diffs.
+
+Qualified Bun 1.4.3 inert controls found TOML `[test] timeout` ineffective and
+first-failure bailout skipping preload `afterAll` process finalization. Use CLI
+timeout, keep final coverage free of `--bail`, and retain missing receipt as GAP.
+The new bailout-custody control passes; it does not create a fallback receipt.
+
+Product corrections preserve existing predicates: reject stale admission before
+loading current config, but still fresh-check config for a live lease; pass the
+original generic pending Journal item to readonlyUnknown so its persisted
+host_reservation cannot be projected away before the existing authority guard.
+Keep the historical known-terminal projection and global activation checks.
+Blind Source review found no authorization/control weakening in either change.
+
+Causal test corrections use a repository-backed admission fixture, remove one
+duplicate unchanged context read, populate required initialization templates,
+validate trusted module exports separately from JSON plain records, clean owned
+`.vida` between completed initialization cases, and mutate the actual malformed
+Journal item rather than a shallow helper copy. Malformed activation and
+normalization fail at the codec with their precise denials. Reservation setup
+claims a real persisted Host attempt, completes it and suspends ownership before
+making only the synthetic Journal observation pending; no live/historical state
+or UNKNOWN operation is replayed. The original regression reproduced inspect
+acceptance, then passed after preserving reservation in the Source guard.
+
+Root exact completion: 5PASS/40assertions/9.35s covers reservation denial751ms,
+both malformed Journal denials, unchanged generic three-UNKNOWN rebind4821ms
+and trusted namespace control. Isolated pool observer passes221ms; initialization
+2case check passes48assertions/4.98s. Other retained focused evidence covers
+expired lease/current-config drift, public report, data-only context, mutation
+argv and paused replacement. Do not infer production2s compliance from fixture
+timings or whole-suite percentiles from partial/forwarded reporter rows.
+
+Current batch static check initially found three literal data-URL TS2307 errors
+in the namespace control. Use dynamic URL values and validate imported records;
+no declaration, cast-to-valid-output or compiler suppression was added. Retain
+the failed static receipt. Recheck the final joined Source under ordinary strict
+staged gates before publication.
+
+All logs remain in `.tmp/complex-quality-20261012-WfxQXq`; latest targeted
+sessions1768,26584,88735 observed terminal outcomes. Full current coverage,
+exhaustive executable frozen CRAP plan, mutation partition admission and clean
+native Runtime qualification remain open. No current numeric percentage or
+installed unblock is claimed. Preserve unowned `BASE/` and root `bun.lock`.
+
+Final joined static check passes421 maintained files and97 stricter Source
+files,0diagnostics. Namespace parity assertions now compare the exact exported
+function identities without forcing unknown values into a typed expected object.
+The resulting focused tooling completion passes5cases/29assertions/4.03s:
+ordinary successful and failing preload finalization, bailout custody, pinned
+mutation argv and namespace exports. Existing tests keep distinct assertion,
+execution, coverage and mutation evidence. Full suites were not repeated here.

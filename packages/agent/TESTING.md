@@ -552,6 +552,19 @@ Use deterministic seeds. Record platform skips as GAPs. A descriptor simulation 
 
 ## Process, timeout and fixture safety
 
+The default timeout is 5 seconds per individual test, selected explicitly with
+`bun test --timeout 5000`. It is not a deadline for a file, phase, child pool or
+the whole suite. Explicit per-test exceptions require a contract-backed reason,
+such as observing a complete isolated pool or a real recovery quarantine.
+Keep aggregate process budgets separate and preserve their cleanup/report
+allowance. The product operation target remains 2 seconds; neither test defaults
+nor exceptions change it. Do not shorten protocol quarantine to fit a test.
+
+On the qualified Bun 1.4.3, a local inert control showed that `[test] timeout`
+in TOML did not enforce the requested timeout; use the CLI option. Another
+control showed `--bail=1` skips preload `afterAll` finalization on first failure.
+Do not enable bailout in final coverage or admit a missing process receipt.
+
 The launcher and ordinary test phases have no implicit aggregate deadline. Explicit caller, case, probe, repair, installation and cleanup bounds still apply. Do not turn an unbounded duration into an infinite native timeout value.
 
 When a caller sets a parent deadline, every nested command uses its remaining allowance. Setup, sequential children and recovery do not restart that budget. Reject expired or malformed deadline metadata before launching another child. Preserve the original process-tree deadline through clock changes.

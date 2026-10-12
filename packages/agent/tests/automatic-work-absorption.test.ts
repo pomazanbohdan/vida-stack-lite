@@ -803,7 +803,7 @@ test('competing base attempt commits before the local Host call and cannot be re
 });
 
 test('data-only admitted context rejects expired tickets, expired claims and absent active claims', () => {
-  const f = fixture();
+  const f = fixture(false, true);
   try {
     const input = f.prepare('live-context', 'user:live-context');
     if (!input.nativeSessionHandle) throw new Error('live context fixture has no native session handle');
@@ -828,9 +828,8 @@ test('data-only admitted context rejects expired tickets, expired claims and abs
       .get();
     if (!row) throw new Error('persisted coordination ledger is missing');
     const original = parseCoordinationLedgerJson(row.payload);
-    const initiallyAdmitted = readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'live-context');
-    expect(requireWorkLease(initiallyAdmitted.work).thread_id).toBe('session');
     const current = readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'live-context');
+    expect(requireWorkLease(current.work).thread_id).toBe('session');
     const before = f.store.readHostStateSnapshot(current.identity);
     assertCompleteHostSnapshot(before);
     for (const nativeSessionHandle of ['x'.repeat(257), 'session\u0001']) {
@@ -1111,7 +1110,7 @@ test('public report retrieves an exact durable observation before stale CAS and 
         schema_sha256: createHash('sha256')
           .update(readFileSync(path.join(bundle, 'schemas/runtime-initialization.v1.schema.json')))
           .digest('hex'),
-        templates: [],
+        templates: fixtureInitializationTemplates(f.root, bundle),
         created_at: new Date().toISOString(),
       }),
     );

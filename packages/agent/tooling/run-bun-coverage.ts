@@ -137,7 +137,15 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const executionRoot = execution && fixture ? path.join(snapshotRoot, fixture.directory) : root;
     const args = execution
       ? execution.argv.map((arg) => snapshotArgument(arg, executionRoot))
-      : ['test', '--parallel=1', '--no-isolate', `--config=${path.join(snapshotRoot, 'bunfig.toml')}`, ...tests];
+      : [
+          'test',
+          '--timeout',
+          '5000',
+          '--parallel=1',
+          '--no-isolate',
+          `--config=${path.join(snapshotRoot, 'bunfig.toml')}`,
+          ...tests,
+        ];
     const configIndex = args.findIndex((arg) => arg.startsWith('--config='));
     if (configIndex < 0) throw new Error('Bun coverage invocation has no captured config.');
     args.splice(configIndex, 0, '--preload', path.join(snapshotRoot, 'tooling', 'bun-coverage-preload.ts'));

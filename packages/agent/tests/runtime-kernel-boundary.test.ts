@@ -22,6 +22,10 @@ import { loadProjectContext, loadProjectSetContext } from '../src/config/project
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { initializeProject } from '../bin/init.ts';
 import type { RuntimeTimingEvent } from '../src/runtime-timing.js';
+import { createAutomaticWorkAdmissionFixture } from './helpers/automatic-work-admission-fixture.js';
+import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import type { CoordinationLedger } from '../src/host-state.ts';
+import { validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
 type TrustedAuthentication = TrustedHostCompositionInput['authentication'];
 import {
   assertRuntimeConfigUnchanged,
@@ -34,6 +38,7 @@ import {
   createTrustedHostComposition,
   dispatchWorkflowAssignment,
   prepareWorkflowExecution,
+  requireLiveLocalSessionAdmission,
   readStableRuntimeConfig,
 } from '../src/runtime-kernel.ts';
 function invokeUntrusted(
@@ -75,6 +80,52 @@ function firstProjectId(projectIds: readonly string[]): string {
   const id = projectIds[0];
   if (id === undefined) throw new Error('runtime test project id is required');
   return id;
+}
+
+function parseCoordinationLedgerJson(text: string): CoordinationLedger {
+  const result = validateCoordinationLedgerV1(JSON.parse(text));
+  if (!result.ok)
+    throw new Error(result.issues[0]?.message ?? 'fixture payload is not a current CoordinationLedger/v1 record');
+  return result.ledger;
+}
+
+async function prepareAdmittedSessionFixture(workId: string) {
+  const fixture = createAutomaticWorkAdmissionFixture(false, true);
+  try {
+    const input = fixture.prepare(workId, 'user:' + workId);
+    if (!input.nativeSessionHandle) throw new Error('lease fixture has no native session handle');
+    input.intakePath = `.agent/work/${workId}/raw-intake.json`;
+    await writeFile(
+      path.join(fixture.root, input.intakePath),
+      JSON.stringify({
+        schema: 'VidaLocalSessionIntake/v1',
+        work_item: input.workItem,
+        native_session_handle: input.nativeSessionHandle,
+        scope_path: input.scopePath,
+        acceptance_path: input.acceptancePath,
+        runtime_code_paths: input.runtimeCodePaths,
+        route: input.route,
+        risk: input.risk,
+        change_kind: input.changeKind,
+      }),
+    );
+    const admitted = fixture.admit(input);
+    const work = admitted.host.work;
+    if (!work) throw new Error('lease fixture has no admitted Work');
+    return {
+      fixture,
+      identity: {
+        repository_id: work.binding.repository_id,
+        project_ids: work.binding.project_ids,
+        integrations_digest: work.binding.integrations_digest,
+        work_id: work.binding.lifecycle_work_id,
+      },
+      nativeSessionHandle: input.nativeSessionHandle,
+    };
+  } catch (error) {
+    fixture.close();
+    throw error;
+  }
 }
 
 async function createRuntimeRepositoryRoot(): Promise<string> {
@@ -786,6 +837,69 @@ describe('runtime kernel boundary', () => {
     expect(() => readStableRuntimeConfig(repositoryRoot, '0'.repeat(64))).toThrow(
       'runtime configuration changed after composition',
     );
+  });
+  test('denies an expired lease before reading malformed current configuration', async () => {
+    const { fixture, identity, nativeSessionHandle } = await prepareAdmittedSessionFixture('preflight-expired-lease');
+    try {
+      const ledgerRow = fixture.database
+        .query<{ payload: string }, []>("SELECT payload FROM agent_host_state WHERE kind='ledger'")
+        .get();
+      if (!ledgerRow) throw new Error('lease fixture has no persisted coordination ledger');
+      const ledger = parseCoordinationLedgerJson(ledgerRow.payload);
+      const ticket = ledger.tickets.find((entry) => entry.work_id === identity.work_id);
+      if (!ticket) throw new Error('lease fixture has no coordination ticket');
+      const expiredAt = '2020-01-01T00:00:00.000Z';
+      const expiredLedger: CoordinationLedger = {
+        ...ledger,
+        tickets: ledger.tickets.map((entry) =>
+          entry.ticket_id === ticket.ticket_id ? { ...entry, expires_at: expiredAt } : entry,
+        ),
+        claims: ledger.claims.map((entry) =>
+          entry.ticket_id === ticket.ticket_id ? { ...entry, lease_expires_at: expiredAt } : entry,
+        ),
+      };
+      fixture.database
+        .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+        .run(canonicalJson(expiredLedger), canonicalJsonDigest(expiredLedger));
+      await writeFile(path.join(fixture.root, 'agent-runtime.config.v1.yaml'), 'invalid: [configuration');
+
+      expect(() =>
+        requireLiveLocalSessionAdmission({
+          repositoryRoot: fixture.root,
+          identity,
+          store: fixture.store,
+          nativeSessionHandle,
+        }),
+      ).toThrow('local workflow admission or exact-path lease is stale');
+    } finally {
+      fixture.close();
+    }
+  });
+  test('still compares a live lease with current configuration', async () => {
+    const { fixture, identity, nativeSessionHandle } =
+      await prepareAdmittedSessionFixture('preflight-live-config-drift');
+    try {
+      const configPath = path.join(fixture.root, 'agent-runtime.config.v1.yaml');
+      const configText = await readFile(configPath, 'utf8');
+      await writeFile(
+        configPath,
+        configText.replace(
+          /config_revision: (\d+)/,
+          (_match, revision: string) => `config_revision: ${Number(revision) + 1}`,
+        ),
+      );
+
+      expect(() =>
+        requireLiveLocalSessionAdmission({
+          repositoryRoot: fixture.root,
+          identity,
+          store: fixture.store,
+          nativeSessionHandle,
+        }),
+      ).toThrow('local workflow admission or exact-path lease is stale');
+    } finally {
+      fixture.close();
+    }
   });
   test.skipIf(!nativeNoFollowAvailable)(
     'rechecks the composed configuration before governance evaluation',

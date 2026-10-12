@@ -12,7 +12,8 @@ if (!isolated && !underStryker) {
   linuxTest(
     'runs lock payload custody cases in an isolated Bun process',
     () => {
-      const child = spawnSync(process.execPath, ['test', fileURLToPath(import.meta.url)], {
+      // This child runs the complete isolated pool; its process budget is not a per-test timeout.
+      const child = spawnSync(process.execPath, ['test', '--timeout', '5000', fileURLToPath(import.meta.url)], {
         cwd: packageRoot,
         env: { ...process.env, LOCK_PAYLOAD_CUSTODY_ISOLATED: '1' },
         encoding: 'utf8',
@@ -25,6 +26,7 @@ if (!isolated && !underStryker) {
       expect(child.status).toBe(0);
       expect(`${child.stdout ?? ''}\n${child.stderr ?? ''}`).toContain('BUN_TEST_SUITE_COMPLETE:lock payload custody');
     },
+    // Exception: the wrapper observes the entire child pool and its terminal receipt.
     150_000,
   );
 } else {
