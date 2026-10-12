@@ -8170,3 +8170,39 @@ Source97/maintained426TS staticchecks and lintPASS before last test-only size
 correction; ordinary final hook checks pending. Blind Source adapter review
 approves observational scope and failure propagation; independent global
 coverage/CRAP/mutation and actual Runtime acceptance remain pending.
+
+### 2026-10-12 — ddcaf54 terminal iteration and fixture/assertion refinement
+
+Runtime snapshot packet ddcaf54 passed ordinary hooks and was pushed. Its full
+coverage iteration terminated at600000ms:84PASS/5FAIL partial, UNKNOWN, no final
+numeric receipt; exact reservation released. Failed/UNKNOWN roots retained.
+The five failures are audit writer child UNKNOWN, both real Host role orders,
+configured inspect, and interrupted retirement rollback exceeding case bounds.
+Controller passed117438.57ms; retained opt-in diagnostic receipts show qualified
+child109133ms, frozen install1031ms and scope snapshot799ms. Settled public
+issue phases total~46.8s, reports~46.9s; kernel/setup timing alone does not explain
+those costs. No safe freshness shortcut or whole-suite speedup is established.
+
+Removed unused schemas/instructions/tooling/TESTING shadow copies from the
+TaskSource consumer fixture; actual resources resolve from the executing
+package. Keep fresh consumer roots, configuration, Host/journal assertions and
+source-byte reads. Reader preference now asserts zero cooperative-reader calls
+instead of throwing a generic fixture error. A real temporary selection defect
+produces assertion failure expected0/received2, then Source was restored with
+an empty production diff. This is a behavioral negative control, not an admitted
+mutation result. Restored positive control passes8assertions/body2.16ms.
+
+426maintainedTS/0diagnostics, Source97 checker and scoped lint PASS. Six focused
+cases PASS63assertions/10.06s with original case limits; blind patch review has
+no actionable findings. Fresh executable temp storage in /dev/shm qualified by
+actually running the copied Bun1.4.3, then the six cases. Storage and fixture
+changes were combined, so elapsed differences are not a matched benchmark.
+Next full iteration uses a fresh external temp root there, one producer and
+unchanged600000ms bound; diagnostics off permits normal successful cleanup.
+
+Applied the project bun-test skill and rechecked official runtime-behavior and
+code-coverage docs:5000ms is per test; native statements thresholds are not
+enforced and lcov-only threshold behavior has limitations. Existing four-metric
+instrumented admission remains authoritative. Global coverage/CRAP/mutation,
+exhaustive frozen correspondence and isolated actual Runtime acceptance remain
+pending; no P0/P1 closure or unblock is inferred from focused qualification.

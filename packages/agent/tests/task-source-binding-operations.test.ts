@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import type { Database } from 'bun:sqlite';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -296,9 +296,7 @@ function makeConfiguredFixtureRoot() {
   const repositoryRoot = mkdtempSync(path.join(tmpdir(), 'vida-task-source-real-host-')),
     runtimeRoot = path.join(repositoryRoot, 'runtime');
   mkdirSync(runtimeRoot, { recursive: true });
-  for (const directory of ['schemas', 'instructions', 'tooling'])
-    cpSync(path.join(packageRoot, directory), path.join(runtimeRoot, directory), { recursive: true });
-  cpSync(path.join(packageRoot, 'TESTING.md'), path.join(runtimeRoot, 'TESTING.md'));
+  // Package resources resolve through the executing package, not this consumer root.
   mkdirSync(path.join(repositoryRoot, 'docs', 'agent-instructions'), { recursive: true });
   writeFileSync(path.join(repositoryRoot, 'AGENTS.md'), '# Isolated Host fixture\n');
   writeFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'), '# Isolated project fixture\n');

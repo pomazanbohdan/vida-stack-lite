@@ -92,6 +92,17 @@ Ruling: parallel independent writers are authorized by the user's explicit dispa
 
 dbfa40c is published. Its iteration log is .tmp/coverage-iteration-dbfa40c/full-coverage.log; result UNKNOWN with77PASS/8FAIL partial rows. The prior1800s attempt is UNKNOWN with121PASS/19FAIL and no coverage receipt. Neither is a global gate pass.
 
+Later published packets6f5f9de/0f90461/ddcaf54 repair fixture validity, resource
+closure, duplicate coverage transforms and runtime-only read-side CAS writes.
+Iteration ddcaf54 is terminal UNKNOWN at600000ms,84PASS/5FAIL partial and no
+numeric receipt. Controller phase receipts isolate public issue/report costs;
+finer attribution remains open. A reviewed next test packet removes unused
+consumer copies and makes reader-selection failure assertion-specific:
+6PASS/63assertions plus restored reader positive8assertions; temporary negative
+selection fails expected0/received2. Next full run uses fresh executable external
+RAM temp storage, diagnostics off, unchanged selection/default/ceiling. Root
+monitors capacity; no failed/UNKNOWN fixture pruning or gate relaxation.
+
 Next packet: malformed-process-output parser controls3PASS/7assertions; controller opt-in start/settled diagnostics cover setup and public calls, parent62function complexities unchanged. Fresh controller controlsPASS17assertions at27.55s and31.07s command; diagnostic receipts retained in workspace before exact verified successful fixture cleanup. Setup~0.8s, largest issue-wave~6.1s in that fresh tmpfs control; workspace full measurements are not a matched benchmark. Further Source/runtime-package cost attribution remains open, no safe freshness shortcut admitted.
 
 ## Next reviewed P1 packet: retain the existing transform result

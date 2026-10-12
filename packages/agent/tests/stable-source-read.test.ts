@@ -227,6 +227,7 @@ test('runtime snapshots retain logical bundle identities while forwarding stable
 
 test('runtime snapshots prefer a fresh verified package read and bind it to the runtime reader', () => {
   const calls: string[] = [];
+  let stableCalls = 0;
   let contents = Buffer.from('first package bytes');
   const reader = {
     fileExists(): boolean {
@@ -236,7 +237,8 @@ test('runtime snapshots prefer a fresh verified package read and bind it to the 
       throw new Error('runtime verified capture must not use mutable byte reads');
     },
     readStableBytes(): Buffer | null {
-      throw new Error('runtime verified capture must not take a cooperative stable read');
+      stableCalls += 1;
+      return Buffer.from(contents);
     },
     readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
       expect(this).toBe(reader);
@@ -248,6 +250,7 @@ test('runtime snapshots prefer a fresh verified package read and bind it to the 
   contents = Buffer.from('changed package bytes');
   const second = snapshotRuntimePackageSources(reader, 'runtime-package', ['runtime-package/bin/a.ts']);
 
+  expect(stableCalls).toBe(0);
   expect(calls).toEqual(['bin/a.ts:scoped source stable read:default', 'bin/a.ts:scoped source stable read:default']);
   expect(first.entries[0]).toMatchObject({ path: 'runtime-package/bin/a.ts', exists: true, bytes: 19 });
   expect(second.entries[0]).toMatchObject({ path: 'runtime-package/bin/a.ts', exists: true, bytes: 21 });
