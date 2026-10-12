@@ -152,8 +152,14 @@ export function createAutomaticWorkAdmissionFixture(sourceWriter = false, public
     prepare,
     admit,
     close({ retainRoot = false }: { retainRoot?: boolean } = {}) {
-      closeWorkspaceDatabaseWithAdmission(database);
-      if (!retainRoot) rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      try {
+        closeWorkspaceDatabaseWithAdmission(database);
+        if (!retainRoot) rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+        else console.warn('Failed or uncertain absorption fixture retained: ' + root);
+      } catch (error) {
+        console.error('Absorption fixture cleanup failed; root retained or uncertain: ' + root, error);
+        throw error;
+      }
     },
   };
 }

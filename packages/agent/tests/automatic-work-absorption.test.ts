@@ -804,6 +804,7 @@ test('competing base attempt commits before the local Host call and cannot be re
 
 test('data-only admitted context rejects expired tickets, expired claims and absent active claims', () => {
   const f = fixture(false, true);
+  let completed = false;
   try {
     const input = f.prepare('live-context', 'user:live-context');
     if (!input.nativeSessionHandle) throw new Error('live context fixture has no native session handle');
@@ -883,10 +884,17 @@ test('data-only admitted context rejects expired tickets, expired claims and abs
         .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
         .run(canonicalJson(original), canonicalJsonDigest(original));
     }
-    const finallyAdmitted = readAdmittedSessionExecutionContext(f.root, f.store, 'sample', 'live-context');
-    expect(requireWorkLease(finallyAdmitted.work).thread_id).toBe('session');
+    expect(
+      requireLiveLocalSessionAdmission({
+        repositoryRoot: f.root,
+        identity: current.identity,
+        store: f.store,
+        nativeSessionHandle: requireWorkLease(current.work).thread_id,
+      }),
+    ).toEqual(before);
+    completed = true;
   } finally {
-    f.close();
+    f.close({ retainRoot: !completed });
   }
 });
 

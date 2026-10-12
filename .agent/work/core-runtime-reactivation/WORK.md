@@ -7850,7 +7850,7 @@ scenario matrices -> Ajv -> Bun coverage, frozen complexity/CRAP ceilings and
 assertion-confirmed mutation. Default remains5s per individual case with explicit
 existing integration exceptions; no timeout/compile/runtime result is a Killed.
 
-- [ ] First correction packet: `bin/run.ts` readonly release canonical JSON
+- [x] First correction packet: `bin/run.ts` readonly release canonical JSON
       comparison and `tests/stopped-source-capture.test.ts` consumer custody. Use the
       existing canonical comparator, strict request/observation parsers and engine
       completion checks. Qualify positive admission before engine tampering, retained
@@ -7932,3 +7932,45 @@ are excluded from the next lifecycle selection. The mixed stopped-source writer
 case still exhausts60s; its213-file runtime capture is checked four times across
 distinct boundaries (five with HITL), so neither fsync deletion nor cached effect
 proofs are authorized shortcuts. Global coverage/CRAP/mutation remain pending.
+
+### v1085–v1090 — published P0 correction and reduced test work
+
+9521ddb is published to origin/main after ordinary staged hooks:420formatted
+files,424typechecked files and strict Knip pass. Final strict CLI v1084 passes
+144files. HEAD/origin divergence is zero; unrelated BASE/ and root bun.lock stay
+untouched. No native/runtime installation or unblock is inferred.
+
+The fresh data-only absorption case v1086 no longer has the old missing-context
+failure: its shared fixture already supplies canonical Host root. It executes
+all9assertions but exceeds default5s at5.995s; retain
+/tmp/vida-absorption-CaXG27 and the original log. A disjoint Luna writer keeps
+initial full current-context admission, forged-handle checks and all three
+actual reader denials, then replaces a repeated full runtime package capture
+with current live admission and exact restored Host snapshot equality. Source
+bytes are unchanged by these ledger-only mutations. v1089 passes the same9
+assertions in4.668s under unchanged5s default; this is one observation, not a
+percentile or global suite speed claim. The existing fixture close option now
+retains unsuccessful roots; the shared close owner reports retained paths.
+
+Fresh serialized lifecycle representatives v1087 pass4cases/174assertions in
+50.94s, bodies13.79/12.27/11.20/11.68s under existing60s integration exceptions.
+These cover ordinary publication, activation, fresh resume and release with
+same-ID reconciliation and no replay. Old CAS-contention failures are not
+reproduced by this selection. Seventeen remaining expanded cases are selected
+once in v1090, excluding these4and the previously qualified first/last abrupt
+publication and closure cases. No repeated full suite or old UNKNOWN replay.
+v1090 completes17PASS/817assertions in331.10s with7previously qualified cases
+filtered out. All ordinary resume, intent/bootstrap/publication, activation,
+release/retirement, deliberate UNKNOWN denial and fresh-process controls in that
+selection pass their unchanged60/90s exceptions. Intentional UNKNOWN fixtures
+remain; no original failed fixture was replayed or reclaimed. This adds21fresh
+qualifications/991assertions across v1087+v1090; together with the three prior
+qualified abrupt-write/closure cases, all24expanded lifecycle scenarios have
+incremental behavior evidence. This is not one current full-suite/numeric report.
+
+Independent review confirms the absorption replacement checks actual fresh
+admission and full restored state, keeping every expiry denial. Shared close
+logs retention and close/removal failures without adding effects or retrying an
+uncertain cleanup. Bounded search finds no other eligible duplicated full-context
+lookup in this file; the other runtime/Source checks test actual drift/rebinding.
+The focused optimization packet's final static/hooks/publication remain pending.
