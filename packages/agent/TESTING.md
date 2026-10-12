@@ -663,6 +663,27 @@ final coverage or mutation results. Keep its CLI
 controller destinations must remain outside the editable repository target;
 do not set TMPDIR to a directory inside that target for the full suite.
 
+Parallel coverage is a pending protocol change, not a supported flag override.
+Current preload/process receipts require the whole selected test set per
+process; historical references additionally bind one PID and fixture-child
+observations. Native Bun worker/JUnit merging does not satisfy these contracts.
+See `.agent/work/core-runtime-reactivation/PARALLEL-TESTING-DESIGN-20261012.md`
+and its implementation plan. The proposed current-mode path uses two direct
+serial shards over one captured snapshot, exact disjoint assignment/union,
+resource-exclusive waves and one final verifier. Keep historical mode serial.
+Do not enable it before bounded custody/provenance and same-input performance
+qualification. The planned pinned-command deadline includes typecheck and the
+currently nested CRAP gate; the present ten-minute limit covers the test
+producer only. Never report the planned behavior as already implemented.
+
+For fixture teardown after asynchronous bodies, completion alone is insufficient:
+a timed-out body may reach its final assertions later. Permit removal only with
+successful completion and a finite, unexpired monotonic case deadline checked
+after owned connection cleanup. Retain/report incomplete roots, attempt all
+owned closes, and preserve both body and cleanup errors. Native Linux missing
+file errors may expose a proc-fd leaf path; distinguish provider details from
+required configured-context diagnostics and keep exact denial/no-effect proofs.
+
 Close admitted workspace/Host database handles through
 `closeWorkspaceDatabaseWithAdmission` or the owning store/ledger/fixture close
 method. Raw SQLite `.close()` does not release the paired storage-admission

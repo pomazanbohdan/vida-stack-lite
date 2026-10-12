@@ -61,18 +61,42 @@ function canonicalSkillPath(value: string): string {
   return value;
 }
 
+function readConfiguredBytes(
+  access: Pick<SafeRepositoryAccess, 'readBytes'>,
+  target: string,
+  relative: string,
+  label: string,
+  contextualMissing: boolean,
+): Buffer {
+  try {
+    return access.readBytes(target, label);
+  } catch (error) {
+    if (contextualMissing && error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+      throw new Error(`configured context ${relative} is missing`, { cause: error });
+    }
+    throw error;
+  }
+}
+
 function readLocal(
   access: Pick<SafeRepositoryAccess, 'readBytes'>,
   root: string,
   relative: string,
   usedBytes: { value: number },
+  contextualMissing = false,
 ): Pick<ConfiguredContextEntry, 'status' | 'sha256' | 'bytes' | 'content' | 'truncated'> {
   const target = path.join(root, relative);
-  const first = access.readBytes(target, `configured context ${relative}`);
+  const first = readConfiguredBytes(access, target, relative, `configured context ${relative}`, contextualMissing);
   requireContext(first.length <= MAX_FILE_BYTES, `${relative} exceeds the per-file limit`);
   usedBytes.value += first.length;
   requireContext(usedBytes.value <= MAX_TOTAL_BYTES, 'local content exceeds the total limit');
-  const second = access.readBytes(target, `configured context stable read ${relative}`);
+  const second = readConfiguredBytes(
+    access,
+    target,
+    relative,
+    `configured context stable read ${relative}`,
+    contextualMissing,
+  );
   requireContext(first.equals(second), `${relative} changed during read`);
   const content = new TextDecoder('utf-8', { fatal: true }).decode(first);
   const omission = '\n[middle omitted; read source for complete content]\n';
@@ -151,7 +175,7 @@ export function buildConfiguredContext(
       kind: 'skill',
       location,
       title: path.basename(path.dirname(location)),
-      ...readLocal(access, root, location, usedBytes),
+      ...readLocal(access, root, location, usedBytes, true),
     });
   }
   entries.sort((a, b) => (a.kind < b.kind ? -1 : a.kind > b.kind ? 1 : a.id < b.id ? -1 : a.id > b.id ? 1 : 0));

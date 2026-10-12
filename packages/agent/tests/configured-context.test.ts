@@ -83,4 +83,39 @@ describe('configured local context', () => {
       /skill reference/,
     );
   });
+
+  test.skipIf(process.platform !== 'linux')(
+    'labels a missing required context file and retains the filesystem cause',
+    () => {
+      const skillPath = path.join(root, '.codex/skills/clio/SKILL.md');
+      rmSync(skillPath);
+      let failure: unknown;
+      try {
+        buildConfiguredContext(root, config, base);
+      } catch (error) {
+        failure = error;
+      }
+      expect(failure).toBeInstanceOf(Error);
+      if (!(failure instanceof Error)) throw Error('Expected a missing configured context error');
+      expect(failure.message).toBe('configured context .codex/skills/clio/SKILL.md is missing');
+      const cause = failure.cause;
+      expect(cause).toBeInstanceOf(Error);
+      if (!(cause instanceof Error)) throw Error('Expected the original filesystem cause');
+      expect(Reflect.get(cause, 'code')).toBe('ENOENT');
+    },
+  );
+
+  test.skipIf(process.platform !== 'linux')('preserves non-ENOENT failures from the safe repository reader', () => {
+    const skillPath = path.join(root, '.codex/skills/clio/SKILL.md');
+    rmSync(skillPath);
+    mkdirSync(skillPath);
+    try {
+      expect(() => buildConfiguredContext(root, config, base)).toThrow(
+        /configured context \.codex\/skills\/clio\/SKILL\.md must be a regular single-link file/,
+      );
+    } finally {
+      rmSync(skillPath, { recursive: true, force: true });
+      writeFileSync(skillPath, '# Fixture skill\nUse only the selected test source.\n');
+    }
+  });
 });

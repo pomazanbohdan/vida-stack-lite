@@ -420,21 +420,56 @@ async function fixture() {
       'Actual execution capability',
     );
   }
-  let connectionsClosed = false;
+  let connectionsClosed = false,
+    primaryBridgeClosed = false,
+    ledgerClosed = false;
+  const closedExtraBridges = new Set<MastraSessionBridgeInstance>();
   async function closeConnections() {
     if (connectionsClosed) return;
-    for (const extra of extraBridges) await extra.close();
-    await bridge.close();
-    ledger.close();
+    const failures: unknown[] = [];
+    for (const extra of extraBridges) {
+      if (closedExtraBridges.has(extra)) continue;
+      try {
+        await extra.close();
+        closedExtraBridges.add(extra);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+    if (!primaryBridgeClosed) {
+      try {
+        await bridge.close();
+        primaryBridgeClosed = true;
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+    if (!ledgerClosed) {
+      try {
+        ledger.close();
+        ledgerClosed = true;
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+    if (failures.length > 0) {
+      console.error(`Fixture connections failed to close; root retained: ${root}`);
+      throw new AggregateError(failures, 'Interrupted Source fixture connection cleanup failed');
+    }
     connectionsClosed = true;
   }
-  async function close() {
+  async function close({ removeRoot = false, deadline = Number.NEGATIVE_INFINITY } = {}): Promise<boolean> {
     await closeConnections();
+    if (!removeRoot || !Number.isFinite(deadline) || !(performance.now() < deadline)) {
+      console.warn(`Retained incomplete or expired interrupted Source fixture root: ${root}`);
+      return false;
+    }
     try {
       await rm(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+      return true;
     } catch (error) {
-      if (!(error instanceof Error) || !('code' in error) || error.code !== 'EBUSY') throw error;
-      console.warn('Fixture cleanup deferred (closed SQLite handles, OS EBUSY): ' + root);
+      console.error(`Fixture cleanup failed; root retained or uncertain: ${root}`, error);
+      throw error;
     }
   }
   type AdmissionResult = ReturnType<typeof admission>;
@@ -518,7 +553,63 @@ async function fixture() {
   };
 }
 
+type RetirementFixtureCaseOutcome = {
+  readonly deadline: number;
+  readonly completed: boolean;
+  readonly bodyFailed: boolean;
+  readonly bodyError?: unknown;
+};
+
+async function closeTestFixture(
+  f: Awaited<ReturnType<typeof fixture>>,
+  outcome: RetirementFixtureCaseOutcome,
+  closeOther?: () => void,
+): Promise<boolean> {
+  const failures: unknown[] = [];
+  try {
+    closeOther?.();
+  } catch (error) {
+    failures.push(error);
+  }
+  let removed = false;
+  try {
+    removed = await f.close({
+      removeRoot: outcome.completed && failures.length === 0,
+      deadline: outcome.deadline,
+    });
+  } catch (error) {
+    failures.push(error);
+  }
+  if (failures.length > 0)
+    throw new AggregateError(
+      [...(outcome.bodyFailed ? [outcome.bodyError] : []), ...failures],
+      'Interrupted Source case fixture cleanup failed',
+    );
+  return removed;
+}
+
+async function closeRecoveryFixture(
+  f: Awaited<ReturnType<typeof fixture>>,
+  outcome: RetirementFixtureCaseOutcome,
+  cloneRoot: string,
+  closeOther: () => void,
+): Promise<void> {
+  try {
+    const removed = await closeTestFixture(f, outcome, closeOther);
+    if (removed && outcome.completed && performance.now() < outcome.deadline)
+      await rm(cloneRoot, { recursive: true, force: true });
+    else console.warn(`Retained incomplete or expired interrupted recovery package root: ${cloneRoot}`);
+  } catch (error) {
+    console.warn(`Interrupted recovery package cleanup incomplete; root retained or uncertain: ${cloneRoot}`);
+    throw error;
+  }
+}
+
 test('interrupted Source retirement keeps the provider outcome unknown and fences stale completion', async () => {
+  const deadline = performance.now() + 60000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
   const f = await fixture();
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
@@ -605,12 +696,21 @@ test('interrupted Source retirement keeps the provider outcome unknown and fence
     expect(() => f.ledger.report('stopped', 1, journal.version, complete, f.source)).toThrow(
       'Mastra source observation has no matching current host outcome',
     );
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
   } finally {
-    await f.close();
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError });
   }
 }, 60000);
 
 test('an interrupted Source owner keeps a later FIFO contender queued', async () => {
+  const deadline = performance.now() + 60000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
   const f = await fixture();
   try {
     await expectRejection(
@@ -633,12 +733,21 @@ test('an interrupted Source owner keeps a later FIFO contender queued', async ()
     expect(contender.sequence).toBeGreaterThan(owner.sequence);
     expect(contender.active_resources).toEqual([]);
     expect(contender.blocked_resources).toContain('file:AGENT.sidecar.md');
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
   } finally {
-    await f.close();
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError });
   }
 }, 60000);
 
 test('public owner retirement restarts after lease expiry and package drift without an execution capability', async () => {
+  const deadline = performance.now() + 60000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
   mkdirSync(path.join(bundle, '.tmp'), { recursive: true });
   const f = await fixture(),
     cloneRoot = mkdtempSync(path.join(bundle, '.tmp', 'interrupted-recovery-')),
@@ -737,15 +846,24 @@ test('public owner retirement restarts after lease expiry and package drift with
       version: originalJournal.version,
       state: originalJournal.state,
     });
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
   } finally {
-    Date.now = realNow;
-    observer?.close();
-    await f.close();
-    await rm(cloneRoot, { recursive: true, force: true });
+    await closeRecoveryFixture(f, { deadline, completed, bodyFailed, bodyError }, cloneRoot, () => {
+      Date.now = realNow;
+      observer?.close();
+    });
   }
 }, 60000);
 
 test('interrupted Source retirement rejects missing, running, foreign, and stale evidence without mutation', async () => {
+  const deadline = performance.now() + 60000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
   const f = await fixture();
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
@@ -828,12 +946,21 @@ test('interrupted Source retirement rejects missing, running, foreign, and stale
     expect(requireValue(f.store.readWorkSessionJournal(f.identity), 'retirement journal').version).toEqual(
       journal.version,
     );
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
   } finally {
-    await f.close();
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError });
   }
 }, 60000);
 
 test('interrupted Source retirement transaction rolls back the attempt downgrade when release fails', async () => {
+  const deadline = performance.now() + 60000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
   const f = await fixture();
   try {
     const before = f.store.readHostStateSnapshot(f.identity),
@@ -876,12 +1003,21 @@ test('interrupted Source retirement transaction rolls back the attempt downgrade
     expect(requireValue(f.store.readWorkSessionJournal(f.identity), 'retirement journal').version).toEqual(
       journal.version,
     );
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
   } finally {
-    await f.close();
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError });
   }
 }, 60000);
 
 test('correction defaults repair preserves an issued unknown Source attempt and supports public retirement', async () => {
+  const deadline = performance.now() + 60000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
   const f = await fixture();
   let database: Database | undefined;
   const repair = (mode: 'inspect' | 'plan' | 'apply' | 'resume' | 'restore', actor?: string) =>
@@ -1134,13 +1270,23 @@ test('correction defaults repair preserves an issued unknown Source attempt and 
       ).status,
     ).toBe('active');
     expect(() => repair('restore')).toThrow();
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
   } finally {
-    if (database) closeWorkspaceDatabaseWithAdmission(database);
-    await f.close();
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError }, () => {
+      if (database) closeWorkspaceDatabaseWithAdmission(database);
+    });
   }
 }, 60000);
 
 test('interrupted correction defaults repair rejects partial authority and mismatched approval receipt copies', async () => {
+  const deadline = performance.now() + 60000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
   const f = await fixture();
   let database: Database | undefined;
   const repair = () =>
@@ -1382,8 +1528,14 @@ test('interrupted correction defaults repair rejects partial authority and misma
     };
     saveWork(correctiveHistory);
     expect(() => repair()).toThrow(/corrective history|correction_count|base generation/i);
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
   } finally {
-    if (database) closeWorkspaceDatabaseWithAdmission(database);
-    await f.close();
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError }, () => {
+      if (database) closeWorkspaceDatabaseWithAdmission(database);
+    });
   }
 }, 60000);

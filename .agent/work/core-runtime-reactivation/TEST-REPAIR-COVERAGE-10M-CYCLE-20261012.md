@@ -1,5 +1,13 @@
 # Test Repair and Coverage Cycle Implementation Plan
 
+Current scheduling extension: PARALLEL-TESTING-DESIGN-20261012.md and
+PARALLEL-TESTING-IMPLEMENTATION-20261012.md. Their explicit shard architecture
+is reviewed/pending, not deployed. Existing repair/numeric constraints remain.
+Serial72eefda full iteration is terminalUNKNOWN245PASS/8FAIL; actual failure
+family qualification12PASS293assertions, plus context and custody controls.
+Do not repeat identical complete serial input merely to seek green; implement
+bounded assignment/protocol controls and reviewed domain extraction next.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. Root owns runtime verification; blind Luna workers own disjoint implementation files and independent reviews.
 
 **Goal:** Reach a complete passing current test selection with exact coverage and frozen quality gates, within the user's ten-minute iteration ceiling.

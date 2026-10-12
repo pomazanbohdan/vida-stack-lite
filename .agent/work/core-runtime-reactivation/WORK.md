@@ -8206,3 +8206,65 @@ enforced and lcov-only threshold behavior has limitations. Existing four-metric
 instrumented admission remains authoritative. Global coverage/CRAP/mutation,
 exhaustive frozen correspondence and isolated actual Runtime acceptance remain
 pending; no P0/P1 closure or unblock is inferred from focused qualification.
+
+### 2026-10-12 — parallel design iterations and actual failure repair
+
+Published72eefda. Full run66f78094-b5ba-4557-8625-c5bdece47caa terminates
+UNKNOWN at600000ms:245PASS/8FAIL partial, no final coverage metrics; exact
+reservation released. New RAM temp root remains outside editable target.
+ControllerPASS26189ms, audit writerPASS39962ms, rollbackPASS13018ms; these are
+not controlled comparisons to the earlier workspace run. Memory pressure
+events increased, OOM/kill counters unchanged; retained failed/UNKNOWN roots
+were not pruned/replayed.
+
+Blind RCA identifies one diagnostic defect: missing required repository skill
+propagates native Linux proc-fd ENOENT without configured-context label. Skill
+reads now normalize ENOENT only with original cause; local/unsafe errors,
+fresh two-read equality, limits/digests remain. Native Linux controls explicitly
+platform-scoped; no Windows qualification inferred. Initial strict checker
+caught Reflect.get on unknown cause; narrowed actual Error before access.
+Configured-context4PASS/21assertions. Twelve actual rebind/capture/context
+controlsPASS293assertions30.23s with unchanged case limits and no-effect checks.
+
+Three negative fixtures were detached/malformed: historical config tamper must
+assign its cloned plan back before rehash; maintenance tamper must assign cloned
+inspection back; a fresh inspect needs inspection-free base before reinspection,
+then the inspected request for exact resume. No verifier/regex weakening.
+Missing local source checks now assert qualified Linux proc-fd leaf path+ENOENT,
+instead of an unavailable logical-parent path; full state/engine/file invariants
+remain. All eight observed failures are covered by the12PASS qualification.
+
+Retirement and public final-assurance cleanup retain by default and require
+completed assertions plus finite unexpired monotonic deadline after owned close.
+Attempt all owned closes, retain/log incomplete roots, preserve primary+cleanup
+errors. Shared synchronous final-assurance cleanup reuses completeOwnedCleanup.
+Blind review caught NaN deletion bypass and primary-error masking; corrected.
+Scoped lint then caught throws in finally; moved multiroot orchestration into
+named cleanup owner and reused existing aggregation. No timeout increase or
+new lifetime framework.8PASS179assertions151.44s; changed cleanup paths+shared
+owner requalification4PASS92assertions76.86s. Real assertion-failure and invalid
+deadline controls retain existing roots; temporary subjects restored. These
+are behavioral custody controls, not mutation Killed admission.
+
+426maintainedTS/0diagnostics and Source97 checkerPASS; final scoped lintPASS.
+Independent revised code review has no remaining blocker. Ordinary hooks and
+push pending at this ledger entry; build/install suites not invoked.
+
+Applied project bun-test skill and official Bun parallel/runtime/coverage docs
+plus1.4.3 release fixes. Native flag support is locally present in qualified
+test--help; VIDA parallel custody is not implemented. Iteratively compared
+serial, native workers shared-global/isolated, global concurrent and explicit
+shards, then refined with blind design review. Recommended explicit direct
+serial shards(concurrency2), one snapshot/AST/input capture, exact assignments,
+exclusive waves and one Root merge. Historical baseline remains serial.
+Partial reporter sums identify runtime-config-rebind160rows/~414.5s as observed
+largest contour, not full file timing/predicted speed. Domain extraction required.
+
+Written PARALLEL-TESTING-DESIGN-20261012.md and implementation plan specify
+global/local test bindings, separate process/terminal records, resource conflicts,
+deadline at pinned command owner including typecheck/nestedCRAP, no native
+timeout0 on spent allowance, synthetic pilot classification and test-ID lineage.
+Review resolved all architecture blockers; implementation/pilot remains pending.
+Current runtime producer still has600000ms child-only ceiling; do not claim the
+planned end-to-end budget as deployed. Exact coverage, exhaustive frozen budgets,
+assertion-confirmed mutation100 and actual Runtime acceptance remain pending.

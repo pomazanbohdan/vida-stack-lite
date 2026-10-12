@@ -11,6 +11,7 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../src/orchestration/local-work-admission.ts';
 import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
@@ -198,15 +199,33 @@ function fixture(sourceWriter: boolean = false, publicStore: boolean = false) {
     database,
     store,
     prepare,
-    close() {
-      closeWorkspaceDatabaseWithAdmission(database);
-      rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+    close(options?: { completed: boolean; deadline: number }) {
+      try {
+        closeWorkspaceDatabaseWithAdmission(database);
+      } catch (error) {
+        console.error('Retaining public final assurance fixture after database close failure:', root, error);
+        throw error;
+      }
+      if (options?.completed && Number.isFinite(options.deadline) && performance.now() < options.deadline) {
+        try {
+          rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+        } catch (error) {
+          console.error('Retaining public final assurance fixture after cleanup failure:', root, error);
+          throw error;
+        }
+      } else {
+        console.error('Retaining public final assurance fixture for incomplete or expired case:', root);
+      }
     },
   };
 }
 
 test('public final assurance commits three synthetic review reverse pairs at a released nonzero maintenance generation', async () => {
+  const deadline = performance.now() + 90000;
   const f = fixture(true, true);
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
   const invoke = (args: string[]) =>
     spawnSync(
       process.execPath,
@@ -812,7 +831,20 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     expect(eight).toHaveLength(8);
     expect(eight.every((ref) => ref.generation === packet.generation || ref.kind === 'delivery_manifest')).toBe(true);
     expect(response.delivery_manifest?.path).toBe('.agent/work/' + id + '/delivery.json');
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
   } finally {
-    f.close();
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close({ completed, deadline });
+          return undefined;
+        },
+      ],
+      bodyFailed ? { error: bodyError } : undefined,
+    );
   }
 }, 90000);

@@ -876,11 +876,10 @@ function expectMissingFixtureContextRead(error: unknown, label: string): void {
     );
   } else {
     expect(Reflect.get(error, 'code')).toBe('ENOENT');
-    expect(
-      String(Reflect.get(error, 'path') ?? '')
-        .replaceAll('\\', '/')
-        .endsWith('/docs/project-context.md'),
-    ).toBe(true);
+    const missingPath = String(Reflect.get(error, 'path') ?? '').replaceAll('\\', '/');
+    if (process.platform === 'linux')
+      expect(missingPath).toMatch(/^\/proc\/self\/fd\/[1-9][0-9]*\/project-context\.md$/);
+    else expect(missingPath.endsWith('/docs/project-context.md')).toBe(true);
   }
 }
 
@@ -5181,12 +5180,14 @@ test('public capture CLI exact resume reuses the Host poststate fence without wr
   expect(applied.accepted_result).toBe(false);
   const beforeResume = databaseState(f),
     engineBeforeResume = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
+  f.put(requestRef, json(base));
   const reinspected = await run(args('inspect'));
   expect(reinspected.status).toBe('historical_terminal_synthesis_capture_inspected');
   expect(reinspected.custody_receipt_present).toBe(true);
   expect(reinspected.request_digest).toBe(applied.request_digest);
   expect(databaseState(f)).toEqual(beforeResume);
   expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engineBeforeResume);
+  f.put(requestRef, json(reinspected.request));
   const resumed = await run(args('resume'));
   expect(resumed.status).toBe('historical_terminal_synthesis_captured');
   expect(resumed.receipt).toEqual(applied.receipt);
@@ -6171,6 +6172,7 @@ test('released UNKNOWN uses its bound historical config through a second repair 
     { reasoning: 'max' },
   );
   tamperedPlan.baseline_yaml = json(wrongConfig);
+  tampered.plan = tamperedPlan;
   tampered.plan_digest = canonicalJsonDigest(tamperedPlan);
   f.put(priorPath, json(tampered));
   await Promise.resolve(
@@ -7540,6 +7542,7 @@ test.each(['journal', 'preimage', 'maintenance'])(
           'historical expected maintenance generation',
         );
       inspection.expectedMaintenanceGeneration = generation + 1;
+      changed.inspection = inspection;
       f.put('release.json', json(changed));
     }
     const before = databaseState(f);

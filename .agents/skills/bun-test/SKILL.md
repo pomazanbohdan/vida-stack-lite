@@ -168,6 +168,23 @@ same case and instrumentation under the same resource conditions. Report
 operation-count reductions separately from elapsed-time improvements; nested
 reporter rows and partial runs do not establish whole-suite percentiles.
 
+For parallel test design, consult [Bun file workers/isolation/sharding](https://bun.com/docs/test/parallel.md).
+`--parallel` distributes files; `test.concurrent` shares a thread/global within
+a file. Global mocks, clocks, environment or mutable fixture state need explicit
+independence proof. Native coverage/JUnit merging is not VIDA receipt admission.
+Our proposed [explicit-shard design](../../../.agent/work/core-runtime-reactivation/PARALLEL-TESTING-DESIGN-20261012.md)
+is pending: one captured snapshot/maps, two direct serial producers, exact
+assignment union, exclusive resource waves and Root's one global validation.
+Keep current/historical serial commands until its custody/pilot checks qualify.
+No additional per-worker AST/scan/hash passes or full-suite duplicates.
+
+Completion flags do not prevent cleanup after a timed-out body settles late.
+Before deleting a fixture, require a finite unexpired monotonic deadline after
+owned closes, as well as successful assertions. Attempt all owned resource
+closes; retain roots and both original/cleanup errors on failure. Provider-native
+error paths and required-context diagnostics are different contracts; assert
+the intended denial and unchanged authoritative state, not an unrelated error.
+
 For dependency migrations, keep runtime/declaration versions independent and
 exercise real transforms/provider boundaries. Use an identical-content,
 different-inode control when testing identity; a content mismatch alone cannot
