@@ -430,6 +430,65 @@ if (!isolated && !underStryker) {
     completedRoots.add(root);
   });
 
+  linuxTest('fresh, malformed, and nonempty reclaim guards stay in place without namespace mutation', () => {
+    const cases = [
+      { owner: 'live', aged: false, extraEntry: false },
+      { owner: 'live', aged: true, extraEntry: false },
+      { owner: 'dead', aged: false, extraEntry: false },
+      { owner: 'malformed', aged: true, extraEntry: false },
+      { owner: 'dead', aged: true, extraEntry: true },
+    ];
+
+    for (const entry of cases) {
+      const root = freshRoot();
+      const access = requireSafeRepositoryAccess(root);
+      expect(access.provider).toBe('linux-proc-fd');
+      const guardPath = lockPath(root) + '.reclaim';
+      const ownerPath = path.join(guardPath, 'owner.json');
+      actualFs.mkdirSync(guardPath, 0o700);
+      const ownerBytes =
+        entry.owner === 'malformed'
+          ? '{malformed'
+          : JSON.stringify({
+              schema: 'SafeRepositoryAccessReclaimGuard/v1',
+              owner_pid: entry.owner === 'live' ? process.pid : 2_147_483_647,
+              owner_token: '00000000-0000-4000-8000-000000000000',
+              acquired_at: new Date().toISOString(),
+            });
+      actualFs.writeFileSync(ownerPath, ownerBytes);
+      if (entry.extraEntry) actualFs.writeFileSync(path.join(guardPath, 'retain.txt'), 'retained');
+      if (entry.aged) {
+        actualFs.utimesSync(ownerPath, new Date(0), new Date(0));
+        actualFs.utimesSync(guardPath, new Date(0), new Date(0));
+      }
+
+      // A successful quarantine rename changes the parent's mtime even when cleanup restores the same inode.
+      const stableParentTime = new Date(1_600_000_000_000);
+      actualFs.utimesSync(root, stableParentTime, stableParentTime);
+      const parentBefore = actualFs.statSync(root, { bigint: true });
+      const guardBefore = lstatSync(guardPath, { bigint: true });
+      let callbackCalls = 0;
+      expect(() =>
+        access.withExclusiveLock('owner.lock', 'ineligible reclaim guard', () => {
+          callbackCalls += 1;
+        }),
+      ).toThrow(SafeRepositoryLockContentionError);
+
+      const guardAfter = lstatSync(guardPath, { bigint: true });
+      const parentAfter = actualFs.statSync(root, { bigint: true });
+      expect(callbackCalls).toBe(0);
+      expect(guardAfter.dev).toBe(guardBefore.dev);
+      expect(guardAfter.ino).toBe(guardBefore.ino);
+      expect(parentAfter.mtimeNs).toBe(parentBefore.mtimeNs);
+      expect(actualFs.readFileSync(ownerPath, 'utf8')).toBe(ownerBytes);
+      expect(actualFs.readdirSync(root)).toEqual([path.basename(guardPath)]);
+      expect(actualFs.readdirSync(guardPath).sort()).toEqual(
+        entry.extraEntry ? ['owner.json', 'retain.txt'] : ['owner.json'],
+      );
+      completedRoots.add(root);
+    }
+  });
+
   linuxTest('payload fsync and cleanup close failures preserve both errors and retain the owned lock', () => {
     const root = freshRoot();
     const access = requireSafeRepositoryAccess(root);

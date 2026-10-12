@@ -89,7 +89,8 @@ export function assertAdmittedRuntimeCodeCurrent(
   requireExecution(work, 'admitted local session work is unavailable');
   const intake = readAdmittedSessionIntakeForWork(repositoryRoot, work);
   const config = loadRuntimeConfig(repositoryRoot);
-  const currentPaths = runtimePackageCodePaths(config.runtime.bundle);
+  const packageAccess = runtimePackageAccess();
+  const currentPaths = runtimePackageCodePaths(config.runtime.bundle, packageAccess);
   const initialView = journal ? readInitialSourceContinuationLineageView(store, identity, journal.attempt) : null;
   const initialReceipt = initialView?.receipt ?? null;
   const configuredContinuation = journal ? store.readConfiguredFrontierRecoveryView(identity, journal.attempt) : null;
@@ -144,9 +145,7 @@ export function assertAdmittedRuntimeCodeCurrent(
       ),
       project = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids),
       schemaDigest = createHash('sha256')
-        .update(
-          runtimePackageAccess().readBytes('schemas/agent-runtime-config.v1.schema.json', 'current runtime schema'),
-        )
+        .update(packageAccess.readBytes('schemas/agent-runtime-config.v1.schema.json', 'current runtime schema'))
         .digest('hex');
     requireExecution(
       intakeRef &&
@@ -173,7 +172,7 @@ export function assertAdmittedRuntimeCodeCurrent(
       'admitted runtime continuation does not bind the protected intake and current endpoint',
     );
   }
-  const current = snapshotRuntimePackageSources(runtimePackageAccess(), config.runtime.bundle, currentPaths);
+  const current = snapshotRuntimePackageSources(packageAccess, config.runtime.bundle, currentPaths);
   if (initialEndpoint) {
     requireExecution(
       current.digest === work.binding.runtime_code_digest &&

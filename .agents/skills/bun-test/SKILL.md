@@ -47,8 +47,8 @@ executes that operation. Keep build/install free of test suites.
 Run from `packages/agent`, using the existing pinned launcher:
 
 ```sh
-node bin/bun.ts --version
-node bin/bun.ts test ./tests/maintained-source-inventory.test.ts ./tests/runtime-package-access-reuse.test.ts
+bun bin/bun.ts --version
+bun bin/bun.ts test ./tests/maintained-source-inventory.test.ts ./tests/runtime-package-access-reuse.test.ts
 ```
 
 Read scripts for ordinary phase membership. Add each maintained test once to
@@ -96,6 +96,13 @@ synthetic package version and file sizes from their actual fixture bytes.
 For each observed error or bottleneck, retain a bounded receipt, inspect the
 causal path and check current official documentation/upstream issues. Record
 documented support separately from local qualification.
+
+Parallel agents own disjoint edits; the lead schedules one runtime measurement
+at a time. Hold edits to observed package inputs during that measurement. Save
+the command, terminal exit, log and exec session ID before yielding. Compare the
+same case and instrumentation under the same resource conditions. Report
+operation-count reductions separately from elapsed-time improvements; nested
+reporter rows and partial runs do not establish whole-suite percentiles.
 
 For dependency migrations, keep runtime/declaration versions independent and
 exercise real transforms/provider boundaries. Use an identical-content,

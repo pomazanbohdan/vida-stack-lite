@@ -1,13 +1,15 @@
-import { expect, test } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { expect, spyOn, test, type Mock } from 'bun:test';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import { runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.js';
-import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.js';
+import * as runtimeConfig from '../src/config/runtime-config.js';
+import * as safeRepositoryAccess from '../src/config/safe-repository-access.js';
+import { assertAdmittedRuntimeCodeCurrent } from '../src/orchestration/admitted-session-execution.js';
+import { createAutomaticWorkAdmissionFixture } from './helpers/automatic-work-admission-fixture.js';
 import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.ts';
 
 test('runtime package paths reuse the owned access and preserve live inventory parity', () => {
-  const access = runtimePackageAccess();
+  const access = runtimeConfig.runtimePackageAccess();
   const expected = runtimeExecutableInventory(access.repository_root, 'source').map(
     (file) => 'runtime-package/' + file,
   );
@@ -28,7 +30,7 @@ test('runtime package paths reuse the owned access and preserve live inventory p
     },
   };
 
-  expect(runtimePackageCodePaths('runtime-package', observedAccess)).toEqual(expected);
+  expect(runtimeConfig.runtimePackageCodePaths('runtime-package', observedAccess)).toEqual(expected);
   expect(expected).toContain('runtime-package/bin/cli-metadata.ts');
   expect(expected).not.toContain('runtime-package/bin/cli-metadata.mjs');
   expect(expected).toContain('runtime-package/tooling/maintained-source-inventory.ts');
@@ -40,7 +42,7 @@ test('runtime package paths reuse the owned access and preserve live inventory p
 test('runtime package paths reject a wrong root before calling its access methods', () => {
   const unrelatedRoot = mkdtempSync(path.join(tmpdir(), 'runtime-package-access-reuse-'));
   try {
-    const safeAccess = requireSafeRepositoryAccess(unrelatedRoot);
+    const safeAccess = safeRepositoryAccess.requireSafeRepositoryAccess(unrelatedRoot);
     let accessReads = 0;
     const countedAccess = {
       ...safeAccess,
@@ -58,11 +60,57 @@ test('runtime package paths reject a wrong root before calling its access method
       },
     };
 
-    expect(() => runtimePackageCodePaths('runtime-package', countedAccess)).toThrow(
+    expect(() => runtimeConfig.runtimePackageCodePaths('runtime-package', countedAccess)).toThrow(
       'runtime package access root differs',
     );
     expect(accessReads).toBe(0);
   } finally {
     rmSync(unrelatedRoot, { recursive: true, force: true });
+  }
+});
+
+test('one admission operation reuses its checked runtime package access for inventory and Source reads', () => {
+  const fixture = createAutomaticWorkAdmissionFixture(false, true);
+  let accessSpy: Mock<typeof safeRepositoryAccess.requireSafeRepositoryAccess> | undefined;
+  try {
+    const input = fixture.prepare('runtime-access-reuse', 'user:runtime-access-reuse');
+    input.intakePath = '.agent/work/runtime-access-reuse/raw-intake.json';
+    writeFileSync(
+      path.join(fixture.root, input.intakePath),
+      JSON.stringify({
+        schema: 'VidaLocalSessionIntake/v1',
+        work_item: input.workItem,
+        native_session_handle: input.nativeSessionHandle,
+        scope_path: input.scopePath,
+        acceptance_path: input.acceptancePath,
+        runtime_code_paths: input.runtimeCodePaths,
+        route: input.route,
+        risk: input.risk,
+        change_kind: input.changeKind,
+      }),
+    );
+    const packageRoot = path.resolve(import.meta.dirname, '..');
+    const packageAccesses: string[] = [];
+    const original = safeRepositoryAccess.requireSafeRepositoryAccess;
+    accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((root) => {
+      if (path.resolve(root) === packageRoot) packageAccesses.push(root);
+      return original(root);
+    });
+    const admitted = fixture.admit(input);
+    expect(packageAccesses).toHaveLength(1);
+    const work = admitted.host.work;
+    if (!work) throw new Error('admitted fixture has no work');
+    const identity = {
+      repository_id: work.binding.repository_id,
+      project_ids: work.binding.project_ids,
+      integrations_digest: work.binding.integrations_digest,
+      work_id: input.context.work_id,
+    };
+
+    assertAdmittedRuntimeCodeCurrent(fixture.root, fixture.store, identity);
+    expect(packageAccesses).toHaveLength(2);
+  } finally {
+    accessSpy?.mockRestore();
+    fixture.close();
   }
 });

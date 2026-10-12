@@ -641,6 +641,36 @@ function parseTestRunPayload(value: unknown): TestRunPayload {
   return runResult;
 }
 
+function parseUnpreparedRecoveryResult(value: unknown): Record<string, unknown> {
+  const record = requireRecord(value, 'unprepared recovery result');
+  if (
+    (record.status !== 'unprepared_recovery_inspected' && record.status !== 'unprepared_execution_released') ||
+    record.rights_granted !== false ||
+    record.runtime_acceptance !== false
+  )
+    throw Error('unprepared recovery result identity is invalid');
+  if (record.status === 'unprepared_recovery_inspected') {
+    if (record.next_operation !== 'release_unprepared_work' || !isPlainRecord(record.request))
+      throw Error('unprepared recovery inspection result is invalid');
+  } else {
+    const version = (candidate: unknown): boolean =>
+      isPlainRecord(candidate) &&
+      typeof candidate.revision === 'number' &&
+      Number.isSafeInteger(candidate.revision) &&
+      candidate.revision > 0 &&
+      typeof candidate.digest === 'string' &&
+      /^[a-f0-9]{64}$/u.test(candidate.digest);
+    if (
+      record.next_operation !== null ||
+      typeof record.gap !== 'string' ||
+      !version(record.work_version) ||
+      !version(record.ledger_version)
+    )
+      throw Error('unprepared recovery release result is invalid');
+  }
+  return record;
+}
+
 function requireRecord(value: unknown, label: string): Record<string, unknown> {
   if (!isPlainRecord(value)) throw Error(`${label} must be an object`);
   return value;
@@ -1011,7 +1041,7 @@ describe('unprepared recovery', () => {
         '--request',
         'inspect.json',
       ];
-      const inspected = parseTestRunPayload(await run(args));
+      const inspected = parseUnpreparedRecoveryResult(await run(args));
       const inspectedEnvelope = requireRecord(inspected.request, 'unprepared recovery request envelope');
       if (
         inspected.next_operation !== 'release_unprepared_work' ||
@@ -1027,7 +1057,7 @@ describe('unprepared recovery', () => {
       const apply = args.map((value, index) =>
         args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
       );
-      const released = parseTestRunPayload(await run(apply));
+      const released = parseUnpreparedRecoveryResult(await run(apply));
       if (released.status !== 'unprepared_execution_released' || released.rights_granted !== false)
         throw Error('unprepared recovery release result is invalid');
       const after = f.observed();
@@ -1054,7 +1084,7 @@ describe('unprepared recovery', () => {
         expect(claim.renewed_at).toBe(operation.created_at);
       }
       f.reopen();
-      const retried = parseTestRunPayload(await run(apply));
+      const retried = parseUnpreparedRecoveryResult(await run(apply));
       expect(retried.work_version).toEqual(released.work_version);
       expect(retried.ledger_version).toEqual(released.ledger_version);
       expect(f.observed()).toEqual(after);
@@ -1129,7 +1159,7 @@ describe('unprepared recovery', () => {
           '--request',
           'inspect.json',
         ];
-        const inspected = parseTestRunPayload(await run(args));
+        const inspected = parseUnpreparedRecoveryResult(await run(args));
         const inspectedEnvelope = requireRecord(inspected.request, 'unprepared recovery request envelope');
         if (!isPlainRecord(inspectedEnvelope.request)) throw Error('unprepared recovery inspection request is invalid');
         const currentRequest = f.store.inspectUnpreparedWorkRecovery(f.input);
@@ -1139,7 +1169,7 @@ describe('unprepared recovery', () => {
         const current = baseline.toString('utf8').replace('config_revision: 1', 'config_revision: 2');
         const delivered =
           fault === 'project'
-            ? current.replaceAll('"project"', '"other"')
+            ? current.replaceAll("'project'", "'other'")
             : fault === 'integration'
               ? current.replace('tenant_id: local', 'tenant_id: changed')
               : current.replaceAll('work_root: .agent/work', 'work_root: .agent/other');

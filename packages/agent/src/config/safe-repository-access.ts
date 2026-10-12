@@ -585,9 +585,34 @@ function rejectRetainedLockQuarantine(parentFd: number, name: string, label: str
   if (retained !== undefined) denyReclaimGuard(name, label, phase, retained);
 }
 
-function reclaimStaleReclaimGuard(parentFd: number, name: string, label: string): boolean {
+function staleReclaimGuardStats(parentFd: number, name: string, label: string): BigIntStats | null {
   const guardName = name + '.reclaim';
   const current = reclaimGuardStats(parentFd, guardName, label);
+  if (!current) return null;
+  const guardPath = reclaimGuardPath(parentFd, guardName);
+  let guardFd = -1;
+  try {
+    guardFd = openSync(guardPath, fsConstants.O_RDONLY | directoryFlag | noFollow);
+    const opened = fstatSync(guardFd, { bigint: true });
+    if (!sameFileIdentity(current, opened)) return null;
+    const pinnedGuardPath = childPath(guardFd, '.');
+    const entries = readdirSync(pinnedGuardPath);
+    if (entries.some((entry) => entry !== reclaimGuardOwnerFile)) return null;
+    const ownerState = readReclaimGuardOwner(pinnedGuardPath, label);
+    const referenceTime = Math.max(statMtimeMilliseconds(opened), ownerState.mtimeMs);
+    if (!ownerState.owner || Date.now() - referenceTime < staleLockAgeMs || processIsAlive(ownerState.owner.owner_pid))
+      return null;
+    return current;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
+    throw error;
+  } finally {
+    if (guardFd >= 0) closeQuietly(guardFd);
+  }
+}
+function reclaimStaleReclaimGuard(parentFd: number, name: string, label: string): boolean {
+  const guardName = name + '.reclaim';
+  const current = staleReclaimGuardStats(parentFd, name, label);
   if (!current) return false;
   const native = linuxNativeBinding;
   reject(!native, label + ' requires the bundled Linux no-replace rename primitive');

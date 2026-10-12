@@ -2595,11 +2595,6 @@ function isUnpreparedRecoveryEnvelope(
   );
 }
 
-/** @param {UnpreparedWorkRecoveryRequest} current @param {unknown} retained */
-function assertRetainedUnpreparedRecoveryRequest(current: UnpreparedWorkRecoveryRequest, retained: unknown) {
-  if (!isDeepStrictEqual(current, retained)) throw Error('Unprepared recovery retained request differs');
-}
-
 /** @param {string} file @param {ReturnType<typeof lstatSync>} before @returns {void} */
 function assertUnpreparedRecoveryHostStable(file: string, before: ReturnType<typeof lstatSync>): void {
   if (!before) throw Error('Unprepared recovery Host missing');
@@ -4022,8 +4017,7 @@ async function recoverUnpreparedWork(args: string[]) {
         runtime_acceptance: false,
       };
     }
-    const supplied = store.inspectUnpreparedWorkRecovery(context);
-    assertRetainedUnpreparedRecoveryRequest(supplied, input.request);
+    const supplied = input.request as UnpreparedWorkRecoveryRequest;
     const result = store.releaseUnpreparedWork(context, supplied);
     return {
       status: 'unprepared_execution_released',

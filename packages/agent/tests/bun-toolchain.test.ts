@@ -692,8 +692,22 @@ test('every public developer script enters the pinned bootstrap without recursio
         : `bun bin/bun.ts run ${task}:pinned`,
     );
     assert.equal(script.includes(`run ${task} `), false);
-    for (const [, dependency] of script.matchAll(/\bbun run ([\w:-]+)/g)) {
+    for (const [, bunHost, dependency] of script.matchAll(/\bbun run (--bun )?([\w:-]+)/g)) {
       assert.ok(dependency, 'nested pinned command must include a task name');
+      if (bunHost) {
+        const binaryOwners: Record<string, string> = { oxfmt: 'oxfmt', stryker: '@stryker-mutator/core' };
+        const owner = binaryOwners[dependency];
+        assert.ok(owner, `Bun-hosted binary ${dependency} must have a declared owner`);
+        assert.equal(manifest.scripts[dependency], undefined, 'a binary leaf must not hide an unpinned script');
+        const installed: unknown = JSON.parse(
+          readFileSync(path.resolve(import.meta.dirname, '../node_modules', owner, 'package.json'), 'utf8'),
+        );
+        assert.ok(installed && typeof installed === 'object' && 'name' in installed && installed.name === owner);
+        assert.ok('bin' in installed && installed.bin && typeof installed.bin === 'object');
+        assert.ok(dependency in installed.bin);
+        assert.equal(typeof Reflect.get(installed.bin, dependency), 'string');
+        continue;
+      }
       assert.ok(dependency.endsWith(':pinned'), `nested ${dependency} must retain pinned execution`);
       assert.ok(manifest.scripts[dependency], `nested ${dependency} must exist`);
     }

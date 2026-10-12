@@ -366,7 +366,7 @@ const pin = readPin(root);
 checkManifest(root, pin);
 if (process.versions.bun !== pin) throw new Error('Mutation gate requires the pinned Bun executable.');
 async function installedStrykerCli(): Promise<string> {
-  const declaredBin: (typeof import('@stryker-mutator/core/package.json'))['bin']['stryker'] = 'bin/stryker.js';
+  const declaredBin: (typeof import('@stryker-mutator/core/package.json'))['bin']['stryker'] = './bin/stryker.js';
   const packageRoot = path.join(root, 'node_modules/@stryker-mutator/core');
   const packageBytes = await readFile(path.join(packageRoot, 'package.json'));
   const installed: unknown = JSON.parse(packageBytes.toString('utf8'));
@@ -698,6 +698,7 @@ const partitions: MutationPartition[] = [
       'bin/fs-safe-native-import-boundary.ts',
       'bin/runtime-import-bindings.ts',
       'bin/module-directory-anchors.ts',
+      'bin/module-url-resource-shape.ts',
     ],
     tests: ['tests/forward-candidate-admission.test.ts', 'tests/forward-candidate-authority.test.ts'],
     report: 'mutation-bun-forward-candidate-admission.json',

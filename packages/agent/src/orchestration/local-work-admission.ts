@@ -164,19 +164,17 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
       acceptance.source_revision === source.digest,
     'accepted scope or AC source revision is stale',
   );
+  const packageAccess = runtimePackageAccess();
   const runtimeCode = snapshotRuntimePackageSources(
-    runtimePackageAccess(),
+    packageAccess,
     config.runtime.bundle,
-    runtimePackageCodePaths(config.runtime.bundle),
+    runtimePackageCodePaths(config.runtime.bundle, packageAccess),
   );
   requireAdmission(
     runtimeCode.entries.every((entry) => entry.exists),
     'runtime code binding has a missing file',
   );
-  const schemaBytes = runtimePackageAccess().readBytes(
-    'schemas/agent-runtime-config.v1.schema.json',
-    'runtime schema binding',
-  );
+  const schemaBytes = packageAccess.readBytes('schemas/agent-runtime-config.v1.schema.json', 'runtime schema binding');
   const schemaDigest = digest(schemaBytes);
   const codeDigest = runtimeCode.digest;
   const canonicalIntakePath =

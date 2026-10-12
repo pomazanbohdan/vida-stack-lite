@@ -7211,3 +7211,88 @@ shared rejection helper, with reason-specific failure checks; do not remove
 await or suppress type-aware rules. Affected archive4PASS25assertions and host
 pin1PASS. Current staged Bun check reports421files/0type errors; the final hook
 must complete after this correction. No full behavioral suite repeat.
+
+### v956–v965 — bounded test cost corrections and causal recovery fixes
+
+Checkpoint176269e is published; fresh origin/main fetch confirms0/0 divergence.
+Unowned BASE/ and root bun.lock remain unstaged. Qualified Bun1.4.3 executes
+repository tooling; bootstrap examples in TESTING and bun-test now use Bun.
+
+Complex current coverage run df1b1647-fa3d-4986-a690-77c73a06e0e6 terminated
+after its1800s limit with UNKNOWN test effects, zero process receipts and no
+admitted final report. Keep its directory and custody; do not replay it or
+publish a coverage percentage. Private receipt directory is
+.tmp/complex-quality-20261012-WfxQXq. Its1902 reported rows, including possible
+nested output and excluding setup/unreported cases, measure min0.01ms,
+mean905.90ms, p952089.50ms, max90039.01ms. These are partial instrumented
+reporter statistics, not a finished suite or a comparable speedup baseline.
+
+Mutation initially failed before engine launch: installed Core10's exact bin
+is ./bin/stryker.js, not bin/stryker.js. Correct that owner comparison without
+relaxing version/file guards. The next inventory revealed the genuine missing
+module-url-resource-shape Source assignment; add it to its existing forward
+admission partition, whose tests directly exercise it. Inventory now passes;
+the pending upgrade/merge partition still prevents actual mutation execution.
+No Killed score is claimed. CRAP has no current coverage report or exhaustive
+executable frozen plan. Preserve the existing genuine historical baseline
+reference/admission; its report is not present at the current runs path, so
+locate original evidence custody before using it. Do not recapture unchanged
+baseline or activate the partial lineage file as an executable plan.
+
+Blind disjoint writers found and corrected two causal product boundaries.
+Unprepared recovery apply now sends the retained exact request directly to
+HostState's producer-fenced release. The redundant fresh-owner inspection
+rejected valid reopened lost-ACK retries after release. Store canonicalization,
+current context/storage, CAS, first-owner and prior-operation afterimage checks
+remain. Correct the direct-result test decoder and actual quoted project YAML
+mutation; retain both Host and CLI drift denials and unchanged-state assertions.
+
+Reclaim screening previously moved even a known live/young/malformed guard
+before deciding eligibility. New pinned-directory staleReclaimGuardStats checks
+no-follow, inode, entries, bounded owner, age and dead PID before a move. Retain
+all post-move identity/owner/age checks, restoration and uncertain custody.
+Root shared inventory shows retained reclaimer CC2 and its body closure CC9
+unchanged; the new screening helper CC10 uses the pre-existing new-role ceiling,
+with its own closure disposition. This is static lineage input, not CRAP PASS.
+It does not claim an atomic inode-conditional rename against same-privilege
+replacement; that existing provider limitation remains.
+
+Admission/current-code checks reuse one checked package access per invocation:
+admission3→1 constructions, normal current-code2→1. Live inventory/schema/Source
+reads, snapshots and digest guards remain; no cross-operation or stat-only
+cache. Regression RED observed3 instead of1, then reuse/path guards pass.
+Canonical intake's isolated2case completion passes; its earlier combined-run
+5s timeout remains. Counts are verified; elapsed speedup is not measured.
+
+Root stable affected completion5PASS/233assertions/5.84s covers reopened retry,
+current project/integration/storage denial, stale CAS/foreign caller refusal,
+mutation inventory and the full isolated lock custody child. Later bounded
+guard matrix1PASS/45assertions adds aged-live/young-dead independence and exact
+owner bytes; no repeated unchanged full suite. Matrix parent mtime, inode,
+namespace and zero-callback assertions prove no ineligible quarantine move.
+Both blind scoped Source reviews found no actionable defect in their boundary.
+
+Upgrade diagnostics reached6010 package reads/204MB and29 bundle checks before
+UNKNOWN termination. Their checks cross awaited publication/DB/fence effects;
+no safe digest reuse or arbitrary wait removal was found. Preserve the actual
+30s quarantine and child/parent bounds. Absorption's distinct public auth/state
+commands also remain. Its diagnostic terminal outcome is UNKNOWN after a lost
+exec session ID; do not promote terminal-cleanup text to PASS or reuse its root.
+Future probes save session/log/exit and run serially on stable observed inputs.
+
+No full suite, exact numeric quality, SDK formation, installation, active
+schema/loader switch or clean native Runtime acceptance is claimed. Root now
+owns strict staged publication and remaining prerequisite work.
+
+Strict staged publication rejects the migrated handler's JSDoc-only cast:
+Bun check reports one TS2345 at releaseUnpreparedWork. Use a real TypeScript
+assertion at that typed API boundary; the Host runtime canonicalizer/guards
+remain the validators. No runtime contract, assertion or quality rule changed.
+Retry only the failed staged admission, not the unchanged behavior suites.
+Fresh blind reference application selects the exact Bun command, sequential
+measurements, held Source inputs and UNKNOWN custody from the corrected skill.
+
+The next staged check passes421file types but rejects the generic spy return
+annotation as any under typed lint. Bind Mock to the actual safe-access function
+signature; retain unconditional spy restoration and fixture cleanup. No lint
+suppression or behavior change. Failed staged attempts remain in session evidence.
