@@ -8454,3 +8454,77 @@ assertion-confirmed mutation and real isolated Runtime exercise remain pending.
 Task2 foundation is partial, Task3 supervisor/global entry budget pending, and
 Task4 package-resource removal/domain eligibility not admitted. Preserve all
 FAIL/UNKNOWN custody; publish the exact verified packet with ordinary hooks.
+
+### 2026-10-12 — entry budget and smallest rebind domains
+
+Continue after publisheda80a8df. Blind independent reads confirm there is no
+current positive descendant/effect-quiescence contract. Ruling: qualify the
+existing pinned command budget before async sibling supervision, and keep
+resourceSafeToAdvance unsupported/false until an actual reviewed proof exists.
+Do not turn direct PASS/close or a released reservation into that proof.
+
+The two maintained coverage aliases now launch the same exact tooling entry
+through one pinned bootstrap rather than an alias plus another wrapper. Its
+600000ms outer wall allowance begins before pin/package/runtime checks and
+composes stricter supplied caller budgets. Runner reuses the inherited deadline,
+reserves30000ms for terminal/report work, typechecks current Source once under
+the acquired lock before one capture, checks the remainder between phases and
+clamps producer/CRAP (CRAP also <=300000ms). Current test paths are explicit./,
+preventing discovery of snapshot copies. Historical selection shares the entry
+budget, omits current typecheck and preserves original fixture/serial argv and
+reference admission. No async waves or numeric admission are activated.
+
+Shared inert runner fixture materializes the actual two-file CLI import closure
+and an explicitly inert marker typecheck, without extending production capture
+roles or adding another scan. The existing real producer-map control transparently
+observes native subprocess calls/results: one typecheck/test/CRAP sequence,
+positive decreasing allowances under36000ms inherited budget, one capture and
+the original one-test/pristine-map/receipt checks. It passes in1.97s. New controls
+cover current typecheck nonzero, ambiguous retention, spent no-launch and
+historical typecheck omission before a controlled capture failure. Exact ENOENT
+typecheck branch integration remains a narrow gap; its unchanged predicate has
+separate native controls. Async ENOENT probe has missing PID, errorENOENT and
+close-2 with no exit event; do not silently normalize it to the qualified sync
+PID0/null/null tuple. Raw inert observation is retained, not parallel admission.
+
+First combined selection61PASS/2FAIL over6files55.64s. Both failures are launcher
+test oracles: the new direct coverage alias and123→122ms elapsed remaining
+allowance. Retain that failed run. Root then identifies a real uncommitted
+regression: a supplied noncoverage budget skipped unconditional malformed-timeout
+validation, permitting a version probe before denial. Meaningful focusedRED
+reaches the later allowance error; restored original early validation and the
+zero-probe regression qualify. Exclude the first incorrectly named0-test
+invocation. Final whole toolchain31PASS/0FAIL1.29s; no full-suite claim.
+
+Keep the new private profile owner small: scoped existing inventory gives CC8
+for coverageIterationBudget and runPinnedBun18→17. This is local nonregression,
+not exhaustive frozen correspondence or CRAP admission. Final static435capturedTS,
+combined434files0errors, Source97files0errors and lint PASS. An initial lint error
+from Array.isArray's any[] row is fixed by explicit unknown before validation.
+Native observer retains the original function value before module replacement,
+avoiding live-namespace recursion. Research/logs remain under
+.tmp/coverage-iteration-a80a8df/; cgroup OOM2/kill1/max221149 unchanged.
+
+Task4 smallest domains move5delivery registrations/9expanded cases and6limits/
+6cases to their owned test files; each registers existing cleanup once. Root
+registration AST union proof preserves97 original expressions exactly once after
+formatting, including original callbacks/assertions/matrices/timeouts. Original
+file now3974lines; destinations162/298. Repair phase and runtime-config mutation
+partition include each destination once. Native focused delivery9/9 and limits
+6/6 pass with original per-case defaults/justified overrides; no forced speedup,
+quarantine change or removal of the shared package resource.
+
+| Existing test identity owner | Destination | Preserved case-name family | Registration / expanded count |
+| --- | --- | --- | --- |
+| tests/runtime-config-rebind.test.ts | tests/runtime-config-rebind-delivery.test.ts | delivered configuration; original five cutoff values retained | 5 / 9 |
+| tests/runtime-config-rebind.test.ts | tests/runtime-config-rebind-limits.test.ts | compact config binding; all six exact original names retained | 6 / 6 |
+
+Source function identities remain unchanged by these moves. Test file/name tuples
+change; generated association/matrix slices require fresh owner review and cannot
+be blanket-restamped. Blind extraction/membership review accepts the scoped
+change; legacy failure/late-timeout fixture retention, broader domain moves,
+resource eligibility and full original selection remain open. Blind budget review
+accepts the first-packet scope; retained numeric metrics remain UNKNOWN/pending.
+Update TESTING and bun-test reference with this verified budget status in the
+same packet, publish with ordinary hooks, then continue supervision and the
+bounded full current correction cycle. No installed-runtime/unblock claim.

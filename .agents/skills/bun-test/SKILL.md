@@ -198,8 +198,13 @@ Use this recipe for the [pending explicit-shard design](../../../.agent/work/cor
    PASS/exit, released
    lock, absent PID/marker or a cleanup signal is insufficient. Stop successors
    and retain UNKNOWN on missing proof; do not retry under a new operation ID.
-6. Preserve one remaining pinned-command budget including planned typecheck,
-   preparation, waves and nested CRAP; the deployed ceiling is still child-only.
+6. Use the maintained coverage alias's one pinned entry budget, including
+   package/runtime checks, current typecheck, preparation, producer and CRAP.
+   The parent wall ceiling is600000ms; runner terminal/report reserve is30000ms.
+   Stricter caller limits remain ceilings. Validate malformed durations before
+   probes even with a supplied budget; clamp every nested launch to the remainder.
+   Historical selection skips current typecheck while keeping original fixtures
+   and serial argv. Async supervision/waves remain pending.
    Spent allowance means no launch, never native timeout0. Compare bounded
    synthetic pilots with distinct run IDs/output roots over identical captured
    inputs; they qualify mechanics, not global metrics or adversarial test trust.

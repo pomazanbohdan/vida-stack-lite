@@ -14,6 +14,7 @@ import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertCoverageSnapshotBytes } from './bun-coverage-report-validator.js';
+import { executionBudget } from '../bin/bun.ts';
 import { assertPublishedFixtureChildren, assertPublishedFixtureProcess } from './published-coverage-inputs.js';
 import {
   historicalInventoryChildId,
@@ -88,6 +89,9 @@ export function coverageProducerReservationSafeToRelease(
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputRoot = path.join(root, 'coverage', 'bun-unified');
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+  // One command-entry allowance covers pin resolution, current typecheck,
+  // capture, the direct producer, CRAP and final report work.
+  const commandBudget = executionBudget(600_000, 30_000);
   const args = process.argv.slice(2);
   if (args.some((arg) => arg !== '--published-baseline=b549951'))
     throw new Error('Unsupported Bun coverage runner argument.');
@@ -148,7 +152,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
           '--parallel=1',
           '--no-isolate',
           `--config=${path.join(snapshotRoot, 'bunfig.toml')}`,
-          ...tests,
+          ...tests.map((file) => `./${file}`),
         ];
     const configIndex = args.findIndex((arg) => arg.startsWith('--config='));
     if (configIndex < 0) throw new Error('Bun coverage invocation has no captured config.');
@@ -298,7 +302,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       // Explicit user-owned iteration ceiling; individual test deadlines remain
       // separate. Stream output so interrupted iterations retain useful logs.
       stdio: ['ignore', 'inherit', 'inherit'],
-      timeout: 10 * 60 * 1000,
+      timeout: commandBudget.remaining(),
       windowsHide: true,
     });
     if (result.error || result.signal || !Number.isInteger(result.status))
@@ -328,7 +332,38 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   let executionFailed = false;
   let executionError: unknown;
   try {
+    // Historical baseline evidence retains its original declared tool closure;
+    // only current production runs the current Source typecheck.
+    if (selectionMode === 'current') {
+      if ((process.env.BUN_OPTIONS ?? '').trim()) throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
+      const typecheckAllowance = commandBudget.remaining();
+      const typecheck = spawnSync(process.execPath, ['run', 'typecheck:pinned'], {
+        cwd: root,
+        env: {
+          ...process.env,
+          VIDA_PINNED_COMMAND_BUDGET_MS: String(typecheckAllowance),
+          VIDA_PINNED_COMMAND_DEADLINE_MS: String(Date.now() + typecheckAllowance),
+        },
+        stdio: 'inherit',
+        timeout: typecheckAllowance,
+        killSignal: 'SIGKILL',
+        windowsHide: true,
+      });
+      if (typecheck.error || typecheck.signal || !Number.isInteger(typecheck.status)) {
+        const producerTerminalKnown = coverageProducerTerminalKnown(typecheck);
+        terminalKnown = producerTerminalKnown || coverageProducerReservationSafeToRelease(typecheck);
+        throw new Error(
+          producerTerminalKnown
+            ? 'Pinned coverage typecheck outcome is UNKNOWN; direct producer terminated; preserve run evidence.'
+            : terminalKnown
+              ? 'Pinned coverage typecheck outcome is UNKNOWN; producer did not start; preserve run evidence.'
+              : 'Pinned coverage typecheck outcome is UNKNOWN; preserve the run lock.',
+        );
+      }
+      if (typecheck.status !== 0) throw new Error('Pinned coverage typecheck failed.');
+    }
     const lockedInputs = await coverageInputs(root, selectionMode);
+    commandBudget.remaining();
     const capturedPin = lockedInputs.input_bytes['.bun-version'];
     if (!capturedPin || new TextDecoder('utf-8', { fatal: true }).decode(capturedPin).trim() !== pinnedBun)
       throw new Error('Captured Bun version differs from the selected runtime pin.');
@@ -381,6 +416,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       });
       sourceMapEntries.push([absolute, transformed.fileCoverage]);
     }
+    commandBudget.remaining();
     sealSnapshotTree(snapshotDirectory, fixtureDependencyLink, fixtureRoot);
     // Published tests intentionally write coverage-subject scratch here. These
     // Outputs carry no measurement authority; captured files are byte-checked.
@@ -423,6 +459,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     };
     const manifestPath = path.join(runDirectory, 'manifest.json');
     const invocation = bunTestInvocation(evidence.tests, manifest, manifestPath, reportDirectory);
+    commandBudget.remaining();
     manifest.active_argv = invocation.args;
     writeAtomic(manifestPath, manifest);
     chmodSync(runDirectory, 0o500);
@@ -445,6 +482,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     }
     if (outcome.status !== 0 && !(publishedFixture && outcome.status === 1))
       throw new Error('Bun Test coverage suite failed.');
+    commandBudget.remaining();
     const historicalJUnitBytes =
       publishedFixture && outcome.status === 1
         ? readFileSync(path.join(reportDirectory, 'suite.junit.xml'))
@@ -550,6 +588,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       coverage: mergedCoverage,
     };
     const finalPath = path.join(outputRoot, 'coverage-final.json');
+    commandBudget.remaining();
     writeAtomic(finalPath, finalReport);
     if (publishedReference) {
       process.stderr.write(
@@ -562,7 +601,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       const gate = spawnSync(process.execPath, [capturedGate], {
         cwd: root,
         env: { ...process.env, VIDA_BUN_COVERAGE_ROOT: root, VIDA_BUN_COVERAGE_REPORT: finalPath },
-        timeout: 5 * 60 * 1000,
+        timeout: commandBudget.remaining(300_000),
         killSignal: 'SIGKILL',
         encoding: 'utf8',
         maxBuffer: 64 * 1024 * 1024,

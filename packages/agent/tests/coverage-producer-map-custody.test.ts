@@ -1,12 +1,12 @@
 import { expect, test } from 'bun:test';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageToolInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
+import { instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
 import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
-import { restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
+import { prepareCoverageRunnerInputs, restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 function write(root: string, file: string, bytes: string | Uint8Array): void {
@@ -25,33 +25,72 @@ test('real producer and consumer preserve pristine initialization maps while mer
   const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-map-custody-'));
   let passed = false;
   try {
-    write(root, 'package.json', JSON.stringify({ files: ['src/**'], scripts: {} }));
-    write(root, '.bun-version', readFileSync(path.join(packageRoot, '.bun-version')));
+    prepareCoverageRunnerInputs(root, packageRoot, ['src/**']);
     write(root, 'src/sum.ts', 'export function sum(a: number, b: number): number { return a + b; }\n');
     write(
       root,
       'tests/sum.test.ts',
       "import {test,expect} from 'bun:test'; import {sum} from '../src/sum.ts'; test('owned sum assertion',()=>expect(sum(2,3)).toBe(5));\n",
     );
-    for (const file of coverageToolInputs) {
-      if (file === '.bun-version' || file === 'package.json') continue;
-      if (file.startsWith('tooling/')) {
-        const dest = path.join(root, file);
-        mkdirSync(path.dirname(dest), { recursive: true });
-        cpSync(path.join(packageRoot, file), dest);
-      } else write(root, file, 'inert fixture capture input\n');
-    }
     write(root, 'bunfig.toml', '[test]\nroot = "./tests"\n');
     write(root, 'schemas/inert.json', '{}\n');
     write(root, 'templates/inert.yaml', 'inert: true\n');
     write(root, 'instructions/inert.md', 'inert\n');
     symlinkSync(path.join(packageRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir');
-    const child = spawnSync(process.execPath, [path.join(root, 'tooling/run-bun-coverage.ts')], {
-      cwd: root,
-      encoding: 'utf8',
-      timeout: 15000,
-      maxBuffer: 4 * 1024 * 1024,
-    });
+    const observationPath = path.join(root, 'coverage-launch-observations.json');
+    const capturePath = path.join(root, 'coverage-capture-observation.json');
+    const preloadPath = path.join(root, 'tooling/coverage-launch-observer-preload.ts');
+    write(
+      root,
+      'tooling/coverage-launch-observer-preload.ts',
+      `import * as childProcess from 'node:child_process';
+import * as evidence from './bun-coverage-evidence.ts';
+import { mock } from 'bun:test';
+import { writeFileSync } from 'node:fs';
+const observations: Array<Record<string, unknown>> = [];
+const run = childProcess.spawnSync;
+mock.module('node:child_process', () => ({
+  ...childProcess,
+  spawnSync(command: string, args: string[], options: Record<string, unknown>) {
+    const started_ms = performance.now();
+    const phase = args[0] === 'run' && args[1] === 'typecheck:pinned' ? 'typecheck' :
+      args[0] === 'test' ? 'test' : 'crap';
+    const result = run(command, args, options);
+    observations.push({ phase, started_ms, finished_ms: performance.now(), timeout_ms: options.timeout,
+      pid: result.pid, status: result.status, signal: result.signal });
+    writeFileSync(${JSON.stringify(observationPath)}, JSON.stringify(observations));
+    return result;
+  },
+}));
+let captureCalls = 0;
+const captureInputs = evidence.coverageInputs;
+mock.module('./bun-coverage-evidence.ts', () => ({
+  ...evidence,
+  async coverageInputs(...args: Parameters<typeof evidence.coverageInputs>) {
+    captureCalls += 1;
+    const captured = await captureInputs(...args);
+    writeFileSync(${JSON.stringify(capturePath)}, JSON.stringify({ calls: captureCalls }));
+    return captured;
+  },
+}));
+`,
+    );
+    const child = spawnSync(
+      process.execPath,
+      ['--preload', preloadPath, path.join(root, 'tooling/run-bun-coverage.ts')],
+      {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 15000,
+        maxBuffer: 4 * 1024 * 1024,
+        env: {
+          ...process.env,
+          BUN_OPTIONS: '',
+          VIDA_PINNED_COMMAND_BUDGET_MS: '36000',
+          VIDA_PINNED_COMMAND_DEADLINE_MS: String(Date.now() + 36000),
+        },
+      },
+    );
     write(root, 'child.stdout.log', child.stdout ?? '');
     write(root, 'child.stderr.log', child.stderr ?? '');
     expect(child.error).toBeUndefined();
@@ -59,6 +98,35 @@ test('real producer and consumer preserve pristine initialization maps while mer
     expect(child.status).toBe(1);
     expect(child.stderr).toMatch(/cannot identify the Source repository root/u);
     expect(child.stderr).toMatch(/Ran 1 test across 1 file/u);
+    expect(readFileSync(path.join(root, 'typecheck.marker'), 'utf8')).toBe('ran');
+    const capture: unknown = JSON.parse(readFileSync(capturePath, 'utf8'));
+    expect(capture).toEqual({ calls: 1 });
+    const launches: unknown = JSON.parse(readFileSync(observationPath, 'utf8'));
+    if (!Array.isArray(launches)) throw new Error('Coverage child observations are missing.');
+    expect(launches.map((value) => record(value).phase)).toEqual(['typecheck', 'test', 'crap']);
+    const timeoutFor = (index: number): number => {
+      const row: unknown = launches[index];
+      if (typeof row !== 'object' || row === null || !('timeout_ms' in row) || typeof row.timeout_ms !== 'number')
+        throw new Error('Observed child timeout is missing.');
+      return row.timeout_ms;
+    };
+    const typecheckTimeout = timeoutFor(0);
+    const testTimeout = timeoutFor(1);
+    const crapTimeout = timeoutFor(2);
+    expect(typecheckTimeout).toBeGreaterThan(0);
+    expect(typecheckTimeout).toBeLessThanOrEqual(6000);
+    expect(typecheckTimeout).toBeGreaterThan(testTimeout);
+    expect(testTimeout).toBeGreaterThan(crapTimeout);
+    expect(crapTimeout).toBeGreaterThan(0);
+    expect(crapTimeout).toBeLessThan(300000);
+    let priorFinish = -Infinity;
+    for (const value of launches) {
+      const row = record(value);
+      expect(row.started_ms).toBeGreaterThanOrEqual(priorFinish);
+      expect(row.finished_ms).toBeGreaterThan(row.started_ms as number);
+      if (typeof row.finished_ms !== 'number') throw new Error('Observed child finish time is missing.');
+      priorFinish = row.finished_ms;
+    }
     const reportPath = path.join(root, 'coverage/bun-unified/coverage-final.json');
     const report = record(JSON.parse(readFileSync(reportPath, 'utf8')));
     const manifest = record(JSON.parse(readFileSync(path.join(root, String(report.manifest_path)), 'utf8')));

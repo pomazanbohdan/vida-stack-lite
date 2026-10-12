@@ -796,10 +796,22 @@ the intended denial boundary. An earlier load/decoder error cannot qualify an
 ownership or counter control merely because the report was rejected. Malformed
 output-role sets still need an explicit structural denial.
 
-The planned600000ms pinned-command deadline covers typecheck, preparation,
-waves, custody, report validation and nested CRAP. The current600000ms ceiling
-still covers the test producer only. Use one monotonic remaining allowance;
-reserve cleanup/report time and clamp CRAP's existing300000ms upper bound.
+The maintained coverage aliases launch `tooling/run-bun-coverage.ts` directly
+through the pinned bootstrap, with one600000ms outer wall allowance beginning
+before package checks and runtime resolution. Stricter caller limits remain
+ceilings; supplied budgets cannot bypass malformed-duration validation before
+version probes. Other developer commands retain their existing default budgets.
+The runner reuses the inherited monotonic allowance, reserves30000ms for
+terminal/report work and runs one current typecheck under its acquired lock
+before one capture/preparation. Producer and CRAP launches spend the remainder;
+CRAP also retains its300000ms upper bound. Check the remainder between CPU
+phases; the pinned parent supplies the hard bound while a synchronous phase
+cannot service a timer. An outer timeout remains UNKNOWN and cannot prove
+descendant/effect quiescence or successful reservation cleanup.
+Historical selection shares the entry budget but skips current typecheck and
+keeps its original fixture, serial argv and reference-admission contract.
+Current serial tests use explicit `./` captured paths to avoid snapshot-copy
+discovery. Parallel waves and async sibling supervision remain pending.
 Spent allowance prevents launch; native timeout0 may disable a timeout.
 Per-test5000ms defaults and justified case overrides remain separate. Mutation
 is separately invoked; the ten-minute target does not qualify its whole campaign.

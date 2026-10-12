@@ -1,6 +1,5 @@
 import { expect, test } from 'bun:test';
 import {
-  cpSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -15,8 +14,7 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageToolInputs } from '../tooling/bun-coverage-evidence.ts';
-import { restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
+import { prepareCoverageRunnerInputs, restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const maintainedSources = [
@@ -37,22 +35,13 @@ function write(root: string, relative: string, bytes: string | Uint8Array): void
 function createRunnerCandidate(): string {
   const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-runner-lock-candidate-'));
   try {
-    write(root, '.bun-version', readFileSync(path.join(packageRoot, '.bun-version')));
-    write(root, 'package.json', JSON.stringify({ files: ['src/**', 'bin/**'], scripts: {} }));
+    prepareCoverageRunnerInputs(root, packageRoot, ['src/**', 'bin/**']);
     for (const source of maintainedSources) write(root, source, 'export const fixture = true;\n');
     write(
       root,
       'tests/fixture.test.mjs',
       "import { test } from 'bun:test'; test('inert lock fixture test', () => {});\n",
     );
-    for (const file of coverageToolInputs) {
-      if (file === '.bun-version' || file === 'package.json') continue;
-      if (file.startsWith('tooling/')) {
-        const target = path.join(root, file);
-        mkdirSync(path.dirname(target), { recursive: true });
-        cpSync(path.join(packageRoot, file), target);
-      } else write(root, file, 'fixture input for isolated runner preflight\n');
-    }
     // Bun loads its config before the entrypoint; preflight needs valid TOML.
     write(root, 'bunfig.toml', '[test]\n');
     write(root, 'schemas/fixture.schema.json', '{}\n');
@@ -96,17 +85,17 @@ mock.module('./bun-coverage-evidence.ts', () => ({
   return preload;
 }
 
-function launchRunner(root: string, preload?: string) {
+function launchRunner(root: string, preload?: string, environment: NodeJS.ProcessEnv = {}, args: string[] = []) {
   return spawnSync(
     process.execPath,
-    [...(preload ? ['--preload', preload] : []), path.join(root, 'tooling', 'run-bun-coverage.ts')],
+    [...(preload ? ['--preload', preload] : []), path.join(root, 'tooling', 'run-bun-coverage.ts'), ...args],
     {
       cwd: root,
       encoding: 'utf8',
       timeout: 60_000,
       maxBuffer: 2 * 1024 * 1024,
       windowsHide: true,
-      env: { ...process.env, BUN_OPTIONS: '' },
+      env: { ...process.env, BUN_OPTIONS: '', ...environment },
     },
   );
 }
@@ -172,6 +161,7 @@ test('real Bun coverage runner captures once under its owned lock and cleans up 
     expect(result.signal).toBeNull();
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('controlled capture failure');
+    expect(readFileSync(path.join(root, 'typecheck.marker'), 'utf8')).toBe('ran');
     const observation: unknown = JSON.parse(readFileSync(path.join(root, 'coverage-capture-probe.json'), 'utf8'));
     expect(observation).toMatchObject({ calls: 1 });
     if (typeof observation !== 'object' || observation === null || !('dev' in observation) || !('ino' in observation))
@@ -183,6 +173,123 @@ test('real Bun coverage runner captures once under its owned lock and cleans up 
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });
     else console.error(`Preserved failed coverage single-capture fixture at ${root}`);
+  }
+});
+
+test('current coverage typecheck failure releases the owned lock before capture', () => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>;
+    };
+    manifest.scripts['typecheck:pinned'] = 'bun -e "process.exit(7)"';
+    write(root, 'package.json', JSON.stringify(manifest));
+    const preload = writeCaptureProbe(root, "throw new Error('capture must not follow failed typecheck');");
+    const result = launchRunner(root, preload);
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Pinned coverage typecheck failed.');
+    expect(existsSync(path.join(root, 'coverage-capture-probe.json'))).toBe(false);
+    expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-run.lock'))).toBe(false);
+    expect(existsSync(path.join(root, 'coverage/bun-unified/runs'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Preserved failed coverage typecheck fixture at ${root}`);
+  }
+});
+
+test('historical baseline selection skips current typecheck before a controlled capture failure', () => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    const preload = writeCaptureProbe(root, "throw new Error('controlled baseline capture failure');");
+    const result = launchRunner(root, preload, {}, ['--published-baseline=b549951']);
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('controlled baseline capture failure');
+    expect(existsSync(path.join(root, 'typecheck.marker'))).toBe(false);
+    const observation: unknown = JSON.parse(readFileSync(path.join(root, 'coverage-capture-probe.json'), 'utf8'));
+    expect(observation).toMatchObject({ calls: 1 });
+    expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-run.lock'))).toBe(false);
+    expect(existsSync(path.join(root, 'coverage/bun-unified/runs'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Preserved failed baseline selection fixture at ${root}`);
+  }
+});
+
+test('unknown current typecheck producer retains the shared coverage lock', () => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    write(
+      root,
+      'tooling/unknown-typecheck-preload.ts',
+      `import * as original from 'node:child_process';
+import { mock } from 'bun:test';
+const run = original.spawnSync;
+mock.module('node:child_process', () => ({
+  spawnSync(command: string, args: string[], options: Record<string, unknown>) {
+    if (args[0] === 'run' && args[1] === 'typecheck:pinned')
+      return { pid: undefined, status: null, signal: null, error: Object.assign(new Error('uncertain'), { code: 'EIO' }) };
+    return run(command, args, options);
+  },
+}));
+`,
+    );
+    const result = spawnSync(
+      process.execPath,
+      [
+        '--preload',
+        path.join(root, 'tooling/unknown-typecheck-preload.ts'),
+        path.join(root, 'tooling/run-bun-coverage.ts'),
+      ],
+      {
+        cwd: root,
+        encoding: 'utf8',
+        timeout: 60_000,
+        maxBuffer: 2 * 1024 * 1024,
+        windowsHide: true,
+        env: { ...process.env, BUN_OPTIONS: '' },
+      },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Pinned coverage typecheck outcome is UNKNOWN; preserve the run lock.');
+    expect(existsSync(path.join(root, 'typecheck.marker'))).toBe(false);
+    expect(existsSync(path.join(root, 'coverage-capture-probe.json'))).toBe(false);
+    expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-run.lock'))).toBe(true);
+    expect(existsSync(path.join(root, 'coverage/bun-unified/runs'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Preserved failed unknown typecheck fixture at ${root}`);
+  }
+});
+
+test('spent inherited command budget launches neither typecheck nor capture', () => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    const preload = writeCaptureProbe(root, "throw new Error('capture must not run with spent budget');");
+    const result = launchRunner(root, preload, { VIDA_PINNED_COMMAND_BUDGET_MS: '0' });
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain('Execution budget exhausted before child launch.');
+    expect(existsSync(path.join(root, 'typecheck.marker'))).toBe(false);
+    expect(existsSync(path.join(root, 'coverage-capture-probe.json'))).toBe(false);
+    expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-run.lock'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Preserved failed spent-budget fixture at ${root}`);
   }
 });
 
@@ -265,6 +372,7 @@ import { writeFileSync } from 'node:fs';
 const run = original.spawnSync;
 mock.module('node:child_process', () => ({
   spawnSync(command: string, args: string[], options: Record<string, unknown>) {
+    if (args[0] === 'run' && args[1] === 'typecheck:pinned') return run(command, args, options);
     const result = run(command, ['--eval', 'process.stdout.write(String(process.pid)); setInterval(() => {}, 1000);'], { encoding: 'utf8', timeout: 100, killSignal: 'SIGKILL' });
     writeFileSync(${JSON.stringify(path.join(root, 'direct-child-outcome.json'))}, JSON.stringify({ pid: result.pid, status: result.status, signal: result.signal, error: String(result.error), stdio: options.stdio, suite_timeout: options.timeout, buffered_output: Object.hasOwn(options, 'maxBuffer'), test_timeout: args[args.indexOf('--timeout') + 1] }));
     return result;
@@ -304,10 +412,14 @@ mock.module('node:child_process', () => ({
     expect(child).toMatchObject({ status: null, signal: 'SIGKILL' });
     expect(child).toMatchObject({
       stdio: ['ignore', 'inherit', 'inherit'],
-      suite_timeout: 600000,
       buffered_output: false,
       test_timeout: '5000',
     });
+    expect(child).toHaveProperty('suite_timeout');
+    if (typeof child !== 'object' || child === null || !('suite_timeout' in child))
+      throw new Error('Expected bounded coverage child deadline');
+    expect(child.suite_timeout).toBeGreaterThan(0);
+    expect(child.suite_timeout).toBeLessThanOrEqual(570000);
     if (typeof child !== 'object' || child === null || !('error' in child) || typeof child.error !== 'string')
       throw new Error('Expected child timeout error');
     expect(child.error).toContain('ETIMEDOUT');

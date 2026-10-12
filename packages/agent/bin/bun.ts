@@ -599,7 +599,27 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
   return executable;
 }
 
+function coverageIterationBudget(
+  args: readonly string[],
+  options: BunOptions,
+): { maximum: number; budget: ExecutionBudget | undefined } {
+  const isCoverageEntry =
+    args[0] === 'tooling/run-bun-coverage.ts' &&
+    (args.length === 1 || (args.length === 2 && args[1] === '--published-baseline=b549951'));
+  const requestedMaximum = options.timeoutMs === undefined ? Infinity : options.timeoutMs;
+  const maximum = isCoverageEntry ? Math.min(requestedMaximum, 600_000) : requestedMaximum;
+  const budget = isCoverageEntry
+    ? options.budget
+      ? options.budget.child(maximum, 0)
+      : executionBudget(maximum, 0)
+    : undefined;
+  return { maximum, budget };
+}
+
 export function runPinnedBun(args: readonly string[], options: BunOptions = {}): number {
+  // Coverage owns a single wall deadline beginning before package checks and
+  // pinned-runtime resolution. Ordinary launches retain their existing order.
+  const coverageProfile = coverageIterationBudget(args, options);
   const embedded = standaloneRuntime(options.env ?? process.env);
   const root = options.root ?? embedded?.root ?? bundleRoot;
   const pin = readPin(root);
@@ -607,13 +627,13 @@ export function runPinnedBun(args: readonly string[], options: BunOptions = {}):
   const spawn = options.spawn ?? spawnSync;
   const env = options.env ?? process.env;
   const cleanup = options.cleanup ?? defaultTimeoutCleanup;
-  const maximum = options.timeoutMs === undefined ? Infinity : options.timeoutMs;
+  const maximum = coverageProfile.maximum;
   // Validate before resolution can launch a version probe. A caller budget
   // never converts malformed input into an unlimited command.
   const commandBudget = executionBudget(maximum, 0);
-  const budget = options.budget ?? commandBudget;
+  const budget = coverageProfile.budget ?? options.budget ?? commandBudget;
   const executable = resolvePinnedBun({ ...options, root, spawn, env, cleanup, budget });
-  const timeoutMs = budget ? budget.remaining(maximum) : maximum;
+  const timeoutMs = budget.remaining(maximum);
   const result = boundedSpawnSync(
     spawn,
     executable,

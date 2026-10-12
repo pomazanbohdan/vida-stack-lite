@@ -76,6 +76,17 @@ The current TESTING owner retains the environment/default and clock rules.
 - [ ] Zero/spent allowance forbids launch (never native timeout0); record unattempted evidence and preserve custody.
 - [ ] Preserve original serial/historical path. Root runs bounded real child controls; reviewer audits failure/UNKNOWN/release behavior; publish.
 
+First packet qualifies the command budget independently of parallel activation:
+both maintained coverage aliases enter the same pinned launcher directly.
+Its600000ms outer wall bound begins before package/runtime checks; the runner
+shares the inherited monotonic deadline and30000ms terminal/report reserve,
+typechecks current Source once under the lock, captures once and clamps the
+producer/CRAP remainder. Historical selection shares the entry budget but omits
+current typecheck and preserves original fixture/serial/reference semantics.
+Malformed caller durations still fail before probes with supplied budgets.
+Async direct supervision, all-sibling accounting and resource-safe wave
+advancement remain pending; never infer them from this first packet.
+
 ## Task4: Domain extraction for the measured largest contour
 
 Prerequisite to private CLI/Host parallel eligibility: shared package-resource
@@ -110,6 +121,16 @@ closure and common-resource removal remain pending; keep the conflict tag.
 - [ ] Assign one writer per destination contour; move smaller independent groups first. Do not execute original and moved copies in the same phase.
 - [ ] Update exact test-ID/association lineage and captured inputs; preserve scenario review/N/A status. Prove every original case appears once, no assertion loss and no shared mutable root/DB.
 - [ ] Root qualifies changed contours once; blind reviews; publish. Admit parallel resource eligibility only after fixture/mocking independence controls.
+
+Smallest domains extracted first: delivery5registrations/9expanded cases and
+limits6/6, with one explicit cleanup registration per file. Complete
+baseline registration AST union retains97expressions exactly once across the
+original and both destinations, including callbacks/assertions/timeouts.
+Repair phase and the mutation source-to-test partition include each destination
+once. Generated association slices remain unreviewed until their owner checks
+the new file/name identities; this does not admit private parallel eligibility.
+Domain declaration order is retained; moving files changes cross-file ordering
+and still requires the existing module/mocking resource review.
 
 ## Task5: Controlled comparison and expansion
 

@@ -149,6 +149,7 @@ test('verified absolute Bun replaces a conflicting global PATH and preserves arg
   assert.equal(calls[2]!.options.env?.OTHER, 'preserved');
   assert.equal(calls[2]!.options.env?.[pathKey === 'PATH' ? 'Path' : 'PATH'], undefined);
   assert.equal(calls[2]!.options.cwd, root);
+  assert.equal(calls[2]!.options.timeout, undefined);
   assert.ok(calls.every((call) => !call.options.shell));
 });
 
@@ -324,6 +325,94 @@ test('reuses a supplied pinned executable, still verifies its version, and clean
   const timeout = calls[1]!.options.timeout;
   assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 123);
   assert.equal(calls[1]!.options.detached, process.platform !== 'win32');
+});
+
+test('coverage iteration defaults to one propagated ten-minute launcher deadline', () => {
+  const { root, pin } = fixture();
+  const executable = path.join(root, 'coverage-bun');
+  const calls: LauncherCall[] = [];
+  const started = Date.now();
+  const status = runPinnedBun(['tooling/run-bun-coverage.ts'], {
+    root,
+    executable,
+    spawn(command, argv, options) {
+      calls.push({ command, argv, options });
+      return calls.length === 1 ? success(pin) : success('');
+    },
+  });
+  assert.equal(status, 0);
+  assert.equal(calls.length, 2);
+  for (const call of calls) {
+    const timeout = call.options.timeout;
+    const environment = call.options.env;
+    assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 600_000);
+    const childBudget = Number(environment?.VIDA_PINNED_COMMAND_BUDGET_MS);
+    const childDeadline = Number(environment?.VIDA_PINNED_COMMAND_DEADLINE_MS);
+    assert.equal(childBudget, timeout);
+    assert.ok(childDeadline > started && childDeadline <= started + 600_050);
+  }
+});
+
+test('malformed caller timeout is rejected before resolution even with a supplied budget', () => {
+  const { root, pin } = fixture();
+  let calls = 0;
+  let failure: unknown;
+  try {
+    runPinnedBun([], {
+      root,
+      executable: path.join(root, 'resolved-bun'),
+      timeoutMs: Number.NaN,
+      budget: executionBudget(10_000, 0),
+      spawn() {
+        calls += 1;
+        return success(pin);
+      },
+    });
+  } catch (error) {
+    failure = error;
+  }
+  assert.equal(calls, 0);
+  assert.match(String(failure), /Execution budget and reserve must be bounded integer durations/u);
+});
+
+test('coverage iteration cannot raise a stricter explicit caller timeout', () => {
+  const { root, pin } = fixture();
+  const executable = path.join(root, 'coverage-bun');
+  const calls: LauncherCall[] = [];
+  runPinnedBun(['tooling/run-bun-coverage.ts', '--published-baseline=b549951'], {
+    root,
+    executable,
+    timeoutMs: 123,
+    spawn(command, argv, options) {
+      calls.push({ command, argv, options });
+      return calls.length === 1 ? success(pin) : success('');
+    },
+  });
+  assert.equal(calls.length, 2);
+  const command = calls[1];
+  assert.ok(command);
+  const timeout = command.options.timeout;
+  assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 123);
+  assert.equal(command.options.env?.VIDA_PINNED_COMMAND_BUDGET_MS, String(timeout));
+});
+
+test('spent caller budget prevents coverage version probes and command spawns', () => {
+  const { root } = fixture();
+  let calls = 0;
+  assert.throws(
+    () =>
+      runPinnedBun(['tooling/run-bun-coverage.ts'], {
+        root,
+        executable: path.join(root, 'coverage-bun'),
+        budget: executionBudget(1_000, 0, performance.now() - 1),
+        spawn() {
+          calls += 1;
+          return success('unexpected');
+        },
+      }),
+    /Execution budget exhausted before child launch/u,
+  );
+  assert.equal(calls, 0);
 });
 
 test('nested commands get one leading pinned directory even without PATH', () => {
@@ -689,7 +778,9 @@ test('every public developer script enters the pinned bootstrap without recursio
       manifest.scripts[task],
       task === 'test'
         ? 'bun bin/bun.ts run test:pinned && bun bin/bun.ts run test:repair:pinned && bun bin/bun.ts run test:host-state:pinned && bun bin/bun.ts run test:run-entrypoint:pinned'
-        : `bun bin/bun.ts run ${task}:pinned`,
+        : task === 'test:coverage'
+          ? 'bun bin/bun.ts tooling/run-bun-coverage.ts'
+          : `bun bin/bun.ts run ${task}:pinned`,
     );
     assert.equal(script.includes(`run ${task} `), false);
     for (const [, bunHost, dependency] of script.matchAll(/\bbun run (--bun )?([\w:-]+)/g)) {
