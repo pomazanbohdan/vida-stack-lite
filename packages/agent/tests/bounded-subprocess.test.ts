@@ -14,7 +14,7 @@ test('bounded subprocess forwards only the accepted stderr prefix when explicitl
   ] as const) {
     const program = `
       import { runBoundedSubprocess } from ${JSON.stringify(helper)};
-      const result = await runBoundedSubprocess('node', ['-e', "process.stderr.write('0123456789');"], {
+      const result = await runBoundedSubprocess(${JSON.stringify(process.execPath)}, ['-e', "process.stderr.write('0123456789');"], {
         timeoutMs: 1500, stderrLimitBytes: ${limit}, forwardStderrProgress: ${enabled},
       });
       process.stdout.write(JSON.stringify({
@@ -44,7 +44,7 @@ test('bounded subprocess preserves forwarding failure and requests termination o
   const program = `
     import { closeSync } from 'node:fs';
     import { runBoundedSubprocess } from ${JSON.stringify(helper)};
-    const pending = runBoundedSubprocess('node', ['-e', "process.stderr.write('progress'); setInterval(() => {}, 1000);"], {
+    const pending = runBoundedSubprocess(${JSON.stringify(process.execPath)}, ['-e', "process.stderr.write('progress'); setInterval(() => {}, 1000);"], {
       timeoutMs: 1000, forwardStderrProgress: true,
     });
     closeSync(2);
@@ -75,7 +75,7 @@ test('bounded subprocess retains its deadline when the diagnostic stderr sink st
   const helper = new URL('./helpers/bounded-subprocess.ts', import.meta.url).href;
   const blockedSink = `
     import { runBoundedSubprocess } from ${JSON.stringify(helper)};
-    const result = await runBoundedSubprocess('node', ['-e', "process.stderr.write(Buffer.alloc(2 * 1024 * 1024, 'p'));"], {
+    const result = await runBoundedSubprocess(${JSON.stringify(process.execPath)}, ['-e', "process.stderr.write(Buffer.alloc(2 * 1024 * 1024, 'p'));"], {
       timeoutMs: 250, stderrLimitBytes: 2 * 1024 * 1024, forwardStderrProgress: true,
     });
     process.stdout.write(JSON.stringify({
@@ -118,6 +118,7 @@ test('bounded subprocess distinguishes unobserved child close from simulated Win
       import { EventEmitter } from 'node:events';
       const actualSpawn = actualProcess.spawn;
       let ownedChild;
+      let childStarted = false;
       let requests = 0;
       await mock.module('node:child_process', () => ({
         ...actualProcess,
@@ -131,17 +132,20 @@ test('bounded subprocess distinguishes unobserved child close from simulated Win
             return request;
           }
           ownedChild = actualSpawn(command, args, options);
-          // Emit a controlled stream event in this platform double. Real
-          // stderr capture has separate native controls; Node startup latency
-          // must not decide whether this request was issued before deadline.
-          setImmediate(() => ownedChild.stderr.emit('data', Buffer.from('overflow')));
+          // Emit a controlled stream event only after the real child reports
+          // that its script has started. This keeps startup latency out of
+          // the simulated platform behavior without faking child readiness.
+          ownedChild.stdout.once('data', () => {
+            childStarted = true;
+            ownedChild.stderr.emit('data', Buffer.from('overflow'));
+          });
           return ownedChild;
         },
       }));
       // This is a platform control in one owned process, not Windows evidence.
       Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
       const { runBoundedSubprocess } = await import(${JSON.stringify(helper)});
-      const result = await runBoundedSubprocess('node', ['-e', "setInterval(() => {}, 1000);"], {
+      const result = await runBoundedSubprocess(${JSON.stringify(process.execPath)}, ['-e', "process.stdout.write('child-started\\\\n'); setInterval(() => {}, 1000);"], {
         timeoutMs: 150, stderrLimitBytes: 1, terminateOnOutputLimit: ${confirmed},
       });
       const closed = new Promise((resolve) => ownedChild.once('close', resolve));
@@ -151,7 +155,7 @@ test('bounded subprocess distinguishes unobserved child close from simulated Win
         timedOut: result.timedOut, closeObserved: result.closeObserved,
         status: result.exitCode, signal: result.signal, requests,
         confirmed: result.terminationRequestConfirmed, bytes: result.stderr.toString(),
-        unobservedRequest: result.terminationError?.includes('not observed') === true,
+        unobservedRequest: result.terminationError?.includes('not observed') === true, childStarted,
       }));
     `;
     const result = await runBoundedSubprocess(process.execPath, ['--no-env-file', '--no-install', '-e', program], {
@@ -169,6 +173,7 @@ test('bounded subprocess distinguishes unobserved child close from simulated Win
       confirmed,
       bytes: 'o',
       unobservedRequest: !confirmed,
+      childStarted: true,
     });
   }
 });
@@ -187,7 +192,7 @@ test('bounded subprocess retains a live-child error until its bounded terminal o
       return child;
     }}));
     const { runBoundedSubprocess } = await import(${JSON.stringify(helper)});
-    const result = await runBoundedSubprocess('node', ['-e', 'setInterval(() => {}, 1000)'], { timeoutMs: 100 });
+    const result = await runBoundedSubprocess(${JSON.stringify(process.execPath)}, ['-e', 'setInterval(() => {}, 1000)'], { timeoutMs: 100 });
     process.stdout.write(JSON.stringify({ timedOut: result.timedOut, closeObserved: result.closeObserved,
       status: result.exitCode, error: result.childError, requested: result.terminationRequestConfirmed }));
   `;
@@ -215,7 +220,7 @@ test.each([0, 1, 64 * 1024])('bounded subprocess preserves complete %i-byte outp
     process.stdout.write(value);
     process.stderr.write(value);
   `;
-  const result = await runBoundedSubprocess('node', ['-e', program], { timeoutMs: 5000 });
+  const result = await runBoundedSubprocess(process.execPath, ['-e', program], { timeoutMs: 5000 });
   assert.equal(result.exitCode, 0);
   assert.equal(result.closeObserved, true);
   assert.equal(result.signal, null);
@@ -236,7 +241,7 @@ test('bounded subprocess records bytes discarded after an exact output-limit bou
       process.stderr.write('discarded');
     }, 100);
   `;
-  const result = await runBoundedSubprocess('node', ['-e', program], { timeoutMs: 5000 });
+  const result = await runBoundedSubprocess(process.execPath, ['-e', program], { timeoutMs: 5000 });
   assert.equal(result.exitCode, 0);
   assert.equal(result.signal, null);
   assert.equal(result.timedOut, false);
@@ -250,16 +255,18 @@ test('bounded subprocess terminates the full child tree and returns actionable t
   const root = mkdtempSync(path.join(os.tmpdir(), 'vida-subprocess-'));
   roots.push(root);
   const marker = path.join(root, 'grandchild-survived.txt');
-  const grandchild = `setTimeout(() => require('node:fs').writeFileSync(process.argv[1], 'survived'), 3000)`;
+  const naturalExitMs = 1000;
+  const grandchild = `setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'survived'), ${naturalExitMs}); process.stdout.write('grandchild-started\\n')`;
   const parent = `require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(
     grandchild,
-  )}, ${JSON.stringify(marker)}], { stdio: 'ignore' }); setInterval(() => {}, 1000);`;
-  const result = await runBoundedSubprocess('node', ['-e', parent], { timeoutMs: 750 });
+  )}], { stdio: 'inherit' }); setInterval(() => {}, 1000);`;
+  const result = await runBoundedSubprocess(process.execPath, ['-e', parent], { timeoutMs: 300 });
   assert.equal(result.timedOut, true);
   assert.equal(result.terminationRequestConfirmed, true);
   assert.equal(result.terminationError, null);
   assert.match(result.diagnostic, /termination request sent/);
-  await new Promise((resolve) => setTimeout(resolve, 3500));
+  assert.match(result.stdout.toString(), /grandchild-started/);
+  await new Promise((resolve) => setTimeout(resolve, naturalExitMs + 100));
   assert.equal(existsSync(marker), false, subprocessFailure('child-tree cleanup', result));
 });
 
@@ -272,16 +279,16 @@ test.skipIf(process.platform === 'win32')(
     const naturalExitMs = 1200;
     const grandchild = `
       const fs = require('node:fs');
-      process.stdout.write('grandchild-started\\n');
       setTimeout(() => {
-        fs.writeFileSync(process.argv[1], 'finished');
+        fs.writeFileSync(${JSON.stringify(marker)}, 'finished');
         process.stdout.write('grandchild-finished\\n');
       }, ${naturalExitMs});
+      process.stdout.write('grandchild-started\\n');
     `;
     const parent = `
       const child = require('node:child_process').spawn(
         process.execPath,
-        ['-e', ${JSON.stringify(grandchild)}, ${JSON.stringify(marker)}],
+        ['-e', ${JSON.stringify(grandchild)}],
         { stdio: 'inherit' },
       );
       child.unref();
@@ -289,7 +296,7 @@ test.skipIf(process.platform === 'win32')(
     `;
     const timeoutMs = 300;
     const startedAt = Date.now();
-    const result = await runBoundedSubprocess('node', ['-e', parent], { timeoutMs });
+    const result = await runBoundedSubprocess(process.execPath, ['-e', parent], { timeoutMs });
     const elapsedMs = Date.now() - startedAt;
 
     assert.equal(result.timedOut, true, subprocessFailure('exited-parent process-group timeout', result));
@@ -313,7 +320,7 @@ test('bounded subprocess preserves configured large stdout and independently cap
     process.stdout.write('\\n');
     process.stderr.write(Buffer.alloc(${stderrBytes}, 'e'));
   `;
-  const result = await runBoundedSubprocess('node', ['-e', program], {
+  const result = await runBoundedSubprocess(process.execPath, ['-e', program], {
     timeoutMs: 5000,
     stdoutLimitBytes,
     stderrLimitBytes,
@@ -335,19 +342,20 @@ test.skipIf(process.platform === 'win32')(
     const marker = path.join(root, 'descendant-finished.txt');
     const naturalExitMs = 1000;
     const grandchild = `
+      setTimeout(() => require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'finished'), ${naturalExitMs});
       setTimeout(() => process.stdout.write('overflow beyond eight bytes'), 100);
-      setTimeout(() => require('node:fs').writeFileSync(process.argv[1], 'finished'), ${naturalExitMs});
+      process.stderr.write('descendant-started\\n');
     `;
     const parent = `
       const child = require('node:child_process').spawn(
         process.execPath,
-        ['-e', ${JSON.stringify(grandchild)}, ${JSON.stringify(marker)}],
+        ['-e', ${JSON.stringify(grandchild)}],
         { stdio: 'inherit' },
       );
       child.unref();
       process.exit(0);
     `;
-    const result = await runBoundedSubprocess('node', ['-e', parent], {
+    const result = await runBoundedSubprocess(process.execPath, ['-e', parent], {
       timeoutMs: 1800,
       stdoutLimitBytes: 8,
       stderrLimitBytes: 32,
@@ -357,6 +365,7 @@ test.skipIf(process.platform === 'win32')(
     assert.equal(result.timedOut, false);
     assert.equal(result.stdoutTruncated, true);
     assert.equal(result.exitCode, 0);
+    assert.match(result.stderr.toString(), /descendant-started/);
     await new Promise((resolve) => setTimeout(resolve, naturalExitMs + 100));
     assert.equal(existsSync(marker), false, subprocessFailure('output-limit descendant cleanup', result));
   },
@@ -379,21 +388,28 @@ test('bounded subprocess rejects invalid per-stream limits before any spawn', as
   ] as const;
   for (const [index, [option, value]] of invalidLimits.entries()) {
     const marker = path.join(root, `spawned-${index}.txt`);
-    const program = `require('node:fs').writeFileSync(process.argv[1], 'spawned')`;
-    await assert.rejects(runBoundedSubprocess('node', ['-e', program, marker], { timeoutMs: 5000, [option]: value }), {
-      name: 'RangeError',
-      message: 'Invalid subprocess output byte limit',
-    });
+    const program = `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'spawned')`;
+    await assert.rejects(
+      runBoundedSubprocess(process.execPath, ['-e', program], { timeoutMs: 5000, [option]: value }),
+      {
+        name: 'RangeError',
+        message: 'Invalid subprocess output byte limit',
+      },
+    );
     assert.equal(existsSync(marker), false, `${option}=${String(value)} must be rejected before spawn`);
   }
 });
 
 test('bounded subprocess retains no output under explicit zero-byte budgets', async () => {
-  const result = await runBoundedSubprocess('node', ['-e', "process.stdout.write('x'); process.stderr.write('y');"], {
-    timeoutMs: 5000,
-    stdoutLimitBytes: 0,
-    stderrLimitBytes: 0,
-  });
+  const result = await runBoundedSubprocess(
+    process.execPath,
+    ['-e', "process.stdout.write('x'); process.stderr.write('y');"],
+    {
+      timeoutMs: 5000,
+      stdoutLimitBytes: 0,
+      stderrLimitBytes: 0,
+    },
+  );
   assert.equal(result.exitCode, 0);
   assert.equal(result.timedOut, false);
   assert.equal(result.stdout.byteLength, 0);
@@ -405,11 +421,12 @@ test('bounded subprocess retains no output under explicit zero-byte budgets', as
 test.skipIf(process.platform === 'win32')(
   'bounded subprocess reports an unconfirmed group termination request without claiming tree cleanup',
   async () => {
-    const grandchild = "setTimeout(() => process.stdout.write('descendant-finished'), 600)";
+    const grandchild =
+      "setTimeout(() => process.stdout.write('descendant-finished'), 600); process.stdout.write('descendant-started\\n')";
     const parent = `
-      const child = require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: 'inherit' });
+      const child = require('node:child_process').spawn(process.execPath, ['-e', ${JSON.stringify(grandchild)}], { stdio: ['ignore', 'pipe', 'inherit'] });
+      child.stdout.once('data', (bytes) => { process.stdout.write(bytes); process.exit(0); });
       child.unref();
-      process.exit(0);
     `;
     const originalKill = process.kill.bind(process);
     const kill = spyOn(process, 'kill').mockImplementation((...args: Parameters<typeof process.kill>) => {
@@ -418,13 +435,14 @@ test.skipIf(process.platform === 'win32')(
       return originalKill(...args);
     });
     try {
-      const result = await runBoundedSubprocess('node', ['-e', parent], { timeoutMs: 150 });
+      const result = await runBoundedSubprocess(process.execPath, ['-e', parent], { timeoutMs: 150 });
       assert.equal(result.timedOut, true);
       assert.equal(result.terminationRequestConfirmed, false);
       assert.match(result.terminationError ?? '', /group signal denied/);
       assert.equal(result.closeObserved, false);
       assert.equal(result.exitCode, null);
       assert.equal(result.signal, null);
+      assert.match(result.stdout.toString(), /descendant-started/);
       assert.doesNotMatch(result.stdout.toString(), /descendant-finished/);
       assert.match(result.diagnostic, /termination request unconfirmed/);
       assert.doesNotMatch(result.diagnostic, /terminated the child process tree/);

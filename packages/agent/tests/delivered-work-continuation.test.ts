@@ -1044,7 +1044,11 @@ test('public failed prewriter owner recovery inspects, denies a changed owner an
     if (typeof output !== 'string') throw new Error('Fixture CLI response has no UTF-8 text output');
     const parsed: unknown = JSON.parse(output);
     if (!isPlainRecord(parsed)) throw new Error('Fixture CLI response is not an object');
-    if (!isPlainRecord(parsed.request)) throw new Error('Fixture CLI response has no request record');
+    if (mode === 'inspect') {
+      if (!isPlainRecord(parsed.request)) throw new Error('Fixture CLI response has no request record');
+    } else if (status !== 0) {
+      expect(parsed).toMatchObject({ schema: 'VidaAgentRunResult/v1', status: 'blocked' });
+    }
     return parsed;
   };
   const inspected = invoke('inspect', 0);
@@ -1062,7 +1066,9 @@ test('public failed prewriter owner recovery inspects, denies a changed owner an
     failed_reports_preserved: true,
     source_bindings_changed: false,
   });
-  expect(requireFixtureValue(f.store.readWorkSessionJournal(f.identity), 'recovered journal').state).toEqual(journal);
+  expect(requireFixtureValue(f.store.readWorkSessionJournal(f.identity), 'recovered journal').state).toEqual(
+    updatedJournal,
+  );
   expect(requireFixtureValue(f.store.readHostStateSnapshot(f.identity).work, 'recovered work').binding).toEqual(
     requireFixtureValue(before.work, 'before work').binding,
   );
@@ -2922,7 +2928,7 @@ test('frontier repair joins prior Work with the exact run and accepted scope and
     };
     expect(() =>
       continuationRepair.validateConfiguredFrontierReceiptStructure(rebind(prior, next, malformed, nextLedger)),
-    ).toThrow(/ledger contract|non-canonical JSON number/);
+    ).toThrow(/coordination ledger rejected|non-canonical JSON number/);
   }
   const wrongRevision = { ...input.receipt.successor_ledger, revision: input.receipt.prior_ledger.revision + 2 };
   expect(() =>

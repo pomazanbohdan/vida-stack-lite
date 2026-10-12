@@ -83,6 +83,14 @@ cleanup budgets must fit the parent case limit; use the shared bounded child
 owner, await terminal evidence and mark fixture retention before launch. Clear
 retention only after all assertions pass. Formation does not launch these tests.
 
+For Bun `-e` fixtures, embed inert path literals with `JSON.stringify` or pass
+named environment fields instead of assuming Node's positional argv layout.
+Marker-based termination checks first arm the real timer, emit and assert a
+readiness handshake, then observe beyond its deadline. A missing marker without
+that positive control is insufficient. Platform doubles may simulate responses,
+but must observe real child startup separately; an unconfirmed request stays
+UNKNOWN rather than proving cleanup.
+
 Test SDK Source capture with inert files and tool imports, without forming an
 SDK. Verify retained bytes after live changes, aliases/cycles, omitted tests/
 generated files and existing boundary limits. Reuse the bounded quality reader

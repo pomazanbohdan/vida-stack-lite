@@ -573,6 +573,15 @@ Reserve cleanup and report time within the parent budget. A positive reserve giv
 
 Record timeout, status, signal, spawn error and cleanup result separately. A signal or cleanup attempt does not prove that descendants stopped. Require an observed integer terminal status without timeout, signal or spawn error before parsing command output. An expected exit 1 still needs the exact denial and unchanged-state assertions.
 
+Bun-only subprocess fixtures launch `process.execPath`. For `-e` programs,
+embed inert path literals with `JSON.stringify` or use named environment fields;
+do not assume Node's positional `process.argv` layout. A missing marker alone
+cannot prove descendant termination: arm the real marker timer before emitting
+a readiness handshake, assert that handshake, and observe past the timer's
+deadline. Keep simulated platform responses separate from real child readiness.
+An unconfirmed signal request retains UNKNOWN; absence of a PID or marker does
+not turn it into confirmed cleanup.
+
 Keep each case's declared bound. The five repair/recovery seconds, 60-second stopped-source cases and 30-second cleanup/report reserve are operation bounds. They are not new suite deadlines. The stopped-source async teardown uses at most the 15-second cleanup half. Preserve the report half before and after the final binding check.
 
 Log the owned root before deletion and its actual completion after deletion. A deferred, failed or timed-out cleanup retains custody. It does not authorize another deletion attempt. Do not remove another operation's roots.

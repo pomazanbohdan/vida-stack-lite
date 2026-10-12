@@ -7359,3 +7359,65 @@ The resulting focused tooling completion passes5cases/29assertions/4.03s:
 ordinary successful and failing preload finalization, bailout custody, pinned
 mutation argv and namespace exports. Existing tests keep distinct assertion,
 execution, coverage and mutation evidence. Full suites were not repeated here.
+
+## 2026-10-12 — coverage findings: independent causes and test corrections
+
+Fresh origin/main fetch confirms published b00a8a7 and 0/0 divergence. Keep
+unowned BASE/ and root bun.lock unstaged. Full current run
+938b6a54-4b21-4ed0-8e8b-f1b79c1e5dff reached its separate 1800s deadline:
+terminal launcher exit1, UNKNOWN test effects, no process/final coverage report.
+Retain original custody. The saved 1916 reporter rows include possible nested
+output and are not whole-suite outcomes, coverage percentages or percentiles.
+
+The correction packet changes five tests. Capture one typed successor admission
+proposal after its genuine second-predecessor verification failure, restore the
+method in finally, then exercise three bad synchronous callbacks directly at
+the same Host boundary. Full preparation drops from four passes to one; raw
+Journal and workspace equality checks remain. Root qualification passes3.80s.
+Static checking found lost narrowing inside the assertion closure; retain the
+guarded proposal in a const instead of casting or weakening the compiler.
+
+Initialization prepares a real scope digest, acceptance manifest and local
+intake; public admission and same-attempt resume share the actual initialized
+workspace database. Root qualification passes1case/8assertions/12.76s under
+its existing explicit exception. Recovery decodes the actual inspect/apply
+envelopes and compares against the exact failed Journal seeded before recovery;
+the owner-preservation case passes9.79s. Its independent frontier-codec denial
+also passes. These are test-contract corrections, not new product fixes.
+
+Fourteen real bounded-child launches and the release-mutex child use the
+qualified executable rather than an absent external Node. Bun -e fixtures use
+embedded inert path literals or named environment values. Marker controls arm
+real timers before verified child-readiness handshakes; simulated platform
+responses observe real startup separately. The initial bounded file passed16
+cases; strengthened controls exposed two actual fixture faults, both corrected
+and qualified in an exact2case/1.23s run. Three other changed marker controls
+and the recovery case passed in the preceding causal run. Release mutex passes
+1.25s. The full-tree control now derives its inert timer and observation from
+1000ms, preserving readiness and real termination checks; Root passes1.40s
+instead of the previous4.26s focused control. This is a case timing, not a
+whole-suite speedup claim. Bun-test skill and TESTING receive this verified
+transport/readiness guidance together.
+
+Blind review found no guard/ownership/assertion weakening in this packet.
+Joined static checks pass421 maintained TS files and97 stricter Source files,
+zero diagnostics. Ordinary strict staged hooks still own publication admission.
+
+Open causal follow-up: the first interrupted upgrade publication originally
+lost observation to the90s parent deadline. A private per-case120s correction
+exposed its independent45s resume-child timeout in a new fixture; it does not
+close recovery or establish cleanup. Keep that candidate out of this packet
+and retain /tmp/project-upgrade-lifecycle-opjRBd with UNKNOWN effects. Never
+retry that operation to obtain cleaner measurements or raise the child cap.
+The saved log is tree-speed-and-upgrade-budget-causal.log, session60064,
+terminal exit1. Shared package-root CAS failures following timeouts remain a
+cascade until independently demonstrated, not hundreds of separate defects.
+
+Further blind lanes own private candidates for reclaim-restoration fixtures,
+actual Host transaction race/readiness, stopped-source release authority,
+historical runtime consumer binding, and SDK formation-output capture. The
+original genuine baseline report was found in retained published-worktree
+custody; do not recapture it. Current Bun1.4.3 must consume the admitted original
+Bun1.4.2 measurement without executing the old runtime or changing its failed
+suite status. Executable exhaustive frozen CRAP plan, mutation partition
+admission and current final coverage remain open. No numeric PASS is claimed.

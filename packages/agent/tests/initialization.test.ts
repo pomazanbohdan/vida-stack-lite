@@ -8,6 +8,8 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { parseRuntimeConfigYaml } from '../src/config/runtime-config.ts';
+import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import {
   validateRuntimeInitializationReceipt,
   type RuntimeInitializationReceipt,
@@ -314,6 +316,79 @@ v8CoverageTest(
     const config = parseRuntimeConfigYaml(await readFile(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8'));
     const firstProject = config.projects[0];
     if (!firstProject) throw new Error('Initialized configuration has no project.');
+    const workId = 'work-17';
+    const nativeSessionHandle = 'initialization-test-session';
+    const scopeDigest = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENTS.md']).digest;
+    await mkdir(path.join(root, '.agent/work', workId), { recursive: true });
+    const scope = {
+      schema: 'ImplementationScope/v1',
+      scope_id: 'scope-' + workId,
+      work_id: workId,
+      source_revision: scopeDigest,
+      ac_ids: ['AC-INITIALIZATION-PREPARE'],
+      allowed_paths: ['AGENTS.md'],
+      implementation_paths: ['AGENTS.md'],
+      documentation_paths: [],
+      changed_symbols: [],
+      non_goals: ['Source mutation'],
+      acceptance_trace: ['AC-INITIALIZATION-PREPARE'],
+      behavior_trace: ['Prepare a Mastra session packet for admitted local work.'],
+      test_trace: ['fresh local initialization exposes the current Mastra session prepare packet'],
+      diagnostic_trace: ['Verify prepared and resumed packet identity.'],
+      attribution: { thread_id: nativeSessionHandle, pointer: 'test:initialization/' + workId },
+      owner: 'initialization test fixture',
+      created_at: new Date().toISOString(),
+    };
+    const scopePath = `.agent/work/${workId}/scope.json`;
+    const acceptancePath = `.agent/work/${workId}/acceptance.json`;
+    const intakePath = `.agent/work/${workId}/intake.json`;
+    await writeFile(path.join(root, scopePath), JSON.stringify(scope));
+    await writeFile(
+      path.join(root, acceptancePath),
+      JSON.stringify({
+        schema: 'AcceptanceManifest/v1',
+        id: 'acceptance-' + workId,
+        version: 1,
+        ac_ids: scope.ac_ids,
+        source: 'AGENTS.md',
+        scope: scope.scope_id,
+        source_revision: scopeDigest,
+        contracts: [
+          {
+            id: 'AC-INITIALIZATION-PREPARE',
+            definition: 'Prepare and resume one admitted local Mastra session.',
+            sr: 'SR-INITIALIZATION-PREPARE',
+            evidence: ['prepared and resumed packet identity'],
+          },
+        ],
+      }),
+    );
+    await writeFile(
+      path.join(root, intakePath),
+      JSON.stringify({
+        schema: 'VidaLocalSessionIntake/v1',
+        native_session_handle: nativeSessionHandle,
+        work_item: {
+          schema: 'WorkItem/v1',
+          id: workId,
+          provider: 'local',
+          provider_type: 'Research',
+          canonical_kind: 'research',
+          intent: 'information_research',
+          project_id: firstProject.project_id,
+          title: 'Initialization Mastra packet fixture',
+          description: 'Exercise first preparation and same-attempt resume.',
+          labels: [],
+          risk_flags: [],
+        },
+        scope_path: scopePath,
+        acceptance_path: acceptancePath,
+        runtime_code_paths: ['tools/agents/bin/run.ts'],
+        route: 'R2',
+        risk: 'low',
+        change_kind: 'feature',
+      }),
+    );
     const runArgs = [
       path.join(bundle, 'bin/run.ts'),
       '--project-root',
@@ -325,11 +400,15 @@ v8CoverageTest(
       '--work-path',
       'tools/agents',
       '--work-id',
-      'work-17',
+      workId,
       '--attempt',
-      '2',
+      '1',
       '--scope-digest',
-      'a'.repeat(64),
+      scopeDigest,
+      '--scope-path',
+      'AGENTS.md',
+      '--intake',
+      path.join(root, intakePath),
       '--team',
       'default-development',
       '--kind',

@@ -2041,27 +2041,35 @@ test('second predecessor verification failure leaves every canonical row and raw
     const journals = f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all();
     const admit = f.store.admitSuccessorWork.bind(f.store);
     type SuccessorAdmissionInput = Parameters<HostStateStore['admitSuccessorWork']>[0];
-    let verified = 0;
-    f.store.admitSuccessorWork = (input: SuccessorAdmissionInput) =>
-      admit({
+    let verified = 0,
+      proposal: SuccessorAdmissionInput | undefined;
+    f.store.admitSuccessorWork = (input: SuccessorAdmissionInput) => {
+      proposal = input;
+      return admit({
         ...input,
         verifyCurrent(work, journal, pointer) {
           input.verifyCurrent(work, journal, pointer);
           if (++verified === 2) throw new Error('injected second predecessor verification fault');
         },
       });
-    expect(() => admitLocalSessionWork(f.prepare('next', 'user:next'))).toThrow(/second predecessor/);
+    };
+    try {
+      expect(() => admitLocalSessionWork(f.prepare('next', 'user:next'))).toThrow(/second predecessor/);
+    } finally {
+      f.store.admitSuccessorWork = admit;
+    }
     expect(verified).toBe(2);
     expect(f.store.readWorkspaceSnapshot()).toEqual(before);
     expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(journals);
+    if (!proposal) throw new Error('successor admission proposal was not captured');
+    const acceptedProposal = proposal;
     const callbacks: readonly SuccessorAdmissionInput['verifyCurrent'][] = [
       () => Promise.resolve(),
       () => Promise.reject(new Error('rejected current proof')),
       () => true,
     ];
     for (const callback of callbacks) {
-      f.store.admitSuccessorWork = (input: SuccessorAdmissionInput) => admit({ ...input, verifyCurrent: callback });
-      expect(() => admitLocalSessionWork(f.prepare('next', 'user:next'))).toThrow(/synchronously/);
+      expect(() => admit({ ...acceptedProposal, verifyCurrent: callback })).toThrow(/synchronously/);
       expect(f.store.readWorkspaceSnapshot()).toEqual(before);
       expect(f.database.query('SELECT * FROM agent_host_mastra_session_ledger ORDER BY work_id').all()).toEqual(
         journals,

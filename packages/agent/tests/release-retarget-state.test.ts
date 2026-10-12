@@ -1664,16 +1664,22 @@ test('busy worker and admission deny before custody or effects', async () => {
     await Promise.resolve(assert.rejects(plan(value), /busy/));
     const module = new URL('../bin/local-release-artifacts.ts', import.meta.url).href;
     const child = spawnSync(
-      'node',
+      process.execPath,
       [
         '--input-type=module',
         '-e',
-        'const {operationMutex}=await import(process.argv[1]); const db=operationMutex(process.argv[2],process.argv[3]); console.log(db ? "open" : "busy"); db?.close();',
-        module,
-        value.root,
-        operation,
+        'const {operationMutex}=await import(process.env.VIDA_RETARGET_MODULE_URL); const db=operationMutex(process.env.VIDA_RETARGET_ROOT,process.env.VIDA_RETARGET_OPERATION); console.log(db ? "open" : "busy"); db?.close();',
       ],
-      { encoding: 'utf8', windowsHide: true },
+      {
+        encoding: 'utf8',
+        windowsHide: true,
+        env: {
+          ...process.env,
+          VIDA_RETARGET_MODULE_URL: module,
+          VIDA_RETARGET_ROOT: value.root,
+          VIDA_RETARGET_OPERATION: operation,
+        },
+      },
     );
     assert.equal(child.error, undefined);
     assert.equal(child.status, 0, child.stderr);
