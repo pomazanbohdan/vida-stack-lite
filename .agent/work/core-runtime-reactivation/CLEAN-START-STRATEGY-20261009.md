@@ -1418,3 +1418,16 @@ Root finishes strict checkpoint and publication, then collects one current whole
 measurement. Exact coverage/CRAP/mutation/default exhaustive plan/native remain
 pending. No changed output-root bypass, cap reset, build/install suite or unblock
 notice to Runtime owners. Source custody correction does not prove Runtime unblock.
+
+#### Current actual coverage terminal checkpoint v812–v813
+
+Producer correction15b3db5 is strict-published. One standard current whole
+measurement4a914e88-c29d-462a-bc25-448fdf8997ca reaches its unchanged30minute
+bound and exits1/UNKNOWN. The genuine active reservation is automatically
+released after known direct producer termination; run and unknown effects are
+retained. This closes unnecessary reservation retention for the observed path,
+not numeric qualification. No current exact coverage/CRAP/mutation is admitted.
+Next: scoped causal repairs for actual stale fixture paths, query-bearing module
+capture and contained-controller failures; no repeated full suite, timeout
+increase or retained operation replay. Independent ready shared-owner P1 work
+continues after this measurement's input freeze. Details/receipts: WORKv812–v813.

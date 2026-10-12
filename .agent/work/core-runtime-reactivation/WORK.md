@@ -6565,3 +6565,29 @@ identity. Root's concurrent status inspection may refresh Git index metadata;
 no semantic staged change is assumed away. Preserve this failed checkpoint.
 Root stops Git reads during the next hook and uses GIT_OPTIONAL_LOCKS=0 for
 subsequent read-only Git inspection. No index-integrity check is weakened.
+
+### v812–v813 — published producer fix and actual timeout release
+
+Strict stable-index checkpoint-v812 passes; reviewed correction15b3db5 is
+publishedc5a6865..15b3db5 without bypass. Root starts exactly one current
+standard coverage measurementv813 using qualified Bun1.4.2 after publication.
+Run4a914e88-c29d-462a-bc25-448fdf8997ca selects168testfiles/144productionfiles,
+with captured inputs frozen throughout the actual measurement. Direct measured
+child176638 reaches the unchanged30minute bound; launcher176625 and controller
+176622 terminate with exit1. The actual runner diagnostic observes direct
+producer termination and preserves UNKNOWN run/test-effect custody. Its genuine
+coverage-run.lock is automatically released at the standard output root.
+No manual unlock, output-root bypass or timeout increase is applied. This actual
+full-run observation confirms that a terminated UNKNOWN measurement no longer
+leaves an unnecessary coverage reservation. It grants no test-effect cleanup,
+valid numeric report, assertion-confirmed Killed or Runtime acceptance.
+
+Retain manifest, snapshot, process directory and buffered failure log. No final
+coverage/CRAP/mutation result is admitted. The log exposes initializer stale
+entrypoint/ENOENT failures, an uncaptured query-bearing module identity, repeated
+contained-controller failures and effectful interruption timeouts. Diagnose
+independent causal lanes through scoped read-only agents; do not repeat the
+full suite or retained UNKNOWN fixtures. Exact receipts under BASE:
+current-coverage-measurement-v813.log and current-coverage-measurement-v813.exit.
+After terminal observation the Source-input freeze ends; only affected new
+corrections and bounded relevant controls may invalidate their existing proof.
