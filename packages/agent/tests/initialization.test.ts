@@ -107,7 +107,7 @@ async function run(
   args: readonly string[],
   env: NodeJS.ProcessEnv = {},
   cwd: string = root,
-  executable = 'bun',
+  executable = process.execPath,
 ): Promise<TerminalRunResult> {
   if (initializationOutcomeUnknown) throw Error('Prior initializer child outcome prevents fixture reuse.');
   const entrypoint = args[0];

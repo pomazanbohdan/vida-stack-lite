@@ -6591,3 +6591,26 @@ full suite or retained UNKNOWN fixtures. Exact receipts under BASE:
 current-coverage-measurement-v813.log and current-coverage-measurement-v813.exit.
 After terminal observation the Source-input freeze ends; only affected new
 corrections and bounded relevant controls may invalidate their existing proof.
+
+### v822–v824 — scoped initializer harness corrections after terminal capture
+
+Actual terminal checkpoint9f2e7f7 is published15b3db5..9f2e7f7. Blind agents
+diagnose independent actual v813 failures using its retained log and current
+Source. Initializer harness defaulted to bare bun although the qualified runner
+uses an exact executable; v813 ENOENT prevented all later fixture reuse under
+the unchanged UNKNOWN barrier. The copied public initializer test additionally
+requested removed bin/init.mjs instead of declared maintained bin/init.ts.
+Root corrects exactly these two test harness paths: current process.execPath
+and copied init.ts. No product runtime, PATH fallback, compatibility artifact,
+UNKNOWN barrier or timeout change is introduced. New owned focused execution
+passes2tests17assertions3.77s, with50unrelatedcases filtered out. The malformed
+inputs produce expected known exit1/no spawn error; copied repeated init keeps
+project-owned sidecar/config/policy/receipt values. Blind exact-diff reviewAPPROVES.
+This does not replay or relabel any v813 retained fixture. Receipts under BASE:
+coverage-initializer-focused-v824.log and coverage-initializer-fix-review-v824.md.
+
+Separate read-only diagnoses remain proposals: stale unlisted dist resolution,
+query-bearing module request capture, contained-controller failure provenance.
+Keep the physical captured-file identity distinct from Bun module-instance query
+identity; no speculative suffix stripping or live Source fallback is applied.
+Current exact coverage, CRAP, mutation and native qualification remain GAP.

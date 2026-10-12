@@ -400,7 +400,7 @@ test('copied public initializer preserves project-owned integration values on a 
       dependencies,
       process.platform === 'win32' ? 'junction' : 'dir',
     );
-    const copiedModule: unknown = await import(pathToFileURL(path.join(bundle, 'bin', 'init.mjs')).href);
+    const copiedModule: unknown = await import(pathToFileURL(path.join(bundle, 'bin', 'init.ts')).href);
     if (
       copiedModule === null ||
       typeof copiedModule !== 'object' ||
