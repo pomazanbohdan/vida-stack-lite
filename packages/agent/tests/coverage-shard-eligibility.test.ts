@@ -1,11 +1,24 @@
 import { describe, expect, test } from 'bun:test';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
+import os from 'node:os';
+import path from 'node:path';
+import * as coverageConsumerBinding from '../tooling/coverage-consumer-binding.ts';
+import { buildCoverageReviewScope } from '../tooling/coverage-consumer-binding.ts';
 import {
   canonicalCoverageReviewScope,
   resolveCoverageShardEligibility,
 } from '../tooling/coverage-shard-eligibility.ts';
-import type { InputDigest } from '../tooling/bun-coverage-evidence.ts';
-import { coverageEnvironmentSha256, coverageReviewEnvironmentSha256 } from '../tooling/bun-coverage-evidence.ts';
+import type { CoverageInputs, InputDigest } from '../tooling/bun-coverage-evidence.ts';
+import {
+  coverageEnvironmentSha256,
+  coverageReviewEnvironmentSha256,
+  sha256,
+} from '../tooling/bun-coverage-evidence.ts';
+import type { CoverageReviewScope } from '../tooling/coverage-shard-eligibility.ts';
 import { prepareCoverageShardLaunches } from '../tooling/run-bun-coverage.ts';
+import * as runBunCoverageModule from '../tooling/run-bun-coverage.ts';
+import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
   coverageAssignmentPlanSha256,
   validateCoverageShardLaunchBinding,
@@ -26,6 +39,182 @@ const scope = {
 };
 const input = (name: string, fill = 'f'): InputDigest => ({ path: `tests/${name}.test.ts`, sha256: fill.repeat(64) });
 const resource = `package-root:${'9'.repeat(64)}`;
+const configurationRows = [
+  { path: '.bun-version', sha256: '1'.repeat(64) },
+  { path: 'bunfig.toml', sha256: '2'.repeat(64) },
+  { path: 'package.json', sha256: '3'.repeat(64) },
+  { path: 'bun.lock', sha256: '4'.repeat(64) },
+];
+const packageAccess = (options: { provider?: string; identities?: string[] } = {}) => {
+  let identityIndex = 0;
+  const identityCalls: string[] = [];
+  const access = {
+    schema: 'SafeRepositoryAccess/v1',
+    provider: options.provider ?? 'linux-proc-fd',
+    platform: process.platform,
+    repository_root: '/fixture/packages/agent',
+    directoryIdentity: (target: string, label: string) => {
+      identityCalls.push(`${target}:${label}`);
+      const identities = options.identities ?? ['package-identity'];
+      return identities[Math.min(identityIndex++, identities.length - 1)]!;
+    },
+    readCapturedBytes: () => {
+      throw new Error('Scope preparation must reuse captured configuration bytes.');
+    },
+    readBytes: () => {
+      throw new Error('Scope preparation must not read package files.');
+    },
+    listFiles: () => {
+      throw new Error('Scope preparation must not scan the package.');
+    },
+  } as unknown as import('../src/config/safe-repository-access.ts').SafeRepositoryAccess;
+  return { access, identityCalls };
+};
+const scopeInputs = (overrides: Record<string, unknown> = {}) => ({
+  packageAccess: packageAccess().access,
+  inputs: {
+    source_fingerprint: 'a'.repeat(64),
+    test_fingerprint: 'b'.repeat(64),
+    tool_fingerprint: 'c'.repeat(64),
+    tool_inputs: [...configurationRows, { path: 'tooling/coverage-shard-eligibility.ts', sha256: '5'.repeat(64) }],
+  },
+  runtimeExecutableSha256: 'd'.repeat(64),
+  bunVersion: '1.4.3',
+  environment: { PATH: '/qualified/bun', TEST_SETTING: 'one' },
+  ...overrides,
+});
+const scopeBuilder = () => {
+  const candidate = Reflect.get(coverageConsumerBinding, 'buildCoverageReviewScope');
+  expect(typeof candidate).toBe('function');
+  return candidate as (input: ReturnType<typeof scopeInputs>) => CoverageReviewScope;
+};
+const currentShardBuilder = () => {
+  const candidate = Reflect.get(runBunCoverageModule, 'prepareCurrentCoverageShardLaunches');
+  expect(typeof candidate).toBe('function');
+  return candidate as (input: {
+    root: string;
+    temporary_root: string;
+    run_id: string;
+    inputs: CoverageInputs;
+    runtimeExecutableSha256: string;
+    bunVersion: string;
+    environment: NodeJS.ProcessEnv;
+    wrappedInvocation?: boolean;
+    consumerConfiguration?: Awaited<ReturnType<typeof coverageConsumerBinding.captureCoverageConsumerBinding>>;
+  }) => ReturnType<typeof prepareCoverageShardLaunches>;
+};
+
+function currentShardPolicyFixture() {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-current-shard-policy-'));
+  const temporaryRoot = path.resolve(os.tmpdir());
+  const tests = ['tests/policy-a.test.ts', 'tests/policy-b.test.ts'];
+  const testInputs = tests.map((file, index) => ({ path: file, sha256: String(index + 1).repeat(64) }));
+  const sourceInputs = [{ path: 'src/policy.ts', sha256: '3'.repeat(64) }];
+  const toolInputs = [...configurationRows];
+  const inputs: CoverageInputs = {
+    sources: sourceInputs,
+    source_fingerprint: sha256(JSON.stringify(sourceInputs)),
+    tests,
+    test_selection: { mode: 'full-current-test-set', tests },
+    test_inputs: testInputs,
+    test_fingerprint: sha256(JSON.stringify(testInputs)),
+    tool_inputs: toolInputs,
+    tool_fingerprint: sha256(JSON.stringify(toolInputs)),
+    module_inputs: sourceInputs,
+    input_bytes: {},
+  };
+  const environment: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH ?? '/qualified/bun',
+    NODE_ENV: 'test',
+    TZ: 'Etc/UTC',
+    TMPDIR: temporaryRoot,
+  };
+  const consumerConfiguration = {
+    repository_root: path.join(root, 'consumer'),
+    root_identity_sha256: '4'.repeat(64),
+    source: 'agent-runtime.config.v1.yaml' as const,
+    source_digest: '5'.repeat(64),
+  };
+  const runtimeExecutableSha256 = sha256('fixture-selected-runtime-executable');
+  const bunVersion = '1.4.3';
+  const artifactPath = path.join(root, 'coverage', 'bun-unified', 'shard-eligibility.v1.json');
+  const runId = randomUUID();
+  return {
+    root,
+    temporaryRoot,
+    tests,
+    testInputs,
+    inputs,
+    environment,
+    consumerConfiguration,
+    runtimeExecutableSha256,
+    bunVersion,
+    artifactPath,
+    runId,
+  };
+}
+
+function writeCurrentShardReview(
+  fixture: ReturnType<typeof currentShardPolicyFixture>,
+  options: {
+    packageRoot?: string;
+    inputs?: CoverageInputs;
+    environment?: NodeJS.ProcessEnv;
+    consumerConfiguration?: typeof fixture.consumerConfiguration;
+  } = {},
+) {
+  const effectiveEnvironment = {
+    ...(options.environment ?? fixture.environment),
+    AGENT_RUNTIME_TEST_REPOSITORY_ROOT: (options.consumerConfiguration ?? fixture.consumerConfiguration)
+      .repository_root,
+  };
+  const reviewScope = buildCoverageReviewScope({
+    packageAccess: requireSafeRepositoryAccess(options.packageRoot ?? fixture.root),
+    inputs: options.inputs ?? fixture.inputs,
+    runtimeExecutableSha256: fixture.runtimeExecutableSha256,
+    bunVersion: fixture.bunVersion,
+    environment: effectiveEnvironment,
+    wrappedInvocation: true,
+    consumerConfiguration: options.consumerConfiguration ?? fixture.consumerConfiguration,
+  });
+  const reviewScopeSha256 = canonicalCoverageReviewScope(reviewScope);
+  const reviews = fixture.testInputs.map((row) => ({
+    test_file: row.path,
+    test_sha256: row.sha256,
+    review_scope_sha256: reviewScopeSha256,
+    shared_resources: [],
+    exclusive_run: false,
+    reviewer_ref: 'synthetic-current-shard-policy-fixture',
+  }));
+  mkdirSync(path.dirname(fixture.artifactPath), { recursive: true });
+  writeFileSync(
+    fixture.artifactPath,
+    JSON.stringify({
+      schema: 'VidaCoverageShardEligibility/v1',
+      scope: reviewScope,
+      review_scope_sha256: reviewScopeSha256,
+      reviews,
+    }),
+  );
+}
+
+function callCurrentShardBuilder(
+  fixture: ReturnType<typeof currentShardPolicyFixture>,
+  overrides: Partial<Parameters<ReturnType<typeof currentShardBuilder>>[0]> = {},
+) {
+  return currentShardBuilder()({
+    root: fixture.root,
+    temporary_root: fixture.temporaryRoot,
+    run_id: fixture.runId,
+    inputs: fixture.inputs,
+    runtimeExecutableSha256: fixture.runtimeExecutableSha256,
+    bunVersion: fixture.bunVersion,
+    environment: fixture.environment,
+    wrappedInvocation: true,
+    consumerConfiguration: fixture.consumerConfiguration,
+    ...overrides,
+  });
+}
 
 const clockEnvironment = (
   issuedAt: number,
@@ -97,6 +286,95 @@ test('review-base hashing keeps malformed or inconsistent clocks exact', () => {
   ])
     expect(coverageReviewEnvironmentSha256(altered, true)).toBe(coverageEnvironmentSha256(altered));
 });
+
+describe('buildCoverageReviewScope', () => {
+  test('binds captured input digests, actual runtime metadata, environment and package identity', () => {
+    const { access, identityCalls } = packageAccess();
+    const built = scopeBuilder()({ ...scopeInputs(), packageAccess: access });
+
+    expect<Record<string, unknown>>(built).toEqual({
+      source_fingerprint: 'a'.repeat(64),
+      test_fingerprint: 'b'.repeat(64),
+      tool_fingerprint: 'c'.repeat(64),
+      configuration_fingerprint: expect.any(String),
+      runtime_executable_sha256: 'd'.repeat(64),
+      environment_sha256: coverageReviewEnvironmentSha256({ PATH: '/qualified/bun', TEST_SETTING: 'one' }),
+      bun_version: '1.4.3',
+      provider: access.provider,
+      platform: process.platform,
+      architecture: process.arch,
+      package_root_identity_sha256: sha256('package-identity'),
+    });
+    expect(Object.keys(built).sort()).toEqual([
+      'architecture',
+      'bun_version',
+      'configuration_fingerprint',
+      'environment_sha256',
+      'package_root_identity_sha256',
+      'platform',
+      'provider',
+      'runtime_executable_sha256',
+      'source_fingerprint',
+      'test_fingerprint',
+      'tool_fingerprint',
+    ]);
+    expect(identityCalls).toHaveLength(2);
+    expect(identityCalls[0]).toBe(identityCalls[1]);
+  });
+
+  test('changes with captured config digests, consumer origin, provider and actual environment', () => {
+    const build = scopeBuilder();
+    const original = build(scopeInputs());
+    const changedConfigRows = configurationRows.map((row) =>
+      row.path === 'package.json' ? { ...row, sha256: '8'.repeat(64) } : row,
+    );
+    const changedConfig = build({
+      ...scopeInputs(),
+      inputs: { ...scopeInputs().inputs, tool_inputs: changedConfigRows },
+    });
+    const consumerConfiguration = {
+      repository_root: '/fixture/consumer',
+      root_identity_sha256: '9'.repeat(64),
+      source: '.vida/project.yaml' as const,
+      source_digest: '0'.repeat(64),
+    };
+    const changedConsumer = build(scopeInputs({ consumerConfiguration }));
+    const changedProviderAccess = packageAccess({ provider: 'fs-safe-windows' }).access;
+    const changedProvider = build({ ...scopeInputs(), packageAccess: changedProviderAccess });
+    const changedEnvironment = build(scopeInputs({ environment: { PATH: '/qualified/bun', TEST_SETTING: 'two' } }));
+
+    expect(changedConfig.configuration_fingerprint).not.toBe(original.configuration_fingerprint);
+    expect(changedConsumer.configuration_fingerprint).not.toBe(original.configuration_fingerprint);
+    expect(changedProvider.provider).not.toBe(original.provider);
+    expect(changedEnvironment.environment_sha256).not.toBe(original.environment_sha256);
+  });
+
+  test('rejects duplicate or missing captured configuration owner rows', () => {
+    const build = scopeBuilder();
+    const rows = scopeInputs().inputs.tool_inputs;
+    expect(() => build(scopeInputs({ inputs: { ...scopeInputs().inputs, tool_inputs: [...rows, rows[0]!] } }))).toThrow(
+      /configuration/i,
+    );
+    expect(() =>
+      build(
+        scopeInputs({
+          inputs: { ...scopeInputs().inputs, tool_inputs: rows.filter((row) => row.path !== 'bun.lock') },
+        }),
+      ),
+    ).toThrow(/configuration/i);
+  });
+
+  test('rejects package identity drift and returns no fabricated review resources or eligibility', () => {
+    const unstable = packageAccess({ identities: ['before', 'after'] });
+    expect(() => scopeBuilder()({ ...scopeInputs(), packageAccess: unstable.access })).toThrow(/changed/i);
+
+    const built = scopeBuilder()(scopeInputs());
+    expect(built).not.toHaveProperty('reviews');
+    expect(built).not.toHaveProperty('shared_resources');
+    expect(built).not.toHaveProperty('status');
+  });
+});
+
 const review = (row: InputDigest, reviewScope = canonicalCoverageReviewScope(scope)) => ({
   test_file: row.path,
   test_sha256: row.sha256,
@@ -255,6 +533,124 @@ describe('resolveCoverageShardEligibility', () => {
     });
     expect(unknownResult.status).toBe('serial-fallback');
     expect(changedResult.status).toBe('serial-fallback');
+  });
+});
+
+describe('prepareCurrentCoverageShardLaunches', () => {
+  test('reads the fixed review artifact and prepares two fixture assignments without creating outputs', () => {
+    const fixture = currentShardPolicyFixture();
+    let passed = false;
+    try {
+      writeCurrentShardReview(fixture);
+      const prepared = callCurrentShardBuilder(fixture);
+
+      expect(prepared.status).toBe('prepared');
+      if (prepared.status !== 'prepared') throw new Error('Complete current fixture review was denied.');
+      expect(prepared.plan.waves).toHaveLength(1);
+      expect(prepared.plan.waves[0]?.assignments.length).toBeGreaterThan(0);
+      expect(prepared.plan.waves[0]?.assignments.length).toBeLessThanOrEqual(2);
+      expect(prepared.launches).toHaveLength(prepared.plan.waves[0]!.assignments.length);
+      expect(
+        prepared.invocations
+          .flatMap(({ output_paths }) => Object.values(output_paths))
+          .every((file) => !existsSync(file)),
+      ).toBe(true);
+      expect(existsSync(path.join(fixture.root, 'coverage', 'bun-unified', 'runs', fixture.runId))).toBe(false);
+      expect(
+        prepared.launches.flatMap((launch) => launch.args.filter((arg) => arg.startsWith('./tests/'))).sort(),
+      ).toEqual(fixture.tests.map((file) => './' + file).sort());
+      for (const launch of prepared.launches) {
+        expect(launch.args).toContain('--parallel=1');
+        expect(launch.args).toContain('--no-isolate');
+        expect(launch.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT).toBe(fixture.consumerConfiguration.repository_root);
+        expect(launch.env.TMPDIR).toBe(path.resolve(launch.env.TMPDIR!));
+        expect(path.relative(fixture.root, launch.env.TMPDIR!).startsWith('..')).toBe(true);
+        const externalTempPath = path.relative(fixture.temporaryRoot, launch.env.TMPDIR!);
+        expect(externalTempPath.length).toBeGreaterThan(0);
+        expect(externalTempPath.startsWith('..')).toBe(false);
+      }
+      passed = true;
+    } finally {
+      if (passed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Preserved failed current shard policy fixture at ' + fixture.root);
+    }
+  });
+
+  test.each(['missing', 'unreadable', 'malformed'] as const)(
+    'keeps serial fallback before output allocation for a %s review artifact',
+    (artifactState) => {
+      const fixture = currentShardPolicyFixture();
+      let passed = false;
+      try {
+        if (artifactState === 'unreadable') mkdirSync(fixture.artifactPath, { recursive: true });
+        if (artifactState === 'malformed') {
+          mkdirSync(path.dirname(fixture.artifactPath), { recursive: true });
+          writeFileSync(fixture.artifactPath, '{');
+        }
+        const result = callCurrentShardBuilder(fixture);
+        expect(result.status).toBe('serial-fallback');
+        expect('launches' in result).toBe(false);
+        expect(existsSync(path.join(fixture.root, 'coverage', 'bun-unified', 'runs', fixture.runId))).toBe(false);
+        passed = true;
+      } finally {
+        if (passed) rmSync(fixture.root, { recursive: true, force: true });
+        else console.error(`Preserved ${artifactState} current shard policy fixture at ${fixture.root}`);
+      }
+    },
+  );
+
+  test('keeps serial fallback before output allocation for stale config, environment or package identity', () => {
+    const fixture = currentShardPolicyFixture();
+    const foreignPackageRoot = mkdtempSync(path.join(os.tmpdir(), 'coverage-current-shard-foreign-package-'));
+    let passed = false;
+    try {
+      writeCurrentShardReview(fixture);
+      const changedToolInputs = fixture.inputs.tool_inputs.map((row) =>
+        row.path === 'package.json' ? { ...row, sha256: '6'.repeat(64) } : row,
+      );
+      expect(
+        callCurrentShardBuilder(fixture, {
+          inputs: {
+            ...fixture.inputs,
+            tool_inputs: changedToolInputs,
+            tool_fingerprint: sha256(JSON.stringify(changedToolInputs)),
+          },
+        }).status,
+      ).toBe('serial-fallback');
+      expect(
+        callCurrentShardBuilder(fixture, {
+          environment: { ...fixture.environment, NODE_ENV: 'development' },
+        }).status,
+      ).toBe('serial-fallback');
+      writeCurrentShardReview(fixture, { packageRoot: foreignPackageRoot });
+      expect(callCurrentShardBuilder(fixture).status).toBe('serial-fallback');
+      expect(existsSync(path.join(fixture.root, 'coverage', 'bun-unified', 'runs', fixture.runId))).toBe(false);
+      passed = true;
+    } finally {
+      if (passed) {
+        rmSync(fixture.root, { recursive: true, force: true });
+        rmSync(foreignPackageRoot, { recursive: true, force: true });
+      } else
+        console.error(`Preserved stale current shard policy fixtures at ${fixture.root} and ${foreignPackageRoot}`);
+    }
+  });
+
+  test('rejects ambient BUN_OPTIONS before allocating outputs', () => {
+    const fixture = currentShardPolicyFixture();
+    let passed = false;
+    try {
+      writeCurrentShardReview(fixture);
+      expect(() =>
+        callCurrentShardBuilder(fixture, {
+          environment: { ...fixture.environment, BUN_OPTIONS: '--bail=1' },
+        }),
+      ).toThrow('Ambient BUN_OPTIONS');
+      expect(existsSync(path.join(fixture.root, 'coverage', 'bun-unified', 'runs', fixture.runId))).toBe(false);
+      passed = true;
+    } finally {
+      if (passed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Preserved ambient BUN_OPTIONS current shard policy fixture at ' + fixture.root);
+    }
   });
 });
 

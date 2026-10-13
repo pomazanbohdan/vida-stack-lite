@@ -12,6 +12,47 @@
 
 ## Current dispatch — 2026-10-13
 
+Latest joined preparation packet: the maintained runner supports a fixed,
+verified-read current eligibility artifact before allocating shard outputs.
+The scope reuses the one captured Source/test/tool/config closure, actual runtime
+hash and selected SafeAccess provider/physical identity, plus the captured consumer
+origin and effective environment. Missing/stale/malformed or unavailable reviews
+retain serial fallback; historical production skips it. The complete initial
+nonexclusive wave has at most two serial children, owned log descriptors and
+distinct outputs. Its report assembler joins accounted successful native PIDs
+and strictly decoded receipt bytes, emitting aggregate-free report/v2; only the
+existing final validator merges counters. No duplicate scan/transform/full suite.
+
+Static448capturedTS/447program plus100Source files and strict typed lint PASS.
+Native focused policy/lifecycle batch49PASS/306assertions/6.80s; existing report,
+counter, plan and direct-custody regressions103PASS/340assertions/15.50s. These
+qualify the preparation/receipt mechanics and preserved serial contracts, not
+complete current resource eligibility, exact numeric gates or production speed.
+The real eligibility artifact is not yet authored. A/B/C candidate union is
+63/63/62=188 exact selected paths, with no duplicates/missing paths; still UNREVIEWED.
+
+Resource review corrected a missed conflict: runtime-package-resource-read
+asserts package CAS sidecars absent and must coassign with the three raw package
+reader controls. Configured-context consumer YAML and repository reference reads
+also acquire CAS; semantically read-only does not mean resource-free. Record the
+shared research-record namespace with its unique wx leaves/exact cleanup. Natural
+quarantine roots and process-local clocks do not justify global exclusivity.
+
+Reviewed custody ruling: quiescence is required before a successor test-resource
+wave reuses effects. This sole complete wave has no successor test producer;
+read-only receipt validation/CRAP may follow known successful direct terminals.
+No ordinary post-close receipt/counter writer was found; preload publishes its
+receipt synchronously after hooks. Inherited log FDs do not establish quiescence,
+and logs do not supply numeric counters. Keep resourceSafeToAdvance=false and
+deny UNKNOWN/nonzero/unaccounted groups. No resource-successor qualification.
+
+Next sequence: complete physical-owner review and caller closure, bind a fresh
+current artifact to the settled capture, then one complete300000ms production
+run. Keep failed/UNKNOWN roots and the30000ms report reserve. One-DB next unit
+is fresh EXCLUSIVE mode before first SQLite access, same-held-connection fence
+and in-place SQL; closing the handle for the old closed-image merge loses
+exclusion. Do not retire the auxiliary gate or activate layout/readers yet.
+
 The shared dispatch capture is anchored atfa227cf; obtain the latest published
 Source from Git rather than treating that capture as a moving checkpoint. The last full current run,
 6ecf5884-1970-4988-ac04-b4af06260ba0, ended UNKNOWN under300000ms with170emitted

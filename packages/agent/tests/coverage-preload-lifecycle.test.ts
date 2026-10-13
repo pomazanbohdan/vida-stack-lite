@@ -37,6 +37,7 @@ import {
 import { planCoverageShards } from '../tooling/coverage-shard-plan.ts';
 import { coverageAssignmentPlanSha256, coverageOutputPathsSha256 } from '../tooling/coverage-shard-evidence.ts';
 import { prepareCoverageShardLaunches, superviseCoverageProducers } from '../tooling/run-bun-coverage.ts';
+import * as runBunCoverageModule from '../tooling/run-bun-coverage.ts';
 import { canonicalCoverageReviewScope } from '../tooling/coverage-shard-eligibility.ts';
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
@@ -489,7 +490,7 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
     const sources = digestRows(['src/shared.ts', 'src/seeded.ts']);
     const testInputs = digestRows(testFiles);
     const toolInputs = digestRows(coverageToolInputs);
-    const selection = { mode: 'full-current-test-set', tests: testFiles };
+    const selection = { mode: 'full-current-test-set' as const, tests: testFiles };
     const runtimeHash = sha256(readFileSync(process.execPath));
     const packageStat = statSync(root, { bigint: true });
     const reviewScopeInputs = {
@@ -598,8 +599,9 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
     expect(new Set(allOutputPaths).size).toBe(allOutputPaths.length);
 
     const assignmentPlanSha256 = coverageAssignmentPlanSha256(plan, decodedInvocations);
+    const manifestPath = path.join(runDirectory, 'manifest.json');
     const manifest = {
-      schema: 'VidaBunCoverageRun/v3',
+      schema: 'VidaBunCoverageRun/v3' as const,
       run_id: runId,
       snapshot_directory: snapshotRelative,
       source_fingerprint: sha256(JSON.stringify(sources)),
@@ -621,7 +623,7 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
       shard_invocations: decodedInvocations,
       shard_temporary_root: path.resolve(os.tmpdir()),
     };
-    writeFileSync(path.join(runDirectory, 'manifest.json'), JSON.stringify(manifest));
+    writeFileSync(manifestPath, JSON.stringify(manifest));
 
     let settledGroup: Awaited<ReturnType<typeof superviseCoverageProducers>> | undefined;
     const groupPromise = superviseCoverageProducers(
@@ -690,6 +692,55 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
     expect(group.resourceSafeToAdvance).toBe(false);
     expect(group.outcomes.every(({ resourceSafeToAdvance }) => !resourceSafeToAdvance)).toBe(true);
 
+    const collectCoverageShardReport = Reflect.get(runBunCoverageModule, 'collectCoverageShardReport');
+    expect(typeof collectCoverageShardReport).toBe('function');
+    if (typeof collectCoverageShardReport !== 'function')
+      throw new Error('Coverage runner has no collectCoverageShardReport implementation.');
+    const report = collectCoverageShardReport({ root, manifestPath, manifest, group });
+    expect(report).toMatchObject({
+      schema: 'VidaBunCoverageReport/v2',
+      run_id: runId,
+      manifest_sha256: sha256(readFileSync(manifestPath)),
+      runtime_executable_sha256: runtimeHash,
+      source_fingerprint: manifest.source_fingerprint,
+      test_fingerprint: manifest.test_fingerprint,
+      tool_fingerprint: manifest.tool_fingerprint,
+      sources,
+      tests: testFiles,
+      test_selection: selection,
+      test_inputs: testInputs,
+      tool_inputs: toolInputs,
+      module_inputs: manifest.module_inputs,
+      execution_scope: manifest.execution_scope,
+      active_argv: manifest.active_argv,
+      source_maps: expectedMaps,
+    });
+    expect(Object.hasOwn(report, 'coverage')).toBe(false);
+    expect(report.processes).toHaveLength(2);
+    expect(report.shards).toHaveLength(2);
+
+    const reportMetadata = structuredClone(report);
+    const refuseMutatedGroupWithoutChangingReport = (
+      mutate: (outcome: (typeof group.outcomes)[number] & Record<string, unknown>) => void,
+    ) => {
+      const candidate = structuredClone(group);
+      const selected = candidate.outcomes[0] as (typeof group.outcomes)[number] & Record<string, unknown>;
+      mutate(selected);
+      expect(candidate.outcomes[1]).toEqual(group.outcomes[1]);
+      expect(() => collectCoverageShardReport({ root, manifestPath, manifest, group: candidate })).toThrow();
+      expect<typeof settledGroup>(group).toEqual(settledGroup);
+      expect(report).toEqual(reportMetadata);
+    };
+    refuseMutatedGroupWithoutChangingReport((outcome) => {
+      outcome.unknown = true;
+    });
+    refuseMutatedGroupWithoutChangingReport((outcome) => {
+      outcome.status = 9;
+    });
+    refuseMutatedGroupWithoutChangingReport((outcome) => {
+      outcome.directProducerAccounted = false;
+    });
+
     const runBinding = {
       schema: 'VidaBunCoverageRun/v3' as const,
       run_id: runId,
@@ -704,24 +755,29 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
       snapshot_directory: snapshot,
     };
     const processEvidence: CoverageShardProcessEvidence[] = [];
-    const terminals: CoverageShardTerminalEvidence[] = [];
+    const terminals: CoverageShardTerminalEvidence[] = report.shards;
     for (const outcome of group.outcomes) {
       const invocation = invocations.find(({ assignment }) => assignment.shard_id === outcome.shard_id)!;
       const receiptFiles = readdirSync(invocation.outputPaths.receipt_directory);
       expect(receiptFiles).toHaveLength(1);
-      const receipt: unknown = JSON.parse(
-        readFileSync(path.join(invocation.outputPaths.receipt_directory, receiptFiles[0]!), 'utf8'),
-      );
+      const processReceipt = report.processes.find(({ shard_id }) => shard_id === outcome.shard_id);
+      expect(processReceipt).toBeDefined();
+      if (!processReceipt) throw new Error('Coverage report omitted a pilot process receipt.');
+      expect(processReceipt.file).toBe(path.join(outcome.shard_id, receiptFiles[0]!));
+      const receiptBytes = readFileSync(path.join(runDirectory, 'processes', processReceipt.file));
+      expect(processReceipt.sha256).toBe(sha256(receiptBytes));
+      expect<number | null>(processReceipt.pid).toBe(outcome.producer_pid);
+      const receipt: unknown = JSON.parse(receiptBytes.toString('utf8'));
       const evidence = decodeCoverageShardProcessEvidence(receipt);
       expect(evidence).toBeDefined();
       if (!evidence) throw new Error('Pilot process receipt failed the v2 decoder.');
       expect<number | null>(evidence.pid).toBe(outcome.producer_pid);
       expect(evidence.shard_id).toBe(outcome.shard_id);
       processEvidence.push(evidence);
-      terminals.push({
+      expect<readonly unknown[]>(terminals).toContainEqual({
         run_id: runId,
         shard_id: outcome.shard_id,
-        pid: outcome.producer_pid!,
+        pid: outcome.producer_pid,
         status: outcome.status,
         signal: outcome.signal,
         error: outcome.error,

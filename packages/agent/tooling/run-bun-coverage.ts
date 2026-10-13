@@ -1,7 +1,9 @@
 import { Buffer } from 'node:buffer';
 import {
   chmodSync,
+  closeSync,
   mkdirSync,
+  openSync,
   readFileSync,
   readlinkSync,
   readdirSync,
@@ -11,6 +13,7 @@ import {
 } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { spawn as spawnChild, spawnSync, type ChildProcess, type SpawnSyncReturns } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertCoverageSnapshotBytes } from './bun-coverage-report-validator.js';
@@ -24,12 +27,18 @@ import {
 import {
   coverageAssignmentPlanSha256,
   coverageShardOutputPaths,
+  decodeCoverageShardProcessEvidence,
   mergeCoverageShardCounters,
   validateCoverageShardLaunchBinding,
   type CoverageShardRunBinding,
+  type CoverageShardTerminalEvidence,
 } from './coverage-shard-evidence.js';
-import { resolveCoverageShardEligibility, type CoverageReviewScope } from './coverage-shard-eligibility.ts';
-import { captureCoverageConsumerBinding } from './coverage-consumer-binding.ts';
+import {
+  canonicalCoverageReviewScope,
+  resolveCoverageShardEligibility,
+  type CoverageReviewScope,
+} from './coverage-shard-eligibility.ts';
+import { buildCoverageReviewScope, captureCoverageConsumerBinding } from './coverage-consumer-binding.ts';
 import {
   instrumentedArtifactPath,
   maxInstrumentedArtifactBytes,
@@ -51,6 +60,7 @@ import type { CoverageShardInvocation } from './coverage-shard-evidence.ts';
 
 import type { FileCoverageData } from 'istanbul-lib-instrument';
 import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
+import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 
 type SourceDigest = InputDigest;
 type RunManifest = {
@@ -78,6 +88,7 @@ type RunManifest = {
   coverage_plan?: CoverageShardPlan;
   assignment_plan_sha256?: string;
   shard_invocations?: CoverageShardInvocation[];
+  shard_temporary_root?: string;
 };
 type ChildOutcome = {
   shard_id: string;
@@ -110,6 +121,138 @@ export type CoverageProducerGroup = {
   reservationSafeToRelease: boolean;
   resourceSafeToAdvance: false;
 };
+
+type ShardReportManifest = Pick<
+  RunManifest,
+  | 'run_id'
+  | 'source_fingerprint'
+  | 'test_fingerprint'
+  | 'tool_fingerprint'
+  | 'runtime_executable_sha256'
+  | 'sources'
+  | 'tests'
+  | 'test_inputs'
+  | 'tool_inputs'
+  | 'module_inputs'
+  | 'test_selection'
+  | 'execution_scope'
+  | 'active_argv'
+  | 'source_maps'
+  | 'snapshot_directory'
+> & {
+  schema: 'VidaBunCoverageRun/v3';
+  coverage_plan: CoverageShardPlan;
+  assignment_plan_sha256: string;
+  shard_invocations: CoverageShardInvocation[];
+  shard_temporary_root: string;
+};
+
+/** Assemble accounted native receipts. The existing validator alone admits and merges counters. */
+export function collectCoverageShardReport(input: {
+  root: string;
+  manifestPath: string;
+  manifest: ShardReportManifest;
+  group: CoverageProducerGroup;
+}) {
+  const { root, manifestPath, manifest, group } = input;
+  validateCoverageShardLaunchBinding(
+    {
+      ...manifest,
+      selected_test_inputs: manifest.test_inputs.filter((row) => manifest.tests.includes(row.path)),
+      snapshot_directory: path.resolve(root, manifest.snapshot_directory),
+    },
+    manifest.coverage_plan,
+    root,
+    manifest.shard_temporary_root,
+  );
+  if (
+    !group.reservationSafeToRelease ||
+    group.outcomes.length !== manifest.shard_invocations.length ||
+    new Set(group.outcomes.map((outcome) => outcome.shard_id)).size !== group.outcomes.length
+  )
+    throw new Error('Coverage shard producer group is incomplete or unaccounted.');
+  const shards = group.outcomes.map((outcome) => successfulCoverageShardTerminal(manifest, outcome));
+  const processes = manifest.shard_invocations.flatMap((invocation) => {
+    const terminal = shards.find((row) => row.shard_id === invocation.shard_id);
+    if (!terminal) throw new Error('Coverage shard terminal is missing.');
+    return capturedCoverageShardReceipts(invocation, terminal);
+  });
+  return {
+    schema: 'VidaBunCoverageReport/v2' as const,
+    run_id: manifest.run_id,
+    manifest_path: path.relative(root, manifestPath).replaceAll('\\', '/'),
+    manifest_sha256: sha256(readFileSync(manifestPath)),
+    runtime_executable_sha256: manifest.runtime_executable_sha256,
+    sources: manifest.sources,
+    tests: manifest.tests,
+    test_selection: manifest.test_selection,
+    test_inputs: manifest.test_inputs,
+    tool_inputs: manifest.tool_inputs,
+    module_inputs: manifest.module_inputs,
+    execution_scope: manifest.execution_scope,
+    active_argv: manifest.active_argv,
+    source_maps: manifest.source_maps,
+    source_fingerprint: manifest.source_fingerprint,
+    test_fingerprint: manifest.test_fingerprint,
+    tool_fingerprint: manifest.tool_fingerprint,
+    shards,
+    processes,
+  };
+}
+
+function successfulCoverageShardTerminal(
+  manifest: ShardReportManifest,
+  outcome: CoverageProducerOutcome,
+): CoverageShardTerminalEvidence {
+  if (
+    !outcome.launch_attempted ||
+    !outcome.producerTerminalKnown ||
+    !outcome.directProducerAccounted ||
+    outcome.unknown ||
+    outcome.status !== 0 ||
+    outcome.signal !== null ||
+    outcome.error !== null ||
+    outcome.producer_pid === null ||
+    !Number.isSafeInteger(outcome.producer_pid) ||
+    outcome.producer_pid < 1 ||
+    !manifest.shard_invocations.some((row) => row.shard_id === outcome.shard_id)
+  )
+    throw new Error('Coverage shard outcome is unsuccessful, unknown or unaccounted.');
+  return {
+    run_id: manifest.run_id,
+    shard_id: outcome.shard_id,
+    pid: outcome.producer_pid,
+    status: outcome.status,
+    signal: outcome.signal,
+    error: outcome.error,
+    unknown: outcome.unknown,
+  };
+}
+
+function capturedCoverageShardReceipts(invocation: CoverageShardInvocation, terminal: CoverageShardTerminalEvidence) {
+  const names = readdirSync(invocation.output_paths.receipt_directory)
+    .filter((name) => name.endsWith('.json'))
+    .sort();
+  if (!names.length) throw new Error('Coverage shard has no process receipts.');
+  return names.map((name) => {
+    const bytes = readFileSync(path.join(invocation.output_paths.receipt_directory, name));
+    const raw: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    const receipt = decodeCoverageShardProcessEvidence(raw);
+    if (
+      !receipt ||
+      receipt.run_id !== terminal.run_id ||
+      receipt.shard_id !== terminal.shard_id ||
+      receipt.pid !== terminal.pid
+    )
+      throw new Error('Coverage shard receipt does not match its accounted native terminal.');
+    return {
+      file: terminal.shard_id + '/' + name,
+      pid: receipt.pid,
+      shard_id: receipt.shard_id,
+      sha256: sha256(bytes),
+    };
+  });
+}
 
 /** Prepare one complete initial wave. This does not create outputs, launch children or activate production. */
 export function prepareCoverageShardLaunches(input: {
@@ -222,6 +365,101 @@ export function prepareCoverageShardLaunches(input: {
   Object.freeze(invocations);
   Object.freeze(launches);
   return { status: 'prepared' as const, plan: eligibility.plan, binding, invocations, launches };
+}
+
+const coverageShardEligibilityPath = 'coverage/bun-unified/shard-eligibility.v1.json';
+const maxCoverageShardEligibilityBytes = 8 * 1024 * 1024;
+
+/** Read the fixed current review artifact through the package's verified reader before planning outputs. */
+export function prepareCurrentCoverageShardLaunches(input: {
+  root: string;
+  temporary_root: string;
+  run_id: string;
+  inputs: CoverageInputs;
+  runtimeExecutableSha256: string;
+  bunVersion: string;
+  environment: NodeJS.ProcessEnv;
+  wrappedInvocation?: boolean;
+  consumerConfiguration?: Awaited<ReturnType<typeof captureCoverageConsumerBinding>>;
+}) {
+  if ((input.environment.BUN_OPTIONS ?? '').trim())
+    throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
+  if (!path.isAbsolute(input.temporary_root) || path.resolve(input.temporary_root) !== input.temporary_root)
+    throw new Error('Coverage shard temporary root is not canonical and absolute.');
+  const fallback = (reason: string, artifactSha256?: string, reviewScopeSha256?: string) => ({
+    status: 'serial-fallback' as const,
+    reason,
+    ...(artifactSha256 === undefined ? {} : { artifact_sha256: artifactSha256 }),
+    ...(reviewScopeSha256 === undefined ? {} : { review_scope_sha256: reviewScopeSha256 }),
+  });
+
+  let packageAccess: SafeRepositoryAccess;
+  try {
+    packageAccess = requireSafeRepositoryAccess(input.root);
+  } catch {
+    return fallback('package-safe-access-unavailable');
+  }
+  if (typeof packageAccess.readVerifiedCaptureBytes !== 'function')
+    return fallback('verified-review-reader-unavailable');
+
+  let bytes: Buffer;
+  try {
+    bytes = packageAccess.readVerifiedCaptureBytes(
+      coverageShardEligibilityPath,
+      'current coverage shard eligibility review',
+      maxCoverageShardEligibilityBytes,
+    );
+  } catch {
+    return fallback('review-artifact-unavailable');
+  }
+  const artifactSha256 = sha256(bytes);
+  let envelope: unknown;
+  try {
+    envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+  } catch {
+    return fallback('review-artifact-malformed', artifactSha256);
+  }
+
+  const environment = { ...input.environment };
+  const temporaryRoot = input.temporary_root;
+  environment.TMPDIR = temporaryRoot;
+  if (input.consumerConfiguration)
+    environment.AGENT_RUNTIME_TEST_REPOSITORY_ROOT = input.consumerConfiguration.repository_root;
+  const scope = buildCoverageReviewScope({
+    packageAccess,
+    inputs: input.inputs,
+    runtimeExecutableSha256: input.runtimeExecutableSha256,
+    bunVersion: input.bunVersion,
+    environment,
+    ...(input.wrappedInvocation === undefined ? {} : { wrappedInvocation: input.wrappedInvocation }),
+    ...(input.consumerConfiguration === undefined ? {} : { consumerConfiguration: input.consumerConfiguration }),
+  });
+  const reviewScopeSha256 = canonicalCoverageReviewScope(scope);
+  const selected = new Set(input.inputs.tests);
+  const selectedTestInputs = input.inputs.test_inputs.filter((row) => selected.has(row.path));
+  if (
+    selected.size !== input.inputs.tests.length ||
+    selectedTestInputs.length !== input.inputs.tests.length ||
+    new Set(selectedTestInputs.map((row) => row.path)).size !== input.inputs.tests.length
+  )
+    return fallback('captured-test-selection-incomplete', artifactSha256, reviewScopeSha256);
+  const prepared = prepareCoverageShardLaunches({
+    root: input.root,
+    temporary_root: temporaryRoot,
+    run_id: input.run_id,
+    scope,
+    selected_test_inputs: selectedTestInputs,
+    eligibility: envelope,
+    environment,
+    ...(input.wrappedInvocation === undefined ? {} : { wrapped_invocation: input.wrappedInvocation }),
+  });
+  if (prepared.status !== 'prepared')
+    return fallback(prepared.reason, artifactSha256, prepared.reviewScopeSha256 ?? reviewScopeSha256);
+  return {
+    ...prepared,
+    artifact_sha256: artifactSha256,
+    review_scope_sha256: reviewScopeSha256,
+  };
 }
 
 export async function superviseCoverageProducers(
@@ -699,6 +937,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   let terminalKnown = true;
   let executionFailed = false;
   let executionError: unknown;
+  const openShardLogFds: number[] = [];
   try {
     // Historical baseline evidence retains its original declared tool closure;
     // only current production runs the current Source typecheck.
@@ -738,11 +977,28 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         ? await captureCoverageConsumerBinding(root, process.env)
         : undefined;
     commandBudget.remaining();
+    const runtimeExecutableSha256 = sha256(readFileSync(process.execPath));
     const capturedPin = lockedInputs.input_bytes['.bun-version'];
     if (!capturedPin || new TextDecoder('utf-8', { fatal: true }).decode(capturedPin).trim() !== pinnedBun)
       throw new Error('Captured Bun version differs from the selected runtime pin.');
     const runId = randomUUID();
     const { input_bytes: inputBytes, ...evidence } = lockedInputs;
+    const externalTemporaryRoot = path.resolve(process.env.TMPDIR ?? tmpdir());
+    const shardPreparation =
+      selectionMode === 'current'
+        ? prepareCurrentCoverageShardLaunches({
+            root,
+            temporary_root: externalTemporaryRoot,
+            run_id: runId,
+            inputs: lockedInputs,
+            runtimeExecutableSha256,
+            bunVersion: pinnedBun,
+            environment: process.env,
+            wrappedInvocation,
+            ...(consumerConfiguration ? { consumerConfiguration } : {}),
+          })
+        : undefined;
+    const preparedShards = shardPreparation?.status === 'prepared' ? shardPreparation : undefined;
     const runDirectory = path.join(outputRoot, 'runs', runId);
     const snapshotDirectory = path.join(runDirectory, 'snapshot');
     const reportDirectory = path.join(runDirectory, 'processes');
@@ -798,18 +1054,34 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const sourceMaps: Record<string, FileCoverageData> = Object.fromEntries(sourceMapEntries);
     const snapshotRelative = path.relative(root, snapshotDirectory).replaceAll('\\', '/');
     const manifest: RunManifest = {
-      schema: 'VidaBunCoverageRun/v2',
+      schema: preparedShards ? 'VidaBunCoverageRun/v3' : 'VidaBunCoverageRun/v2',
       run_id: runId,
       bun_version: pinnedBun,
-      runtime_executable_sha256: sha256(readFileSync(process.execPath)),
+      runtime_executable_sha256: runtimeExecutableSha256,
       snapshot_directory: snapshotRelative,
       ...evidence,
       test_selection: evidence.test_selection,
       source_maps: sourceMaps,
       instrumented_sources: instrumentedSources,
+      ...(preparedShards
+        ? {
+            coverage_plan: preparedShards.plan,
+            assignment_plan_sha256: preparedShards.binding.assignment_plan_sha256,
+            shard_invocations: [...preparedShards.invocations],
+            shard_temporary_root: externalTemporaryRoot,
+          }
+        : {}),
       execution_scope: {
         ...(wrappedInvocation ? { wrapper_review_clocks: true } : {}),
         ...(consumerConfiguration ? { consumer_configuration: consumerConfiguration } : {}),
+        ...(preparedShards
+          ? {
+              shard_eligibility: {
+                artifact_sha256: preparedShards.artifact_sha256,
+                review_scope_sha256: preparedShards.review_scope_sha256,
+              },
+            }
+          : {}),
         ...(publishedFixture
           ? {
               fixture_child_scope: 'direct-child-process-api',
@@ -834,135 +1106,185 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       active_argv: [],
     };
     const manifestPath = path.join(runDirectory, 'manifest.json');
-    const invocation = bunTestInvocation(evidence.tests, manifest, manifestPath, reportDirectory);
+    const invocation = preparedShards
+      ? { args: [], env: {} as NodeJS.ProcessEnv, cwd: root }
+      : bunTestInvocation(evidence.tests, manifest, manifestPath, reportDirectory);
     commandBudget.remaining();
     manifest.active_argv = invocation.args;
     writeAtomic(manifestPath, manifest);
-    chmodSync(runDirectory, 0o500);
-    const { producerTerminalKnown, reservationSafeToRelease, ...outcome } = await runBunTests(
-      evidence.tests,
-      manifest,
-      manifestPath,
-      reportDirectory,
-      invocation,
-    );
-    if (outcome.unknown) {
-      terminalKnown = reservationSafeToRelease;
-      throw new Error(
-        producerTerminalKnown
-          ? 'Bun Test outcome is UNKNOWN; direct coverage producer terminated; preserve run directory and test-effect custody.'
-          : reservationSafeToRelease
-            ? 'Bun Test outcome is UNKNOWN; producer did not start; preserve run directory and test-effect custody.'
-            : 'Bun Test outcome is UNKNOWN; preserve lock and run directory.',
-      );
+    if (preparedShards) {
+      for (const shardInvocation of preparedShards.invocations) {
+        const outputs = shardInvocation.output_paths;
+        mkdirSync(outputs.coverage_directory, { recursive: true, mode: 0o700 });
+        mkdirSync(path.dirname(outputs.junit_file), { recursive: true, mode: 0o700 });
+        mkdirSync(outputs.receipt_directory, { recursive: true, mode: 0o700 });
+        mkdirSync(outputs.temp_directory, { recursive: true, mode: 0o700 });
+        mkdirSync(path.dirname(outputs.log_file), { recursive: true, mode: 0o700 });
+        openShardLogFds.push(openSync(outputs.log_file, 'wx', 0o600));
+      }
     }
-    if (outcome.status !== 0 && !(publishedFixture && outcome.status === 1))
-      throw new Error('Bun Test coverage suite failed.');
+    chmodSync(runDirectory, 0o500);
+    let shardGroup: CoverageProducerGroup | undefined;
+    let outcome: ChildOutcome | undefined;
+    if (preparedShards) {
+      const launches = preparedShards.launches.map((launch, index) => {
+        const logFd = openShardLogFds[index];
+        if (logFd === undefined) throw new Error('Coverage shard caller-owned log descriptor is missing.');
+        return { ...launch, log_fd: logFd };
+      });
+      const errors: unknown[] = [];
+      try {
+        terminalKnown = false;
+        shardGroup = await superviseCoverageProducers(launches, commandBudget);
+        terminalKnown = shardGroup.reservationSafeToRelease;
+      } catch (error) {
+        errors.push(error);
+      }
+      while (openShardLogFds.length) {
+        const fd = openShardLogFds.shift()!;
+        try {
+          closeSync(fd);
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (errors.length === 1) throw errors[0];
+      if (errors.length > 1) throw new AggregateError(errors, 'Coverage shard supervision and log closure failed.');
+    } else {
+      const result = await runBunTests(evidence.tests, manifest, manifestPath, reportDirectory, invocation);
+      const { producerTerminalKnown, reservationSafeToRelease, ...serialOutcome } = result;
+      outcome = serialOutcome;
+      if (outcome.unknown) {
+        terminalKnown = reservationSafeToRelease;
+        throw new Error(
+          producerTerminalKnown
+            ? 'Bun Test outcome is UNKNOWN; direct coverage producer terminated; preserve run directory and test-effect custody.'
+            : reservationSafeToRelease
+              ? 'Bun Test outcome is UNKNOWN; producer did not start; preserve run directory and test-effect custody.'
+              : 'Bun Test outcome is UNKNOWN; preserve lock and run directory.',
+        );
+      }
+      if (outcome.status !== 0 && !(publishedFixture && outcome.status === 1))
+        throw new Error('Bun Test coverage suite failed.');
+    }
     commandBudget.remaining();
     const historicalJUnitBytes =
-      publishedFixture && outcome.status === 1
+      publishedFixture && outcome?.status === 1
         ? readFileSync(path.join(reportDirectory, 'suite.junit.xml'))
         : undefined;
     if (historicalJUnitBytes) historicalReferenceJUnit(historicalJUnitBytes, fixtureRoot!, evidence.tests);
     let historicalInventory: { process_file: string; pid: number; child_id: number } | undefined;
     if (publishedFixture) assertCoverageSnapshotBytes(snapshotDirectory, inputBytes);
 
-    const reportFiles = readdirSync(reportDirectory)
-      .filter((file) => file.endsWith('.json'))
-      .sort();
-    if (!reportFiles.length) throw new Error('Bun coverage run produced no per-process reports.');
-    const childCoverageMaps: Record<string, unknown>[] = [];
-    const processReceipts: { file: string; pid: number; shard_id: 'bun-test'; sha256: string }[] = [];
-    const expectedPaths = evidence.sources.map((entry) => path.resolve(root, entry.path)).sort();
-    const manifestDigest = sha256(readFileSync(manifestPath));
-    for (const name of reportFiles) {
-      const reportPath = path.join(reportDirectory, name);
-      const processBytes = readFileSync(reportPath);
-      const reportValue: unknown = JSON.parse(processBytes.toString('utf8'));
-      const report = record(reportValue, `${name}.report`);
-      if (
-        report.schema !== 'VidaBunCoverageProcess/v1' ||
-        report.run_id !== runId ||
-        report.shard_id !== 'bun-test' ||
-        report.source_fingerprint !== manifest.source_fingerprint ||
-        report.test_fingerprint !== manifest.test_fingerprint ||
-        report.tool_fingerprint !== manifest.tool_fingerprint ||
-        report.runtime_executable_sha256 !== manifest.runtime_executable_sha256 ||
-        JSON.stringify(report.sources) !== JSON.stringify(evidence.sources)
-      )
-        throw new Error('Foreign or stale per-process coverage report: ' + name);
-      if (typeof report.pid !== 'number' || !Number.isSafeInteger(report.pid) || report.pid < 1)
-        throw new Error('Invalid coverage report process identity.');
-      requireSnapshotReceipt(report, manifest, name);
-      if (historicalJUnitBytes && publishedFixture && fixtureRoot) {
-        if (historicalInventory) throw new Error('Historical inventory has duplicate process observations.');
-        historicalInventory = {
-          process_file: name,
+    let finalReport: unknown;
+    let publishedReference: ReturnType<typeof parseHistoricalReference> | undefined;
+    if (preparedShards) {
+      if (!shardGroup) throw new Error('Coverage shard group disappeared before report assembly.');
+      finalReport = collectCoverageShardReport({
+        root,
+        manifestPath,
+        manifest: manifest as ShardReportManifest,
+        group: shardGroup,
+      });
+    } else {
+      if (!outcome) throw new Error('Serial coverage producer has no terminal outcome.');
+      const reportFiles = readdirSync(reportDirectory)
+        .filter((file) => file.endsWith('.json'))
+        .sort();
+      if (!reportFiles.length) throw new Error('Bun coverage run produced no per-process reports.');
+      const childCoverageMaps: Record<string, unknown>[] = [];
+      const processReceipts: { file: string; pid: number; shard_id: 'bun-test'; sha256: string }[] = [];
+      const expectedPaths = evidence.sources.map((entry) => path.resolve(root, entry.path)).sort();
+      const manifestDigest = sha256(readFileSync(manifestPath));
+      for (const name of reportFiles) {
+        const reportPath = path.join(reportDirectory, name);
+        const processBytes = readFileSync(reportPath);
+        const reportValue: unknown = JSON.parse(processBytes.toString('utf8'));
+        const report = record(reportValue, `${name}.report`);
+        if (
+          report.schema !== 'VidaBunCoverageProcess/v1' ||
+          report.run_id !== runId ||
+          report.shard_id !== 'bun-test' ||
+          report.source_fingerprint !== manifest.source_fingerprint ||
+          report.test_fingerprint !== manifest.test_fingerprint ||
+          report.tool_fingerprint !== manifest.tool_fingerprint ||
+          report.runtime_executable_sha256 !== manifest.runtime_executable_sha256 ||
+          JSON.stringify(report.sources) !== JSON.stringify(evidence.sources)
+        )
+          throw new Error('Foreign or stale per-process coverage report: ' + name);
+        if (typeof report.pid !== 'number' || !Number.isSafeInteger(report.pid) || report.pid < 1)
+          throw new Error('Invalid coverage report process identity.');
+        requireSnapshotReceipt(report, manifest, name);
+        if (historicalJUnitBytes && publishedFixture && fixtureRoot) {
+          if (historicalInventory) throw new Error('Historical inventory has duplicate process observations.');
+          historicalInventory = {
+            process_file: name,
+            pid: report.pid,
+            child_id: historicalInventoryChildId(report, publishedFixture, fixtureRoot),
+          };
+        }
+        const coverage = record(report.coverage, `${name}.coverage`);
+        const paths = Object.keys(coverage)
+          .map((file) => path.resolve(file))
+          .sort();
+        if (paths.some((file) => !expectedPaths.includes(file)))
+          throw new Error('Per-process report contains an unexpected source: ' + name);
+        childCoverageMaps.push(coverage);
+        processReceipts.push({
+          file: name,
           pid: report.pid,
-          child_id: historicalInventoryChildId(report, publishedFixture, fixtureRoot),
-        };
+          shard_id: 'bun-test',
+          sha256: sha256(processBytes),
+        });
       }
-      const coverage = record(report.coverage, `${name}.coverage`);
-      const paths = Object.keys(coverage)
+      const mergedCoverage = mergeCoverageShardCounters(manifest.source_maps, childCoverageMaps);
+      const mergedPaths = Object.keys(mergedCoverage)
         .map((file) => path.resolve(file))
         .sort();
-      if (paths.some((file) => !expectedPaths.includes(file)))
-        throw new Error('Per-process report contains an unexpected source: ' + name);
-      childCoverageMaps.push(coverage);
-      processReceipts.push({
-        file: name,
-        pid: report.pid,
-        shard_id: 'bun-test',
-        sha256: sha256(processBytes),
-      });
-    }
-    const mergedCoverage = mergeCoverageShardCounters(manifest.source_maps, childCoverageMaps);
-    const mergedPaths = Object.keys(mergedCoverage)
-      .map((file) => path.resolve(file))
-      .sort();
-    if (JSON.stringify(mergedPaths) !== JSON.stringify(expectedPaths))
-      throw new Error('Merged coverage source set differs from maintained inventory.');
-    const publishedReference = historicalJUnitBytes
-      ? parseHistoricalReference(
-          {
-            schema: 'PublishedBaselineReference/v1',
-            kind: 'measurement_admitted',
-            suite_passed: false,
-            quality_passed: false,
-            failure_id: 'b549951/mutation-inventory-gap-37',
-            junit: {
-              path: path.relative(root, path.join(reportDirectory, 'suite.junit.xml')).replaceAll('\\', '/'),
-              sha256: sha256(historicalJUnitBytes),
-              bytes: historicalJUnitBytes.length,
+      if (JSON.stringify(mergedPaths) !== JSON.stringify(expectedPaths))
+        throw new Error('Merged coverage source set differs from maintained inventory.');
+      publishedReference = historicalJUnitBytes
+        ? parseHistoricalReference(
+            {
+              schema: 'PublishedBaselineReference/v1',
+              kind: 'measurement_admitted',
+              suite_passed: false,
+              quality_passed: false,
+              failure_id: 'b549951/mutation-inventory-gap-37',
+              junit: {
+                path: path.relative(root, path.join(reportDirectory, 'suite.junit.xml')).replaceAll('\\', '/'),
+                sha256: sha256(historicalJUnitBytes),
+                bytes: historicalJUnitBytes.length,
+              },
+              inventory: historicalInventory,
             },
-            inventory: historicalInventory,
-          },
-          runId,
-        )
-      : undefined;
-    const finalReport = {
-      ...(publishedReference ? { published_reference: publishedReference } : {}),
-      schema: 'VidaBunCoverageReport/v1',
-      run_id: runId,
-      manifest_path: path.relative(root, manifestPath).replaceAll('\\', '/'),
-      manifest_sha256: manifestDigest,
-      sources: manifest.sources,
-      tests: evidence.tests,
-      test_selection: evidence.test_selection,
-      module_inputs: manifest.module_inputs,
-      execution_scope: manifest.execution_scope,
-      active_argv: manifest.active_argv,
-      test_inputs: evidence.test_inputs,
-      tool_inputs: evidence.tool_inputs,
-      source_maps: manifest.source_maps,
-      source_fingerprint: manifest.source_fingerprint,
-      test_fingerprint: manifest.test_fingerprint,
-      tool_fingerprint: manifest.tool_fingerprint,
-      runtime_executable_sha256: manifest.runtime_executable_sha256,
-      shards: [outcome],
-      processes: processReceipts,
-      coverage: mergedCoverage,
-    };
+            runId,
+          )
+        : undefined;
+      finalReport = {
+        ...(publishedReference ? { published_reference: publishedReference } : {}),
+        schema: 'VidaBunCoverageReport/v1',
+        run_id: runId,
+        manifest_path: path.relative(root, manifestPath).replaceAll('\\', '/'),
+        manifest_sha256: manifestDigest,
+        sources: manifest.sources,
+        tests: evidence.tests,
+        test_selection: evidence.test_selection,
+        module_inputs: manifest.module_inputs,
+        execution_scope: manifest.execution_scope,
+        active_argv: manifest.active_argv,
+        test_inputs: evidence.test_inputs,
+        tool_inputs: evidence.tool_inputs,
+        source_maps: manifest.source_maps,
+        source_fingerprint: manifest.source_fingerprint,
+        test_fingerprint: manifest.test_fingerprint,
+        tool_fingerprint: manifest.tool_fingerprint,
+        runtime_executable_sha256: manifest.runtime_executable_sha256,
+        shards: [outcome],
+        processes: processReceipts,
+        coverage: mergedCoverage,
+      };
+    }
     const finalPath = path.join(outputRoot, 'coverage-final.json');
     commandBudget.remaining();
     writeAtomic(finalPath, finalReport);
@@ -1001,7 +1323,18 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     }
   } catch (error) {
     executionFailed = true;
-    executionError = error;
+    const closeErrors: unknown[] = [];
+    while (openShardLogFds.length) {
+      const fd = openShardLogFds.shift()!;
+      try {
+        closeSync(fd);
+      } catch (closeError) {
+        closeErrors.push(closeError);
+      }
+    }
+    executionError = closeErrors.length
+      ? new AggregateError([error, ...closeErrors], 'Coverage execution and caller-owned shard log closure failed.')
+      : error;
   }
   let cleanupFailed = false;
   let cleanupError: unknown;

@@ -792,8 +792,14 @@ architecture and physical package-owner digests. The initial launch seam accepts
 only a complete current selection in one nonexclusive wave of at most two serial
 assignments; missing, stale, malformed, historical or multiwave reviews retain
 serial fallback. No caller may manufacture empty resource rows. The existing
-native fixture pilot exercises this seam; production activation and an
-authoritative current review artifact remain pending.
+native fixture pilot exercises this seam. The maintained current runner reads
+`coverage/bun-unified/shard-eligibility.v1.json` once through the qualified verified
+reader before output allocation; unavailable, malformed or stale reviews retain
+serial fallback. The scope builder reuses captured configuration digests and the
+observed consumer origin, runtime hash, environment and physical package identity.
+It does not reread configuration, invent resource reviews or grant eligibility.
+An authoritative current resource review and complete production qualification
+remain pending; the fixed artifact is absent until that review is complete.
 
 Launch preparation and report admission share the canonical output-layout owner.
 Prepared child temporary directories are distinct run/shard children outside the
@@ -812,9 +818,13 @@ union and counter rules, performs the checked merge and returns it separately as
 `CoverageResult.coverage`. CRAP consumes that transient checked map. The raw report
 and zero-seeded canonical maps cannot substitute for it. Report/v1 retains its
 persisted aggregate comparison, including established v1/v3 fixture compatibility
-and historical readers. The live producer remains serial report/v1 until current
-eligibility and producer activation qualify; fixture acceptance does not activate
-this new wire format or establish numeric evidence.
+and historical readers. Without a qualified current artifact the live producer
+remains serial report/v1. The opt-in v3 route reuses the same capture, transform,
+supervisor and final validator: parent-owned log descriptors are closed after
+direct accounting, and the report assembler joins actual successful native PIDs
+to strictly decoded process receipts. It emits report/v2 without a producer
+premerge. Fixture acceptance alone does not qualify a full production run or
+establish numeric evidence.
 
 Module mocks, clocks and environment changes confined to a serial child do not
 alone establish a conflict between producer processes. Trace active guards and
@@ -972,7 +982,9 @@ Historical selection shares the entry budget but skips current typecheck and
 keeps its original fixture, serial argv and reference-admission contract.
 Current serial tests use explicit `./` captured paths to avoid snapshot-copy
 discovery. The current serial producer uses the async direct-accounting owner.
-Parallel shard receipts, outputs and resource-wave integration remain pending.
+The opt-in one-wave shard receipt/output route is implemented; its complete
+current resource review and production qualification remain pending. No
+successor resource-wave integration is enabled.
 Spent allowance prevents launch; native timeout0 may disable a timeout.
 Per-test5000ms defaults and justified case overrides remain separate. Mutation
 is separately invoked; the five-minute target does not qualify its whole campaign.
@@ -1016,8 +1028,12 @@ verify actual owned creation authority before launching its control children.
 The async foundation has focused static, native direct-producer and current
 serial caller qualification. Its internal one-or-two-invocation controls do not
 qualify a complete shard selection or descendant/effect quiescence. Keep current
-coverage serial and historical execution synchronous; parallel receipts, outputs,
-resource waves and a quiescence provider remain pending.
+coverage serial unless its complete current review admits the sole initial wave;
+historical execution stays synchronous. The successful one-wave producers may
+feed read-only receipt admission and CRAP without claiming resource advancement.
+No successor test producer is launched; `resourceSafeToAdvance=false` remains.
+Actual UNKNOWN/failed/unaccounted producers deny report success. Resource
+successors and a quiescence provider remain pending.
 Retain an actual timed-out control's UNKNOWN run after successful assertions;
 passing the classifier test is not permission to erase that run in teardown.
 

@@ -10568,3 +10568,54 @@ Keep live v3 activation, complete current resource review, one-database gate
 replacement/repair, exact100coverage, exhaustive frozenCRAP/CC and confirmedKilled
 mutation gate OPEN. Publish this coherent correction packet with the strict hook,
 then continue the already-owned eligibility/caller closure tasks.
+
+### Current one-wave coverage production preparation — 2026-10-13
+
+Resumed from published01f1118; BASE/ and root bun.lock preserved. Root owns four
+Source/test files; independent blind Luna reviews cover scope, direct custody,
+all three resource partitions, quarantine and one-DB/frozen next steps.
+No worker checks/Git or competing Source writer. The live runner now accepts the
+fixed verified-read eligibility artifact before output allocation, builds its
+scope from captured config digests and actual provider/runtime/environment/
+consumer identity, and prepares only a complete one-wave nonexclusive selection.
+Missing/stale/malformed/unavailable artifacts retain serial fallback; historical
+production remains serial. Actual artifact is absent; no synthetic review is
+used for the repository. Parent-owned log FDs close independently, body+close
+errors survive, and real native PIDs join strictly decoded actual receipt bytes
+in aggregate-free report/v2. The final validator owns the single checked merge.
+
+RED logs live-shard-scope-report-red.log and live-current-policy-red.log establish
+missing builder/assembler/current policy, not final numeric failure. Two fixture
+literal type diagnostics and one unsafe matcher contextual type were corrected
+without suppressions. Final live-shard-scope-report-static.log:448capturedTS/
+447program and100Source, zero diagnostics; strict typed lint exit0.
+live-shard-scope-report-green.log:49PASS/306assertions/6.80s, including real two
+Bun children, own stream markers, receipts/PIDs and one merge. Current policy
+fixtures use synthetic subjects/runtime digests and do not grant real eligibility.
+live-shard-evidence-regressions.log:103PASS/340assertions/15.50s across5files,
+including UNKNOWN sibling, direct descendant and preserved report-v1 contracts.
+
+Scope review approves mechanics. Custody reviewer retracted its earlier blocker
+after checking actual successor wording and receipt writers: a sole complete
+initial wave may feed read-only receipt/CRAP admission, without qualifying any
+test-resource successor. resourceSafeToAdvance remainsfalse. Failed, UNKNOWN or
+unaccounted groups still deny success. No ordinary post-close counter/receipt
+writer found; descendants retaining log FDs do not provide quiescence evidence.
+
+Candidate resource rows decode as unknown: exact63/63/62 union188, no duplicate,
+foreign or missing selected paths. They remain UNREVIEWED, not eligibility.
+Review found omitted configured-root CAS reads (including runtime-initialization)
+and package CAS-absence assertion conflicts; Root is reconciling actual owners.
+Research-record UUID/wx leaves and private fixture children do not require global
+exclusion; record their common namespace. Natural quarantine private clocks/state
+do not qualify successor quiescence. Exact100coverage/frozenCC-CRAP/Killed remain
+OPEN; no complete current run repeated unchanged, no unblock/installed notice.
+
+One-DB reviewed next step: a fresh maintenance handle must set EXCLUSIVE before
+first WAL/database access and keep the same held connection for fence and in-place
+SQL. Existing closed-image merge drops exclusion when it closes that handle;
+it cannot retire the auxiliary gate. Preserve current admission/layout/readers
+until bundle-owned repair, interruption and lifetime exclusion are qualified.
+Frozen mapping review identifies two NEW init reader methods; host migration
+cleanup is a changed retained role. Reuse exact source/tool-bound old inventory
+and capture changed module roles once; never turn partial lineage into budgets.

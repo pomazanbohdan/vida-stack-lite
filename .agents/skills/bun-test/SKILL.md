@@ -8,6 +8,24 @@ description: Use when writing, migrating, reviewing, running or optimizing TypeS
 Use the smallest contract-backed check that resolves the current uncertainty.
 Keep behavior, timing and numerical qualification as separate evidence.
 
+The current runner optionally reads the fixed
+`coverage/bun-unified/shard-eligibility.v1.json` before allocating outputs.
+Reuse the actual scope builder and captured config/input rows; do not generate
+empty resource reviews, synthetic runtime hashes or stale scope bindings for a
+real run. Missing/unavailable/malformed/stale reviews preserve serial fallback.
+Only a complete nonexclusive initial wave of at most two serial children is
+supported. Parent log descriptors, known successful native terminals and actual
+receipt bytes feed the existing aggregate-free report/v2 assembler; the final
+validator owns the single checked merge. Reading that wave's receipts and CRAP
+is evidence admission, not a successor test-resource wave. No descendant/effect
+quiescence or numeric qualification follows; resource advancement stays false.
+
+Classify actual reader effects, not the word "read-only": configured-context
+loads consumer YAML/references through SafeAccess CAS, so shared physical roots
+must coassign. A verified-reader test asserting absence of package CAS sidecars
+also conflicts with raw readers of that same package. UUID leaves and unique
+fixture children under a shared parent do not alone require whole-run exclusion.
+
 For current captured configured-context tests, propagate the manifest's bound
 consumer root to the child rather than deriving it from relocated module paths.
 Qualify missing/stale origin negatives at the real validator with other receipt
