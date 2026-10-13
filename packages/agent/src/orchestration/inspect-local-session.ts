@@ -10,12 +10,53 @@ import type { ValidateFunction } from 'ajv';
 import workSchema from '../../schemas/work-state.v1.schema.json' with { type: 'json' };
 import { canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
 import { coordinationLedgerDigest, sameCoordinationStrings, type CoordinationLedger } from '../contracts/envelopes.js';
-import type { WorkState } from '../host-state.js';
+import type { StateVersion, WorkState } from '../host-state.js';
 import { deriveWorkspaceId } from '../workspace-identity.js';
 import { assertProjectUpgradeInactive, type AgentRuntimeConfig } from '../config/runtime-config.js';
 import { correctiveExecutionSchema, validateWorkSessionBinding } from './final-assurance.js';
 
 type Row = { revision: number; payload: string; digest: string; value: unknown };
+type InspectionEvidence = {
+  readonly journal_version: StateVersion | null;
+  readonly work_version: StateVersion | null;
+  readonly ledger_version: StateVersion | null;
+};
+type LocalSessionDiagnosis = {
+  readonly reason:
+    | 'session_absent'
+    | 'preparation_incomplete'
+    | 'pending_observation'
+    | 'expired_lease'
+    | 'persisted_snapshot';
+  readonly evidence: InspectionEvidence;
+  readonly advisory_routes: readonly 'recover-unprepared-work'[];
+  readonly rights_granted: false;
+};
+
+/** Classifies validated snapshot predicates; suggested inspection supplies no recovery authority. */
+function localSessionDiagnosis(
+  evidence: InspectionEvidence,
+  hasLease: boolean,
+  expired: boolean,
+  hasPending: boolean,
+): LocalSessionDiagnosis {
+  const incomplete = evidence.work_version !== null && evidence.journal_version === null && hasLease;
+  const reason = incomplete
+    ? 'preparation_incomplete'
+    : hasPending
+      ? 'pending_observation'
+      : hasLease && expired
+        ? 'expired_lease'
+        : evidence.work_version === null && evidence.journal_version === null
+          ? 'session_absent'
+          : 'persisted_snapshot';
+  return {
+    reason,
+    evidence,
+    advisory_routes: incomplete ? ['recover-unprepared-work'] : [],
+    rights_granted: false,
+  };
+}
 const AjvConstructor = Ajv2020 as unknown as new (options: object) => {
   compile<T>(schema: object): ValidateFunction<T>;
 };
@@ -163,14 +204,17 @@ export function inspectLocalSession(input: {
             issue_id: item.issue_id,
             stage_id: item.request.stage_id,
           }));
+        const evidence: InspectionEvidence = {
+          journal_version: journal && { revision: journal.revision, digest: journal.digest },
+          work_version: work && { revision: work.revision, digest: work.digest },
+          ledger_version: ledger && { revision: ledger.revision, digest: ledger.digest },
+        };
         return {
           schema: 'VidaLocalSessionInspection/v1',
           status: 'inspected',
           work_id: input.workId,
           attempt: input.attempt,
-          journal_version: journal && { revision: journal.revision, digest: journal.digest },
-          work_version: work && { revision: work.revision, digest: work.digest },
-          ledger_version: ledger && { revision: ledger.revision, digest: ledger.digest },
+          ...evidence,
           lifecycle_phase: inspectedWork?.lifecycle.phase ?? null,
           execution_status: inspectedWork?.execution.status ?? null,
           lease: lease && {
@@ -182,6 +226,7 @@ export function inspectLocalSession(input: {
           },
           pending_actions: pending,
           recovery_required: pending.length > 0 || Boolean(lease && expired),
+          diagnosis: localSessionDiagnosis(evidence, lease !== null, expired, pending.length > 0),
         };
       })
       .deferred();

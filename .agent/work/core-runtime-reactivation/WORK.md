@@ -9559,3 +9559,49 @@ rebind-source-domain-lineage.json, -static.log, -lint.log and -focused.log retai
 evidence. Source function identities remain unchanged. Generated association/
 scenario slices need current file/hash binding review and remain unreviewed;
 no full-suite, coverage, frozen CRAP or mutation admission follows from the move.
+
+User resumes remaining P0–P1 first, then full coverage. Fetch matches0cbeed0
+origin/main; unrelated BASE/root bun.lock preserved. /tmp remains full; use the
+existing executable external RAM TMPDIR with7.5GiB free, preserve old evidence.
+Two blind readonly lanes select a dependency-ready P1 outcome, typed local-session
+diagnosis, and distinguish the still-pending per-case quarantine ownership work
+from descendant/effect custody. No new confirmed P0 product defect is claimed.
+
+Audit18:F4/OPT01–04/14 session slice extends the existing inspect response only.
+One pure private classifier consumes already validated version references and
+snapshot predicates; no new SQL/read/write, schema version, route or capability.
+It reports preparation_incomplete, pending_observation, expired_lease,
+session_absent or persisted_snapshot. Only the exact existing incomplete guard
+(Work/no Journal/lease) suggests recover-unprepared-work for readonly inspect;
+rights_granted staysfalse. Existing malformed/foreign/CAS validation still
+throws before projection. Native run/recovery/renewal/capture callers retain
+their current effect guards. Product contract lives in system-specification.
+
+Official SQLite isolation and Bun SQLite transaction documentation were retrieved
+for the unchanged one-transaction owner: https://www.sqlite.org/isolation.html
+and https://bun.com/docs/runtime/sqlite.md. Projection reuse is not effect
+freshness or engine-absence evidence. No external framework adapter is required.
+Missing-diagnosis assertion RED is2FAIL/8assertions plus the existing retained-
+request case1FAIL/1assertion, not runtime/setup failures. Expanded first GREEN
+is3PASS/61assertions/4.13s. The WAL case also validates seeded expired ticket/
+claims, proves pending takes priority, binds versions and checks unchanged rows.
+No clock override, delay, real lock aging or quarantine change occurs. Its raw
+row witnesses are then deduplicated into one case-local reader without losing
+columns or changing query scope; final affected qualification is recorded below.
+
+An actual temporary inversion of the expiry predicate assertion-fails on the
+existing live-snapshot category,1FAIL/7assertions/3.29s. Correct Source is restored
+byte-for-byte against its qualified copy; failed root/log stays retained. This
+is a targeted assertion control, not a global mutation score. Existing8 function
+roles keep their prior CCs, including inspect1/transaction49; new pure classifier
+CC10. Scoped current inventory is not the missing exhaustive frozen plan.
+Independent final review on the qualified copy accepts exact evidence reuse,
+guard ordering, inspect-only advisory and caller rights; no actionable finding.
+Root owns final static/focused checks, ordinary publication and the sole full
+current coverage launch after stable code/docs. Numeric/native gaps stay open.
+Final stable packet qualification:3PASS/59assertions/3.15s after row-witness
+deduplication, with original5s bounds and all three named cases preserved.
+Current438capturedTS/437program plus97Source checks PASS,0diagnostics; lintPASS,
+formatPASS and diffcheckPASS. Code and tests are settled before publication.
+The selected Source engineering outcome is ready; quarantine isolation/native
+flows and final exhaustive numeric gates are not marked complete by this proof.

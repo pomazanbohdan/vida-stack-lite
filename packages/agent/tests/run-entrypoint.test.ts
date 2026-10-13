@@ -82,13 +82,20 @@ test('readonly local inspection validates decoded rows and retains uncertain jou
       workId: 'fixture-inspection',
       attempt: 1,
     };
-    expect(inspectLocalSession(input)).toMatchObject({
+    const emptyInspection = inspectLocalSession(input);
+    expect(emptyInspection).toMatchObject({
       status: 'inspected',
       recovery_required: false,
       pending_actions: [],
       journal_version: null,
       work_version: null,
       ledger_version: null,
+      diagnosis: {
+        reason: 'session_absent',
+        evidence: { journal_version: null, work_version: null, ledger_version: null },
+        advisory_routes: [],
+        rights_granted: false,
+      },
     });
     expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual([]);
     expect(database.query('SELECT * FROM agent_host_state').all()).toEqual([]);
@@ -113,10 +120,21 @@ test('readonly local inspection validates decoded rows and retains uncertain jou
     };
     saveJournal(state);
     const before = database.query('SELECT * FROM agent_host_mastra_session_ledger').all();
-    expect(inspectLocalSession(input)).toMatchObject({
+    const pendingInspection = inspectLocalSession(input);
+    expect(pendingInspection).toMatchObject({
       status: 'inspected',
       recovery_required: true,
       pending_actions: [{ action_id: 'retained-action', issue_id: 'retained-issue', stage_id: 'review' }],
+      diagnosis: {
+        reason: 'pending_observation',
+        evidence: {
+          journal_version: pendingInspection.journal_version,
+          work_version: pendingInspection.work_version,
+          ledger_version: pendingInspection.ledger_version,
+        },
+        advisory_routes: [],
+        rights_granted: false,
+      },
     });
     expect(database.query('SELECT * FROM agent_host_mastra_session_ledger').all()).toEqual(before);
     for (const candidate of [
@@ -294,6 +312,18 @@ test('readonly local inspection keeps Work, Ledger and Journal on one committed 
     expect(duringCommit.work_version).toEqual(initialInspection.work_version);
     expect(duringCommit.ledger_version).toEqual(initialInspection.ledger_version);
     expect(duringCommit.journal_version).toEqual(initialInspection.journal_version);
+    expect(duringCommit).toMatchObject({
+      diagnosis: {
+        reason: 'persisted_snapshot',
+        evidence: {
+          journal_version: duringCommit.journal_version,
+          work_version: duringCommit.work_version,
+          ledger_version: duringCommit.ledger_version,
+        },
+        advisory_routes: [],
+        rights_granted: false,
+      },
+    });
     expect(duringCommit.lifecycle_phase).toBe(initialInspection.lifecycle_phase);
 
     const afterCommitRows = fixture.database
@@ -308,6 +338,18 @@ test('readonly local inspection keeps Work, Ledger and Journal on one committed 
     expect(nextInspection.work_version?.revision).toBe((initialInspection.work_version?.revision ?? 0) + 1);
     expect(nextInspection.ledger_version?.revision).toBe((initialInspection.ledger_version?.revision ?? 0) + 1);
     expect(nextInspection.journal_version?.revision).toBe((initialInspection.journal_version?.revision ?? 0) + 1);
+    expect(nextInspection).toMatchObject({
+      diagnosis: {
+        reason: 'persisted_snapshot',
+        evidence: {
+          journal_version: nextInspection.journal_version,
+          work_version: nextInspection.work_version,
+          ledger_version: nextInspection.ledger_version,
+        },
+        advisory_routes: [],
+        rights_granted: false,
+      },
+    });
     expect(nextInspection.lifecycle_phase).toBe(initialInspection.lifecycle_phase);
     expect(
       fixture.database
@@ -321,6 +363,129 @@ test('readonly local inspection keeps Work, Ledger and Journal on one committed 
         )
         .get(fixture.store.workspaceId, workId, 1),
     ).toEqual(afterCommitJournal);
+
+    const inspectionRows = () => ({
+      host: fixture.database
+        .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
+        .all(fixture.store.workspaceId),
+      journal: fixture.database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(fixture.store.workspaceId, workId, 1),
+    });
+    const lease = admittedWork.lease;
+    if (!lease) throw Error('inspection expiry fixture has no admitted lease');
+    const currentLedgerRow = writerDatabase
+      .query(
+        "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'",
+      )
+      .get(fixture.store.workspaceId) as { revision: number; payload: string; digest: string } | null;
+    if (!currentLedgerRow) throw Error('inspection expiry fixture has no persisted ledger');
+    const parsedLedger: unknown = JSON.parse(currentLedgerRow.payload);
+    const currentLedgerResult = validateCoordinationLedgerV1(parsedLedger);
+    if (!currentLedgerResult.ok) throw Error('inspection expiry fixture current ledger is invalid');
+    const currentLedger = currentLedgerResult.ledger;
+    const expiredAt = new Date(Date.now() - 60_000).toISOString();
+    const expiredLedger: CoordinationLedger = {
+      ...currentLedger,
+      revision: currentLedger.revision + 1,
+      tickets: currentLedger.tickets.map((ticket) =>
+        ticket.ticket_id === lease.ticket_id ? { ...ticket, expires_at: expiredAt } : ticket,
+      ),
+      claims: currentLedger.claims.map((claim) =>
+        claim.ticket_id === lease.ticket_id && claim.status === 'active'
+          ? { ...claim, lease_expires_at: expiredAt }
+          : claim,
+      ),
+    };
+    const validatedExpiredLedger = validateCoordinationLedgerV1(expiredLedger);
+    if (
+      !validatedExpiredLedger.ok ||
+      !expiredLedger.tickets.some(
+        (ticket) => ticket.ticket_id === lease.ticket_id && ticket.expires_at === expiredAt,
+      ) ||
+      !expiredLedger.claims.some(
+        (claim) =>
+          claim.ticket_id === lease.ticket_id && claim.status === 'active' && claim.lease_expires_at === expiredAt,
+      )
+    )
+      throw Error('inspection expiry ledger fixture is invalid');
+    const expiredLedgerUpdate = writerDatabase
+      .query(
+        "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared' AND revision=? AND digest=?",
+      )
+      .run(
+        expiredLedger.revision,
+        JSON.stringify(expiredLedger),
+        coordinationLedgerDigest(expiredLedger),
+        fixture.store.workspaceId,
+        currentLedgerRow.revision,
+        currentLedgerRow.digest,
+      );
+    if (expiredLedgerUpdate.changes !== 1) throw Error('inspection expiry ledger fixture CAS failed');
+    const beforeExpiredInspection = inspectionRows();
+    const expiredInspection = inspectLocalSession(input);
+    expect(expiredInspection).toMatchObject({
+      diagnosis: {
+        reason: 'expired_lease',
+        evidence: {
+          journal_version: expiredInspection.journal_version,
+          work_version: expiredInspection.work_version,
+          ledger_version: expiredInspection.ledger_version,
+        },
+        advisory_routes: [],
+        rights_granted: false,
+      },
+    });
+    expect(inspectionRows()).toEqual(beforeExpiredInspection);
+
+    const journalRow = writerDatabase
+      .query(
+        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .get(fixture.store.workspaceId, workId, 1) as { revision: number; payload: string; digest: string } | null;
+    if (!journalRow) throw Error('inspection priority fixture has no persisted journal');
+    const parsedJournal: unknown = JSON.parse(journalRow.payload);
+    if (!isPlainRecord(parsedJournal)) throw Error('inspection priority fixture journal is invalid');
+    const journal = parsedJournal;
+    journal.items = [
+      {
+        issue_id: 'inspection-pending-issue',
+        observation: null,
+        request: { action_id: 'inspection-pending-action', stage_id: 'review' },
+      },
+    ];
+    const pendingJournalUpdate = writerDatabase
+      .query(
+        'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+      )
+      .run(
+        journalRow.revision + 1,
+        JSON.stringify(journal),
+        canonicalJsonDigest(journal),
+        fixture.store.workspaceId,
+        workId,
+        1,
+        journalRow.revision,
+        journalRow.digest,
+      );
+    if (pendingJournalUpdate.changes !== 1) throw Error('inspection priority journal fixture CAS failed');
+    const beforePendingInspection = inspectionRows();
+    const pendingInspection = inspectLocalSession(input);
+    expect(pendingInspection).toMatchObject({
+      diagnosis: {
+        reason: 'pending_observation',
+        evidence: {
+          journal_version: pendingInspection.journal_version,
+          work_version: pendingInspection.work_version,
+          ledger_version: pendingInspection.ledger_version,
+        },
+        advisory_routes: [],
+        rights_granted: false,
+      },
+    });
+    expect(inspectionRows()).toEqual(beforePendingInspection);
     expect(performance.now()).toBeLessThan(deadline);
   } catch (error) {
     errors.push(error);
@@ -1216,6 +1381,31 @@ describe('unprepared recovery', () => {
   test('read-only CLI exposes a retained request; release and lost-ack retry preserve original evidence', async () => {
     const f = unpreparedRecoveryFixture();
     try {
+      const beforeDiagnosis = f.observed();
+      const diagnosis = inspectLocalSession({
+        repositoryRoot: f.root,
+        config: f.config,
+        projectIds: f.identity.project_ids,
+        integrationsDigest: f.identity.integrations_digest,
+        workId: f.identity.work_id,
+        attempt: 1,
+      });
+      expect(diagnosis).toMatchObject({
+        diagnosis: {
+          reason: 'preparation_incomplete',
+          evidence: {
+            journal_version: diagnosis.journal_version,
+            work_version: diagnosis.work_version,
+            ledger_version: diagnosis.ledger_version,
+          },
+          advisory_routes: ['recover-unprepared-work'],
+          rights_granted: false,
+        },
+      });
+      expect(diagnosis.journal_version).toBeNull();
+      expect(diagnosis.work_version).not.toBeNull();
+      expect(diagnosis.lease).not.toBeNull();
+      expect(f.observed()).toEqual(beforeDiagnosis);
       const baseline = readFileSync(path.join(f.root, 'baseline.yaml'));
       const delivered = baseline.toString('utf8').replace('config_revision: 1', 'config_revision: 2');
       writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), delivered);

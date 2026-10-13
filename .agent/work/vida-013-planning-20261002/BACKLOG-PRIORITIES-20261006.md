@@ -26,7 +26,7 @@ report SHA ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.
 Він допускає використання історичних вимірювань, але його suite/quality FAIL
 не стає PASS. Бракує повного актуального reviewed function correspondence;
 не потрібно повторювати baseline чи підвищувати budgets за поточним кодом.
-Останній повний coverage run 3ad33c8f — UNKNOWN без допустимого
+Останній завершений повний coverage run ca5209ff — UNKNOWN без допустимого
 підсумкового report. Source/тестові виправлення й актуальна черга зафіксовані
 в [WORK](../core-runtime-reactivation/WORK.md) та
 [поточному плані](../core-runtime-reactivation/PARALLEL-TESTING-IMPLEMENTATION-20261012.md).
@@ -53,7 +53,7 @@ Readonly snapshot не надає прав на changing routes.
 | P0 7 audit18:F3 | Readonly snapshot і реальний конкурентний WAL commit regression PASS | Спільне фінальне прийняття |
 | P0 8 delivery | Поточний Source опубліковано; це не native installation | Одна whole-agent formation/delivery та ізольований runtime matrix |
 | P1 1 workspace DB | Shared project paths, Bun adapter і 5 прямих regressions PASS | Cutover/native proof; in-memory tests не доводять disk branch |
-| P1 2 execution/diagnostics | Shared contracts і SDK refusal cause є | Typed readonly diagnosis: reason/evidence, advisory existing routes, без нових прав |
+| P1 2 execution/diagnostics | Shared contracts, SDK refusal cause й typed local-session diagnosis реалізовано | Повне прийняття й affected native flows; advisory лишається readonly, без нових прав |
 | P1 3 context/reads | Bounded reads і freshness guards є | Контракт history/current-owner lookup та обґрунтовані SQL improvements |
 | P1 4 tests | Bun, AST/scenario tooling і strict hook є | Exact coverage, exhaustive frozen correspondence, confirmed mutation, qualified parallel custody |
 | P1 5 transport | Реалізацію чинного scope завершено; wave CAS, partial-report restart, retry/foreign/prefix tests є | Спільне фінальне прийняття; нова semantics лишається P2 |
@@ -72,12 +72,22 @@ control. Це не SQL prepare/cache-miss чи wall-time метрика. Histori
 та configured-frontier/admission schema readers мають focused caller proofs,
 raw-reader RED та збережені persisted digest bindings. Joined19tests і5admission
 file tests PASS; повний runca5209ff UNKNOWN за600000ms, без admitted report,
-публікація пакета pending. Перекриття5 природних quarantine waits
+пакет702270b опубліковано. Перекриття5 природних quarantine waits
 залежить від per-case state/cleanup та descendant/effect quiescence, без concurrent
 flag до їх кваліфікації.
 Дизайн і докази — `packages/agent/docs/research/test-timeout-cost-20261013.md`.
 Реальні locks не старимо, timeout не збільшуємо. Batch не закриває відсутні
 числові/native докази. Старі відсотки не є кількістю продуктових дефектів.
+
+Актуальне доповнення:702270b,90426f0,3f945a9 і0cbeed0 вже опубліковані
+з ordinary hooksPASS. UNKNOWN custody аналоги coverage-typecheck та rebind
+виправлено; Source eligibility3registrations/6cases перенесено зі збереженням
+усього97-expression AST union. Typed readonly session diagnosis використовує
+ті самі validated Work/Ledger/Journal versions і чинний recovery-inspect route;
+expiry/pending не надають changing advice. Цей Source пакет перевіряється перед
+одним новим current coverage run; повний frozen plan і numeric/native acceptance
+ще відкриті. Старі coverage статуси вище — provenance, останній до цього batch
+ca5209ff UNKNOWN без admitted numeric report.
 
 ## Правило класифікації
 

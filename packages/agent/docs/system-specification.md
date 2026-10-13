@@ -1071,6 +1071,20 @@ read transaction. Its returned versions describe one committed snapshot.
 It does not open a writer, renew a lease or make the snapshot valid for a later
 effect; that effect still checks current authority and CAS.
 
+The existing `VidaLocalSessionInspection/v1` view includes a typed derived
+diagnosis. Its evidence reuses the returned Work, Ledger and Journal versions;
+it contains no raw payloads and performs no additional database reads. Reasons
+describe observed predicates: incomplete preparation (Work and lease, no Journal),
+pending observation, expired lease, absent Work/Journal, or a persisted snapshot,
+in that order. A persisted snapshot is not an admission or readiness verdict.
+Only incomplete preparation suggests the existing `recover-unprepared-work`
+route for its read-only inspect mode. The advisory grants no apply, release,
+retry or execution rights; its `rights_granted` is always false. Every later
+operation still reconstructs eligibility and checks authority, ownership and CAS.
+Expired or pending evidence suggests no changing route. Malformed, foreign or
+conflicting rows fail the existing inspection guards before any diagnosis is
+returned; they are never converted into a successful absence or no-effect view.
+
 Project membership for a repository path comes from the deepest matching
 configured `project_root`. Equal deepest roots are explicitly shared by those
 projects. A nested root owns its descendants and excludes a broader parent
