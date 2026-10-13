@@ -331,7 +331,19 @@ from its case constructor; never sweep another case's custody in `afterEach`.
 Carry the original case bound into its monotonic cleanup deadline. Qualify the
 cleanup effect directly so controls do not depend on relative finish-callback
 ordering; separately preserve actual UNKNOWN post-hook afterimage checks.
-Current lifecycle timing/interception globals still exclude concurrent bodies.
+Current lifecycle read counters/timing are case-local through explicit ALS.run
+inside ordinary test callbacks. Keep module/prototype interceptor lifetime and
+natural-age overlap as separate pending qualifications; concurrent bodies remain
+disabled. Capture original module callables before mock.module: Bun updates live
+imports, so wrapping the rebound observer again double-counts real reads.
+
+On qualified Bun1.4.3, [#44552](https://github.com/oven-sh/bun/issues/44552) misclassifies
+async hooks registered under ALS as done callbacks. ALS.exit at registration is
+not a qualified workaround. Register owning cleanup before entering ALS; affected
+afterimage observers use explicit done(error?) completion with both async outcome
+paths forwarded and no returned Promise. Do not raise hook/test timeouts to mask
+the defect. Native inert and actual retained-afterimage controls are distinct
+from concurrency or quiescence qualification.
 
 Completion flags do not prevent cleanup after a timed-out body settles late.
 Before deleting a fixture, require a finite unexpired monotonic deadline after

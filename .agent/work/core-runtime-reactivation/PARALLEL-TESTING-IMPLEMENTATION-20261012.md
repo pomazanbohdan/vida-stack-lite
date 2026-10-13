@@ -174,9 +174,14 @@ The current TESTING owner retains the environment/default and clock rules.
 owns one case rather than sweeping all cases, and checks that case's finite
 monotonic deadline with unchanged60s/90s/default5s bounds. Foreign-owner deletion
 and expired-success deletion have assertion RED controls; direct effect checks
-avoid assuming callback ordering. Retained UNKNOWN afterimages remain. Timing
-globals, interceptor lifetime across files, natural-age overlap, live shard
-bindings and resource/effect quiescence are still pending. Existing native
+avoid assuming callback ordering. Retained UNKNOWN afterimages remain. Case read
+counts/timing now belong to explicit ALS.run contexts inside unchanged ordinary
+registrations, with native delayed/late-read and missing-context controls.
+Bun1.4.3 #44552 hook misclassification requires documented explicit done completion
+for two observers registered under ALS; ALS.exit alone fails an inert native probe.
+Actual changed-stage and natural pre-effect retained-afterimage controls pass.
+Interceptor lifetime across files, natural-age overlap, live shard bindings and
+resource/effect quiescence are still pending. Existing native
 two-shard primitives/pilot are qualified already; do not repeat them or enable
 parallel production from this prerequisite alone.
 

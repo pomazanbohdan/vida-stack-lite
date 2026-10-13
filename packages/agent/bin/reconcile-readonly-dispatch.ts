@@ -61,6 +61,9 @@ function hasPlanRequest(value: Record<string, unknown>): boolean {
     typeof value.source_digest === 'string'
   );
 }
+function isMaintenanceGeneration(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0;
+}
 function hasPlanResult(value: Record<string, unknown>): boolean {
   return (
     value.replacement_generation === 1 &&
@@ -69,9 +72,7 @@ function hasPlanResult(value: Record<string, unknown>): boolean {
     isStateVersion(value.work_version) &&
     isStateVersion(value.ledger_version) &&
     isStateVersion(value.mastra_version) &&
-    typeof value.maintenance_generation === 'number' &&
-    Number.isSafeInteger(value.maintenance_generation) &&
-    value.maintenance_generation >= 0 &&
+    isMaintenanceGeneration(value.maintenance_generation) &&
     value.status === 'prepared' &&
     typeof value.digest === 'string'
   );

@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 1059,
-    "new": 258,
+    "retained": 1065,
+    "new": 286,
     "removed": 1,
-    "current_roles": 1317,
-    "source_files": 71
+    "current_roles": 1351,
+    "source_files": 80
   },
   "source_bindings": [
     {
@@ -300,6 +300,42 @@
     {
       "file": "bin/read-only-dispatch-repair.ts",
       "sha256": "a07e6dfbb2a73dadcb9d0fdad2c5f7297b1c31076959e0ddcd413df5b6ef5ad1"
+    },
+    {
+      "file": "src/orchestration/corrective-execution-contract.ts",
+      "sha256": "5d14fd5c9d7abc6fd656eb0692c23f9f8b7cc1f0258f85783a523b9168795393"
+    },
+    {
+      "file": "src/trusted-host.ts",
+      "sha256": "83c0a2fef99e35583cfb29f57fba76ab42e60c0153e7b2fdafddb85892aa6afa"
+    },
+    {
+      "file": "src/config/index.ts",
+      "sha256": "531081030a672da49a8502679647f746661a111846bbca54002af5e37a8f9d74"
+    },
+    {
+      "file": "src/index.ts",
+      "sha256": "2b0b6ebad1ab872a1459441afe80b09ffd69458c043424338178c0515f0b7ed7"
+    },
+    {
+      "file": "src/config/fs-safe-attestation.ts",
+      "sha256": "d0c12f0f3168e558f2aa372f5866ff4c8d844af481c5924094639295094711c7"
+    },
+    {
+      "file": "bin/module-directory-anchors.ts",
+      "sha256": "fcb74ff4daeb5baadf6ea901dad2093fc49961d79d50fd5f83a347a0cb1b2792"
+    },
+    {
+      "file": "bin/module-url-resource-shape.ts",
+      "sha256": "b0d0be707079a33041f7cd65483cbcb0a5db2dadce5f60b6bf8ba46ecb6c6f0e"
+    },
+    {
+      "file": "bin/runtime-import-bindings.ts",
+      "sha256": "e63471edd70062ff2399409403fe4bd7eeae71a5d8498ea3a03970dbf0c410e3"
+    },
+    {
+      "file": "bin/reconcile-readonly-dispatch.ts",
+      "sha256": "0b8b8d00885e216f84f8bb733280946b707431efc6edc301a2b659556ce805b5"
     }
   ],
   "baseline_functions": [
@@ -25507,6 +25543,198 @@
       "baseline_crap": 2,
       "max_crap": 2,
       "rationale": "The closure removes the digest field before canonical plan hashing in both versions. The current expression at line 56 is the same concrete integrity-check operation as the baseline expression at line 254; its enclosing applier also has a one-to-one retained mapping. Keep cap 1 unchanged; current CC 1 is within cap. Refreshed current Source includes bce02c8 shared requireRepair, keeping config-first short-circuit and exact error/transaction contract; apply now CC2, under original CC2 ceiling."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.mjs#binding:requireCommand/binding:requireCommand#0",
+      "current_identity": "bin/reconcile-readonly-dispatch.ts#binding:requireCommand/binding:requireCommand#0",
+      "file": "bin/reconcile-readonly-dispatch.mjs",
+      "name": "binding:requireCommand",
+      "source_address": {
+        "line": 12,
+        "column": 23,
+        "start": 773,
+        "end": 872,
+        "bodyLine": 12,
+        "bodyColumn": 47,
+        "bodyEndLine": 14,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 121,
+        "column": 83,
+        "start": 4316,
+        "end": 4415,
+        "bodyLine": 121,
+        "bodyColumn": 107,
+        "bodyEndLine": 123,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.mjs#binding:planFile/binding:planFile#0",
+      "current_identity": "bin/reconcile-readonly-dispatch.ts#binding:planFile/binding:planFile#0",
+      "file": "bin/reconcile-readonly-dispatch.mjs",
+      "name": "binding:planFile",
+      "source_address": {
+        "line": 18,
+        "column": 17,
+        "start": 1159,
+        "end": 1236,
+        "bodyLine": 18,
+        "bodyColumn": 37,
+        "bodyEndLine": 18,
+        "bodyEndColumn": 94
+      },
+      "current_source_address": {
+        "line": 129,
+        "column": 17,
+        "start": 4642,
+        "end": 4729,
+        "bodyLine": 129,
+        "bodyColumn": 47,
+        "bodyEndLine": 129,
+        "bodyEndColumn": 104
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.mjs#fn:argsObject#0",
+      "current_identity": "bin/reconcile-readonly-dispatch.ts#fn:argsObject#0",
+      "file": "bin/reconcile-readonly-dispatch.mjs",
+      "name": "fn:argsObject",
+      "source_address": {
+        "line": 20,
+        "column": 0,
+        "start": 1239,
+        "end": 2425,
+        "bodyLine": 20,
+        "bodyColumn": 26,
+        "bodyEndLine": 40,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 131,
+        "column": 0,
+        "start": 4732,
+        "end": 6258,
+        "bodyLine": 131,
+        "bodyColumn": 60,
+        "bodyEndLine": 167,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 13,
+      "baseline_coverage": 0,
+      "max_complexity": 13,
+      "baseline_crap": 182,
+      "max_crap": 182,
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.mjs#fn:readPlan#0",
+      "current_identity": "bin/reconcile-readonly-dispatch.ts#fn:readPlan#0",
+      "file": "bin/reconcile-readonly-dispatch.mjs",
+      "name": "fn:readPlan",
+      "source_address": {
+        "line": 42,
+        "column": 0,
+        "start": 2427,
+        "end": 2974,
+        "bodyLine": 42,
+        "bodyColumn": 34,
+        "bodyEndLine": 53,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 169,
+        "column": 0,
+        "start": 6260,
+        "end": 6828,
+        "bodyLine": 169,
+        "bodyColumn": 72,
+        "bodyEndLine": 180,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "max_complexity": 4,
+      "baseline_crap": 20,
+      "max_crap": 20,
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.mjs#fn:writePlan#0",
+      "current_identity": "bin/reconcile-readonly-dispatch.ts#fn:writePlan#0",
+      "file": "bin/reconcile-readonly-dispatch.mjs",
+      "name": "fn:writePlan",
+      "source_address": {
+        "line": 55,
+        "column": 0,
+        "start": 2976,
+        "end": 3461,
+        "bodyLine": 55,
+        "bodyColumn": 41,
+        "bodyEndLine": 62,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 182,
+        "column": 0,
+        "start": 6830,
+        "end": 7369,
+        "bodyLine": 182,
+        "bodyColumn": 85,
+        "bodyEndLine": 194,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.mjs#fn:runReadOnlyDispatchRepair#0",
+      "current_identity": "bin/reconcile-readonly-dispatch.ts#fn:runReadOnlyDispatchRepair#0",
+      "file": "bin/reconcile-readonly-dispatch.mjs",
+      "name": "fn:runReadOnlyDispatchRepair",
+      "source_address": {
+        "line": 65,
+        "column": 7,
+        "start": 3568,
+        "end": 6485,
+        "bodyLine": 65,
+        "bodyColumn": 48,
+        "bodyEndLine": 108,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 197,
+        "column": 7,
+        "start": 7476,
+        "end": 10979,
+        "bodyLine": 203,
+        "bodyColumn": 2,
+        "bodyEndLine": 283,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "max_complexity": 8,
+      "baseline_crap": 72,
+      "max_crap": 72,
+      "rationale": "Retains the original read-only dispatch CLI role through typed Source migration. Source body and contract reviewed independently; stricter plan-shape helpers are new roles. Exact original admitted zero-coverage measurement and Original CC ceilings remain; no candidate-derived increase."
     }
   ],
   "new_functions": [
@@ -29587,6 +29815,454 @@
         "bodyEndLine": 159,
         "bodyEndColumn": 1
       }
+    },
+    {
+      "identity": "bin/module-directory-anchors.ts#fn:moduleDirectoryAnchorCalls#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 17,
+        "column": 7,
+        "start": 947,
+        "end": 1807,
+        "bodyLine": 21,
+        "bodyColumn": 30,
+        "bodyEndLine": 39,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/module-url-resource-shape.ts#fn:isNamedIdentifier#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 3,
+        "column": 7,
+        "start": 91,
+        "end": 246,
+        "bodyLine": 3,
+        "bodyColumn": 99,
+        "bodyEndLine": 5,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/module-url-resource-shape.ts#fn:isImportMetaProperty#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 7,
+        "column": 7,
+        "start": 255,
+        "end": 445,
+        "bodyLine": 7,
+        "bodyColumn": 90,
+        "bodyEndLine": 9,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/module-url-resource-shape.ts#fn:moduleUrlResourceShape#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 12,
+        "column": 7,
+        "start": 538,
+        "end": 1124,
+        "bodyLine": 14,
+        "bodyColumn": 53,
+        "bodyEndLine": 28,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:namedRuntimeDeclarationBinding#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 30,
+        "column": 0,
+        "start": 957,
+        "end": 1302,
+        "bodyLine": 30,
+        "bodyColumn": 67,
+        "bodyEndLine": 34,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:valueImportBindings#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 36,
+        "column": 0,
+        "start": 1304,
+        "end": 2087,
+        "bodyLine": 39,
+        "bodyColumn": 2,
+        "bodyEndLine": 54,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:singleConstIdentifierInitializer#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 56,
+        "column": 0,
+        "start": 2089,
+        "end": 2519,
+        "bodyLine": 58,
+        "bodyColumn": 77,
+        "bodyEndLine": 64,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:directStatementFacts#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 66,
+        "column": 0,
+        "start": 2521,
+        "end": 3453,
+        "bodyLine": 66,
+        "bodyColumn": 65,
+        "bodyEndLine": 88,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:directStatementFacts#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 78,
+        "column": 36,
+        "start": 3112,
+        "end": 3164,
+        "bodyLine": 78,
+        "bodyColumn": 53,
+        "bodyEndLine": 78,
+        "bodyEndColumn": 88
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:runtimeBindingNames#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 91,
+        "column": 7,
+        "start": 3543,
+        "end": 4207,
+        "bodyLine": 91,
+        "bodyColumn": 58,
+        "bodyEndLine": 102,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:runtimeBindingNames#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 96,
+        "column": 65,
+        "start": 3960,
+        "end": 4012,
+        "bodyLine": 96,
+        "bodyColumn": 77,
+        "bodyEndLine": 96,
+        "bodyEndColumn": 116
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:runtimeBindingNames#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 98,
+        "column": 35,
+        "start": 4087,
+        "end": 4184,
+        "bodyLine": 99,
+        "bodyColumn": 6,
+        "bodyEndLine": 99,
+        "bodyEndColumn": 86
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:moduleDeclarationFacts#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 104,
+        "column": 7,
+        "start": 4216,
+        "end": 4628,
+        "bodyLine": 104,
+        "bodyColumn": 113,
+        "bodyEndLine": 109,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:emptyModuleDeclarationFacts#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 111,
+        "column": 0,
+        "start": 4630,
+        "end": 4827,
+        "bodyLine": 111,
+        "bodyColumn": 63,
+        "bodyEndLine": 118,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:collectModuleDeclarationFacts#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 120,
+        "column": 0,
+        "start": 4829,
+        "end": 5685,
+        "bodyLine": 120,
+        "bodyColumn": 81,
+        "bodyEndLine": 136,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:hasExactValueImportBinding#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 138,
+        "column": 7,
+        "start": 5694,
+        "end": 6000,
+        "bodyLine": 143,
+        "bodyColumn": 11,
+        "bodyEndLine": 147,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:hasExactValueImportBinding#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 145,
+        "column": 4,
+        "start": 5878,
+        "end": 5992,
+        "bodyLine": 145,
+        "bodyColumn": 17,
+        "bodyEndLine": 145,
+        "bodyEndColumn": 118
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/runtime-import-bindings.ts#fn:moduleHasValueBinding#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 149,
+        "column": 7,
+        "start": 6009,
+        "end": 6141,
+        "bodyLine": 149,
+        "bodyColumn": 73,
+        "bodyEndLine": 151,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New module-resource/declaration analysis role; published Source has no corresponding callable in this file. Existing inline module-anchor expressions do not become fabricated Original roles. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:isRecord#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 23,
+        "column": 0,
+        "start": 998,
+        "end": 1148,
+        "bodyLine": 23,
+        "bodyColumn": 68,
+        "bodyEndLine": 25,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:isStringArray#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 26,
+        "column": 0,
+        "start": 1149,
+        "end": 1294,
+        "bodyLine": 26,
+        "bodyColumn": 58,
+        "bodyEndLine": 28,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:isStringArray#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 27,
+        "column": 45,
+        "start": 1254,
+        "end": 1290,
+        "bodyLine": 27,
+        "bodyColumn": 56,
+        "bodyEndLine": 27,
+        "bodyEndColumn": 81
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:isStateVersion#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 29,
+        "column": 0,
+        "start": 1295,
+        "end": 1547,
+        "bodyLine": 29,
+        "bodyColumn": 87,
+        "bodyEndLine": 36,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:hasPlanIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 37,
+        "column": 0,
+        "start": 1548,
+        "end": 2066,
+        "bodyLine": 37,
+        "bodyColumn": 66,
+        "bodyEndLine": 50,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:hasPlanRequest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 51,
+        "column": 0,
+        "start": 2067,
+        "end": 2618,
+        "bodyLine": 51,
+        "bodyColumn": 65,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:isMaintenanceGeneration#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 64,
+        "column": 0,
+        "start": 2619,
+        "end": 2769,
+        "bodyLine": 64,
+        "bodyColumn": 66,
+        "bodyEndLine": 66,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:hasPlanResult#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 67,
+        "column": 0,
+        "start": 2770,
+        "end": 3264,
+        "bodyLine": 67,
+        "bodyColumn": 64,
+        "bodyEndLine": 79,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:isReadOnlyDispatchPlan#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 80,
+        "column": 0,
+        "start": 3265,
+        "end": 4231,
+        "bodyLine": 80,
+        "bodyColumn": 79,
+        "bodyEndLine": 119,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "bin/reconcile-readonly-dispatch.ts#fn:requiredOption#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 124,
+        "column": 0,
+        "start": 4417,
+        "end": 4624,
+        "bodyLine": 124,
+        "bodyColumn": 77,
+        "bodyEndLine": 128,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
     }
   ],
   "removed_functions": [
@@ -29697,5 +30373,38 @@
     "frozen_ceilings": "Exact original measured rows corroborated by original.baseline; never original.current or candidate CC.",
     "historical_measurement": "measurement_admitted=true, suite_passed=false, quality_passed=false",
     "numeric_status": "Current exhaustive coverage/CRAP/mutation qualification remains pending."
+  },
+  "scope_review_20261013_small": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "source_parent": "7eeea09",
+    "scope": [
+      "src/orchestration/corrective-execution-contract.ts",
+      "src/trusted-host.ts",
+      "src/config/index.ts",
+      "src/index.ts",
+      "src/config/fs-safe-attestation.ts",
+      "bin/module-directory-anchors.ts",
+      "bin/module-url-resource-shape.ts",
+      "bin/runtime-import-bindings.ts",
+      "bin/reconcile-readonly-dispatch.ts"
+    ],
+    "retained_added": 6,
+    "new_added": 28,
+    "zero_role_scopes": [
+      "src/orchestration/corrective-execution-contract.ts",
+      "src/trusted-host.ts",
+      "src/config/index.ts",
+      "src/index.ts",
+      "src/config/fs-safe-attestation.ts"
+    ],
+    "review": "Blind per-scope semantic review and independent frozen_small_join_review approve exact Original six-role measured ceilings, prospective new10/10, unique canonical identities, zero-callable scopes and current addresses. Root corrects prior incomplete baseline filter. No default plan activation or global numeric evidence; prior rows/ceilings remain unchanged.",
+    "input": ".tmp/p0p1-3f3dc1a/frozen-small-scope-proposal.json",
+    "before_counts": {
+      "retained": 1059,
+      "new": 258,
+      "removed": 1,
+      "current_roles": 1317,
+      "source_files": 71
+    }
   }
 }

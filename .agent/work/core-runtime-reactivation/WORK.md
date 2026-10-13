@@ -9787,6 +9787,71 @@ the replaced compiled-validator expressions were three consumers/compile owners.
 The old static inventory predates the new helper. Partial correspondence remains
 non-executable/non-exhaustive; these proposals do not admit a frozen plan.
 
+Published7eeea09 with ordinary commit hook and non-force push. New complete
+selectionee1769c2-4d8c-4530-ae13-3a23e1dd6ee5 is UNKNOWN under the300000ms
+entry allowance; no final numeric report. Three copied recovery routes pass;
+bug_fix receives only the remaining seconds, then a child timed out/SIGKILL with
+ESRCH cleanup uncertainty. Its emitted failure is budget uncertainty, not an
+assertion-confirmed product defect. Preserve recoveryOutcomeUnknown custody and
+the retained capture; do not replay or prune. No unchanged rerun follows.
+
+Next independent writers: lifecycle file only for call-time ALS attribution,
+readonly-dispatch test only for actual public malformed-generation controls;
+Root owns the private Source predicate and docs/final checks. No registration
+DSL or concurrent activation. Blind frozen review corrects its initial incomplete
+dispatch mapping: all6original roles are retained,9helpers new; original measured
+CC/CRAP ceilings stay even though genuine baseline suite/quality failed. The new
+hasPlanResult role exceeds prospective cap10 atCC11; canonical static control
+fails before correction. Extract its exact maintenance-generation predicate,
+preserving nonnegative safe-integer behavior, rather than raising the cap. Actual
+existing shared numeric helpers have different contracts/private owners. All
+other retained/current roles in this scope meet their original static ceilings.
+
+Case-local context packet implements explicit ALS.run inside existing ordinary
+test callbacks; counters and package/fixture read aggregates belong to custody,
+and observations select the store at read-call time. Root catches two writer
+control-setup defects: Bun mock.module rebound actualAccess caused double wrapping,
+so reuse the callable captured before mocking; canonical digest rejected an unsafe
+integer before CLI, so malformed-shape controls retain the original digest and
+assert the public shape denial before later digest admission. Failed invalid-plan
+controls retain their input; original bytes restore only after every check passes.
+Five invalid-generation classes retain all four relevant DB table snapshots and
+original accepted0/apply/resume controls. Early joined6PASS/69assertions/2.99s.
+
+Wrong-owner observer negative control assertion-fails expected0/received1 at the
+cross-case fixture read; exact candidate restored in finally, failed inert fixture
+retained. No global mutation-score claim. Root static registration/matrix/timeout
+lineage preserves24original registrations and425assertion expressions with only
+global counter→case accessor normalization; candidate adds1registration. In the
+wider real selection, asynchronous afterimage hooks registered under ALS time out
+after executing their assertions. Fresh isolated reproduction confirms it, and
+official upstreamBun#44552 documents callback-arity misclassification. An inert
+Bun1.4.3 control proves ALS.exit at registration still fails while explicit done
+completion works. Both affected observers now forward async success/rejection to
+done without returning a Promise or raising timeouts. Owning cleanup registration
+remains before ALS.run. Actual changed-stage plus natural30s pre-effect write
+2PASS/107assertions/48.51s; retained operation byte/identity proofs remain. Final
+joined12PASS/313assertions/40.82s covers all context controls, UNKNOWN denials,
+resume/planning and three public readonly-dispatch cases. These are scoped passes,
+not complete-suite/coverage/quiescence admission. Module/prototype cross-file
+lifetime and natural-age overlap remain pending.
+
+Independent9-scope frozen join review corroborates all6Original CLI CC/CRAP tuples
+from the admitted failed-quality baseline,28newprospective10/10roles and5zero-role
+Source files. The partial artifact now1065retained+286new=1351currentroles over
+80Sourcebindings, removed1unchanged. Independent post-join comparison confirms all
+prior1059retained/258new/71bindings/removed rows structurally unchanged and exact
+34unique additions. Current hasPlanResultCC9 versus prior11; its new generation
+predicateCC3, all selected static caps pass. Default exhaustive plan remains
+absent; status remainsNON_EXECUTABLE_NOT_EXHAUSTIVE and global numeric gatesOPEN.
+
+Next Source optimization research finds exact acceptance-schema compiles in four
+orchestration modules, plus exact checkpoint-schema compiles in three documentation
+modules. Options/drafts and boolean-only consumers match, distinct error/CAS/auth
+guards stay with callers. Policy/scope validators with different options or absent
+valid controls are excluded. Future narrow shared owners may remove duplicate
+compiles, with actual consumer invalid/positive proofs; no timing gain claimed yet.
+
 One Root canonical static inventory of the b356b49 immutable capture has7608
 roles/145production files; it is explicitly NOT_COVERAGE_NOT_REVIEWED. Compared
 with partial lineage bindings,64unchanged/7changed/74absent scopes identify the

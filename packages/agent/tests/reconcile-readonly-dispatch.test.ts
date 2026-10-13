@@ -404,6 +404,47 @@ test('sole public reconcile CLI plans and applies one paused read-only dispatch 
     delete planBody.digest;
     expect(planDigest).toMatch(/^[a-f0-9]{64}$/);
     expect(canonicalJsonDigest(planBody)).toBe(planDigest);
+
+    const originalPlanBytes = readFileSync(planPath);
+    const dispatchState = (): unknown => {
+      const stateDb = new Database(value.databasePath, { readonly: true });
+      try {
+        return [
+          'agent_host_state',
+          'agent_host_mastra_session_ledger',
+          'agent_host_readonly_dispatch_repair',
+          'agent_host_readonly_dispatch_outcome',
+        ].map((table) => {
+          const exists = stateDb
+            .query("SELECT 1 AS present FROM sqlite_master WHERE type='table' AND name=?")
+            .get(table);
+          return [table, exists ? stateDb.query(`SELECT * FROM ${table}`).all() : null];
+        });
+      } finally {
+        stateDb.close();
+      }
+    };
+    const beforeRejectedApplies = dispatchState();
+    for (const invalidGeneration of [-1, 0.5, '0', null, Number.MAX_SAFE_INTEGER + 1]) {
+      const invalidPlan: Record<string, unknown> = { ...planValue, maintenance_generation: invalidGeneration };
+      // Shape denial precedes digest admission, including numbers which the
+      // canonical digest helper would reject before reaching the public CLI.
+      writeFileSync(planPath, `${JSON.stringify(invalidPlan, null, 2)}\n`);
+      let rejection: unknown;
+      try {
+        await runReconcileArtifacts(value.args('apply'));
+      } catch (error) {
+        rejection = error;
+      }
+      expect(rejection).toBeInstanceOf(Error);
+      expect(rejection).toHaveProperty(
+        'message',
+        'vida repair artifacts: read-only dispatch plan is not exact canonical JSON',
+      );
+      expect(dispatchState()).toEqual(beforeRejectedApplies);
+    }
+    writeFileSync(planPath, originalPlanBytes);
+
     const applied: unknown = await runReconcileArtifacts(value.args('apply'));
     expect(field(applied, 'status')).toBe('prepared');
     expect(field(applied, 'old_issue_outcome')).toBe('unknown');

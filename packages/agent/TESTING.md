@@ -970,8 +970,20 @@ not a file-wide sweep over other cases. Its finite monotonic cleanup deadline
 matches each original test bound; expired completion and failed removal retain
 custody. Direct effect controls qualify own-root removal, foreign-root survival
 and expired retention without depending on finish-callback order. This does not
-qualify concurrent bodies: timing aggregates/interceptors and natural-age overlap
-remain separate pending work.
+qualify concurrent bodies. Case-local read counts/timing use explicit
+`AsyncLocalStorage.run` inside existing test bodies; native deferred/late-read
+controls qualify call-time attribution and missing-context denial. Module/prototype
+interceptors, cross-file lifetime and natural-age overlap remain pending.
+
+Qualified Bun1.4.3 reproduces [upstream #44552](https://github.com/oven-sh/bun/issues/44552):
+zero-parameter asynchronous hooks registered while an ALS frame is active can
+be misclassified as done callbacks. An inert native probe shows `ALS.exit` at
+registration still fails. For the two affected post-finish afterimage observers,
+use the documented explicit done-callback form, forwarding both async success
+and rejection, without returning a Promise or increasing the hook timeout.
+Keep test registrations and owning cleanup registration outside the ALS body.
+Actual changed-stage and natural pre-effect UNKNOWN cases qualify this workaround;
+hook success does not grant fixture disposal or concurrent eligibility.
 
 Close admitted workspace/Host database handles through
 `closeWorkspaceDatabaseWithAdmission` or the owning store/ledger/fixture close
