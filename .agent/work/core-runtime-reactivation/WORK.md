@@ -9694,3 +9694,54 @@ this is incomplete selection, not suitePASS. Retain the whole run and uncertain
 test-effect custody. No final current coverage/CRAP/mutation report is admitted.
 Do not repeat unchanged selection; next work completes frozen role correspondence
 and qualifies actual per-case/resource-safe parallel execution or concrete costs.
+
+## Blind analogue cycle and shared WorkState owner — 2026-10-13
+
+Human asks for blind analogous-error searches. Six separate Luna contours audit
+schema owners, budget inheritance, pre-READY setup, UNKNOWN cleanup, repeated CLI
+reads and repeated immutable validation. Two further concrete fixture defects
+are confirmed; no new budget-inheritance or safely removable CLI-read defect is
+substantiated. One cache-API repetition in rebind is not cold recompilation:
+the same Ajv instance already caches the same schema object. No speed claim.
+
+Changed-stage upgrade test proved unknown_move plus changed staging afterimage,
+then passed+settled cleanup deleted both. Explicit post-hook journal-exists RED
+fails expectedtrue/receivedfalse,47assertions/5.49s; that defective owner removed
+the fresh test root. Add custody.retained and require exact journal/stage bytes,
+device/inode, root directory and target absence after actual cleanup. GREEN is
+included below; its current UNKNOWN root is retained, never replayed or pruned.
+Three Host process races similarly overlapped DB setup before READY. They now
+register each child before sequential READY setup, then release both GO gates;
+one COMMITTED/one CONFLICT and persisted state assertions remain. Root corrects
+the stream type to the actual ChildProcessWithoutNullStreams pipe overload.
+
+The same WorkState/v1 schema/options were independently compiled by Host,
+readonly inspection and synthesis repair. One package-owned typed predicate
+in contracts/work-state-schema.ts captures import-time schema, lazily compiles
+one Ajv2020/allErrors validator and validates every value. Consumers keep their
+separate CAS, identity, authorization and error messages. The WorkState import
+is type-only; there is no new runtime import cycle or validated-value cache.
+One owned test observer replaces duplicate prototype-spy forwarding in tests.
+Fresh shared-owner positive/invalid checks and real persisted readonly snapshot
+reuse are asserted. An actual duplicate-module negative control assertion-fails
+on one additional compile versus zero; Source is restored and failed root/log
+retained. This is an assertion control, not a global mutation result.
+New production helper belongs once to the existing bun-host-state mutation scope.
+
+Final affected selection12PASS/0FAIL/195Bun assertions/30.09s covers all3process
+races, retained changed-stage UNKNOWN, shared guard, actual readonly/WAL paths,
+existing WorkState admission/repair, proof validators and synthesis apply/replay
+plus post-publication CAS denial. Current441capturedTS/440program PASS,0diagnostics;
+lint/format/diff checks PASS. Two independent blind reviews found no regression.
+The previous full-run receipts remain tied to b356b49; changed Source has no
+new admitted coverage/CRAP/mutation evidence yet. Scope facts are not global PASS.
+
+One Root canonical static inventory of the b356b49 immutable capture has7608
+roles/145production files; it is explicitly NOT_COVERAGE_NOT_REVIEWED. Compared
+with partial lineage bindings,64unchanged/7changed/74absent scopes identify the
+remaining work. A blind7-scope review finds46retained correspondences plus one
+retained public entry with split responsibilities,22prior new roles and2new roles
+requiring inclusion. Its proposal remains private/non-executable; the later
+shared-schema edit makes affected Source bindings stale again. Do not infer
+frozen caps, completeness or execution from that table. Default exhaustive plan
+and current numeric/native admission are still OPEN. No unchanged full rerun.

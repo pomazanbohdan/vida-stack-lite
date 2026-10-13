@@ -48,9 +48,7 @@ import type {
   MastraSessionLedgerState,
   MastraLedgerItem,
 } from './orchestration/persistent-session-handoff.js';
-import Ajv2020 from 'ajv/dist/2020.js';
-import type { ValidateFunction } from 'ajv';
-import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
+import { validateWorkState as validateWork } from './contracts/work-state-schema.ts';
 import {
   safeHistoricalWorkflowOwnedPath,
   safeWorkflowOwnedPath,
@@ -1594,16 +1592,6 @@ function repositoryRootIdentity(root: string): string {
   const resolved = realpathSync.native(root);
   requireState(statSync(resolved).isDirectory(), 'repository root must be a directory');
   return resolved;
-}
-const AjvConstructor = Ajv2020 as unknown as new (options: object) => {
-  compile<T>(schema: object): ValidateFunction<T>;
-};
-const capturedWorkSchema = structuredClone(workSchema);
-let compiledWorkValidator: ValidateFunction<WorkState> | undefined;
-function validateWork(value: unknown): value is WorkState {
-  return (compiledWorkValidator ??= new AjvConstructor({ allErrors: true }).compile<WorkState>(capturedWorkSchema))(
-    value,
-  );
 }
 const hashPattern = /^[a-f0-9]{64}$/;
 const maxTaskSourceProjectionRows = 2048;

@@ -7,8 +7,7 @@ import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli
 import { createHash, randomUUID } from 'node:crypto';
 import { lstatSync, readdirSync } from 'node:fs';
 import path from 'node:path';
-import { Ajv2020 } from 'ajv/dist/2020.js';
-import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
+import { validateWorkState } from '../src/contracts/work-state-schema.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
@@ -167,8 +166,6 @@ const synthesisRepairPlanSchema = 'VidaSynthesisQualificationRepairPlan/v1';
 const synthesisRepairEventSchema = 'VidaSynthesisQualificationRepairEvent/v1';
 const maintenanceFenceBindingSchema = 'MaintenanceFenceBinding/v1';
 const maintenanceReleaseAuthorizationSchema = 'MaintenanceReleaseAuthorization/v1';
-
-const validateWorkState = new Ajv2020({ allErrors: true }).compile<WorkState>(workSchema);
 
 function exactRecord(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
   return (

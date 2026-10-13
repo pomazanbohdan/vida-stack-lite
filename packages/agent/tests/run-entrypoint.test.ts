@@ -1,6 +1,7 @@
 import { recoverFailedPrewriterOwner } from '../bin/recover-failed-prewriter-owner.ts';
 import { afterAll, describe, expect, test, spyOn } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
+import { observeWorkStateSchemaCompiles } from './helpers/ajv-compile-observer.ts';
 import {
   HostStateStore,
   inspectHostWorkspaceDatabase,
@@ -169,7 +170,7 @@ test('readonly local inspection validates decoded rows and retains uncertain jou
   }
 });
 
-test('readonly local inspection keeps Work, Ledger and Journal on one committed snapshot', () => {
+test('readonly local inspection keeps Work, Ledger and Journal on one committed snapshot', async () => {
   const deadline = performance.now() + 5_000;
   const fixture = createAutomaticWorkAdmissionFixture(false, true);
   const databaseFile = path.join(fixture.root, fixture.config.control.work_root, 'session-handoff.v1.sqlite');
@@ -195,8 +196,20 @@ test('readonly local inspection keeps Work, Ledger and Journal on one committed 
         integrationsDigest: identity.integrations_digest,
         workId,
         attempt: 1,
-      },
-      initialInspection = inspectLocalSession(input);
+      };
+    const compilation = observeWorkStateSchemaCompiles();
+    let initialInspection: ReturnType<typeof inspectLocalSession>;
+    try {
+      // Admission already used the shared schema. A fresh inspection module
+      // must reuse it, including during its first actual persisted read.
+      const fresh = (await import(
+        `../src/orchestration/inspect-local-session.ts?shared=${randomUUID()}`
+      )) as typeof import('../src/orchestration/inspect-local-session.ts');
+      initialInspection = fresh.inspectLocalSession(input);
+      expect(compilation.schemas).toHaveLength(0);
+    } finally {
+      compilation.restore();
+    }
     expect(initialInspection.status).toBe('inspected');
 
     fixture.database.exec('PRAGMA journal_mode=WAL');

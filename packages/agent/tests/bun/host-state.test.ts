@@ -1,6 +1,7 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
-import { Ajv2020 } from 'ajv/dist/2020.js';
+import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
+import { validateWorkState } from '../../src/contracts/work-state-schema.ts';
 import type {
   CoordinationClaim,
   CoordinationLedger,
@@ -563,46 +564,35 @@ function fixture(id = 'work', resource = 'file:src/task.ts'): MutableHostStateWr
   return value;
 }
 
-test('Host WorkState validator compiles on first public use and reuses the compiled schema', async () => {
-  const compiledWorkSchemas: string[] = [];
-  const original: unknown = Reflect.get(Ajv2020.prototype, 'compile');
-  if (typeof original !== 'function') throw Error('Ajv compile method is unavailable');
-  const originalCompile = original as Ajv2020['compile'];
-  const compileSpy = spyOn(Ajv2020.prototype, 'compile');
-  compileSpy.mockImplementation(
-    new Proxy(originalCompile, {
-      apply(target, receiver, args) {
-        const schema: unknown = args[0];
-        if (
-          typeof schema === 'object' &&
-          schema !== null &&
-          'properties' in schema &&
-          typeof schema.properties === 'object' &&
-          schema.properties !== null &&
-          'schema' in schema.properties &&
-          typeof schema.properties.schema === 'object' &&
-          schema.properties.schema !== null &&
-          'const' in schema.properties.schema &&
-          schema.properties.schema.const === 'WorkState/v1'
-        )
-          compiledWorkSchemas.push('WorkState/v1');
-        const compiled: unknown = Reflect.apply(target, receiver, args);
-        if (typeof compiled !== 'function') throw Error('Ajv did not return a validator');
-        return compiled;
-      },
-    }),
-  );
+test('Host and readonly inspection share a lazy WorkState schema without caching valid records', async () => {
+  const compilation = observeWorkStateSchemaCompiles();
+  const compiledWorkSchemas = compilation.schemas;
 
   try {
+    await import(`../../src/orchestration/inspect-local-session.ts?lazy=${randomUUID()}`);
+    expect(compiledWorkSchemas).toEqual([]);
+    const freshSchema = (await import(
+      `../../src/contracts/work-state-schema.ts?lazy=${randomUUID()}`
+    )) as typeof import('../../src/contracts/work-state-schema.ts');
+    expect(compiledWorkSchemas).toEqual([]);
+    const request = fixture();
+    expect(freshSchema.validateWorkState(request.nextWork)).toBe(true);
+    expect(compiledWorkSchemas).toHaveLength(1);
+    expect(freshSchema.validateWorkState(request.nextWork)).toBe(true);
+    expect(compiledWorkSchemas).toHaveLength(1);
     // A qualified query creates a new module instance while Ajv's constructor remains shared.
     const fresh = (await import(
       `../../src/host-state.ts?lazy=${randomUUID()}`
     )) as typeof import('../../src/host-state.ts');
-    expect(compiledWorkSchemas).toEqual([]);
+    expect(compiledWorkSchemas).toHaveLength(1);
 
     const freshStore = new fresh.HostStateStore(database, workspace);
-    const committed = freshStore.compareAndSwapHostState(fixture());
-    expect(compiledWorkSchemas).toEqual(['WorkState/v1']);
+    const committed = freshStore.compareAndSwapHostState(request);
+    // Earlier cases may already have compiled the shared ordinary module.
+    // The fresh owner above always compiles once; public callers add at most one.
+    const publicCompileCount = compiledWorkSchemas.length;
+    expect(publicCompileCount).toBeGreaterThanOrEqual(1);
+    expect(publicCompileCount).toBeLessThanOrEqual(2);
 
     const saved = presentSnapshot(freshStore.readHostStateSnapshot(identity));
     expect(saved.work.workspace_id).toBe(workspace);
@@ -610,7 +600,7 @@ test('Host WorkState validator compiles on first public use and reuses the compi
     expect(saved.workVersion.revision).toBe(saved.work.revision);
     expect(saved.ledgerVersion.revision).toBe(saved.ledger.revision);
     expect(committed).toEqual(saved);
-    expect(compiledWorkSchemas).toEqual(['WorkState/v1']);
+    expect(compiledWorkSchemas).toHaveLength(publicCompileCount);
 
     const invalid = fixture();
     invalid.expectedWork = saved.workVersion;
@@ -618,15 +608,17 @@ test('Host WorkState validator compiles on first public use and reuses the compi
     invalid.nextWork.revision = saved.work.revision + 1;
     invalid.nextLedger.revision = saved.ledger.revision + 1;
     expect(Reflect.deleteProperty(invalid.nextWork.execution, 'assignment_attempts')).toBe(true);
+    expect(freshSchema.validateWorkState(invalid.nextWork)).toBe(false);
+    expect(validateWorkState(invalid.nextWork)).toBe(false);
     expect(() => freshStore.compareAndSwapHostState(invalid)).toThrow('work record must match current WorkState/v1');
 
     expect(freshStore.readHostStateSnapshot(identity)).toEqual(saved);
-    expect(compiledWorkSchemas).toEqual(['WorkState/v1']);
+    expect(compiledWorkSchemas).toHaveLength(publicCompileCount);
   } catch (error) {
     preserveHostFixtureRoot = true;
     throw error;
   } finally {
-    compileSpy.mockRestore();
+    compilation.restore();
   }
 });
 
@@ -7011,7 +7003,12 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
       const reservation =
         raceKind === 'governance-transition' ? store.reserveOperation('race', operationKey, requestDigest) : null;
       const moduleUrl = new URL('../../src/host-state.ts', import.meta.url).href;
-      const racers = [1, 2].map((number) => {
+      const racers: {
+        child: import('node:child_process').ChildProcessWithoutNullStreams;
+        ready: Promise<void>;
+        done: Promise<string>;
+      }[] = [];
+      for (const number of [1, 2]) {
         const input = next(saved);
         input.nextWork.execution.phase = 'racer-' + number;
         const action =
@@ -7046,9 +7043,10 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
             code === 0 ? resolve(output) : reject(new Error(errors || 'race process failed')),
           );
         });
-        return { child, ready, done };
-      });
-      await Promise.all(racers.map((racer) => racer.ready));
+        const racer = { child, ready, done };
+        racers.push(racer);
+        await racer.ready;
+      }
       for (const racer of racers) racer.child.stdin.end('go\n');
       const results = await Promise.all(racers.map((racer) => racer.done));
       expect(results.filter((result) => result.includes('COMMITTED'))).toHaveLength(1);

@@ -5,9 +5,7 @@ import {
   closeWorkspaceDatabaseWithAdmission,
 } from '../config/storage-read-admission.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
-import Ajv2020 from 'ajv/dist/2020.js';
-import type { ValidateFunction } from 'ajv';
-import workSchema from '../../schemas/work-state.v1.schema.json' with { type: 'json' };
+import { validateWorkState as validWork } from '../contracts/work-state-schema.ts';
 import { canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
 import { coordinationLedgerDigest, sameCoordinationStrings, type CoordinationLedger } from '../contracts/envelopes.js';
 import type { StateVersion, WorkState } from '../host-state.js';
@@ -57,10 +55,6 @@ function localSessionDiagnosis(
     rights_granted: false,
   };
 }
-const AjvConstructor = Ajv2020 as unknown as new (options: object) => {
-  compile<T>(schema: object): ValidateFunction<T>;
-};
-const validWork = new AjvConstructor({ allErrors: true }).compile<WorkState>(workSchema);
 
 function journalItems(value: unknown) {
   if (!Array.isArray(value)) throw new Error('local session inspection: journal items are invalid');

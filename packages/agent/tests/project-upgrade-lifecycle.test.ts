@@ -959,6 +959,18 @@ test('changed staged database bytes at the real no-replace boundary retain UNKNO
     expect(stageStatsAfter.ino).toBe(stageStats.ino);
     expect(await readFile(targetPath).catch((error: unknown) => error)).toMatchObject({ code: 'ENOENT' });
     expect(await readFile(journalPath)).not.toEqual(beforeJournal);
+    custody.retained = true;
+    onTestFinished(async () => {
+      expect(await Bun.file(journalPath).exists()).toBe(true);
+      expect((await lstat(root)).isDirectory()).toBe(true);
+      expect(await readFile(journalPath)).toEqual(unknownJournal);
+      expect(await Bun.file(stagePath).exists()).toBe(true);
+      expect(await readFile(stagePath)).toEqual(changedStage);
+      const stageStatsAfterCleanup = await stat(stagePath, { bigint: true });
+      expect(stageStatsAfterCleanup.dev).toBe(stageStats.dev);
+      expect(stageStatsAfterCleanup.ino).toBe(stageStats.ino);
+      expect(await readFile(targetPath).catch((error: unknown) => error)).toMatchObject({ code: 'ENOENT' });
+    });
     completeRoot(root);
   } finally {
     settleCase(custody);

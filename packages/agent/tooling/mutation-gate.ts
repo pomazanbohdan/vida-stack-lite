@@ -495,7 +495,7 @@ const partitions: MutationPartition[] = [
   {
     name: 'bun-host-state',
     environment: 'bun',
-    sources: ['src/host-state.ts', 'src/trusted-host.ts'],
+    sources: ['src/host-state.ts', 'src/trusted-host.ts', 'src/contracts/work-state-schema.ts'],
     tests: ['tests/bun/host-state.test.ts'],
     report: 'mutation-bun-host-state.json',
   },
