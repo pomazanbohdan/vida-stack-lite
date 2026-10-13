@@ -10,6 +10,41 @@
 
 **Spec:** PARALLEL-TESTING-DESIGN-20261012.md in this directory; current TESTING.md and test repair cycle plan.
 
+## Current dispatch — 2026-10-13
+
+Resume the existing tasks; do not restart qualified scheduler, protocol or native
+pilot work. The last full run on4192e2f is UNKNOWN with no admitted coverage
+report. Its measured failures and existing diagnostics choose the next packet.
+
+1. Root finishes the prepared pure configuration reuse regression and the
+   one-line existing WeakMap seed after complete operation validation/freezing.
+   One focused RED/GREEN, existing closure-validation controls and the actual
+   denial caller qualify this change; retain the original failed artifacts.
+2. Four blind Luna roles work independently: config/test correctness review,
+   existing-log critical-path analysis, parallel activation boundary review,
+   and verification/dispatch plan check. They read selected existing evidence;
+   they do not run tests, compilers, Git or duplicate inventory/hash scans.
+   Reassign a finished role only to a concrete uncovered question; keep spare
+   slots for disjoint writers/review instead of duplicating the same analysis.
+3. Root alone edits shared protocol/Source/docs, joins any disjoint test writer,
+   runs applicable static and focused checks, then commits/pushes the reviewed
+   packet with ordinary hooks. No observed Source/tests/HEAD edits during checks.
+4. Inspect the remaining evidenced planning cost before choosing the next
+   correction. Existing partial reporter rows locate expensive cases; they are
+   not full-suite totals, complete timing weights or numeric coverage. Preserve
+   live bundle/filesystem/authorization/CAS checks; cache only pure bound values.
+5. Keep production serial until complete current eligibility and required
+   descendant/effect custody are qualified. Do not add an unused v3 preflight
+   builder solely to show progress; implement bindings with their actual caller
+   and focused negative controls when that dependency-ready packet is selected.
+6. After concrete corrections stabilize, Root runs one complete current coverage
+   selection within600000ms. Consume its result once; next corrections use exact
+   failures and direct callers. Global100%, frozen CC/CRAP and confirmed mutation
+   evidence remain open until their separate existing validators admit them.
+
+Acceptance and all existing tasks below are unchanged. One writer per shared
+file and one final-check owner apply throughout; task preparation is not closure.
+
 ## Global Constraints
 
 - 600000ms qualified pinned test/coverage command deadline, including typecheck and nested CRAP;5000ms default per case with justified exceptions. CRAP's300000ms cap is clamped to remaining time; mutation remains independently invoked.

@@ -157,6 +157,15 @@ defines deterministic JSON representation for repeatable integrity bindings.
 VIDA's ledger/component resource bounds are product limits, not limits imposed
 by either reference. Changing traversal budgets must preserve canonical bytes.
 
+For immutable upgrade-plan reuse, the current
+[ECMAScript WeakMap contract](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-weakmap-objects)
+and [get algorithm](https://tc39.es/ecma262/multipage/keyed-collections.html#sec-weakmap.prototype.get)
+bind entries to object identity. Rechecked2026-10-13: the existing config WeakMap
+can retain the configuration already validated for the exact frozen plan after
+all operation guards succeed. A separately parsed journal clone remains a new
+key and must validate independently. This pure reuse carries no filesystem,
+bundle freshness, authorization or CAS evidence; those checks remain live.
+
 The target `.vida` layout and upgrade behavior are specified in
 `../system-specification.md#initialized-project-layout-and-upgrades`.
 Implementation remains part of CLEAR; moving a directory or rerunning the current

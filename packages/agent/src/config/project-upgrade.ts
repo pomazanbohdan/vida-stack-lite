@@ -324,6 +324,7 @@ export function validateProjectUpgradeOperation(value: unknown): ProjectUpgradeO
   assertStorageProgress(operation);
   assertActivationProgress(operation);
   const frozen = freezeJsonValue(operation);
+  originalConfigurations.set(frozen.plan, config);
   validatedOperations.add(frozen);
   return frozen;
 }

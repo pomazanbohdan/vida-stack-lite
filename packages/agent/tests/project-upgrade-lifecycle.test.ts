@@ -2345,3 +2345,61 @@ test('upgrade artifact closure reuse is bounded to the last verified plan and pr
     settleCase(custody);
   }
 }, 90_000);
+
+test('fresh upgrade planning reuses the validated plan configuration during dependency checks', async () => {
+  const custody = beginCase();
+  const root = await makeFreshRepository();
+  addRoot(root, custody);
+  const prepare = artifactProducer.prepareProjectUpgradeArtifacts;
+  const dependencyPaths = artifactProducer.projectUpgradeDependencyPaths;
+  const configsPrepared: Parameters<typeof prepare>[0][] = [];
+  let completedPreparations = 0;
+  let checkedDependencies: Parameters<typeof prepare>[0] | undefined;
+  const prepareSpy = spyOn(artifactProducer, 'prepareProjectUpgradeArtifacts').mockImplementation((...args) => {
+    const prepared = prepare(...args);
+    configsPrepared.push(args[0]);
+    completedPreparations++;
+    return prepared;
+  });
+  const dependencySpy = spyOn(artifactProducer, 'projectUpgradeDependencyPaths').mockImplementation((...args) => {
+    const paths = dependencyPaths(...args);
+    if (completedPreparations >= 2 && checkedDependencies === undefined) checkedDependencies = args[1];
+    return paths;
+  });
+  let qualified = false;
+  try {
+    const planned = await planFresh(root, 'lifecycle-config-reuse-001');
+    expect(completedPreparations).toBe(2); // Real capture and independent derived-closure validation.
+    expect(configsPrepared).toHaveLength(2);
+    expect(checkedDependencies).toBeDefined();
+    expect(configsPrepared[1]).toBeDefined();
+    expect(checkedDependencies === configsPrepared[1]).toBe(true);
+
+    expect(planned).toMatchObject({
+      phase: 'planned',
+      next_file: 0,
+      plan: { database_mode: 'fresh' },
+      storage_phase: 'absent',
+      activation: null,
+    });
+    expect(planned.initial_database).not.toBeNull();
+    expect(await readFile(path.join(root, PROJECT_UPGRADE_OPERATION_PATH), 'utf8')).toBe(
+      JSON.stringify(planned, null, 2) + '\n',
+    );
+    expect(
+      await readFile(path.join(root, PROJECT_WORKSPACE_DATABASE_PATH)).catch((error: unknown) => error),
+    ).toMatchObject({ code: 'ENOENT' });
+    for (const dependency of planned.plan.dependencies) {
+      const current = await readFile(path.join(root, dependency.path), 'utf8').catch((error: unknown) => error);
+      if (dependency.bytes === null) expect(current).toMatchObject({ code: 'ENOENT' });
+      else expect(current).toBe(dependency.bytes);
+    }
+    qualified = true;
+    completeRoot(root);
+  } finally {
+    prepareSpy.mockRestore();
+    dependencySpy.mockRestore();
+    if (!qualified) console.error(`Retained failed fresh config-reuse fixture: ${custody.root ?? 'creation pending'}`);
+    settleCase(custody);
+  }
+});

@@ -111,6 +111,13 @@ its execution does not measure Source coverage.
 
 ## Diagnose and optimize
 
+For pure configuration reuse, observe real public callers and forward to the
+actual producer in spies. Count completed preparation only after it returns,
+then compare the config identity used by the next dependency check. Record a
+positive observation before the identity assertion; use a boolean comparison
+to avoid dumping whole configurations on failure. Keep independently parsed
+journal clones and every live freshness/authority check outside that reuse.
+
 For child diagnostics, check Buffer and offset Uint8Array views with Unicode
 and distinct secret bytes inside/outside the view. Decode through the existing
 output owner before sanitizing/capping; retain raw receipt custody separately.

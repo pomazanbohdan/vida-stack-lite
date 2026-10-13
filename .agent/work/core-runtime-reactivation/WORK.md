@@ -8912,3 +8912,91 @@ spent-deadline retention after FD close, omitted/invalid/changing descriptors,
 and the slow caller's scoped PASS without timeout/speed closure. Root checks
 21local links/headings and skill frontmatter with0errors, plus clean diff
 whitespace. Ordinary staged-snapshot publication gates remain required.
+
+### 2026-10-13 — current full coverage iteration on4192e2f
+
+The user asks to continue and report current coverage. Root confirms HEAD and
+origin/main4192e2f, clean tracked Source/index, preserving BASE/ and root bun.lock.
+Canonical coverage/bun-unified/coverage-final.json is absent; no current functions,
+lines, statements or branches percentage is admitted. Existing UNKNOWN snapshot
+and synthetic fixture reports are not numeric evidence or replay authority.
+
+Run42adcb56-a671-432a-b5bd-a2711d298425 uses the ordinary pinned current coverage
+entry, qualified Bun1.4.3, external TMPDIR /dev/shm/vida-coverage-4192e2f and the
+existing600000ms entry/reserve/typecheck/capture/producer owner. Freeze observed
+Source/tests/HEAD for exec77677. Six bounded blind Luna analyses are read-only;
+none runs runtime/compiler/build/install/Git or another full inventory/hash pass.
+Retain .tmp/coverage-iteration-4192e2f/full-coverage-20261013.log.
+
+Terminal exit1/UNKNOWN: direct producer terminated and its reservation released,
+canonical final report absent.473partial PASS reporter rows/3FAIL are not unique
+full-suite totals or coverage. Early project-upgrade denial worker planning takes
+10289.5ms; its UNKNOWN-intent hook/body fails at8088.78ms and the shared worker
+18s orchestration expires without four named results/retained-root records.
+Assertions themselves were not shown failing. The third run-entrypoint
+implementation_change recovery case inherits only2772ms near the spent global
+allowance; actual SIGKILL/timeout and uncertain outcome remain retained. It does
+not independently prove a new product/CAS defect. Preserve original run, every
+failed/UNKNOWN consumer and missing descendant/effect proof; do not replay them.
+
+After the terminal boundary, Root runs only the exact denial UNKNOWN-intent
+case using existing CPU/read/timing diagnostics, with fresh owned fixture and
+alloriginal5000ms default/UNKNOWN assertions. NativePASS1/0FAIL/10assertions,
+case3188.79ms/file4.86s. Phase planning2043.9ms. Diagnostic exported APIs report
+21parse config calls630.67ms,22validate calls445.52ms,7package path calls54.05ms;
+1472package reads return52,845,788bytes/836.25ms. These are inclusive overlapping
+observations, not additive wall time or same-instrumentation speedup. The retained
+known-pending fixture is project-upgrade-denial-9VdUsQ; never use it to resume a
+previous uncertain operation. Saved diagnostic log is denial-planning-focused-
+diagnostics-20261013.log in the same iteration directory.
+
+Read-only analysis identifies a bounded pure-work reuse gap: validator computes
+original config before freezing parsed plan, so its WeakMap remains unseeded;
+the first later helper on that same frozen plan reparses identical bytes. Reuse
+the computed config after freeze under the existing WeakMap, retaining clone-level
+validation and every live bundle/filesystem/auth/CAS/UNKNOWN/durable fence. Root
+owns that one Source writer; a disjoint Luna test writer prepares an actual
+public fresh-planning control observing the config identity passed through real
+artifact preparation and dependency checks before Source correction.
+No cross-clone cache, live hash reuse, timeout increase or production parallel
+activation is proposed. Numeric100%/frozen CC-CRAP/confirmed mutation100 stay OPEN.
+
+### 2026-10-13 — resumed config reuse and optimized dispatch
+
+The user resumes after the explicit pause and asks Superpowers to optimize steps
+and delegation. No work ran during the pause. Retained Source/test/doc changes,
+BASE/ and root bun.lock survive. Fresh fetch is0/0 against origin/main4192e2f.
+The current parallel implementation plan now owns the bounded dispatch order;
+four fresh blind Luna roles review correctness, existing timing evidence,
+activation dependencies and verification order. Root alone runs checks/Git and
+owns shared Source/docs. Spare slots are for uncovered disjoint work, not copies
+of completed analysis. The proposal for an unused v3 binding builder is deferred
+until it can ship with its real caller and complete admission prerequisites.
+
+The prepared actual public-planning regression assertion-fails before the fix:
+expected same config identity, receivedfalse; case1899.42ms/terminal1. Retain
+project-upgrade-lifecycle-Bt6spU. Root seeds the existing originalConfigurations
+WeakMap with the just-validated config and exact frozen plan after all guards.
+No new helper/API/cache, no clone-level shortcut and no live guard removal.
+ECMAScript object-key identity was checked against the current official spec;
+the existing research owner records its applicability. Blind review finds no
+blocker and limits this test's claims to pure reuse and observed planning effects.
+
+Strict static/type/lint PASS with435capturedTS files,434combined/97Source files
+and0diagnostics. Focused native regression plus existing independent closure,
+clone, changed-plan and malformed-operation controls:2PASS/0FAIL/41assertions,
+5.37s total. Exact denial diagnostic:1PASS/0FAIL/10assertions,3372.83ms/case;
+parse calls21->16 and validate calls22->17, while package path calls remain7
+and package reads1472. Source bytes changed, so returned-byte totals differ;
+no IO reduction or wall-time speedup is claimed. Preserve known-pending fixture
+project-upgrade-denial-HNBBFk. The actual bounded four-case denial parent also
+passes,12162.97ms, with its existing18s worker/20s parent and5s per-case defaults;
+its health oracle validates all four named child cases,0fail and distinct custody.
+Retained known-pending roots are h5fATC,2uCJvS,tNths4,l5t4Fb under the same
+project-upgrade-denial prefix. This native pass does not erase full-run UNKNOWN.
+
+Logs: .tmp/coverage-iteration-4192e2f/config-reuse-{red-native,green-static,
+green-native,denial-diagnostics,denial-pool}-20261013.log. No accepted global
+coverage report, frozen CRAP result, mutation100 or Runtime update is established.
+Ordinary commit/push follows the reviewed packet; no broad recovery/pilot rerun
+is added solely to publish this focused correction.
