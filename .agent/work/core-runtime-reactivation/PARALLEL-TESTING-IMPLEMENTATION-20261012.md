@@ -45,6 +45,20 @@ report. Its measured failures and existing diagnostics choose the next packet.
 Acceptance and all existing tasks below are unchanged. One writer per shared
 file and one final-check owner apply throughout; task preparation is not closure.
 
+Current result after publication9f26769: full run037062bf remains UNKNOWN after
+the producer allowance under the600000ms entry cap is spent. The formerly failing four-case denial
+worker passes in14785.44ms; implementation_change recovery later receives only
+2438ms for its interrupted child. The474PASS/1FAIL reporter rows are partial,
+not an admitted selection or coverage percentage. Do not repeat this full run
+without another concrete correction. Read-only reviews found no safe call
+deletion in the distinct recovery/Source-rights scenarios, and no further proven
+config shortcut without widening validation trust. Next prioritize Task4 reader
+caller/overlap qualification and Task3 resource-quiescence proof as independent
+bounded investigations; only then select the production-binding integration
+packet. Keep one Source/protocol writer and a disjoint test writer per packet.
+Existing public CLI timings are sufficient to select that work; do not create a
+separate benchmark lane, extend limits or remove required restart/CAS assertions.
+
 ## Global Constraints
 
 - 600000ms qualified pinned test/coverage command deadline, including typecheck and nested CRAP;5000ms default per case with justified exceptions. CRAP's300000ms cap is clamped to remaining time; mutation remains independently invoked.

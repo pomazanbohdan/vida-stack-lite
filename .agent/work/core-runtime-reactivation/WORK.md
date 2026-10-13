@@ -9000,3 +9000,37 @@ green-native,denial-diagnostics,denial-pool}-20261013.log. No accepted global
 coverage report, frozen CRAP result, mutation100 or Runtime update is established.
 Ordinary commit/push follows the reviewed packet; no broad recovery/pilot rerun
 is added solely to publish this focused correction.
+
+Publication completed normally: commit9f26769, ordinary precommit formatting/
+strict type/lint/Knip checks exit0; ordinary non-force push advances main from
+4192e2f. No unrelated untracked files were staged. The user-directed dispatch
+update and Source correction are both in that reviewed packet.
+
+Root then performs one full current coverage run on stable9f26769, external
+TMPDIR /dev/shm/vida-coverage-9f26769, existing600000ms entry budget, same pinned
+owner and one capture. Exec25986 terminates1; run037062bf-3863-4b7f-b4aa-e1ca8884297e
+is UNKNOWN with its direct producer terminated and reservation released. The
+canonical final report is absent. Keep all run/consumer custody; no descendant
+or effect quiescence is inferred. Log:
+.tmp/coverage-iteration-9f26769/full-coverage-20261013.log.
+
+Observed progress: the actual four-case denial parent passes14785.44ms in the
+full run, preserving all four distinct known-pending fixtures and original bounds.
+The former denial health failure does not recur. Partial reporter rows are now
+474PASS/1FAIL, compared with473PASS/3FAIL before; these are not unique suite totals
+or percentages. The remaining implementation_change recovery case inherits a
+shrinking global allowance; its interrupted child receives2438ms and reports
+SIGKILL/ETIMEDOUT, cleanupESRCH and uncertain outcome at run-entrypoint.test.ts:2384.
+The parent fails at25057.73ms. This is an elapsed-budget blocker, not evidence of
+a changed CAS or product assertion defect. implementation_new passes54909.59ms.
+
+Two further blind Luna reviews inspect the existing long recovery and stopped-
+Source cases. No safe call deletion is identified: public restart, separately
+issued disjoint/overlapping rights, current-state denial and immutable package
+checks prove distinct required boundaries. Another pure-config review finds no
+further bounded reuse without expanding trust beyond this packet. Do not turn
+these hypotheses into new bypass helpers/caches or repeat the same full run.
+The current parallel plan records dependency-ready reader/caller qualification
+and resource-quiescence proof before actual production integration. Global100%
+coverage/frozen CC-CRAP/confirmed mutation100 and isolated Runtime qualification
+remain OPEN. No system update, unblock claim or external notice was issued.
