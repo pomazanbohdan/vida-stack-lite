@@ -308,6 +308,16 @@ once. Generated association slices remain unreviewed until their owner checks
 the new file/name identities; this does not admit private parallel eligibility.
 Domain declaration order is retained; moving files changes cross-file ordering
 and still requires the existing module/mocking resource review.
+Next smallest Source eligibility group is now extracted:3registration expressions/
+6expanded cases in runtime-config-rebind-source.test.ts. Exact callback, matrix,
+assertion and timeout AST stays equal to the immediate pre-move capture;
+all97registrations across original/delivery/limits/source remain exactly once.
+The destination registers existing cleanup once and both repair/mutation
+selections include it once. Strict TS/lint and6native cases/26assertions PASS;
+case times169.30–1307.16ms,7.47s command. Existing30_000 overrides remain.
+This qualifies the move and named-case lineage only. Generated scenario/association
+slices remain unreviewed until their existing owner validates changed file/hash
+bindings; shared fixture/native state and package conflict stay enforced.
 
 ## Task5: Controlled comparison and expansion
 

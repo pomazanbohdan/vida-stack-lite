@@ -9520,3 +9520,42 @@ Final blind contract review confirms the changed retention/terminal paths and
 supported transition. Automatic-admission and run-entrypoint disposal are next
 read-only candidates: lack of a predicate alone is not a confirmed defect;
 require an actual unresolved state at deletion before changing those owners.
+
+Published3f945a9 with ordinary hooksPASS and non-force push; fetch confirms
+0ahead/0behind origin/main. Follow-up read-only audit could not substantiate an
+actual reserved/commit_unknown producer outcome followed by deletion in the
+automatic-admission/absorption or run-entrypoint candidates. Their observed
+admission/seeded denial states and child-UNKNOWN retention differ from the
+confirmed defect. No speculative predicate or redundant repair is added there.
+
+Continue Task4 with the smallest remaining Source eligibility domain. One blind
+Luna writer moves exactly3registrations/6expanded cases into
+tests/runtime-config-rebind-source.test.ts; Root owns package/mutation/docs and
+checks. Bounded Babel comparison against the immediate pre-move capture proves
+exact callback/assertion/matrix/timeout AST equality and all97registrations once
+across original/delivery/limits/source. The first comparison counted only top-level
+registrations and missed two existing loop registrations; corrected traversal
+qualifies the complete97-expression union. It is not new execution evidence.
+
+Exact file/name tuple lineage from tests/runtime-config-rebind.test.ts to
+tests/runtime-config-rebind-source.test.ts:
+
+- Source rebind rejects source bytes drift before acquiring maintenance
+- Source rebind rejects inventory addition drift before acquiring maintenance
+- Source rebind rejects selector appearance drift before acquiring maintenance
+- Source rebind rejects workspace identity drift before acquiring maintenance
+- a consumer without selector cannot use Source rebind
+- Source rejects a preexisting consumer-shaped selector without state changes
+
+Both repair phase and existing bun-runtime-config-rebind mutation partition
+include the new file once, with remaining original/delivery/limits paths retained.
+The destination owns one explicit cleanup registration. Two unused imports from
+the worker's proposal are removed; strict438capturedTS/437program plus97Source
+PASS,0diagnostics, lintPASS. Native moved-domain selection6PASS/0FAIL/26assertions/
+7.47s; case times169.30–1307.16ms. Existing30_000 overrides and semantic bodies
+remain unchanged. Blind review finds no blocking regression; shared native/PATH
+cleanup state still precludes automatic concurrency eligibility. Logs
+rebind-source-domain-lineage.json, -static.log, -lint.log and -focused.log retain
+evidence. Source function identities remain unchanged. Generated association/
+scenario slices need current file/hash binding review and remain unreviewed;
+no full-suite, coverage, frozen CRAP or mutation admission follows from the move.

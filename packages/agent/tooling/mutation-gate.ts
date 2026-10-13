@@ -693,6 +693,7 @@ const partitions: MutationPartition[] = [
       'tests/runtime-config-rebind.test.ts',
       'tests/runtime-config-rebind-delivery.test.ts',
       'tests/runtime-config-rebind-limits.test.ts',
+      'tests/runtime-config-rebind-source.test.ts',
     ],
     report: 'mutation-bun-runtime-config-rebind.json',
   },
