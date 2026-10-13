@@ -5,7 +5,11 @@ import path from 'node:path';
 import { requireSafeRepositoryAccess } from './safe-repository-access.js';
 import {
   assertWorkspaceDatabaseRelativePath,
+  closeNativeWorkspaceDatabase,
+  forgetWorkspaceDatabaseClose,
   openUnadmittedWorkspaceDatabase,
+  retainFailedWorkspaceDatabaseClose,
+  retryPendingWorkspaceDatabaseCloses,
   workspaceDatabaseFileIdentity,
 } from './workspace-database-raw.js';
 
@@ -81,7 +85,7 @@ function openGate(root: string, readonly: boolean): Database {
     return database;
   } catch (error) {
     try {
-      database.close(true);
+      closeNativeWorkspaceDatabase(database);
     } catch (closeError) {
       throw new AggregateError([error, closeError], 'gate validation and close failed');
     }
@@ -192,7 +196,7 @@ function ensureGate(root: string, workspaceId: string): void {
     errors.push(error);
   }
   try {
-    database.close(true);
+    closeNativeWorkspaceDatabase(database);
   } catch (error) {
     errors.push(error);
   }
@@ -215,13 +219,21 @@ export function assertOnlyStorageAdmissionGate(root: string, workspaceId: string
   );
   const identity = gateIdentity(root);
   const database = openGate(root, true);
+  const errors: unknown[] = [];
   try {
     assertGateRow(database, workspaceId);
     assertClosedGateSchema(database);
     assertGateIdentity(root, identity);
-  } finally {
-    database.close(true);
+  } catch (error) {
+    errors.push(error);
   }
+  try {
+    closeNativeWorkspaceDatabase(database);
+  } catch (error) {
+    errors.push(error);
+  }
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) throw new AggregateError(errors, 'gate inspection and close failed');
   assertNoGateSidecars(access);
 }
 
@@ -240,13 +252,15 @@ interface AdmissionState {
   sourceDatabase: Database | null;
   sourceClosed: boolean;
   live: boolean;
+  closing: boolean;
+  readonly retryGateClose: (database: Database) => void;
 }
 const admissionStates = new WeakMap<object, AdmissionState>();
 const databaseAdmissions = new WeakMap<Database, AdmissionState>();
-const pendingDatabaseCloses = new Set<Database>();
 
 function releaseAdmission(state: AdmissionState): void {
   if (!state.live) return;
+  state.closing = true;
   const errors: unknown[] = [];
   try {
     if (state.gateDatabase.inTransaction) state.gateDatabase.exec('ROLLBACK');
@@ -255,9 +269,12 @@ function releaseAdmission(state: AdmissionState): void {
   }
   try {
     state.gateDatabase.close(true);
+    forgetWorkspaceDatabaseClose(state.gateDatabase);
     state.live = false;
     admissionStates.delete(state.admission);
   } catch (error) {
+    if (state.sourceDatabase === null) retainFailedWorkspaceDatabaseClose(state.gateDatabase, state.retryGateClose);
+    else retainFailedWorkspaceDatabaseClose(state.sourceDatabase, closeWorkspaceDatabaseWithAdmission);
     errors.push(error);
   }
   if (state.live) throw new AggregateError(errors, 'storage admission remains in cleanup custody');
@@ -267,7 +284,7 @@ function releaseAdmission(state: AdmissionState): void {
 
 function leaseState(admission: StorageReadAdmission): AdmissionState {
   const state = admissionStates.get(admission);
-  requireAdmission(state !== undefined && state.live, 'storage admission is invalid or expired');
+  requireAdmission(state !== undefined && state.live && !state.closing, 'storage admission is invalid or expired');
   return state;
 }
 
@@ -284,6 +301,7 @@ function assertLeaseOwner(admission: StorageReadAdmission, root: string, relativ
 export function acquireStorageReadAdmission(root: string, workspaceId: string, relative: string): StorageReadAdmission {
   assertSupportedArguments(root, workspaceId);
   assertWorkspaceDatabaseRelativePath(relative);
+  retryPendingWorkspaceDatabaseCloses();
   ensureGate(root, workspaceId);
   const identity = gateIdentity(root);
   const database = openGate(root, true);
@@ -312,12 +330,14 @@ export function acquireStorageReadAdmission(root: string, workspaceId: string, r
       sourceDatabase: null,
       sourceClosed: false,
       live: true,
+      closing: false,
+      retryGateClose: () => releaseAdmission(state),
     };
     admissionStates.set(lease, state);
     return lease;
   } catch (error) {
     try {
-      database.close(true);
+      closeNativeWorkspaceDatabase(database);
     } catch (closeError) {
       throw new AggregateError([error, closeError], 'admission open and close failed');
     }
@@ -347,43 +367,31 @@ function bindWorkspaceStorageAdmission(
 export function closeWorkspaceDatabaseWithAdmission(database: Database): void {
   const state = databaseAdmissions.get(database);
   if (!state) {
-    database.close(true);
+    closeNativeWorkspaceDatabase(database);
     return;
   }
+  state.closing = true;
   try {
     if (!state.sourceClosed) {
       database.close(true);
       state.sourceClosed = true;
     }
   } catch (error) {
-    pendingDatabaseCloses.add(database);
+    retainFailedWorkspaceDatabaseClose(database, closeWorkspaceDatabaseWithAdmission);
     throw new AggregateError([error], 'source database close failed; admission remains held for retry');
   }
   try {
     releaseAdmission(state);
     databaseAdmissions.delete(database);
-    pendingDatabaseCloses.delete(database);
+    forgetWorkspaceDatabaseClose(database);
   } catch (error) {
-    if (state.live) pendingDatabaseCloses.add(database);
+    if (state.live) retainFailedWorkspaceDatabaseClose(database, closeWorkspaceDatabaseWithAdmission);
     else {
       databaseAdmissions.delete(database);
-      pendingDatabaseCloses.delete(database);
+      forgetWorkspaceDatabaseClose(database);
     }
     throw error;
   }
-}
-
-/** Retry only exact package-owned handles retained after a failed close. */
-function retryPendingDatabaseCloses(): void {
-  const errors: unknown[] = [];
-  for (const database of pendingDatabaseCloses) {
-    try {
-      closeWorkspaceDatabaseWithAdmission(database);
-    } catch (error) {
-      errors.push(error);
-    }
-  }
-  if (errors.length > 0) throw new AggregateError(errors, 'pending workspace database closes remain unresolved');
 }
 
 /** Acquire before the existing-only source open, with paired cleanup on any open/validation error. */
@@ -396,8 +404,8 @@ export function openAdmittedWorkspaceDatabase(
 ): Database {
   assertSupportedArguments(root, workspaceId, readonly, safeIntegers);
   assertWorkspaceDatabaseRelativePath(relative);
-  return openDatabaseWithStorageAdmission(root, workspaceId, relative, () =>
-    openUnadmittedWorkspaceDatabase(root, relative, readonly, safeIntegers),
+  return openDatabaseWithStorageAdmission(root, workspaceId, relative, (capture) =>
+    openUnadmittedWorkspaceDatabase(root, relative, readonly, safeIntegers, capture),
   );
 }
 
@@ -413,8 +421,8 @@ export function openExistingWorkspaceDatabaseWithAdmission(
   assertWorkspaceDatabaseRelativePath(relative);
   const state = leaseState(admission);
   assertSupportedArguments(root, state.workspaceId, readonly, safeIntegers);
-  return openAndBindWorkspaceDatabase(root, relative, state.workspaceId, admission, () =>
-    openUnadmittedWorkspaceDatabase(root, relative, readonly, safeIntegers),
+  return openAndBindWorkspaceDatabase(root, relative, state.workspaceId, admission, (capture) =>
+    openUnadmittedWorkspaceDatabase(root, relative, readonly, safeIntegers, capture),
   );
 }
 
@@ -487,7 +495,7 @@ const withExclusiveStorageAdmissionOwner = async <T, A>(
     typeof verifyHeldOwner === 'function' && typeof operation === 'function',
     'gate callbacks are required',
   );
-  retryPendingDatabaseCloses();
+  retryPendingWorkspaceDatabaseCloses();
   ensureGate(root, workspaceId);
   const identity = gateIdentity(root);
   const database = openGate(root, false);
@@ -523,7 +531,7 @@ const withExclusiveStorageAdmissionOwner = async <T, A>(
     }
   }
   try {
-    database.close(true);
+    closeNativeWorkspaceDatabase(database);
   } catch (error) {
     errors.push(error);
   }
@@ -566,7 +574,7 @@ export function assertWorkspaceDatabaseAdmission(
 ): void {
   const state = databaseAdmissions.get(database);
   requireAdmission(
-    state !== undefined && state.live && state.sourceDatabase === database && !state.sourceClosed,
+    state !== undefined && state.live && !state.closing && state.sourceDatabase === database && !state.sourceClosed,
     'workspace database lacks a live paired admission lease',
   );
   assertLeaseOwner(state.admission, root, relative, workspaceId);

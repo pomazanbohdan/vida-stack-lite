@@ -204,6 +204,17 @@ properties. The replacement and bundle-owned repair must qualify before an
 active reader/layout switch; never delete an existing gate or replay UNKNOWN
 to make the workspace appear compliant.
 
+Closing a read admission expires its ordinary access authority immediately,
+even when native close fails. Keep the exact connection with its existing
+cleanup owner and retry before admitting another read or exclusive owner.
+An associated source and gate have one paired cleanup owner: source close
+precedes gate close, and each retry pass makes at most one gate close attempt.
+An unbound lease retains only its gate cleanup owner. Internal open capture
+records the exact handle synchronously before any fallible check; invoking
+capture transfers cleanup custody even if that check throws. Capture grants
+no verified identity, admission or execution rights. Preserve both operation
+and cleanup errors rather than replacing one with the other.
+
 The current separate storage-admission database remains a compatibility
 implementation GAP against that target. Its uninitialized exact zero-byte file
 may be completed under an exclusive

@@ -475,6 +475,15 @@ outside the editable target. Close admitted Host/workspace database handles
 with the admission-aware wrapper or their owning fixture/store close method,
 so the source connection closes before its paired gate lease.
 
+For close-custody controls, expire read authority at the first close attempt
+and retain exact handles with their original cleanup owner. Reader and exclusive
+admission both retry before a new owner. An associated source owns gate cleanup,
+with one gate attempt per retry pass; an unbound lease owns only its gate.
+An internal capture callback records its handle before fallible binding and
+owns cleanup on callback failure. Distinguish an injected pre-native close
+interruption from a real SQLite I/O close fault. Preserve body and cleanup
+errors, and retain failed or expired fixture roots.
+
 After a verified change to Bun Test practices, update the authoritative owner
 and this reference in the same correction packet. Validate linked paths,
 frontmatter and commands; use blind scenario exercises for changed guidance.

@@ -10360,3 +10360,63 @@ Ordinary staged hook denies three unsafe any assignments in the new inert native
 observation's env reconstruction. Explicit unknown locals + string guards repair
 the boundary; native final control1PASS/3.14scommand,2438msbody. No hook bypass;
 the failing hook log is retained and exact final staged checks run again.
+
+### Single-database prerequisite: exact close custody — 2026-10-13
+
+The user's one-persistent-DB target includes admission coordination. Current
+`storage-admission.v1.sqlite` remains an implementation GAP; no gate deletion,
+active loader/layout switch, legacy overlap relaxation or archived UNKNOWN replay
+is authorized by this packet. Existing Linux/Bun1.4.3/SQLite3.53.4 WAL mechanism
+research is reused without another probe. Product lifetime/cross-process/crash
+qualification and bundle-owned bootstrap/repair still precede retirement.
+
+One shared exact-handle close registry replaces the admission-local set.
+Unassociated raw handles retain their native owner; an associated source retains
+its paired owner and closes before its gate. Closing expires read authority
+immediately while cleanup custody remains. Reader and exclusive admission retry
+before ensure/open/owner callbacks. Open capture transfers cleanup custody before
+callback invocation and postguards; its internal caller records the handle
+synchronously before fallible binding. Capture grants no identity or execution
+rights. Gate inspection retains both identity and cleanup failures. Existing
+service-operation and upgrade raw cleanup sites use the same native owner; CAS,
+authorization, source identity and UNKNOWN rules remain.
+
+Blind review found ordinary-reader retry bypass, competing raw/paired cleanup
+on capture failure, and duplicated paired gate retries. Causal retained RED logs
+are `admission-read-close-custody-red.log`, `raw-capture-sole-owner-red.log`, and
+`paired-close-once-red.log` under `.tmp/p0p1-3f3dc1a/`. Their failed roots remain.
+The exclusive failure REDs from the preceding continuation are also retained.
+Final focused native controls12PASS/123assertions/3.21s; boundary faults interrupt
+before native close and do not establish actual SQLite I/O-close failure behavior.
+
+Affected caller selection26PASS/230assertions/22.86s emitted no assertion FAIL,
+but concurrent static execution pushed the existing upgrade inspection case to
+5376.71ms: its expired root is retained, so this is not qualified five-second
+evidence for that case. Run its changed assertion/inspection controls alone
+after static checks. Static found a mutable source reference not narrowed inside
+a closure, then an any-returning asymmetric matcher; both test-only boundaries
+were corrected without relaxing rules. Final static/inspection/publication
+receipts are pending below; no global coverage/CRAP/Killed receipt follows.
+
+New generic functions in `workspace-database-raw.ts` are
+`retainFailedWorkspaceDatabaseClose`, `forgetWorkspaceDatabaseClose`,
+`retryPendingWorkspaceDatabaseCloses`, and `closeNativeWorkspaceDatabase`.
+The admission retry role moves to the shared retry owner; existing paired close
+and raw opener roles are changed, not silently NEW. Blind prospective inspection
+accepts CC/CRAP ceilings10/10 for these new generic helpers, before numeric
+measurement; it is not measured budget evidence or exhaustive frozen mapping.
+Canonical Babel IDs/source/test/config hashes and retained-role correspondence
+remain the maintained inventory/frozen gate owner's next current capture.
+The new raw test file joins exactly one maintained package phase. Reuse affected
+passing evidence only while its bindings remain current; do not repeat an
+unchanged full serial UNKNOWN run. Complete current eligibility, exhaustive
+frozen correspondence and exact numeric gates remain OPEN.
+
+Final static qualificationPASS:448capturedTS/447program and100Source,
+0diagnostics; typedlintPASS. Final inspection controls run without compiler
+competition2PASS/17assertions/2.95s (1255.43ms/108.89ms bodies), without widening
+the5000ms per-test default. The earlier expired root remains retained; this new
+run does not relabel it. Blind final review accepts the inspected custody,
+capture, rollback and terminal-expiry contracts with no blocker. Its review of
+prospective10/10 helper budgets is nonnumeric. Ordinary commit/push pending;
+all final global gates and the actual one-DB cutover stay OPEN.

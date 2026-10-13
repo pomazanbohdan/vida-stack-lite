@@ -4,7 +4,11 @@ import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { HostStateStore, type MaintenanceFenceBinding, type MaintenanceFenceReceipt } from '../host-state.js';
-import { assertWorkspaceDatabaseRelativePath, openUnadmittedWorkspaceDatabase } from './workspace-database-raw.js';
+import {
+  assertWorkspaceDatabaseRelativePath,
+  closeNativeWorkspaceDatabase,
+  openUnadmittedWorkspaceDatabase,
+} from './workspace-database-raw.js';
 import { requireSafeRepositoryAccess } from './safe-repository-access.js';
 import {
   acquireStorageReadAdmission,
@@ -84,7 +88,7 @@ function withDatabaseClose<T>(database: Database, work: () => T, message: string
     errors.push(error);
   }
   try {
-    database.close(true);
+    closeNativeWorkspaceDatabase(database);
   } catch (error) {
     errors.push(error);
   }
@@ -110,7 +114,7 @@ function checkpointAndClose(root: string, relative: string): void {
     errors.push(error);
   }
   try {
-    database.close(true);
+    closeNativeWorkspaceDatabase(database);
   } catch (error) {
     errors.push(error);
   }

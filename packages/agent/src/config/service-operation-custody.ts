@@ -10,7 +10,7 @@ import {
   withExclusiveServiceOperationAdmission,
 } from './storage-read-admission.js';
 import { openExistingWorkspaceDatabase } from './workspace-database.js';
-import { openUnadmittedWorkspaceDatabase } from './workspace-database-raw.js';
+import { closeNativeWorkspaceDatabase, openUnadmittedWorkspaceDatabase } from './workspace-database-raw.js';
 export { serviceOperationLaunchCapabilityMatches } from './service-operation-launch-capability.js';
 
 type ServiceOperationKind = 'release-pack-worker' | 'release-worker';
@@ -558,7 +558,7 @@ export async function handoffServiceOperationCustody(
           );
           return found;
         },
-        () => source.close(true),
+        () => closeNativeWorkspaceDatabase(source),
         'handoff source read and close failed',
       );
       const revision = nextRevision(prior.revision);
@@ -596,7 +596,7 @@ export async function handoffServiceOperationCustody(
           result = readRow(database, workspaceId, operationId) ?? undefined;
           requireCustody(result !== undefined, 'handed-off owner row disappeared');
         },
-        () => database.close(true),
+        () => closeNativeWorkspaceDatabase(database),
         'handoff CAS and close failed',
       );
     },
@@ -643,7 +643,7 @@ export async function reconcileServiceOperationCustody(
           );
           return prior;
         },
-        () => database.close(true),
+        () => closeNativeWorkspaceDatabase(database),
         'reconciliation source read and close failed',
       );
     },
@@ -683,7 +683,7 @@ export async function reconcileServiceOperationCustody(
         }
         if (database !== undefined) {
           try {
-            database.close(true);
+            closeNativeWorkspaceDatabase(database);
           } catch (cleanupError) {
             cleanupErrors.push(cleanupError);
           }
@@ -722,7 +722,7 @@ export async function reconcileServiceOperationCustody(
           result = readRow(database, workspaceId, operationId) ?? undefined;
           requireCustody(result !== undefined, 'reconciled owner row disappeared');
         },
-        () => database.close(true),
+        () => closeNativeWorkspaceDatabase(database),
         'reconciliation CAS and close failed',
       );
     },

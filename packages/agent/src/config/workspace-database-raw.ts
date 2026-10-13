@@ -8,6 +8,44 @@ export interface WorkspaceDatabaseFileIdentity {
   readonly ino: number;
 }
 const openedFileIdentities = new WeakMap<Database, WorkspaceDatabaseFileIdentity>();
+const pendingDatabaseCloses = new Map<Database, (database: Database) => void>();
+
+/** Keep only exact package-owned handles and their existing native or paired cleanup owner. */
+export function retainFailedWorkspaceDatabaseClose(database: Database, retry: (database: Database) => void): void {
+  const previous = pendingDatabaseCloses.get(database);
+  requireDatabase(previous === undefined || previous === retry, 'pending close belongs to another cleanup owner');
+  pendingDatabaseCloses.set(database, retry);
+}
+
+export function forgetWorkspaceDatabaseClose(database: Database): void {
+  pendingDatabaseCloses.delete(database);
+}
+
+/** Cleanup grants no open, migration or execution rights; stop before a new owner if any retry fails. */
+export function retryPendingWorkspaceDatabaseCloses(): void {
+  const errors: unknown[] = [];
+  for (const [database, retry] of [...pendingDatabaseCloses]) {
+    if (pendingDatabaseCloses.get(database) !== retry) continue;
+    try {
+      retry(database);
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length || pendingDatabaseCloses.size)
+    throw new AggregateError(errors, 'pending workspace database closes remain unresolved');
+}
+
+/** Native-only handles have no paired lease. Never use this to bypass an admitted source's close owner. */
+export function closeNativeWorkspaceDatabase(database: Database): void {
+  try {
+    database.close(true);
+    forgetWorkspaceDatabaseClose(database);
+  } catch (error) {
+    retainFailedWorkspaceDatabaseClose(database, closeNativeWorkspaceDatabase);
+    throw error;
+  }
+}
 
 /** Verified physical identity from this existing-only opener; it grants no Host or workflow rights. */
 export function workspaceDatabaseFileIdentity(database: Database): WorkspaceDatabaseFileIdentity {
@@ -64,16 +102,22 @@ export function assertWorkspaceDatabaseRelativePath(relative: unknown): asserts 
   );
 }
 
-/** Private raw opener. Only an admission owner or the exclusive migration coordinator may call it. */
+/**
+ * Private raw opener. Only admission or exclusive migration owns this entry.
+ * A capture callback must record the handle synchronously before it can throw;
+ * invoking it transfers all cleanup custody, including callback failure.
+ */
 export function openUnadmittedWorkspaceDatabase(
   repositoryRoot: string,
   relative: string,
   readonly: boolean,
   safeIntegers = false,
+  capture?: (database: Database) => void,
 ): Database {
   assertWorkspaceDatabaseRelativePath(relative);
   requireDatabase(typeof readonly === 'boolean', 'explicit access mode required');
   requireDatabase(typeof safeIntegers === 'boolean', 'explicit integer mode required');
+  requireDatabase(capture === undefined || typeof capture === 'function', 'database capture callback required');
   const access = requireSafeRepositoryAccess(repositoryRoot);
   const parent = path.posix.dirname(relative);
   const parentIdentity = access.directoryIdentity(parent, 'existing database parent');
@@ -82,7 +126,12 @@ export function openUnadmittedWorkspaceDatabase(
   const before = regularDatabase(file);
   checkSidecars(file);
   const database = new Database(file, { create: false, readonly, readwrite: !readonly, strict: true, safeIntegers });
+  let transferred = false;
   try {
+    if (capture) {
+      transferred = true;
+      capture(database);
+    }
     const after = regularDatabase(file);
     requireDatabase(
       before.dev === after.dev &&
@@ -100,8 +149,10 @@ export function openUnadmittedWorkspaceDatabase(
     openedFileIdentities.set(database, Object.freeze(before));
     return database;
   } catch (error) {
+    // Capture grants cleanup custody only; it does not bypass any identity or admission guard.
+    if (transferred) throw error;
     try {
-      database.close(true);
+      closeNativeWorkspaceDatabase(database);
     } catch (cleanup) {
       throw new AggregateError([error, cleanup], 'Workspace database open and close failed');
     }

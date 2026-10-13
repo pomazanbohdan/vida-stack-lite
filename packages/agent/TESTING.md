@@ -1055,6 +1055,17 @@ method. Raw SQLite `.close()` does not release the paired storage-admission
 gate lease. Keep the source-close then gate-close order and retain failed or
 uncertain fixtures under their existing custody owner.
 
+Failed native closes retain the exact handle and its existing cleanup strategy
+in the shared workspace close owner. Both reader and exclusive admission retry
+that custody before opening a new owner. Closing immediately expires ordinary
+read authority; cleanup remains permitted. Qualify source-before-gate ordering,
+one gate attempt per retry pass, callback failure after capture, and body plus
+cleanup error retention. An internal capture callback records the handle before
+fallible binding and owns cleanup even when it throws. Injected interruptions
+before a native close prove this custody contract; they do not prove native
+SQLite I/O failure behavior. These controls do not qualify auxiliary-gate
+retirement or the pending one-workspace-DB cutover.
+
 When a caller sets a parent deadline, every nested command uses its remaining allowance. Setup, sequential children and recovery do not restart that budget. Reject expired or malformed deadline metadata before launching another child. Preserve the original process-tree deadline through clock changes.
 
 Reserve cleanup and report time within the parent budget. A positive reserve gives cleanup at most its allocated half. A zero reserve keeps the existing unpartitioned behavior. No remaining cleanup time means an unattempted UNKNOWN outcome.

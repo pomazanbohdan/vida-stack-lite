@@ -67,6 +67,16 @@ database with qualified lifetime exclusion and bundle-owned repair; it remains
 OPEN. Join these causal controls and ordinary static/review/publication first,
 then consume one complete current run under the unchanged300000ms allowance.
 
+The close-custody prerequisite uses one package-owned exact-handle retry registry,
+without another database or lock file. Reader and exclusive admission both retry
+before new ownership. Captured handles keep one cleanup owner even when binding
+throws; associated source cleanup precedes its gate and attempts that gate once
+per pass. Pre-native fault controls qualify custody only. Main-inode WAL lifetime
+locking, interrupted bootstrap/repair and active layout cutover remain OPEN;
+this correction does not retire auxiliary admission storage or grant shard
+eligibility. Keep expensive compiler/lint checks before the final runtime cases
+to avoid competing CPU load inside individual five-second test deadlines.
+
 Resume the existing tasks; do not restart qualified scheduler, protocol or native
 pilot work. Current full runca5209ff is UNKNOWN at600000ms with no admitted coverage report.
 Its emitted rows have no assertion FAIL before interruption; all5quarantine
