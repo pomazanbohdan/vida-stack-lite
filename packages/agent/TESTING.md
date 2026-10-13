@@ -12,6 +12,10 @@ Read operational status from the current work and release evidence. Version
 text and passing Source checks do not prove installation or Runtime acceptance.
 Keep dated runs, failed logs and audit history in their evidence stores.
 Preserve FAIL and UNKNOWN. Missing numeric reports remain explicit gaps.
+An expected-UNKNOWN fixture remains retained even when its denial assertions
+pass. Its test owner marks retention separately from successful case completion.
+For serial cases, an onTestFinished assertion can check exact retained bytes
+after afterEach; the hook itself does not establish success or quiescence.
 
 Coverage must use a provider compatible with Bun and report all required
 metrics. The frozen-budget CRAP policy must match its executable gate; a fixed

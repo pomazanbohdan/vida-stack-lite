@@ -1,4 +1,4 @@
-import { afterAll, afterEach, expect, mock, spyOn, test } from 'bun:test';
+import { afterAll, afterEach, expect, mock, onTestFinished, spyOn, test } from 'bun:test';
 import * as artifactProducer from '../src/config/project-upgrade-artifacts.ts';
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
@@ -2141,6 +2141,14 @@ test.each(['write', 'replace'] as const)(
         planned.plan.operation_id,
         'VIDA project upgrade: UNKNOWN file publication requires explicit same-operation reconciliation',
       );
+      onTestFinished(async () => {
+        expect(await Bun.file(journalPath).exists()).toBe(true);
+        expect((await lstat(root)).isDirectory()).toBe(true);
+        expect(await readFile(journalPath)).toEqual(journalBytes);
+      });
+      // Successful denial assertions do not authorize disposing of the UNKNOWN operation.
+      custody.retained = true;
+      console.error(`Retaining UNKNOWN publication fixture through shared cleanup: ${root}`);
       qualified = true;
       completeRoot(root);
     } finally {

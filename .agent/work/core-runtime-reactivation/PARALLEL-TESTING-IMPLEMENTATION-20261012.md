@@ -254,6 +254,11 @@ persisted Host/request authority. Admission's real access factory still runs on
 every call; no test observer or product cache substitutes for freshness.
 Their focused PASS and negative controls qualify these callers only; all broader
 current eligibility, resource/effect quiescence and final numeric gates stay open.
+The two real pre-effect UNKNOWN publication fixtures now explicitly retain
+custody even when their denial assertions pass. onTestFinished reads their exact
+journals after shared cleanup; assertion RED and3caseGREEN/180assertions qualify
+this disposition, not cleanup isolation or descendant/effect quiescence. All
+five natural age witnesses and their case/child bounds remain.
 The existing completed-Source recovery case now observes the actual expired-
 lease schema caller selecting verified bytes once, no raw read, its persisted
 schema digest and unchanged Source. Its focused native PASS retains original

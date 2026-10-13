@@ -67,8 +67,9 @@ SQLite and Mastra references; current phase evidence and rejected shortcuts).
   package-reader witnesses join this batch;19focused cases plus5admission-file
   cases PASS. General runca5209ff UNKNOWN at the cap with no admitted report;
   preserve exact counters and numeric gaps rather than declaring suite success.
-- [ ] Correct both pre-effect UNKNOWN-fixture cleanup dispositions and qualify
+- [x] Correct both pre-effect UNKNOWN-fixture cleanup dispositions and qualify
   retention after hook execution; preserve all original interruption assertions.
+  Explicit assertion RED; write/replace and known-success GREEN3PASS/180assertions.
 
 Two-root quarantine remains blocked by shared lifecycle state/hooks, sibling
 cleanup and descendant/effect quiescence. Keep natural30s aging and production

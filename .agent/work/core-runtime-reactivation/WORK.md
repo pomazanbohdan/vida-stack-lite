@@ -9447,3 +9447,44 @@ assertion success from disposal permission; next packet keeps both exact UNKNOWN
 fixtures and verifies their presence after cleanup, without changing quarantine,
 45schild/90scase bounds or authorization. Shared case-context refactor and
 resource-safe parallel activation still require separate qualification.
+
+Published reviewed packet702270b with ordinary hooksPASS and non-force push to
+origin/main; remote matches HEAD, unrelated BASE/root lock remain untouched.
+Next bounded test writer adds an after-hook retained-journal assertion to both
+existing pre-effect cases. Root qualifies RED before marking their existing
+custody retained; no duplicate long fixture or new execution rights.
+
+Initial after-hook RED confirms native write fixture QvX9wv was deleted by
+shared cleanup: ENOENT,1FAIL/50assertions,44.29s. Its complete log remains; the
+defective owner deleted the root, not retained. Tighten the regression to an
+explicit journal-exists assertion before stat/read, so omission is detected by
+an assertion rather than an incidental runtime I/O error. Fresh RED uses a new
+root, never the old UNKNOWN operation. Retention disposition is still unchanged
+until that assertion RED is observed.
+
+After-hook explicit journal-exists RED fails expectedtrue/receivedfalse in
+44.38s,1FAIL/51assertions. Root adds the existing custody.retained disposition
+to the two shared pre-effect cases; no generic cleanup change. GREEN includes
+write, replace and original successful upgrade:3PASS/180assertions,105.43s;
+case times42.46/44.98/16.08s. Retained UNKNOWN roots JsRvYo and0suiFZ under the
+external RAM directory survive actual afterEach with exact journal bytes, as
+checked by onTestFinished. Original natural30s lock identity/age,45schild and
+90scase bounds, public denial/same-ID, CAS and UNKNOWN assertions remain.
+Static435program/97Source plus436capturedTS PASS, zero diagnostics; lintPASS;
+blind scoped review reports no actionable defect. Logs unknown-fixture-
+retention-assertion-red.log, -green.log, -static.log and -lint.log retain evidence.
+The earlier RED roots were deleted by the original defect; logs remain, and no
+old UNKNOWN operation is recreated or replayed. No additional full run is made
+for this fixture-only correction; prior complete-selection outcome remains
+ca5209ff UNKNOWN, no numeric report. Shared cleanup isolation/parallel custody,
+exhaustive frozen correspondence and native Runtime matrix remain pending.
+
+User adds a standing instruction: after finding a defect, inspect the entire
+affected contour for analogous failure paths. Recorded in the lifecycle's
+existing defect-research owner. Three blind readonly audits cover upgrade/
+storage/lifecycle, rebind/recovery/continuation, and process/fixture helpers.
+Upgrade audit found no additional high-confidence unresolved UNKNOWN deletion;
+other two audits identify coverage-runner UNKNOWN-typecheck fixture disposal
+and settled recovery commit_unknown governance roots. Root verifies each actual
+state/cleanup path before a separate joined correction. Seeded states and
+successful same-ID recovery are not keyword-based findings or new rights.

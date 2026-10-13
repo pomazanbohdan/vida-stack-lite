@@ -319,6 +319,12 @@ test file, account for preparation/recovery calls, and retain shared process
 state while work is pending. `onTestFinished` has no documented success status;
 hook execution alone cannot authorize fixture deletion. Qualify registration,
 pending-state retention and successful cleanup separately.
+Use onTestFinished to observe post-afterEach retention in a serial case, with
+explicit existence and exact-byte assertions. A passing expected-UNKNOWN denial
+still requires the owning fixture's retained disposition; assertion success
+does not grant disposal. Check existence before stat/read so deletion produces
+an assertion failure instead of an incidental I/O error. This does not qualify
+concurrent hooks, late timeout cleanup or descendant quiescence.
 
 Completion flags do not prevent cleanup after a timed-out body settles late.
 Before deleting a fixture, require a finite unexpired monotonic deadline after

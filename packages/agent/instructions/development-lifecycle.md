@@ -595,7 +595,12 @@ specifications relevant to the failure, including external agent frameworks in
 `docs/research/agent-framework-reference-registry.md`; do not limit research to
 installed dependencies or require every listed framework for every defect.
 Record verified sources, applicability and the chosen invariant in current
-product research and decision documents. Repair the shared root cause and its
+product research and decision documents. After finding a defect, search the
+entire affected contour for the same failure pattern before closing its repair.
+Check shared helpers, direct callers and analogous state transitions; verify
+the actual outcome and cleanup path rather than treating a text match as a
+defect. Record the reviewed scope, confirmed analogues and unresolved limits.
+Repair the shared root cause and its
 single state or contract owner, reconcile affected callers, and retain one
 behavioral regression. Reuse existing framework primitives; an architectural
 fix does not require new abstractions. Reduce agent execution steps, commands
