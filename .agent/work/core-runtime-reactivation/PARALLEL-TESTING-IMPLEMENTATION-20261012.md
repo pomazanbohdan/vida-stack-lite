@@ -16,6 +16,15 @@ Resume the existing tasks; do not restart qualified scheduler, protocol or nativ
 pilot work. Current full runca5209ff is UNKNOWN at600000ms with no admitted coverage report.
 Its emitted rows have no assertion FAIL before interruption; all5quarantine
 cases PASS. This does not close the complete selection or numeric gates.
+
+Current2026-10-13 selectionacd577ea onf34d00e is UNKNOWN under the superseding
+300000ms entry budget. Its bug_fix copied-recovery child exhausted an inherited
+668ms allowance, not an assertion-confirmed product defect; both failed fixture
+and shared copied bundle remain retained. No current numeric receipt was admitted.
+Root's next bounded correction reduces eager WorkState compilation and three
+duplicate preparing-status CLI launches; full affected flows are qualified before
+another complete selection. Five natural quarantine cases remain exclusive until
+per-case fault/custody/timing context and package-resource eligibility are proved.
 Its stale provenance fixture path is corrected; fresh continuation phase evidence
 and natural-quarantine overlap research select the next packet in
 TEST-REPAIR-COVERAGE-10M-CYCLE-20261012.md#current-cost-correction--2026-10-13.

@@ -9648,3 +9648,39 @@ budget; actual public policy transition and concurrent initialization control
 Logs and scoped inventory are in .tmp/p0p1-3f3dc1a. These proofs qualify the
 correction packet only. Current exact coverage, exhaustive frozen CRAP,
 assertion-confirmed mutation and isolated native Runtime remain pending.
+
+Packetf34d00e passed ordinary hooks and non-force publication to origin/main.
+Unrelated BASE/root bun.lock remain untouched. Its one full current coverage
+runacd577ea-0d88-4b4e-bc4f-ae821b808df0 terminated UNKNOWN under the new300000ms
+entry allowance. The direct producer stopped before final numeric admission.
+One observed FAIL is the bug_fix recovery case's uncertain child outcome:
+ETIMEDOUT/SIGKILL after668ms allowance; cleanup492ms reportedESRCH/failed.
+This is spent inherited budget, not an assertion-confirmed product defect.
+Both failed route root and shared copied bundle are retained by the actual
+recoveryOutcomeUnknown cleanup guards; never replay or prune them. Log is
+five-minute-full-coverage.log; no current coverage%, CRAP or mutation score.
+
+Two blind performance lanes identify remaining startup work and actual global
+fault/custody/timing owners in the five natural quarantine bodies. Independent
+30s overlap is not activated: per-case context, mock/prototype ordering and
+common package-resource eligibility remain prerequisites. No Source quarantine
+change or new scheduler framework is authorized by those research findings.
+The next bounded Source packet defers the WorkState validator only until its
+first public validation; schema snapshot/options and both current generic denial
+messages stay unchanged. Its genuine existing fixture produces expected RED
+on eager import and GREEN on public commit, readback and invalid-no-write.
+One common preparing-status copied-CLI witness replaces four duplicate reads,
+removing exactly3launches. Every workflow keeps its own interrupted state,
+original CAS recovery, stale/action/issue denials and report/replay sequence.
+Full affected-flow/static qualification is in progress; no measured speedup
+or global gate closure follows merely from fewer launches.
+
+Second startup packet final qualification:7PASS/0FAIL/179Bun assertions,
+207.56s for all four copied-bundle recovery workflows plus the existing valid/
+invalid attempt admission, repair and new first-use validator control. Every
+workflow's recovery/report/replay outcome passed. These scoped wall times are
+not a comparable global speedup measurement. Current439capturedTS/438program
+PASS,0diagnostics; lint/format/diff checks PASS. Blind review found no concrete
+defect. Existing Source function complexities remain unchanged; validateWork is
+one new privateCC2 role. Preserve UNKNOWNacd577ea and all dependent test effects.
+Code/checks are settled before ordinary publication and the next complete run.

@@ -1,5 +1,6 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
+import { Ajv2020 } from 'ajv/dist/2020.js';
 import type {
   CoordinationClaim,
   CoordinationLedger,
@@ -561,6 +562,74 @@ function fixture(id = 'work', resource = 'file:src/task.ts'): MutableHostStateWr
   validateLifecycleAggregate(value.nextWork);
   return value;
 }
+
+test('Host WorkState validator compiles on first public use and reuses the compiled schema', async () => {
+  const compiledWorkSchemas: string[] = [];
+  const original: unknown = Reflect.get(Ajv2020.prototype, 'compile');
+  if (typeof original !== 'function') throw Error('Ajv compile method is unavailable');
+  const originalCompile = original as Ajv2020['compile'];
+  const compileSpy = spyOn(Ajv2020.prototype, 'compile');
+  compileSpy.mockImplementation(
+    new Proxy(originalCompile, {
+      apply(target, receiver, args) {
+        const schema: unknown = args[0];
+        if (
+          typeof schema === 'object' &&
+          schema !== null &&
+          'properties' in schema &&
+          typeof schema.properties === 'object' &&
+          schema.properties !== null &&
+          'schema' in schema.properties &&
+          typeof schema.properties.schema === 'object' &&
+          schema.properties.schema !== null &&
+          'const' in schema.properties.schema &&
+          schema.properties.schema.const === 'WorkState/v1'
+        )
+          compiledWorkSchemas.push('WorkState/v1');
+        const compiled: unknown = Reflect.apply(target, receiver, args);
+        if (typeof compiled !== 'function') throw Error('Ajv did not return a validator');
+        return compiled;
+      },
+    }),
+  );
+
+  try {
+    // A qualified query creates a new module instance while Ajv's constructor remains shared.
+    const fresh = (await import(
+      `../../src/host-state.ts?lazy=${randomUUID()}`
+    )) as typeof import('../../src/host-state.ts');
+    expect(compiledWorkSchemas).toEqual([]);
+
+    const freshStore = new fresh.HostStateStore(database, workspace);
+    const committed = freshStore.compareAndSwapHostState(fixture());
+    expect(compiledWorkSchemas).toEqual(['WorkState/v1']);
+
+    const saved = presentSnapshot(freshStore.readHostStateSnapshot(identity));
+    expect(saved.work.workspace_id).toBe(workspace);
+    expect(saved.work.binding.lifecycle_work_id).toBe('work');
+    expect(saved.workVersion.revision).toBe(saved.work.revision);
+    expect(saved.ledgerVersion.revision).toBe(saved.ledger.revision);
+    expect(committed).toEqual(saved);
+    expect(compiledWorkSchemas).toEqual(['WorkState/v1']);
+
+    const invalid = fixture();
+    invalid.expectedWork = saved.workVersion;
+    invalid.expectedLedger = saved.ledgerVersion;
+    invalid.nextWork.revision = saved.work.revision + 1;
+    invalid.nextLedger.revision = saved.ledger.revision + 1;
+    expect(Reflect.deleteProperty(invalid.nextWork.execution, 'assignment_attempts')).toBe(true);
+    expect(() => freshStore.compareAndSwapHostState(invalid)).toThrow('work record must match current WorkState/v1');
+
+    expect(freshStore.readHostStateSnapshot(identity)).toEqual(saved);
+    expect(compiledWorkSchemas).toEqual(['WorkState/v1']);
+  } catch (error) {
+    preserveHostFixtureRoot = true;
+    throw error;
+  } finally {
+    compileSpy.mockRestore();
+  }
+});
+
 function next(
   snapshot: PresentHostSnapshot = presentSnapshot(store.readHostStateSnapshot(identity)),
 ): MutableHostStateWrite {

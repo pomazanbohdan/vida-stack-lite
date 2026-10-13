@@ -350,3 +350,10 @@ denials; help/install/version не замінюють доказу. Source check
 fixture і відкладає чотири зайві startup-компіляції Ajv до їх першого використання.
 Точкові/статичні докази та історичний UNKNOWN42f7cd51 зафіксовано в актуальному
 WORK; ці зміни не закривають повні числові гейти або ізольований Runtime.
+
+Наступний current-runacd577ea під300000ms завершується UNKNOWN через вичерпання
+успадкованого бюджету; старий runtime/fixture не replay. Другий перевірений пакет
+прибирає eager WorkState compilation та3дублюючі статусні CLI-запуски.
+Усі4копійовані recovery workflows, host admission/repair та first-use control
+пройшли точково7PASS; static439TS/438program, lint і review PASS. Глобальні gates
+і resource-safe паралельні quarantine-контури залишаються OPEN.

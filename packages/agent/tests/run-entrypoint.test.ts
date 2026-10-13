@@ -2720,14 +2720,18 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
           expect(reservedIssues).toHaveLength(preparedActions.length);
           expect(interruptedSnapshot.state.items.filter((item) => item.research_activation)).toHaveLength(1);
           expect(existsSync(activationHistory)).toBe(false);
-          const preparationStatus = call();
-          expect(preparationStatus.status, preparationStatus.stderr).toBe(0);
-          expect(preparationStatus.payload.research_preparation_status).toBe('preparation_incomplete');
-          const preparationActionStatuses = preparationStatus.payload.action_statuses;
-          if (!preparationActionStatuses) throw Error('preparation action statuses are missing');
-          expect(preparationActionStatuses.every((item) => item.status === 'research_preparation_incomplete')).toBe(
-            true,
-          );
+          // The shared readonly incomplete-status branch has one copied-bundle
+          // witness; every route retains its interrupted state and recovery CAS.
+          if (route.workflow === researchFirstRoutes[0]?.workflow) {
+            const preparationStatus = call();
+            expect(preparationStatus.status, preparationStatus.stderr).toBe(0);
+            expect(preparationStatus.payload.research_preparation_status).toBe('preparation_incomplete');
+            const preparationActionStatuses = preparationStatus.payload.action_statuses;
+            if (!preparationActionStatuses) throw Error('preparation action statuses are missing');
+            expect(preparationActionStatuses.every((item) => item.status === 'research_preparation_incomplete')).toBe(
+              true,
+            );
+          }
 
           const issued = call([...expected(interruptedSnapshot.version), '--issue-wave', 'true']);
           expect(issued.status, issued.stderr).toBe(0);

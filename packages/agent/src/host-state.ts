@@ -1598,8 +1598,13 @@ function repositoryRootIdentity(root: string): string {
 const AjvConstructor = Ajv2020 as unknown as new (options: object) => {
   compile<T>(schema: object): ValidateFunction<T>;
 };
-const ajv = new AjvConstructor({ allErrors: true });
-const validateWork = ajv.compile<WorkState>(workSchema);
+const capturedWorkSchema = structuredClone(workSchema);
+let compiledWorkValidator: ValidateFunction<WorkState> | undefined;
+function validateWork(value: unknown): value is WorkState {
+  return (compiledWorkValidator ??= new AjvConstructor({ allErrors: true }).compile<WorkState>(capturedWorkSchema))(
+    value,
+  );
+}
 const hashPattern = /^[a-f0-9]{64}$/;
 const maxTaskSourceProjectionRows = 2048;
 const maxTaskSourceProjectionPayloadBytes = 64 * 1024 * 1024;
