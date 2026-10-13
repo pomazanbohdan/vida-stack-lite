@@ -25,6 +25,12 @@ Root's next bounded correction reduces eager WorkState compilation and three
 duplicate preparing-status CLI launches; full affected flows are qualified before
 another complete selection. Five natural quarantine cases remain exclusive until
 per-case fault/custody/timing context and package-resource eligibility are proved.
+
+After publicationb356b49, current runbbb301ac completes all four copied-bundle
+recovery routes before its direct producer cutoff. Caller wall4m30.198s,
+UNKNOWN/no admitted numeric report, no emitted FAIL row. The30000ms terminal
+reserve remains inside300000ms. Further unchanged full reruns add no proof;
+complete role correspondence and actual case/resource qualification next.
 Its stale provenance fixture path is corrected; fresh continuation phase evidence
 and natural-quarantine overlap research select the next packet in
 TEST-REPAIR-COVERAGE-10M-CYCLE-20261012.md#current-cost-correction--2026-10-13.
