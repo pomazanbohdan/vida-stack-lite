@@ -133,7 +133,11 @@ test('pinned launcher checks version then forwards one payload with unchanged ar
   const root = pinFixture('launcher'),
     calls: PinnedInvocation[] = [];
   const argv = ['fixture-entry.mjs', '--value', 'space and unicode: є', '--literal', '--not-a-flag'];
-  const env = { PATH: 'fixture-path', FIXTURE_VALUE: 'retained' };
+  const env = {
+    PATH: 'fixture-path',
+    FIXTURE_VALUE: 'retained',
+    VIDA_COVERAGE_REVIEW_CLOCK_POLICY: 'forged caller clock claim',
+  };
   const exit = runPinnedBun(argv, {
     root,
     cwd: scratch,
@@ -160,9 +164,13 @@ test('pinned launcher checks version then forwards one payload with unchanged ar
     VIDA_PINNED_COMMAND_BUDGET_MS: duration,
     VIDA_PINNED_COMMAND_DEADLINE_MS: expiry,
     VIDA_PIPELINE_DIAGNOSTICS: diagnostics,
+    VIDA_COVERAGE_REVIEW_CLOCK_POLICY: reviewPolicy,
     ...forwardedEnvironment
   } = payloadCall.options.env;
-  assert.deepEqual(forwardedEnvironment, pinnedEnvironment(process.execPath, env, root));
+  const expectedEnvironment = pinnedEnvironment(process.execPath, env, root);
+  delete expectedEnvironment.VIDA_COVERAGE_REVIEW_CLOCK_POLICY;
+  assert.equal(reviewPolicy, undefined);
+  assert.deepEqual(forwardedEnvironment, expectedEnvironment);
   if (duration === undefined) {
     assert.equal(expiry, undefined);
     assert.equal(Object.hasOwn(payloadCall.options, 'timeout'), false);

@@ -53,6 +53,46 @@ is fresh EXCLUSIVE mode before first SQLite access, same-held-connection fence
 and in-place SQL; closing the handle for the old closed-image merge loses
 exclusion. Do not retire the auxiliary gate or activate layout/readers yet.
 
+Actual current production attempt on4b57413: run77dcc9b8-bc7a-4e5f-9da5-37636196b21c
+uses run/v3 and two94-file serial assignments under the common300000ms entry.
+Root's incremental review binds unchanged committed fa227cf rows plus12changed
+input files; real runtime/provider/package identity and observed wrapper issuance
+bind scopec8c4f4447cb22286ce214f769c6a22c79616f20871f7ca34b096aa761969b6f8.
+Root reconciles transitive config consumers omitted by generic resource rows,
+including deep-property's real child suite and the new actual-origin test.
+Common package/config resources remain coassigned; no successor wave exists.
+
+The producer allowance expires before completion; the runner throws at its
+post-group remaining check. Both receipt directories are empty, no admitted
+current numeric report, reservation no longer present. Do not infer descendant
+quiescence or successful measurement from that removal. Actual supervisor
+terminal observations were not persisted by this runner; preserve run/logs.
+Partial emitted rows: shard1=863PASS/2FAIL, shard2=111PASS/1FAIL. The last bug_fix
+failure is an uncertain init child under exhausted inherited allowance, not a
+causal assertion-confirmed product defect. No identical full rerun.
+
+Next ready corrections: the raw mock environment comparison omits the wrapper-
+managed policy scrub; fix its projection and prove a forged ambient claim is
+cleared. The SDK regression selected a stale derived dist receipt; form SDK once
+separately through the existing build, preserving its mismatch denial. Both
+corrections now have affected native PASS. Build invokes no test suite.
+Persist direct group observations into the owned writable output directory
+before a spent producer allowance can prevent report/diagnostic processing.
+Keep them explicitly non-numeric and preserve UNKNOWN plus log-close errors.
+Use the existing bounded native pilot/owner; add no duplicate full selection.
+
+Observed cost next unit: copied recovery implementation_new58.03s,
+implementation_change45.47s, information_research_light54.29s, and public final
+assurance45.87s. Child times dominate; the11 recovery CLI calls prove different
+public state edges and cannot be deleted as duplicates. Compatible init-positive
+mapping cases may consolidate one public invocation with every assertion and
+scenario preserved; measure before claiming speed. Granular package-reader
+ownership awaits complete caller qualification; fixture-only raw hash reads
+may reuse the immutable helper, preserving explicit raw/fallback controls.
+One-DB groundwork may reuse the Host verifier/checkpoint connection under the
+existing AUX gate, but every post-verifier error needs exact source-before-gate
+cleanup custody. This is not main-file exclusion or auxiliary-gate retirement.
+
 The shared dispatch capture is anchored atfa227cf; obtain the latest published
 Source from Git rather than treating that capture as a moving checkpoint. The last full current run,
 6ecf5884-1970-4988-ac04-b4af06260ba0, ended UNKNOWN under300000ms with170emitted

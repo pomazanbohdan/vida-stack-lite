@@ -30,6 +30,16 @@ must coassign. A verified-reader test asserting absence of package CAS sidecars
 also conflicts with raw readers of that same package. UUID leaves and unique
 fixture children under a shared parent do not alone require whole-run exclusion.
 
+When testing a pinned launch through an injected spawn, project the launcher-
+managed budget/deadline/diagnostics/review-policy keys separately. Assert an
+ambient review-policy claim is scrubbed on ordinary payloads; compare all other
+caller environment fields exactly. Own-undefined mock properties differ from
+the physical child environment, where undefined values are omitted.
+For complete-run timing, label statistics from emitted PASS rows as partial;
+unobserved/failed cases and startup/fixture overhead are outside that sample.
+Preserve actual supervisor terminals before a spent producer allowance blocks
+report work; diagnostics do not replace successful receipts or quiescence.
+
 For current captured configured-context tests, propagate the manifest's bound
 consumer root to the child rather than deriving it from relocated module paths.
 Qualify missing/stale origin negatives at the real validator with other receipt

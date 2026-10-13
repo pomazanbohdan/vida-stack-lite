@@ -10669,3 +10669,66 @@ Publish this correction before refreshing the actual review scope and launching
 one complete initial-wave run under300000ms. This qualifies neither exact100
 coverage nor frozen CRAP/CC or confirmedKilled, and does not retire the auxiliary
 admission DB or grant real Runtime acceptance/unblock notices.
+
+### First complete current two-shard launch and corrective batch — 2026-10-13
+
+Published4b57413 equals origin/main. Actual run77dcc9b8-bc7a-4e5f-9da5-37636196b21c
+is run/v3, complete188-file selection, two94-file serial children. Root reuses
+unchanged committed fa227cf capture rows, refreshes12published changed input files
+once and inventories only3changed Source modules (1238roles, static/unreviewed,
+not frozen budgets). Actual provider, physical package/consumer identities,
+runtime hash and native observed wrapper-issued environment control bind the
+current review. Root corrects omitted transitive configured-root consumers,
+including historical helpers, deep-property child and actual-origin test; package
+prefix lifecycle references are verified reads, not consumer CAS. Common
+package/config resources stay coassigned; no successor resource wave.
+
+current-4b57413-parallel-coverage.log ends at the post-group remaining check under
+the300000ms entry, with its30000ms reserve retained. The run is UNKNOWN/no
+admitted measurement, both process receipt directories empty and no current
+numeric report. Reservation absent does not prove quiescence. The current
+runner does not persist its in-memory terminal group; do not invent PID/status
+evidence afterward. Run/logs/effect roots remain. No unchanged full rerun.
+Validated current-4b57413-parallel-run-summary.json reports only emitted rows:
+shard1=863PASS/2FAIL; shard2=111PASS/1FAIL. Total974emittedPASS is not complete
+suite success or a directly comparable speedup over the earlier170row run.
+Partial passing-body stats(ms): shard1 min0.01/mean286.35/p951241.68/max11432.72;
+shard2 min0.01/mean2220.46/p952735.88/max58032.67. They exclude unobserved cases,
+FAIL/UNKNOWN durations and fixture/command overhead, not whole-suite percentiles.
+
+Three displayed failures have separate causes. The forwarding mock sees the
+intentional own-undefined VIDA_COVERAGE_REVIEW_CLOCK_POLICY scrub; no product
+argv/cwd/environment forwarding defect. forwarding-policy-red.log reproduces
+it directly. The corrected projection asserts the managed scrub and retains
+all caller forwarding/status checks, now with a forged ambient claim. Strict
+static448capturedTS/447program plus100Source and typed lint PASS; affected
+forwarding-policy-green.log38PASS/8.30s across cache-routing and toolchain.
+
+The distributed SDK guard correctly rejects stale dist/sdk-formation.json
+before the governance child runs. Root had not refreshed that derived artifact
+before the first full selection, despite the existing TESTING instruction.
+SDK formation was rerun once through build:pinned with no test suite; selected
+Bun1.4.3 emits the runtime/declarations, no test issuers shipped. Then separately
+sdk-current-formation-green.log:1PASS/4assertions/4.89s, body2171.57ms and actual
+distributed authentication denial child1680.54ms. Keep the stale-input denial;
+formation is not install, native qualification or Runtime acceptance.
+
+The last bug_fix recovery fails at init with uncertain process outcome after
+inherited allowance exhaustion. Preserve its private root and copied bundle;
+do not call it an assertion-confirmed product bug or retry that operation under
+another ID. Independent cost review finds11distinct public CLI edges in the
+45.47s implementation_change case, not redundant status calls. Initialization
+already amortizes bundle copy once; compatible positive mappings may share an
+invocation, but preserve each asserted scenario and compare actual cost.
+
+Current correction categories: managed environment projection, stale derived
+formation, inherited-budget UNKNOWN, long public subprocess contours, conservative
+shared-reader ownership and missing terminal-group diagnostics. Next Source
+packet persists actual supervisor observations before the spent producer check,
+under the owned output owner and original reserve; it cannot admit numeric
+evidence or advance resources. Reuse the existing pilot, no new complete suite.
+For one-DB groundwork, sharing verifier/checkpoint Host under AUX can remove one
+open/close, but post-verifier assertion/body failures must retain exact Host
+before AUX cleanup. Do not add an unused raw opener or activate a layout.
+Exact100coverage/exhaustive frozenCC-CRAP/confirmedKilled and isolated real Runtime
+flows remain OPEN. No actual installed/unblock notice is issued.
