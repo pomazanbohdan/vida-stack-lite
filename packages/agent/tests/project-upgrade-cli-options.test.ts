@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import { assertReconcileOptionKeys, reconcileExpectedOptions } from '../bin/reconcile-cli-contracts.ts';
+import { cliMetadataResult } from '../bin/cli-metadata.ts';
 
 const resume = {
   '--kind': 'project-upgrade',
@@ -11,6 +12,39 @@ const resume = {
 test('project upgrade resume accepts the declared default-false omission', () => {
   expect(reconcileExpectedOptions('project-upgrade', 'resume', resume)?.sort()).toEqual(Object.keys(resume).sort());
   expect(() => assertReconcileOptionKeys(resume, 'project-upgrade', 'resume')).not.toThrow();
+});
+
+test('project upgrade resume help reports the omitted reconciliation value as false', () => {
+  const help = cliMetadataResult(['reconcile-artifacts', '--help', 'project-upgrade', 'resume'], {});
+  if (!help || typeof help !== 'object' || !('optionDetails' in help) || !Array.isArray(help.optionDetails))
+    throw new Error('project upgrade resume help is unavailable');
+  const reconcileUnknown = help.optionDetails.find(
+    (option: unknown) =>
+      !!option && typeof option === 'object' && 'name' in option && option.name === '--reconcile-unknown',
+  );
+  expect(reconcileUnknown).toMatchObject({
+    name: '--reconcile-unknown',
+    values: ['true', 'false'],
+    required: false,
+    default: 'false',
+  });
+
+  const optionalWithoutBehavioralDefault = cliMetadataResult(
+    ['reconcile-artifacts', '--help', 'runtime-config-delivery', 'repair-inspect'],
+    {},
+  );
+  if (
+    !optionalWithoutBehavioralDefault ||
+    typeof optionalWithoutBehavioralDefault !== 'object' ||
+    !('optionDetails' in optionalWithoutBehavioralDefault) ||
+    !Array.isArray(optionalWithoutBehavioralDefault.optionDetails)
+  )
+    throw new Error('runtime config delivery repair inspect help is unavailable');
+  const publishOperation = optionalWithoutBehavioralDefault.optionDetails.find(
+    (option: unknown) =>
+      !!option && typeof option === 'object' && 'name' in option && option.name === '--publish-operation',
+  );
+  expect(publishOperation).toMatchObject({ name: '--publish-operation', required: false, default: 'not supplied' });
 });
 
 test('project upgrade resume accepts either explicit reconciliation value', () => {

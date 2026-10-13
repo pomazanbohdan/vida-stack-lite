@@ -1095,6 +1095,18 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
               },
             }
           : {}),
+        ...(shardPreparation?.status === 'serial-fallback'
+          ? {
+              shard_eligibility: {
+                status: shardPreparation.status,
+                reason: shardPreparation.reason,
+                ...(shardPreparation.artifact_sha256 ? { artifact_sha256: shardPreparation.artifact_sha256 } : {}),
+                ...(shardPreparation.review_scope_sha256
+                  ? { review_scope_sha256: shardPreparation.review_scope_sha256 }
+                  : {}),
+              },
+            }
+          : {}),
         ...(publishedFixture
           ? {
               fixture_child_scope: 'direct-child-process-api',

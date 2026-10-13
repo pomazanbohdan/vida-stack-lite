@@ -10849,3 +10849,70 @@ callers and current SDK verification. This is affected behavior evidence, not a
 complete timing comparison, install or real Runtime acceptance. Numerical gates
 remain OPEN. Publish this checked batch, refresh actual current inputs/resource
 scope using existing unchanged captures and then perform one bounded full run.
+
+Published12626b6 through strict hook (449program0diagnostics); origin/main
+matches. Fresh prepared scope2e917213... binds189selectedfiles: private94files
+(recovery included) and shared95files (original entrypoint included). SDK-derived
+rows and28changed/new inputs refreshed; unchanged captured rows reused, no extra
+AST inventory. Frozen role review emits132roles/74new/58unresolved, including
+nested roles and surviving primary-HostState predecessor collisions. It is
+review-only/non-executable; previous partial budgets stay unqualified.
+
+The actual91b9bef7-9e4e-4d59-ab3b-8163746bba9d run chose serial fallback. Root
+prepared review from repository cwd but launched the wrapper from package cwd.
+Read-only native parent environment control proves PWD is the sole mismatch:
+actualreviewhash eedb070e... versus prepared2b991189...; restoring only PWD to
+the repository value reproduces the prepared hash exactly. Source/test/tool
+rows and order are identical. Correct the invocation/review origin, not the
+strict environment binding. No unchecked parallel activation occurred.
+
+The bounded run ended UNKNOWN: actualPID458548/nullstatus/SIGKILL, observed
+direct terminal/accounted, reservationSafeToRelease=true, resourceSafeToAdvance
+=false. The newly published diagnostic persists actual supervisor bytes under
+processes/observations/supervisor.json despite timeout; no final numeric output.
+current-run-summary.json records213PASSbodyrows/no emitted assertion failures;
+partial sample min0.05/mean1166.25/p955050.2/max28113.63ms excludes unobserved,
+failed, startup and cleanup. It is not complete-suite success or timing proof.
+Retain this run/effect roots; do not replay UNKNOWN operations.
+
+Second six-blind-review cycle found a concrete P1 help default mismatch:
+project-upgrade resume omission is false but help reports not supplied. A writer
+adds actual help/optional-default regression; Root owns Source correction and
+checks. Another candidate reuses the already captured config-schema digest in
+expired-lease recovery; its distinct freshness contract still needs confirmation.
+Activation/merge/custody reviews found no new reachable defect; acknowledged
+legacy exclusion stays blocked. Pending upgrade mutation partition lacks direct
+merge tests and general nested-child cause binding; keep it pending. Actual
+previous interruption evidence remains valid; no unchanged reruns. Next joined
+correction packet and correctly bound current review precede the next full run.
+
+Exact callback review rejects the apparent schema reuse optimization: expired
+lease recovery has no later runtime/schema freshness fence before successor
+Work commit. Its late verified schema read is a distinct final sample after
+the multi-file snapshot and lineage checks. Existing initial-source-continuation
+regression explicitly requires that fresh read and no raw fallback. Admission's
+same-capture digest is a different contract. Keep this guard and missing-schema
+denial unchanged; no Source/runtime test rewrite for this rejected candidate.
+
+Help regression: first incorrect filter matched0, not causal. Exact named case
+in upgrade-help-exact-causal-red.log assertion-fails on actual help default
+not supplied versus requiredfalse. Root declares that default in the existing
+shared reconciliation contract; optionality/values and parser stay the same.
+
+First help caller batch14PASS/1FAIL: the project-upgrade default assertion was
+fixed, but the new unrelated optional fixture selected a foreign kind/mode.
+Corrected fixture uses runtime-config-delivery/repair-inspect, its actual owner.
+fallback-help-native-green.log5PASS/31assertions/2.02s validates all upgrade
+options plus the existing native serial UNKNOWN fixture. Its manifest now
+records actual serial-fallback/review-artifact-unavailable; actual child PID,
+terminal observation and denied numeric report remain. Earlier public help
+matrix completed139children/9commands/5aliases/102nested routes successfully;
+that full matrix is not repeated for the fixture-only correction.
+
+fallback-help-static.log450capturedTS/449program0diagnostics, typed lint PASS0.
+The Source packet adds only an explicit help default and actual fallback
+diagnostics; no expired-lease freshness, active loader/schema/storage, coverage
+threshold, frozen budget or mutation assertion requirement changed. Root keeps
+PWD and all other caller fields bound, and will invoke the next reviewed full
+run from the same repository origin as review preparation. Source/build suites
+remain separate; no installed Runtime or unblock notice is claimed.

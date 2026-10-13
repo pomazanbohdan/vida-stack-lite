@@ -1029,6 +1029,15 @@ caller log closure can fail. This diagnostic is separate from child receipts
 and numeric reports. It grants no measurement success or resource advancement;
 failed persistence still fails the run and retains actual direct accounting.
 
+The retained manifest also records an actual current serial-fallback decision
+in `execution_scope.shard_eligibility`: status, owner-provided reason and
+available artifact/review-scope hashes. Prepared and historical paths retain
+their existing shape. This explains a denied plan; it grants no parallel or
+numeric admission. Prepare the review and launch from the same caller origin:
+`PWD` remains an exact environment input even when the launcher sets child cwd.
+Reuse already captured rows to diagnose mismatches; do not relax environment
+binding or recapture a full inventory just to compare two scope fields.
+
 | Observation | Direct reservation disposition | Measurement and resource reuse |
 | --- | --- | --- |
 | Qualified positive PID with observed direct terminal exit or signal | May account for that producer only | Nonzero, signal, timeout or error denies success; descendant/effect proof remains separate. |

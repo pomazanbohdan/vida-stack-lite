@@ -8,6 +8,13 @@ description: Use when writing, migrating, reviewing, running or optimizing TypeS
 Use the smallest contract-backed check that resolves the current uncertainty.
 Keep behavior, timing and numerical qualification as separate evidence.
 
+For a denied current shard plan, inspect the retained manifest's
+`execution_scope.shard_eligibility` status/reason and available hashes. Compare
+the existing captured input rows and caller environment before another run.
+Prepare and launch from the same caller origin; child cwd does not normalize
+the inherited `PWD` field. Keep exact binding rather than excluding a differing
+field. Do not consume fallback metadata as a receipt or numerical evidence.
+
 The current runner optionally reads the fixed
 `coverage/bun-unified/shard-eligibility.v1.json` before allocating outputs.
 Reuse the actual scope builder and captured config/input rows; do not generate

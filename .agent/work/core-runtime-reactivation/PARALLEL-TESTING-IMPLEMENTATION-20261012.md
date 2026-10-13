@@ -12,8 +12,8 @@
 
 ## Current dispatch — 2026-10-13
 
-Resumed environment preserves published `f553252` and unrelated `BASE/` and root
-`bun.lock`; fresh origin/main fetch confirms0/0 divergence, actual Bun1.4.3. The terminal
+Published corrections `d296ceb` and `12626b6` preserve unrelated `BASE/` and root
+`bun.lock`; origin/main matches, actual Bun1.4.3. The terminal
 diagnostic correction now records actual current serial/v3 supervisor groups in
 the owned nested observations directory before budget/report and log-close
 failures. It reuses the existing atomic writer and never feeds numeric admission.
@@ -28,7 +28,23 @@ retirement or main-file exclusion is qualified.
 Independent cost review confirms existing init mapping cases already use one
 supported invocation and recovery calls prove distinct edges. Do not delete
 these calls or claim an unevidenced speedup. A concrete cost/resource correction
-and fresh physical review still precede another complete coverage attempt.
+and fresh physical review still precede each complete coverage attempt.
+
+The four copied-bundle recovery cases now own one private serial test file;
+their existing parser support is shared once. Known failed fixtures are retained
+separately from UNKNOWN, which still denies reuse. Static450capturedTS/
+449program0diagnostics and typed lint PASS; affected4PASS/64assertions/48.77s.
+SDK formed separately with no suites. The189-file review prepares94private/
+95shared assignments, preserving other common-resource tags.
+
+Actual run91b9bef7 chose serial fallback because Root prepared from repository
+PWD then launched from package PWD. Existing captured rows match; restoring
+only PWD reproduces the reviewed environment hash. The exact environment gate
+stays. The run ends UNKNOWN with actual directPID458548/nullstatus/SIGKILL;
+new supervisor observations survive and no final numeric output is admitted.
+213partialPASSbodyrows are not complete suite/timing proof. Next: publish the
+checked explicit help-default/fallback-reason corrections and run from the
+same caller origin as the fresh review. No unchanged serial retry.
 
 Latest joined preparation packet: the maintained runner supports a fixed,
 verified-read current eligibility artifact before allocating shard outputs.
@@ -46,8 +62,9 @@ Native focused policy/lifecycle batch49PASS/306assertions/6.80s; existing report
 counter, plan and direct-custody regressions103PASS/340assertions/15.50s. These
 qualify the preparation/receipt mechanics and preserved serial contracts, not
 complete current resource eligibility, exact numeric gates or production speed.
-The real eligibility artifact is not yet authored. A/B/C candidate union is
-63/63/62=188 exact selected paths, with no duplicates/missing paths; still UNREVIEWED.
+A reviewed189-file eligibility artifact now exists; its actual current run was
+denied by the caller-environment mismatch above. Earlier A/B/C candidate union
+63/63/62=188 was an unreviewed preparation artifact, not current admission.
 
 Resource review corrected a missed conflict: runtime-package-resource-read
 asserts package CAS sidecars absent and must coassign with the three raw package

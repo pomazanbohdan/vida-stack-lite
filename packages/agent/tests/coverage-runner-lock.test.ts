@@ -426,7 +426,15 @@ mock.module('node:child_process', () => ({
     expect(runs).toHaveLength(1);
     const runId = runs[0];
     if (typeof runId !== 'string') throw new Error('Retained coverage run identity missing');
-    expect(existsSync(path.join(outputRoot, 'runs', runId, 'manifest.json'))).toBe(true);
+    const manifest: unknown = JSON.parse(readFileSync(path.join(outputRoot, 'runs', runId, 'manifest.json'), 'utf8'));
+    expect(manifest).toMatchObject({
+      execution_scope: {
+        shard_eligibility: {
+          status: 'serial-fallback',
+          reason: 'review-artifact-unavailable',
+        },
+      },
+    });
     const processDirectory = path.join(outputRoot, 'runs', runId, 'processes');
     expect(readdirSync(processDirectory)).toEqual(['observations']);
     expect(existsSync(path.join(outputRoot, 'coverage-final.json'))).toBe(false);

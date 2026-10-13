@@ -26,6 +26,7 @@ type ReconcileCliContract = {
   optionalByMode?: Record<string, string[]>;
   optionalGroups?: string[][];
   values?: Record<string, string[]>;
+  defaults?: Record<string, string>;
   conflicts?: string[];
   note?: string;
   bases?: string[];
@@ -50,6 +51,7 @@ export const reconcileCliContracts: Readonly<Record<string, ReconcileCliContract
     },
     optionalByMode: { resume: ['--reconcile-unknown'] },
     values: { '--reconcile-unknown': ['true', 'false'] },
+    defaults: { '--reconcile-unknown': 'false' },
     note: 'Fresh storage uses the bundle-owned repair owner. Existing storage remains blocked until old opener exclusion is proved. UNKNOWN permits only exact same-operation afterimage reconciliation.',
   },
   'research-records': {
@@ -874,7 +876,7 @@ function reconcileOptionDetails(
     ...(name === '--basis' ? { values: [...basisValues] } : {}),
     ...(reconcileCliContracts[kind]?.values?.[name] ? { values: [...reconcileCliContracts[kind].values[name]] } : {}),
     required: required.includes(name),
-    ...(optional.includes(name) ? { default: 'not supplied' } : {}),
+    ...(optional.includes(name) ? { default: reconcileCliContracts[kind]?.defaults?.[name] ?? 'not supplied' } : {}),
   }));
 }
 
