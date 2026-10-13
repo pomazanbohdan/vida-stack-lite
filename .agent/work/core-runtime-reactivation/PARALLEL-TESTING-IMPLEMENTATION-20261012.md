@@ -13,19 +13,18 @@
 ## Current dispatch — 2026-10-13
 
 Resume the existing tasks; do not restart qualified scheduler, protocol or native
-pilot work. The last full run on4192e2f is UNKNOWN with no admitted coverage
+pilot work. The last full run on9f26769 is UNKNOWN with no admitted coverage
 report. Its measured failures and existing diagnostics choose the next packet.
 
-1. Root finishes the prepared pure configuration reuse regression and the
-   one-line existing WeakMap seed after complete operation validation/freezing.
-   One focused RED/GREEN, existing closure-validation controls and the actual
-   denial caller qualify this change; retain the original failed artifacts.
-2. Four blind Luna roles work independently: config/test correctness review,
-   existing-log critical-path analysis, parallel activation boundary review,
-   and verification/dispatch plan check. They read selected existing evidence;
-   they do not run tests, compilers, Git or duplicate inventory/hash scans.
-   Reassign a finished role only to a concrete uncovered question; keep spare
-   slots for disjoint writers/review instead of duplicating the same analysis.
+1. The pure configuration reuse packet is published. The resumed reader packet
+   qualifies actual descriptor-boundary overlap, late renewal and project-split
+   rebind schema readers. The latter exposed two P0 defects: legacy target-source
+   validation and creation of the wrong operation directory. Both now have
+   focused RED/GREEN evidence; retain the failed fixture roots.
+2. Blind Luna roles review disjoint uncovered questions: remaining package-reader
+   caller closure and the separate resource-quiescence owner. Read current Source
+   and existing evidence without tests, compilers, Git mutation or duplicate
+   inventory/hash scans. Reassign only for a concrete unresolved question.
 3. Root alone edits shared protocol/Source/docs, joins any disjoint test writer,
    runs applicable static and focused checks, then commits/pushes the reviewed
    packet with ordinary hooks. No observed Source/tests/HEAD edits during checks.
@@ -197,15 +196,28 @@ One writer owns the shared reader/call sites; separate reviewer checks scope.
 
 Reader status: the package-only verified adapter and selected configuration,
 initialization/context/rebind callers have focused qualification. The native
-two-child READY/GO control proves coordinated correct reads and no write/fsync,
-not actual read overlap. Its former cross-child hrtime comparison is excluded:
-qualified Bun1.4.3 origins are process-relative. Actual overlap, broader caller
-closure and common-resource removal remain pending; keep the conflict tag.
+two-child control now also parks both real readers at the opened schema
+descriptor's readSync boundary and releases neither until both entries arrive.
+Its native PASS qualifies pending verified captures and unchanged package
+sidecars/bytes without writes/fsync, not simultaneous kernel syscalls. The former
+cross-child hrtime comparison remains excluded: qualified Bun1.4.3 origins are
+process-relative. Broader caller closure and common-resource removal remain
+pending; keep the conflict tag.
 The existing completed-Source recovery case now observes the actual expired-
 lease schema caller selecting verified bytes once, no raw read, its persisted
 schema digest and unchanged Source. Its focused native PASS retains original
-CAS/lease/authority assertions. The late renewal and rebind-planner schema callers
-and actual read-boundary overlap still need qualification; no conflict removal.
+CAS/lease/authority assertions. The real late-renewal caller now has focused
+native proof of verified schema selection/digest, lease expiry, Host/Journal CAS
+and unchanged Source. A raw-reader substitution assertion-fails; original Source
+is restored. The project-split planner now has native proof of one verified
+schema read, exact persisted digest/target/path and unchanged configuration,
+selector, initialization, activation and database rows. A schema-byte drift
+blocks apply without changing the operation or that state. Reuse of the existing
+fresh upgrade case removes duplicate preparation; no timing speedup is inferred.
+The real caller exposed and verifies fixes for target-source binding and the
+canonical operation-parent directory. No conflict removal or whole coverage
+admission follows from these focused cases; broader caller eligibility and
+descendant/effect quiescence remain pending.
 
 **Files:** tests/runtime-config-rebind.test.ts; new tests/runtime-config-rebind-source.test.ts, runtime-config-rebind-delivery.test.ts, runtime-config-rebind-readonly.test.ts, runtime-config-rebind-history.test.ts, runtime-config-rebind-limits.test.ts; shared tests/helpers/runtime-config-rebind-fixture.ts; package.json phase membership and test associations.
 

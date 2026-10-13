@@ -34,7 +34,7 @@ import {
   splitRuntimeConfig,
   projectConfigurationInputDigest,
 } from '../src/config/project-configuration.ts';
-import { bindLoadedConfigurationSource } from '../src/config/project-paths.ts';
+import { bindLoadedConfigurationSource, runtimeConfigurationSourceFor } from '../src/config/project-paths.ts';
 import {
   readProjectInitializationReceipt,
   validateProjectInitializationReceipt,
@@ -1478,7 +1478,7 @@ function targetConfig(
   targetPath: string,
 ) {
   const bytes = access.readBytes(targetPath, 'authored target YAML');
-  const target = validateRuntimeConfigRepairTargetBytes(bytes, root);
+  const target = validateRuntimeConfigRepairTargetBytes(bytes, root, runtimeConfigurationSourceFor(oldConfig));
   const unchanged = structuredClone(target) as DeepMutable<RebindAgentRuntimeConfig>,
     unchangedExecutor = unchanged.agents.profiles.executor,
     oldExecutor = oldConfig.agents.profiles.executor;
@@ -6045,7 +6045,7 @@ async function runProjectRuntimeConfigRebindCommand(
     if (['inspect', 'plan'].includes(mode)) {
       const operation = frozenProjectPlan(values, root, access, db);
       if (mode === 'plan') {
-        access.ensureDirectory(`${config.control.work_root}/${id}`, 'project config rebind operation directory');
+        access.ensureDirectory(path.posix.dirname(operationPath), 'project config rebind operation directory');
         access.writeExclusive(operationPath, json(operation), 'project config rebind operation');
       }
       return {

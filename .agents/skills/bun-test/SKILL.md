@@ -243,6 +243,17 @@ not read-boundary overlap. Preserve the common package resource until actual
 overlap and caller closure qualify. For adversarial fixtures, retain valid
 prerequisites/sibling receipts and assert the targeted rejection rather than an
 earlier unrelated load/decoder error.
+The Linux package-reader control parks both readers at the actual schema
+descriptor's `readSync` boundary until the coordinator observes both entries.
+This qualifies pending verified captures, not overlapping kernel syscalls or
+all caller eligibility. A late renewal fixture starts the real Mastra bridge
+producer; the absorption helper's minimal journal lacks required Source scope.
+Renewal preserves Journal payload/digest while advancing its CAS revision.
+Reuse the completed upgrade fixture for project-split planner checks; keep its
+original assertions and custody. Seed the isolated consumer selector prerequisite
+explicitly, but let the planner create its operation directory. Assert the target
+source binding and schema-drift denial against unchanged selector/config/receipt/
+activation/database/operation state. This is not installed Runtime evidence.
 Apply the same prerequisite rule to Source and authorization retries: retain
 the real drift denial separately; a current-snapshot callback used to isolate
 a later Host guard does not authorize the original candidate or public route.

@@ -233,10 +233,26 @@ import { mock } from 'bun:test';
 import { createHash } from 'node:crypto';
 import * as fs from 'node:fs';
 const nativeFs = { ...fs };
+const id = process.env.VIDA_PACKAGE_READER_ID;
+const boundaryPath = ${JSON.stringify(path.join(packageRoot, 'schemas/agent-runtime-config.v1.schema.json'))};
+let boundaryHeld = false;
+function waitForCommand(expected) {
+  const command = Buffer.alloc(1);
+  if (nativeFs.readSync(0, command, 0, 1, null) !== 1 || command.toString() !== expected)
+    throw new Error('package reader command missing: ' + expected);
+}
 let packageWriteSyncs = 0;
 let packageFsyncs = 0;
 await mock.module('node:fs', () => ({
   ...nativeFs,
+  readSync(fd, ...args) {
+    if (!boundaryHeld && nativeFs.realpathSync('/proc/self/fd/' + fd) === boundaryPath) {
+      boundaryHeld = true;
+      nativeFs.writeSync(1, JSON.stringify({ kind: 'read-boundary', id, path: boundaryPath }) + '\\n');
+      waitForCommand('R');
+    }
+    return nativeFs.readSync(fd, ...args);
+  },
   writeSync(fd, ...args) {
     if (typeof fd === 'number' && fd > 2) packageWriteSyncs++;
     return nativeFs.writeSync(fd, ...args);
@@ -244,18 +260,10 @@ await mock.module('node:fs', () => ({
   fsyncSync(fd) { packageFsyncs++; return nativeFs.fsyncSync(fd); },
 }));
 const { runtimePackageAccess, readRuntimePackageResourceBytes, readRuntimePackageResourceText } = await import(${JSON.stringify(runtimeConfigUrl)});
-const id = process.env.VIDA_PACKAGE_READER_ID;
 const consumerRoot = process.env.VIDA_PACKAGE_CONSUMER_ROOT;
 if (process.cwd() !== consumerRoot) throw new Error('reader did not use its fresh consumer root');
-process.stdout.write(JSON.stringify({ kind: 'ready', id, cwd: process.cwd() }) + '\\n');
-await new Promise((resolve, reject) => {
-  process.stdin.setEncoding('utf8');
-  process.stdin.once('data', (chunk) => {
-    process.stdin.pause();
-    if (chunk.includes('GO')) resolve(); else reject(new Error('shared start signal missing'));
-  });
-  process.stdin.once('error', reject);
-});
+nativeFs.writeSync(1, JSON.stringify({ kind: 'ready', id, cwd: process.cwd() }) + '\\n');
+waitForCommand('G');
 const started = process.hrtime.bigint().toString();
 const access = runtimePackageAccess();
 if (access.provider !== 'linux-proc-fd' || !access.readVerifiedCaptureBytes || access.repository_root !== ${JSON.stringify(packageRoot)})
@@ -345,7 +353,10 @@ try {
     observe(child, config);
   }
   const ready = await bounded(Promise.all(states.map((state) => state.waitFor('ready'))), 'reader readiness');
-  for (let index = 0; index < states.length; index++) states[index].child.stdin.write('GO\\n');
+  for (const state of states) state.child.stdin.write('G');
+  const boundaries = await bounded(Promise.all(states.map((state) => state.waitFor('read-boundary'))), 'descriptor-read boundary');
+  // Neither real descriptor read can complete before both readers enter it.
+  for (const state of states) state.child.stdin.write('R');
   const done = await bounded(Promise.all(states.map((state) => state.waitFor('done'))), 'reader completion');
   const terminal = await bounded(Promise.all(states.map((state) => state.terminal)), 'reader terminal receipts');
   if (terminal.some((receipt) => !receipt.closeObserved || receipt.exitCode !== 0 || receipt.signal !== null))
@@ -358,6 +369,7 @@ try {
   process.stdout.write(JSON.stringify({
     protocol: 'package-reader-coordinated-read/v1',
     ready: ready.map(({ id, cwd }) => ({ id, cwd })),
+    boundaries,
     durations,
     receipts: states.map((state, index) => ({ id: state.id, ...terminal[index], childError: state.childError, stderr: state.stderr() })),
     observations: done,
@@ -429,6 +441,7 @@ try {
       }
       if (
         !Array.isArray(report.ready) ||
+        !Array.isArray(report.boundaries) ||
         !Array.isArray(report.durations) ||
         !Array.isArray(report.receipts) ||
         !Array.isArray(report.observations)
@@ -496,6 +509,13 @@ try {
         };
       });
       expect(ready.map(({ cwd }) => cwd)).toEqual(roots);
+      expect(report.boundaries).toEqual(
+        roots.map((_, index) => ({
+          kind: 'read-boundary',
+          id: `reader-${index + 1}`,
+          path: path.join(packageRoot, 'schemas/agent-runtime-config.v1.schema.json'),
+        })),
+      );
       expect(durations).toHaveLength(2);
       for (const duration of durations) expect(BigInt(duration.durationNs) > 0n).toBe(true);
       expect(receipts).toHaveLength(2);

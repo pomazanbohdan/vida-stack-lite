@@ -9034,3 +9034,119 @@ The current parallel plan records dependency-ready reader/caller qualification
 and resource-quiescence proof before actual production integration. Global100%
 coverage/frozen CC-CRAP/confirmed mutation100 and isolated Runtime qualification
 remain OPEN. No system update, unblock claim or external notice was issued.
+
+### 2026-10-13 — resumed coverage: package-reader boundary and real callers
+
+User resumes coverage with Superpowers after ast-index publication f43ef15.
+Root retains the last full-run UNKNOWN, unchanged 600000ms entry budget and
+unrelated BASE/ and root bun.lock. The installed vida-agent command is absent;
+bootstrap uses the maintained lifecycle Source directly. Qualified Bun remains
+1.4.3. No competing test producer was observed. Fresh blind Luna reviews split
+Task4 descriptor overlap, actual schema callers, and Task3 quiescence; Root owns
+all checks/Git and shared instructions. No fresh full serial run repeats the
+unchanged budget failure merely because navigation tooling was installed.
+
+The existing Linux two-reader case now intercepts the real schema descriptor
+read, parks each reader, and releases both only after two observed entries. It
+retains native reads, byte/text/hash equality, root/provider identity, no-write/
+fsync counters, sidecars, bounded terminal accounting and failed roots. Native
+case PASS 786.03ms. This is causal overlap of pending verified captures at the
+JavaScript descriptor boundary; it is not a kernel-syscall timing claim.
+Official Bun module-mock and child-process documentation was retrieved into
+.tmp/coverage-iteration-f43ef15; supported mocking and stdio transport do not by
+themselves establish this local qualification.
+
+The new late-renewal case initially denies on missing Source scope in the
+absorption fixture's minimal journal. Retain vida-absorption-RPf9na. Correction
+uses direct real admission and MastraSessionBridge.start through its producer,
+not private Journal rewrites. A second assertion wrongly expected unchanged
+Journal CAS; actual Host renewal deliberately advances revision while preserving
+payload/digest. Retain Xbt2vW and correct that assertion to the contract.
+Focused real renewal then PASS 3224.05ms / 14 assertions: one verified schema
+read, zero raw reads, exact bound digest, renewed ticket/claim expiry, unchanged
+lease identity/Source/work binding and expected Host/Journal CAS progression.
+The default remains 5000ms per test; cleanup closes both resources and retains
+roots after deadline/body/close failure with combined errors.
+
+A bounded negative control temporarily substitutes the actual late schema call
+with the raw reader. Public renewal reaches its inspected result, then the
+verified-read count assertion fails (expected1/received0). The original run.ts
+bytes are restored in finally; retain X01LKH. This is a regression control,
+not a completed mutation campaign or a global assertion-confirmed Killed score.
+Logs: .tmp/coverage-iteration-f43ef15/package-readers.log,
+renewal-caller.log, renewal-caller-green.log and renewal-negative.log. Earlier
+static issues in the new test were narrowed/typed and the interim strict check
+passed; final joined checks follow remaining caller work.
+
+Independent test review found no boundary/assertion-loss blocker; runtime checks
+then corrected the actual fixture and Journal expectations above. Task3 review
+confirms no qualified descendant/effect quiescence owner; direct exit/released
+reservation is insufficient. Unknown/exclusive files prevent an unreviewed
+whole-selection single-wave shortcut. Keep current production serial and common
+package resource until complete caller/eligibility review. The project-split
+rebind planner test is the next disjoint writer packet, using the existing
+fresh-project upgrade fixture and real development lifecycle APIs only.
+
+#### Reader packet completion and project-split rebind repairs
+
+The standalone project-rebind case spent9435ms in duplicate fresh-upgrade setup
+under a5s case bound (retained project-upgrade-lifecycle-KScpz9). Its assertions
+were moved into the existing `fresh resume keeps one operation identity and
+reaches exact released history` case after all original assertions. The existing
+60s integration exception and fixture custody stay unchanged. No duplicate case
+or relaxed default was added. Remove one redundant unchanged database snapshot.
+
+The real caller then exposed two P0 product defects. First, targetConfig passed
+project-bound instruction paths into the legacy-default byte validator, denying
+the authored .vida executor change (retained W51oLf; reused-fixture-native.log).
+The pure boundary RED records the same source-binding denial. Forward an optional
+RuntimeConfigurationSource through the existing byte validator and derive it
+from the already validated baseline binding in targetConfig. Legacy defaults,
+strict bytes, mismatched source denial and lack of loaded-config authority stay
+intact. The pure fixture initially forgot to recompute its registry digest after
+changing paths; fix that fixture digest, not the production validation guard.
+
+Next, a valid isolated consumer selector prerequisite was missing from the fresh
+upgrade fixture (retained DC1w4r); creating its parent directory was also missing
+from the first fixture correction (retained NOsV6d). Seed the same explicitly
+synthetic selector contract used by the current rebind fixture and compare its
+bytes with the other immutable state. This grants no installed Runtime evidence.
+The product guard remains unchanged. With those prerequisites, plan reached an
+ENOENT in its own publication path (retained cDRqAi): it ensured .vida/work/<id>
+but wrote .vida/work/configuration-rebind/<id>/runtime-config-rebind-operation.v1.json.
+Derive the parent from the canonical operationPath with path.posix.dirname and
+retain SafeRepositoryAccess directory and exclusive-write CAS owners. The test
+does not precreate that directory and also denies the stray legacy directory.
+
+Final focused evidence on the repaired Source:
+- path-fixed-static.log: strict435 captured TS /434 program files and97 Source
+  files, zero diagnostics; scoped TS lint PASS.
+- config-readers-qualified.log:86PASS/0FAIL,546 assertions,13.21s across current
+  YAML, exact-byte boundary and both package-reader files. New renewal and the
+  native two-reader control remain within the5s default.
+- project-rebind-path-fixed.log:1PASS/0FAIL,64 assertions,12093.43ms case /
+  13.73s process. Public plan persists its project target and exact verified v2
+  schema digest; schema-byte drift blocks apply with unchanged config/selector/
+  initialization/activation/database/operation bytes.
+- legacy-rebind-final.log: existing inspect/plan/apply/resume provenance control
+  PASS,19 assertions,4481.15ms case. The later directory fix is project-lane only.
+These are88 distinct focused cases, not full-selection coverage. Interim failed
+logs remain in .tmp/coverage-iteration-f43ef15 beside the terminal green logs.
+
+Blind Luna review confirms the baseline source is the trusted source owner,
+split recovery already uses parseProjectConfiguration with the explicit project
+source, and remaining default-byte validators belong to legacy operation paths.
+The new operation-parent correction matches other safe artifact publishers;
+generic legacy rebind already created the correct parent. Review checks code
+and contracts; native terminal results above establish the passing assertions.
+Canonical Babel inventory keeps validateRuntimeConfigRepairTargetBytes and
+targetConfig identities with complexity1 before/after, without new branches.
+This is correspondence/complexity observation, not frozen CRAP admission.
+
+Update TESTING, the project Bun skill and current parallel plan with qualified
+fixture/caller practices. A new blind read-only caller-closure review chooses
+the next uncovered route. Keep production serial and the shared package conflict
+tag until complete eligibility plus descendant/effect quiescence qualify. Global
+coverage100%, dynamic CRAP/frozen correspondence and confirmed mutation100 remain
+OPEN; full run037062bf has no new admitted report. No system Runtime upgrade,
+unblock claim, external notice or archived UNKNOWN replay occurred.

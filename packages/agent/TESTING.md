@@ -752,6 +752,24 @@ Keep the package resource shared until the stronger overlap and affected-caller
 closure checks qualify; do not force a green timing assertion with sleeps or
 retries.
 
+The Linux package-reader control additionally parks both real readers inside a
+`readSync` interposition after matching the opened schema descriptor. The
+coordinator releases either read only after observing both boundary entries.
+This proves concurrent pending verified captures at that JavaScript descriptor
+boundary; it does not measure overlapping kernel syscalls. Keep the common
+package resource until the remaining caller closure and eligibility review.
+For late renewal caller tests, initialize the real Mastra bridge journal through
+its producer owner. The absorption helper's minimal journal omits Source scope
+and cannot reach the late schema fence. A successful renewal advances Journal
+CAS while preserving its payload and digest; assert these separately.
+Project-split rebind caller checks reuse an already activated upgrade fixture
+after its original assertions. Supply the consumer selector prerequisite as
+explicit isolated fixture data, not installation evidence. Let the public planner
+create its own canonical operation directory; precreating it hides path defects.
+Bind authored target validation to the loaded baseline's configuration source,
+retain source-mismatch denials, and compare selector/config/receipt/activation
+bytes, database rows and operation bytes around a schema-drift denial.
+
 Shared fixture helpers export an explicit hook-registration function; each test
 file calls it once in its own top-level or owning suite scope. With
 `--no-isolate`, imported modules are cached across files: a module-level

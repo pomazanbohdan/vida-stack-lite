@@ -2,6 +2,8 @@ import { describe, expect, test } from 'bun:test';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { PROJECT_CONFIGURATION_PATHS } from '../src/config/project-paths.ts';
+import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { configuredTestContext } from './configured-context.ts';
 import {
   assertLoadedRuntimeConfig,
@@ -26,6 +28,37 @@ describe('current-v1 exact-byte config repair boundary', () => {
     expect(runtimeConfigDigest(bomTarget)).toBe(runtimeConfigDigest(loaded));
     expect(target).not.toBe(loaded);
     expect(() => assertLoadedRuntimeConfig(target, repositoryRoot)).toThrow(/must come from loadRuntimeConfig/);
+  });
+
+  test('binds repair target instructions to the declared configuration source without granting authority', () => {
+    const loaded = loadRuntimeConfig(repositoryRoot);
+    const source = PROJECT_CONFIGURATION_PATHS.project;
+    const { digest: _digest, ...registry } = loaded.research_decision.registry;
+    const projectRegistry = {
+      ...registry,
+      instructions: registry.instructions.map((instruction, index) => ({
+        ...instruction,
+        source_path: source + '#research_decision.registry.instructions.' + index,
+      })),
+    };
+    const projectTarget = {
+      ...loaded,
+      research_decision: {
+        ...loaded.research_decision,
+        registry: {
+          ...projectRegistry,
+          digest: canonicalJsonDigest(projectRegistry),
+        },
+      },
+    };
+    const bytes = Buffer.from(JSON.stringify(projectTarget));
+    const target = validateRuntimeConfigRepairTargetBytes(bytes, repositoryRoot, source);
+    expect(runtimeConfigDigest(target)).toBe(runtimeConfigDigest(projectTarget));
+    expect(() => assertLoadedRuntimeConfig(target, repositoryRoot)).toThrow(/must come from loadRuntimeConfig/);
+    expect(() => validateRuntimeConfigRepairTargetBytes(bytes, repositoryRoot)).toThrow(/source binding is invalid/);
+    expect(() => validateRuntimeConfigRepairTargetBytes(sourceBytes, repositoryRoot, source)).toThrow(
+      /source binding is invalid/,
+    );
   });
 
   test('rejects malformed bytes, oversized input, a relative root and another schema', () => {

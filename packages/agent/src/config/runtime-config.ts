@@ -1612,12 +1612,16 @@ export function parseRuntimeConfigYaml(raw: string): AgentRuntimeConfig {
   return validateRuntimeConfig(parseRuntimeConfigDocument(raw));
 }
 
-export function validateRuntimeConfigRepairTargetBytes(bytes: Uint8Array, repositoryRoot: string): AgentRuntimeConfig {
+export function validateRuntimeConfigRepairTargetBytes(
+  bytes: Uint8Array,
+  repositoryRoot: string,
+  source?: RuntimeConfigurationSource,
+): AgentRuntimeConfig {
   assertCondition(path.isAbsolute(repositoryRoot), 'runtime config repair root must be absolute');
   assertCondition(bytes.byteLength <= MAX_CONFIG_BYTES, 'runtime YAML is too large');
   const raw = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
   assertCondition(Buffer.from(raw, 'utf8').equals(Buffer.from(bytes)), 'runtime YAML bytes are not canonical UTF-8');
-  return validateRuntimeConfig(parseRuntimeConfigDocument(raw), repositoryRoot);
+  return validateRuntimeConfig(parseRuntimeConfigDocument(raw), repositoryRoot, source);
 }
 
 export function validateRuntimeConfig(

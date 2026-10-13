@@ -2,7 +2,17 @@ import { afterAll, afterEach, expect, mock, spyOn, test } from 'bun:test';
 import * as artifactProducer from '../src/config/project-upgrade-artifacts.ts';
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
-import { closeSync, fstatSync, fsyncSync, openSync, readFileSync, readSync, writeSync } from 'node:fs';
+import {
+  closeSync,
+  fstatSync,
+  fsyncSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readSync,
+  writeFileSync,
+  writeSync,
+} from 'node:fs';
 import { lstat, readFile, rm, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -12,6 +22,8 @@ import * as actualAccess from '../src/config/safe-repository-access.js';
 import {
   PROJECT_ACTIVATION_PATH,
   PROJECT_CONFIGURATION_PATHS,
+  PROJECT_INITIALIZATION_PATH,
+  projectConfigurationRebindPath,
   PROJECT_UPGRADE_OPERATION_PATH,
   PROJECT_WORKSPACE_DATABASE_PATH,
   projectUpgradeHistoryPath,
@@ -19,6 +31,8 @@ import {
 } from '../src/config/project-paths.js';
 import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import { runBoundedSubprocess } from './helpers/bounded-subprocess.js';
+import { expectRejection } from './helpers/expect-rejection.ts';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const packageSource = (relativePath: string): string => path.join(packageRoot, relativePath);
@@ -625,7 +639,172 @@ afterAll(() => {
   restoreWhenSettled();
 });
 
+function projectRebindStateSnapshot(root: string): {
+  readonly files: readonly (readonly [string, Buffer])[];
+  readonly rows: unknown;
+} {
+  const files = [
+    ...Object.values(PROJECT_CONFIGURATION_PATHS),
+    PROJECT_INITIALIZATION_PATH,
+    PROJECT_ACTIVATION_PATH,
+    '.agent/active-runtime-selector.v1.json',
+  ].map((relative) => [relative, readFileSync(path.join(root, relative))] as const);
+  const database = new Database(path.join(root, PROJECT_WORKSPACE_DATABASE_PATH), { readonly: true, strict: true });
+  try {
+    const tables = database
+      .query<{ name: string }, []>("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+      .all();
+    return {
+      files,
+      rows: tables.map(({ name }) => ({
+        name,
+        rows: database.query(`SELECT * FROM "${name.replaceAll('"', '""')}"`).all(),
+      })),
+    };
+  } finally {
+    database.close();
+  }
+}
+
+async function assertProjectRebindSchemaReader(root: string): Promise<void> {
+  const { runReconcileArtifacts } = await import('../bin/reconcile-artifacts.ts');
+  let accessSpy: { mockRestore(): void } | undefined;
+  try {
+    const baselineConfig = runtimeConfig.loadRuntimeConfig(root),
+      baselineExecutor = baselineConfig.agents.profiles.executor;
+    if (!baselineExecutor) throw new Error('Project upgrade fixture has no executor profile');
+    const targetExecutor = {
+      ...baselineExecutor,
+      model: baselineExecutor.model === 'gpt-6.1-sol' ? 'gpt-6-sol' : 'gpt-6.1-sol',
+      reasoning: baselineExecutor.reasoning === 'high' ? 'medium' : 'high',
+    };
+    const targetConfig = {
+      ...baselineConfig,
+      agents: {
+        ...baselineConfig.agents,
+        profiles: { ...baselineConfig.agents.profiles, executor: targetExecutor },
+      },
+    };
+    expect(targetExecutor.model).not.toBe(baselineExecutor.model);
+    writeFileSync(path.join(root, 'rebind-target.yaml'), stringifyYaml(targetConfig));
+    // This isolated consumer fixture supplies the same synthetic selector prerequisite
+    // as the rebind fixture owner. It does not qualify an installed runtime.
+    mkdirSync(path.join(root, '.agent'), { recursive: true });
+    writeFileSync(
+      path.join(root, '.agent/active-runtime-selector.v1.json'),
+      canonicalJson({
+        schema: 'ActiveRuntimeSelector/v1',
+        generation: 'fixture-project-rebind',
+        runtime: 'vida-agent',
+        bundle_root: 'vida-agent',
+        config_path: 'agent-runtime.config.v1.yaml',
+        payload_manifest_sha256: canonicalJsonDigest({ fixture: 'project-rebind-package-schema-reader' }),
+      }),
+      { flag: 'wx' },
+    );
+
+    const rebindId = 'binding-project-rebind-001';
+    const command = (mode: 'plan' | 'apply'): string[] => [
+      '--kind',
+      'runtime-config',
+      '--mode',
+      mode,
+      '--project-root',
+      root,
+      '--repair-id',
+      rebindId,
+      ...(mode === 'plan'
+        ? [
+            '--actor',
+            'test-owner: project configuration rebind',
+            '--timestamp',
+            '2026-10-13T00:00:00.000Z',
+            '--instruction-ref',
+            'tests/project-upgrade-lifecycle.test.ts',
+            '--target-config',
+            'rebind-target.yaml',
+          ]
+        : []),
+    ];
+
+    let accessMode: 'plan' | 'apply' = 'plan';
+    const nativeAccess = runtimeConfig.runtimePackageAccess(),
+      nativeVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
+    if (!nativeVerifiedRead) throw new Error('Project rebind requires the native verified package-byte reader');
+    const reads = {
+      plan: { verified: 0, raw: 0, bytes: undefined as Buffer | undefined },
+      apply: { verified: 0, raw: 0 },
+    };
+    accessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => ({
+      ...nativeAccess,
+      readBytes(target: string, label: string): Buffer {
+        if (target === 'schemas/runtime-initialization.v2.schema.json' && label === 'project initialization schema')
+          reads[accessMode].raw += 1;
+        return nativeAccess.readBytes(target, label);
+      },
+      readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+        const bytes = nativeVerifiedRead.call(nativeAccess, target, label, maxBytes);
+        if (target === 'schemas/runtime-initialization.v2.schema.json' && label === 'project initialization schema') {
+          reads[accessMode].verified += 1;
+          if (accessMode === 'plan') reads.plan.bytes = Buffer.from(bytes);
+          else return Buffer.concat([bytes, Buffer.from('\n')]);
+        }
+        return bytes;
+      },
+    }));
+
+    const beforePlan = projectRebindStateSnapshot(root),
+      planResult: unknown = await runReconcileArtifacts(command('plan'));
+    if (!isPlainRecord(planResult) || planResult.status !== 'planned' || typeof planResult.operation_path !== 'string')
+      throw new Error('Project rebind plan did not return its persisted operation path');
+    expect(reads.plan).toMatchObject({ verified: 1, raw: 0 });
+    const schemaBytes = reads.plan.bytes;
+    if (!schemaBytes) throw new Error('Project rebind planner did not expose verified initialization schema bytes');
+    const operationPath = planResult.operation_path;
+    expect(operationPath).toBe(projectConfigurationRebindPath(rebindId));
+    await expectRejection(lstat(path.join(root, '.vida/work', rebindId)), /ENOENT/);
+    const operationBytes = readFileSync(path.join(root, operationPath)),
+      operationValue: unknown = JSON.parse(operationBytes.toString('utf8'));
+    if (!isPlainRecord(operationValue) || !isPlainRecord(operationValue.plan))
+      throw new Error('Project rebind planner did not persist a record-shaped operation');
+    const planValue = operationValue.plan,
+      baselineInputs = planValue.baseline_inputs,
+      targetInputs = planValue.target_inputs;
+    if (!isPlainRecord(baselineInputs) || !isPlainRecord(targetInputs))
+      throw new Error('Project rebind planner did not persist both frozen input sets');
+    if (!isPlainRecord(targetInputs.agents) || typeof targetInputs.agents.text !== 'string')
+      throw new Error('Project rebind plan did not persist target agents YAML');
+    const plannedAgents: unknown = parseYaml(targetInputs.agents.text);
+    if (
+      !isPlainRecord(plannedAgents) ||
+      !isPlainRecord(plannedAgents.agents) ||
+      !isPlainRecord(plannedAgents.agents.profiles) ||
+      !isPlainRecord(plannedAgents.agents.profiles.executor)
+    )
+      throw new Error('Project rebind plan did not persist a target executor profile');
+    expect(operationValue.schema).toBe('ConfigRebindOperation/v1');
+    expect(operationValue.phase).toBe('planned');
+    expect(planValue.configuration_format).toBe('project-split-v2');
+    expect(planValue.initialization_schema_digest).toBe(createHash('sha256').update(schemaBytes).digest('hex'));
+    expect(planValue.old_config_digest).toBe(baselineInputs.config_digest);
+    expect(planValue.target_config_digest).not.toBe(planValue.old_config_digest);
+    expect(targetInputs.config_digest).toBe(planValue.target_config_digest);
+    expect(plannedAgents.agents.profiles.executor.model).toBe(targetExecutor.model);
+    expect(plannedAgents.agents.profiles.executor.model).not.toBe(baselineExecutor.model);
+    expect(projectRebindStateSnapshot(root)).toEqual(beforePlan);
+
+    accessMode = 'apply';
+    await expectRejection(runReconcileArtifacts(command('apply')), /project initialization schema changed/);
+    expect(reads.apply).toEqual({ verified: 1, raw: 0 });
+    expect(projectRebindStateSnapshot(root)).toEqual(beforePlan);
+    expect(readFileSync(path.join(root, operationPath))).toEqual(operationBytes);
+  } finally {
+    accessSpy?.mockRestore();
+  }
+}
+
 test('fresh resume keeps one operation identity and reaches exact released history', async () => {
+  const deadlineAt = performance.now() + 60_000;
   const custody = beginCase();
   try {
     const root = await makeFreshRepository();
@@ -667,6 +846,10 @@ test('fresh resume keeps one operation identity and reaches exact released histo
         source_path: PROJECT_CONFIGURATION_PATHS.project + '#research_decision.registry.instructions.' + index,
       })),
     );
+    if (process.platform === 'linux' && actualAccess.safeRepositoryProviderAvailable)
+      await assertProjectRebindSchemaReader(root);
+    else console.warn('Verified project-rebind schema caller remains unqualified on this provider');
+    if (performance.now() >= deadlineAt) throw new Error('Project upgrade case deadline expired before cleanup');
     completeRoot(root);
   } finally {
     settleCase(custody);
