@@ -140,7 +140,9 @@ test('one admission operation reuses its checked runtime package access for inve
     const work = admitted.host.work;
     if (!work) throw new Error('admitted fixture has no work');
     expect(rawSchemaReads).toBe(0);
-    expect(verifiedSchemaReads).toHaveLength(2);
+    // The schema digest comes from the same full verified runtime snapshot, without a cache;
+    // the later assertAdmittedRuntimeCodeCurrent call remains a separate freshness fence.
+    expect(verifiedSchemaReads).toHaveLength(1);
     const capturedSchema = verifiedSchemaReads[0];
     if (!capturedSchema) throw new Error('Admission did not capture its package schema');
     const schemaDigest = createHash('sha256').update(capturedSchema).digest('hex');
@@ -159,6 +161,37 @@ test('one admission operation reuses its checked runtime package access for inve
   } finally {
     packageAccessSpy?.mockRestore();
     accessSpy?.mockRestore();
+    fixture.close({ retainRoot: !success });
+  }
+});
+
+test('admission denies missing captured schema after its original cutoff without other database effects', () => {
+  const fixture = createAutomaticWorkAdmissionFixture(false, true);
+  let pathsSpy: Mock<typeof runtimeConfig.runtimePackageCodePaths> | undefined;
+  let success = false;
+  try {
+    const input = fixture.prepare('missing-runtime-schema', 'user:missing-runtime-schema');
+    // Admission deliberately retains this rollback cutoff before fallible scope/schema preparation.
+    fixture.store.recordAdmissionAttempt(input.context.work_id, input.context.attempt, {
+      workItem: input.workItem,
+      nativeSessionHandle: input.nativeSessionHandle,
+      context: input.context,
+      scopePath: input.scopePath,
+      acceptancePath: input.acceptancePath,
+    });
+    const before = snapshotFixtureDatabase(fixture.database),
+      originalPaths = runtimeConfig.runtimePackageCodePaths,
+      schemaPath = input.config.runtime.bundle + '/schemas/agent-runtime-config.v1.schema.json';
+    pathsSpy = spyOn(runtimeConfig, 'runtimePackageCodePaths').mockImplementation((bundle, access) =>
+      originalPaths(bundle, access).filter((entry) => entry !== schemaPath),
+    );
+
+    expect(() => fixture.admit(input)).toThrow('runtime schema binding is absent from the captured package snapshot');
+    expect(snapshotFixtureDatabase(fixture.database)).toEqual(before);
+    expect(fixture.store.readWorkspaceSnapshot().work).toHaveLength(0);
+    success = true;
+  } finally {
+    pathsSpy?.mockRestore();
     fixture.close({ retainRoot: !success });
   }
 });

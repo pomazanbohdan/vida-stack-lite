@@ -6,7 +6,6 @@ import { validateImplementationScope as validScope } from '../contracts/implemen
 import {
   type AgentRuntimeConfig,
   type WorkItemSelection,
-  readRuntimePackageResourceBytes,
   runtimeConfigDigest,
   runtimePackageAccess,
   runtimePackageCodePaths,
@@ -169,12 +168,14 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
     runtimeCode.entries.every((entry) => entry.exists),
     'runtime code binding has a missing file',
   );
-  const schemaBytes = readRuntimePackageResourceBytes(
-    packageAccess,
-    'schemas/agent-runtime-config.v1.schema.json',
-    'runtime schema binding',
+  const schemaEntry = runtimeCode.entries.find(
+    (entry) => entry.path === config.runtime.bundle + '/schemas/agent-runtime-config.v1.schema.json',
   );
-  const schemaDigest = digest(schemaBytes);
+  requireAdmission(
+    schemaEntry?.exists === true && typeof schemaEntry.sha256 === 'string',
+    'runtime schema binding is absent from the captured package snapshot',
+  );
+  const schemaDigest = schemaEntry.sha256;
   const codeDigest = runtimeCode.digest;
   const canonicalIntakePath =
     input.intakePath === undefined ? null : `.agent/work/${context.work_id}/local-session-intake.v1.json`;

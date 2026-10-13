@@ -10420,3 +10420,75 @@ run does not relabel it. Blind final review accepts the inspected custody,
 capture, rollback and terminal-expiry contracts with no blocker. Its review of
 prospective10/10 helper budgets is nonnumeric. Ordinary commit/push pending;
 all final global gates and the actual one-DB cutover stay OPEN.
+
+### Optimized dispatch and single-capture schema binding — 2026-10-13
+
+fa227cf is committed and pushed non-force to origin/main with an ordinary strict
+hook. Only unrelated BASE/ and root bun.lock remained. This optimization follows
+the current human Superpowers directive and reuses the existing CLEAR plan;
+no second workflow hierarchy, scanner, lock framework or full suite is added.
+
+Root used all seven slots: six blind Luna roles for three disjoint resource
+sets, causal cost, existing-main/plan review and frozen-role reuse. A single
+capture atfa227cf supplied188testfiles/148Sourcepaths,63/63/62 review packets
+and retained byte images. The packets are unreviewed inputs, not eligibility;
+subsequent Source/test changes invalidate affected scope. Workers ran no
+compiler/test/build/install/Git or duplicate capture/hash/AST pass.
+
+Reuse candidates at that capture:127saved-inventory modules/5533roles have
+matching SHA and the inventory-tool SHA matches;18modules/2075roles need new
+review/inventory, with3capture-only paths. Reviewed partial lineage has74same
+bindings/10changed,925retained+241NEW roles on matching bound files,
+127retained+49NEW on changed files and74retained with no current binding.
+These are source-bound review candidates, not exhaustive plans or numeric proof.
+Do not automatically transfer changed roles or manufacture NEW10/10 budgets.
+
+Root rejects two overbroad resource findings: immutable plain-file reads do not
+take a config CAS lock; a common .tmp parent with unique mkdtemp children and
+own-child cleanup is not a global exclusive resource. Actual configured-root
+SafeAccess readers still coassign. Caller-selected
+VIDA_INITIAL_SOURCE_ENGINE_DIAGNOSTIC_FILE and VIDA_STOPPED_SOURCE_PHASE_LOG
+remain explicit output resources when enabled. Actual package provider/caller
+closure and authoritative current eligibility still precede live shards.
+
+Confirmed admission duplication: snapshotRuntimePackageSources already reads
+the config schema and hashes its exact image; admission separately reread it
+only for schema_digest. Reuse the exact required schema entry in runtimeCode,
+retaining the whole snapshot and later freshness/CAS/source checks. No cache
+or schema/public digest format changes. Required membership has its own guard:
+inventory discovery of existing files cannot prove a required absent filename.
+The per-snapshot .find predicate is prospectively reviewed at10/10; existing
+admission correspondence stays a changed retained role, not a hidden NEW role.
+
+Actual RED admission-schema-reuse-red.log observes2reads versus1; the failed
+root is retained. admission-schema-membership-red-selected.log proves an omitted
+schema was still admitted through its independent second read. The earlier
+membership log matched0tests and is a filter/setup failure, not causal evidence.
+Final full affected file6PASS/38assertions/5.45s; longest body2355.23ms.
+Retained-source/exact-retry direct callers2PASS/17assertions/3.85s. Static448TS/
+447program and100SourcePASS,0diagnostics, typedlintPASS; ordinary hook validates
+the final review test edits. No elapsed-speedup claim follows from read counts.
+
+Final review finds a wording/test gap: admission deliberately records its
+durable rollback cutoff before scope preparation. Ruling: preserve this order,
+as required by the existing consumer-migration contract and its public test;
+schema denial prevents Work/lease/execution effects, not that bookkeeping row.
+Moving the snapshot before cutoff would weaken rollback protection and change
+guard order. The corrected control establishes the exact original cutoff through
+its real owner and compares all database tables afterward, not just Work rows.
+Its fresh completion check also includes the actual public cutoff case.
+No Source code reorder, private state edit, fabricated authority or replay.
+
+The next one-DB implementation unit is the already-published main DB: lifetime
+ordinary access and fresh EXCLUSIVE-mode maintenance on that same connection,
+with Host/service verifier and operation SQL reusing it. Fresh publication stays
+with existing complete-image/journal owner. Gate retirement/active switch await
+qualified bundle-owned repair. Exact coverage/frozen CRAP/Killed and isolated
+real-runtime full flow checks remain OPEN; no installed/unblock notice.
+
+Final corrected cutoff controls2PASS/8assertions/2.04s,500.97ms/117.18ms bodies.
+The preserved public case proves rollback cutoff behavior; the strengthened
+schema-omission case proves all canonical database rows remain unchanged after
+that exact original cutoff. Source optimization and later freshness proof are
+current; historical RED/failed roots are retained. Publish the connected packet
+through the ordinary strict hook; do not relabel global gates or activate shards.

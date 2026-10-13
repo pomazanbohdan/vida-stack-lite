@@ -261,6 +261,15 @@ Source snapshots prefer this capability when available; missing required files
 deny capture rather than becoming absent runtime entries. Mutable TaskSource
 and ordinary declared-source snapshots retain their cooperative stable reader.
 
+Initial local admission derives its runtime-config schema digest from the exact
+required schema entry in that operation's complete runtime-package Source
+snapshot. A missing schema entry or digest denies Work, lease and execution
+effects. Preserve the existing durable admission-cutoff record, which precedes
+scope preparation and blocks rollback after an observed admission attempt.
+Do not bind the schema to a second independently read image or cache it across
+operations. Later ownership/effect freshness checks still capture and compare
+the current complete package binding independently.
+
 The only public agent distribution is one native `vida-agent` executable per qualified
 OS/CPU target, embedding the exact Source-selected Bun. Direct installation, public commands and first
 run require no external Node, npm or Bun executable and no first-run network

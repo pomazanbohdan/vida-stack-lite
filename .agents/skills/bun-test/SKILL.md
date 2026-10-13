@@ -44,6 +44,12 @@ use the selected `.bun-version` and manifest/lock declarations, without embeddin
 the current runtime version in tests. An emitted native entry binds its selected
 pin; fixtures for prior operations keep their original pin and bytes.
 
+For parallel agent work, use one lead-owned input capture and disjoint review
+packets. Reuse unchanged byte/tool-bound inventory roles; packets and generated
+rows do not grant eligibility or reviewed budgets. Join writers, finish heavy
+static checks, then run bounded affected behavior without compiler contention.
+Keep one final numeric/Git owner and the existing exact gates.
+
 Use the package-owned `bun check --project ... --no-pretty` no-emit gate on
 qualified Bun 1.4.3. Preserve the explicit maintained roots, staged snapshot
 and stricter Source project. Declaration emission still uses TypeScript's

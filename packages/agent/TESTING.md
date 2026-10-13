@@ -223,6 +223,14 @@ prove the regression and affected callers together; do not repeat the same
 cases as a second completion command. Workers do not launch duplicate suites.
 After a failed full run, retain that result and recheck only affected behavior.
 
+Finish expensive compiler, format and lint checks before bounded runtime cases;
+these checks compete for CPU and can consume a case's five-second allowance.
+Root captures shared Source/test/tool inputs once per settled byte state and
+dispatches compact disjoint review packets. Workers reuse those bindings and
+the existing inventory, without independent scan/hash/full-suite passes. A
+packet is not an eligibility receipt. Reuse SHA-identical inventory roles only
+with the same inventory-tool binding; changed or new roles require fresh review.
+
 Pass exact file paths with name filters. A name filter alone may still load
 unrelated files; see the official [Bun test runner guide](https://bun.sh/docs/test).
 

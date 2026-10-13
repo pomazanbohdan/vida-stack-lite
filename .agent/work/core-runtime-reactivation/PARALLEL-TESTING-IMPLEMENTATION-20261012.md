@@ -12,11 +12,48 @@
 
 ## Current dispatch — 2026-10-13
 
-Latest published Source is31aa6de. The last full current run,
+Latest published Source isfa227cf. The last full current run,
 6ecf5884-1970-4988-ac04-b4af06260ba0, ended UNKNOWN under300000ms with170emitted
 PASS rows, no emitted assertion failure and no admitted numeric report. Preserve
-the run/effects; no unchanged full rerun. Six prior resource review packets remain
+the run/effects; no unchanged full rerun. Earlier resource review packets are
 UNREVIEWED and stale after Source changes, not current eligibility receipts.
+
+The current optimization dispatch uses all seven slots: Root plus six blind Luna
+roles. Root captured188selectedtests/148Sourcepaths once atfa227cf, split only
+the test metadata into63/63/62 resource review packets, and retained captured
+bytes for identity reuse. The packets are analysis inputs, not eligibility.
+Source/test edits invalidate their affected bindings; workers never recapture,
+hash, parse an inventory or run competing checks.
+
+| Role | Owned result | Writer/check boundary |
+| --- | --- | --- |
+| Resource A/B/C | Exact mutable owner/reader closure for disjoint test sets | Read-only; no invented empty rows or global locks from plain shared parents |
+| Causal cost | One proven duplicated read/call and its existing regression | Test writer only after Root acceptance, one file |
+| One-DB/plan review | Existing-main connection API and same-connection fence dependencies | Read-only independent plan/code review |
+| Frozen scope | Reuse confirmed SHA/tool-bound roles; finite changed/added review list | No measurement or automatic NEW budgets |
+| Root | Shared Source, current plan/spec, integration and final evidence | Sole runtime/compiler/numeric/Git owner |
+
+Freeze one dependency-ready correction: admission reuses the config schema digest
+already present in its complete runtime-code snapshot. Require the exact schema
+entry and retain later effect-facing freshness checks. This removes one duplicate
+verified read and split-image binding without a cache. In parallel, the other
+roles finish next-unit context; they do not reopen qualified scheduler work or
+activate live parallelism. Gate retirement still depends on existing-main lifetime
+exclusion, same-connection SQL/fence use and qualified bootstrap/repair.
+
+Sequence: causal RED and accepted plan → disjoint Source/test writers → join and
+freeze → static/format/lint → affected runtime cases without compiler contention
+→ independent review → ordinary commit/push. One full current numeric run follows
+only when the actual cost/eligibility correction is ready; build/install run no
+suites. Keep default5000ms per case and300000ms total, including preparation and
+report reserve. Reuse unchanged evidence by its actual bindings.
+
+After writers join, reuse the capture/tool digests to update only changed/new
+inventory modules. Atfa227cf, saved inventory tool SHA matches and127modules /
+5533roles have matching source SHA;18modules/2075roles are stale and3paths lack
+inventory. Partial lineage has74matching bindings and10changed bindings. These
+are reuse candidates, not exhaustive mapping or numeric qualification. Preserve
+genuineb549951 baseline, one-to-one role partitions and reviewed prospective caps.
 
 The consumer-origin packet binds the successful configuration loader's existing
 source digest and physical root identity into the current producer and final
@@ -24,9 +61,9 @@ validator. The current child receives that exact bound root; the native fixture
 reproduces missing propagation before the fix and retains the failed root.
 Missing/stale scope negatives preserve the other manifest/child receipt hashes.
 Legacy and activated project origins have separate controls. Live production
-remains serial. Next resolve wrapper-owned moving-clock provenance for the base
-review digest without weakening exact child environment hashes or caller ceilings,
-then qualify the actual complete current resource review before activation.
+remains serial. Wrapper-owned moving-clock provenance is now qualified separately
+from exact child hashes and caller ceilings. Next qualify the complete current
+resource review and affected package-reader closure before activation.
 
 Clock correction scope: the maintained current wrapper captures original caller
 and ancestor ceilings before rewriting clocks. It discards ambient policy claims
