@@ -5552,9 +5552,10 @@ export class HostStateStore {
           'SELECT generation,work_id,attempt,request_digest FROM agent_host_admission_attempt WHERE workspace_id=? ORDER BY generation,work_id,attempt',
         )
         .all(this.#workspaceId);
-    const checkSettled = (): void => {
-      this.#assertMaintenanceQuiescent();
-      for (const row of readRows().agent_host_mastra_session_ledger ?? []) {
+    const checkSettled = (): { validatedLedger: CoordinationLedger | null; rows: ReturnType<typeof readRows> } => {
+      const validatedLedger = this.#assertMaintenanceQuiescent();
+      const rows = readRows();
+      for (const row of rows.agent_host_mastra_session_ledger ?? []) {
         const journal = parseMastraSessionLedgerState(readMigrationRowValue(row));
         requireState(
           journal.schema === 'MastraSessionLedger/v1' &&
@@ -5579,6 +5580,7 @@ export class HostStateStore {
           'consumer migration native outcome remains unknown',
         );
       }
+      return { validatedLedger, rows };
     };
     this.#transactionWithProducerFence(() => {
       this.#assertMaintenanceReceipt(receipt);
@@ -5644,14 +5646,13 @@ export class HostStateStore {
             result,
           };
         }
-        checkSettled();
-        const before = readRows(),
-          attemptBaseline = admissions();
+        const { validatedLedger, rows: before } = checkSettled();
+        const attemptBaseline = admissions();
         // Validate every current-v1 pair before hiding old tasks; retired readers are never selected.
         for (const row of before.agent_host_state ?? [])
           if (row.kind === 'work') {
             const work = this.#checkedWork(readMigrationRowValue(row));
-            validatePair(work, this.#load('ledger', 'shared') as CoordinationLedger | null);
+            validatePair(work, validatedLedger);
           }
         const result = files();
         requireState(
@@ -7169,7 +7170,7 @@ export class HostStateStore {
     );
     return value;
   }
-  #assertMaintenanceQuiescent(): void {
+  #assertMaintenanceQuiescent(): CoordinationLedger | null {
     this.#assertGovernanceQuiescent();
     const rows = this.#database
       .query("SELECT id FROM agent_host_state WHERE workspace_id=? AND kind='work'")
@@ -7184,6 +7185,7 @@ export class HostStateStore {
         !ledger?.tickets.some((ticket) => ticket.status === 'active' || ticket.status === 'queued'),
       'queued/active coordination ownership blocks maintenance',
     );
+    return ledger;
   }
   #assertMaintenanceProjects(binding: MaintenanceFenceBinding): void {
     requireState(

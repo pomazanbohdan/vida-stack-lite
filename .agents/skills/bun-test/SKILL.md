@@ -311,6 +311,12 @@ snapshot stays readonly; clone entries explicitly only for a mutable fixture.
 For Bun eval subprocess fixtures, launch process.execPath and pass validated
 fixture operands explicitly through the child environment. Script argv examples
 do not establish eval operand positions. Keep real SQLite transaction/row proofs.
+For read-amplification controls, observe the real owned SQL/decoder boundary,
+scope the observer to the operation and restore it in finally. Use multiple Work
+rows and a genuinely aggregate-overflow corpus; keep exact restore assertions.
+Reuse validated snapshots only within the same fenced transaction before effects,
+while retaining every per-record check. Record read/decoder counts separately from
+wall-time claims; concurrent static checks make timings incomparable.
 Reuse the completed upgrade fixture for project-split planner checks; keep its
 original assertions and custody. Seed the isolated consumer selector prerequisite
 explicitly, but let the planner create its operation directory. Assert the target

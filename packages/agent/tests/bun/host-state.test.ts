@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
 import { validateWorkState } from '../../src/contracts/work-state-schema.ts';
@@ -81,6 +81,7 @@ import {
   createHostOperationReservationStore,
 } from '../../src/governance/edictum-boundary.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
+import * as persistedRows from '../../src/config/host-persisted-row.ts';
 
 const workspace = 'a'.repeat(64);
 const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -160,7 +161,6 @@ type SqliteJournalModeRow = { readonly journal_mode: string };
 type SqliteSynchronousRow = { readonly synchronous: number };
 type SqliteBusyTimeoutRow = { readonly timeout: number };
 type PayloadSqlRow = { readonly payload: string };
-type RevisionPayloadSqlRow = { readonly revision: number; readonly payload: string };
 type RevisionPayloadDigestSqlRow = {
   readonly revision: number;
   readonly payload: string;
@@ -968,13 +968,14 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
     started.attempt.attempt_id,
   );
   const row = database
-    .query<RevisionPayloadSqlRow, [string]>(
-      'SELECT revision,payload FROM agent_host_mastra_session_ledger WHERE work_id=?',
+    .query<RevisionPayloadDigestSqlRow, [string]>(
+      'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE work_id=?',
     )
     .get('work');
   if (!row) throw new Error('renewed session ledger row is missing');
   expect(row.revision).toBe(journal.version.revision + 1);
   expect(row.payload).toBe(canonicalJson(journal.state));
+  expect(row.digest).toBe(journal.version.digest);
   expect(() => store.renewActiveLocalLease({ ...request, nativeSessionHandle: 'foreign' })).toThrow();
   const readClock = Date.now;
   const renewedLease = renewed.work.lease;
@@ -2901,8 +2902,14 @@ const workingStore = (handle = database) =>
 test('consumer migration keeps canonical SQLite in place, clears active rows and restores exact state under its held fence', async () => {
   const initial = fixture();
   quiesceImportedState([initial.nextWork], initial.nextLedger);
-  commitHostState(initial);
+  const first = commitHostState(initial);
+  const second = fixture('second', 'file:src/other.ts');
+  quiesceImportedState([second.nextWork], second.nextLedger);
+  includeExistingLedger(second, first.ledger);
+  second.expectedLedger = first.ledgerVersion;
+  commitHostState(second);
   const before = store.readWorkspaceSnapshot();
+  expect(before.work).toHaveLength(2);
   const consumerFile = path.join(root, 'consumer-source.txt');
   const originalBytes = Buffer.from('original consumer source\n');
   writeFileSync(consumerFile, originalBytes);
@@ -2916,11 +2923,24 @@ test('consumer migration keeps canonical SQLite in place, clears active rows and
     database.query<ScalarCountRow, []>('SELECT count(*) AS count FROM agent_host_admission_attempt').get()?.count,
   ).toBe(0);
   let callbacks = 0;
-  const baseline = migration.consumerMigrationState(fence, 'baseline', () => {
-    callbacks++;
-    expect(() => store.recordAdmissionAttempt('blocked', 1, { valid: 'fixture' })).toThrow(/maintenance|nested/);
-    return 'files archived';
+  let ledgerReads = 0;
+  const originalReadStateRow = persistedRows.readWorkspaceStateSqlRow;
+  const rowObserver = spyOn(persistedRows, 'readWorkspaceStateSqlRow').mockImplementation((...args) => {
+    if (args[0] === database && args[1] === workspace && args[2] === 'ledger' && args[3] === 'shared') ledgerReads++;
+    return originalReadStateRow(...args);
   });
+  const baseline = (() => {
+    try {
+      return migration.consumerMigrationState(fence, 'baseline', () => {
+        callbacks++;
+        expect(() => store.recordAdmissionAttempt('blocked', 1, { valid: 'fixture' })).toThrow(/maintenance|nested/);
+        return 'files archived';
+      });
+    } finally {
+      rowObserver.mockRestore();
+    }
+  })();
+  expect(ledgerReads).toBe(1);
   expect(baseline.status).toBe('baseline');
   expect(migration.readWorkspaceSnapshot().work).toHaveLength(0);
   expect(migration.readWorkspaceSnapshot().ledger).toBeNull();
@@ -2964,13 +2984,15 @@ test('consumer migration archives individually bounded governance rows beyond th
     .query<GovernanceSqlRow, []>("SELECT * FROM agent_host_governance WHERE kind='operation'")
     .get();
   if (!template) throw new Error('operation fixture row is missing');
+  const basePayload = validateHostOperationReservation(parseJsonRecord(template.payload));
+  const insert = database.query<never, SQLQueryBindings[]>('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)');
   database
     .transaction(() => {
       for (let index = 0; index < 1400; index++) {
         const key = createHash('sha256')
           .update('archive-operation-' + index)
           .digest('hex');
-        const payload = { ...validateHostOperationReservation(parseJsonRecord(template.payload)), operation_key: key };
+        const payload = { ...basePayload, operation_key: key };
         const digest = canonicalJsonDigest({
           workspace_id: workspace,
           store_id: template.store_id,
@@ -2979,9 +3001,7 @@ test('consumer migration archives individually bounded governance rows beyond th
           revision: template.revision,
           payload,
         });
-        database
-          .query<never, SQLQueryBindings[]>('INSERT INTO agent_host_governance VALUES(?,?,?,?,?,?,?)')
-          .run(workspace, template.store_id, template.kind, key, template.revision, canonicalJson(payload), digest);
+        insert.run(workspace, template.store_id, template.kind, key, template.revision, canonicalJson(payload), digest);
       }
     })
     .immediate();
@@ -2991,7 +3011,24 @@ test('consumer migration archives individually bounded governance rows beyond th
   expect(() => canonicalJsonDigest(rows)).toThrow(/node budget/);
   const migration = maintenanceStore(),
     fence = migration.acquireMaintenanceFence(maintenanceBinding());
-  expect(migration.consumerMigrationState(fence, 'baseline', () => undefined).status).toBe('baseline');
+  let governanceDecodes = 0;
+  const originalDecodeRow = persistedRows.decodeWorkspaceSqlRow;
+  const decoderObserver = spyOn(persistedRows, 'decodeWorkspaceSqlRow').mockImplementation(
+    new Proxy(originalDecodeRow, {
+      apply(target, receiver: unknown, args: unknown[]) {
+        if (args[0] === 'agent_host_governance' && args[2] === workspace && args[3] === database) governanceDecodes++;
+        const result: unknown = Reflect.apply(target, receiver, args);
+        return result;
+      },
+    }),
+  );
+  try {
+    expect(migration.consumerMigrationState(fence, 'baseline', () => undefined).status).toBe('baseline');
+  } finally {
+    decoderObserver.mockRestore();
+  }
+  expect(governanceDecodes).toBeGreaterThanOrEqual(rows.length);
+  expect(governanceDecodes).toBeLessThanOrEqual(rows.length * 2);
   expect(database.query<ScalarCountRow, []>('SELECT count(*) AS count FROM agent_host_governance').get()?.count).toBe(
     0,
   );
@@ -7541,6 +7578,9 @@ test('completed readonly owner release denies missing, reserved, failed and fore
 
 test('completed readonly owner release denies stale CAS and a newer queued conflicting contour', async () => {
   const prepared = await writerFixture();
+  firstTicket(prepared.seed.nextLedger).exclusive_resources = ['file:src/task.ts'];
+  firstTicket(prepared.seed.nextLedger).active_resources = ['file:src/task.ts'];
+  firstClaim(prepared.seed.nextLedger).resources = ['file:src/task.ts'];
   const initial = commitHostState(prepared.seed);
   const journal = clone(completedCurrentWorkflowJournal(prepared.source));
   const request: Parameters<typeof suspendCompletedReadOnlyWork>[0] = {

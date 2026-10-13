@@ -9983,3 +9983,56 @@ lint/format/diff PASS. Independent blind Host diff review finds no lost behavior
 assertions, timeout changes or product guard changes. The Bun skill records these
 verified fixture/eval techniques. Publication and one subsequent full current
 measurement remain the next owner actions; global numeric/native gates stayOPEN.
+
+## Migration read amplification and second full-run corrections — 2026-10-13
+
+Host fixture packet publishede07c478 through ordinary hooks/non-force push. Its
+subsequent full current run62dd9de2-e528-418a-8c32-4f7c6dec2288 remainsUNKNOWN at
+the global300000ms boundary; preserve its run/effects, no admitted final report.
+The log exposes one default5000ms governance archive timeout6127ms (not an
+assertion-confirmed product defect) and one real failed test oracle: the typed
+readonly fixture's initial lease became execution-only, while the queued claimant
+still requests a file, so the supposed collision no longer exists. Restore the
+test's initial same-file ticket/claim resources without adding rights or changing
+the product guard. Keep stale CAS, queued ordering and exact unchanged snapshot.
+
+Root hoists the archive fixture's stable validated template and INSERT statement;
+all1400newdistinctkeys/payloads/digests plus original row remain, with aggregate
+node-budget denial and exact ordered1401-row restore. Add explicit heartbeat
+stored digest proof alongside unchanged canonical payload, revision and attempt.
+Three affected native cases PASS before the next Source optimization; no timer
+increase or reduced data bound. Scoped times do not establish unified speedup.
+
+Independent Source audit finds repeated baseline reads of the same shared ledger
+and the same complete SQL row snapshot. Root two-work roundtrip control first
+assertion-fails ledgerReads3 versus1. Return the already-validated quiescent ledger
+only after existing guards, and reuse it for every Work/Ledger pair in the same
+immediate producer-fenced transaction. Root archive counter then assertion-fails
+4203governance decodes versus2802ceiling; return the already-captured/validated
+rows after journal checks instead of recapturing all tables. All deterministic
+checks precede the unchanged filesystem callback; no write/callback occurs
+between the former snapshots. WeakMap values retain the same row identities.
+Restore and other private guard callers keep their guards; per-work pair scans
+still run, so no claim that all quadratic cost disappeared. Independent review
+approves snapshot freshness, guard order, custody and both restored observers.
+
+Final native7PASS/55assertions/5.55s covers two-work migration/restore with a real
+interrupted restore, new admissions/foreign row/UNKNOWN denials, archive, conflict
+and heartbeat. Archive2263.56ms under unchanged default5000ms in this scoped run;
+unified performance remains pending. Scoped static1127production callables
+unchanged; affectedCC2/5/3unchanged versus checked e07c478 capture. This is not an
+Original/frozen ceiling source. Strict444capturedTS/443program and100SourcePASS,
+0diagnostics; final lint PASS. Ordinary hook will recheck final bytes.
+
+Two independent semantic reviews approve34Original synthesis and27Original
+transition-proof roles, plus2newlazy-factory roles. Root ignores the old private
+allowance seed and joins actual admitted fe54f83c report bytes whose frozenSHA
+ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb matches.
+Selected Original Source bytes match that report; the maintained function/body/
+counter mapper supplies actual61zero-covered tuples. Inherited highCC13/51/55/21
+andCRAP182/2652/3080/462remain Original ceilings, not prospective new ceilings.
+Only the two new factory roles get fixed prospective10/10. Independent pre/post
+join reviews confirm prior rows/bindings/caps unchanged and exact additions.
+Partial now1126retained+290new=1416roles over84Sourcebindings, removed1unchanged.
+It remainsNON_EXECUTABLE_NOT_EXHAUSTIVE; default exhaustive plan/current numeric/
+native gatesOPEN. Publication and one full current measurement follow this batch.
