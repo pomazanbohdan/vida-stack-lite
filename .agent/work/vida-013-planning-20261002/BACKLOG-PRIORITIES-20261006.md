@@ -1,6 +1,76 @@
-# Беклог VIDA — чинний порядок контурів, 9 жовтня 2026
+# Беклог VIDA — чинний порядок контурів, звірено 13 жовтня 2026
 
 Чинні пріоритети погодженого CLEAR. Збережено task IDs, критерії, research і домовленості. Root інтегрує код; агенти досліджують окремі контури. Історія виконання зберігається в архіві, не задає поточні передумови.
+
+## Поточна звірка й один batch закриття — 2026-10-13
+
+У базових таблицях нижче 8 P0 і 10 P1 **контурів**, а не 18 підтверджених
+невиправлених дефектів. Історичне `pending` не переважає пізніший перевірений
+результат. За новим дорученням користувача Root звіряє всі 18 рядків одним
+пакетом із шістьма сліпими Luna-дослідженнями та одним власником перевірок.
+Статуси реалізації Source, цільових доказів і фінального прийняття розділені;
+підзадачі й спільні фінальні гейти не збільшують кількість контурів.
+
+Вже звірено:9803d14 і3b69209 опубліковані; реальні ordinary pre-commit hooks
+обох пакетів PASS. Старий Babel mismatch не є поточним blocker. Audit18:L1
+видалений із чинного опублікованого Source. Пізніший v705 PASS закриває
+конкретний Source activation-move/process-death/same-ID resume сценарій;
+ранній90s FAIL збережено як provenance, він не підміняє поточний стан.
+Ці результати не означають встановлений native Runtime або глобальні100%.
+
+Source/тестовий batch пройшов свої статичні й точкові перевірки; повне
+прийняття залишається відкритим. `quality:final` вимагає повний frozen CRAP
+plan; стандартний `crap-budgets.v1.json` відсутній, reviewed-partial не є
+заміною. Genuine baseline b549951 уже виміряний і збережений: run fe54f83c,
+report SHA ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.
+Він допускає використання історичних вимірювань, але його suite/quality FAIL
+не стає PASS. Бракує повного актуального reviewed function correspondence;
+не потрібно повторювати baseline чи підвищувати budgets за поточним кодом.
+Останній повний coverage run 3ad33c8f — UNKNOWN без допустимого
+підсумкового report. Source/тестові виправлення й актуальна черга зафіксовані
+в [WORK](../core-runtime-reactivation/WORK.md) та
+[поточному плані](../core-runtime-reactivation/PARALLEL-TESTING-IMPLEMENTATION-20261012.md).
+Повні контури закриваються після власних AC; відсутній proof залишається GAP.
+
+Звірка шести незалежних Luna-оглядів із поточними tests виправила ще три
+застарілі припущення. F1 має `normal-large` повний engine test і новий
+`normal-history` для ledger, що сам перевищує 10 000 nodes; останній виявив
+generic receipt clone defect у retry/lookup, виправлений спільним codec.
+Обидва тепер PASS. F2 вже має всі exact 3/4-target
+prefixes, settled retry та drift у кожному target у `release-preparation.test.ts`;
+новий дублюючий prefix suite не потрібний. SDK preparation-denial cause вже
+збережено; ширша typed readonly diagnosis лишається окремою P1 реалізацією.
+Readonly snapshot не надає прав на changing routes.
+
+| Порядок у базовій таблиці | Звірений стан Source / доказ | Точний залишок |
+| --- | --- | --- |
+| P0 1 admission/ownership | Виправлення реалізовано; нового дефекту огляд не відтворив | Поточне повне прийняття та свіжий native Runtime |
+| P0 2 root/unresolved writer | Bound-root renewal і terminal/quiescence fences збережено | Цільова кваліфікація; UNKNOWN не replay |
+| P0 3 rollback/filesystem | Source repairs збережено | Справжні Windows/native докази окремо від Linux/simulation |
+| P0 4 pre-commit | Чинний ordinary hook двічі PASS на опублікованих пакетах | Спільні фінальні гейти; старий Babel blocker знято |
+| P0 5 audit18:F1 | Retry/обидва lookup clones виправлено; large-composite/history PASS | Повне числове прийняття й native delivery |
+| P0 6 audit18:F2 | Exact prefix/resume/conflict matrix уже реалізована | Фінальне прийняття/доставка, без дублювання matrix |
+| P0 7 audit18:F3 | Readonly snapshot і реальний конкурентний WAL commit regression PASS | Спільне фінальне прийняття |
+| P0 8 delivery | Поточний Source опубліковано; це не native installation | Одна whole-agent formation/delivery та ізольований runtime matrix |
+| P1 1 workspace DB | Shared project paths, Bun adapter і 5 прямих regressions PASS | Cutover/native proof; in-memory tests не доводять disk branch |
+| P1 2 execution/diagnostics | Shared contracts і SDK refusal cause є | Typed readonly diagnosis: reason/evidence, advisory existing routes, без нових прав |
+| P1 3 context/reads | Bounded reads і freshness guards є | Контракт history/current-owner lookup та обґрунтовані SQL improvements |
+| P1 4 tests | Bun, AST/scenario tooling і strict hook є | Exact coverage, exhaustive frozen correspondence, confirmed mutation, qualified parallel custody |
+| P1 5 transport | Реалізацію чинного scope завершено; wave CAS, partial-report restart, retry/foreign/prefix tests є | Спільне фінальне прийняття; нова semantics лишається P2 |
+| P1 6 delivery/binding | Current cohort/version/cache bindings реалізовано | Справжній CI artifact/cache та встановлений target |
+| P1 7 cleanup | audit18:L1 видалено й опубліковано; Source scope закрито | Не відновлювати видалений ланцюг або старий pending |
+| P1 8 governance | Edictum dependency видалено; Mastra + VIDA інтегровано | Актуальний повний behavioral/numeric proof |
+| P1 9 Bun | Maintained TS/Bun migration реалізовано | Supported native flows/option matrix; generated SDK output окремо |
+| P1 10 .vida upgrade | Plan/apply/resume і last-file/activation-death cases мають Source PASS | Active init/loader cutover за ready repair та свіжий native matrix |
+
+Disjoint writers завершили F1, F3 і adapter; Root кваліфікував TRACE та фінальні
+callers. Прибрано12 повторних CLI launches зі збереженням усіх4 route checks;
+виправлено stale `.mjs` synthetic provenance path, точкова перевірка PASS.
+Наступна P1 корекція: transaction-local producer receipt reuse з живою перевіркою
+config/identity; далі кваліфіковане перекриття5 природних quarantine waits.
+Дизайн і докази — `packages/agent/docs/research/test-timeout-cost-20261013.md`.
+Реальні locks не старимо, timeout не збільшуємо. Batch не закриває відсутні
+числові/native докази. Старі відсотки не є кількістю продуктових дефектів.
 
 ## Правило класифікації
 
@@ -22,7 +92,7 @@ P1 також може впорядковувати внутрішню реал�
 | Чинні admission/ownership контракти: F01/F02/F04/F06, P0-02/P0-04 | Зберегти доставлені виправлення. Доопрацьовувати лише недоставлений або відтворений у новому контурі дефект; старі leases та steps не відновлювати | Core; нове виконання |
 | Source root / unresolved writer: F03/F05 | Bound Source root при renewal та terminal/quiescence fence у generic ownership CAS; CONFIRMED_STATIC | Core, спільний Host/run writer |
 | Rollback/filesystem: F07/F09 + audit6 | Dynamic rollback closure; існуючі beforeimages; Windows private identity/link checks. Audit6 receipt/Linux atomicity/FD/FIFO/DB URL/no-effect retry зберігають власні AC; Source contributions не закривають real target proof | Core; Windows/Linux proof окремо від simulation |
-| Existing pre-commit bugs, original hook work | Staged-index selection/checked-byte race, partial staging, pinned environment/root config checks. Виправлення hook — P0; активація погодженого pre-commit — P1, нові hooks/checks — P2 | Core, існуючий hook contour; без checkout commit/restage |
+| Existing pre-commit bugs, original hook work | Staged-index/custody, partial staging і pinned checks реалізовано. Ordinary hook активний і PASS на 9803d14/3b69209; історичний Babel mismatch знято. Спільний final quality proof окремо | Core, існуючий hook contour; без checkout commit/restage |
 | audit18:F1 / читання складеного стану | Спільні ledger/component codecs застосовано в Host, CLI та continuation/capture history. Поточні v1 bytes і межі збережено за static review; фінальні regression/numeric checks і доставка pending | Core; поточний пакет P0 |
 | audit18:F2 / підготовка релізу | Intent до першої зміни manifest, exact resume та conflict retention реалізовано. Scoped static review не знайшов дефекту; фінальні перевірки й доставка pending | Core; свіжа release operation; архівні UNKNOWN не replay |
 | audit18:F3 / узгоджений inspector | Один readonly snapshot із перевіркою work identity, journal run, revision і lease-ticket binding реалізовано. Фінальні concurrency/negative checks і доставка pending | Core; разом із причинним пакетом |
@@ -52,10 +122,10 @@ P1 також може впорядковувати внутрішню реал�
 | 4 | Повний локальний контур тестування: TEST-013-01..07; original test-policy/hook work; OPT15; OPT10/14/19; DB05/06 | ПРИЙНЯТО ДО P1. Завершити Bun Test/coverage migration, сценарії, scoped coverage/CRAP, mutation qualification та погоджений pre-commit. Задачі Vida-Test включено до спільного пулу; критерії й порядок нижче. Новий runtime proof framework — P2 |
 | 5 | Transport і reporting: OPT05/06; OPT08/09; BL-FLOW004/005 вузька частина | Звести наявні prepare/issue ingress calls, partial reports/dedupe зі збереженням усіх CAS/accepted-prefix/UNKNOWN. Нова supported partial-report semantics спочатку як P2; bug існуючого retry — P0 |
 | 6 | Поточна доставка й binding: runtime BL-RUNTIME-PATCH-VERSION-001; BL-DELIVERY-RELEASE-001/SA08 existing slices | Reuse cached build/download й відомого operation result, прибрати зайві читання/команди чинного updater. Відсутній обов'язковий identity/result binding — P0; новий allocator/Release resolver — P2 |
-| 7 | CLEAR чинного коду: audit18:L1 та план очищення | Видалити доведено невикористані writer/repair ланцюги й дублікати. L1 виправлено та перевірено локально, ще не поставлено. Непотрібні історичні recovery залежності вилучити після перевірки callers і потрібної поточної поведінки |
+| 7 | CLEAR чинного коду: audit18:L1 та план очищення | Source scope закрито: L1 writer chain відсутній у чинному опублікованому Source. Поточний publisher і interruption/retry tests збережено. Не повторювати вже виконане видалення |
 | 8 | Governance: Mastra + VIDA | Прибрати `@edictum/core`. Mastra виконує граф і suspend/resume; VIDA зберігає потрібні finite policy checks, counters, direct SDK і чинні v1 проєкції. Host/Cedar approval, reservation, CAS та UNKNOWN лишаються у своїх власників. Код інтегровано; фінальна поведінкова перевірка та доставка pending |
 | 9 | Нативні можливості Bun | Окреме дослідження Luna: фактичні Node call sites, офіційні Bun API, семантика й пріоритетні заміни. Root переносить код пакетами за користю для чинного runtime. Спільні зміни SQLite, subprocess, кешу та тестового tooling виконуються в їхніх уже наявних задачах; без дубльованих реалізацій і host-залежності |
-| 10 | Єдиний каталог `.vida` та upgrade | Лише ініціалізований агент: config, instructions і work state; Source лишається в `packages`. Component schema/composer, pure v1 converter і спільний DB/config path owner інтегровано; Source static checks проходять. Bundle-owned upgrade, active loader/init, atomic activation та exact resume pending. Не активувати старий архів |
+| 10 | Єдиний каталог `.vida` та upgrade | Component composer/converter, shared paths і bundle-owned plan/apply/resume реалізовано. Last-file та activation-move interruption/same-ID resume мають пізніші Source PASS v670/v705. Залишок: active init/loader cutover за готового repair і свіжий native Runtime proof. Старий архів не активувати |
 
 P1 numeric domain Source узгоджено: schema/canonical snapshot/revision boundary
 відхиляють unsafe integers; scoped Ajv regression має PASS. Фінальний connected

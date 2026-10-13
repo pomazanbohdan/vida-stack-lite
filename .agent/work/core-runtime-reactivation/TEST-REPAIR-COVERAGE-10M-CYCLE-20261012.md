@@ -3,10 +3,11 @@
 Current scheduling extension: PARALLEL-TESTING-DESIGN-20261012.md and
 PARALLEL-TESTING-IMPLEMENTATION-20261012.md. Their explicit shard architecture
 is reviewed/pending, not deployed. Existing repair/numeric constraints remain.
-Serial72eefda full iteration is terminalUNKNOWN245PASS/8FAIL; actual failure
-family qualification12PASS293assertions, plus context and custody controls.
-Do not repeat identical complete serial input merely to seek green; implement
-bounded assignment/protocol controls and reviewed domain extraction next.
+Current full run3ad33c8f is terminal UNKNOWN under the600000ms cap; no admitted
+coverage report. Its stale synthetic fixture path is fixed and focused-qualified.
+Earlier run counts are historical observations, not the current gate result.
+Do not repeat identical complete serial input merely to seek green; prioritize
+measured repeated Host validation and qualified resource overlap below.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. Root owns runtime verification; blind Luna workers own disjoint implementation files and independent reviews.
 
@@ -36,6 +37,27 @@ bounded assignment/protocol controls and reviewed domain extraction next.
 3. Parent timeout must not claim body/descendant termination, successful cleanup or numeric admission.
 4. Immutable snapshot reuse must not cross a current Source/authorization/CAS boundary.
 5. A fast partial selection must not substitute for the complete current selection or hide uncovered functions.
+
+## Current cost correction — 2026-10-13
+
+Research/decision owner:
+`packages/agent/docs/research/test-timeout-cost-20261013.md` (official Bun,
+SQLite and Mastra references; current phase evidence and rejected shortcuts).
+
+- [x] Separate generic JSON large-history proof from the original full-engine
+  composite witness; both PASS,110 assertions together with provenance.
+- [x] Trace a fresh full-composite case:18.28s; open/resume/reopen4.59/4.12/4.01s,
+  storage init about0.10s. Keep every existing bridge/restart/auth assertion.
+- [ ] Reuse trusted identity/continuation receipts within begin/settle's existing
+  immediate transaction; retain the later config freshness gate and exact
+  identity comparison. One Source writer; independent test writer owns only
+  `initial-source-continuation.test.ts`. Existing count14→projected10 needs actual
+  qualification plus config-drift/no-write negative control before publication.
+- [ ] Qualify two independent natural-quarantine waits through existing parallel
+  resource/custody tasks. Five expanded recovery cases currently wait; no lock
+  aging, touch, clock rewrite or deletion of real interruption evidence.
+- [ ] Compare the affected fresh case once after the concrete change, then full
+  current selection when ready. No new full scan/suite/profiler framework.
 
 ## Ownership and schedule
 

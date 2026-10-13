@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import type { Database } from 'bun:sqlite';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -718,11 +718,12 @@ function makePrewriterHostFixture({
     actions,
     ledger,
     store,
-    close({ retainRoot = false }: { readonly retainRoot?: boolean } = {}) {
+    close({ retainRoot = false, deadline }: { readonly retainRoot?: boolean; readonly deadline?: number } = {}) {
       try {
         ledger.close();
         configuredDatabase.close();
-        if (retainRoot) console.warn(`Retained task-source fixture root after incomplete case: ${repositoryRoot}`);
+        if (retainRoot || (deadline !== undefined && performance.now() >= deadline))
+          console.warn(`Retained task-source fixture root after incomplete case: ${repositoryRoot}`);
         else rmSync(repositoryRoot, { recursive: true, force: true });
       } catch (error) {
         console.error(`Task-source fixture cleanup failed; root retained or uncertain: ${repositoryRoot}`, error);
@@ -2552,6 +2553,116 @@ test.each([
     }
   },
 );
+
+test('rejects a changed Host owner after the TRACE snapshot and before source-plan publication', () => {
+  const deadline = performance.now() + 5_000;
+  const fixture = makePrewriterHostFixture();
+  let completed = false;
+  let bodyError: unknown;
+  let cleanupError: unknown;
+  let cleanupFailed = false;
+  try {
+    const admitted = fixture.store.readHostStateSnapshot(fixture.workIdentity),
+      admittedWork = hostWork(admitted),
+      admittedLedger = admitted.ledger;
+    assert.ok(admittedLedger && admitted.workVersion && admitted.ledgerVersion);
+    const traced = fixture.store.projectLifecycleTransition(
+      admittedWork,
+      'TRACE',
+      'Trace the accepted source plan against the current scope and acceptance.',
+    );
+    const traceSnapshot = fixture.store.compareAndSwapHostState({
+      expectedWork: admitted.workVersion,
+      expectedLedger: admitted.ledgerVersion,
+      expectedMaintenanceGeneration: admitted.maintenanceGeneration,
+      nextWork: traced,
+      nextLedger: { ...admittedLedger, revision: admittedLedger.revision + 1 },
+    });
+    expect(hostWork(traceSnapshot).lifecycle.phase).toBe('TRACE');
+
+    const journal = fixture.ledger.resume(fixture.workId, 1);
+    assert.ok(journal);
+    const issued = fixture.ledger.issueWave(fixture.workId, 1, journal.version),
+      planner = issued.state.items.find((item) => item.request.role === 'source-planner');
+    assert.ok(planner);
+    const action = fixtureActionForRole(fixture, 'source-planner'),
+      record = preparationRecord(fixture, action, 'source_plan'),
+      observation = acceptedPreparationObservation(action, record, requiredLedgerIssueId(planner));
+
+    const reportHost = fixture.ledger.hostState;
+    const originalReadWorkspaceSnapshot = reportHost.readWorkspaceSnapshot.bind(reportHost);
+    let workspaceReads = 0;
+    let racedHost: HostStateSnapshot | undefined;
+    const workspaceRead = spyOn(reportHost, 'readWorkspaceSnapshot').mockImplementation(() => {
+      const captured = originalReadWorkspaceSnapshot();
+      workspaceReads += 1;
+      if (workspaceReads === 2) {
+        const beforeRace = fixture.store.readHostStateSnapshot(fixture.workIdentity),
+          raceWork = hostWork(beforeRace),
+          raceLedger = beforeRace.ledger;
+        assert.ok(raceLedger && beforeRace.workVersion && beforeRace.ledgerVersion);
+        racedHost = fixture.store.compareAndSwapHostState({
+          expectedWork: beforeRace.workVersion,
+          expectedLedger: beforeRace.ledgerVersion,
+          expectedMaintenanceGeneration: beforeRace.maintenanceGeneration,
+          nextWork: {
+            ...raceWork,
+            revision: raceWork.revision + 1,
+            lifecycle: { ...raceWork.lifecycle, revision: raceWork.lifecycle.revision + 1 },
+          },
+          nextLedger: { ...raceLedger, revision: raceLedger.revision + 1 },
+        });
+      }
+      return captured;
+    });
+    let reportError: unknown;
+    try {
+      fixture.ledger.report(fixture.workId, 1, issued.version, observation, fixture.taskScope);
+    } catch (error) {
+      reportError = error;
+    } finally {
+      workspaceRead.mockRestore();
+    }
+
+    expect(workspaceReads).toBe(2);
+    assert.ok(racedHost);
+    expect(hostWork(racedHost).revision).toBe(traceSnapshot.work!.revision + 1);
+    expect(hostWork(racedHost).lifecycle.phase).toBe('TRACE');
+    expect(hostWork(racedHost).lifecycle.references.filter((entry) => entry.kind === 'source_plan')).toHaveLength(0);
+    expect(fixture.store.readHostStateSnapshot(fixture.workIdentity)).toEqual(racedHost);
+    const retainedJournal = fixture.ledger.resume(fixture.workId, 1);
+    assert.ok(retainedJournal);
+    expect(
+      retainedJournal.state.items.find((item) => item.request.action_id === observation.action_id)?.observation,
+    ).toEqual(observation);
+    expect(
+      existsSync(
+        path.join(
+          fixture.repositoryRoot,
+          fixture.config.control.work_root,
+          fixture.workId,
+          'preparations',
+          `source-plan-${action.action_id}.v1.json`,
+        ),
+      ),
+    ).toBe(false);
+    assert.ok(reportError instanceof Error);
+    expect(reportError.message).toContain('prewriter attachment Host owner, phase or configuration differs');
+    assert.ok(performance.now() < deadline, 'prewriter race regression exceeded its five-second case deadline');
+    completed = true;
+  } catch (error) {
+    bodyError = error;
+  }
+  try {
+    fixture.close({ retainRoot: !completed, deadline });
+  } catch (error) {
+    cleanupError = error;
+    cleanupFailed = true;
+  }
+  if (cleanupFailed)
+    throw new AggregateError(completed ? [cleanupError] : [bodyError, cleanupError], 'Prewriter race cleanup failed');
+  if (!completed) throw bodyError;
+}, 5_000);
 
 test('low lifecycle risk still attaches security policy when the admitted packet has the high flag', async () => {
   const fixture = makePrewriterHostFixture({ lifecycleRisk: 'low', packetRiskFlags: ['high'] });

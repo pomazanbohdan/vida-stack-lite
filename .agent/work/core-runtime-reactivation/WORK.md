@@ -9188,3 +9188,150 @@ safe caching opportunity. Parallel production still lacks a qualified positive
 descendant/effect-quiescence owner; no duplicate pilot or unused binding builder
 is justified. Continue concrete tests/repairs; preserve the600000ms cap and all
 open global numeric gates. Research conclusions are not P0/P1 completion claims.
+
+#### Immediate task update —3b69209 published; TRACE regression prepared
+
+3b69209 ordinary hooks PASS and push9803d14..3b69209 to origin/main completed.
+User requires task/document updates immediately; record implementation and proof
+states separately. Blind Luna completed a new test-only TRACE race case in
+task-source-binding-operations.test.ts; Root has not yet run its checks. Existing
+Host transition/CAS owners prepare TRACE, then a second real revision CAS occurs
+after the inner workspace capture. The fixture keeps the persisted journal and
+owned failed root. Static, positive and temporary omitted-read control are pending;
+no production freshness read was removed and no coverage gain is claimed yet.
+
+Second bounded research round: official qualified Bun matcher implementation
+waits for rejects.toThrow's input promise, so the existing Promise.resolve wrapper
+is not a demonstrated early-settlement bug; no mass rewrite. The instructions
+and documentation-clear normal parsers match their shared declarations. Current
+coverage validator/counter/shard terminal checks have no false-acceptance finding
+in the two reviewed chains. Post-test fresh input capture, independent pinned
+instrumentation validation and Babel function correspondence are separate proof
+boundaries; no safe removable pass is established. Historical inspector v1 schema
+caller instrumentation is a ready existing-case extension, still unassigned.
+
+#### One-batch closure validation — 2026-10-13, current 3b69209
+
+User requests validation and closure in one batch. Six blind Luna audits joined
+all eight P0 and ten P1 contours; Root reconciles claims with current tests,
+not historical pending prose. Backlog now has an explicit 18-row evidence and
+remainder table. Current ordinary hooks PASS; L1 Source cleanup is published;
+transport's existing one-report contract is implemented. F2 already contains
+all3/4-target exact-prefix, settled retry and each-target conflict tests, so no
+duplicate suite is assigned. Later v670/v705 interruption PASS supersedes the
+old activation timeout as current Source evidence. Native/full quality stay open.
+
+TRACE initial qualification exposed a test harness error, not a product bug:
+fixture.store and ledger.hostState are separate real DB handles. Intercepting
+fixture.store never injected the intended report read race. Failed root
+/tmp/vida-task-source-real-host-oNSgEH is retained. Use spyOn on ledger.hostState
+and mutate through fixture.store; restore the method in finally. This also fixes
+the unbound-method lint diagnostic. Static log trace-race-static-fixed.log PASS
+(435 captured TS/434 program and97 Source, zero diagnostics); native focused
+trace-race-native-fixed.log1PASS/9assertions,718.64ms case/2.02s command.
+
+The actual omitted-read negative control temporarily constructs the Host snapshot
+from the earlier workspace snapshot. It fails the no-file assertion (expected
+false, received true); the accepted report and raced Host remain inspected.
+Root elZiE3 and trace-race-negative.log are retained. Original Source SHA
+eda8d7427fca59ea481e327569b7e0fbd30163bdf99e70f72b3c5a1ced585a20 restored exactly.
+This protects the earlier owner lookup/currentness boundary; it does not qualify
+all later publication/CAS races or a global mutation score. Restored final check
+will join the batch.
+
+Disjoint test writers now extend existing F1 normal-large continuation to a
+ledger that alone exceeds10k nodes, add F3 inspector concurrent-snapshot proof,
+and add direct Bun SQLite adapter regressions. No product writer conflict or
+worker runtime/compiler/Git operations. Root joins edits before one static and
+focused qualification sequence. Failures are corrected before publication.
+
+CRAP baseline re-audit found the genuine admitted b549951 measurement already
+present at .tmp/tooling-research/root-published-baseline-v6/published-worktree/
+packages/agent/coverage/bun-unified/coverage-final.json, run fe54f83c and SHA
+ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb. Retain its
+measurement_admitted=true, suite_passed=false, quality_passed=false distinction.
+No baseline rerun. Missing exhaustive reviewed current correspondence, not absent
+measurement, blocks generation of the full frozen plan. Partial review artifacts
+cannot be promoted or summed across snapshots; all numeric gates remain open.
+
+Joined batch static PASS after fixing test-only strict-type/lint findings. First
+focused packet batch-closure-focused.log:9PASS/1FAIL,157 assertions,28.47s.
+F3 real concurrent snapshot612.61ms, TRACE488.25ms, five in-memory adapter cases
+0.86–8.57ms PASS. Adapter rollback asserts the actual uniqueness error; queued
+read must observe rolled-back data and observes its rejection immediately.
+F3 restores the query spy, checks all-old then all-new versions, and retains
+failed roots/cleanup errors. These focused tests do not establish disk-adapter
+isolation or whole-selection numerical quality.
+
+F1 normal-large exposed a current product defect: continuation first succeeds,
+then exact same-ID retry clones a valid composite receipt with generic snapshot
+and fails at prior_ledger.tickets[163].repository_id. Root first corrects the
+retry; the next bounded run and independent review identify the same generic
+clone in both current lookup branches. All three use the existing
+serializeDeliveredWorkContinuationReceipt via snapshotEncoded; its generic
+encoder argument now accurately takes T rather than unknown (type-only).
+Ordinary ingress, component/aggregate limits, exact receipt bytes/digests,
+authorization, ownership, CAS and UNKNOWN stay unchanged. Second failure log
+ledger-retry-native-fixed.log and fresh root /tmp/frontier-repair-host-KySEWn
+retained. The first new failure used the prior case cleanup, which did not retain
+that root; its complete log remains. The case now catches and retains every
+failed root before the shared afterEach cleanup. No failed operation is replayed.
+
+Independent exact-branch review also identified12 redundant copied-bundle CLI
+launches: issue/report mutually exclusive flags and oversized/malformed/hardlink
+report bytes each repeated on three extra workflows. Keep their copied-bundle
+assertions once in information_research_light; every route retains interruption,
+same-ID recovery, duplicate issuance, wrong-action, successful reports, accepted
+prefix and exact retry. No deadline increase, new fixture or call. Operation-count
+reduction is established by the loop; whole-command speed is still unmeasured.
+
+### 2026-10-13 — final batch qualification and 30-second cost design
+
+The223-record full-engine variant exposed a second lookup clone defect after
+retry was corrected, then exceeded the existing30s bound in the bridge helper.
+Retained timeout root W17WCp and original logs remain UNKNOWN, never replayed.
+Keep the original16×64 composite/full-engine variant and add a distinct
+223-record history/codec/persistence/retry/lookup witness. The latter ends before
+unrelated engine/restart work; all original full-engine assertions remain.
+
+One fresh full coverage operation ran against stable inputs: run3ad33c8f,
+terminal exit1 UNKNOWN under the600000ms cap, direct producer termination
+observed, no admitted coverage report. It exposed stale `.mjs` selection/argv
+in the synthetic TS provenance fixture. The helper and consumer now share one
+`syntheticFixtureTestPath`; all stale-test/tool/process denial and report/manifest
+byte-preservation assertions remain. Failure root LMnLa3 retained. No identical
+full rerun; no numeric percentages or CRAP/mutation success inferred.
+
+Final static checks PASS: maintained TS-only436 captured files, strict435-file
+program plus97 Source files,0 diagnostics; scoped TS lint PASS. Fresh focused
+history/composite/provenance:3PASS/110 assertions,24.20s. History3015.54ms;
+full composite18275.47ms includes phase tracing. Additional final caller batch:
+9PASS/193 assertions,170.81s, all four copied-bundle research recovery routes,
+TRACE changed-owner denial, F3 coherent snapshot, three direct SQLite cases.
+Two remaining direct adapter cases were already qualified in the first batch;
+their files/contracts did not change after that result. The four route times
+are45.74/36.35/52.47/32.96s, not a matched before/after speed comparison.
+Logs are in `.tmp/coverage-iteration-f43ef15/`: batch-full-coverage.log,
+batch-final-static.log, batch-final-lint.log, batch-ledger-provenance-trace.log,
+batch-final-callers.log. Final quality precondition still fails for the missing
+exhaustive frozen plan; genuine baseline exists, no baseline rerun is needed.
+
+Latest user asks architecture research for30s tests. Official Bun SQLite/time/
+parallel/profiling, SQLite isolation and Mastra snapshots docs reviewed. Three
+blind causal reviews plus independent custody/design review choose the smallest
+next P1: reuse already-validated receipt/Host values only in one synchronous
+immediate transaction before writes, keep later config/identity checks and all
+fresh effect boundaries. Existing14 row preparations project10; not implemented
+or measured yet. Fresh child trace attributes open/resume/reopen4.59/4.12/4.01s,
+storage init~0.10s. Nested intervals are not additive.
+
+Natural quarantine occurs in5 expanded lifecycle cases, not4 (initial read-only
+estimate corrected). All5 passed in this fullrun. Locks remain untouched for
+their own30s age; tests retain90s exceptions. Reject artificial mtime aging on
+actual interrupted operations and global fake clocks. Proposed two-root overlap
+depends on existing package-resource/descendant custody qualification; no global
+runner activation. Research/acceptance owner is
+`packages/agent/docs/research/test-timeout-cost-20261013.md`; existing repair and
+parallel plans and project bun-test skill updated. Mechanical/no-work and pending
+repair denial explicitly remain acceptance cases. Missing numeric/native proofs
+stay open; this packet does not declare all18 contours closed or Runtime unblocked.

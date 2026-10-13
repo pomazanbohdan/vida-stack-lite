@@ -36,7 +36,8 @@ const bootstrapPaths = [
   'tooling/maintained-source-inventory.ts',
 ];
 const executionScope = { kind: 'synthetic-validator-fixture' };
-const activeArgv = ['bun', 'test', 'tests/fixture.test.mjs'];
+export const syntheticFixtureTestPath = 'tests/fixture.test.ts';
+const activeArgv = ['bun', 'test', syntheticFixtureTestPath];
 
 export type SyntheticFixture = {
   readonly root: string;
@@ -75,7 +76,7 @@ export async function createSyntheticCoverageFixture(
     write(root, 'package.json', JSON.stringify({ files: ['src/**', 'bin/**'], scripts: {} }));
     for (const source of sourcePaths) write(root, source, 'export const fixture = true;\n');
     write(root, 'bin/cli-metadata.ts', 'export const fixture = true;\n');
-    write(root, 'tests/fixture.test.ts', "import { test } from 'bun:test'; test('inert fixture', () => {});\n");
+    write(root, syntheticFixtureTestPath, "import { test } from 'bun:test'; test('inert fixture', () => {});\n");
     if (options.versionedShards)
       write(
         root,

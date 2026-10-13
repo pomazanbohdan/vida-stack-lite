@@ -1672,7 +1672,7 @@ function stateValues(kind: string, value: unknown): readonly [string, string] {
 function snapshotLedger(value: unknown): CoordinationLedger {
   return freezeJsonValue(JSON.parse(coordinationLedgerJson(value)) as CoordinationLedger);
 }
-function snapshotEncoded<T>(value: T, encode: (value: unknown) => string): T {
+function snapshotEncoded<T>(value: T, encode: (value: T) => string): T {
   return freezeJsonValue(JSON.parse(encode(value))) as T;
 }
 function unpreparedRecoveryJson(value: unknown): string {
@@ -12250,7 +12250,7 @@ export class HostStateStore {
       return Object.freeze({
         status: 'already_continued',
         snapshot: current,
-        receipt: snapshot(existing),
+        receipt: snapshotEncoded(existing, serializeDeliveredWorkContinuationReceipt),
         action: null,
       });
     }
@@ -13992,7 +13992,7 @@ export class HostStateStore {
       );
       const frozenJournal = snapshot({ version, state: journal });
       return Object.freeze({
-        receipt: snapshot(receipt),
+        receipt: snapshotEncoded(receipt, serializeDeliveredWorkContinuationReceipt),
         recovery: recovery ? snapshotFailedPrewriterRecoveryReceipt(recovery) : null,
         snapshot: current,
         journal: frozenJournal,
@@ -14030,7 +14030,7 @@ export class HostStateStore {
     );
     const frozenItem = snapshot(item);
     return Object.freeze({
-      receipt: snapshot(receipt),
+      receipt: snapshotEncoded(receipt, serializeDeliveredWorkContinuationReceipt),
       snapshot: current,
       journal: snapshot({ version, state: journal }),
       item: frozenItem,

@@ -44,6 +44,11 @@ import {
   isPlainRecord,
   MAX_CANONICAL_BYTES,
 } from '../src/contracts/public-ingress.ts';
+import {
+  coordinationComponentJson,
+  coordinationLedgerDigest,
+  coordinationLedgerJson,
+} from '../src/contracts/envelopes.ts';
 import { validateLifecycleAggregate } from '../src/lifecycle/lifecycle-state.ts';
 import {
   runtimeConfigDigest,
@@ -3399,274 +3404,312 @@ fs.writeFileSync(value.root+'/bridge-result.json',JSON.stringify({before,after,r
   };
 }
 
-test.each(['delivery', 'normal', 'normal-large'])(
+test.each(['delivery', 'normal', 'normal-large', 'normal-history'])(
   'Host produces the current full prewriter wave atomically from the actual unissued old engine and preserves its original attempt [%s]',
   async (proofKind) => {
     const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot(
-      proofKind === 'normal-large' ? 'normal' : proofKind,
+      proofKind === 'normal-large' || proofKind === 'normal-history' ? 'normal' : proofKind,
     );
-    // Another completed operation may advance the ledger after this work's release.
-    const priorLedger = input.receipt.prior_ledger;
-    priorLedger.revision += 1;
-    priorLedger.tickets.push({
-      ...requireFixtureValue(priorLedger.tickets[0], 'prior ledger ticket'),
-      ticket_id: 'other-ticket',
-      work_id: 'other-work',
-      thread_id: 'other-thread',
-      sequence: priorLedger.next_sequence++,
-      claim_ids: ['other-claim'],
-      exclusive_resources: ['file:other.ts'],
-    });
-    priorLedger.claims.push({
-      ...requireFixtureValue(priorLedger.claims[0], 'prior ledger claim'),
-      claim_id: 'other-claim',
-      ticket_id: 'other-ticket',
-      work_id: 'other-work',
-      thread_id: 'other-thread',
-      resources: ['file:other.ts'],
-    });
-    priorLedger.operations.push({
-      ...requireFixtureValue(priorLedger.operations[0], 'prior ledger operation'),
-      operation_id: 'unrelated-release',
-      ticket_id: 'other-ticket',
-      work_id: 'other-work',
-      thread_id: 'other-thread',
-      resources: ['file:other.ts'],
-      from_ledger_revision: priorLedger.revision - 1,
-      to_ledger_revision: priorLedger.revision,
-    });
-    if (proofKind === 'normal-large') {
-      for (let index = 0; index < 16; index++) {
-        const resources = Array.from(
-          { length: 64 },
-          (_, resource) => `file:unrelated/${index}/${String(resource).padStart(3, '0')}.ts`,
-        );
-        const ticketId = 'unrelated-ticket-' + index,
-          claimId = 'unrelated-claim-' + index,
-          workId = 'unrelated-work-' + index;
-        priorLedger.tickets.push({
-          ...requireFixtureValue(priorLedger.tickets[0], 'prior ledger ticket'),
-          ticket_id: ticketId,
-          work_id: workId,
-          thread_id: workId,
-          sequence: priorLedger.next_sequence++,
-          exclusive_resources: resources,
-          claim_ids: [claimId],
-        });
-        priorLedger.claims.push({
-          ...requireFixtureValue(priorLedger.claims[0], 'prior ledger claim'),
-          claim_id: claimId,
-          ticket_id: ticketId,
-          work_id: workId,
-          thread_id: workId,
-          resources,
-        });
-        priorLedger.operations.push({
-          ...requireFixtureValue(priorLedger.operations[0], 'prior ledger operation'),
-          operation_id: 'unrelated-release-' + index,
-          ticket_id: ticketId,
-          work_id: workId,
-          thread_id: workId,
-          resources,
-          from_ledger_revision: priorLedger.revision,
-          to_ledger_revision: ++priorLedger.revision,
-        });
+    try {
+      // Another completed operation may advance the ledger after this work's release.
+      const priorLedger = input.receipt.prior_ledger;
+      const originalLedger = structuredClone(priorLedger);
+      expect(coordinationLedgerJson(originalLedger)).toBe(canonicalJson(originalLedger));
+      expect(coordinationLedgerDigest(originalLedger)).toBe(canonicalJsonDigest(originalLedger));
+      priorLedger.revision += 1;
+      priorLedger.tickets.push({
+        ...requireFixtureValue(priorLedger.tickets[0], 'prior ledger ticket'),
+        ticket_id: 'other-ticket',
+        work_id: 'other-work',
+        thread_id: 'other-thread',
+        sequence: priorLedger.next_sequence++,
+        claim_ids: ['other-claim'],
+        exclusive_resources: ['file:other.ts'],
+      });
+      priorLedger.claims.push({
+        ...requireFixtureValue(priorLedger.claims[0], 'prior ledger claim'),
+        claim_id: 'other-claim',
+        ticket_id: 'other-ticket',
+        work_id: 'other-work',
+        thread_id: 'other-thread',
+        resources: ['file:other.ts'],
+      });
+      priorLedger.operations.push({
+        ...requireFixtureValue(priorLedger.operations[0], 'prior ledger operation'),
+        operation_id: 'unrelated-release',
+        ticket_id: 'other-ticket',
+        work_id: 'other-work',
+        thread_id: 'other-thread',
+        resources: ['file:other.ts'],
+        from_ledger_revision: priorLedger.revision - 1,
+        to_ledger_revision: priorLedger.revision,
+      });
+      if (proofKind === 'normal-large' || proofKind === 'normal-history') {
+        // 223 small legal records exceed the old generic 10,000-node ceiling
+        // within one Ledger. Keep the original composite-size bridge fixture.
+        for (let index = 0; index < (proofKind === 'normal-history' ? 223 : 16); index++) {
+          const resources =
+            proofKind === 'normal-history'
+              ? [`file:unrelated/${index}.ts`]
+              : Array.from(
+                  { length: 64 },
+                  (_, resource) => `file:unrelated/${index}/${String(resource).padStart(3, '0')}.ts`,
+                );
+          const ticketId = 'unrelated-ticket-' + index,
+            claimId = 'unrelated-claim-' + index,
+            workId = 'unrelated-work-' + index;
+          priorLedger.tickets.push({
+            ...requireFixtureValue(priorLedger.tickets[0], 'prior ledger ticket'),
+            ticket_id: ticketId,
+            work_id: workId,
+            thread_id: workId,
+            sequence: priorLedger.next_sequence++,
+            exclusive_resources: resources,
+            claim_ids: [claimId],
+          });
+          priorLedger.claims.push({
+            ...requireFixtureValue(priorLedger.claims[0], 'prior ledger claim'),
+            claim_id: claimId,
+            ticket_id: ticketId,
+            work_id: workId,
+            thread_id: workId,
+            resources,
+          });
+          priorLedger.operations.push({
+            ...requireFixtureValue(priorLedger.operations[0], 'prior ledger operation'),
+            operation_id: 'unrelated-release-' + index,
+            ticket_id: ticketId,
+            work_id: workId,
+            thread_id: workId,
+            resources,
+            from_ledger_revision: priorLedger.revision,
+            to_ledger_revision: ++priorLedger.revision,
+          });
+        }
       }
-    }
-    const priorVersion = { revision: priorLedger.revision, digest: canonicalJsonDigest(priorLedger) };
-    const request = { ...input.receipt.request, expectedLedger: priorVersion };
-    input.receipt = {
-      ...input.receipt,
-      prior_ledger_version: priorVersion,
-      request,
-      request_digest: canonicalJsonDigest(request),
-      authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(request) },
-    };
-    const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
-    mkdirSync(path.dirname(databasePath), { recursive: true });
-    const f = await continuationFixture({
-      root,
-      config,
-      workspaceId,
-      databasePath,
-      repositoryRoot: root,
-      identity: input.receipt.request.identity,
-    });
-    const prior = input.receipt;
-    const priorStateRows: readonly (
-      | readonly ['work', WorkState, StateVersion]
-      | readonly ['ledger', CoordinationLedger, StateVersion]
-    )[] = [
-      ['work', prior.prior_work, prior.prior_work_version],
-      ['ledger', prior.prior_ledger, prior.prior_ledger_version],
-    ];
-    for (const [kind, value, version] of priorStateRows)
-      f.db
-        .query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=?')
-        .run(version.revision, canonicalJson(value), version.digest, workspaceId, kind);
-    f.db
-      .query(
-        'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
-      )
-      .run(
-        prior.prior_journal_version.revision,
-        canonicalJson(prior.prior_journal),
-        prior.prior_journal_version.digest,
-        workspaceId,
-        f.identity.work_id,
-      );
-    await seedOriginalFrontierEngine(root, config, input);
-    const before = f.store.readHostStateSnapshot(f.identity);
-    await Promise.resolve(
-      expect(
-        f.store.continueDeliveredWork({
-          ...prior.request,
-          expectedLedger: { ...prior.request.expectedLedger, revision: prior.request.expectedLedger.revision - 1 },
-        }),
-      ).rejects.toThrow(),
-    );
-    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
-    const result = await f.store.continueDeliveredWork(prior.request);
-    if (proofKind === 'normal-large') {
-      expect(() => canonicalJsonDigest(result)).toThrow(/node budget/);
-      expect(() => canonicalJsonDigest(result.snapshot)).not.toThrow();
-      expect(() => canonicalJsonDigest(result.receipt)).not.toThrow();
-      for (const value of [
-        result,
-        result.snapshot,
-        result.snapshot.ledger,
-        result.receipt,
-        result.receipt.prior_ledger,
-        result.receipt.successor_ledger,
-        result.action,
-      ])
-        expect(Object.isFrozen(value)).toBe(true);
-      expect(
-        Object.isFrozen(
-          requireFixtureValue(result.receipt.prior_ledger.tickets[0], 'prior ledger first ticket').exclusive_resources,
-        ),
-      ).toBe(true);
-    }
-    expect(
-      requireFixtureValue(result.receipt.successor_ledger.tickets.at(-1), 'successor active ticket')
-        .exclusive_resources,
-    ).toEqual(requireFixtureValue(prior.prior_ledger.tickets[0], 'prior frontier ticket').exclusive_resources);
-    expect(
-      requireFixtureValue(result.receipt.successor_ledger.claims.at(-1), 'successor active claim').resources,
-    ).toEqual(requireFixtureValue(prior.prior_ledger.claims[0], 'prior frontier claim').resources);
-    expect(result.status).toBe('continued');
-    expect(result.receipt.historical_capture).toBeNull();
-    expect(result.receipt.successor_journal.run_id).toBe(prior.prior_journal.run_id);
-    expect(result.receipt.successor_journal.items.map((item) => item.request.role)).toEqual([
-      'source-planner',
-      'security-prewriter',
-    ]);
-    expect(result.receipt.successor_journal.completed).toEqual(prior.prior_journal.completed);
-    expect(requireFixtureValue(result.receipt.prior_journal.items[0], 'prior journal item').request).toEqual(
-      prior.request.action.request,
-    );
-    expect(result.receipt.successor_work.contracts).toEqual(prior.prior_work.contracts);
-    expect(result.receipt.successor_work.artifacts).toEqual(prior.prior_work.artifacts);
-    expect(result.receipt.successor_work.lifecycle.risk).toBe(prior.prior_work.lifecycle.risk);
-    expect(result.receipt.rights_granted).toBe(false);
-    const retry = await f.store.continueDeliveredWork(prior.request);
-    expect(retry.status).toBe('already_continued');
-    expect(retry.receipt).toEqual(result.receipt);
-    expect(retry.action).toBeNull();
-    expect(retry.snapshot.workVersion).toEqual(result.snapshot.workVersion);
-    expect(retry.snapshot.ledgerVersion).toEqual(result.snapshot.ledgerVersion);
-    expect(Object.isFrozen(retry.receipt.prior_ledger)).toBe(true);
-    expect(
-      requireFixtureValue(f.store.readDeliveredWorkContinuation(f.identity, 1), 'continued lookup').items,
-    ).toHaveLength(2);
-    const delivered = f.store.readHostStateSnapshot(f.identity),
-      deliveredLedger = requireFixtureValue(delivered.ledger, 'delivered frontier ledger'),
-      activeTicket = requireFixtureValue(deliveredLedger.tickets.at(-1), 'active frontier ticket');
-    const fileResource = requireFixtureValue(
-      activeTicket.exclusive_resources.find((resource) => resource.startsWith('file:')),
-      'frontier file resource',
-    );
-    const conflict = {
-      ...activeTicket,
-      ticket_id: 'foreign-file-only',
-      work_id: 'other-work',
-      thread_id: 'other-thread',
-      sequence: activeTicket.sequence + 1,
-      claim_ids: ['foreign-claim'],
-      exclusive_resources: [fileResource],
-      active_resources: [fileResource],
-    };
-    const conflictClaim: MutableCoordinationClaim = {
-      ...requireFixtureValue(deliveredLedger.claims.at(-1), 'active frontier claim'),
-      claim_id: 'foreign-claim',
-      ticket_id: conflict.ticket_id,
-      work_id: conflict.work_id,
-      thread_id: conflict.thread_id,
-      resources: [fileResource],
-    };
-    const writeLedger = (ledger: CoordinationLedger) =>
-      f.db
-        .query("UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger'")
-        .run(ledger.revision, canonicalJson(ledger), canonicalJsonDigest(ledger), workspaceId);
-    writeLedger({
-      ...deliveredLedger,
-      next_sequence: conflict.sequence + 1,
-      tickets: [...deliveredLedger.tickets, conflict],
-      claims: [...deliveredLedger.claims, conflictClaim],
-    });
-    expect(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).toThrow(/FIFO/);
-    writeLedger({
-      ...deliveredLedger,
-      next_sequence: conflict.sequence + 1,
-      tickets: [
-        ...deliveredLedger.tickets,
-        { ...conflict, status: 'queued', claim_ids: [], expires_at: null, active_resources: [] },
-      ],
-    });
-    expect(
-      requireFixtureValue(f.store.readDeliveredWorkContinuation(f.identity, 1), 'queued owner lookup').items,
-    ).toHaveLength(2);
-    writeLedger(deliveredLedger);
-
-    const reports: MastraSessionLedgerState['items'] = result.receipt.successor_journal.items.map((item, index) => {
-      const issue = index === 0 ? '71e62a38-b44b-470e-b732-81cefbaf983a' : 'fa354d58-05f9-4a5f-8f39-5b594cb9d95d';
-      const summary = 'Fixture current prewriter report ' + index;
-      return {
-        ...item,
-        issue_id: issue,
-        observation: {
-          schema: 'VidaSessionObservation/v1',
-          action_id: item.request.action_id,
-          issue_id: issue,
-          agent_id: 'fixture-prewriter-' + index,
-          tool_call_ref: 'fixture-call-' + index,
-          status: 'reported_complete',
-          summary,
-          output_digest: canonicalJsonDigest(summary),
-          evidence_refs: [],
-        },
+      if (proofKind === 'normal-history') {
+        expect(() => canonicalJson(priorLedger)).toThrow(/node budget/);
+        expect(JSON.parse(coordinationLedgerJson(priorLedger))).toEqual(priorLedger);
+      }
+      const priorVersion = { revision: priorLedger.revision, digest: coordinationLedgerDigest(priorLedger) };
+      const request = { ...input.receipt.request, expectedLedger: priorVersion };
+      input.receipt = {
+        ...input.receipt,
+        prior_ledger_version: priorVersion,
+        request,
+        request_digest: canonicalJsonDigest(request),
+        authorization: { ...input.receipt.authorization, request_digest: canonicalJsonDigest(request) },
       };
-    });
-    const reportedJournal = { ...result.receipt.successor_journal, items: reports };
-    f.db
-      .query(
-        'UPDATE agent_host_mastra_session_ledger SET revision=revision+1,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
-      )
-      .run(canonicalJson(reportedJournal), canonicalJsonDigest(reportedJournal), workspaceId, f.identity.work_id);
-    const bridgeResult = resumeFrontierBridgeFixture({
-      root,
-      workspaceId,
-      identity: f.identity,
-      context: input.prewriterBinding.context,
-      selection: input.prewriterBinding.selection,
-      observations: reports.map((item) => requireFixtureValue(item.observation, 'prewriter report observation')),
-      runId: prior.prior_journal.run_id,
-    });
-    expect(bridgeResult.after.run_id).toBe(prior.prior_journal.run_id);
-    expect(bridgeResult.after.step_id).toBe('wave-2');
-    expect(bridgeResult.after.requests.map((request) => request.role)).toEqual(['developer-orchestrator']);
-    expect(bridgeResult.restart).toEqual(bridgeResult.after);
-    expect(bridgeResult.retained).toEqual(result.receipt);
+      const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+      mkdirSync(path.dirname(databasePath), { recursive: true });
+      const f = await continuationFixture({
+        root,
+        config,
+        workspaceId,
+        databasePath,
+        repositoryRoot: root,
+        identity: input.receipt.request.identity,
+      });
+      const prior = input.receipt;
+      const priorStateRows: readonly (
+        | readonly ['work', WorkState, StateVersion]
+        | readonly ['ledger', CoordinationLedger, StateVersion]
+      )[] = [
+        ['work', prior.prior_work, prior.prior_work_version],
+        ['ledger', prior.prior_ledger, prior.prior_ledger_version],
+      ];
+      for (const [kind, value, version] of priorStateRows) {
+        const payload = kind === 'ledger' ? coordinationLedgerJson(value) : canonicalJson(value);
+        f.db
+          .query('UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind=?')
+          .run(version.revision, payload, version.digest, workspaceId, kind);
+      }
+      f.db
+        .query(
+          'UPDATE agent_host_mastra_session_ledger SET revision=?,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
+        )
+        .run(
+          prior.prior_journal_version.revision,
+          canonicalJson(prior.prior_journal),
+          prior.prior_journal_version.digest,
+          workspaceId,
+          f.identity.work_id,
+        );
+      await seedOriginalFrontierEngine(root, config, input);
+      const before = f.store.readHostStateSnapshot(f.identity);
+      await Promise.resolve(
+        expect(
+          f.store.continueDeliveredWork({
+            ...prior.request,
+            expectedLedger: { ...prior.request.expectedLedger, revision: prior.request.expectedLedger.revision - 1 },
+          }),
+        ).rejects.toThrow(),
+      );
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+      const result = await f.store.continueDeliveredWork(prior.request);
+      if (proofKind === 'normal-large' || proofKind === 'normal-history') {
+        expect(() => canonicalJsonDigest(result)).toThrow(/node budget/);
+        if (proofKind === 'normal-history') {
+          expect(() => canonicalJsonDigest(result.snapshot)).toThrow(/node budget/);
+          expect(() => canonicalJsonDigest(result.receipt)).toThrow(/node budget/);
+        } else {
+          expect(() => canonicalJsonDigest(result.snapshot)).not.toThrow();
+          expect(() => canonicalJsonDigest(result.receipt)).not.toThrow();
+        }
+        expect(() => coordinationLedgerJson(result.snapshot.ledger)).not.toThrow();
+        expect(() => coordinationLedgerJson(result.receipt.prior_ledger)).not.toThrow();
+        expect(() => coordinationLedgerJson(result.receipt.successor_ledger)).not.toThrow();
+        expect(coordinationLedgerDigest(result.snapshot.ledger)).toBe(
+          requireFixtureValue(result.snapshot.ledgerVersion, 'continued ledger version').digest,
+        );
+        expect(f.store.readHostStateSnapshot(f.identity)).toEqual(result.snapshot);
+        for (const value of [
+          result,
+          result.snapshot,
+          result.snapshot.ledger,
+          result.receipt,
+          result.receipt.prior_ledger,
+          result.receipt.successor_ledger,
+          result.action,
+        ])
+          expect(Object.isFrozen(value)).toBe(true);
+        expect(
+          Object.isFrozen(
+            requireFixtureValue(result.receipt.prior_ledger.tickets[0], 'prior ledger first ticket')
+              .exclusive_resources,
+          ),
+        ).toBe(true);
+      }
+      expect(
+        requireFixtureValue(result.receipt.successor_ledger.tickets.at(-1), 'successor active ticket')
+          .exclusive_resources,
+      ).toEqual(requireFixtureValue(prior.prior_ledger.tickets[0], 'prior frontier ticket').exclusive_resources);
+      expect(
+        requireFixtureValue(result.receipt.successor_ledger.claims.at(-1), 'successor active claim').resources,
+      ).toEqual(requireFixtureValue(prior.prior_ledger.claims[0], 'prior frontier claim').resources);
+      expect(result.status).toBe('continued');
+      expect(result.receipt.historical_capture).toBeNull();
+      expect(result.receipt.successor_journal.run_id).toBe(prior.prior_journal.run_id);
+      expect(result.receipt.successor_journal.items.map((item) => item.request.role)).toEqual([
+        'source-planner',
+        'security-prewriter',
+      ]);
+      expect(result.receipt.successor_journal.completed).toEqual(prior.prior_journal.completed);
+      expect(requireFixtureValue(result.receipt.prior_journal.items[0], 'prior journal item').request).toEqual(
+        prior.request.action.request,
+      );
+      expect(result.receipt.successor_work.contracts).toEqual(prior.prior_work.contracts);
+      expect(result.receipt.successor_work.artifacts).toEqual(prior.prior_work.artifacts);
+      expect(result.receipt.successor_work.lifecycle.risk).toBe(prior.prior_work.lifecycle.risk);
+      expect(result.receipt.rights_granted).toBe(false);
+      const retry = await f.store.continueDeliveredWork(prior.request);
+      expect(retry.status).toBe('already_continued');
+      expect(retry.receipt).toEqual(result.receipt);
+      expect(retry.action).toBeNull();
+      expect(retry.snapshot.workVersion).toEqual(result.snapshot.workVersion);
+      expect(retry.snapshot.ledgerVersion).toEqual(result.snapshot.ledgerVersion);
+      expect(Object.isFrozen(retry.receipt.prior_ledger)).toBe(true);
+      expect(
+        requireFixtureValue(f.store.readDeliveredWorkContinuation(f.identity, 1), 'continued lookup').items,
+      ).toHaveLength(2);
+      // Large retained-history proof ends at persisted retry/lookup; all original
+      // variants still exercise the full independent engine bridge and restart.
+      if (proofKind === 'normal-history') return;
+      const delivered = f.store.readHostStateSnapshot(f.identity),
+        deliveredLedger = requireFixtureValue(delivered.ledger, 'delivered frontier ledger'),
+        activeTicket = requireFixtureValue(deliveredLedger.tickets.at(-1), 'active frontier ticket');
+      const fileResource = requireFixtureValue(
+        activeTicket.exclusive_resources.find((resource) => resource.startsWith('file:')),
+        'frontier file resource',
+      );
+      const conflict = {
+        ...activeTicket,
+        ticket_id: 'foreign-file-only',
+        work_id: 'other-work',
+        thread_id: 'other-thread',
+        sequence: activeTicket.sequence + 1,
+        claim_ids: ['foreign-claim'],
+        exclusive_resources: [fileResource],
+        active_resources: [fileResource],
+      };
+      const conflictClaim: MutableCoordinationClaim = {
+        ...requireFixtureValue(deliveredLedger.claims.at(-1), 'active frontier claim'),
+        claim_id: 'foreign-claim',
+        ticket_id: conflict.ticket_id,
+        work_id: conflict.work_id,
+        thread_id: conflict.thread_id,
+        resources: [fileResource],
+      };
+      const writeLedger = (ledger: CoordinationLedger) => {
+        const payload = coordinationComponentJson(ledger),
+          digest = createHash('sha256').update(payload).digest('hex');
+        return f.db
+          .query("UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger'")
+          .run(ledger.revision, payload, digest, workspaceId);
+      };
+      writeLedger({
+        ...deliveredLedger,
+        next_sequence: conflict.sequence + 1,
+        tickets: [...deliveredLedger.tickets, conflict],
+        claims: [...deliveredLedger.claims, conflictClaim],
+      });
+      expect(() => f.store.readDeliveredWorkContinuation(f.identity, 1)).toThrow(/FIFO/);
+      writeLedger({
+        ...deliveredLedger,
+        next_sequence: conflict.sequence + 1,
+        tickets: [
+          ...deliveredLedger.tickets,
+          { ...conflict, status: 'queued', claim_ids: [], expires_at: null, active_resources: [] },
+        ],
+      });
+      expect(
+        requireFixtureValue(f.store.readDeliveredWorkContinuation(f.identity, 1), 'queued owner lookup').items,
+      ).toHaveLength(2);
+      writeLedger(deliveredLedger);
+
+      const reports: MastraSessionLedgerState['items'] = result.receipt.successor_journal.items.map((item, index) => {
+        const issue = index === 0 ? '71e62a38-b44b-470e-b732-81cefbaf983a' : 'fa354d58-05f9-4a5f-8f39-5b594cb9d95d';
+        const summary = 'Fixture current prewriter report ' + index;
+        return {
+          ...item,
+          issue_id: issue,
+          observation: {
+            schema: 'VidaSessionObservation/v1',
+            action_id: item.request.action_id,
+            issue_id: issue,
+            agent_id: 'fixture-prewriter-' + index,
+            tool_call_ref: 'fixture-call-' + index,
+            status: 'reported_complete',
+            summary,
+            output_digest: canonicalJsonDigest(summary),
+            evidence_refs: [],
+          },
+        };
+      });
+      const reportedJournal = { ...result.receipt.successor_journal, items: reports };
+      f.db
+        .query(
+          'UPDATE agent_host_mastra_session_ledger SET revision=revision+1,payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=1',
+        )
+        .run(canonicalJson(reportedJournal), canonicalJsonDigest(reportedJournal), workspaceId, f.identity.work_id);
+      const bridgeResult = resumeFrontierBridgeFixture({
+        root,
+        workspaceId,
+        identity: f.identity,
+        context: input.prewriterBinding.context,
+        selection: input.prewriterBinding.selection,
+        observations: reports.map((item) => requireFixtureValue(item.observation, 'prewriter report observation')),
+        runId: prior.prior_journal.run_id,
+      });
+      expect(bridgeResult.after.run_id).toBe(prior.prior_journal.run_id);
+      expect(bridgeResult.after.step_id).toBe('wave-2');
+      expect(bridgeResult.after.requests.map((request) => request.role)).toEqual(['developer-orchestrator']);
+      expect(bridgeResult.restart).toEqual(bridgeResult.after);
+      expect(bridgeResult.retained).toEqual(result.receipt);
+    } catch (error) {
+      retainContinuationFixtureRoot(root);
+      throw error;
+    }
   },
   30000,
 );

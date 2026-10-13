@@ -41,7 +41,7 @@ import { inspectLocalSession } from '../src/orchestration/inspect-local-session.
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.js';
 import type { RuntimeInitializationReceipt } from '../src/config/initialization-record.js';
 import { readRuntimeInitializationReceipt } from '../src/config/initialization-record.js';
-import { validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
+import { coordinationLedgerDigest, validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
 import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import type { SessionAgentAction } from '../src/orchestration/session-handoff.ts';
 import type { SessionHandoffContext } from '../src/orchestration/session-handoff.ts';
@@ -56,6 +56,7 @@ import type { DeliveredWorkContinuationRequest } from '../src/orchestration/deli
 import type { LocalWorkAdmissionInput } from '../src/orchestration/local-work-admission.ts';
 import { Console } from 'node:console';
 import { Writable } from 'node:stream';
+import { createAutomaticWorkAdmissionFixture } from './helpers/automatic-work-admission-fixture.ts';
 
 test('readonly local inspection validates decoded rows and retains uncertain journal custody without writes', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-readonly-inspection-'));
@@ -150,6 +151,194 @@ test('readonly local inspection validates decoded rows and retains uncertain jou
   }
 });
 
+test('readonly local inspection keeps Work, Ledger and Journal on one committed snapshot', () => {
+  const deadline = performance.now() + 5_000;
+  const fixture = createAutomaticWorkAdmissionFixture(false, true);
+  const databaseFile = path.join(fixture.root, fixture.config.control.work_root, 'session-handoff.v1.sqlite');
+  let writerDatabase: Database | undefined;
+  const errors: unknown[] = [];
+  try {
+    const workId = 'inspection-snapshot-' + randomUUID().slice(0, 8),
+      admitted = fixture.admit(fixture.prepare(workId, 'user:inspection-snapshot')),
+      admittedWork = admitted.host.work,
+      admittedLedger = admitted.host.ledger;
+    if (!admittedWork || !admittedLedger || !admitted.host.workVersion || !admitted.host.ledgerVersion)
+      throw Error('inspection snapshot fixture did not admit complete Host state');
+    const identity: WorkIdentity = {
+        repository_id: admittedWork.binding.repository_id,
+        project_ids: [...admittedWork.binding.project_ids],
+        integrations_digest: admittedWork.binding.integrations_digest,
+        work_id: workId,
+      },
+      input = {
+        repositoryRoot: fixture.root,
+        config: fixture.config,
+        projectIds: identity.project_ids,
+        integrationsDigest: identity.integrations_digest,
+        workId,
+        attempt: 1,
+      },
+      initialInspection = inspectLocalSession(input);
+    expect(initialInspection.status).toBe('inspected');
+
+    fixture.database.exec('PRAGMA journal_mode=WAL');
+    writerDatabase = new Database(databaseFile, { strict: true });
+    const workKey = JSON.stringify([
+      identity.repository_id,
+      identity.project_ids,
+      identity.integrations_digest,
+      identity.work_id,
+    ]);
+    let barrierReached = false,
+      mutationQueries = 0;
+    const commitNextSnapshot = () => {
+      const currentWorkRow = writerDatabase!
+          .query("SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='work' AND id=?")
+          .get(fixture.store.workspaceId, workKey) as { revision: number; payload: string; digest: string } | null,
+        currentLedgerRow = writerDatabase!
+          .query(
+            "SELECT revision,payload,digest FROM agent_host_state WHERE workspace_id=? AND kind='ledger' AND id='shared'",
+          )
+          .get(fixture.store.workspaceId) as { revision: number; payload: string; digest: string } | null,
+        currentJournalRow = writerDatabase!
+          .query(
+            'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+          )
+          .get(fixture.store.workspaceId, workId, 1) as { revision: number; payload: string; digest: string } | null;
+      if (!currentWorkRow || !currentLedgerRow || !currentJournalRow)
+        throw Error('inspection snapshot writer is missing a valid persisted row');
+      const currentWork = admittedWork,
+        currentLedger = admittedLedger,
+        nextWork: WorkState = {
+          ...currentWork,
+          revision: currentWork.revision + 1,
+          lifecycle: {
+            ...currentWork.lifecycle,
+            revision: currentWork.lifecycle.revision + 1,
+            next_action: 'Inspect the newly committed Host snapshot.',
+          },
+        },
+        nextLedger: CoordinationLedger = { ...currentLedger, revision: currentLedger.revision + 1 };
+      const tx = writerDatabase!.transaction(() => {
+        const workUpdate = writerDatabase!
+          .query(
+            "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='work' AND id=? AND revision=? AND digest=?",
+          )
+          .run(
+            nextWork.revision,
+            canonicalJson(nextWork),
+            canonicalJsonDigest(nextWork),
+            fixture.store.workspaceId,
+            workKey,
+            currentWorkRow.revision,
+            currentWorkRow.digest,
+          );
+        const ledgerUpdate = writerDatabase!
+          .query(
+            "UPDATE agent_host_state SET revision=?,payload=?,digest=? WHERE workspace_id=? AND kind='ledger' AND id='shared' AND revision=? AND digest=?",
+          )
+          .run(
+            nextLedger.revision,
+            canonicalJson(nextLedger),
+            coordinationLedgerDigest(nextLedger),
+            fixture.store.workspaceId,
+            currentLedgerRow.revision,
+            currentLedgerRow.digest,
+          );
+        const journalUpdate = writerDatabase!
+          .query(
+            'UPDATE agent_host_mastra_session_ledger SET revision=revision+1 WHERE workspace_id=? AND work_id=? AND attempt=? AND revision=? AND digest=?',
+          )
+          .run(fixture.store.workspaceId, workId, 1, currentJournalRow.revision, currentJournalRow.digest);
+        if (workUpdate.changes !== 1 || ledgerUpdate.changes !== 1 || journalUpdate.changes !== 1)
+          throw Error('inspection snapshot writer CAS did not update all three rows');
+      });
+      tx.immediate();
+    };
+    const originalQuery: unknown = Object.getOwnPropertyDescriptor(Database.prototype, 'query')?.value;
+    if (typeof originalQuery !== 'function') throw Error('SQLite query method is unavailable');
+    const observedQuery = function (this: Database, sql: string) {
+      const statement = Reflect.apply(originalQuery, this, [sql]) as ReturnType<Database['query']>;
+      if (/^\s*(?:UPDATE|INSERT|DELETE|REPLACE)\b/iu.test(sql)) mutationQueries += 1;
+      if (
+        barrierReached ||
+        !/^\s*SELECT\s+revision\s*,\s*payload\s*,\s*digest\s+FROM\s+agent_host_mastra_session_ledger\b/iu.test(sql)
+      )
+        return statement;
+      return new Proxy(statement, {
+        get(target, property) {
+          const value: unknown = Reflect.get(target, property, target);
+          if (typeof value !== 'function') return value;
+          return (...args: unknown[]) => {
+            const row: unknown = Reflect.apply(value, target, args);
+            if (property === 'get' && !barrierReached) {
+              barrierReached = true;
+              commitNextSnapshot();
+            }
+            return row;
+          };
+        },
+      }) as typeof statement;
+    };
+    const querySpy = spyOn(Database.prototype, 'query').mockImplementation(
+      observedQuery as typeof Database.prototype.query,
+    );
+    let duringCommit: ReturnType<typeof inspectLocalSession>;
+    try {
+      duringCommit = inspectLocalSession(input);
+    } finally {
+      querySpy.mockRestore();
+    }
+    expect(barrierReached).toBe(true);
+    expect(mutationQueries).toBe(3);
+    expect(duringCommit.work_version).toEqual(initialInspection.work_version);
+    expect(duringCommit.ledger_version).toEqual(initialInspection.ledger_version);
+    expect(duringCommit.journal_version).toEqual(initialInspection.journal_version);
+    expect(duringCommit.lifecycle_phase).toBe(initialInspection.lifecycle_phase);
+
+    const afterCommitRows = fixture.database
+      .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
+      .all(fixture.store.workspaceId);
+    const afterCommitJournal = fixture.database
+      .query(
+        'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+      )
+      .get(fixture.store.workspaceId, workId, 1);
+    const nextInspection = inspectLocalSession(input);
+    expect(nextInspection.work_version?.revision).toBe((initialInspection.work_version?.revision ?? 0) + 1);
+    expect(nextInspection.ledger_version?.revision).toBe((initialInspection.ledger_version?.revision ?? 0) + 1);
+    expect(nextInspection.journal_version?.revision).toBe((initialInspection.journal_version?.revision ?? 0) + 1);
+    expect(nextInspection.lifecycle_phase).toBe(initialInspection.lifecycle_phase);
+    expect(
+      fixture.database
+        .query('SELECT kind,id,revision,payload,digest FROM agent_host_state WHERE workspace_id=? ORDER BY kind,id')
+        .all(fixture.store.workspaceId),
+    ).toEqual(afterCommitRows);
+    expect(
+      fixture.database
+        .query(
+          'SELECT revision,payload,digest FROM agent_host_mastra_session_ledger WHERE workspace_id=? AND work_id=? AND attempt=?',
+        )
+        .get(fixture.store.workspaceId, workId, 1),
+    ).toEqual(afterCommitJournal);
+    expect(performance.now()).toBeLessThan(deadline);
+  } catch (error) {
+    errors.push(error);
+  }
+  try {
+    writerDatabase?.close(true);
+  } catch (error) {
+    errors.push(error);
+  }
+  try {
+    fixture.close({ retainRoot: errors.length > 0 || performance.now() >= deadline });
+  } catch (error) {
+    errors.push(error);
+  }
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) throw new AggregateError(errors, 'Snapshot inspection and cleanup failed');
+});
+
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {
   const { main } = await import('../bin/run.ts');
   const diagnose = async (message: string): Promise<{ readonly message: string }> => {
@@ -195,7 +384,12 @@ test('lease recovery eligibility denies repeat advice while retaining expiry, CA
   expect((await diagnose('journal CAS changed')).message).toContain('current state revision changed');
   expect((await diagnose('C:/secret/token confidential')).message).not.toContain('confidential');
 });
-import { canonicalJsonDigest, isPlainRecord, rfc3339TimestampMilliseconds } from '../src/contracts/public-ingress.ts';
+import {
+  canonicalJson,
+  canonicalJsonDigest,
+  isPlainRecord,
+  rfc3339TimestampMilliseconds,
+} from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId, loadRuntimeConfig, runtimeConfigDigest } from '../src/index.ts';
 import type { FlowIntent, WorkItemKind, WorkItemSelection } from '../src/config/runtime-config.ts';
 import { runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.ts';
@@ -2370,31 +2564,29 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
           expect(new Set(issuedActions.map((item) => item.issue_id)).size).toBe(issuedActions.length);
           const stale = call([...expected(issuedVersion), '--issue-wave', 'true']);
           expect(stale.status).toBe(1);
-          const mixed = call([
-            ...expected(issuedVersion),
-            '--issue-wave',
-            'true',
-            '--report',
-            path.join(root, 'report.json'),
-          ]);
-          expect(mixed.status).toBe(1);
-          expect(mixed.payload.code).toBe('GAP-VIDA-RUN-CLI-001');
           const reportFile = path.join(root, 'report.json');
-          writeFileSync(reportFile, 'x'.repeat(32769));
-          const oversized = call([...expected(issuedVersion), '--report', reportFile]);
-          expect(oversized.status).toBe(1);
-          expect(oversized.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
-          writeFileSync(reportFile, '{');
-          const malformed = call([...expected(issuedVersion), '--report', reportFile]);
-          expect(malformed.status).toBe(1);
-          expect(malformed.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
-          writeFileSync(reportFile, '{}');
-          const secondLink = path.join(root, 'report-hardlink.json');
-          linkSync(reportFile, secondLink);
-          const linked = call([...expected(issuedVersion), '--report', reportFile]);
-          expect(linked.status).toBe(1);
-          expect(linked.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
-          unlinkSync(secondLink);
+          // Shared CLI/report byte ingress needs one copied-bundle witness.
+          // Duplicate issuance and action/issue/CAS denials remain in every route.
+          if (route.workflow === researchFirstRoutes[0]?.workflow) {
+            const mixed = call([...expected(issuedVersion), '--issue-wave', 'true', '--report', reportFile]);
+            expect(mixed.status).toBe(1);
+            expect(mixed.payload.code).toBe('GAP-VIDA-RUN-CLI-001');
+            writeFileSync(reportFile, 'x'.repeat(32769));
+            const oversized = call([...expected(issuedVersion), '--report', reportFile]);
+            expect(oversized.status).toBe(1);
+            expect(oversized.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
+            writeFileSync(reportFile, '{');
+            const malformed = call([...expected(issuedVersion), '--report', reportFile]);
+            expect(malformed.status).toBe(1);
+            expect(malformed.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
+            writeFileSync(reportFile, '{}');
+            const secondLink = path.join(root, 'report-hardlink.json');
+            linkSync(reportFile, secondLink);
+            const linked = call([...expected(issuedVersion), '--report', reportFile]);
+            expect(linked.status).toBe(1);
+            expect(linked.payload.code).toBe('GAP-VIDA-RUN-REPORT-001');
+            unlinkSync(secondLink);
+          }
           let version = issuedVersion;
           let final: ReturnType<typeof call> | undefined;
           for (const item of issuedActions) {

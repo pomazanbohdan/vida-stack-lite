@@ -13,8 +13,10 @@
 ## Current dispatch — 2026-10-13
 
 Resume the existing tasks; do not restart qualified scheduler, protocol or native
-pilot work. The last full run on9f26769 is UNKNOWN with no admitted coverage
-report. Its measured failures and existing diagnostics choose the next packet.
+pilot work. Current full run3ad33c8f is UNKNOWN with no admitted coverage report.
+Its stale provenance fixture path is corrected; fresh continuation phase evidence
+and natural-quarantine overlap research select the next packet in
+TEST-REPAIR-COVERAGE-10M-CYCLE-20261012.md#current-cost-correction--2026-10-13.
 
 1. The pure configuration reuse packet is published. The resumed reader packet
    qualifies actual descriptor-boundary overlap, late renewal and project-split
@@ -43,6 +45,36 @@ report. Its measured failures and existing diagnostics choose the next packet.
 
 Acceptance and all existing tasks below are unchanged. One writer per shared
 file and one final-check owner apply throughout; task preparation is not closure.
+
+Immediate task state after publication3b69209:
+- Verified/published:9803d14 project-rebind P0 repairs and reader overlap/renewal/
+  v2 schema cases;3b69209 prewriter v1 schema/template caller and path-based raw
+  counters. Current complete coverage/CRAP/mutation admission remains OPEN.
+- TRACE qualification: actual report Host store spy + a second real CAS writer
+  passes; the omitted-fresh-read control assertion-fails on the created artifact.
+  Original Source restored byte-for-byte; the freshness read remains. This is
+  one lookup boundary proof, not all publication races or a mutation score.
+- One-batch closure work: direct SQLite adapter cases and coherent inspector
+  concurrent-commit case pass in the first focused packet. The stronger F1
+  standalone-large ledger test found generic receipt clones on same-ID retry
+  and current lookup. Root replaces all three exact-type clones with the
+  existing component serializer. Fresh final large-composite/history and
+  provenance selection:3PASS/110 assertions. History3.02s, full engine18.28s;
+  the latter is phase-instrumented, not a before/after speed measurement.
+- The copied-bundle research matrix retains its four route-specific recovery,
+  duplicate issue, wrong-action/report/CAS and retry paths. Four shared parser/
+  byte-envelope denials run once in the first route;12 redundant CLI launches
+  are removed. Independent review and all four focused routes PASS retain the
+  scenarios. Final callers selection9PASS/193 assertions,170.81s, includes
+  F3/TRACE and three direct SQLite cases; other two adapter cases passed earlier.
+  Complete600000ms selection remains UNKNOWN; no global timing/coverage claim.
+- Research completed without a new confirmed defect: upgrade exact-image
+  semantics, project-rebind authorization/idempotency, config/context freshness,
+  two concrete help parsers, coverage exact-map/terminal admission and post-test
+  input/map validation cost. Do not turn these scoped reviews into task closure.
+- Next ready caller extension: historical inspector's existing successful case
+  can observe its one v1 schema read and bind bytes to the retained receipt.
+  It is researched only, not yet assigned/implemented or measured.
 
 Current result after publication9f26769: full run037062bf remains UNKNOWN after
 the producer allowance under the600000ms entry cap is spent. The formerly failing four-case denial

@@ -111,12 +111,46 @@ its execution does not measure Source coverage.
 
 ## Diagnose and optimize
 
+Distinguish a case timeout from a protocol age threshold. Native process-death
+fixtures retain untouched lock bytes, identity and mtime until natural quarantine
+age; synthetic aged-lock cases prove a different boundary. Do not backdate an
+actual abandoned operation or globally fake its clock to obtain a faster pass.
+Overlap independent waits only through qualified resource/custody ownership.
+For producer read reuse, SQLite transaction isolation covers DB state, not the
+filesystem: retain configuration freshness and exact identity checks, and never
+reuse across an intervening write, await or later effect boundary. Bun's query
+cache contains prepared statements, not validated Host/receipt values. Use the
+existing query-count regression and fresh phase trace before claiming a gain;
+nested phase durations must not be added to their parent totals. Current concrete
+design and evidence: [timeout cost research](../../../packages/agent/docs/research/test-timeout-cost-20261013.md).
+
 For pure configuration reuse, observe real public callers and forward to the
 actual producer in spies. Count completed preparation only after it returns,
 then compare the config identity used by the next dependency check. Record a
 positive observation before the identity assertion; use a boolean comparison
 to avoid dumping whole configurations on failure. Keep independently parsed
 journal clones and every live freshness/authority check outside that reuse.
+
+For Host race controls, intercept the store used by the real caller; a fixture's
+writer handle can be a different instance. Commit through the independent real
+connection after the captured read, then check exact persisted versions and
+artifact absence. An omitted-read negative control qualifies only that boundary.
+For SQLite inspection, a second WAL writer can commit after the first real SELECT
+inside the reader's deferred transaction; require all-old then all-new row versions,
+restore the query spy and retain failed roots. Do not infer mutating-route rights
+from a coherent readonly snapshot.
+
+Separate one large Ledger from a large composition of individually small Ledgers.
+Both are valid regression classes. Keep ordinary ingress denial, small-v1 byte/
+digest parity, first persistence, exact retry and current lookup. Retained receipt
+clones must use the same bounded component encoder as their writer. Preserve the
+existing full engine/restart cases; a new history-boundary case need not repeat
+their engine roundtrip. A timed-out large-history engine check stays unqualified.
+
+Consolidate shared CLI syntax/byte-envelope denials across routes only after
+checking the actual shared branch. Keep one real copied-bundle witness and all
+route-specific duplicate issuance, action/issue/CAS, recovery and report checks.
+Report removed launches separately from measured speed or full-suite completion.
 
 For child diagnostics, check Buffer and offset Uint8Array views with Unicode
 and distinct secret bytes inside/outside the view. Decode through the existing
