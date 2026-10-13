@@ -1006,6 +1006,14 @@ test('fresh resume keeps one operation identity and reaches exact released histo
 
       const activatedConfig = runtimeConfig.loadRuntimeConfig(root);
       expect(runtimeConfigurationSourceFor(activatedConfig)).toBe(PROJECT_CONFIGURATION_PATHS.project);
+      const activatedOrigin = runtimeConfig.capturedRuntimeConfigurationBinding(activatedConfig);
+      expect(activatedOrigin).toMatchObject({ repository_root: root, source: PROJECT_CONFIGURATION_PATHS.project });
+      expect(activatedOrigin.source_digest).toMatch(/^[0-9a-f]{64}$/u);
+      expect(Object.isFrozen(activatedOrigin)).toBe(true);
+      expect(runtimeConfig.capturedRuntimeConfigurationBinding(activatedConfig)).toBe(activatedOrigin);
+      expect(runtimeConfig.capturedRuntimeConfigurationBinding(legacyConfig).source).toBe(
+        'agent-runtime.config.v1.yaml',
+      );
       expect(activatedConfig.schema).toBe(legacyConfig.schema);
       expect(activatedConfig.version).toBe(legacyConfig.version);
       expect(activatedConfig.config_id).toBe(legacyConfig.config_id);

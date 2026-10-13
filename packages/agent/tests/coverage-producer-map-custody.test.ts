@@ -1,9 +1,11 @@
 import { expect, test } from 'bun:test';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { captureCoverageConsumerBinding } from '../tooling/coverage-consumer-binding.ts';
+import { expectRejection } from './helpers/expect-rejection.ts';
 import { instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
 import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
 import { prepareCoverageRunnerInputs, restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
@@ -23,6 +25,7 @@ function record(value: unknown): Record<string, unknown> {
 // Its final CRAP stage must fail because this fixture has no published Git baseline.
 test('real producer and consumer preserve pristine initialization maps while merging executed counters', async () => {
   const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-map-custody-'));
+  const consumerConfiguration = await captureCoverageConsumerBinding(packageRoot, process.env);
   let passed = false;
   try {
     prepareCoverageRunnerInputs(root, packageRoot, ['src/**']);
@@ -30,7 +33,29 @@ test('real producer and consumer preserve pristine initialization maps while mer
     write(
       root,
       'tests/sum.test.ts',
-      "import {test,expect} from 'bun:test'; import {sum} from '../src/sum.ts'; test('owned sum assertion',()=>expect(sum(2,3)).toBe(5));\n",
+      "import {test,expect} from 'bun:test'; import {sum} from '../src/sum.ts'; import {assertConfiguredContext} from './configured-context.ts'; test('owned sum assertion',()=>{assertConfiguredContext(); expect(sum(2,3)).toBe(5);});\n",
+    );
+    write(
+      root,
+      'tests/configured-context.ts',
+      `import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+function record(value: unknown): Record<string, unknown> {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected manifest record');
+  return value as Record<string, unknown>;
+}
+export function assertConfiguredContext(): void {
+  const repositoryRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT;
+  const manifestPath = process.env.VIDA_BUN_COVERAGE_MANIFEST;
+  if (!repositoryRoot || !manifestPath) throw new Error('Captured consumer root was not propagated to the test child.');
+  const manifest = record(JSON.parse(readFileSync(manifestPath, 'utf8')));
+  const scope = record(manifest.execution_scope);
+  const consumer = record(scope.consumer_configuration);
+  assert.equal(repositoryRoot, consumer.repository_root, 'child env root must match captured consumer configuration');
+  assert.notEqual(repositoryRoot, process.env.VIDA_BUN_COVERAGE_ROOT, 'consumer root must differ from package root');
+  assert.notEqual(repositoryRoot, process.env.VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY, 'consumer root must differ from snapshot');
+}
+`,
     );
     write(root, 'bunfig.toml', '[test]\nroot = "./tests"\n');
     write(root, 'schemas/inert.json', '{}\n');
@@ -50,6 +75,12 @@ import { writeFileSync } from 'node:fs';
 const observations: Array<Record<string, unknown>> = [];
 const run = childProcess.spawnSync;
 const runAsync = childProcess.spawn;
+import * as consumerBinding from './coverage-consumer-binding.ts';
+const capturedConsumerConfiguration = ${JSON.stringify(consumerConfiguration)};
+mock.module('./coverage-consumer-binding.ts', () => ({
+  ...consumerBinding,
+  async captureCoverageConsumerBinding() { return capturedConsumerConfiguration; },
+}));
 mock.module('node:child_process', () => ({
   ...childProcess,
   spawnSync(command: string, args: string[], options: Record<string, unknown>) {
@@ -68,8 +99,10 @@ mock.module('node:child_process', () => ({
     let spawnError: unknown;
     child.once('error', (error) => { spawnError = error; });
     child.once('close', (status, signal) => {
+      const childEnvironment = options.env as NodeJS.ProcessEnv | undefined;
       observations.push({ phase: 'test', started_ms, finished_ms: performance.now(), timeout_ms: options.timeout,
         pid: child.pid, status, signal, error: spawnError === undefined ? null : String(spawnError),
+        consumer_repository_root: childEnvironment?.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? null,
         stdio: options.stdio, kill_signal: options.killSignal, buffered_output: Object.hasOwn(options, 'maxBuffer'),
         test_timeout: args[args.indexOf('--timeout') + 1] });
       writeFileSync(${JSON.stringify(observationPath)}, JSON.stringify(observations));
@@ -90,6 +123,13 @@ mock.module('./bun-coverage-evidence.ts', () => ({
 }));
 `,
     );
+    const producerEnvironment: NodeJS.ProcessEnv = {
+      ...process.env,
+      BUN_OPTIONS: '',
+      VIDA_PINNED_COMMAND_BUDGET_MS: '36000',
+      VIDA_PINNED_COMMAND_DEADLINE_MS: String(Date.now() + 36000),
+    };
+    delete producerEnvironment.AGENT_RUNTIME_TEST_REPOSITORY_ROOT;
     const child = spawnSync(
       process.execPath,
       ['--preload', preloadPath, path.join(root, 'tooling/run-bun-coverage.ts')],
@@ -98,12 +138,7 @@ mock.module('./bun-coverage-evidence.ts', () => ({
         encoding: 'utf8',
         timeout: 15000,
         maxBuffer: 4 * 1024 * 1024,
-        env: {
-          ...process.env,
-          BUN_OPTIONS: '',
-          VIDA_PINNED_COMMAND_BUDGET_MS: '36000',
-          VIDA_PINNED_COMMAND_DEADLINE_MS: String(Date.now() + 36000),
-        },
+        env: producerEnvironment,
       },
     );
     write(root, 'child.stdout.log', child.stdout ?? '');
@@ -143,6 +178,7 @@ mock.module('./bun-coverage-evidence.ts', () => ({
     expect(producer.kill_signal).toBe('SIGKILL');
     expect(producer.buffered_output).toBe(false);
     expect(producer.test_timeout).toBe('5000');
+    expect(producer.consumer_repository_root).toBe(consumerConfiguration.repository_root);
     let priorFinish = -Infinity;
     for (const value of launches) {
       const row = record(value);
@@ -183,7 +219,51 @@ mock.module('./bun-coverage-evidence.ts', () => ({
     const executed = record(record(report.coverage)[source]);
     expect(Object.values(record(initialization.f))).toEqual([0]);
     expect(Object.values(record(executed.f))).toEqual([1]);
-    const result = await validateCoverageReport(reportPath, root, { requireFullCoverage: false });
+    const priorConsumerRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT;
+    process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT = consumerConfiguration.repository_root;
+    let result: Awaited<ReturnType<typeof validateCoverageReport>>;
+    try {
+      result = await validateCoverageReport(reportPath, root, { requireFullCoverage: false });
+      // Altered receipt controls are synthetic negatives, not additional producer evidence.
+      const manifestPath = path.join(root, String(report.manifest_path));
+      const manifestBytes = readFileSync(manifestPath);
+      const receipts = report.processes;
+      if (!Array.isArray(receipts) || receipts.length !== 1) throw new Error('Expected one native receipt.');
+      const receipt = record(receipts[0]);
+      const receiptPath = path.join(path.dirname(manifestPath), 'processes', String(receipt.file));
+      const receiptBytes = readFileSync(receiptPath);
+      const originalChild = record(JSON.parse(receiptBytes.toString('utf8')));
+      chmodSync(manifestPath, 0o600);
+      for (const missing of [true, false]) {
+        const alteredManifest = structuredClone(manifest);
+        const scope = record(alteredManifest.execution_scope);
+        if (missing) delete scope.consumer_configuration;
+        else record(scope.consumer_configuration).source_digest = '0'.repeat(64);
+        const alteredManifestBytes = Buffer.from(JSON.stringify(alteredManifest));
+        writeFileSync(manifestPath, alteredManifestBytes);
+        const alteredChildBytes = Buffer.from(JSON.stringify({ ...originalChild, execution_scope: scope }));
+        writeFileSync(receiptPath, alteredChildBytes);
+        const alteredReport = {
+          ...report,
+          execution_scope: scope,
+          manifest_sha256: sha256(alteredManifestBytes),
+          processes: [{ ...receipt, sha256: sha256(alteredChildBytes) }],
+        };
+        await expectRejection(
+          validateCoverageReport(reportPath, root, {
+            requireFullCoverage: false,
+            reportBytes: Buffer.from(JSON.stringify(alteredReport)),
+          }),
+          missing ? /binding is malformed/ : /changed since collection: source_digest/,
+        );
+      }
+      writeFileSync(manifestPath, manifestBytes);
+      chmodSync(manifestPath, 0o400);
+      writeFileSync(receiptPath, receiptBytes);
+    } finally {
+      if (priorConsumerRoot === undefined) delete process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT;
+      else process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT = priorConsumerRoot;
+    }
     expect(result.processes).toBe(1);
     const canonical = result.canonical_source_maps[source];
     if (!canonical) throw new Error('Canonical Source map missing');

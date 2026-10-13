@@ -739,6 +739,14 @@ Eligibility binds captured test SHA plus the source/test/tool/config/runtime,
 platform/provider and package-owner review scope. Source or dependency drift
 invalidates unchanged-test reviews too. Omitted reviews default to singleton
 exclusive waves; stale, duplicate, foreign or malformed reviews deny planning.
+Current selections containing `tests/configured-context.ts` capture the actual
+consumer configuration origin and physical root identity in execution scope.
+Pass that captured root to the current child; relocating a test snapshot must
+not change its configured root. Reuse the successful loader's source digest,
+not the canonical semantic config digest. The final validator resolves its
+expected root from the caller and denies missing, stale or foreign claims;
+report metadata grants no filesystem or execution authority. This binding opens
+no workspace database and does not activate parallel eligibility.
 Use canonical `namespace:<64 lowercase hex>` resource IDs derived from already
 captured physical-owner identity, not alternative raw path spellings. The pure
 scheduler performs no filesystem discovery. Resource IDs shared by concurrent

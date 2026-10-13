@@ -1661,6 +1661,17 @@ const configCache = new Map<string, CachedConfig>();
 const authorizedRuntimeConfigs = new WeakSet<object>();
 const authorizedRuntimeConfigRoots = new WeakMap<object, string>();
 const loadedConfigDigests = new WeakMap<object, string>();
+const capturedConfigurationBindings = new WeakMap<
+  object,
+  Readonly<{ repository_root: string; source: RuntimeConfigurationSource; source_digest: string }>
+>();
+
+/** Successful-load origin only; it grants no authority and does not assert current filesystem bytes. */
+export function capturedRuntimeConfigurationBinding(config: AgentRuntimeConfig) {
+  const binding = capturedConfigurationBindings.get(config);
+  assertCondition(binding !== undefined, 'configuration source binding requires a successful loadRuntimeConfig');
+  return binding!;
+}
 
 export function assertLoadedRuntimeConfig(config: AgentRuntimeConfig, repositoryRoot?: string): void {
   assertCondition(authorizedRuntimeConfigs.has(config), 'runtime config must come from loadRuntimeConfig');
@@ -1706,6 +1717,10 @@ function loadRuntimeConfigForSelectedSource(repositoryRoot: string): AgentRuntim
   assertCondition(
     recheckRuntimeConfigurationSelection(access, selection),
     'runtime configuration source changed during its read.',
+  );
+  capturedConfigurationBindings.set(
+    config,
+    Object.freeze({ repository_root: root, source, source_digest: loaded.source_digest }),
   );
   return config;
 }

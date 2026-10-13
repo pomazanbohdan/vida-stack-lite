@@ -217,6 +217,7 @@
     "tooling/coverage-counters.ts",
     "tooling/coverage-shard-plan.ts",
     "tooling/coverage-shard-eligibility.ts",
+    "tooling/coverage-consumer-binding.ts",
     "tooling/coverage-shard-evidence.ts",
     "tooling/coverage-run-lock.ts",
     "tests/coverage-counters.test.ts",

@@ -10232,3 +10232,67 @@ envelope, not a duplicate review schema. Normal target WAL lifetime admission /
 exclusive-maintenance and fenced bootstrap/auxiliary repair follow their current
 owners; the private probe does not activate those paths. Exhaustive frozen plan,
 current exact coverage and assertion-confirmed mutation remainOPEN.
+
+### Current consumer configuration origin — 2026-10-13
+
+The successful runtime loader exposes its existing raw Source digest through a
+frozen WeakMap origin after final selection recheck. Canonical semantic config
+digest and authorization brands stay separate; repair targets and forged copies
+have no origin. Coverage captures that origin with verified physical consumer
+root identity, opens no workspace DB, and records it in current execution scope
+when the captured configured-context helper is present. Final admission resolves
+the expected root from its caller, not the report, and checks current origin.
+
+Blind review finds a real propagation gap: the current child otherwise derives
+its root from relocated tests while the manifest binds the original repository.
+The existing native producer fixture now reproduces that missing root, without
+an inherited override; RED retains coverage-map-custody-f4EBWE and its log.
+The runner passes the captured root to the current child. Historical invocation
+is unchanged. The fixture mocks only the copied inert capture boundary with a
+genuine previously captured origin; its caller stub proves propagation, not the
+product loader. Real legacy origin/byte-drift/forged controls and the existing
+activated project upgrade positive cover the loader separately.
+
+Final blind review asks for a real same-path physical-owner control. Two owned
+directories with identical config bytes replace each other at the original path;
+root and source digest stay equal, physical identity changes, and the previous
+claim is denied specifically at root_identity_sha256. Targeted wrong-identity
+claim and actual replacement controls2PASS/19assertions/1.70s. This does not
+qualify a mid-capture directory swap. The first final static pass finds TS2339
+in the fixture env deletion; explicit NodeJS.ProcessEnv fixes its type without
+changing runtime behavior. Final static and ordinary publication follow.
+
+Typed lint also rejects Bun's declaration-level non-Thenable assertion awaits.
+Both changed files now use the existing expectRejection owner, which waits for
+the actual operation before inspection/cleanup; no new assertion helper. Final
+joined config/producer11PASS/111assertions/5.01s. Strict447capturedTS/446program
+and100SourcePASS,0diagnostics; typed lintPASS. Format and diff checksPASS. Current
+full coverage remains UNKNOWN with no admitted global metrics. Ordinary reviewed
+commit/push follows; unrelated BASE/ and root bun.lock remain untouched.
+
+Final cleanup review finds both two-root cases could skip the second root after
+the first removal error. The existing fixture cleanup owner now attempts each
+owned root, logs retained failed roots and aggregates cleanup errors after all
+attempts. No failed-body cleanup is authorized. Last affected two-root controls
+2PASS/27assertions/1.76s. The ordinary staged hook verifies this last TS change;
+the previous static receipt is not claimed as checking bytes written later.
+
+Focused native propagation plus project resume2PASS/114assertions/14.38s;
+the reused producer/consumer case then qualifies consistent missing and stale
+scope negatives1PASS/47assertions/2.87s. Exact captured Source maps, one input
+capture, bounded phases and receipt custody remain. Earlier joined legacy/
+native/synthetic41PASS/188assertions and final config4PASS/26assertions remain
+scoped evidence, not a complete current suite or numerical receipt.
+
+User reiterates that auxiliary storage-admission.v1.sqlite violates the one-DB
+target; it stays an explicit P0 GAP. Research selects existing Host opener and
+storage admission/close owners for normal WAL lifetime access and fresh exclusive
+maintenance. Missing/zero/DELETE bootstrap, crash/identity/close-failure custody
+and bundle-owned repair qualify before gate retirement or reader activation;
+legacy two-file overlap remains blocked. No admission DB is deleted here.
+
+Next parallel dependency is wrapper-owned moving-clock provenance for the
+semantic review-base environment digest. Keep exact child environment hashing,
+unknown diagnostic keys, caller ceilings and the existing review envelope.
+No duplicate schema, full suite, AST/scan/hash pass, native activation or new
+coverage/CRAP/mutation admission follows from this packet.

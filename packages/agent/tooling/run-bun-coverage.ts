@@ -29,6 +29,7 @@ import {
   type CoverageShardRunBinding,
 } from './coverage-shard-evidence.js';
 import { resolveCoverageShardEligibility, type CoverageReviewScope } from './coverage-shard-eligibility.ts';
+import { captureCoverageConsumerBinding } from './coverage-consumer-binding.ts';
 import {
   instrumentedArtifactPath,
   maxInstrumentedArtifactBytes,
@@ -64,7 +65,9 @@ type RunManifest = {
   module_inputs: SourceDigest[];
   test_inputs: SourceDigest[];
   tool_inputs: SourceDigest[];
-  execution_scope: Record<string, unknown>;
+  execution_scope: Record<string, unknown> & {
+    consumer_configuration?: Awaited<ReturnType<typeof captureCoverageConsumerBinding>>;
+  };
   active_argv: string[];
   tests: string[];
   sources: SourceDigest[];
@@ -504,7 +507,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       Object.assign(env, execution.env);
       // Moving exact tests into the captured tree retains their original configured root.
       env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT = path.resolve(root, '../..');
-    }
+    } else if (manifest.execution_scope.consumer_configuration)
+      env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT = manifest.execution_scope.consumer_configuration.repository_root;
     env.VIDA_BUN_COVERAGE_ACTIVE_ARGV = JSON.stringify(args);
     return { args, env, cwd: executionRoot };
   }
@@ -721,6 +725,12 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     }
     const lockedInputs = await coverageInputs(root, selectionMode);
     commandBudget.remaining();
+    const consumerConfiguration =
+      selectionMode === 'current' &&
+      lockedInputs.test_inputs.some((entry) => entry.path === 'tests/configured-context.ts')
+        ? await captureCoverageConsumerBinding(root, process.env)
+        : undefined;
+    commandBudget.remaining();
     const capturedPin = lockedInputs.input_bytes['.bun-version'];
     if (!capturedPin || new TextDecoder('utf-8', { fatal: true }).decode(capturedPin).trim() !== pinnedBun)
       throw new Error('Captured Bun version differs from the selected runtime pin.');
@@ -791,6 +801,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       source_maps: sourceMaps,
       instrumented_sources: instrumentedSources,
       execution_scope: {
+        ...(consumerConfiguration ? { consumer_configuration: consumerConfiguration } : {}),
         ...(publishedFixture
           ? {
               fixture_child_scope: 'direct-child-process-api',

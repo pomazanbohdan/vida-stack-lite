@@ -20,6 +20,7 @@ import {
   type CoverageShardTerminalEvidence,
 } from './coverage-shard-evidence.js';
 import type { CoverageShardPlan } from './coverage-shard-plan.js';
+import { assertCoverageConsumerBinding } from './coverage-consumer-binding.ts';
 import { lstatSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { parsePublishedFixtureIdentity } from './published-coverage-inputs.js';
@@ -1015,6 +1016,12 @@ async function validateCoverageReportInternal(
     // Historical closure reconstruction binds original declared inputs while
     // preserving the common report/manifest input agreement guard.
     verifyInputBindings(run.report, run.manifest, current);
+  }
+  if (selectionMode === 'current') {
+    const scope = record(run.manifest.execution_scope, 'execution scope');
+    const requiresConsumer = current.test_inputs.some((entry) => entry.path === 'tests/configured-context.ts');
+    if (requiresConsumer || Object.hasOwn(scope, 'consumer_configuration'))
+      await assertCoverageConsumerBinding(scope.consumer_configuration, root, process.env);
   }
   const { summary, perFile, sourceMaps, coverage } = validatedCoverageSummary(
     root,

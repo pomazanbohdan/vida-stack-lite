@@ -8,6 +8,14 @@ description: Use when writing, migrating, reviewing, running or optimizing TypeS
 Use the smallest contract-backed check that resolves the current uncertainty.
 Keep behavior, timing and numerical qualification as separate evidence.
 
+For current captured configured-context tests, propagate the manifest's bound
+consumer root to the child rather than deriving it from relocated module paths.
+Qualify missing/stale origin negatives at the real validator with other receipt
+joins and hashes consistent. Reuse the successful loader's raw-source binding
+and physical root identity; canonical config equality is not byte freshness.
+An inert caller stub proves environment propagation only, not the product
+configuration loader; keep genuine loader and project-upgrade controls separate.
+
 For coverage receipt negatives, preserve the canonical Source map, assigned
 tests, sibling/process joins and receipt hashes while changing the targeted
 loaded-Source row. Test both nonzero and zero-valued child maps: every emitted

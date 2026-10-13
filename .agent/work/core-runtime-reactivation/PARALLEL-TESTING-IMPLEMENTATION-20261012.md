@@ -12,11 +12,21 @@
 
 ## Current dispatch — 2026-10-13
 
-Latest published Source is0e67292. The last full current run atc54f713,
-7a305bc1-0001-459c-a885-8203d5861a8e ended UNKNOWN under300000ms, with no emitted
-assertion failure before cutoff and no admitted numeric report. Archive1912ms,
-same-file conflict and migration controls PASS. Preserve the run/effects; no
-unchanged full rerun. Six blind resource reviews reuse its186captured tests.
+Latest published Source is31aa6de. The last full current run,
+6ecf5884-1970-4988-ac04-b4af06260ba0, ended UNKNOWN under300000ms with170emitted
+PASS rows, no emitted assertion failure and no admitted numeric report. Preserve
+the run/effects; no unchanged full rerun. Six prior resource review packets remain
+UNREVIEWED and stale after Source changes, not current eligibility receipts.
+
+The consumer-origin packet binds the successful configuration loader's existing
+source digest and physical root identity into the current producer and final
+validator. The current child receives that exact bound root; the native fixture
+reproduces missing propagation before the fix and retains the failed root.
+Missing/stale scope negatives preserve the other manifest/child receipt hashes.
+Legacy and activated project origins have separate controls. Live production
+remains serial. Next resolve wrapper-owned moving-clock provenance for the base
+review digest without weakening exact child environment hashes or caller ceilings,
+then qualify the actual complete current resource review before activation.
 
 Current packet adds strict bound eligibility and one complete initial-wave
 preparation to the existing native pilot, retaining the serial production caller.
