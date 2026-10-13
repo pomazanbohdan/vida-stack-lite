@@ -27,8 +27,17 @@ quiescence or numeric qualification follows; resource advancement stays false.
 Classify actual reader effects, not the word "read-only": configured-context
 loads consumer YAML/references through SafeAccess CAS, so shared physical roots
 must coassign. A verified-reader test asserting absence of package CAS sidecars
-also conflicts with raw readers of that same package. UUID leaves and unique
+also conflicts with raw SafeAccess readers of that same package. UUID leaves and unique
 fixture children under a shared parent do not alone require whole-run exclusion.
+
+Distinguish a plain immutable `readFileSync` dependency from a SafeAccess reader
+that creates CAS sidecars. A common path alone does not prove a read/write
+conflict: review actual transitive effects and selected peer mutations before
+retiring any resource tag. Private copied-bundle CAS remains its own owner.
+When splitting a phase, register each moved file once in that disjoint phase,
+preserve exact describe/case names and file/name lineage, and move shared parser
+support once. Keep known fixture-failure retention separate from UNKNOWN: both
+retain/report roots, while only uncertain child custody denies bundle reuse.
 
 When testing a pinned launch through an injected spawn, project the launcher-
 managed budget/deadline/diagnostics/review-policy keys separately. Assert an

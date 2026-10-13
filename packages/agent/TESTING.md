@@ -483,7 +483,7 @@ Use the current scripts for the applicable completion checks.
 | Ordinary agent phase          | `bun bin/bun.ts run test:pinned`                                                     |
 | Repair and recovery           | `bun bin/bun.ts run test:repair:pinned`                                              |
 | HostState and lifecycle       | `bun bin/bun.ts run test:host-state:pinned`                                          |
-| Public run entrypoint         | `bun bin/bun.ts run test:run-entrypoint:pinned`                                      |
+| Public run entrypoint/recovery | `bun bin/bun.ts run test:run-entrypoint:pinned`                                      |
 | Resource integrity            | `bun bin/bun.ts run test:resources:pinned`                                           |
 | Fuzz                          | `bun bin/bun.ts run test:fuzz:pinned`                                                |
 | ZOMBIES                       | `bun bin/bun.ts run test:zombies:pinned`                                             |
@@ -493,6 +493,23 @@ Use the current scripts for the applicable completion checks.
 | Coverage and CRAP             | `bun bin/bun.ts run test:coverage:pinned`                                            |
 | Saved coverage report         | `bun bin/bun.ts run coverage:gate:pinned`                                            |
 | Saved CRAP budget report      | `bun bin/bun.ts run crap:pinned`                                                     |
+
+The run-entrypoint phase selects both `run-entrypoint.test.ts` and
+`run-entrypoint-recovery.test.ts`; neither belongs in the ordinary phase.
+Their shared run-result parsers live once in a pure test-support module. Keep
+the four copied-bundle recovery case names and their enclosing describe name;
+path/name test references move to the new file, while production function IDs
+stay unchanged. Existing Bun mutation and V8 skip policy stays unchanged.
+All four recovery cases own one private copied bundle and run serially in that
+file. Consumer roots are fresh per case. Source schema/template dependencies
+are immutable raw reads during the Source freeze: they create no CAS sidecars,
+and reviewed selected peers do not mutate those live files. Distinguish these
+read-only dependencies from actual shared-root CAS effects; ordinary bundle and
+consumer CAS still require their exact private owners. This scoped review does
+not remove common-resource tags from other files or qualify successor waves.
+Known assertion/cleanup failures retain and report fixtures independently from
+UNKNOWN child outcomes; UNKNOWN still denies copied-bundle reuse. A file split
+and an affected caller pass do not establish a complete-run timing improvement.
 | Format                        | `bun bin/bun.ts run format:check:pinned`                                             |
 | Final applicable local matrix | `bun bin/bun.ts run local:candidate:pinned`                                          |
 | Portable local subset         | `bun bin/bun.ts run verify:portable:pinned`                                          |

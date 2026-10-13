@@ -10803,3 +10803,49 @@ attempt. Existing recovery calls prove distinct edges; init mapping cases alread
 share an invocation. Keep100% exact coverage, frozen CC/CRAP and assertion-
 confirmed Killed gates OPEN until actual final evidence, followed by isolated
 formed-native options/flows. No old unblock/owner notice is required.
+
+### Private recovery contour dispatch — 2026-10-13
+
+Published d296ceb to origin/main through the strict commit hook: formatting and
+447-file typecheck passed. The exact checked17-file custody/observation packet
+is committed; BASE/ and root bun.lock remain untracked and preserved.
+
+Six blind Luna workers now own recovery-file extraction, independent resource
+review, registration/test-ID lineage, frozen numeric closure, bundle repair gap
+review and analogous test-cost patterns. Root remains the sole Source, shared
+configuration, final-check, documentation and Git owner. The writer may move the
+existing run-result test support once, without a duplicate helper slab. Existing
+four recovery assertions/public CLI edges and UNKNOWN custody stay intact.
+
+The extraction is in progress, not an admitted parallel resource review or a
+measured speedup. Private copied-bundle CAS is not automatically the common
+executing-package resource; transitive callers still need actual review. Keep
+the original disjoint test phases, exact path/name lineage and per-file hooks.
+No additional full suite has been launched. Next: join writer/review, qualify
+static/affected contours, form the current SDK separately from tests, capture
+fresh resource eligibility and run one full coverage under300000ms/30000reserve.
+
+Extraction joined: run-entrypoint-recovery.test.ts owns the original four
+copied-bundle CAS routes, their private bundle and inherited phase budget.
+run-entrypoint-test-support.ts owns the existing parsers once; original cases
+import that owner. Exact describe/case names and assertions remain. The new file
+is registered only in the separate run-entrypoint phase; ordinary phase and
+mutation partitions are unchanged. Existing Bun mutation/V8 skip behavior stays.
+
+Independent review corrected an overbroad path-based conflict assumption:
+Source schema/template lstat/readFileSync has no CAS sidecars; selected peers
+do not mutate those live files. Ordinary SafeAccess effects are confined to the
+private copy/consumer roots. No common package tag is removed from other files.
+Review also found original known-failure cleanup deleted fixtures; the new owner
+retains/reports assertion, finalization and cleanup failures separately from
+UNKNOWN. UNKNOWN still denies copied-bundle reuse.
+
+recovery-static.log:450capturedTS/449program0diagnostics. Initial lint found
+three unused extraction leftovers; recovery-lint-green.log PASS0 after removal.
+Separate recovery-sdk-formation.log forms Bun1.4.3 SDK0.1.3, with no suites or
+test issuers shipped. recovery-native-caller-green.log4PASS/64assertions/48.77s:
+the research route47638.57ms with its genuine public CLI edges, old readonly/CAS
+callers and current SDK verification. This is affected behavior evidence, not a
+complete timing comparison, install or real Runtime acceptance. Numerical gates
+remain OPEN. Publish this checked batch, refresh actual current inputs/resource
+scope using existing unchanged captures and then perform one bounded full run.
