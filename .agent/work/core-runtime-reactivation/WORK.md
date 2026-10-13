@@ -10619,3 +10619,53 @@ until bundle-owned repair, interruption and lifetime exclusion are qualified.
 Frozen mapping review identifies two NEW init reader methods; host migration
 cleanup is a changed retained role. Reuse exact source/tool-bound old inventory
 and capture changed module roles once; never turn partial lineage into budgets.
+
+### Real-origin preparation correction and complete resource review — 2026-10-13
+
+Published98ec57c is equal to origin/main after the ordinary strict hook. Six new
+blind Luna audits cover all188 paths in32/32/31/31/31/31 partitions, with specific
+owners and explicit uncertainty. Root reconciles concrete omissions from prior
+reviews: config CAS consumers include transitive historical helpers and the real
+deep-property child suite. Package-prefixed lifecycle references select the
+verified package reader, not consumer CAS; Root corrects the contrary inference.
+Keep the common package tag and coassign config consumers conservatively. Unique
+fixture leaves remain private; recorded descendant/late cleanup uncertainty
+does not authorize a successor resource wave.
+
+Root reuses the fa227cf capture's committed unchanged rows and reads/hashes only
+the published changed input closure for current review; the execution owner must
+still capture its actual inputs and deny a stale scope. Actual runtime hash,
+SafeAccess physical identity and a native observed wrapper-issued environment
+control supply the remaining scope. No synthetic runtime or empty resource
+reviews are promoted. The initial attempt fails before artifact publication or
+test launch: real legacy loader source_digest is filename:SHA, while the new
+scope builder incorrectly requires bare SHA. No complete suite or UNKNOWN
+coverage operation occurred in current-98ec57c-parallel-coverage.log.
+
+real-origin-scope-red.log matched0 tests because the filter included a display
+separator; not causal RED. Corrected real-origin-scope-red-public.log executes
+the real loader and fails at that exact digest guard. The repair retains opaque
+trimmed nonempty bounded provenance, strict physical-owner SHA and supported
+source identities. The existing successful-loader freshness comparison is
+unchanged; derived configuration fingerprint remains strict SHA. Independent
+review approves and finds no other bare-origin-hash assumption in this contour.
+The activated successful-loader proof is the existing fresh upgrade lifecycle
+case; repair-boundary target fixtures do not prove activation.
+
+First repair batch51PASS/1FAIL: copied inert runner lacks the new project-paths
+import. Its maintained helper now copies the real CLI/provider/source-identity
+closure, including SafeAccess and attestation, without mocked constants. Next
+batch60PASS/1FAIL: captured-pin negative reaches a consumer-field error first.
+The pin guard now runs immediately after capture, before consumer config and the
+large executable hash, so drift is rejected earlier without staging or extra
+work. Preserve capture-before-validation and all effect-facing authority guards.
+Final real-origin-scope-static.log:448capturedTS/447program and100Source, zero
+diagnostics; strict typed lint PASS. real-origin-scope-final.log:51PASS/
+330assertions/12.24s across3affectedfiles, including actual producer/validator
+and old serial/historical/UNKNOWN lock controls. The10unchanged repair-boundary
+cases passed in the preceding batch. Failed native fixture roots and logs remain.
+
+Publish this correction before refreshing the actual review scope and launching
+one complete initial-wave run under300000ms. This qualifies neither exact100
+coverage nor frozen CRAP/CC or confirmedKilled, and does not retire the auxiliary
+admission DB or grant real Runtime acceptance/unblock notices.

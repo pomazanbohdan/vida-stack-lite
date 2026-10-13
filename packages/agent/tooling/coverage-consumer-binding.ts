@@ -4,6 +4,7 @@ import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
 import { canonicalCoverageReviewScope } from './coverage-shard-eligibility.ts';
 import type { CoverageReviewScope } from './coverage-shard-eligibility.ts';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { LEGACY_RUNTIME_CONFIGURATION_PATH, PROJECT_CONFIGURATION_PATHS } from '../src/config/project-paths.ts';
 
 const configurationPaths = ['.bun-version', 'bunfig.toml', 'package.json', 'bun.lock'] as const;
 const digestPattern = /^[0-9a-f]{64}$/u;
@@ -43,9 +44,12 @@ function validatedConsumerOrigin(value: unknown): Record<string, string> | undef
   if (
     consumerBindingKeys.some((key) => typeof value[key] !== 'string') ||
     !validDigest(value.root_identity_sha256) ||
-    !validDigest(value.source_digest) ||
+    typeof value.source_digest !== 'string' ||
+    value.source_digest.length === 0 ||
+    value.source_digest.length > 4096 ||
+    value.source_digest.trim() !== value.source_digest ||
     value.repository_root === '' ||
-    value.source === ''
+    (value.source !== LEGACY_RUNTIME_CONFIGURATION_PATH && value.source !== PROJECT_CONFIGURATION_PATHS.project)
   )
     throw new Error('Captured coverage consumer configuration origin is malformed.');
   return {

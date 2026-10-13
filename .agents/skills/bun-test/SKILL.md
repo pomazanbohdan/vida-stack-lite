@@ -13,6 +13,10 @@ The current runner optionally reads the fixed
 Reuse the actual scope builder and captured config/input rows; do not generate
 empty resource reviews, synthetic runtime hashes or stale scope bindings for a
 real run. Missing/unavailable/malformed/stale reviews preserve serial fallback.
+Carry the loader's exact opaque source digest, including a legacy filename
+prefix; hashing a configuration origin does not require every string inside it
+to be a bare hash. Exercise a genuine loader origin alongside synthetic policy
+controls. Copied inert runner fixtures need its actual eager import closure.
 Only a complete nonexclusive initial wave of at most two serial children is
 supported. Parent log descriptors, known successful native terminals and actual
 receipt bytes feed the existing aggregate-free report/v2 assembler; the final

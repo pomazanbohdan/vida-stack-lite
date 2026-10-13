@@ -971,6 +971,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     }
     const lockedInputs = await coverageInputs(root, selectionMode);
     commandBudget.remaining();
+    const capturedPin = lockedInputs.input_bytes['.bun-version'];
+    if (!capturedPin || new TextDecoder('utf-8', { fatal: true }).decode(capturedPin).trim() !== pinnedBun)
+      throw new Error('Captured Bun version differs from the selected runtime pin.');
     const consumerConfiguration =
       selectionMode === 'current' &&
       lockedInputs.test_inputs.some((entry) => entry.path === 'tests/configured-context.ts')
@@ -978,9 +981,6 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         : undefined;
     commandBudget.remaining();
     const runtimeExecutableSha256 = sha256(readFileSync(process.execPath));
-    const capturedPin = lockedInputs.input_bytes['.bun-version'];
-    if (!capturedPin || new TextDecoder('utf-8', { fatal: true }).decode(capturedPin).trim() !== pinnedBun)
-      throw new Error('Captured Bun version differs from the selected runtime pin.');
     const runId = randomUUID();
     const { input_bytes: inputBytes, ...evidence } = lockedInputs;
     const externalTemporaryRoot = path.resolve(process.env.TMPDIR ?? tmpdir());

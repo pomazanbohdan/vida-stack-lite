@@ -1,10 +1,10 @@
 import { describe, expect, test } from 'bun:test';
-import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import * as coverageConsumerBinding from '../tooling/coverage-consumer-binding.ts';
-import { buildCoverageReviewScope } from '../tooling/coverage-consumer-binding.ts';
+import { buildCoverageReviewScope, captureCoverageConsumerBinding } from '../tooling/coverage-consumer-binding.ts';
 import {
   canonicalCoverageReviewScope,
   resolveCoverageShardEligibility,
@@ -288,6 +288,39 @@ test('review-base hashing keeps malformed or inconsistent clocks exact', () => {
 });
 
 describe('buildCoverageReviewScope', () => {
+  test('preserves the real loader origin digest instead of assuming a bare hash', async () => {
+    const packageRoot = path.resolve(import.meta.dirname, '..');
+    const consumerConfiguration = await captureCoverageConsumerBinding(packageRoot, process.env);
+    expect(consumerConfiguration.source).toBe('agent-runtime.config.v1.yaml');
+    const configBytes = readFileSync(path.join(consumerConfiguration.repository_root, consumerConfiguration.source));
+    expect(consumerConfiguration.source_digest).toBe(consumerConfiguration.source + ':' + sha256(configBytes));
+    const built = buildCoverageReviewScope({
+      ...scopeInputs(),
+      consumerConfiguration,
+    });
+    expect(built.configuration_fingerprint).toBe(
+      sha256(
+        JSON.stringify({
+          captured_configuration_inputs: configurationRows,
+          consumer_configuration: {
+            repository_root: consumerConfiguration.repository_root,
+            root_identity_sha256: consumerConfiguration.root_identity_sha256,
+            source: consumerConfiguration.source,
+            source_digest: consumerConfiguration.source_digest,
+          },
+        }),
+      ),
+    );
+    for (const sourceDigest of ['', ' '.repeat(2), 'x'.repeat(4097)]) {
+      expect(() =>
+        buildCoverageReviewScope({
+          ...scopeInputs(),
+          consumerConfiguration: { ...consumerConfiguration, source_digest: sourceDigest },
+        }),
+      ).toThrow(/consumer configuration origin is malformed/u);
+    }
+  });
+
   test('binds captured input digests, actual runtime metadata, environment and package identity', () => {
     const { access, identityCalls } = packageAccess();
     const built = scopeBuilder()({ ...scopeInputs(), packageAccess: access });

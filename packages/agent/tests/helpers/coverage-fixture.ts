@@ -28,9 +28,15 @@ export function prepareCoverageRunnerInputs(root: string, packageRoot: string, p
       cpSync(path.join(packageRoot, file), target);
     } else write(file, 'inert fixture capture input\n');
   }
-  // The checkout-loaded runner imports this actual two-file CLI closure before
-  // capture; isolated candidates must load the same implementation bytes.
-  for (const file of ['bin/bun.ts', 'bin/cli-error-properties.ts']) {
+  // Materialize the real runner's eager CLI/provider/source-identity closure;
+  // inert candidates still load these exact maintained implementation bytes.
+  for (const file of [
+    'bin/bun.ts',
+    'bin/cli-error-properties.ts',
+    'src/config/project-paths.ts',
+    'src/config/safe-repository-access.ts',
+    'src/config/fs-safe-attestation.ts',
+  ]) {
     const target = path.join(root, file);
     mkdirSync(path.dirname(target), { recursive: true });
     cpSync(path.join(packageRoot, file), target);

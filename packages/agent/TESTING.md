@@ -798,6 +798,13 @@ reader before output allocation; unavailable, malformed or stale reviews retain
 serial fallback. The scope builder reuses captured configuration digests and the
 observed consumer origin, runtime hash, environment and physical package identity.
 It does not reread configuration, invent resource reviews or grant eligibility.
+Treat the consumer loader's `source_digest` as bounded opaque provenance:
+legacy origins include the configuration filename prefix, while activated
+origins hash their complete activation/history/input/receipt binding. Carry its
+exact value into the fingerprint; only derived scope and physical-owner hashes
+have the bare64-hex contract. The existing loader recapture owns freshness.
+Inert runner fixtures copy the real eager CLI/provider/source-identity closure,
+without substituting constants or weakening product readers.
 An authoritative current resource review and complete production qualification
 remain pending; the fixed artifact is absent until that review is complete.
 
