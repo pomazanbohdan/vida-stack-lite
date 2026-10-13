@@ -11,10 +11,10 @@
   },
   "counts": {
     "retained": 1065,
-    "new": 286,
+    "new": 288,
     "removed": 1,
-    "current_roles": 1351,
-    "source_files": 80
+    "current_roles": 1353,
+    "source_files": 82
   },
   "source_bindings": [
     {
@@ -99,7 +99,7 @@
     },
     {
       "file": "src/documentation/policy-transition.ts",
-      "sha256": "a64f8a8ca668a6a21069dafd283dae6db802a5ccd3ff7b94effe43ab37c24829"
+      "sha256": "c3d35bfdb0ed08fa7a2859cab3a1d2e3e99ef63815f2a7988073a915a8dddb75"
     },
     {
       "file": "src/orchestration/admitted-implementation-result.ts",
@@ -171,7 +171,7 @@
     },
     {
       "file": "src/orchestration/observed-research-result.ts",
-      "sha256": "91c4bbfc706825a2cd4f9ded898a6a2ff5e7f8e8235315d26b5901f0dfe001fa"
+      "sha256": "3daa24e09c392fdffed28c63159f63e24b7b0c305242be27540912e5ecc683f6"
     },
     {
       "file": "src/orchestration/failed-prewriter-recovery.ts",
@@ -336,6 +336,14 @@
     {
       "file": "bin/reconcile-readonly-dispatch.ts",
       "sha256": "0b8b8d00885e216f84f8bb733280946b707431efc6edc301a2b659556ce805b5"
+    },
+    {
+      "file": "src/contracts/acceptance-manifest-schema.ts",
+      "sha256": "a3e08da8a19438989eebb98251facd110ad1691ea0c2045423b3dba216f8a305"
+    },
+    {
+      "file": "src/documentation/clear-checkpoint-validator.ts",
+      "sha256": "06093dc39010a1f653fae4ee6d3a7da94e754169db94dfde47339834fdc64c7e"
     }
   ],
   "baseline_functions": [
@@ -17987,8 +17995,8 @@
       "current_source_address": {
         "line": 18,
         "column": 12,
-        "start": 1057,
-        "end": 1136,
+        "start": 1056,
+        "end": 1135,
         "bodyLine": 18,
         "bodyColumn": 43,
         "bodyEndLine": 18,
@@ -18007,8 +18015,8 @@
       "current_source_address": {
         "line": 19,
         "column": 15,
-        "start": 1153,
-        "end": 1285,
+        "start": 1152,
+        "end": 1284,
         "bodyLine": 19,
         "bodyColumn": 62,
         "bodyEndLine": 21,
@@ -18025,13 +18033,13 @@
       "max_crap": 1,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 32,
+        "line": 31,
         "column": 7,
-        "start": 1656,
-        "end": 1881,
-        "bodyLine": 32,
+        "start": 1553,
+        "end": 1778,
+        "bodyLine": 31,
         "bodyColumn": 74,
-        "bodyEndLine": 35,
+        "bodyEndLine": 34,
         "bodyEndColumn": 1
       }
     },
@@ -18045,13 +18053,13 @@
       "max_crap": 20,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 38,
+        "line": 37,
         "column": 7,
-        "start": 1980,
-        "end": 2921,
-        "bodyLine": 38,
+        "start": 1877,
+        "end": 2818,
+        "bodyLine": 37,
         "bodyColumn": 93,
-        "bodyEndLine": 58,
+        "bodyEndLine": 57,
         "bodyEndColumn": 1
       }
     },
@@ -18065,13 +18073,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 45,
+        "line": 44,
         "column": 62,
-        "start": 2441,
-        "end": 2473,
-        "bodyLine": 45,
+        "start": 2338,
+        "end": 2370,
+        "bodyLine": 44,
         "bodyColumn": 72,
-        "bodyEndLine": 45,
+        "bodyEndLine": 44,
         "bodyEndColumn": 94
       }
     },
@@ -18085,13 +18093,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 52,
+        "line": 51,
         "column": 31,
-        "start": 2686,
-        "end": 2719,
-        "bodyLine": 52,
+        "start": 2583,
+        "end": 2616,
+        "bodyLine": 51,
         "bodyColumn": 41,
-        "bodyEndLine": 52,
+        "bodyEndLine": 51,
         "bodyEndColumn": 64
       }
     },
@@ -18105,13 +18113,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 54,
+        "line": 53,
         "column": 39,
-        "start": 2778,
-        "end": 2810,
-        "bodyLine": 54,
+        "start": 2675,
+        "end": 2707,
+        "bodyLine": 53,
         "bodyColumn": 49,
-        "bodyEndLine": 54,
+        "bodyEndLine": 53,
         "bodyEndColumn": 71
       }
     },
@@ -18125,13 +18133,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 60,
+        "line": 59,
         "column": 7,
-        "start": 2930,
-        "end": 3084,
-        "bodyLine": 60,
+        "start": 2827,
+        "end": 2981,
+        "bodyLine": 59,
         "bodyColumn": 83,
-        "bodyEndLine": 62,
+        "bodyEndLine": 61,
         "bodyEndColumn": 1
       }
     },
@@ -18145,13 +18153,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 64,
+        "line": 63,
         "column": 7,
-        "start": 3093,
-        "end": 3663,
-        "bodyLine": 64,
+        "start": 2990,
+        "end": 3560,
+        "bodyLine": 63,
         "bodyColumn": 83,
-        "bodyEndLine": 80,
+        "bodyEndLine": 79,
         "bodyEndColumn": 1
       }
     },
@@ -18165,13 +18173,13 @@
       "max_crap": 50,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 83,
+        "line": 82,
         "column": 7,
-        "start": 3767,
-        "end": 11039,
-        "bodyLine": 94,
+        "start": 3664,
+        "end": 10936,
+        "bodyLine": 93,
         "bodyColumn": 11,
-        "bodyEndLine": 237,
+        "bodyEndLine": 236,
         "bodyEndColumn": 1
       }
     },
@@ -18185,13 +18193,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 122,
+        "line": 121,
         "column": 36,
-        "start": 5695,
-        "end": 5716,
-        "bodyLine": 122,
+        "start": 5592,
+        "end": 5613,
+        "bodyLine": 121,
         "bodyColumn": 47,
-        "bodyEndLine": 122,
+        "bodyEndLine": 121,
         "bodyEndColumn": 57
       }
     },
@@ -18205,13 +18213,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 140,
+        "line": 139,
         "column": 43,
-        "start": 6583,
-        "end": 6643,
-        "bodyLine": 140,
+        "start": 6480,
+        "end": 6540,
+        "bodyLine": 139,
         "bodyColumn": 53,
-        "bodyEndLine": 140,
+        "bodyEndLine": 139,
         "bodyEndColumn": 103
       }
     },
@@ -18225,13 +18233,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 140,
+        "line": 139,
         "column": 72,
-        "start": 6612,
-        "end": 6642,
-        "bodyLine": 140,
+        "start": 6509,
+        "end": 6539,
+        "bodyLine": 139,
         "bodyColumn": 83,
-        "bodyEndLine": 140,
+        "bodyEndLine": 139,
         "bodyEndColumn": 102
       }
     },
@@ -18245,13 +18253,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 148,
+        "line": 147,
         "column": 4,
-        "start": 7066,
-        "end": 7156,
-        "bodyLine": 148,
+        "start": 6963,
+        "end": 7053,
+        "bodyLine": 147,
         "bodyColumn": 15,
-        "bodyEndLine": 148,
+        "bodyEndLine": 147,
         "bodyEndColumn": 94
       }
     },
@@ -18265,13 +18273,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 153,
+        "line": 152,
         "column": 37,
-        "start": 7308,
-        "end": 7329,
-        "bodyLine": 153,
+        "start": 7205,
+        "end": 7226,
+        "bodyLine": 152,
         "bodyColumn": 48,
-        "bodyEndLine": 153,
+        "bodyEndLine": 152,
         "bodyEndColumn": 58
       }
     },
@@ -18285,13 +18293,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 154,
+        "line": 153,
         "column": 40,
-        "start": 7383,
-        "end": 7404,
-        "bodyLine": 154,
+        "start": 7280,
+        "end": 7301,
+        "bodyLine": 153,
         "bodyColumn": 51,
-        "bodyEndLine": 154,
+        "bodyEndLine": 153,
         "bodyEndColumn": 61
       }
     },
@@ -18305,13 +18313,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 159,
+        "line": 158,
         "column": 38,
-        "start": 7597,
-        "end": 7639,
-        "bodyLine": 159,
+        "start": 7494,
+        "end": 7536,
+        "bodyLine": 158,
         "bodyColumn": 52,
-        "bodyEndLine": 159,
+        "bodyEndLine": 158,
         "bodyEndColumn": 80
       }
     },
@@ -18325,13 +18333,13 @@
       "max_crap": 2,
       "rationale": "Published/current declarations and callback caller roles match. The retained preimage role now calls the upgrade-inactive guard and admitted workspace database open/close owners. These supported safety/storage changes preserve function correspondence and its old allowance; they require their own behavior evidence.",
       "current_source_address": {
-        "line": 180,
+        "line": 179,
         "column": 51,
-        "start": 8509,
-        "end": 8531,
-        "bodyLine": 180,
+        "start": 8406,
+        "end": 8428,
+        "bodyLine": 179,
         "bodyColumn": 62,
-        "bodyEndLine": 180,
+        "bodyEndLine": 179,
         "bodyEndColumn": 73
       }
     },
@@ -19625,13 +19633,13 @@
       "max_crap": 2,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 47,
+        "line": 41,
         "column": 15,
-        "start": 1560,
-        "end": 1635,
-        "bodyLine": 47,
+        "start": 1255,
+        "end": 1330,
+        "bodyLine": 41,
         "bodyColumn": 42,
-        "bodyEndLine": 47,
+        "bodyEndLine": 41,
         "bodyEndColumn": 90
       }
     },
@@ -19645,13 +19653,13 @@
       "max_crap": 6,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 57,
+        "line": 51,
         "column": 0,
-        "start": 2032,
-        "end": 2191,
-        "bodyLine": 57,
+        "start": 1727,
+        "end": 1886,
+        "bodyLine": 51,
         "bodyColumn": 81,
-        "bodyEndLine": 59,
+        "bodyEndLine": 53,
         "bodyEndColumn": 1
       }
     },
@@ -19665,13 +19673,13 @@
       "max_crap": 2,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 61,
+        "line": 55,
         "column": 0,
-        "start": 2193,
-        "end": 2287,
-        "bodyLine": 61,
+        "start": 1888,
+        "end": 1982,
+        "bodyLine": 55,
         "bodyColumn": 62,
-        "bodyEndLine": 63,
+        "bodyEndLine": 57,
         "bodyEndColumn": 1
       }
     },
@@ -19685,13 +19693,13 @@
       "max_crap": 12,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 65,
+        "line": 59,
         "column": 0,
-        "start": 2289,
-        "end": 2673,
-        "bodyLine": 65,
+        "start": 1984,
+        "end": 2368,
+        "bodyLine": 59,
         "bodyColumn": 113,
-        "bodyEndLine": 74,
+        "bodyEndLine": 68,
         "bodyEndColumn": 1
       }
     },
@@ -19705,13 +19713,13 @@
       "max_crap": 2162,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 104,
+        "line": 98,
         "column": 7,
-        "start": 3619,
-        "end": 9821,
-        "bodyLine": 104,
+        "start": 3314,
+        "end": 9516,
+        "bodyLine": 98,
         "bodyColumn": 96,
-        "bodyEndLine": 235,
+        "bodyEndLine": 229,
         "bodyEndColumn": 1
       }
     },
@@ -19725,13 +19733,13 @@
       "max_crap": 2,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 115,
+        "line": 109,
         "column": 67,
-        "start": 4260,
-        "end": 4298,
-        "bodyLine": 115,
+        "start": 3955,
+        "end": 3993,
+        "bodyLine": 109,
         "bodyColumn": 77,
-        "bodyEndLine": 115,
+        "bodyEndLine": 109,
         "bodyEndColumn": 105
       }
     },
@@ -19745,13 +19753,13 @@
       "max_crap": 2,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 162,
+        "line": 156,
         "column": 33,
-        "start": 6676,
-        "end": 6750,
-        "bodyLine": 162,
+        "start": 6371,
+        "end": 6445,
+        "bodyLine": 156,
         "bodyColumn": 42,
-        "bodyEndLine": 162,
+        "bodyEndLine": 156,
         "bodyEndColumn": 107
       }
     },
@@ -19765,13 +19773,13 @@
       "max_crap": 6,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 169,
+        "line": 163,
         "column": 31,
-        "start": 7023,
-        "end": 7096,
-        "bodyLine": 169,
+        "start": 6718,
+        "end": 6791,
+        "bodyLine": 163,
         "bodyColumn": 43,
-        "bodyEndLine": 169,
+        "bodyEndLine": 163,
         "bodyEndColumn": 104
       }
     },
@@ -19785,13 +19793,13 @@
       "max_crap": 2,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 170,
+        "line": 164,
         "column": 56,
-        "start": 7157,
-        "end": 7212,
-        "bodyLine": 170,
+        "start": 6852,
+        "end": 6907,
+        "bodyLine": 164,
         "bodyColumn": 68,
-        "bodyEndLine": 170,
+        "bodyEndLine": 164,
         "bodyEndColumn": 111
       }
     },
@@ -19805,13 +19813,13 @@
       "max_crap": 2,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 179,
+        "line": 173,
         "column": 18,
-        "start": 7674,
-        "end": 7737,
-        "bodyLine": 179,
+        "start": 7369,
+        "end": 7432,
+        "bodyLine": 173,
         "bodyColumn": 26,
-        "bodyEndLine": 179,
+        "bodyEndLine": 173,
         "bodyEndColumn": 81
       }
     },
@@ -19825,13 +19833,13 @@
       "max_crap": 2,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 179,
+        "line": 173,
         "column": 42,
-        "start": 7698,
-        "end": 7736,
-        "bodyLine": 179,
+        "start": 7393,
+        "end": 7431,
+        "bodyLine": 173,
         "bodyColumn": 54,
-        "bodyEndLine": 179,
+        "bodyEndLine": 173,
         "bodyEndColumn": 80
       }
     },
@@ -19845,13 +19853,13 @@
       "max_crap": 6,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 186,
+        "line": 180,
         "column": 18,
-        "start": 7983,
-        "end": 8072,
-        "bodyLine": 186,
+        "start": 7678,
+        "end": 7767,
+        "bodyLine": 180,
         "bodyColumn": 26,
-        "bodyEndLine": 186,
+        "bodyEndLine": 180,
         "bodyEndColumn": 107
       }
     },
@@ -19865,13 +19873,13 @@
       "max_crap": 2,
       "rationale": "Existing observation/result evidence and digests retained. Shared implementation-scope validation replaces local compilation without moving any retained parent allowance to the shared helper.",
       "current_source_address": {
-        "line": 186,
+        "line": 180,
         "column": 68,
-        "start": 8033,
-        "end": 8071,
-        "bodyLine": 186,
+        "start": 7728,
+        "end": 7766,
+        "bodyLine": 180,
         "bodyColumn": 80,
-        "bodyEndLine": 186,
+        "bodyEndLine": 180,
         "bodyEndColumn": 106
       }
     },
@@ -23087,9 +23095,7 @@
           "callsite": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
           "receiver_callee": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:authorizationAttempt"
-          ],
+          "receivers": ["binding:authorizationAttempt"],
           "control": [],
           "enclosing_context": [
             "binding:authorizationAttempt",
@@ -23105,9 +23111,7 @@
           "callsite": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
           "receiver_callee": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:authorizationAttempt"
-          ],
+          "receivers": ["binding:authorizationAttempt"],
           "control": [],
           "enclosing_context": [
             "binding:authorizationAttempt",
@@ -23158,10 +23162,7 @@
           "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:authorizationAttempt",
-            "binding:claimValid"
-          ],
+          "receivers": ["binding:authorizationAttempt", "binding:claimValid"],
           "control": [],
           "enclosing_context": [
             "binding:claimValid",
@@ -23176,10 +23177,7 @@
           "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:authorizationAttempt",
-            "binding:claimValid"
-          ],
+          "receivers": ["binding:authorizationAttempt", "binding:claimValid"],
           "control": [],
           "enclosing_context": [
             "binding:claimValid",
@@ -23229,10 +23227,7 @@
           "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:authorizationAttempt",
-            "binding:claimValid"
-          ],
+          "receivers": ["binding:authorizationAttempt", "binding:claimValid"],
           "control": [],
           "enclosing_context": [
             "binding:claimValid",
@@ -23247,10 +23242,7 @@
           "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:authorizationAttempt",
-            "binding:claimValid"
-          ],
+          "receivers": ["binding:authorizationAttempt", "binding:claimValid"],
           "control": [],
           "enclosing_context": [
             "binding:claimValid",
@@ -23359,10 +23351,7 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": [
-            "binding:diagnostics",
-            "array-index:0"
-          ],
+          "enclosing_context": ["binding:diagnostics", "array-index:0"],
           "enclosing_context_detail": []
         },
         "current": {
@@ -23373,10 +23362,7 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": [
-            "binding:diagnostics",
-            "array-index:0"
-          ],
+          "enclosing_context": ["binding:diagnostics", "array-index:0"],
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
@@ -23420,11 +23406,7 @@
           "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:authorizationAttempt",
-            "binding:execute",
-            "binding:diagnostics"
-          ],
+          "receivers": ["binding:authorizationAttempt", "binding:execute", "binding:diagnostics"],
           "control": [],
           "enclosing_context": [
             "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))[argument:0]"
@@ -23437,11 +23419,7 @@
           "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:authorizationAttempt",
-            "binding:execute",
-            "binding:diagnostics"
-          ],
+          "receivers": ["binding:authorizationAttempt", "binding:execute", "binding:diagnostics"],
           "control": [],
           "enclosing_context": [
             "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))[argument:0]"
@@ -23491,10 +23469,7 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": [
-            "binding:diagnostics",
-            "array-index:1"
-          ],
+          "enclosing_context": ["binding:diagnostics", "array-index:1"],
           "enclosing_context_detail": []
         },
         "current": {
@@ -23505,10 +23480,7 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": [
-            "binding:diagnostics",
-            "array-index:1"
-          ],
+          "enclosing_context": ["binding:diagnostics", "array-index:1"],
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
@@ -23554,10 +23526,7 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": [
-            "binding:factories",
-            "array-index:0"
-          ],
+          "enclosing_context": ["binding:factories", "array-index:0"],
           "enclosing_context_detail": []
         },
         "current": {
@@ -23568,10 +23537,7 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": [
-            "binding:factories",
-            "array-index:0"
-          ],
+          "enclosing_context": ["binding:factories", "array-index:0"],
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
@@ -23920,9 +23886,7 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": [
-            "return"
-          ],
+          "enclosing_context": ["return"],
           "enclosing_context_detail": []
         },
         "current": {
@@ -23933,9 +23897,7 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": [
-            "return"
-          ],
+          "enclosing_context": ["return"],
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
@@ -24496,10 +24458,7 @@
           "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:failure",
-            "property:diagnostics"
-          ],
+          "receivers": ["binding:failure", "property:diagnostics"],
           "control": [],
           "enclosing_context": [
             "property:diagnostics",
@@ -24513,10 +24472,7 @@
           "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "argument_role": "argument:0",
-          "receivers": [
-            "binding:failure",
-            "property:diagnostics"
-          ],
+          "receivers": ["binding:failure", "property:diagnostics"],
           "control": [],
           "enclosing_context": [
             "property:diagnostics",
@@ -30263,6 +30219,38 @@
         "bodyEndColumn": 1
       },
       "rationale": "New local typed plan/option validation role, including the exact maintenance-generation predicate. Original six public/parser/writer roles remain mapped separately with their frozen ceilings. Prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "src/contracts/acceptance-manifest-schema.ts#fn:validateAcceptanceManifestSchema#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 11,
+        "column": 7,
+        "start": 468,
+        "end": 645,
+        "bodyLine": 11,
+        "bodyColumn": 74,
+        "bodyEndLine": 13,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New extracted schema predicate; no genuine published callable counterpart. Prospective authorized 10/10 ceilings, not candidate-derived. Existing callers retain their own identity and frozen caps; this scope does not refresh their changed bindings."
+    },
+    {
+      "identity": "src/documentation/clear-checkpoint-validator.ts#fn:validateDocumentationClearCheckpointSchema#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_source_address": {
+        "line": 12,
+        "column": 7,
+        "start": 522,
+        "end": 768,
+        "bodyLine": 12,
+        "bodyColumn": 109,
+        "bodyEndLine": 16,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New extracted schema predicate; no genuine published callable counterpart. Prospective authorized 10/10 ceilings, not candidate-derived. Existing callers retain their own identity and frozen caps; this scope does not refresh their changed bindings."
     }
   ],
   "removed_functions": [
@@ -30334,9 +30322,7 @@
   "scope_review_v794": {
     "status": "APPROVED_SOURCE_LINEAGE_ONLY_NOT_EXHAUSTIVE",
     "source_parent": "1c5fa9e",
-    "scope": [
-      "bin/project-mapping-contract.ts"
-    ],
+    "scope": ["bin/project-mapping-contract.ts"],
     "counts": {
       "retained": 17,
       "new": 1,
@@ -30365,11 +30351,7 @@
       "crap-review-operation-policy-v1002/review.json",
       "crap-review-dispatch-repair-v999/review.json"
     ],
-    "independent_review_lanes": [
-      "frozen_cedar_join_v1028",
-      "frozen_policy_join_v1029",
-      "frozen_dispatch_join_v1030"
-    ],
+    "independent_review_lanes": ["frozen_cedar_join_v1028", "frozen_policy_join_v1029", "frozen_dispatch_join_v1030"],
     "frozen_ceilings": "Exact original measured rows corroborated by original.baseline; never original.current or candidate CC.",
     "historical_measurement": "measurement_admitted=true, suite_passed=false, quality_passed=false",
     "numeric_status": "Current exhaustive coverage/CRAP/mutation qualification remains pending."
@@ -30406,5 +30388,24 @@
       "current_roles": 1317,
       "source_files": 71
     }
+  },
+  "scope_review_20261013_shared_schema": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "source_parent": "10103da",
+    "captured_run_id": "0bf13f37-50cb-4e7f-b605-14aa195a62d4",
+    "scope": ["src/contracts/acceptance-manifest-schema.ts", "src/documentation/clear-checkpoint-validator.ts"],
+    "retained_added": 0,
+    "new_added": 2,
+    "review": "Independent blind review approves exactly two new extracted schema predicate declarations with prospective fixed10/10. Existing rows, caps and bindings remain unchanged. Changed consumer bindings require their separate refresh; this partial remains non-executable and non-exhaustive.",
+    "input": ".tmp/p0p1-3f3dc1a/shared-schema-frozen-proposal.json"
+  },
+  "scope_review_20261013_consumer_refresh": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "source_parent": "10103da",
+    "captured_run_id": "0bf13f37-50cb-4e7f-b605-14aa195a62d4",
+    "scope": ["src/orchestration/observed-research-result.ts", "src/documentation/policy-transition.ts"],
+    "roles_refreshed": 31,
+    "review": "Independent per-scope Original semantic review and Root canonical snapshot correspondence retain exact31existing role identities, Original source addresses and all frozen ceilings. Only current Source addresses and two byte bindings refresh. No synthesis/transition-proof additions or complete/default plan activation.",
+    "input": ".tmp/p0p1-3f3dc1a/shared-consumer-role-rows.json"
   }
 }

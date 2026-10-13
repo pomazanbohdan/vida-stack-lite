@@ -8514,10 +8514,10 @@ partition include each destination once. Native focused delivery9/9 and limits
 6/6 pass with original per-case defaults/justified overrides; no forced speedup,
 quarantine change or removal of the shared package resource.
 
-| Existing test identity owner | Destination | Preserved case-name family | Registration / expanded count |
-| --- | --- | --- | --- |
-| tests/runtime-config-rebind.test.ts | tests/runtime-config-rebind-delivery.test.ts | delivered configuration; original five cutoff values retained | 5 / 9 |
-| tests/runtime-config-rebind.test.ts | tests/runtime-config-rebind-limits.test.ts | compact config binding; all six exact original names retained | 6 / 6 |
+| Existing test identity owner        | Destination                                  | Preserved case-name family                                    | Registration / expanded count |
+| ----------------------------------- | -------------------------------------------- | ------------------------------------------------------------- | ----------------------------- |
+| tests/runtime-config-rebind.test.ts | tests/runtime-config-rebind-delivery.test.ts | delivered configuration; original five cutoff values retained | 5 / 9                         |
+| tests/runtime-config-rebind.test.ts | tests/runtime-config-rebind-limits.test.ts   | compact config binding; all six exact original names retained | 6 / 6                         |
 
 Source function identities remain unchanged by these moves. Test file/name tuples
 change; generated association/matrix slices require fresh owner review and cannot
@@ -8562,11 +8562,11 @@ independent defect and remains unchanged.
 The existing audit owner represents test identities as file/name tuples. This
 explicit lineage all belongs to tests/run-entrypoint.test.ts:
 
-| Previous case name | Current case name | Preserved negative control |
-| --- | --- | --- |
-| requires every explicit argument and rejects raw authority inputs | requires every explicit argument | Missing workflow; status1, empty stdout, CLI GAP |
-| requires every explicit argument and rejects raw authority inputs | rejects a raw thread authority input | Forged thread-id; status1 and CLI GAP |
-| requires every explicit argument and rejects raw authority inputs | rejects a legacy tenant authority input | Legacy tenant; status1 and CLI GAP |
+| Previous case name                                                | Current case name                       | Preserved negative control                       |
+| ----------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------ |
+| requires every explicit argument and rejects raw authority inputs | requires every explicit argument        | Missing workflow; status1, empty stdout, CLI GAP |
+| requires every explicit argument and rejects raw authority inputs | rejects a raw thread authority input    | Forged thread-id; status1 and CLI GAP            |
+| requires every explicit argument and rejects raw authority inputs | rejects a legacy tenant authority input | Legacy tenant; status1 and CLI GAP               |
 
 The stopped-capture case name/file remains unchanged. Generated association and
 scenario slices need fresh review against the changed test bytes; do not carry
@@ -8598,12 +8598,12 @@ callers. Reuse existing bytes/text helpers at the same call positions with a
 fresh runtimePackageAccess each time. Do not hoist/cache accesses or alter
 mutable project/intake/Source readers, ownership, authorization, CAS or UNKNOWN.
 
-| Caller | Resource / existing label | Shared owner |
-| --- | --- | --- |
-| runtime-code-rebind.ts continuation request | config schema / current config schema | readRuntimePackageResourceBytes then existing sha |
-| run.ts expired recovery callback | config schema / expired lease recovery schema | readRuntimePackageResourceBytes then existing digest |
+| Caller                                       | Resource / existing label                        | Shared owner                                          |
+| -------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------- |
+| runtime-code-rebind.ts continuation request  | config schema / current config schema            | readRuntimePackageResourceBytes then existing sha     |
+| run.ts expired recovery callback             | config schema / expired lease recovery schema    | readRuntimePackageResourceBytes then existing digest  |
 | run.ts renewal before project/ledger loading | implementation scope schema / renew scope schema | readRuntimePackageResourceText then existing JSON/Ajv |
-| run.ts renewal callback | config schema / lease renewal schema | readRuntimePackageResourceBytes then existing digest |
+| run.ts renewal callback                      | config schema / lease renewal schema             | readRuntimePackageResourceBytes then existing digest  |
 
 One real renewal caller control reuses the owned admission and controlled
 initialization fixtures. Its injected schema contains malformed UTF-8 inside a
@@ -9119,6 +9119,7 @@ retain SafeRepositoryAccess directory and exclusive-write CAS owners. The test
 does not precreate that directory and also denies the stray legacy directory.
 
 Final focused evidence on the repaired Source:
+
 - path-fixed-static.log: strict435 captured TS /434 program files and97 Source
   files, zero diagnostics; scoped TS lint PASS.
 - config-readers-qualified.log:86PASS/0FAIL,546 assertions,13.21s across current
@@ -9130,8 +9131,8 @@ Final focused evidence on the repaired Source:
   initialization/activation/database/operation bytes.
 - legacy-rebind-final.log: existing inspect/plan/apply/resume provenance control
   PASS,19 assertions,4481.15ms case. The later directory fix is project-lane only.
-These are88 distinct focused cases, not full-selection coverage. Interim failed
-logs remain in .tmp/coverage-iteration-f43ef15 beside the terminal green logs.
+  These are88 distinct focused cases, not full-selection coverage. Interim failed
+  logs remain in .tmp/coverage-iteration-f43ef15 beside the terminal green logs.
 
 Blind Luna review confirms the baseline source is the trusted source owner,
 split recovery already uses parseProjectConfiguration with the explicit project
@@ -9902,3 +9903,83 @@ requiring inclusion. Its proposal remains private/non-executable; the later
 shared-schema edit makes affected Source bindings stale again. Do not infer
 frozen caps, completeness or execution from that table. Default exhaustive plan
 and current numeric/native admission are still OPEN. No unchanged full rerun.
+
+## Current full measurement and Host fixture correction — 2026-10-13
+
+Shared-schema packet published10103da with ordinary formatting/type hooks and
+non-force push. The one subsequent full current coverage run0bf13f37-50cb-4e7f-
+b605-14aa195a62d4 terminatesUNKNOWN under the current300000ms global entry budget;
+the log ends in final-assurance-public selection, without an admitted final
+coverage report. Its captured Source/manifest and actual test-effect custody stay
+retained; no archived operation is replayed. No coverage/CRAP/mutation percentage
+can be inferred from an incomplete producer or partial passing output.
+
+The producer logs19Host-test failures. Independent blind reviews classify
+concrete fixture defects: beforeEach already creates docs; project-bound config
+is paired with the repository's foreign documentation policy; populated-snapshot
+helper is called for deliberately empty Host state; current-lease monkeypatch
+aliases the persisted-state oracle; completed replay construction demands an
+already revoked current lease; raw journal fixtures lack current codec fields.
+Two cross-process SQLite cases still invoke external node with eval operands;
+the Bun-only toolchain exposes their incompatible operand interpretation. Repair
+them using the selected Bun and explicit operand transport, preserving real
+held/released row and BEGIN IMMEDIATE exclusion proofs. Current path contract
+joins the lexical filename:memory: to an absolute physical file, so its rejection
+assertion is unsupported; do not invent a product path prohibition. Governance
+denials already fail closed at current strict-schema/integrity stages; preserve
+their unchanged/absent-row assertions rather than obsolete error wording.
+One writer owns the whole Host test file; Root owns final checks/publication.
+All corrections remain pending until actual affected tests and static checks pass.
+
+Root bounded canonical inventory of the two new shared validators reuses the
+immutable10103da capture; each has one real declared callable, CC2. Independent
+review approves fixed prospective10/10 ceilings without invented Original roles.
+Partial lineage now1065retained+288new=1353roles over82Sourcebindings, removed1
+unchanged. Prior rows/ceilings remain unchanged; changed consumer bindings still
+need separate refresh. Default exhaustive plan remains absent/non-executable.
+
+Parallel caller review finds no production-owned resource-review binding yet:
+planner reviews occur only in its tests/native pilot. Do not manufacture empty
+resource lists. The smallest supported live seam requires current captured whole
+selection, an authoritative bound review artifact, and one nonexclusive initial
+wave of at most2assignments. Other shapes retain existing serial fallback;
+resourceSafeToAdvance staysfalse, and one final validator owns the checked merge.
+Existing scheduler/supervisor/native pilot are reused, not rebuilt. Event-schema
+compile sharing remains a separately scoped candidate with real producer-positive
+controls required; prioritize the observed Host failures before that optimization.
+
+The bounded consumer correspondence refresh separately approves13existing
+observed-research-result roles and18policy-transition roles. Root reuses their
+canonical rows from the same immutable capture. Independent post-join comparison
+confirms only31current_source_address fields and the two Source SHA bindings
+change; all Original identities/addresses/CC/CRAP ceilings and every other row
+remain unchanged. Counts1353/82remain. Synthesis34andtransition-proof29are not
+yet in this partial; their retained55/21andotherOriginalceilings cannot be replaced
+with prospective10/10 simply because the scopes are unbound.
+
+Scoped reader review corrects an outdated inference: current runtimePackageAccess
+already reads package.json through the verified resource reader. The existing
+two-native-child descriptor control includes package identity/schema/template,
+zero writes/fsyncs and unchanged CAS sidecars; reuse it, do not rebuild it.
+The upgrade inventory reader's generic provider fallback and unreviewed caller
+closure remain separate eligibility obligations. Existing Bun1.4.3 bail control
+also already proves --bail=1 skips preload afterAll and the process receipt.
+Therefore keep bailout out of admitted full coverage; no new diagnostic framework
+or duplicate control is added.
+
+Final Host correction selection19PASS/473assertions/31.23s covers every one of
+the19initial failures, including all5realMastra execute/resume flows and both
+independent BunSQLite children. Root strengthens the heartbeat's exact attempt-ID
+assertion and verifies it separately1PASS/11assertions/3.96s; these scoped counts
+overlap, not a combined global suite. Root catches and fixes mutable/readonly
+fixture typing, exact canonical journal byte assertions and the duplicate
+execution resource inherited from writerFixture. Recovery preserves completed
+predecessor and unissued successor bytes while advancing from its actual input
+journal revision, rather than stale literal2. Typed trusted legacy readonly
+completion is kept separate from current durable research exposure; do not
+simulate activation merely to repair a Host fixture.
+Combined static444capturedTS/443program and100Source PASS,0diagnostics; final
+lint/format/diff PASS. Independent blind Host diff review finds no lost behavioral
+assertions, timeout changes or product guard changes. The Bun skill records these
+verified fixture/eval techniques. Publication and one subsequent full current
+measurement remain the next owner actions; global numeric/native gates stayOPEN.

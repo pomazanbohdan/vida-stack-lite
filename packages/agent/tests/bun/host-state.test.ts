@@ -50,6 +50,14 @@ import type { FlowIntent, WorkItemKind } from '../../src/config/runtime-config.t
 import { loadProjectSetContext } from '../../src/config/project-context.ts';
 import { createTestTrustedHostLauncherCapability, createTrustedHostComposition } from '../../src/runtime-kernel.ts';
 import { createConfiguredMastra } from '../../src/orchestration/mastra-boundary.ts';
+import {
+  buildSessionBridgeRequest,
+  parseSessionBridgeObservation,
+} from '../../src/orchestration/mastra-session-bridge-contract.ts';
+import {
+  prepareSessionWorkflowHandoffFromConfig,
+  type SessionAgentAction,
+} from '../../src/orchestration/session-handoff.ts';
 import { suspendLocalWork, suspendCompletedReadOnlyWork } from '../../src/orchestration/suspend-local-work.ts';
 import { acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.ts';
 import { resumePausedLocalWork } from '../../src/orchestration/resume-paused-local-work.ts';
@@ -202,7 +210,7 @@ function parseJsonRecord(source: string): Record<string, unknown> {
 function parseMaintenanceRow(source: string): MaintenanceSqlRow {
   const parsed = parseJsonRecord(source);
   if (typeof parsed.revision !== 'number' || typeof parsed.payload !== 'string' || typeof parsed.digest !== 'string')
-    throw new Error('expected maintenance row from Node fixture');
+    throw new Error('expected maintenance row from Bun fixture');
   return { revision: parsed.revision, payload: parsed.payload, digest: parsed.digest };
 }
 
@@ -638,6 +646,18 @@ function next(
     nextLedger: ledger,
   };
 }
+function currentConfigHostFixture(id = 'work', resource = 'file:src/task.ts'): MutableHostStateWrite {
+  const seed = fixture(id, resource);
+  const configDigest = runtimeConfigDigest(loadRuntimeConfig(root));
+  const sourceRevision = '6'.repeat(64);
+  seed.nextWork.binding.team_id = 'default-development';
+  seed.nextWork.binding.config_digest = configDigest;
+  seed.nextWork.lifecycle.config_binding.config_digest = configDigest;
+  seed.nextWork.binding.work_source_revision = sourceRevision;
+  seed.nextWork.lifecycle.source_revision = sourceRevision;
+  firstTicket(seed.nextLedger).source_revision = sourceRevision;
+  return seed;
+}
 
 test('successor admission atomically releases predecessor rights and rejects changed retry or stale CAS', () => {
   const first = commitHostState(fixture('work', 'file:src/one.ts'));
@@ -906,7 +926,7 @@ test('fresh terminal ownership inspection does not create a journal or infer mis
 });
 
 test('same live writer heartbeat preserves its fence and unknown outcome while revocation and expiry deny renewal', () => {
-  let state = commitHostState(fixture());
+  let state = commitHostState(currentConfigHostFixture());
   const stateLease = state.work.lease;
   if (!stateLease) throw new Error('live Host fixture lease is missing');
   const started = store.claimWorkflowAttempt({
@@ -919,24 +939,7 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
     lease: clone(stateLease),
   });
   state = readPresentSnapshot(store, identity);
-  const journal: Record<string, unknown> = {
-    schema: 'MastraSessionLedger/v1',
-    workspace_id: workspace,
-    work_id: 'work',
-    attempt: 1,
-    run_id: 'run-work',
-    step_id: 'writer-wave',
-    items: [
-      { issue_id: 'fixture-issued', observation: null, host_reservation: { receipt: { attempt: started.attempt } } },
-    ],
-    completed: [],
-  };
-  database.exec(
-    'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
-  );
-  database
-    .query<never, SQLQueryBindings[]>('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
-    .run(workspace, 'work', 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
+  const journal = issuedCurrentWorkflowJournal().journal;
   const request: Parameters<HostStateStore['renewActiveLocalLease']>[0] = {
     identity,
     attempt: 1,
@@ -944,7 +947,7 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
     generation: 1,
     expectedWork: state.workVersion,
     expectedLedger: state.ledgerVersion,
-    expectedJournal: { revision: 1, digest: canonicalJsonDigest(journal) },
+    expectedJournal: journal.version,
     expectedMaintenanceGeneration: state.maintenanceGeneration,
     verifyCurrent() {},
   };
@@ -961,14 +964,17 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
   expect(renewed.work.lease).toEqual(state.work.lease);
   expect(renewed.work.execution.assignment_attempts).toEqual(state.work.execution.assignment_attempts);
   expect(firstOf(renewed.work.execution.assignment_attempts, 'renewed assignment attempt').status).toBe('started');
+  expect(firstOf(renewed.work.execution.assignment_attempts, 'renewed assignment attempt').attempt_id).toBe(
+    started.attempt.attempt_id,
+  );
   const row = database
     .query<RevisionPayloadSqlRow, [string]>(
       'SELECT revision,payload FROM agent_host_mastra_session_ledger WHERE work_id=?',
     )
     .get('work');
   if (!row) throw new Error('renewed session ledger row is missing');
-  expect(row.revision).toBe(2);
-  expect(parseJsonRecord(row.payload)).toEqual(journal);
+  expect(row.revision).toBe(journal.version.revision + 1);
+  expect(row.payload).toBe(canonicalJson(journal.state));
   expect(() => store.renewActiveLocalLease({ ...request, nativeSessionHandle: 'foreign' })).toThrow();
   const readClock = Date.now;
   const renewedLease = renewed.work.lease;
@@ -983,7 +989,7 @@ test('same live writer heartbeat preserves its fence and unknown outcome while r
         ...request,
         expectedWork: renewed.workVersion,
         expectedLedger: renewed.ledgerVersion,
-        expectedJournal: { revision: row.revision, digest: canonicalJsonDigest(journal) },
+        expectedJournal: { revision: row.revision, digest: journal.version.digest },
       }),
     ).toThrow(/live expiry differs/);
     expect(store.readHostStateSnapshot(identity)).toEqual(renewed);
@@ -1069,6 +1075,171 @@ function persistJournalFixture(journal: TestJournal): void {
       journal.version.digest,
     );
 }
+function issuedCurrentWorkflowJournal(workId = 'work', runId = 'run-work') {
+  const config = loadRuntimeConfig(root);
+  const host = presentSnapshot(store.readHostStateSnapshot({ ...identity, work_id: workId }));
+  const context = { work_id: workId, attempt: 1, scope_digest: host.work.binding.work_source_revision };
+  const selection = {
+    team: 'default-development',
+    kind: 'bug',
+    intent: 'bug_fix',
+    project: firstOf(identity.project_ids, 'journal fixture project'),
+    risk_flags: [],
+    labels: [],
+  } as const;
+  const handoff = prepareSessionWorkflowHandoffFromConfig(config, selection, context);
+  if (host.work.binding.workflow_id !== handoff.workflow_id)
+    throw new Error('typed session fixture workflow differs from Host binding');
+  const requests = handoff.actions.map((action) =>
+    buildSessionBridgeRequest({
+      runId,
+      workflowId: handoff.workflow_id,
+      configDigest: host.work.binding.config_digest,
+      context,
+      waveIndex: 0,
+      action,
+      configuredContext: null,
+      priorResults: [],
+    }),
+  );
+  const ledger = new MastraSessionLedger(database, workspace, config, root, store);
+  const prepared = ledger.sync(workId, context.attempt, runId, handoff.actions[0]!.stage_id, requests);
+  return { ledger, journal: ledger.issueWave(workId, context.attempt, prepared.version) };
+}
+
+function fixtureSourceScope(): NonNullable<MastraSessionLedgerSnapshot['state']['source_scope']> {
+  mkdirSync(path.join(root, 'src'), { recursive: true });
+  writeFileSync(path.join(root, 'src/task.ts'), 'typed host fixture source\n');
+  return snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['src/task.ts']);
+}
+
+/** A trusted legacy caller supplies a complete typed observation without claiming current research activation. */
+function completedCurrentWorkflowJournal(
+  sourceScope = fixtureSourceScope(),
+  workId = 'work',
+  runId = 'run-work',
+): TestJournal {
+  const config = loadRuntimeConfig(root);
+  const host = presentSnapshot(store.readHostStateSnapshot({ ...identity, work_id: workId }));
+  const context = { work_id: workId, attempt: 1, scope_digest: sourceScope.digest };
+  const handoff = prepareSessionWorkflowHandoffFromConfig(
+    config,
+    {
+      team: 'default-development',
+      kind: 'bug',
+      intent: 'bug_fix',
+      project: firstOf(identity.project_ids, 'completed journal fixture project'),
+      risk_flags: [],
+      labels: [],
+    },
+    context,
+  );
+  const action = requiredValue(handoff.actions[0], 'completed journal workflow action');
+  if (host.work.binding.workflow_id !== handoff.workflow_id)
+    throw new Error('completed session fixture workflow differs from Host binding');
+  const request = buildSessionBridgeRequest({
+    runId,
+    workflowId: handoff.workflow_id,
+    configDigest: host.work.binding.config_digest,
+    context,
+    waveIndex: action.wave_index,
+    action,
+    configuredContext: null,
+    priorResults: [],
+  });
+  const issueId = randomUUID();
+  const summary = 'Observed completed legacy readonly fixture result.';
+  const observation = parseSessionBridgeObservation({
+    schema: 'VidaSessionObservation/v1',
+    action_id: request.action_id,
+    issue_id: issueId,
+    agent_id: 'fixture-agent',
+    tool_call_ref: 'local:fixture/readonly-completion',
+    status: 'reported_complete',
+    summary,
+    output_digest: canonicalJsonDigest(summary),
+    evidence_refs: ['local://fixture/readonly-completion'],
+  });
+  const journal: TestJournal = {
+    version: { revision: 1, digest: '0'.repeat(64) },
+    resume_status: 'complete',
+    state: {
+      schema: 'MastraSessionLedger/v1',
+      workspace_id: workspace,
+      work_id: workId,
+      attempt: 1,
+      run_id: runId,
+      source_scope: { ...sourceScope, entries: sourceScope.entries.map((entry) => ({ ...entry })) },
+      step_id: action.stage_id,
+      items: [{ request, issue_id: issueId, observation }],
+      completed: [],
+    },
+  };
+  persistJournalFixture(journal);
+  return journal;
+}
+
+/** A completed predecessor and an unissued current action preserve recovery's retained-work contract. */
+function completedRecoveryJournal(
+  workId: string,
+  runId: string,
+  sourceScope: NonNullable<MastraSessionLedgerSnapshot['state']['source_scope']>,
+): TestJournal {
+  const journal = completedCurrentWorkflowJournal(sourceScope, workId, runId);
+  const completed = clone(firstJournalItem(journal));
+  const config = loadRuntimeConfig(root);
+  const context = { work_id: workId, attempt: 1, scope_digest: sourceScope.digest };
+  const handoff = prepareSessionWorkflowHandoffFromConfig(
+    config,
+    {
+      team: 'default-development',
+      kind: 'bug',
+      intent: 'bug_fix',
+      project: firstOf(identity.project_ids, 'recovery journal fixture project'),
+      risk_flags: [],
+      labels: [],
+    },
+    context,
+  );
+  const predecessorAction = requiredValue(handoff.actions[0], 'recovery journal predecessor action');
+  const nextAction: SessionAgentAction = {
+    ...predecessorAction,
+    action_id: canonicalJsonDigest({ workId, runId, stage: 'synthesize_task' }),
+    wave_index: predecessorAction.wave_index + 1,
+    action_order: 0,
+    assignment_index: 0,
+    stage_id: 'synthesize_task',
+    stage_kind: 'synthesize',
+    stage_mode: 'single',
+    required_after: [predecessorAction.stage_id],
+    role: 'research-synthesizer',
+    resolved_profile: { ...predecessorAction.resolved_profile, profile_id: 'researcher' },
+    role_description: 'Synthesize the completed research result.',
+    consumes: ['ResearchResult/v1'],
+    produces: ['ResearchSynthesis/v1', 'DevelopmentTaskPacket/v1'],
+    prior_outcomes: [],
+  };
+  const host = presentSnapshot(store.readHostStateSnapshot({ ...identity, work_id: workId }));
+  const request = buildSessionBridgeRequest({
+    runId,
+    workflowId: handoff.workflow_id,
+    configDigest: host.work.binding.config_digest,
+    context,
+    waveIndex: nextAction.wave_index,
+    action: nextAction,
+    configuredContext: null,
+    priorResults: [requiredValue(completed.observation, 'completed recovery observation')],
+  });
+  journal.state.completed = [{ step_id: completed.request.stage_id, items: [completed] }];
+  journal.state.items = [{ request, issue_id: null, observation: null }];
+  journal.state.step_id = nextAction.stage_id;
+  journal.resume_status = 'ready';
+  journal.version.revision++;
+  journal.version.digest = canonicalJsonDigest(journal.state);
+  persistJournalFixture(journal);
+  return journal;
+}
+
 function ownerRecoveryPreviewJournal(): TestJournal {
   const journal = clone(quiescentJournal());
   journal.resume_status = 'ready';
@@ -1662,8 +1833,27 @@ beforeEach(async () => {
     mkdirSync(policyRoot, { recursive: true });
     writeFileSync(
       path.join(policyRoot, 'documentation-policy.v1.json'),
-      readFileSync(path.join(repositoryRoot, 'docs/agent-instructions/documentation-policy.v1.json'), 'utf8'),
+      JSON.stringify(
+        {
+          schema: 'DocumentationPolicy/v1',
+          policy_id: 'host-state-test-documentation',
+          project_id: firstOf(identity.project_ids, 'fixture project identity'),
+          source_path: 'docs/agent-instructions/documentation-policy.v1.json',
+          owner: 'project:host-state-test',
+          required: true,
+          canonical_roots: ['docs/agent-instructions'],
+          map_paths: ['docs/agent-instructions/index.md'],
+          excluded_roots: ['.agent', '.planning'],
+          changelog_required: false,
+          changelog_path: null,
+          relations: ['documents'],
+          updated_at: '2026-10-13T00:00:00.000Z',
+        },
+        null,
+        2,
+      ) + '\n',
     );
+    writeFileSync(path.join(policyRoot, 'index.md'), '# Fixture documentation map\n');
     const runtimeTemplate = readFileSync(
       path.join(bundleRoot, 'templates/agent-runtime.config.template.v1.yaml'),
       'utf8',
@@ -2546,7 +2736,11 @@ test('host database opener pins recoverable SQLite settings and preserves state 
   const saved = commitHostState(fixture());
   reopenStore();
   expect(store.readHostStateSnapshot(identity)).toEqual(saved);
-  expect(() => openHostStateDatabase(root, ':memory:', workspace)).toThrow(/relative|path/i);
+  const namedMemory = openHostStateDatabase(root, ':memory:', workspace);
+  admittedHostDatabases.add(namedMemory);
+  handles.push(namedMemory);
+  expect(namedMemory.filename).toBe(path.join(root, ':memory:'));
+  expect(existsSync(path.join(root, ':memory:'))).toBe(true);
   expect(() => openHostStateDatabase(root, '../relative.sqlite', workspace)).toThrow(/relative|path/i);
 });
 
@@ -2829,24 +3023,15 @@ test('consumer migration restore refuses a prepared admission even when no WorkS
 });
 
 test('consumer migration rejects issued unknown journals before baseline filesystem effects', () => {
-  const initial = fixture();
+  const initial = currentConfigHostFixture();
   quiesceImportedState([initial.nextWork], initial.nextLedger);
   commitHostState(initial);
-  const journal: Record<string, unknown> = {
-    schema: 'MastraSessionLedger/v1',
-    workspace_id: workspace,
-    work_id: 'work',
-    attempt: 1,
-    run_id: 'run-work',
-    items: [{ issue_id: 'fixture-issued', observation: null }],
-    completed: [],
-  };
-  database.exec(
-    'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT,PRIMARY KEY(workspace_id,work_id,attempt))',
-  );
-  database
-    .query<never, SQLQueryBindings[]>('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
-    .run(workspace, 'work', 1, 1, canonicalJson(journal), canonicalJsonDigest(journal));
+  const journal = issuedCurrentWorkflowJournal(
+    identity.work_id,
+    requiredValue(initial.nextWork.execution.run_id, 'migration run id'),
+  ).journal;
+  expect(journal.state.items.length).toBeGreaterThan(0);
+  expect(journal.state.items.every((item) => item.issue_id !== null && item.observation === null)).toBe(true);
   const before = database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all();
   const migration = maintenanceStore(),
     fence = migration.acquireMaintenanceFence(maintenanceBinding());
@@ -2858,11 +3043,9 @@ test('consumer migration rejects issued unknown journals before baseline filesys
   ).toThrow(/outcome remains unknown/);
   expect(called).toBe(false);
   expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(before);
-  expect(
-    parseJsonRecord(
-      database.query<PayloadSqlRow, []>('SELECT payload FROM agent_host_mastra_session_ledger').get()?.payload ?? '',
-    ),
-  ).toEqual(journal);
+  expect(database.query<PayloadSqlRow, []>('SELECT payload FROM agent_host_mastra_session_ledger').get()?.payload).toBe(
+    canonicalJson(journal.state),
+  );
 });
 
 test('consumer migration rejects foreign canonical rows appearing after its baseline', () => {
@@ -3246,18 +3429,19 @@ describe('host-owned durable maintenance fence', () => {
     expect(fileBytes).toBe('before');
   });
 
-  test('Node can read the exact Bun maintenance row across the process boundary', async () => {
+  test('Bun can read the exact maintenance row across the process boundary', async () => {
     store = maintenanceStore();
     const receipt = store.acquireMaintenanceFence(maintenanceBinding());
-    const readWithNode = () =>
+    const readWithBun = () =>
       new Promise<MaintenanceSqlRow>((resolve, reject) => {
-        const code = `const { DatabaseSync } = require('node:sqlite');
-          const db = new DatabaseSync(process.argv[1], { readOnly: true });
-          const row = db.prepare('SELECT revision,payload,digest FROM agent_host_maintenance WHERE workspace_id=?')
-            .get(process.argv[2]);
+        const code = `const { Database } = require('bun:sqlite');
+          const db = new Database(process.env.VIDA_TEST_DB_PATH, { readonly: true, strict: true });
+          const row = db.query('SELECT revision,payload,digest FROM agent_host_maintenance WHERE workspace_id=?')
+            .get(process.env.VIDA_TEST_WORKSPACE_ID);
           console.log(JSON.stringify(row));
           db.close();`;
-        const child = spawn('node', ['-e', code, databasePath, workspace], {
+        const child = spawn(process.execPath, ['-e', code], {
+          env: { ...process.env, VIDA_TEST_DB_PATH: databasePath, VIDA_TEST_WORKSPACE_ID: workspace },
           windowsHide: true,
           stdio: ['ignore', 'pipe', 'pipe'],
         });
@@ -3268,27 +3452,28 @@ describe('host-owned durable maintenance fence', () => {
         child.stderr.on('data', (data) => (errors += data));
         child.on('error', reject);
         child.on('close', (exitCode) =>
-          exitCode === 0 ? resolve(parseMaintenanceRow(output)) : reject(new Error(errors || 'Node fence read failed')),
+          exitCode === 0 ? resolve(parseMaintenanceRow(output)) : reject(new Error(errors || 'Bun fence read failed')),
         );
       });
-    const held = await readWithNode();
+    const held = await readWithBun();
     expect(held.revision).toBe(receipt.fence.revision);
     expect(held.digest).toBe(canonicalJsonDigest(parseJsonRecord(held.payload)));
     expect(parseJsonRecord(held.payload)).toEqual(parseJsonRecord(JSON.stringify(receipt.fence)));
     const released = await store.releaseMaintenanceFence(receipt);
-    const observed = await readWithNode();
+    const observed = await readWithBun();
     expect(observed.revision).toBe(released.revision);
     expect(parseJsonRecord(observed.payload)).toEqual(parseJsonRecord(JSON.stringify(released)));
   });
 
-  test('a Node write transaction excludes concurrent Bun fence acquisition', async () => {
+  test('a Bun write transaction excludes concurrent fence acquisition', async () => {
     store = maintenanceStore();
-    const code = `const { DatabaseSync } = require('node:sqlite');
-      const db = new DatabaseSync(process.argv[1]);
+    const code = `const { Database } = require('bun:sqlite');
+      const db = new Database(process.env.VIDA_TEST_DB_PATH, { strict: true });
       db.exec('PRAGMA busy_timeout=1000; BEGIN IMMEDIATE');
       console.log('LOCKED');
       process.stdin.once('data', () => { db.exec('COMMIT'); db.close(); });`;
-    const child = spawn('node', ['-e', code, databasePath], {
+    const child = spawn(process.execPath, ['-e', code], {
+      env: { ...process.env, VIDA_TEST_DB_PATH: databasePath },
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -3303,7 +3488,7 @@ describe('host-owned durable maintenance fence', () => {
       child.stderr.on('data', (data) => (errors += data));
       child.on('error', reject);
       child.on('close', (exitCode) => {
-        if (exitCode !== 0) reject(new Error(errors || 'Node transaction failed'));
+        if (exitCode !== 0) reject(new Error(errors || 'Bun transaction failed'));
       });
     });
     await locked;
@@ -3312,7 +3497,7 @@ describe('host-owned durable maintenance fence', () => {
     const finished = new Promise<void>((resolve, reject) => {
       child.on('error', reject);
       child.on('close', (exitCode) =>
-        exitCode === 0 ? resolve() : reject(new Error(errors || 'Node transaction failed')),
+        exitCode === 0 ? resolve() : reject(new Error(errors || 'Bun transaction failed')),
       );
     });
     child.stdin.end('release\n');
@@ -3391,13 +3576,13 @@ describe('host-owned durable maintenance fence', () => {
 
   test('rejects a pre-fence state snapshot after release even when state versions did not change', async () => {
     store = maintenanceStore();
-    const before = readPresentSnapshot(store, identity);
+    const before = store.readHostStateSnapshot(identity);
     const receipt = store.acquireMaintenanceFence(maintenanceBinding());
     await store.releaseMaintenanceFence(receipt);
     const stale = { ...fixture(), expectedMaintenanceGeneration: before.maintenanceGeneration };
     expect(() => commitHostState(stale)).toThrow(/maintenance generation/);
     expect(store.readHostStateSnapshot(identity).work).toBeNull();
-    const current = readPresentSnapshot(store, identity);
+    const current = store.readHostStateSnapshot(identity);
     expect(current.maintenanceGeneration).toBe(1);
     const saved = commitHostState({
       ...fixture(),
@@ -3855,7 +4040,7 @@ describe('host SQLite governance persistence', () => {
     const malformedApproval = { ...approvalBinding() };
     setFixtureField(malformedApproval, 'extra', true);
     await Promise.resolve(
-      expect(store.consumeApproval('approvals', malformedApproval, async () => {})).rejects.toThrow(/record/),
+      expect(store.consumeApproval('approvals', malformedApproval, async () => {})).rejects.toThrow(/unrecognized/i),
     );
     expect(governanceRows()).toEqual([]);
     expect(database.query<GovernanceStoreSqlRow, []>('SELECT * FROM agent_host_governance_stores').all()).toEqual([]);
@@ -3929,7 +4114,15 @@ describe('host SQLite governance persistence', () => {
     ];
     for (const { column, value } of corruptions) {
       database.query<never, [SQLQueryBindings]>(`UPDATE agent_host_governance SET ${column}=?`).run(value);
+      const corruptRows = governanceRows();
+      const corruptStores = database
+        .query<GovernanceStoreSqlRow, []>('SELECT * FROM agent_host_governance_stores')
+        .all();
       expect(() => store.inspectOperation('operations', operationKey)).toThrow();
+      expect(governanceRows()).toEqual(corruptRows);
+      expect(database.query<GovernanceStoreSqlRow, []>('SELECT * FROM agent_host_governance_stores').all()).toEqual(
+        corruptStores,
+      );
       const originalValues: Readonly<Record<string, SQLQueryBindings>> = {
         payload: original.payload,
         revision: original.revision,
@@ -3939,10 +4132,20 @@ describe('host SQLite governance persistence', () => {
       database.query<never, [SQLQueryBindings]>(`UPDATE agent_host_governance SET ${column}=?`).run(originalValue);
     }
     database.query<never, [string]>('UPDATE agent_host_governance SET store_id=?').run('foreign');
-    expect(() => store.inspectOperation('foreign', operationKey)).toThrow(/identity/);
+    const foreignRows = governanceRows();
+    expect(() => store.inspectOperation('foreign', operationKey)).toThrow(/row integrity/);
+    expect(governanceRows()).toEqual(foreignRows);
     database.query<never, [string]>('UPDATE agent_host_governance SET store_id=?').run('operations');
     database.query<never, [string]>('UPDATE agent_host_governance_stores SET digest=?').run('0'.repeat(64));
+    const corruptStoreRows = database
+      .query<GovernanceStoreSqlRow, []>('SELECT * FROM agent_host_governance_stores')
+      .all();
+    const corruptGovernanceRows = governanceRows();
     expect(() => store.inspectOperation('operations', operationKey)).toThrow(/identity/);
+    expect(governanceRows()).toEqual(corruptGovernanceRows);
+    expect(database.query<GovernanceStoreSqlRow, []>('SELECT * FROM agent_host_governance_stores').all()).toEqual(
+      corruptStoreRows,
+    );
   });
   test('SQLite insert/transition failures roll back and preserve the external-effect boundary', async () => {
     database.exec(
@@ -4228,8 +4431,8 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
   test.each(workflowCases)(
     'real Mastra + SQLite executes and resumes %s without repeated dispatch (fixture host identity)',
     async (workflowId, intent, kind, provider, providerType) => {
-      await mkdir(path.join(root, 'runtime'));
-      await mkdir(path.join(root, 'docs'));
+      await mkdir(path.join(root, 'runtime'), { recursive: true });
+      await mkdir(path.join(root, 'docs'), { recursive: true });
       await cp(new URL('../../schemas', import.meta.url), path.join(root, 'runtime/schemas'), { recursive: true });
       await mkdir(path.join(root, 'runtime/instructions'), { recursive: true });
       await Promise.all([
@@ -4666,7 +4869,8 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     async (changed) => {
       const prepared = await prepareLocalNoEffectRetryFixture();
       await reconcileUnissuedLocalSessionAction(prepared.input);
-      const before = prepared.hostStore.readHostStateSnapshot(identity);
+      const readPersisted = prepared.hostStore.readHostStateSnapshot.bind(prepared.hostStore);
+      const before = readPersisted(identity);
       const callsBefore = { ...prepared.calls };
       if (changed === 'proof') {
         prepared.writeJson(prepared.proofPath, {
@@ -4707,7 +4911,7 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
 
       await Promise.resolve(expect(reconcileUnissuedLocalSessionAction(prepared.input)).rejects.toThrow());
 
-      expect(prepared.hostStore.readHostStateSnapshot(identity)).toEqual(before);
+      expect(readPersisted(identity)).toEqual(before);
       expect(prepared.calls).toEqual(callsBefore);
     },
   );
@@ -5203,7 +5407,12 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     revokeTicket(terminalRevoke.nextLedger, firstTicket(terminalRevoke.nextLedger));
     commitHostState(terminalRevoke);
     const revokedSnapshot = readPresentSnapshot(store, identity);
-    const replay = { ...attemptRequest(revokedSnapshot, 1), lease: second.attempt.lease };
+    const replay = {
+      ...attemptRequest(beforeRevocation, 1),
+      expectedWork: revokedSnapshot.workVersion,
+      expectedLedger: revokedSnapshot.ledgerVersion,
+      lease: second.attempt.lease,
+    };
     expect(store.claimWorkflowAttempt(replay).attempt).toEqual(revokedCompletion.attempt);
     expect(() => store.claimWorkflowAttempt({ ...replay, lease: { ...replay.lease, generation: 99 } })).toThrow(
       /completed replay lease binding/,
@@ -5212,7 +5421,9 @@ describe('current-v1 paired host state on real Bun SQLite', () => {
     expect(store.readHostStateSnapshot(identity)).toEqual(revokedSnapshot);
     expect(() =>
       store.claimWorkflowAttempt({
-        ...attemptRequest(readPresentSnapshot(store, identity), 2),
+        ...attemptRequest(beforeRevocation, 2),
+        expectedWork: revokedSnapshot.workVersion,
+        expectedLedger: revokedSnapshot.ledgerVersion,
         lease: first.attempt.lease,
       }),
     ).toThrow(/active leased/);
@@ -7249,19 +7460,14 @@ test('ten quiescent same-thread follow-ups release only their prior exact claim 
 }, 120_000);
 
 test('completed readonly owner release closes an expired exact lease without phase or rights change', async () => {
-  const seed = fixture(),
-    expiry = new Date(Date.now() + 150).toISOString();
+  const prepared = await writerFixture();
+  const seed = prepared.seed;
+  const expiry = new Date(Date.now() + 150).toISOString();
   firstTicket(seed.nextLedger).expires_at = expiry;
   firstClaim(seed.nextLedger).lease_expires_at = expiry;
   const initial = commitHostState(seed);
   await Bun.sleep(180);
-  const journal = quiescentJournal();
-  journal.state.step_id = 'wave-1';
-  const item = firstJournalItem(journal);
-  item.issue_id = 'completed-issue';
-  setFixtureField(item, 'observation', { status: 'reported_complete' });
-  setFixtureField(item.request, 'action_id', 'completed-readonly-action');
-  persistJournalFixture(journal);
+  const journal = completedCurrentWorkflowJournal(prepared.source);
   const request: Parameters<typeof suspendLocalWork>[0] = {
     store,
     identity: { ...identity },
@@ -7295,14 +7501,10 @@ test('completed readonly owner release closes an expired exact lease without pha
   expect(suspendCompletedReadOnlyWork(request).workVersion).toEqual(released.workVersion);
 });
 
-test('completed readonly owner release denies missing, reserved, failed and foreign completion', () => {
-  const initial = commitHostState(fixture()),
-    journal = quiescentJournal();
-  const item = firstJournalItem(journal);
-  item.issue_id = 'issued';
-  setFixtureField(item, 'observation', { status: 'reported_complete' });
-  setFixtureField(item.request, 'action_id', 'readonly');
-  persistJournalFixture(journal);
+test('completed readonly owner release denies missing, reserved, failed and foreign completion', async () => {
+  const prepared = await writerFixture();
+  const initial = commitHostState(prepared.seed);
+  const journal = completedCurrentWorkflowJournal(prepared.source);
   const request: Parameters<typeof suspendLocalWork>[0] = {
     store,
     identity: { ...identity },
@@ -7337,13 +7539,10 @@ test('completed readonly owner release denies missing, reserved, failed and fore
   expect(readPresentSnapshot(store, identity).ledgerVersion).toEqual(initial.ledgerVersion);
 });
 
-test('completed readonly owner release denies stale CAS and a newer queued conflicting contour', () => {
-  const initial = commitHostState(fixture());
-  const journal = quiescentJournal();
-  setFixtureField(journal.state, 'items', [
-    { issue_id: 'issued', observation: { status: 'reported_complete' }, request: { action_id: 'readonly' } },
-  ]);
-  persistJournalFixture(journal);
+test('completed readonly owner release denies stale CAS and a newer queued conflicting contour', async () => {
+  const prepared = await writerFixture();
+  const initial = commitHostState(prepared.seed);
+  const journal = clone(completedCurrentWorkflowJournal(prepared.source));
   const request: Parameters<typeof suspendCompletedReadOnlyWork>[0] = {
     store,
     identity: { ...identity },
@@ -7911,38 +8110,22 @@ test('issued readonly release: completed official-docs predecessor does not bloc
   });
 });
 
-test('expired recovery keeps runtime identity coupled across verified bundle changes without replaying research', () => {
-  const seed = fixture();
-  seed.nextWork.binding.allowed_resources.push('execution:work');
-  firstTicket(seed.nextLedger).contour_keys.push('execution:work');
-  firstTicket(seed.nextLedger).exclusive_resources = ['execution:work'];
-  firstTicket(seed.nextLedger).active_resources = ['execution:work'];
-  firstClaim(seed.nextLedger).resources = ['execution:work'];
+test('expired recovery keeps runtime identity coupled across verified bundle changes without replaying research', async () => {
+  const prepared = await writerFixture();
+  const seed = prepared.seed;
   const digestA = 'a'.repeat(64),
     digestB = 'b'.repeat(64);
   seed.nextWork.binding.runtime_source_revision = digestA;
   seed.nextWork.binding.runtime_code_digest = digestA;
   seed.nextWork.lifecycle.config_binding.runtime_code_digest = digestA;
   const initial = commitHostState(seed);
-  database.exec(
-    'CREATE TABLE agent_host_mastra_session_ledger(workspace_id TEXT,work_id TEXT,attempt INTEGER,revision INTEGER,payload TEXT,digest TEXT)',
+  const journal = completedRecoveryJournal(
+    identity.work_id,
+    requiredValue(initial.work.execution.run_id, 'recovery run id'),
+    prepared.source,
   );
-  const journal: unknown = {
-    schema: 'MastraSessionLedger/v1',
-    workspace_id: workspace,
-    work_id: identity.work_id,
-    attempt: 1,
-    run_id: initial.work.execution.run_id,
-    completed: [
-      { step_id: 'research', items: [{ issue_id: 'observed-research', observation: { status: 'reported_complete' } }] },
-    ],
-    items: [{ issue_id: null, observation: null }],
-  };
-  const journalBytes = canonicalJson(journal),
-    journalDigest = canonicalJsonDigest(journal);
-  database
-    .query<never, SQLQueryBindings[]>('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
-    .run(workspace, identity.work_id, 1, 1, journalBytes, journalDigest);
+  const journalBytes = canonicalJson(journal.state);
+  const journalDigest = journal.version.digest;
   const now = Date.now;
   let recovered!: PresentHostSnapshot;
   try {
@@ -7955,7 +8138,7 @@ test('expired recovery keeps runtime identity coupled across verified bundle cha
         generation: 1,
         expectedWork: initial.workVersion,
         expectedLedger: initial.ledgerVersion,
-        expectedJournal: { revision: 1, digest: journalDigest },
+        expectedJournal: journal.version,
         expectedMaintenanceGeneration: initial.maintenanceGeneration,
         verifyCurrent: () => ({ runtimeCodeDigest: digestB, authorityPointer: 'user:verified-current-bundle' }),
       }),
@@ -7977,5 +8160,5 @@ test('expired recovery keeps runtime identity coupled across verified bundle cha
   );
   expect(stored.payload).toBe(journalBytes);
   expect(stored.digest).toBe(journalDigest);
-  expect(stored.revision).toBe(2);
+  expect(stored.revision).toBe(journal.version.revision + 1);
 });

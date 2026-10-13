@@ -301,6 +301,16 @@ This qualifies pending verified captures, not overlapping kernel syscalls or
 all caller eligibility. A late renewal fixture starts the real Mastra bridge
 producer; the absorption helper's minimal journal lacks required Source scope.
 Renewal preserves Journal payload/digest while advancing its CAS revision.
+For Host-only fixtures, distinguish a typed trusted legacy completion from the
+current durable research protocol: use current request/observation builders and
+codec-valid fields, while keeping activation/normalization absent for the legacy
+contract. Current public research completion requires its real exposure barrier.
+Compare journal revisions to the captured input revision plus the expected
+transition count and preserve exact payload/digest assertions. A readonly Source
+snapshot stays readonly; clone entries explicitly only for a mutable fixture.
+For Bun eval subprocess fixtures, launch process.execPath and pass validated
+fixture operands explicitly through the child environment. Script argv examples
+do not establish eval operand positions. Keep real SQLite transaction/row proofs.
 Reuse the completed upgrade fixture for project-split planner checks; keep its
 original assertions and custody. Seed the isolated consumer selector prerequisite
 explicitly, but let the planner create its operation directory. Assert the target
