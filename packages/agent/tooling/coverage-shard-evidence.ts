@@ -35,6 +35,26 @@ export type CoverageShardInvocation = {
   };
 };
 
+/** One canonical output layout, shared by launch preparation and report admission. */
+export function coverageShardOutputPaths(
+  root: string,
+  runId: string,
+  shardId: string,
+  temporaryRoot?: string,
+): CoverageShardInvocation['output_paths'] {
+  const runDirectory = path.join(root, 'coverage', 'bun-unified', 'runs', runId);
+  const shardRoot = path.join(runDirectory, 'shards', shardId);
+  return {
+    coverage_directory: path.join(shardRoot, 'coverage'),
+    junit_file: path.join(shardRoot, 'suite.junit.xml'),
+    log_file: path.join(shardRoot, 'child.log'),
+    receipt_directory: path.join(runDirectory, 'processes', shardId),
+    temp_directory: temporaryRoot
+      ? path.join(temporaryRoot, 'vida-coverage-' + runId, shardId, 'tmp')
+      : path.join(shardRoot, 'tmp'),
+  };
+}
+
 type CoverageShardAssignment = CoverageShardPlan['waves'][number]['assignments'][number];
 
 function parsedStringList(value: unknown): string[] | undefined {
@@ -559,6 +579,45 @@ function validateCoverageShardPlanBinding(
     );
   }
   return { assignments, invocations };
+}
+
+/** Reuse the manifest/plan guards before any launch or output creation. */
+export function validateCoverageShardLaunchBinding(
+  run: CoverageShardRunBinding,
+  plan: CoverageShardPlan,
+  root: string,
+  temporaryRoot: string,
+): void {
+  validateCoverageShardPlanBinding(run, plan);
+  validateCoverageShardOutputLayout(run, root, temporaryRoot);
+}
+
+/** Enforce the same canonical output ownership at launch and report admission. */
+export function validateCoverageShardOutputLayout(
+  run: CoverageShardRunBinding,
+  root: string,
+  temporaryRoot?: string,
+): void {
+  if (
+    temporaryRoot !== undefined &&
+    (!path.isAbsolute(temporaryRoot) ||
+      path.resolve(temporaryRoot) !== temporaryRoot ||
+      run.shard_invocations.some(({ output_paths }) => pathOverlaps(output_paths.temp_directory, root)))
+  )
+    failClaim('Coverage shard temporary root must be canonical and outside the editable package.');
+  for (const invocation of run.shard_invocations) {
+    if (
+      invocation.cwd !== root ||
+      JSON.stringify(invocation.output_paths) !==
+        JSON.stringify(coverageShardOutputPaths(root, run.run_id, invocation.shard_id, temporaryRoot))
+    )
+      failClaim('Coverage shard launch paths differ from their canonical run layout.');
+    for (const required of temporaryRoot === undefined
+      ? []
+      : ['--preload', '--reporter=junit', '--config=', '--reporter-outfile='])
+      if (!invocation.argv.some((arg) => (required.endsWith('=') ? arg.startsWith(required) : arg === required)))
+        failClaim('Coverage shard launch omits a required runner option.');
+  }
 }
 
 /** Validate one preload's assigned selection using only captured run rows. */

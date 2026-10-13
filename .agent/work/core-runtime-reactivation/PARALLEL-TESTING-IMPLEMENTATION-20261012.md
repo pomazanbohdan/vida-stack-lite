@@ -12,6 +12,31 @@
 
 ## Current dispatch — 2026-10-13
 
+Latest published Source is c54f713. Its full current run
+7a305bc1-0001-459c-a885-8203d5861a8e ended UNKNOWN under300000ms, with no emitted
+assertion failure before cutoff and no admitted numeric report. Archive1912ms,
+same-file conflict and migration controls PASS. Preserve the run/effects; no
+unchanged full rerun. Six blind resource reviews reuse its186captured tests.
+
+Current packet adds strict bound eligibility and one complete initial-wave
+preparation to the existing native pilot, retaining the serial production caller.
+The pilot uses the actual prepared argv/environment/layout, separate external
+TMPDIRs and the existing supervisor/receipt/merge owners. Root fixes environment
+review drift and shares launch/admission output guards. The automatic-absorption
+timing receipts move from a fixed repository path to their existing fixture roots,
+without losing the observed setup origin. Actual public validation found a60s
+outer timeout, not assertion-confirmed Source failure:3PASS/1UNKNOWN, retained
+private root and child timing. Keep it open and diagnose cumulative startup /
+integrity-check cost without widening the timer or removing public calls.
+
+Next dependency is the report lifecycle: current v3 integration must not merge
+in the producer and again in the validator. Prepare a current-only aggregate-free
+report/v2 wire path, with the existing validator owning the sole checked merge
+and exposing its transient result to CRAP. Preserve v1/historical compatibility,
+all freshness/provenance/counter gates and the single final owner. Complete
+authoritative configuration/environment/resource binding before live activation;
+the six captured review packets remain UNREVIEWED, not eligibility receipts.
+
 Resume the existing tasks; do not restart qualified scheduler, protocol or native
 pilot work. Current full runca5209ff is UNKNOWN at600000ms with no admitted coverage report.
 Its emitted rows have no assertion FAIL before interruption; all5quarantine

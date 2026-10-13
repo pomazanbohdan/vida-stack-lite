@@ -105,6 +105,7 @@ export const coverageToolInputs: string[] = [
   'tooling/coverage-math.ts',
   'tooling/coverage-counters.ts',
   'tooling/coverage-shard-plan.ts',
+  'tooling/coverage-shard-eligibility.ts',
   'tooling/coverage-shard-evidence.ts',
   'tooling/coverage-run-lock.ts',
   'tooling/published-coverage-inputs.ts',

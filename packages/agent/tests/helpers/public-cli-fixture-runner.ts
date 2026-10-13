@@ -12,12 +12,10 @@ interface PublicCliFixtureRunnerOptions {
 }
 
 /** Phase starts only: the final row never implies that its phase completed. */
-export function createPublicCliFixturePhaseMarker(diagnosticReceiptPath: string) {
-  const startedNs = process.hrtime.bigint();
+export function createPublicCliFixturePhaseMarker(diagnosticReceiptPath: string, startedNs = process.hrtime.bigint()) {
   let previousNs = startedNs;
   mkdirSync(path.dirname(diagnosticReceiptPath), { recursive: true });
-  return (phase: string): void => {
-    const nowNs = process.hrtime.bigint();
+  return (phase: string, nowNs = process.hrtime.bigint()): void => {
     appendFileSync(
       diagnosticReceiptPath,
       JSON.stringify({

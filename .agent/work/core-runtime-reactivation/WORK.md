@@ -10036,3 +10036,84 @@ join reviews confirm prior rows/bindings/caps unchanged and exact additions.
 Partial now1126retained+290new=1416roles over84Sourcebindings, removed1unchanged.
 It remainsNON_EXECUTABLE_NOT_EXHAUSTIVE; default exhaustive plan/current numeric/
 native gatesOPEN. Publication and one full current measurement follow this batch.
+
+## Bound shard reviews and private timing custody — 2026-10-13
+
+c54f713 is published. Full current7a305bc1-0001-459c-a885-8203d5861a8e remains
+UNKNOWN at300000ms, without emitted assertion FAIL before cutoff. Archive1912ms,
+FIFO conflict and migration controls PASS; no admitted final coverage/CRAP/mutation
+report. Preserve run/effects. Root extracts186selected hashes from this one
+manifest into6blind31-file resource packets; no worker runtime/compiler or full
+AST/hash scans. Packet status stays captured/unreviewed; changed tools/tests now
+invalidate their old scope, and no row is promoted automatically.
+
+Deep reviews correct marker-only findings: fresh mkdtemp roots and local mock /
+clock state do not imply cross-process conflict. Host uses one workspace DB per
+private project fixture and native verified package readers. Shared consumer-root
+configuration/Source reads still create real CAS locks, unlike package-only
+verified reads. Group their physical owners. The fixed automatic-absorption
+public-cli NDJSON filenames were real shared writes. Root moves them under each
+existing consumer fixture; explicit observed setup origin preserves timing before
+the private path exists. Original assertions/public commands/timeouts remain.
+
+Strict unknown eligibility now binds Source/test/tool/config/runtime/base-env,
+Bun/provider/platform/architecture/package owner. Missing/stale/malformed,
+historical or multiwave reviews use serial fallback, never invented resources.
+prepareCoverageShardLaunches is used by the existing native pilot, not the live
+production caller: whole union, one initial wave, serial argv, worker1, sealed
+environment, separate outputs and one existing supervisor. Blind review catches
+base-env drift, in-package TMPDIR and prelaunch layout/required-option gaps; Root
+fixes these and shares canonical output ownership with final admission. Legacy
+missing external-root v3 fixture layout remains supported. No successor resource
+claim: resourceSafeToAdvance staysfalse.
+
+The first adapted pilot fails because it writes manifest at the predecessor
+private root address; both children report ENOENT and the fixture remains at
+/dev/shm/vida-test-tmp-20261013-batch/untrusted-two-shard-coverage-pilot-DR6rJl.
+Root uses canonical run manifest path and observes terminal group before waiting
+out a missing marker. External-temp controls then expose overly broad parent
+overlap rejection and missing log-parent allocation; both are corrected, with
+failed fixture roots retained. Native pilot805ms/45assertions PASS before the
+external-temp refinement; final combined native/eligibility/timing qualification
+is recorded below after final checks. This is fixture mechanics, no global
+coverage admission or speed comparison.
+
+All four real public correction cases:3PASS, validate reaches its existing60s
+outer test deadline, SIGTERM interrupts one child whose own30s timeout did not
+fire. Root retains /dev/shm/vida-test-tmp-20261013-batch/vida-absorption-9yW0Bl
+and its fixture-owned timing rows. Observed child total2.9–7.6s and kernel63–83ms
+show cumulative startup/preflight outside kernel timing; causal split remains
+unmeasured. No replay or timeout increase. Bun official environment/cache docs
+confirm content-addressable runtime cache behavior; package cache191MB has11GB
+overlay capacity, so disk-full is not established as this cause.
+
+Two independent reviews select the minimal next report seam: current v3 report/v2
+omits producer aggregate coverage; existing validator checks receipts and merges
+once, exposing a transient checked map to CRAP. Preserve v1/historical readers;
+reject v2 forged aggregate, incompatible manifest/selection and historical fields.
+No new trust cache/sidecar or repeated suite. Production stillserial; default
+exhaustive frozen/currentnumeric/native gatesOPEN.
+
+Final bound-protocol qualification:61PASS/266assertions/16.17s across eligibility,
+private timing, all native preload lifecycle controls and synthetic report
+admission. This includes oldv1/v3compatibility, external-temp layout denials and
+the real two-shard pilot. Scope env now normalizes the explicitly selected base
+temporary root, so changing only that argument invalidates the review; fallback
+retains the computed review scope digest without any artifact/admission claim.
+Strict446capturedTS/445program and100SourcePASS,0diagnostics; final scoped lint
+PASS and formatter/diff checks PASS. Numeric/fullcurrent/native gaps
+remainOPEN. Source correction publication is the next owner action.
+
+Ordinary precommit Knip rejects one unused exported envelope type. Root keeps
+the internal decoder type private; public scope/resolver types remain consumed.
+The hook is not bypassed or relaxed. This declaration-only correction changes
+no emitted behavior; the same ordinary gate rechecks the final staged bytes.
+
+User DB clarification verified against actual Source: project-format Host/ledger/
+workflow paths all resolve to .vida/work/workspace.v1.sqlite, per physical checkout
+identity rather than per project ID. Legacy source configuration still routes to
+session-handoff and mastra-workflows SQLite files. Project-upgrade staging is
+temporary; .vida/storage-admission.v1.sqlite is a separate coordination database,
+not workspace product data. Ast-index stays in host cache. Do not state that only
+one SQLite file exists universally or remove the admission owner/CAS to obtain
+that claim. This inspection opens no old database/lease/runtime operation.

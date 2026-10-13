@@ -21,7 +21,14 @@ import {
   historicalReferenceJUnit,
   parseHistoricalReference,
 } from './published-baseline-reference.js';
-import { mergeCoverageShardCounters } from './coverage-shard-evidence.js';
+import {
+  coverageAssignmentPlanSha256,
+  coverageShardOutputPaths,
+  mergeCoverageShardCounters,
+  validateCoverageShardLaunchBinding,
+  type CoverageShardRunBinding,
+} from './coverage-shard-evidence.js';
+import { resolveCoverageShardEligibility, type CoverageReviewScope } from './coverage-shard-eligibility.ts';
 import {
   instrumentedArtifactPath,
   maxInstrumentedArtifactBytes,
@@ -29,7 +36,14 @@ import {
   type InstrumentedSourceDigest,
 } from './coverage-instrumented-sources.ts';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from './coverage-run-lock.js';
-import { coverageInputs, instrumentSource, isExternalModulePath, readBunPin, sha256 } from './bun-coverage-evidence.ts';
+import {
+  coverageEnvironmentSha256,
+  coverageInputs,
+  instrumentSource,
+  isExternalModulePath,
+  readBunPin,
+  sha256,
+} from './bun-coverage-evidence.ts';
 import type { CoverageShardPlan } from './coverage-shard-plan.ts';
 import type { CoverageShardInvocation } from './coverage-shard-evidence.ts';
 
@@ -92,6 +106,115 @@ export type CoverageProducerGroup = {
   reservationSafeToRelease: boolean;
   resourceSafeToAdvance: false;
 };
+
+/** Prepare one complete initial wave. This does not create outputs, launch children or activate production. */
+export function prepareCoverageShardLaunches(input: {
+  root: string;
+  temporary_root: string;
+  run_id: string;
+  scope: CoverageReviewScope;
+  selected_test_inputs: readonly InputDigest[];
+  eligibility: unknown;
+  environment: NodeJS.ProcessEnv;
+}) {
+  const eligibility = resolveCoverageShardEligibility({
+    mode: 'current',
+    envelope: input.eligibility,
+    scope: input.scope,
+    selectedTests: input.selected_test_inputs,
+  });
+  if (eligibility.status !== 'eligible') return eligibility;
+  if (!path.isAbsolute(input.root) || path.resolve(input.root) !== input.root)
+    throw new Error('Coverage shard package root is not canonical and absolute.');
+  if (!/^[0-9a-f-]{36}$/u.test(input.run_id)) throw new Error('Coverage shard run identity is invalid.');
+  if ((input.environment.BUN_OPTIONS ?? '').trim())
+    throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
+  if (
+    coverageEnvironmentSha256({ ...input.environment, TMPDIR: input.temporary_root }) !== input.scope.environment_sha256
+  )
+    return {
+      status: 'serial-fallback' as const,
+      reason: 'review-environment-stale-or-mismatched',
+      reviewScopeSha256: eligibility.reviewScopeSha256,
+    };
+  const runDirectory = path.join(input.root, 'coverage', 'bun-unified', 'runs', input.run_id);
+  const snapshotDirectory = path.join(runDirectory, 'snapshot');
+  const manifestPath = path.join(runDirectory, 'manifest.json');
+  const tests = input.selected_test_inputs.map(({ path: file }) => file).sort();
+  const invocations: CoverageShardInvocation[] = [];
+  const launches: PreparedCoverageProducer[] = [];
+  for (const assignment of eligibility.plan.waves[0]!.assignments) {
+    const outputs = coverageShardOutputPaths(input.root, input.run_id, assignment.shard_id, input.temporary_root);
+    const args = [
+      'test',
+      '--timeout',
+      '5000',
+      '--parallel=1',
+      '--no-isolate',
+      `--config=${path.join(snapshotDirectory, 'bunfig.toml')}`,
+      '--preload',
+      path.join(snapshotDirectory, 'tooling', 'bun-coverage-preload.ts'),
+      '--reporter=junit',
+      `--reporter-outfile=${outputs.junit_file}`,
+      ...assignment.tests.map((file) => './' + file),
+    ];
+    const env: NodeJS.ProcessEnv = {
+      ...input.environment,
+      TMPDIR: outputs.temp_directory,
+      VIDA_BUN_COVERAGE_ROOT: input.root,
+      VIDA_BUN_COVERAGE_MANIFEST: manifestPath,
+      VIDA_BUN_COVERAGE_REPORT_DIRECTORY: outputs.receipt_directory,
+      VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY: snapshotDirectory,
+      VIDA_BUN_COVERAGE_RUN_ID: input.run_id,
+      VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT: input.scope.source_fingerprint,
+      VIDA_BUN_COVERAGE_TEST_FINGERPRINT: input.scope.test_fingerprint,
+      VIDA_BUN_COVERAGE_TOOL_FINGERPRINT: input.scope.tool_fingerprint,
+      VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: 'full-current-test-set',
+      VIDA_BUN_COVERAGE_ACTIVE_ARGV: JSON.stringify(args),
+      VIDA_BUN_COVERAGE_SHARD_ID: assignment.shard_id,
+      VIDA_BUN_COVERAGE_ASSIGNED_TESTS: JSON.stringify(assignment.tests),
+      VIDA_BUN_COVERAGE_SHARD_SELECTION_SHA256: assignment.selection_sha256,
+      VIDA_BUN_COVERAGE_OUTPUT_COVERAGE_DIRECTORY: outputs.coverage_directory,
+      VIDA_BUN_COVERAGE_JUNIT_FILE: outputs.junit_file,
+      VIDA_BUN_COVERAGE_LOG_FILE: outputs.log_file,
+      VIDA_BUN_COVERAGE_TEMP_DIRECTORY: outputs.temp_directory,
+      BUN_TEST_WORKER_ID: '1',
+      JEST_WORKER_ID: '1',
+      AGENT_RUNTIME_NATIVE_COVERAGE_MAIN: '1',
+    };
+    delete env.BUN_OPTIONS;
+    Object.freeze(args);
+    Object.freeze(env);
+    Object.freeze(outputs);
+    invocations.push({
+      shard_id: assignment.shard_id,
+      argv: args,
+      cwd: input.root,
+      environment_sha256: coverageEnvironmentSha256(env),
+      output_paths: outputs,
+    });
+    launches.push({ shard_id: assignment.shard_id, args, cwd: input.root, env });
+  }
+  const binding: CoverageShardRunBinding = {
+    schema: 'VidaBunCoverageRun/v3',
+    run_id: input.run_id,
+    source_fingerprint: input.scope.source_fingerprint,
+    test_fingerprint: input.scope.test_fingerprint,
+    tool_fingerprint: input.scope.tool_fingerprint,
+    runtime_executable_sha256: input.scope.runtime_executable_sha256,
+    assignment_plan_sha256: coverageAssignmentPlanSha256(eligibility.plan, invocations),
+    tests,
+    selected_test_inputs: input.selected_test_inputs.map((row) => ({ ...row })),
+    shard_invocations: invocations,
+    snapshot_directory: snapshotDirectory,
+  };
+  validateCoverageShardLaunchBinding(binding, eligibility.plan, input.root, input.temporary_root);
+  for (const invocation of invocations) Object.freeze(invocation);
+  for (const launch of launches) Object.freeze(launch);
+  Object.freeze(invocations);
+  Object.freeze(launches);
+  return { status: 'prepared' as const, plan: eligibility.plan, binding, invocations, launches };
+}
 
 export async function superviseCoverageProducers(
   launches: readonly PreparedCoverageProducer[],

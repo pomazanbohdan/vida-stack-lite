@@ -745,6 +745,32 @@ scheduler performs no filesystem discovery. Resource IDs shared by concurrent
 assignments are forbidden. A file joining resources from both assignments starts
 a later wave. Global-exclusive files run alone between settled waves.
 
+The pure `coverage-shard-eligibility.ts` resolver decodes an explicit
+`VidaCoverageShardEligibility/v1` review envelope. It compares Source, tests,
+tools, configuration, runtime, base environment, Bun version, provider, platform,
+architecture and physical package-owner digests. The initial launch seam accepts
+only a complete current selection in one nonexclusive wave of at most two serial
+assignments; missing, stale, malformed, historical or multiwave reviews retain
+serial fallback. No caller may manufacture empty resource rows. The existing
+native fixture pilot exercises this seam; production activation and an
+authoritative current review artifact remain pending.
+
+Launch preparation and report admission share the canonical output-layout owner.
+Prepared child temporary directories are distinct run/shard children outside the
+editable package, including when a temporary fixture package shares their parent.
+Bind the external root in `shard_temporary_root`; keep absent-field compatibility
+for existing v3 fixture receipts. Validate the layout and effective serial argv
+before creating outputs or launching children. Seal the reviewed base environment
+separately from each child's effective environment; diagnostic environment switches
+can change resource ownership even when test bytes are unchanged.
+
+Module mocks, clocks and environment changes confined to a serial child do not
+alone establish a conflict between producer processes. Trace active guards and
+restoration, including unresolved failure paths. A randomized child under a
+shared temporary parent is distinct from a fixed output or destructive parent
+cleanup. Ordinary SafeRepositoryAccess config/Source reads can create CAS locks;
+batch callers of the same physical consumer root in one serial assignment.
+
 Private consumer roots do not isolate runtime package resources. Package identity,
 schema and template reads may still use one executing package root and read-side
 CAS locks. Keep the shared runtime-package owner resource until package-only

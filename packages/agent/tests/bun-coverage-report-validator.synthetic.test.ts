@@ -105,6 +105,18 @@ test('accepts an UNTRUSTED v3 run with two exact v2 shard receipts and one spars
   });
 });
 
+test.each(['relative', 'inside-package'])('rejects a versioned manifest with %s temporary root', async (kind) => {
+  await withVersionedFixture(async (fixture) => {
+    fixture.manifest.shard_temporary_root = kind === 'relative' ? 'tmp' : path.join(fixture.root, 'tmp');
+    const manifestBytes = Buffer.from(JSON.stringify(fixture.manifest));
+    const manifestPath = fixture.report.manifest_path;
+    if (typeof manifestPath !== 'string') throw new Error('Synthetic manifest path is malformed.');
+    writeFileSync(path.join(fixture.root, manifestPath), manifestBytes);
+    fixture.report.manifest_sha256 = sha256(manifestBytes);
+    await rejects(fixture, fixture.reportBytes(), /temporary root must be canonical|outside/u);
+  });
+});
+
 test('rejects a v3 child that claims its sibling test while retaining both shard receipts', async () => {
   await withVersionedFixture(async (fixture) => {
     const selected = unknownArray(fixture.report.tests);

@@ -422,6 +422,21 @@ functions/lines/statements/branches admission.
 
 ## Maintain this reference
 
+For the pending shard launch seam, use the existing eligibility resolver and
+canonical layout guard; do not reproduce their checks in a caller. Bind the
+reviewed base environment as well as configuration/provider and captured input
+digests. Keep the entire selected union and one initial nonexclusive wave. Use
+distinct external run/shard temporary directories; create log parents separately
+because an external TMPDIR is no longer their ancestor. Missing reviews retain
+serial fallback. The maintained native fixture pilot qualifies mechanics only.
+
+Store public CLI timing rows in the owning consumer fixture. Observe the setup
+origin before allocation, then persist that actual timestamp after the private
+path exists; retain both the elapsed interval and failed/UNKNOWN root. The final
+phase start does not prove phase completion. Startup/preflight time is distinct
+from the measured createRuntimeKernel interval. Compare attributable complete
+scopes before claiming improvement.
+
 For full coverage, stream the producer's output into the owned caller log and
 keep the five-second default per individual test. The explicit user-selected
 global operation deadline is five minutes (300000ms); timeout remains UNKNOWN, never final numeric

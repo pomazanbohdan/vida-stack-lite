@@ -11,6 +11,7 @@ import {
   decodeCoverageShardInvocations,
   decodeCoverageShardPlan,
   decodeCoverageShardProcessEvidence,
+  validateCoverageShardOutputLayout,
   mergeCoverageShardCounters,
   validateCoverageShardEvidence,
   type CoverageShardInvocation,
@@ -77,6 +78,7 @@ type RunManifest = {
   coverage_plan?: CoverageShardPlan;
   assignment_plan_sha256?: string;
   shard_invocations?: import('./coverage-shard-evidence.js').CoverageShardInvocation[];
+  shard_temporary_root?: unknown;
 };
 type CoverageReport = {
   published_reference?: PublishedBaselineReference;
@@ -836,19 +838,9 @@ function mergeProcessCoverage(
       shard_invocations: invocations,
       snapshot_directory: path.resolve(root, ...manifest.snapshot_directory.split('/')),
     };
-    const runDirectory = path.join(root, 'coverage', 'bun-unified', 'runs', report.run_id);
-    for (const invocation of invocations) {
-      const shardRoot = path.join(runDirectory, 'shards', invocation.shard_id);
-      const expectedOutputs = {
-        coverage_directory: path.join(shardRoot, 'coverage'),
-        junit_file: path.join(shardRoot, 'suite.junit.xml'),
-        log_file: path.join(shardRoot, 'child.log'),
-        receipt_directory: path.join(runDirectory, 'processes', invocation.shard_id),
-        temp_directory: path.join(shardRoot, 'tmp'),
-      };
-      if (JSON.stringify(invocation.output_paths) !== JSON.stringify(expectedOutputs))
-        throw new Error('Coverage shard output paths are not disjoint canonical run-owned paths.');
-    }
+    if (manifest.shard_temporary_root !== undefined && typeof manifest.shard_temporary_root !== 'string')
+      throw new Error('Coverage shard temporary root is malformed.');
+    validateCoverageShardOutputLayout(binding, root, manifest.shard_temporary_root);
     const processes: CoverageShardProcessEvidence[] = [];
     const terminals: CoverageShardTerminalEvidence[] = [];
     const receiptNames = new Set<string>();

@@ -11,6 +11,7 @@ import {
   readdirSync,
   rmSync,
   symlinkSync,
+  statSync,
   writeFileSync,
 } from 'node:fs';
 import os from 'node:os';
@@ -35,7 +36,8 @@ import {
 } from '../tooling/coverage-shard-evidence.ts';
 import { planCoverageShards } from '../tooling/coverage-shard-plan.ts';
 import { coverageAssignmentPlanSha256, coverageOutputPathsSha256 } from '../tooling/coverage-shard-evidence.ts';
-import { superviseCoverageProducers } from '../tooling/run-bun-coverage.ts';
+import { prepareCoverageShardLaunches, superviseCoverageProducers } from '../tooling/run-bun-coverage.ts';
+import { canonicalCoverageReviewScope } from '../tooling/coverage-shard-eligibility.ts';
 
 const packageRoot = fileURLToPath(new URL('../', import.meta.url));
 const capturedTools = new Map(coverageToolInputs.map((file) => [file, readFileSync(path.join(packageRoot, file))]));
@@ -408,6 +410,7 @@ test.each([1, 2] as const)(
 test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receipts and one sparse merge', async () => {
   const budget = executionBudget(20_000, 1_000);
   const root = mkdtempSync(path.join(os.tmpdir(), 'untrusted-two-shard-coverage-pilot-'));
+  let ownedTemporaryRunRoot: string | undefined;
   let passed = false;
   let bodyFailed = false;
   let bodyError: unknown;
@@ -488,7 +491,31 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
     const toolInputs = digestRows(coverageToolInputs);
     const selection = { mode: 'full-current-test-set', tests: testFiles };
     const runtimeHash = sha256(readFileSync(process.execPath));
-    const reviewScope = 'c'.repeat(64);
+    const packageStat = statSync(root, { bigint: true });
+    const reviewScopeInputs = {
+      source_fingerprint: sha256(JSON.stringify(sources)),
+      test_fingerprint: sha256(JSON.stringify(testInputs)),
+      tool_fingerprint: sha256(JSON.stringify(toolInputs)),
+      configuration_fingerprint: sha256(
+        JSON.stringify(
+          toolInputs.filter(({ path: file }) => ['.bun-version', 'bunfig.toml', 'package.json'].includes(file)),
+        ),
+      ),
+      runtime_executable_sha256: runtimeHash,
+      environment_sha256: coverageEnvironmentSha256({
+        ...process.env,
+        TMPDIR: path.resolve(os.tmpdir()),
+        VIDA_COVERAGE_PILOT_MARKERS: markerDirectory,
+      }),
+      bun_version: process.versions.bun,
+      provider: 'synthetic-fixture',
+      platform: process.platform,
+      architecture: process.arch,
+      package_root_identity_sha256: sha256(
+        JSON.stringify({ dev: packageStat.dev.toString(), ino: packageStat.ino.toString() }),
+      ),
+    };
+    const reviewScope = canonicalCoverageReviewScope(reviewScopeInputs);
     const reviews = testInputs.map((entry) => ({
       test_file: entry.path,
       test_sha256: entry.sha256,
@@ -497,7 +524,25 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
       exclusive_run: false,
       reviewer_ref: 'synthetic-two-shard-lifecycle-pilot',
     }));
-    const planned = planCoverageShards(testInputs, reviews, 2, reviewScope);
+    const eligibility = {
+      schema: 'VidaCoverageShardEligibility/v1',
+      scope: reviewScopeInputs,
+      review_scope_sha256: reviewScope,
+      reviews,
+    };
+    const prepared = prepareCoverageShardLaunches({
+      root,
+      temporary_root: path.resolve(os.tmpdir()),
+      run_id: runId,
+      scope: reviewScopeInputs,
+      selected_test_inputs: testInputs,
+      eligibility,
+      environment: { ...process.env, VIDA_COVERAGE_PILOT_MARKERS: markerDirectory },
+    });
+    expect(prepared.status).toBe('prepared');
+    if (prepared.status !== 'prepared') throw new Error('Pilot resource review denied the initial wave.');
+    ownedTemporaryRunRoot = path.join(path.resolve(os.tmpdir()), 'vida-coverage-' + runId);
+    const planned = prepared.plan;
     expect(planned.waves).toHaveLength(1);
     expect(planned.waves[0]?.assignments).toHaveLength(2);
     const plan = decodeCoverageShardPlan(planned);
@@ -529,71 +574,21 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
     const expectedMaps = Object.fromEntries(
       sourceRows.map(({ row, fileCoverage }) => [path.join(root, row.path), fileCoverage]),
     );
-    const invocations = assignments.map((assignment) => {
-      const shardRoot = path.join(runDirectory, 'shards', assignment.shard_id);
-      const outputPaths = {
-        coverage_directory: path.join(shardRoot, 'coverage'),
-        junit_file: path.join(shardRoot, 'suite.junit.xml'),
-        log_file: path.join(shardRoot, 'child.log'),
-        receipt_directory: path.join(runDirectory, 'processes', assignment.shard_id),
-        temp_directory: path.join(shardRoot, 'tmp'),
-      };
-      mkdirSync(outputPaths.temp_directory, { recursive: true });
-      const logFd = openSync(outputPaths.log_file, 'wx', 0o600);
+    const invocations = prepared.launches.map((launch) => {
+      const assignment = assignments.find(({ shard_id }) => shard_id === launch.shard_id);
+      const invocation = prepared.invocations.find(({ shard_id }) => shard_id === launch.shard_id);
+      if (!assignment || !invocation) throw new Error('Prepared pilot omitted a shard binding.');
+      mkdirSync(invocation.output_paths.temp_directory, { recursive: true });
+      mkdirSync(path.dirname(invocation.output_paths.log_file), { recursive: true });
+      const logFd = openSync(invocation.output_paths.log_file, 'wx', 0o600);
       ownedLogFds.push({ fd: logFd, closeAttempted: false });
-      const argv = [
-        'test',
-        '--timeout',
-        '5000',
-        '--parallel=1',
-        '--no-isolate',
-        `--config=${path.join(snapshot, 'bunfig.toml')}`,
-        '--preload',
-        path.join(snapshot, 'tooling/bun-coverage-preload.ts'),
-        '--reporter=junit',
-        `--reporter-outfile=${outputPaths.junit_file}`,
-        ...assignment.tests.map((file) => './' + file),
-      ];
-      const environment: NodeJS.ProcessEnv = {
-        ...process.env,
-        BUN_OPTIONS: '',
-        TMPDIR: outputPaths.temp_directory,
-        VIDA_BUN_COVERAGE_ROOT: root,
-        VIDA_BUN_COVERAGE_MANIFEST: path.join(root, 'manifest.json'),
-        VIDA_BUN_COVERAGE_REPORT_DIRECTORY: outputPaths.receipt_directory,
-        VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY: snapshot,
-        VIDA_BUN_COVERAGE_RUN_ID: runId,
-        VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT: sha256(JSON.stringify(sources)),
-        VIDA_BUN_COVERAGE_TEST_FINGERPRINT: sha256(JSON.stringify(testInputs)),
-        VIDA_BUN_COVERAGE_TOOL_FINGERPRINT: sha256(JSON.stringify(toolInputs)),
-        VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: selection.mode,
-        VIDA_BUN_COVERAGE_ACTIVE_ARGV: JSON.stringify(argv),
-        VIDA_BUN_COVERAGE_SHARD_ID: assignment.shard_id,
-        VIDA_BUN_COVERAGE_ASSIGNED_TESTS: JSON.stringify(assignment.tests),
-        VIDA_BUN_COVERAGE_SHARD_SELECTION_SHA256: assignment.selection_sha256,
-        VIDA_BUN_COVERAGE_OUTPUT_COVERAGE_DIRECTORY: outputPaths.coverage_directory,
-        VIDA_BUN_COVERAGE_JUNIT_FILE: outputPaths.junit_file,
-        VIDA_BUN_COVERAGE_LOG_FILE: outputPaths.log_file,
-        VIDA_BUN_COVERAGE_TEMP_DIRECTORY: outputPaths.temp_directory,
-        VIDA_COVERAGE_PILOT_MARKERS: markerDirectory,
-        BUN_TEST_WORKER_ID: '1',
-        JEST_WORKER_ID: '1',
-        AGENT_RUNTIME_NATIVE_COVERAGE_MAIN: '1',
-      };
-      delete environment.BUN_OPTIONS;
       return {
         assignment,
-        argv,
-        outputPaths,
+        argv: invocation.argv,
+        outputPaths: invocation.output_paths,
         logFd,
-        environment,
-        invocation: {
-          shard_id: assignment.shard_id,
-          argv,
-          cwd: root,
-          environment_sha256: coverageEnvironmentSha256(environment),
-          output_paths: outputPaths,
-        },
+        environment: launch.env,
+        invocation,
       };
     });
     const decodedInvocations = decodeCoverageShardInvocations(invocations.map(({ invocation }) => invocation));
@@ -624,9 +619,11 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
       coverage_plan: plan,
       assignment_plan_sha256: assignmentPlanSha256,
       shard_invocations: decodedInvocations,
+      shard_temporary_root: path.resolve(os.tmpdir()),
     };
-    writeFileSync(path.join(root, 'manifest.json'), JSON.stringify(manifest));
+    writeFileSync(path.join(runDirectory, 'manifest.json'), JSON.stringify(manifest));
 
+    let settledGroup: Awaited<ReturnType<typeof superviseCoverageProducers>> | undefined;
     const groupPromise = superviseCoverageProducers(
       invocations.map(({ assignment, argv, environment, logFd }) => ({
         shard_id: assignment.shard_id,
@@ -637,10 +634,14 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
         log_fd: logFd,
       })),
       budget,
-    );
+    ).then((group) => {
+      settledGroup = group;
+      return group;
+    });
     const waitForMarkers = async (suffix: string) => {
       const targets = assignments.map(({ shard_id }) => path.join(markerDirectory, `${shard_id}-${suffix}`));
       while (!targets.every(existsSync)) {
+        if (settledGroup) throw new Error('Pilot producers terminated before the ' + suffix + ' boundary.');
         await new Promise((resolve) => setTimeout(resolve, Math.min(20, budget.remaining())));
       }
       return targets.map((target) => readFileSync(target, 'utf8'));
@@ -777,7 +778,10 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
     console.error('Preserved untrusted two-shard pilot fixture after log descriptor close failure at ' + root);
     throw new AggregateError(cause, 'Pilot log descriptor cleanup failed.');
   }
-  if (bodyFailed) throw bodyError;
+  if (bodyFailed) {
+    console.error('Preserved failed untrusted two-shard pilot fixture at ' + root);
+    throw bodyError;
+  }
   if (!passed) throw new Error('Untrusted two-shard pilot ended without completing its assertions.');
   try {
     budget.remaining();
@@ -786,6 +790,7 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
     throw error;
   }
   try {
+    if (ownedTemporaryRunRoot) rmSync(ownedTemporaryRunRoot, { recursive: true, force: true });
     rmSync(root, { recursive: true, force: true });
   } catch (error) {
     console.error('Preserved untrusted two-shard pilot fixture after cleanup failure at ' + root);

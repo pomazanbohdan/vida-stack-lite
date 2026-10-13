@@ -2768,13 +2768,11 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
     'public same-work correction after real report resume sync ' + scenario,
     async () => {
       const failureStage = ['runtime-rebind', 'success'].includes(scenario) ? 'validate' : scenario;
-      const diagnosticReceiptPath = path.resolve(
-        bundle,
-        '../../.tmp/tooling-research/root-public-cli-fixture-timing-v10/public-cli-' + scenario + '.ndjson',
-      );
-      const markPhase = createPublicCliFixturePhaseMarker(diagnosticReceiptPath);
-      markPhase('fixture_setup');
+      const fixtureSetupStartedNs = process.hrtime.bigint();
       const f = fixture(true, true);
+      const diagnosticReceiptPath = path.join(f.root, '.tmp', 'public-cli-' + scenario + '.ndjson');
+      const markPhase = createPublicCliFixturePhaseMarker(diagnosticReceiptPath, fixtureSetupStartedNs);
+      markPhase('fixture_setup', fixtureSetupStartedNs);
       let failure: unknown,
         didFail = false,
         retainFixtureRootOnUnknown = false;

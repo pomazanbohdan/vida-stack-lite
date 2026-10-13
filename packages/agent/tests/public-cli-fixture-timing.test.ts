@@ -59,3 +59,38 @@ test('parent phase receipt write failure is visible without a fabricated complet
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('fixture-owned receipts retain the observed setup origin before their path exists', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-parent-setup-timing-'));
+  const clock = spyOn(process.hrtime, 'bigint').mockReturnValue(1_025_000_000n);
+  try {
+    const setupStartedNs = 1_000_000_000n;
+    for (const owner of ['first', 'second']) {
+      const receipt = path.join(root, owner, 'timing.ndjson');
+      const mark = fixtureTiming.createPublicCliFixturePhaseMarker(receipt, setupStartedNs);
+      mark('fixture_setup', setupStartedNs);
+      mark('workflow_setup');
+      const records: unknown = readFileSync(receipt, 'utf8')
+        .trim()
+        .split('\n')
+        .map((line): unknown => JSON.parse(line));
+      expect(records).toEqual([
+        {
+          schema: 'PrivatePublicCliFixturePhaseTiming/v1',
+          phase: 'fixture_setup',
+          elapsed_ms: 0,
+          since_previous_ms: 0,
+        },
+        {
+          schema: 'PrivatePublicCliFixturePhaseTiming/v1',
+          phase: 'workflow_setup',
+          elapsed_ms: 25,
+          since_previous_ms: 25,
+        },
+      ]);
+    }
+  } finally {
+    clock.mockRestore();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
