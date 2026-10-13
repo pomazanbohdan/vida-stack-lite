@@ -28,6 +28,16 @@ remains serial. Next resolve wrapper-owned moving-clock provenance for the base
 review digest without weakening exact child environment hashes or caller ceilings,
 then qualify the actual complete current resource review before activation.
 
+Clock correction scope: the maintained current wrapper captures original caller
+and ancestor ceilings before rewriting clocks. It discards ambient policy claims
+and emits a bounded consistent policy only for the current coverage entry with
+no opaque parent budget. A separate review-base digest normalizes only its exact
+generated pair; original absolute expiries remain exact semantic inputs. Unknown
+or inconsistent claims retain exact hashing, as do direct launches without a
+policy. Exact child hashes remain unchanged. The tuple is cooperative consistency
+data, not authentication; final qualification retains the owner's observed real
+wrapper issuance. Reuse existing launcher/eligibility tests and fallback behavior.
+
 Current packet adds strict bound eligibility and one complete initial-wave
 preparation to the existing native pilot, retaining the serial production caller.
 The pilot uses the actual prepared argv/environment/layout, separate external

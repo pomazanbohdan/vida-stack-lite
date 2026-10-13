@@ -58,6 +58,15 @@ type PinnedSpawn = (command: string, args: readonly string[], options: PinnedSpa
 type BoundedSpawnOptions = PinnedSpawnOptions & {
   budget?: ExecutionBudget | undefined;
   diagnostics?: boolean | undefined;
+  coverageReviewPolicy?: CoverageReviewClockPolicy | undefined;
+};
+type CoverageReviewClockPolicy = {
+  maximum_ms: number;
+  report_reserve_ms: 30000;
+  original_duration_ms: string | null;
+  original_expiry_ms: string | null;
+  ancestor_duration_ms: string | null;
+  ancestor_expiry_ms: string | null;
 };
 interface BunOptions {
   root?: string;
@@ -327,7 +336,7 @@ export function boundedSpawnSync(
   label: string,
   cleanup: TimeoutCleanup = defaultTimeoutCleanup,
 ): TrackedCommandResult {
-  const { budget, diagnostics = false, timeout = Infinity, ...spawnOptions } = options;
+  const { budget, diagnostics = false, timeout = Infinity, coverageReviewPolicy, ...spawnOptions } = options;
   if (!(Number.isSafeInteger(timeout) || timeout === Infinity) || timeout <= 0)
     throw new Error('Child allowance must be a positive integer duration.');
   const environment = options.env ?? process.env;
@@ -340,15 +349,28 @@ export function boundedSpawnSync(
   );
   if (allowance <= 0) throw new Error('Execution budget exhausted before child launch.');
   const timeoutMs = budget ? budget.remaining(Math.floor(allowance)) : Math.floor(allowance);
+  const issuedAt = Date.now();
+  const childDeadline = Math.min(ceiling.expiry, inherited.expiry, issuedAt + timeoutMs);
   const started = performance.now();
   const result: TrackedCommandResult = spawn(command, args, {
     ...spawnOptions,
     env: {
       ...environment,
+      VIDA_COVERAGE_REVIEW_CLOCK_POLICY: undefined,
       ...(Number.isFinite(timeoutMs)
         ? {
             VIDA_PINNED_COMMAND_BUDGET_MS: String(timeoutMs),
-            VIDA_PINNED_COMMAND_DEADLINE_MS: String(Math.min(ceiling.expiry, inherited.expiry, Date.now() + timeoutMs)),
+            VIDA_PINNED_COMMAND_DEADLINE_MS: String(childDeadline),
+            ...(coverageReviewPolicy
+              ? {
+                  VIDA_COVERAGE_REVIEW_CLOCK_POLICY: JSON.stringify({
+                    ...coverageReviewPolicy,
+                    budget_ms: String(timeoutMs),
+                    deadline_ms: String(childDeadline),
+                    issued_at_ms: issuedAt,
+                  }),
+                }
+              : {}),
           }
         : {}),
     },
@@ -602,7 +624,7 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
 function coverageIterationBudget(
   args: readonly string[],
   options: BunOptions,
-): { maximum: number; budget: ExecutionBudget | undefined } {
+): { maximum: number; budget: ExecutionBudget | undefined; reviewPolicy?: CoverageReviewClockPolicy | undefined } {
   const isCoverageEntry =
     args[0] === 'tooling/run-bun-coverage.ts' &&
     (args.length === 1 || (args.length === 2 && args[1] === '--published-baseline=b549951'));
@@ -613,7 +635,22 @@ function coverageIterationBudget(
       ? options.budget.child(maximum, 0)
       : executionBudget(maximum, 0)
     : undefined;
-  return { maximum, budget };
+  const environment = options.env ?? process.env;
+  return {
+    maximum,
+    budget,
+    reviewPolicy:
+      isCoverageEntry && args.length === 1 && !options.budget
+        ? {
+            maximum_ms: maximum,
+            report_reserve_ms: 30000,
+            original_duration_ms: environment.VIDA_PINNED_COMMAND_BUDGET_MS ?? null,
+            original_expiry_ms: environment.VIDA_PINNED_COMMAND_DEADLINE_MS ?? null,
+            ancestor_duration_ms: inherited.duration === Infinity ? null : String(inherited.duration),
+            ancestor_expiry_ms: inherited.expiry === Infinity ? null : String(inherited.expiry),
+          }
+        : undefined,
+  };
 }
 
 export function runPinnedBun(args: readonly string[], options: BunOptions = {}): number {
@@ -637,7 +674,11 @@ export function runPinnedBun(args: readonly string[], options: BunOptions = {}):
   const result = boundedSpawnSync(
     spawn,
     executable,
-    embedded ? ['--no-env-file', '--no-install', '--config=' + path.join(root, 'bunfig.toml'), ...args] : args,
+    [
+      ...(embedded ? ['--no-env-file', '--no-install', '--config=' + path.join(root, 'bunfig.toml')] : []),
+      ...args,
+      ...(coverageProfile.reviewPolicy ? ['--wrapper-review-clocks'] : []),
+    ],
     {
       cwd: options.cwd ?? process.cwd(),
       env: { ...pinnedEnvironment(executable, env, root), VIDA_PIPELINE_DIAGNOSTICS: undefined },
@@ -646,6 +687,7 @@ export function runPinnedBun(args: readonly string[], options: BunOptions = {}):
       timeout: timeoutMs,
       budget,
       diagnostics: options.diagnostics ?? false,
+      coverageReviewPolicy: coverageProfile.reviewPolicy,
     },
     'Pinned Bun command',
     cleanup,

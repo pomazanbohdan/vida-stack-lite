@@ -39,6 +39,7 @@ import {
 import { acquireCoverageRunLock, releaseCoverageRunLock } from './coverage-run-lock.js';
 import {
   coverageEnvironmentSha256,
+  coverageReviewEnvironmentSha256,
   coverageInputs,
   instrumentSource,
   isExternalModulePath,
@@ -119,6 +120,7 @@ export function prepareCoverageShardLaunches(input: {
   selected_test_inputs: readonly InputDigest[];
   eligibility: unknown;
   environment: NodeJS.ProcessEnv;
+  wrapped_invocation?: boolean;
 }) {
   const eligibility = resolveCoverageShardEligibility({
     mode: 'current',
@@ -133,7 +135,10 @@ export function prepareCoverageShardLaunches(input: {
   if ((input.environment.BUN_OPTIONS ?? '').trim())
     throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
   if (
-    coverageEnvironmentSha256({ ...input.environment, TMPDIR: input.temporary_root }) !== input.scope.environment_sha256
+    coverageReviewEnvironmentSha256(
+      { ...input.environment, TMPDIR: input.temporary_root },
+      input.wrapped_invocation,
+    ) !== input.scope.environment_sha256
   )
     return {
       status: 'serial-fallback' as const,
@@ -430,7 +435,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   // One command-entry allowance covers pin resolution, current typecheck,
   // capture, the direct producer, CRAP and final report work.
   const commandBudget = executionBudget(300_000, 30_000);
-  const args = process.argv.slice(2);
+  const rawArgs = process.argv.slice(2);
+  const wrappedInvocation = rawArgs.length === 1 && rawArgs[0] === '--wrapper-review-clocks';
+  const args = wrappedInvocation ? [] : rawArgs;
   if (args.some((arg) => arg !== '--published-baseline=b549951'))
     throw new Error('Unsupported Bun coverage runner argument.');
   if (args.length > 1) throw new Error('Bun coverage runner accepts one baseline selection flag.');
@@ -801,6 +808,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       source_maps: sourceMaps,
       instrumented_sources: instrumentedSources,
       execution_scope: {
+        ...(wrappedInvocation ? { wrapper_review_clocks: true } : {}),
         ...(consumerConfiguration ? { consumer_configuration: consumerConfiguration } : {}),
         ...(publishedFixture
           ? {

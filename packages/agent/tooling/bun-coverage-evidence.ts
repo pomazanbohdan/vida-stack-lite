@@ -130,6 +130,77 @@ export function coverageEnvironmentSha256(environment: NodeJS.ProcessEnv): strin
   const selected = Object.fromEntries(Object.entries(values).sort(([left], [right]) => left.localeCompare(right)));
   return sha256(canonicalJson(selected) ?? '');
 }
+
+/** Review-base clock policy only; exact child receipts keep coverageEnvironmentSha256. */
+export function coverageReviewEnvironmentSha256(environment: NodeJS.ProcessEnv, wrappedInvocation = false): string {
+  if (!wrappedInvocation) return coverageEnvironmentSha256(environment);
+  const raw = environment.VIDA_COVERAGE_REVIEW_CLOCK_POLICY;
+  const exact = () => coverageEnvironmentSha256(environment);
+  if (typeof raw !== 'string' || raw.length > 4096) return exact();
+  let policy: unknown;
+  try {
+    policy = JSON.parse(raw);
+  } catch {
+    return exact();
+  }
+  if (typeof policy !== 'object' || policy === null || Array.isArray(policy)) return exact();
+  const keys = [
+    'ancestor_duration_ms',
+    'ancestor_expiry_ms',
+    'budget_ms',
+    'deadline_ms',
+    'issued_at_ms',
+    'maximum_ms',
+    'original_duration_ms',
+    'original_expiry_ms',
+    'report_reserve_ms',
+  ];
+  if (Object.keys(policy).sort().join(',') !== keys.join(',')) return exact();
+  const read = (key: string): unknown => Reflect.get(policy, key);
+  const decimal = (value: unknown): value is string =>
+    typeof value === 'string' && /^\d+$/u.test(value) && Number.isSafeInteger(Number(value));
+  const ceilingKeys = ['ancestor_duration_ms', 'ancestor_expiry_ms', 'original_duration_ms', 'original_expiry_ms'];
+  if (ceilingKeys.some((key) => read(key) !== null && !decimal(read(key)))) return exact();
+  const maximum = read('maximum_ms'),
+    issuedAt = read('issued_at_ms');
+  if (
+    typeof maximum !== 'number' ||
+    !Number.isSafeInteger(maximum) ||
+    maximum <= 0 ||
+    maximum > 300000 ||
+    read('report_reserve_ms') !== 30000 ||
+    typeof issuedAt !== 'number' ||
+    !Number.isSafeInteger(issuedAt) ||
+    issuedAt < 0
+  )
+    return exact();
+  const budgetText = read('budget_ms'),
+    deadlineText = read('deadline_ms');
+  if (
+    !decimal(budgetText) ||
+    !decimal(deadlineText) ||
+    environment.VIDA_PINNED_COMMAND_BUDGET_MS !== budgetText ||
+    environment.VIDA_PINNED_COMMAND_DEADLINE_MS !== deadlineText
+  )
+    return exact();
+  const budget = Number(budgetText),
+    deadline = Number(deadlineText);
+  if (budget <= 0 || budget > maximum || deadline <= issuedAt || deadline - issuedAt > budget) return exact();
+  for (const key of ceilingKeys) {
+    const value = read(key);
+    if (value !== null && (key.endsWith('duration_ms') ? budget : deadline) > Number(value)) return exact();
+  }
+  return coverageEnvironmentSha256({
+    ...environment,
+    VIDA_PINNED_COMMAND_BUDGET_MS: undefined,
+    VIDA_PINNED_COMMAND_DEADLINE_MS: undefined,
+    VIDA_COVERAGE_REVIEW_CLOCK_POLICY: JSON.stringify({
+      maximum_ms: maximum,
+      report_reserve_ms: 30000,
+      ...Object.fromEntries(ceilingKeys.map((key) => [key, read(key)])),
+    }),
+  });
+}
 export const repositoryToolingInputPrefix = '_repository/tooling/agent';
 
 export function repositoryRootForPackage(packageRoot: string): string | null {

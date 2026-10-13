@@ -266,14 +266,21 @@ test('internal recovery denies mixed execution flags and missing original contex
 }, 30000);
 
 test('source correction native mock falls back to the original runtime declaration after override closes', async () => {
-  const previousPath = process.env.PATH ?? '';
-  await sourceCorrectionRebindWithNative({ root: tmpdir(), executable: process.execPath });
-  sourceCorrectionNativeRuntime.value = null;
-  process.env.PATH = previousPath;
-  sourceCorrectionNativeRuntime.previousPath = undefined;
+  const previousPath = process.env.PATH,
+    previousRuntime = sourceCorrectionNativeRuntime.value,
+    previousRuntimePath = sourceCorrectionNativeRuntime.previousPath;
+  try {
+    await sourceCorrectionRebindWithNative({ root: tmpdir(), executable: process.execPath });
+    sourceCorrectionNativeRuntime.value = null;
 
-  const bunModule = await import('../bin/bun.ts');
-  expect(bunModule.standaloneRuntime({})).toBeNull();
+    const bunModule = await import('../bin/bun.ts');
+    expect(bunModule.standaloneRuntime({})).toBeNull();
+  } finally {
+    sourceCorrectionNativeRuntime.value = previousRuntime;
+    if (previousPath === undefined) delete process.env.PATH;
+    else process.env.PATH = previousPath;
+    sourceCorrectionNativeRuntime.previousPath = previousRuntimePath;
+  }
 });
 
 test('public source repair freezes original beforeimages, prior update and held-fence scope without Host writes', async () => {

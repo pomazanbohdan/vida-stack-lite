@@ -4,7 +4,7 @@ import {
   resolveCoverageShardEligibility,
 } from '../tooling/coverage-shard-eligibility.ts';
 import type { InputDigest } from '../tooling/bun-coverage-evidence.ts';
-import { coverageEnvironmentSha256 } from '../tooling/bun-coverage-evidence.ts';
+import { coverageEnvironmentSha256, coverageReviewEnvironmentSha256 } from '../tooling/bun-coverage-evidence.ts';
 import { prepareCoverageShardLaunches } from '../tooling/run-bun-coverage.ts';
 import {
   coverageAssignmentPlanSha256,
@@ -26,6 +26,77 @@ const scope = {
 };
 const input = (name: string, fill = 'f'): InputDigest => ({ path: `tests/${name}.test.ts`, sha256: fill.repeat(64) });
 const resource = `package-root:${'9'.repeat(64)}`;
+
+const clockEnvironment = (
+  issuedAt: number,
+  budget: number,
+  originalDuration: string | null = null,
+): NodeJS.ProcessEnv => ({
+  PATH: '/qualified/bun',
+  VIDA_PINNED_COMMAND_BUDGET_MS: String(budget),
+  VIDA_PINNED_COMMAND_DEADLINE_MS: String(issuedAt + budget),
+  VIDA_COVERAGE_REVIEW_CLOCK_POLICY: JSON.stringify({
+    maximum_ms: 300000,
+    report_reserve_ms: 30000,
+    original_duration_ms: originalDuration,
+    original_expiry_ms: null,
+    ancestor_duration_ms: null,
+    ancestor_expiry_ms: null,
+    budget_ms: String(budget),
+    deadline_ms: String(issuedAt + budget),
+    issued_at_ms: issuedAt,
+  }),
+});
+
+test('review-base hashes normalize consistent generated clocks while exact child hashes remain distinct', () => {
+  const first = clockEnvironment(1000000, 299000);
+  const second = clockEnvironment(2000000, 298000);
+  expect(coverageReviewEnvironmentSha256(first, true)).toBe(coverageReviewEnvironmentSha256(second, true));
+  expect(coverageEnvironmentSha256(first)).not.toBe(coverageEnvironmentSha256(second));
+  expect(coverageReviewEnvironmentSha256(clockEnvironment(1000000, 299000, '300000'), true)).not.toBe(
+    coverageReviewEnvironmentSha256(first, true),
+  );
+  expect(coverageReviewEnvironmentSha256({ ...first, VIDA_FRONTIER_PHASE_TRACE: '1' }, true)).not.toBe(
+    coverageReviewEnvironmentSha256(first, true),
+  );
+  expect(coverageReviewEnvironmentSha256({ ...first, UNRECOGNIZED_SWITCH: '1' }, true)).not.toBe(
+    coverageReviewEnvironmentSha256(first, true),
+  );
+  expect(coverageReviewEnvironmentSha256({ ...first, NODE_ENV: 'test', TZ: 'Etc/UTC' }, true)).toBe(
+    coverageReviewEnvironmentSha256(first, true),
+  );
+  expect(coverageReviewEnvironmentSha256(first)).toBe(coverageEnvironmentSha256(first));
+});
+
+test('review-base hashing keeps malformed or inconsistent clocks exact', () => {
+  const first = clockEnvironment(1000000, 299000);
+  const original: unknown = JSON.parse(first.VIDA_COVERAGE_REVIEW_CLOCK_POLICY!);
+  if (typeof original !== 'object' || original === null || Array.isArray(original))
+    throw new Error('Missing clock fixture.');
+  const changedPolicy = (change: Record<string, unknown>) => ({
+    ...first,
+    VIDA_COVERAGE_REVIEW_CLOCK_POLICY: JSON.stringify({ ...original, ...change }),
+  });
+  for (const altered of [
+    { ...first, VIDA_COVERAGE_REVIEW_CLOCK_POLICY: undefined },
+    { ...first, VIDA_COVERAGE_REVIEW_CLOCK_POLICY: '{}' },
+    { ...first, VIDA_COVERAGE_REVIEW_CLOCK_POLICY: '[' },
+    { ...first, VIDA_PINNED_COMMAND_BUDGET_MS: '300000' },
+    clockEnvironment(1000000, 299000, '123'),
+    clockEnvironment(1000000, 300001),
+    { ...first, VIDA_COVERAGE_REVIEW_CLOCK_POLICY: '[]' },
+    changedPolicy({ extra: true }),
+    changedPolicy({ maximum_ms: 0 }),
+    changedPolicy({ report_reserve_ms: 0 }),
+    changedPolicy({ issued_at_ms: -1 }),
+    changedPolicy({ original_duration_ms: 300000 }),
+    changedPolicy({ ancestor_duration_ms: '12' }),
+    changedPolicy({ original_expiry_ms: '1000001' }),
+    changedPolicy({ ancestor_expiry_ms: '1000001' }),
+    changedPolicy({ deadline_ms: '1300000' }),
+  ])
+    expect(coverageReviewEnvironmentSha256(altered, true)).toBe(coverageEnvironmentSha256(altered));
+});
 const review = (row: InputDigest, reviewScope = canonicalCoverageReviewScope(scope)) => ({
   test_file: row.path,
   test_sha256: row.sha256,
@@ -192,7 +263,7 @@ describe('prepareCoverageShardLaunches', () => {
   const reviewedEnvelope = (environment: NodeJS.ProcessEnv) => {
     const actualScope = {
       ...scope,
-      environment_sha256: coverageEnvironmentSha256({ ...environment, TMPDIR: '/external' }),
+      environment_sha256: coverageReviewEnvironmentSha256({ ...environment, TMPDIR: '/external' }, true),
     };
     return envelope(selected, {
       scope: actualScope,
@@ -207,10 +278,14 @@ describe('prepareCoverageShardLaunches', () => {
       root: '/synthetic',
       temporary_root: '/external',
       run_id: '11111111-1111-1111-1111-111111111111',
-      scope: { ...scope, environment_sha256: coverageEnvironmentSha256({ ...environment, TMPDIR: '/external' }) },
+      scope: {
+        ...scope,
+        environment_sha256: coverageReviewEnvironmentSha256({ ...environment, TMPDIR: '/external' }, true),
+      },
       selected_test_inputs: selected,
       eligibility: boundEligibility,
       environment,
+      wrapped_invocation: true,
     });
 
   test('seals complete serial assignments and separate outputs before the supervisor receives them', () => {
@@ -242,6 +317,40 @@ describe('prepareCoverageShardLaunches', () => {
     expect(result.launches.flatMap(({ args }) => args.filter((arg) => arg.startsWith('./tests/'))).sort()).toEqual(
       selected.map(({ path: file }) => './' + file),
     );
+  });
+
+  test('prepared launches reuse reviewed clock policy while sealing each exact changed child environment', () => {
+    const first = clockEnvironment(1000000, 299000);
+    const second = clockEnvironment(2000000, 298000);
+    const review = reviewedEnvelope(first);
+    const initial = prepare(first, review);
+    const changed = prepare(second, review);
+    expect(initial.status).toBe('prepared');
+    expect(changed.status).toBe('prepared');
+    if (initial.status !== 'prepared' || changed.status !== 'prepared')
+      throw new Error('Consistent clock policy denied.');
+    expect(initial.plan).toEqual(changed.plan);
+    const direct = prepareCoverageShardLaunches({
+      root: '/synthetic',
+      temporary_root: '/external',
+      run_id: '11111111-1111-1111-1111-111111111111',
+      scope: { ...scope, environment_sha256: coverageReviewEnvironmentSha256({ ...first, TMPDIR: '/external' }, true) },
+      selected_test_inputs: selected,
+      eligibility: review,
+      environment: first,
+    });
+    expect(direct).toMatchObject({ status: 'serial-fallback', reason: 'review-environment-stale-or-mismatched' });
+    for (const [index, invocation] of changed.invocations.entries()) {
+      expect(invocation.environment_sha256).toBe(coverageEnvironmentSha256(changed.launches[index]!.env));
+      expect(invocation.environment_sha256).not.toBe(initial.invocations[index]!.environment_sha256);
+    }
+    expect(prepare(clockEnvironment(2000000, 298000, '300000'), review).status).toBe('serial-fallback');
+    const limited = clockEnvironment(1000000, 299000);
+    const policy: unknown = JSON.parse(limited.VIDA_COVERAGE_REVIEW_CLOCK_POLICY!);
+    if (typeof policy !== 'object' || policy === null) throw new Error('Missing clock fixture.');
+    Reflect.set(policy, 'original_expiry_ms', '2000000');
+    limited.VIDA_COVERAGE_REVIEW_CLOCK_POLICY = JSON.stringify(policy);
+    expect(coverageReviewEnvironmentSha256(limited, true)).not.toBe(coverageReviewEnvironmentSha256(first, true));
   });
 
   test('returns serial fallback for missing reviews and denies ambient selection modifiers before launch', () => {

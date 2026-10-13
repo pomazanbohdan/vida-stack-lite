@@ -735,6 +735,19 @@ keys. Worker1 is local to each child and cannot identify a global shard;
 use the run/shard/PID receipt join. Nonempty ambient BUN_OPTIONS denies this
 contract. Do not log raw environment values while diagnosing hash differences.
 
+The review-base environment digest is separate from the exact child digest.
+Only the current maintained wrapper, without an opaque parent budget, emits
+`--wrapper-review-clocks` together with a fresh bounded clock-policy tuple after
+discarding ambient claims. The tuple binds the actual generated budget/deadline,
+original caller and ancestor ceilings, effective maximum and30000ms reserve.
+Review normalization requires explicit wrapper opt-in and full tuple consistency;
+direct invocations, missing/malformed claims and opaque budgets use exact hashing.
+Original absolute expiries, diagnostic flags and unknown env keys remain bound.
+This is cooperative consistency, not authentication or execution authority.
+The final owner retains actual Source wrapper issuance evidence; an internal
+flag or internally consistent JSON alone is not that evidence. Native inert
+wrapper/direct controls qualify this routing without running a second suite.
+
 Eligibility binds captured test SHA plus the source/test/tool/config/runtime,
 platform/provider and package-owner review scope. Source or dependency drift
 invalidates unchanged-test reviews too. Omitted reviews default to singleton

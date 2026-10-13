@@ -123,11 +123,24 @@ mock.module('./bun-coverage-evidence.ts', () => ({
 }));
 `,
     );
+    const issuedAt = Date.now();
     const producerEnvironment: NodeJS.ProcessEnv = {
       ...process.env,
       BUN_OPTIONS: '',
       VIDA_PINNED_COMMAND_BUDGET_MS: '36000',
-      VIDA_PINNED_COMMAND_DEADLINE_MS: String(Date.now() + 36000),
+      VIDA_PINNED_COMMAND_DEADLINE_MS: String(issuedAt + 36000),
+      // A direct invocation must not adopt this internally consistent ambient claim.
+      VIDA_COVERAGE_REVIEW_CLOCK_POLICY: JSON.stringify({
+        maximum_ms: 300000,
+        report_reserve_ms: 30000,
+        original_duration_ms: null,
+        original_expiry_ms: null,
+        ancestor_duration_ms: null,
+        ancestor_expiry_ms: null,
+        budget_ms: '36000',
+        deadline_ms: String(issuedAt + 36000),
+        issued_at_ms: issuedAt,
+      }),
     };
     delete producerEnvironment.AGENT_RUNTIME_TEST_REPOSITORY_ROOT;
     const child = spawnSync(
@@ -191,6 +204,7 @@ mock.module('./bun-coverage-evidence.ts', () => ({
     const report = record(JSON.parse(readFileSync(reportPath, 'utf8')));
     const manifest = record(JSON.parse(readFileSync(path.join(root, String(report.manifest_path)), 'utf8')));
     expect(manifest.schema).toBe('VidaBunCoverageRun/v2');
+    expect(record(manifest.execution_scope)).not.toHaveProperty('wrapper_review_clocks');
     expect(report.source_maps).toEqual(manifest.source_maps);
     const rows = manifest.instrumented_sources;
     expect(Array.isArray(rows)).toBe(true);

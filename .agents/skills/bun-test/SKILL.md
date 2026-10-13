@@ -16,6 +16,15 @@ and physical root identity; canonical config equality is not byte freshness.
 An inert caller stub proves environment propagation only, not the product
 configuration loader; keep genuine loader and project-upgrade controls separate.
 
+For coverage clock reviews, keep exact child environment receipts unchanged.
+The separate review-base hash defaults to exact and requires the maintained
+current wrapper's explicit opt-in plus a consistent generated clock tuple.
+Qualify real wrapper issuance and direct ambient-claim fallback in owned inert
+scripts. Keep original caller/ancestor ceilings and all diagnostic/unknown keys
+bound; no internal flag or cooperative JSON grants authority. Opaque parent
+budgets and historical entries retain exact hashing. Bound native probes and
+second controls within the case deadline; retain the root on failed observation.
+
 For coverage receipt negatives, preserve the canonical Source map, assigned
 tests, sibling/process joins and receipt hashes while changing the targeted
 loaded-Source row. Test both nonzero and zero-valued child maps: every emitted

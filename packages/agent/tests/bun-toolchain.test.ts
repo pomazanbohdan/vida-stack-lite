@@ -12,6 +12,7 @@ import {
 } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { afterEach, test } from 'bun:test';
 import {
   boundedSpawnSync,
@@ -25,6 +26,7 @@ import {
   runPinnedBun,
   syncPin,
 } from '../bin/bun.ts';
+import { coverageReviewEnvironmentSha256, coverageEnvironmentSha256 } from '../tooling/bun-coverage-evidence.ts';
 
 interface CommandResult {
   status: number | null;
@@ -367,6 +369,108 @@ test('coverage iteration defaults to one propagated five-minute launcher deadlin
     const childDeadline = Number(environment?.VIDA_PINNED_COMMAND_DEADLINE_MS);
     assert.equal(childBudget, timeout);
     assert.ok(childDeadline > started && childDeadline <= started + 300_050);
+  }
+});
+
+test('current coverage wrapper replaces ambient review clocks and preserves caller ceilings in semantic policy', () => {
+  const { root, pin } = fixture();
+  const calls: LauncherCall[] = [];
+  const callerExpiry = String(Date.now() + 300000);
+  runPinnedBun(['tooling/run-bun-coverage.ts'], {
+    root,
+    executable: path.join(root, 'coverage-bun'),
+    env: {
+      VIDA_COVERAGE_REVIEW_CLOCK_POLICY: 'ambient-forged-claim',
+      VIDA_PINNED_COMMAND_BUDGET_MS: '240000',
+      VIDA_PINNED_COMMAND_DEADLINE_MS: callerExpiry,
+    },
+    spawn(command, argv, options) {
+      calls.push({ command, argv, options });
+      return calls.length === 1 ? success(pin) : success('');
+    },
+  });
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0]?.options.env?.VIDA_COVERAGE_REVIEW_CLOCK_POLICY, undefined);
+  const environment = calls[1]?.options.env;
+  assert.ok(environment);
+  const raw = environment.VIDA_COVERAGE_REVIEW_CLOCK_POLICY;
+  assert.ok(typeof raw === 'string');
+  const policy: unknown = JSON.parse(raw);
+  assert.ok(typeof policy === 'object' && policy !== null && !Array.isArray(policy));
+  assert.equal(Reflect.get(policy, 'original_duration_ms'), '240000');
+  assert.equal(Reflect.get(policy, 'original_expiry_ms'), callerExpiry);
+  assert.equal(Reflect.get(policy, 'budget_ms'), environment.VIDA_PINNED_COMMAND_BUDGET_MS);
+  assert.equal(Reflect.get(policy, 'deadline_ms'), environment.VIDA_PINNED_COMMAND_DEADLINE_MS);
+  assert.ok(Number(environment.VIDA_PINNED_COMMAND_BUDGET_MS) <= 240000);
+  assert.ok(Number(environment.VIDA_PINNED_COMMAND_DEADLINE_MS) <= Number(callerExpiry));
+  assert.ok(calls[1]?.argv.includes('--wrapper-review-clocks'));
+  assert.notEqual(coverageReviewEnvironmentSha256(environment, true), coverageEnvironmentSha256(environment));
+  assert.equal(coverageReviewEnvironmentSha256(environment), coverageEnvironmentSha256(environment));
+});
+
+test('native wrapper issuance opts into review clocks while a direct ambient claim keeps exact hashing', () => {
+  const { root } = fixture();
+  let passed = false;
+  try {
+    const entry = path.join(root, 'tooling/run-bun-coverage.ts');
+    const output = path.join(root, 'clock-observation.json');
+    const owner = pathToFileURL(path.resolve(import.meta.dirname, '../tooling/bun-coverage-evidence.ts')).href;
+    mkdirSync(path.dirname(entry), { recursive: true });
+    writeFileSync(
+      entry,
+      `import {writeFileSync} from 'node:fs';
+import {coverageReviewEnvironmentSha256,coverageEnvironmentSha256} from ${JSON.stringify(owner)};
+const argv=process.argv.slice(2);
+writeFileSync(${JSON.stringify(output)},JSON.stringify({argv,
+  policy:process.env.VIDA_COVERAGE_REVIEW_CLOCK_POLICY,
+  budget:process.env.VIDA_PINNED_COMMAND_BUDGET_MS,deadline:process.env.VIDA_PINNED_COMMAND_DEADLINE_MS,
+  exact:coverageEnvironmentSha256(process.env),
+  review:coverageReviewEnvironmentSha256(process.env,argv.length===1&&argv[0]==='--wrapper-review-clocks')}));\n`,
+    );
+    assert.equal(
+      runPinnedBun(['tooling/run-bun-coverage.ts'], {
+        root,
+        cwd: root,
+        executable: process.execPath,
+        timeoutMs: 2000,
+      }),
+      0,
+    );
+    const observation: unknown = JSON.parse(readFileSync(output, 'utf8'));
+    assert.ok(typeof observation === 'object' && observation !== null && !Array.isArray(observation));
+    assert.deepEqual(Reflect.get(observation, 'argv'), ['--wrapper-review-clocks']);
+    assert.notEqual(Reflect.get(observation, 'review'), Reflect.get(observation, 'exact'));
+    const nativePolicy: unknown = Reflect.get(observation, 'policy');
+    const nativeBudget: unknown = Reflect.get(observation, 'budget');
+    const nativeDeadline: unknown = Reflect.get(observation, 'deadline');
+    assert.ok(
+      typeof nativePolicy === 'string' && typeof nativeBudget === 'string' && typeof nativeDeadline === 'string',
+    );
+    const direct = spawnSync(process.execPath, [entry], {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 2000,
+      env: {
+        ...process.env,
+        VIDA_COVERAGE_REVIEW_CLOCK_POLICY: nativePolicy,
+        VIDA_PINNED_COMMAND_BUDGET_MS: nativeBudget,
+        VIDA_PINNED_COMMAND_DEADLINE_MS: nativeDeadline,
+      },
+    });
+    assert.equal(direct.error, undefined);
+    assert.equal(direct.signal, null);
+    assert.equal(direct.status, 0);
+    const directObservation: unknown = JSON.parse(readFileSync(output, 'utf8'));
+    assert.ok(typeof directObservation === 'object' && directObservation !== null && !Array.isArray(directObservation));
+    assert.deepEqual(Reflect.get(directObservation, 'argv'), []);
+    assert.equal(Reflect.get(directObservation, 'policy'), Reflect.get(observation, 'policy'));
+    assert.equal(Reflect.get(directObservation, 'review'), Reflect.get(directObservation, 'exact'));
+    passed = true;
+  } finally {
+    if (!passed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed native wrapper clock fixture: ' + root);
+    }
   }
 });
 

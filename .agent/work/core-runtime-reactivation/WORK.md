@@ -10296,3 +10296,67 @@ semantic review-base environment digest. Keep exact child environment hashing,
 unknown diagnostic keys, caller ceilings and the existing review envelope.
 No duplicate schema, full suite, AST/scan/hash pass, native activation or new
 coverage/CRAP/mutation admission follows from this packet.
+
+### Review clocks and current resource closure — 2026-10-13
+
+869ff43 committed with ordinary strict staged hook and pushed non-force to main;
+only unrelated BASE/ and root bun.lock remain. Current187selectedtestfiles are
+captured once for five blind Luna resource packets (38/38/37/37/37). Descriptors
+remain non-eligibility research. Root rejects two unsupported findings: coverage
+provenance edits its synthetic fixture, and npm_execpath already has finally.
+Actual configured-root CAS readers are grouped by their captured physical owner;
+child-local module/prototype/env clocks do not alone imply global exclusivity.
+The configured-context lock/reclaim targets its unique .tmp child and does not
+collide with unrelated package schemas. Complete current caller closure remains
+required before removing the common package owner or activating shards.
+
+The maintained wrapper's generated clocks previously made persistent review
+environment hashes stale at each launch. Causal clock RED uses the exact old
+hash behavior:1PASS/1FAIL. The separate review-base API retains all unknown env
+and original caller/ancestor limits while validating/normalizing only the bounded
+generated pair. Exact child hashing stays unchanged. Wrapper clears ambient
+claims; current unbudgeted entry emits policy plus internal opt-in. Historical
+and opaque-budget launches retain exact semantics. Blind review finds direct
+ambient claim acceptance; the default exact path and explicit wrapper opt-in
+close it. The flag/JSON is cooperative consistency, not authentication: final
+owner still observes actual wrapper issuance.
+
+Full affected launcher/eligibility/native fixture controls63PASS/156assertions/
+4.61s, no duplicate full selection. The added native inert wrapper/direct control
+1PASS/3.02s command (1770msbody) proves actual child argv/policy and exact direct
+fallback without another Bun suite. It is bounded to2000ms wrapper and2000ms
+direct child inside default5000ms, with failed root retention. Shared native
+override test restores exact PATH/value/path-marker in finally; persistent module
+mock installation marker remains owned by its existing helper. Its focused case
+passes. Strict447capturedTS/446program and100SourcePASS,0diagnostics; typedlint
+PASS before final native control/clock guidance edits. Ordinary staged hook
+qualifies final bytes. Live production remains serial; no new global metrics.
+
+Six new blind Luna closure roles cover verified package provider, CONFIG and
+orchestration callers, exact mutable test targets, frozen correspondence gaps
+and single-DB close custody. Confirmed exclusive admission close-error path
+currently loses the native handle; qualify/repair its existing custody owner
+before one-DB cutover. Package bootstrap raw schema validation is separate from
+dynamic package access and needs contract review before calling it a defect.
+Existing report roots/effects and all UNKNOWN outcomes remain preserved.
+
+Final bounded native wrapper/direct control1PASS/1199mscommand,885msbody after
+the explicit2000ms wrapper ceiling; failed fixtures remain guarded. Provider and
+CONFIG/orchestration closure reviews identify actual Linux verified package
+readers with propagated failure and zero CAS writes; Windows/missing-method
+fallback remains mutable. Root rejects whole-package exclusivity from a private
+context.txt lock family. Optional VIDA_STOPPED_SOURCE_PHASE_LOG is a real
+caller-selected append owner and must stay resource-bound. Initialization/upgrade/
+migration affected-reader controls and full current eligibility remain pending.
+
+Frozen research reuses saved candidate inventory:7608roles/145paths, static
+unreviewed. Stored binding join with reviewed partial shows12differingSHA paths,
+63unbound paths and2partial-only paths. These are stale/provenance contour lists,
+not current metrics or valid default CRAP. Reconcile those finite scopes against
+one current capture; preserve genuine baseline/ref/roles/removals and reviewed
+prospective ceilings. No generated role or coverage result auto-fills budgets.
+
+Ordinary staged hook denies three unsafe any assignments in the new inert native
+observation's env reconstruction. Explicit unknown locals + string guards repair
+the boundary; native final control1PASS/3.14scommand,2438msbody. No hook bypass;
+the failing hook log is retained and exact final staged checks run again.
