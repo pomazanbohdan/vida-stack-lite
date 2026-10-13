@@ -16,6 +16,12 @@ An expected-UNKNOWN fixture remains retained even when its denial assertions
 pass. Its test owner marks retention separately from successful case completion.
 For serial cases, an onTestFinished assertion can check exact retained bytes
 after afterEach; the hook itself does not establish success or quiescence.
+Settled fixture transport does not resolve persisted governance. The cleanup
+owner checks its recorded creator database with the shared reservation validator;
+reserved, commit_unknown and unreadable or malformed evidence retain the root.
+Qualify retained bytes and normal terminal cleanup separately. An applied control
+uses the real reserved-to-commit_unknown-to-applied transition; successful child
+exit alone does not authorize disposal of another unresolved producer's lock.
 
 Coverage must use a provider compatible with Bun and report all required
 metrics. The frozen-budget CRAP policy must match its executable gate; a fixed

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { HostStateStore } from '../../src/host-state.ts';
+import { hasUnresolvedFixtureOperations } from './unresolved-governance-fixture.ts';
 import type {
   CoordinationLedger,
   CoordinationClaim,
@@ -729,20 +730,7 @@ export function cleanupContinuationFixtures() {
   const retained = new Set(uncertainFixtureRoots);
   for (const database of fixtureDatabases.splice(0)) {
     const filename = path.resolve(database.filename);
-    const operations: readonly unknown[] = database
-      .query("SELECT payload FROM agent_host_governance WHERE kind='operation'")
-      .all();
-    if (
-      operations.some((row) => {
-        if (!isPlainRecord(row) || typeof row.payload !== 'string') return true;
-        const value: unknown = JSON.parse(row.payload);
-        return (
-          !isPlainRecord(value) ||
-          typeof value.status !== 'string' ||
-          ['reserved', 'commit_unknown'].includes(value.status)
-        );
-      })
-    ) {
+    if (hasUnresolvedFixtureOperations(database)) {
       for (const root of fixtureRoots) {
         const relative = path.relative(path.resolve(root), filename);
         if (relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep))

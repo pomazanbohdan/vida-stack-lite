@@ -32,8 +32,9 @@ function actualFixturePrelude(resultPath: string): string {
   return `
     import { afterAll, expect, test } from 'bun:test';
     import { existsSync, writeFileSync } from 'node:fs';
+    import { Database } from 'bun:sqlite';
     const fixtureApi = await import(${JSON.stringify(helperUrl)});
-    const { fixture, fixtureCall, registerRuntimeConfigFixtureCleanup, sourceCorrectionNativeRuntime } = fixtureApi;
+    const { fixture, fixtureCall, registerRuntimeConfigFixtureCleanup, sourceCorrectionNativeRuntime, withDatabase } = fixtureApi;
     registerRuntimeConfigFixtureCleanup();
     const f = fixture();
     const resultPath = ${JSON.stringify(resultPath)};
@@ -141,10 +142,86 @@ test('an unresolved fixture call retains its root and shared native state', asyn
   }
 }, 45_000);
 
+test.each(['reserved', 'commit_unknown'] as const)(
+  'a settled fixture call retains its root when its governance operation remains %s',
+  async (status) => {
+    const controlRoot = mkdtempSync(path.join(tmpdir(), 'vida-runtime-config-rebind-unknown-control-'));
+    const resultPath = path.join(controlRoot, 'result.json');
+    const source = `${actualFixturePrelude(resultPath)}
+    import { HostStateStore } from ${JSON.stringify(pathToFileURL(path.resolve(import.meta.dirname, '../src/host-state.ts')).href)};
+    import path from 'node:path';
+    const storeId = 'vida-lifecycle-unknown-control';
+    const operationKey = '2'.repeat(64);
+    const databasePath = path.join(f.root, '.agent/work/session-handoff.v1.sqlite');
+    let expectedOperationBytes;
+    const readOperationBytes = () => {
+      if (!existsSync(databasePath)) return null;
+      const db = new Database(databasePath, { readonly: true, strict: true });
+      try {
+        const row = db.query('SELECT payload FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind=? AND record_key=?')
+          .get(f.workspace, storeId, 'operation', operationKey);
+        return row && typeof row.payload === 'string' ? row.payload : null;
+      } finally { db.close(); }
+    };
+    test('settle fixture transport with an unresolved governance operation', async () => {
+      const args = ['--project-root', f.root, '--mode', 'sentinel'];
+      const result = await fixtureCall((observed) => {
+        expect(observed).toEqual(args);
+        return withDatabase(f, (db) => {
+          const store = new HostStateStore(db, f.workspace);
+          const operation = store.reserveOperation(storeId, operationKey, '1'.repeat(64));
+          if (!operation) throw Error('UNKNOWN control reservation was not created');
+          if (${JSON.stringify(status)} === 'commit_unknown') store.transitionOperation(operation, 'commit_unknown');
+          const retained = store.inspectOperation(storeId, operationKey);
+          if (!retained) throw Error('UNKNOWN control operation is missing');
+          return { status: retained.status, bytes: readOperationBytes() };
+        });
+      }, args);
+      expect(result.status).toBe(${JSON.stringify(status)});
+      expectedOperationBytes = result.bytes;
+      expect(typeof expectedOperationBytes).toBe('string');
+    });
+    afterAll(() => writeFileSync(resultPath, JSON.stringify({
+      root: f.root,
+      rootExists: existsSync(f.root),
+      expectedOperationBytes,
+      actualOperationBytes: readOperationBytes(),
+    })));
+  `;
+    let retain = true;
+    let fixtureRoot: string | undefined;
+    try {
+      const { child } = await runActualFixtureChild('unknown-control', source);
+      expect(child.closeObserved).toBe(true);
+      expect(child.timedOut).toBe(false);
+      expect(child.exitCode, child.stderr.toString()).toBe(0);
+      const capture: unknown = JSON.parse(readFileSync(resultPath, 'utf8'));
+      expect(isRecord(capture)).toBe(true);
+      if (!isRecord(capture)) throw Error('UNKNOWN-operation child produced an invalid capture record');
+      fixtureRoot = typeof capture.root === 'string' ? capture.root : undefined;
+      expect(capture.rootExists).toBe(true);
+      expect(typeof capture.expectedOperationBytes).toBe('string');
+      expect(capture.actualOperationBytes).toBe(capture.expectedOperationBytes);
+      const operation: unknown = JSON.parse(String(capture.actualOperationBytes));
+      expect(isRecord(operation)).toBe(true);
+      if (!isRecord(operation)) throw Error('Retained UNKNOWN operation payload is invalid');
+      expect(operation.status).toBe(status);
+      retain = false;
+    } finally {
+      if (!retain) {
+        if (fixtureRoot) console.warn('Retained UNKNOWN governance control fixture: ' + fixtureRoot);
+        rmSync(controlRoot, { recursive: true, force: true });
+      }
+    }
+  },
+  45_000,
+);
+
 test('a settled fixture call preserves its result and performs normal cleanup', async () => {
   const controlRoot = mkdtempSync(path.join(tmpdir(), 'vida-runtime-config-rebind-settled-control-'));
   const resultPath = path.join(controlRoot, 'result.json');
   const source = `${actualFixturePrelude(resultPath)}
+    import { HostStateStore } from ${JSON.stringify(pathToFileURL(path.resolve(import.meta.dirname, '../src/host-state.ts')).href)};
     test('settle one owned fixture call', async () => {
       sourceCorrectionNativeRuntime.value = { root: 'controlled-root', executable: 'controlled-executable' };
       sourceCorrectionNativeRuntime.previousPath = baselinePath;
@@ -152,6 +229,14 @@ test('a settled fixture call preserves its result and performs normal cleanup', 
       const args = ['--project-root', f.root, '--mode', 'sentinel'];
       const result = await fixtureCall((observed) => {
         expect(observed).toEqual(args);
+        withDatabase(f, (db) => {
+          const store = new HostStateStore(db, f.workspace);
+          const operation = store.reserveOperation('vida-lifecycle-terminal-control', '4'.repeat(64), '5'.repeat(64));
+          if (!operation) throw Error('Terminal control reservation was not created');
+          store.transitionOperation(operation, 'commit_unknown');
+          store.transitionOperation(operation, 'applied', '6'.repeat(64));
+          expect(store.inspectOperation(operation.store_id, operation.operation_key)?.status).toBe('applied');
+        });
         return { status: 'settled' };
       }, args);
       expect(result).toEqual({ status: 'settled' });
@@ -169,7 +254,7 @@ test('a settled fixture call preserves its result and performs normal cleanup', 
     const { child } = await runActualFixtureChild('settled-control', source);
     expect(child.closeObserved).toBe(true);
     expect(child.timedOut).toBe(false);
-    expect(child.exitCode).toBe(0);
+    expect(child.exitCode, child.stderr.toString()).toBe(0);
     const capture: unknown = JSON.parse(readFileSync(resultPath, 'utf8'));
     expect(isRecord(capture)).toBe(true);
     if (!isRecord(capture)) throw Error('Settled-call child produced an invalid capture record');

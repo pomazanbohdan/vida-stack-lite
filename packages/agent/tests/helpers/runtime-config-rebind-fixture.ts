@@ -3,7 +3,7 @@ import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { stringify as stringifyYaml } from 'yaml';
-import { mkdirSync, mkdtempSync, readFileSync, writeFileSync, cpSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, cpSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { isUnknownSynchronousChild } from './synchronous-child-outcome.ts';
@@ -68,6 +68,7 @@ import type {
 import type { WorkExecutionContext } from '../../src/orchestration/workflow-session-reservation-contract.ts';
 import type { ScopedSourceSnapshot } from '../../src/orchestration/scoped-source-snapshot.ts';
 import { validateHostOperationReservation, type OperationReservation } from '../../src/governance/edictum-boundary.ts';
+import { hasUnresolvedFixtureOperations } from './unresolved-governance-fixture.ts';
 import type { SpawnSyncReturns } from 'node:child_process';
 import type { ConfiguredContext } from '../../src/orchestration/configured-context.ts';
 import {
@@ -86,7 +87,10 @@ export function registerRuntimeConfigFixtureCleanup(): void {
     for (const root of fixtureRoots.splice(0)) {
       if (pendingFixtureCalls.has(root)) console.warn(`Retained fixture with an unresolved operation: ${root}`);
       else if (failedFixtureRoots.has(root)) console.warn(`Retained failed historical inspection fixture: ${root}`);
+      else if (fixtureHasUnresolvedOperations(root))
+        console.warn(`Retained fixture with unresolved governance: ${root}`);
       else rmSync(root, { recursive: true, force: true });
+      fixtureDatabasePaths.delete(root);
     }
     if (!hasPendingCalls) resetSourceCorrectionNativeRuntime();
   });
@@ -361,9 +365,24 @@ type StandaloneRuntime = NonNullable<ReturnType<typeof import('../../bin/bun.ts'
 export const fixtureContextPath = 'docs/project-context.md';
 
 const fixtureRoots: string[] = [];
+const fixtureDatabasePaths = new Map<string, string>();
 const failedFixtureRoots = new Set<string>();
 
 const pendingFixtureCalls = new Map<string | undefined, number>();
+
+function fixtureHasUnresolvedOperations(root: string): boolean {
+  const databasePath = fixtureDatabasePaths.get(root);
+  if (databasePath === undefined || !existsSync(databasePath)) return true;
+  let database: Database | undefined;
+  try {
+    database = new Database(databasePath, { readonly: true, strict: true });
+    return hasUnresolvedFixtureOperations(database);
+  } catch {
+    return true;
+  } finally {
+    database?.close();
+  }
+}
 
 /** Retain only this case's newly-created fixture roots if setup or its body fails. */
 export function withHistoricalInspectionFixtureCustody<TResult>(body: () => TResult): TResult {
@@ -1385,7 +1404,9 @@ export function fixture({
   expect(target).not.toBe(oldYaml);
   put('proposed.yaml', target);
   mkdirSync(path.join(root, '.agent/work'), { recursive: true });
-  const db = new Database(path.join(root, '.agent/work/session-handoff.v1.sqlite'), { create: true });
+  const databasePath = path.join(root, '.agent/work/session-handoff.v1.sqlite');
+  fixtureDatabasePaths.set(root, databasePath);
+  const db = new Database(databasePath, { create: true });
   new HostStateStore(db, workspace);
   db.exec(
     'CREATE TABLE agent_host_mastra_session_ledger (workspace_id TEXT NOT NULL, work_id TEXT NOT NULL, attempt INTEGER NOT NULL, revision INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,work_id,attempt))',

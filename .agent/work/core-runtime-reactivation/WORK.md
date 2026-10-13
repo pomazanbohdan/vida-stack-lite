@@ -9488,3 +9488,35 @@ other two audits identify coverage-runner UNKNOWN-typecheck fixture disposal
 and settled recovery commit_unknown governance roots. Root verifies each actual
 state/cleanup path before a separate joined correction. Seeded states and
 successful same-ID recovery are not keyword-based findings or new rights.
+
+Published90426f0 retains the two actual pre-effect upgrade UNKNOWN roots;
+ordinary hooksPASS and non-force push complete. Three blind whole-contour
+analogue audits confirm two further cleanup defects: coverage-runner's clean
+outer CLI exit1 does not resolve its UNKNOWN typecheck producer/lock, and settled
+rebind transport does not resolve persisted reserved/commit_unknown operations.
+Desired RED assertions observe missing roots/locks: coverage1FAIL/9assertions;
+rebind1FAIL/5assertions/2.52s. Incidental early setup errors are not those REDs.
+
+Root retains the controlled UNKNOWN typecheck root and its actual coverage lock.
+Rebind records each real creator database path, opens it readonly for cleanup,
+and retains unresolved/unreadable state. Continuation and rebind now share
+hasUnresolvedFixtureOperations, using the existing production reservation
+validator. No mutable config reload, state replay, new authorization or product
+test seam is introduced. Final matrix checks actual reserved/commit_unknown
+payload bytes after afterEach, and checks deletion after a valid applied
+operation plus reset of existing native/PATH state. The first final selection
+was7PASS/1FAIL because the new terminal control skipped commit_unknown; Root
+corrected it to the supported transition and inspected analogous test callers.
+Final corrected selection8PASS/0FAIL/83assertions/11.79s includes continuation
+endpoint/CAS cases, hook registration, pending transport and UNKNOWN lock.
+New uncertain roots stay retained under external RAM TMPDIR; failed roots/logs
+are not replayed or pruned. Logs analog-unknown-custody-final-focused-corrected,
+publish-static and publish-lint retain evidence. Final static437capturedTS/
+436program plus97Source PASS,0diagnostics; lintPASS. No duplicate full suite is
+run for this fixture-only correction. Current ca5209ff outcome remains UNKNOWN
+without numeric admission; late-native-timeout/descendant quiescence, parallel
+eligibility, exhaustive frozen correspondence and native acceptance stay open.
+Final blind contract review confirms the changed retention/terminal paths and
+supported transition. Automatic-admission and run-entrypoint disposal are next
+read-only candidates: lack of a predicate alone is not a confirmed defect;
+require an actual unresolved state at deletion before changing those owners.

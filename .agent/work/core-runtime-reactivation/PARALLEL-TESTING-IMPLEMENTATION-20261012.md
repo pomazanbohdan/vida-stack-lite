@@ -259,6 +259,13 @@ custody even when their denial assertions pass. onTestFinished reads their exact
 journals after shared cleanup; assertion RED and3caseGREEN/180assertions qualify
 this disposition, not cleanup isolation or descendant/effect quiescence. All
 five natural age witnesses and their case/child bounds remain.
+The joined analogue audit also qualifies retention of the UNKNOWN typecheck
+producer's coverage lock and rebind fixture reserved/commit_unknown operations.
+Rebind cleanup checks its recorded creator database; continuation cleanup reuses
+the same reservation-validator predicate. Unreadable/malformed evidence stays
+retained. Actual post-cleanup byte checks and an applied terminal control pass;
+transport settlement alone no longer grants disposal. This closes the confirmed
+analogue defects, not legacy late-failure custody or parallel eligibility.
 The existing completed-Source recovery case now observes the actual expired-
 lease schema caller selecting verified bytes once, no raw read, its persisted
 schema digest and unchanged Source. Its focused native PASS retains original

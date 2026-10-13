@@ -152,6 +152,17 @@ monitors capacity; no failed/UNKNOWN fixture pruning or gate relaxation.
 
 Next packet: malformed-process-output parser controls3PASS/7assertions; controller opt-in start/settled diagnostics cover setup and public calls, parent62function complexities unchanged. Fresh controller controlsPASS17assertions at27.55s and31.07s command; diagnostic receipts retained in workspace before exact verified successful fixture cleanup. Setup~0.8s, largest issue-wave~6.1s in that fresh tmpfs control; workspace full measurements are not a matched benchmark. Further Source/runtime-package cost attribution remains open, no safe freshness shortcut admitted.
 
+The subsequent fixture-custody packet is qualified separately: three blind
+contour audits identify two additional unresolved-evidence disposal paths after
+the upgrade UNKNOWN-root fix90426f0. The coverage UNKNOWN-typecheck lock and
+rebind reserved/commit_unknown roots now survive actual owner cleanup; rebind
+and continuation share one existing-validator predicate. Final scoped checks
+are8PASS/83assertions/11.79s, current TS0diagnostics and lintPASS. The applied
+terminal control follows the real two-step settlement before normal deletion.
+No additional unchanged full run is launched for this fixture-only packet.
+ca5209ff remains UNKNOWN at600000ms without an admitted numeric report. Broader
+late-timeout custody, parallel eligibility and frozen correspondence stay open.
+
 ## Next reviewed P1 packet: retain the existing transform result
 
 The producer currently discards generated code from its map transform; the

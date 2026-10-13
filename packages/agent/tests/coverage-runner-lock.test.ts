@@ -268,9 +268,11 @@ mock.module('node:child_process', () => ({
     expect(existsSync(path.join(root, 'coverage/bun-unified/runs'))).toBe(false);
     passed = true;
   } finally {
-    if (passed) rmSync(root, { recursive: true, force: true });
+    if (passed) console.warn(`Retained controlled UNKNOWN typecheck fixture at ${root}`);
     else console.error(`Preserved failed unknown typecheck fixture at ${root}`);
   }
+  expect(existsSync(root)).toBe(true);
+  expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-run.lock'))).toBe(true);
 });
 
 test('spent inherited command budget launches neither typecheck nor capture', () => {
