@@ -13,17 +13,19 @@ measured repeated Host validation and qualified resource overlap below.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. Root owns runtime verification; blind Luna workers own disjoint implementation files and independent reviews.
 
-**Goal:** Reach a complete passing current test selection with exact coverage and frozen quality gates, within the user's ten-minute iteration ceiling.
+**Goal:** Reach a complete passing current test selection with exact coverage and frozen quality gates, within the user's five-minute (300000ms) global test/coverage operation deadline.
 
 **Architecture:** Retain Babel AST → function inventory → test links → reviewed scenario matrices, Ajv and the owned Bun coverage producer. Each iteration captures inputs once, streams its selected tests, records terminal evidence, fixes causal families, and publishes verified packets before the next full run. A partial or interrupted run never qualifies a global gate.
 
 **Tech Stack:** Qualified Bun1.4.3, maintained TypeScript, existing Babel/Ajv/coverage/CRAP/mutation tooling; no new dependencies or orchestration framework.
 
-**Spec:** HANDOFF-CLEAR-CLOUD-20261009.md, current packages/agent/TESTING.md, current WORK.md, and the user's explicit ten-minute iterative repair instruction on2026-10-12. Earlier recovery records are not current premises.
+**Spec:** HANDOFF-CLEAR-CLOUD-20261009.md, current packages/agent/TESTING.md, current WORK.md, and the user's explicit iterative repair instruction on2026-10-12. Earlier recovery records are not current premises.
+
+The five-minute (300000ms) global operation deadline issued on2026-10-13 supersedes this file's earlier ten-minute target; the filename is retained as a historical reference.
 
 ## Global Constraints
 
-- Suite producer ceiling600000ms; default5000ms per individual test, existing justified case exceptions remain distinct.
+- Global test/coverage operation deadline300000ms; default5000ms per individual test, existing justified case exceptions remain distinct.
 - Exact100% functions/lines/statements/branches for every maintained source and aggregate; every mapped function must have valid execution evidence.
 - Frozen complexity/CRAP correspondence and ceilings; never derive new ceilings from candidate failures.
 - Mutation100% requires assertion-confirmed Killed; timeout, compile/runtime error and no coverage never count.
@@ -133,7 +135,7 @@ Ruling: parallel independent writers are authorized by the user's explicit dispa
 - [ ] Run exact coverage/CRAP/mutation admission sequentially under Root; reuse current receipts only when every binding remains current.
 - [ ] Record producer and end-to-end command durations separately. Fix measured setup/I/O/teardown costs without weakening fsync, quarantine, freshness or assertion strength.
 - [ ] Repeat tasks2–5 after a concrete fix batch; never repeat identical input just to seek a greener outcome.
-- [ ] Finish only when all current tests pass, exact four-metric coverage and frozen gates pass, assertion-confirmed mutation score is100%, and the complete test/coverage flow finishes within10minutes. Explicitly retain any pending target-platform/runtime qualification.
+- [ ] Finish only when all current tests pass, exact four-metric coverage and frozen gates pass, assertion-confirmed mutation score is100%, and the complete test/coverage flow finishes within300000ms. Explicitly retain any pending target-platform/runtime qualification.
 
 ## Current ledger
 

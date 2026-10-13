@@ -22,20 +22,28 @@ const Constructor = Ajv2020 as unknown as new (options: object) => {
   compile<T = RecordValue>(schema: object): ValidateFunction<T>;
 };
 const validScope = new Constructor({ strict: true, allErrors: true }).compile<ScopeProjection>(scopeSchema);
-const validPolicy = new Constructor({
+function deferredValidator<T = RecordValue>(schema: object, options: object): (value: unknown) => value is T {
+  // Capture the same import-time schema as eager compilation; never retain
+  // consumer proof bytes or validated state between calls.
+  const ownedSchema = structuredClone(schema);
+  let validator: ValidateFunction<T> | undefined;
+  return (value: unknown): value is T => (validator ??= new Constructor(options).compile<T>(ownedSchema))(value);
+}
+const validPolicy = deferredValidator<PolicyProjection>(policySchema, {
   strict: true,
   allErrors: true,
   formats: { 'date-time': true },
-}).compile<PolicyProjection>(policySchema);
-const validTransition = new Constructor({ strict: true, allErrors: true }).compile<RecordValue & { plan: RecordValue }>(
-  transitionSchema,
-);
-const validEvent = new Constructor({
+});
+const validTransition = deferredValidator<RecordValue & { plan: RecordValue }>(transitionSchema, {
+  strict: true,
+  allErrors: true,
+});
+const validEvent = deferredValidator(eventSchema, {
   strict: true,
   allErrors: true,
   formats: { 'date-time': true },
-}).compile(eventSchema);
-const validCheckpoint = new Constructor({ strict: true, allErrors: true }).compile(checkpointSchema);
+});
+const validCheckpoint = deferredValidator(checkpointSchema, { strict: true, allErrors: true });
 function requireProof(condition: unknown, message: string): asserts condition {
   if (!condition) throw Error('forward documentation proof: ' + message);
 }

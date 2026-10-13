@@ -170,7 +170,7 @@ function isCoverageProducerOptions(launch: PreparedCoverageProducer): boolean {
     launch.maximum_duration_ms === undefined ||
     (Number.isSafeInteger(launch.maximum_duration_ms) &&
       launch.maximum_duration_ms > 0 &&
-      launch.maximum_duration_ms <= 600_000)
+      launch.maximum_duration_ms <= 300_000)
   );
 }
 
@@ -303,7 +303,7 @@ const outputRoot = path.join(root, 'coverage', 'bun-unified');
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   // One command-entry allowance covers pin resolution, current typecheck,
   // capture, the direct producer, CRAP and final report work.
-  const commandBudget = executionBudget(600_000, 30_000);
+  const commandBudget = executionBudget(300_000, 30_000);
   const args = process.argv.slice(2);
   if (args.some((arg) => arg !== '--published-baseline=b549951'))
     throw new Error('Unsupported Bun coverage runner argument.');

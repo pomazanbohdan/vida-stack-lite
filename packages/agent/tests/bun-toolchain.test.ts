@@ -126,6 +126,10 @@ test('verified absolute Bun replaces a conflicting global PATH and preserves arg
   const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
   const env = { [pathKey]: path.join(root, 'wrong-global'), OTHER: 'preserved' };
   const args = ['run', 'test', '--', 'argument with spaces', '$(not a shell)'];
+  const inheritedBudget = executionBudget();
+  const inheritedAllowance = Number.isFinite(inheritedBudget.deadline)
+    ? Math.floor(inheritedBudget.deadline - performance.now())
+    : Infinity;
   const status = runPinnedBun(args, {
     root,
     cwd: root,
@@ -149,7 +153,20 @@ test('verified absolute Bun replaces a conflicting global PATH and preserves arg
   assert.equal(calls[2]!.options.env?.OTHER, 'preserved');
   assert.equal(calls[2]!.options.env?.[pathKey === 'PATH' ? 'Path' : 'PATH'], undefined);
   assert.equal(calls[2]!.options.cwd, root);
-  assert.equal(calls[2]!.options.timeout, undefined);
+  const timeout = calls[2]!.options.timeout;
+  if (Number.isFinite(inheritedAllowance)) {
+    assert.ok(Number.isSafeInteger(timeout) && timeout! > 0 && timeout! <= inheritedAllowance);
+    assert.equal(calls[2]!.options.env?.VIDA_PINNED_COMMAND_BUDGET_MS, String(timeout));
+    const deadline = Number(calls[2]!.options.env?.VIDA_PINNED_COMMAND_DEADLINE_MS);
+    assert.ok(Number.isSafeInteger(deadline));
+    assert.ok(deadline <= Date.now() + timeout!);
+    if (process.env.VIDA_PINNED_COMMAND_DEADLINE_MS !== undefined)
+      assert.ok(deadline <= Number(process.env.VIDA_PINNED_COMMAND_DEADLINE_MS));
+  } else {
+    assert.equal(timeout, undefined);
+    assert.equal(calls[2]!.options.env?.VIDA_PINNED_COMMAND_BUDGET_MS, undefined);
+    assert.equal(calls[2]!.options.env?.VIDA_PINNED_COMMAND_DEADLINE_MS, undefined);
+  }
   assert.ok(calls.every((call) => !call.options.shell));
 });
 
@@ -327,7 +344,7 @@ test('reuses a supplied pinned executable, still verifies its version, and clean
   assert.equal(calls[1]!.options.detached, process.platform !== 'win32');
 });
 
-test('coverage iteration defaults to one propagated ten-minute launcher deadline', () => {
+test('coverage iteration defaults to one propagated five-minute launcher deadline', () => {
   const { root, pin } = fixture();
   const executable = path.join(root, 'coverage-bun');
   const calls: LauncherCall[] = [];
@@ -345,11 +362,11 @@ test('coverage iteration defaults to one propagated ten-minute launcher deadline
   for (const call of calls) {
     const timeout = call.options.timeout;
     const environment = call.options.env;
-    assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 600_000);
+    assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 300_000);
     const childBudget = Number(environment?.VIDA_PINNED_COMMAND_BUDGET_MS);
     const childDeadline = Number(environment?.VIDA_PINNED_COMMAND_DEADLINE_MS);
     assert.equal(childBudget, timeout);
-    assert.ok(childDeadline > started && childDeadline <= started + 600_050);
+    assert.ok(childDeadline > started && childDeadline <= started + 300_050);
   }
 });
 

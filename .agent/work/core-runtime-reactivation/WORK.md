@@ -9605,3 +9605,46 @@ Current438capturedTS/437program plus97Source checks PASS,0diagnostics; lintPASS,
 formatPASS and diffcheckPASS. Code and tests are settled before publication.
 The selected Source engineering outcome is ready; quarantine isolation/native
 flows and final exhaustive numeric gates are not marked complete by this proof.
+
+## Current correction batch — 2026-10-13, five-minute global deadline
+
+Full current run42f7cd51-98a7-45ba-a2b2-afa8c11dd999 on3f3dc1a terminated
+UNKNOWN at its historical600000ms ceiling, exit1, without admitted final coverage.
+Observed partial failures: separate-process initialization setup contended in
+DB_OPEN_START before the intended BIND barrier; the toolchain fixture wrongly
+required an unlimited launch inside an inherited finite coverage deadline.
+Retain the original run and initialization root vida-init-binding-L29eW9.
+No archival replay or global numerical score follows from these reporter rows.
+
+The fresh human instruction replaces the global maintained test/coverage entry
+ceiling with300000ms, including bootstrap, typecheck, capture, producer and
+nested CRAP. Keep30000ms terminal reserve, stricter caller/child ceilings,
+default5000ms per case and justified overrides. Timeout remains UNKNOWN.
+Current plans, TESTING and the project Bun skill reflect this supersession;
+historical600000ms outcomes and the original10M plan filename remain intact.
+
+Racer setup now reaches READY in turn, then releases both existing BIND gates;
+both bound results and final identity assertions remain. The toolchain fixture
+checks the real inherited allowance rather than assuming it is unlimited, while
+the existing isolated unlimited control is unchanged. Blind contour review
+found no further matching defect. Original inherited-budget RED is retained.
+
+Four private transition-proof Ajv validators compile only on first applicable
+use and reuse their compiled code. Each captures its import-time static schema;
+all proof values still validate per call with unchanged strict/allErrors/formats.
+Scope validation remains eager; synchronous APIs, digest and ownership guards
+are unchanged. Expected RED observed five eager compilations versus scope alone.
+The initial new fixture used an invalid incomplete policy and a wrong Bun spy
+API; Root corrected it to the real policy template and the supported spyOn,
+then preserved overloaded Ajv method forwarding through a typed Proxy.
+New test is registered once in repair and its existing mutation partition.
+Existing function-role complexity stays unchanged; new factoryCC1/closureCC2
+is scoped inventory evidence, not an exhaustive frozen CRAP admission.
+
+Final static check439capturedTS/438program files PASS,0diagnostics; lintPASS.
+Affected launcher/custody/proof selection48PASS/0FAIL under a finite inherited
+budget; actual public policy transition and concurrent initialization control
+3PASS/0FAIL/9.01s. Independent blind review found no blocking issue.
+Logs and scoped inventory are in .tmp/p0p1-3f3dc1a. These proofs qualify the
+correction packet only. Current exact coverage, exhaustive frozen CRAP,
+assertion-confirmed mutation and isolated native Runtime remain pending.

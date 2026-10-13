@@ -268,7 +268,7 @@ Use this recipe for the [pending explicit-shard design](../../../.agent/work/cor
    and retain UNKNOWN on missing proof; do not retry under a new operation ID.
 6. Use the maintained coverage alias's one pinned entry budget, including
    package/runtime checks, current typecheck, preparation, producer and CRAP.
-   The parent wall ceiling is600000ms; runner terminal/report reserve is30000ms.
+   The parent wall ceiling is300000ms; runner terminal/report reserve is30000ms.
    Stricter caller limits remain ceilings. Validate malformed durations before
    probes even with a supplied budget; clamp every nested launch to the remainder.
    Historical selection skips current typecheck while keeping original fixtures
@@ -389,7 +389,7 @@ functions/lines/statements/branches admission.
 
 For full coverage, stream the producer's output into the owned caller log and
 keep the five-second default per individual test. The explicit user-selected
-iteration ceiling is ten minutes; timeout remains UNKNOWN, never final numeric
+global operation deadline is five minutes (300000ms); timeout remains UNKNOWN, never final numeric
 admission. No output-buffer ceiling applies. Place controller temporary data
 outside the editable target. Close admitted Host/workspace database handles
 with the admission-aware wrapper or their owning fixture/store close method,

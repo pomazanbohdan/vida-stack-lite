@@ -671,7 +671,8 @@ Do not enable bailout in final coverage or admit a missing process receipt.
 The launcher and ordinary test phases have no implicit aggregate deadline. Explicit caller, case, probe, repair, installation and cleanup bounds still apply. Do not turn an unbounded duration into an infinite native timeout value.
 
 The coverage test producer inherits stdout/stderr into its caller-owned log;
-the explicit user-selected iteration ceiling is ten minutes, with no in-memory
+the explicit user-selected global operation deadline is five minutes
+(300000ms), with no in-memory
 output ceiling. An interrupted iteration remains UNKNOWN and cannot admit
 final coverage or mutation results. Keep its CLI
 `--timeout 5000` per individual test and documented case overrides. Temporary
@@ -873,7 +874,7 @@ route acceptance. Check unchanged authoritative state after each denial.
 Malformed output-role sets still need an explicit structural denial.
 
 The maintained coverage aliases launch `tooling/run-bun-coverage.ts` directly
-through the pinned bootstrap, with one600000ms outer wall allowance beginning
+through the pinned bootstrap, with one300000ms outer wall allowance beginning
 before package checks and runtime resolution. Stricter caller limits remain
 ceilings; supplied budgets cannot bypass malformed-duration validation before
 version probes. Other developer commands retain their existing default budgets.
@@ -891,7 +892,7 @@ discovery. The current serial producer uses the async direct-accounting owner.
 Parallel shard receipts, outputs and resource-wave integration remain pending.
 Spent allowance prevents launch; native timeout0 may disable a timeout.
 Per-test5000ms defaults and justified case overrides remain separate. Mutation
-is separately invoked; the ten-minute target does not qualify its whole campaign.
+is separately invoked; the five-minute target does not qualify its whole campaign.
 
 #### Direct-producer accounting before resource reuse
 

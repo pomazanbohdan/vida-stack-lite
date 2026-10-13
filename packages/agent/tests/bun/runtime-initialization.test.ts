@@ -608,8 +608,8 @@ describe('separate process initialization', () => {
         output += chunk.toString();
         if (output.includes('READY\n')) resolveReady();
       });
+      await racer.ready;
     }
-    await Promise.all(racers.map((racer) => racer.ready));
   });
 
   test('separate processes bind one pending receipt without changing its identity', async () => {

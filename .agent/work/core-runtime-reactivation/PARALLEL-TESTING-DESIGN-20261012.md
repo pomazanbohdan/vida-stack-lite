@@ -8,7 +8,7 @@ introduced. Root owns this document and final runtime/numeric verification.
 
 ## Evidence and intent
 
-Reach a complete current test/coverage operation within600000ms while preserving
+Reach a complete current test/coverage operation within300000ms while preserving
 exact four-metric coverage, frozen CC/CRAP correspondence and assertion-confirmed
 Killed semantics. Keep the5000ms per-test default and justified individual
 exceptions. Build/install execute no suites. No new dependency is required.
@@ -200,21 +200,21 @@ or weaken Source/authorization/CAS/durable sync to speed setup.
 
 ## Deadline, failure and retention
 
-The600000ms target applies to the qualified pinned test/coverage command:
+The300000ms target applies to the qualified pinned test/coverage command:
 required typecheck, preparation, test waves, terminal accounting, report validation
 and the CRAP subprocess currently nested in run-bun-coverage.ts. Move required
 typecheck into this existing command owner before preparation; eliminate the
 separate shell pre-step. Start one monotonic deadline at command entry; every
 launch/wait consumes remaining
-time, never a fresh600000ms allowance. Preserve existing cleanup/report reserves
+time, never a fresh300000ms allowance. Preserve the30000ms terminal/report reserve
 inside that deadline; if no allowance remains, retain UNKNOWN/unattempted proof.
 Never pass timeout0 to a native child as an expired deadline: it can disable the
 timeout. Spent allowance prevents launch, including the nested CRAP stage.
 CRAP retains its300000ms upper bound, clamped to remaining global time/reserves,
 and its existing owner/lock semantics. Mutation remains a separately invoked
-admission stage, with no inferred ten-minute guarantee for the full mutation
+admission stage, with no inferred five-minute guarantee for the full mutation
 campaign. Record public Bun bootstrap and pinned-command durations separately;
-do not claim a caller-level ten-minute pass merely from child elapsed time.
+do not claim a caller-level five-minute pass merely from child elapsed time.
 
 Await and record every direct child terminal outcome; stream per-shard logs.
 The single acquired run reservation releases once only after every launched
@@ -243,7 +243,7 @@ replacement is insufficient. No archival UNKNOWN replay.
 4. Domain extraction: prove every old case occurs exactly once with equivalent
    assertions/phase membership; evaluate tests and qualification under Root.
 5. Expand reviewed contours; run one complete current selection. Require all
-   tests PASS and full coverage/report admission within600000ms. Frozen and
+   tests PASS and full coverage/report admission within300000ms. Frozen and
    assertion-confirmed mutation gates remain mandatory and independently pending.
 
 Stop expansion on provenance gaps, collision, changed assertions/case set,
@@ -259,4 +259,5 @@ in-process test code or establish trusted general Source measurement.
 References: https://bun.com/docs/test/parallel.md,
 https://bun.com/docs/test/runtime-behavior.md,
 https://bun.com/docs/test/code-coverage.md, https://bun.com/blog/bun-v1.4.3;
-current TESTING.md, bun-test skill and the10-minute cycle plan.
+current TESTING.md, bun-test skill and the10-minute cycle plan (its target was
+superseded on2026-10-13 by the five-minute global operation deadline).

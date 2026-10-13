@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. Root owns runtime/numeric checks; blind Luna workers have disjoint files.
 
-**Goal:** Distribute the complete current test selection across auditable direct Bun shards and reach a qualified test/coverage operation within600000ms.
+**Goal:** Distribute the complete current test selection across auditable direct Bun shards and reach a qualified test/coverage operation within300000ms.
 
 **Architecture:** One captured inventory/snapshot/transform supplies deterministic disjoint shard assignments. Two direct serial Bun children start under one supervisor and deadline; Root validates every receipt and merges counters once. Resource-conflicting waves remain exclusive; historical baseline remains serial.
 
@@ -41,7 +41,7 @@ TEST-REPAIR-COVERAGE-10M-CYCLE-20261012.md#current-cost-correction--2026-10-13.
    builder solely to show progress; implement bindings with their actual caller
    and focused negative controls when that dependency-ready packet is selected.
 6. After concrete corrections stabilize, Root runs one complete current coverage
-   selection within600000ms. Consume its result once; next corrections use exact
+   selection within300000ms. Consume its result once; next corrections use exact
    failures and direct callers. Global100%, frozen CC/CRAP and confirmed mutation
    evidence remain open until their separate existing validators admit them.
 
@@ -101,7 +101,7 @@ separate benchmark lane, extend limits or remove required restart/CAS assertions
 
 ## Global Constraints
 
-- 600000ms qualified pinned test/coverage command deadline, including typecheck and nested CRAP;5000ms default per case with justified exceptions. CRAP's300000ms cap is clamped to remaining time; mutation remains independently invoked.
+- 300000ms qualified pinned test/coverage command deadline, including typecheck and nested CRAP;5000ms default per case with justified exceptions. CRAP's300000ms cap is clamped to remaining time; mutation remains independently invoked.
 - Exact100% functions/lines/statements/branches, frozen CC/CRAP correspondence and assertion-confirmed Killed100% remain mandatory; a passing pilot is not global admission.
 - One preparation and one final canonical validation; reuse maps/artifacts/inventory/input digests. No per-worker full AST/scan/hash rebuild or duplicate full suite.
 - Preserve source/test/config bindings, CAS, authorization, ownership, durable sync, UNKNOWN/no replay, failed roots and exact reservation predicates.
@@ -167,7 +167,7 @@ The current TESTING owner retains the environment/default and clock rules.
 
 First packet qualifies the command budget independently of parallel activation:
 both maintained coverage aliases enter the same pinned launcher directly.
-Its600000ms outer wall bound begins before package/runtime checks; the runner
+Its300000ms outer wall bound begins before package/runtime checks; the runner
 shares the inherited monotonic deadline and30000ms terminal/report reserve,
 typechecks current Source once under the lock, captures once and clamps the
 producer/CRAP remainder. Historical selection shares the entry budget but omits
@@ -326,7 +326,7 @@ bindings; shared fixture/native state and package conflict stay enforced.
 - [ ] Run bounded identical immutable captured selection serial then concurrency2 with distinct run IDs/disjoint outputs, including pure, private CLI/Host, failure/collision and ordering controls. Record real wall time, per-file/test tails, RAM/children/retained roots; no native speed claim from docs.
 - [ ] Keep bounded synthetic-fixture pilot results explicitly untrusted/non-global. Reuse that owner; no partial selector may admit a current coverage report or manufacture numeric evidence.
 - [ ] Stop on provenance/freshness/custody/resource regressions. Keep serial mode and no automatic retries of unknown operations. Increase workers only with useful measured benefit and stable bounds.
-- [ ] One complete current parallel selection must pass and produce admitted report within600000ms. Fix actual failures and repeat only after concrete corrections.
+- [ ] One complete current parallel selection must pass and produce admitted report within300000ms. Fix actual failures and repeat only after concrete corrections.
 - [ ] Existing final owner checks exact coverage, reviewed frozen budgets and assertion-confirmed mutation evidence. Update authoritative guidance and skill only for practices actually qualified; pending parts stay labeled pending.
 
 Execution priority: qualify/publish already prepared diagnostic and custody

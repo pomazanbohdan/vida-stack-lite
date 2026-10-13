@@ -705,7 +705,7 @@ const partitions: MutationPartition[] = [
       'src/documentation/policy-transition.ts',
       'src/documentation/transition-proof.ts',
     ],
-    tests: ['tests/documentation-policy-transition.test.ts'],
+    tests: ['tests/documentation-policy-transition.test.ts', 'tests/documentation-transition-proof.test.ts'],
     report: 'mutation-bun-documentation-policy-transition.json',
   },
   {

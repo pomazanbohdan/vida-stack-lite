@@ -607,7 +607,7 @@ function coverageIterationBudget(
     args[0] === 'tooling/run-bun-coverage.ts' &&
     (args.length === 1 || (args.length === 2 && args[1] === '--published-baseline=b549951'));
   const requestedMaximum = options.timeoutMs === undefined ? Infinity : options.timeoutMs;
-  const maximum = isCoverageEntry ? Math.min(requestedMaximum, 600_000) : requestedMaximum;
+  const maximum = isCoverageEntry ? Math.min(requestedMaximum, 300_000) : requestedMaximum;
   const budget = isCoverageEntry
     ? options.budget
       ? options.budget.child(maximum, 0)
