@@ -10205,3 +10205,30 @@ real shipped Bun/VFS/provider qualification; it covers in-place main-DB work,
 not legacy two-file merge or active database rename. Do not use debug-only
 SQLITE_FCNTL_LOCKSTATE as production proof or introduce another lock database.
 Keep creation/repair/close-retry/CAS and UNKNOWN custody with their existing owners.
+
+75697e4 committed with ordinary strict format/type/Knip hookPASS and non-force
+push to origin/main. Unrelated BASE/ and root bun.lock remain. Root then qualifies
+the narrow one-DB mechanism in a fresh native child: Bun1.4.3/SQLite3.53.4,
+1PASS/7assertions/30mscommand,17.46msbody. Normal WAL writer commits while a
+child holds a read connection; maintenance EXCLUSIVE-first read is BUSY until
+that child closes; successful maintenance then blocks another normal query until
+close. Owned successful probe root is removed, no product DB or admission grant.
+Framework reference owner records facts/limits. Source integration, crash/
+provider/creation/repair qualification stayOPEN. Root starts one complete current
+coverage attempt on this stable correction scope; no other Source writer or
+runtime/numeric producer runs alongside it.
+
+Full current6ecf5884-1970-4988-ac04-b4af06260ba0 terminatesexit1/UNKNOWN after
+the producer's inherited allowance is exhausted. Direct producer terminal is
+known, owned coverage reservation released, run/effects retained. Log
+counter-admission-full-coverage.log contains170PASSrows and no emitted assertion
+FAIL; no coverage-final.json is admitted. This is not a complete170-test suite
+receipt, numeric result, new mutation kill or permission to discard UNKNOWN.
+No unchanged serial repetition. Next ready packet binds actual consumer config
+Source and physical identity into current resource reviews and the live runner.
+Use already computed loader source_digest, not another config read/hash; retain
+canonical runtimeConfigDigest semantics. Consume the existing strict eligibility
+envelope, not a duplicate review schema. Normal target WAL lifetime admission /
+exclusive-maintenance and fenced bootstrap/auxiliary repair follow their current
+owners; the private probe does not activate those paths. Exhaustive frozen plan,
+current exact coverage and assertion-confirmed mutation remainOPEN.

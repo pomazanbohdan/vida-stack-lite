@@ -1341,3 +1341,33 @@ evidence; published Node engine ranges for TS/Stryker are not an upstream Bun
 certification. No duplicate suite/AST/hash pass or tests in build/install are added.
 Whole coverage, frozen correspondence/CRAP and confirmed mutation remain separate
 open gates; local engine support never promotes those results.
+
+## Single-database WAL maintenance exclusion
+
+The target workspace must not create a second SQLite admission database.
+[SQLite WAL](https://sqlite.org/wal.html),
+[WAL locking](https://sqlite.org/walformat.html) and
+[locking_mode](https://sqlite.org/pragma.html#pragma_locking_mode) distinguish
+connection locking mode from transaction mode. WAL `BEGIN EXCLUSIVE` behaves
+like `BEGIN IMMEDIATE`; it does not drain readers. A fresh maintenance connection
+selects `locking_mode=EXCLUSIVE` before its first WAL access, then performs a real
+read to acquire the main-file exclusive lock. Ordinary WAL connections retain
+main-file shared locks for their lifetime after database access. Setting the
+mode after WAL was already opened does not establish the same read-side proof.
+
+One bounded native Linux/tmpfs probe on selected Bun1.4.3/SQLite3.53.4 passes
+7assertions at17.46ms. A real child holds a normal read connection while a second
+connection commits a write. Fresh EXCLUSIVE maintenance cannot read until that
+child closes. It then reads and writes while another connection's query is
+denied; ordinary access resumes after maintenance closes. Probe/log:
+`.tmp/p0p1-3f3dc1a/single-db-locking.test.ts` and `single-db-locking-probe.log`.
+This is an isolated SQLite mechanism control, not product admission or global
+coverage evidence. No operational database, lease or UNKNOWN is accessed.
+
+The candidate covers one WAL database and in-place maintenance only. It does not
+exclude legacy multi-file merge or permit renaming an active database. Integrate
+only with the existing initialization/repair/owner/close-retry boundaries, then
+qualify provider/filesystem targets, blocked openers, crash, drift and retry.
+First creation still needs the existing fenced lifecycle. Debug-only
+SQLITE_FCNTL_LOCKSTATE is not production proof. Current auxiliary-gate retirement
+and target cutover remain implementation/qualification GAPs.
