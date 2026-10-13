@@ -21,17 +21,7 @@ type BaselineFunctionBudget = {
   rationale: string;
 };
 type BaselineEvidenceRow = { identity: string; complexity: number; coverage: number; crap: number };
-type CoverageReport = {
-  schema: string;
-  run_id: string;
-  manifest_path: string;
-  source_fingerprint: string;
-  test_fingerprint: string;
-  tests: string[];
-  test_selection: import('./bun-coverage-evidence.ts').CoverageInputs['test_selection'];
-  test_inputs: Array<{ path: string; sha256: string }>;
-  coverage: Record<string, import('istanbul-lib-instrument').FileCoverageData>;
-};
+type CoverageReport = Awaited<ReturnType<typeof validateCoverageReport>>['report'];
 type NewFunctionBudget = { identity: string; max_complexity: number; max_crap: number; rationale: string };
 type RemovalDisposition = { identity: string; rationale: string };
 type CheckedPlan = {
@@ -292,6 +282,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     report: Record<string, unknown>;
     packageRoot: string;
     inputs: Awaited<ReturnType<typeof validateCoverageReport>>['inputs'];
+    coverage: Awaited<ReturnType<typeof validateCoverageReport>>['coverage'];
   }> {
     requirePlanRecord(value);
     const evidencePath = evidencePathForPlan(value);
@@ -313,13 +304,16 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const validation = runtimeExecutablePath
       ? await validateHistoricalBaselineCoverageReport(evidencePath, packageRoot, runtimeExecutablePath, options)
       : await validateCoverageReport(evidencePath, packageRoot, options);
-    return { report: validation.report, packageRoot, inputs: validation.inputs };
+    return { report: validation.report, packageRoot, inputs: validation.inputs, coverage: validation.coverage };
   }
 
-  function baselineFunctionEvidence(report: Record<string, unknown>, packageRoot: string, sources: string[]) {
+  function baselineFunctionEvidence(
+    packageRoot: string,
+    sources: string[],
+    checkedCoverage: Record<string, import('istanbul-lib-instrument').FileCoverageData>,
+  ) {
     const functions: BaselineEvidenceRow[] = [];
     const publishedFunctions = new Map<string, FunctionRow>();
-    const coverageFiles = isRecord(report.coverage) ? report.coverage : {};
     for (const file of sources) {
       const source = baselineSource(file);
       if (source === null) throw new Error(`Published baseline source is unavailable: ${file}`);
@@ -329,16 +323,16 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
           throw new Error(`Duplicate published function identity: ${row.identity}`);
         publishedFunctions.set(row.identity, row);
       }
-      const coverage = coverageFiles[path.resolve(packageRoot, file)];
+      const coverage = checkedCoverage[path.resolve(packageRoot, file)];
       functions.push(...baselineFunctionEvidenceForSource(file, rows, coverage));
     }
     return { functions, publishedFunctions };
   }
 
   async function readBaselineEvidence(value: unknown) {
-    const { report, packageRoot, inputs } = await readBaselineCoverageReport(value);
+    const { report, packageRoot, inputs, coverage } = await readBaselineCoverageReport(value);
     const sources = await verifyPublishedCoverageInputs(report, packageRoot, inputs);
-    const snapshot = baselineFunctionEvidence(report, packageRoot, sources);
+    const snapshot = baselineFunctionEvidence(packageRoot, sources, coverage);
     return { evidence: checkedEvidenceFunctions(snapshot.functions), publishedFunctions: snapshot.publishedFunctions };
   }
 
@@ -590,7 +584,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   const plan = await checkedPlan(planValue);
   const planDigest = sha256(planBytes);
   const report = currentCoverage.report as CoverageReport;
-  const coverage = createCoverageMap(report.coverage);
+  const coverage = createCoverageMap(currentCoverage.coverage);
   const inventory = maintainedSourceInventory(root);
   if (
     !isRecord(inventory) ||

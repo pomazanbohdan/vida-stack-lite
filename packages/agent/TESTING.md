@@ -764,6 +764,18 @@ before creating outputs or launching children. Seal the reviewed base environmen
 separately from each child's effective environment; diagnostic environment switches
 can change resource ownership even when test bytes are unchanged.
 
+For current run/v3, the aggregate-free `VidaBunCoverageReport/v2` wire contract
+contains sealed Source maps and process/terminal receipt references, with no
+top-level `coverage` or historical admission fields. Unknown wire keys fail
+closed. The final validator checks the same provenance, snapshot, map, selected
+union and counter rules, performs the checked merge and returns it separately as
+`CoverageResult.coverage`. CRAP consumes that transient checked map. The raw report
+and zero-seeded canonical maps cannot substitute for it. Report/v1 retains its
+persisted aggregate comparison, including established v1/v3 fixture compatibility
+and historical readers. The live producer remains serial report/v1 until current
+eligibility and producer activation qualify; fixture acceptance does not activate
+this new wire format or establish numeric evidence.
+
 Module mocks, clocks and environment changes confined to a serial child do not
 alone establish a conflict between producer processes. Trace active guards and
 restoration, including unresolved failure paths. A randomized child under a

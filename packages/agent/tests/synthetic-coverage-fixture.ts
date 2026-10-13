@@ -11,11 +11,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { coverageToolInputs, coverageInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
 import { planCoverageShards } from '../tooling/coverage-shard-plan.ts';
-import {
-  coverageAssignmentPlanSha256,
-  coverageOutputPathsSha256,
-  mergeCoverageShardCounters,
-} from '../tooling/coverage-shard-evidence.ts';
+import { coverageAssignmentPlanSha256, coverageOutputPathsSha256 } from '../tooling/coverage-shard-evidence.ts';
 
 type InstrumentedFile = ReturnType<typeof instrumentSource>['fileCoverage'];
 type CoverageMap = Record<string, InstrumentedFile>;
@@ -126,7 +122,7 @@ export async function createSyntheticCoverageFixture(
         });
       }
     }
-    const coverage: CoverageMap = clone(sourceMaps);
+    const coverage = options.versionedShards ? undefined : clone(sourceMaps);
     const runtimeHash = sha256(readFileSync(process.execPath));
     const manifestPath = path.posix.join(runRelative, 'manifest.json');
     const testsInputRows = inputs.test_inputs.filter(({ path: file }) => inputs.tests.includes(file));
@@ -216,8 +212,9 @@ export async function createSyntheticCoverageFixture(
               return { path: file, sha256: digest };
             });
             const sparseCoverage: CoverageMap = {
-              [Object.keys(sourceMaps)[index === 0 ? 0 : sourcePaths.length - 1]!]:
+              [Object.keys(sourceMaps)[index === 0 ? 0 : sourcePaths.length - 1]!]: clone(
                 Object.values(sourceMaps)[index === 0 ? 0 : sourcePaths.length - 1]!,
+              ),
             };
             return {
               schema: 'VidaBunCoverageProcess/v2',
@@ -285,7 +282,7 @@ export async function createSyntheticCoverageFixture(
     const processPath = processPaths[0]!.processPath;
     const reportPath = path.join(root, 'untrusted-report.json');
     const report: JsonRecord = {
-      schema: 'VidaBunCoverageReport/v1',
+      schema: options.versionedShards ? 'VidaBunCoverageReport/v2' : 'VidaBunCoverageReport/v1',
       run_id: runId,
       manifest_path: manifestPath,
       manifest_sha256: sha256(manifestBytes),
@@ -314,7 +311,7 @@ export async function createSyntheticCoverageFixture(
           }))
         : [{ shard_id: 'bun-test', status: 0, signal: null, error: null, unknown: false }],
       processes: [],
-      coverage,
+      ...(!options.versionedShards ? { coverage } : {}),
     };
 
     const writeChildAndReceipt = (): Uint8Array => {
@@ -324,12 +321,7 @@ export async function createSyntheticCoverageFixture(
         return { file: receiptName, pid: child.pid, shard_id: child.shard_id, sha256: sha256(childBytes) };
       });
       report.processes = receipts;
-      report.coverage = coveragePlan
-        ? mergeCoverageShardCounters(
-            sourceMaps,
-            processPaths.map(({ child }) => child.coverage as CoverageMap),
-          )
-        : clone(children[0]!.coverage);
+      if (!coveragePlan) report.coverage = clone(children[0]!.coverage);
       return Buffer.from(JSON.stringify(report));
     };
     writeChildAndReceipt();

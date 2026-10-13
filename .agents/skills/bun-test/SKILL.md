@@ -430,6 +430,13 @@ distinct external run/shard temporary directories; create log parents separately
 because an external TMPDIR is no longer their ancestor. Missing reviews retain
 serial fallback. The maintained native fixture pilot qualifies mechanics only.
 
+Use the validator-owned `CoverageResult.coverage` for numeric consumers. In the
+pending current v3 report/v2 route, wire bytes contain no aggregate counters.
+Keep Source initialization maps zero-seeded and distinct from child maps; clone
+sparse fixture maps before changing counters. A positive merge control needs an
+actual nonzero counter and unchanged seeds, including constant-only modules that
+have statements but no functions. Keep legacy report/v1 aggregate checks.
+
 Store public CLI timing rows in the owning consumer fixture. Observe the setup
 origin before allocation, then persist that actual timestamp after the private
 path exists; retain both the elapsed interval and failed/UNKNOWN root. The final

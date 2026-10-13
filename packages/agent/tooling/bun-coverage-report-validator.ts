@@ -80,9 +80,8 @@ type RunManifest = {
   shard_invocations?: import('./coverage-shard-evidence.js').CoverageShardInvocation[];
   shard_temporary_root?: unknown;
 };
-type CoverageReport = {
+type CoverageReportCommon = {
   published_reference?: PublishedBaselineReference;
-  schema: string;
   run_id: string;
   manifest_path: string;
   manifest_sha256: string;
@@ -107,24 +106,32 @@ type CoverageReport = {
     unknown: boolean;
   }>;
   processes: ProcessReceipt[];
-  coverage: Record<string, FileCoverageData>;
 };
+type CoverageReport =
+  | (CoverageReportCommon & { schema: 'VidaBunCoverageReport/v1'; coverage: Record<string, FileCoverageData> })
+  | (Omit<CoverageReportCommon, 'published_reference' | 'test_selection'> & {
+      schema: 'VidaBunCoverageReport/v2';
+      published_reference?: never;
+      test_selection: Omit<CoverageReportCommon['test_selection'], 'mode'> & { mode: 'full-current-test-set' };
+    });
 
 type SelectionMode = 'current' | 'published-baseline-bun-native';
 type CoverageOptions = { requireFullCoverage?: boolean; reportBytes?: Uint8Array; testSelectionMode?: SelectionMode };
 type CoverageInputs = import('./bun-coverage-evidence.ts').CoverageInputs;
 type FinalProjections = FinalQualityProjectionInputs;
 type InputProjections = Awaited<ReturnType<typeof qualityInputProjections>>;
-type DecodedReport = Record<string, unknown> &
-  Pick<CoverageReport, 'schema' | 'run_id' | 'runtime_executable_sha256'> & {
-    sources: unknown[];
-    tests: unknown[];
-    test_inputs: unknown[];
-    tool_inputs: unknown[];
-    shards: unknown[];
-    processes: unknown[];
-    coverage: Record<string, unknown>;
-  };
+type DecodedReport = Record<string, unknown> & {
+  schema: 'VidaBunCoverageReport/v1' | 'VidaBunCoverageReport/v2';
+  run_id: string;
+  runtime_executable_sha256: string;
+  sources: unknown[];
+  tests: unknown[];
+  test_inputs: unknown[];
+  tool_inputs: unknown[];
+  shards: unknown[];
+  processes: unknown[];
+  coverage?: Record<string, unknown>;
+};
 type DecodedManifest = Record<string, unknown> &
   Pick<RunManifest, 'schema' | 'run_id' | 'snapshot_directory' | 'runtime_executable_sha256'> & {
     sources: unknown[];
@@ -140,6 +147,8 @@ type CoverageResult = {
   processes: number;
   totals: CoverageSummaryData;
   files: Record<string, CoverageSummaryData>;
+  /** Validator-owned canonical maps from the one checked process/shard merge. */
+  coverage: Record<string, FileCoverageData>;
   /** Transient Source-generated maps; never substitute report-owned maps. */
   canonical_source_maps: Record<string, FileCoverageData>;
 };
@@ -147,6 +156,29 @@ type CoverageResultWithInputs = CoverageResult & { input_projections: InputProje
 
 const { createCoverageMap } = coverageApi;
 const metricNames = ['functions', 'lines', 'statements', 'branches'] as const;
+const v2ReportKeys = [
+  'schema',
+  'run_id',
+  'manifest_path',
+  'manifest_sha256',
+  'runtime_executable_sha256',
+  'sources',
+  'tests',
+  'test_selection',
+  'test_inputs',
+  'tool_inputs',
+  'module_inputs',
+  'execution_scope',
+  'active_argv',
+  'source_maps',
+  'source_fingerprint',
+  'test_fingerprint',
+  'tool_fingerprint',
+  'shards',
+  'processes',
+]
+  .sort()
+  .join(',');
 
 function checkedSelectionMode(options: CoverageOptions): SelectionMode {
   const mode = options.testSelectionMode ?? 'current';
@@ -210,7 +242,7 @@ function readCoverageReport(reportPath: string, reportBytes?: Uint8Array) {
   const bytes = reportBytes ?? readFileSync(reportPath);
   const report = record(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)), 'coverage report');
   if (
-    report.schema !== 'VidaBunCoverageReport/v1' ||
+    (report.schema !== 'VidaBunCoverageReport/v1' && report.schema !== 'VidaBunCoverageReport/v2') ||
     typeof report.run_id !== 'string' ||
     !/^[0-9a-f-]{36}$/u.test(report.run_id) ||
     typeof report.runtime_executable_sha256 !== 'string'
@@ -218,7 +250,16 @@ function readCoverageReport(reportPath: string, reportBytes?: Uint8Array) {
     throw new Error('Coverage report schema or run identity is invalid.');
   for (const key of ['sources', 'tests', 'test_inputs', 'tool_inputs', 'shards', 'processes'])
     if (!Array.isArray(report[key])) throw new Error(`Coverage report ${key} are missing.`);
-  const coverage = record(report.coverage, 'coverage report counters');
+  let coverage: Record<string, unknown> | undefined;
+  if (report.schema === 'VidaBunCoverageReport/v1') {
+    coverage = record(report.coverage, 'coverage report counters');
+  } else {
+    if (Object.hasOwn(report, 'coverage')) throw new Error('Aggregate counters are forbidden in coverage report v2.');
+    if (Object.hasOwn(report, 'published_reference'))
+      throw new Error('Historical reference admission is forbidden in coverage report v2.');
+    if (Object.keys(report).sort().join(',') !== v2ReportKeys)
+      throw new Error('Coverage report v2 contains unknown or missing fields.');
+  }
   return { report: report as DecodedReport, coverage };
 }
 
@@ -426,7 +467,7 @@ function validatedCoverageSummary(
   for (const source of current.sources)
     perFile[source.path] = merged.fileCoverageFor(path.resolve(root, source.path)).toSummary().toJSON();
   if (requireFullCoverage) requireCompleteCoverage(current, summary, perFile);
-  return { summary, perFile, sourceMaps };
+  return { summary, perFile, sourceMaps, coverage: merged.toJSON() };
 }
 
 function requireCompleteCoverage(
@@ -816,6 +857,8 @@ function mergeProcessCoverage(
 ) {
   const historical = validateHistoricalReference(root, report, manifest, current);
   if (manifest.schema === 'VidaBunCoverageRun/v3') {
+    if (report.schema === 'VidaBunCoverageReport/v2' && current.test_selection.mode !== 'full-current-test-set')
+      throw new Error('Coverage report v2 is current-selection only.');
     if (current.test_selection.mode !== 'full-current-test-set')
       throw new Error('Versioned coverage shard evidence is current-selection only.');
     if (historical) throw new Error('Historical coverage cannot use versioned shard evidence.');
@@ -883,10 +926,12 @@ function mergeProcessCoverage(
     validateCoverageShardEvidence({ run: binding, plan, processes, terminals });
     const sparseMaps = processes.map((entry) => record(entry.coverage, `coverage shard ${entry.shard_id} counters`));
     const mergedMaps = mergeCoverageShardCounters(expectedSourceMaps, sparseMaps);
-    if (JSON.stringify(mergedMaps) !== JSON.stringify(report.coverage))
+    if (report.schema === 'VidaBunCoverageReport/v1' && JSON.stringify(mergedMaps) !== JSON.stringify(report.coverage))
       throw new Error('Final counters do not equal the checked global shard merge.');
     return createCoverageMap(mergedMaps);
   }
+  if (report.schema === 'VidaBunCoverageReport/v2')
+    throw new Error('Coverage report v2 requires a versioned current manifest.');
   requireCleanShard(report, historical !== undefined);
   if (!report.processes.length) throw new Error('Coverage process receipts are missing.');
 
@@ -969,7 +1014,7 @@ async function validateCoverageReportInternal(
     // preserving the common report/manifest input agreement guard.
     verifyInputBindings(run.report, run.manifest, current);
   }
-  const { summary, perFile, sourceMaps } = validatedCoverageSummary(
+  const { summary, perFile, sourceMaps, coverage } = validatedCoverageSummary(
     root,
     run,
     current,
@@ -985,6 +1030,7 @@ async function validateCoverageReportInternal(
     processes: run.report.processes.length,
     totals: summary,
     files: perFile,
+    coverage,
     canonical_source_maps: sourceMaps,
   };
   return inputProjections ? { ...result, input_projections: inputProjections } : result;

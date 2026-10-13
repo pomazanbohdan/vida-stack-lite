@@ -189,7 +189,8 @@ mock.module('./bun-coverage-evidence.ts', () => ({
     if (!canonical) throw new Error('Canonical Source map missing');
     expect(Object.values(canonical.f)).toEqual([0]);
     expect(canonical).not.toBe(result.report.source_maps[source]);
-    expect(canonical).not.toBe(result.report.coverage[source]);
+    expect(canonical).not.toBe(result.coverage[source]);
+    expect(Object.values(result.coverage[source]?.f ?? {})).toEqual([1]);
     expect(result.report.shards[0]?.status).toBe(0);
     passed = true;
   } finally {

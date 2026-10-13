@@ -94,14 +94,87 @@ async function withVersionedFixture(action: (fixture: SyntheticFixture) => Promi
 
 test('accepts an UNTRUSTED v3 run with two exact v2 shard receipts and one sparse checked merge', async () => {
   await withVersionedFixture(async (fixture) => {
+    const childCoverage = record(fixture.child.coverage, 'synthetic child coverage');
+    const hitFile = Object.keys(childCoverage)[0];
+    if (!hitFile) throw new Error('Versioned fixture has no observed Source map.');
+    const statementCounts = record(
+      record(childCoverage[hitFile], 'synthetic child Source').s,
+      'synthetic statement counts',
+    );
+    const hitStatement = Object.keys(statementCounts)[0];
+    if (!hitStatement || statementCounts[hitStatement] !== 0)
+      throw new Error('Versioned fixture has no zero-seeded statement.');
+    const bytes = fixture.rewriteChildAndReceiptHash(() => {
+      statementCounts[hitStatement] = 2;
+      const logicalSource = path.relative(fixture.root, hitFile).replaceAll(path.sep, '/');
+      const sourceInputs = unknownArray(fixture.manifest.sources);
+      const input = sourceInputs?.find((row) => record(row, 'Source input').path === logicalSource);
+      const loaded = unknownArray(fixture.child.loaded_inputs);
+      if (!input || !loaded) throw new Error('Versioned fixture omitted Source input metadata.');
+      loaded.push(input);
+      fixture.child.loaded_inputs = loaded;
+    });
     const result = await validateCoverageReport(fixture.reportPath, fixture.root, {
-      reportBytes: fixture.reportBytes(),
+      reportBytes: bytes,
       requireFullCoverage: false,
     });
     expect(result.manifest.schema).toBe('VidaBunCoverageRun/v3');
     expect(result.processes).toBe(2);
     expect(fixture.report.tests).toEqual(fixture.manifest.tests);
+    expect(fixture.report.schema).toBe('VidaBunCoverageReport/v2');
+    expect(Object.hasOwn(fixture.report, 'coverage')).toBe(false);
+    expect(result.coverage[hitFile]?.s[hitStatement]).toBe(2);
+    expect(
+      record(record(record(fixture.report.source_maps, 'sealed maps')[hitFile], 'sealed Source').s, 'sealed counts')[
+        hitStatement
+      ],
+    ).toBe(0);
+    expect(result.coverage).not.toBe(fixture.report.source_maps);
     expect(JSON.stringify(result.canonical_source_maps)).toBe(JSON.stringify(fixture.report.source_maps));
+  });
+});
+
+test.each([null, {}])('rejects v2 raw reports with forged aggregate field %j', async (aggregate) => {
+  await withVersionedFixture(async (fixture) => {
+    fixture.report.coverage = aggregate;
+    await rejects(fixture, fixture.reportBytes(), /Aggregate counters are forbidden in coverage report v2/u);
+  });
+});
+
+test('rejects unknown report v2 wire fields', async () => {
+  await withVersionedFixture(async (fixture) => {
+    fixture.report.legacy_coverage = {};
+    await rejects(fixture, fixture.reportBytes(), /unknown or missing fields/u);
+  });
+});
+
+test('rejects report v2 when paired with a serial manifest', async () => {
+  await withVersionedFixture(async (fixture) => {
+    fixture.manifest.schema = 'VidaBunCoverageRun/v2';
+    await rejects(fixture, manifestBytes(fixture), /Coverage report v2 requires a versioned current manifest/u);
+  });
+});
+
+test('rejects report v2 historical metadata and historical selection', async () => {
+  await withVersionedFixture(async (fixture) => {
+    fixture.report.published_reference = { schema: 'PublishedBaselineReference/v1', kind: 'measurement_admitted' };
+    await rejects(fixture, fixture.reportBytes(), /Historical reference admission is forbidden in coverage report v2/u);
+  });
+  await withVersionedFixture(async (fixture) => {
+    fixture.report.test_selection = { mode: 'published-baseline-bun-native', tests: [] };
+    await rejects(fixture, fixture.reportBytes(), /test selection|test_selection|Coverage input changed/u);
+  });
+});
+
+test('preserves aggregate-checked report v1 compatibility with a v3 manifest', async () => {
+  await withVersionedFixture(async (fixture) => {
+    fixture.report.schema = 'VidaBunCoverageReport/v1';
+    fixture.report.coverage = structuredClone(fixture.report.source_maps);
+    const result = await validateCoverageReport(fixture.reportPath, fixture.root, {
+      reportBytes: fixture.reportBytes(),
+      requireFullCoverage: false,
+    });
+    expect(JSON.stringify(result.coverage)).toBe(JSON.stringify(fixture.report.coverage));
   });
 });
 

@@ -383,7 +383,10 @@ async function main(mode: string | undefined): Promise<void> {
     const coverageRunId = requireString(report.coverage_run_id, 'CRAP report has no bound coverage selector receipt.');
     const coverageReportValue: unknown = JSON.parse(readFileSync(coverageReportFile, 'utf8'));
     const coverageReport = requireRecord(coverageReportValue, 'Malformed coverage report.');
-    if (coverageReport.schema !== 'VidaBunCoverageReport/v1' || coverageReport.run_id !== coverageRunId)
+    if (
+      (coverageReport.schema !== 'VidaBunCoverageReport/v1' && coverageReport.schema !== 'VidaBunCoverageReport/v2') ||
+      coverageReport.run_id !== coverageRunId
+    )
       throw new Error('Coverage and CRAP reports do not share one qualified run.');
     if (stableInputs(root, true) !== before) throw new Error('Checked HEAD inputs changed before completion.');
   } finally {

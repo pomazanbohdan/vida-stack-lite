@@ -29,11 +29,11 @@ outer timeout, not assertion-confirmed Source failure:3PASS/1UNKNOWN, retained
 private root and child timing. Keep it open and diagnose cumulative startup /
 integrity-check cost without widening the timer or removing public calls.
 
-Next dependency is the report lifecycle: current v3 integration must not merge
-in the producer and again in the validator. Prepare a current-only aggregate-free
-report/v2 wire path, with the existing validator owning the sole checked merge
-and exposing its transient result to CRAP. Preserve v1/historical compatibility,
-all freshness/provenance/counter gates and the single final owner. Complete
+The aggregate-free current report/v2 contract is implemented and qualified by
+56scopedtests/265assertions, including transient nonzero counters, CRAP adapters,
+native serial map custody and v1/historical compatibility. The existing validator
+owns the checked merge; no producer premerge is added to the pending v3 path.
+All freshness/provenance/counter gates and the single final owner remain. Complete
 authoritative configuration/environment/resource binding before live activation;
 the six captured review packets remain UNREVIEWED, not eligibility receipts.
 

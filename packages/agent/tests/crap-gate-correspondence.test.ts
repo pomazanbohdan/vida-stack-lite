@@ -208,13 +208,13 @@ mock.module('node:child_process', () => ({ ...actual, spawnSync(command: string,
 mock.module(new URL('./tooling/bun-coverage-report-validator.ts', import.meta.url).pathname, () => ({ async validateCoverageReport(reportPath: string) {
   if (reportPath === data.baselinePath) {
     if (data.swap) writeFileSync(data.planPath, data.replacement);
-    return { report: data.baselineReport, inputs: data.oldInputs };
+    return { report: data.baselineReport, coverage: data.baselineReport.coverage, inputs: data.oldInputs };
   }
-  return { report: data.currentReport, canonical_source_maps: data.canonicalSourceMaps, inputs: { ...data.currentInputs, input_bytes: Object.fromEntries(Object.entries(data.currentInputs.input_bytes).map(([file, text]) => [file, Buffer.from(text as string)])) } };
+  return { report: data.currentReport, coverage: data.currentReport.coverage, canonical_source_maps: data.canonicalSourceMaps, inputs: { ...data.currentInputs, input_bytes: Object.fromEntries(Object.entries(data.currentInputs.input_bytes).map(([file, text]) => [file, Buffer.from(text as string)])) } };
 }, async validateHistoricalBaselineCoverageReport(reportPath: string, _packageRoot: string, runtimePath: string) {
   historicalRuntimeCalls.push(runtimePath);
   if (reportPath !== data.baselinePath) throw new Error('Historical runtime override used for the wrong report.');
-  return { report: data.baselineReport, inputs: data.oldInputs };
+  return { report: data.baselineReport, coverage: data.baselineReport.coverage, inputs: data.oldInputs };
 } }));
 process.on('exit', () => {
   writeFileSync(new URL('./unit-git-calls.json', import.meta.url), JSON.stringify([...gitCalls]));

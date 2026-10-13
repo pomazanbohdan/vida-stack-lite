@@ -10117,3 +10117,41 @@ temporary; .vida/storage-admission.v1.sqlite is a separate coordination database
 not workspace product data. Ast-index stays in host cache. Do not state that only
 one SQLite file exists universally or remove the admission owner/CAS to obtain
 that claim. This inspection opens no old database/lease/runtime operation.
+
+## Aggregate-free current report contract — 2026-10-13
+
+a35c76b published through ordinary strict Knip/format/type hook and non-force
+push. Unrelated BASE/ and root bun.lock remain untouched. Root applies a blind
+worker's private report-v2 proposal only after that publication; private hunk/type
+defects are corrected before Source application. No new package or trust cache.
+
+Current run/v3 can now consume rawreport/v2 with no aggregate coverage field.
+Strict v2 rejects any own coverage, historical admission and unknown top-level
+keys, and cannot use serial/historical selection. Preserve report/v1, including
+existing v1/v3 aggregate equality and actual historical readers. The existing
+validator owns the checked global merge and returns transientCoverageResult.coverage;
+current and baseline CRAP consumers use that checked map. Git's final report
+identity join accepts both validated wire versions. Native serial producer still
+writes report/v1; no production parallel activation or new numeric admission.
+
+Root catches the proposal's unused/wrong type shape and all affected consumer
+mocks: non-discriminated TestSelection cannot use Extract to narrow mode; actual
+legacy custody and historical-reference callers keep correct trusted views. The
+synthetic v3 fixture stops premerging and allocating an unused full aggregate.
+Its sparse children clone their maps so counter mutation cannot alter sealed
+Source initialization maps. Positive control first exposes an invalid function
+oracle on a constant-only module; use its actual statement counter instead.
+The failed fixture is retained at
+/dev/shm/vida-test-tmp-20261013-batch/untrusted-coverage-validator-LWMB67.
+The final positive proves transient count2, loaded Source digest and unchanged
+zero seed. Every such fixture remains UNTRUSTED, not producer or numeric proof.
+
+Final four-file qualification56PASS/265assertions/19.77s includes v2 denial and
+transient merge controls, CRAP current/baseline adapter contracts, old
+report/historical readers and real native serial producer map custody. Strict
+446capturedTS/445program and100SourcePASS,0diagnostics. Final scoped lint and
+ordinary publication follow. Final scoped lint PASS,0diagnostics; formatter/diff
+checks PASS. Root retains the real public60s UNKNOWN and keeps
+startup/preflight optimization, authoritative current eligibility, one final
+qualified complete run, frozen exhaustive budgets and mutation/native evidence
+OPEN. No unchanged serial complete rerun or notice is triggered by this packet.
