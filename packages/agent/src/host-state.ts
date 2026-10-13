@@ -48,7 +48,7 @@ import type {
   MastraSessionLedgerState,
   MastraLedgerItem,
 } from './orchestration/persistent-session-handoff.js';
-import { validateWorkState as validateWork } from './contracts/work-state-schema.ts';
+import { validateWorkState as validateWork } from './contracts/work-state-schema.js';
 import {
   safeHistoricalWorkflowOwnedPath,
   safeWorkflowOwnedPath,

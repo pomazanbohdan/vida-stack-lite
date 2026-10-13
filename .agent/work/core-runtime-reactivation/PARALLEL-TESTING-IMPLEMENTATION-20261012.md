@@ -170,6 +170,16 @@ The current TESTING owner retains the environment/default and clock rules.
 
 ## Task3: Async direct-producer supervision and global budget
 
+2026-10-13 resumed custody prerequisite: project-upgrade-lifecycle cleanup now
+owns one case rather than sweeping all cases, and checks that case's finite
+monotonic deadline with unchanged60s/90s/default5s bounds. Foreign-owner deletion
+and expired-success deletion have assertion RED controls; direct effect checks
+avoid assuming callback ordering. Retained UNKNOWN afterimages remain. Timing
+globals, interceptor lifetime across files, natural-age overlap, live shard
+bindings and resource/effect quiescence are still pending. Existing native
+two-shard primitives/pilot are qualified already; do not repeat them or enable
+parallel production from this prerequisite alone.
+
 **Files:** run-bun-coverage.ts, package.json test:coverage:pinned command and existing bounded-subprocess / coverage-run custody owners and tests. Same protocol writer owns runner; a separate writer may own disjoint adversarial tests.
 
 **Interfaces:** Reuse exact current terminal/reservation predicates and `ReturnType<typeof executionBudget>`; no second deadline factory. The bounded foundation is `superviseCoverageProducers(launches:readonly PreparedCoverageProducer[], budget:ReturnType<typeof executionBudget>):Promise<CoverageProducerGroup>`. Prepared invocations bind shard ID, args, cwd, env and optional maximum duration. Outcomes retain launch_attempted, producer_pid, status/signal/error and direct terminal/accounting fields. Group resourceSafeToAdvance is false without a separate proof. Future runCoverageShards reuses this owner and the capturedInputs/plan, not another clock. The run-level release predicate requires every launched producer accounted under existing exact rules and explicit budget-spent evidence for unattempted launches; an unaccounted attempted sibling holds the shared lock. Not-started accounts for its launch alone. Root releases the one acquired handle once, never from a per-shard outcome. Keep direct producer reservation release separate from reviewed resource/descendant/effect quiescence. ChildOutcome keeps current fields; no success from PID absence. Command-entry deadline precedes required typecheck/preparation; concurrency initially2. Typecheck moves into the existing runner owner, removing the shell pre-step, not adding a duplicate scan.

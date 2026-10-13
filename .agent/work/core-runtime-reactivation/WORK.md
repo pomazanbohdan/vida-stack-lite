@@ -9736,6 +9736,57 @@ lint/format/diff checks PASS. Two independent blind reviews found no regression.
 The previous full-run receipts remain tied to b356b49; changed Source has no
 new admitted coverage/CRAP/mutation evidence yet. Scope facts are not global PASS.
 
+## Resumed dependency-ready case custody packet — 2026-10-13
+
+Resume starts from published1e82dd0 with origin/main aligned; preserve untracked
+BASE/ and root bun.lock. Blind design confirms existing scheduler, async producer,
+v3/v2 primitives and native two-shard pilot are already implemented. Do not repeat
+those foundations. Live caller bindings, resource eligibility and descendant/effect
+quiescence remain separate pending owners; serial production is still authoritative.
+
+Root first fixes lifecycle per-case cleanup. The former afterEach traversed all
+cases, including another settled owner's root. A native post-hook control RED
+assertion-fails expectedtrue/receivedfalse. A second expired-completion control
+similarly RED assertion-fails after old cleanup erased its fresh inert fixture.
+These controls use only fresh inert directories, not archived operations. Cleanup
+now closes over its custody via onTestFinished, requires explicit passed+settled,
+not retained and finite unexpired monotonic deadline, and retains cleanup errors.
+Existing60s/90s exceptions remain exactly mapped to their case bounds; default5s
+remains. Direct owned-effect controls avoid reliance on finish-callback order.
+UNKNOWN post-hook byte checks remain; shared timing/global interception and natural
+age overlap are still pending. Do not infer concurrent eligibility from this fix.
+
+Separate test writer adds real public CLEAR-producer bytes plus schema-valid
+stale-digest and correctly-digested blocked-status controls. The parser's second
+immediate validation of the same immutable value is removed; first schema guard,
+digest and pass-status requirements remain. Pre-refactor joined control4PASS,
+29assertions/2.00s; final affected/static/review checks pending. This removes one
+validation call per parsed checkpoint, not a measured global speedup.
+
+Final affected selection8PASS/225assertions/35.86s includes foreign/expired
+custody controls, actual changed-stage UNKNOWN, original fresh resume, typed
+no-effect activation recovery and default-bound config reuse. After Source import
+correction, actual readonly/WAL/proof controls10PASS/70assertions/5.60s and shared
+Host+inspection guard1PASS/21assertions/3.91s. Final proof-only check2PASS,
+23assertions/9.96s after cleanup-report review correction. These selections overlap;
+do not sum them as distinct suite cardinality or claim global quality.
+
+Separate Source emit typecheck caught two TS5097 runtime imports introduced by
+the last shared guard packet; the current-only checker allowed them. Restore
+established .js runtime specifiers and consistent erased type edge, without
+loosening tsconfig. Combined typecheck now441capturedTS/440program and98Source
+files PASS,0diagnostics. Final lint/diff PASS; two blind reviews find no remaining
+concrete regression. Generic numerical gates and native qualification remainOPEN.
+One new global coverage run follows ordinary publication of this concrete packet.
+
+Independent frozen-role review confirms readConfiguredBytes and
+localSessionDiagnosis are new callable roles, with prospective10/10 policy caps;
+retained buildConfiguredContext8/72 and inspectLocalSession4/20 caps stay unchanged.
+Shared validateWorkState is one new callable, not three frozen original functions:
+the replaced compiled-validator expressions were three consumers/compile owners.
+The old static inventory predates the new helper. Partial correspondence remains
+non-executable/non-exhaustive; these proposals do not admit a frozen plan.
+
 One Root canonical static inventory of the b356b49 immutable capture has7608
 roles/145production files; it is explicitly NOT_COVERAGE_NOT_REVIEWED. Compared
 with partial lineage bindings,64unchanged/7changed/74absent scopes identify the

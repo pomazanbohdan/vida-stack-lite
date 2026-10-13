@@ -82,10 +82,7 @@ export function parseForwardClearCheckpoint(bytes: Uint8Array): RecordValue {
   const checkpoint: unknown = JSON.parse(Buffer.from(bytes).toString('utf8'));
   requireProof(validCheckpoint(checkpoint), 'CLEAR checkpoint schema invalid');
   const { digest: expected, ...body } = checkpoint;
-  requireProof(
-    validCheckpoint(checkpoint) && expected === digest(body) && checkpoint.status === 'pass',
-    'CLEAR checkpoint integrity/status differs',
-  );
+  requireProof(expected === digest(body) && checkpoint.status === 'pass', 'CLEAR checkpoint integrity/status differs');
   return checkpoint;
 }
 

@@ -326,6 +326,13 @@ does not grant disposal. Check existence before stat/read so deletion produces
 an assertion failure instead of an incidental I/O error. This does not qualify
 concurrent hooks, late timeout cleanup or descendant quiescence.
 
+For upgrade lifecycle fixtures, register the owning case's cleanup explicitly
+from its case constructor; never sweep another case's custody in `afterEach`.
+Carry the original case bound into its monotonic cleanup deadline. Qualify the
+cleanup effect directly so controls do not depend on relative finish-callback
+ordering; separately preserve actual UNKNOWN post-hook afterimage checks.
+Current lifecycle timing/interception globals still exclude concurrent bodies.
+
 Completion flags do not prevent cleanup after a timed-out body settles late.
 Before deleting a fixture, require a finite unexpired monotonic deadline after
 owned closes, as well as successful assertions. Attempt all owned resource

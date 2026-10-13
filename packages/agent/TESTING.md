@@ -965,6 +965,14 @@ or permission to delete. Require the existing explicit success/deadline/custody
 evidence; record unsupported legacy cleanup as a gap until qualified. Hook
 registration controls alone do not establish failure-retention correctness.
 
+The upgrade lifecycle owner registers cleanup per case with `onTestFinished`,
+not a file-wide sweep over other cases. Its finite monotonic cleanup deadline
+matches each original test bound; expired completion and failed removal retain
+custody. Direct effect controls qualify own-root removal, foreign-root survival
+and expired retention without depending on finish-callback order. This does not
+qualify concurrent bodies: timing aggregates/interceptors and natural-age overlap
+remain separate pending work.
+
 Close admitted workspace/Host database handles through
 `closeWorkspaceDatabaseWithAdmission` or the owning store/ledger/fixture close
 method. Raw SQLite `.close()` does not release the paired storage-admission

@@ -1,4 +1,4 @@
-import { afterAll, afterEach, expect, mock, onTestFinished, spyOn, test } from 'bun:test';
+import { afterAll, expect, mock, onTestFinished, spyOn, test } from 'bun:test';
 import * as artifactProducer from '../src/config/project-upgrade-artifacts.ts';
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
@@ -13,7 +13,8 @@ import {
   writeFileSync,
   writeSync,
 } from 'node:fs';
-import { lstat, readFile, rm, stat } from 'node:fs/promises';
+import { lstat, mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.js';
@@ -62,7 +63,7 @@ const accessModule = pathToFileURL(
   path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../src/config/safe-repository-access.ts'),
 ).href;
 const faults = new Map<string, BoundaryFault>();
-type FixtureCustody = { root?: string; passed: boolean; settled: boolean; retained: boolean };
+type FixtureCustody = { root?: string; deadlineAt: number; passed: boolean; settled: boolean; retained: boolean };
 const roots = new Map<string, FixtureCustody>();
 const cases = new Set<FixtureCustody>();
 let restorationRequested = false;
@@ -316,12 +317,51 @@ async function expectFailure(promise: Promise<unknown>, message: string): Promis
   expect(error).toHaveProperty('message', message);
 }
 
-function beginCase(): FixtureCustody {
-  const custody: FixtureCustody = { passed: false, settled: false, retained: false };
+function beginCase(timeoutMs = 5000): FixtureCustody {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new Error('Invalid upgrade case timeout');
+  const custody: FixtureCustody = {
+    deadlineAt: performance.now() + timeoutMs,
+    passed: false,
+    settled: false,
+    retained: false,
+  };
   cases.add(custody);
+  onTestFinished(() => finishCase(custody));
   // Intended for one isolated case. Concurrent/late callbacks can share this aggregate.
   bundleReadTiming = { package: emptyBundleReadTiming(), fixture: emptyBundleReadTiming() };
   return custody;
+}
+
+async function finishCase(custody: FixtureCustody): Promise<void> {
+  if (!cases.has(custody)) return;
+  const root = custody.root;
+  if (
+    root !== undefined &&
+    custody.passed &&
+    custody.settled &&
+    !custody.retained &&
+    Number.isFinite(custody.deadlineAt) &&
+    performance.now() < custody.deadlineAt
+  ) {
+    try {
+      await rm(root, { recursive: true, force: true });
+    } catch (error) {
+      custody.retained = true;
+      console.error(`Retained upgrade fixture after cleanup failure: ${root}`);
+      throw error;
+    }
+    faults.delete(root);
+    roots.delete(root);
+    cases.delete(custody);
+  } else if (!custody.retained) {
+    custody.retained = true;
+    console.error(`Retained failed or unsettled upgrade fixture: ${root ?? 'creation pending'}`);
+  }
+  recordBundleTiming({
+    phase: 'case-readBytes',
+    scope: 'single isolated case; concurrent or late callbacks may mix aggregates',
+    reads: bundleReadTiming,
+  });
 }
 
 function recordBundleTiming(value: Record<string, unknown>): void {
@@ -614,26 +654,6 @@ async function runFreshBunResume(
   return result;
 }
 
-afterEach(async () => {
-  recordBundleTiming({
-    phase: 'case-readBytes',
-    scope: 'single isolated case; concurrent or late callbacks may mix aggregates',
-    reads: bundleReadTiming,
-  });
-  for (const custody of cases) {
-    const root = custody.root;
-    if (root !== undefined && custody.passed && custody.settled && !custody.retained) {
-      await rm(root, { recursive: true, force: true });
-      faults.delete(root);
-      roots.delete(root);
-      cases.delete(custody);
-    } else if (!custody.retained) {
-      custody.retained = true;
-      console.error(`Retained failed or unsettled upgrade fixture: ${root ?? 'creation pending'}`);
-    }
-  }
-});
-
 afterAll(() => {
   restorationRequested = true;
   restoreWhenSettled();
@@ -802,9 +822,65 @@ async function assertProjectRebindSchemaReader(root: string): Promise<void> {
   }
 }
 
+test('upgrade case cleanup leaves another settled fixture under its own custody', async () => {
+  const foreignRoot = await mkdtemp(path.join(tmpdir(), 'vida-upgrade-foreign-custody-'));
+  const foreign: FixtureCustody = {
+    root: foreignRoot,
+    deadlineAt: performance.now() + 5000,
+    passed: true,
+    settled: true,
+    retained: false,
+  };
+  cases.add(foreign);
+  const marker = Buffer.from('another case owns these bytes');
+  writeFileSync(path.join(foreignRoot, 'owner.txt'), marker);
+  const custody = beginCase();
+  const root = await mkdtemp(path.join(tmpdir(), 'vida-upgrade-current-custody-'));
+  addRoot(root, custody);
+  completeRoot(root);
+  settleCase(custody);
+  await finishCase(custody);
+  expect(
+    await stat(root).then(
+      () => true,
+      () => false,
+    ),
+  ).toBe(false);
+  expect(
+    await stat(foreignRoot).then(
+      () => true,
+      () => false,
+    ),
+  ).toBe(true);
+  expect(await readFile(path.join(foreignRoot, 'owner.txt'))).toEqual(marker);
+  cases.delete(foreign);
+  await rm(foreignRoot, { recursive: true, force: true });
+});
+
+test('upgrade case cleanup retains successful late completion after its monotonic deadline', async () => {
+  const custody = beginCase();
+  const root = await mkdtemp(path.join(tmpdir(), 'vida-upgrade-expired-custody-'));
+  addRoot(root, custody);
+  const marker = Buffer.from('late completion retains evidence');
+  writeFileSync(path.join(root, 'owner.txt'), marker);
+  // Model the actual expired monotonic boundary without waiting for a test timeout.
+  custody.deadlineAt = performance.now() - 1;
+  completeRoot(root);
+  settleCase(custody);
+  await finishCase(custody);
+  expect(custody.retained).toBe(true);
+  expect(
+    await stat(root).then(
+      () => true,
+      () => false,
+    ),
+  ).toBe(true);
+  expect(await readFile(path.join(root, 'owner.txt'))).toEqual(marker);
+});
+
 test('fresh resume keeps one operation identity and reaches exact released history', async () => {
   const deadlineAt = performance.now() + 60_000;
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -856,7 +932,7 @@ test('fresh resume keeps one operation identity and reaches exact released histo
 }, 60_000);
 
 test('changed staged database bytes at the real no-replace boundary retain UNKNOWN without publishing', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -978,7 +1054,7 @@ test('changed staged database bytes at the real no-replace boundary retain UNKNO
 }, 60_000);
 
 test('fresh bootstrap write afterimage requires same-id consent and is moved once without replay', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1110,7 +1186,7 @@ test('fresh bootstrap write afterimage requires same-id consent and is moved onc
 }, 60_000);
 
 test('bootstrap move lost acknowledgement reconciles its exact afterimage without another move', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1183,7 +1259,7 @@ test('bootstrap move lost acknowledgement reconciles its exact afterimage withou
 }, 60_000);
 
 test('absent initial atomic intent UNKNOWN blocks replacement inspection and repeated publication', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1260,7 +1336,7 @@ test('absent initial atomic intent UNKNOWN blocks replacement inspection and rep
 }, 60_000);
 
 test('conflicting initial atomic intent afterimage preserves custody without reissuing publication', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1346,7 +1422,7 @@ test('conflicting initial atomic intent afterimage preserves custody without rei
 }, 60_000);
 
 test('initial atomic intent lost acknowledgement accepts only its exact committed same-id image', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1397,7 +1473,7 @@ test('initial atomic intent lost acknowledgement accepts only its exact committe
 
 for (const boundary of ['file', 'activation staging'] as const) {
   test(`${boundary} conflicting UNKNOWN afterimage remains retained without another effect`, async () => {
-    const custody = beginCase();
+    const custody = beginCase(60_000);
     try {
       const root = await makeFreshRepository();
       addRoot(root, custody);
@@ -1489,7 +1565,7 @@ for (const boundary of ['file', 'activation staging'] as const) {
 }
 
 test('publication lost acknowledgement requires same-id reconciliation and resumes its afterimage once', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1527,7 +1603,7 @@ test('publication lost acknowledgement requires same-id reconciliation and resum
 }, 60_000);
 
 test('activation staging write lost acknowledgement preserves its held fence until same-id reconciliation', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1596,7 +1672,7 @@ test('activation staging write lost acknowledgement preserves its held fence unt
 }, 60_000);
 
 test('activation move lost acknowledgement requires same-id reconciliation and never repeats the move', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1629,7 +1705,7 @@ test('activation move lost acknowledgement requires same-id reconciliation and n
 }, 60_000);
 
 test('typed no-effect activation move restores staging and retries only the same operation', async () => {
-  const custody = beginCase();
+  const custody = beginCase(90_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1699,7 +1775,7 @@ test('typed no-effect activation move restores staging and retries only the same
 }, 90_000);
 
 test('release failure before effect retains UNKNOWN and never reissues from its held beforeimage', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1770,7 +1846,7 @@ test('release failure before effect retains UNKNOWN and never reissues from its 
 }, 60_000);
 
 test('release lost acknowledgement requires same-id reconciliation without a second fence release', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1810,7 +1886,7 @@ test('release lost acknowledgement requires same-id reconciliation without a sec
 }, 60_000);
 
 test('typed no-effect retirement restores released custody and retries the same move once', async () => {
-  const custody = beginCase();
+  const custody = beginCase(90_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1883,7 +1959,7 @@ test('typed no-effect retirement restores released custody and retries the same 
 }, 90_000);
 
 test('retirement lost acknowledgement completes observed afterimage without replaying the move', async () => {
-  const custody = beginCase();
+  const custody = beginCase(60_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -1921,7 +1997,7 @@ test('retirement lost acknowledgement completes observed afterimage without repl
 }, 60_000);
 
 test('fresh Bun process reconciles the retained publication afterimage with exact same-operation consent', async () => {
-  const custody = beginCase();
+  const custody = beginCase(90_000);
   try {
     const root = await makeFreshRepository();
     addRoot(root, custody);
@@ -2007,7 +2083,7 @@ test('fresh Bun process reconciles the retained publication afterimage with exac
 test.each(['write', 'replace'] as const)(
   'fresh Bun stop before the %s publication effect retains UNKNOWN and forbids replay',
   async (method) => {
-    const custody = beginCase();
+    const custody = beginCase(90_000);
     let qualified = false;
     try {
       const root = await makeFreshRepository();
@@ -2207,7 +2283,7 @@ test('fresh Bun abrupt stop after activation move retains the exact afterimage a
       });
     }
   }
-  const custody = beginCase();
+  const custody = beginCase(90_000);
   let qualified = false;
   try {
     const root = await makeFreshRepository();
@@ -2358,7 +2434,7 @@ test('fresh Bun abrupt stop after activation move retains the exact afterimage a
 test.each(['first', 'last'] as const)(
   'fresh Bun abrupt stop after the %s publication write resumes the exact afterimage once',
   async (boundary) => {
-    const custody = beginCase();
+    const custody = beginCase(90_000);
     let qualified = false;
     try {
       const root = await makeFreshRepository();
@@ -2473,7 +2549,7 @@ test.each(['first', 'last'] as const)(
 );
 
 test('upgrade artifact closure reuse is bounded to the last verified plan and preserves independent validators', async () => {
-  const custody = beginCase();
+  const custody = beginCase(90_000);
   const root = await makeFreshRepository();
   addRoot(root, custody);
   const prepare = artifactProducer.prepareProjectUpgradeArtifacts;

@@ -1,6 +1,6 @@
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ValidateFunction } from 'ajv';
-import type { WorkState } from '../host-state.ts';
+import type { WorkState } from '../host-state.js';
 import workSchema from '../../schemas/work-state.v1.schema.json' with { type: 'json' };
 
 const Constructor = Ajv2020 as unknown as new (options: object) => {

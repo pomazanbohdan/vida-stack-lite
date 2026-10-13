@@ -5,7 +5,7 @@ import {
   closeWorkspaceDatabaseWithAdmission,
 } from '../config/storage-read-admission.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
-import { validateWorkState as validWork } from '../contracts/work-state-schema.ts';
+import { validateWorkState as validWork } from '../contracts/work-state-schema.js';
 import { canonicalJsonDigest, isPlainRecord } from '../contracts/public-ingress.js';
 import { coordinationLedgerDigest, sameCoordinationStrings, type CoordinationLedger } from '../contracts/envelopes.js';
 import type { StateVersion, WorkState } from '../host-state.js';
