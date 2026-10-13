@@ -8,6 +8,12 @@ description: Use when writing, migrating, reviewing, running or optimizing TypeS
 Use the smallest contract-backed check that resolves the current uncertainty.
 Keep behavior, timing and numerical qualification as separate evidence.
 
+For coverage receipt negatives, preserve the canonical Source map, assigned
+tests, sibling/process joins and receipt hashes while changing the targeted
+loaded-Source row. Test both nonzero and zero-valued child maps: every emitted
+map key requires that child's load evidence, unlike an unloaded global zero
+seed. Derive synthetic Source rows from the existing captured inventory.
+
 ## Load the current owners
 
 Resolve the repository root. Read `AGENTS.md` → `AGENT.sidecar.md`, then

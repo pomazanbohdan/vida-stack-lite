@@ -12,7 +12,7 @@
 
 ## Current dispatch — 2026-10-13
 
-Latest published Source is c54f713. Its full current run
+Latest published Source is0e67292. The last full current run atc54f713,
 7a305bc1-0001-459c-a885-8203d5861a8e ended UNKNOWN under300000ms, with no emitted
 assertion failure before cutoff and no admitted numeric report. Archive1912ms,
 same-file conflict and migration controls PASS. Preserve the run/effects; no
@@ -36,6 +36,16 @@ owns the checked merge; no producer premerge is added to the pending v3 path.
 All freshness/provenance/counter gates and the single final owner remain. Complete
 authoritative configuration/environment/resource binding before live activation;
 the six captured review packets remain UNREVIEWED, not eligibility receipts.
+
+Current correction batch closes a counter/load self-consistency hole: each
+serial or versioned child map key must have matching captured Source load
+evidence in that child, including zero-valued maps. Keep sparse unloaded global
+seeds and the single checked merge. The upgrade inspection allowlist now reaches
+its existing strict gate verifier instead of denying a sole valid gate early.
+The one-workspace-DB task also includes removing the auxiliary admission SQLite
+database with qualified lifetime exclusion and bundle-owned repair; it remains
+OPEN. Join these causal controls and ordinary static/review/publication first,
+then consume one complete current run under the unchanged300000ms allowance.
 
 Resume the existing tasks; do not restart qualified scheduler, protocol or native
 pilot work. Current full runca5209ff is UNKNOWN at600000ms with no admitted coverage report.

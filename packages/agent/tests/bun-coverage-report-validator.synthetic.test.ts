@@ -106,13 +106,6 @@ test('accepts an UNTRUSTED v3 run with two exact v2 shard receipts and one spars
       throw new Error('Versioned fixture has no zero-seeded statement.');
     const bytes = fixture.rewriteChildAndReceiptHash(() => {
       statementCounts[hitStatement] = 2;
-      const logicalSource = path.relative(fixture.root, hitFile).replaceAll(path.sep, '/');
-      const sourceInputs = unknownArray(fixture.manifest.sources);
-      const input = sourceInputs?.find((row) => record(row, 'Source input').path === logicalSource);
-      const loaded = unknownArray(fixture.child.loaded_inputs);
-      if (!input || !loaded) throw new Error('Versioned fixture omitted Source input metadata.');
-      loaded.push(input);
-      fixture.child.loaded_inputs = loaded;
     });
     const result = await validateCoverageReport(fixture.reportPath, fixture.root, {
       reportBytes: bytes,
@@ -131,6 +124,73 @@ test('accepts an UNTRUSTED v3 run with two exact v2 shard receipts and one spars
     ).toBe(0);
     expect(result.coverage).not.toBe(fixture.report.source_maps);
     expect(JSON.stringify(result.canonical_source_maps)).toBe(JSON.stringify(fixture.report.source_maps));
+  });
+});
+
+test.each(['VidaBunCoverageReport/v2', 'VidaBunCoverageReport/v1'] as const)(
+  'rejects %s counters for a Source absent from that shard loaded-input receipt',
+  async (schema) => {
+    await withVersionedFixture(async (fixture) => {
+      const childCoverage = record(fixture.child.coverage, 'synthetic child coverage');
+      const hitFile = Object.keys(childCoverage)[0];
+      if (!hitFile) throw new Error('Versioned fixture has no observed Source map.');
+      const logicalSource = path.relative(fixture.root, hitFile).replaceAll(path.sep, '/');
+      const statementCounts = record(
+        record(childCoverage[hitFile], 'synthetic child Source').s,
+        'synthetic statement counts',
+      );
+      const hitStatement = Object.keys(statementCounts)[0];
+      const loaded = unknownArray(fixture.child.loaded_inputs);
+      if (!hitStatement || statementCounts[hitStatement] !== 0 || !loaded)
+        throw new Error('Versioned fixture has no zero-seeded Source counter or loaded-input receipt.');
+      const sourceIndex = loaded.findIndex((entry) => record(entry, 'loaded input').path === logicalSource);
+      if (sourceIndex < 0) throw new Error('Versioned fixture omitted its loaded Source input.');
+
+      const bytes = fixture.rewriteChildAndReceiptHash(() => {
+        // Keep the map canonical and all other receipt evidence while removing
+        // only the corresponding loaded-Source row.
+        statementCounts[hitStatement] = 2;
+        loaded.splice(sourceIndex, 1);
+        fixture.child.loaded_inputs = loaded;
+      });
+      if (schema === 'VidaBunCoverageReport/v1') {
+        fixture.report.schema = schema;
+        const aggregate = structuredClone(record(fixture.report.source_maps, 'sealed source maps'));
+        aggregate[hitFile] = structuredClone(childCoverage[hitFile]);
+        fixture.report.coverage = aggregate;
+      }
+
+      await rejects(
+        fixture,
+        schema === 'VidaBunCoverageReport/v1' ? fixture.reportBytes() : bytes,
+        /Coverage process counters include an unloaded Source/u,
+      );
+    });
+  },
+);
+
+test('rejects serial report/v1 zero-valued Source map absent from its loaded-input receipt', async () => {
+  await withFixture(async (fixture) => {
+    const childCoverage = record(fixture.child.coverage, 'synthetic child coverage');
+    const hitFile = Object.keys(childCoverage)[0];
+    if (!hitFile) throw new Error('Serial fixture has no observed Source map.');
+    const logicalSource = path.relative(fixture.root, hitFile).replaceAll(path.sep, '/');
+    const statementCounts = record(
+      record(childCoverage[hitFile], 'synthetic child Source').s,
+      'synthetic statement counts',
+    );
+    const hitStatement = Object.keys(statementCounts)[0];
+    const loaded = unknownArray(fixture.child.loaded_inputs);
+    if (!hitStatement || statementCounts[hitStatement] !== 0 || !loaded)
+      throw new Error('Serial fixture has no zero-seeded Source counter or loaded-input receipt.');
+    const sourceIndex = loaded.findIndex((entry) => record(entry, 'loaded input').path === logicalSource);
+    if (sourceIndex < 0) throw new Error('Serial fixture omitted its loaded Source input.');
+
+    const bytes = fixture.rewriteChildAndReceiptHash(() => {
+      loaded.splice(sourceIndex, 1);
+      fixture.child.loaded_inputs = loaded;
+    });
+    await rejects(fixture, bytes, /Coverage process counters include an unloaded Source/u);
   });
 });
 

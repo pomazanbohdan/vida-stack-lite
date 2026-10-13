@@ -9,7 +9,8 @@ import {
   workspaceDatabaseFileIdentity,
 } from './workspace-database-raw.js';
 
-const gateRelative = '.vida/storage-admission.v1.sqlite';
+export const STORAGE_ADMISSION_GATE_FILE = 'storage-admission.v1.sqlite';
+const gateRelative = '.vida/' + STORAGE_ADMISSION_GATE_FILE;
 const gateLabel = 'project storage admission';
 const gateSchema = 'VidaStorageAdmission/v1';
 const busyTimeoutMs = 250;

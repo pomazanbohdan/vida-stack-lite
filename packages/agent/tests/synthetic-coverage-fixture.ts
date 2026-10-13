@@ -190,7 +190,9 @@ export async function createSyntheticCoverageFixture(
     const boundByPath = new Map(
       [...inputs.sources, ...inputs.test_inputs, ...inputs.tool_inputs].map((entry) => [entry.path, entry.sha256]),
     );
-    const loadedInputs = [...new Set([...inputs.tests, ...bootstrapPaths])].map((file) => {
+    const loadedInputs = [
+      ...new Set([...inputs.tests, ...bootstrapPaths, ...inputs.sources.map(({ path }) => path)]),
+    ].map((file) => {
       const digest = boundByPath.get(file);
       if (!digest) throw new Error(`Fixture capture omitted loaded input binding: ${file}`);
       return { path: file, sha256: digest };
@@ -205,6 +207,7 @@ export async function createSyntheticCoverageFixture(
                 ...bootstrapPaths,
                 'tooling/coverage-shard-evidence.ts',
                 'tooling/coverage-counters.ts',
+                inputs.sources[index === 0 ? 0 : sourcePaths.length - 1]!.path,
               ]),
             ].map((file) => {
               const digest = boundByPath.get(file);

@@ -599,6 +599,8 @@ function verifyLoadedInputs(
     [...current.sources, ...current.test_inputs, ...current.tool_inputs].map((entry) => [entry.path, entry.sha256]),
   );
   const observed = loadedInputPaths(child.loaded_inputs, expected);
+  for (const source of sourcePaths)
+    if (!observed.has(source)) throw new Error('Coverage process counters include an unloaded Source: ' + source);
   const requiredTests =
     manifest.schema === 'VidaBunCoverageRun/v3'
       ? stringArray(child.assigned_tests, 'coverage process assigned tests')

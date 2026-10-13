@@ -36,7 +36,7 @@ import {
   type WorkspaceBootstrapBinding,
 } from './project-upgrade-storage.js';
 import { closeWorkspaceDatabaseWithAdmission, openAdmittedWorkspaceDatabase } from './storage-read-admission.js';
-import { assertOnlyStorageAdmissionGate } from './storage-read-admission.js';
+import { assertOnlyStorageAdmissionGate, STORAGE_ADMISSION_GATE_FILE } from './storage-read-admission.js';
 import {
   existingMergeBindingSchema,
   unifiedDatabaseImageSchema,
@@ -481,7 +481,11 @@ export function inspectProjectUpgrade(
   const access = requireSafeRepositoryAccess(repositoryRoot);
   if (access.fileExists('.vida', label)) {
     access.assertDirectory('.vida', label);
-    requireUpgrade(access.listFiles('.vida', label).length === 0, 'existing VIDA data requires its retained operation');
+    const entries = access.listFiles('.vida', label);
+    requireUpgrade(
+      entries.length === 0 || (entries.length === 1 && entries[0] === STORAGE_ADMISSION_GATE_FILE),
+      'existing VIDA data requires its retained operation',
+    );
   }
   const raw = image(access, LEGACY_RUNTIME_CONFIGURATION_PATH);
   requireUpgrade(raw !== null, 'original configuration is missing');

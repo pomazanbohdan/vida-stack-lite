@@ -194,8 +194,19 @@ writes atomic. Readers cannot admit partially applied state.
 Existing-storage merge stays blocked while the legacy storage overlap exclusion
 is unproven. This intent repair does not unblock existing consumers.
 
-The package storage-admission coordinator is separate from source databases.
-Its uninitialized exact zero-byte file may be completed under an exclusive
+The target initialized workspace has exactly one persistent SQLite database,
+`.vida/work/workspace.v1.sqlite`, shared by Host, ledger/history and workflows.
+Storage admission must not introduce another SQLite database. Its replacement
+must preserve concurrent ordinary WAL access, connection-lifetime exclusion
+against maintenance and relocation, exact owner/file identity and close-retry
+custody. A short transaction or persisted lease row alone does not prove those
+properties. The replacement and bundle-owned repair must qualify before an
+active reader/layout switch; never delete an existing gate or replay UNKNOWN
+to make the workspace appear compliant.
+
+The current separate storage-admission database remains a compatibility
+implementation GAP against that target. Its uninitialized exact zero-byte file
+may be completed under an exclusive
 SQLite transaction, including after interrupted exclusive file creation or an
 `EEXIST` creation race. This does not establish authority from creation timing.
 Require the captured parent/device/inode, the opened connection identity, exact
@@ -203,7 +214,9 @@ zero physical bytes under the lock, an empty user catalog and the finite fresh
 logical page count before creating the closed workspace-bound gate metadata.
 Reject persisted nonzero empty or malformed databases and unexpected sidecars;
 never recreate source storage or settle/replay a product UNKNOWN operation.
-Existing complete gate metadata must match the current workspace.
+Existing complete gate metadata must match the current workspace. Upgrade
+inspection may accept only this verified gate in an otherwise empty `.vida`;
+it grants no product-state admission, publication or activation.
 
 Resume uses the same operation and recorded progress. It never repeats an
 uncertain effect. Unknown future versions produce an actionable upgrade error;

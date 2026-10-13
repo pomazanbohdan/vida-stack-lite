@@ -7,6 +7,40 @@ import { fileURLToPath } from 'node:url';
 import { deriveWorkspaceId } from '../src/workspace-identity.js';
 import { loadRuntimeConfig } from '../src/config/runtime-config.js';
 import { acquireStorageReadAdmission } from '../src/config/storage-read-admission.js';
+import { inspectProjectUpgrade } from '../src/config/project-upgrade.js';
+import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
+
+test('upgrade inspection accepts only a verified admission gate without publishing product state', async () => {
+  const started = process.hrtime.bigint();
+  const root = await makeFreshRepository('upgrade-admission-inspection-');
+  let passed = false;
+  try {
+    const config = loadRuntimeConfig(root);
+    const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+    const lease = acquireStorageReadAdmission(root, workspaceId, '.vida/unused.sqlite');
+    lease.close();
+    const file = path.join(root, '.vida/storage-admission.v1.sqlite');
+    const before = readFileSync(file);
+    const operation = inspectProjectUpgrade(root, {
+      operation_id: 'verified-gate-inspection',
+      actor: 'test-owner',
+      instruction_ref: 'existing admission gate inspection',
+    });
+    expect(operation.plan.workspace_id).toBe(workspaceId);
+    expect(operation.plan.database_mode).toBe('fresh');
+    expect(readFileSync(file)).toEqual(before);
+    expect(() => readFileSync(path.join(root, '.vida/project-upgrade.v1.json'))).toThrow();
+    writeFileSync(path.join(root, '.vida/foreign.json'), '{}', { flag: 'wx' });
+    expect(() => inspectProjectUpgrade(root, operation.plan)).toThrow(
+      'VIDA project upgrade: existing VIDA data requires its retained operation',
+    );
+    expect(readFileSync(file)).toEqual(before);
+    passed = true;
+  } finally {
+    if (passed && process.hrtime.bigint() - started < 5_000_000_000n) rmSync(root, { recursive: true, force: true });
+    else console.error(`Retained failed or expired admission inspection fixture: ${root}`);
+  }
+});
 
 describe('fresh storage admission gate', () => {
   test('initializes the exact fresh zero-byte gate and retains a valid gate on reopen', () => {

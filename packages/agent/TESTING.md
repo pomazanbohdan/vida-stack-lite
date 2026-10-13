@@ -866,6 +866,11 @@ stale, duplicate, foreign, failed or UNKNOWN evidence.
 An absent Source key adds no counter increments; an unloaded seeded Source keeps
 zero counters and still faces every exact coverage gate. Absence cannot replace
 required receipt or loaded-module evidence; retain existing per-process checks.
+Every child counter-map key, including a zero-valued map, requires its matching
+Source path/digest in that same child's validated `loaded_inputs`. Apply this
+guard to serial and versioned reports before merging. A global zero seed alone
+does not claim a child loaded that Source. Synthetic fixtures derive load rows
+from their actual captured Source/maps rather than a separate hand-written list.
 
 #### Shard output qualification
 

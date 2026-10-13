@@ -10155,3 +10155,53 @@ checks PASS. Root retains the real public60s UNKNOWN and keeps
 startup/preflight optimization, authoritative current eligibility, one final
 qualified complete run, frozen exhaustive budgets and mutation/native evidence
 OPEN. No unchanged serial complete rerun or notice is triggered by this packet.
+
+## Counter/load admission and upgrade allowlist — 2026-10-13
+
+Resume from published0e67292 with unrelated BASE/ and root bun.lock preserved.
+Six blind Luna reviews inspect independent contours without suites, compilers,
+Git mutations or old database access. Root owns all qualification and publication.
+The user's one-DB correction applies to auxiliary admission storage too: current
+separateSQLite coordinator is an implementation GAP, not a completed one-DB task.
+System specification/backlog now preserve that requirement explicitly; no current
+gate, activation/schema or unknown operation is deleted or rewritten.
+
+Two causal defects are reproduced. Upgrade inspection rejects a sole valid gate
+before its strict workspace/schema/identity verifier; native RED preserves
+upgrade-admission-inspection-8DNiHU. The early allowlist now accepts only the
+owner-declared gate basename; the existing verifier still rejects unrelated
+data, wrong identities, malformed schema and sidecars. Native5PASS includes the
+new inspection/no-publication/unchanged-byte/foreign-file control at1118ms.
+
+Current report/v2 and compatible report/v1 with run/v3 accepted nonzero canonical
+Source counters without the corresponding child's loaded-input row. Both actual
+REDs receive no rejection, with original failed fixture roots retained. The shared
+loaded-input verifier now requires every emitted child map key, including zero
+maps, in its already validated path/digest set. Global unloaded Source seeds stay
+zero and do not claim child execution; sparse maps, exact counters and single
+merge remain. Serial report/v1 uses the same verifier and gains a zero-map
+negative; the two versioned negatives retain nonzero counts, both receipts and
+valid hashes/aggregate compatibility.
+
+First focused qualification51PASS/13FAIL exposes synthetic fixture load rows
+derived from an incomplete hand-written Source list. Root uses actual captured
+Source rows and the same sparse-map index; no scan/hash/AST pass added. Fresh
+validator/historical scope43PASS/133assertions/12.62s; final changed zero-map
+control1PASS/2assertions/1.86s. Previously passing real serial map custody and
+CRAP adapter controls do not consume the changed fixture. Failed fixtures/logs
+are retained. Two fresh blind reviews approve the code; the counter reviewer’s
+zero-map note is covered by that final control.
+
+Strict446capturedTS/445program and100SourcePASS,0diagnostics. Typed lintPASS;
+scoped format and diff checks PASS. Ordinary hook and publication follow; no
+full-suite/numeric/native acceptance is inferred from this focused packet.
+
+One-DB research corrects an initial incomplete lock analysis: WAL BEGIN EXCLUSIVE
+does not drain readers, but SQLite locking_mode=EXCLUSIVE on a fresh connection
+before its first WAL access can hold the main-file exclusive lock. Normal WAL
+clients retain main-file shared locks after an actual read. Official SQLite WAL,
+walformat, pragma and pager.c support this narrower DB-local candidate. It needs
+real shipped Bun/VFS/provider qualification; it covers in-place main-DB work,
+not legacy two-file merge or active database rename. Do not use debug-only
+SQLITE_FCNTL_LOCKSTATE as production proof or introduce another lock database.
+Keep creation/repair/close-retry/CAS and UNKNOWN custody with their existing owners.

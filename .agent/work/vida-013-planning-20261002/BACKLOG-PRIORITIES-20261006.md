@@ -52,7 +52,7 @@ Readonly snapshot не надає прав на changing routes.
 | P0 6 audit18:F2 | Exact prefix/resume/conflict matrix уже реалізована | Фінальне прийняття/доставка, без дублювання matrix |
 | P0 7 audit18:F3 | Readonly snapshot і реальний конкурентний WAL commit regression PASS | Спільне фінальне прийняття |
 | P0 8 delivery | Поточний Source опубліковано; це не native installation | Одна whole-agent formation/delivery та ізольований runtime matrix |
-| P1 1 workspace DB | Shared project paths, Bun adapter і 5 прямих regressions PASS | Cutover/native proof; in-memory tests не доводять disk branch |
+| P1 1 workspace DB | Shared project paths і Bun adapter реалізовані; окрема admission SQLite БД суперечить цільовому one-DB контракту | Прибрати другу БД через кваліфіковане lifetime exclusion і bundle-owned repair; cutover/native proof; in-memory tests не доводять disk branch |
 | P1 2 execution/diagnostics | Shared contracts, SDK refusal cause й typed local-session diagnosis реалізовано | Повне прийняття й affected native flows; advisory лишається readonly, без нових прав |
 | P1 3 context/reads | Bounded reads і freshness guards є | Контракт history/current-owner lookup та обґрунтовані SQL improvements |
 | P1 4 tests | Bun, AST/scenario tooling і strict hook є | Exact coverage, exhaustive frozen correspondence, confirmed mutation, qualified parallel custody |
