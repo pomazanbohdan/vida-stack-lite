@@ -4,17 +4,14 @@ import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { HostStateStore, type MaintenanceFenceBinding, type MaintenanceFenceReceipt } from '../host-state.js';
-import {
-  assertWorkspaceDatabaseRelativePath,
-  closeNativeWorkspaceDatabase,
-  openUnadmittedWorkspaceDatabase,
-} from './workspace-database-raw.js';
+import { assertWorkspaceDatabaseRelativePath, openUnadmittedWorkspaceDatabase } from './workspace-database-raw.js';
 import { requireSafeRepositoryAccess } from './safe-repository-access.js';
 import {
   acquireStorageReadAdmission,
   closeWorkspaceDatabaseWithAdmission,
   openExistingWorkspaceDatabaseWithAdmission,
   withExclusiveStorageAdmission,
+  type ExclusiveStorageSourceOwner,
 } from './storage-read-admission.js';
 import { closeWorkspaceWorkflowClients } from '../orchestration/bun-sqlite-client.js';
 import type { ClosedDatabaseImage, ExistingMergeBinding } from './project-upgrade-existing-storage.js';
@@ -79,7 +76,12 @@ function closedImageIdentity(image: ClosedDatabaseImage) {
   return { device: image.device, inode: image.inode, size: image.size, sha256: image.sha256 };
 }
 
-function withDatabaseClose<T>(database: Database, work: () => T, message: string): T {
+function withDatabaseClose<T>(
+  database: Database,
+  work: () => T,
+  close: (database: Database) => void,
+  message: string,
+): T {
   const errors: unknown[] = [];
   let result: T | undefined;
   try {
@@ -88,7 +90,7 @@ function withDatabaseClose<T>(database: Database, work: () => T, message: string
     errors.push(error);
   }
   try {
-    closeNativeWorkspaceDatabase(database);
+    close(database);
   } catch (error) {
     errors.push(error);
   }
@@ -97,40 +99,27 @@ function withDatabaseClose<T>(database: Database, work: () => T, message: string
   return result as T;
 }
 
-function checkpointAndClose(root: string, relative: string): void {
-  const database = openUnadmittedWorkspaceDatabase(root, relative, false, true);
-  const errors: unknown[] = [];
-  try {
-    const row = database
-      .query<{ busy: number | bigint; log: number | bigint; checkpointed: number | bigint }, []>(
-        'PRAGMA wal_checkpoint(TRUNCATE)',
-      )
-      .get();
-    requireAdmission(
-      row !== null && BigInt(row.busy) === 0n && BigInt(row.checkpointed) >= BigInt(row.log),
-      'source WAL checkpoint did not complete',
-    );
-  } catch (error) {
-    errors.push(error);
-  }
-  try {
-    closeNativeWorkspaceDatabase(database);
-  } catch (error) {
-    errors.push(error);
-  }
-  if (errors.length > 0) {
-    if (errors.length === 1) throw errors[0];
-    throw new AggregateError(errors, 'source checkpoint and close failed');
-  }
-  try {
-    sourceSidecarsAbsent(root, relative);
-  } catch (error) {
-    errors.push(error);
-  }
-  if (errors.length > 0) {
-    if (errors.length === 1) throw errors[0];
-    throw new AggregateError(errors, 'source close and sidecar validation failed');
-  }
+function checkpointSource(database: Database): void {
+  const row = database
+    .query<{ busy: number | bigint; log: number | bigint; checkpointed: number | bigint }, []>(
+      'PRAGMA wal_checkpoint(TRUNCATE)',
+    )
+    .get();
+  requireAdmission(
+    row !== null && BigInt(row.busy) === 0n && BigInt(row.checkpointed) >= BigInt(row.log),
+    'source WAL checkpoint did not complete',
+  );
+}
+
+function checkpointAndClose(root: string, relative: string, sourceOwner: ExclusiveStorageSourceOwner): void {
+  const database = openUnadmittedWorkspaceDatabase(root, relative, false, true, sourceOwner.captureSource);
+  withDatabaseClose(
+    database,
+    () => checkpointSource(database),
+    sourceOwner.closeSource,
+    'source checkpoint and close failed',
+  );
+  sourceSidecarsAbsent(root, relative);
 }
 
 function fenceBindingMatches(actual: MaintenanceFenceBinding, expected: MaintenanceFenceBinding): boolean {
@@ -217,19 +206,31 @@ export async function withExistingStorageMergeCapability<T>(input: {
   return withExclusiveStorageAdmission(
     input.repositoryRoot,
     input.workspaceId,
-    () => {
+    (sourceOwner) => {
       // This private verifier opener runs only after SQLite EXCLUSIVE admission; public openers wait.
-      const host = openUnadmittedWorkspaceDatabase(input.repositoryRoot, input.hostRelative, false, false);
-      return withDatabaseClose(
+      const host = openUnadmittedWorkspaceDatabase(
+        input.repositoryRoot,
+        input.hostRelative,
+        false,
+        false,
+        sourceOwner.captureSource,
+      );
+      const fence = withDatabaseClose(
         host,
-        () => verifyCurrentFence(host),
+        () => {
+          const verified = verifyCurrentFence(host);
+          checkpointSource(host);
+          return verified;
+        },
+        sourceOwner.closeSource,
         'exclusive Host fence verification and close failed',
       );
+      sourceSidecarsAbsent(input.repositoryRoot, input.hostRelative);
+      return fence;
     },
     async (gate) => {
       gate.assertActive();
-      checkpointAndClose(input.repositoryRoot, input.hostRelative);
-      checkpointAndClose(input.repositoryRoot, input.mastraRelative);
+      checkpointAndClose(input.repositoryRoot, input.mastraRelative, gate);
       const hostImage = closedImage(input.repositoryRoot, input.hostRelative);
       const mastraImage = closedImage(input.repositoryRoot, input.mastraRelative);
       const fence = gate.fence as ReturnType<HostStateStore['assertMaintenanceFence']>;

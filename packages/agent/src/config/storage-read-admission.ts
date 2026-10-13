@@ -437,7 +437,19 @@ export function openDatabaseWithStorageAdmission<T extends Database>(
   assertWorkspaceDatabaseRelativePath(relative);
   requireAdmission(typeof open === 'function', 'database opener callback is required');
   const admission = acquireStorageReadAdmission(root, workspaceId, relative);
-  return openAndBindWorkspaceDatabase(root, relative, workspaceId, admission, open);
+  try {
+    return openAndBindWorkspaceDatabase(root, relative, workspaceId, admission, open);
+  } catch (error) {
+    const state = admissionStates.get(admission);
+    if (state?.sourceDatabase === null && !state.closing) {
+      try {
+        admission.close();
+      } catch (closeError) {
+        throw new AggregateError([error, closeError], 'workspace admission validation and close failed');
+      }
+    }
+    throw error;
+  }
 }
 
 function openAndBindWorkspaceDatabase<T extends Database>(
@@ -448,6 +460,7 @@ function openAndBindWorkspaceDatabase<T extends Database>(
   open: (capture: (database: T) => void) => T,
 ): T {
   assertLeaseOwner(admission, root, relative, workspaceId);
+  requireAdmission(leaseState(admission).sourceDatabase === null, 'admission already owns a database');
   let database: T | undefined;
   try {
     const capture = (opened: T) => {
@@ -483,46 +496,26 @@ function openAndBindWorkspaceDatabase<T extends Database>(
   }
 }
 
-/** Bounded writer gate. The caller must first close every registered local reader/client. */
-const withExclusiveStorageAdmissionOwner = async <T, A>(
-  root: string,
-  workspaceId: string,
-  verifyHeldOwner: () => A,
-  operation: (proof: { readonly owner: A; assertActive(this: void): void }) => Promise<T>,
-): Promise<T> => {
-  assertSupportedArguments(root, workspaceId);
-  requireAdmission(
-    typeof verifyHeldOwner === 'function' && typeof operation === 'function',
-    'gate callbacks are required',
-  );
-  retryPendingWorkspaceDatabaseCloses();
-  ensureGate(root, workspaceId);
-  const identity = gateIdentity(root);
-  const database = openGate(root, false);
-  const errors: unknown[] = [];
-  let result: T | undefined;
-  let live = false;
+export interface ExclusiveStorageSourceOwner {
+  captureSource(this: void, database: Database): void;
+  closeSource(this: void, database: Database): void;
+}
+
+function includesExclusiveCloseError(value: unknown, target: unknown, seen = new Set<unknown>()): boolean {
+  if (value === target) return true;
   try {
-    // BUSY / LOCKED here is a safe drain failure. No source inspection or image creation starts.
-    database.exec('BEGIN EXCLUSIVE');
-    live = true;
-    assertGateRow(database, workspaceId);
-    assertClosedGateSchema(database);
-    assertGateIdentity(root, identity);
-    const owner = verifyHeldOwner();
-    const proof = Object.freeze({
-      owner,
-      assertActive(this: void): void {
-        requireAdmission(live && database.inTransaction, 'exclusive admission capability expired');
-        assertGateIdentity(root, identity);
-      },
-    });
-    proof.assertActive();
-    result = await operation(proof);
-  } catch (error) {
-    errors.push(error);
+    if (!(value instanceof AggregateError) || seen.has(value)) return false;
+    seen.add(value);
+    const errors: unknown = Object.getOwnPropertyDescriptor(value, 'errors')?.value;
+    return Array.isArray(errors) && errors.some((error: unknown) => includesExclusiveCloseError(error, target, seen));
+  } catch {
+    // Opaque thrown values must never replace the original body/cleanup evidence.
+    return false;
   }
-  live = false;
+}
+
+function closeExclusiveStorageGate(database: Database): void {
+  const errors: unknown[] = [];
   if (database.inTransaction) {
     try {
       database.exec('ROLLBACK');
@@ -536,6 +529,136 @@ const withExclusiveStorageAdmissionOwner = async <T, A>(
     errors.push(error);
   }
   if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) throw new AggregateError(errors, 'exclusive gate rollback and close failed');
+}
+
+/** Retain the exact gate while any captured source close is uncertain. */
+function exclusiveStorageSourceOwner(gate: Database, assertActive: () => void) {
+  const sources = new Map<Database, { closed: boolean; attempted: boolean; error?: unknown }>();
+  let finishing = false;
+  let gateReleaseAttempted = false;
+  const allClosed = () => [...sources.values()].every((source) => source.closed);
+  function releaseGate(): void {
+    if (gateReleaseAttempted) return;
+    gateReleaseAttempted = true;
+    closeExclusiveStorageGate(gate);
+  }
+  function closeSource(database: Database): void {
+    const source = sources.get(database);
+    requireAdmission(source !== undefined, 'source close belongs to another exclusive owner');
+    if (source.closed) return;
+    if (source.attempted) throw source.error;
+    source.attempted = true;
+    try {
+      closeNativeWorkspaceDatabase(database, retrySourceThenGate);
+      source.closed = true;
+    } catch (error) {
+      source.error = error;
+      throw error;
+    }
+  }
+  function retrySourceThenGate(database: Database): void {
+    const source = sources.get(database);
+    requireAdmission(source !== undefined, 'pending source belongs to another exclusive owner');
+    source.attempted = false;
+    closeSource(database);
+    if (finishing && allClosed()) releaseGate();
+  }
+  return {
+    captureSource(this: void, database: Database): void {
+      requireAdmission(database instanceof Database, 'exclusive source database is invalid');
+      requireAdmission(database !== gate && !sources.has(database), 'exclusive source was already captured');
+      sources.set(database, { closed: false, attempted: false });
+      try {
+        assertActive();
+      } catch (error) {
+        if (finishing) {
+          try {
+            closeSource(database);
+          } catch (closeError) {
+            throw new AggregateError([error, closeError], 'expired source capture and close failed');
+          }
+        }
+        throw error;
+      }
+    },
+    closeSource,
+    finish(primaryErrors: readonly unknown[]): unknown[] {
+      finishing = true;
+      const errors: unknown[] = [];
+      for (const [database, source] of sources) {
+        if (source.closed) continue;
+        if (source.attempted) {
+          if (!primaryErrors.some((error) => includesExclusiveCloseError(error, source.error)))
+            errors.push(source.error);
+          continue;
+        }
+        try {
+          closeSource(database);
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      if (allClosed()) {
+        try {
+          releaseGate();
+        } catch (error) {
+          errors.push(error);
+        }
+      }
+      return errors;
+    },
+  };
+}
+
+/** Bounded writer gate. The caller must first close every registered local reader/client. */
+const withExclusiveStorageAdmissionOwner = async <T, A>(
+  root: string,
+  workspaceId: string,
+  verifyHeldOwner: (sourceOwner: ExclusiveStorageSourceOwner) => A,
+  operation: (proof: ExclusiveStorageSourceOwner & { readonly owner: A; assertActive(this: void): void }) => Promise<T>,
+): Promise<T> => {
+  assertSupportedArguments(root, workspaceId);
+  requireAdmission(
+    typeof verifyHeldOwner === 'function' && typeof operation === 'function',
+    'gate callbacks are required',
+  );
+  retryPendingWorkspaceDatabaseCloses();
+  ensureGate(root, workspaceId);
+  const identity = gateIdentity(root);
+  const database = openGate(root, false);
+  const errors: unknown[] = [];
+  let result: T | undefined;
+  let live = false;
+  const assertActive = () => {
+    requireAdmission(live && database.inTransaction, 'exclusive admission capability expired');
+    assertGateIdentity(root, identity);
+  };
+  const sourceOwner = exclusiveStorageSourceOwner(database, assertActive);
+  try {
+    // BUSY / LOCKED here is a safe drain failure. No source inspection or image creation starts.
+    database.exec('BEGIN EXCLUSIVE');
+    live = true;
+    assertGateRow(database, workspaceId);
+    assertClosedGateSchema(database);
+    assertGateIdentity(root, identity);
+    const owner = verifyHeldOwner(
+      Object.freeze({ captureSource: sourceOwner.captureSource, closeSource: sourceOwner.closeSource }),
+    );
+    const proof = Object.freeze({
+      owner,
+      assertActive,
+      captureSource: sourceOwner.captureSource,
+      closeSource: sourceOwner.closeSource,
+    });
+    proof.assertActive();
+    result = await operation(proof);
+  } catch (error) {
+    errors.push(error);
+  }
+  live = false;
+  errors.push(...sourceOwner.finish(errors));
+  if (errors.length === 1) throw errors[0];
   if (errors.length > 1) throw new AggregateError(errors, 'exclusive storage operation and cleanup failed');
   return result as T;
 };
@@ -544,11 +667,13 @@ const withExclusiveStorageAdmissionOwner = async <T, A>(
 export function withExclusiveStorageAdmission<T>(
   root: string,
   workspaceId: string,
-  verifyHeldHostFence: (this: void) => unknown,
-  operation: (proof: { readonly fence: unknown; assertActive(this: void): void }) => Promise<T>,
+  verifyHeldHostFence: (this: void, sourceOwner: ExclusiveStorageSourceOwner) => unknown,
+  operation: (
+    proof: ExclusiveStorageSourceOwner & { readonly fence: unknown; assertActive(this: void): void },
+  ) => Promise<T>,
 ): Promise<T> {
-  return withExclusiveStorageAdmissionOwner(root, workspaceId, verifyHeldHostFence, ({ owner, assertActive }) =>
-    operation(Object.freeze({ fence: owner, assertActive })),
+  return withExclusiveStorageAdmissionOwner(root, workspaceId, verifyHeldHostFence, ({ owner, ...proof }) =>
+    operation(Object.freeze({ fence: owner, ...proof })),
   );
 }
 
@@ -559,8 +684,8 @@ export function withExclusiveStorageAdmission<T>(
 export function withExclusiveServiceOperationAdmission<T, A>(
   root: string,
   workspaceId: string,
-  verifyHeldServiceOperationOwner: (this: void) => A,
-  operation: (proof: { readonly owner: A; assertActive(this: void): void }) => Promise<T>,
+  verifyHeldServiceOperationOwner: (this: void, sourceOwner: ExclusiveStorageSourceOwner) => A,
+  operation: (proof: ExclusiveStorageSourceOwner & { readonly owner: A; assertActive(this: void): void }) => Promise<T>,
 ): Promise<T> {
   return withExclusiveStorageAdmissionOwner(root, workspaceId, verifyHeldServiceOperationOwner, operation);
 }

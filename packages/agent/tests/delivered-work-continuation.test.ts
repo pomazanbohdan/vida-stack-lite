@@ -54,6 +54,7 @@ import {
   runtimeConfigDigest,
   loadRuntimeConfig,
   runtimePackageAccess,
+  readRuntimePackageResourceBytes,
   runtimePackageCodePaths,
 } from '../src/config/runtime-config.ts';
 import * as runtimeConfigModule from '../src/config/runtime-config.ts';
@@ -1783,7 +1784,7 @@ test('admitted runtime uses the Host stored normal continuation endpoint without
       runtimePackageCodePaths(config.runtime.bundle),
     );
     const schemaDigest = createHash('sha256')
-      .update(access.readBytes('schemas/agent-runtime-config.v1.schema.json', 'fixture schema'))
+      .update(readRuntimePackageResourceBytes(access, 'schemas/agent-runtime-config.v1.schema.json', 'fixture schema'))
       .digest('hex');
     const original = input.receipt;
     const intakeRef = requireFixtureValue(

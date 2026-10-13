@@ -10,6 +10,13 @@ import {
   retryPendingWorkspaceDatabaseCloses,
   workspaceDatabaseFileIdentity,
 } from '../src/config/workspace-database-raw.js';
+import {
+  acquireStorageReadAdmission,
+  assertWorkspaceDatabaseAdmission,
+  closeWorkspaceDatabaseWithAdmission,
+  openDatabaseWithStorageAdmission,
+  openExistingWorkspaceDatabaseWithAdmission,
+} from '../src/config/storage-read-admission.js';
 
 const testBudgetNs = 5_000_000_000n;
 
@@ -112,6 +119,113 @@ test.skipIf(process.platform !== 'linux')('capture transfers cleanup custody bef
     expect(database.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
     closeNativeWorkspaceDatabase(database);
     closed = true;
+  });
+});
+
+test('reusing one admission cannot replace its existing source connection owner', () => {
+  withExistingDatabaseFixture('workspace-db-admission-reuse-', (fixture, addCleanup) => {
+    const relative = 'db/workspace.sqlite';
+    const workspaceId = 'a'.repeat(64);
+    const admission = acquireStorageReadAdmission(fixture.root, workspaceId, relative);
+    const source = openExistingWorkspaceDatabaseWithAdmission(fixture.root, relative, admission, false);
+    const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    let sourceCloseAttempts = 0;
+    let sourceClosed = false;
+    let pairedCloseCompleted = false;
+    const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, force?: boolean) {
+      if (this === source) sourceCloseAttempts += 1;
+      const result = originalClose.call(this, force);
+      if (this === source) sourceClosed = true;
+      return result;
+    });
+    addCleanup(() => {
+      if (!pairedCloseCompleted) {
+        try {
+          closeWorkspaceDatabaseWithAdmission(source);
+        } finally {
+          if (!sourceClosed) originalClose.call(source, true);
+        }
+      }
+    });
+    addCleanup(() => closeSpy.mockRestore());
+
+    expect(() => openExistingWorkspaceDatabaseWithAdmission(fixture.root, relative, admission, false)).toThrow(
+      /admission already owns a database/u,
+    );
+    assertWorkspaceDatabaseAdmission(source, fixture.root, relative, workspaceId);
+    expect(source.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
+    closeWorkspaceDatabaseWithAdmission(source);
+    pairedCloseCompleted = true;
+    expect(sourceCloseAttempts).toBe(1);
+    expect(sourceClosed).toBe(true);
+  });
+});
+
+test('fresh factory closes its acquired gate when the pre-open identity guard fails', () => {
+  withExistingDatabaseFixture('workspace-db-factory-gate-guard-', (fixture, addCleanup) => {
+    const relative = 'db/workspace.sqlite';
+    const workspaceId = 'b'.repeat(64);
+    const gatePath = path.join(fixture.root, '.vida/storage-admission.v1.sqlite');
+    const displacedGatePath = gatePath + '.captured';
+    let closeCapturedAdmission: (() => void) | undefined;
+    const gateReceivers: Database[] = [];
+    let gateCloseAttempts = 0;
+    let openerCalls = 0;
+
+    const nativeFreeze = Reflect.get(Object, 'freeze') as <T>(value: T) => Readonly<T>;
+    const nativeExec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+    const nativeClose = Reflect.get(Database.prototype, 'close') as (this: Database, force?: boolean) => void;
+    const execSpy = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, sql: string) {
+      if (sql.trim().toUpperCase() === 'BEGIN DEFERRED') gateReceivers.push(this);
+      return nativeExec.call(this, sql);
+    });
+    const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+      this: Database,
+      force?: boolean,
+    ): void {
+      if (this === gateReceivers[0]) gateCloseAttempts += 1;
+      return nativeClose.call(this, force);
+    });
+    const freezeSpy = spyOn(Object, 'freeze').mockImplementation(<T>(value: T): Readonly<T> => {
+      const frozen = nativeFreeze(value);
+      const actualAdmission: unknown = frozen;
+      if (typeof actualAdmission === 'object' && actualAdmission !== null && 'schema' in actualAdmission) {
+        const schema: unknown = Reflect.get(actualAdmission, 'schema');
+        const savedClose: unknown = Reflect.get(actualAdmission, 'close');
+        if (schema === 'VidaStorageReadAdmission/v1' && typeof savedClose === 'function') {
+          closeCapturedAdmission = () => {
+            Reflect.apply(savedClose, actualAdmission, []);
+          };
+          renameSync(gatePath, displacedGatePath);
+          writeFileSync(gatePath, '', { flag: 'wx' });
+        }
+      }
+      return frozen;
+    });
+    addCleanup(() => freezeSpy.mockRestore());
+    addCleanup(() => execSpy.mockRestore());
+    addCleanup(() => closeSpy.mockRestore());
+    addCleanup(() => closeCapturedAdmission?.());
+
+    let openError: unknown;
+    try {
+      openDatabaseWithStorageAdmission(fixture.root, workspaceId, relative, () => {
+        openerCalls += 1;
+        throw new Error('source opener ran before its admission identity check');
+      });
+    } catch (error) {
+      openError = error;
+    }
+
+    expect(openError).toBeInstanceOf(Error);
+    expect(String(openError)).toMatch(/gate file or parent was replaced/u);
+    expect(openerCalls).toBe(0);
+    expect(closeCapturedAdmission).toBeDefined();
+    expect(gateReceivers).toHaveLength(1);
+    expect(gateCloseAttempts).toBe(1);
+    const gate = gateReceivers[0];
+    if (!gate) throw new Error('gate transaction receiver was not captured');
+    expect(() => gate.query('SELECT 1').get()).toThrow();
   });
 });
 

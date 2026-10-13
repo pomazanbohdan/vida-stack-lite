@@ -10,7 +10,7 @@ import {
   withExclusiveServiceOperationAdmission,
 } from './storage-read-admission.js';
 import { openExistingWorkspaceDatabase } from './workspace-database.js';
-import { closeNativeWorkspaceDatabase, openUnadmittedWorkspaceDatabase } from './workspace-database-raw.js';
+import { openUnadmittedWorkspaceDatabase } from './workspace-database-raw.js';
 export { serviceOperationLaunchCapabilityMatches } from './service-operation-launch-capability.js';
 
 type ServiceOperationKind = 'release-pack-worker' | 'release-worker';
@@ -544,7 +544,7 @@ export async function handoffServiceOperationCustody(
     () => Object.freeze({ operation_id: operationId, workspace_id: workspaceId }),
     async (exclusive) => {
       exclusive.assertActive();
-      const source = openUnadmittedWorkspaceDatabase(root, relative, false, true);
+      const source = openUnadmittedWorkspaceDatabase(root, relative, false, true, exclusive.captureSource);
       const prior = withCleanup(
         () => {
           assertServiceOperationCustodyReady(source);
@@ -558,7 +558,7 @@ export async function handoffServiceOperationCustody(
           );
           return found;
         },
-        () => closeNativeWorkspaceDatabase(source),
+        () => exclusive.closeSource(source),
         'handoff source read and close failed',
       );
       const revision = nextRevision(prior.revision);
@@ -567,7 +567,7 @@ export async function handoffServiceOperationCustody(
       validateDigest(proof.evidence_digest, 'handoff install image digest');
       validateDigest(proof.handoff_digest, 'retarget receipt digest');
       exclusive.assertActive();
-      const database = openUnadmittedWorkspaceDatabase(root, relative, false, true);
+      const database = openUnadmittedWorkspaceDatabase(root, relative, false, true, exclusive.captureSource);
       withCleanup(
         () => {
           runShortTransaction(database, () => {
@@ -596,7 +596,7 @@ export async function handoffServiceOperationCustody(
           result = readRow(database, workspaceId, operationId) ?? undefined;
           requireCustody(result !== undefined, 'handed-off owner row disappeared');
         },
-        () => closeNativeWorkspaceDatabase(database),
+        () => exclusive.closeSource(database),
         'handoff CAS and close failed',
       );
     },
@@ -627,8 +627,8 @@ export async function reconcileServiceOperationCustody(
   await withExclusiveServiceOperationAdmission(
     root,
     workspaceId,
-    () => {
-      const database = openUnadmittedWorkspaceDatabase(root, relative, false, true);
+    (sourceOwner) => {
+      const database = openUnadmittedWorkspaceDatabase(root, relative, false, true, sourceOwner.captureSource);
       let prior: ServiceOperationCustody | null = null;
       return withCleanup(
         () => {
@@ -643,7 +643,7 @@ export async function reconcileServiceOperationCustody(
           );
           return prior;
         },
-        () => closeNativeWorkspaceDatabase(database),
+        () => sourceOwner.closeSource(database),
         'reconciliation source read and close failed',
       );
     },
@@ -666,7 +666,7 @@ export async function reconcileServiceOperationCustody(
         let database: Database | undefined;
         try {
           exclusive.assertActive();
-          const opened = openUnadmittedWorkspaceDatabase(root, relative, false, true);
+          const opened = openUnadmittedWorkspaceDatabase(root, relative, false, true, exclusive.captureSource);
           database = opened;
           runShortTransaction(opened, () => {
             const unknown = opened
@@ -683,7 +683,7 @@ export async function reconcileServiceOperationCustody(
         }
         if (database !== undefined) {
           try {
-            closeNativeWorkspaceDatabase(database);
+            exclusive.closeSource(database);
           } catch (cleanupError) {
             cleanupErrors.push(cleanupError);
           }
@@ -696,7 +696,7 @@ export async function reconcileServiceOperationCustody(
         throw error;
       }
       exclusive.assertActive();
-      const database = openUnadmittedWorkspaceDatabase(root, relative, false, true);
+      const database = openUnadmittedWorkspaceDatabase(root, relative, false, true, exclusive.captureSource);
       withCleanup(
         () => {
           runShortTransaction(database, () => {
@@ -722,7 +722,7 @@ export async function reconcileServiceOperationCustody(
           result = readRow(database, workspaceId, operationId) ?? undefined;
           requireCustody(result !== undefined, 'reconciled owner row disappeared');
         },
-        () => closeNativeWorkspaceDatabase(database),
+        () => exclusive.closeSource(database),
         'reconciliation CAS and close failed',
       );
     },

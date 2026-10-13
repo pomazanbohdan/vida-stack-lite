@@ -1006,6 +1006,12 @@ check its remaining allowance immediately before each launch. Never create a
 new deadline per sibling or wave. Await accounting for every attempted sibling,
 including when another launch fails or its allowance is spent.
 
+Current serial and v3 producers atomically preserve the actual parent group in
+`processes/observations/supervisor.json` before later budget/report checks or
+caller log closure can fail. This diagnostic is separate from child receipts
+and numeric reports. It grants no measurement success or resource advancement;
+failed persistence still fails the run and retains actual direct accounting.
+
 | Observation | Direct reservation disposition | Measurement and resource reuse |
 | --- | --- | --- |
 | Qualified positive PID with observed direct terminal exit or signal | May account for that producer only | Nonzero, signal, timeout or error denies success; descendant/effect proof remains separate. |
@@ -1107,6 +1113,21 @@ fallible binding and owns cleanup even when it throws. Injected interruptions
 before a native close prove this custody contract; they do not prove native
 SQLite I/O failure behavior. These controls do not qualify auxiliary-gate
 retirement or the pending one-workspace-DB cutover.
+
+Exclusive verifiers and callbacks transfer each raw handle through their source
+owner before post-open guards. Its registered retry closes each pending source
+once per pass and releases the exact gate only after every source is closed.
+A competing native close owner rejects before effects; expired capture still
+owns cleanup. Keep original nested body/close errors without duplicate entries.
+Reject bound-lease reuse before another open. Fresh acquisition owns unbound
+lease cleanup when its pre-open identity check fails; preserve caller-owned leases.
+Prime the gate before instrumenting an exclusive owner, so bootstrap handles
+cannot qualify its ordering. Match row assertions to the actual safe-integer mode.
+Use registered pending-close cleanup after restoring fault spies; never close a
+gate independently while source custody is unresolved. Bun documents immediate
+statement finalization and connection release with
+[close(true)](https://bun.com/docs/runtime/sqlite#close-throwonerror-boolean-false);
+injected pre-close interruptions establish custody, not physical SQLite I/O faults.
 
 When a caller sets a parent deadline, every nested command uses its remaining allowance. Setup, sequential children and recovery do not restart that budget. Reject expired or malformed deadline metadata before launching another child. Preserve the original process-tree deadline through clock changes.
 

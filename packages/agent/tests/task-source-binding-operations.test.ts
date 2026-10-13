@@ -24,6 +24,7 @@ import {
   loadRuntimeConfig,
   runtimeConfigDigest,
   runtimePackageAccess,
+  readRuntimePackageResourceBytes,
   runtimePackageCodePaths,
   type WorkItemSelection,
 } from '../src/config/runtime-config.ts';
@@ -2721,7 +2722,8 @@ test('public run awaits configured TaskSource policy and serializes the persiste
     const { repositoryRoot, config, project, workIdentity, workId, threadId } = fixture,
       workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot),
       initializationPath = path.join(repositoryRoot, '.agent', 'runtime-initialization.v1.json'),
-      initializationSchema = runtimePackageAccess().readBytes(
+      initializationSchema = readRuntimePackageResourceBytes(
+        runtimePackageAccess(),
         'schemas/runtime-initialization.v1.schema.json',
         'TaskSource public run initialization schema',
       ),

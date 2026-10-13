@@ -427,7 +427,8 @@ mock.module('node:child_process', () => ({
     const runId = runs[0];
     if (typeof runId !== 'string') throw new Error('Retained coverage run identity missing');
     expect(existsSync(path.join(outputRoot, 'runs', runId, 'manifest.json'))).toBe(true);
-    expect(readdirSync(path.join(outputRoot, 'runs', runId, 'processes'))).toEqual([]);
+    const processDirectory = path.join(outputRoot, 'runs', runId, 'processes');
+    expect(readdirSync(processDirectory)).toEqual(['observations']);
     expect(existsSync(path.join(outputRoot, 'coverage-final.json'))).toBe(false);
     const child: unknown = JSON.parse(readFileSync(path.join(root, 'direct-child-outcome.json'), 'utf8'));
     expect(child).toMatchObject({ status: null, signal: 'SIGKILL' });
@@ -441,6 +442,29 @@ mock.module('node:child_process', () => ({
     if (typeof child !== 'object' || child === null || !('pid' in child) || typeof child.pid !== 'number')
       throw new Error('Expected the native async producer PID');
     expect(child.pid).toBeGreaterThan(0);
+    const supervisor: unknown = JSON.parse(
+      readFileSync(path.join(processDirectory, 'observations', 'supervisor.json'), 'utf8'),
+    );
+    expect(supervisor).toEqual({
+      schema: 'VidaBunCoverageSupervisorObservation/v1',
+      run_id: runId,
+      outcomes: [
+        {
+          shard_id: 'bun-test',
+          producer_pid: child.pid,
+          status: null,
+          signal: 'SIGKILL',
+          error: null,
+          unknown: true,
+          launch_attempted: true,
+          producerTerminalKnown: true,
+          directProducerAccounted: true,
+          resourceSafeToAdvance: false,
+        },
+      ],
+      reservationSafeToRelease: true,
+      resourceSafeToAdvance: false,
+    });
     expect(child).toHaveProperty('timeout_ms');
     if (typeof child !== 'object' || child === null || !('timeout_ms' in child))
       throw new Error('Expected bounded native async producer timeout');

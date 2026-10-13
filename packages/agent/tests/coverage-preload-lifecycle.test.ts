@@ -36,7 +36,11 @@ import {
 } from '../tooling/coverage-shard-evidence.ts';
 import { planCoverageShards } from '../tooling/coverage-shard-plan.ts';
 import { coverageAssignmentPlanSha256, coverageOutputPathsSha256 } from '../tooling/coverage-shard-evidence.ts';
-import { prepareCoverageShardLaunches, superviseCoverageProducers } from '../tooling/run-bun-coverage.ts';
+import {
+  prepareCoverageShardLaunches,
+  recordCoverageProducerGroup,
+  superviseCoverageProducers,
+} from '../tooling/run-bun-coverage.ts';
 import * as runBunCoverageModule from '../tooling/run-bun-coverage.ts';
 import { canonicalCoverageReviewScope } from '../tooling/coverage-shard-eligibility.ts';
 
@@ -667,6 +671,18 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
     const closeErrors = closeOwnedLogFds();
     if (closeErrors.length)
       throw new AggregateError(closeErrors, 'Pilot parent-owned log descriptors failed to close.');
+    const observationPath = path.join(runDirectory, 'supervisor-observation.json');
+    recordCoverageProducerGroup(observationPath, runId, group);
+    const observation: unknown = JSON.parse(readFileSync(observationPath, 'utf8'));
+    expect(observation).toEqual({
+      schema: 'VidaBunCoverageSupervisorObservation/v1',
+      run_id: runId,
+      outcomes: group.outcomes,
+      reservationSafeToRelease: group.reservationSafeToRelease,
+      resourceSafeToAdvance: false,
+    });
+    expect(observation).not.toHaveProperty('coverage');
+    expect(observation).not.toHaveProperty('metrics');
     if (coordinationError) throw coordinationError;
     expect(new Set(readyPids).size).toBe(2);
     expect(new Set(runningPids).size).toBe(2);
@@ -840,6 +856,15 @@ test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receip
   }
   if (!passed) throw new Error('Untrusted two-shard pilot ended without completing its assertions.');
   try {
+    const exhaustedProducerBudget = executionBudget(1, 1);
+    expect(() => exhaustedProducerBudget.remaining()).toThrow('Execution budget exhausted before child launch.');
+    expect(existsSync(path.join(root, 'coverage', 'bun-unified', 'runs'))).toBe(true);
+    const runDirectory = path.join(root, 'coverage', 'bun-unified', 'runs');
+    const runIds = readdirSync(runDirectory);
+    expect(runIds).toHaveLength(1);
+    const runId = runIds[0];
+    if (typeof runId !== 'string') throw new Error('Retained pilot run identity missing.');
+    expect(existsSync(path.join(runDirectory, runId, 'supervisor-observation.json'))).toBe(true);
     budget.remaining();
   } catch (error) {
     console.error('Preserved untrusted two-shard pilot fixture after budget exhaustion at ' + root);

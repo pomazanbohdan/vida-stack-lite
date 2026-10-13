@@ -37,12 +37,21 @@ export function retryPendingWorkspaceDatabaseCloses(): void {
 }
 
 /** Native-only handles have no paired lease. Never use this to bypass an admitted source's close owner. */
-export function closeNativeWorkspaceDatabase(database: Database): void {
+export function closeNativeWorkspaceDatabase(
+  database: Database,
+  retry: (database: Database) => void = closeNativeWorkspaceDatabase,
+): void {
+  requireDatabase(typeof retry === 'function', 'database close retry callback required');
+  const pendingOwner = pendingDatabaseCloses.get(database);
+  requireDatabase(
+    pendingOwner === undefined || pendingOwner === retry,
+    'pending close belongs to another cleanup owner',
+  );
   try {
     database.close(true);
     forgetWorkspaceDatabaseClose(database);
   } catch (error) {
-    retainFailedWorkspaceDatabaseClose(database, closeNativeWorkspaceDatabase);
+    retainFailedWorkspaceDatabaseClose(database, retry);
     throw error;
   }
 }

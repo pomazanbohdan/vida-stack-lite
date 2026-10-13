@@ -39,6 +39,21 @@ For complete-run timing, label statistics from emitted PASS rows as partial;
 unobserved/failed cases and startup/fixture overhead are outside that sample.
 Preserve actual supervisor terminals before a spent producer allowance blocks
 report work; diagnostics do not replace successful receipts or quiescence.
+Reuse `recordCoverageProducerGroup` and the native lifecycle/timeout controls.
+Keep `processes/observations/supervisor.json` outside immediate process-receipt
+enumeration. Compare UNKNOWN diagnostics to actual native PID/status/signal,
+and preserve the denial of final numeric output and resource advancement.
+
+For storage fault controls, initialize/close the gate before arming receiver
+spies. Distinguish bootstrap from the held exclusive owner. `safeIntegers=true`
+returns bigint rows; preserve that actual mode in assertions. Restore spies,
+then retry through the registered pending-close owner; a default native close
+must not bypass its callback or release the paired gate. Retain failed roots.
+Exercise lease reuse and fresh-acquisition pre-open guards independently:
+the former preserves the caller's source, the latter closes its newly owned
+unbound lease. Fixture-only executing-package hashes may use the existing
+verified byte helper; explicit copied-bundle and raw instrumentation controls
+keep their original reader contract and resource classification.
 
 For current captured configured-context tests, propagate the manifest's bound
 consumer root to the child rather than deriving it from relocated module paths.

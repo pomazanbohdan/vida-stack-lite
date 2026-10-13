@@ -12,6 +12,24 @@
 
 ## Current dispatch — 2026-10-13
 
+Resumed environment preserves published `f553252` and unrelated `BASE/` and root
+`bun.lock`; fresh origin/main fetch confirms0/0 divergence, actual Bun1.4.3. The terminal
+diagnostic correction now records actual current serial/v3 supervisor groups in
+the owned nested observations directory before budget/report and log-close
+failures. It reuses the existing atomic writer and never feeds numeric admission.
+The existing two-child pilot and actual serial UNKNOWN diagnostic control pass.
+Host verification/checkpoint now share one native connection. Every captured
+exclusive source retains its exact AUX gate until all source closes are known;
+service reconciliation/handoff callers use the same owner. Fresh acquisition
+header failures close their unbound lease, and bound-lease reuse rejects before
+opening another source. Native storage/caller batch76PASS/611assertions/10.71s;
+immutable fixture-reader caller batch4PASS/39assertions/10.85s. No auxiliary gate
+retirement or main-file exclusion is qualified.
+Independent cost review confirms existing init mapping cases already use one
+supported invocation and recovery calls prove distinct edges. Do not delete
+these calls or claim an unevidenced speedup. A concrete cost/resource correction
+and fresh physical review still precede another complete coverage attempt.
+
 Latest joined preparation packet: the maintained runner supports a fixed,
 verified-read current eligibility artifact before allocating shard outputs.
 The scope reuses the one captured Source/test/tool/config closure, actual runtime

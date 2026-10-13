@@ -122,6 +122,21 @@ export type CoverageProducerGroup = {
   resourceSafeToAdvance: false;
 };
 
+function writeAtomic(file: string, value: unknown): void {
+  const temporary = file + '.tmp-' + process.pid;
+  writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
+  renameSync(temporary, file);
+}
+
+/** Factual parent observations only; neither coverage receipts nor resource-quiescence proof. */
+export function recordCoverageProducerGroup(file: string, runId: string, group: CoverageProducerGroup): void {
+  writeAtomic(file, {
+    schema: 'VidaBunCoverageSupervisorObservation/v1',
+    run_id: runId,
+    ...group,
+  });
+}
+
 type ShardReportManifest = Pick<
   RunManifest,
   | 'run_id'
@@ -690,11 +705,6 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     if (!isRecord(value)) throw new Error(`Invalid Istanbul map: ${description}`);
     return value;
   }
-  function writeAtomic(file: string, value: unknown) {
-    const temporary = file + '.tmp-' + process.pid;
-    writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
-    renameSync(temporary, file);
-  }
   function childEnvironment(
     manifest: RunManifest,
     manifestPath: string,
@@ -895,6 +905,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       [{ shard_id: 'bun-test', args: invocation.args, cwd: invocation.cwd, env: invocation.env }],
       commandBudget,
     );
+    terminalKnown = group.reservationSafeToRelease;
+    recordCoverageProducerGroup(path.join(reportDirectory, 'observations', 'supervisor.json'), manifest.run_id, group);
     const outcome = group.outcomes[0];
     if (!outcome) throw new Error('Coverage producer supervisor returned no outcome.');
     return {
@@ -1005,6 +1017,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     mkdirSync(snapshotDirectory, { recursive: true, mode: 0o700 });
     mkdirSync(reportDirectory, { recursive: true, mode: 0o700 });
     chmodSync(reportDirectory, 0o700);
+    mkdirSync(path.join(reportDirectory, 'observations'), { mode: 0o700 });
     for (const [file, bytes] of Object.entries(inputBytes)) {
       const target = path.join(snapshotDirectory, ...file.split('/'));
       mkdirSync(path.dirname(target), { recursive: true });
@@ -1137,6 +1150,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         terminalKnown = false;
         shardGroup = await superviseCoverageProducers(launches, commandBudget);
         terminalKnown = shardGroup.reservationSafeToRelease;
+        recordCoverageProducerGroup(path.join(reportDirectory, 'observations', 'supervisor.json'), runId, shardGroup);
       } catch (error) {
         errors.push(error);
       }

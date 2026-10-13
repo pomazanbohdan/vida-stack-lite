@@ -68,40 +68,84 @@ describe('native existing-storage admission boundary', () => {
     const receipt = fixture.receipt;
     let callbacks = 0;
     let escapedCapability: ExistingStorageMergeCapability | undefined;
-    const result = await withExistingStorageMergeCapability({
-      repositoryRoot: fixture.root,
-      workspaceId,
-      operationId: binding.operation_id,
-      planDigest: '9'.repeat(64),
-      expectedFenceBinding: binding,
-      receipt,
-      hostRelative,
-      mastraRelative,
-      closeHostOwner: () => {
-        callbacks++;
-        closeHostOwner(fixture);
-      },
-      operation: async (capability) => {
-        escapedCapability = capability;
-        capability.assertActive();
-        capability.assertSourcesUnchanged();
-        expect(capability.schema).toBe('VidaExistingStorageMergeCapability/v1');
-        expect(capability.binding).toMatchObject({
-          operation_id: binding.operation_id,
-          workspace_id: workspaceId,
-          plan_digest: '9'.repeat(64),
-          held_fence_token_digest: receipt.fence.token_digest,
-        });
-        expect(capability.host.sha256).toBe(sha256(readFileSync(path.join(fixture.root, hostRelative))));
-        expect(capability.mastra.sha256).toBe(sha256(readFileSync(path.join(fixture.root, mastraRelative))));
-        return 'admitted';
-      },
-    });
+    const originalQuery = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+    const originalAssertMaintenanceFence = Reflect.get(
+      HostStateStore.prototype,
+      'assertMaintenanceFence',
+    ) as typeof HostStateStore.prototype.assertMaintenanceFence;
+    const fenceVerificationReceivers = new Set<Database>();
+    const hostCheckpointReceivers: Database[] = [];
+    let verifyingFence = false;
+    const observedQuery = function (this: Database, sql: string) {
+      if (verifyingFence) fenceVerificationReceivers.add(this);
+      if (
+        sql.trim().toLowerCase() === 'pragma wal_checkpoint(truncate)' &&
+        this.filename === path.join(fixture.root, hostRelative)
+      )
+        hostCheckpointReceivers.push(this);
+      return Reflect.apply(originalQuery, this, [sql]);
+    } as unknown as typeof Database.prototype.query;
+    const observedFenceVerification = function (this: HostStateStore, fenceReceipt: MaintenanceFenceReceipt) {
+      verifyingFence = true;
+      try {
+        return Reflect.apply(originalAssertMaintenanceFence, this, [fenceReceipt]);
+      } finally {
+        verifyingFence = false;
+      }
+    };
+    let result: string;
+    Database.prototype.query = observedQuery;
+    HostStateStore.prototype.assertMaintenanceFence = observedFenceVerification;
+    try {
+      result = await withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => {
+          callbacks++;
+          closeHostOwner(fixture);
+        },
+        operation: async (capability) => {
+          escapedCapability = capability;
+          capability.assertActive();
+          capability.assertSourcesUnchanged();
+          expect(capability.schema).toBe('VidaExistingStorageMergeCapability/v1');
+          expect(capability.binding).toMatchObject({
+            operation_id: binding.operation_id,
+            workspace_id: workspaceId,
+            plan_digest: '9'.repeat(64),
+            held_fence_token_digest: receipt.fence.token_digest,
+          });
+          expect(capability.host.sha256).toBe(sha256(readFileSync(path.join(fixture.root, hostRelative))));
+          expect(capability.mastra.sha256).toBe(sha256(readFileSync(path.join(fixture.root, mastraRelative))));
+          return 'admitted';
+        },
+      });
+    } finally {
+      HostStateStore.prototype.assertMaintenanceFence = originalAssertMaintenanceFence;
+      Database.prototype.query = originalQuery;
+    }
     expect(result).toBe('admitted');
     expect(callbacks).toBe(1);
     expect(() => escapedCapability?.assertActive()).toThrow(/callback capability expired/u);
     expect(readdirSync(fixture.root)).toEqual(['.vida']);
-    await releaseFence(fixture.root, receipt);
+    try {
+      expect(fenceVerificationReceivers.size).toBeGreaterThan(0);
+      expect(hostCheckpointReceivers).toHaveLength(1);
+      const checkpointReceiver = hostCheckpointReceivers[0];
+      if (!checkpointReceiver) throw new Error('Host checkpoint receiver was not observed.');
+      expect(fenceVerificationReceivers).toContain(checkpointReceiver);
+      await releaseFence(fixture.root, receipt);
+    } catch (error) {
+      roots.delete(fixture.root);
+      console.error(`Retained failed existing-storage admission fixture: ${fixture.root}`);
+      throw error;
+    }
   });
 
   test('denies an incorrect request token before the owner-close or merge callback effects', async () => {

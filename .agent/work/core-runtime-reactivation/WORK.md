@@ -10732,3 +10732,74 @@ open/close, but post-verifier assertion/body failures must retain exact Host
 before AUX cleanup. Do not add an unused raw opener or activate a layout.
 Exact100coverage/exhaustive frozenCC-CRAP/confirmedKilled and isolated real Runtime
 flows remain OPEN. No actual installed/unblock notice is issued.
+
+### Resumed native custody correction batch — 2026-10-13
+
+Full tracked handoff reread; sidecar/lifecycle/testing/parallel contract and local
+Bun skill loaded. Fresh fetch verifies f553252/origin main0/0. Branch work,
+untracked BASE/ and root bun.lock preserved; actual Bun1.4.3. No old Host state,
+leases or UNKNOWN operations restored. Six blind Luna roles own disjoint tests
+and independent review; Root owns shared Source, checks, documentation and Git.
+Cloud Superpowers skills are unavailable; the equivalent dispatch/review workflow
+uses the current project owners without inventing skill completion evidence.
+
+Trace: initialized-project-layout-and-upgrades exact connection/paired cleanup
+contract; TESTING direct-producer accounting and shard-output qualification.
+Code: one shared atomic writer records actual current serial/v3 groups under
+processes/observations/supervisor.json before spent-budget/report/log-close
+failures. Diagnostic is not a process receipt, numeric report or quiescence.
+terminalKnown is assigned from actual group accounting before persistence errors.
+Initial affected batch34PASS/1FAIL; old timeout fixture wrongly expected an empty
+process directory. Existing pilot passes; corrected real UNKNOWN control1PASS/
+20assertions/1.80s, exact positive native PID/null status/SIGKILL retained and no
+final numeric report. Sources: terminal-diagnostics-green.log and
+terminal-timeout-green.log in .tmp/p0p1-resume-f553252.
+
+Native same-connection regression is causal RED in same-db-red.log; Host verifier
+and checkpoint formerly opened different connections. Now checkpoint uses its
+verified handle. Exclusive source capture precedes fallible raw opener guards,
+with one stable native retry callback per exact source. Failed source closes
+retain the exact AUX transaction; the last known source close releases its gate.
+All five service custody raw opens use the same owner. Independent review caught
+expired capture, competing pending-close bypass and nested-error duplication;
+all are corrected and covered, including two-source and last-gate-close faults.
+
+Two additional causal P0s are corrected. admission-reuse-causal-red.log proves
+a second open replaced the first handle's admission. The pre-open guard now
+preserves that source and rejects before another native open. An initial wrong
+filter matched0tests and is not causal evidence. fresh-header-causal-red.log
+proves the fresh factory leaked its acquired gate on pre-open identity drift;
+it now closes only its still-unbound, not-already-closing lease. Caller-owned
+leases and already-entered source cleanup are preserved without duplicate retry.
+
+First storage batch69PASS/6FAIL exposed new fixture oracles: bigint mode and
+bootstrap-gate receiver confusion, plus cleanup that bypassed pending owners.
+Six repaired cases6PASS/141assertions/2.23s. After the new factory correction,
+final storage-final-green.log76PASS/611assertions/10.71s across8files. Source
+assertion/fault evidence only; pre-native close interruptions do not qualify
+physical I/O failures, main-file lifetime exclusion or auxiliary-gate retirement.
+
+Three executing-package fixture hash preparations reuse the existing verified
+byte helper. Explicit copied-bundle templates and upgrade reader instrumentation
+stay unchanged. fixture-reader-caller-green.log4PASS/39assertions/10.85s proves
+renewal UTF-8/verified bytes, delivered continuation and public TaskSource run.
+Default5000ms and existing justified case bounds unchanged. Package/config
+resource tags stay conservative; no full-suite speedup is inferred.
+
+Static: header-final-static.log448capturedTS/447program0diagnostics;
+header-source-static.log100Source0diagnostics; header-final-lint.log PASS0.
+The current partial inventory updates only4changed modules and then only the
+changed factory module, reusing other rows:132roles, no complexity above10.
+final-current-inventory.json is static-only/not-reviewed-budgets, not exhaustive
+frozen correspondence or dynamic CRAP. Existing strict gates remain unchanged.
+
+One exec-server transport rejection occurred before the batch log was created;
+read-only inspection found no active Bun producer. The subsequent actual batch
+has the terminal receipt above. This does not establish a machine-restart cause.
+All tracked changes remain. No build/install, active loader/schema change,
+admitted numeric report or Runtime acceptance. Next: publish the checked packet,
+then a concrete heavy-file/resource correction before one fresh300000ms coverage
+attempt. Existing recovery calls prove distinct edges; init mapping cases already
+share an invocation. Keep100% exact coverage, frozen CC/CRAP and assertion-
+confirmed Killed gates OPEN until actual final evidence, followed by isolated
+formed-native options/flows. No old unblock/owner notice is required.

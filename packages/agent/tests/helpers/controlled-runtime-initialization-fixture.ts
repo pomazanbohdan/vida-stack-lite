@@ -2,7 +2,12 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.js';
-import { runtimeConfigDigest, runtimePackageAccess, type AgentRuntimeConfig } from '../../src/config/runtime-config.js';
+import {
+  readRuntimePackageResourceBytes,
+  runtimeConfigDigest,
+  runtimePackageAccess,
+  type AgentRuntimeConfig,
+} from '../../src/config/runtime-config.js';
 import type { RuntimeInitializationReceipt } from '../../src/config/initialization-record.js';
 import type { HostStateStore } from '../../src/host-state.js';
 import { bindRuntimeInitialization } from '../../src/runtime-initialization.js';
@@ -37,10 +42,14 @@ export async function bindControlledRuntimeInitialization(
     workspace_binding_status: 'pending',
     bundle: config.runtime.bundle,
     config_digest: runtimeConfigDigest(config),
-    schema_sha256: sha256(packageAccess.readBytes('schemas/runtime-initialization.v1.schema.json', 'fixture schema')),
+    schema_sha256: sha256(
+      readRuntimePackageResourceBytes(packageAccess, 'schemas/runtime-initialization.v1.schema.json', 'fixture schema'),
+    ),
     templates: templateOutputs.map(([template, output]) => ({
       template,
-      template_sha256: sha256(packageAccess.readBytes(template, 'fixture template: ' + template)),
+      template_sha256: sha256(
+        readRuntimePackageResourceBytes(packageAccess, template, 'fixture template: ' + template),
+      ),
       output,
       output_sha256: sha256(readFileSync(path.join(root, output))),
     })),
