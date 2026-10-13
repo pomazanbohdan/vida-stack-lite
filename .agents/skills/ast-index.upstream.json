@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/defendend/Claude-ast-index-search",
+  "revision": "6ca99bde97627224f9217c7962e3dff9944c7a87",
+  "release": "v3.56.0",
+  "license": "MIT",
+  "cliVersion": "3.56.0",
+  "qualifiedPlatform": "linux-x86_64",
+  "releaseAsset": "ast-index-v3.56.0-linux-x86_64.tar.gz",
+  "publishedAssetDigest": "sha256:88c84ed45c16528c1884da0c960110aed42bc6697a5bba1604d954863bf6a1b8",
+  "adoption": "Project-adapted upstream skill; unsupported commands, universal-first and exhaustive-reference claims excluded. No upstream hooks or MCP registration installed.",
+  "upstreamFiles": {
+    "plugin/skills/ast-index/SKILL.md": "e26c765750755b08c44ead74c69fea43c4e769ec53d620a2c369ca2a50b9ed2b",
+    "plugin/skills/ast-index/references/typescript-commands.md": "44a31e335537ec1b33ebd1bda07db25bb2b2f2e02e221a673567da99e5caf98b",
+    "LICENSE": "704ed39e482cc852b8b26aafc25cb59c96e652f6cd795e12936e8a0087be2e0b"
+  }
+}

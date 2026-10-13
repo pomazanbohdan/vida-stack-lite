@@ -14,14 +14,15 @@ before searching or reading implementation files. Select the tool by purpose:
 | ---------------------------------------------------------------------------- | ------------------------------------------------ |
 | File names, symbol names, messages and configuration text                    | `rg`, `rg --files`                               |
 | Call shapes, repeated syntax and refactoring candidates                      | `ast-grep run` or `ast-grep scan`                |
-| Navigation to declarations, imports and direct members before reading bodies | `ast-grep outline`                               |
+| Indexed definitions and reference candidates                                | `ast-index symbol`, `refs`, `usages`              |
+| Navigation to declarations, imports and direct members before reading bodies | `ast-index outline` or `ast-grep outline`         |
 | Maintained function inventory and identities; type and semantic checks       | Existing Babel inventory and TypeScript compiler |
 
 Delegation includes the repository root and this bootstrap pointer, including
 for blind agents. Agents read the relevant project skill before using
-`ast-grep`; inspect only the selected paths and reuse current results. If the
+`ast-index` or `ast-grep`; inspect only the selected paths and reuse current results. If the
 CLI is unavailable or its version differs from the pin, report that limitation
-and use the existing tools without claiming an ast-grep check. Syntax findings
+and use the existing tools without claiming that tool's check. Syntax findings
 remain review candidates; all validation and evidence gates stay with their
 current owners.
 
@@ -92,6 +93,41 @@ other applications from using it.
   separately from actual elapsed execution time.
 
 ## Structural code search
+
+Use [ast-index](.agents/skills/ast-index/SKILL.md) for indexed TS/TSX definitions,
+reference candidates and compact context. Qualified native CLI: `ast-index 3.56.0`,
+installed on the development host; version/provenance/license are in
+`.agents/skills/ast-index.upstream.json`. It adds no product dependency or runtime
+database. Run from this repository's root. `.ast-index.yaml` scopes the index to
+maintained packages/tests/tooling and excludes generated/dependency trees; the
+reconstructable SQLite index stays in the host cache returned by `ast-index db-path`.
+
+One designated agent refreshes the shared index after writers join: rebuild
+initially, then update once per settled edit batch. The updater compares mtime
+in seconds and size; same-size edits within that second, restored timestamps or
+uncertain freshness require a coordinated rebuild. Plain queries do not refresh.
+Do not refresh during frozen runtime/numeric checks or run an automatic watcher.
+Readers receive repository root and refresh status; they do not each rebuild.
+An optional symbol graph has its own `graph build`/`graph status` lifecycle;
+index update leaves it stale. Reuse existing results within the same input state.
+
+Keep `rg` first for file/name/text searches, ast-index for indexed navigation,
+direct ast-grep for selected structural patterns, and Babel/TypeScript for
+maintained identities/semantic proof. Choose one first; do not launch both AST
+tools for every query or add a search router/reducer service. Narrow scope and
+limits, return path/symbol/line or range/relevant snippet, and report truncation.
+Read a returned body again only for omitted context or after its input changes.
+Verify current Source before edits. ast-index `refs` are name-based candidates;
+`callers` is a live textual scan and can match comments/strings. A graph may have
+ambiguous/unresolved edges. Empty results never prove safe deletion or replace
+Knip, function correspondence, coverage, assertion or mutation evidence.
+
+The native `ast-index agrep` bridge exists but reparses through an external
+ast-grep, scans the discovered root and does not reuse the index/include scope.
+Use direct ast-grep with explicit files for our structural searches. Qualified
+commands and observed upstream documentation differences are in the skill;
+do not adopt its upstream "always first" or exhaustive-usage claims. Preserve
+one original project skill under `.agents/skills`, not `.vida/skills`.
 
 Use `ast-grep` as an additional development tool for structural searches and
 compact file outlines. Its CLI is pinned to `@ast-grep/cli@0.50.0`; verify

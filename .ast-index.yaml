@@ -1,0 +1,15 @@
+# Navigation cache only; Babel/TypeScript and existing quality gates remain authoritative.
+# Keep include roots disjoint from exclude: explicit included roots bypass a root exclusion in 3.56.0.
+include:
+  - packages
+  - tooling
+  - tests
+exclude:
+  - node_modules
+  - dist
+  - coverage
+  - .tmp
+  - .agent
+  - .planning
+  - BASE
+no_ignore: false
