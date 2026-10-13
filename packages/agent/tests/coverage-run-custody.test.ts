@@ -80,11 +80,23 @@ test('supervisor rejects invalid group descriptors before any native launch', as
   let passed = false;
   try {
     const launch = producer('one', root, "require('node:fs').writeFileSync('unexpected.marker', 'launched')");
+    let logFdReads = 0;
+    const changingLogFd = {
+      ...launch,
+      shard_id: 'changing-log-fd',
+      get log_fd() {
+        return ++logFdReads <= 3 ? 0 : -1;
+      },
+    };
     for (const launches of [
       [],
       [launch, launch],
       [launch, { ...launch, shard_id: 'two' }, { ...launch, shard_id: 'three' }],
       [launch, { ...launch, shard_id: 'bad-limit', maximum_duration_ms: 0 }],
+      [launch, { ...launch, shard_id: 'negative-log-fd', log_fd: -1 }],
+      [launch, { ...launch, shard_id: 'fractional-log-fd', log_fd: 0.5 }],
+      [launch, { ...launch, shard_id: 'unsafe-log-fd', log_fd: Number.MAX_SAFE_INTEGER + 1 }],
+      [launch, changingLogFd],
     ]) {
       await expectRejection(
         superviseCoverageProducers(launches, executionBudget(1_000, 100)),

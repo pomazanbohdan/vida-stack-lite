@@ -107,16 +107,22 @@ before; disjoint parallel outputs/receipts remain a later protocol integration.
 - [x] Qualify the bounded one-or-two-prepared-invocation API and current single
   serial producer caller with static checks, native close/error/timeout controls,
   existing map/capture-once and acquired-lock controls, and blind review.
-- [ ] Bind actual two-shard invocation/output/receipt roles through v3/v2 and
-  qualify the exact disjoint selection plus sparse merge under this supervisor.
+- [x] Qualify bounded native two-shard fixture invocation/output/receipt roles
+  through v3/v2, exact disjoint selection and one sparse merge under this owner.
   Apply TESTING's shard-output qualification: actual per-shard stdout/stderr
-  capture is required; declared distinct log paths alone leave this item open.
+  capture is required; declared distinct log paths alone do not qualify it.
   Use one existing pilot validation/merge path, not a duplicate report remerge.
+- [ ] Integrate those qualified bindings into the current production command;
+  full output-role physical custody and full-selection admission remain pending.
 - [ ] Provide separately reviewed descendant/effect quiescence before resource
   successors. Direct reservation release and native marker coordination do not
   qualify it; this host's cgroup creation probe remains provider-unavailable.
 
 Current Source keeps historical synchronous invocation/reference semantics.
+The bounded native fixture uses the prepared invocation's optional caller-owned
+log_fd for both streams; omitted FD retains inherited current serial output.
+Validate the actual captured descriptor before any group launch. The caller
+holds and closes its own handles after accounting, retaining body/close failures.
 The real async timeout caller retains its UNKNOWN fixture after passing the
 classifier assertions. New helper complexity is checked with the existing scoped
 inventory; this is not frozen-budget/CRAP or global numerical admission.
@@ -146,6 +152,11 @@ two-child READY/GO control proves coordinated correct reads and no write/fsync,
 not actual read overlap. Its former cross-child hrtime comparison is excluded:
 qualified Bun1.4.3 origins are process-relative. Actual overlap, broader caller
 closure and common-resource removal remain pending; keep the conflict tag.
+The existing completed-Source recovery case now observes the actual expired-
+lease schema caller selecting verified bytes once, no raw read, its persisted
+schema digest and unchanged Source. Its focused native PASS retains original
+CAS/lease/authority assertions. The late renewal and rebind-planner schema callers
+and actual read-boundary overlap still need qualification; no conflict removal.
 
 **Files:** tests/runtime-config-rebind.test.ts; new tests/runtime-config-rebind-source.test.ts, runtime-config-rebind-delivery.test.ts, runtime-config-rebind-readonly.test.ts, runtime-config-rebind-history.test.ts, runtime-config-rebind-limits.test.ts; shared tests/helpers/runtime-config-rebind-fixture.ts; package.json phase membership and test associations.
 

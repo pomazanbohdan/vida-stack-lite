@@ -8834,3 +8834,81 @@ without required markers or duplicate pilot merges. It checks the actual runner
 stdio and report-validator calls and finds no instruction contradiction.
 Publication uses the ordinary staged-snapshot hooks; no suite/build/install
 or numeric measurement is required by this documentation-only correction.
+
+### 2026-10-13 — native shard log pilot and actual expired-schema caller
+
+After publishing instruction packet1e12188, Root resumes the standing testing/
+CLEAR P0-P1 goal. One blind Luna owns only coverage-preload-lifecycle.test.ts;
+Root owns runner/custody controls, static/native checks and publication. Independent
+blind Source, caller and final pilot reviews run read-only. Preserve BASE/ and
+unrelated root bun.lock. No active schema/loader/System runtime or old Host effects.
+
+The first static check finds3Bun matcher overload errors from nullable terminal
+PIDs. Keep all values/oracles and use Set<number|null>/expect<number|null>.
+Qualified static passes435captured TS/434combined/97Source,0diagnostics and lint.
+Native first RED is not the log proof: child GO/RELEASE waits use shard-specific
+paths while parent writes shared barriers. Children timeout5000ms and parent
+spends its allowance; retain untrusted-two-shard-coverage-pilot-uqEN9T. Correct
+only those two wait targets. Targeted native RED then has both child bodies PASS
+but bound log_file absent, Expectedtrue/Receivedfalse. Retain original fixture
+untrusted-two-shard-coverage-pilot-ER8yR6; do not replay either retained operation.
+Failed descriptor-control root vida-coverage-custody-KtdGxy also remains retained.
+These roots are under /dev/shm/vida-focused-ef23451.
+
+Root adds only internal PreparedCoverageProducer.log_fd: optional caller-owned
+writable FD, snapshotted and nonnegative safe-integer validated before launches;
+both child streams use it, otherwise inherit. No file-opening/closing framework,
+CLI/env override or changed executable/clock/UNKNOWN predicate. Caller fixture
+opens each bound path exclusively, holds descriptors through direct accounting,
+attempts each owned close once and combines body/close errors. Move its existing
+20s/1s budget before preparation; only successful assertions, closes and remaining
+allowance permit root deletion.25s outer integration exception leaves individual
+child test defaults5000ms. Lint finds unsafe finally throws; record failures in
+finally and rethrow outside without masking either original or cleanup error.
+
+Blind Source review finds getter values can change between validation and copy.
+Actual native changing-getter RED fails expected prelaunch rejection; retain
+vida-coverage-custody-27aSBz. Capture FD once while copying and validate the actual
+plain snapshot before any group launch. Original structural validation remains
+before copying malformed inputs. Existing negative matrix now covers negative,
+fractional, unsafe and changing FD values with no first-sibling marker.
+Source re-review accepts the correction. Official Bun child-process docs document
+numeric output descriptors for Bun.spawn; the actual node:child_process bridge
+is qualified by this native pilot, not inferred from that documentation.
+
+Root static PASS; existing function-inventory scoped to4changed tooling helpers
+reports CC8/3/9/5. The diagnostic first selected raw names instead of fn: labels
+and returned0rows/exit1; correct that diagnostic selector, not inventory identity.
+This is scoped tooling evidence only, never exhaustive frozen/CRAP admission.
+Final native selection35PASS/0FAIL/352assertions17.03s across4files includes API,
+preload lifecycle, serial map/capture-once and acquired-lock controls. The new
+pilot joins two real supervised Bun children to sealed v3/v2 bindings, exact
+selected union, real separate stdout/stderr logs, distinct PID/terminal receipts
+and one checked sparse merge. Shared function count3; seeded unloaded Source
+count0 remains in the full map. ResourceSafeToAdvance remainsfalse; native marker
+coordination is not read-boundary overlap or descendant/effect quiescence.
+Final blind pilot review finds no concrete defect in this scope.
+
+The pending completed-Source recovery test observes the real public expired-lease
+schema callback:1verified read,0raw reads, persisted schema digest and unchanged
+Source, preserving every original lease/authority/CAS assertion. Blind caller
+review accepts the real-method delegation/restoration. Root exact native case
+PASS: child230assertions, parent156.32s, terminal0 under its existing180s subprocess/
+190s wrapper bounds. Child reporter says151635ms despite configured60000ms;
+this does not qualify inner timeout enforcement or adequate test speed. Retain
+that measured bottleneck for the existing phase/receipt optimization owner;
+do not raise budgets, infer cause or count this as the whole recovery contour.
+
+Owned logs are .tmp/coverage-iteration-ca94b7c/shard-log-*-20261013.log and
+expired-schema-caller-green-native-20261013.log; scoped CC artifact uses the
+same prefix. TESTING/skill/current plan reflect qualified synthetic mechanics
+and caller closure only. Production shard integration, complete physical output
+custody, later renewal/rebind-planner caller closure, actual reader overlap,
+resource quiescence and global100%/frozen CC-CRAP/assertion-confirmed mutation100
+remain OPEN. No full-suite/build/install/unblock notice or Runtime acceptance.
+
+Fresh blind instruction application accepts all4cases: pilot-only qualification,
+spent-deadline retention after FD close, omitted/invalid/changing descriptors,
+and the slow caller's scoped PASS without timeout/speed closure. Root checks
+21local links/headings and skill frontmatter with0errors, plus clean diff
+whitespace. Ordinary staged-snapshot publication gates remain required.

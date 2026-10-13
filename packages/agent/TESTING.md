@@ -817,10 +817,16 @@ validator itself validates joins, performs the checked merge and compares it to
 reported counters. Do not add a preceding merge solely to repeat that same pilot
 check. Preserve the required report-counter consistency comparison.
 
-The current serial supervisor inherits stdout/stderr. Complete two-shard output
-qualification and production integration remain pending; declaring paths or
-writing a pilot test does not activate them. Resource successors still require
-the separate descendant/effect proof below.
+The current serial supervisor inherits stdout/stderr by default. An internal
+prepared invocation may supply a caller-owned writable `log_fd`; its caller opens,
+holds and closes that descriptor. Validate the actual captured descriptor before
+any group launch, including an accessor that changes during copying.
+The bounded native v3/v2 fixture qualifies separate stream routing, receipt/PID
+joins and one sparse merge. It does not qualify production shard integration,
+resource successors, read-boundary overlap or global numerical gates. Current
+commands remain serial; successors need the separate descendant/effect proof.
+Its25s test exception observes the whole two-child group and owned cleanup under
+one20s preparation/producer budget; each child retains the5000ms test default.
 
 Negative controls preserve the valid prerequisites of the targeted guard.
 Adversarial receipt fixtures preserve prerequisite rows and sibling receipts

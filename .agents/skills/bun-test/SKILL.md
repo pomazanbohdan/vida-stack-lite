@@ -197,6 +197,9 @@ Use this recipe for the [pending explicit-shard design](../../../.agent/work/cor
    declared log paths are not captured child streams. Qualify actual routing
    with distinct native stdout/stderr markers. Use one existing pilot merge
    path; the v3 report validator already performs its own checked merge.
+   The bounded native pilot qualifies these fixture mechanics only. Caller-owned
+   log FDs close after accounting; keep body and close errors, retain failed roots,
+   and validate the captured FD before launch rather than trusting earlier reads.
 5. Separate direct reservation release from resource-wave advancement.
    The one run lock releases only after every launched direct producer is
    accounted for; an unknown sibling holds it. Not-started accounts only for its

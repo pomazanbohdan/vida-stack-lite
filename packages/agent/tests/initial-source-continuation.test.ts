@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
+import * as runtimeConfig from '../src/config/runtime-config.ts';
 import {
   loadRuntimeConfig,
   runtimeConfigDigest,
@@ -2189,19 +2190,57 @@ function completedSourceRecoveryCase(refreshOnly: 'none' | 'guards' | 'crash-bef
       expect(hostStore(f).readCompletedSourceReportRecoveryReceipt(f.identity, 1)).toEqual(recovery);
       const beforeExpiredRecovery = continuationState(f);
       holdExpiredOwnerClockForFixture(f);
+      const expiredRecoveryArgs = [
+        ...args,
+        '--recover-expired-lease',
+        'true',
+        '--rebind-current-bundle',
+        'true',
+        '--native-session-handle',
+        executionLease.thread_id,
+        '--lease-generation',
+        String(executionLease.generation),
+        ...expectedRunVersion(beforeExpiredRecovery.journalVersion),
+      ];
+      let expiredRecoveryValue: unknown;
+      if (refreshOnly === 'none') {
+        const nativeAccess = runtimePackageAccess();
+        const originalReadBytes = nativeAccess.readBytes;
+        const originalVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
+        if (!originalVerifiedRead)
+          throw new Error('Expired recovery caller requires the native verified package-byte reader');
+        let rawSchemaReads = 0;
+        const verifiedSchemaReads: Buffer[] = [];
+        const accessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => ({
+          ...nativeAccess,
+          readBytes(target: string, label: string): Buffer {
+            if (target === 'schemas/agent-runtime-config.v1.schema.json' && label === 'expired lease recovery schema')
+              rawSchemaReads += 1;
+            return originalReadBytes.call(nativeAccess, target, label);
+          },
+          readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+            const bytes = originalVerifiedRead.call(nativeAccess, target, label, maxBytes);
+            if (target === 'schemas/agent-runtime-config.v1.schema.json' && label === 'expired lease recovery schema')
+              verifiedSchemaReads.push(Buffer.from(bytes));
+            return bytes;
+          },
+        }));
+        try {
+          expiredRecoveryValue = await runAgent(expiredRecoveryArgs);
+        } finally {
+          accessSpy.mockRestore();
+        }
+        expect(verifiedSchemaReads).toHaveLength(1);
+        const verifiedSchemaBytes = verifiedSchemaReads[0];
+        if (!verifiedSchemaBytes) throw new Error('Expired recovery schema bytes were not observed');
+        expect(sha256(verifiedSchemaBytes)).toBe(beforeExpiredRecovery.work.binding.schema_digest);
+        expect(rawSchemaReads).toBe(0);
+        expect(snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), f.documents)).toEqual(sourceAfter);
+      } else {
+        expiredRecoveryValue = await runAgent(expiredRecoveryArgs);
+      }
       const expiredRecoveryResult = requireRecord(
-        await runAgent([
-          ...args,
-          '--recover-expired-lease',
-          'true',
-          '--rebind-current-bundle',
-          'true',
-          '--native-session-handle',
-          executionLease.thread_id,
-          '--lease-generation',
-          String(executionLease.generation),
-          ...expectedRunVersion(beforeExpiredRecovery.journalVersion),
-        ]),
+        expiredRecoveryValue,
         'same-attempt expired execution-lease recovery',
       );
       expect(expiredRecoveryResult.status).toBe('inspected');

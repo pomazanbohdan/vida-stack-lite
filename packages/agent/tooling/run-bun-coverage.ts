@@ -75,6 +75,8 @@ export type PreparedCoverageProducer = {
   cwd: string;
   env: NodeJS.ProcessEnv;
   maximum_duration_ms?: number;
+  /** Caller-owned writable log FD; caller holds and closes it. Default inherits. */
+  log_fd?: number;
 };
 
 export type CoverageProducerOutcome = ChildOutcome & {
@@ -132,6 +134,7 @@ function snapshotCoverageProducerLaunches(launches: readonly PreparedCoveragePro
   for (const value of launches as readonly unknown[]) {
     if (!isPreparedCoverageProducer(value)) throw new Error('Invalid coverage producer launch descriptor.');
     const launch = snapshotCoverageProducer(value);
+    if (!isPreparedCoverageProducer(launch)) throw new Error('Invalid coverage producer launch descriptor.');
     if (ids.has(launch.shard_id)) throw new Error('Invalid coverage producer launch descriptor.');
     ids.add(launch.shard_id);
     prepared.push(launch);
@@ -140,12 +143,14 @@ function snapshotCoverageProducerLaunches(launches: readonly PreparedCoveragePro
 }
 
 function snapshotCoverageProducer(launch: PreparedCoverageProducer): PreparedCoverageProducer {
+  const logFd = launch.log_fd;
   return {
     shard_id: launch.shard_id,
     args: [...launch.args],
     cwd: launch.cwd,
     env: { ...launch.env },
     ...(launch.maximum_duration_ms === undefined ? {} : { maximum_duration_ms: launch.maximum_duration_ms }),
+    ...(logFd === undefined ? {} : { log_fd: logFd }),
   };
 }
 
@@ -160,6 +165,7 @@ function isPreparedCoverageProducer(value: unknown): value is PreparedCoveragePr
 
 function isCoverageProducerOptions(launch: PreparedCoverageProducer): boolean {
   if (!launch.env || typeof launch.env !== 'object') return false;
+  if (launch.log_fd !== undefined && (!Number.isSafeInteger(launch.log_fd) || launch.log_fd < 0)) return false;
   return (
     launch.maximum_duration_ms === undefined ||
     (Number.isSafeInteger(launch.maximum_duration_ms) &&
@@ -194,10 +200,11 @@ function runCoverageProducer(
 ): Promise<CoverageProducerOutcome> {
   let child: ChildProcess;
   try {
+    const output = launch.log_fd ?? 'inherit';
     child = spawnChild(process.execPath, [...launch.args], {
       cwd: launch.cwd,
       env: launch.env,
-      stdio: ['ignore', 'inherit', 'inherit'],
+      stdio: ['ignore', output, output],
       timeout: allowance,
       killSignal: 'SIGKILL',
       windowsHide: true,
