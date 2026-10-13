@@ -795,6 +795,33 @@ An absent Source key adds no counter increments; an unloaded seeded Source keeps
 zero counters and still faces every exact coverage gate. Absence cannot replace
 required receipt or loaded-module evidence; retain existing per-process checks.
 
+#### Shard output qualification
+
+Record a bounded pilot's separate dispositions for exact test selection,
+v3 run/v2 process receipt and terminal joins, physical output custody, checked
+counter merge and resource reuse. A passing receipt/merge check does not close
+the output or resource disposition. Keep the synthetic fixture scope explicit.
+
+Declared disjoint `log_file` paths are not evidence of captured child streams.
+For the native output pilot, emit distinct controlled stdout and stderr markers
+from each real child. Check that each bound physical log contains its own
+markers and no sibling markers, alongside the existing output-role, alias and
+collision controls. An inherited shared parent log retains diagnostics but does
+not qualify separate shard logs. Do not manufacture logs from expected strings
+or substitute preload output for observing the actual producer streams. Silent
+ordinary tests need no artificial output; these markers qualify the routing.
+
+Choose one existing validation/merge path for a pilot: direct shard-evidence
+validation plus checked sparse merge, or the report-validator path. The v3 report
+validator itself validates joins, performs the checked merge and compares it to
+reported counters. Do not add a preceding merge solely to repeat that same pilot
+check. Preserve the required report-counter consistency comparison.
+
+The current serial supervisor inherits stdout/stderr. Complete two-shard output
+qualification and production integration remain pending; declaring paths or
+writing a pilot test does not activate them. Resource successors still require
+the separate descendant/effect proof below.
+
 Negative controls preserve the valid prerequisites of the targeted guard.
 Adversarial receipt fixtures preserve prerequisite rows and sibling receipts
 while changing the targeted claim and its dependent custody rows/hashes. Assert

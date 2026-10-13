@@ -8794,3 +8794,43 @@ the now-unused directory-write-restoration import after UNKNOWN fixture teardown
 stops deleting its root. Remove that unused named import; keep the already loaded
 fixture owner and runtime behavior. Preserve the rejected hook log separately;
 the qualified publication attempt must pass without bypass.
+
+### 2026-10-13 — testing instruction output-custody clarification
+
+The current user asks to carry the parallel-testing lessons into maintained
+instructions. Published619a619 provides the qualified current serial async
+foundation; the two pending test-file edits remain untouched and unqualified.
+Preserve those edits, BASE/ and unrelated root bun.lock. No product, runner,
+loader, active schema or System runtime change belongs to this docs packet.
+
+A blind Luna reference exercise correctly refuses a two-shard completion claim
+based on declared distinct logs with inherited shared stdout/stderr. It identifies
+an actual wording ambiguity: the physical log role was required, but its native
+stream-routing qualification was not explicit. This is reference clarification,
+not a fabricated behavioral-failure baseline. Existing receipt mechanics and
+direct reservation release still cannot establish full outputs or resource safety.
+
+TESTING now requires separate pilot dispositions for selection, v3 run/v2 process
+joins, physical outputs, merge and resource reuse. Controlled native stdout/stderr
+markers check each actual bound log and deny sibling capture. Ordinary silent
+tests need no artificial output. Shared inherited output retains diagnostics,
+not separate shard-log proof. The project bun-test reference points to this one
+owner; the current implementation item remains open.
+
+Direct Source inspection confirms bun-coverage-report-validator.ts already calls
+validateCoverageShardEvidence and mergeCoverageShardCounters before comparing
+reported counters. A bounded pilot selects that path or direct helpers without
+an extra pre-merge solely to repeat the same check. Preserve report consistency,
+all exact/frozen/assertion-confirmed mutation gates, one captured pipeline and
+one final-check owner. Documentation does not qualify the pending test code,
+parallel production, successor quiescence or global numeric admission.
+
+The sidecar bootstrap now points shard-output reviews to the same owner. Root's
+qualified Bun diagnostic checks21local links/headings and skill frontmatter
+with0errors; git diff --check passes. A fresh blind Luna application review
+accepts all three distinctions: receipt-only success with missing logs, bounded
+native routing/merge success without resource safety, and silent ordinary tests
+without required markers or duplicate pilot merges. It checks the actual runner
+stdio and report-validator calls and finds no instruction contradiction.
+Publication uses the ordinary staged-snapshot hooks; no suite/build/install
+or numeric measurement is required by this documentation-only correction.

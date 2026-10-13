@@ -153,6 +153,8 @@ pending runner or establish numeric evidence.
 Shard reviews apply the same contract's sealed argv/environment, child-local
 clock and targeted-negative-control rules. A coordinated reader correctness
 check does not qualify removal of the common package resource.
+For shard logs and pilot merge paths, also load
+[shard output qualification](packages/agent/TESTING.md#shard-output-qualification).
 
 Before async launch or reservation changes, also load
 [direct-producer accounting](packages/agent/TESTING.md#direct-producer-accounting-before-resource-reuse).

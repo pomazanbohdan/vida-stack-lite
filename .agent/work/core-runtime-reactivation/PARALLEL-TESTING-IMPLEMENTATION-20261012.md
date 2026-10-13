@@ -109,6 +109,9 @@ before; disjoint parallel outputs/receipts remain a later protocol integration.
   existing map/capture-once and acquired-lock controls, and blind review.
 - [ ] Bind actual two-shard invocation/output/receipt roles through v3/v2 and
   qualify the exact disjoint selection plus sparse merge under this supervisor.
+  Apply TESTING's shard-output qualification: actual per-shard stdout/stderr
+  capture is required; declared distinct log paths alone leave this item open.
+  Use one existing pilot validation/merge path, not a duplicate report remerge.
 - [ ] Provide separately reviewed descendant/effect quiescence before resource
   successors. Direct reservation release and native marker coordination do not
   qualify it; this host's cgroup creation probe remains provider-unavailable.

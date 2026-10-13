@@ -193,6 +193,10 @@ Use this recipe for the [pending explicit-shard design](../../../.agent/work/cor
    input evidence and receipt/terminal run-shard-PID joins before one checked
    counter merge/global validation. Native JUnit/coverage aggregation is not
    admission. Keep proof kinds and exact/frozen/mutation gates distinct.
+   Apply [shard output qualification](../../../packages/agent/TESTING.md#shard-output-qualification):
+   declared log paths are not captured child streams. Qualify actual routing
+   with distinct native stdout/stderr markers. Use one existing pilot merge
+   path; the v3 report validator already performs its own checked merge.
 5. Separate direct reservation release from resource-wave advancement.
    The one run lock releases only after every launched direct producer is
    accounted for; an unknown sibling holds it. Not-started accounts only for its
