@@ -490,6 +490,16 @@ owns cleanup on callback failure. Distinguish an injected pre-native close
 interruption from a real SQLite I/O close fault. Preserve body and cleanup
 errors, and retain failed or expired fixture roots.
 
+For public consumer migration reader tests, use the existing public-store fixture
+option rather than its synthetic workspace. Reset close observations when the
+selected verified capture starts; count completed native closes, preserving the
+exact failed handle for the maintained retry. Include logical bundle prefixes
+when joining observed byte entries to the persisted snapshot digest. An earlier
+probe close or individual file hash cannot establish that join.
+Initializer caller controls preserve explicit copied-bundle initialization;
+only executing-package resources select its immutable reader. Keep consumer
+CAS and every freshness/recovery boundary, and retain failed fixture roots.
+
 After a verified change to Bun Test practices, update the authoritative owner
 and this reference in the same correction packet. Validate linked paths,
 frontmatter and commands; use blind scenario exercises for changed guidance.

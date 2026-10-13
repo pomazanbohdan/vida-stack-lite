@@ -1,8 +1,10 @@
 import { projectMappings } from './project-mapping-contract.ts';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const isBunRuntime = typeof Bun !== 'undefined';
+const executingPackageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 /** @type {typeof import('ajv/dist/2020.js').Ajv2020 | null} */
 const Ajv2020 = isBunRuntime ? (await import('ajv/dist/2020.js')).Ajv2020 : null;
 const runtimeConfig = isBunRuntime ? await import('../src/config/runtime-config.ts') : null;
@@ -185,7 +187,29 @@ function initializationContext({
   const selectedProjects = projectMappings(mappings);
   const bundle = portableBundlePath(projectRoot, bundleRoot);
   const access = requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(projectRoot);
-  const packageAccess = requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(bundleRoot);
+  const selectedPackageAccess = requireRuntimeModule(repositoryAccess).requireSafeRepositoryAccess(bundleRoot);
+  // Explicit copied bundles remain selected inputs; only the executing package
+  // uses its immutable-resource reader. Consumer access keeps its own CAS owner.
+  const packageAccess: SafeRepositoryAccess =
+    bundleRoot === executingPackageRoot
+      ? {
+          ...selectedPackageAccess,
+          readBytes(target: string, label: string): Buffer {
+            return requireRuntimeModule(runtimeConfig).readRuntimePackageResourceBytes(
+              selectedPackageAccess,
+              target,
+              label,
+            );
+          },
+          readText(target: string, label: string): string {
+            return requireRuntimeModule(runtimeConfig).readRuntimePackageResourceText(
+              selectedPackageAccess,
+              target,
+              label,
+            );
+          },
+        }
+      : selectedPackageAccess;
   /** @type {unknown} */
   const packageManifest: unknown = JSON.parse(packageAccess.readText('package.json', 'runtime package identity'));
   if (!isPackageManifest(packageManifest) || packageManifest.name !== 'vida-agent')

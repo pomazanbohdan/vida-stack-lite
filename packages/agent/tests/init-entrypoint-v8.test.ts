@@ -1,4 +1,4 @@
-import { expect, test } from 'bun:test';
+import { expect, spyOn, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import {
   cpSync,
@@ -19,6 +19,7 @@ import { initializeProject, main } from '../bin/init.ts';
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { createInitializationBundle } from './helpers/init-bundle.js';
 import { loadRuntimeConfig } from '../src/config/runtime-config.js';
+import * as safeRepositoryAccess from '../src/config/safe-repository-access.js';
 
 type InitMainOptions = NonNullable<Parameters<typeof main>[0]>;
 type InitializationRequest = Parameters<typeof initializeProject>[0];
@@ -215,6 +216,139 @@ test('public initializer rejects a relative project root before initialization',
   );
   expect(failure).toBeInstanceOf(Error);
   expect(failure).toHaveProperty('message', 'Initialization requires an explicit canonical absolute project root');
+});
+
+test('public initializer reads executing-package resources through the maintained package reader', async () => {
+  const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-package-reader-'));
+  let completed = false;
+  const verifiedTargets: string[] = [];
+  const stableTargets: string[] = [];
+  const rawTargets: string[] = [];
+  let hasVerifiedReader = false;
+  let hasStableReader = false;
+  const originalRequire = safeRepositoryAccess.requireSafeRepositoryAccess;
+  const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((root) => {
+    const nativeAccess = originalRequire(root);
+    if (path.resolve(root) !== packageRoot) return nativeAccess;
+    const nativeVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
+    const nativeStableRead = nativeAccess.readStableBytes;
+    hasVerifiedReader = typeof nativeVerifiedRead === 'function';
+    hasStableReader = typeof nativeStableRead === 'function';
+    const wrapped = {
+      ...nativeAccess,
+      readBytes(target: string, label: string): Buffer {
+        rawTargets.push(target);
+        return nativeAccess.readBytes.call(nativeAccess, target, label);
+      },
+      readText(target: string, label: string): string {
+        rawTargets.push(target);
+        return nativeAccess.readText.call(nativeAccess, target, label);
+      },
+      ...(nativeStableRead
+        ? {
+            readStableBytes(target: string, label: string): Buffer | null {
+              expect(this === wrapped).toBe(true);
+              stableTargets.push(target);
+              return nativeStableRead.call(nativeAccess, target, label);
+            },
+          }
+        : {}),
+      ...(nativeVerifiedRead
+        ? {
+            readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+              expect(this === wrapped).toBe(true);
+              verifiedTargets.push(target);
+              return nativeVerifiedRead.call(nativeAccess, target, label, maxBytes);
+            },
+          }
+        : {}),
+    };
+    return wrapped;
+  });
+  try {
+    const receipt = await initializeProject(validRequest(projectRoot));
+    expect(receipt.status).toBe('initialized');
+    expect(existsSync(path.join(projectRoot, 'AGENTS.md'))).toBe(true);
+    expect(existsSync(path.join(projectRoot, '.agent', 'runtime-initialization.v1.json'))).toBe(true);
+    const resourceTargets = new Set([...verifiedTargets, ...stableTargets, ...rawTargets]);
+    const preferredTargets = hasVerifiedReader ? verifiedTargets : hasStableReader ? stableTargets : rawTargets;
+    for (const target of [
+      'package.json',
+      'templates/AGENTS.template.md',
+      'templates/AGENT.sidecar.template.md',
+      'templates/agent-runtime.config.template.v1.yaml',
+      'templates/documentation-policy.template.v1.json',
+      'schemas/documentation-policy.v1.schema.json',
+      'schemas/runtime-initialization.v1.schema.json',
+      'instructions/development-lifecycle.md',
+    ]) {
+      expect(resourceTargets.has(target), `missing package resource read: ${target}`).toBe(true);
+      expect(preferredTargets.includes(target), `resource bypassed the preferred package reader: ${target}`).toBe(true);
+    }
+    if (hasVerifiedReader || hasStableReader) expect(rawTargets).toEqual([]);
+    completed = true;
+  } finally {
+    accessSpy.mockRestore();
+    retainedCleanup(projectRoot, completed);
+  }
+});
+
+test('public initializer does not fall back or publish when a verified package read fails', async () => {
+  const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-package-reader-failure-'));
+  let completed = false;
+  const failure = new Error('fixture verified package read failure');
+  const verifiedTargets: string[] = [];
+  const rawTargets: string[] = [];
+  const originalRequire = safeRepositoryAccess.requireSafeRepositoryAccess;
+  const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((root) => {
+    const nativeAccess = originalRequire(root);
+    if (path.resolve(root) !== packageRoot) return nativeAccess;
+    const nativeVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
+    const nativeStableRead = nativeAccess.readStableBytes;
+    const wrapped = {
+      ...nativeAccess,
+      readBytes(target: string, label: string): Buffer {
+        rawTargets.push(target);
+        return nativeAccess.readBytes.call(nativeAccess, target, label);
+      },
+      readText(target: string, label: string): string {
+        rawTargets.push(target);
+        return nativeAccess.readText.call(nativeAccess, target, label);
+      },
+      readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+        expect(this === wrapped).toBe(true);
+        verifiedTargets.push(target);
+        if (target === 'templates/AGENTS.template.md') throw failure;
+        if (nativeVerifiedRead) return nativeVerifiedRead.call(nativeAccess, target, label, maxBytes);
+        if (nativeStableRead) {
+          const stable = nativeStableRead.call(nativeAccess, target, label);
+          if (stable === null) throw new Error('required runtime package resource is absent');
+          return stable;
+        }
+        return wrapped.readBytes(target, label);
+      },
+    };
+    return wrapped;
+  });
+  try {
+    await Promise.resolve(expect(initializeProject(validRequest(projectRoot))).rejects.toBe(failure));
+    expect(verifiedTargets).toContain('templates/AGENTS.template.md');
+    expect(rawTargets).not.toContain('templates/AGENTS.template.md');
+    expect(
+      [
+        'AGENTS.md',
+        'AGENT.sidecar.md',
+        'agent-runtime.config.v1.yaml',
+        'docs/agent-instructions/documentation-policy.v1.json',
+        '.agent/runtime-initialization.pending.v1.json',
+        '.agent/runtime-initialization.v1.json',
+      ].some((target) => existsSync(path.join(projectRoot, target))),
+    ).toBe(false);
+    completed = true;
+  } finally {
+    accessSpy.mockRestore();
+    retainedCleanup(projectRoot, completed);
+  }
 });
 
 test('Node CLI reports delegator errors and a non-main import performs no work', async () => {

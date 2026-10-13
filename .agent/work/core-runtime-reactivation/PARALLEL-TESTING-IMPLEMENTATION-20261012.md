@@ -12,7 +12,8 @@
 
 ## Current dispatch — 2026-10-13
 
-Latest published Source isfa227cf. The last full current run,
+The shared dispatch capture is anchored atfa227cf; obtain the latest published
+Source from Git rather than treating that capture as a moving checkpoint. The last full current run,
 6ecf5884-1970-4988-ac04-b4af06260ba0, ended UNKNOWN under300000ms with170emitted
 PASS rows, no emitted assertion failure and no admitted numeric report. Preserve
 the run/effects; no unchanged full rerun. Earlier resource review packets are
@@ -40,6 +41,16 @@ verified read and split-image binding without a cache. In parallel, the other
 roles finish next-unit context; they do not reopen qualified scheduler work or
 activate live parallelism. Gate retirement still depends on existing-main lifetime
 exclusion, same-connection SQL/fence use and qualified bootstrap/repair.
+
+Resumed caller closure: the schema-rebind caller adds verified-reader error/no
+fallback evidence to its existing upgrade fixture. The public consumer migration
+caller must also close its admitted source and paired gate when package capture
+fails during setup; Root owns that Source repair and the regression qualification.
+Review the complete post-open cleanup contour and preserve both body and close
+errors. Initializer migration must retain the supported explicit copied-bundle
+API: an executing-package-only helper cannot silently reject those callers.
+These reader/cleanup tasks precede an authoritative current resource review and
+live coverage activation. Generated review packets remain unreviewed.
 
 Sequence: causal RED and accepted plan → disjoint Source/test writers → join and
 freeze → static/format/lint → affected runtime cases without compiler contention

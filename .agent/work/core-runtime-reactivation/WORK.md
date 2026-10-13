@@ -10492,3 +10492,79 @@ schema-omission case proves all canonical database rows remain unchanged after
 that exact original cutoff. Source optimization and later freshness proof are
 current; historical RED/failed roots are retained. Publish the connected packet
 through the ordinary strict hook; do not relabel global gates or activate shards.
+
+### Resumed caller cleanup and package-reader closure — 2026-10-13
+
+Published checkpoint3f84cd4 remains equal to fetched origin/main; preserve the
+unrelated BASE/ and root bun.lock. The paused upgrade test edit has a blind
+correctness approval; runtime/static qualification is pending. Root dispatched
+six blind Luna roles for its review, the consumer regression, cleanup analogues,
+eligibility input design, initializer closure and incremental frozen inventory.
+Root alone owns Source, checks, current documents and publication.
+
+Confirmed consumer cleanup gap: runConsumerMigrationState opens an admitted
+canonical connection before fallible package snapshot/binding setup, while its
+try/finally begins afterward. A selected verified-reader error skips both source
+and paired gate close. Repair the entire post-open scope through its exact close
+owner and retain body plus close errors. The existing public wrapper case owns
+the regression; observe completed native closes after the selected read boundary
+so an earlier probe cannot satisfy the assertion.
+
+The first scoped attempt, consumer-package-capture-close-red.log, failed during
+fixture setup with gate identity differs; it is not causal RED. Its existing
+fixture used a synthetic workspace for a public derived-workspace caller. Use
+the maintained publicStore fixture option, preserving the real identity guard
+instead of deleting or rewriting its gate. The previous unconditional fixture
+cleanup removed the early setup/RED roots; their logs survive, but do not claim
+root retention. The corrected case retains its root until all assertions pass.
+
+Bounded analogous cleanup review covers Host inspection/exclusive transactions,
+task-source and persistent-session callers, existing/fresh upgrade, service
+custody and four session-engine snapshot readers. The consumer setup gap is
+confirmed. Existing-upgrade binding-before-try and recorded-identity-before-try
+are structural candidates with no ordinary trigger established; do not report
+them as confirmed defects. No new generic cleanup framework is required.
+
+Resource qualification remains open: public init accepts an explicitly selected
+copied bundle, so blindly substituting an executing-package-only root helper
+would break that API. Preserve it while qualifying immutable resource reads.
+The current runner has no authoritative eligibility artifact/scope input; its
+existing v3 helpers and v2 validator are reusable, but unreviewed/stale packets
+must not activate production shards. No new full unchanged run or numeric
+coverage/CRAP/mutation admission follows from these static findings.
+
+Qualification: consumer-package-capture-close-red-public.log reproduces the
+missing completed native source/gate closes after the sentinel boundary.
+init-package-reader-red.log reproduces raw template reads and the ignored
+verified-reader sentinel. The connected repair moves all consumer post-open
+work under error collection, closes through the paired owner, preserves a sole
+error exactly and combines body/close errors in order. No new cleanup framework
+or admission identity override was introduced.
+
+The initializer constructs one selected access and wraps its byte/text methods
+only for the executing package. All nine existing read sites reuse that owner;
+explicit copied-bundle initialization, consumer CAS, independent freshness reads
+and package identity checks remain. Two inline adapter callables are prospectively
+reviewed within10/10; this is not exhaustive frozen-budget admission.
+
+Static final Source/test bodies:448capturedTS/447program and100Source files,
+0diagnostics; typed strict lint PASS with no suppressions added. Initial test
+type/lint findings were corrected rather than suppressed. Blind consumer and init
+Source reviews approve; the consumer review also prompted inspection-handle
+finally and failed-root retention.
+
+caller-package-cleanup-green.log:3PASS/1testFAIL in17.65s. Init positives/error and
+existing upgrade/rebind case PASS; upgrade body13952.44ms uses its existing60s
+exception. The consumer test's digest used physical read operands instead of
+logical bundle-prefixed entries; fix that test join, preserving the persisted
+product digest. The failed consumer root remains retained. Corrected focused
+consumer case:1PASS/47assertions/3.06s, body1133.60ms, including dual-error ordering
+and exact retained source-before-gate close retry. Reader/recovery regression
+batch:59PASS/361assertions/26.60s across init-entrypoint, audit-partial-init,
+runtime-package-resource-read and workspace-database-close-custody. No case
+timeout or observed assertion failure remains in this affected batch.
+
+Keep live v3 activation, complete current resource review, one-database gate
+replacement/repair, exact100coverage, exhaustive frozenCRAP/CC and confirmedKilled
+mutation gate OPEN. Publish this coherent correction packet with the strict hook,
+then continue the already-owned eligibility/caller closure tasks.

@@ -214,6 +214,11 @@ records the exact handle synchronously before any fallible check; invoking
 capture transfers cleanup custody even if that check throws. Capture grants
 no verified identity, admission or execution rights. Preserve both operation
 and cleanup errors rather than replacing one with the other.
+The public consumer migration wrapper owns its connection immediately after
+open, including package snapshot and binding preparation. Setup failure must
+close through that paired owner before propagating the original error; if close
+also fails, report both errors and retain the exact handle for the existing retry
+path. No migration callback or maintenance acquisition follows failed capture.
 
 The current separate storage-admission database remains a compatibility
 implementation GAP against that target. Its uninitialized exact zero-byte file

@@ -1371,3 +1371,28 @@ qualify provider/filesystem targets, blocked openers, crash, drift and retry.
 First creation still needs the existing fenced lifecycle. Debug-only
 SQLITE_FCNTL_LOCKSTATE is not production proof. Current auxiliary-gate retirement
 and target cutover remain implementation/qualification GAPs.
+
+## Public database cleanup scope — 2026-10-13
+
+Current official [Bun SQLite close](https://bun.com/docs/runtime/sqlite.md)
+documents that close(true) finalizes outstanding statements and requests immediate
+connection release with SQLite errors propagated. close(false) and garbage
+collection are weaker lifetime evidence. The documented using statement calls
+native close(true), which does not replace VIDA's paired admission owner or its
+exact-handle retry custody.
+
+Confirmed local defect: runConsumerMigrationState opened its admitted canonical
+connection before fallible package capture but entered cleanup afterward. The
+regression observes no completed source close after a selected capture failure.
+The repair protects all post-open setup and work, then attempts paired cleanup,
+rethrows a sole error unchanged and aggregates body/close errors in order. A
+pre-native injected close failure proves exact-handle retry ordering, not a real
+SQLite I/O failure or crash durability. The existing public-store fixture supplies
+the real workspace identity; synthetic identity mismatch is a setup failure.
+
+Bounded analogue review found immediate cleanup in Host inspection/transactions,
+task-source and persistent-session callers, and protected existing-storage/service
+paths. Existing-upgrade binding-before-try and session snapshot recorded-identity
+access are structural candidates without an established ordinary failure trigger.
+Do not qualify those candidates by text shape alone. No active storage layout,
+maintenance rights, CAS, or UNKNOWN disposition changes follow from this repair.

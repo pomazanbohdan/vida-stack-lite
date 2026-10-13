@@ -254,6 +254,17 @@ Initialization resource fixtures reuse the maintained inventory owner's exact
 reserved-sidecar predicate. Preserve ordinary hidden files and lookalikes;
 exclude only reserved custody metadata. Serialize Source-copy and Source-binding
 behavior checks, retaining actual copy errors and prior failed receipts.
+Initializer reader controls distinguish the executing package from the supported
+explicit copied bundle. The public executing-package path uses the immutable
+resource helper; explicitly selected bundles keep their existing SafeAccess/CAS
+reader. Observe real package resources and selected-reader failure before
+consumer publication, without caching across freshness boundaries.
+Consumer migration controls use the fixture's public derived workspace identity.
+Reset close observations at the selected capture boundary so an earlier probe
+cannot satisfy cleanup assertions; record native close completion and exact
+source-before-gate ordering. Retain body plus close errors and verify retry of
+that same handle. Snapshot digest assertions use logical bundle-prefixed paths,
+not the physical reader's relative operands.
 
 Tests and comments describe current supported behavior. Do not include narratives about absent legacy implementations. Human authorization covers the strict Knip precommit gate. Qualify its staged snapshot, tool/config failures, formatter check, one strict maintained-TypeScript program, lint and focused-test enforcement. Hook activation proves enforcement, not quality closure: existing findings must continue to block commits. This authorization does not activate pre-push coverage, CRAP or mutation checks.
 

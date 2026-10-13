@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test';
+import { test, expect, spyOn, type Mock } from 'bun:test';
 import { createAutomaticWorkAdmissionFixture as createFixture } from './helpers/automatic-work-admission-fixture.js';
 import { Database } from 'bun:sqlite';
 import { Ajv2020 } from 'ajv/dist/2020.js';
@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, type AgentRuntimeConfig, type WorkItemSelection } from '../src/config/runtime-config.ts';
+import * as runtimeConfig from '../src/config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { parseScopedSourceSnapshot, snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
@@ -1940,7 +1941,10 @@ test('admission accepts an exact out-of-root shared path under the selected proj
 });
 
 test('public consumer wrapper checks the separate Mastra store and recovers the same fenced operation', async () => {
-  const f = fixture();
+  const f = fixture(false, true);
+  let completed = false;
+  let runtimePackageAccessSpy: Mock<typeof runtimeConfig.runtimePackageAccess> | undefined;
+  let databaseCloseSpy: Mock<typeof Database.prototype.close> | undefined;
   try {
     const workflowPath = path.join(f.root, f.config.control.work_root, 'mastra-workflows.v1.sqlite');
     mkdirSync(path.dirname(workflowPath), { recursive: true });
@@ -1954,13 +1958,192 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
       actor: 'fixture:consumer',
       mode: 'baseline',
     };
-    let called = false;
-    await Promise.resolve(
+    const failedCaptureInput = { ...input, operationId: 'public-consumer-capture-failure' };
+    const originalRuntimePackageAccess = runtimeConfig.runtimePackageAccess;
+    const failedNativeAccesses: object[] = [];
+    let selectedVerifiedFailures = 0;
+    let failureRawReads = 0;
+    const selectedVerifiedLabels: string[] = [];
+    const canonicalDatabasePath = path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite');
+    const gateDatabasePath = path.join(f.root, '.vida/storage-admission.v1.sqlite');
+    const closeEvents: string[] = [];
+    const databaseCloseValue: unknown = Object.getOwnPropertyDescriptor(Database.prototype, 'close')?.value;
+    if (typeof databaseCloseValue !== 'function') throw new Error('SQLite close method is unavailable');
+    const originalDatabaseClose = databaseCloseValue as (this: Database, force?: boolean) => void;
+    databaseCloseSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+      this: Database,
+      force?: boolean,
+    ) {
+      const filename = path.resolve(this.filename);
+      const result = originalDatabaseClose.call(this, force);
+      if (filename === canonicalDatabasePath || filename === gateDatabasePath) closeEvents.push(filename);
+      return result;
+    });
+    const captureSentinel = new Error('selected runtime package capture sentinel');
+    runtimePackageAccessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => {
+      const nativeAccess = originalRuntimePackageAccess();
+      failedNativeAccesses.push(nativeAccess);
+      const originalVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
+      if (!originalVerifiedRead) throw new Error('Consumer migration requires the verified package-byte reader');
+      return {
+        ...nativeAccess,
+        readBytes(target: string, label: string): Buffer {
+          if (target === 'src/host-state.ts') failureRawReads += 1;
+          return nativeAccess.readBytes.call(nativeAccess, target, label);
+        },
+        readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+          if (target === 'src/host-state.ts') {
+            closeEvents.length = 0;
+            selectedVerifiedFailures += 1;
+            selectedVerifiedLabels.push(label);
+            throw captureSentinel;
+          }
+          return originalVerifiedRead.call(nativeAccess, target, label, maxBytes);
+        },
+      };
+    });
+    let failedCaptureCallback = false;
+    try {
+      await Promise.resolve(
+        expect(
+          runConsumerMigrationState(failedCaptureInput, () => {
+            failedCaptureCallback = true;
+          }),
+        ).rejects.toBe(captureSentinel),
+      );
+    } finally {
+      runtimePackageAccessSpy.mockRestore();
+      runtimePackageAccessSpy = undefined;
+    }
+    expect(failedNativeAccesses).toHaveLength(1);
+    expect(new Set(failedNativeAccesses).size).toBe(failedNativeAccesses.length);
+    expect(selectedVerifiedFailures).toBe(1);
+    expect(selectedVerifiedLabels).toEqual(['scoped source stable read']);
+    expect(failureRawReads).toBe(0);
+    expect(failedCaptureCallback).toBe(false);
+    expect(closeEvents).toContain(canonicalDatabasePath);
+    expect(closeEvents).toContain(gateDatabasePath);
+    expect(closeEvents.indexOf(canonicalDatabasePath)).toBeLessThan(closeEvents.indexOf(gateDatabasePath));
+    databaseCloseSpy.mockRestore();
+    databaseCloseSpy = undefined;
+    const failedCaptureDatabase = new Database(canonicalDatabasePath, { create: false, strict: true });
+    try {
+      const hasMigrationTable = failedCaptureDatabase
+        .query("SELECT name FROM sqlite_master WHERE type='table' AND name='agent_host_consumer_migration'")
+        .get();
       expect(
-        runConsumerMigrationState(input, () => {
-          called = true;
-        }),
-      ).rejects.toThrow(/unknown or inflight/),
+        hasMigrationTable
+          ? failedCaptureDatabase
+              .query('SELECT operation_id FROM agent_host_consumer_migration WHERE operation_id=?')
+              .all(failedCaptureInput.operationId)
+          : [],
+      ).toEqual([]);
+      expect(
+        failedCaptureDatabase
+          .query('SELECT payload FROM agent_host_maintenance WHERE workspace_id=?')
+          .all(deriveWorkspaceId(f.config.repository.repository_id, f.root)),
+      ).toEqual([]);
+    } finally {
+      failedCaptureDatabase.close();
+    }
+    const closeSentinel = new Error('canonical database close sentinel');
+    let closeFaultArmed = false;
+    const failedCloseHandles: Database[] = [];
+    let dualFailureCallback = false;
+    let dualFailureRawReads = 0;
+    const originalRuntimePackageAccessForCloseFailure = runtimeConfig.runtimePackageAccess;
+    databaseCloseSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+      this: Database,
+      force?: boolean,
+    ) {
+      const filename = path.resolve(this.filename);
+      if (filename === canonicalDatabasePath && closeFaultArmed) {
+        closeFaultArmed = false;
+        failedCloseHandles.push(this);
+        throw closeSentinel;
+      }
+      const result = originalDatabaseClose.call(this, force);
+      if (filename === canonicalDatabasePath || filename === gateDatabasePath) closeEvents.push(filename);
+      return result;
+    });
+    runtimePackageAccessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => {
+      const nativeAccess = originalRuntimePackageAccessForCloseFailure();
+      const originalVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
+      if (!originalVerifiedRead) throw new Error('Consumer migration requires the verified package-byte reader');
+      return {
+        ...nativeAccess,
+        readBytes(target: string, label: string): Buffer {
+          if (target === 'src/host-state.ts') dualFailureRawReads += 1;
+          return nativeAccess.readBytes.call(nativeAccess, target, label);
+        },
+        readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+          if (target === 'src/host-state.ts') {
+            closeEvents.length = 0;
+            closeFaultArmed = true;
+            throw captureSentinel;
+          }
+          return originalVerifiedRead.call(nativeAccess, target, label, maxBytes);
+        },
+      };
+    });
+    let dualFailureError: unknown;
+    try {
+      await runConsumerMigrationState(failedCaptureInput, () => {
+        dualFailureCallback = true;
+      });
+    } catch (error) {
+      dualFailureError = error;
+    } finally {
+      runtimePackageAccessSpy.mockRestore();
+      runtimePackageAccessSpy = undefined;
+      databaseCloseSpy.mockRestore();
+      databaseCloseSpy = undefined;
+    }
+    expect(dualFailureCallback).toBe(false);
+    expect(dualFailureRawReads).toBe(0);
+    expect(dualFailureError).toBeInstanceOf(AggregateError);
+    if (!(dualFailureError instanceof AggregateError)) throw new Error('capture and close errors were not combined');
+    expect(dualFailureError.errors[0]).toBe(captureSentinel);
+    const closeErrors: unknown[] = [];
+    const collectErrors = (error: unknown): void => {
+      if (error instanceof AggregateError) {
+        for (const nested of error.errors) collectErrors(nested);
+      } else closeErrors.push(error);
+    };
+    if (dualFailureError.errors[1] !== undefined) collectErrors(dualFailureError.errors[1]);
+    expect(closeErrors).toContain(closeSentinel);
+    expect(failedCloseHandles).toHaveLength(1);
+
+    const retriedCloseEvents: string[] = [];
+    const retriedSourceHandles: Database[] = [];
+    databaseCloseSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+      this: Database,
+      force?: boolean,
+    ) {
+      const filename = path.resolve(this.filename);
+      const result = originalDatabaseClose.call(this, force);
+      if (filename === canonicalDatabasePath) retriedSourceHandles.push(this);
+      if (filename === canonicalDatabasePath || filename === gateDatabasePath) retriedCloseEvents.push(filename);
+      return result;
+    });
+    let called = false;
+    try {
+      await Promise.resolve(
+        expect(
+          runConsumerMigrationState(input, () => {
+            called = true;
+          }),
+        ).rejects.toThrow(/unknown or inflight/),
+      );
+    } finally {
+      databaseCloseSpy.mockRestore();
+      databaseCloseSpy = undefined;
+    }
+    expect(retriedSourceHandles[0]).toBe(failedCloseHandles[0]);
+    expect(retriedCloseEvents.indexOf(canonicalDatabasePath)).toBeGreaterThanOrEqual(0);
+    expect(retriedCloseEvents.indexOf(gateDatabasePath)).toBeGreaterThanOrEqual(0);
+    expect(retriedCloseEvents.indexOf(canonicalDatabasePath)).toBeLessThan(
+      retriedCloseEvents.indexOf(gateDatabasePath),
     );
     expect(called).toBe(false);
     const settled = new Database(workflowPath, { create: true, strict: true });
@@ -1968,22 +2151,92 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
     settled.close();
     type ConsumerBindings = Parameters<Parameters<typeof runConsumerMigrationState>[1]>[0];
     let databasePath: string | undefined, backup: ConsumerBindings['backup'] | undefined;
-    const result = await runConsumerMigrationState(input, (bindings) => {
-      databasePath = bindings.database_path;
-      backup = bindings.backup;
-      expect(bindings.workflow_database_path).toBe(workflowPath);
-      return 'baseline-files';
+    const capturedSnapshots: {
+      access: object;
+      entries: { path: string; exists: true; bytes: number; sha256: string }[];
+      labels: string[];
+    }[] = [];
+    let successfulRawReads = 0;
+    const originalPackageAccess = runtimeConfig.runtimePackageAccess;
+    runtimePackageAccessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => {
+      const nativeAccess = originalPackageAccess();
+      const entries: { path: string; exists: true; bytes: number; sha256: string }[] = [];
+      const labels: string[] = [];
+      capturedSnapshots.push({ access: nativeAccess, entries, labels });
+      const originalVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
+      if (!originalVerifiedRead) throw new Error('Consumer migration requires the verified package-byte reader');
+      return {
+        ...nativeAccess,
+        readBytes(target: string, label: string): Buffer {
+          if (['src/host-state.ts', 'src/orchestration/local-work-admission.ts', 'bin/run.ts'].includes(target))
+            successfulRawReads += 1;
+          return nativeAccess.readBytes.call(nativeAccess, target, label);
+        },
+        readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+          const bytes = originalVerifiedRead.call(nativeAccess, target, label, maxBytes);
+          if (['src/host-state.ts', 'src/orchestration/local-work-admission.ts', 'bin/run.ts'].includes(target)) {
+            labels.push(label);
+            entries.push({
+              path: f.config.runtime.bundle + '/' + target,
+              exists: true,
+              bytes: bytes.length,
+              sha256: createHash('sha256').update(bytes).digest('hex'),
+            });
+          }
+          return bytes;
+        },
+      };
     });
+    let result: Awaited<ReturnType<typeof runConsumerMigrationState<string>>>;
+    try {
+      result = await runConsumerMigrationState(input, (bindings) => {
+        databasePath = bindings.database_path;
+        backup = bindings.backup;
+        expect(bindings.workflow_database_path).toBe(workflowPath);
+        return 'baseline-files';
+      });
+      await runConsumerMigrationState(input, (bindings) => {
+        expect(bindings.backup).toBeNull();
+        return 'retry-files';
+      });
+    } finally {
+      runtimePackageAccessSpy.mockRestore();
+      runtimePackageAccessSpy = undefined;
+    }
+    expect(capturedSnapshots).toHaveLength(2);
+    expect(new Set(capturedSnapshots.map((snapshot) => snapshot.access)).size).toBe(capturedSnapshots.length);
+    expect(successfulRawReads).toBe(0);
+    const expectedPaths = ['bin/run.ts', 'src/host-state.ts', 'src/orchestration/local-work-admission.ts'].map(
+      (target) => f.config.runtime.bundle + '/' + target,
+    );
+    const snapshotDigests = capturedSnapshots.map(({ entries, labels }) => {
+      entries.sort((left, right) => left.path.localeCompare(right.path));
+      expect(entries.map((entry) => entry.path)).toEqual(expectedPaths);
+      expect(labels).toEqual(['scoped source stable read', 'scoped source stable read', 'scoped source stable read']);
+      return canonicalJsonDigest({ schema: 'ScopedSourceSnapshot/v1', entries });
+    });
+    expect(snapshotDigests[1]).toBe(snapshotDigests[0]);
+    const expectedBundleDigest = snapshotDigests[0];
+    if (!expectedBundleDigest) throw new Error('Consumer migration did not capture a package snapshot');
     expect(result.status).toBe('baseline');
     if (!databasePath || backup === undefined || backup === null)
       throw new Error('baseline consumer migration did not expose its SQLite backup');
     const persistedDatabasePath = databasePath;
+    const persistedBaseline = new Database(persistedDatabasePath, { create: false, strict: true });
+    try {
+      const row = persistedBaseline
+        .query('SELECT payload FROM agent_host_consumer_migration WHERE operation_id=?')
+        .get(input.operationId) as { payload: string } | null;
+      expect(row).not.toBeNull();
+      if (!row) throw new Error('consumer migration baseline row was not persisted');
+      expect((JSON.parse(row.payload) as { binding: { bundle_digest: string } }).binding.bundle_digest).toBe(
+        expectedBundleDigest,
+      );
+    } finally {
+      persistedBaseline.close();
+    }
     expect(Buffer.from(backup).subarray(0, 16).toString()).toBe('SQLite format 3\u0000');
     expect(persistedDatabasePath).toBe(path.join(f.root, f.config.control.work_root, 'session-handoff.v1.sqlite'));
-    await runConsumerMigrationState(input, (bindings) => {
-      expect(bindings.backup).toBeNull();
-      return 'retry-files';
-    });
     const consumerFile = path.join(f.root, 'consumer-init-output.txt');
     writeFileSync(consumerFile, 'known init failure');
     await Promise.resolve(
@@ -2022,10 +2275,16 @@ test('public consumer wrapper checks the separate Mastra store and recovers the 
     ).toThrow(/admission metadata missing/);
     expect(readFileSync(persistedDatabasePath)).toEqual(bytesBefore);
     const unchanged = new Database(persistedDatabasePath, { create: false, strict: true });
-    expect(unchanged.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(schemaBefore);
-    unchanged.close();
+    try {
+      expect(unchanged.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(schemaBefore);
+    } finally {
+      unchanged.close();
+    }
+    completed = true;
   } finally {
-    f.close();
+    runtimePackageAccessSpy?.mockRestore();
+    databaseCloseSpy?.mockRestore();
+    f.close({ retainRoot: !completed });
   }
 });
 

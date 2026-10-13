@@ -768,24 +768,30 @@ async function assertProjectRebindSchemaReader(root: string): Promise<void> {
         : []),
     ];
 
-    let accessMode: 'plan' | 'apply' = 'plan';
+    let accessMode: 'plan' | 'apply' | 'readerError' = 'plan';
     const nativeAccess = runtimeConfig.runtimePackageAccess(),
       nativeVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
-    if (!nativeVerifiedRead) throw new Error('Project rebind requires the native verified package-byte reader');
+    if (nativeAccess.provider !== 'linux-proc-fd' || !nativeVerifiedRead)
+      throw new Error('Project rebind requires the native Linux verified package-byte reader');
     const reads = {
-      plan: { verified: 0, raw: 0, bytes: undefined as Buffer | undefined },
-      apply: { verified: 0, raw: 0 },
+      plan: { verifiedCalls: 0, verifiedBytes: 0, casReadCalls: 0, bytes: undefined as Buffer | undefined },
+      apply: { verifiedCalls: 0, verifiedBytes: 0, casReadCalls: 0 },
+      readerError: { verifiedCalls: 0, verifiedBytes: 0, casReadCalls: 0 },
     };
     accessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => ({
       ...nativeAccess,
       readBytes(target: string, label: string): Buffer {
-        if (target === 'schemas/runtime-initialization.v2.schema.json') reads[accessMode].raw += 1;
+        if (target === 'schemas/runtime-initialization.v2.schema.json') reads[accessMode].casReadCalls += 1;
         return nativeAccess.readBytes(target, label);
       },
       readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+        if (target === 'schemas/runtime-initialization.v2.schema.json' && label === 'project initialization schema') {
+          reads[accessMode].verifiedCalls += 1;
+          if (accessMode === 'readerError') throw new Error('injected verified package reader failure');
+        }
         const bytes = nativeVerifiedRead.call(nativeAccess, target, label, maxBytes);
         if (target === 'schemas/runtime-initialization.v2.schema.json' && label === 'project initialization schema') {
-          reads[accessMode].verified += 1;
+          reads[accessMode].verifiedBytes += bytes.byteLength;
           if (accessMode === 'plan') reads.plan.bytes = Buffer.from(bytes);
           else return Buffer.concat([bytes, Buffer.from('\n')]);
         }
@@ -797,7 +803,8 @@ async function assertProjectRebindSchemaReader(root: string): Promise<void> {
       planResult: unknown = await runReconcileArtifacts(command('plan'));
     if (!isPlainRecord(planResult) || planResult.status !== 'planned' || typeof planResult.operation_path !== 'string')
       throw new Error('Project rebind plan did not return its persisted operation path');
-    expect(reads.plan).toMatchObject({ verified: 1, raw: 0 });
+    expect(reads.plan).toMatchObject({ verifiedCalls: 1, casReadCalls: 0 });
+    expect(reads.plan.verifiedBytes).toBeGreaterThan(0);
     const schemaBytes = reads.plan.bytes;
     if (!schemaBytes) throw new Error('Project rebind planner did not expose verified initialization schema bytes');
     const operationPath = planResult.operation_path;
@@ -835,7 +842,14 @@ async function assertProjectRebindSchemaReader(root: string): Promise<void> {
 
     accessMode = 'apply';
     await expectRejection(runReconcileArtifacts(command('apply')), /project initialization schema changed/);
-    expect(reads.apply).toEqual({ verified: 1, raw: 0 });
+    expect(reads.apply).toMatchObject({ verifiedCalls: 1, casReadCalls: 0 });
+    expect(reads.apply.verifiedBytes).toBeGreaterThan(0);
+    expect(projectRebindStateSnapshot(root)).toEqual(beforePlan);
+    expect(readFileSync(path.join(root, operationPath))).toEqual(operationBytes);
+
+    accessMode = 'readerError';
+    await expectRejection(runReconcileArtifacts(command('apply')), /injected verified package reader failure/);
+    expect(reads.readerError).toEqual({ verifiedCalls: 1, verifiedBytes: 0, casReadCalls: 0 });
     expect(projectRebindStateSnapshot(root)).toEqual(beforePlan);
     expect(readFileSync(path.join(root, operationPath))).toEqual(operationBytes);
   } finally {

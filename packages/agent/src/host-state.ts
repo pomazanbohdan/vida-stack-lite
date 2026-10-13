@@ -5049,56 +5049,58 @@ export async function runConsumerMigrationState<T>(
     }
   }
   const database = openHostStateDatabase(input.repositoryRoot, relativeDatabase, workspaceId);
-  const packageSource = snapshotRuntimePackageSources(
-    runtimePackageAccess(),
-    config.runtime.bundle,
-    ['src/host-state.ts', 'src/orchestration/local-work-admission.ts', 'bin/run.ts'].map(
-      (item) => config.runtime.bundle + '/' + item,
-    ),
-  );
-  const context = {
-    repository_id: config.repository.repository_id,
-    project_ids: projectIds,
-    repository_root: input.repositoryRoot,
-    operation_id: input.operationId,
-    actor: input.actor,
-    config_digest: runtimeConfigDigest(config),
-  };
-  const binding: MaintenanceFenceBinding = {
-    schema: 'MaintenanceFenceBinding/v1',
-    project_ids: projectIds,
-    operation_id: input.operationId,
-    manifest_digest: canonicalJsonDigest({ kind: 'consumer-migration', context }),
-    request_digest: canonicalJsonDigest(context),
-    bindings_digest: canonicalJsonDigest(context),
-    closure_digest: canonicalJsonDigest({ operation_id: input.operationId, closure: 'settled-consumer-state' }),
-    bundle_digest: packageSource.digest,
-  };
-  const verifier: MaintenanceReleaseVerifier = {
-    principal: 'vida:consumer-migration',
-    projectIds,
-    verify(fence) {
-      const row = database
-        .query('SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?')
-        .get(workspaceId, input.operationId) as { payload: string; digest: string } | null;
-      if (!row) return null;
-      const state = JSON.parse(row.payload) as { status: string; binding: unknown };
-      if (
-        createHash('sha256').update(row.payload).digest('hex') !== row.digest ||
-        !sameJson(state.binding, binding) ||
-        !['baseline', 'restored'].includes(state.status)
-      )
-        return null;
-      return {
-        schema: 'MaintenanceReleaseAuthorization/v1',
-        principal: 'vida:consumer-migration',
-        fence_digest: canonicalJsonDigest(fence),
-        closure_digest: binding.closure_digest,
-        bundle_digest: binding.bundle_digest,
-      };
-    },
-  };
+  const errors: unknown[] = [];
+  let result!: Awaited<ReturnType<typeof runConsumerMigrationState<T>>>;
   try {
+    const packageSource = snapshotRuntimePackageSources(
+      runtimePackageAccess(),
+      config.runtime.bundle,
+      ['src/host-state.ts', 'src/orchestration/local-work-admission.ts', 'bin/run.ts'].map(
+        (item) => config.runtime.bundle + '/' + item,
+      ),
+    );
+    const context = {
+      repository_id: config.repository.repository_id,
+      project_ids: projectIds,
+      repository_root: input.repositoryRoot,
+      operation_id: input.operationId,
+      actor: input.actor,
+      config_digest: runtimeConfigDigest(config),
+    };
+    const binding: MaintenanceFenceBinding = {
+      schema: 'MaintenanceFenceBinding/v1',
+      project_ids: projectIds,
+      operation_id: input.operationId,
+      manifest_digest: canonicalJsonDigest({ kind: 'consumer-migration', context }),
+      request_digest: canonicalJsonDigest(context),
+      bindings_digest: canonicalJsonDigest(context),
+      closure_digest: canonicalJsonDigest({ operation_id: input.operationId, closure: 'settled-consumer-state' }),
+      bundle_digest: packageSource.digest,
+    };
+    const verifier: MaintenanceReleaseVerifier = {
+      principal: 'vida:consumer-migration',
+      projectIds,
+      verify(fence) {
+        const row = database
+          .query('SELECT payload,digest FROM agent_host_consumer_migration WHERE workspace_id=? AND operation_id=?')
+          .get(workspaceId, input.operationId) as { payload: string; digest: string } | null;
+        if (!row) return null;
+        const state = JSON.parse(row.payload) as { status: string; binding: unknown };
+        if (
+          createHash('sha256').update(row.payload).digest('hex') !== row.digest ||
+          !sameJson(state.binding, binding) ||
+          !['baseline', 'restored'].includes(state.status)
+        )
+          return null;
+        return {
+          schema: 'MaintenanceReleaseAuthorization/v1',
+          principal: 'vida:consumer-migration',
+          fence_digest: canonicalJsonDigest(fence),
+          closure_digest: binding.closure_digest,
+          bundle_digest: binding.bundle_digest,
+        };
+      },
+    };
     const store = new HostStateStore(
       database,
       workspaceId,
@@ -5163,7 +5165,7 @@ export async function runConsumerMigrationState<T>(
         rmSync(inspectionRoot, { recursive: true, force: true });
       }
     };
-    const result = store.consumerMigrationState(receipt, input.mode, () => {
+    result = store.consumerMigrationState(receipt, input.mode, () => {
       verifyWorkflowStore();
       return files({
         database_path: databasePath,
@@ -5178,10 +5180,17 @@ export async function runConsumerMigrationState<T>(
       });
     });
     await store.releaseMaintenanceFence(receipt);
-    return result;
-  } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
+  } catch (error) {
+    errors.push(error);
   }
+  try {
+    closeWorkspaceDatabaseWithAdmission(database);
+  } catch (error) {
+    errors.push(error);
+  }
+  if (errors.length === 1) throw errors[0];
+  if (errors.length > 1) throw new AggregateError(errors, 'consumer migration and database close failed');
+  return result;
 }
 
 /** Empty schema initialization only. It creates no workspace, work, lease or authorization records. */
