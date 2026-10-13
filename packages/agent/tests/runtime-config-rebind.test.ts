@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test';
+import { test, expect, spyOn } from 'bun:test';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
@@ -24,6 +24,7 @@ import {
 } from '../bin/runtime-config-rebind.ts';
 import { readAppliedRuntimeConfigRebind } from '../bin/runtime-config-rebind.ts';
 import { inspectHistoricalOwnerWork, suspendHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
+import * as runtimeConfig from '../src/config/runtime-config.ts';
 import { loadRuntimeConfig, parseRuntimeConfigYaml, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { validateCoordinationLedgerV1, type CoordinationLedger } from '../src/contracts/envelopes.ts';
@@ -1003,7 +1004,58 @@ test('prewriter template adoption preserves a multi-project registry and rejects
     expect(databaseState(f)).toEqual(before);
   }
   f.put('proposed.yaml', json(target));
-  expect((await runReconcileArtifacts(f.args('plan'))).status).toBe('planned');
+  const nativeAccess = runtimeConfig.runtimePackageAccess(),
+    nativeVerifiedRead = nativeAccess.readVerifiedCaptureBytes;
+  if (nativeAccess.provider === 'linux-proc-fd') {
+    if (!nativeVerifiedRead) throw new Error('Native package reader has no verified capture method');
+    const observed: { target: string; label: string; bytes: Buffer }[] = [],
+      rawReads: string[] = [],
+      accessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => ({
+        ...nativeAccess,
+        readBytes(target: string, label: string): Buffer {
+          if (
+            target === 'templates/agent-runtime.config.template.v1.yaml' ||
+            target === 'schemas/runtime-initialization.v1.schema.json'
+          )
+            rawReads.push(`${target}:${label}`);
+          return nativeAccess.readBytes.call(nativeAccess, target, label);
+        },
+        readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+          const bytes = nativeVerifiedRead.call(nativeAccess, target, label, maxBytes);
+          observed.push({ target, label, bytes: Buffer.from(bytes) });
+          return bytes;
+        },
+      }));
+    try {
+      expect((await runReconcileArtifacts(f.args('plan'))).status).toBe('planned');
+    } finally {
+      accessSpy.mockRestore();
+    }
+    expect(
+      observed.filter(
+        ({ target, label }) =>
+          target === 'templates/agent-runtime.config.template.v1.yaml' &&
+          label === 'maintained prewriter workflow template',
+      ),
+    ).toHaveLength(1);
+    const schemaReads = observed.filter(
+      ({ target, label }) =>
+        target === 'schemas/runtime-initialization.v1.schema.json' && label === 'initialization schema',
+    );
+    expect(schemaReads).toHaveLength(2);
+    const schemaRead = requiredElement(schemaReads, 0, 'verified initialization schema');
+    expect(requiredElement(schemaReads, 1, 'verified plan initialization schema').bytes).toEqual(schemaRead.bytes);
+    expect(rawReads).toEqual([]);
+    const operationPath = path.join(f.root, '.agent/work/fixture-rebind/runtime-config-rebind-operation.v1.json'),
+      operation = checkedRecord(parseFixtureJson(readFileSync(operationPath, 'utf8')), 'planned prewriter operation'),
+      plan = requiredCliObject(operation, 'plan', 'planned prewriter operation plan');
+    expect(plan.initialization_schema_digest).toBe(sha(schemaRead.bytes));
+  } else {
+    console.warn(
+      'Native verified package-resource caller qualification unavailable; retaining semantic case assertions',
+    );
+    expect((await runReconcileArtifacts(f.args('plan'))).status).toBe('planned');
+  }
   expect((await runReconcileArtifacts(f.args('apply'))).status).toBe('author_config_required');
   f.put('agent-runtime.config.v1.yaml', json(target));
   expect((await runReconcileArtifacts(f.args('resume'))).status).toBe('applied');

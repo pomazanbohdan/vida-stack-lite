@@ -254,6 +254,10 @@ original assertions and custody. Seed the isolated consumer selector prerequisit
 explicitly, but let the planner create its operation directory. Assert the target
 source binding and schema-drift denial against unchanged selector/config/receipt/
 activation/database/operation state. This is not installed Runtime evidence.
+Count raw-reader bypasses by resource path independently of diagnostic labels;
+assert labels separately on the expected verified calls. Renaming a label must
+not hide an extra raw read. Extend existing caller cases instead of bootstrapping
+the same lifecycle again only to observe another schema or template.
 Apply the same prerequisite rule to Source and authorization retries: retain
 the real drift denial separately; a current-snapshot callback used to isolate
 a later Host guard does not authorize the original candidate or public route.

@@ -769,6 +769,11 @@ create its own canonical operation directory; precreating it hides path defects.
 Bind authored target validation to the loaded baseline's configuration source,
 retain source-mismatch denials, and compare selector/config/receipt/activation
 bytes, database rows and operation bytes around a schema-drift denial.
+For reader instrumentation, count raw accesses by resource path independently
+of diagnostic labels. Verify the expected labels on native verified captures and
+bind their actual bytes to the caller's persisted digest. A declared supported
+provider missing verified capture fails qualification; unsupported providers keep
+the original semantic assertions with an explicit qualification gap.
 
 Shared fixture helpers export an explicit hook-registration function; each test
 file calls it once in its own top-level or owning suite scope. With

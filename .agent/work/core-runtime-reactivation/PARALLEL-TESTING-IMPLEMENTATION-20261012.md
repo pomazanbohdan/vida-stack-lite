@@ -218,6 +218,14 @@ The real caller exposed and verifies fixes for target-source binding and the
 canonical operation-parent directory. No conflict removal or whole coverage
 admission follows from these focused cases; broader caller eligibility and
 descendant/effect quiescence remain pending.
+The existing prewriter adoption case now also observes its original plan call:
+one verified maintained-template read, two verified v1 initialization-schema
+reads (receipt and plan), identical schema bytes and their persisted plan digest.
+It restores the observer before the original apply/resume and multi-project
+preservation assertions. Targeted raw counts use resource paths independently
+of diagnostic labels, including the renewal and v2 planner observers. No extra
+fixture or public call was added. Native focused PASS does not close historical
+caller coverage or qualify the common package conflict tag.
 
 **Files:** tests/runtime-config-rebind.test.ts; new tests/runtime-config-rebind-source.test.ts, runtime-config-rebind-delivery.test.ts, runtime-config-rebind-readonly.test.ts, runtime-config-rebind-history.test.ts, runtime-config-rebind-limits.test.ts; shared tests/helpers/runtime-config-rebind-fixture.ts; package.json phase membership and test associations.
 

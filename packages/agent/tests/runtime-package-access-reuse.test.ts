@@ -315,8 +315,7 @@ test.skipIf(process.platform !== 'linux' || !safeRepositoryAccess.safeRepository
       accessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => ({
         ...nativeAccess,
         readBytes(target: string, label: string): Buffer {
-          if (target === 'schemas/agent-runtime-config.v1.schema.json' && label === 'lease renewal schema')
-            rawReads += 1;
+          if (target === 'schemas/agent-runtime-config.v1.schema.json') rawReads += 1;
           return originalReadBytes.call(nativeAccess, target, label);
         },
         readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {

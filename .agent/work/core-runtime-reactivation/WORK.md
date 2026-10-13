@@ -9150,3 +9150,41 @@ tag until complete eligibility plus descendant/effect quiescence qualify. Global
 coverage100%, dynamic CRAP/frozen correspondence and confirmed mutation100 remain
 OPEN; full run037062bf has no new admitted report. No system Runtime upgrade,
 unblock claim, external notice or archived UNKNOWN replay occurred.
+
+#### Publication and continued v1 caller closure / parallel research
+
+9803d14 committed with ordinary hooks and pushed f43ef15..9803d14 to origin/main.
+Unrelated BASE/ and root bun.lock remain untouched. The next blind Luna writer
+extends only the existing prewriter adoption case around its existing plan call:
+native template1/schema2 verified reads, schema-byte parity and frozen plan
+digest, zero raw reads. Observer restoration precedes unchanged apply/resume and
+project registry/integration assertions. Reuse existing sha/requiredElement
+helpers. Independent review improves all three caller observers to count raw
+access by resource path independently of labels; supported Linux missing the
+verified method fails instead of silently downgrading its proof.
+
+Final logs in .tmp/coverage-iteration-f43ef15: reader-boundary-static.log strict
+and lint PASS; renewal-boundary-final.log5PASS/31 assertions (late renewal2134.03ms);
+project-reader-boundary-final.log1PASS/64 assertions (10467.52ms existing60s case);
+prewriter-boundary-final.log1PASS/23 assertions (5706.87ms existing120s case).
+No new exception, bootstrap, public call, suite or product seam is added.
+
+User requests P0/P1 in parallel with coverage and the full Luna research pool.
+Six blind research contours inspect upgrade interruption, project-rebind
+authority, workspace DB/ledger reads, config/context reads, help/version/cache,
+and the next parallel-coverage boundary. The candidate activation inode rule is
+withdrawn: the specified recovery image is byte-bound, not a new retained inode
+contract. Project rebind has no verified further authority defect; its3MiB
+planner vs4MiB parser envelope difference remains a bounded contract question,
+not an authorization bypass. Help/version/cache has no demonstrated Source bug;
+exhaustive parser acceptance and live cold/warm CI evidence remain gaps.
+
+Reject workspace-snapshot reuse in attachObservedSourcePreparation: its later
+identity read detects Work drift before artifact publication, whereas reusing the
+older snapshot could write a file before stale CAS fails. Research its existing
+fixture for a regression protecting that boundary; do not remove the guard.
+Config/context repeated reads likewise remain currentness checks, not a proven
+safe caching opportunity. Parallel production still lacks a qualified positive
+descendant/effect-quiescence owner; no duplicate pilot or unused binding builder
+is justified. Continue concrete tests/repairs; preserve the600000ms cap and all
+open global numeric gates. Research conclusions are not P0/P1 completion claims.

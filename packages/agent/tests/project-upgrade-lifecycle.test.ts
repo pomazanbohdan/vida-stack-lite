@@ -738,8 +738,7 @@ async function assertProjectRebindSchemaReader(root: string): Promise<void> {
     accessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => ({
       ...nativeAccess,
       readBytes(target: string, label: string): Buffer {
-        if (target === 'schemas/runtime-initialization.v2.schema.json' && label === 'project initialization schema')
-          reads[accessMode].raw += 1;
+        if (target === 'schemas/runtime-initialization.v2.schema.json') reads[accessMode].raw += 1;
         return nativeAccess.readBytes(target, label);
       },
       readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
