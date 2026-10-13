@@ -10,7 +10,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { randomUUID } from 'node:crypto';
-import { spawnSync, type SpawnSyncReturns } from 'node:child_process';
+import { spawn as spawnChild, spawnSync, type ChildProcess, type SpawnSyncReturns } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { assertCoverageSnapshotBytes } from './bun-coverage-report-validator.js';
@@ -62,12 +62,217 @@ type RunManifest = {
   shard_invocations?: CoverageShardInvocation[];
 };
 type ChildOutcome = {
-  shard_id: 'bun-test';
+  shard_id: string;
   status: number | null;
   signal: NodeJS.Signals | null;
   error: string | null;
   unknown: boolean;
 };
+
+export type PreparedCoverageProducer = {
+  shard_id: string;
+  args: readonly string[];
+  cwd: string;
+  env: NodeJS.ProcessEnv;
+  maximum_duration_ms?: number;
+};
+
+export type CoverageProducerOutcome = ChildOutcome & {
+  producer_pid: number | null;
+  launch_attempted: boolean;
+  producerTerminalKnown: boolean;
+  directProducerAccounted: boolean;
+  resourceSafeToAdvance: false;
+};
+
+export type CoverageProducerGroup = {
+  outcomes: readonly CoverageProducerOutcome[];
+  reservationSafeToRelease: boolean;
+  resourceSafeToAdvance: false;
+};
+
+export async function superviseCoverageProducers(
+  launches: readonly PreparedCoverageProducer[],
+  budget: ReturnType<typeof executionBudget>,
+): Promise<CoverageProducerGroup> {
+  const prepared = snapshotCoverageProducerLaunches(launches);
+  const outcomesByLaunch: Array<Promise<CoverageProducerOutcome> | CoverageProducerOutcome> = [];
+  for (let index = 0; index < prepared.length; index++) {
+    const launch = prepared[index]!;
+    let allowance: number;
+    let terminalWait: number;
+    try {
+      allowance = budget.remaining(launch.maximum_duration_ms);
+      terminalWait = Math.max(0, budget.cleanupTimeout());
+    } catch (error) {
+      const spent = error instanceof Error && error.message === 'Execution budget exhausted before child launch.';
+      for (let remaining = index; remaining < prepared.length; remaining++)
+        outcomesByLaunch[remaining] = unattemptedCoverageProducer(prepared[remaining]!, error, spent);
+      break;
+    }
+    outcomesByLaunch[index] = runCoverageProducer(launch, allowance, terminalWait);
+  }
+  const outcomes = await Promise.all(outcomesByLaunch.map((outcome) => Promise.resolve(outcome)));
+  return {
+    outcomes,
+    reservationSafeToRelease: outcomes.every((outcome) =>
+      outcome.launch_attempted
+        ? outcome.directProducerAccounted
+        : outcome.error === 'Execution budget exhausted before child launch.',
+    ),
+    resourceSafeToAdvance: false,
+  };
+}
+
+function snapshotCoverageProducerLaunches(launches: readonly PreparedCoverageProducer[]): PreparedCoverageProducer[] {
+  if (!Array.isArray(launches) || launches.length < 1 || launches.length > 2)
+    throw new Error('Invalid coverage producer group size.');
+  const ids = new Set<string>();
+  const prepared: PreparedCoverageProducer[] = [];
+  for (const value of launches as readonly unknown[]) {
+    if (!isPreparedCoverageProducer(value)) throw new Error('Invalid coverage producer launch descriptor.');
+    const launch = snapshotCoverageProducer(value);
+    if (ids.has(launch.shard_id)) throw new Error('Invalid coverage producer launch descriptor.');
+    ids.add(launch.shard_id);
+    prepared.push(launch);
+  }
+  return prepared;
+}
+
+function snapshotCoverageProducer(launch: PreparedCoverageProducer): PreparedCoverageProducer {
+  return {
+    shard_id: launch.shard_id,
+    args: [...launch.args],
+    cwd: launch.cwd,
+    env: { ...launch.env },
+    ...(launch.maximum_duration_ms === undefined ? {} : { maximum_duration_ms: launch.maximum_duration_ms }),
+  };
+}
+
+function isPreparedCoverageProducer(value: unknown): value is PreparedCoverageProducer {
+  if (typeof value !== 'object' || value === null) return false;
+  const launch = value as PreparedCoverageProducer;
+  if (typeof launch.shard_id !== 'string' || !launch.shard_id) return false;
+  if (!Array.isArray(launch.args) || launch.args.some((arg) => typeof arg !== 'string')) return false;
+  if (typeof launch.cwd !== 'string' || !launch.cwd) return false;
+  return isCoverageProducerOptions(launch);
+}
+
+function isCoverageProducerOptions(launch: PreparedCoverageProducer): boolean {
+  if (!launch.env || typeof launch.env !== 'object') return false;
+  return (
+    launch.maximum_duration_ms === undefined ||
+    (Number.isSafeInteger(launch.maximum_duration_ms) &&
+      launch.maximum_duration_ms > 0 &&
+      launch.maximum_duration_ms <= 600_000)
+  );
+}
+
+function unattemptedCoverageProducer(
+  launch: PreparedCoverageProducer,
+  reason: unknown,
+  knownBudgetExhaustion: boolean,
+): CoverageProducerOutcome {
+  return {
+    shard_id: launch.shard_id,
+    status: null,
+    signal: null,
+    error: knownBudgetExhaustion ? 'Execution budget exhausted before child launch.' : String(reason),
+    unknown: true,
+    producer_pid: null,
+    launch_attempted: false,
+    producerTerminalKnown: false,
+    directProducerAccounted: false,
+    resourceSafeToAdvance: false,
+  };
+}
+
+function runCoverageProducer(
+  launch: PreparedCoverageProducer,
+  allowance: number,
+  terminalWait: number,
+): Promise<CoverageProducerOutcome> {
+  let child: ChildProcess;
+  try {
+    child = spawnChild(process.execPath, [...launch.args], {
+      cwd: launch.cwd,
+      env: launch.env,
+      stdio: ['ignore', 'inherit', 'inherit'],
+      timeout: allowance,
+      killSignal: 'SIGKILL',
+      windowsHide: true,
+    });
+  } catch (error) {
+    return Promise.resolve(coverageProducerOutcome(launch, null, null, null, String(error)));
+  }
+  try {
+    return observeCoverageProducerClose(launch, child, allowance, terminalWait);
+  } catch (error) {
+    try {
+      child.kill('SIGKILL');
+    } catch {}
+    child.unref();
+    return Promise.resolve(coverageProducerOutcome(launch, positivePid(child.pid), null, null, String(error)));
+  }
+}
+
+function positivePid(value: number | undefined): number | null {
+  return Number.isInteger(value) && value! > 0 ? value! : null;
+}
+
+function coverageProducerOutcome(
+  launch: PreparedCoverageProducer,
+  pid: number | null,
+  status: number | null,
+  signal: NodeJS.Signals | null,
+  error: string | null,
+): CoverageProducerOutcome {
+  const producerTerminalKnown = pid !== null && coverageProducerTerminalKnown({ pid, status, signal });
+  return {
+    shard_id: launch.shard_id,
+    status,
+    signal,
+    error,
+    unknown: Boolean(error) || signal !== null || !Number.isInteger(status) || !producerTerminalKnown,
+    producer_pid: pid,
+    launch_attempted: true,
+    producerTerminalKnown,
+    directProducerAccounted: producerTerminalKnown,
+    resourceSafeToAdvance: false,
+  };
+}
+
+function observeCoverageProducerClose(
+  launch: PreparedCoverageProducer,
+  child: ChildProcess,
+  allowance: number,
+  terminalWait: number,
+): Promise<CoverageProducerOutcome> {
+  const pid = positivePid(child.pid);
+  return new Promise((resolve) => {
+    let settled = false;
+    let spawnError: Error | undefined;
+    const finish = (code: number | null, signalValue: NodeJS.Signals | null | undefined, timedOut: boolean) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      const signal = signalValue ?? null;
+      if (timedOut) {
+        try {
+          child.kill('SIGKILL');
+        } catch {}
+        child.unref();
+      }
+      const error = spawnError ?? (timedOut ? 'Producer close was not observed within its bounded wait.' : null);
+      resolve(coverageProducerOutcome(launch, pid, code, signal, error === null ? null : String(error)));
+    };
+    const timer = setTimeout(() => finish(null, null, true), allowance + terminalWait);
+    child.once('error', (error: Error) => {
+      spawnError = error;
+    });
+    child.once('close', (code, signal) => finish(code, signal, false));
+  });
+}
 
 /** A qualified synchronous return observes only this producer, not its test effects or descendants. */
 export function coverageProducerTerminalKnown(
@@ -289,22 +494,44 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     return seen;
   }
 
-  function runBunTests(
+  async function runBunTests(
     tests: string[],
     manifest: RunManifest,
     manifestPath: string,
     reportDirectory: string,
     invocation: { args: string[]; env: NodeJS.ProcessEnv; cwd: string },
+  ): Promise<ChildOutcome & { producerTerminalKnown: boolean; reservationSafeToRelease: boolean }> {
+    if (manifest.test_selection.published_execution) {
+      const result = spawnSync(process.execPath, invocation.args, {
+        cwd: invocation.cwd,
+        env: invocation.env,
+        // Preserve the published baseline's qualified synchronous execution.
+        stdio: ['ignore', 'inherit', 'inherit'],
+        timeout: commandBudget.remaining(),
+        windowsHide: true,
+      });
+      return outcomeFromSynchronousProducer(result);
+    }
+    const group = await superviseCoverageProducers(
+      [{ shard_id: 'bun-test', args: invocation.args, cwd: invocation.cwd, env: invocation.env }],
+      commandBudget,
+    );
+    const outcome = group.outcomes[0];
+    if (!outcome) throw new Error('Coverage producer supervisor returned no outcome.');
+    return {
+      shard_id: outcome.shard_id,
+      status: outcome.status,
+      signal: outcome.signal,
+      error: outcome.error,
+      unknown: outcome.unknown,
+      producerTerminalKnown: outcome.producerTerminalKnown,
+      reservationSafeToRelease: group.reservationSafeToRelease,
+    };
+  }
+
+  function outcomeFromSynchronousProducer(
+    result: SpawnSyncReturns<unknown>,
   ): ChildOutcome & { producerTerminalKnown: boolean; reservationSafeToRelease: boolean } {
-    const result = spawnSync(process.execPath, invocation.args, {
-      cwd: invocation.cwd,
-      env: invocation.env,
-      // Explicit user-owned iteration ceiling; individual test deadlines remain
-      // separate. Stream output so interrupted iterations retain useful logs.
-      stdio: ['ignore', 'inherit', 'inherit'],
-      timeout: commandBudget.remaining(),
-      windowsHide: true,
-    });
     if (result.error || result.signal || !Number.isInteger(result.status))
       return {
         shard_id: 'bun-test',
@@ -463,7 +690,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     manifest.active_argv = invocation.args;
     writeAtomic(manifestPath, manifest);
     chmodSync(runDirectory, 0o500);
-    const { producerTerminalKnown, reservationSafeToRelease, ...outcome } = runBunTests(
+    const { producerTerminalKnown, reservationSafeToRelease, ...outcome } = await runBunTests(
       evidence.tests,
       manifest,
       manifestPath,

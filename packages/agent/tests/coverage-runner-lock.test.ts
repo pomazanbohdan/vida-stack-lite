@@ -14,7 +14,7 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prepareCoverageRunnerInputs, restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
+import { prepareCoverageRunnerInputs } from './helpers/coverage-fixture.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const maintainedSources = [
@@ -359,24 +359,43 @@ test('real Bun coverage runner rejects captured pin drift before staging', () =>
   }
 });
 
-test('a synchronously reaped coverage producer timeout retains the run but releases its reservation', () => {
+test('an asynchronously observed coverage producer timeout retains the run but releases its reservation', () => {
   const root = createRunnerCandidate();
   let passed = false;
   try {
+    write(
+      root,
+      'tests/fixture.test.mjs',
+      "import { test } from 'bun:test'; test('inert lock fixture test', async () => { await new Promise((resolve) => setTimeout(resolve, 1000)); });\n",
+    );
     write(
       root,
       'tooling/inert-timeout-preload.ts',
       `import * as original from 'node:child_process';
 import { mock } from 'bun:test';
 import { writeFileSync } from 'node:fs';
-const run = original.spawnSync;
+const runSync = original.spawnSync;
+const runAsync = original.spawn;
 mock.module('node:child_process', () => ({
+  ...original,
   spawnSync(command: string, args: string[], options: Record<string, unknown>) {
-    if (args[0] === 'run' && args[1] === 'typecheck:pinned') return run(command, args, options);
-    const result = run(command, ['--eval', 'process.stdout.write(String(process.pid)); setInterval(() => {}, 1000);'], { encoding: 'utf8', timeout: 100, killSignal: 'SIGKILL' });
-    writeFileSync(${JSON.stringify(path.join(root, 'direct-child-outcome.json'))}, JSON.stringify({ pid: result.pid, status: result.status, signal: result.signal, error: String(result.error), stdio: options.stdio, suite_timeout: options.timeout, buffered_output: Object.hasOwn(options, 'maxBuffer'), test_timeout: args[args.indexOf('--timeout') + 1] }));
-    return result;
-  }
+    return runSync(command, args, options);
+  },
+  spawn(command: string, args: string[], options: Record<string, unknown>) {
+    if (args[0] !== 'test') return runAsync(command, args, options as Parameters<typeof original.spawn>[2]);
+    const child = runAsync(command, args, { ...options, timeout: 100 } as Parameters<typeof original.spawn>[2]);
+    let spawnError: unknown;
+    child.once('error', (error) => { spawnError = error; });
+    child.once('close', (status, signal) => {
+      writeFileSync(${JSON.stringify(path.join(root, 'direct-child-outcome.json'))}, JSON.stringify({
+        pid: child.pid, status, signal, error: spawnError === undefined ? null : String(spawnError),
+        timeout_ms: 100, kill_signal: options.killSignal, stdio: options.stdio,
+        suite_timeout: options.timeout, buffered_output: Object.hasOwn(options, 'maxBuffer'),
+        test_timeout: args[args.indexOf('--timeout') + 1],
+      }));
+    });
+    return child;
+  },
 }));
 `,
     );
@@ -414,21 +433,27 @@ mock.module('node:child_process', () => ({
       stdio: ['ignore', 'inherit', 'inherit'],
       buffered_output: false,
       test_timeout: '5000',
+      kill_signal: 'SIGKILL',
     });
+    expect(child).toHaveProperty('pid');
+    if (typeof child !== 'object' || child === null || !('pid' in child) || typeof child.pid !== 'number')
+      throw new Error('Expected the native async producer PID');
+    expect(child.pid).toBeGreaterThan(0);
+    expect(child).toHaveProperty('timeout_ms');
+    if (typeof child !== 'object' || child === null || !('timeout_ms' in child))
+      throw new Error('Expected bounded native async producer timeout');
+    expect(child.timeout_ms).toBe(100);
     expect(child).toHaveProperty('suite_timeout');
     if (typeof child !== 'object' || child === null || !('suite_timeout' in child))
       throw new Error('Expected bounded coverage child deadline');
     expect(child.suite_timeout).toBeGreaterThan(0);
     expect(child.suite_timeout).toBeLessThanOrEqual(570000);
-    if (typeof child !== 'object' || child === null || !('error' in child) || typeof child.error !== 'string')
-      throw new Error('Expected child timeout error');
-    expect(child.error).toContain('ETIMEDOUT');
+    expect(child).toHaveProperty('error', null);
     expect(existsSync(path.join(outputRoot, 'coverage-run.lock'))).toBe(false);
     passed = true;
   } finally {
     if (passed) {
-      restoreOwnedCoverageDirectoryWrites(root);
-      rmSync(root, { recursive: true, force: true });
+      console.warn(`Retained controlled UNKNOWN coverage timeout fixture at ${root}`);
     } else console.error(`Preserved failed coverage timeout fixture at ${root}`);
   }
 });

@@ -68,7 +68,7 @@ The current TESTING owner retains the environment/default and clock rules.
 
 **Files:** run-bun-coverage.ts, package.json test:coverage:pinned command and existing bounded-subprocess / coverage-run custody owners and tests. Same protocol writer owns runner; a separate writer may own disjoint adversarial tests.
 
-**Interfaces:** Reuse exact current terminal/reservation predicates. `runCoverageShards(plan:CoverageShardPlan, capturedInputs:Awaited<ReturnType<typeof coverageInputs>>, deadline:MonotonicCoverageDeadline):Promise<CoverageShardOutcomes>`. `MonotonicCoverageDeadline {started_ns:bigint; expires_ns:bigint}`; `CoverageShardOutcomes {outcomes:readonly (ChildOutcome & {producer_pid:number|null; producerTerminalKnown:boolean; directProducerAccounted:boolean; resourceSafeToAdvance:boolean})[]; reservationSafeToRelease:boolean}`. The run-level release predicate requires every launched producer accounted under existing exact rules; an unknown sibling holds the shared lock. Not-started accounts for its launch alone. Root releases the one acquired handle once, never from a per-shard outcome. Keep direct producer reservation release separate from reviewed resource/descendant/effect quiescence. ChildOutcome keeps current fields; no success from PID absence. Command-entry deadline precedes required typecheck/preparation; concurrency initially2. Typecheck moves into the existing runner owner, removing the shell pre-step, not adding a duplicate scan.
+**Interfaces:** Reuse exact current terminal/reservation predicates and `ReturnType<typeof executionBudget>`; no second deadline factory. The bounded foundation is `superviseCoverageProducers(launches:readonly PreparedCoverageProducer[], budget:ReturnType<typeof executionBudget>):Promise<CoverageProducerGroup>`. Prepared invocations bind shard ID, args, cwd, env and optional maximum duration. Outcomes retain launch_attempted, producer_pid, status/signal/error and direct terminal/accounting fields. Group resourceSafeToAdvance is false without a separate proof. Future runCoverageShards reuses this owner and the capturedInputs/plan, not another clock. The run-level release predicate requires every launched producer accounted under existing exact rules and explicit budget-spent evidence for unattempted launches; an unaccounted attempted sibling holds the shared lock. Not-started accounts for its launch alone. Root releases the one acquired handle once, never from a per-shard outcome. Keep direct producer reservation release separate from reviewed resource/descendant/effect quiescence. ChildOutcome keeps current fields; no success from PID absence. Command-entry deadline precedes required typecheck/preparation; concurrency initially2. Typecheck moves into the existing runner owner, removing the shell pre-step, not adding a duplicate scan.
 
 - [ ] RED controls: two real marker producers overlap; deadline exhausted before launch; timeout with sibling active; ordinary nonzero; crash/missing receipt; known direct exit with live descendant; signal/late output; no-start versus unknown spawn.
 - [ ] Replace synchronous launch for current parallel mode with bounded async direct children, explicit paths,5000ms default, per-shard streamed logs and existing cleanup/report reserve semantics. Account every launched sibling; retain uncertain roots and operations.
@@ -84,8 +84,39 @@ typechecks current Source once under the lock, captures once and clamps the
 producer/CRAP remainder. Historical selection shares the entry budget but omits
 current typecheck and preserves original fixture/serial/reference semantics.
 Malformed caller durations still fail before probes with supplied budgets.
-Async direct supervision, all-sibling accounting and resource-safe wave
-advancement remain pending; never infer them from this first packet.
+That first budget packet did not qualify async supervision or waves. The bounded
+foundation below now has focused qualification; resource-safe waves stay pending.
+
+Next bounded foundation reuses `ReturnType<typeof executionBudget>`; do not
+introduce a second monotonic deadline factory. Keep the supervisor in the runner
+owner as an intended internal tooling API for one or two already-prepared Bun
+invocations. Each launch uses the qualified `process.execPath`, remaining shared
+allowance and raw async terminal/error observations. Account all launches before
+returning the group disposition. An exact budget-spent prelaunch result describes
+only that unattempted launch. Missing-PID async ENOENT is not the qualified sync
+no-start tuple. Keep resourceSafeToAdvance false without a separate proof.
+
+Use the same owner for the current single-producer serial path after its focused
+controls qualify; preserve historical synchronous launch/argv/reference semantics.
+Two-marker controls exercise the internal producer mechanics only, not shard
+receipt admission, full parallel activation or global numeric evidence. No new
+CLI/environment test override, generic subprocess framework, child-image mapping
+or cgroup provider is authorized by this foundation. Stream current output as
+before; disjoint parallel outputs/receipts remain a later protocol integration.
+
+- [x] Qualify the bounded one-or-two-prepared-invocation API and current single
+  serial producer caller with static checks, native close/error/timeout controls,
+  existing map/capture-once and acquired-lock controls, and blind review.
+- [ ] Bind actual two-shard invocation/output/receipt roles through v3/v2 and
+  qualify the exact disjoint selection plus sparse merge under this supervisor.
+- [ ] Provide separately reviewed descendant/effect quiescence before resource
+  successors. Direct reservation release and native marker coordination do not
+  qualify it; this host's cgroup creation probe remains provider-unavailable.
+
+Current Source keeps historical synchronous invocation/reference semantics.
+The real async timeout caller retains its UNKNOWN fixture after passing the
+classifier assertions. New helper complexity is checked with the existing scoped
+inventory; this is not frozen-budget/CRAP or global numerical admission.
 
 ## Task4: Domain extraction for the measured largest contour
 

@@ -206,7 +206,8 @@ Use this recipe for the [pending explicit-shard design](../../../.agent/work/cor
    Stricter caller limits remain ceilings. Validate malformed durations before
    probes even with a supplied budget; clamp every nested launch to the remainder.
    Historical selection skips current typecheck while keeping original fixtures
-   and serial argv. Async supervision/waves remain pending.
+   and serial argv. Current serial production uses the qualified async direct-
+   accounting owner; parallel receipt/output integration and waves remain pending.
    Spent allowance means no launch, never native timeout0. Compare bounded
    synthetic pilots with distinct run IDs/output roots over identical captured
    inputs; they qualify mechanics, not global metrics or adversarial test trust.
@@ -279,8 +280,9 @@ synchronous no-start tuple. Record attempted versus budget-spent unattempted
 launches and account for every attempted sibling. One inherited allowance and
 one acquired group reservation remain owned by the runner. A live descendant
 or unresolved effects keep `resourceSafeToAdvance=false`, even after direct
-termination. The supervisor foundation remains pending qualification; these
-controls do not activate parallel shards or waves.
+termination. Focused direct controls and current serial callers qualify the
+foundation, not parallel shard receipts, outputs or waves. Retain an actual
+timed-out control's UNKNOWN fixture even when its classifier assertions pass.
 
 ## Official references
 

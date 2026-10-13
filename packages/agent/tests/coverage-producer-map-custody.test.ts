@@ -49,6 +49,7 @@ import { mock } from 'bun:test';
 import { writeFileSync } from 'node:fs';
 const observations: Array<Record<string, unknown>> = [];
 const run = childProcess.spawnSync;
+const runAsync = childProcess.spawn;
 mock.module('node:child_process', () => ({
   ...childProcess,
   spawnSync(command: string, args: string[], options: Record<string, unknown>) {
@@ -60,6 +61,20 @@ mock.module('node:child_process', () => ({
       pid: result.pid, status: result.status, signal: result.signal });
     writeFileSync(${JSON.stringify(observationPath)}, JSON.stringify(observations));
     return result;
+  },
+  spawn(command: string, args: string[], options: Record<string, unknown>) {
+    const started_ms = performance.now();
+    const child = runAsync(command, args, options as Parameters<typeof childProcess.spawn>[2]);
+    let spawnError: unknown;
+    child.once('error', (error) => { spawnError = error; });
+    child.once('close', (status, signal) => {
+      observations.push({ phase: 'test', started_ms, finished_ms: performance.now(), timeout_ms: options.timeout,
+        pid: child.pid, status, signal, error: spawnError === undefined ? null : String(spawnError),
+        stdio: options.stdio, kill_signal: options.killSignal, buffered_output: Object.hasOwn(options, 'maxBuffer'),
+        test_timeout: args[args.indexOf('--timeout') + 1] });
+      writeFileSync(${JSON.stringify(observationPath)}, JSON.stringify(observations));
+    });
+    return child;
   },
 }));
 let captureCalls = 0;
@@ -119,6 +134,15 @@ mock.module('./bun-coverage-evidence.ts', () => ({
     expect(testTimeout).toBeGreaterThan(crapTimeout);
     expect(crapTimeout).toBeGreaterThan(0);
     expect(crapTimeout).toBeLessThan(300000);
+    const producer = record(launches[1]);
+    expect(producer.pid).toBeGreaterThan(0);
+    expect(producer.status).toBe(0);
+    expect(producer.signal).toBeNull();
+    expect(producer.error).toBeNull();
+    expect(producer.stdio).toEqual(['ignore', 'inherit', 'inherit']);
+    expect(producer.kill_signal).toBe('SIGKILL');
+    expect(producer.buffered_output).toBe(false);
+    expect(producer.test_timeout).toBe('5000');
     let priorFinish = -Infinity;
     for (const value of launches) {
       const row = record(value);

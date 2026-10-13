@@ -674,7 +674,7 @@ Parallel coverage remains pending; it is not a supported flag override. The pure
 `tooling/coverage-shard-plan.ts` scheduler does not activate parallel production.
 The deployed serial v2 run/v1 process receipts require the whole selected set
 per process. Versioned v3 run/v2 process primitives are a separate foundation,
-not activation of the producer or supervisor. Historical references also bind
+not activation of parallel producers or resource-wave supervision. Historical references also bind
 one PID and fixture-child observations. Native
 Bun worker/JUnit merging does not satisfy these contracts. Keep current and
 historical commands serial until the versioned protocol, custody and bounded
@@ -821,7 +821,8 @@ descendant/effect quiescence or successful reservation cleanup.
 Historical selection shares the entry budget but skips current typecheck and
 keeps its original fixture, serial argv and reference-admission contract.
 Current serial tests use explicit `./` captured paths to avoid snapshot-copy
-discovery. Parallel waves and async sibling supervision remain pending.
+discovery. The current serial producer uses the async direct-accounting owner.
+Parallel shard receipts, outputs and resource-wave integration remain pending.
 Spent allowance prevents launch; native timeout0 may disable a timeout.
 Per-test5000ms defaults and justified case overrides remain separate. Mutation
 is separately invoked; the ten-minute target does not qualify its whole campaign.
@@ -862,9 +863,13 @@ their stated coordination; missing markers or PIDs do not prove quiescence.
 OS capability documentation or writable cgroup mounts do not qualify a provider:
 verify actual owned creation authority before launching its control children.
 
-The async supervisor foundation is pending static, native and caller integration
-qualification. Keep current coverage serial and historical execution synchronous;
-these instructions do not activate shards, resource waves or a cgroup provider.
+The async foundation has focused static, native direct-producer and current
+serial caller qualification. Its internal one-or-two-invocation controls do not
+qualify a complete shard selection or descendant/effect quiescence. Keep current
+coverage serial and historical execution synchronous; parallel receipts, outputs,
+resource waves and a quiescence provider remain pending.
+Retain an actual timed-out control's UNKNOWN run after successful assertions;
+passing the classifier test is not permission to erase that run in teardown.
 
 Qualify pure assignment controls first, then bounded two-file/failure pilots
 through the existing explicitly untrusted synthetic-fixture owner. A pilot proves

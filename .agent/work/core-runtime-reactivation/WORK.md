@@ -8719,3 +8719,78 @@ entry budgets and pending status. Tighten its one wording edge by stating that
 each unattempted launch must carry explicit budget-spent evidence; unexpected
 unaccounted errors do not qualify group release. No new runtime proof follows
 from this guidance exercise.
+
+### 2026-10-13 — bounded async producer foundation and real caller controls
+
+Root continues the authorized testing/P0-P1 goal after documentation publication
+d533e2e. Preserve BASE/ and unrelated root bun.lock. The runner owns one or two
+prepared native Bun invocations, reuses executionBudget, snapshots descriptors
+before any launch and awaits all attempted siblings. Budget-spent unattempted
+records contribute no live producer. Missing-PID async ENOENT/close-2 remains
+attempted UNKNOWN and unaccounted; never normalize to the synchronous tuple.
+Current production still launches one serial producer and emits v2/v1 receipts.
+Historical fixture invocation stays synchronous with original argv/reference
+semantics. No shard/wave, provider, loader, schema or System runtime activation.
+
+Retained prior meaningful stub RED: count2 got0 in first new custody case;
+the zero-test/error/timeout cases do not substitute for it. Static first detects
+exactOptionalPropertyTypes on an undefined optional duration field; omit it when
+absent. Next lint finds broad error stringification; type the native error event
+as its Error contract and keep original error text. The brief apply_patch transport
+closure is transient: read-only verification confirms Source persisted before
+the successful retry. Qualified static435capturedTS,434combined and97Source
+files0errors, scoped typed lint PASS. No environment restart/lost edits inferred.
+
+Existing function-inventory, scoped to this tooling file only, finds new
+validator CC14 and finish CC12. Reuse an options predicate and one outcome
+factory for spawn exceptions/close/timer results; current new maxima9, finish8,
+factory5. Keep .tmp/coverage-iteration-ca94b7c/async-scoped-complexity-20261013.json
+as scoped tooling evidence only, not exhaustive correspondence, frozen budgets
+or dynamic CRAP admission. No second inventory/clock framework or dependency.
+
+First native API qualification16PASS/0FAIL/98assertions816ms. Root then runs the
+two existing actual caller controls:2FAIL/12assertions3.25s. Map observer misses
+the actual async test launch; timeout observer intercepts later CRAP rather than
+the test producer. Retain fresh failed roots under /dev/shm/vida-focused-ef23451:
+coverage-map-custody-2b5U3X and coverage-runner-lock-candidate-4ZsKGW. No replay.
+
+One blind Luna writer updates both caller tests. Observe actual async spawn and
+close while preserving synchronous typecheck/CRAP, capture-once, pristine versus
+executed maps, canonical copies and remaining-budget ordering. The timeout
+candidate's inert test retains its name and gains a bounded1000ms wait; the
+provider wrapper launches its original executable/argv/cwd/env exactly once with
+only timeout100ms overridden. Root catches and corrects the receipt mistakenly
+recording original options.timeout as timeout_ms; retain that original value as
+suite_timeout, record actual100 and check SIGKILL. Async native errors need no
+fabricated ETIMEDOUT. Controlled real caller terminal PID/status/signal qualifies
+direct reservation release, not effect quiescence.
+
+Outer test-ID lineage in tests/coverage-runner-lock.test.ts:
+"a synchronously reaped coverage producer timeout retains the run but releases its reservation"
+-> "an asynchronously observed coverage producer timeout retains the run but releases its reservation".
+Case intent retained; generated association/scenario reviews need this exact
+current name/path, not an inferred ordinal or silent rename.
+
+Final three-file native qualification26PASS/0FAIL/231assertions5.45s; complete
+focused selection, not whole current coverage. Root identifies premature
+teardown after the expected actual UNKNOWN: keep the original control root after
+passing classification assertions. Changed timeout-only check1PASS/19assertions
+1.54s retains coverage-runner-lock-candidate-ByfjjT. Its lock is released only
+after real direct close; retained manifest/snapshot/run are not replay authority.
+Fresh blind review finds one missing group-level release assertion in timeout+
+held-sibling control. Add exact reservationSafeToRelease=true alongside both
+direct-accounted outcomes and resourceSafeToAdvance=false; focused delta PASS.
+Keep native logs in .tmp/coverage-iteration-ca94b7c/async-*-20261013.log.
+
+Blind Source reviews accept the extraction and preserved historical/custody
+semantics. Updated TESTING/skill/implementation plan describe the qualified
+current serial foundation separately from pending full parallel output/receipt
+binding and resource quiescence. Whole current100% coverage, exhaustive frozen
+CC/CRAP and assertion-confirmed mutation100 remain OPEN. No full suite/build/
+install, native Runtime acceptance, old Host access or unblock notices follow.
+
+First ordinary packet hook passes formatting and434-file typecheck but rejects
+the now-unused directory-write-restoration import after UNKNOWN fixture teardown
+stops deleting its root. Remove that unused named import; keep the already loaded
+fixture owner and runtime behavior. Preserve the rejected hook log separately;
+the qualified publication attempt must pass without bypass.
