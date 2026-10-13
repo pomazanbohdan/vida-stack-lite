@@ -6,7 +6,7 @@ import transitionSchema from '../../schemas/documentation-policy-transition.v1.s
 import scopeSchema from '../../schemas/implementation-scope.v1.schema.json' with { type: 'json' };
 import policySchema from '../../schemas/documentation-policy.v1.schema.json' with { type: 'json' };
 import eventSchema from '../../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
-import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
+import { validateDocumentationClearCheckpointSchema as validCheckpoint } from './clear-checkpoint-validator.js';
 
 type RecordValue = Record<string, unknown>;
 type ScopeProjection = RecordValue & { documentation_paths?: readonly string[] };
@@ -43,7 +43,6 @@ const validEvent = deferredValidator(eventSchema, {
   allErrors: true,
   formats: { 'date-time': true },
 });
-const validCheckpoint = deferredValidator(checkpointSchema, { strict: true, allErrors: true });
 function requireProof(condition: unknown, message: string): asserts condition {
   if (!condition) throw Error('forward documentation proof: ' + message);
 }

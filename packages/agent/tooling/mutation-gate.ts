@@ -582,8 +582,13 @@ const partitions: MutationPartition[] = [
   {
     name: 'bun-doc-clear',
     environment: 'bun',
-    sources: ['src/documentation/clear.ts', 'src/documentation/policy.ts', 'bin/documentation-clear.ts'],
-    tests: ['tests/documentation-clear.test.ts'],
+    sources: [
+      'src/documentation/clear.ts',
+      'src/documentation/policy.ts',
+      'src/documentation/clear-checkpoint-validator.ts',
+      'bin/documentation-clear.ts',
+    ],
+    tests: ['tests/documentation-clear.test.ts', 'tests/documentation-transition-proof.test.ts'],
     report: 'mutation-bun-doc-clear.json',
   },
   {
@@ -591,6 +596,7 @@ const partitions: MutationPartition[] = [
     environment: 'bun',
     sources: [
       'src/orchestration/admitted-development-packet.ts',
+      'src/contracts/acceptance-manifest-schema.ts',
       'src/orchestration/admitted-implementation-result.ts',
       'src/orchestration/observed-validation.ts',
       'src/orchestration/observed-receipt-evidence.ts',
@@ -598,6 +604,7 @@ const partitions: MutationPartition[] = [
     ],
     tests: [
       'tests/admitted-development-packet.test.ts',
+      'tests/acceptance-manifest-schema.test.ts',
       'tests/observed-validation.test.ts',
       'tests/scoped-source-snapshot.test.ts',
       'tests/stable-source-read.test.ts',

@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
-import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
+import { validateDocumentationClearCheckpointSchema as validCheckpoint } from './clear-checkpoint-validator.js';
 import eventSchema from '../../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
@@ -58,7 +58,6 @@ const sha256 = (bytes: Uint8Array): string => createHash('sha256').update(bytes)
 const Ajv2020Constructor = Ajv2020 as unknown as new (options?: Record<string, unknown>) => {
   compile(schema: object): (value: unknown) => boolean;
 };
-const validCheckpoint = new Ajv2020Constructor({ strict: true, allErrors: true }).compile(checkpointSchema as object);
 const validEvent = new Ajv2020Constructor({ strict: true, allErrors: true, formats: { 'date-time': true } }).compile(
   eventSchema as object,
 );

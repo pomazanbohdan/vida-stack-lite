@@ -1,8 +1,7 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import Ajv2020 from 'ajv/dist/2020.js';
+import { validateAcceptanceManifestSchema as validAcceptance } from '../contracts/acceptance-manifest-schema.js';
 import { validateImplementationScope as validScope } from '../contracts/implementation-scope.js';
-import acceptanceSchema from '../../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
 import { runtimeConfigDigest, type AgentRuntimeConfig } from '../config/runtime-config.js';
 import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
@@ -27,11 +26,6 @@ import {
   type SessionBridgeRequest,
 } from './mastra-session-bridge.js';
 
-const Ajv = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: boolean }) => {
-  compile(schema: object): (value: unknown) => boolean;
-};
-const validator = new Ajv({ strict: true, allErrors: true });
-const validAcceptance = validator.compile(acceptanceSchema);
 const sha256 = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 const substantiveKeys = [
   'schema',

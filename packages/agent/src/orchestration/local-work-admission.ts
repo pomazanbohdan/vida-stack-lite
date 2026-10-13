@@ -1,8 +1,7 @@
 import { eligibleReadonlyRelinquishment } from './final-assurance.js';
 import { sameCoordinationStrings } from '../contracts/envelopes.js';
 import { createHash } from 'node:crypto';
-import Ajv2020 from 'ajv/dist/2020.js';
-import acceptanceSchema from '../../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
+import { validateAcceptanceManifestSchema as validAcceptance } from '../contracts/acceptance-manifest-schema.js';
 import { validateImplementationScope as validScope } from '../contracts/implementation-scope.js';
 import {
   type AgentRuntimeConfig,
@@ -39,11 +38,6 @@ import {
   validateResearchSynthesis,
 } from '../research-decision.js';
 
-const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: boolean }) => {
-  compile(schema: object): (value: unknown) => boolean;
-};
-const validator = new Ajv2020Constructor({ strict: true, allErrors: true });
-const validAcceptance = validator.compile(acceptanceSchema);
 const digest = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 
 export interface LocalWorkAdmissionInput {

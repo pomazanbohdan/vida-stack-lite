@@ -130,17 +130,40 @@ test('forward CLEAR checkpoint parser accepts producer bytes and rejects digest 
   }
 });
 
+test('documentation consumers do not compile duplicate CLEAR checkpoint validators during import', async () => {
+  const compilation = observeAjvCompiles((schema) => schemaId(schema) === schemaIds.checkpoint);
+  try {
+    await import(`../src/documentation/clear.ts?cold=${randomUUID()}`);
+    await import(`../src/documentation/policy-transition.ts?cold=${randomUUID()}`);
+    await import(`../src/documentation/transition-proof.ts?cold=${randomUUID()}`);
+    expect(compilation.schemas).toHaveLength(0);
+  } finally {
+    compilation.restore();
+  }
+});
+
 test('forward proof parsers compile private Ajv validators on first use', async () => {
   const compilation = observeAjvCompiles((schema) => schemaId(schema) !== undefined);
   const observedSchemaIds = () => compilation.schemas.map(schemaId);
+  const fixture = forwardCheckpointFixture();
+  let passed = false;
 
   try {
+    const checkpoint = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+    expect(checkpoint.status).toBe('pass');
+    const producerBytes = Buffer.from(JSON.stringify(checkpoint));
+    // An earlier ordinary case may already have warmed the one shared owner.
+    const checkpointCompiles = observedSchemaIds().length;
+    expect(checkpointCompiles).toBeLessThanOrEqual(1);
+    const producerCompilations = Array.from({ length: checkpointCompiles }, () => schemaIds.checkpoint);
+    expect(observedSchemaIds()).toEqual(producerCompilations);
+
     // Bun's qualified fresh-query loader gives this module instance a new identity.
     // Keep the ordinary static import above for the real valid-policy contract.
     const fresh = (await import(
       `../src/documentation/transition-proof.ts?lazy=${randomUUID()}`
     )) as typeof import('../src/documentation/transition-proof.ts');
-    expect(observedSchemaIds()).toEqual([schemaIds.scope]);
+    expect(observedSchemaIds()).toEqual([...producerCompilations, schemaIds.scope]);
 
     const parsers = [
       {
@@ -158,11 +181,6 @@ test('forward proof parsers compile private Ajv validators on first use', async 
         parse: fresh.parseForwardDocumentationEvent,
         message: 'forward documentation proof: documentation event schema invalid',
       },
-      {
-        id: schemaIds.checkpoint,
-        parse: fresh.parseForwardClearCheckpoint,
-        message: 'forward documentation proof: CLEAR checkpoint schema invalid',
-      },
     ] as const;
 
     for (const { id, parse, message } of parsers) {
@@ -172,12 +190,43 @@ test('forward proof parsers compile private Ajv validators on first use', async 
       expect(observedSchemaIds().filter((observed) => observed === id)).toHaveLength(1);
     }
 
+    // The normal transition-proof import shares the checkpoint owner warmed by
+    // the real producer. Values are still checked on each parser call.
+    expect(fresh.parseForwardClearCheckpoint(producerBytes)).toEqual(checkpoint);
+    expect(() => fresh.parseForwardClearCheckpoint(Buffer.from('{}'))).toThrow(
+      'forward documentation proof: CLEAR checkpoint schema invalid',
+    );
+    expect(observedSchemaIds().filter((id) => id === schemaIds.checkpoint)).toHaveLength(checkpointCompiles);
+
+    // A fresh-query owner has a private module cache. It compiles on its first
+    // valid use, then validates each later value with that compiled function.
+    const privateOwner = (await import(
+      `../src/documentation/clear-checkpoint-validator.ts?private=${randomUUID()}`
+    )) as {
+      validateDocumentationClearCheckpointSchema(value: unknown): value is Record<string, unknown>;
+    };
+    expect(privateOwner.validateDocumentationClearCheckpointSchema(checkpoint)).toBe(true);
+    expect(privateOwner.validateDocumentationClearCheckpointSchema(checkpoint)).toBe(true);
+    expect(observedSchemaIds().filter((id) => id === schemaIds.checkpoint)).toHaveLength(checkpointCompiles + 1);
+    const missingRequired: Partial<typeof checkpoint> = { ...checkpoint };
+    expect(privateOwner.validateDocumentationClearCheckpointSchema(missingRequired)).toBe(true);
+    delete missingRequired.work_id;
+    expect(privateOwner.validateDocumentationClearCheckpointSchema(missingRequired)).toBe(false);
+    missingRequired.work_id = checkpoint.work_id;
+    expect(privateOwner.validateDocumentationClearCheckpointSchema(missingRequired)).toBe(true);
+    expect(privateOwner.validateDocumentationClearCheckpointSchema({ ...checkpoint, status: 'unknown' })).toBe(false);
+    expect(privateOwner.validateDocumentationClearCheckpointSchema(checkpoint)).toBe(true);
+    expect(observedSchemaIds().filter((id) => id === schemaIds.checkpoint)).toHaveLength(checkpointCompiles + 1);
+
     const validPolicy = parseForwardPolicyIdentity(Buffer.from(JSON.stringify(policy)), policy.source_path);
     expect(validPolicy).toEqual(policy);
     expect(() => parseForwardPolicyIdentity(Buffer.from(JSON.stringify(policy)), 'docs/other-policy.json')).toThrow(
       'canonical policy identity differs',
     );
+    passed = true;
   } finally {
     compilation.restore();
+    if (passed) fixture.cleanup();
+    else console.error(`Retained failed forward checkpoint fixture: ${fixture.root}`);
   }
 });

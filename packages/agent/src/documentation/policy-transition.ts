@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { parseDocumentationPolicyTransitionEnvelope } from './transition-proof.js';
 import eventSchema from '../../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
-import checkpointSchema from '../../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
+import { validateDocumentationClearCheckpointSchema as validCheckpoint } from './clear-checkpoint-validator.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { assertProjectUpgradeInactive, loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
@@ -27,7 +27,6 @@ const validEvent = new Constructor({
   allErrors: true,
   formats: { 'date-time': true },
 }).compile(eventSchema);
-const validCheckpoint = new Constructor({ strict: true, allErrors: true }).compile(checkpointSchema);
 
 export function documentationPolicyTransitionPath(workId: string): string {
   assert(/^[a-z0-9][a-z0-9._-]{0,127}$/u.test(workId), 'work identity invalid');

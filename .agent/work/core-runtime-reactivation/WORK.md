@@ -9852,6 +9852,47 @@ guards stay with callers. Policy/scope validators with different options or abse
 valid controls are excluded. Future narrow shared owners may remove duplicate
 compiles, with actual consumer invalid/positive proofs; no timing gain claimed yet.
 
+## Narrow shared schema owners — 2026-10-13
+
+Case-context/frozen packet publishedd31b6a4 with ordinary hooks and non-force push.
+Separate blind research confirms exact schema/draft/options and boolean-only
+consumer contracts for acceptanceManifest(4owners) and CLEARcheckpoint(3owners).
+Root cold-import assertion RED observes4 and2 additional compiles respectively;
+missing helpers are dynamically loaded only after that actual assertion point.
+Two narrow package-owned predicates capture schemas at import, lazily retain only
+the compiled function and validate every input again. All original consumer
+errors, schema/byte guard order, digest/status/CAS/ownership/authorization checks
+remain. Event/policy/scope variants stay with their existing distinct owners.
+No active schema or loader switch, no values/state/read/effect cache.
+
+Test writers reuse the real CLEAR producer fixture and actual research/packet
+fixtures. Root fixes randomized warm-cache assumptions: normal owner may already
+be warm, but cold consumer imports must compile0; fresh private helper control
+compiles exactly1 and every subsequent value uses that compile. Mutable valid
+record→invalid→restored controls prove no value cache; schema JSON mutation after
+private helper import proves import-time capture and restores the original array
+identity. Root reuses the owned compile observer, avoiding another prototype spy.
+Existing case names/default5s preserved. Acceptance test is added once to the
+existing primary phase; both new Source owners belong once to existing mutation
+partitions with their actual control tests. No full suite added to build/install.
+
+Actual joined11PASS/115assertions/5.53s over6files covers lazy/schema-capture and
+mutation-of-value controls, real producer→fresh proof reuse, primed acceptance→
+fresh research/packet reuse, malformed research schema-specific denial, current
+local admission no-effect denial and policy transition/forged closure behavior.
+Public CLEAR baseline/closeout CLI1PASS/11assertions/9.43s. Scoped counts overlap;
+not a global coverage/CRAP/mutation pass or a speedup estimate. Both fresh Source
+helper roles have prospective10/10 policy ceilings, not measured current budgets;
+changed existing Source bindings require their own final lineage refresh.
+
+Combined static444capturedTS/443program and100Source files PASS,0diagnostics;
+final lint/format/diff PASS. Independent blind review finds no runtime-contract
+regression and exact once-only phase/partition membership. Reviewer corrects a
+false missing-skill conclusion: plain rg --files omitted hidden/ignored .agents,
+but direct known-path read loads the maintained Bun skill. Empty search is not
+absence. Official Ajv managing-schemas guidance corroborates compiled-function
+reuse; option equality and caller behavior are locally qualified, no new package.
+
 One Root canonical static inventory of the b356b49 immutable capture has7608
 roles/145production files; it is explicitly NOT_COVERAGE_NOT_REVIEWED. Compared
 with partial lineage bindings,64unchanged/7changed/74absent scopes identify the

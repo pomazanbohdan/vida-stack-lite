@@ -38,6 +38,7 @@ import { configuredFrontierRepairFixture } from './helpers/configured-frontier-f
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import { configuredFrontierRecoveryViewDigest } from '../src/orchestration/failed-prewriter-transition.ts';
+import { observeAjvCompiles } from './helpers/ajv-compile-observer.ts';
 import {
   runtimeCodeContinuationProtectedWorkDigest,
   validateQualifiedRuntimeCodeContinuationRequest,
@@ -841,18 +842,40 @@ describe('admitted development packet', () => {
     expectPublicPacketDenial({}, /runtime config must come from loadRuntimeConfig/);
   });
 
-  test('keeps an absent new file truthful and derives stable task content', () => {
+  test('keeps an absent new file truthful and derives stable task content', async () => {
     const input = controlledPacketSnapshot();
-    const first = buildAdmittedDevelopmentPacket(input);
-    const second = buildAdmittedDevelopmentPacket(input);
-    expect(first).toEqual(second);
-    expect(first.in_scope).toEqual([input.target]);
-    expect(first.owned_paths).toEqual(input.allowedPaths);
-    expect(first.code_evidence_refs).toEqual([]);
-    expect(first.skill_refs).toEqual([]);
-    expect(first.documentation_refs).toEqual([]);
-    expect(first.acceptance).toEqual(['AC-1: The scoped file is created.']);
-    expect(first.expected_tests).toEqual(['Run the focused acceptance check.']);
+    const compilation = observeAjvCompiles((schema) => {
+      if (typeof schema !== 'object' || schema === null || !('$id' in schema)) return false;
+      return schema.$id === 'https://vida-agent.invalid/schemas/acceptance-manifest.v1.schema.json';
+    });
+
+    try {
+      const acceptanceValidator = await import('../src/contracts/acceptance-manifest-schema.js');
+      expect(
+        acceptanceValidator.validateAcceptanceManifestSchema(
+          JSON.parse(input.acceptanceBytes.toString('utf8')) as unknown,
+        ),
+      ).toBe(true);
+      const compilesAfterPrime = compilation.schemas.length;
+      expect(compilesAfterPrime).toBeLessThanOrEqual(1);
+
+      const freshPacketModule = (await import(
+        `../src/orchestration/admitted-development-packet.ts?acceptance-reuse=${randomUUID()}`
+      )) as typeof import('../src/orchestration/admitted-development-packet.ts');
+      const first = freshPacketModule.buildAdmittedDevelopmentPacket(input);
+      const second = buildAdmittedDevelopmentPacket(input);
+      expect(compilation.schemas).toHaveLength(compilesAfterPrime);
+      expect(first.objective).toBe(second.objective);
+      expect(first.in_scope).toEqual([input.target]);
+      expect(first.owned_paths).toEqual(input.allowedPaths);
+      expect(first.code_evidence_refs).toEqual([]);
+      expect(first.skill_refs).toEqual([]);
+      expect(first.documentation_refs).toEqual([]);
+      expect(first.acceptance).toEqual(['AC-1: The scoped file is created.']);
+      expect(first.expected_tests).toEqual(['Run the focused acceptance check.']);
+    } finally {
+      compilation.restore();
+    }
   });
 
   test('publishes the authenticated planning journal once after packet construction succeeds', () => {

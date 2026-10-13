@@ -1,8 +1,10 @@
 import { expect, test } from 'bun:test';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
+import { observeAjvCompiles } from './helpers/ajv-compile-observer.ts';
 import { configuredTestContext } from './configured-context.ts';
 import { runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { validateAcceptanceManifestSchema } from '../src/contracts/acceptance-manifest-schema.ts';
 import type { WorkState } from '../src/host-state.ts';
 import type { ActivationUse } from '../src/research-decision.ts';
 import type { SessionBridgeObservation, SessionBridgeRequest } from '../src/orchestration/mastra-session-bridge.ts';
@@ -335,8 +337,39 @@ function fixture(): ObservedResearchFixture {
   };
 }
 
-test('uses only substantive observed research and host-bound identity', () => {
+test('uses only substantive observed research and host-bound identity', async () => {
   const input = fixture();
+  const acceptanceSchemaId = 'https://vida-agent.invalid/schemas/acceptance-manifest.v1.schema.json';
+  const compilation = observeAjvCompiles(
+    (schema) => typeof schema === 'object' && schema !== null && '$id' in schema && schema.$id === acceptanceSchemaId,
+  );
+  try {
+    const parsedAcceptance: unknown = JSON.parse(input.acceptanceBytes.toString('utf8'));
+    expect(validateAcceptanceManifestSchema(parsedAcceptance)).toBe(true);
+    const compilesAfterPrime = compilation.schemas.length;
+    expect(compilesAfterPrime).toBeLessThanOrEqual(1);
+
+    const freshConsumer = (await import(
+      `../src/orchestration/observed-research-result.ts?acceptance-reuse=${randomUUID()}`
+    )) as typeof import('../src/orchestration/observed-research-result.ts');
+    const freshResult = freshConsumer.buildObservedResearchResult(input);
+    expect(freshResult.result_id).toBe(`research-${input.request.action_id.slice(0, 40)}`);
+    expect(freshResult.actor).toBe(input.observation.agent_id);
+    expect(freshResult.br_ids).toEqual(input.output.br_ids);
+    expect(freshResult.pointer).toBe('.agent/work/session-handoff.v1.sqlite');
+    expect(() => freshConsumer.buildObservedResearchResult({ ...input, acceptanceBytes: Buffer.from('{}') })).toThrow(
+      'observed research result: accepted acceptance schema is invalid',
+    );
+    const repeatedFreshResult = freshConsumer.buildObservedResearchResult(input);
+    expect(repeatedFreshResult.result_id).toBe(freshResult.result_id);
+    expect(repeatedFreshResult.actor).toBe(freshResult.actor);
+    expect(repeatedFreshResult.br_ids).toEqual(freshResult.br_ids);
+    expect(repeatedFreshResult.pointer).toBe(freshResult.pointer);
+    expect(compilation.schemas).toHaveLength(compilesAfterPrime);
+  } finally {
+    compilation.restore();
+  }
+
   const result = buildObservedResearchResult(input);
   expect(result.result_id).toBe(`research-${input.request.action_id.slice(0, 40)}`);
   expect(result.actor).toBe(input.observation.agent_id);
