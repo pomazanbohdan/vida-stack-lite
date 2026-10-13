@@ -73,9 +73,9 @@ do not add them to the parent totals. Logs: `.tmp/coverage-iteration-f43ef15/`
  load, compare its identity, and consume those existing values before any DB
  write. Public readers and every later/async effect boundary remain fresh. No
  process cache, new public API, transaction held across await, or schema change.
- The existing initial-source observer expects14 Host row-query preparations per
- begin/settle; removing two repeated receipt readers projects10. That is an
- unimplemented count estimate, not measured elapsed improvement. Threading only
+ The existing initial-source observer measured14 matching Host query API calls
+ per begin/settle; the implementation now measures10 in each transaction. These
+ are calls, not SQLite statement preparations/cache misses or elapsed improvement. Threading only
  the Host snapshot through those readers is a smaller trust change but leaves
  duplicate receipt parsing; use it if complete receipt reuse cannot preserve a
  current guard. Do not remove such a guard to meet the count.
@@ -98,7 +98,8 @@ do not add them to the parent totals. Logs: `.tmp/coverage-iteration-f43ef15/`
 ## Acceptance and stop rules
 
 - Producer reuse: extend the existing count test, preserve exact Host/Journal/
- receipt results, and add config-drift denial after the first Host read. Cover
+ receipt results, and add config-drift denial after the real Journal resume has
+ finished its independent config check. Cover
  ordinary, configured-frontier, initial-source and missing-receipt paths. Keep
  ambiguity/corruption/owner/expiry/CAS denials and a focused omitted-freshness
  negative control. Check the same fresh full-composite trace after implementation;
@@ -120,3 +121,44 @@ do not add them to the parent totals. Logs: `.tmp/coverage-iteration-f43ef15/`
  operation when ready. Default5000ms, justified exceptions,600000ms complete
  operation cap, exact coverage, frozen complexity/CRAP and assertion-confirmed
  mutation gates stay unchanged. Publish each verified correction packet.
+
+## Implementation qualification, 2026-10-13
+
+The bounded reuse is implemented. The existing fixture checks10/10 query calls
+and unchanged Host/Journal/receipt and producer reservation state. A temporary
+omission of the second project load causes an assertion failure: the changed
+configuration is accepted instead of throwing the exact stale-config error.
+Source restored byte-for-byte; failed fixture retained. This is a targeted
+assertion control, not a complete mutation score. Mechanical/no-work, admitted
+Work conflict, stale CAS, pending repair and real engine settlement also pass.
+
+The first post-change full-composite trace passes25.39s versus the earlier18.28s;
+different execution conditions preclude a speed claim. Matching query calls
+fall by4/14, approximately28.6%, only within each observed transaction.
+
+Historical inspection has two legitimate initialization-schema captures: receipt
+validation and digest binding. Its existing case now observes both and a raw
+reader substitution fails the assertion while preserving its root. A separate
+configured-frontier execution caller used raw readBytes; the existing shared
+verified helper replaces it. Its original test covers both endpoint and package
+snapshot schema captures with exact persisted digest joins, no duplicate fixture.
+New local admission has the same shared verified-reader correction. Its existing
+reuse test calls the real factory each time and binds both observed schema
+captures to persisted Host state; all5affected-file cases PASS35assertions.
+The joined earlier packet passes19cases/183parent assertions, with86assertions
+inside its one owned initial-source child. These are focused results, not a
+complete current suite or global coverage/mutation admission.
+
+The latest overlap audit identifies shared lifecycle faults/roots/cases,
+prototype interception, timing resets and sibling cleanup. Per-case ownership
+and descendant/effect quiescence must qualify before any two-root pilot.
+[Bun lifecycle hooks](https://bun.com/docs/test/lifecycle) run cleanup after a
+case; hook invocation is not proof of success. New bounded custody catches
+setup/assertion failures; existing late native timeout custody is still a gap.
+
+/tmp exhausted its capacity during qualification. A fresh disk-backed fixture
+directory exposed additional I/O timeouts; those roots remain retained. Fresh
+fixtures now use an executable RAM-backed directory outside the repository with
+capacity checked before launch. This is environment selection, not a production
+durability change or a matched performance comparison. Do not delete old failed
+or UNKNOWN roots to make a benchmark faster.

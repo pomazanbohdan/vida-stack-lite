@@ -943,7 +943,7 @@ function expectNoChange(f: InitialWorkFixture, request: InitialSourceContinuatio
 
 async function runOwnedInitialSourceFixture(name: string) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-initial-source-owned-'));
-  let terminalObserved = false;
+  let successfulExitObserved = false;
   await withCleanup(
     async () => {
       const result = await runBoundedSubprocess(
@@ -969,14 +969,22 @@ async function runOwnedInitialSourceFixture(name: string) {
           timeoutMs: 180_000,
         },
       );
-      terminalObserved = result.exitCode !== null || result.signal !== null;
+      successfulExitObserved =
+        result.closeObserved &&
+        !result.timedOut &&
+        result.exitCode === 0 &&
+        result.signal === null &&
+        result.childError === null &&
+        result.terminationRequestConfirmed === null &&
+        result.stderrForwardingError === null &&
+        !result.stdoutTruncated &&
+        !result.stderrTruncated;
       process.stderr.write(result.stderr);
-      if (result.timedOut || result.exitCode !== 0 || result.signal)
-        throw new Error(subprocessFailure('initial-source fixture subprocess', result));
+      if (!successfulExitObserved) throw new Error(subprocessFailure('initial-source fixture subprocess', result));
       return result;
     },
     () => {
-      if (!terminalObserved) throw new Error('Initial Source child outcome is unknown; fixture retained at ' + root);
+      if (!successfulExitObserved) throw new Error('Initial Source child did not pass; fixture retained at ' + root);
       removeOwnedFixtureParent(root);
     },
     'Initial Source subprocess',
@@ -3058,9 +3066,10 @@ registerFixtureTest(
         expectedJournal: before.journalVersion,
         maintenanceGeneration: before.maintenanceGeneration,
       };
-      const database = hostLedger(f).sessionProducerBinding().database;
+      const binding = hostLedger(f).sessionProducerBinding();
+      const database = binding.database;
       const actualQuery: typeof database.query = database.query.bind(database);
-      let hostRowQueryPreparations = 0;
+      let hostRowQueryCalls = 0;
       const observedQuery: typeof database.query = <Result, Bindings extends SQLQueryBindings | SQLQueryBindings[]>(
         sql: string,
       ): ReturnType<typeof actualQuery<Result, Bindings>> => {
@@ -3069,7 +3078,7 @@ registerFixtureTest(
           sql.startsWith('SELECT workspace_id,kind,id,revision,digest,') &&
           sql.includes(' FROM agent_host_state WHERE workspace_id=? AND kind=? AND id=?')
         ) {
-          hostRowQueryPreparations += 1;
+          hostRowQueryCalls += 1;
         }
         return actualQuery<Result, Bindings>(sql);
       };
@@ -3078,19 +3087,90 @@ registerFixtureTest(
         // Use the actual Host entry point. The ledger adapter's separate
         // readHostStateSnapshot preflight is intentionally outside this count.
         const producer = hostStore(f).beginSessionProducer(hostLedger(f), input);
-        const beginPreparations = hostRowQueryPreparations;
-        hostRowQueryPreparations = 0;
+        const beginQueryCalls = hostRowQueryCalls;
+        hostRowQueryCalls = 0;
 
         hostStore(f).settleSessionProducer(producer, before.journalVersion);
-        // Receipt validators have their own live reads. Reuse removes only the
-        // extra Work+Ledger pair: observed16 preparations become14 per transaction.
-        expect([beginPreparations, hostRowQueryPreparations]).toEqual([14, 14]);
+        // Receipt validators keep their live reads. Reuse the validated identity
+        // and receipt snapshots to remove the caller's repeated Host reads.
+        expect([beginQueryCalls, hostRowQueryCalls]).toEqual([10, 10]);
       } finally {
         querySpy.mockRestore();
       }
 
       expect(continuationState(f)).toEqual(before);
       expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(initialReceipt);
+      let changedConfig = false;
+      const configPath = path.join(f.root, 'agent-runtime.config.v1.yaml');
+      const configBefore = readFileSync(configPath);
+      const configDriftBytes = configBefore
+        .toString('utf8')
+        .replace(/(\n  repository_id: ')[^'\r\n]+(')/, '$1' + f.config.repository.repository_id + '-drift$2');
+      const producerFenceState = () => ({
+        reservations: database
+          .query(
+            'SELECT store_id,kind,record_key,revision,payload,digest FROM agent_host_governance ' +
+              'WHERE workspace_id=? AND store_id=? ORDER BY kind,record_key',
+          )
+          .all(binding.workspaceId, 'vida-session-producers'),
+        generation: database
+          .query('SELECT generation,digest FROM agent_host_governance_stores WHERE workspace_id=? AND store_id=?')
+          .all(binding.workspaceId, 'vida-session-producers'),
+      });
+      if (Buffer.from(configDriftBytes).equals(configBefore))
+        throw new Error('Initial Source config drift fixture did not change the repository identifier');
+      const beforeProducerFence = producerFenceState();
+      // oxlint-disable-next-line typescript/unbound-method -- Forward below with the actual receiver and restore the exact prototype method.
+      const actualResume = MastraSessionLedger.prototype.resume;
+      const driftResumeSpy = spyOn(MastraSessionLedger.prototype, 'resume').mockImplementation(function (
+        this: MastraSessionLedgerType,
+        ...args: Parameters<MastraSessionLedgerType['resume']>
+      ) {
+        const result = actualResume.apply(this, args);
+        // Journal resume has its own current-config guard. Change bytes after
+        // that real read so this witness reaches the later project reload.
+        if (!changedConfig && this === hostLedger(f) && database.inTransaction) {
+          writeFileSync(configPath, configDriftBytes);
+          const changed = loadRuntimeConfig(f.root);
+          if (
+            changed.repository.repository_id !== f.config.repository.repository_id + '-drift' ||
+            runtimeConfigDigest(changed) === runtimeConfigDigest(f.config)
+          )
+            throw new Error('Initial Source config drift fixture did not parse as a changed configuration');
+          changedConfig = true;
+        }
+        return result;
+      });
+      let producer: ReturnType<HostStateStore['beginSessionProducer']> | null = null;
+      await withCleanup(
+        () => {
+          expect(() => {
+            producer = hostStore(f).beginSessionProducer(hostLedger(f), input);
+          }).toThrow(/runtime config snapshot is stale or forged/);
+          expect(changedConfig).toBe(true);
+          expect(producer).toBeNull();
+          writeFileSync(configPath, configBefore);
+          expect(continuationState(f)).toEqual(before);
+          expect(hostStore(f).readInitialSourceContinuationReceipt(f.identity, 1)).toEqual(initialReceipt);
+          expect(producerFenceState()).toEqual(beforeProducerFence);
+        },
+        () => {
+          const errors: unknown[] = [];
+          try {
+            driftResumeSpy.mockRestore();
+          } catch (error) {
+            errors.push(error);
+          }
+          try {
+            writeFileSync(configPath, configBefore);
+          } catch (error) {
+            errors.push(error);
+          }
+          if (errors.length === 1) throw errors[0];
+          if (errors.length > 1) throw new AggregateError(errors, 'Initial Source config drift cleanup failed');
+        },
+        'Initial Source config drift assertion',
+      );
     });
   },
 );

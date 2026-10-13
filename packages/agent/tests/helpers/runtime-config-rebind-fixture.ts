@@ -85,6 +85,7 @@ export function registerRuntimeConfigFixtureCleanup(): void {
     const hasPendingCalls = pendingFixtureCalls.size !== 0;
     for (const root of fixtureRoots.splice(0)) {
       if (pendingFixtureCalls.has(root)) console.warn(`Retained fixture with an unresolved operation: ${root}`);
+      else if (failedFixtureRoots.has(root)) console.warn(`Retained failed historical inspection fixture: ${root}`);
       else rmSync(root, { recursive: true, force: true });
     }
     if (!hasPendingCalls) resetSourceCorrectionNativeRuntime();
@@ -360,8 +361,20 @@ type StandaloneRuntime = NonNullable<ReturnType<typeof import('../../bin/bun.ts'
 export const fixtureContextPath = 'docs/project-context.md';
 
 const fixtureRoots: string[] = [];
+const failedFixtureRoots = new Set<string>();
 
 const pendingFixtureCalls = new Map<string | undefined, number>();
+
+/** Retain only this case's newly-created fixture roots if setup or its body fails. */
+export function withHistoricalInspectionFixtureCustody<TResult>(body: () => TResult): TResult {
+  const firstOwnedRoot = fixtureRoots.length;
+  try {
+    return body();
+  } catch (error: unknown) {
+    for (const root of fixtureRoots.slice(firstOwnedRoot)) failedFixtureRoots.add(root);
+    throw error;
+  }
+}
 
 export const sourceCorrectionNativeRuntime: {
   value: StandaloneRuntime | null;

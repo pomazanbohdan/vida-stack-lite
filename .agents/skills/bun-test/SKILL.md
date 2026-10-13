@@ -121,8 +121,26 @@ filesystem: retain configuration freshness and exact identity checks, and never
 reuse across an intervening write, await or later effect boundary. Bun's query
 cache contains prepared statements, not validated Host/receipt values. Use the
 existing query-count regression and fresh phase trace before claiming a gain;
+`database.query()` observations count API calls, not actual SQL preparations or
+cache misses. For the later project freshness boundary, change fixture config
+after the real Journal resume has completed its own currentness check; prove
+the intended boundary with a scoped omission control. Select the exact YAML
+field, since config_id and repository_id can contain identical text.
 nested phase durations must not be added to their parent totals. Current concrete
 design and evidence: [timeout cost research](../../../packages/agent/docs/research/test-timeout-cost-20261013.md).
+
+Package-reader witnesses count by resource path, independently of error labels.
+Trace all legitimate captures before asserting cardinality: receipt validation,
+endpoint binding and a full package snapshot can each read the same schema.
+Join every observed byte digest to persisted authority. A raw-reader control
+must alter the actual caller, not the observation wrapper. Keep failed roots;
+when an existing test counts access construction, the observer must call the
+real factory for each production invocation. Returning a precached access can
+mask that witness even while byte-reader assertions remain valid.
+a clean child exit also requires its close observation and no child/output or
+forwarding errors before cleanup. Assertion custody alone does not qualify late
+timeout or descendant quiescence. Check temp capacity and executable support
+before a large run; use a fresh external root without pruning UNKNOWN evidence.
 
 For pure configuration reuse, observe real public callers and forward to the
 actual producer in spies. Count completed preparation only after it returns,

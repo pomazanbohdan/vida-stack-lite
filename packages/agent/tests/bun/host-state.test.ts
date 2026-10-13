@@ -109,6 +109,7 @@ const handles: Database[] = [];
 const admittedHostDatabases = new WeakSet<Database>();
 const children: import('node:child_process').ChildProcess[] = [];
 const producerRoots: string[] = [];
+const failedProducerRoots = new Set<string>();
 const clone = <T>(value: T): DeepMutable<T> => structuredClone(value) as DeepMutable<T>;
 
 type GovernanceSqlRow = {
@@ -1635,6 +1636,10 @@ afterEach(async () => {
       !path.basename(fixtureRoot).startsWith('vida-producer-')
     )
       throw new Error('unsafe producer fixture cleanup');
+    if (failedProducerRoots.delete(fixtureRoot)) {
+      console.error('Failed producer fixture retained: ' + fixtureRoot);
+      continue;
+    }
     try {
       await rm(fixtureRoot, { recursive: true, force: true });
     } catch (error) {
@@ -1709,39 +1714,104 @@ function producerFixture(name = 'producer'): {
   };
 }
 
-test('session producer requires the actual configured ledger before any engine effect', async () => {
-  const f = producerFixture();
-  const malformedPrototypeLedger = new Proxy({}, { getPrototypeOf: () => MastraSessionLedger.prototype });
-  for (const ledger of [undefined, {}, malformedPrototypeLedger]) {
-    await Promise.resolve(
-      expect(
-        Reflect.apply(MastraSessionBridge.open.bind(MastraSessionBridge), undefined, [{ ...f.args, ledger }]),
-      ).rejects.toThrow(),
-    );
-    expect(existsSync(f.enginePath)).toBe(false);
-    expect(f.rows()).toHaveLength(0);
+function noWorkProducerInput(
+  f: ReturnType<typeof producerFixture>,
+  change: Partial<ProducerInput> = {},
+): ProducerInput {
+  return {
+    ...f.input,
+    phase: 'initialize',
+    runId: sessionBridgeRunId(f.args.workspaceId, f.args.context, f.args.workflowId),
+    expectedWork: null,
+    expectedLedger: null,
+    expectedJournal: null,
+    maintenanceGeneration: 0,
+    ...change,
+  };
+}
+
+async function withProducerFixtureCustody<T>(
+  body: (f: ReturnType<typeof producerFixture>) => T | Promise<T>,
+  name?: string,
+): Promise<T> {
+  const rootsBefore = producerRoots.length;
+  let f: ReturnType<typeof producerFixture>;
+  try {
+    f = producerFixture(name);
+  } catch (error) {
+    for (const fixtureRoot of producerRoots.slice(rootsBefore)) failedProducerRoots.add(fixtureRoot);
+    throw error;
   }
-  for (const projectIds of [[], ['foreign'], ['project', 'project']]) {
-    await Promise.resolve(expect(MastraSessionBridge.open({ ...f.args, projectIds })).rejects.toThrow());
-    expect(existsSync(f.enginePath)).toBe(false);
-    expect(f.rows()).toHaveLength(0);
+  try {
+    return await body(f);
+  } catch (error) {
+    failedProducerRoots.add(f.args.repositoryRoot);
+    throw error;
   }
-  expect(() => f.ledger.hostState.reserveOperation('vida-session-producers', 'forged', 'a'.repeat(64))).toThrow(
-    /protected/,
-  );
-  expect(() =>
-    f.ledger.hostState.beginSessionProducer(f.ledger, {
-      ...f.input,
-      phase: 'start',
-      runId: 'foreign',
-      expectedWork: null,
-      expectedLedger: null,
-      expectedJournal: null,
-      maintenanceGeneration: 0,
-    }),
-  ).toThrow(/run differs/);
+}
+
+function expectMechanicalProducerDenial(
+  f: ReturnType<typeof producerFixture>,
+  input: ProducerInput,
+  message: RegExp,
+): void {
+  const database = f.ledger.sessionProducerBinding().database,
+    hostBefore = database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all(),
+    journalBefore = database
+      .query<SessionLedgerSqlRow, []>(
+        'SELECT * FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt',
+      )
+      .all();
+
+  expect(() => f.ledger.hostState.beginSessionProducer(f.ledger, input)).toThrow(message);
   expect(f.rows()).toHaveLength(0);
+  expect(database.query<HostStateSqlRow, []>('SELECT * FROM agent_host_state ORDER BY kind,id').all()).toEqual(
+    hostBefore,
+  );
+  expect(
+    database
+      .query<SessionLedgerSqlRow, []>(
+        'SELECT * FROM agent_host_mastra_session_ledger ORDER BY workspace_id,work_id,attempt',
+      )
+      .all(),
+  ).toEqual(journalBefore);
   expect(existsSync(f.enginePath)).toBe(false);
+}
+
+test('session producer requires the actual configured ledger before any engine effect', async () => {
+  await withProducerFixtureCustody(async (f) => {
+    const malformedPrototypeLedger = new Proxy({}, { getPrototypeOf: () => MastraSessionLedger.prototype });
+    for (const ledger of [undefined, {}, malformedPrototypeLedger]) {
+      await Promise.resolve(
+        expect(
+          Reflect.apply(MastraSessionBridge.open.bind(MastraSessionBridge), undefined, [{ ...f.args, ledger }]),
+        ).rejects.toThrow(),
+      );
+      expect(existsSync(f.enginePath)).toBe(false);
+      expect(f.rows()).toHaveLength(0);
+    }
+    for (const projectIds of [[], ['foreign'], ['project', 'project']]) {
+      await Promise.resolve(expect(MastraSessionBridge.open({ ...f.args, projectIds })).rejects.toThrow());
+      expect(existsSync(f.enginePath)).toBe(false);
+      expect(f.rows()).toHaveLength(0);
+    }
+    expect(() => f.ledger.hostState.reserveOperation('vida-session-producers', 'forged', 'a'.repeat(64))).toThrow(
+      /protected/,
+    );
+    expectMechanicalProducerDenial(
+      f,
+      {
+        ...f.input,
+        phase: 'start',
+        runId: 'foreign',
+        expectedWork: null,
+        expectedLedger: null,
+        expectedJournal: null,
+        maintenanceGeneration: 0,
+      },
+      /run differs/,
+    );
+  });
 });
 
 for (const rootName of ['literal%20', 'standalone%', 'fragment#', 'space path', 'unicode-é東京']) {
@@ -1806,6 +1876,39 @@ test('session producer reuses the validated Journal only inside each acquisition
   } finally {
     MastraSessionLedger.prototype.resume = originalResume;
   }
+});
+
+test('session producer mechanical no-work rejects an admitted lifecycle Work without reservation or state changes', async () => {
+  await withProducerFixtureCustody((f) => {
+    const binding = f.ledger.sessionProducerBinding(),
+      write = fixture('producer');
+    write.nextWork.workspace_id = f.args.workspaceId;
+    write.nextLedger.workspace_id = f.args.workspaceId;
+    write.nextWork.binding.repository_id = 'other-repository';
+    write.nextWork.binding.integrations_digest = 'f'.repeat(64);
+    for (const ticket of write.nextLedger.tickets) {
+      ticket.repository_id = write.nextWork.binding.repository_id;
+      ticket.integrations_digest = write.nextWork.binding.integrations_digest;
+    }
+    binding.host.compareAndSwapHostState(write);
+    const snapshot = binding.host.readHostStateSnapshot({
+      repository_id: f.args.config.repository.repository_id,
+      project_ids: f.args.projectIds,
+      integrations_digest: loadProjectSetContext(
+        f.args.repositoryRoot,
+        f.args.config,
+        f.args.config.repository.repository_id,
+        f.args.projectIds,
+      ).integrations_digest,
+      work_id: f.args.context.work_id,
+    });
+    const input = noWorkProducerInput(f, {
+      expectedWork: snapshot.workVersion,
+      expectedLedger: snapshot.ledgerVersion,
+      maintenanceGeneration: snapshot.maintenanceGeneration,
+    });
+    expectMechanicalProducerDenial(f, input, /mechanical producer conflicts with admitted Work/);
+  }, 'mechanical-work');
 });
 
 test('session producer acquisition rejects stale CAS, maintenance and selection without reservation', async () => {

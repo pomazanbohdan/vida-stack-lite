@@ -93,6 +93,7 @@ import {
   querySqliteRow,
   readSessionLedgerSqlRow,
   readonlyJournalMutations,
+  withHistoricalInspectionFixtureCustody,
   readonlySnapshotMutations,
   recoveryFixture,
   requiredCliObject,
@@ -1405,19 +1406,52 @@ test.each(['fence_acquired', 'fenced', 'receipt_rebound', 'applied', 'released']
   0,
 );
 
-test('historical owner inspection preserves the default when context history is omitted and denies an empty export', () => {
-  const { f, request } = historicalFixture('unknown_readonly'),
-    before = databaseState(f),
-    engineBefore = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'));
-  expect(() =>
-    inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, request.attempt, undefined),
-  ).not.toThrow();
-  expect(() => inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, request.attempt, [])).toThrow(
-    /original context collection must be a nonempty array/,
-  );
-  expect(databaseState(f)).toEqual(before);
-  expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engineBefore);
-});
+test('historical owner inspection preserves the default when context history is omitted and denies an empty export', () =>
+  withHistoricalInspectionFixtureCustody(() => {
+    const { f, request } = historicalFixture('unknown_readonly'),
+      before = databaseState(f),
+      engineBefore = readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite')),
+      nativeAccess = runtimeConfig.runtimePackageAccess(),
+      originalReadBytes = nativeAccess.readBytes,
+      originalVerifiedRead = nativeAccess.readVerifiedCaptureBytes,
+      verifiedSchemaReads: Buffer[] = [];
+    let rawSchemaReads = 0;
+    if (!originalVerifiedRead)
+      throw new Error('Historical inspection requires the native verified package-byte reader');
+    const accessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => ({
+      ...nativeAccess,
+      readBytes(target: string, label: string): Buffer {
+        if (target === 'schemas/runtime-initialization.v1.schema.json') rawSchemaReads += 1;
+        return originalReadBytes.call(nativeAccess, target, label);
+      },
+      readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+        const bytes = originalVerifiedRead.call(nativeAccess, target, label, maxBytes);
+        if (target === 'schemas/runtime-initialization.v1.schema.json') verifiedSchemaReads.push(Buffer.from(bytes));
+        return bytes;
+      },
+    }));
+    try {
+      expect(() =>
+        inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, request.attempt, undefined),
+      ).not.toThrow();
+    } finally {
+      accessSpy.mockRestore();
+    }
+    expect(verifiedSchemaReads).toHaveLength(2);
+    expect(rawSchemaReads).toBe(0);
+    const retainedReceipt = checkedFixtureInitializationReceipt(
+      f,
+      readFileSync(path.join(f.root, '.agent/runtime-initialization.v1.json'), 'utf8'),
+    );
+    for (const [index, schemaBytes] of verifiedSchemaReads.entries()) {
+      expect(sha(schemaBytes), `verified historical schema read ${index + 1}`).toBe(retainedReceipt.schema_sha256);
+    }
+    expect(() => inspectHistoricalOwnerContext(f.root, 'baseline.yaml', request.identity, request.attempt, [])).toThrow(
+      /original context collection must be a nonempty array/,
+    );
+    expect(databaseState(f)).toEqual(before);
+    expect(readFileSync(path.join(f.root, '.agent/work/mastra-workflows.v1.sqlite'))).toEqual(engineBefore);
+  }));
 
 test.each(['completed_readonly', 'unknown_readonly', 'settled_writer_failed_validators'])(
   'historical %s releases only its original owner after config delivery and preserves all original evidence',

@@ -3,8 +3,10 @@
 Current scheduling extension: PARALLEL-TESTING-DESIGN-20261012.md and
 PARALLEL-TESTING-IMPLEMENTATION-20261012.md. Their explicit shard architecture
 is reviewed/pending, not deployed. Existing repair/numeric constraints remain.
-Current full run3ad33c8f is terminal UNKNOWN under the600000ms cap; no admitted
-coverage report. Its stale synthetic fixture path is fixed and focused-qualified.
+Current full runca5209ff is terminal UNKNOWN under the600000ms cap; no admitted
+coverage report. Its emitted rows contain no assertion FAIL before interruption;
+all5natural quarantine cases pass, but the complete selection is unfinished.
+Earlier run3ad33c8f's stale synthetic fixture path is fixed and focused-qualified.
 Earlier run counts are historical observations, not the current gate result.
 Do not repeat identical complete serial input merely to seek green; prioritize
 measured repeated Host validation and qualified resource overlap below.
@@ -48,16 +50,30 @@ SQLite and Mastra references; current phase evidence and rejected shortcuts).
   composite witness; both PASS,110 assertions together with provenance.
 - [x] Trace a fresh full-composite case:18.28s; open/resume/reopen4.59/4.12/4.01s,
   storage init about0.10s. Keep every existing bridge/restart/auth assertion.
-- [ ] Reuse trusted identity/continuation receipts within begin/settle's existing
+- [x] Reuse trusted identity/continuation receipts within begin/settle's existing
   immediate transaction; retain the later config freshness gate and exact
   identity comparison. One Source writer; independent test writer owns only
-  `initial-source-continuation.test.ts`. Existing count14→projected10 needs actual
-  qualification plus config-drift/no-write negative control before publication.
+  `initial-source-continuation.test.ts`. Matching Host query API calls14→10
+  qualified; config-drift/no-write positive and omitted-load assertion failure
+  preserve the fresh boundary. This is not actual SQL preparation timing.
 - [ ] Qualify two independent natural-quarantine waits through existing parallel
   resource/custody tasks. Five expanded recovery cases currently wait; no lock
   aging, touch, clock rewrite or deletion of real interruption evidence.
-- [ ] Compare the affected fresh case once after the concrete change, then full
-  current selection when ready. No new full scan/suite/profiler framework.
+- [x] Compare the affected fresh case once:25.39s versus prior18.28s with phase
+  trace; no elapsed speedup established. Mechanical/pending-repair/engine cases
+  pass. No new full scan/suite/profiler framework.
+- [x] Final joined static/focused checks and one full current selection at the
+  end of the packet. Historical inspector, configured-frontier and admission
+  package-reader witnesses join this batch;19focused cases plus5admission-file
+  cases PASS. General runca5209ff UNKNOWN at the cap with no admitted report;
+  preserve exact counters and numeric gaps rather than declaring suite success.
+- [ ] Correct both pre-effect UNKNOWN-fixture cleanup dispositions and qualify
+  retention after hook execution; preserve all original interruption assertions.
+
+Two-root quarantine remains blocked by shared lifecycle state/hooks, sibling
+cleanup and descendant/effect quiescence. Keep natural30s aging and production
+serial. New fixture roots use an external executable RAM directory after /tmp
+capacity exhaustion; disk-backed timing failures are retained, never replayed.
 
 ## Ownership and schedule
 

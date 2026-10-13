@@ -66,8 +66,15 @@ Readonly snapshot не надає прав на changing routes.
 Disjoint writers завершили F1, F3 і adapter; Root кваліфікував TRACE та фінальні
 callers. Прибрано12 повторних CLI launches зі збереженням усіх4 route checks;
 виправлено stale `.mjs` synthetic provenance path, точкова перевірка PASS.
-Наступна P1 корекція: transaction-local producer receipt reuse з живою перевіркою
-config/identity; далі кваліфіковане перекриття5 природних quarantine waits.
+Transaction-local producer receipt reuse реалізовано:14→10 matching query calls
+на begin/settle; живий config/identity guard перевірено позитивно та omission
+control. Це не SQL prepare/cache-miss чи wall-time метрика. Historical inspector
+та configured-frontier/admission schema readers мають focused caller proofs,
+raw-reader RED та збережені persisted digest bindings. Joined19tests і5admission
+file tests PASS; повний runca5209ff UNKNOWN за600000ms, без admitted report,
+публікація пакета pending. Перекриття5 природних quarantine waits
+залежить від per-case state/cleanup та descendant/effect quiescence, без concurrent
+flag до їх кваліфікації.
 Дизайн і докази — `packages/agent/docs/research/test-timeout-cost-20261013.md`.
 Реальні locks не старимо, timeout не збільшуємо. Batch не закриває відсутні
 числові/native докази. Старі відсотки не є кількістю продуктових дефектів.

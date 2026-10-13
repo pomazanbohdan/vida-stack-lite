@@ -9335,3 +9335,115 @@ runner activation. Research/acceptance owner is
 parallel plans and project bun-test skill updated. Mechanical/no-work and pending
 repair denial explicitly remain acceptance cases. Missing numeric/native proofs
 stay open; this packet does not declare all18 contours closed or Runtime unblocked.
+
+### 2026-10-13 — transaction-local reuse and reader closure in progress
+
+User confirms continued P0/P1 closure with focused checks during development and
+one general test/coverage run at the end of the joined correction batch. Root
+owns Source, shared documentation, all qualification and publication; blind Luna
+writers own disjoint tests and independent reviewers perform no runtime checks.
+
+Producer context now returns its already validated identity and receipts; begin
+and settle retain their second fresh project/config load and exact identity
+comparison before any DB/governance write. Independent correctness review found
+no removed authorization/CAS/ownership/UNKNOWN boundary. RED observed14 matching
+Host query calls per transaction against expected10; initial GREEN assertions
+reach10/10. These count query API invocations, not SQLite prepare/cache misses.
+The same case's added drift fixture changed config_id instead of repository_id;
+correct the exact field and qualify its omitted-freshness negative control.
+Failed child root /tmp/vida-initial-source-owned-ZklMFw is retained; cleanup now
+requires observed clean untruncated success, not merely any terminal result.
+
+First focused packet producer-reuse-focused.log:7PASS/2FAIL,139assertions,46.77s.
+Mechanical/no-work, stale CAS, pending repair and real engine settlement pass.
+Original full-composite path passes25.39s under phase tracing; this differs from
+the prior18.28s and establishes no wall-time improvement. Historical inspector
+actually captures the schema twice (receipt validation and binding check), not
+once; adjust the path-based witness to assert both equal captures, zero raw
+reads and retained receipt digest. The old fixture cleanup removed that failed
+root; log retained, exact assertion-failure custody repair is in this packet.
+
+Another concrete P1 gap: assertAdmittedRuntimeCodeCurrent's configured-frontier
+branch still uses raw schema readBytes. Extend its existing real continuation
+test, qualify RED, then use the existing shared verified package reader. No new
+fixture/public API/cache or schema is needed. All existing negative assertions
+remain. Static checks before these fixture corrections:436capturedTS/435program,
+97Source,0diagnostics; lintPASS. Final joined checks are pending.
+
+Quarantine overlap is not ready for a concurrent flag: the lifecycle file shares
+faults/roots/cases, prototype interception, timing reset and teardown, which can
+clean a sibling's fixture. Per-case custody plus descendant/effect quiescence
+and current caller eligibility remain dependencies. No lock aging/global clock
+shortcut. /tmp has only41MiB free; new fixtures use the fresh owned directory
+/workspace/vida-test-tmp-20261013-batch, outside Source. Retained failure/UNKNOWN
+roots are not pruned or reused.
+
+#### Joined qualification after pause
+
+The exact repository_id drift fixture now changes bytes after the real Journal
+resume has finished its independent config guard. Restored positive passes;
+temporary omission of the later project reload assertion-fails because begin
+does not throw. Failed root I06uWk is retained in the fresh external RAM temp
+directory; host-state.ts restored byte-for-byte. Historical raw-reader control
+fails expected2/received1 verified captures, retaining fixture-jq3p1O; original
+runtime-config-rebind.ts restored exactly. These are scoped assertion witnesses,
+not global mutation admission. The control script initially rejected a nonunique
+selector before mutation; corrected selection reaches the actual caller.
+
+Final focused packet producer-reader-final-focused.log:19PASS/0FAIL,183parent
+assertions,43.84s; initial-source owned child additionally reports86assertions.
+Do not count that child as a separate selected test. Static435-file program plus
+97Source PASS,436capturedTS,0diagnostics. Lint's single unbound-method warning
+was addressed with the same scoped explanation as the existing prototype spy;
+actual receiver forwarding remains. Final lint-fixed logPASS, diffcheck clean.
+Independent blind final review reports no actionable packet defect.
+
+Bounded HEAD-to-current function inventory:1127HostState and20admitted-execution
+IDs unchanged; begin transaction CC47→46 and settle16→15, no other increase.
+This does not supply exhaustive b549951 frozen correspondence or global CRAP.
+
+The remaining immutable-package schema caller in local-work-admission.ts now
+uses the existing verified package helper too. Its original reuse test still
+constructs access through the real factory on every call, preserving the one-
+construction admission/two-construction subsequent freshness assertion. Raw
+RED expected0/received1; captured endpoint and inventory schema images now equal
+and join the persisted Host digest. Entire affected file:5PASS/35assertions,
+5.37s command, admission case472.61ms. Root corrected the worker's precached
+observer because it would mask the existing access-construction witness.
+Failed RED roots retained; independent scoped review found no actionable issue.
+
+New fresh fixtures use /dev/shm/vida-test-tmp-20261013-batch (7.8GiB available),
+an executable RAM directory outside Source. The earlier disk-backed attempt
+had a late5000ms historical-case timeout and initial-source child timeout;
+their logs/known roots remain failed or UNKNOWN. Assertion custody does not
+close late-native-timeout or descendant/effect quiescence. No age/deadline gate
+changed. General current coverage runs once after the final admission-reader
+static/lint checks and settled documentation; all numeric/native gaps remain.
+
+Frozen correspondence triage confirms the partial artifact has1317current roles
+across71files (1059retained,258new,1removed) and is explicitly non-executable,
+non-exhaustive. Do not promote it or redo already reviewed new-helper rows.
+The genuine published measurement stays retained; no baseline rerun.
+
+Final joined reader-joined-final-static.log and reader-joined-final-lint.log
+PASS after the admission correction, zero diagnostics. Fetch origin/main gives
+0ahead/0behind a5a3527; local packet and unrelated BASE/root lock preserved.
+One full current coverage operation starts on these stable bytes with external
+RAM TMPDIR and600000ms cap; final outcome/publication recorded after terminal.
+
+Full run ca5209ff-96f7-49da-9518-ec00fd8d2af8 is terminal UNKNOWN, exit1 at the
+600000ms entry cap; the direct coverage producer terminated and the run remains
+retained. Log reader-batch-full-coverage.log contains no emitted assertion FAIL
+row before termination; this is incomplete selection, not suite PASS. No current
+coverage-final report was admitted, so no coverage%, global CRAP or mutation
+score is claimed. All5natural quarantine cases pass42.0–46.9s; later observed
+stopped-capture/recovery cases pass, but the full current selection is unfinished.
+One correction-batch full run only; no identical rerun. Numeric/native gaps stay.
+
+Blind follow-up discovered a concrete next custody defect: both pre-effect
+write/replace tests prove retained operation phase UNKNOWN but never mark their
+custody retained. afterEach removes their passed+settled roots. Distinguish case
+assertion success from disposal permission; next packet keeps both exact UNKNOWN
+fixtures and verifies their presence after cleanup, without changing quarantine,
+45schild/90scase bounds or authorization. Shared case-context refactor and
+resource-safe parallel activation still require separate qualification.

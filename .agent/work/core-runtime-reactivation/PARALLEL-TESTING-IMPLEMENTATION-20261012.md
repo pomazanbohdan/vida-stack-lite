@@ -13,7 +13,9 @@
 ## Current dispatch — 2026-10-13
 
 Resume the existing tasks; do not restart qualified scheduler, protocol or native
-pilot work. Current full run3ad33c8f is UNKNOWN with no admitted coverage report.
+pilot work. Current full runca5209ff is UNKNOWN at600000ms with no admitted coverage report.
+Its emitted rows have no assertion FAIL before interruption; all5quarantine
+cases PASS. This does not close the complete selection or numeric gates.
 Its stale provenance fixture path is corrected; fresh continuation phase evidence
 and natural-quarantine overlap research select the next packet in
 TEST-REPAIR-COVERAGE-10M-CYCLE-20261012.md#current-cost-correction--2026-10-13.
@@ -72,9 +74,16 @@ Immediate task state after publication3b69209:
   semantics, project-rebind authorization/idempotency, config/context freshness,
   two concrete help parsers, coverage exact-map/terminal admission and post-test
   input/map validation cost. Do not turn these scoped reviews into task closure.
-- Next ready caller extension: historical inspector's existing successful case
-  can observe its one v1 schema read and bind bytes to the retained receipt.
-  It is researched only, not yet assigned/implemented or measured.
+- Historical inspector's existing case now observes both v1 schema captures
+  (receipt validation and binding), zero raw reads and retained receipt digest.
+  Actual raw-caller substitution assertion-fails; original Source restored.
+  Configured-frontier execution's raw schema read is changed to the existing
+  verified helper with the existing real public caller test. Final joined
+  checks/publication pending; common-resource removal is not qualified.
+- Producer transaction reuse measures14→10 matching query API calls in begin
+  and settle. Changed-config denial and omitted-load assertion control retain
+  the later freshness boundary. Natural-quarantine overlap still needs per-case
+  faults/roots/interceptor/timing/cleanup isolation plus effect quiescence.
 
 Current result after publication9f26769: full run037062bf remains UNKNOWN after
 the producer allowance under the600000ms entry cap is spent. The formerly failing four-case denial
@@ -211,8 +220,10 @@ inventory; this is not frozen-budget/CRAP or global numerical admission.
 
 Prerequisite to private CLI/Host parallel eligibility: shared package-resource
 reads are not private merely because consumer roots differ. runtimePackageAccess
-reads package.json using a read-side CAS lock; schema/template reads share that
-executing package root. Keep `runtime-package-root:<owner-sha256>` resource
+now reads package.json through the verified resource owner; unqualified providers
+retain the existing CAS fallback, and caller eligibility remains incomplete.
+Schema/template reads share the executing package root. Keep
+`runtime-package-root:<owner-sha256>` resource
 conflict until the following P1 contour qualifies. Use the canonical physical-owner
 digest in that resource ID, not a raw path spelling.
 
@@ -235,6 +246,14 @@ sidecars/bytes without writes/fsync, not simultaneous kernel syscalls. The forme
 cross-child hrtime comparison remains excluded: qualified Bun1.4.3 origins are
 process-relative. Broader caller closure and common-resource removal remain
 pending; keep the conflict tag.
+The historical inspector observes both legitimate v1 schema captures and
+retained receipt digest; its raw-reader control assertion-fails. Configured-
+frontier execution and new local admission now use the shared verified schema
+reader. Existing real caller tests bind both endpoint and inventory captures to
+persisted Host/request authority. Admission's real access factory still runs on
+every call; no test observer or product cache substitutes for freshness.
+Their focused PASS and negative controls qualify these callers only; all broader
+current eligibility, resource/effect quiescence and final numeric gates stay open.
 The existing completed-Source recovery case now observes the actual expired-
 lease schema caller selecting verified bytes once, no raw read, its persisted
 schema digest and unchanged Source. Its focused native PASS retains original

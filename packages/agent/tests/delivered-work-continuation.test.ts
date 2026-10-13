@@ -1,5 +1,5 @@
 import { prewriterProjectionFixture, configuredFrontierRepairFixture } from './helpers/configured-frontier-fixture.ts';
-import { afterEach, test, expect } from 'bun:test';
+import { afterEach, test, expect, spyOn } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
 import { Mastra } from '@mastra/core/mastra';
@@ -56,6 +56,7 @@ import {
   runtimePackageAccess,
   runtimePackageCodePaths,
 } from '../src/config/runtime-config.ts';
+import * as runtimeConfigModule from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import {
@@ -1774,146 +1775,185 @@ test('normal config endpoint proof is separate from delivery and binds only the 
 
 test('admitted runtime uses the Host stored normal continuation endpoint without rewriting the protected old inventory', async () => {
   const { root, config, workspaceId, input, intakePath } = configuredFrontierRepairHostRoot('normal');
-  const access = runtimePackageAccess();
-  const currentCode = snapshotRuntimePackageSources(
-    access,
-    config.runtime.bundle,
-    runtimePackageCodePaths(config.runtime.bundle),
-  );
-  const schemaDigest = createHash('sha256')
-    .update(access.readBytes('schemas/agent-runtime-config.v1.schema.json', 'fixture schema'))
-    .digest('hex');
-  const original = input.receipt;
-  const intakeRef = requireFixtureValue(
-    original.prior_work.artifacts.find((ref) => ref.artifact_id === 'local-session-intake'),
-    'original local-session intake artifact',
-  );
-  const originalProof = original.request.sourceTransition;
-  if (originalProof.status !== 'closed_config_rebind_proven')
-    throw new Error('Configured frontier fixture did not provide a closed config rebind proof');
-  const transition = {
-    ...originalProof.transition,
-    target_runtime_code_digest: currentCode.digest,
-    target_schema_digest: schemaDigest,
-    original_intake_ref: intakeRef.path,
-    original_intake_sha256: intakeRef.sha256,
-  };
-  const sourceTransition = {
-    ...originalProof,
-    transition,
-    transition_digest: canonicalJsonDigest(transition),
-  };
-  const project = loadProjectSetContext(
-    root,
-    config,
-    config.repository.repository_id,
-    original.request.identity.project_ids,
-  );
-  const request: DeliveredWorkContinuationRequest = {
-    ...original.request,
-    targetRuntimeCodeDigest: currentCode.digest,
-    targetSchemaDigest: schemaDigest,
-    targetProjectContextDigest: project.project_context_digest,
-    sourceTransition,
-  };
-  const successorBinding = {
-    ...original.successor_binding,
-    runtime_source_revision: currentCode.digest,
-    runtime_code_digest: currentCode.digest,
-    schema_digest: schemaDigest,
-  };
-  const successorWork = {
-    ...original.successor_work,
-    binding: successorBinding,
-    lifecycle: {
-      ...original.successor_work.lifecycle,
-      config_binding: {
-        ...original.successor_work.lifecycle.config_binding,
-        schema_digest: schemaDigest,
-        runtime_code_digest: currentCode.digest,
-      },
-    },
-  };
-  input.receipt = {
-    ...original,
-    request,
-    request_digest: canonicalJsonDigest(request),
-    successor_binding: successorBinding,
-    successor_work: successorWork,
-    work_version: { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) },
-    authorization: {
-      ...original.authorization,
-      request_digest: canonicalJsonDigest(request),
-      transition_digest: sourceTransition.transition_digest,
-    },
-    continuation_id: canonicalJsonDigest({
-      identity: request.identity,
-      attempt: request.attempt,
-      action_id: request.action.request.action_id,
-      transition_digest: sourceTransition.transition_digest,
-    }),
-  };
-  const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
-  mkdirSync(path.dirname(databasePath), { recursive: true });
-  const f = await continuationFixture({
-    root,
-    config,
-    workspaceId,
-    databasePath,
-    repositoryRoot: root,
-    identity: request.identity,
-  });
-  seedFrontierHostFixture(f, input);
-  const before = readFileSync(path.join(root, intakePath));
-  expect(assertAdmittedRuntimeCodeCurrent(root, f.store, f.identity).native_session_handle).toBe(
-    request.nativeSessionHandle,
-  );
-  expect(readFileSync(path.join(root, intakePath))).toEqual(before);
-  const row: unknown = f.db
-    .query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=?')
-    .get(workspaceId);
-  if (!isPlainRecord(row) || typeof row.payload !== 'string' || typeof row.digest !== 'string')
-    throw new Error('Fixture continuation row is missing its payload or digest');
-  for (const patch of [
-    { original_intake_sha256: '0'.repeat(64) },
-    { original_intake_ref: '.agent/work/foreign/intake.json' },
-    { target_runtime_code_digest: '0'.repeat(64) },
-  ]) {
-    const badTransition = { ...transition, ...patch };
-    const badRequest = {
-      ...request,
-      sourceTransition: {
-        ...sourceTransition,
-        transition: badTransition,
-        transition_digest: canonicalJsonDigest(badTransition),
+  try {
+    const access = runtimePackageAccess();
+    const currentCode = snapshotRuntimePackageSources(
+      access,
+      config.runtime.bundle,
+      runtimePackageCodePaths(config.runtime.bundle),
+    );
+    const schemaDigest = createHash('sha256')
+      .update(access.readBytes('schemas/agent-runtime-config.v1.schema.json', 'fixture schema'))
+      .digest('hex');
+    const original = input.receipt;
+    const intakeRef = requireFixtureValue(
+      original.prior_work.artifacts.find((ref) => ref.artifact_id === 'local-session-intake'),
+      'original local-session intake artifact',
+    );
+    const originalProof = original.request.sourceTransition;
+    if (originalProof.status !== 'closed_config_rebind_proven')
+      throw new Error('Configured frontier fixture did not provide a closed config rebind proof');
+    const transition = {
+      ...originalProof.transition,
+      target_runtime_code_digest: currentCode.digest,
+      target_schema_digest: schemaDigest,
+      original_intake_ref: intakeRef.path,
+      original_intake_sha256: intakeRef.sha256,
+    };
+    const sourceTransition = {
+      ...originalProof,
+      transition,
+      transition_digest: canonicalJsonDigest(transition),
+    };
+    const project = loadProjectSetContext(
+      root,
+      config,
+      config.repository.repository_id,
+      original.request.identity.project_ids,
+    );
+    const request: DeliveredWorkContinuationRequest = {
+      ...original.request,
+      targetRuntimeCodeDigest: currentCode.digest,
+      targetSchemaDigest: schemaDigest,
+      targetProjectContextDigest: project.project_context_digest,
+      sourceTransition,
+    };
+    const successorBinding = {
+      ...original.successor_binding,
+      runtime_source_revision: currentCode.digest,
+      runtime_code_digest: currentCode.digest,
+      schema_digest: schemaDigest,
+    };
+    const successorWork = {
+      ...original.successor_work,
+      binding: successorBinding,
+      lifecycle: {
+        ...original.successor_work.lifecycle,
+        config_binding: {
+          ...original.successor_work.lifecycle.config_binding,
+          schema_digest: schemaDigest,
+          runtime_code_digest: currentCode.digest,
+        },
       },
     };
-    const badReceipt = {
-      ...input.receipt,
-      request: badRequest,
-      request_digest: canonicalJsonDigest(badRequest),
+    input.receipt = {
+      ...original,
+      request,
+      request_digest: canonicalJsonDigest(request),
+      successor_binding: successorBinding,
+      successor_work: successorWork,
+      work_version: { revision: successorWork.revision, digest: canonicalJsonDigest(successorWork) },
       authorization: {
-        ...input.receipt.authorization,
-        request_digest: canonicalJsonDigest(badRequest),
-        transition_digest: badRequest.sourceTransition.transition_digest,
+        ...original.authorization,
+        request_digest: canonicalJsonDigest(request),
+        transition_digest: sourceTransition.transition_digest,
       },
       continuation_id: canonicalJsonDigest({
-        identity: badRequest.identity,
-        attempt: badRequest.attempt,
-        action_id: badRequest.action.request.action_id,
-        transition_digest: badRequest.sourceTransition.transition_digest,
+        identity: request.identity,
+        attempt: request.attempt,
+        action_id: request.action.request.action_id,
+        transition_digest: sourceTransition.transition_digest,
       }),
     };
+    const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+    mkdirSync(path.dirname(databasePath), { recursive: true });
+    const f = await continuationFixture({
+      root,
+      config,
+      workspaceId,
+      databasePath,
+      repositoryRoot: root,
+      identity: request.identity,
+    });
+    seedFrontierHostFixture(f, input);
+    const before = readFileSync(path.join(root, intakePath));
+    const verifiedReader = access.readVerifiedCaptureBytes;
+    if (!verifiedReader) throw new Error('Configured continuation requires the native verified package-byte reader');
+    const schemaTarget = 'schemas/agent-runtime-config.v1.schema.json';
+    let rawSchemaReads = 0;
+    const verifiedSchemaReads: Buffer[] = [];
+    const accessSpy = spyOn(runtimeConfigModule, 'runtimePackageAccess').mockImplementation(() => ({
+      ...access,
+      readBytes(target: string, label: string): Buffer {
+        if (target === schemaTarget) rawSchemaReads += 1;
+        return access.readBytes.call(access, target, label);
+      },
+      readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+        const bytes = verifiedReader.call(access, target, label, maxBytes);
+        if (target === schemaTarget) verifiedSchemaReads.push(Buffer.from(bytes));
+        return bytes;
+      },
+    }));
+    try {
+      expect(assertAdmittedRuntimeCodeCurrent(root, f.store, f.identity).native_session_handle).toBe(
+        request.nativeSessionHandle,
+      );
+    } finally {
+      accessSpy.mockRestore();
+    }
+    expect(rawSchemaReads).toBe(0);
+    // The endpoint check and the full package snapshot each capture this file.
+    expect(verifiedSchemaReads).toHaveLength(2);
+    const capturedSchema = verifiedSchemaReads[0];
+    if (!capturedSchema) throw new Error('Configured continuation did not capture its current package schema');
+    expect(verifiedSchemaReads[1]).toEqual(capturedSchema);
+    const persistedWork = f.store.readWorkSessionSnapshot(f.identity).host.work;
+    if (!persistedWork) throw new Error('Configured continuation Host work is missing after admission');
+    const capturedSchemaDigest = createHash('sha256').update(capturedSchema).digest('hex');
+    expect(capturedSchemaDigest).toBe(persistedWork.binding.schema_digest);
+    expect(capturedSchemaDigest).toBe(persistedWork.lifecycle.config_binding.schema_digest);
+    expect(capturedSchemaDigest).toBe(request.targetSchemaDigest);
+    expect(capturedSchemaDigest).toBe(sourceTransition.transition.target_schema_digest);
+    expect(readFileSync(path.join(root, intakePath))).toEqual(before);
+    const row: unknown = f.db
+      .query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=?')
+      .get(workspaceId);
+    if (!isPlainRecord(row) || typeof row.payload !== 'string' || typeof row.digest !== 'string')
+      throw new Error('Fixture continuation row is missing its payload or digest');
+    for (const patch of [
+      { original_intake_sha256: '0'.repeat(64) },
+      { original_intake_ref: '.agent/work/foreign/intake.json' },
+      { target_runtime_code_digest: '0'.repeat(64) },
+    ]) {
+      const badTransition = { ...transition, ...patch };
+      const badRequest = {
+        ...request,
+        sourceTransition: {
+          ...sourceTransition,
+          transition: badTransition,
+          transition_digest: canonicalJsonDigest(badTransition),
+        },
+      };
+      const badReceipt = {
+        ...input.receipt,
+        request: badRequest,
+        request_digest: canonicalJsonDigest(badRequest),
+        authorization: {
+          ...input.receipt.authorization,
+          request_digest: canonicalJsonDigest(badRequest),
+          transition_digest: badRequest.sourceTransition.transition_digest,
+        },
+        continuation_id: canonicalJsonDigest({
+          identity: badRequest.identity,
+          attempt: badRequest.attempt,
+          action_id: badRequest.action.request.action_id,
+          transition_digest: badRequest.sourceTransition.transition_digest,
+        }),
+      };
+      f.db
+        .query('UPDATE agent_host_delivered_work_continuation SET payload=?,digest=? WHERE workspace_id=?')
+        .run(canonicalJson(badReceipt), canonicalJsonDigest(badReceipt), workspaceId);
+      expect(() => assertAdmittedRuntimeCodeCurrent(root, f.store, f.identity)).toThrow();
+    }
     f.db
       .query('UPDATE agent_host_delivered_work_continuation SET payload=?,digest=? WHERE workspace_id=?')
-      .run(canonicalJson(badReceipt), canonicalJsonDigest(badReceipt), workspaceId);
-    expect(() => assertAdmittedRuntimeCodeCurrent(root, f.store, f.identity)).toThrow();
+      .run(row.payload, row.digest, workspaceId);
+    writeFileSync(path.join(root, intakePath), '{}');
+    expect(() => assertAdmittedRuntimeCodeCurrent(root, f.store, f.identity)).toThrow(/intake changed/);
+  } catch (error) {
+    retainContinuationFixtureRoot(root);
+    throw error;
   }
-  f.db
-    .query('UPDATE agent_host_delivered_work_continuation SET payload=?,digest=? WHERE workspace_id=?')
-    .run(row.payload, row.digest, workspaceId);
-  writeFileSync(path.join(root, intakePath), '{}');
-  expect(() => assertAdmittedRuntimeCodeCurrent(root, f.store, f.identity)).toThrow(/intake changed/);
 });
 /** @param {ReturnType<typeof loadRuntimeConfig>} [config] @param {string} [repositoryRoot] @param {string} [workspaceId] */
 test('current prewriter projection preserves the unissued developer and offers every configured reviewer', () => {

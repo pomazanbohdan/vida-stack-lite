@@ -6251,6 +6251,9 @@ export class HostStateStore {
     readonly config: import('./config/runtime-config.js').AgentRuntimeConfig;
     readonly journal: ReturnType<MastraSessionLedger['resume']>;
     readonly host: HostStateSnapshot;
+    readonly identity: WorkIdentity;
+    readonly continuation: DeliveredWorkContinuationReceipt | undefined;
+    readonly initialContinuation: InitialSourceContinuationReceipt | null;
   } {
     const bound = MastraSessionLedger.prototype.sessionProducerBinding.call(ledger);
     const physical = lstatSync(this.#database.filename);
@@ -6332,7 +6335,7 @@ export class HostStateStore {
             }),
         'mechanical producer run differs',
       );
-      return { config: currentConfig, journal, host };
+      return { config: currentConfig, journal, host, identity, continuation: undefined, initialContinuation: null };
     }
     const work = host.work,
       lease = work.lease;
@@ -6473,14 +6476,14 @@ export class HostStateStore {
       'session producer owner claim/FIFO/expiry differs',
     );
     this.#assertNoOverlappingActiveSourceOwner(host.ledger, ticket);
-    return { config: currentConfig, journal, host };
+    return { config: currentConfig, journal, host, identity, continuation, initialContinuation };
   }
 
   #readSessionProducerEngineSnapshot(
     binding: SessionEngineBinding,
     journal: ReturnType<MastraSessionLedger['resume']>,
     identity: WorkIdentity,
-    continuation: DeliveredWorkContinuationReceipt | null,
+    continuation: DeliveredWorkContinuationReceipt | undefined,
     initialContinuation: InitialSourceContinuationReceipt | null,
     currentHost: HostStateSnapshot,
   ): SessionBridgeSnapshot | null {
@@ -6530,7 +6533,14 @@ export class HostStateStore {
       .transaction(() => {
         this.#assertReconciliationWritesAllowed();
         this.assertSessionProducerWriteAllowed();
-        const { config, journal, host } = this.#assertSessionProducerContext(ledger, input, input.expectedJournal);
+        const {
+          config,
+          journal,
+          host,
+          identity: validatedIdentity,
+          continuation,
+          initialContinuation,
+        } = this.#assertSessionProducerContext(ledger, input, input.expectedJournal);
         const project = loadProjectSetContext(
             input.repositoryRoot,
             config,
@@ -6543,13 +6553,10 @@ export class HostStateStore {
             integrations_digest: project.integrations_digest,
             work_id: input.context.work_id,
           },
-          continuation = this.#readDeliveredWorkContinuationReceipt(identity, input.context.attempt),
-          configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null,
-          initialContinuation = this.#readInitialSourceContinuationReceipt(identity, input.context.attempt);
-        requireState(
-          !(configuredContinuation && initialContinuation),
-          'multiple Host producer continuation receipts are ambiguous',
-        );
+          configuredContinuation = continuation?.request.action.kind === 'configured_frontier' ? continuation : null;
+        // Reuse only before this transaction's first write. Project files still
+        // require the fresh load above even while the database is isolated.
+        requireState(sameJson(identity, validatedIdentity), 'session producer project identity changed');
         const engineBinding = {
           ...input,
           config,
@@ -6729,11 +6736,14 @@ export class HostStateStore {
       .transaction(() => {
         this.assertSessionProducerWriteAllowed(handle);
         const entry = this.#sessionProducers.get(handle)!;
-        const { config, journal, host } = this.#assertSessionProducerContext(
-          entry.ledger,
-          entry.input,
-          expectedJournal,
-        );
+        const {
+          config,
+          journal,
+          host,
+          identity: validatedIdentity,
+          continuation,
+          initialContinuation,
+        } = this.#assertSessionProducerContext(entry.ledger, entry.input, expectedJournal);
         const project = loadProjectSetContext(
             entry.input.repositoryRoot,
             config,
@@ -6745,13 +6755,8 @@ export class HostStateStore {
             project_ids: project.project_ids,
             integrations_digest: project.integrations_digest,
             work_id: entry.input.context.work_id,
-          },
-          continuation = this.#readDeliveredWorkContinuationReceipt(identity, entry.input.context.attempt),
-          initialContinuation = this.#readInitialSourceContinuationReceipt(identity, entry.input.context.attempt);
-        requireState(
-          !(continuation?.request.action.kind === 'configured_frontier' && initialContinuation),
-          'multiple Host producer continuation receipts are ambiguous',
-        );
+          };
+        requireState(sameJson(identity, validatedIdentity), 'session producer project identity changed');
         const binding = {
           ...entry.input,
           config,

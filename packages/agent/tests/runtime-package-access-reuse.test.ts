@@ -80,6 +80,8 @@ test('runtime package paths reject a wrong root before calling its access method
 test('one admission operation reuses its checked runtime package access for inventory and Source reads', () => {
   const fixture = createAutomaticWorkAdmissionFixture(false, true);
   let accessSpy: Mock<typeof safeRepositoryAccess.requireSafeRepositoryAccess> | undefined;
+  let packageAccessSpy: Mock<typeof runtimeConfig.runtimePackageAccess> | undefined;
+  let success = false;
   try {
     const input = fixture.prepare('runtime-access-reuse', 'user:runtime-access-reuse');
     input.intakePath = '.agent/work/runtime-access-reuse/raw-intake.json';
@@ -104,10 +106,46 @@ test('one admission operation reuses its checked runtime package access for inve
       if (path.resolve(root) === packageRoot) packageAccesses.push(root);
       return original(root);
     });
-    const admitted = fixture.admit(input);
+    const originalPackageAccess = runtimeConfig.runtimePackageAccess;
+    const schemaPath = 'schemas/agent-runtime-config.v1.schema.json';
+    let rawSchemaReads = 0;
+    const verifiedSchemaReads: Buffer[] = [];
+    packageAccessSpy = spyOn(runtimeConfig, 'runtimePackageAccess').mockImplementation(() => {
+      // Construct through the real factory for every production call, preserving
+      // the original independent access-reuse count instead of pre-caching it.
+      const nativePackageAccess = originalPackageAccess();
+      const originalVerifiedRead = nativePackageAccess.readVerifiedCaptureBytes;
+      if (!originalVerifiedRead) throw new Error('Admission requires the verified package-byte reader');
+      return {
+        ...nativePackageAccess,
+        readBytes(target: string, label: string): Buffer {
+          if (target === schemaPath) rawSchemaReads += 1;
+          return nativePackageAccess.readBytes.call(nativePackageAccess, target, label);
+        },
+        readVerifiedCaptureBytes(target: string, label: string, maxBytes?: number): Buffer {
+          const bytes = originalVerifiedRead.call(nativePackageAccess, target, label, maxBytes);
+          if (target === schemaPath) verifiedSchemaReads.push(Buffer.from(bytes));
+          return bytes;
+        },
+      };
+    });
+    let admitted: ReturnType<typeof fixture.admit>;
+    try {
+      admitted = fixture.admit(input);
+    } finally {
+      packageAccessSpy.mockRestore();
+      packageAccessSpy = undefined;
+    }
     expect(packageAccesses).toHaveLength(1);
     const work = admitted.host.work;
     if (!work) throw new Error('admitted fixture has no work');
+    expect(rawSchemaReads).toBe(0);
+    expect(verifiedSchemaReads).toHaveLength(2);
+    const capturedSchema = verifiedSchemaReads[0];
+    if (!capturedSchema) throw new Error('Admission did not capture its package schema');
+    const schemaDigest = createHash('sha256').update(capturedSchema).digest('hex');
+    expect(verifiedSchemaReads.every((bytes) => bytes.equals(capturedSchema))).toBe(true);
+    expect(work.binding.schema_digest).toBe(schemaDigest);
     const identity = {
       repository_id: work.binding.repository_id,
       project_ids: work.binding.project_ids,
@@ -117,9 +155,11 @@ test('one admission operation reuses its checked runtime package access for inve
 
     assertAdmittedRuntimeCodeCurrent(fixture.root, fixture.store, identity);
     expect(packageAccesses).toHaveLength(2);
+    success = true;
   } finally {
+    packageAccessSpy?.mockRestore();
     accessSpy?.mockRestore();
-    fixture.close();
+    fixture.close({ retainRoot: !success });
   }
 });
 

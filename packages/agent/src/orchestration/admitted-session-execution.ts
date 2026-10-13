@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { projectRecoveryRuntimeCodeAncestor } from './failed-prewriter-transition.js';
 import {
   loadRuntimeConfig,
+  readRuntimePackageResourceBytes,
   runtimeConfigDigest,
   runtimePackageAccess,
   runtimePackageCodePaths,
@@ -145,7 +146,13 @@ export function assertAdmittedRuntimeCodeCurrent(
       ),
       project = loadProjectSetContext(repositoryRoot, config, identity.repository_id, identity.project_ids),
       schemaDigest = createHash('sha256')
-        .update(packageAccess.readBytes('schemas/agent-runtime-config.v1.schema.json', 'current runtime schema'))
+        .update(
+          readRuntimePackageResourceBytes(
+            packageAccess,
+            'schemas/agent-runtime-config.v1.schema.json',
+            'current runtime schema',
+          ),
+        )
         .digest('hex');
     requireExecution(
       intakeRef &&
