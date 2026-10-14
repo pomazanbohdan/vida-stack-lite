@@ -1116,3 +1116,63 @@ test('actual uncertain child output is rejected before parsing while completed f
   assert.deepEqual(JSON.parse(completed.stderr), { status: 'expected_denial' });
   assert.equal(commandOutcomeUnknown({ status: null }), true);
 }, 10_000);
+
+test('terminal command classification preserves nullable results, status boundaries and getter order', () => {
+  const emptyDiagnostic = {
+    status: null,
+    signal: null,
+    error_code: null,
+    timed_out: false,
+    timeout_ms: null,
+    cleanup_outcome: null,
+    cleanup_status: null,
+    cleanup_error_code: null,
+  };
+  for (const value of [null, undefined]) {
+    assert.equal(commandOutcomeUnknown(value), true);
+    assert.throws(() => requireTerminalCommand(value, 'nullable result'), {
+      message: 'nullable result: uncertain command outcome ' + JSON.stringify(emptyDiagnostic),
+    });
+  }
+  for (const status of [null, -1, 0.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    const value = { status };
+    assert.equal(commandOutcomeUnknown(value), true);
+    assert.throws(() => requireTerminalCommand(value, 'invalid status'), /uncertain command outcome/);
+  }
+  for (const status of [0, 1, Number.MAX_SAFE_INTEGER]) {
+    const value = { status };
+    assert.equal(commandOutcomeUnknown(value), false);
+    assert.equal(requireTerminalCommand(value, 'completed result'), value);
+  }
+  const reads: string[] = [];
+  const value = {
+    get timedOut() {
+      reads.push('timedOut');
+      return false;
+    },
+    get error() {
+      reads.push('error');
+      return undefined;
+    },
+    get signal() {
+      reads.push('signal');
+      return null;
+    },
+    get status() {
+      reads.push('status');
+      return 0;
+    },
+  };
+  assert.equal(invokeRuntimeArguments(requireTerminalCommand, [value, 'getter result']), value);
+  assert.deepEqual(reads, ['timedOut', 'error', 'signal', 'status']);
+  const failure = new Error('status getter failed');
+  const throwing = {
+    get status(): number {
+      throw failure;
+    },
+  };
+  assert.throws(
+    () => requireTerminalCommand(throwing, 'throwing result'),
+    (error) => error === failure,
+  );
+});

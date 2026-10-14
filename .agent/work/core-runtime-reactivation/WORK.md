@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `c231e30` at origin/main.
+- Published input: `89dea90` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -659,6 +659,69 @@ attribution. Keep required CLI transitions and all canonical maps/custody; inspe
 that owner before adding caches or a second profiler. Mutation keeps its full
 assertion-confirmed evidence join; current complete coverage/CRAP prerequisites
 remain absent. New partition selectors were not added.
+
+## Terminal outcome correction and next correspondence batch
+
+The terminal result is now an internal typed predicate using the original
+short-circuit classifier. Its public unknown-outcome boolean remains an inverse
+relay; `requireTerminalCommand` removes duplicate null/undefined checks. Getter
+order, exception identity, original result identity and diagnostic fields remain.
+No launch, timeout, fallback, authorization or cleanup policy changes.
+
+Reused pre-change inventory shows terminal guard12>original10. The final scoped
+inventory shows10<=10, classifier5 under its original ceiling and public relay1
+under the unchanged prospective10 policy. The original classifier's allowance
+follows the actual predicate once; no duplicate historical allowance is retained.
+The other Bun deficits22>21,39>37 and18>16 remain open.
+
+Nullable/status/getter controls passed before the refactor. Final affected file:
+43PASS/0FAIL/2.43s; Source typecheck101files/0errors. Independent review found no
+correctness or correspondence issue. Exact evidence in `/workspace/attachments/`:
+`quality-bun-terminal-controls-before-20261014.log`,
+`quality-bun-terminal-affected-tests-20261014.log`,
+`quality-bun-terminal-source-types-20261014.log` and
+`quality-bun-terminal-final-review-20261014.md`.
+The ordinary staged gate remains required before publication.
+The first strict staged attempt rejected the deliberate undefined-error getter
+fixture under exactOptionalPropertyTypes. Its existing unknown-ingress adapter
+now invokes that fixture without relaxing product types or adding a cast. Retain
+`quality-bun-terminal-strict-commit-20261014.log` as the failed attempt; the final
+strict attempt is recorded separately. Root initially used an incorrect fixture
+helper name; the focused test and staged compiler rejected it. Both failed logs
+remain retained. Corrected focused proof is
+`quality-bun-terminal-corrected-controls-20261014.log`; final staged evidence is
+`quality-bun-terminal-corrected-strict-commit-20261014.log`.
+
+Root joins64 further reviewed roles: task-source binding31retained, completed
+report recovery26retained/7new. Their current Source bytes/addresses were checked
+with only the three affected files re-inventoried; all other inventory rows were
+reused. Partial totals2064roles,1531retained/533new/6removed,107bound files.
+Global inventory7713roles leaves5649current and4164original dispositions missing.
+The recovery predicate remains3>its inherited2, not a new10 allowance. The three
+task-source interfaces are internal in current Source and have no other maintained
+named imports; this join changes no visibility or delivery contract. It does not
+establish compatibility for historical deep Source imports.
+Receipt: `quality-lineage-next-join-receipt-20261014.json`; independent review:
+`quality-lineage-next-independent-20261014.md` in the same attachments directory.
+Partial remains NON_EXECUTABLE/NOT_EXHAUSTIVE; no coverage/CRAP/mutation PASS.
+
+One fresh CLI case was profiled with native Bun1.4.3 and passed1/0/8expectations,
+37.28s case time including profiler overhead. Its first/repeat engine profiles
+attribute67.0%/46.6% self samples to fsyncSync in safe CAS owner/reclaim durability;
+these are sampled stack timings, not CPU cycles, syscall counts or speedup proof.
+Profiles: `/workspace/attachments/quality-cli-prof-20261014-Re27SX/`; full log:
+`quality-cli-profile-fresh-20261014.log`. Independent stack/read/caller reviews
+found repeated config validation but no safe snapshot reuse preserving existing
+stale/error precedence and race checkpoints. Retain every freshness/CAS/fsync
+boundary; no cache or filesystem substitution was applied.
+
+Resource review corrected the earlier topology concern: the retained189rows pack
+into one supported wave with94/95serial files, keeping all shared owners in one
+assignment. The blockers are stale scope and five missing reviews, not the shared
+tags alone. Review those effects and current captured inputs before qualification;
+do not retarget stale rows or remove package/consumer resource tags. Retained
+UNKNOWN operations remain fenced. Review:
+`quality-coverage-resource-refresh-design-20261014.md` in the attachments directory.
 
 Genuine b549951 was measured once: runfe54f83c-6a70-4223-9872-f43f1ac784e9,
 SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.

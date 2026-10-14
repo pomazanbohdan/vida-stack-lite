@@ -47,6 +47,7 @@ interface TrackedCommandResult extends CommandResult {
   diagnosticLabel?: string | undefined;
   elapsedMs?: number | undefined;
 }
+type TerminalCommandResult = TrackedCommandResult & { status: number };
 interface CleanupResult {
   status?: number | null;
   signal?: NodeJS.Signals | null;
@@ -417,8 +418,8 @@ export function boundedSpawnSync(
   return result;
 }
 
-export function commandOutcomeUnknown(result: TrackedCommandResult | null | undefined): boolean {
-  return (
+function isTerminalCommandResult(result: TrackedCommandResult | null | undefined): result is TerminalCommandResult {
+  return !(
     !result ||
     result.timedOut === true ||
     Boolean(result.error) ||
@@ -427,11 +428,15 @@ export function commandOutcomeUnknown(result: TrackedCommandResult | null | unde
   );
 }
 
+export function commandOutcomeUnknown(result: TrackedCommandResult | null | undefined): boolean {
+  return !isTerminalCommandResult(result);
+}
+
 export function requireTerminalCommand(
   result: TrackedCommandResult | null | undefined,
   label: string,
 ): TrackedCommandResult {
-  if (result === null || result === undefined || commandOutcomeUnknown(result))
+  if (!isTerminalCommandResult(result))
     throw new Error(
       `${label}: uncertain command outcome ${JSON.stringify({
         status: result?.status ?? null,
