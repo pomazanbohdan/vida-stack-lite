@@ -346,34 +346,64 @@ test('reuses a supplied pinned executable, still verifies its version, and clean
   assert.equal(calls[1]!.options.detached, process.platform !== 'win32');
 });
 
-test.each(['tooling/run-bun-coverage.ts', '../../tooling/agent/run-coverage.ts'])(
-  'coverage iteration defaults to one propagated five-minute launcher deadline: %s',
-  (entry) => {
-    const { root, pin } = fixture();
-    const executable = path.join(root, 'coverage-bun');
-    const calls: LauncherCall[] = [];
-    const started = Date.now();
-    const status = runPinnedBun([entry], {
-      root,
-      executable,
-      spawn(command, argv, options) {
-        calls.push({ command, argv, options });
-        return calls.length === 1 ? success(pin) : success('');
-      },
-    });
-    assert.equal(status, 0);
-    assert.equal(calls.length, 2);
-    for (const call of calls) {
-      const timeout = call.options.timeout;
-      const environment = call.options.env;
-      assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 300_000);
-      const childBudget = Number(environment?.VIDA_PINNED_COMMAND_BUDGET_MS);
-      const childDeadline = Number(environment?.VIDA_PINNED_COMMAND_DEADLINE_MS);
-      assert.equal(childBudget, timeout);
-      assert.ok(childDeadline > started && childDeadline <= started + 300_050);
-    }
-  },
-);
+test.each([
+  { entry: 'tooling/run-bun-coverage.ts', baseline: false },
+  { entry: '../../tooling/agent/run-coverage.ts', baseline: false },
+  { entry: 'tooling/run-bun-coverage.ts', baseline: true },
+  { entry: '../../tooling/agent/run-coverage.ts', baseline: true },
+])('coverage iteration defaults to one propagated five-minute launcher deadline: %j', ({ entry, baseline }) => {
+  const { root, pin } = fixture();
+  const executable = path.join(root, 'coverage-bun');
+  const calls: LauncherCall[] = [];
+  const started = Date.now();
+  const args = baseline ? [entry, '--published-baseline=b549951'] : [entry];
+  const status = runPinnedBun(args, {
+    root,
+    executable,
+    spawn(command, argv, options) {
+      calls.push({ command, argv, options });
+      return calls.length === 1 ? success(pin) : success('');
+    },
+  });
+  assert.equal(status, 0);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1]?.argv.includes('--wrapper-review-clocks'), !baseline);
+  for (const call of calls) {
+    const timeout = call.options.timeout;
+    const environment = call.options.env;
+    assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 300_000);
+    const childBudget = Number(environment?.VIDA_PINNED_COMMAND_BUDGET_MS);
+    const childDeadline = Number(environment?.VIDA_PINNED_COMMAND_DEADLINE_MS);
+    assert.equal(childBudget, timeout);
+    assert.ok(childDeadline > started && childDeadline <= started + 300_050);
+  }
+});
+
+test.each([
+  { args: ['tooling/run-bun-coverage.ts', '--published-baseline=other'] },
+  { args: ['tooling/run-bun-coverage.ts', '--published-baseline=b549951', '--extra'] },
+  { args: ['../../tooling/agent/run-coverage.ts', '--extra'] },
+  { args: ['other.ts', 'tooling/run-bun-coverage.ts'] },
+  { args: ['tooling/run-bun-coverage.ts/near-match'] },
+])('coverage-like arguments retain ordinary launcher policy: %j', ({ args }) => {
+  const { root, pin } = fixture();
+  const calls: LauncherCall[] = [];
+  runPinnedBun(args, {
+    root,
+    executable: path.join(root, 'coverage-bun'),
+    timeoutMs: 400_000,
+    spawn(command, argv, options) {
+      calls.push({ command, argv, options });
+      return calls.length === 1 ? success(pin) : success('');
+    },
+  });
+  assert.equal(calls.length, 2);
+  const command = calls[1];
+  assert.ok(command);
+  assert.deepEqual(command.argv, args);
+  assert.ok(typeof command.options.timeout === 'number' && command.options.timeout > 300_000);
+  assert.equal(command.options.env?.VIDA_COVERAGE_REVIEW_CLOCK_POLICY, undefined);
+});
 
 test.each(['tooling/run-bun-coverage.ts', '../../tooling/agent/run-coverage.ts'])(
   'current coverage wrapper replaces ambient review clocks and preserves caller ceilings in semantic policy: %s',

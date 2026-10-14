@@ -37,8 +37,11 @@ Complete exact frozen function correspondence against the genuine `b549951` base
 Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
-and older binding refreshes rather than recreating inventories. Retrieve current
-CI-formed SDK outputs with their now-selected formation receipt before the
+and older binding refreshes rather than recreating inventories.
+The reviewed partial now binds1999roles; Host callback3<=3 and coverage policy
+owners8/5/5<=10 have scoped proof. Keep original installer/planner and newly
+observed retained Bun deficits open. WORK owns their exact ceilings and receipts.
+Retrieve current CI-formed SDK outputs with their selected formation receipt before the
 complete selection. Maintained aliases now prepare the distinct CI SDK test-input
 artifact through the repository adapter; exact Source/output freshness remains
 with the existing capture owner. Test compilation is not a product release or

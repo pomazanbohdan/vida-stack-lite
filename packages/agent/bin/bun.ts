@@ -621,13 +621,35 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
   return executable;
 }
 
+const coverageEntryPaths = new Set<string | undefined>([
+  'tooling/run-bun-coverage.ts',
+  '../../tooling/agent/run-coverage.ts',
+]);
+
+function coverageInvocationMode(args: readonly string[]): 'current' | 'published' | undefined {
+  if (!coverageEntryPaths.has(args[0])) return undefined;
+  if (args.length === 1) return 'current';
+  if (args.length === 2 && args[1] === '--published-baseline=b549951') return 'published';
+  return undefined;
+}
+
+function coverageReviewClockPolicy(maximum: number, environment: NodeJS.ProcessEnv): CoverageReviewClockPolicy {
+  return {
+    maximum_ms: maximum,
+    report_reserve_ms: 30000,
+    original_duration_ms: environment.VIDA_PINNED_COMMAND_BUDGET_MS ?? null,
+    original_expiry_ms: environment.VIDA_PINNED_COMMAND_DEADLINE_MS ?? null,
+    ancestor_duration_ms: inherited.duration === Infinity ? null : String(inherited.duration),
+    ancestor_expiry_ms: inherited.expiry === Infinity ? null : String(inherited.expiry),
+  };
+}
+
 function coverageIterationBudget(
   args: readonly string[],
   options: BunOptions,
 ): { maximum: number; budget: ExecutionBudget | undefined; reviewPolicy?: CoverageReviewClockPolicy | undefined } {
-  const isCoverageEntry =
-    (args[0] === 'tooling/run-bun-coverage.ts' || args[0] === '../../tooling/agent/run-coverage.ts') &&
-    (args.length === 1 || (args.length === 2 && args[1] === '--published-baseline=b549951'));
+  const mode = coverageInvocationMode(args);
+  const isCoverageEntry = mode !== undefined;
   const requestedMaximum = options.timeoutMs === undefined ? Infinity : options.timeoutMs;
   const maximum = isCoverageEntry ? Math.min(requestedMaximum, 300_000) : requestedMaximum;
   const budget = isCoverageEntry
@@ -639,17 +661,7 @@ function coverageIterationBudget(
   return {
     maximum,
     budget,
-    reviewPolicy:
-      isCoverageEntry && args.length === 1 && !options.budget
-        ? {
-            maximum_ms: maximum,
-            report_reserve_ms: 30000,
-            original_duration_ms: environment.VIDA_PINNED_COMMAND_BUDGET_MS ?? null,
-            original_expiry_ms: environment.VIDA_PINNED_COMMAND_DEADLINE_MS ?? null,
-            ancestor_duration_ms: inherited.duration === Infinity ? null : String(inherited.duration),
-            ancestor_expiry_ms: inherited.expiry === Infinity ? null : String(inherited.expiry),
-          }
-        : undefined,
+    reviewPolicy: mode === 'current' && !options.budget ? coverageReviewClockPolicy(maximum, environment) : undefined,
   };
 }
 

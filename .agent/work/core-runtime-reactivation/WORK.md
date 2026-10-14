@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `66c3c947d069fcf51dee61f447f90ed035a7a670` at origin/main.
+- Published input: `c231e30` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -621,6 +621,36 @@ Source101types/0errors and independent final correctness review passed:
 `/workspace/attachments/quality-host-budget-red-20261014.json` and
 `quality-host-budget-final-green-20261014.json`. This is not dynamic CRAP or final
 coverage. Full correspondence and original planner/installer gaps remain open.
+
+The Host packetc231e30 passed strict commit and ordinary push. Bun coverage policy
+then separates exact positional current/published classification from immutable
+review-clock metadata, retaining the same maximum/deadline/caller-budget behavior.
+Both supported entries still accept the exact historical flag; near, extra and
+reordered arguments remain ordinary. Current new-role CC17 becomes8, with two
+genuine private owners eachCC5 under the unchanged10/10 policy. No new clock,
+public command, normalization waiver or raised cap. Source101types0; complete
+affected Bun toolchain42PASS/0FAIL/2.34s. The final uniquely named scenario matrix
+has9PASS/0FAIL/343ms, preserving per-test5000ms. Evidence:
+`/workspace/attachments/quality-bun-profile-budget-green-20261014.json`,
+`quality-bun-profile-affected-tests-20261014.log`,
+`quality-bun-profile-final-matrix-20261014.log` and
+`quality-bun-profile-final-review-20261014.md` in that root.
+
+Root joined54independently reviewed current roles:36retained/18new and3original
+removals. Complete Bun and repair-builder families plus the moved Host callback
+are bound. Corrected environment-key ownership gives the broader collection
+helper a new budget, retains the original PATH predicate once and removes its
+consolidated PATHEXT duplicate. No ceiling duplication or parent-cap transfer.
+The advisory Host-already-joined label was incorrect; its genuine transaction
+row is now joined once. Partial totals1999roles,1474retained/525new/6removed,
+105bound files; global7712roles,5713current dispositions still missing.
+Receipt: `/workspace/attachments/quality-lineage-join-receipt-20261014.json`.
+Independent source-role review: `quality-root-lineage-review-20261014.md` in that
+root. The partial remains NON_EXECUTABLE/NOT_EXHAUSTIVE.
+Fresh scoped comparison exposes additional retained Bun blockers: bounded spawn
+22>21, terminal command12>10, executable resolver39>37 and launcher18>16.
+Keep these original ceilings and live custody; the new policy owners pass but
+do not qualify the whole module's frozen or dynamic CRAP gate.
 
 Coverage instrumentation review found parent AST/transform capture already single
 pass and child counters already sparse. Child preloads still decode the22,983,396-

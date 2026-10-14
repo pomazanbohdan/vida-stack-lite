@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 1438,
-    "new": 507,
-    "removed": 3,
-    "current_roles": 1945,
-    "source_files": 103
+    "retained": 1474,
+    "new": 525,
+    "removed": 6,
+    "current_roles": 1999,
+    "source_files": 105
   },
   "source_bindings": [
     {
@@ -428,6 +428,14 @@
     {
       "file": "bin/synthesis-observation-correction.ts",
       "sha256": "d0b812f3d3243f854c28bd362aceaac50f1f7e977c5423fdd35b9ad3ad056121"
+    },
+    {
+      "file": "src/host-state.ts",
+      "sha256": "e6571f7893a45735a03b5a7c69c16c48c97adca1f97ee3f0263fc04458f7b6b4"
+    },
+    {
+      "file": "bin/bun.ts",
+      "sha256": "9b4f37efcc6266f31d85a283eeef4f81f8ab14531f84c783e0e275b05c889a7b"
     }
   ],
   "baseline_functions": [
@@ -37763,6 +37771,1158 @@
       "max_complexity": 6,
       "max_crap": 42,
       "rationale": "Same public inspect/plan/apply/resume owner; current implementation uses admitted Host DB/store and typed continuation receipt while retaining its mode boundary. Independently reviewed wave3; original measured ceiling unchanged."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:standaloneRuntime#0",
+      "current_identity": "bin/bun.ts#fn:standaloneRuntime#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 23,
+        "column": 7,
+        "start": 554,
+        "end": 1842,
+        "bodyLine": 23,
+        "bodyColumn": 53,
+        "bodyEndLine": 50,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 105,
+        "column": 7,
+        "start": 3262,
+        "end": 4625,
+        "bodyLine": 105,
+        "bodyColumn": 117,
+        "bodyEndLine": 132,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:standaloneRuntime",
+      "baseline_complexity": 17,
+      "baseline_coverage": 0,
+      "max_complexity": 17,
+      "baseline_crap": 306,
+      "max_crap": 306,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:standaloneEnvironment#0",
+      "current_identity": "bin/bun.ts#fn:standaloneEnvironment#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 52,
+        "column": 7,
+        "start": 1851,
+        "end": 2174,
+        "bodyLine": 52,
+        "bodyColumn": 57,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 134,
+        "column": 7,
+        "start": 4634,
+        "end": 4995,
+        "bodyLine": 134,
+        "bodyColumn": 95,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:standaloneEnvironment",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "max_complexity": 4,
+      "baseline_crap": 20,
+      "max_crap": 20,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:readPin#0",
+      "current_identity": "bin/bun.ts#fn:readPin#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 62,
+        "column": 7,
+        "start": 2183,
+        "end": 2634,
+        "bodyLine": 62,
+        "bodyColumn": 43,
+        "bodyEndLine": 71,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 144,
+        "column": 7,
+        "start": 5004,
+        "end": 5471,
+        "bodyLine": 144,
+        "bodyColumn": 59,
+        "bodyEndLine": 153,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:readPin",
+      "baseline_complexity": 4,
+      "baseline_coverage": 1,
+      "max_complexity": 4,
+      "baseline_crap": 4,
+      "max_crap": 4,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:checkManifest#0",
+      "current_identity": "bin/bun.ts#fn:checkManifest#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 73,
+        "column": 7,
+        "start": 2643,
+        "end": 2957,
+        "bodyLine": 73,
+        "bodyColumn": 41,
+        "bodyEndLine": 78,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 159,
+        "column": 7,
+        "start": 5619,
+        "end": 5965,
+        "bodyLine": 159,
+        "bodyColumn": 63,
+        "bodyEndLine": 164,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:checkManifest",
+      "baseline_complexity": 3,
+      "baseline_coverage": 1,
+      "max_complexity": 3,
+      "baseline_crap": 3,
+      "max_crap": 3,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:syncPin#0",
+      "current_identity": "bin/bun.ts#fn:syncPin#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 80,
+        "column": 7,
+        "start": 2966,
+        "end": 4732,
+        "bodyLine": 80,
+        "bodyColumn": 43,
+        "bodyEndLine": 123,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 166,
+        "column": 7,
+        "start": 5974,
+        "end": 7806,
+        "bodyLine": 166,
+        "bodyColumn": 60,
+        "bodyEndLine": 210,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:syncPin",
+      "baseline_complexity": 17,
+      "baseline_coverage": 0,
+      "max_complexity": 17,
+      "baseline_crap": 306,
+      "max_crap": 306,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:findNpmCli#0",
+      "current_identity": "bin/bun.ts#fn:findNpmCli#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 125,
+        "column": 7,
+        "start": 4741,
+        "end": 5323,
+        "bodyLine": 125,
+        "bodyColumn": 52,
+        "bodyEndLine": 137,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 212,
+        "column": 7,
+        "start": 7815,
+        "end": 8413,
+        "bodyLine": 212,
+        "bodyColumn": 68,
+        "bodyEndLine": 224,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:findNpmCli",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:findNpmCli#0/binding:found/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/bun.ts#fn:findNpmCli#0/binding:found/closure:CallExpression:arguments[0]#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 133,
+        "column": 4,
+        "start": 5106,
+        "end": 5207,
+        "bodyLine": 133,
+        "bodyColumn": 14,
+        "bodyEndLine": 133,
+        "bodyEndColumn": 105
+      },
+      "current_source_address": {
+        "line": 220,
+        "column": 4,
+        "start": 8196,
+        "end": 8297,
+        "bodyLine": 220,
+        "bodyColumn": 14,
+        "bodyEndLine": 220,
+        "bodyEndColumn": 105
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "max_complexity": 4,
+      "baseline_crap": 20,
+      "max_crap": 20,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:succeeded#0",
+      "current_identity": "bin/bun.ts#fn:succeeded#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 139,
+        "column": 0,
+        "start": 5325,
+        "end": 5969,
+        "bodyLine": 139,
+        "bodyColumn": 34,
+        "bodyEndLine": 150,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 238,
+        "column": 0,
+        "start": 8891,
+        "end": 9573,
+        "bodyLine": 238,
+        "bodyColumn": 72,
+        "bodyEndLine": 253,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:succeeded",
+      "baseline_complexity": 12,
+      "baseline_coverage": 0,
+      "max_complexity": 12,
+      "baseline_crap": 156,
+      "max_crap": 156,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:cleanupTimedOutProcessTree#0",
+      "current_identity": "bin/bun.ts#fn:cleanupTimedOutProcessTree#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 152,
+        "column": 0,
+        "start": 5971,
+        "end": 6664,
+        "bodyLine": 152,
+        "bodyColumn": 77,
+        "bodyEndLine": 166,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 255,
+        "column": 0,
+        "start": 9575,
+        "end": 10300,
+        "bodyLine": 255,
+        "bodyColumn": 115,
+        "bodyEndLine": 269,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:cleanupTimedOutProcessTree",
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "max_complexity": 9,
+      "baseline_crap": 90,
+      "max_crap": 90,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:defaultTimeoutCleanup#0",
+      "current_identity": "bin/bun.ts#fn:defaultTimeoutCleanup#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 168,
+        "column": 0,
+        "start": 6666,
+        "end": 7018,
+        "bodyLine": 168,
+        "bodyColumn": 54,
+        "bodyEndLine": 178,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 271,
+        "column": 0,
+        "start": 10302,
+        "end": 10689,
+        "bodyLine": 271,
+        "bodyColumn": 89,
+        "bodyEndLine": 281,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:defaultTimeoutCleanup",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:executionCeiling#0",
+      "current_identity": "bin/bun.ts#fn:executionCeiling#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 180,
+        "column": 0,
+        "start": 7020,
+        "end": 7512,
+        "bodyLine": 180,
+        "bodyColumn": 31,
+        "bodyEndLine": 190,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 283,
+        "column": 0,
+        "start": 10691,
+        "end": 11240,
+        "bodyLine": 283,
+        "bodyColumn": 88,
+        "bodyEndLine": 293,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:executionCeiling",
+      "baseline_complexity": 7,
+      "baseline_coverage": 1,
+      "max_complexity": 7,
+      "baseline_crap": 7,
+      "max_crap": 7,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:executionBudget#0",
+      "current_identity": "bin/bun.ts#fn:executionBudget#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 194,
+        "column": 7,
+        "start": 7677,
+        "end": 9196,
+        "bodyLine": 194,
+        "bodyColumn": 100,
+        "bodyEndLine": 226,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 297,
+        "column": 7,
+        "start": 11405,
+        "end": 12949,
+        "bodyLine": 297,
+        "bodyColumn": 117,
+        "bodyEndLine": 329,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:executionBudget",
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "max_complexity": 8,
+      "baseline_crap": 72,
+      "max_crap": 72,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:executionBudget#0/method:remaining#0",
+      "current_identity": "bin/bun.ts#fn:executionBudget#0/method:remaining#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 206,
+        "column": 4,
+        "start": 8216,
+        "end": 8634,
+        "bodyLine": 206,
+        "bodyColumn": 35,
+        "bodyEndLine": 212,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 309,
+        "column": 4,
+        "start": 11961,
+        "end": 12379,
+        "bodyLine": 309,
+        "bodyColumn": 35,
+        "bodyEndLine": 315,
+        "bodyEndColumn": 5
+      },
+      "name": "method:remaining",
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "max_complexity": 5,
+      "baseline_crap": 30,
+      "max_crap": 30,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:executionBudget#0/method:cleanupTimeout#0",
+      "current_identity": "bin/bun.ts#fn:executionBudget#0/method:cleanupTimeout#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 213,
+        "column": 4,
+        "start": 8640,
+        "end": 9071,
+        "bodyLine": 213,
+        "bodyColumn": 21,
+        "bodyEndLine": 221,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 316,
+        "column": 4,
+        "start": 12385,
+        "end": 12816,
+        "bodyLine": 316,
+        "bodyColumn": 21,
+        "bodyEndLine": 324,
+        "bodyEndColumn": 5
+      },
+      "name": "method:cleanupTimeout",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:executionBudget#0/method:child#0",
+      "current_identity": "bin/bun.ts#fn:executionBudget#0/method:child#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 222,
+        "column": 4,
+        "start": 9077,
+        "end": 9188,
+        "bodyLine": 222,
+        "bodyColumn": 37,
+        "bodyEndLine": 224,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 325,
+        "column": 4,
+        "start": 12822,
+        "end": 12941,
+        "bodyLine": 325,
+        "bodyColumn": 45,
+        "bodyEndLine": 327,
+        "bodyEndColumn": 5
+      },
+      "name": "method:child",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:boundedSpawnSync#0",
+      "current_identity": "bin/bun.ts#fn:boundedSpawnSync#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 228,
+        "column": 7,
+        "start": 9205,
+        "end": 12088,
+        "bodyLine": 228,
+        "bodyColumn": 104,
+        "bodyEndLine": 295,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 331,
+        "column": 7,
+        "start": 12958,
+        "end": 16550,
+        "bodyLine": 338,
+        "bodyColumn": 24,
+        "bodyEndLine": 418,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:boundedSpawnSync",
+      "baseline_complexity": 21,
+      "baseline_coverage": 0,
+      "max_complexity": 21,
+      "baseline_crap": 462,
+      "max_crap": 462,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:commandOutcomeUnknown#0",
+      "current_identity": "bin/bun.ts#fn:commandOutcomeUnknown#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 297,
+        "column": 7,
+        "start": 12097,
+        "end": 12327,
+        "bodyLine": 297,
+        "bodyColumn": 46,
+        "bodyEndLine": 306,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 420,
+        "column": 7,
+        "start": 16559,
+        "end": 16810,
+        "bodyLine": 420,
+        "bodyColumn": 96,
+        "bodyEndLine": 428,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:commandOutcomeUnknown",
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "max_complexity": 6,
+      "baseline_crap": 42,
+      "max_crap": 42,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:requireTerminalCommand#0",
+      "current_identity": "bin/bun.ts#fn:requireTerminalCommand#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 308,
+        "column": 7,
+        "start": 12336,
+        "end": 12938,
+        "bodyLine": 308,
+        "bodyColumn": 54,
+        "bodyEndLine": 323,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 430,
+        "column": 7,
+        "start": 16819,
+        "end": 17542,
+        "bodyLine": 433,
+        "bodyColumn": 24,
+        "bodyEndLine": 448,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:requireTerminalCommand",
+      "baseline_complexity": 10,
+      "baseline_coverage": 0,
+      "max_complexity": 10,
+      "baseline_crap": 110,
+      "max_crap": 110,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:pinnedEnvironment#0",
+      "current_identity": "bin/bun.ts#fn:pinnedEnvironment#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 325,
+        "column": 7,
+        "start": 12947,
+        "end": 14948,
+        "bodyLine": 325,
+        "bodyColumn": 84,
+        "bodyEndLine": 366,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 450,
+        "column": 7,
+        "start": 17551,
+        "end": 19615,
+        "bodyLine": 454,
+        "bodyColumn": 21,
+        "bodyEndLine": 495,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:pinnedEnvironment",
+      "baseline_complexity": 13,
+      "baseline_coverage": 0,
+      "max_complexity": 13,
+      "baseline_crap": 182,
+      "max_crap": 182,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:pinnedEnvironment#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/bun.ts#fn:pinnedEnvironment#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 344,
+        "column": 17,
+        "start": 13910,
+        "end": 13944,
+        "bodyLine": 344,
+        "bodyColumn": 27,
+        "bodyEndLine": 344,
+        "bodyEndColumn": 51
+      },
+      "current_source_address": {
+        "line": 473,
+        "column": 17,
+        "start": 18577,
+        "end": 18611,
+        "bodyLine": 473,
+        "bodyColumn": 27,
+        "bodyEndLine": 473,
+        "bodyEndColumn": 51
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:pinnedEnvironment#0/binding:keys/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/bun.ts#fn:pinnedEnvironment#0/binding:keys/closure:CallExpression:arguments[0]#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 349,
+        "column": 39,
+        "start": 14062,
+        "end": 14154,
+        "bodyLine": 350,
+        "bodyColumn": 4,
+        "bodyEndLine": 350,
+        "bodyEndColumn": 82
+      },
+      "current_source_address": {
+        "line": 478,
+        "column": 39,
+        "start": 18729,
+        "end": 18821,
+        "bodyLine": 479,
+        "bodyColumn": 4,
+        "bodyEndLine": 479,
+        "bodyEndColumn": 82
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:resolvePinnedBun#0/binding:keys/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/bun.ts#fn:environmentVariableKey#0/binding:keys/closure:CallExpression:arguments[0]#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 385,
+        "column": 41,
+        "start": 15770,
+        "end": 15861,
+        "bodyLine": 386,
+        "bodyColumn": 6,
+        "bodyEndLine": 386,
+        "bodyEndColumn": 82
+      },
+      "current_source_address": {
+        "line": 498,
+        "column": 39,
+        "start": 19760,
+        "end": 19833,
+        "bodyLine": 498,
+        "bodyColumn": 49,
+        "bodyEndLine": 498,
+        "bodyEndColumn": 111
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Retained PATH-name predicate now receives the caller-selected case-fold policy. PATH calls keep the platform policy; PATHEXT uses the same predicate with folding enabled. Original predicate responsibility and ceiling retained once."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:resolvePinnedBun#0",
+      "current_identity": "bin/bun.ts#fn:resolvePinnedBun#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 368,
+        "column": 7,
+        "start": 14957,
+        "end": 18935,
+        "bodyLine": 368,
+        "bodyColumn": 47,
+        "bodyEndLine": 476,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 502,
+        "column": 7,
+        "start": 19918,
+        "end": 24395,
+        "bodyLine": 502,
+        "bodyColumn": 67,
+        "bodyEndLine": 622,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:resolvePinnedBun",
+      "baseline_complexity": 37,
+      "baseline_coverage": 0,
+      "max_complexity": 37,
+      "baseline_crap": 1406,
+      "max_crap": 1406,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:resolvePinnedBun#0/binding:extensions/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/bun.ts#fn:resolvePinnedBun#0/binding:extensions/closure:CallExpression:arguments[0]#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 395,
+        "column": 20,
+        "start": 16269,
+        "end": 16316,
+        "bodyLine": 395,
+        "bodyColumn": 35,
+        "bodyEndLine": 395,
+        "bodyEndColumn": 67
+      },
+      "current_source_address": {
+        "line": 539,
+        "column": 20,
+        "start": 21531,
+        "end": 21578,
+        "bodyLine": 539,
+        "bodyColumn": 35,
+        "bodyEndLine": 539,
+        "bodyEndColumn": 67
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:runPinnedBun#0",
+      "current_identity": "bin/bun.ts#fn:runPinnedBun#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 478,
+        "column": 7,
+        "start": 18944,
+        "end": 20455,
+        "bodyLine": 478,
+        "bodyColumn": 49,
+        "bodyEndLine": 513,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 668,
+        "column": 7,
+        "start": 26211,
+        "end": 28323,
+        "bodyLine": 668,
+        "bodyColumn": 88,
+        "bodyEndLine": 714,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:runPinnedBun",
+      "baseline_complexity": 16,
+      "baseline_coverage": 0,
+      "max_complexity": 16,
+      "baseline_crap": 272,
+      "max_crap": 272,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#binding:requireRepair/binding:requireRepair#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#binding:requireRepair/binding:requireRepair#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 11,
+        "column": 22,
+        "start": 689,
+        "end": 797,
+        "bodyLine": 11,
+        "bodyColumn": 46,
+        "bodyEndLine": 13,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 73,
+        "column": 89,
+        "start": 2852,
+        "end": 2960,
+        "bodyLine": 73,
+        "bodyColumn": 113,
+        "bodyEndLine": 75,
+        "bodyEndColumn": 1
+      },
+      "name": "binding:requireRepair",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Same assertion owner and error prefix/message construction; planner callsites preserve the rejection boundary. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#binding:sha256/binding:sha256#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#binding:sha256/binding:sha256#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 17,
+        "column": 15,
+        "start": 948,
+        "end": 1007,
+        "bodyLine": 17,
+        "bodyColumn": 26,
+        "bodyEndLine": 17,
+        "bodyEndColumn": 74
+      },
+      "current_source_address": {
+        "line": 109,
+        "column": 15,
+        "start": 4239,
+        "end": 4319,
+        "bodyLine": 109,
+        "bodyColumn": 47,
+        "bodyEndLine": 109,
+        "bodyEndColumn": 95
+      },
+      "name": "binding:sha256",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Same SHA-256 helper verifies activation-history prefix and record bytes. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:committedActivation#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#fn:committedActivation#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 18,
+        "column": 0,
+        "start": 1009,
+        "end": 3277,
+        "bodyLine": 18,
+        "bodyColumn": 79,
+        "bodyEndLine": 73,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 110,
+        "column": 0,
+        "start": 4321,
+        "end": 6718,
+        "bodyLine": 118,
+        "bodyColumn": 2,
+        "bodyEndLine": 173,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:committedActivation",
+      "baseline_complexity": 27,
+      "baseline_coverage": 0,
+      "max_complexity": 27,
+      "baseline_crap": 756,
+      "max_crap": 756,
+      "rationale": "Same activation bindings across work, attempt, run, issue, scope, config and released lease, followed by exact history byte/digest validation. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:committedActivation#0/binding:ticket/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#fn:committedActivation#0/binding:ticket/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 24,
+        "column": 39,
+        "start": 1371,
+        "end": 1422,
+        "bodyLine": 24,
+        "bodyColumn": 50,
+        "bodyEndLine": 24,
+        "bodyEndColumn": 90
+      },
+      "current_source_address": {
+        "line": 124,
+        "column": 39,
+        "start": 4811,
+        "end": 4862,
+        "bodyLine": 124,
+        "bodyColumn": 50,
+        "bodyEndLine": 124,
+        "bodyEndColumn": 90
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Same ledger ticket lookup by bound lease ticket ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:deterministicIssueId#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#fn:deterministicIssueId#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 74,
+        "column": 0,
+        "start": 3278,
+        "end": 3568,
+        "bodyLine": 74,
+        "bodyColumn": 39,
+        "bodyEndLine": 78,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 174,
+        "column": 0,
+        "start": 6719,
+        "end": 7025,
+        "bodyLine": 174,
+        "bodyColumn": 48,
+        "bodyEndLine": 178,
+        "bodyEndColumn": 1
+      },
+      "name": "fn:deterministicIssueId",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Same deterministic replacement issue identifier derived from repair, prior issue and generation binding. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/binding:pending/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#fn:buildReadOnlyDispatchRepairPlan#0/binding:pending/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 172,
+        "column": 37,
+        "start": 6931,
+        "end": 6992,
+        "bodyLine": 172,
+        "bodyColumn": 47,
+        "bodyEndLine": 172,
+        "bodyEndColumn": 98
+      },
+      "current_source_address": {
+        "line": 301,
+        "column": 37,
+        "start": 11236,
+        "end": 11297,
+        "bodyLine": 301,
+        "bodyColumn": 47,
+        "bodyEndLine": 301,
+        "bodyEndColumn": 98
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "max_complexity": 2,
+      "baseline_crap": 6,
+      "max_crap": 6,
+      "rationale": "Same selection of pending rows with a non-null issue and null observation. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/binding:item/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#fn:buildReadOnlyDispatchRepairPlan#0/binding:item/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 173,
+        "column": 28,
+        "start": 7023,
+        "end": 7071,
+        "bodyLine": 173,
+        "bodyColumn": 39,
+        "bodyEndLine": 173,
+        "bodyEndColumn": 76
+      },
+      "current_source_address": {
+        "line": 302,
+        "column": 28,
+        "start": 11328,
+        "end": 11376,
+        "bodyLine": 302,
+        "bodyColumn": 39,
+        "bodyEndLine": 302,
+        "bodyEndColumn": 76
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Same pending row lookup by requested action ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#fn:buildReadOnlyDispatchRepairPlan#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 183,
+        "column": 67,
+        "start": 7484,
+        "end": 7524,
+        "bodyLine": 183,
+        "bodyColumn": 78,
+        "bodyEndLine": 183,
+        "bodyEndColumn": 107
+      },
+      "current_source_address": {
+        "line": 312,
+        "column": 67,
+        "start": 11789,
+        "end": 11829,
+        "bodyLine": 312,
+        "bodyColumn": 78,
+        "bodyEndLine": 312,
+        "bodyEndColumn": 107
+      },
+      "name": "closure:OptionalCallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Same workflow stage lookup by requested stage ID. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/binding:freshSource/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#fn:buildReadOnlyDispatchRepairPlan#0/binding:freshSource/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 203,
+        "column": 35,
+        "start": 8423,
+        "end": 8444,
+        "bodyLine": 203,
+        "bodyColumn": 46,
+        "bodyEndLine": 203,
+        "bodyEndColumn": 56
+      },
+      "current_source_address": {
+        "line": 332,
+        "column": 35,
+        "start": 12747,
+        "end": 12768,
+        "bodyLine": 332,
+        "bodyColumn": 46,
+        "bodyEndLine": 332,
+        "bodyEndColumn": 56
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Same projection of source-scope entries to paths for a fresh source snapshot. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/read-only-dispatch-repair.ts#fn:isReusableReadOnlyReport#0",
+      "file": "src/orchestration/read-only-dispatch-repair.ts",
+      "source_address": {
+        "line": 211,
+        "column": 6,
+        "start": 8637,
+        "end": 8865,
+        "bodyLine": 212,
+        "bodyColumn": 8,
+        "bodyEndLine": 215,
+        "bodyEndColumn": 64
+      },
+      "current_source_address": {
+        "line": 180,
+        "column": 0,
+        "start": 7027,
+        "end": 7392,
+        "bodyLine": 184,
+        "bodyColumn": 11,
+        "bodyEndLine": 191,
+        "bodyEndColumn": 1
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "max_complexity": 4,
+      "baseline_crap": 20,
+      "max_crap": 20,
+      "rationale": "Old every-callback predicate (same dispatched item, or reported-complete under matching scope/config digests) now lives in this helper. Original measured ceiling remains unchanged; zero original coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:applyReadOnlyDispatchRepair#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:commitReadOnlyDispatchRepair#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "source_address": {
+        "line": 258,
+        "column": 17,
+        "start": 10473,
+        "end": 12380,
+        "bodyLine": 258,
+        "bodyColumn": 23,
+        "bodyEndLine": 304,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 8447,
+        "column": 46,
+        "start": 372997,
+        "end": 375566,
+        "bodyLine": 8447,
+        "bodyColumn": 52,
+        "bodyEndLine": 8496,
+        "bodyEndColumn": 5
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "max_complexity": 3,
+      "baseline_crap": 12,
+      "max_crap": 12,
+      "rationale": "Original immediate transaction responsibility moved into the producer-fenced Host commit. Deterministic plan verification, one-generation receipt lookup, exact idempotent payload/digest and insertion remain under the original transaction; current maintenance and Work/Ledger/Journal CAS guards remain. Original3/12 ceiling retained once, currentCC3; this row was not previously joined despite the advisory report label."
     }
   ],
   "new_functions": [
@@ -46003,6 +47163,312 @@
       "max_complexity": 10,
       "max_crap": 10,
       "rationale": "New synthesis shape/guard/cleanup callable after explicit original-role mapping. Independent wave3 review; prospective10/10, no transferred allowance."
+    },
+    {
+      "identity": "bin/bun.ts#fn:errorCode#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 85,
+        "column": 0,
+        "start": 2545,
+        "end": 2702,
+        "bodyLine": 85,
+        "bodyColumn": 55,
+        "bodyEndLine": 88,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Extracted safe error-code reader used by timeout and command diagnostics."
+    },
+    {
+      "identity": "bin/bun.ts#fn:isRecord#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 90,
+        "column": 0,
+        "start": 2704,
+        "end": 2854,
+        "bodyLine": 90,
+        "bodyColumn": 68,
+        "bodyEndLine": 92,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New unknown-value guard for parsed manifest objects."
+    },
+    {
+      "identity": "bin/bun.ts#fn:manifestRecord#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 94,
+        "column": 0,
+        "start": 2856,
+        "end": 3024,
+        "bodyLine": 94,
+        "bodyColumn": 65,
+        "bodyEndLine": 97,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Central manifest-record validation extracted from direct JSON.parse use."
+    },
+    {
+      "identity": "bin/bun.ts#fn:parseManifest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 99,
+        "column": 0,
+        "start": 3026,
+        "end": 3168,
+        "bodyLine": 99,
+        "bodyColumn": 63,
+        "bodyEndLine": 102,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Central JSON parse and object-validation boundary used by standalone and package checks."
+    },
+    {
+      "identity": "bin/bun.ts#fn:manifestEngines#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 155,
+        "column": 0,
+        "start": 5473,
+        "end": 5610,
+        "bodyLine": 155,
+        "bodyColumn": 85,
+        "bodyEndLine": 157,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Manifest engines object validation extracted from optional property access."
+    },
+    {
+      "identity": "bin/bun.ts#fn:positiveExitStatus#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 4,
+      "current_source_address": {
+        "line": 226,
+        "column": 0,
+        "start": 8415,
+        "end": 8569,
+        "bodyLine": 226,
+        "bodyColumn": 59,
+        "bodyEndLine": 228,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Exit-code normalization extracted from succeeded; explicit reusable failure status."
+    },
+    {
+      "identity": "bin/bun.ts#fn:nonzeroIntegerStatus#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 230,
+        "column": 0,
+        "start": 8571,
+        "end": 8729,
+        "bodyLine": 230,
+        "bodyColumn": 74,
+        "bodyEndLine": 232,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Cleanup status classification extracted from inline condition."
+    },
+    {
+      "identity": "bin/bun.ts#fn:unknownExitStatus#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 234,
+        "column": 0,
+        "start": 8731,
+        "end": 8889,
+        "bodyLine": 234,
+        "bodyColumn": 71,
+        "bodyEndLine": 236,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Terminal-status uncertainty predicate extracted from inline condition."
+    },
+    {
+      "identity": "bin/bun.ts#fn:environmentVariableKey#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 497,
+        "column": 0,
+        "start": 19617,
+        "end": 19909,
+        "bodyLine": 497,
+        "bodyColumn": 102,
+        "bodyEndLine": 500,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New reusable environment-key collection/preference owner. Its enumeration, exact-case preference and absent-key fallback were inline in resolvePinnedBun; it does not inherit an old predicate allowance."
+    },
+    {
+      "identity": "bin/bun.ts#fn:coverageIterationBudget#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 8,
+      "current_source_address": {
+        "line": 647,
+        "column": 0,
+        "start": 25369,
+        "end": 26202,
+        "bodyLine": 650,
+        "bodyColumn": 114,
+        "bodyEndLine": 666,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New coverage-specific wrapper budget/profile policy, including the bounded 300s iteration cap and review clock policy."
+    },
+    {
+      "identity": "bin/bun.ts#fn:coverageInvocationMode#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 629,
+        "column": 0,
+        "start": 24533,
+        "end": 24842,
+        "bodyLine": 629,
+        "bodyColumn": 94,
+        "bodyEndLine": 634,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New private coverageInvocationMode responsibility, extracted from current coverage policy. Exact positional request classification and immutable original-clock metadata remain separate from deadline issuance. No original callable exists; unchanged10/10 new-role policy."
+    },
+    {
+      "identity": "bin/bun.ts#fn:coverageReviewClockPolicy#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 636,
+        "column": 0,
+        "start": 24844,
+        "end": 25367,
+        "bodyLine": 636,
+        "bodyColumn": 111,
+        "bodyEndLine": 645,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New private coverageReviewClockPolicy responsibility, extracted from current coverage policy. Exact positional request classification and immutable original-clock metadata remain separate from deadline issuance. No original callable exists; unchanged10/10 new-role policy."
+    },
+    {
+      "identity": "src/orchestration/read-only-dispatch-repair.ts#fn:configuredValue#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 79,
+        "column": 0,
+        "start": 3096,
+        "end": 3248,
+        "bodyLine": 79,
+        "bodyColumn": 95,
+        "bodyEndLine": 81,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New typed lookup wrapper for optional configuration records. No original counterpart; prospective new-function policy is 10/10."
+    },
+    {
+      "identity": "src/orchestration/read-only-dispatch-repair.ts#fn:requireCompleteHostSnapshot#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 4,
+      "current_source_address": {
+        "line": 82,
+        "column": 0,
+        "start": 3249,
+        "end": 3580,
+        "bodyLine": 87,
+        "bodyColumn": 2,
+        "bodyEndLine": 89,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New Host snapshot completeness boundary added with typed/versioned snapshot input. No original counterpart; prospective new-function policy is 10/10."
+    },
+    {
+      "identity": "src/orchestration/read-only-dispatch-repair.ts#fn:isActivationEvidence#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 4,
+      "current_source_address": {
+        "line": 99,
+        "column": 7,
+        "start": 3900,
+        "end": 4223,
+        "bodyLine": 99,
+        "bodyColumn": 82,
+        "bodyEndLine": 108,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New exact-record type guard; historical validation was inline and did not expose this callable boundary. No original counterpart; prospective new-function policy is 10/10."
+    },
+    {
+      "identity": "src/orchestration/read-only-dispatch-repair.ts#fn:buildReadOnlyDispatchRepairPlan#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 284,
+        "column": 8,
+        "start": 10771,
+        "end": 10840,
+        "bodyLine": 284,
+        "bodyColumn": 19,
+        "bodyEndLine": 284,
+        "bodyEndColumn": 77
+      },
+      "rationale": "New callback selects a snapshot host work row for caller-side owner selection. No original counterpart; prospective new-function policy is 10/10."
+    },
+    {
+      "identity": "src/orchestration/read-only-dispatch-repair.ts#fn:isSortedUniqueProjectIds#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 7,
+      "current_source_address": {
+        "line": 90,
+        "column": 0,
+        "start": 3581,
+        "end": 3892,
+        "bodyLine": 90,
+        "bodyColumn": 69,
+        "bodyEndLine": 98,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New broader validator combines old parent array/nonempty checks with the old callback string/order test. The old callback is removed as absorbed; its cap cannot transfer. No original counterpart; prospective new-function policy is 10/10."
+    },
+    {
+      "identity": "src/orchestration/read-only-dispatch-repair.ts#fn:buildReadOnlyDispatchRepairPlan#0/closure:CallExpression:arguments[0]#1",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 339,
+        "column": 22,
+        "start": 12954,
+        "end": 13011,
+        "bodyLine": 339,
+        "bodyColumn": 33,
+        "bodyEndLine": 339,
+        "bodyEndColumn": 79
+      },
+      "rationale": "New thin every callback forwards entries to retained isReusableReadOnlyReport predicate helper. No original counterpart; prospective new-function policy is 10/10."
     }
   ],
   "removed_functions": [
@@ -46047,6 +47513,18 @@
       "baseline_coverage": 0,
       "baseline_crap": 72,
       "rationale": "Target CLI now delegates bounded reads through readReleaseBytes in local-release-artifacts.ts; that helper has no direct same-name baseline row here, so do not transfer this allowance by name alone. Independent semantic removal review. Scope 20261014-next-frozen-families."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:resolvePinnedBun#0/binding:extensionKeys/closure:CallExpression:arguments[0]#0",
+      "rationale": "Equivalent uppercase PATHEXT predicate consolidated into the retained PATH-name predicate with explicit folding policy. The new collection/preference owner receives its own new-role budget; no second original ceiling is transferred."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:checkedRow#0",
+      "rationale": "The generic SQL row decoder is absent. Current CLI obtains typed, versioned work, ledger and session state through HostStateStore.readWorkSessionSnapshot; no same-family callable replaces the old parser. Original measured row is explicitly accounted; no ceiling transfers."
+    },
+    {
+      "identity": "bin/read-only-dispatch-repair.mjs#fn:planReadOnlyDispatchRepair#0/closure:CallExpression:arguments[0]#0",
+      "rationale": "The old callback checked string elements and strict ordering. isSortedUniqueProjectIds also adds array and nonempty validation formerly in its parent, so the broader callable gets new 10/10 policy rather than the old callback ceiling. Original measured row is explicitly accounted; no ceiling transfers."
     }
   ],
   "review": {
@@ -46431,5 +47909,22 @@
       }
     ],
     "limits": "Only three complete selected families. Other repair/new lock callback correspondence remains pending; no executable/numeric qualification."
+  },
+  "quality_continuation_current_bindings": {
+    "schema": "ReviewedLineageJoin/v1",
+    "status": "SCOPED_SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
+    "input_sha256": "07aad88852c71173cc72b52ddb2523dad7195479e676f844989fb2ee28de874d",
+    "current_inventory_ref": "/workspace/attachments/quality-current-inventory-host-bun-final-20261014.json",
+    "candidate_ref": "/workspace/attachments/quality-root-lineage-draft-20261014.json",
+    "independent_review_ref": "/workspace/attachments/quality-root-lineage-review-20261014.md",
+    "counts": {
+      "retained": 1474,
+      "new": 525,
+      "removed": 6,
+      "current_roles": 1999,
+      "source_files": 105
+    },
+    "missing_current_dispositions": 5713,
+    "limits": "Complete Bun and repair-builder families plus one moved Host callback; exhaustive original/current mapping and final numeric evidence remain absent."
   }
 }
