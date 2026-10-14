@@ -1,7 +1,7 @@
 # Agent runtime system specification
 
 Owner: agent product maintainer. Class: canonical living system specification.
-Repository-only source trace: [the repository delivery decision](../../../AGENT.sidecar.md#native-only-public-delivery-decision).
+Repository-only source trace: [the repository delivery decision](https://github.com/pomazanbohdan/vida-stack-lite/blob/2caf6ea736f824e4eb29c619fc295ea687902b55/AGENT.sidecar.md#native-only-public-delivery-decision).
 This trace is not an installed consumer dependency. Current clean-project qualification
 supersedes historical existing-consumer unblocking for the CLEAR development task.
 This document defines the target behavior; its presence does not certify that

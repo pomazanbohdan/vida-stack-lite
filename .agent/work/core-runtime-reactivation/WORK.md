@@ -4,7 +4,7 @@ Status date: 2026-10-14. This page is the current execution record. It does not 
 
 ## Current state
 
-- The published source baseline is `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e`. Publication of source and an SDK package does not prove native installation, runtime activation, or whole-runtime acceptance.
+- The correction Source packet is published as `2caf6ea736f824e4eb29c619fc295ea687902b55` at origin/main. Its input baseline was `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e`. Source publication does not prove native installation, activation or acceptance.
 - The maintained source migration from handwritten JavaScript to TypeScript is complete. Help and inventory repairs are implemented. These are not pending work.
 - The SDK package formed at `7f4c265` passed its own extracted archive verifier. This proves package contents and portable-lock handling only.
 - The full run at `.tmp/p0p1-resume-f553252/current-b9a4108-full-paused.log` ended `UNKNOWN`. The number 1459 is a throw line in `run-bun-coverage.ts`, not an outcome identifier. Preserve that exact result. It has no admitted numeric report and is not a pass or a replay trigger.
@@ -59,7 +59,15 @@ entry/hook checks passed. Pstack reports1.15.0,60 skills, enabled trusted startu
 hook. Provider-template save and full Vex semantic readiness remain GAP.
 Package lock retirement was generated offline with scripts disabled; all retained
 resolved version/content rows already existed. Root's untracked bun.lock and BASE
-remain untouched. Final strict staged checks/publication are pending.
+remain untouched. Strict staged gate PASS: format458files, compiler463files,
+0diagnostics; scoped typed lint0. Commit/push2caf6ea succeeded without hook bypass.
+The old7f4c265 SDK verifier result applies to that archive only; current Source
+changes invalidate its use as current SDK freshness evidence.
+
+The actual final owner's readBudgetPlan prerequisite was checked without launching
+suites. It reports GAP/ENOENT for crap-budgets.v1.json. Reviewed partial lineage,
+including the four new helpers, remains non-executable/non-exhaustive. Full numeric
+acceptance requires the complete reviewed plan; no unchanged full retry was made.
 
 The existing consumer cleanup handoff is
 [consumer-source-retirement.md](../../../docs/migration/consumer-source-retirement.md).

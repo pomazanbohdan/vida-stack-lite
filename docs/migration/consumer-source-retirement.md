@@ -27,13 +27,15 @@ AGENTS, Sidecar, product code/docs and new .agent/work evidence remain protected
 
 ## Source custody
 
-Published Source before the current packet is
-bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e in pomazanbohdan/vida-stack-lite.
+The corrected Source packet is published as
+2caf6ea736f824e4eb29c619fc295ea687902b55 in pomazanbohdan/vida-stack-lite.
 The original b549951 tree remains in Git. Runtime code, schemas, instructions,
 tests and tooling belong in packages/agent; current handwritten entrypoints are
 TypeScript. Current equivalents of the old bin names are run.ts, init.ts,
 documentation-clear.ts, bun.ts and install.ts. Their migration is not a claim
 that every previously deleted consumer byte equals current Source.
+All five corresponding original MJS paths were directly confirmed in the
+b549951 Source Git tree. No original consumer byte was restored or executed.
 
 Exact custom-code retention requires its path/content lineage, not a category
 count. The reported remaining Babel data contains no custom runtime Source.
@@ -58,6 +60,8 @@ old state recovery or global-suite run follows from this coordination request.
 [Installation](../../packages/agent/docs/installation.md) and the package lifecycle
 own guarded relocation/rebind. Do not initialize over an existing receipt or
 replace loader pointers merely because copied files are missing.
+The current installation guide still marks package relocation repair as an
+implementation GAP. No invented rebind command or Source-only substitute closes it.
 
 ## Cleanup classification
 
