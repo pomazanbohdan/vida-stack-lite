@@ -1167,6 +1167,13 @@ from opaque ledger/bridge protocol controls. Capture live admission before
 close starts: its read authority deliberately expires on the first close attempt.
 Restore injected faults before registered retry, and retain failed fixture roots.
 
+Engine-reader close controls retain the original close, upgrade-inactive and
+physical-file identity fence order. Exercise both successful and rejected reads
+with drift introduced after admitted open/native source close. Capture the actual
+paired gate at `BEGIN DEFERRED`: gate bootstrap verification also closes a handle
+for the same filename, so filename-wide counts do not establish paired ordering.
+Keep parameterized case names distinct with explicit scenario labels.
+
 Exclusive verifiers and callbacks transfer each raw handle through their source
 owner before post-open guards. Its registered retry closes each pending source
 once per pass and releases the exact gate only after every source is closed.

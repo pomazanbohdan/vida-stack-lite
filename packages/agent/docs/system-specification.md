@@ -214,6 +214,10 @@ records the exact handle synchronously before any fallible check; invoking
 capture transfers cleanup custody even if that check throws. Capture grants
 no verified identity, admission or execution rights. Preserve both operation
 and cleanup errors rather than replacing one with the other.
+Engine readers retain their exact admitted close owner, then the upgrade-inactive
+and physical-file identity fences in that order. A failed read and failed close
+or fence retain both causes; a sole failure preserves its identity. Successful
+cleanup leaves the original return or rejection unchanged.
 The public consumer migration wrapper owns its connection immediately after
 open, including package snapshot and binding preparation. Setup failure must
 close through that paired owner before propagating the original error; if close

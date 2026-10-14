@@ -12,6 +12,25 @@
 
 ## Current dispatch — 2026-10-14
 
+Current publisheda666bd4 has strict hook and scoped close-custody/caller PASS.
+SDK0.1.4 formed separately without suites; exact distributed authorization
+freshness case passes1/4assertions. New full run1900f49f ends UNKNOWN/SIGKILL
+for both accounted direct producers, with320/158partialPASS rows and no report.
+No current numeric gates or resource advancement follow. Root preserves the
+five-minute budget and avoids unchanged retry. Next packet targets four actual
+engine-reader work/close masking paths, plus existing-suite mutation partition
+eligibility; workers do not launch checks. Before another full run identify and
+qualify a concrete cost/resource correction, not merely another partial count.
+
+v13 completes four-reader masking correction through one exact close/post-close
+fence owner: native14PASS/273assertions plus completed witness PASS are scoped
+evidence. Coordinator joins the existing lifecycle mutation partition/suite
+once; image gains its direct suite, admission ownership stays. Inventory has no
+pending assignment, not a Killed result. New reader Source invalidates the old
+SDK formation. Resource/cache reviews find no safely removable call/tag;
+versioned three-producer and actual caller-overlap qualification remain bounded
+pilot proposals with stop criteria, not enabled production eligibility.
+
 Latest publishedb7e7244 full run377d441a ends with both actual direct children
 SIGKILL/UNKNOWN, no numeric report and no resource advancement. Partial PASS
 rows are not whole-file weights. Current dependency-ready v12 packet closes

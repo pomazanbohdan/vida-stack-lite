@@ -11068,6 +11068,102 @@ eight selector-skipped ordinary cases are not counted. No isolated speedup
 claim follows from different case timings. Root publishes the joined packet
 through ordinary strict staged hook, preserving unrelated BASE/ and bun.lock.
 
+Publisheda666bd4: strict hook445formatted/449program0diagnostics and ordinary
+push PASS; only unrelated BASE/ and root bun.lock remain. Fresh SDK0.1.4
+formation completed without suites (current-sdk-014-formation.log). The first
+freshness filter selected0 due to its describe prefix and provides no evidence;
+the corrected case-suffix filter selects exactly1PASS/4assertions/4.04s command,
+2152.10ms body. Its actual Bun SDK child exits0 after authentication denial,
+joining current formation inputs and four emitted JS members. No installation,
+native Runtime, confirmed release baseline or public SDK publication is claimed.
+
+Fresh reviewed run1900f49f-2fa9-4d5d-8daf-72477b9467ae binds Sourcea666bd4,
+scope5a3efacd6d89e8469b1edf15e15cbb825465572c2aeeb00f4c3c9909c22ef90b,
+189files/94private/95shared, refreshed57changed inputs including actual dist.
+Both actual direct PIDs487460/487461 terminate nullstatus/SIGKILL/UNKNOWN at
+the producer allowance; Root command exits1 on spent report-launch allowance.
+Actual supervisor accounts both, reservationSafeToRelease=true and
+resourceSafeToAdvance=false. Partial320/158PASS rows contain no assertion-fail
+rows, but no numeric report/current CRAP/Killed score is admitted. All four
+recovery routes pass45.30/61.21/34.38/33.47s; publication/producer nested rows
+are one physical case, not duplicate weights. Retain roots, no unchanged retry.
+
+Read-only current cost review rejects removing recovery routes, later package
+byte checks, controller verify/inspect/scope or either paused-replacement edge:
+they prove distinct contracts. No safely redundant operation or measured
+speedup was established. Frozen gate review confirms original5701functions/
+108sources baselinefe54f83c is already admitted with suite/quality FAIL;
+the1416-role84-file partial map remains non-executable/non-exhaustive. Complete
+one canonical current correspondence plan using original rows, explicit retained,
+NEW<=10/10 and removed/source dispositions; do not rerun baseline or seed its
+budgets from candidate complexity. Final CRAP waits for an admitted current run.
+
+Next actual Source-grounded P0 analogue: four session-engine-snapshot SQLite
+readers close in finally before upgrade/inode checks and can mask their body
+validation failure when exact admitted cleanup fails. A blind existing-file
+writer prepares one real frontier validation plus native pre-close interruption
+control after this run's terminal; Root keeps Source unchanged for causal RED.
+Both upgrade/physical target freshness guards stay in their original order.
+One-main-file repair remains OPEN: the safest next same-ID recovery seam
+revalidates both retained source digests through its existing capture owner
+before stage/move; current legacy guard still rejects before merge_preparing.
+The primitive probe does not authorize AUX removal or exclusion/loader activation.
+
+Mutation scope review authorizes two disjoint runnable Bun descriptors using
+existing direct image and coordinator lifecycle suites. The admission Source
+and its suite retain their single existing partition. Root updates the pending
+combined descriptor and its existing inventory test only; no new suite or
+campaign launch. Exact assertion-confirmed Killed and all numeric gates remain
+unchanged and OPEN; guarded positive branches may remain uncovered/survived.
+
+v13 causal engine-frontier-close-causal-red-v13.log1FAIL/5assertions/1.82s
+reaches the actual retained frontier rejection and loses that cause under exact
+pre-native source close interruption. Root tags all four admitted read bodies
+and reuses the common accumulator; private finishSessionEngineRead extracts
+the duplicated exact close→upgrade-inactive→regular-file/nlink/dev/ino fences.
+Original returns and guard messages stay unchanged; lone failure identity and
+failed-undefined semantics survive. No extra query/retry, authority, loader/
+schema switch or AUX retirement follows. Two temporary edit attempts refused
+invalid/changed anchors before Source writes; their outputs are not checks of
+applied Source. Actual applied strict Source/current TS and typed lint pass.
+
+engine-mutation-callers-native-v13.log11PASS/253assertions/9.81s covers
+combined frontier fault, original drift/denial cases, actual completed staged
+witness and mutation metadata. The witness keeps its existing case exception.
+Three fresh Source reviews find no blocker; one identifies absent post-open
+upgrade/inode behavior proof. Root adds four native controls crossing successful/
+failed reads with after-close upgrade-path presence or byte-identical inode
+replacement. First4FAIL count a bootstrap verification gate as the paired lease;
+Source is unchanged. Fixture instead captures the actual paired gate object at
+BEGIN DEFERRED and uses distinct string scenario names. Final
+engine-fences-mutation-native-v13-green.log14PASS/273assertions/3.43s proves
+the fences, source-before-gate order and closed handles; final static reports
+450capturedTS/449program0 and100Source0, typed lint PASS0. Failed/expired roots
+remain retained. New fence/closure and changed reader role correspondence is
+OPEN; no prospective budget is historical or current numeric acceptance.
+
+Final mutation grouping joins coordinator with the existing lifecycle artifacts/
+storage partition and its suite once, avoiding a duplicate lifecycle baseline
+run. Image keeps its direct partition; admission unchanged. Native inventory
+asserts complete unique Source assignment and zero pending entries. This is
+neither a campaign nor Killed proof. Cache/resource reviews reject removing
+distinct calls, later byte guards, conservative tags or substituting bytecode
+fixtures. Children already share canonical bundle/Bun-pin cache namespaces.
+Official Bun bytecode docs describe a different artifact contract, not qualified
+cache hits. The two-producer limit spans planner, eligibility, evidence and
+supervisor; a third producer needs a versioned one-wave mechanics pilot and
+fresh resource review. Extra capacity alone does not separate95common-resource
+files. Proceed with a concrete bounded pilot, not another unchanged full run.
+SDK0.1.4 is now stale for changed reader Source; earlier formation/freshness
+does not qualify new SDK bytes, native installation or Runtime acceptance.
+
+Ordinary v13 hook first denies one unused internal identity re-export after the
+engine reader moved to its actual raw owner. Root removes only that unused
+import/export from workspace-database.ts; the identity implementation, existing
+reader APIs and published SDK exports are unchanged. No hook bypass or commit
+occurs on the rejected snapshot. Restage the exact correction and rerun the
+normal staged owner; preserve all staged files and unrelated untracked state.
+
 Published f24aa93 to origin/main. Run9364aa69-a223-4a4d-8ffb-2f659eea36a6
 prepared and launched from the same repository origin, admitting the reviewed
 189-file initial wave:94private/95shared. Actual direct PIDs462014/462015 both

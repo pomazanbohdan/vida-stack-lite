@@ -1,7 +1,7 @@
-import { expect, test } from 'bun:test';
+import { expect, spyOn, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, linkSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, linkSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,6 +13,10 @@ import {
   type RetainedSessionEngineWorkEvidence,
 } from '../src/orchestration/session-engine-snapshot.ts';
 import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-session-ledger-codec.ts';
+import { retryPendingWorkspaceDatabaseCloses } from '../src/config/workspace-database-raw.ts';
+import { assertWorkspaceDatabaseAdmission } from '../src/config/storage-read-admission.ts';
+import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import { PROJECT_UPGRADE_OPERATION_PATH } from '../src/config/project-paths.ts';
 import type { MastraSessionLedgerState } from '../src/orchestration/persistent-session-handoff.ts';
 import {
   buildSessionBridgeRequest,
@@ -296,14 +300,269 @@ function fixture() {
   };
 }
 
-function withFixture(callback: (value: ReturnType<typeof fixture>) => void): void {
+function withFixture(
+  callback: (value: ReturnType<typeof fixture>) => void,
+  options: { readonly disposeWhen?: () => boolean } = {},
+): void {
   const value = fixture();
+  let completed = false;
   try {
     callback(value);
+    completed = true;
   } finally {
-    rmSync(value.root, { recursive: true, force: true });
+    if (completed && (options.disposeWhen?.() ?? true)) rmSync(value.root, { recursive: true, force: true });
+    else console.error(`Retained failed or expired session engine frontier fixture: ${value.root}`);
   }
 }
+
+test('retains unknown frontier validation with its admitted source close failure and retries the same owner', () => {
+  const started = process.hrtime.bigint();
+  let mayDispose = false;
+  withFixture(
+    ({ binding, work, journal, snapshot, runId, databasePath }) => {
+      // Persist the invalid frontier before installing any database observers.
+      snapshot.status = 'unknown';
+      const setup = new Database(databasePath, { strict: true });
+      try {
+        setup
+          .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+          .run(JSON.stringify(snapshot), runId);
+      } finally {
+        setup.close();
+      }
+      let bodyOnlyError: unknown;
+      try {
+        readRetainedUnissuedSessionEngineSnapshot(binding, {
+          work,
+          journal: parseMastraSessionLedgerState(journal),
+        });
+      } catch (error) {
+        bodyOnlyError = error;
+      }
+      expect(bodyOnlyError).toBeInstanceOf(Error);
+      const validationMessage = bodyOnlyError instanceof Error ? bodyOnlyError.message : '';
+      const closeError = new Error('injected admitted source close interruption');
+      const closeOrder: string[] = [];
+      let source: Database | undefined;
+      let gate: Database | undefined;
+      const sourceHandles: Database[] = [];
+      const gateHandles: Database[] = [];
+      let admissionWasLiveBeforeValidation = false;
+      const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+      const originalExec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+      const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+        this: Database,
+        force?: boolean,
+      ) {
+        if (this === source) {
+          closeOrder.push('source');
+          if (closeOrder.filter((entry) => entry === 'source').length === 1) throw closeError;
+        }
+        if (this === gate) closeOrder.push('gate');
+        return Reflect.apply(originalClose, this, [force]);
+      });
+      const execSpy = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, sql: string) {
+        const statement = sql.trim();
+        if (statement === 'BEGIN DEFERRED') {
+          gateHandles.push(this);
+          gate = gateHandles.at(-1);
+        }
+        const result = Reflect.apply(originalExec, this, [sql]);
+        if (path.resolve(this.filename) === databasePath && statement === 'PRAGMA busy_timeout=1000') {
+          assertWorkspaceDatabaseAdmission(
+            this,
+            binding.repositoryRoot,
+            path.relative(binding.repositoryRoot, databasePath),
+            deriveWorkspaceId(binding.config.repository.repository_id, binding.repositoryRoot),
+          );
+          sourceHandles.push(this);
+          source = sourceHandles.at(-1);
+          admissionWasLiveBeforeValidation = true;
+        }
+        return result;
+      });
+      let spiesRestored = false;
+      let bodyError: unknown;
+      const cleanupErrors: unknown[] = [];
+      try {
+        let readError: unknown;
+        try {
+          readRetainedUnissuedSessionEngineSnapshot(binding, {
+            work,
+            journal: parseMastraSessionLedgerState(journal),
+          });
+        } catch (error) {
+          readError = error;
+        }
+        const containsCause = (error: unknown, target: (nested: unknown) => boolean): boolean =>
+          target(error) ||
+          (error instanceof AggregateError && error.errors.some((nested) => containsCause(nested, target)));
+        expect(admissionWasLiveBeforeValidation).toBe(true);
+        if (!source || !gate) throw new Error('admitted source or paired gate was not captured');
+        const admittedSource = source;
+        const pairedGate = gate;
+        expect(readError).toBeInstanceOf(AggregateError);
+        expect(containsCause(readError, (error) => error === closeError)).toBe(true);
+        expect(containsCause(readError, (error) => error instanceof Error && error.message === validationMessage)).toBe(
+          true,
+        );
+        expect(closeOrder).toEqual(['source']);
+        expect(admittedSource.query('PRAGMA busy_timeout').get()).toBeDefined();
+        expect(pairedGate.inTransaction).toBe(true);
+        expect(
+          pairedGate
+            .query<{ schema: string; workspace_id: string }, []>(
+              'SELECT schema,workspace_id FROM storage_admission_meta WHERE id=1',
+            )
+            .get()?.schema,
+        ).toBe('VidaStorageAdmission/v1');
+
+        closeSpy.mockRestore();
+        execSpy.mockRestore();
+        spiesRestored = true;
+        retryPendingWorkspaceDatabaseCloses();
+        expect(() => admittedSource.query('PRAGMA busy_timeout').get()).toThrow();
+        expect(() => pairedGate.query('SELECT workspace_id FROM storage_admission_meta').get()).toThrow();
+
+        snapshot.status = 'suspended';
+        const retrySetup = new Database(databasePath, { strict: true });
+        try {
+          retrySetup
+            .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+            .run(JSON.stringify(snapshot), runId);
+        } finally {
+          retrySetup.close();
+        }
+        expect(
+          readRetainedUnissuedSessionEngineSnapshot(binding, {
+            work,
+            journal: parseMastraSessionLedgerState(journal),
+          }).status,
+        ).toBe('suspended');
+      } catch (error) {
+        bodyError = error;
+      } finally {
+        if (!spiesRestored) {
+          closeSpy.mockRestore();
+          execSpy.mockRestore();
+        }
+        try {
+          retryPendingWorkspaceDatabaseCloses();
+        } catch (error) {
+          cleanupErrors.push(error);
+        }
+      }
+      if (bodyError !== undefined && cleanupErrors.length > 0)
+        throw new AggregateError([bodyError, ...cleanupErrors], 'frontier validation and close retry failed');
+      if (bodyError !== undefined) throw bodyError;
+      if (cleanupErrors.length > 0) throw new AggregateError(cleanupErrors, 'frontier close retry remained pending');
+      if (process.hrtime.bigint() - started >= 5_000_000_000n)
+        throw new Error('frontier validation and close retry exceeded the default five-second deadline');
+      mayDispose = true;
+    },
+    { disposeWhen: () => mayDispose },
+  );
+});
+
+test.each([
+  ['identity', 'success'],
+  ['identity', 'failure'],
+  ['upgrade', 'success'],
+  ['upgrade', 'failure'],
+] as const)('post-close %s fence retains the frontier outcome after read %s', (fence, outcome) => {
+  const bodyFails = outcome === 'failure';
+  const started = process.hrtime.bigint();
+  withFixture(
+    ({ binding, work, journal, snapshot, runId, databasePath }) => {
+      // Prime admission and establish the actual successful caller before arming the close observer.
+      expect(readRetainedUnissuedSessionEngineSnapshot(binding, { work, journal }).status).toBe('suspended');
+      if (bodyFails) {
+        snapshot.status = 'unknown';
+        const setup = new Database(databasePath, { strict: true });
+        try {
+          setup
+            .query('UPDATE mastra_workflow_snapshot SET snapshot=jsonb(?) WHERE run_id=?')
+            .run(JSON.stringify(snapshot), runId);
+        } finally {
+          setup.close();
+        }
+      }
+      const beforeBytes = readFileSync(databasePath);
+      const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+      const originalExec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+      const closedSources: Database[] = [];
+      const closedGates: Database[] = [];
+      const pairedGates: Database[] = [];
+      const closeOrder: string[] = [];
+      const gatePath = path.join(binding.repositoryRoot, '.vida/storage-admission.v1.sqlite');
+      const execSpy = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, sql: string) {
+        if (path.resolve(this.filename) === gatePath && sql === 'BEGIN DEFERRED') pairedGates.push(this);
+        return Reflect.apply(originalExec, this, [sql]);
+      });
+      const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+        this: Database,
+        force?: boolean,
+      ) {
+        const source = path.resolve(this.filename) === databasePath;
+        const gate = this === pairedGates[0];
+        const result = originalClose.call(this, force);
+        if (gate) {
+          closedGates.push(this);
+          closeOrder.push('gate');
+        }
+        if (source) {
+          closedSources.push(this);
+          closeOrder.push('source');
+          if (fence === 'identity') {
+            renameSync(databasePath, databasePath + '.original');
+            writeFileSync(databasePath, beforeBytes, { flag: 'wx' });
+          } else {
+            const operation = path.join(binding.repositoryRoot, PROJECT_UPGRADE_OPERATION_PATH);
+            mkdirSync(path.dirname(operation), { recursive: true });
+            writeFileSync(operation, '{}', { flag: 'wx' });
+          }
+        }
+        return result;
+      });
+      let failure: unknown;
+      try {
+        readRetainedUnissuedSessionEngineSnapshot(binding, { work, journal });
+      } catch (error) {
+        failure = error;
+      } finally {
+        closeSpy.mockRestore();
+        execSpy.mockRestore();
+        retryPendingWorkspaceDatabaseCloses();
+      }
+      expect(closedSources).toHaveLength(1);
+      expect(closedGates).toHaveLength(1);
+      expect(closeOrder).toEqual(['source', 'gate']);
+      const closedSource = closedSources[0];
+      const closedGate = closedGates[0];
+      if (!closedSource) throw new Error('post-close fence did not observe its exact source');
+      if (!closedGate) throw new Error('post-close fence did not observe its paired gate close');
+      expect(() => closedSource.query('SELECT 1').get()).toThrow();
+      expect(() => closedGate.query('SELECT 1').get()).toThrow();
+      const fenceError: unknown = bodyFails && failure instanceof AggregateError ? failure.errors[1] : failure;
+      if (bodyFails) {
+        expect(failure).toBeInstanceOf(AggregateError);
+        if (!(failure instanceof AggregateError))
+          throw new Error('frontier validation was lost at its post-close fence');
+        expect(failure.errors).toHaveLength(2);
+        expect(failure.errors[0]).toHaveProperty(
+          'message',
+          'Session engine: retained original run is not a suspended snapshot',
+        );
+      }
+      expect(fenceError).toBeInstanceOf(Error);
+      if (!(fenceError instanceof Error)) throw new Error('post-close fence did not reject');
+      expect(fenceError.message).toMatch(
+        fence === 'identity' ? /database was substituted/u : /Project upgrade is in progress/u,
+      );
+    },
+    { disposeWhen: () => process.hrtime.bigint() - started < 5_000_000_000n },
+  );
+});
 
 test('reads a retained unissued developer frontier and verifies the successful old prefix', () => {
   withFixture(

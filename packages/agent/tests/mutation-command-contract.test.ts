@@ -114,7 +114,7 @@ test('mutation partition descriptor binds the owned source list to its captured 
   ).toBe(false);
 });
 
-test('mutation inventory assigns maintained sources and exposes pending upgrade qualification', () => {
+test('mutation inventory assigns maintained sources to runnable partitions', () => {
   expect(process.versions.bun).toBe(readPin(root));
 
   const result = spawnSync(process.execPath, ['tooling/mutation-gate.ts', '--inventory'], {
@@ -125,19 +125,14 @@ test('mutation inventory assigns maintained sources and exposes pending upgrade 
     windowsHide: true,
   });
   expect(result.error).toBeUndefined();
-  // Inventory success describes assignment only; these upgrade sources remain pending.
+  // Inventory success describes assignment and runner selection, not mutation results.
   expect(result.status).toBe(0);
 
   const inventory = JSON.parse(result.stdout) as MutationInventory;
   const maintained = maintainedSourceInventory(root);
   expect(inventory.schema).toBe('CandidateMutationInventory/v1');
-  expect(inventory.pending_partition_sources).toEqual([
-    'src/config/project-upgrade-existing-storage.ts',
-    'src/config/project-upgrade.ts',
-  ]);
-  expect(inventory.partitions.filter(({ status }) => status === 'pending').map(({ name }) => name)).toEqual([
-    'pending-project-upgrade-coordinator-and-existing-merge',
-  ]);
+  expect(inventory.pending_partition_sources).toEqual([]);
+  expect(inventory.partitions.filter(({ status }) => status === 'pending')).toEqual([]);
   expect(inventory.expected_sources).toEqual([...maintained.mutationSources]);
   expect(inventory.unassigned_sources).toEqual([]);
   expect(inventory.unknown_partition_sources).toEqual([]);
@@ -153,6 +148,14 @@ test('mutation inventory assigns maintained sources and exposes pending upgrade 
   const owners = new Map<string, string[]>();
   for (const partition of inventory.partitions)
     for (const source of partition.sources) owners.set(source, [...(owners.get(source) ?? []), partition.name]);
+
+  expect(owners.get('src/config/project-upgrade-existing-storage.ts')).toEqual([
+    'bun-project-upgrade-existing-storage-image',
+  ]);
+  expect(owners.get('src/config/project-upgrade.ts')).toEqual(['bun-project-upgrade-lifecycle']);
+  expect(owners.get('src/config/project-upgrade-existing-storage-admission.ts')).toEqual([
+    'bun-project-upgrade-storage-admission',
+  ]);
 
   expect([...owners.keys()].sort()).toEqual([...inventory.expected_sources].sort());
   for (const source of inventory.expected_sources) {

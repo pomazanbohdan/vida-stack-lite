@@ -6,7 +6,12 @@ import { isDeepStrictEqual } from 'node:util';
 import type { AgentRuntimeConfig, WorkItemSelection } from '../config/runtime-config.js';
 import type { HostStateSnapshot, WorkState } from '../host-state.js';
 import { assertProjectUpgradeInactive, runtimeConfigDigest } from '../config/runtime-config.js';
-import { workspaceDatabaseFileIdentity } from '../config/workspace-database.js';
+import {
+  finishWorkspaceDatabaseClose,
+  workspaceDatabaseFileIdentity,
+  type DatabaseWorkOutcome,
+  type WorkspaceDatabaseFileIdentity,
+} from '../config/workspace-database-raw.js';
 import {
   openAdmittedWorkspaceDatabase,
   closeWorkspaceDatabaseWithAdmission,
@@ -155,6 +160,7 @@ export function assertUnpreparedSessionEngineAbsent(input: {
   assertProjectUpgradeInactive(access);
   const database = openAdmittedWorkspaceDatabase(repositoryRoot, relative, workspaceId, true);
   const before = workspaceDatabaseFileIdentity(database);
+  let readOutcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   try {
     requireEngine(
       database
@@ -222,19 +228,41 @@ export function assertUnpreparedSessionEngineAbsent(input: {
         'preparation has a surviving engine run',
       );
     }
+  } catch (error) {
+    readOutcome = { ok: false, error };
+    throw error;
   } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-    assertProjectUpgradeInactive(access);
-    const after = lstatSync(target);
-    requireEngine(
-      after.isFile() &&
-        !after.isSymbolicLink() &&
-        after.nlink === 1 &&
-        after.dev === before.dev &&
-        after.ino === before.ino,
-      'preparation engine substituted',
-    );
+    finishSessionEngineRead(database, readOutcome, access, target, before, 'preparation engine substituted');
   }
+}
+
+/** Close the exact admitted reader before its existing upgrade and physical-identity fences. */
+function finishSessionEngineRead(
+  database: Database,
+  outcome: DatabaseWorkOutcome<void>,
+  access: ReturnType<typeof requireSafeRepositoryAccess>,
+  target: string,
+  before: WorkspaceDatabaseFileIdentity,
+  substitutedMessage: string,
+): void {
+  finishWorkspaceDatabaseClose(
+    database,
+    outcome,
+    (owner) => {
+      closeWorkspaceDatabaseWithAdmission(owner);
+      assertProjectUpgradeInactive(access);
+      const after = lstatSync(target);
+      requireEngine(
+        after.isFile() &&
+          !after.isSymbolicLink() &&
+          after.nlink === 1 &&
+          after.dev === before.dev &&
+          after.ino === before.ino,
+        substitutedMessage,
+      );
+    },
+    'Session engine read and owned close or freshness check both failed',
+  );
 }
 
 function requireEngine(value: unknown, message: string): asserts value {
@@ -437,6 +465,7 @@ export function readRetainedUnissuedSessionEngineSnapshot(
   const workspaceId = deriveWorkspaceId(binding.config.repository.repository_id, binding.repositoryRoot);
   const database = openAdmittedWorkspaceDatabase(binding.repositoryRoot, relative, workspaceId, true);
   const before = workspaceDatabaseFileIdentity(database);
+  let readOutcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   try {
     requireEngine(
       database
@@ -670,18 +699,11 @@ export function readRetainedUnissuedSessionEngineSnapshot(
       requests,
       observations: state.observations,
     };
+  } catch (error) {
+    readOutcome = { ok: false, error };
+    throw error;
   } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-    assertProjectUpgradeInactive(access);
-    const after = lstatSync(target);
-    requireEngine(
-      after.isFile() &&
-        !after.isSymbolicLink() &&
-        after.nlink === 1 &&
-        after.dev === before.dev &&
-        after.ino === before.ino,
-      'database was substituted',
-    );
+    finishSessionEngineRead(database, readOutcome, access, target, before, 'database was substituted');
   }
 }
 
@@ -813,6 +835,7 @@ export function readConfiguredContinuationSessionEngineSnapshot(
   const workspaceId = deriveWorkspaceId(binding.config.repository.repository_id, binding.repositoryRoot);
   const database = openAdmittedWorkspaceDatabase(binding.repositoryRoot, relative, workspaceId, true);
   const before = workspaceDatabaseFileIdentity(database);
+  let readOutcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   let persisted: UntrustedMastraSnapshot;
   try {
     requireEngine(
@@ -874,16 +897,16 @@ export function readConfiguredContinuationSessionEngineSnapshot(
         !arrayShape(persisted.context),
       'configured continuation original engine snapshot identity differs',
     );
+  } catch (error) {
+    readOutcome = { ok: false, error };
+    throw error;
   } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-    assertProjectUpgradeInactive(access);
-    const after = lstatSync(target);
-    requireEngine(
-      after.isFile() &&
-        !after.isSymbolicLink() &&
-        after.nlink === 1 &&
-        after.dev === before.dev &&
-        after.ino === before.ino,
+    finishSessionEngineRead(
+      database,
+      readOutcome,
+      access,
+      target,
+      before,
       'configured continuation database was substituted',
     );
   }
@@ -1516,6 +1539,7 @@ function readSessionEngineSnapshotInternal(
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot);
   const database = openAdmittedWorkspaceDatabase(repositoryRoot, relative, workspaceId, true);
   const before = workspaceDatabaseFileIdentity(database);
+  let readOutcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   try {
     requireEngine(
       database.query("SELECT name FROM sqlite_master WHERE name='mastra_workflow_snapshot' AND type='table'").get(),
@@ -1795,17 +1819,10 @@ function readSessionEngineSnapshotInternal(
       requests,
       observations: state.observations,
     };
+  } catch (error) {
+    readOutcome = { ok: false, error };
+    throw error;
   } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-    assertProjectUpgradeInactive(access);
-    const after = lstatSync(target);
-    requireEngine(
-      after.isFile() &&
-        !after.isSymbolicLink() &&
-        after.nlink === 1 &&
-        after.dev === before.dev &&
-        after.ino === before.ino,
-      'database was substituted',
-    );
+    finishSessionEngineRead(database, readOutcome, access, target, before, 'database was substituted');
   }
 }

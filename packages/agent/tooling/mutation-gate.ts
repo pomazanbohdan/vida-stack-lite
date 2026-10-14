@@ -812,11 +812,15 @@ const partitions: MutationPartition[] = [
     report: 'mutation-bun-governance-and-public-contracts.json',
   },
   {
-    name: 'bun-project-upgrade-fresh-artifacts-storage',
+    name: 'bun-project-upgrade-lifecycle',
     environment: 'bun',
-    sources: ['src/config/project-upgrade-artifacts.ts', 'src/config/project-upgrade-storage.ts'],
+    sources: [
+      'src/config/project-upgrade-artifacts.ts',
+      'src/config/project-upgrade-storage.ts',
+      'src/config/project-upgrade.ts',
+    ],
     tests: [...commonTests, 'tests/project-upgrade-lifecycle.test.ts'],
-    report: 'mutation-bun-project-upgrade-fresh-artifacts-storage.json',
+    report: 'mutation-bun-project-upgrade-lifecycle.json',
   },
   {
     name: 'bun-project-upgrade-storage-admission',
@@ -826,14 +830,11 @@ const partitions: MutationPartition[] = [
     report: 'mutation-bun-project-upgrade-storage-admission.json',
   },
   {
-    name: 'pending-project-upgrade-coordinator-and-existing-merge',
-    environment: 'pending',
-    sources: ['src/config/project-upgrade-existing-storage.ts', 'src/config/project-upgrade.ts'],
-    intendedTests: [
-      'tests/project-upgrade-existing-storage.test.ts',
-      'tests/project-upgrade-lifecycle.test.ts',
-      'tests/bun/project-upgrade-existing-storage-admission.test.ts',
-    ],
+    name: 'bun-project-upgrade-existing-storage-image',
+    environment: 'bun',
+    sources: ['src/config/project-upgrade-existing-storage.ts'],
+    tests: [...commonTests, 'tests/project-upgrade-existing-storage.test.ts'],
+    report: 'mutation-bun-project-upgrade-existing-storage-image.json',
   },
   {
     name: 'bun-orchestration-recovery-contracts',

@@ -6,15 +6,9 @@ import {
   assertWorkspaceDatabaseRelativePath,
   queryWorkspaceRowUnknown,
   queryWorkspaceRowsUnknown,
-  workspaceDatabaseFileIdentity,
 } from './workspace-database-raw.js';
 
-export {
-  assertWorkspaceDatabaseRelativePath,
-  queryWorkspaceRowUnknown,
-  queryWorkspaceRowsUnknown,
-  workspaceDatabaseFileIdentity,
-};
+export { assertWorkspaceDatabaseRelativePath, queryWorkspaceRowUnknown, queryWorkspaceRowsUnknown };
 
 /** Every package caller supplies the exact workspace before opening an existing file. */
 export function openExistingWorkspaceDatabase(

@@ -581,6 +581,13 @@ Await adapter cleanup before observing its outcome. Preserve sole error identity
 explicit failed-undefined outcomes and work-before-cleanup cause order. An opaque
 owner ordering control remains separate from native configured-caller evidence.
 
+For engine post-close fences, introduce target inode replacement or upgrade-path
+presence only after the actual source close and cross it with successful/failed
+reads. Retain the displaced inode for identity controls. Observe the paired gate
+object at `BEGIN DEFERRED`, not every close for its filename: bootstrap verification
+has a distinct handle. Require source-before-gate close and both closed handles.
+Use explicit string scenario labels so Bun's parameterized names stay distinct.
+
 For public consumer migration reader tests, use the existing public-store fixture
 option rather than its synthetic workspace. Reset close observations when the
 selected verified capture starts; count completed native closes, preserving the
