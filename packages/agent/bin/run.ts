@@ -2035,12 +2035,15 @@ export function writeDurable(file: string, value: unknown): void {
   const target = `${file}.pending-${randomUUID()}`;
   const fd = openSync(target, 'wx', 0o600);
   try {
-    try {
-      writeFileSync(fd, bytes);
-      fsyncSync(fd);
-    } finally {
-      closeSync(fd);
-    }
+    withWorkspaceDatabaseClose(
+      fd,
+      () => {
+        writeFileSync(fd, bytes);
+        fsyncSync(fd);
+      },
+      closeSync,
+      'Cutoff write and descriptor close failed.',
+    );
     renameSync(target, file);
   } catch (error) {
     try {

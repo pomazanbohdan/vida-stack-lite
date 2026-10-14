@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input before this packet: `73d7eff7a5676f607981bc78ec2a2b0f44f0fce5` at origin/main.
+- Published input: `b0a34604cf6a1e5606435c370a01bcf975f3ef93` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -145,7 +145,7 @@ simple optional-access changes do not reduce the inventory's counted decisions.
 These blockers require a reviewed design, not disguised decisions or raised caps.
 The1945-role partial and all full numeric prerequisites remain incomplete.
 
-## Current research repair and Vex packet
+## Published research repair and Vex packet
 
 The repository owner selects Pstack for every development contour. Root uses
 the installed entry and focused root-cause, domain-model, writing and review
@@ -179,7 +179,11 @@ Corrected scoped lint and three-file format check passed at
 `research-cleanup-format-final-check-20261014.log` in the same attachments root.
 The unbound-method warning in the earlier lint attempt remains retained; explicit
 Reflect capture preserves the real receiver without a lint suppression.
-Full numeric, SDK/native qualification and this packet's publication remain open.
+Packetb0a3460 passed ordinary strict precommit:463types/0errors and458formatted
+files plus lint/Knip. Push to origin/main was confirmed at the exact full SHA
+above. Logs: `/workspace/attachments/research-vex-strict-commit-20261014.log` and
+`research-vex-push-20261014.log` in the same root. BASE/root bun.lock remain
+untracked and untouched. Full numeric and SDK/native qualification stay open.
 
 Only the two changed Source files were re-inventoried; all other rows were reused.
 They contain106roles, up from100. Global capture now7707roles/149Sources:
@@ -212,6 +216,59 @@ do not establish exhaustive semantic resolution, types or numeric function proof
 The owner's later directive makes Vex the ordinary navigation default in Sidecar
 and every blind-agent bootstrap. Do not run queries during frozen checks or
 overlap cold indexing with compiler/coverage; fresh hosts require preparation.
+
+## Current controller durable-write correction
+
+Vex show and strict usages selected `bin/run.ts#writeDurable`, its cutoff caller
+and the existing durable publication regression. The descriptor finally can
+mask the write/fsync error before the outer pending-unlink accumulator runs.
+Blind, disjoint test writing produced causal RED2FAIL/1PASS before Source changed:
+`/workspace/attachments/controller-durable-causal-red-20261014.log`.
+The existing generic accumulator now preserves write/fsync plus close causes
+before the original outer pending-unlink accumulator. Exclusive create, rename
+and afterimage checks retain their order. Fresh independent review approves:
+`/workspace/attachments/controller-durable-final-review-20261014.md`.
+Vex evidence: `/workspace/attachments/vex-next-repair-durable-owner-20261014.json`
+and `vex-next-durable-references-20261014.json` in the same root.
+
+The complete two-file selection, exec18358, ended exit1 after89.05s:
+34PASS/3FAIL/269expect calls/37cases. Raw log:
+`/workspace/attachments/controller-durable-complete-selection-20261014.log`.
+All new writer cases, existing rename-failure and cutoff-exclusion cases passed.
+These recovery cases timed out at5000ms and remain open:
+
+- read-only CLI exposes a retained request; release and lost-ack retry preserve original evidence;
+- retained apply rejects current selected project integration and storage drift without effects;
+- missing engine journal and surviving base or unknown alias deny with custody intact.
+
+This is a failed complete selection, not whole-flow or numeric PASS.
+
+Source/tests432file types passed. A redundant unknown|null test annotation was
+found by lint after that run was already launched. Root waited for terminal exit,
+removed the redundant type union and reran the complete new file only:
+3PASS/0FAIL/23expect calls/1.25s, exec47593, exit0,
+`/workspace/attachments/controller-durable-final-focused-20261014.log`.
+Corrected lint passed at `controller-durable-lint-final-20261014.log`; formatted
+Source/test passed at `controller-durable-format-final-20261014.log` in that root.
+No unchanged broad retry or timeout inflation occurred. Fault roots remain logged
+and retained. The ordinary test:pinned selection now includes the new test file.
+
+Only bin/run.ts was re-inventoried using the existing diagnostic owner:
+557roles, previously556; global7708/149Sources. Capture:
+`/workspace/attachments/quality-resume-current-inventory-controller-durable-20261014.json`.
+Receipt: `/workspace/attachments/controller-durable-source-capture-20261014.json`.
+No bin/run.ts roles or binding exist in the1945-role partial, which remains
+unchanged/non-executable. Missing current dispositions now5763; historical4260.
+
+Two blind analyses recommend separate fresh-fixture cases for three independent
+configuration drift variants and six independent journal/engine faults. Keep the
+dependent inspect/apply/reopen/retry sequence together pending real phase evidence.
+Its fixture close currently removes roots without successful completion/deadline
+proof; fix that existing custody defect. Raw new Database handles have no paired
+admission lease and must retain their native close owner. Reports:
+`/workspace/attachments/entrypoint-timeout-analysis-20261014.md` and
+`entrypoint-fixture-custody-analysis-20261014.md` in that root. Actual late-work
+overlap is not proven. Do not replay old operations or infer quiescence from timeout.
 
 Independent release-family validation covers172current/98historical roles:
 93retained/79new/5removed-or-moved, without duplicate/stale/foreign IDs or cap

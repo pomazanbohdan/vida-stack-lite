@@ -171,6 +171,15 @@ held maintenance fence. Restore the native spy before shared close retry and a
 new observer; retain the interrupted fixture. Named filesystem-import interception
 uses the qualified awaited module mock/restoration pattern in TESTING.
 
+Controller `writeDurable` controls preserve undefined write, descriptor-close and
+pending-unlink causes, and fsync plus close causes after successful unlink.
+Exercise real exclusive creation and native descriptor close through scoped named
+filesystem mocks; assert unchanged prior target bytes and exact pending custody.
+Keep fault roots even after passing assertions. An ordinary write after module
+restoration must publish exact JSON bytes with no pending file. The shared
+descriptor accumulator preserves existing rename, afterimage and outer cleanup
+behavior; these controls do not qualify native I/O errors or whole-controller flow.
+
 Read-only dispatch repair replay checks the exact persisted payload and digest.
 The existing Host-backed idempotence case rejects conflicting strings and BLOBs
 in either column with the same generation-conflict diagnostic, preserves Host,

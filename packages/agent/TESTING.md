@@ -1287,6 +1287,12 @@ intercept these named bindings. Keep module replacement out of concurrent bodies
 and restore it before any other case or registered cleanup uses the dependency.
 See [Bun module mocks](https://bun.com/docs/test/mocks#module-mocks-with-mockmodule).
 
+The public controller durable writer follows the same descriptor accumulator.
+Its regressions retain ordered write/fsync, real-close and unlink failures,
+including an undefined write cause, and unchanged prior target bytes. Retain both
+fault fixtures even when their assertions pass; ordinary success cleans its own
+root only after exact published-byte and no-pending-file assertions.
+
 Engine-reader close controls retain the original close, upgrade-inactive and
 physical-file identity fence order. Exercise both successful and rejected reads
 with drift introduced after admitted open/native source close. Capture the actual
