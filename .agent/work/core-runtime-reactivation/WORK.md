@@ -11375,3 +11375,44 @@ the aliases module-private; declare that exact generated-child fixture entry in
 existing Knip config, with no blanket ignore. Current static remains452TS0 and
 typedlintPASS. Retry the ordinary strict hook on this precise restaged correction;
 no hook bypass and no runtime behavior change or duplicate suite required.
+
+## 2026-10-14 — resumed current coverage and automatic input discovery
+
+Actual HEAD/origin/main are acfce5c (ordinary strict publication completed).
+SDK0.1.4 was freshly formed from that Source without suites; actual distributed
+SDK authority denial1PASS/4assertions/4.22s is recorded in
+batch-v15-current-sdk-auth-native.log. No release acceptance or Runtime activation.
+BASE/ and root bun.lock remain untouched/untracked.
+
+Six blind Luna read-only lanes revalidate incremental admission, resource deltas,
+quality/frozen prerequisites, SQL forms, bundle upgrade and actual test costs.
+The current review anchor missed a new fixture, outcome tooling, tsconfig and
+five SDK artifacts. User explicitly requests automation: the existing input
+owner now exposes one shared SDK inventory and one pure review-path delta.
+Git supplies added helper/test paths; only supported test/spec files join the
+selection. Coverage roots and SDK output membership come from their existing
+owners. Current preparation reads/hashes only the delta; actual full execution
+capture still denies a mismatch. No automatic resource grant or receipt-derived
+input inventory. Initial regressions v16-input-discovery-red.log and
+v16-helper-discovery-red.log fail on the missing APIs as expected; current
+static/green qualification is pending. Formation freshness must be updated
+again after publication because the builder input owner changed.
+
+Resource review also finds audit-package-context afterEach draining roots before
+fallible deletion, an F07 analogue. That repair is queued with independent root
+accounting and same error/retention rules. No unchecked timeout increase, common
+resource tag removal, AUX retirement or archival UNKNOWN replay is planned.
+Dynamic CRAP remains blocked by missing exhaustive frozen plan; complete
+coverage and assertion-confirmed mutation remain OPEN. Next: finish this small
+automation packet, strict publish, fresh SDK then one fresh300000ms full run.
+
+Automatic-discovery qualification: v16-discovery-corrected-static.log reports
+452capturedTS/451program0diagnostics, Source100/0 and typedlintPASS. A transient
+typed Bun arrayContaining diagnostic was fixed with direct typed membership
+assertions, not suppressed. v16-discovery-green.log covers the complete existing
+quality-projection and SDK-formation capture files. Blind admission review
+confirms all eight missing current inputs are now included, helper selection is
+deduplicated and no resource authorization is inferred. Root alone publishes
+the exact small packet through ordinary strict hook; no Source reads/edits by
+workers during the hook. The retained incremental preparation now consumes the
+package-owned path discovery instead of a handwritten additions list.

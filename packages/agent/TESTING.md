@@ -171,6 +171,14 @@ mutated exposed buffer cannot inherit the owner's private SDK projection.
 Captured-byte validation hashes actual bytes, never caller-supplied digests.
 Missing/stale artifacts block the run; form them separately without suites.
 
+Incremental review preparation reuses `coverageReviewInputPaths` from the same
+input owner. It adds published Git test inputs, keeps helpers out of the selected
+test set, and derives runner/SDK inputs from maintained inventories. Refresh
+changed inputs and current SDK outputs with one bounded delta read. This is
+review metadata only: it does not authorize resources, replace the execution
+capture, or infer an import closure from the formation receipt. The actual
+captured closure must still match the reviewed scope before any producer starts.
+
 Every acquired coverage operation records a separate diagnostic under
 `coverage/bun-unified/operation-outcomes/<run-id>.json`. Native producer close
 observations are recorded before a spent budget can stop report assembly.

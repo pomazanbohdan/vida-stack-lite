@@ -6,9 +6,12 @@ import path from 'node:path';
 import { mutationToolInputs } from '../tooling/mutation-evidence.js';
 import { orchestrationDeadline, remainingChildTimeoutMs } from '../tooling/quality-final.js';
 import { expectRejection } from './helpers/expect-rejection.ts';
+import { expectedJavascriptFiles } from '../tooling/maintained-source-inventory.ts';
 import {
   capturedModuleInputs,
   coverageToolInputs,
+  coverageReviewInputPaths,
+  sdkFormationToolInputPaths,
   qualityFingerprint,
   qualityInputProjections,
   readQualityInputs,
@@ -67,6 +70,84 @@ describe('final quality deadlines', () => {
 });
 
 describe('final quality input projections', () => {
+  test('review input delta discovers helpers and owned SDK inputs without selecting helper files as tests', () => {
+    const discovered = coverageReviewInputPaths(
+      {
+        sources: [{ path: 'src/current.ts', sha256: 'a'.repeat(64) }],
+        test_inputs: [{ path: 'tests/configured-workflow.test.ts', sha256: 'b'.repeat(64) }],
+        tool_inputs: [{ path: 'tooling/bun-coverage-evidence.ts', sha256: 'c'.repeat(64) }],
+        test_selection: { mode: 'full-current-test-set', tests: ['tests/configured-workflow.test.ts'] },
+      },
+      ['tests/helpers/new-fixture.ts', 'tests/new-case.test.ts', 'src/current.ts'],
+    );
+    expect(discovered).toMatchObject({
+      added_tests: ['tests/helpers/new-fixture.ts', 'tests/new-case.test.ts'],
+      selected_tests: ['tests/configured-workflow.test.ts', 'tests/new-case.test.ts'],
+    });
+    for (const file of [
+      'tooling/coverage-run-outcome.ts',
+      'tsconfig.json',
+      'dist/sdk-formation.json',
+      ...expectedJavascriptFiles.map((file) => 'dist/src/' + file),
+    ])
+      expect(discovered.added_tools).toContain(file);
+    for (const file of [
+      'src/current.ts',
+      'tests/helpers/new-fixture.ts',
+      'tests/new-case.test.ts',
+      'dist/sdk-formation.json',
+    ])
+      expect(discovered.refresh_paths).toContain(file);
+  });
+
+  test('review input discovery shares the current SDK artifact inventory and excludes inert or historical selections', () => {
+    expect(
+      sdkFormationToolInputPaths('current', {
+        mode: 'full-current-test-set',
+        tests: ['tests/configured-workflow.test.ts'],
+      }),
+    ).toEqual([
+      'tooling/build-package.ts',
+      'tsconfig.json',
+      'dist/sdk-formation.json',
+      ...expectedJavascriptFiles.map((file) => 'dist/src/' + file),
+    ]);
+    expect(sdkFormationToolInputPaths('current', { mode: 'full-current-test-set', tests: [] })).toEqual([]);
+    expect(
+      sdkFormationToolInputPaths('published-baseline-bun-native', {
+        mode: 'published-baseline-bun-native',
+        tests: ['tests/configured-workflow.test.ts'],
+      }),
+    ).toEqual([]);
+  });
+
+  test('review input discovery rejects historical anchors and deduplicates current additions', () => {
+    expect(() =>
+      coverageReviewInputPaths(
+        {
+          sources: [],
+          test_inputs: [],
+          tool_inputs: [],
+          test_selection: { mode: 'published-baseline-bun-native', tests: [] },
+        },
+        [],
+      ),
+    ).toThrow('requires a current test selection');
+    const result = coverageReviewInputPaths(
+      {
+        sources: [],
+        test_inputs: [{ path: 'tests/old.test.ts', sha256: 'a'.repeat(64) }],
+        tool_inputs: coverageToolInputs.map((file) => ({ path: file, sha256: 'b'.repeat(64) })),
+        test_selection: { mode: 'full-current-test-set', tests: ['tests/old.test.ts'] },
+      },
+      ['tests/new.test.ts', 'tests/new.test.ts', 'tests/old.test.ts', 'README.md'],
+    );
+    expect(result.added_tests).toEqual(['tests/new.test.ts']);
+    expect(result.added_tools).toEqual([]);
+    expect(result.selected_tests).toEqual(['tests/new.test.ts', 'tests/old.test.ts']);
+    expect(result.refresh_paths).toEqual(['tests/new.test.ts', 'tests/old.test.ts']);
+  });
+
   test('captures explicit package bytes once per canonical sorted path and retains the snapshot', async () => {
     const root = fixtureRoot();
     const selected = ['tooling/quality-final.ts', 'package.json', 'tooling/quality-final.ts'];

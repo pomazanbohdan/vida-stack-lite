@@ -673,7 +673,8 @@ function qualityToolInputPaths(
   return [...new Set([...coverageToolInputs, ...additionalToolInputs, ...contractInputs, ...baselineInputs])].sort();
 }
 
-function sdkFormationToolInputPaths(
+/** Shared capture/review inventory; membership comes from selection and the maintained SDK owner. */
+export function sdkFormationToolInputPaths(
   selectionMode: 'current' | 'published-baseline-bun-native',
   selection: TestSelection,
 ): string[] {
@@ -684,6 +685,37 @@ function sdkFormationToolInputPaths(
     'dist/sdk-formation.json',
     ...expectedJavascriptFiles.map((file) => `dist/src/${file}`),
   ];
+}
+
+/** Incremental review membership only; execution still captures and verifies its full closure. */
+export function coverageReviewInputPaths(
+  anchor: Pick<CoverageInputs, 'sources' | 'test_inputs' | 'tool_inputs' | 'test_selection'>,
+  publishedChanged: readonly string[],
+): { added_tests: string[]; added_tools: string[]; selected_tests: string[]; refresh_paths: string[] } {
+  if (anchor.test_selection.mode !== 'full-current-test-set')
+    throw new Error('Incremental review discovery requires a current test selection.');
+  const known = new Set([...anchor.sources, ...anchor.test_inputs, ...anchor.tool_inputs].map((row) => row.path));
+  const added_tests = [
+    ...new Set(publishedChanged.filter((file) => file.startsWith('tests/') && !known.has(file))),
+  ].sort();
+  const selected_tests = [
+    ...new Set([
+      ...anchor.test_selection.tests,
+      ...added_tests.filter((file) => /\.(?:test|spec)\.(?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$/u.test(file)),
+    ]),
+  ].sort();
+  const sdkPaths = sdkFormationToolInputPaths('current', { mode: 'full-current-test-set', tests: selected_tests });
+  const toolPaths = new Set(anchor.tool_inputs.map((row) => row.path));
+  const added_tools = [...new Set([...coverageToolInputs, ...sdkPaths])].filter((file) => !toolPaths.has(file)).sort();
+  const refresh_paths = [
+    ...new Set([
+      ...publishedChanged.filter((file) => known.has(file)),
+      ...added_tests,
+      ...added_tools,
+      ...sdkPaths.filter((file) => file.startsWith('dist/')),
+    ]),
+  ].sort();
+  return { added_tests, added_tools, selected_tests, refresh_paths };
 }
 
 function verifyPublishedBaselineInputs(
