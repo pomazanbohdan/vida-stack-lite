@@ -4,7 +4,7 @@ Status date: 2026-10-14. This page is the current execution record. It does not 
 
 ## Current state
 
-- The correction Source packet is published as `2caf6ea736f824e4eb29c619fc295ea687902b55` at origin/main. Its input baseline was `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e`. Source publication does not prove native installation, activation or acceptance.
+- Published input for the current repair packet: `2ed0e5793aa021da4f41766210ea06d1516a2298` at origin/main. Source publication does not prove native installation, activation or acceptance. The current correction and proof are recorded below.
 - The maintained source migration from handwritten JavaScript to TypeScript is complete. Help and inventory repairs are implemented. These are not pending work.
 - The SDK package formed at `7f4c265` passed its own extracted archive verifier. This proves package contents and portable-lock handling only.
 - The full run at `.tmp/p0p1-resume-f553252/current-b9a4108-full-paused.log` ended `UNKNOWN`. The number 1459 is a throw line in `run-bun-coverage.ts`, not an outcome identifier. Preserve that exact result. It has no admitted numeric report and is not a pass or a replay trigger.
@@ -109,9 +109,8 @@ represents1433current roles:1127retained/306new, plus1published removal and
 87bound files. Four stale current IDs are repaired. Independent review corrected
 a candidate's false uncovered claim before the retained budget was joined from
 the admitted historical inventory. All allowances remain unchanged.
-Selected rows have fresh scope bindings; eight older whole-file bindings differ
-and still require their remaining family review. This remains non-executable,
-non-exhaustive lineage, with6262current and4573baseline dispositions unrepresented.
+This1433-role packet is superseded by the reviewed family join below. It remains
+historical partial evidence, never an executable or exhaustive budget plan.
 
 Root retained byte-identical official Bun1.4.2 evidence at
 `.tmp/tooling-research/baseline-runtime-evidence-20261014/bun`, mode0600.
@@ -126,6 +125,78 @@ After publication, the actual current prerequisite owners report two GAPs:
 ENOENT for the complete frozen plan, and SDK receipt inputs differing from
 selected current formation bytes. No suite or build was launched by this probe.
 Receipt: `/workspace/attachments/quality-current-prerequisites-20261014.json`.
+
+## Current repair cleanup and family join
+
+Root reproduced a public delivered-work repair defect: admitted database close
+failure hid the original missing-plan error. The CLI now uses the existing shared
+body/cleanup accumulator, preserving both causes and the paired retained-close
+owner. Close still precedes the database identity check; authorization, CAS,
+UNKNOWN and inspect/plan/apply/resume guards remain in place. Independent review
+found no guard or custody regression. Causal RED: expected2errors, actual1,
+`/workspace/attachments/delivered-repair-close-causal-red-20261014.log`.
+The earlier RED log with a nonexistent fixture close API is invalid causal proof.
+
+The documented focused test project previously failed with1432TS5097 and9TS6059:
+it inherited the Source extension restriction and excluded imported repository
+tooling from rootDir. Tests-only `.ts` import permission plus repository rootDir
+with noEmit fixes this without changing strict options, selection or Source policy.
+Current focused typecheck:431files/0errors,
+`/workspace/attachments/delivered-repair-types-final-20261014.log`.
+
+Six independently reviewed family packets are joined from the genuine measured
+baseline:1712current roles,1278retained/434new,3baseline removals,96bound files.
+Thirteen reviewed families have complete current Source bindings. The one changed
+CLI was re-inventoried alone; other AST rows were reused. Original allowances are
+unchanged; new callbacks keep prior10/10. Receipt:
+`/workspace/attachments/lineage-next-join-20261014.json`.
+The current inventory has7697roles:5985current and4420baseline dispositions remain
+unrepresented. The partial stays non-executable/non-exhaustive. This is progress
+on prerequisites, not coverage, CRAP or mutation acceptance.
+
+Affected preliminary run: the new causal regression passed319ms, both public
+plan/apply/resume variants passed, normal interruption passed, delivery interruption
+timed out at the unchanged5000ms default. Exact result4PASS/1FAIL:
+`/workspace/attachments/delivered-repair-green-20261014.log`.
+Keep this failure separate from the causal fix proof. Root is locating its cost;
+no full campaign, Source fallback, local SDK formation or old UNKNOWN replay ran.
+
+The phase diagnostic completed the five required public calls at5561ms, each
+phase below2s, and retained its FAIL result at the5s default. Temporary markers
+were removed. Adjacent work/ledger assertions share one snapshot; public fresh
+input checks remain separate. The dependent interruption chain has a documented
+8s case exception, while ordinary cases retain5000ms and full coverage300000ms.
+Final affected completion:5PASS/0FAIL/44assertions,19.75s command total;
+`/workspace/attachments/delivered-repair-completion-20261014.log`.
+This is no matched speedup or full-suite result. Final focused test types:
+431files/0errors, `delivered-repair-types-completion-20261014.log` in the same
+attachments directory. Worktree documentation check:5documents/36links,0failures,
+`/workspace/attachments/delivered-repair-documentation-20261014.log`.
+
+The next blind candidate wave identifies budget questions in install/help,
+standalone resource validation and read-only repair lineage. These are under
+independent review, not admitted pairings or new budget allowances. The analogous
+qualified runtime continuation `try/finally` close also needs a causal regression
+and the same shared error owner. Retained failed evidence is not overwritten.
+
+Independent implementation-responsibility review corrected one prior pairing:
+the historical pure read-only planner's body belongs to the Source builder,
+not its now-thin CLI context/snapshot wrapper. Original40/1640 ceilings follow
+the builder exactly once; the wrapper is new at prior10/10. Builder CC43 remains
+an explicit numeric blocker, with no allowance increase. This adds one represented
+current role:1713total,1278retained/435new,3removals,97bound files,5984current
+dispositions missing. Original thirteen-family complete bindings remain valid;
+this correction binds only selected roles, not the whole read-only repair family.
+Receipt: `/workspace/attachments/lineage-planner-responsibility-correction-20261014.json`.
+
+First strict commit attempt failed typed lint after format458files and compiler
+463files/0errors: the new regression captured an unbound method and destructured
+AggregateError.errors as implicit any. It now captures/narrows an unknown callable
+and reads error entries as unknown. No lint suppression or hook bypass was added.
+Original failure: `/workspace/attachments/delivered-repair-commit-20261014.log`.
+Scoped typed lint now has0diagnostics. The altered callable capture regression
+passes1case/6assertions after that correction:
+`/workspace/attachments/delivered-repair-close-lint-green-20261014.log`.
 
 ## Historical record
 

@@ -60,6 +60,11 @@ test, not to the whole file, phase or pool. Keep case exceptions and aggregate
 child, cleanup and report budgets separate. Do not raise a timeout to make a
 result pass.
 
+A justified composite-case exception needs the dependent contract and measured
+phase costs, not only an overrun. Preserve its freshness/CAS checks and document
+the exception in TESTING. Reuse one snapshot for adjacent work/ledger assertions
+only when no effect separates them; never cache live authority across public calls.
+
 Scope hooks to cases that own the fixture. Await all work and restore mocks and
 resources in `finally`. Keep cleanup in `finally` while preserving the original
 and cleanup errors. Register each test file's own cleanup hook. If a case times

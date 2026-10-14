@@ -3,8 +3,9 @@
   "compilerOptions": {
     "allowJs": true,
     "checkJs": true,
+    "allowImportingTsExtensions": true,
     "noEmit": true,
-    "rootDir": ".."
+    "rootDir": "../../.."
   },
   "include": ["**/*.mjs", "**/*.ts", "../tooling/**/*.d.ts"],
   "exclude": []

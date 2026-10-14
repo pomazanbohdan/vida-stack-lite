@@ -462,6 +462,11 @@ that a test's types compile. Before moving public CLI/bootstrap paths, verify
 the generated artifact's exact Source binding, manifest/exports closure and
 actual supported version/help/dispatch routes.
 
+The focused `tests/tsconfig.json` permits `.ts` imports with `noEmit:true` and
+uses the repository root for `rootDir`, because maintained tests import declared
+repository tooling. Its selection and inherited strict options stay unchanged.
+This does not change the package Source project's extension or emission policy.
+
 Scenario matrices may reuse explicitly reviewed contract applicability profiles
 and scenario definitions, while retaining exact function IDs and unique named
 test cases. Profiles do not attest to assertions or executed behavior. Generated
@@ -799,6 +804,14 @@ the issued wire result in one attempt. The related independent report/GAP/high-
 risk cases retain the5s default.
 This classifies the supported integration contract; it establishes no processing
 speed improvement and does not relax the2s product target or freshness checks.
+
+The delivered-work public interruption case has an explicit8s exception for
+five dependent public calls: plan, intake-denied apply, interrupted apply, resume
+and exact retry, with persisted UNKNOWN/fence checks between them. A phase probe
+measured the complete sequence at5.56s and each phase below2s. The ordinary
+three-call repair and body/cleanup regression keep the5s default. This allowance
+preserves the composite contract; it claims no speedup and changes no product
+target, protocol threshold or full coverage operation budget.
 
 On the qualified Bun 1.4.3, a local inert control showed that `[test] timeout`
 in TOML did not enforce the requested timeout; use the CLI option. Another

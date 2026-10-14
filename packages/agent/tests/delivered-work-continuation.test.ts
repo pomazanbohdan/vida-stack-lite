@@ -24,6 +24,7 @@ import type {
   WorkState,
 } from '../src/host-state.ts';
 import { HostStateStore } from '../src/host-state.ts';
+import { retryPendingWorkspaceDatabaseCloses } from '../src/config/workspace-database-raw.js';
 import type {
   FailedPrewriterRecoveryReceipt,
   FailedPrewriterTransitionRequest,
@@ -4121,8 +4122,9 @@ test.each(['delivery', 'normal'])(
     expect(planned.branch).toBe('configured_frontier');
     expect((await runDeliveredWorkContinuationRepair([...prefix, '--mode', 'apply'])).status).toBe('applied');
     expect((await runDeliveredWorkContinuationRepair([...prefix, '--mode', 'resume'])).status).toBe('already_applied');
-    expect(f.store.readHostStateSnapshot(f.identity).work).toEqual(input.receipt.successor_work);
-    expect(f.store.readHostStateSnapshot(f.identity).ledger).toEqual(input.receipt.successor_ledger);
+    const finalSnapshot = f.store.readHostStateSnapshot(f.identity);
+    expect(finalSnapshot.work).toEqual(input.receipt.successor_work);
+    expect(finalSnapshot.ledger).toEqual(input.receipt.successor_ledger);
     const row: unknown = f.db
       .query('SELECT payload,digest FROM agent_host_delivered_work_continuation WHERE workspace_id=?')
       .get(workspaceId);
@@ -4131,6 +4133,80 @@ test.each(['delivery', 'normal'])(
   },
 );
 
+test('public delivered-work repair preserves a plan-read failure when admitted database close also fails', async () => {
+  const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot('normal');
+  const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+  mkdirSync(path.dirname(databasePath), { recursive: true });
+  const f = await continuationFixture({
+    root,
+    config,
+    workspaceId,
+    databasePath,
+    repositoryRoot: root,
+    identity: input.receipt.request.identity,
+  });
+  const prefix = [
+    '--kind',
+    'delivered-work-continuation',
+    '--project-root',
+    root,
+    '--repair-id',
+    'missing-plan-close-failure',
+    '--mode',
+    'apply',
+  ];
+  const closeError = new Error('injected delivered-work repair close failure');
+  const originalClose: unknown = Reflect.get(Database.prototype, 'close');
+  if (typeof originalClose !== 'function') throw new Error('SQLite close method is unavailable');
+  let closeFaultInjected = false;
+  const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, force?: boolean) {
+    if (!closeFaultInjected && this !== f.db && path.resolve(this.filename) === path.resolve(databasePath)) {
+      closeFaultInjected = true;
+      throw closeError;
+    }
+    Reflect.apply(originalClose, this, [force]);
+  });
+  let assertionFailed = false;
+  let assertionFailure: unknown;
+  try {
+    let caught: unknown;
+    try {
+      await runDeliveredWorkContinuationRepair(prefix);
+    } catch (error) {
+      caught = error;
+    }
+    expect(closeFaultInjected).toBe(true);
+    expect(caught).toBeInstanceOf(AggregateError);
+    if (!(caught instanceof AggregateError)) throw new Error('Expected repair and admitted-close failures');
+    expect(caught.errors).toHaveLength(2);
+    const repairError: unknown = caught.errors[0];
+    const cleanupError: unknown = caught.errors[1];
+    expect(repairError).toMatchObject({ code: 'ENOENT' });
+    expect(cleanupError).toBeInstanceOf(AggregateError);
+    if (!(cleanupError instanceof AggregateError)) throw new Error('Expected retained admitted-close failure');
+    expect(cleanupError.errors).toEqual([closeError]);
+  } catch (error) {
+    assertionFailed = true;
+    assertionFailure = error;
+  } finally {
+    closeSpy.mockRestore();
+  }
+  let cleanupFailed = false;
+  let cleanupFailure: unknown;
+  try {
+    retryPendingWorkspaceDatabaseCloses();
+  } catch (error) {
+    cleanupFailed = true;
+    cleanupFailure = error;
+    retainContinuationFixtureRoot(root);
+  }
+  if (assertionFailed && cleanupFailed)
+    throw new AggregateError([assertionFailure, cleanupFailure], 'Repair close regression and fixture cleanup failed');
+  if (assertionFailed) throw assertionFailure;
+  if (cleanupFailed) throw cleanupFailure;
+});
+
+// Five public repair calls measured 5.56s total, with no phase reaching 2s.
 test.each(['delivery', 'normal'])(
   'frontier repair rechecks accepted intake before reservation and retains exact UNKNOWN recovery after interruption [%s]',
   async (proofKind) => {
@@ -4208,9 +4284,11 @@ test.each(['delivery', 'normal'])(
     f.db.exec('DROP TRIGGER frontier_repair_interrupt');
     expect((await runDeliveredWorkContinuationRepair([...prefix, '--mode', 'resume'])).status).toBe('applied');
     expect((await runDeliveredWorkContinuationRepair([...prefix, '--mode', 'resume'])).status).toBe('already_applied');
-    expect(f.store.readHostStateSnapshot(f.identity).work).toEqual(input.receipt.successor_work);
-    expect(f.store.readHostStateSnapshot(f.identity).ledger).toEqual(input.receipt.successor_ledger);
+    const finalSnapshot = f.store.readHostStateSnapshot(f.identity);
+    expect(finalSnapshot.work).toEqual(input.receipt.successor_work);
+    expect(finalSnapshot.ledger).toEqual(input.receipt.successor_ledger);
   },
+  8_000,
 );
 
 test('Host preserves an issued UNKNOWN journal action and denies continuation without reissue', async () => {

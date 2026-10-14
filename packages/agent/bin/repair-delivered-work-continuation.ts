@@ -14,6 +14,7 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import { withWorkspaceDatabaseClose } from '../src/config/workspace-database-raw.js';
 
 function required(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(`vida repair delivered-work-continuation: ${message}`);
@@ -144,14 +145,12 @@ function validatePlan(planValue: unknown, workspaceId: string): Record<string, u
   required(plan.schema === 'DeliveredWorkContinuationIntegrityRepairPlan/v1', 'repair plan schema differs');
   const digest = plan.digest;
   const { digest: _digest, ...body } = plan;
-  required(
-    typeof digest === 'string' && digestPattern.test(digest) && canonicalJsonDigest(body) === digest,
-    'frozen repair plan digest differs',
-  );
-  required(
-    isRecord(plan.inspection) && plan.inspection.workspace_id === workspaceId,
-    'repair plan belongs to another workspace',
-  );
+  required(typeof digest === 'string', 'frozen repair plan digest differs');
+  required(digestPattern.test(digest), 'frozen repair plan digest differs');
+  required(canonicalJsonDigest(body) === digest, 'frozen repair plan digest differs');
+  const inspection = plan.inspection;
+  required(isRecord(inspection), 'repair plan belongs to another workspace');
+  required(inspection.workspace_id === workspaceId, 'repair plan belongs to another workspace');
   const branch = requirePlanBranch(plan.branch);
   return { ...plan, branch };
 }
@@ -185,69 +184,74 @@ export async function runDeliveredWorkContinuationRepair(
   const databasePath = sessionHandoffDatabasePath(root, config);
   const databaseIdentity = safeIdentity(databasePath, 'configured Host database');
   const mode = value(values, '--mode');
-  const readonly = mode === 'inspect' || mode === 'plan';
+  const readonly = ['inspect', 'plan'].includes(mode);
   const database = readonly
     ? openCliWorkspaceDatabase(root, databasePath, workspaceId, true)
     : openCliHostStateDatabase(root, databasePath, workspaceId);
-  try {
-    const store = createCliHostStateStore(
-      database,
-      workspaceId,
-      undefined,
-      undefined,
-      undefined,
-      undefined,
-      root,
-      undefined,
-      undefined,
-      undefined,
-      readonly,
-    );
-    if (readonly) {
-      const projectIds = value(values, '--projects').split(',').sort();
-      const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds);
-      const inspection = store.inspectDeliveredWorkContinuationRepair(
-        {
-          repository_id: config.repository.repository_id,
-          project_ids: projectIds,
-          integrations_digest: project.integrations_digest,
-          work_id: value(values, '--work-id'),
-        },
-        Number(value(values, '--attempt')),
-        value(values, '--action-id'),
+  return withWorkspaceDatabaseClose(
+    database,
+    () => {
+      const store = createCliHostStateStore(
+        database,
+        workspaceId,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        root,
+        undefined,
+        undefined,
+        undefined,
+        readonly,
       );
-      const branch = repairBranchFromInspectionPayload(inspection.row.payload);
-      const planBody = {
-        schema: 'DeliveredWorkContinuationIntegrityRepairPlan/v1',
-        branch,
-        repair_id: repairId,
-        actor: value(values, '--actor'),
-        timestamp: value(values, '--timestamp'),
-        inspection,
-      };
-      if (mode === 'inspect')
-        return {
-          status: 'repairable_current_v1',
+      if (readonly) {
+        const projectIds = value(values, '--projects').split(',').sort();
+        const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds);
+        const inspection = store.inspectDeliveredWorkContinuationRepair(
+          {
+            repository_id: config.repository.repository_id,
+            project_ids: projectIds,
+            integrations_digest: project.integrations_digest,
+            work_id: value(values, '--work-id'),
+          },
+          Number(value(values, '--attempt')),
+          value(values, '--action-id'),
+        );
+        const branch = repairBranchFromInspectionPayload(inspection.row.payload);
+        const planBody = {
+          schema: 'DeliveredWorkContinuationIntegrityRepairPlan/v1',
+          branch,
           repair_id: repairId,
-          plan_digest: canonicalJsonDigest(planBody),
-          branch: planBody.branch,
+          actor: value(values, '--actor'),
+          timestamp: value(values, '--timestamp'),
+          inspection,
         };
-      const plan = { ...planBody, digest: canonicalJsonDigest(planBody) };
-      writePlan(access, repairId, plan);
-      return { status: 'planned', repair_id: repairId, plan_digest: plan.digest, branch: plan.branch };
-    }
-    const plan = validatePlan(readPlan(access, root, repairId), workspaceId);
-    assertApplicableRepairBranch(plan.branch);
-    if (mode === 'apply') store.reserveDeliveredWorkContinuationRepair(plan);
-    return store.applyDeliveredWorkContinuationRepair(plan);
-  } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-    const afterIdentity = safeIdentity(databasePath, 'configured Host database');
-    required(
-      databaseIdentity.dev === afterIdentity.dev && databaseIdentity.ino === afterIdentity.ino,
-      'configured Host database identity changed',
-    );
-  }
+        if (mode === 'inspect')
+          return {
+            status: 'repairable_current_v1',
+            repair_id: repairId,
+            plan_digest: canonicalJsonDigest(planBody),
+            branch: planBody.branch,
+          };
+        const plan = { ...planBody, digest: canonicalJsonDigest(planBody) };
+        writePlan(access, repairId, plan);
+        return { status: 'planned', repair_id: repairId, plan_digest: plan.digest, branch: plan.branch };
+      }
+      const plan = validatePlan(readPlan(access, root, repairId), workspaceId);
+      assertApplicableRepairBranch(plan.branch);
+      if (mode === 'apply') store.reserveDeliveredWorkContinuationRepair(plan);
+      return store.applyDeliveredWorkContinuationRepair(plan);
+    },
+    (closedDatabase) => {
+      closeWorkspaceDatabaseWithAdmission(closedDatabase);
+      const afterIdentity = safeIdentity(databasePath, 'configured Host database');
+      required(
+        databaseIdentity.dev === afterIdentity.dev && databaseIdentity.ino === afterIdentity.ino,
+        'configured Host database identity changed',
+      );
+    },
+    'Delivered work continuation repair and admitted database close failed',
+  );
 }
 function repairBranchFromInspectionPayload(payload: string): RepairBranch {
   const receipt: unknown = JSON.parse(payload);

@@ -264,3 +264,18 @@ matched speedup. Current contained prepare+verify is53493.925ms, of which instal
 is4221ms and snapshot366ms. Its separate authorization fixtures, lifecycle calls
 and pre/post integrity checks protect different boundaries; no justified removal
 was found. Keep this diagnostic separate from case timings and full coverage.
+
+The delivered-work repair interruption sequence was measured with temporary
+opt-in phase marks on Bun1.4.3. Fixture/root559.7ms, plan1288.1ms, corrupt-intake
+apply903.7ms, interrupted apply1652.4ms, first resume790.7ms, retry350.8ms and
+final snapshot15.9ms total5561.3ms. Exact diagnostic:
+`/workspace/attachments/delivered-repair-phase-diagnostic-20261014.log`.
+It timed out at the unchanged5s default; every phase completed its observations,
+but that does not turn the failed test into PASS. The marks were removed.
+Adjacent work/ledger assertions now share one snapshot. Public calls still
+revalidate fresh inputs because they span distinct effects and retained UNKNOWN
+recovery. A contract-specific8s exception covers this five-call composite case;
+other cases and operation budgets stay unchanged. No matched speedup is claimed.
+[Bun runtime behavior](https://bun.com/docs/test/runtime-behavior.md) documents
+the5000ms default and explicit per-test timeout argument. The current docs copy
+is `/workspace/attachments/bun-test-runtime-current-20261014.md`.

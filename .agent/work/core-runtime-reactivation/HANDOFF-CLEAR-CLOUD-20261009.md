@@ -102,11 +102,15 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents1433roles and has no stale current IDs; older
-whole-file binding refreshes remain pending. Current Bun1.4.3 validates the
+The current partial represents1713roles and has no stale current IDs. Thirteen
+selected families have complete current bindings; other whole-file refreshes
+and exhaustive mapping remain pending. Current Bun1.4.3 validates the
 retained measurement against byte-identical1.4.2 runtime evidence without
 executing it. Current SDK formation must include its selected receipt; local
 formation, Source fallback and partial numeric claims remain prohibited.
+Independent responsibility review corrected the old pure planner's pairing:
+its body moved into the Source builder, while the thin CLI wrapper is new.
+The builder remains a numeric blocker at CC43 against the unchanged CC40 ceiling.
 Current Source interruption/activation cases have focused proof in retained WORK
 history; they do not qualify active .vida cutover or native Runtime.
 
