@@ -280,6 +280,16 @@ no repair row published. Preserve original UNKNOWN issues and CAS checks.
 
 For unprepared recovery, check the accepted baseline, exact repository/project/integration/storage identity and current registry. Preserve the original Work binding, run and intake. Check inspect, apply, reopen and identical lost-acknowledgement retry. Require a calendar-valid RFC3339 timestamp and exact renewed-at equality. Deny impossible dates and identity drift with all Host, engine and YAML state unchanged.
 
+Keep independent identity and evidence-denial rows as separate fresh cases.
+The dependent public sequence keeps one attempt and the documented8s exception
+in TESTING. Its fixture marks completion only after all assertions and closes
+its owned raw database before deciding removal against the outer case deadline.
+Pending, failed or expired completion retains the exact root. Preserve a body
+error, including undefined, alongside cleanup errors through the existing close
+finisher. A fault after real native close proves cause aggregation, not SQLite
+I/O failure. Test incomplete retention, completed cleanup, expired retention
+and ordered body/close causes separately.
+
 Use actual SQLite JSONB fixtures. Cover unrelated valid state, matching run ID, same-work alias, malformed BLOB, NULL and JSON5. A record within the 8 MiB storage bound whose decoded JSON exceeds 8 MiB must deny before projected payload fetch. Preserve physical/count preflight and bounded decoding. Text-only records do not prove store-codec behavior.
 
 Configuration rebind uses `runtime-config` and `ConfigRebindOperation/v1`. Keep YAML and initialization schemas unchanged. Check the exact executor-only target, read-only inspect/plan, maintenance before owner YAML authoring and receipt-only CAS. Preserve provenance and stale work. Deny queued/active ownership and issued/uncertain effects. Check own-fence release, interruption, no-effect abandonment and forbidden rollback. Verify exact two-file ownership retirement and deny partial or unrelated omissions. Keep parent proof and the current changelog path valid.

@@ -99,6 +99,15 @@ child or descendant stopped. Arm a real timer before a readiness handshake when
 the test depends on observing a deadline. Keep child, cleanup and parent limits
 inside the owning case bound.
 
+Prepare public CLI child environments through the existing pinnedEnvironment
+owner before launch, preserving explicit caller overrides. A raw environment
+can make the entrypoint reload operation modules after cache-routing self-
+reexecution. This preparation changes no authority or UNKNOWN predicate.
+
+For callable CLI main tests, use its injected local exit recipient. Preserve
+the exit-code assertion without mutating the Bun test process. Check native
+command exit independently from the printed case counters.
+
 In copied snapshot fixtures, pass explicit `./` test paths so Bun does not
 rediscover copied tests. Assert exact child file and case counts when fixture
 cardinality matters. Keep fixture preparation separate from the case deadline.

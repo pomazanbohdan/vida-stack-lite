@@ -15,8 +15,9 @@ import {
   sessionHandoffDatabasePath,
 } from '../src/orchestration/persistent-session-handoff.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
+import { finishWorkspaceDatabaseClose, type DatabaseWorkOutcome } from '../src/config/workspace-database-raw.ts';
 import { sessionBridgeRunId } from '../src/orchestration/mastra-session-bridge.ts';
-import { boundedSpawnSync, commandOutcomeUnknown, executionBudget } from '../bin/bun.ts';
+import { boundedSpawnSync, commandOutcomeUnknown, executionBudget, pinnedEnvironment } from '../bin/bun.ts';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
 import {
@@ -531,7 +532,7 @@ test('lease recovery eligibility denies repeat advice while retaining expiry, CA
       },
     });
     const io = new Console({ stdout: sink, stderr: sink });
-    const originalExitCode = process.exitCode;
+    const exit: { exitCode?: number } = {};
     await main({
       isMain: true,
       args: [],
@@ -539,10 +540,9 @@ test('lease recovery eligibility denies repeat advice while retaining expiry, CA
         throw Error(message);
       },
       io,
-      exit: process,
+      exit,
     });
-    expect(process.exitCode).toBe(1);
-    process.exitCode = originalExitCode;
+    expect(exit.exitCode).toBe(1);
     const lines = output.trimEnd().split('\n');
     expect(lines).toHaveLength(1);
     const parsed: unknown = JSON.parse(lines[0]!);
@@ -670,7 +670,7 @@ function parseUnpreparedRecoveryResult(value: unknown): Record<string, unknown> 
 }
 
 // A interrupted admission fixture: real Host CAS, no Mastra producer or installation.
-function unpreparedRecoveryFixture(): {
+function unpreparedRecoveryFixture(deadlineAt: number): {
   readonly root: string;
   readonly file: string;
   readonly engineFile: string;
@@ -682,6 +682,8 @@ function unpreparedRecoveryFixture(): {
   readonly observed: () => ReturnType<typeof inspectHostWorkspaceDatabase>;
   readonly db: Database;
   readonly store: HostStateStore;
+  complete(): void;
+  fail(error: unknown): void;
   reopen(): void;
   close(): void;
 } {
@@ -868,6 +870,11 @@ function unpreparedRecoveryFixture(): {
   mkdirSync(path.dirname(file), { recursive: true });
   let db = new Database(file, { strict: true }),
     store = new HostStateStore(db, workspace, undefined, undefined, undefined, undefined, root);
+  type FixtureOutcome =
+    | { readonly status: 'pending' }
+    | { readonly status: 'completed' }
+    | { readonly status: 'failed'; readonly error: unknown };
+  let outcome: FixtureOutcome = { status: 'pending' };
   store.compareAndSwapHostState({ expectedWork: null, expectedLedger: null, nextWork: work, nextLedger: ledger });
   const journalOwner = openConfiguredMastraSessionLedger(root);
   journalOwner.close();
@@ -893,22 +900,126 @@ function unpreparedRecoveryFixture(): {
     get store() {
       return store;
     },
+    complete() {
+      outcome = { status: 'completed' };
+    },
+    fail(error) {
+      outcome = { status: 'failed', error };
+    },
     reopen() {
       db.close();
       db = new Database(file, { strict: true });
       store = new HostStateStore(db, workspace, undefined, undefined, undefined, undefined, root);
     },
     close() {
-      db.close();
-      rmSync(root, { recursive: true, force: true });
+      const workOutcome: DatabaseWorkOutcome<void> =
+        outcome.status === 'failed' ? { ok: false, error: outcome.error } : { ok: true, value: undefined };
+      finishWorkspaceDatabaseClose(
+        db,
+        workOutcome,
+        (database) => {
+          try {
+            database.close();
+          } catch (error) {
+            console.error(
+              JSON.stringify({
+                operation: 'unprepared-recovery-fixture',
+                root,
+                cleanup: 'retained',
+                reason: 'database-close-failed',
+              }),
+            );
+            throw error;
+          }
+          if (outcome.status === 'completed' && Number.isFinite(deadlineAt) && performance.now() < deadlineAt) {
+            console.log(JSON.stringify({ operation: 'unprepared-recovery-fixture', root, cleanup: 'remove-started' }));
+            try {
+              rmSync(root, { recursive: true, force: true });
+              console.log(JSON.stringify({ operation: 'unprepared-recovery-fixture', root, cleanup: 'removed' }));
+            } catch (error) {
+              console.error(
+                JSON.stringify({ operation: 'unprepared-recovery-fixture', root, cleanup: 'remove-failed' }),
+              );
+              throw error;
+            }
+          } else {
+            console.error(
+              JSON.stringify({
+                operation: 'unprepared-recovery-fixture',
+                root,
+                cleanup: 'retained',
+                reason:
+                  outcome.status === 'failed'
+                    ? 'case-failed'
+                    : outcome.status === 'pending'
+                      ? 'completion-not-marked'
+                      : !Number.isFinite(deadlineAt)
+                        ? 'invalid-deadline'
+                        : 'deadline-expired',
+              }),
+            );
+          }
+        },
+        'Unprepared recovery fixture work and close failed',
+      );
     },
   };
 }
 
 describe('unprepared recovery', () => {
+  test('uncompleted fixture close retains its root', () => {
+    const f = unpreparedRecoveryFixture(performance.now() + 5_000);
+    f.close();
+    expect(existsSync(f.root)).toBe(true);
+  });
+
+  test('completed fixture close removes its root before the case deadline', () => {
+    const f = unpreparedRecoveryFixture(performance.now() + 5_000);
+    f.complete();
+    f.close();
+    expect(existsSync(f.root)).toBe(false);
+  });
+
+  test('expired case deadline retains a completed fixture root', () => {
+    const f = unpreparedRecoveryFixture(performance.now() - 1);
+    f.complete();
+    f.close();
+    expect(existsSync(f.root)).toBe(true);
+  });
+
+  test('fixture close retains undefined body failure and native close cause in order', () => {
+    const f = unpreparedRecoveryFixture(performance.now() + 5_000);
+    const closeError = new Error('injected native close after real close');
+    const nativeClose = f.db.close.bind(f.db);
+    const closeSpy = spyOn(f.db, 'close').mockImplementation(() => {
+      nativeClose();
+      throw closeError;
+    });
+    f.fail(undefined);
+    let didThrow = false;
+    let thrown: unknown;
+    try {
+      f.close();
+    } catch (error) {
+      didThrow = true;
+      thrown = error;
+    } finally {
+      closeSpy.mockRestore();
+    }
+    expect(didThrow).toBe(true);
+    expect(thrown).toBeInstanceOf(AggregateError);
+    if (!(thrown instanceof AggregateError)) throw Error('fixture close did not preserve both failure causes');
+    const causes: unknown[] = thrown.errors;
+    expect(causes).toHaveLength(2);
+    expect(causes[0]).toBe(undefined);
+    expect(causes[1]).toBe(closeError);
+    expect(existsSync(f.root)).toBe(true);
+  });
+
   test('held maintenance and pending FIFO ownership deny even with matching versions', () => {
+    const deadlineAt = performance.now() + 5_000;
     for (const fault of ['maintenance', 'fifo']) {
-      const f = unpreparedRecoveryFixture();
+      const f = unpreparedRecoveryFixture(deadlineAt);
       try {
         if (fault === 'maintenance') {
           const digest = 'a'.repeat(64),
@@ -971,13 +1082,18 @@ describe('unprepared recovery', () => {
           fault === 'maintenance' ? /maintenance fence/ : /FIFO conflict/,
         );
         expect(f.observed()).toEqual(before);
+        f.complete();
+      } catch (error) {
+        f.fail(error);
+        throw error;
       } finally {
         f.close();
       }
     }
   });
   test('failure between Work and Ledger publication rolls back and same request can retry', () => {
-    const f = unpreparedRecoveryFixture();
+    const deadlineAt = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
     let spy: QuerySpyHandle | undefined;
     try {
       const request = f.store.inspectUnpreparedWorkRecovery(f.input);
@@ -996,13 +1112,28 @@ describe('unprepared recovery', () => {
       if (!retried.work) throw Error('retry work state is missing');
       expect(retried.work.execution.status).toBe('suspended');
       expect(retried.work.lease).toBeNull();
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
     } finally {
       spy?.mockRestore();
       f.close();
     }
   });
   test('read-only CLI exposes a retained request; release and lost-ack retry preserve original evidence', async () => {
-    const f = unpreparedRecoveryFixture();
+    const started = performance.now();
+    const deadlineAt = started + 8_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
+    const phase = (name: string) =>
+      console.log(
+        JSON.stringify({
+          operation: 'unprepared-recovery-sequence',
+          phase: name,
+          elapsed_ms: performance.now() - started,
+        }),
+      );
+    phase('fixture-created');
     try {
       const beforeDiagnosis = f.observed();
       const diagnosis = inspectLocalSession({
@@ -1029,6 +1160,7 @@ describe('unprepared recovery', () => {
       expect(diagnosis.work_version).not.toBeNull();
       expect(diagnosis.lease).not.toBeNull();
       expect(f.observed()).toEqual(beforeDiagnosis);
+      phase('diagnosis-complete');
       const baseline = readFileSync(path.join(f.root, 'baseline.yaml'));
       const delivered = baseline.toString('utf8').replace('config_revision: 1', 'config_revision: 2');
       writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), delivered);
@@ -1066,6 +1198,7 @@ describe('unprepared recovery', () => {
       const currentRequest = f.store.inspectUnpreparedWorkRecovery(f.input);
       expect(inspectedRequest).toEqual({ ...currentRequest });
       expect(f.observed()).toEqual(before);
+      phase('inspect-complete');
       writeFileSync(path.join(f.root, 'apply.json'), JSON.stringify(inspectedEnvelope));
       const apply = args.map((value, index) =>
         args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
@@ -1085,6 +1218,7 @@ describe('unprepared recovery', () => {
       expect(state.binding).toEqual(beforeWork.state.binding);
       expect(state.execution.run_id).toBe(beforeWork.state.execution.run_id);
       expect(after.journals).toEqual(before.journals);
+      phase('apply-complete');
       const operation = after.ledger.operations.find(
         (item) => item.kind === 'release' && item.ticket_id === currentRequest.originalTicket.ticket_id,
       );
@@ -1101,6 +1235,7 @@ describe('unprepared recovery', () => {
       expect(retried.work_version).toEqual(released.work_version);
       expect(retried.ledger_version).toEqual(released.ledger_version);
       expect(f.observed()).toEqual(after);
+      phase('retry-complete');
       expect(readFileSync(path.join(f.root, 'baseline.yaml'))).toEqual(baseline);
       expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(delivered);
       writeFileSync(
@@ -1113,12 +1248,18 @@ describe('unprepared recovery', () => {
         ).rejects.toThrow(),
       );
       expect(f.observed()).toEqual(after);
+      phase('changed-request-denied');
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
     } finally {
       f.close();
     }
-  });
+  }, 8_000);
   test('shape-valid impossible retained timestamp denies exact retry without effects', () => {
-    const f = unpreparedRecoveryFixture();
+    const deadlineAt = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
     try {
       const request = f.store.inspectUnpreparedWorkRecovery(f.input);
       f.store.releaseUnpreparedWork(f.input, request);
@@ -1145,69 +1286,81 @@ describe('unprepared recovery', () => {
         'unprepared recovery operation timestamp invalid',
       );
       expect(f.observed()).toEqual(before);
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
     } finally {
       f.close();
     }
   });
-  test('retained apply rejects current selected project integration and storage drift without effects', async () => {
-    for (const fault of ['project', 'integration', 'storage']) {
-      const f = unpreparedRecoveryFixture();
-      try {
-        const base = {
-          identity: f.identity,
-          attempt: 1,
-          baselinePath: 'baseline.yaml',
-          decisionPointer: f.input.decisionPointer,
-        };
-        writeFileSync(path.join(f.root, 'inspect.json'), JSON.stringify(base));
-        const args = [
-          '--recover-unprepared-work',
-          'true',
-          '--mode',
-          'inspect',
-          '--project-root',
-          f.root,
-          '--native-session-handle',
-          f.input.operatorHandle,
-          '--request',
-          'inspect.json',
-        ];
-        const inspected = parseUnpreparedRecoveryResult(await run(args));
-        const inspectedEnvelope = requireRecord(inspected.request, 'unprepared recovery request envelope');
-        if (!isPlainRecord(inspectedEnvelope.request)) throw Error('unprepared recovery inspection request is invalid');
-        const currentRequest = f.store.inspectUnpreparedWorkRecovery(f.input);
-        expect(inspectedEnvelope.request).toEqual({ ...currentRequest });
-        writeFileSync(path.join(f.root, 'apply.json'), JSON.stringify(inspectedEnvelope));
-        const baseline = readFileSync(path.join(f.root, 'baseline.yaml'));
-        const current = baseline.toString('utf8').replace('config_revision: 1', 'config_revision: 2');
-        const delivered =
-          fault === 'project'
-            ? current.replaceAll("'project'", "'other'")
-            : fault === 'integration'
-              ? current.replace('tenant_id: local', 'tenant_id: changed')
-              : current.replaceAll('work_root: .agent/work', 'work_root: .agent/other');
-        writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), delivered);
-        expect(loadRuntimeConfig(f.root).config_revision).toBe(2);
-        const before = f.observed(),
-          engine = readFileSync(f.engineFile);
-        expect(() => f.store.releaseUnpreparedWork(f.input, currentRequest)).toThrow();
-        expect(f.observed()).toEqual(before);
-        const apply = args.map((value, index) =>
-          args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
-        );
-        await Promise.resolve(expect(run(apply)).rejects.toThrow());
-        expect(f.observed()).toEqual(before);
-        expect(readFileSync(f.engineFile)).toEqual(engine);
-        expect(readFileSync(path.join(f.root, 'baseline.yaml'))).toEqual(baseline);
-        expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(delivered);
-        expect(existsSync(path.join(f.root, '.agent/other/session-handoff.v1.sqlite'))).toBe(false);
-      } finally {
-        f.close();
-      }
+  test.each([
+    ['project', 'project identity'],
+    ['integration', 'integration identity'],
+    ['storage', 'storage root'],
+  ] as const)('retained apply rejects current selected %s drift (%s) without effects', async (fault) => {
+    const deadlineAt = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
+    try {
+      const base = {
+        identity: f.identity,
+        attempt: 1,
+        baselinePath: 'baseline.yaml',
+        decisionPointer: f.input.decisionPointer,
+      };
+      writeFileSync(path.join(f.root, 'inspect.json'), JSON.stringify(base));
+      const args = [
+        '--recover-unprepared-work',
+        'true',
+        '--mode',
+        'inspect',
+        '--project-root',
+        f.root,
+        '--native-session-handle',
+        f.input.operatorHandle,
+        '--request',
+        'inspect.json',
+      ];
+      const inspected = parseUnpreparedRecoveryResult(await run(args));
+      const inspectedEnvelope = requireRecord(inspected.request, 'unprepared recovery request envelope');
+      if (!isPlainRecord(inspectedEnvelope.request)) throw Error('unprepared recovery inspection request is invalid');
+      const currentRequest = f.store.inspectUnpreparedWorkRecovery(f.input);
+      expect(inspectedEnvelope.request).toEqual({ ...currentRequest });
+      writeFileSync(path.join(f.root, 'apply.json'), JSON.stringify(inspectedEnvelope));
+      const baseline = readFileSync(path.join(f.root, 'baseline.yaml'));
+      const current = baseline.toString('utf8').replace('config_revision: 1', 'config_revision: 2');
+      const delivered =
+        fault === 'project'
+          ? current.replaceAll("'project'", "'other'")
+          : fault === 'integration'
+            ? current.replace('tenant_id: local', 'tenant_id: changed')
+            : current.replaceAll('work_root: .agent/work', 'work_root: .agent/other');
+      writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), delivered);
+      expect(loadRuntimeConfig(f.root).config_revision).toBe(2);
+      const before = f.observed(),
+        engine = readFileSync(f.engineFile);
+      expect(() => f.store.releaseUnpreparedWork(f.input, currentRequest)).toThrow();
+      expect(f.observed()).toEqual(before);
+      const apply = args.map((value, index) =>
+        args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
+      );
+      await Promise.resolve(expect(run(apply)).rejects.toThrow());
+      expect(f.observed()).toEqual(before);
+      expect(readFileSync(f.engineFile)).toEqual(engine);
+      expect(readFileSync(path.join(f.root, 'baseline.yaml'))).toEqual(baseline);
+      expect(readFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), 'utf8')).toBe(delivered);
+      expect(existsSync(path.join(f.root, '.agent/other/session-handoff.v1.sqlite'))).toBe(false);
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
+    } finally {
+      f.close();
     }
   });
   test('stale Work Ledger maintenance and foreign caller deny without changes', () => {
-    const f = unpreparedRecoveryFixture();
+    const deadlineAt = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
     try {
       const request = f.store.inspectUnpreparedWorkRecovery(f.input),
         before = f.observed();
@@ -1225,79 +1378,94 @@ describe('unprepared recovery', () => {
         /same-owner/,
       );
       expect(f.observed()).toEqual(before);
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
     } finally {
       f.close();
     }
   });
-  test('missing engine journal and surviving base or unknown alias deny with custody intact', () => {
-    for (const fault of ['missing', 'journal', 'base', 'alias', 'malformed', 'correction']) {
-      const f = unpreparedRecoveryFixture();
-      try {
-        if (fault === 'missing') unlinkSync(f.engineFile);
-        else if (fault === 'journal') {
-          const retained = {
-            schema: 'MastraSessionLedger/v1',
-            workspace_id: f.workspace,
-            work_id: f.identity.work_id,
-            attempt: 1,
-            run_id: requireFixtureWorkState(f.store, f.identity).execution.run_id,
-            step_id: null,
-            items: [],
-            completed: [],
-          };
-          f.db
-            .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
-            .run(f.workspace, f.identity.work_id, 1, 1, JSON.stringify(retained), canonicalJsonDigest(retained));
-        } else if (fault === 'correction') {
-          f.db.exec(
-            'CREATE TABLE agent_host_corrective_recovery (workspace_id TEXT,work_id TEXT,attempt INTEGER,generation INTEGER,payload TEXT,digest TEXT)',
+  test.each([
+    ['missing', 'missing engine database'],
+    ['journal', 'retained session journal row'],
+    ['base', 'surviving base snapshot'],
+    ['alias', 'unknown alias snapshot'],
+    ['malformed', 'malformed snapshot'],
+    ['correction', 'corrective recovery row'],
+  ] as const)('%s (%s) denies inspection with custody intact', (fault) => {
+    const deadlineAt = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
+    try {
+      if (fault === 'missing') unlinkSync(f.engineFile);
+      else if (fault === 'journal') {
+        const retained = {
+          schema: 'MastraSessionLedger/v1',
+          workspace_id: f.workspace,
+          work_id: f.identity.work_id,
+          attempt: 1,
+          run_id: requireFixtureWorkState(f.store, f.identity).execution.run_id,
+          step_id: null,
+          items: [],
+          completed: [],
+        };
+        f.db
+          .query('INSERT INTO agent_host_mastra_session_ledger VALUES(?,?,?,?,?,?)')
+          .run(f.workspace, f.identity.work_id, 1, 1, JSON.stringify(retained), canonicalJsonDigest(retained));
+      } else if (fault === 'correction') {
+        f.db.exec(
+          'CREATE TABLE agent_host_corrective_recovery (workspace_id TEXT,work_id TEXT,attempt INTEGER,generation INTEGER,payload TEXT,digest TEXT)',
+        );
+        f.db
+          .query('INSERT INTO agent_host_corrective_recovery VALUES(?,?,?,?,?,?)')
+          .run(f.workspace, f.identity.work_id, 1, 1, '{}', 'a'.repeat(64));
+      } else {
+        const engine = new Database(f.engineFile),
+          runId =
+            fault === 'base'
+              ? requireFixtureWorkState(f.store, f.identity).execution.run_id
+              : 'unknown-corrective-alias';
+        const state = {
+          work_id: f.identity.work_id,
+          attempt: 1,
+          workflow_id: 'task_execution',
+          scope_digest: f.context.scope_digest,
+          config_digest: runtimeConfigDigest(f.config),
+          selection: {
+            team: 'default-development',
+            kind: 'task',
+            intent: 'task_execution',
+            project: 'project',
+            risk_flags: [],
+            labels: [],
+          },
+          observations: [],
+        };
+        engine
+          .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,?)')
+          .run(
+            'task_execution',
+            runId,
+            fault === 'malformed' ? '{}' : JSON.stringify({ runId, status: 'suspended', context: { input: state } }),
           );
-          f.db
-            .query('INSERT INTO agent_host_corrective_recovery VALUES(?,?,?,?,?,?)')
-            .run(f.workspace, f.identity.work_id, 1, 1, '{}', 'a'.repeat(64));
-        } else {
-          const engine = new Database(f.engineFile),
-            runId =
-              fault === 'base'
-                ? requireFixtureWorkState(f.store, f.identity).execution.run_id
-                : 'unknown-corrective-alias';
-          const state = {
-            work_id: f.identity.work_id,
-            attempt: 1,
-            workflow_id: 'task_execution',
-            scope_digest: f.context.scope_digest,
-            config_digest: runtimeConfigDigest(f.config),
-            selection: {
-              team: 'default-development',
-              kind: 'task',
-              intent: 'task_execution',
-              project: 'project',
-              risk_flags: [],
-              labels: [],
-            },
-            observations: [],
-          };
-          engine
-            .query('INSERT INTO mastra_workflow_snapshot VALUES(?,?,?)')
-            .run(
-              'task_execution',
-              runId,
-              fault === 'malformed' ? '{}' : JSON.stringify({ runId, status: 'suspended', context: { input: state } }),
-            );
-          engine.close();
-        }
-        const before = f.observed();
-        expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow();
-        expect(f.observed()).toEqual(before);
-      } finally {
-        f.close();
+        engine.close();
       }
+      const before = f.observed();
+      expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow();
+      expect(f.observed()).toEqual(before);
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
+    } finally {
+      f.close();
     }
   });
   test.each(['unrelated', 'same-run', 'same-work', 'malformed', 'null', 'json5'])(
     'binary snapshot %s preserves absence controls and engine custody',
     (fault: string) => {
-      const f = unpreparedRecoveryFixture();
+      const deadlineAt = performance.now() + 5_000;
+      const f = unpreparedRecoveryFixture(deadlineAt);
       try {
         const workId = fault === 'same-work' ? f.identity.work_id : 'unrelated-work';
         const attempt = fault === 'same-work' ? 2 : 1;
@@ -1364,13 +1532,18 @@ describe('unprepared recovery', () => {
           expect(f.observed()).toEqual(before);
         }
         expect(readFileSync(f.engineFile)).toEqual(bytes);
+        f.complete();
+      } catch (error) {
+        f.fail(error);
+        throw error;
       } finally {
         f.close();
       }
     },
   );
   test('oversized engine snapshots deny before any payload census fetch', () => {
-    const f = unpreparedRecoveryFixture();
+    const deadlineAt = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
     let guard: QuerySpyHandle | undefined;
     try {
       const engine = new Database(f.engineFile);
@@ -1389,6 +1562,12 @@ describe('unprepared recovery', () => {
       expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow('census bytes exceed bound');
       expect(payloadFetches).toBe(0);
       expect(f.observed()).toEqual(before);
+      guard.mockRestore();
+      guard = undefined;
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
     } finally {
       guard?.mockRestore();
       f.close();
@@ -1396,7 +1575,8 @@ describe('unprepared recovery', () => {
   });
 
   test('decoded JSONB census bytes deny before fetching payloads even when storage fits', () => {
-    const f = unpreparedRecoveryFixture();
+    const deadlineAt = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
     let guard: QuerySpyHandle | undefined;
     try {
       const engine = new Database(f.engineFile);
@@ -1425,6 +1605,12 @@ describe('unprepared recovery', () => {
       expect(payloadFetches).toBe(0);
       expect(f.observed()).toEqual(before);
       expect(readFileSync(f.engineFile)).toEqual(bytes);
+      guard.mockRestore();
+      guard = undefined;
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
     } finally {
       guard?.mockRestore();
       f.close();
@@ -1432,8 +1618,9 @@ describe('unprepared recovery', () => {
   });
 
   test('pending and UNKNOWN producer markers block recovery and remain untouched', () => {
+    const deadlineAt = performance.now() + 5_000;
     for (const status of ['reserved', 'commit_unknown']) {
-      const f = unpreparedRecoveryFixture();
+      const f = unpreparedRecoveryFixture(deadlineAt);
       try {
         const marker = {
           schema: 'OperationReservation/v1',
@@ -1479,13 +1666,18 @@ describe('unprepared recovery', () => {
         const before = f.observed();
         expect(() => f.store.inspectUnpreparedWorkRecovery(f.input)).toThrow(/pending or unknown/);
         expect(f.observed()).toEqual(before);
+        f.complete();
+      } catch (error) {
+        f.fail(error);
+        throw error;
       } finally {
         f.close();
       }
     }
   });
   test("producer reservation cannot race recovery apply's Host-state writer fence", () => {
-    const f = unpreparedRecoveryFixture();
+    const deadlineAt = performance.now() + 5_000;
+    const f = unpreparedRecoveryFixture(deadlineAt);
     let peer: ReturnType<typeof openConfiguredMastraSessionLedger> | undefined;
     let spy: QuerySpyHandle | undefined;
     try {
@@ -1521,6 +1713,14 @@ describe('unprepared recovery', () => {
       f.store.releaseUnpreparedWork(f.input, request);
       expect(attempted).toBe(true);
       expect(f.observed().governance).toEqual([]);
+      spy.mockRestore();
+      spy = undefined;
+      peer.close();
+      peer = undefined;
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
     } finally {
       spy?.mockRestore();
       peer?.close();
@@ -1751,7 +1951,7 @@ function invoke(
     [entrypoint, ...args],
     {
       cwd: packageRoot,
-      env: { ...process.env, ...env },
+      env: pinnedEnvironment(process.execPath, { ...process.env, ...env }, packageRoot),
       encoding: 'utf8',
       windowsHide: true,
       timeout: options.childTimeout ?? 5_000,

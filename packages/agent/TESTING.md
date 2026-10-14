@@ -813,6 +813,28 @@ three-call repair and body/cleanup regression keep the5s default. This allowance
 preserves the composite contract; it claims no speedup and changes no product
 target, protocol threshold or full coverage operation budget.
 
+The unprepared-work recovery CLI sequence has an explicit8s exception. Its
+diagnosis, public inspect, apply, connection reopen, exact lost-ack retry and
+changed-request denial depend on the same persisted attempt. A complete5s run
+and the isolated case both exceeded the bound; the isolated sequence reached
+7.23s. Keep every freshness/CAS, original-evidence and no-effect assertion.
+The fixture cleanup deadline starts at case entry and uses the same8s bound.
+The observed inspect phase exceeded2s in that isolated run; its product latency
+target remains an open optimization, not a relaxed gate. Independent recovery
+denials and all ordinary CLI children keep the5s default.
+
+Public CLI test helpers prepare the existing pinnedEnvironment before launching
+the child. This avoids loading operation modules again through cache-routing
+self-reexecution. Preserve caller environment overrides and the existing child
+budget, terminal-outcome and UNKNOWN predicates. Cache preparation grants no
+project, thread or trusted initialization authority.
+
+For callable CLI diagnostics, pass the supported local exit recipient to main
+and assert its exitCode. Do not mutate the test process exitCode and restore
+undefined. A qualified Bun probe left1 after that restoration, despite all
+case assertions passing. Require the actual terminal command result as well as
+the reporter counters; zero failed cases alone does not establish suite PASS.
+
 On the qualified Bun 1.4.3, a local inert control showed that `[test] timeout`
 in TOML did not enforce the requested timeout; use the CLI option. Another
 control showed `--bail=1` skips preload `afterAll` finalization on first failure.

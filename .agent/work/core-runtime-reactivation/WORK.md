@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `b0a34604cf6a1e5606435c370a01bcf975f3ef93` at origin/main.
+- Published input: `31e4b1f83bdecc2d3ffd68f9ddf0c7957b25e74f` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -217,7 +217,7 @@ The owner's later directive makes Vex the ordinary navigation default in Sidecar
 and every blind-agent bootstrap. Do not run queries during frozen checks or
 overlap cold indexing with compiler/coverage; fresh hosts require preparation.
 
-## Current controller durable-write correction
+## Published controller durable-write correction
 
 Vex show and strict usages selected `bin/run.ts#writeDurable`, its cutoff caller
 and the existing durable publication regression. The descriptor finally can
@@ -252,6 +252,11 @@ Corrected lint passed at `controller-durable-lint-final-20261014.log`; formatted
 Source/test passed at `controller-durable-format-final-20261014.log` in that root.
 No unchanged broad retry or timeout inflation occurred. Fault roots remain logged
 and retained. The ordinary test:pinned selection now includes the new test file.
+Packet31e4b1f passed ordinary strict precommit:464checked files/0type errors,
+459formatted files and lint/Knip. Push to origin/main was confirmed at its exact
+SHA. Logs: `/workspace/attachments/controller-durable-strict-commit-20261014.log`
+and `controller-durable-push-20261014.log` in the same root. This Source checkpoint
+does not promote the three failed recovery cases to PASS.
 
 Only bin/run.ts was re-inventoried using the existing diagnostic owner:
 557roles, previously556; global7708/149Sources. Capture:
@@ -269,6 +274,64 @@ admission lease and must retain their native close owner. Reports:
 `/workspace/attachments/entrypoint-timeout-analysis-20261014.md` and
 `entrypoint-fixture-custody-analysis-20261014.md` in that root. Actual late-work
 overlap is not proven. Do not replay old operations or infer quiescence from timeout.
+
+## Current recovery test correction
+
+The blind writer handed tests/run-entrypoint.test.ts back to Root. Independent
+three-row identity drift and six-row retained-evidence denial matrices now use
+fresh test.each cases. Dependent operations retain one attempt and every original
+assertion. A causal close-without-completion control failed before fixture repair:
+`/workspace/attachments/recovery-fixture-custody-causal-red-20261014.log`.
+The owned raw DB closes through the existing finisher. Pending/failed/expired
+fixtures retain their roots; only explicit completed work before the outer case
+deadline permits removal. Four custody controls include undefined body plus
+close failure; fault after real close is not SQLite I/O failure.
+
+The first complete split selection failed:43PASS/2FAIL/252expect/97.25s at
+`/workspace/attachments/recovery-split-complete-selection-20261014.log`.
+Qualified isolated filters reproduced the authority child UNKNOWN at4773.75ms
+and the dependent recovery timeout at7229.76ms. Earlier filters using reporter
+separators matched zero cases and are not test evidence. Isolated raw logs:
+`public-run-authority-isolated-qualified-20261014.log` and
+`recovery-dependent-isolated-qualified-20261014.log` in that attachments root.
+
+Root reused pinnedEnvironment in the shared public invoke helper, preserving
+caller overrides, terminal predicates and the5000ms child default. This avoids
+cache-routing duplicate module loading. The dependent diagnosis/inspect/apply/
+reopen/exact retry/changed-request denial case has a measured8s exception with
+the same outer fixture deadline; independent cases retain5s. Its inspect phase
+exceeded2s, so the product latency target remains open. Blind analysis/review:
+`public-run-timeout-current-20261014.md` and
+`recovery-packet-final-review-current-20261014.md` in that attachments root.
+
+The next complete capture printed45PASS/0FAIL/255expect in76.14s but native exit
+was1, so it is not suite PASS. Raw log:
+`/workspace/attachments/recovery-final-complete-selection-20261014.log`.
+An inert current Bun probe proved that restoring process.exitCode to undefined
+after setting1 leaves1 and exits1:
+`/workspace/attachments/bun-exit-code-restore-probe-20261014.log`.
+The diagnostic case now uses main's existing local exit recipient and keeps its
+exit1 assertion. Root rechecks only that changed case; unaffected reporter
+results remain observations from the failed complete command, not numeric proof.
+The changed-case recheck exited0 with1PASS/0FAIL/34expect/4.35s, session25297:
+`/workspace/attachments/recovery-exit-final-focused-20261014.log`.
+Same-pattern readonly review found no other direct global-exit mutation in the
+maintained test contour; child-source strings were classified separately:
+`/workspace/attachments/exit-code-and-fixture-patterns-current-20261014.md`.
+Current432-file types, scoped lint and format passed; exact logs are
+`recovery-exit-final-types-20261014.log`, `recovery-exit-final-lint-20261014.log`
+and `recovery-exit-final-format-20261014.log` in the same root.
+
+Vex remains the ordinary navigation default. After environment recovery, status
+showed the repository index and embeddings present; a bounded invoke query
+auto-updated the changed file. Receipts:
+`vex-after-environment-resume-20261014.json`, `vex-invoke-resume-20261014.json`
+and `.log` in that root. All workers inherit this default and freeze queries
+during Root checks. No per-worker rebuild or second index was introduced.
+
+Follow-up custody GAP: the unrelated shared uninitialized fixture still has an
+unconditional afterAll removal. Its UNKNOWN branch needs its own retention
+correction/control; this recovery-fixture packet does not claim that path fixed.
 
 Independent release-family validation covers172current/98historical roles:
 93retained/79new/5removed-or-moved, without duplicate/stale/foreign IDs or cap
