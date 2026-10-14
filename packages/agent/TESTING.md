@@ -1265,6 +1265,28 @@ from opaque ledger/bridge protocol controls. Capture live admission before
 close starts: its read authority deliberately expires on the first close attempt.
 Restore injected faults before registered retry, and retain failed fixture roots.
 
+Research repair descriptor controls exercise plan creation, lock creation,
+journal append and pending replacement through the public reconcile entry.
+Preserve work, real-close and pending-unlink causes in order, including thrown
+undefined. An exclusive-open failure grants no pending-file ownership. Successful
+rename consumes that ownership; cleanup must preserve a foreign file recreated
+at the vacated pathname. Retain interrupted plan/lock/journal and foreign-file
+fixtures even when their assertions pass. A phase interruption plus admitted
+database-close error must preserve both causes and the held maintenance fence.
+Restore the fault and retry through the existing close owner before opening an
+observer. Injection after real close qualifies cause retention, not native I/O
+failure behavior.
+
+For preloaded named `node:fs` bindings, first prove the interceptor reaches the
+actual public call. The qualified Bun control uses an original namespace snapshot
+and `await mock.module` for scoped replacement and restoration in finally.
+Materialize the snapshot with `{ ...fs }` before the first replacement. A retained
+live ESM namespace changes with the mock and cannot restore the original exports.
+`mock.restore` does not restore module mocks. A default-export spy alone did not
+intercept these named bindings. Keep module replacement out of concurrent bodies
+and restore it before any other case or registered cleanup uses the dependency.
+See [Bun module mocks](https://bun.com/docs/test/mocks#module-mocks-with-mockmodule).
+
 Engine-reader close controls retain the original close, upgrade-inactive and
 physical-file identity fence order. Exercise both successful and rejected reads
 with drift introduced after admitted open/native source close. Capture the actual

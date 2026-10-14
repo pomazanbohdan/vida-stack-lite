@@ -115,7 +115,10 @@ Current Source interruption/activation cases have focused proof in retained WORK
 history; they do not qualify active .vida cutover or native Runtime.
 
 Vex/LeanCTX/ast-grep are qualified host tools. Full maintained Vex semantic index
-is not ready; use rg/ast-grep until lead-owned guarded preparation succeeds.
+preparation and query-time refresh passed on the current host; see WORK for exact
+receipts and limits. A fresh host requires its own guarded preparation. Keep
+Vex calls outside frozen checks and use current Source fallback for incomplete
+or unsupported results.
 Cloud provider-template save remains pending an actual supported host editor.
 
 ## Final clean Runtime task

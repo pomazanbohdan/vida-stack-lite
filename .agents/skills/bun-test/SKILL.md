@@ -62,6 +62,15 @@ thrown undefined value and a sole cleanup error by identity. A fault injected
 after a real native close proves cause aggregation, not SQLite I/O failure.
 Retain an expected-UNKNOWN fixture independently of successful assertions.
 
+For filesystem repair faults, prove that interception reaches preloaded named
+imports. Use the qualified namespace-snapshot/module-replacement pattern from
+TESTING and await both registration and restoration. Keep these cases serial.
+Copy original exports with `{ ...fs }` before the first replacement; a live ESM
+namespace is not a restorable snapshot.
+Assert effects and all retained causes, not only the mock calls. Exercise denied
+exclusive creation and a foreign afterimage after successful rename separately;
+neither grants ownership of a file created by another actor.
+
 ## Run focused checks safely
 
 Use explicit test paths and an anchored `--test-name-pattern` for a focused

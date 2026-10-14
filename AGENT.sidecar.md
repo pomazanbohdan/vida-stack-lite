@@ -65,10 +65,20 @@ do not claim to have recovered its original bytes or use an old handoff as autho
 The user and this sidecar select the work scope. The lifecycle owns execution and
 evidence policy; TESTING owns verification gates. The current CLEAR plan owns task
 order, the backlog owns stable IDs, and WORK records current evidence.
-Use the task's explicitly selected method once. Pstack supplies scoped investigation,
-refactoring and writing practices; Superpowers supplies selected planning and test
-practices. GSD state is derived and Ponytail applies only to code-producing lanes.
-Do not run another outer workflow or create a second plan for the same outcome.
+The repository owner selects Pstack for every development contour, including
+research, planning, implementation, checks, review and documentation. Resolve its
+installed entry through the [Cloud reference](.codex/README.md#pstack-provisioning-and-qualification),
+then read the focused practices needed for the task. Apply Superpowers' selected
+planning, debugging and test practices within that same work. GSD state is derived
+and Ponytail applies only to code-producing lanes. Keep the current CLEAR plan,
+backlog and WORK as their existing owners. Do not create another outer workflow,
+orchestration store, standing-orders register or canonical ledger for the same work.
+
+Root retains Source integration, shared-file ownership, final checks and Git.
+Native blind Luna is the selected provider/model route for all delegated lanes.
+Pstack defaults do not replace that route or authorize external model spending.
+Use prepared worker-contract guidance and disjoint file/output assignments.
+Prompt-only guidance does not establish a sandbox or independent Git authority.
 
 Use native Luna for independent blind work under the owner's standing preference.
 Each assignment names the root, bootstrap, exact files, invariants and result format.
@@ -144,7 +154,10 @@ other applications from using it.
 The [Cloud reference](.codex/README.md#bootstrap-and-ownership) owns tool selection,
 versions, setup, cache, resource and recovery details. Read its relevant section
 once and use available qualified tools. Use rg first for file/text searches and
-scoped ast-grep for structural patterns. Full Vex semantics is not yet ready.
+scoped ast-grep for structural patterns. The repository owner requires Vex as the
+default for symbol, concept, reference and candidate-call navigation. Confirm
+current host readiness, use bounded queries on the selected paths, and verify
+returned freshness. Pass this default in every delegated agent's bootstrap.
 Never trigger auto-refresh or compete with a cold build during frozen checks.
 
 Project skill owners are [ast-grep](.agents/skills/ast-grep/SKILL.md) and

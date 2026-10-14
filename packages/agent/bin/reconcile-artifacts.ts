@@ -4,6 +4,11 @@ import { constants, closeSync, fsyncSync, lstatSync, openSync, readFileSync, wri
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { reconcileCliContracts, reconcileExpectedOptions } from './reconcile-cli-contracts.ts';
+import {
+  finishWorkspaceDatabaseClose,
+  withWorkspaceDatabaseClose as withOwnedClose,
+  type DatabaseWorkOutcome,
+} from '../src/config/workspace-database-raw.js';
 import type { MaintenanceFence, MaintenanceFenceBinding, MaintenanceReleaseVerifier } from '../src/host-state.ts';
 import type { planResearchSourceIdentityRepair } from './repair-research-records.ts';
 
@@ -255,12 +260,15 @@ export async function runReconcileArtifacts(args: string[], { onPhase }: Reconci
     access.ensureDirectory(`.agent/work/${repairId}`, 'repair work root');
     const file = path.join(workRoot, 'repair-plan.v1.json');
     const fd = openSync(file, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY, 0o600);
-    try {
-      writeFileSync(fd, json(plan));
-      fsyncSync(fd);
-    } finally {
-      closeSync(fd);
-    }
+    withOwnedClose(
+      fd,
+      () => {
+        writeFileSync(fd, json(plan));
+        fsyncSync(fd);
+      },
+      closeSync,
+      'research plan write and descriptor close failed',
+    );
     return {
       status: 'planned',
       repair_id: repairId,
@@ -287,6 +295,7 @@ export async function runReconcileArtifacts(args: string[], { onPhase }: Reconci
   }
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
   const database = openCliHostStateDatabase(root, sessionHandoffDatabasePath(root, config), workspaceId);
+  let closeOutcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   try {
     const store = createCliHostStateStore(database, workspaceId, undefined, undefined, undefined, verifier, root);
     const receipt = store.acquireMaintenanceFenceWithRecordedToken(binding, token);
@@ -307,8 +316,16 @@ export async function runReconcileArtifacts(args: string[], { onPhase }: Reconci
     evidenceComplete(root, plan);
     await store.releaseMaintenanceFence(receipt);
     return { ...result, maintenance_generation: receipt.fence.generation, selector_sha256: sha(selectorBytes) };
+  } catch (error) {
+    closeOutcome = { ok: false, error };
+    throw error;
   } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
+    finishWorkspaceDatabaseClose(
+      database,
+      closeOutcome,
+      closeWorkspaceDatabaseWithAdmission,
+      'research repair operation and admitted database close failed',
+    );
   }
 }
 

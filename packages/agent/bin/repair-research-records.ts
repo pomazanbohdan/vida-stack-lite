@@ -14,6 +14,7 @@ import {
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { runtimePackageAccess } from '../src/config/runtime-config.ts';
+import { withWorkspaceDatabaseClose as withOwnedClose } from '../src/config/workspace-database-raw.js';
 import { validateResearchResult, validateResearchSynthesis } from '../src/research-decision.ts';
 import type { ResearchResult, ResearchSynthesis } from '../src/research-decision.ts';
 import type { AnySchema } from 'ajv';
@@ -475,20 +476,31 @@ function replaceCas(file: string, beforeSha: string, afterSha: string, content: 
   if (sha(current) === afterSha) return;
   if (sha(current) !== beforeSha) fail(`third-party bytes: ${file}`);
   const pending = `${file}.pending-${randomUUID()}`;
-  try {
-    const fd = openSync(pending, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY, 0o600);
-    try {
-      writeFileSync(fd, content);
-      fsyncSync(fd);
-    } finally {
-      closeSync(fd);
-    }
-    if (sha(bytes(file)) !== beforeSha) fail(`CAS lost: ${file}`);
-    renameSync(pending, file);
-    if (sha(bytes(file)) !== afterSha) fail(`repair publication failed: ${file}`);
-  } finally {
-    if (stat(pending)) unlinkSync(pending);
-  }
+  let owned = false;
+  withOwnedClose(
+    pending,
+    () => {
+      const fd = openSync(pending, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY, 0o600);
+      owned = true;
+      withOwnedClose(
+        fd,
+        () => {
+          writeFileSync(fd, content);
+          fsyncSync(fd);
+        },
+        closeSync,
+        'research replacement write and descriptor close failed',
+      );
+      if (sha(bytes(file)) !== beforeSha) fail(`CAS lost: ${file}`);
+      renameSync(pending, file);
+      owned = false;
+      if (sha(bytes(file)) !== afterSha) fail(`repair publication failed: ${file}`);
+    },
+    (file) => {
+      if (owned && stat(file)) unlinkSync(file);
+    },
+    'research replacement and pending cleanup failed',
+  );
 }
 function journal(file: string, repairId: string, phase: RepairPhase): void {
   const expected: RepairPhase[] = ['record_0', 'record_1', 'changelog', 'complete'];
@@ -511,12 +523,15 @@ function journal(file: string, repairId: string, phase: RepairPhase): void {
   if (position < events.length) return;
   if (position !== events.length) fail('repair journal phase gap');
   const fd = openSync(file, constants.O_CREAT | constants.O_APPEND | constants.O_WRONLY, 0o600);
-  try {
-    writeFileSync(fd, `${JSON.stringify({ schema: 'VidaResearchRepairEvent/v1', repair_id: repairId, phase })}\n`);
-    fsyncSync(fd);
-  } finally {
-    closeSync(fd);
-  }
+  withOwnedClose(
+    fd,
+    () => {
+      writeFileSync(fd, `${JSON.stringify({ schema: 'VidaResearchRepairEvent/v1', repair_id: repairId, phase })}\n`);
+      fsyncSync(fd);
+    },
+    closeSync,
+    'research journal append and descriptor close failed',
+  );
 }
 function isResearchRepairJournalEvent(value: unknown, repairId: string, phase: string): boolean {
   return (
@@ -594,12 +609,15 @@ export function applyResearchSourceIdentityRepair({
     if (!bytes(lockPath).equals(json(lock))) fail('repair lock differs');
   } else {
     const fd = openSync(lockPath, constants.O_CREAT | constants.O_EXCL | constants.O_WRONLY, 0o600);
-    try {
-      writeFileSync(fd, json(lock));
-      fsyncSync(fd);
-    } finally {
-      closeSync(fd);
-    }
+    withOwnedClose(
+      fd,
+      () => {
+        writeFileSync(fd, json(lock));
+        fsyncSync(fd);
+      },
+      closeSync,
+      'research lock write and descriptor close failed',
+    );
   }
   if (
     dependencyPaths(project, plan.records_root, new Set(plan.changes.map((item) => item.result_id)), runtimeRoot).length

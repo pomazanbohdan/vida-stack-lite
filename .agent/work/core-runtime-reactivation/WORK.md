@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `df7e2221b8f2b75e6e8e9fa6c7a08bb8f0c72801` at origin/main.
+- Published input before this packet: `73d7eff7a5676f607981bc78ec2a2b0f44f0fce5` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -27,8 +27,8 @@ Pstack/Cloud/shared-helper/documentation packets, exact decisions and receipts
 remain at `f871b65:.agent/work/core-runtime-reactivation/WORK.md`. Template equality,
 Cloud guards/profile custody, shared forward values and changed-worktree link
 checks are implemented. Host Pstack1.15.0/60skills/trusted startup is qualified;
-full Vex semantics and provider-template save remain GAP. Use rg/ast-grep without
-a cold index competing with checks. Current managed Cloud observations report
+provider-template save remains GAP. Current Vex preparation and refresh are below.
+Keep cold indexing separate from checks. Current managed Cloud observations report
 running/connected, observations_current and unrestricted policy enforced. API
 authorization remains endpoint-specific.
 
@@ -124,7 +124,7 @@ complete owner-family review; shared public lock owner remainsCC1, originalcap1.
 Receipt: `/workspace/attachments/lineage-repair-wave3-20261014.json`.
 Partial remains NON_EXECUTABLE/NOT_EXHAUSTIVE. No final numeric PASS is asserted.
 
-## Current Host repair serialization correction
+## Published Host repair serialization correction
 
 The producer-fenced read-only dispatch commit serialized the same rebuilt plan
 twice. It now serializes the caller plan first, the immutable rebuilt plan second,
@@ -144,6 +144,81 @@ The commit callback remainsCC5 against original3. Planner remains43 against40;
 simple optional-access changes do not reduce the inventory's counted decisions.
 These blockers require a reviewed design, not disguised decisions or raised caps.
 The1945-role partial and all full numeric prerequisites remain incomplete.
+
+## Current research repair and Vex packet
+
+The repository owner selects Pstack for every development contour. Root uses
+the installed entry and focused root-cause, domain-model, writing and review
+practices alongside Superpowers. Bootstrap now records native blind Luna,
+one writer per file, Root checks/Git and prepared prompt-only worker guidance.
+There is no second orchestration store or external-provider launch.
+
+Research plan, lock, journal and pending replacement previously masked body
+failures with descriptor-close or pending-unlink failures. The existing shared
+close accumulator now preserves those causes. Exclusive-open denial grants no
+ownership of a foreign pending file, and successful rename consumes ownership.
+Causal RED logs in `/workspace/attachments/`: `research-cleanup-causal-red-20261014.log`
+(4FAIL), `research-foreign-pending-causal-red-20261014.log` (1FAIL) and
+`research-rename-ownership-causal-red-20261014.log` (1FAIL after complete publication).
+The last retained foreign-file fixture is
+`/home/agent/.cache/vida-cloud-tooling/tmp/vida-repair-cli-l5LR8H`.
+Review also found public apply's body/database-close masking. Causal RED1FAIL:
+`/workspace/attachments/research-database-close-causal-red-20261014.log`.
+Its existing awaited body now uses a tagged outcome and the shared synchronous
+finisher without moving callback responsibilities. The test restores the fault
+and retries through the close owner before opening an observer. Real-close fault
+injection proves cause retention, not native I/O failure behavior.
+
+Fresh independent review approves the corrected Source and seven public cases:
+`/workspace/attachments/research-repair-packet-final-review-20261014.md`.
+Affected complete selection:17PASS/0FAIL/177expect calls/28.43s, exit0,
+exec session51828, `/workspace/attachments/research-cleanup-complete-selection-20261014.log`.
+Types431files/0errors: `research-cleanup-types-final-reviewed-20261014.log`.
+Corrected scoped lint and three-file format check passed at
+`research-cleanup-lint-final-corrected-20261014.log` and
+`research-cleanup-format-final-check-20261014.log` in the same attachments root.
+The unbound-method warning in the earlier lint attempt remains retained; explicit
+Reflect capture preserves the real receiver without a lint suppression.
+Full numeric, SDK/native qualification and this packet's publication remain open.
+
+Only the two changed Source files were re-inventoried; all other rows were reused.
+They contain106roles, up from100. Global capture now7707roles/149Sources:
+`/workspace/attachments/quality-resume-current-inventory-research-repair-20261014.json`.
+Receipt: `/workspace/attachments/research-cleanup-source-capture-20261014.json`.
+The unchanged1945-role partial leaves5762current/4260historical dispositions
+absent. Six new cleanup callbacks are unjoined; this is not full numeric evidence.
+
+Vex1.27.4 preflight reports9670symbols/480indexed files, embeddings:false,
+stale clusters and a deleted vitest.config.ts entry:
+`/workspace/attachments/vex-resume-status-20261014.json`.
+Lead-owned guarded semantic preparation completed with exit0, exec session56999:
+9678symbols/491files/embeddings:true, no missing files, fresh clusters,546.12s.
+Log `/workspace/attachments/vex-semantic-preparation-resume-20261014.log`;
+status `/workspace/attachments/vex-semantic-preparation-root-status-20261014.json`.
+A transient exec-server disconnect did not stop its observed PID955; no duplicate
+was launched. The package-directory status attempt selected another nonexistent
+index; retain it as a diagnostic, not a failure of the repository index.
+
+Query-time auto-update refreshed five real changed files and later the changed
+test file without an explicit update command. `vex show` returned the exact current
+Source body including the new database-close finisher. Semantic search observed
+Hybrid results in the current repair contour. Qualification receipt:
+`/workspace/attachments/vex-resume-qualified-20261014.json`; search/raw why:
+`vex-research-semantic-search-20261014.json` and `.log` in that attachments root.
+Post-update count9680symbols/489files,71unsupported paths and18unresolved hierarchy
+facts. Frozen stale clusters after update are separate from current symbol bodies.
+The first phrase query returned empty; it is not absence proof. These mechanics
+do not establish exhaustive semantic resolution, types or numeric function proof.
+The owner's later directive makes Vex the ordinary navigation default in Sidecar
+and every blind-agent bootstrap. Do not run queries during frozen checks or
+overlap cold indexing with compiler/coverage; fresh hosts require preparation.
+
+Independent release-family validation covers172current/98historical roles:
+93retained/79new/5removed-or-moved, without duplicate/stale/foreign IDs or cap
+changes. Artifact: `/workspace/attachments/release-lineage-membership-validation-20261014.json`.
+The shared reader is inside that two-file scope; candidate wording saying outside
+is incorrect. Current isReleaseState8>original7 and testLane2>original1 stay open.
+No candidate is joined into the canonical1945-role partial in this packet.
 
 ## Complete numeric prerequisites
 
@@ -176,8 +251,9 @@ report/resource successor. Preserve original custody and stale review.
 1. Complete correspondence/original-budget corrections: installer44>31, pure
    read-only planner43>40, Host commit callback5>3, unresolved fs-safe owner moves.
    Do not relabel roles or raise caps to force acceptance.
-2. Correct analogous native-delivery/research repair cleanup masking with causal
-   fixtures and existing ownership/CAS/UNKNOWN contracts.
+2. Continue same-pattern cleanup review in remaining affected owners, preserving
+   causal fixtures and ownership/CAS/UNKNOWN contracts. The native/research packets
+   above correct their reviewed Source paths; delivery remains separate.
 3. Complete fresh SDK/resource/shard prerequisites, then exact100% functions,
    lines, statements, branches, frozen complexity/dynamic CRAP and100% assertion-
    confirmed Killed. Timeout/errors/uncovered are not Killed.

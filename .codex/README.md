@@ -37,6 +37,11 @@ Configuration changes require repeating their focused host qualification.
 Read AGENTS.md -> AGENT.sidecar.md before implementation search or delegation.
 Select one tool by intent, using the already-selected paths and inventory:
 
+The repository owner requires Vex for ordinary symbol, concept, reference and
+caller navigation whenever the current host index is qualified. Apply this
+default on every development contour and in each delegated agent's bootstrap.
+Use bounded results and the current Source fallback required below.
+
 | Intent                         | Tool                                                         |
 | ------------------------------ | ------------------------------------------------------------ |
 | File/name/message/config text  | rg or rg --files; add --hidden for dot-directories           |
@@ -61,10 +66,12 @@ refresh owner. Unsupported configuration/JSON remains on rg.
 ## Vex readiness and resource budget
 
 Semantic and synchronous auto-update are configured, with async_update=false.
-Full maintained Source semantic readiness is still OPEN after SIGKILL failures.
-The small isolated semantic/refresh/frozen-snapshot pilot passed; it does not
-qualify the complete index. Until full preparation succeeds, use rg/ast-grep and
-avoid Vex queries that would trigger a cold semantic rebuild.
+The lead prepared the full current checkout index on 2026-10-14 and qualified
+semantic search plus synchronous refresh on a real Source correction. See WORK
+for exact receipts and limits. A fresh host still needs its own preparation;
+tool installation or a prior host's receipt does not establish current readiness.
+Before that preparation succeeds, use rg/ast-grep and avoid a cold semantic rebuild
+through an ordinary query.
 
 One lead prepares the index separately after static checks:
 
@@ -76,18 +83,26 @@ taskset --cpu-list "$VIDA_VEX_CPU" vex search "retry recovery" --limit 10
 
 The first allowed CPU is discovered from /proc/self/status. taskset bounds ONNX
 threads; --jobs bounds parsing, not embedding batch size. Six GiB cgroup headroom
-is an admission margin, not a guaranteed maximum. The current 16-GiB host retains
-RAM-backed failed fixtures in /tmp and /dev/shm. Preserve them; future scratch
+is an admission margin, not a guaranteed maximum. Inspect current host memory
+before preparation. Preserve retained failed/UNKNOWN fixtures; future scratch
 uses disk-backed TMPDIR. Never overlap cold indexing with compilers/coverage.
 
 Ordinary Vex queries refresh under its native single-writer lock after readiness.
+Auto-update runs at query time, not as a background watcher. Check its terminal
+result and returned freshness; enabling it does not guarantee a successful refresh.
 No watchers, per-agent rebuilds or second coordinators are needed. The lead may
 warm one update after a large settled edit. Stop all Vex calls during frozen
 numeric/runtime measurements. Outside measurements, --no-stale-check may serve
 a deliberately frozen pre-warmed snapshot with freshness labeled unverified.
 There is no --no-auto-update flag.
 
-Inspect vex status --coverage --format json before relying on index coverage.
+Inspect `vex status --path <repository-root> --coverage --format json` before
+relying on index coverage. Commands run from a package directory otherwise select
+a different index. Check unsupported paths, missing files and embeddings separately.
+An incremental update freezes clusters and may set clusters_stale=true even when
+symbol bodies are current; do not rebuild the full index solely for that flag.
+Semantic results and reference edges remain candidates, never exhaustive type or
+function-coverage proof. Confirm edits against current Source bytes.
 Tool setup prefetches the pinned MiniLM files with curl and verified hashes
 because the host proxy CA is rejected by the upstream model downloader.
 It never disables TLS. Cache layout follows the qualified fastembed/hf-hub
@@ -110,6 +125,21 @@ omission markers, rather than exact original stdout. Full file delivery/recovery
 has its own qualified control. Archives have the tool's 72-hour/500-MB bounds.
 
 ## Pstack provisioning and qualification
+
+The repository sidecar selects Pstack for every development contour. Read its
+installed `skills/poteto-mode/SKILL.md` and the relevant focused leaves once for
+the task. Resolve the enabled `pstack@open-pstack` source path from
+`codex plugin list --json`; a catalog entry proves availability, not skill use.
+Do not copy a prior host's path or skill count into a new host's readiness claim.
+The current CLEAR plan, backlog and WORK retain their owners. Native blind Luna,
+Root integration/checks/Git and disjoint shared-file assignments are the selected
+repository exceptions to Pstack's orchestration defaults.
+
+Before delegation, use the installed Bun `pstack-worker-contract prepare` owner
+with parent/provider codex, native route and the assigned access mode. Read its
+prepared instructions into the worker brief. The legacy contract is prompt-only;
+it does not restrict inherited tools or qualify hard isolation. Keep each result
+in its assigned artifact path and independently review it before Source joins.
 
 cloud-pstack-setup.ts --install installs/enables pstack@open-pstack through the
 native Codex marketplace, discovers its actual skill path and installs locked

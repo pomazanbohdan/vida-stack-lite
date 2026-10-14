@@ -1,8 +1,9 @@
-import { afterEach, expect, test as baseTest } from 'bun:test';
+import { afterEach, expect, mock, spyOn, test as baseTest } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import * as fs from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +29,7 @@ import {
   type WorkState,
 } from '../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
+import { retryPendingWorkspaceDatabaseCloses } from '../src/config/workspace-database-raw.ts';
 import { validateCoordinationLedgerV1, type CoordinationLedger } from '../src/contracts/envelopes.ts';
 import {
   observationSchema,
@@ -47,6 +49,7 @@ const sealed = <T extends Record<string, unknown>>(body: T): T & { digest: strin
   digest: canonicalJsonDigest(body),
 });
 const roots: string[] = [];
+const originalFsExports = { ...fs };
 const databases: Database[] = [];
 const phaseBudget = executionBudget(undefined, 1_000);
 type PhaseBudget = ReturnType<typeof phaseBudget.child>;
@@ -299,6 +302,133 @@ async function runReconcileArtifacts(args: string[], options?: ReconcileOptions)
     });
   }
 }
+
+type RepairFileOwner = 'plan' | 'lock' | 'journal' | 'pending';
+type Fault = { readonly value: unknown };
+interface RepairFilesystemFaults {
+  readonly owner: RepairFileOwner;
+  readonly openCollision?: string;
+  readonly afterRename?: string;
+  readonly write?: Fault;
+  readonly fsync?: Fault;
+  readonly close?: Fault;
+  readonly unlink?: Fault;
+}
+
+function fileOwner(file: string, root: string): RepairFileOwner | null {
+  const absolute = path.resolve(file);
+  if (!absolute.startsWith(`${path.resolve(root)}${path.sep}`)) return null;
+  const name = path.basename(absolute);
+  if (name === 'repair-plan.v1.json') return 'plan';
+  if (name === 'repair-lock.v1.json') return 'lock';
+  if (name === 'repair-journal.v1.jsonl') return 'journal';
+  if (name.includes('.pending-')) return 'pending';
+  return null;
+}
+
+async function injectRepairFilesystemFaults(
+  root: string,
+  faults: RepairFilesystemFaults,
+): Promise<{
+  readonly events: string[];
+  restore(): Promise<void>;
+}> {
+  const descriptors = new Map<number, string>();
+  const events: string[] = [];
+  let renameInjected = false;
+  const replacement = {
+    ...originalFsExports,
+    openSync: ((...args: Parameters<typeof fs.openSync>) => {
+      if (fileOwner(String(args[0]), root) === faults.owner && faults.openCollision !== undefined) {
+        originalFsExports.writeFileSync(args[0], faults.openCollision, { flag: 'wx' });
+        events.push('open-collision');
+      }
+      const fd = Reflect.apply(originalFsExports.openSync, originalFsExports, args) as number;
+      if (fileOwner(String(args[0]), root) !== null) descriptors.set(fd, String(args[0]));
+      return fd;
+    }) as typeof fs.openSync,
+    writeFileSync: ((...args: Parameters<typeof fs.writeFileSync>) => {
+      const target = typeof args[0] === 'number' ? descriptors.get(args[0]) : undefined;
+      if (target && fileOwner(target, root) === faults.owner && faults.write) {
+        events.push('write');
+        throw faults.write.value;
+      }
+      return Reflect.apply(originalFsExports.writeFileSync, originalFsExports, args) as void;
+    }) as typeof fs.writeFileSync,
+    fsyncSync: ((...args: Parameters<typeof fs.fsyncSync>) => {
+      const target = descriptors.get(args[0]);
+      if (target && fileOwner(target, root) === faults.owner && faults.fsync) {
+        events.push('fsync');
+        throw faults.fsync.value;
+      }
+      return Reflect.apply(originalFsExports.fsyncSync, originalFsExports, args) as void;
+    }) as typeof fs.fsyncSync,
+    closeSync: ((...args: Parameters<typeof fs.closeSync>) => {
+      const target = descriptors.get(args[0]);
+      const owner = target ? fileOwner(target, root) : null;
+      Reflect.apply(originalFsExports.closeSync, originalFsExports, args);
+      descriptors.delete(args[0]);
+      if (owner === faults.owner && faults.close) {
+        events.push('close');
+        throw faults.close.value;
+      }
+    }) as typeof fs.closeSync,
+    unlinkSync: ((...args: Parameters<typeof fs.unlinkSync>) => {
+      if (fileOwner(String(args[0]), root) === faults.owner && faults.unlink) {
+        events.push('unlink');
+        throw faults.unlink.value;
+      }
+      return Reflect.apply(originalFsExports.unlinkSync, originalFsExports, args) as void;
+    }) as typeof fs.unlinkSync,
+    renameSync: ((...args: Parameters<typeof fs.renameSync>) => {
+      Reflect.apply(originalFsExports.renameSync, originalFsExports, args);
+      if (!renameInjected && fileOwner(String(args[0]), root) === faults.owner && faults.afterRename !== undefined) {
+        renameInjected = true;
+        originalFsExports.writeFileSync(args[0], faults.afterRename, { flag: 'wx' });
+        events.push('rename-then-foreign');
+      }
+    }) as typeof fs.renameSync,
+  };
+  await mock.module('node:fs', () => replacement);
+  return {
+    events,
+    async restore() {
+      await mock.module('node:fs', () => originalFsExports);
+    },
+  };
+}
+
+type RepairCallOutcome =
+  | { readonly threw: false; readonly value: unknown }
+  | { readonly threw: true; readonly error: unknown };
+
+async function repairCallOutcome(call: () => Promise<unknown>): Promise<RepairCallOutcome> {
+  try {
+    return { threw: false, value: await call() };
+  } catch (error) {
+    return { threw: true, error };
+  }
+}
+
+function flattenRepairErrors(error: unknown): unknown[] {
+  if (!(error instanceof AggregateError) || !Array.isArray(error.errors)) return [error];
+  const entries: unknown[] = error.errors;
+  return entries.flatMap(flattenRepairErrors);
+}
+
+function expectRepairFailures(outcome: RepairCallOutcome, expected: readonly unknown[]): void {
+  if (!outcome.threw) throw new Error('injected filesystem failure unexpectedly returned a result');
+  const failures = flattenRepairErrors(outcome.error);
+  expect(failures).toHaveLength(expected.length);
+  expected.forEach((failure, index) => expect(failures[index]).toBe(failure));
+}
+
+function retainRepairFixture(root: string, reason: string): void {
+  const index = roots.indexOf(root);
+  if (index >= 0) roots.splice(index, 1);
+  console.error(`repair fixture retained (${reason}): ${root}`);
+}
+
 afterEach(() => {
   const started = performance.now();
   if (repairOutcomeUnknown) {
@@ -1613,5 +1743,285 @@ test('synthesis observation dispatcher prepares a new issue while keeping the or
   );
   expect(stringField(journalReplay, 'payload', 'journal replay after correction')).toBe(
     stringField(journal, 'payload', 'Mastra session ledger after correction'),
+  );
+});
+
+function researchIdentityRepairFixture() {
+  const context = fixture();
+  const results = [research(context, 'research-a', 'source-a.md'), research(context, 'research-b', 'source-b.md')];
+  const paths = writeResearch(context, results);
+  const recordsFile = path.join(context.root, 'records.json');
+  writeFileSync(recordsFile, json(paths));
+  const beforeRecords = paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'));
+  return { context, paths, recordsFile, beforeRecords };
+}
+
+function repairApplyArgs(root: string): string[] {
+  return ['--mode', 'apply', '--project-root', root, '--repair-id', 'repair-test'];
+}
+
+test('public research repair plan retains write and real-close failures at first plan publication', async () => {
+  const { context, paths, recordsFile, beforeRecords } = researchIdentityRepairFixture();
+  const planPath = path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json');
+  const writeError = new Error('injected initial plan write failure');
+  const closeError = new Error('injected initial plan close failure');
+  retainRepairFixture(context.root, 'initial plan write/close afterimage');
+  const filesystem = await injectRepairFilesystemFaults(context.root, {
+    owner: 'plan',
+    write: { value: writeError },
+    close: { value: closeError },
+  });
+  let outcome: RepairCallOutcome;
+  try {
+    outcome = await repairCallOutcome(() =>
+      runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile])),
+    );
+  } finally {
+    await filesystem.restore();
+  }
+
+  expect(filesystem.events).toEqual(['write', 'close']);
+  expectRepairFailures(outcome, [writeError, closeError]);
+  expect(fs.existsSync(planPath)).toBe(true);
+  expect(fs.readFileSync(planPath)).toEqual(Buffer.alloc(0));
+  expect(paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'))).toEqual(beforeRecords);
+  expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
+  expect(fs.existsSync(path.join(context.root, '.agent/work/repair-test/repair-lock.v1.json'))).toBe(false);
+});
+
+test('public research repair lock retains undefined write and real-close failures before Source effects', async () => {
+  const { context, paths, recordsFile, beforeRecords } = researchIdentityRepairFixture();
+  await runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile]));
+  const planPath = path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json');
+  const planBytes = readFileSync(planPath);
+  const lockPath = path.join(context.root, '.agent/work/repair-test/repair-lock.v1.json');
+  const closeError = new Error('injected research repair lock close failure');
+  retainRepairFixture(context.root, 'repair lock write/close afterimage');
+  const filesystem = await injectRepairFilesystemFaults(context.root, {
+    owner: 'lock',
+    write: { value: undefined },
+    close: { value: closeError },
+  });
+  let outcome: RepairCallOutcome;
+  try {
+    outcome = await repairCallOutcome(() => runReconcileArtifacts(repairApplyArgs(context.root)));
+  } finally {
+    await filesystem.restore();
+  }
+
+  expect(filesystem.events).toEqual(['write', 'close']);
+  expectRepairFailures(outcome, [undefined, closeError]);
+  expect(fs.readFileSync(planPath)).toEqual(planBytes);
+  expect(fs.existsSync(lockPath)).toBe(true);
+  expect(fs.readFileSync(lockPath)).toEqual(Buffer.alloc(0));
+  expect(paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'))).toEqual(beforeRecords);
+  expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
+  expect(fs.existsSync(path.join(context.root, '.agent/work/repair-test/repair-journal.v1.jsonl'))).toBe(false);
+});
+
+test('public research repair journal retains fsync and real-close failures after one exact record replacement', async () => {
+  const { context, paths, recordsFile, beforeRecords } = researchIdentityRepairFixture();
+  await runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile]));
+  const planPath = path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json');
+  const planBytes = readFileSync(planPath);
+  const plan = researchPlan(parseRecord(readFileSync(planPath, 'utf8'), 'research repair plan'));
+  const firstChange = firstItem(plan.changes, 'research repair changes');
+  const firstPath = firstItem(paths, 'research result paths');
+  const journalPath = path.join(context.root, '.agent/work/repair-test/repair-journal.v1.jsonl');
+  const fsyncError = new Error('injected research repair journal fsync failure');
+  const closeError = new Error('injected research repair journal close failure');
+  retainRepairFixture(context.root, 'repair journal fsync/close afterimage');
+  const filesystem = await injectRepairFilesystemFaults(context.root, {
+    owner: 'journal',
+    fsync: { value: fsyncError },
+    close: { value: closeError },
+  });
+  let outcome: RepairCallOutcome;
+  try {
+    outcome = await repairCallOutcome(() => runReconcileArtifacts(repairApplyArgs(context.root)));
+  } finally {
+    await filesystem.restore();
+  }
+
+  expect(filesystem.events).toEqual(['fsync', 'close']);
+  expectRepairFailures(outcome, [fsyncError, closeError]);
+  expect(fs.readFileSync(planPath)).toEqual(planBytes);
+  expect(fs.existsSync(path.join(context.root, '.agent/work/repair-test/repair-lock.v1.json'))).toBe(true);
+  expect(readFileSync(path.join(context.root, firstPath), 'utf8')).toBe(firstChange.after);
+  expect(paths.slice(1).map((relative) => readFileSync(path.join(context.root, relative), 'utf8'))).toEqual(
+    beforeRecords.slice(1),
+  );
+  expect(fs.readFileSync(journalPath, 'utf8')).toBe(
+    `${JSON.stringify({ schema: 'VidaResearchRepairEvent/v1', repair_id: 'repair-test', phase: 'record_0' })}\n`,
+  );
+  expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
+});
+
+test('public research repair preserves record-phase and admitted database close failures', async () => {
+  const { context, paths, beforeRecords } = researchIdentityRepairFixture();
+  await runReconcileArtifacts(planning(context, 'plan', ['--records', path.join(context.root, 'records.json')]));
+  const planPath = path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json');
+  const planBytes = readFileSync(planPath);
+  const plan = researchPlan(parseRecord(planBytes.toString('utf8'), 'research repair plan'));
+  const firstChange = firstItem(plan.changes, 'research repair changes');
+  const sourceDatabasePath = path.resolve(context.root, sessionHandoffDatabaseRelativePath(context.config));
+  const bodyError = new Error('injected research repair record-phase failure');
+  const closeError = new Error('injected admitted research repair database close failure');
+  const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+  const events: string[] = [];
+  retainRepairFixture(context.root, 'record-phase and admitted database close afterimage');
+  let closeSpy: { mockRestore(): void } | undefined;
+  let outcome: RepairCallOutcome;
+  try {
+    outcome = await repairCallOutcome(() =>
+      runReconcileArtifacts(repairApplyArgs(context.root), {
+        onPhase(phase) {
+          if (phase !== 'record_0') return;
+          events.push(phase);
+          closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+            this: Database,
+            force?: boolean,
+          ): void {
+            if (path.resolve(this.filename) === sourceDatabasePath && events.length === 1) {
+              Reflect.apply(originalClose, this, [true]);
+              events.push('source_close');
+              throw closeError;
+            }
+            Reflect.apply(originalClose, this, [force]);
+          });
+          throw bodyError;
+        },
+      }),
+    );
+  } finally {
+    closeSpy?.mockRestore();
+    retryPendingWorkspaceDatabaseCloses();
+  }
+
+  expect(events).toEqual(['record_0', 'source_close']);
+  expectRepairFailures(outcome, [bodyError, closeError]);
+  expect(readFileSync(planPath)).toEqual(planBytes);
+  expect(readFileSync(path.join(context.root, firstChange.path), 'utf8')).toBe(firstChange.after);
+  expect(paths.slice(1).map((relative) => readFileSync(path.join(context.root, relative), 'utf8'))).toEqual(
+    beforeRecords.slice(1),
+  );
+  expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
+  expect(readFileSync(path.join(context.root, '.agent/work/repair-test/repair-journal.v1.jsonl'), 'utf8')).toBe(
+    `${JSON.stringify({ schema: 'VidaResearchRepairEvent/v1', repair_id: 'repair-test', phase: 'record_0' })}\n`,
+  );
+  expect(fs.existsSync(path.join(context.root, '.agent/work/repair-test/repair-lock.v1.json'))).toBe(true);
+
+  const observer = new Database(sourceDatabasePath);
+  try {
+    expect(maintenanceStatus(new HostStateStore(observer, context.workspace))).toBe('held');
+  } finally {
+    observer.close(true);
+  }
+});
+
+test('public research repair pending cleanup retains write, real-close and unlink failures without replacement', async () => {
+  const { context, paths, recordsFile, beforeRecords } = researchIdentityRepairFixture();
+  await runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile]));
+  const planPath = path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json');
+  const planBytes = readFileSync(planPath);
+  const plan = researchPlan(parseRecord(readFileSync(planPath, 'utf8'), 'research repair plan'));
+  const firstChange = firstItem(plan.changes, 'research repair changes');
+  const pendingWriteError = new Error('injected research replacement write failure');
+  const closeError = new Error('injected research replacement close failure');
+  const unlinkError = new Error('injected pending-file cleanup failure');
+  retainRepairFixture(context.root, 'pending replacement cleanup failure');
+  const filesystem = await injectRepairFilesystemFaults(context.root, {
+    owner: 'pending',
+    write: { value: pendingWriteError },
+    close: { value: closeError },
+    unlink: { value: unlinkError },
+  });
+  let outcome: RepairCallOutcome;
+  try {
+    outcome = await repairCallOutcome(() => runReconcileArtifacts(repairApplyArgs(context.root)));
+  } finally {
+    await filesystem.restore();
+  }
+
+  expect(filesystem.events).toEqual(['write', 'close', 'unlink']);
+  expectRepairFailures(outcome, [pendingWriteError, closeError, unlinkError]);
+  expect(fs.readFileSync(planPath)).toEqual(planBytes);
+  expect(fs.existsSync(path.join(context.root, '.agent/work/repair-test/repair-lock.v1.json'))).toBe(true);
+  expect(paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'))).toEqual(beforeRecords);
+  expect(fs.existsSync(path.join(context.root, '.agent/work/repair-test/repair-journal.v1.jsonl'))).toBe(false);
+  expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
+  const pendingFiles = fs
+    .readdirSync(path.dirname(path.join(context.root, firstChange.path)))
+    .filter((name) => name.startsWith(`${path.basename(firstChange.path)}.pending-`));
+  expect(pendingFiles).toHaveLength(1);
+  expect(
+    fs.readFileSync(
+      path.join(
+        path.dirname(path.join(context.root, firstChange.path)),
+        firstItem(pendingFiles, 'owned pending files'),
+      ),
+    ),
+  ).toEqual(Buffer.alloc(0));
+});
+
+test('public research repair preserves a foreign pending file when exclusive creation loses ownership', async () => {
+  const { context, paths, recordsFile, beforeRecords } = researchIdentityRepairFixture();
+  await runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile]));
+  const planPath = path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json');
+  const planBytes = readFileSync(planPath);
+  const plan = researchPlan(parseRecord(planBytes.toString('utf8'), 'research repair plan'));
+  const change = firstItem(plan.changes, 'research repair changes');
+  const foreignBytes = 'foreign pending owner bytes';
+  retainRepairFixture(context.root, 'foreign pending file exclusive-creation denial');
+  const filesystem = await injectRepairFilesystemFaults(context.root, {
+    owner: 'pending',
+    openCollision: foreignBytes,
+  });
+  let outcome: RepairCallOutcome;
+  try {
+    outcome = await repairCallOutcome(() => runReconcileArtifacts(repairApplyArgs(context.root)));
+  } finally {
+    await filesystem.restore();
+  }
+  expect(filesystem.events).toEqual(['open-collision']);
+  if (!outcome.threw || !isRecord(outcome.error)) throw new Error('exclusive creation denial is missing');
+  expect(outcome.error.code).toBe('EEXIST');
+  const directory = path.dirname(path.join(context.root, change.path));
+  const pending = fs.readdirSync(directory).filter((name) => name.startsWith(`${path.basename(change.path)}.pending-`));
+  expect(pending).toHaveLength(1);
+  expect(readFileSync(path.join(directory, firstItem(pending, 'foreign pending files')), 'utf8')).toBe(foreignBytes);
+  expect(readFileSync(planPath)).toEqual(planBytes);
+  expect(paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'))).toEqual(beforeRecords);
+  expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
+  expect(fs.existsSync(path.join(context.root, '.agent/work/repair-test/repair-journal.v1.jsonl'))).toBe(false);
+});
+
+test('public research repair releases pending-path ownership when rename consumes the owned file', async () => {
+  const { context, recordsFile } = researchIdentityRepairFixture();
+  await runReconcileArtifacts(planning(context, 'plan', ['--records', recordsFile]));
+  const planPath = path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json');
+  const plan = researchPlan(parseRecord(readFileSync(planPath, 'utf8'), 'research repair plan'));
+  const change = firstItem(plan.changes, 'research repair changes');
+  const foreignBytes = 'foreign bytes after owned rename';
+  retainRepairFixture(context.root, 'foreign pending-path afterimage after successful rename');
+  const filesystem = await injectRepairFilesystemFaults(context.root, { owner: 'pending', afterRename: foreignBytes });
+  let outcome: RepairCallOutcome;
+  try {
+    outcome = await repairCallOutcome(() => runReconcileArtifacts(repairApplyArgs(context.root)));
+  } finally {
+    await filesystem.restore();
+  }
+  expect(filesystem.events).toEqual(['rename-then-foreign']);
+  if (outcome.threw) throw outcome.error;
+  expect(isRecord(outcome.value) && outcome.value.status).toBe('complete');
+  const directory = path.dirname(path.join(context.root, change.path));
+  const pending = fs.readdirSync(directory).filter((name) => name.startsWith(`${path.basename(change.path)}.pending-`));
+  expect(pending).toHaveLength(1);
+  expect(readFileSync(path.join(directory, firstItem(pending, 'foreign pending afterimages')), 'utf8')).toBe(
+    foreignBytes,
+  );
+  for (const item of plan.changes) expect(readFileSync(path.join(context.root, item.path), 'utf8')).toBe(item.after);
+  expect(parseRecords(readFileSync(path.join(context.root, context.changelog), 'utf8'), 'lineage events')).toHaveLength(
+    2,
   );
 });

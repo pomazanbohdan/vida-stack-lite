@@ -159,6 +159,18 @@ and a sole cleanup error by identity. Planning, custody and apply share that
 owner; planning releases its pair before custody reacquires it. These controls
 qualify error aggregation and ordering, not native SQLite I/O failure behavior.
 
+Public research repair regressions retain initial plan write/close failures,
+undefined lock-write plus close failure, journal fsync plus close failure and
+pending write/close/unlink failures. Assert pre-effect or exact partial effects,
+unchanged plan bytes, and retained lock/journal custody. Denied exclusive creation
+preserves foreign pending bytes. Successful rename releases pending-path ownership
+and preserves a foreign recreation while completing the exact target records and
+changelog. A `record_0` interruption plus admitted source-close failure preserves
+both causes, the first transformed record, unchanged next record/changelog and
+held maintenance fence. Restore the native spy before shared close retry and a
+new observer; retain the interrupted fixture. Named filesystem-import interception
+uses the qualified awaited module mock/restoration pattern in TESTING.
+
 Read-only dispatch repair replay checks the exact persisted payload and digest.
 The existing Host-backed idempotence case rejects conflicting strings and BLOBs
 in either column with the same generation-conflict diagnostic, preserves Host,
