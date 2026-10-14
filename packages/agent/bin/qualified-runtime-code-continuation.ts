@@ -21,6 +21,8 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 
 import { deriveWorkspaceId } from '../src/workspace-identity.js';
 import { sessionHandoffDatabasePath } from '../src/config/project-paths.js';
+import { finishWorkspaceDatabaseClose } from '../src/config/workspace-database-raw.js';
+import type { DatabaseWorkOutcome } from '../src/config/workspace-database-raw.js';
 import { readAdmittedSessionIntakeForWork } from '../src/orchestration/admitted-session-execution.js';
 import {
   readInitialSourceContinuationLineageView,
@@ -220,6 +222,7 @@ async function runQualifiedRuntimeCodeContinuationLocked(values: Record<string, 
       !applying && !refreshing,
     );
   const relative = '.agent/work/' + repairId + '/qualified-runtime-code-continuation-plan.v1.json';
+  let outcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   try {
     const store = createCliHostStateStore(
       database,
@@ -487,7 +490,15 @@ async function runQualifiedRuntimeCodeContinuationLocked(values: Record<string, 
       accepted_result: false,
       runtime_acceptance: false,
     };
+  } catch (error) {
+    outcome = { ok: false, error };
+    throw error;
   } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
+    finishWorkspaceDatabaseClose(
+      database,
+      outcome,
+      closeWorkspaceDatabaseWithAdmission,
+      'Qualified runtime code continuation and admitted database close failed',
+    );
   }
 }

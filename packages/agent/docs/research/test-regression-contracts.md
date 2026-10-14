@@ -34,21 +34,20 @@ ordered intervals and visible write failure without a real workflow/CLI run.
 Use these observations to locate cost, never as uninstrumented speed, coverage,
 mutation or Runtime evidence. Preserve failed/UNKNOWN custody and all bounds.
 
-For a missing CPU profile, check the mechanism with an inert control before
-another expensive test. On the qualified Bun 1.4.2, CLI profiling flags can
-leave `bun test` successful without an artifact; upstream issue
-https://github.com/oven-sh/bun/issues/40184 and its open proposed fix do not
-establish installed support. Programmatic `node:inspector/promises` Session
-Profiler commands are documented and locally qualified in an inert test.
+For a missing CPU profile, check the mechanism with an inert control on the
+package-selected current Bun before another expensive test. The historical
+Bun1.4.2 profiling controls and issue references are retained in
+[their original Source record](https://github.com/pomazanbohdan/vida-stack-lite/blob/a443545dce0495d0e7a90affebcb81d0c19b9ae7/packages/agent/docs/research/test-regression-contracts.md#public-cli-and-diagnostics).
+They prove neither support nor failure on the current runtime.
+Programmatic `node:inspector/promises` Session Profiler commands retain their
+existing owner; a changed runtime requires the relevant inert qualification.
 An explicit ignored preload may bracket one selected case with global
 beforeEach/afterEach hooks; disconnect in finally, use an exclusive private
 output and report capture failure separately from the test outcome. Do not
 inherit profiling environment into CLI children. Require a nonempty observed
 artifact, not merely exit zero. Profiles cover the parent, not child execution.
-The Bun 1.4.2 idle-attribution defect in
-https://github.com/oven-sh/bun/issues/44077 also affects Inspector: stack samples
-are candidate attribution, not invocation counts or reliable wall/CPU self
-time. Keep actual phase/child elapsed receipts separate. No profiling result
+Stack samples are candidate attribution, not invocation counts or reliable
+wall/CPU self time. Keep actual phase/child elapsed receipts separate. No profiling result
 waives live checks, durable syncs, custody or numerical gates.
 
 For upgrade package-byte optimization, qualify the optional Linux verified
@@ -139,6 +138,16 @@ Successor admission and eligible predecessor release use one immediate work/shar
 ### Recovery, repair and migration
 
 Use the strict current v1 contracts. Ship and qualify a functional bundle-owned repair before changing active artifacts or readers. Check dependency drift, atomic application boundaries, interruption, exact resume and owned-field restore. Preserve monotonic versions. Caller fields do not create approval or new rights.
+
+The public delivered-work repair and qualified runtime continuation cases in
+`tests/delivered-work-continuation.test.ts` inject a native source-close failure
+after a genuine plan-read/parse failure. Both causes must survive in order, and
+the exact failed handle/admission must remain with its close retry owner. Restore
+the fault before retry, preserve unchanged plan/Host state on pre-effect refusal,
+and retain unresolved cleanup. Reuse the shared close accumulator; an awaited
+body may keep its original try/returns with a tagged outcome and synchronous
+finisher when its exact cleanup owner is synchronous. These are Source regressions,
+not installation, Runtime or complete numeric evidence.
 
 ### Failed prewriter recovery
 
@@ -354,8 +363,8 @@ Run the inert capture cases with `bun bin/bun.ts test ./tests/development-contro
 They cover byte-exact success, terminal nonzero streams, spawn error, pinned
 partial capture, timeout, path/link/collision denial, fresh-process restart,
 declared nesting, duplicate and independent launch denial, and final-receipt
-persistence failure. The partial-capture case runs under the pinned Bun
-1.4.2 Node-compatible `spawnSync` API. Run the existing pure diagnostic check
+persistence failure. The partial-capture case uses the package-selected Bun's
+compatible `spawnSync` API. Run the existing pure diagnostic check
 with `bun bin/bun.ts test ./tests/development-controller.test.ts --test-name-pattern "controller failure diagnostics preserve bounded sanitized terminal fields without claiming no effects"`.
 Do not run the controller construction, dependency-install or copied-package
 integration case as a local observation test.

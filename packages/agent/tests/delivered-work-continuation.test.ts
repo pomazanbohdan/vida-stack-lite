@@ -79,6 +79,7 @@ import {
   validateQualifiedRuntimeCodeContinuationRequest,
   validateQualifiedRuntimeCodeContinuationReceipt,
 } from '../src/orchestration/qualified-runtime-code-continuation.ts';
+import { runQualifiedRuntimeCodeContinuation } from '../bin/qualified-runtime-code-continuation.ts';
 import { transitionFailedPrewriter } from '../bin/transition-failed-prewriter.ts';
 import { run as runAgent } from '../bin/run.ts';
 import { acceptedContractSourceRevision } from '../src/orchestration/admitted-development-packet.ts';
@@ -4202,6 +4203,84 @@ test('public delivered-work repair preserves a plan-read failure when admitted d
   }
   if (assertionFailed && cleanupFailed)
     throw new AggregateError([assertionFailure, cleanupFailure], 'Repair close regression and fixture cleanup failed');
+  if (assertionFailed) throw assertionFailure;
+  if (cleanupFailed) throw cleanupFailure;
+});
+
+test('qualified runtime continuation preserves malformed plan and admitted-close failures', async () => {
+  const { root, config, workspaceId, input } = configuredFrontierRepairHostRoot('normal');
+  const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+  mkdirSync(path.dirname(databasePath), { recursive: true });
+  const f = await continuationFixture({
+    root,
+    config,
+    workspaceId,
+    databasePath,
+    repositoryRoot: root,
+    identity: input.receipt.request.identity,
+  });
+  const repairId = 'qualified-close-failure';
+  const planPath = path.join(root, '.agent', 'work', repairId, 'qualified-runtime-code-continuation-plan.v1.json');
+  mkdirSync(path.dirname(planPath), { recursive: true });
+  writeFileSync(planPath, '[');
+  const planBytes = readFileSync(planPath);
+  const hostBefore = f.store.readHostStateSnapshot(f.identity);
+  const closeError = new Error('injected qualified continuation close failure');
+  const originalClose: unknown = Reflect.get(Database.prototype, 'close');
+  if (typeof originalClose !== 'function') throw new Error('SQLite close method is unavailable');
+  let closeFaultInjected = false;
+  const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, force?: boolean) {
+    if (!closeFaultInjected && this !== f.db && path.resolve(this.filename) === path.resolve(databasePath)) {
+      closeFaultInjected = true;
+      throw closeError;
+    }
+    Reflect.apply(originalClose, this, [force]);
+  });
+  let assertionFailed = false;
+  let assertionFailure: unknown;
+  try {
+    let caught: unknown;
+    try {
+      await runQualifiedRuntimeCodeContinuation({
+        '--project-root': root,
+        '--repair-id': repairId,
+        '--mode': 'apply',
+      });
+    } catch (error) {
+      caught = error;
+    }
+    expect(closeFaultInjected).toBe(true);
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(hostBefore);
+    expect(readFileSync(planPath)).toEqual(planBytes);
+    expect(caught).toBeInstanceOf(AggregateError);
+    if (!(caught instanceof AggregateError)) throw new Error('Expected plan and admitted-close failures');
+    expect(caught.errors).toHaveLength(2);
+    const planError: unknown = caught.errors[0];
+    const cleanupError: unknown = caught.errors[1];
+    expect(planError).toBeInstanceOf(SyntaxError);
+    expect(cleanupError).toBeInstanceOf(AggregateError);
+    if (!(cleanupError instanceof AggregateError)) throw new Error('Expected retained admitted-close failure');
+    expect(cleanupError.errors).toEqual([closeError]);
+  } catch (error) {
+    assertionFailed = true;
+    assertionFailure = error;
+  } finally {
+    closeSpy.mockRestore();
+  }
+  let cleanupFailed = false;
+  let cleanupFailure: unknown;
+  try {
+    retryPendingWorkspaceDatabaseCloses();
+  } catch (error) {
+    cleanupFailed = true;
+    cleanupFailure = error;
+    retainContinuationFixtureRoot(root);
+  }
+  if (assertionFailed && cleanupFailed)
+    throw new AggregateError(
+      [assertionFailure, cleanupFailure],
+      'Qualified continuation close regression and fixture cleanup failed',
+    );
   if (assertionFailed) throw assertionFailure;
   if (cleanupFailed) throw cleanupFailure;
 });

@@ -51,6 +51,11 @@ spies and injected faults before retrying through the registered cleanup owner.
 A test that reaches an early denial has not exercised a later target boundary.
 Use a phase marker or direct observation to prove the intended operation began.
 
+For an existing awaited try-body with synchronous owned cleanup, the package
+finisher can join a tagged outcome in finally without moving returns or callback
+identities. Use the async owner when cleanup itself requires awaiting. Preserve
+both native failure causes and the retained retry owner in the public regression.
+
 ## Run focused checks safely
 
 Use explicit test paths and an anchored `--test-name-pattern` for a focused

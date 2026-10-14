@@ -387,7 +387,7 @@
     },
     {
       "file": "bin/qualified-runtime-code-continuation.ts",
-      "sha256": "76f84f11ffb5dfc5a7a511c3bd47a790606931a61bfbcf0424ece87446d725b2"
+      "sha256": "21c5a1bff9f792cb577f47945b2e90cbfb231d06870ca7400b55390e79e1bed9"
     },
     {
       "file": "bin/reconcile-artifacts.ts",
@@ -31004,13 +31004,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 51,
+        "line": 53,
         "column": 80,
-        "start": 3212,
-        "end": 3317,
-        "bodyLine": 51,
+        "start": 3384,
+        "end": 3489,
+        "bodyLine": 53,
         "bodyColumn": 100,
-        "bodyEndLine": 53,
+        "bodyEndLine": 55,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -31036,13 +31036,13 @@
         "bodyEndColumn": 86
       },
       "current_source_address": {
-        "line": 54,
+        "line": 56,
         "column": 13,
-        "start": 3332,
-        "end": 3423,
-        "bodyLine": 54,
+        "start": 3504,
+        "end": 3595,
+        "bodyLine": 56,
         "bodyColumn": 48,
-        "bodyEndLine": 54,
+        "bodyEndLine": 56,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -31068,13 +31068,13 @@
         "bodyEndColumn": 71
       },
       "current_source_address": {
-        "line": 55,
+        "line": 57,
         "column": 12,
-        "start": 3437,
-        "end": 3517,
-        "bodyLine": 55,
+        "start": 3609,
+        "end": 3689,
+        "bodyLine": 57,
         "bodyColumn": 44,
-        "bodyEndLine": 55,
+        "bodyEndLine": 57,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -31100,13 +31100,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 61,
+        "line": 63,
         "column": 0,
-        "start": 3733,
-        "end": 4107,
-        "bodyLine": 65,
+        "start": 3905,
+        "end": 4279,
+        "bodyLine": 67,
         "bodyColumn": 55,
-        "bodyEndLine": 70,
+        "bodyEndLine": 72,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -31132,13 +31132,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 85,
+        "line": 87,
         "column": 0,
-        "start": 4567,
-        "end": 4915,
-        "bodyLine": 92,
+        "start": 4739,
+        "end": 5087,
+        "bodyLine": 94,
         "bodyColumn": 2,
-        "bodyEndLine": 95,
+        "bodyEndLine": 97,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -31164,13 +31164,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 167,
+        "line": 169,
         "column": 7,
-        "start": 7299,
-        "end": 8044,
-        "bodyLine": 167,
+        "start": 7471,
+        "end": 8216,
+        "bodyLine": 169,
         "bodyColumn": 90,
-        "bodyEndLine": 178,
+        "bodyEndLine": 180,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -31196,13 +31196,13 @@
         "bodyEndColumn": 59
       },
       "current_source_address": {
-        "line": 176,
+        "line": 178,
         "column": 4,
-        "start": 7981,
-        "end": 8036,
-        "bodyLine": 176,
+        "start": 8153,
+        "end": 8208,
+        "bodyLine": 178,
         "bodyColumn": 10,
-        "bodyEndLine": 176,
+        "bodyEndLine": 178,
         "bodyEndColumn": 59
       },
       "baseline_complexity": 1,
@@ -31228,13 +31228,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 208,
+        "line": 210,
         "column": 0,
-        "start": 9151,
-        "end": 22271,
-        "bodyLine": 208,
+        "start": 9323,
+        "end": 22735,
+        "bodyLine": 210,
         "bodyColumn": 89,
-        "bodyEndLine": 493,
+        "bodyEndLine": 504,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 21,
@@ -31260,13 +31260,13 @@
         "bodyEndColumn": 54
       },
       "current_source_address": {
-        "line": 196,
+        "line": 198,
         "column": 6,
-        "start": 8773,
-        "end": 8817,
-        "bodyLine": 196,
+        "start": 8945,
+        "end": 8989,
+        "bodyLine": 198,
         "bodyColumn": 16,
-        "bodyEndLine": 196,
+        "bodyEndLine": 198,
         "bodyEndColumn": 50
       },
       "baseline_complexity": 1,
@@ -31292,13 +31292,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 325,
+        "line": 328,
         "column": 19,
-        "start": 14958,
-        "end": 19303,
-        "bodyLine": 341,
+        "start": 15205,
+        "end": 19550,
+        "bodyLine": 344,
         "bodyColumn": 9,
-        "bodyEndLine": 423,
+        "bodyEndLine": 426,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 14,
@@ -31324,13 +31324,13 @@
         "bodyEndColumn": 39
       },
       "current_source_address": {
-        "line": 364,
+        "line": 367,
         "column": 8,
-        "start": 16736,
-        "end": 16944,
-        "bodyLine": 365,
+        "start": 16983,
+        "end": 17191,
+        "bodyLine": 368,
         "bodyColumn": 10,
-        "bodyEndLine": 368,
+        "bodyEndLine": 371,
         "bodyEndColumn": 37
       },
       "baseline_complexity": 4,
@@ -31356,13 +31356,13 @@
         "bodyEndColumn": 72
       },
       "current_source_address": {
-        "line": 413,
+        "line": 416,
         "column": 51,
-        "start": 18994,
-        "end": 19015,
-        "bodyLine": 413,
+        "start": 19241,
+        "end": 19262,
+        "bodyLine": 416,
         "bodyColumn": 62,
-        "bodyEndLine": 413,
+        "bodyEndLine": 416,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 1,
@@ -31388,13 +31388,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 437,
+        "line": 440,
         "column": 25,
-        "start": 19899,
-        "end": 20637,
-        "bodyLine": 437,
+        "start": 20146,
+        "end": 20884,
+        "bodyLine": 440,
         "bodyColumn": 31,
-        "bodyEndLine": 452,
+        "bodyEndLine": 455,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 1,
@@ -31420,13 +31420,13 @@
         "bodyEndColumn": 82
       },
       "current_source_address": {
-        "line": 442,
+        "line": 445,
         "column": 61,
-        "start": 20236,
-        "end": 20257,
-        "bodyLine": 442,
+        "start": 20483,
+        "end": 20504,
+        "bodyLine": 445,
         "bodyColumn": 72,
-        "bodyEndLine": 442,
+        "bodyEndLine": 445,
         "bodyEndColumn": 82
       },
       "baseline_complexity": 1,
@@ -38875,13 +38875,13 @@
       "identity": "bin/qualified-runtime-code-continuation.ts#fn:requiredOption#0",
       "file": "bin/qualified-runtime-code-continuation.ts",
       "current_source_address": {
-        "line": 56,
+        "line": 58,
         "column": 0,
-        "start": 3519,
-        "end": 3732,
-        "bodyLine": 56,
+        "start": 3691,
+        "end": 3904,
+        "bodyLine": 58,
         "bodyColumn": 77,
-        "bodyEndLine": 60,
+        "bodyEndLine": 62,
         "bodyEndColumn": 1
       },
       "max_complexity": 10,
@@ -38892,13 +38892,13 @@
       "identity": "bin/qualified-runtime-code-continuation.ts#fn:nativeManifestInputs#0",
       "file": "bin/qualified-runtime-code-continuation.ts",
       "current_source_address": {
-        "line": 71,
+        "line": 73,
         "column": 0,
-        "start": 4108,
-        "end": 4335,
-        "bodyLine": 71,
+        "start": 4280,
+        "end": 4507,
+        "bodyLine": 73,
         "bodyColumn": 66,
-        "bodyEndLine": 77,
+        "bodyEndLine": 79,
         "bodyEndColumn": 1
       },
       "max_complexity": 10,
@@ -38909,13 +38909,13 @@
       "identity": "bin/qualified-runtime-code-continuation.ts#fn:systemUpdateOperationId#0",
       "file": "bin/qualified-runtime-code-continuation.ts",
       "current_source_address": {
-        "line": 78,
+        "line": 80,
         "column": 0,
-        "start": 4336,
-        "end": 4566,
-        "bodyLine": 78,
+        "start": 4508,
+        "end": 4738,
+        "bodyLine": 80,
         "bodyColumn": 57,
-        "bodyEndLine": 84,
+        "bodyEndLine": 86,
         "bodyEndColumn": 1
       },
       "max_complexity": 10,
@@ -38926,13 +38926,13 @@
       "identity": "bin/qualified-runtime-code-continuation.ts#fn:acceptedSourceOrigin#0",
       "file": "bin/qualified-runtime-code-continuation.ts",
       "current_source_address": {
-        "line": 97,
+        "line": 99,
         "column": 0,
-        "start": 4917,
-        "end": 5441,
-        "bodyLine": 103,
+        "start": 5089,
+        "end": 5613,
+        "bodyLine": 105,
         "bodyColumn": 2,
-        "bodyEndLine": 107,
+        "bodyEndLine": 109,
         "bodyEndColumn": 1
       },
       "max_complexity": 10,
@@ -38943,13 +38943,13 @@
       "identity": "bin/qualified-runtime-code-continuation.ts#fn:requireStableQualifiedRequest#0",
       "file": "bin/qualified-runtime-code-continuation.ts",
       "current_source_address": {
-        "line": 109,
+        "line": 111,
         "column": 0,
-        "start": 5443,
-        "end": 5830,
-        "bodyLine": 115,
+        "start": 5615,
+        "end": 6002,
+        "bodyLine": 117,
         "bodyColumn": 8,
-        "bodyEndLine": 120,
+        "bodyEndLine": 122,
         "bodyEndColumn": 1
       },
       "max_complexity": 10,
@@ -38960,13 +38960,13 @@
       "identity": "bin/qualified-runtime-code-continuation.ts#fn:verifyContinuationEngineSnapshot#0",
       "file": "bin/qualified-runtime-code-continuation.ts",
       "current_source_address": {
-        "line": 122,
+        "line": 124,
         "column": 0,
-        "start": 5832,
-        "end": 7202,
-        "bodyLine": 129,
+        "start": 6004,
+        "end": 7374,
+        "bodyLine": 131,
         "bodyColumn": 8,
-        "bodyEndLine": 164,
+        "bodyEndLine": 166,
         "bodyEndColumn": 1
       },
       "max_complexity": 10,
@@ -38977,13 +38977,13 @@
       "identity": "bin/qualified-runtime-code-continuation.ts#fn:qualifiedOldRuntimePaths#0",
       "file": "bin/qualified-runtime-code-continuation.ts",
       "current_source_address": {
-        "line": 179,
+        "line": 181,
         "column": 0,
-        "start": 8045,
-        "end": 9149,
-        "bodyLine": 189,
+        "start": 8217,
+        "end": 9321,
+        "bodyLine": 191,
         "bodyColumn": 33,
-        "bodyEndLine": 206,
+        "bodyEndLine": 208,
         "bodyEndColumn": 1
       },
       "max_complexity": 10,
@@ -39968,7 +39968,7 @@
       },
       {
         "file": "bin/qualified-runtime-code-continuation.ts",
-        "sha256": "76f84f11ffb5dfc5a7a511c3bd47a790606931a61bfbcf0424ece87446d725b2",
+        "sha256": "21c5a1bff9f792cb577f47945b2e90cbfb231d06870ca7400b55390e79e1bed9",
         "current_roles": 21
       },
       {
@@ -40006,5 +40006,13 @@
     "current_complexity": 43,
     "max_complexity": 40,
     "limits": "Selected corrected role only. Complete family/removal/callback review and complexity correction pending; this is explicitly an unresolved numeric blocker, never a budget increase."
+  },
+  "qualified_close_correction": {
+    "scope": "20261014-qualified-close-in-place",
+    "file": "bin/qualified-runtime-code-continuation.ts",
+    "sha256": "21c5a1bff9f792cb577f47945b2e90cbfb231d06870ca7400b55390e79e1bed9",
+    "current_roles": 21,
+    "new_roles": 0,
+    "limits": "Independent in-place cleanup review; all historical/new ceilings remain unchanged. Partial remains non-executable and non-exhaustive."
   }
 }

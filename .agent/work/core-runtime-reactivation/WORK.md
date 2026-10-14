@@ -198,6 +198,37 @@ Scoped typed lint now has0diagnostics. The altered callable capture regression
 passes1case/6assertions after that correction:
 `/workspace/attachments/delivered-repair-close-lint-green-20261014.log`.
 
+## Qualified continuation cleanup follow-up
+
+Published input:a443545dce0495d0e7a90affebcb81d0c19b9ae7, confirmed origin/main.
+Root reproduced the analogous qualified-continuation close masking defect using
+a malformed owned plan and one native source-close fault. Host and plan remain
+unchanged; original code returned only the cleanup cause. Causal0PASS/1FAIL:
+`/workspace/attachments/qualified-close-causal-red-20261014.log`.
+
+The existing awaited try-body stays in place. A tagged outcome and shared
+synchronous finisher preserve its return, primary rejection and admitted-close
+retry custody. Independent reviews approve the async/undefined/dual-failure
+semantics and unchanged guards. No new callback, function or public contract.
+One static syntax failure during writer restoration was corrected before runtime
+checks; original failed format/compiler logs remain `qualified-close-types-final`
+and `qualified-close-format` attachments. Corrected types:431files/0errors,
+`/workspace/attachments/qualified-close-types-corrected-20261014.log`.
+
+Final affected scope:4PASS/0FAIL/39assertions across2files,3.43s,
+`/workspace/attachments/qualified-close-completion-20261014.log`.
+The one changed Source file was captured/inventoried once:21unchanged IDs,
+no new roles, enclosing locked function CC18 within unchanged CC21/CRAP462.
+Current addresses and binding are refreshed without a full AST pass or a budget
+reset. Receipt: `/workspace/attachments/lineage-qualified-close-refresh-20261014.json`.
+
+Current host and package pin are both1.4.3. Active regression guidance no longer
+names1.4.2 as its current pin, and the installation guide links the historical
+Windows observation without projecting it onto Cloud. Historical baseline and
+profiling evidence remains in original bytes/Git; no old runtime was executed.
+Complete frozen mapping, current CI SDK, shard resource qualification and final
+numeric/native acceptance remain open. Untracked BASE and root bun.lock untouched.
+
 ## Historical record
 
 The full historical bytes, decisions, task IDs, attempts, and dated receipts are retained at `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:.agent/work/core-runtime-reactivation/WORK.md`. Other dated evidence files in this directory remain unchanged. This current page supersedes their stale narrative only for present status and next work; it does not erase their evidence.
