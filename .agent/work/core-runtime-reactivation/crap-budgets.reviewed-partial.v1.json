@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 1278,
-    "new": 435,
+    "retained": 1311,
+    "new": 491,
     "removed": 3,
-    "current_roles": 1713,
-    "source_files": 97
+    "current_roles": 1802,
+    "source_files": 100
   },
   "source_bindings": [
     {
@@ -195,7 +195,7 @@
     },
     {
       "file": "bin/cli-command-contracts.ts",
-      "sha256": "d835338b4f87543144c4b2b101e564da9ca5893b471dfde542af1f6f1da3a211"
+      "sha256": "ba551599cc5a038ff225d4e05e0f635169cc8e1d25b3132a87150c9773ca2528"
     },
     {
       "file": "bin/run-cli-options.ts",
@@ -404,6 +404,18 @@
     {
       "file": "src/orchestration/read-only-dispatch-repair.ts",
       "sha256": "a4bded0fe7689c9b53b2fb88df02a159b534a97fa9b5b940cdb166ec092129de"
+    },
+    {
+      "file": "bin/development-controller-observation.ts",
+      "sha256": "561ba3cdd21e64d10919805ae55b30fb4d5ec088f0ea968835f2c5e5210fffb6"
+    },
+    {
+      "file": "bin/standalone-resources.ts",
+      "sha256": "41da0cce73c6038bf8bc2bcaae2abf52ff879a5a3a1f36612d2c9d49321217a6"
+    },
+    {
+      "file": "bin/cli-metadata.ts",
+      "sha256": "a6f84551a9ac602f1163cc4831ac12c9382023f32ea48b4c0cb98804929fc21d"
     }
   ],
   "baseline_functions": [
@@ -32619,6 +32631,1062 @@
       "max_complexity": 6,
       "max_crap": 42,
       "rationale": "same inspect/plan/apply/resume repair owner and database close boundary Independent family review and Root measured-baseline join; unchanged allowances. Scope 20261014-next-frozen-families."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:fail#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:fail#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:fail",
+      "source_address": {
+        "line": 24,
+        "column": 0,
+        "start": 692,
+        "end": 795,
+        "bodyLine": 24,
+        "bodyColumn": 23,
+        "bodyEndLine": 26,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 208,
+        "column": 0,
+        "start": 6441,
+        "end": 6559,
+        "bodyLine": 208,
+        "bodyColumn": 38,
+        "bodyEndLine": 210,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:physicalDirectory#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:physicalDirectory#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:physicalDirectory",
+      "source_address": {
+        "line": 28,
+        "column": 0,
+        "start": 797,
+        "end": 1281,
+        "bodyLine": 28,
+        "bodyColumn": 34,
+        "bodyEndLine": 40,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 212,
+        "column": 0,
+        "start": 6561,
+        "end": 7055,
+        "bodyLine": 212,
+        "bodyColumn": 50,
+        "bodyEndLine": 224,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:observationRoot#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:observationRoot#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:observationRoot",
+      "source_address": {
+        "line": 42,
+        "column": 0,
+        "start": 1283,
+        "end": 1523,
+        "bodyLine": 42,
+        "bodyColumn": 41,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 226,
+        "column": 0,
+        "start": 7057,
+        "end": 7313,
+        "bodyLine": 226,
+        "bodyColumn": 57,
+        "bodyEndLine": 232,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:durableExclusive#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:durableExclusive#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:durableExclusive",
+      "source_address": {
+        "line": 50,
+        "column": 0,
+        "start": 1525,
+        "end": 1758,
+        "bodyLine": 50,
+        "bodyColumn": 39,
+        "bodyEndLine": 58,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 234,
+        "column": 0,
+        "start": 7315,
+        "end": 7571,
+        "bodyLine": 234,
+        "bodyColumn": 62,
+        "bodyEndLine": 242,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:readReservation#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:readReservation#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:readReservation",
+      "source_address": {
+        "line": 60,
+        "column": 0,
+        "start": 1760,
+        "end": 2532,
+        "bodyLine": 60,
+        "bodyColumn": 53,
+        "bodyEndLine": 78,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 244,
+        "column": 0,
+        "start": 7573,
+        "end": 8418,
+        "bodyLine": 248,
+        "bodyColumn": 77,
+        "bodyEndLine": 264,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:runtimeContext#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:runtimeContext#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:runtimeContext",
+      "source_address": {
+        "line": 80,
+        "column": 0,
+        "start": 2534,
+        "end": 2832,
+        "bodyLine": 80,
+        "bodyColumn": 26,
+        "bodyEndLine": 88,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 266,
+        "column": 0,
+        "start": 8420,
+        "end": 8734,
+        "bodyLine": 266,
+        "bodyColumn": 42,
+        "bodyEndLine": 274,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:errorRecord#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:errorRecord#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:errorRecord",
+      "source_address": {
+        "line": 90,
+        "column": 0,
+        "start": 2834,
+        "end": 3111,
+        "bodyLine": 90,
+        "bodyColumn": 28,
+        "bodyEndLine": 100,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 276,
+        "column": 0,
+        "start": 8736,
+        "end": 8871,
+        "bodyLine": 276,
+        "bodyColumn": 66,
+        "bodyEndLine": 279,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Same serialized child-error projection entry point; validation/fallback helpers are extracted. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:capturedBytes#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:capturedBytes#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:capturedBytes",
+      "source_address": {
+        "line": 102,
+        "column": 0,
+        "start": 3113,
+        "end": 3287,
+        "bodyLine": 102,
+        "bodyColumn": 30,
+        "bodyEndLine": 106,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 303,
+        "column": 0,
+        "start": 9635,
+        "end": 9917,
+        "bodyLine": 303,
+        "bodyColumn": 87,
+        "bodyEndLine": 308,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:childReceipt#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:childReceipt#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:childReceipt",
+      "source_address": {
+        "line": 108,
+        "column": 0,
+        "start": 3289,
+        "end": 4518,
+        "bodyLine": 120,
+        "bodyColumn": 3,
+        "bodyEndLine": 150,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 310,
+        "column": 0,
+        "start": 9919,
+        "end": 11183,
+        "bodyLine": 323,
+        "bodyColumn": 40,
+        "bodyEndLine": 353,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:runChild#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:runChild#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:runChild",
+      "source_address": {
+        "line": 152,
+        "column": 0,
+        "start": 4520,
+        "end": 5311,
+        "bodyLine": 152,
+        "bodyColumn": 70,
+        "bodyEndLine": 179,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 355,
+        "column": 0,
+        "start": 11185,
+        "end": 12133,
+        "bodyLine": 355,
+        "bodyColumn": 103,
+        "bodyEndLine": 384,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:validateNestedChildren#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:validateNestedChildren#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:validateNestedChildren",
+      "source_address": {
+        "line": 181,
+        "column": 0,
+        "start": 5313,
+        "end": 5753,
+        "bodyLine": 181,
+        "bodyColumn": 48,
+        "bodyEndLine": 191,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 386,
+        "column": 0,
+        "start": 12135,
+        "end": 12615,
+        "bodyLine": 386,
+        "bodyColumn": 71,
+        "bodyEndLine": 396,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:validateNestedChildren#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:validateNestedChildren#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 186,
+        "column": 16,
+        "start": 5562,
+        "end": 5595,
+        "bodyLine": 186,
+        "bodyColumn": 26,
+        "bodyEndLine": 186,
+        "bodyEndColumn": 49
+      },
+      "current_source_address": {
+        "line": 391,
+        "column": 16,
+        "start": 12407,
+        "end": 12436,
+        "bodyLine": 391,
+        "bodyColumn": 26,
+        "bodyEndLine": 391,
+        "bodyEndColumn": 45
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:removeReservation#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:removeReservation#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:removeReservation",
+      "source_address": {
+        "line": 193,
+        "column": 0,
+        "start": 5755,
+        "end": 6017,
+        "bodyLine": 193,
+        "bodyColumn": 50,
+        "bodyEndLine": 199,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 398,
+        "column": 0,
+        "start": 12617,
+        "end": 12901,
+        "bodyLine": 398,
+        "bodyColumn": 72,
+        "bodyEndLine": 404,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:invokeObservedControllerChild#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:invokeObservedControllerChild#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:invokeObservedControllerChild",
+      "source_address": {
+        "line": 202,
+        "column": 7,
+        "start": 6131,
+        "end": 9678,
+        "bodyLine": 211,
+        "bodyColumn": 3,
+        "bodyEndLine": 297,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 407,
+        "column": 7,
+        "start": 13015,
+        "end": 16703,
+        "bodyLine": 416,
+        "bodyColumn": 59,
+        "bodyEndLine": 499,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 14,
+      "baseline_coverage": 0,
+      "baseline_crap": 210,
+      "max_complexity": 14,
+      "max_crap": 210,
+      "rationale": "Same durable reservation, child receipt, nested completion and UNKNOWN custody sequence. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:internalContext#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:internalContext#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:internalContext",
+      "source_address": {
+        "line": 299,
+        "column": 0,
+        "start": 9680,
+        "end": 10566,
+        "bodyLine": 299,
+        "bodyColumn": 27,
+        "bodyEndLine": 316,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 510,
+        "column": 0,
+        "start": 16924,
+        "end": 17827,
+        "bodyLine": 510,
+        "bodyColumn": 44,
+        "bodyEndLine": 527,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.mjs#fn:invokeNestedObservedControllerChild#0",
+      "current_identity": "bin/development-controller-observation.ts#fn:invokeNestedObservedControllerChild#0",
+      "file": "bin/development-controller-observation.ts",
+      "name": "fn:invokeNestedObservedControllerChild",
+      "source_address": {
+        "line": 319,
+        "column": 7,
+        "start": 10657,
+        "end": 11850,
+        "bodyLine": 319,
+        "bodyColumn": 105,
+        "bodyEndLine": 340,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 530,
+        "column": 7,
+        "start": 17918,
+        "end": 19211,
+        "bodyLine": 537,
+        "bodyColumn": 57,
+        "bodyEndLine": 558,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#binding:resourceDigest/binding:resourceDigest#0",
+      "current_identity": "bin/standalone-resources.ts#binding:resourceDigest/binding:resourceDigest#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "binding:resourceDigest",
+      "source_address": {
+        "line": 20,
+        "column": 30,
+        "start": 405,
+        "end": 464,
+        "bodyLine": 20,
+        "bodyColumn": 41,
+        "bodyEndLine": 20,
+        "bodyEndColumn": 89
+      },
+      "current_source_address": {
+        "line": 39,
+        "column": 30,
+        "start": 924,
+        "end": 1004,
+        "bodyLine": 39,
+        "bodyColumn": 62,
+        "bodyEndLine": 39,
+        "bodyEndColumn": 110
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#binding:resourceEntryExists/binding:resourceEntryExists#0",
+      "current_identity": "bin/standalone-resources.ts#binding:resourceEntryExists/binding:resourceEntryExists#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "binding:resourceEntryExists",
+      "source_address": {
+        "line": 21,
+        "column": 35,
+        "start": 501,
+        "end": 567,
+        "bodyLine": 21,
+        "bodyColumn": 45,
+        "bodyEndLine": 21,
+        "bodyEndColumn": 101
+      },
+      "current_source_address": {
+        "line": 40,
+        "column": 35,
+        "start": 1041,
+        "end": 1115,
+        "bodyLine": 40,
+        "bodyColumn": 53,
+        "bodyEndLine": 40,
+        "bodyEndColumn": 109
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:resourcePath#0",
+      "current_identity": "bin/standalone-resources.ts#fn:resourcePath#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "fn:resourcePath",
+      "source_address": {
+        "line": 23,
+        "column": 7,
+        "start": 577,
+        "end": 941,
+        "bodyLine": 23,
+        "bodyColumn": 36,
+        "bodyEndLine": 32,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 43,
+        "column": 7,
+        "start": 1190,
+        "end": 1456,
+        "bodyLine": 43,
+        "bodyColumn": 44,
+        "bodyEndLine": 47,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:resourcePath#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/standalone-resources.ts#fn:isSafeResourceComponent#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 28,
+        "column": 13,
+        "start": 783,
+        "end": 885,
+        "bodyLine": 28,
+        "bodyColumn": 23,
+        "bodyEndLine": 28,
+        "bodyEndColumn": 115
+      },
+      "current_source_address": {
+        "line": 49,
+        "column": 0,
+        "start": 1458,
+        "end": 1665,
+        "bodyLine": 49,
+        "bodyColumn": 47,
+        "bodyEndLine": 56,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "Historical path-component safety callback corresponds to extracted current component predicate; character filtering is a separate helper. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:resourceDirectory#0",
+      "current_identity": "bin/standalone-resources.ts#fn:resourceDirectory#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "fn:resourceDirectory",
+      "source_address": {
+        "line": 34,
+        "column": 7,
+        "start": 950,
+        "end": 1575,
+        "bodyLine": 34,
+        "bodyColumn": 61,
+        "bodyEndLine": 48,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 63,
+        "column": 7,
+        "start": 1839,
+        "end": 2479,
+        "bodyLine": 63,
+        "bodyColumn": 69,
+        "bodyEndLine": 77,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "baseline_crap": 56,
+      "max_complexity": 7,
+      "max_crap": 56,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:privateDirectory#0",
+      "current_identity": "bin/standalone-resources.ts#fn:privateDirectory#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "fn:privateDirectory",
+      "source_address": {
+        "line": 50,
+        "column": 0,
+        "start": 1577,
+        "end": 1969,
+        "bodyLine": 50,
+        "bodyColumn": 37,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 83,
+        "column": 0,
+        "start": 2613,
+        "end": 3013,
+        "bodyLine": 83,
+        "bodyColumn": 45,
+        "bodyEndLine": 90,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:readResource#0",
+      "current_identity": "bin/standalone-resources.ts#fn:readResource#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "fn:readResource",
+      "source_address": {
+        "line": 59,
+        "column": 7,
+        "start": 1978,
+        "end": 2903,
+        "bodyLine": 59,
+        "bodyColumn": 45,
+        "bodyEndLine": 88,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 92,
+        "column": 7,
+        "start": 3022,
+        "end": 3963,
+        "bodyLine": 92,
+        "bodyColumn": 61,
+        "bodyEndLine": 121,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:inventory#0",
+      "current_identity": "bin/standalone-resources.ts#fn:inventory#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "fn:inventory",
+      "source_address": {
+        "line": 90,
+        "column": 0,
+        "start": 2905,
+        "end": 3804,
+        "bodyLine": 90,
+        "bodyColumn": 26,
+        "bodyEndLine": 115,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 174,
+        "column": 0,
+        "start": 5665,
+        "end": 6679,
+        "bodyLine": 174,
+        "bodyColumn": 57,
+        "bodyEndLine": 199,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "baseline_crap": 56,
+      "max_complexity": 7,
+      "max_crap": 56,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:inventory#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/standalone-resources.ts#fn:inventory#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 111,
+        "column": 27,
+        "start": 3687,
+        "end": 3721,
+        "bodyLine": 111,
+        "bodyColumn": 41,
+        "bodyEndLine": 111,
+        "bodyEndColumn": 61
+      },
+      "current_source_address": {
+        "line": 195,
+        "column": 32,
+        "start": 6527,
+        "end": 6566,
+        "bodyLine": 195,
+        "bodyColumn": 46,
+        "bodyEndLine": 195,
+        "bodyEndColumn": 71
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:verifyResourceTree#0",
+      "current_identity": "bin/standalone-resources.ts#fn:verifyResourceTree#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "fn:verifyResourceTree",
+      "source_address": {
+        "line": 117,
+        "column": 7,
+        "start": 3813,
+        "end": 4941,
+        "bodyLine": 117,
+        "bodyColumn": 48,
+        "bodyEndLine": 145,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 201,
+        "column": 7,
+        "start": 6688,
+        "end": 7923,
+        "bodyLine": 201,
+        "bodyColumn": 87,
+        "bodyEndLine": 229,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:verifyResourceTree#0/fn:visit#0",
+      "current_identity": "bin/standalone-resources.ts#fn:verifyResourceTree#0/fn:visit#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "fn:visit",
+      "source_address": {
+        "line": 121,
+        "column": 2,
+        "start": 3958,
+        "end": 4841,
+        "bodyLine": 121,
+        "bodyColumn": 41,
+        "bodyEndLine": 141,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 205,
+        "column": 2,
+        "start": 6884,
+        "end": 7823,
+        "bodyLine": 205,
+        "bodyColumn": 49,
+        "bodyEndLine": 225,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:materializeResources#0",
+      "current_identity": "bin/standalone-resources.ts#fn:materializeResources#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "fn:materializeResources",
+      "source_address": {
+        "line": 147,
+        "column": 7,
+        "start": 4950,
+        "end": 8456,
+        "bodyLine": 155,
+        "bodyColumn": 3,
+        "bodyEndLine": 239,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 252,
+        "column": 7,
+        "start": 8534,
+        "end": 13643,
+        "bodyLine": 260,
+        "bodyColumn": 49,
+        "bodyEndLine": 387,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 23,
+      "baseline_coverage": 0,
+      "baseline_crap": 552,
+      "max_complexity": 23,
+      "max_crap": 552,
+      "rationale": "Same version-payload lock, staged write, verification and publication boundary. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:materializeResources#0/binding:checkCache/binding:checkCache#0",
+      "current_identity": "bin/standalone-resources.ts#fn:materializeResources#0/binding:checkCache/binding:checkCache#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "binding:checkCache",
+      "source_address": {
+        "line": 164,
+        "column": 21,
+        "start": 5507,
+        "end": 5666,
+        "bodyLine": 164,
+        "bodyColumn": 27,
+        "bodyEndLine": 169,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 267,
+        "column": 21,
+        "start": 9079,
+        "end": 9238,
+        "bodyLine": 267,
+        "bodyColumn": 27,
+        "bodyEndLine": 272,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:materializeResources#0/binding:writeEntry/binding:writeEntry#0",
+      "current_identity": "bin/standalone-resources.ts#fn:materializeResources#0/binding:writeEntry/binding:writeEntry#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "binding:writeEntry",
+      "source_address": {
+        "line": 200,
+        "column": 23,
+        "start": 6978,
+        "end": 7560,
+        "bodyLine": 200,
+        "bodyColumn": 40,
+        "bodyEndLine": 214,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 313,
+        "column": 23,
+        "start": 10948,
+        "end": 11570,
+        "bodyLine": 313,
+        "bodyColumn": 75,
+        "bodyEndLine": 327,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.mjs#fn:materializeResources#0/binding:failed/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/standalone-resources.ts#fn:materializeResources#0/binding:failed/closure:CallExpression:arguments[0]#0",
+      "file": "bin/standalone-resources.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 217,
+        "column": 35,
+        "start": 7758,
+        "end": 7798,
+        "bodyLine": 217,
+        "bodyColumn": 47,
+        "bodyEndLine": 217,
+        "bodyEndColumn": 75
+      },
+      "current_source_address": {
+        "line": 330,
+        "column": 35,
+        "start": 11768,
+        "end": 11808,
+        "bodyLine": 330,
+        "bodyColumn": 47,
+        "bodyEndLine": 330,
+        "bodyEndColumn": 75
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Anchored semantic role reviewed against both source declarations/callbacks. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.mjs#fn:cliMetadataResult#0",
+      "current_identity": "bin/cli-metadata.ts#fn:cliMetadataResult#0",
+      "file": "bin/cli-metadata.ts",
+      "name": "fn:cliMetadataResult",
+      "source_address": {
+        "line": 20,
+        "column": 7,
+        "start": 318,
+        "end": 1624,
+        "bodyLine": 20,
+        "bodyColumn": 50,
+        "bodyEndLine": 39,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 358,
+        "column": 7,
+        "start": 14038,
+        "end": 14439,
+        "bodyLine": 358,
+        "bodyColumn": 73,
+        "bodyEndLine": 367,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Same public help/version projection; richer command help is decomposed into new helpers. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.mjs#binding:cliErrorResult/binding:cliErrorResult#0",
+      "current_identity": "bin/cli-metadata.ts#binding:cliErrorResult/binding:cliErrorResult#0",
+      "file": "bin/cli-metadata.ts",
+      "name": "binding:cliErrorResult",
+      "source_address": {
+        "line": 41,
+        "column": 30,
+        "start": 1656,
+        "end": 1786,
+        "bodyLine": 41,
+        "bodyColumn": 42,
+        "bodyEndLine": 46,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 374,
+        "column": 30,
+        "start": 14600,
+        "end": 14748,
+        "bodyLine": 374,
+        "bodyColumn": 51,
+        "bodyEndLine": 379,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same blocked CLI error-result projection; message formatting helper is new. Independent full-family review; measured original allowance unchanged. Scope 20261014-help-resource."
     }
   ],
   "new_functions": [
@@ -39635,6 +40703,958 @@
       "max_complexity": 10,
       "max_crap": 10,
       "rationale": "New thin coherent-snapshot/context adapter after planner-body extraction; independently reviewed role, fixed prospective10/10. Historical planner allowance belongs only to the builder."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:isRecord#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 147,
+        "column": 0,
+        "start": 4301,
+        "end": 4451,
+        "bodyLine": 147,
+        "bodyColumn": 68,
+        "bodyEndLine": 149,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:isStringArray#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 152,
+        "column": 0,
+        "start": 4483,
+        "end": 4637,
+        "bodyLine": 152,
+        "bodyColumn": 58,
+        "bodyEndLine": 154,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:isStringArray#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 153,
+        "column": 45,
+        "start": 4588,
+        "end": 4633,
+        "bodyLine": 153,
+        "bodyColumn": 65,
+        "bodyEndLine": 153,
+        "bodyEndColumn": 90
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:isObservationReservation#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 157,
+        "column": 0,
+        "start": 4669,
+        "end": 5085,
+        "bodyLine": 157,
+        "bodyColumn": 83,
+        "bodyEndLine": 168,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:isChildError#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 171,
+        "column": 0,
+        "start": 5117,
+        "end": 5278,
+        "bodyLine": 171,
+        "bodyColumn": 59,
+        "bodyEndLine": 173,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:validErrorCodeFields#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 175,
+        "column": 0,
+        "start": 5280,
+        "end": 5585,
+        "bodyLine": 175,
+        "bodyColumn": 53,
+        "bodyEndLine": 183,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:validErrorLocationFields#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 185,
+        "column": 0,
+        "start": 5587,
+        "end": 5849,
+        "bodyLine": 185,
+        "bodyColumn": 57,
+        "bodyEndLine": 190,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:hasErrorCode#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 192,
+        "column": 0,
+        "start": 5851,
+        "end": 5964,
+        "bodyLine": 192,
+        "bodyColumn": 61,
+        "bodyEndLine": 194,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:isNestedRole#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 197,
+        "column": 0,
+        "start": 5996,
+        "end": 6190,
+        "bodyLine": 197,
+        "bodyColumn": 59,
+        "bodyEndLine": 201,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:isNestedReceipt#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 204,
+        "column": 0,
+        "start": 6222,
+        "end": 6439,
+        "bodyLine": 204,
+        "bodyColumn": 110,
+        "bodyEndLine": 206,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:normalizedErrorRecord#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 281,
+        "column": 0,
+        "start": 8873,
+        "end": 9231,
+        "bodyLine": 281,
+        "bodyColumn": 69,
+        "bodyEndLine": 291,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/development-controller-observation.ts#fn:unrecognizedErrorRecord#0",
+      "file": "bin/development-controller-observation.ts",
+      "current_source_address": {
+        "line": 293,
+        "column": 0,
+        "start": 9233,
+        "end": 9633,
+        "bodyLine": 293,
+        "bodyColumn": 71,
+        "bodyEndLine": 301,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:hasControlCharacter#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 58,
+        "column": 0,
+        "start": 1667,
+        "end": 1830,
+        "bodyLine": 58,
+        "bodyColumn": 44,
+        "bodyEndLine": 61,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:hasErrorCode#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 79,
+        "column": 0,
+        "start": 2481,
+        "end": 2611,
+        "bodyLine": 79,
+        "bodyColumn": 52,
+        "bodyEndLine": 81,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:isResourceIndexEntry#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 123,
+        "column": 0,
+        "start": 3965,
+        "end": 4300,
+        "bodyLine": 123,
+        "bodyColumn": 75,
+        "bodyEndLine": 134,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:isResourceIndex#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 136,
+        "column": 0,
+        "start": 4302,
+        "end": 4454,
+        "bodyLine": 136,
+        "bodyColumn": 81,
+        "bodyEndLine": 138,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:isEmbeddedResourceFiles#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 140,
+        "column": 0,
+        "start": 4456,
+        "end": 4659,
+        "bodyLine": 140,
+        "bodyColumn": 81,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:isEmbeddedResourceFiles#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 141,
+        "column": 50,
+        "start": 4589,
+        "end": 4655,
+        "bodyLine": 141,
+        "bodyColumn": 68,
+        "bodyEndLine": 141,
+        "bodyEndColumn": 116
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:isResourceDirectoryEntry#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 144,
+        "column": 0,
+        "start": 4661,
+        "end": 5103,
+        "bodyLine": 144,
+        "bodyColumn": 83,
+        "bodyEndLine": 157,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:readDirectoryEntries#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 159,
+        "column": 0,
+        "start": 5105,
+        "end": 5577,
+        "bodyLine": 159,
+        "bodyColumn": 75,
+        "bodyEndLine": 168,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:resourceChildPath#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 170,
+        "column": 0,
+        "start": 5579,
+        "end": 5663,
+        "bodyLine": 170,
+        "bodyColumn": 57,
+        "bodyEndLine": 172,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:assertResourceIdentity#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 231,
+        "column": 0,
+        "start": 7925,
+        "end": 8110,
+        "bodyLine": 231,
+        "bodyColumn": 68,
+        "bodyEndLine": 233,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:assertResourceCacheRoot#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 235,
+        "column": 0,
+        "start": 8112,
+        "end": 8320,
+        "bodyLine": 235,
+        "bodyColumn": 69,
+        "bodyEndLine": 240,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:materializeResources#0/closure:ArrayExpression:elements[0]#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 347,
+        "column": 8,
+        "start": 12410,
+        "end": 12574,
+        "bodyLine": 347,
+        "bodyColumn": 14,
+        "bodyEndLine": 354,
+        "bodyEndColumn": 9
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:materializeResources#0/closure:ArrayExpression:elements[1]#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 355,
+        "column": 8,
+        "start": 12584,
+        "end": 13167,
+        "bodyLine": 355,
+        "bodyColumn": 14,
+        "bodyEndLine": 368,
+        "bodyEndColumn": 9
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/standalone-resources.ts#fn:materializeResources#0/closure:ArrayExpression:elements[2]#0",
+      "file": "bin/standalone-resources.ts",
+      "current_source_address": {
+        "line": 369,
+        "column": 8,
+        "start": 13177,
+        "end": 13598,
+        "bodyLine": 369,
+        "bodyColumn": 14,
+        "bodyEndLine": 382,
+        "bodyEndColumn": 9
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New current controller/resource validation or cleanup callable after explicit original-owner retention. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:cliCommandEntrypoint#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 89,
+        "column": 7,
+        "start": 1965,
+        "end": 2094,
+        "bodyLine": 89,
+        "bodyColumn": 62,
+        "bodyEndLine": 91,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#binding:aliasesFor/binding:aliasesFor#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 95,
+        "column": 19,
+        "start": 2314,
+        "end": 2562,
+        "bodyLine": 96,
+        "bodyColumn": 2,
+        "bodyEndLine": 101,
+        "bodyEndColumn": 5
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#binding:aliasesFor/binding:aliasesFor#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 96,
+        "column": 42,
+        "start": 2383,
+        "end": 2561,
+        "bodyLine": 96,
+        "bodyColumn": 63,
+        "bodyEndLine": 101,
+        "bodyEndColumn": 3
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#binding:commandAliasMap/binding:commandAliasMap#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 102,
+        "column": 24,
+        "start": 2588,
+        "end": 2747,
+        "bodyLine": 103,
+        "bodyColumn": 2,
+        "bodyEndLine": 107,
+        "bodyEndColumn": 3
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#binding:commandAliasMap/binding:commandAliasMap#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 105,
+        "column": 14,
+        "start": 2665,
+        "end": 2690,
+        "bodyLine": 105,
+        "bodyColumn": 25,
+        "bodyEndLine": 105,
+        "bodyEndColumn": 39
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#binding:commandAliasMap/binding:commandAliasMap#0/closure:CallExpression:arguments[0]#1",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 106,
+        "column": 11,
+        "start": 2703,
+        "end": 2741,
+        "bodyLine": 106,
+        "bodyColumn": 22,
+        "bodyEndLine": 106,
+        "bodyEndColumn": 49
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:rootHelp#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 109,
+        "column": 0,
+        "start": 2750,
+        "end": 4427,
+        "bodyLine": 109,
+        "bodyColumn": 41,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:availableModesFor#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 144,
+        "column": 0,
+        "start": 4429,
+        "end": 4898,
+        "bodyLine": 144,
+        "bodyColumn": 74,
+        "bodyEndLine": 155,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:commandOptions#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 157,
+        "column": 0,
+        "start": 4900,
+        "end": 5355,
+        "bodyLine": 157,
+        "bodyColumn": 71,
+        "bodyEndLine": 166,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:commandOptions#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 163,
+        "column": 46,
+        "start": 5263,
+        "end": 5330,
+        "bodyLine": 163,
+        "bodyColumn": 56,
+        "bodyEndLine": 163,
+        "bodyEndColumn": 113
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:commandOptions#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 163,
+        "column": 79,
+        "start": 5296,
+        "end": 5329,
+        "bodyLine": 163,
+        "bodyColumn": 91,
+        "bodyEndLine": 163,
+        "bodyEndColumn": 112
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:runSelectorHelp#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 168,
+        "column": 0,
+        "start": 5357,
+        "end": 6555,
+        "bodyLine": 168,
+        "bodyColumn": 41,
+        "bodyEndLine": 199,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:runSelectorHelp#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 177,
+        "column": 32,
+        "start": 5709,
+        "end": 6209,
+        "bodyLine": 177,
+        "bodyColumn": 43,
+        "bodyEndLine": 191,
+        "bodyEndColumn": 5
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:runSelectorHelp#0/closure:CallExpression:arguments[1]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 193,
+        "column": 33,
+        "start": 6290,
+        "end": 6353,
+        "bodyLine": 193,
+        "bodyColumn": 64,
+        "bodyEndLine": 193,
+        "bodyEndColumn": 96
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:taskSourceHelp#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 201,
+        "column": 0,
+        "start": 6557,
+        "end": 7461,
+        "bodyLine": 201,
+        "bodyColumn": 26,
+        "bodyEndLine": 220,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:taskSourceHelp#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 209,
+        "column": 39,
+        "start": 6924,
+        "end": 7075,
+        "bodyLine": 210,
+        "bodyColumn": 6,
+        "bodyEndLine": 212,
+        "bodyEndColumn": 7
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:reconciliationHelp#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 222,
+        "column": 0,
+        "start": 7463,
+        "end": 7913,
+        "bodyLine": 222,
+        "bodyColumn": 58,
+        "bodyEndLine": 229,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:reconciliationHelpSyntax#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 231,
+        "column": 0,
+        "start": 7915,
+        "end": 8495,
+        "bodyLine": 231,
+        "bodyColumn": 101,
+        "bodyEndLine": 238,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:reconcileCommandHelpResult#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 240,
+        "column": 0,
+        "start": 8497,
+        "end": 9111,
+        "bodyLine": 240,
+        "bodyColumn": 53,
+        "bodyEndLine": 256,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:reconcileCommandHelpRequest#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 258,
+        "column": 0,
+        "start": 9113,
+        "end": 9305,
+        "bodyLine": 258,
+        "bodyColumn": 59,
+        "bodyEndLine": 262,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:runHelpFields#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 264,
+        "column": 0,
+        "start": 9307,
+        "end": 10825,
+        "bodyLine": 264,
+        "bodyColumn": 25,
+        "bodyEndLine": 282,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:runHelpFields#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 268,
+        "column": 6,
+        "start": 9429,
+        "end": 9519,
+        "bodyLine": 268,
+        "bodyColumn": 17,
+        "bodyEndLine": 268,
+        "bodyEndColumn": 96
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:runHelpFields#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 268,
+        "column": 60,
+        "start": 9483,
+        "end": 9513,
+        "bodyLine": 268,
+        "bodyColumn": 75,
+        "bodyEndLine": 268,
+        "bodyEndColumn": 90
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:commandHelpDetails#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 284,
+        "column": 0,
+        "start": 10827,
+        "end": 11414,
+        "bodyLine": 289,
+        "bodyColumn": 2,
+        "bodyEndLine": 299,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:standardCommandHelp#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 301,
+        "column": 0,
+        "start": 11416,
+        "end": 12096,
+        "bodyLine": 301,
+        "bodyColumn": 110,
+        "bodyEndLine": 315,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:rootHelpResult#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 317,
+        "column": 0,
+        "start": 12098,
+        "end": 12436,
+        "bodyLine": 317,
+        "bodyColumn": 63,
+        "bodyEndLine": 323,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:resolveHelpRequest#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 325,
+        "column": 0,
+        "start": 12438,
+        "end": 13287,
+        "bodyLine": 325,
+        "bodyColumn": 67,
+        "bodyEndLine": 339,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:specializedHelp#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 341,
+        "column": 0,
+        "start": 13289,
+        "end": 13511,
+        "bodyLine": 341,
+        "bodyColumn": 72,
+        "bodyEndLine": 345,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:helpResult#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 347,
+        "column": 0,
+        "start": 13513,
+        "end": 14029,
+        "bodyLine": 347,
+        "bodyColumn": 59,
+        "bodyEndLine": 356,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
+    },
+    {
+      "identity": "bin/cli-metadata.ts#fn:cliErrorMessage#0",
+      "file": "bin/cli-metadata.ts",
+      "current_source_address": {
+        "line": 369,
+        "column": 0,
+        "start": 14441,
+        "end": 14568,
+        "bodyLine": 369,
+        "bodyColumn": 41,
+        "bodyEndLine": 372,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New metadata callable; targeted genuine public CLI/help review found no historical callable predecessor. Inline old entry selection is not a function. Independent family review; fixed prospective10/10, no historical allowance transfer. Scope 20261014-help-resource."
     }
   ],
   "removed_functions": [
@@ -39687,7 +41707,8 @@
     "classification": "New inventoried callable is distinct from new engine capability. Original retained callers keep their allowances; only genuine callable relocations transfer a published identity.",
     "prospective_new_function_policy": "Fixed complexity/CRAP 10/10 before current measurement; no current-derived ceilings.",
     "current_scope": "20261014-next-frozen-families: six independent family reviews; repair change independently reviewed; Root join uses original admitted measured rows. Not executable/not exhaustive.",
-    "latest_responsibility_correction": "Independent implementation-responsibility review corrected a prior entrypoint-name pairing; current builder exceeds the unchanged published ceiling."
+    "latest_responsibility_correction": "Independent implementation-responsibility review corrected a prior entrypoint-name pairing; current builder exceeds the unchanged published ceiling.",
+    "latest_help_resource_scope": "20261014-help-resource: independent role and correctness reviews; Root original-measurement join. Full correspondence/numeric acceptance still open."
   },
   "limits": [
     "This operational checkpoint preserves selected semantic lineage only. It is not VidaCrapBudgetPlan/v1 and is never selected by the default CRAP gate.",
@@ -40014,5 +42035,31 @@
     "current_roles": 21,
     "new_roles": 0,
     "limits": "Independent in-place cleanup review; all historical/new ceilings remain unchanged. Partial remains non-executable and non-exhaustive."
+  },
+  "help_resource_current_bindings": {
+    "scope": "20261014-help-resource",
+    "files": [
+      {
+        "file": "bin/development-controller-observation.ts",
+        "sha256": "561ba3cdd21e64d10919805ae55b30fb4d5ec088f0ea968835f2c5e5210fffb6",
+        "current_roles": 28
+      },
+      {
+        "file": "bin/standalone-resources.ts",
+        "sha256": "41da0cce73c6038bf8bc2bcaae2abf52ff879a5a3a1f36612d2c9d49321217a6",
+        "current_roles": 29
+      },
+      {
+        "file": "bin/cli-metadata.ts",
+        "sha256": "a6f84551a9ac602f1163cc4831ac12c9382023f32ea48b4c0cb98804929fc21d",
+        "current_roles": 32
+      },
+      {
+        "file": "bin/cli-command-contracts.ts",
+        "sha256": "ba551599cc5a038ff225d4e05e0f635169cc8e1d25b3132a87150c9773ca2528",
+        "current_roles": 3
+      }
+    ],
+    "limits": "Reviewed complete selected families only. Metadata joins two historical public roles and30 new roles, never32 new roles. Source body/guard tests are separate from numerical admission."
   }
 }

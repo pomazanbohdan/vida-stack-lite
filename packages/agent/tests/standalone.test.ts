@@ -71,8 +71,23 @@ test('resources preserve dangling foreign directory links', async () => {
 );
 
 test('resources reject unsafe paths and partial or foreign publication without replacing owners', async () => {
-  for (const name of ['../escape', 'a/../b', '/absolute', 'C:/escape', 'a\\b', 'a//b', 'a/b.'])
+  for (const name of [
+    '',
+    '.',
+    '..',
+    '../escape',
+    'a/../b',
+    'a/./b',
+    '/absolute',
+    'C:/escape',
+    'a\\b',
+    'a//b',
+    'a/b.',
+    'a/b ',
+  ])
     assert.throws(() => resourcePath(name));
+  for (let code = 0; code < 32; code++) assert.throws(() => resourcePath(`a${String.fromCharCode(code)}b`));
+  assert.equal(resourcePath('instructions/é漢字.md'), 'instructions/é漢字.md');
   const value = fixture();
   try {
     const destination = path.join(value.cache, value.version + '-' + value.payloadId);

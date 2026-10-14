@@ -18,6 +18,7 @@ import {
   cliCommandContracts,
   cliCommandNames,
   cliCommandSet,
+  cliHelpSelectorLimits,
   developmentControllerContract,
 } from './cli-command-contracts.ts';
 
@@ -329,13 +330,9 @@ function resolveHelpRequest(argv: string[], manifest: CliManifest) {
   if (!(commands.has(canonical) || canonical === 'instructions' || canonical === 'version')) return undefined;
   if (args.length > 4) throw Error('help accepts at most three nested selectors');
   const selectorLimit =
-    canonical === 'reconcile-artifacts'
-      ? args[1] === 'runtime-code'
-        ? 4
-        : 3
-      : canonical === 'run' || canonical === 'development-controller'
-        ? 2
-        : 1;
+    cliHelpSelectorLimits.routes[`${canonical}/${args[1]}`] ??
+    cliHelpSelectorLimits.commands[canonical] ??
+    cliHelpSelectorLimits.default;
   if (args.length > selectorLimit) throw Error(`${canonical} help accepts no surplus selectors`);
   const nested = args[1];
   return { command, canonical, args, nested, modes: availableModesFor(canonical, nested) };

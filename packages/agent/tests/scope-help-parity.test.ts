@@ -128,6 +128,18 @@ test('public help rejects surplus selectors instead of silently accepting them',
     ['reconcile-artifacts', '--help', 'project-upgrade', 'inspect', 'extra'],
   ];
   for (const args of malformed) expect(() => cliMetadataResult(args, manifest)).toThrow();
+  expect(() => cliMetadataResult(['run', '--help', 'inspect', 'extra'], manifest)).toThrow(
+    'run help accepts no surplus selectors',
+  );
+  expect(() => cliMetadataResult(['run', '--help', 'unsupported'], manifest)).toThrow('unsupported run help mode');
+  expect(() =>
+    cliMetadataResult(['reconcile-artifacts', '--help', 'runtime-code', 'inspect', 'basis', 'extra'], manifest),
+  ).toThrow('help accepts at most three nested selectors');
+  for (const protoName of ['toString', 'constructor', '__proto__']) {
+    expect(() => cliMetadataResult(['reconcile-artifacts', '--help', protoName, 'inspect', 'basis'], manifest)).toThrow(
+      'reconcile-artifacts help accepts no surplus selectors',
+    );
+  }
 });
 
 test('native run option details retain unique contracts and isolate each returned help image', () => {

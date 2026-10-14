@@ -100,6 +100,16 @@ export const cliCommandContracts = freezeCliDeclaration({
 });
 
 export const cliCommandNames = Object.freeze(Object.keys(cliCommandContracts));
+/** Internal argument counts include the leading --help selector. */
+export const cliHelpSelectorLimits: Readonly<{
+  default: number;
+  commands: Readonly<Record<string, number>>;
+  routes: Readonly<Record<string, number>>;
+}> = freezeCliDeclaration({
+  default: 1,
+  commands: { 'reconcile-artifacts': 3, run: 2, 'development-controller': 2 },
+  routes: { 'reconcile-artifacts/runtime-code': 4 },
+});
 const cliCommands = new Set(cliCommandNames.filter((name) => !['help', 'instructions', 'version'].includes(name)));
 export const cliCommandSet = Object.freeze({ has: (name: string) => cliCommands.has(name) });
 

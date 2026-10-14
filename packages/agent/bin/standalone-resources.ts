@@ -38,6 +38,7 @@ interface ResourceDirectoryEntry {
 
 export const resourceDigest = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
 export const resourceEntryExists = (file: string) => lstatSync(file, { throwIfNoEntry: false }) !== undefined;
+const unsafeResourceComponents = Object.freeze(['', '.', '..']);
 
 export function resourcePath(value: string) {
   assert.ok(typeof value === 'string' && value.length > 0 && !path.isAbsolute(value), 'Resource path must be relative');
@@ -47,7 +48,10 @@ export function resourcePath(value: string) {
 
 function isSafeResourceComponent(part: string) {
   return Boolean(
-    part && part !== '.' && part !== '..' && !/[\\:]/.test(part) && !hasControlCharacter(part) && !/[. ]$/.test(part),
+    !unsafeResourceComponents.includes(part) &&
+    !/[\\:]/.test(part) &&
+    !hasControlCharacter(part) &&
+    !/[. ]$/.test(part),
   );
 }
 
