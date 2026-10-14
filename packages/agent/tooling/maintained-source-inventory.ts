@@ -8,7 +8,6 @@ type InventoryManifest = { files: unknown[]; bin?: Record<string, unknown> };
 export interface MaintainedSourceInventory {
   readonly typescriptSources: readonly string[];
   readonly binSources: readonly string[];
-  readonly v8CoverageSources: readonly string[];
   readonly mutationSources: readonly string[];
   readonly publicBinSources: readonly string[];
   readonly missingPackageSources: readonly string[];
@@ -244,9 +243,6 @@ export function maintainedSourceInventory(
   const missingPublicBins = publicBinSources.filter(
     (file) => !allBinSources.includes(file) || !isPackedFile(file, packedPatterns),
   );
-  const v8CoverageSources = [
-    ...new Set([...typescriptSources.filter((file) => !bunCoverageSources.includes(file)), ...binSources]),
-  ].sort(comparePaths);
   const missingBunCoverageSources = bunCoverageSources.filter((file) => !typescriptSources.includes(file));
   const missingPackageSources = [...new Set([...publicBinSources, ...bunCoverageSources])].filter(
     (file) => !sourceFilesForMutation.includes(file),
@@ -261,7 +257,6 @@ export function maintainedSourceInventory(
   return {
     typescriptSources,
     binSources,
-    v8CoverageSources,
     mutationSources: sourceFilesForMutation,
     publicBinSources,
     missingPackageSources,

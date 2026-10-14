@@ -1,8 +1,13 @@
-import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { closeSync, constants, existsSync, fsyncSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  errorMessage,
+  isRecord,
+  prettyJSON as json,
+  sha256 as sha,
+} from '../../../packages/agent/src/contracts/forward-controller-values.ts';
 
 type JsonRecord = Record<string, unknown>;
 type ForwardChange = {
@@ -62,19 +67,12 @@ type TransitionOperation = JsonRecord & {
   readonly closeout: { readonly path: string; readonly sha256: string };
 };
 
-const sha = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
-const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
-const parseJson = (text: string): unknown => JSON.parse(text);
 const policy = 'docs/agent-instructions/documentation-policy.v1.json';
 const instruction = 'vida-agent/instructions/development-lifecycle.md';
 const map = 'vida-agent/TESTING.md';
 
 function required(condition: unknown, message: string): asserts condition {
   if (!condition) throw Error(`forward documentation: ${message}`);
-}
-
-function isRecord(value: unknown): value is JsonRecord {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function isForwardChange(value: unknown): value is ForwardChange {
@@ -166,10 +164,6 @@ function isTransitionOperation(value: unknown): value is TransitionOperation {
   );
 }
 
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 function receiptMatchesBinding(receipt: ForwardReceipt, binding: ForwardReceiptBinding): boolean {
   return (
     receipt.schema === binding.schema &&
@@ -202,7 +196,7 @@ export async function ensureForwardDocumentationPhase(
     'new work/root binding invalid',
   );
   const read = (relative: string): Buffer => readFileSync(path.join(root, relative));
-  const intentValue: unknown = parseJson(
+  const intentValue: unknown = JSON.parse(
     read('.agent/cutover/' + operationId + '/forward-intent.v1.json').toString('utf8'),
   );
   required(isForwardIntent(intentValue), 'forward intent differs');
@@ -214,7 +208,7 @@ export async function ensureForwardDocumentationPhase(
   const lifecycle = intent.changed.find((entry) => entry.path === instruction);
   const policyChange = intent.changed.find((entry) => entry.path === policy);
   required(lifecycle && policyChange, 'policy transition requires declared instruction and policy changes');
-  const scopeValue: unknown = parseJson(read(`.agent/work/${documentationWorkId}/scope.json`).toString('utf8'));
+  const scopeValue: unknown = JSON.parse(read(`.agent/work/${documentationWorkId}/scope.json`).toString('utf8'));
   required(isForwardScope(scopeValue), 'actual authorized three-path scope missing');
   const scope = scopeValue;
   required(
@@ -235,7 +229,7 @@ export async function ensureForwardDocumentationPhase(
       !result.error && result.status === 0,
       `public operation blocked: ${result.stderr || result.error?.message}`,
     );
-    return parseJson(result.stdout.trim());
+    return JSON.parse(result.stdout.trim()) as unknown;
   };
   const clear = (mode: string): ClearResult => {
     const result = launch(path.join(root, 'vida-agent/bin/documentation-clear.ts'), [
@@ -268,7 +262,7 @@ export async function ensureForwardDocumentationPhase(
   const receiptFile = path.join(root, receiptPath);
   let receipt: ForwardReceipt | null = null;
   if (existsSync(receiptFile)) {
-    const receiptValue: unknown = parseJson(read(receiptPath).toString('utf8'));
+    const receiptValue: unknown = JSON.parse(read(receiptPath).toString('utf8'));
     required(isForwardReceipt(receiptValue), 'receipt binding differs');
     receipt = receiptValue;
   }
@@ -280,7 +274,7 @@ export async function ensureForwardDocumentationPhase(
       'genuine pre-edit baseline required',
     );
     const baselineResult = clear('baseline');
-    const recordValue: unknown = parseJson(read(baselineResult.path).toString('utf8'));
+    const recordValue: unknown = JSON.parse(read(baselineResult.path).toString('utf8'));
     required(isBaselineRecord(recordValue), 'public baseline differs from old source');
     const record = recordValue;
     required(
@@ -291,7 +285,7 @@ export async function ensureForwardDocumentationPhase(
         record.policy_digest === policyChange.old_sha256,
       'public baseline differs from old source',
     );
-    const oldPolicyValue: unknown = parseJson(read(policy).toString('utf8'));
+    const oldPolicyValue: unknown = JSON.parse(read(policy).toString('utf8'));
     required(isRecord(oldPolicyValue) && typeof oldPolicyValue.changelog_path === 'string', 'baseline policy invalid');
     const nextReceipt: ForwardReceipt = {
       ...expected,
@@ -309,7 +303,7 @@ export async function ensureForwardDocumentationPhase(
     receipt = nextReceipt;
   }
   required(receiptMatchesBinding(receipt, expected), 'receipt binding differs');
-  const baselineValue: unknown = parseJson(read(receipt.baseline_path).toString('utf8'));
+  const baselineValue: unknown = JSON.parse(read(receipt.baseline_path).toString('utf8'));
   required(isBaselineRecord(baselineValue), 'baseline work/source binding differs');
   const baseline = baselineValue;
   required(
@@ -362,7 +356,7 @@ export async function ensureForwardDocumentationPhase(
         '--timestamp',
         new Date().toISOString(),
       ]);
-    const operationValue: unknown = parseJson(read(operationPath).toString('utf8'));
+    const operationValue: unknown = JSON.parse(read(operationPath).toString('utf8'));
     required(isRecord(operationValue) && isRecord(operationValue.plan), 'frozen operation work/baseline differs');
     const operation = operationValue;
     const plan = operationValue.plan;
@@ -404,7 +398,7 @@ export async function ensureForwardDocumentationPhase(
   );
   if (phase === 'closeout') required(reconcile('resume').status === 'applied', 'transition not applied');
   const verified = clear('verify');
-  const operationValue: unknown = parseJson(read(operationPath).toString('utf8'));
+  const operationValue: unknown = JSON.parse(read(operationPath).toString('utf8'));
   required(isTransitionOperation(operationValue), 'actual transition/closeout receipt differs');
   const operation = operationValue;
   required(

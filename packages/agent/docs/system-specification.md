@@ -1,8 +1,9 @@
 # Agent runtime system specification
 
 Owner: agent product maintainer. Class: canonical living system specification.
-Repository-only source trace (not an installed consumer dependency): the current attributable repository/distribution and developer
-unblocking decisions in `.agent/work/core-cloud-continuation-20261002/WORK.md#native-only-public-delivery-decision`.
+Repository-only source trace: [the repository delivery decision](../../../AGENT.sidecar.md#native-only-public-delivery-decision).
+This trace is not an installed consumer dependency. Current clean-project qualification
+supersedes historical existing-consumer unblocking for the CLEAR development task.
 This document defines the target behavior; its presence does not certify that
 the distribution, migration or Runtime acceptance gates have passed.
 

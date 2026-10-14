@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
@@ -6,7 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { loadForwardPayloadRuntime } from './forward-payload-runtime.ts';
 import { appendRuntimeDocumentationChange } from './append-runtime-documentation-change.ts';
 import type { DocumentationClearCheckpoint } from '../../../packages/agent/src/documentation/clear.js';
-const sha = (bytes: string | Uint8Array) => createHash('sha256').update(bytes).digest('hex');
+import {
+  errorMessage,
+  isRecord,
+  sha256 as sha,
+} from '../../../packages/agent/src/contracts/forward-controller-values.ts';
 const instruction = 'vida-agent/instructions/development-lifecycle.md';
 const policy = 'docs/agent-instructions/documentation-policy.v1.json';
 
@@ -57,18 +60,6 @@ type ForwardScope = {
   readonly owner: string;
   readonly attribution: { readonly pointer: string };
 };
-
-function isRecord(value: unknown): value is JsonRecord {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
-function parseJson(text: string): unknown {
-  return JSON.parse(text);
-}
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
 
 function isCheckpoint(value: unknown): value is DocumentationClearCheckpoint {
   return (
@@ -158,7 +149,7 @@ export async function ensureForwardLifecycleClear({
   const scopeBytes = access.readBytes(`${workPath}/scope.json`, 'new documentation work scope');
   const scopeValue: unknown = JSON.parse(scopeBytes.toString('utf8'));
   const scope = isForwardScope(scopeValue) ? scopeValue : null;
-  const scopeSchema: unknown = parseJson(
+  const scopeSchema: unknown = JSON.parse(
     access.readText('vida-agent/schemas/implementation-scope.v1.schema.json', 'documentation scope schema'),
   );
   if (!isRecord(scopeSchema)) throw Error('documentation scope schema invalid');
@@ -206,7 +197,7 @@ export async function ensureForwardLifecycleClear({
     );
     if (result.error || result.status !== 0)
       throw Error(`public documentation CLEAR ${mode} blocked: ${result.stderr || result.error?.message}`);
-    const outputValue: unknown = parseJson(result.stdout.trim());
+    const outputValue: unknown = JSON.parse(result.stdout.trim());
     if (
       !isRecord(outputValue) ||
       typeof outputValue.status !== 'string' ||
@@ -217,7 +208,7 @@ export async function ensureForwardLifecycleClear({
     return { status: outputValue.status, path: outputValue.path, sha256: outputValue.sha256 };
   };
   const readCheckpoint = (file: string): DocumentationClearCheckpoint => {
-    const valueJson: unknown = parseJson(access.readText(file, 'forward documentation checkpoint'));
+    const valueJson: unknown = JSON.parse(access.readText(file, 'forward documentation checkpoint'));
     if (!isCheckpoint(valueJson)) throw Error('forward documentation checkpoint differs');
     const value = valueJson;
     const { digest, ...body } = value;
@@ -232,7 +223,7 @@ export async function ensureForwardLifecycleClear({
   };
   let receipt: JsonRecord | null = null;
   if (existsSync(path.join(root, receiptPath))) {
-    const receiptValue: unknown = parseJson(access.readText(receiptPath, 'forward documentation receipt'));
+    const receiptValue: unknown = JSON.parse(access.readText(receiptPath, 'forward documentation receipt'));
     receipt = isRecord(receiptValue) ? receiptValue : null;
     if (!receipt) throw Error('forward documentation binding changed');
   }

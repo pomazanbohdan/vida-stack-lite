@@ -1,8 +1,8 @@
-import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { lstatSync, readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
+import { isRecord, sha256 as sha } from '../../../packages/agent/src/contracts/forward-controller-values.ts';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -60,14 +60,9 @@ export interface ForwardUpdateInspection {
   readonly apply_ready: boolean;
 }
 
-const sha = (value: string | Uint8Array): string => createHash('sha256').update(value).digest('hex');
 const hex = (value: unknown): value is string => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 function fail(message: string): never {
   throw new Error(`vida forward update: ${message}`);
-}
-
-function isRecord(value: unknown): value is JsonRecord {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
 function stat(file: string): ReturnType<typeof lstatSync> | null {

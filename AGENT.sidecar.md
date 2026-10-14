@@ -6,17 +6,11 @@ portable runtime instruction owner. The repository has exactly two products:
 
 ## Agent bootstrap: search tools
 
-During the mandatory `AGENTS.md` -> `AGENT.sidecar.md` bootstrap, the lead and
-every delegated agent load the [structural search policy](#structural-code-search)
-before searching or reading implementation files. Select the tool by purpose:
-
-| Purpose                                                                      | Tool                                             |
-| ---------------------------------------------------------------------------- | ------------------------------------------------ |
-| File names, symbol names, messages and configuration text                    | `rg`, `rg --files`                               |
-| Call shapes, repeated syntax and refactoring candidates                      | `ast-grep run` or `ast-grep scan`                |
-| Indexed definitions and reference candidates                                 | `vex check`, `show`, `usages`, `callers`         |
-| Navigation to declarations, imports and direct members before reading bodies | `vex outline` or `ast-grep outline`              |
-| Maintained function inventory and identities; type and semantic checks       | Existing Babel inventory and TypeScript compiler |
+During `AGENTS.md` -> `AGENT.sidecar.md` bootstrap, the lead and every delegated
+agent load the [search policy](#structural-code-search) before implementation reads.
+The single tool-selection table is in [.codex/README.md](.codex/README.md#bootstrap-and-ownership).
+Use `rg --files --hidden` when searching `.agent`, `.agents` or `.codex`.
+An omitted hidden path is not evidence that a file is absent.
 
 Delegation includes the repository root and this bootstrap pointer, including
 for blind agents. Agents read [.codex/README.md](.codex/README.md) for Vex/LeanCTX and the relevant
@@ -30,7 +24,7 @@ current owners.
 
 | Layer or concern                                                    | Authoritative source                                                                                                               | Owner            |
 | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
-| Repository layout and distribution intent                           | Current attributable user decision in `.agent/work/core-cloud-continuation-20261002/WORK.md#native-only-public-delivery-decision`  | Repository owner |
+| Repository layout and distribution intent                           | [Repository delivery decision](#native-only-public-delivery-decision)                                                              | Repository owner |
 | Agent system behavior                                               | `packages/agent/docs/system-specification.md`                                                                                      | Agent maintainer |
 | Agent lifecycle and verification                                    | `packages/agent/instructions/`, `packages/agent/TESTING.md`                                                                        | Agent maintainer |
 | Agent installation guide                                            | `packages/agent/docs/installation.md` (derived guide, not a second specification)                                                  | Agent maintainer |
@@ -54,6 +48,59 @@ Keep shared product behavior in `packages`; repository adapters call that owner.
 Preserve each boundary's authorization, guard order, CAS and UNKNOWN handling.
 Reuse its tests and inventory; add cases for affected callers and record extracted
 function correspondence. Similar syntax alone is insufficient reason to merge.
+
+## Native-only public delivery decision
+
+The repository owner reaffirmed this existing policy by approving the comprehensive
+Pstack implementation on 2026-10-14. Agent public delivery is one native executable
+with embedded package-selected Bun. npm artifacts serve SDK library imports only.
+The two product roots are `packages/agent` and `packages/plugin`.
+Consumer `.vida` contains project configuration, local instructions and operational
+data. Its active cutover remains conditional on the bundle-owned repair contract.
+The previously cited 2026-10-02 WORK decision record is absent from this checkout;
+do not claim to have recovered its original bytes or use an old handoff as authority.
+
+## Orchestration and delegation
+
+The user and this sidecar select the work scope. The lifecycle owns execution and
+evidence policy; TESTING owns verification gates. The current CLEAR plan owns task
+order, the backlog owns stable IDs, and WORK records current evidence.
+Use the task's explicitly selected method once. Pstack supplies scoped investigation,
+refactoring and writing practices; Superpowers supplies selected planning and test
+practices. GSD state is derived and Ponytail applies only to code-producing lanes.
+Do not run another outer workflow or create a second plan for the same outcome.
+
+Use native Luna for independent blind work under the owner's standing preference.
+Each assignment names the root, bootstrap, exact files, invariants and result format.
+One writer owns each shared file. Workers do not perform Git operations or duplicate
+the lead's checks. Use a bounded useful pool, not one agent per helper. Pstack external
+model defaults do not configure providers or authorize spending. A missing external
+route does not block the authorized native route.
+
+## Documentation maintenance
+
+Update the existing owner in the same correction packet. Keep product behavior in
+the system specification, execution policy in lifecycle, verification in TESTING,
+tool-selection details in `.codex/README.md`, priorities in backlog, order in the
+CLEAR plan and exact outcomes in WORK. Research records facts and open questions.
+It does not grant runtime authority.
+
+Active documents contain current rules and status. Replace superseded narratives
+with a resolvable Git commit/path reference; preserve accepted task IDs, decisions,
+acceptance criteria and exact evidence locators. Do not copy full history into a new
+active document. Retained FAIL/UNKNOWN artifacts keep their original bytes and custody.
+Record a terminal outcome before assigning the next action. Missing proof stays GAP.
+
+For every packet, check changed links and heading anchors, commands, owner references,
+template/generated equality and status against the actual terminal result. Read only
+affected documents and reuse current inventories. Do not add a duplicate whole scan,
+hash pass or suite. Reference tool versions from their maintained manifests/locks.
+Run `bun tooling/agent/check-documentation.ts` for changed tracked Markdown in the
+current worktree. Supply exact additional paths for newly created documents.
+It caches target reads in that invocation; it does not attest staged bytes,
+external URLs, runtime receipts, policy approval or numeric qualification.
+Keep open qualification separate from implemented Source. The generated root AGENTS
+changes through `packages/agent/templates/AGENTS.template.md`; project rules stay here.
 
 ## Runtime and distribution
 
@@ -94,88 +141,28 @@ other applications from using it.
 
 ## Structural code search
 
-Use Vex as the single primary indexed navigation tool; the qualified environment
-setup, versions, cache and recovery contract live in [.codex/README.md](.codex/README.md).
-Known symbol body -> `vex show X` directly; existence -> `vex check X`;
-unknown concept -> `vex search "description" --limit 10`; selected references ->
-`vex usages X --strict`; call chains -> `vex callers/callees X`.
-Use `vex bundle --mode symbol --symbol X` when its full unscoped body and related
-facts are needed; bundle symbol mode ignores scope filters. Keep `rg` first for
-file/name/text searches and direct ast-grep for targeted structural patterns.
-Vex references, graph edges and impact verdicts are candidates, never compiler
-proof or permission to delete. Empty/unsupported/stale/truncated results require
-current Source and an appropriate fallback. Preserve Babel identities and gates.
-
-Cloud setup enables semantic and synchronous auto-update (async_update=false).
-Source the generated host environment file; prefix Vex calls with
-`taskset --cpu-list "$VIDA_VEX_CPU"` to bound ONNX CPU threads on this Cloud host.
-One lead performs `bun tooling/agent/cloud-tooling-setup.ts --prepare-index`
-after static checks; it checks cgroup headroom before a separate cold build;
-ordinary queries then refresh stale inputs under Vex's native single-writer lock.
-Do not add watchers or redundant per-agent manual update/rebuild calls. Before a
-large edit batch completes, the lead may warm `vex update --semantic` once.
-During frozen numeric/runtime measurements stop Vex queries/refreshes entirely.
-For a deliberately frozen, pre-warmed navigation snapshot outside measurement,
-`--no-stale-check` suppresses refresh on supported commands; explicitly label
-that result as a frozen snapshot, not freshness proof. No `--no-auto-update` flag
-exists. Model readiness requires a completed semantic index and actual semantic
-results, not the configured boolean. If status has embeddings=false, use rg and
-ast-grep until guarded preparation succeeds; avoid queries that trigger a full
-semantic rebuild. Preserve old failed evidence and do not compete with a cold
-model build using compilers or parallel test processes.
-Check `vex status --coverage`; JSON/config or unsupported files stay on rg.
-Keep caches outside the repository and product workspace database. ast-index
-and its original skill are retained as an inactive fallback; do not maintain a
-parallel ast-index index/graph while Vex is primary. A switch has one refresh owner.
-
-LeanCTX is explicit context delivery only: `ctx_read` for compact exploration,
-`ctx_shell` for human summaries of successful commands/logs, `ctx_expand` for
-archived output and `ctx_context` for cache status. Require the qualified four-tool
-MCP surface; disabled `ctx_call` must not expose unlisted tools. Use native shell
-for Vex/ast-grep, machine JSON, diffs, compiler/test failures and exact evidence: even
-`ctx_shell(raw=true)` merges streams, redacts and can truncate. Recover existing
-archives before rerunning expensive work; native current reads guard edits.
-No automatic LeanCTX hook, instruction, skill, proxy or background-search setup.
-Codex project MCP configuration affects supported future sessions; check actual
-tool availability before claiming it is active in the current Cloud session.
-
-Use `ast-grep` as an additional development tool for structural searches and
-compact file outlines. Its CLI is pinned to `@ast-grep/cli@0.50.0`; verify
-`ast-grep --version` before use. Installation is global on the development host,
-not an Agent/Core runtime dependency.
+The [Cloud reference](.codex/README.md#bootstrap-and-ownership) owns tool selection,
+versions, setup, cache, resource and recovery details. Read its relevant section
+once and use available qualified tools. Use rg first for file/text searches and
+scoped ast-grep for structural patterns. Full Vex semantics is not yet ready.
+Never trigger auto-refresh or compete with a cold build during frozen checks.
 
 Project skill owners are [ast-grep](.agents/skills/ast-grep/SKILL.md) and
-[ast-grep-outline](.agents/skills/ast-grep-outline/SKILL.md). Read the relevant skill
-before use. `.agents/skills` contains the original project-scoped skill
-directories; upstream revision and license are recorded in
-`.agents/skills/ast-grep.upstream.json`. The repository owner owns their adoption;
-upstream instructions supplement this sidecar and the current lifecycle.
+[ast-grep-outline](.agents/skills/ast-grep-outline/SKILL.md). Read the selected skill
+before use. Originals live only in .agents/skills; upstream revision/license
+records accompany them. ast-index is an inactive fallback, not a second index.
 
-Select candidate paths with `rg --files` or the existing maintained inventory,
-then search only the needed files. Use `--lang ts` for TS and `--lang tsx` for
-TSX. Test each new pattern on matching and nonmatching fixtures before applying
-it to Source. Include optional calls, generics, computed members and nested
-closures when relevant. Use `outline` for navigation, not a second function
-inventory. Keep plain-text searches on `rg` and reuse current results.
+Reuse selected paths and inventory. Qualify new patterns with matching/nonmatching
+fixtures before Source application. Review optional/generic/computed calls and
+nested closures where relevant. Outlines are navigation, not a function inventory.
+JSON lines are zero-based and byte offsets require UTF-8-aware conversion.
+Syntax matches are candidates, not symbol binding, safe deduplication or authority.
 
-Matches are syntax candidates for review. They do not establish symbol binding,
-types, dataflow, function ownership, safe deduplication or valid syntax after
-parser recovery. Preserve the Babel AST inventory, function/test links, reviewed
-scenario matrices, Ajv, Bun coverage and all exact coverage, complexity/CRAP and
-assertion-confirmed mutation gates. Do not add a duplicate full scan or suite.
-
-Prefer JSON output. Its line numbers are zero-based and byte offsets require
-UTF-8-aware conversion before joining Babel/JavaScript offsets. Multi-node
-captures can include punctuation. `run` returns 0 for matches and 1 for no
-matches; inspect stderr and the result body to distinguish no matches from an
-input error. An error-severity `scan` finding returns 1. Rule snapshots cover
-labels/spans/fixes; assert the rule-level diagnostic message separately. Current
-0.50.0 SARIF output is not qualified for standards-compliant export; use JSON.
-
-Search is read-only by default. Preview rewrites in owned fixtures, review the
-exact diff and run affected checks before any authorized Source application.
-Only the designated writer applies changes. A structural match grants no
-execution, authorization, repair or UNKNOWN-replay rights.
+Keep Babel identities, TypeScript binding checks and exact evidence gates with
+their existing owners. Use native current bytes for edits and numeric evidence.
+LeanCTX is explicit human context delivery; recover available archives before
+rerunning expensive work. Its compressed output is not byte-exact evidence.
+Only the assigned writer applies reviewed changes.
 
 ## Bun Test development
 
@@ -268,6 +255,6 @@ by its owner after the product specification is present.
 
 Preserve `.git`, history, origin and unrelated files. The predecessor runtime
 is inactive provenance in `.tmp/archive`, never an active fallback. Do not
-merge predecessor schemas or code into the current product. Existing consumer
-v10 remains until the selected distribution, public CLI and fenced artifact
-repair are verified. Existing tasks are retained as inactive provenance, not migrated.
+merge predecessor schemas or code into the current product. Qualify the formed
+native runtime in fresh isolated projects under the current CLEAR decision.
+Historical consumer tasks/state are inactive provenance, not migration inputs.

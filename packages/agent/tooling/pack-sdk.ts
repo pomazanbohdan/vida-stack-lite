@@ -235,7 +235,7 @@ export function sdkCompatibilityManifest(input: { root: string }): { value: Pack
     if (entry === 'bin/standalone-resources.ts') return true;
     if (/standalone|release-notes|release-publish/.test(entry)) return false;
     if (entry === 'TESTING.md' || entry === 'tsconfig.json' || entry === '.oxfmtrc.json') return false;
-    if (['oxlint.config.json', 'stryker.config.ts', 'vitest.config.ts'].includes(entry)) return false;
+    if (['oxlint.config.json', 'stryker.config.ts'].includes(entry)) return false;
     if (entry.startsWith('tests/')) return false;
     if (entry.startsWith('tooling/')) return verifierFileSet.has(entry);
     return true;

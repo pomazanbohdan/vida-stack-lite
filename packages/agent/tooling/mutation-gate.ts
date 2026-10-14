@@ -795,6 +795,7 @@ const partitions: MutationPartition[] = [
     environment: 'bun',
     sources: [
       'src/contracts/canonical-json-core.ts',
+      'src/contracts/forward-controller-values.ts',
       'src/contracts/implementation-scope.ts',
       'src/governance/operation-policy.ts',
       'src/governance/policy-workflow.ts',
@@ -803,6 +804,7 @@ const partitions: MutationPartition[] = [
     tests: [
       ...commonTests,
       'tests/envelopes-boundary.test.ts',
+      'tests/forward-controller-values.test.ts',
       'tests/fuzz.test.ts',
       'tests/governance-completeness.test.ts',
       'tests/edictum-workflow-completeness.test.ts',

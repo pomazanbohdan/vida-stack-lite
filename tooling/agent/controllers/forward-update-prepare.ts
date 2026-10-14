@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import {
   closeSync,
@@ -22,6 +22,12 @@ import {
 } from './forward-update-plan.ts';
 import { verifyForwardReviewSet } from './forward-review-proof.ts';
 import { assertForwardInvocationLock, withForwardInvocationLock } from './forward-invocation-lock.ts';
+import {
+  errorMessage,
+  isRecord,
+  prettyJSON as json,
+  sha256 as sha,
+} from '../../../packages/agent/src/contracts/forward-controller-values.ts';
 
 type JsonRecord = Record<string, unknown>;
 type Inspection = ReturnType<typeof inspectForwardUpdate>;
@@ -85,21 +91,8 @@ type DocumentationOptions = Pick<
 > & {
   readonly lock: ForwardLock;
 };
-function isRecord(value: unknown): value is JsonRecord {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
-
 function isUnknownArray(value: unknown): value is unknown[] {
   return Array.isArray(value);
-}
-
-function parseJson(value: string): unknown {
-  const parsed: unknown = JSON.parse(value);
-  return parsed;
-}
-
-function errorMessage(value: unknown): string {
-  return value instanceof Error ? value.message : String(value);
 }
 
 function isPayloadManifest(value: unknown): value is PayloadManifest {
@@ -169,8 +162,6 @@ function isPhaseOutput(value: unknown): value is PhaseOutput {
   return isRecord(value) && (value.status === 'baseline_ready' || value.status === 'closeout_verified');
 }
 
-const sha = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
-const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
 function fail(message: string): never {
   throw new Error(`vida forward prepare: ${message}`);
 }
@@ -222,7 +213,7 @@ function requireDocumentationPhase(
     fail(`runtime documentation ${phase} blocked: ${result.stderr || result.error?.message}`);
   let output: unknown;
   try {
-    output = parseJson(result.stdout.trim());
+    output = JSON.parse(result.stdout.trim());
   } catch {
     fail(`runtime documentation ${phase} output invalid`);
   }
@@ -268,7 +259,7 @@ function requireLifecycleOnlyPhase(
     fail(`lifecycle-only CLEAR ${phase} blocked: ${result.stderr || result.error?.message}`);
   let output: unknown;
   try {
-    output = parseJson(result.stdout.trim());
+    output = JSON.parse(result.stdout.trim());
   } catch {
     fail(`lifecycle-only CLEAR ${phase} output invalid`);
   }
@@ -327,7 +318,7 @@ function authorize(project: string, workRoot: string, lock: ForwardLock): JsonRe
   const raw = file(path.join(workRoot, 'forward-authorization.v1.json'));
   let value: unknown;
   try {
-    value = parseJson(raw.toString('utf8'));
+    value = JSON.parse(raw.toString('utf8'));
   } catch {
     fail('invalid forward authorization');
   }
@@ -386,7 +377,7 @@ function journalEvents(filePath: string, operationId: string, lockSha: string): 
     ? raw
         .trimEnd()
         .split('\n')
-        .map((line) => parseJson(line))
+        .map((line): unknown => JSON.parse(line))
     : [];
   if (
     events.some(
@@ -423,10 +414,10 @@ export function verifyLifecycleOnlyForward({
   const policyChange = lock.changed.find((entry) => entry.path === documentationPolicyPath);
   if (!lifecycle || policyChange) return null;
   const lifecycleChange = requireLifecycleChange(lifecycle);
-  const priorValue = parseJson(
+  const priorValue: unknown = JSON.parse(
     file(path.join(path.resolve(oldPayloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
   );
-  const nextValue = parseJson(
+  const nextValue: unknown = JSON.parse(
     file(path.join(path.resolve(payloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
   );
   if (!isPayloadManifest(priorValue) || !isPayloadManifest(nextValue)) fail('payload manifest invalid');
@@ -512,10 +503,10 @@ export function completeCurrentLifecycleOnlyForward({
   const policyChange = lock.changed.find((entry) => entry.path === documentationPolicyPath);
   if (!lifecycle || policyChange) return null;
   const lifecycleChange = requireLifecycleChange(lifecycle);
-  const priorValue = parseJson(
+  const priorValue: unknown = JSON.parse(
     file(path.join(path.resolve(oldPayloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
   );
-  const nextValue = parseJson(
+  const nextValue: unknown = JSON.parse(
     file(path.join(path.resolve(payloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
   );
   if (!isPayloadManifest(priorValue) || !isPayloadManifest(nextValue)) fail('payload manifest invalid');
@@ -624,7 +615,7 @@ function prepareForwardBundleCore({
   const selector = file(safeAt(project, '.agent/active-runtime-selector.v1.json'));
   let current: JsonRecord;
   try {
-    const parsed = parseJson(selector.toString('utf8'));
+    const parsed: unknown = JSON.parse(selector.toString('utf8'));
     if (!isRecord(parsed)) fail('invalid selector');
     current = parsed;
   } catch {
@@ -639,7 +630,7 @@ function prepareForwardBundleCore({
   const journalPath = path.join(workRoot, 'forward-journal.v1.jsonl');
   let lock: ForwardLock;
   if (resume) {
-    const parsedLock = parseJson(file(intentPath).toString('utf8'));
+    const parsedLock: unknown = JSON.parse(file(intentPath).toString('utf8'));
     if (!isForwardLock(parsedLock)) fail('resume intent identity differs');
     lock = parsedLock;
     if (
@@ -763,7 +754,7 @@ function prepareForwardBundleCore({
       fail(`completed readonly owner closure blocked: ${result.stderr || result.error?.message}`);
     let captured: unknown;
     try {
-      captured = parseJson(result.stdout.trim());
+      captured = JSON.parse(result.stdout.trim());
     } catch {
       fail('completed readonly capture output invalid');
     }
@@ -779,10 +770,10 @@ function prepareForwardBundleCore({
     authorize(project, workRoot, lock);
     onPhase?.('completed_readonly_owner_closed');
   }
-  const oldOwnershipValue = parseJson(
+  const oldOwnershipValue: unknown = JSON.parse(
     file(path.join(path.resolve(oldPayloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
   );
-  const nextOwnershipValue = parseJson(
+  const nextOwnershipValue: unknown = JSON.parse(
     file(path.join(path.resolve(payloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
   );
   if (!isPayloadManifest(oldOwnershipValue) || !isPayloadManifest(nextOwnershipValue)) fail('payload manifest invalid');
@@ -813,10 +804,10 @@ function prepareForwardBundleCore({
   const lifecycleOnly = lifecycleChange && !policyChange;
   let lifecyclePolicyHash: string | null = null;
   if (lifecycleOnly) {
-    const priorValue = parseJson(
+    const priorValue: unknown = JSON.parse(
       file(path.join(path.resolve(oldPayloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
     );
-    const nextValue = parseJson(
+    const nextValue: unknown = JSON.parse(
       file(path.join(path.resolve(payloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
     );
     if (!isPayloadManifest(priorValue) || !isPayloadManifest(nextValue)) fail('payload manifest invalid');
@@ -944,7 +935,7 @@ function prepareForwardBundleCore({
   // The repair command's functional check must run against the complete installed
   // successor, not the first prerequisite prefix of a partially replaced bundle.
   if (requiresRepair) {
-    const nextValue = parseJson(
+    const nextValue: unknown = JSON.parse(
       file(path.join(path.resolve(payloadRoot), 'vida-agent-payload.manifest.v1.json')).toString('utf8'),
     );
     if (!isPayloadManifest(nextValue)) fail('payload manifest invalid');

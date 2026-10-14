@@ -1,46 +1,104 @@
-# Consumer agent-source retirement evidence
+# Consumer source retirement
 
-Owner: repository maintainer. Class: supporting project migration evidence, repository-only; not an npm asset or portable runtime contract. Formal CLEAR lineage/closeout is pending. Sources: current user migration direction, coordinator chat `01a0f0d9-a3d5-7fb0-9217-33342a37f265`, independent source inventory, and the current migration WORK.
+Owner: repository maintainer for Source custody and this handoff. The consumer
+coordinator owns actual consumer integration and cleanup. Class: repository-only
+supporting evidence; not a runtime prerequisite or deletion authorization.
+This is the existing creatio-sample cleanup contour, not a new engine task.
 
-## Accepted destination and ordering
+## Current coordinator facts, 2026-10-14
 
-Agent development belongs in this repository's `packages/agent`; the Codex plugin product belongs in `packages/plugin`. The agent is distributed as the local unscoped `vida-agent` npm package through its public PATH command. The first local system publication is 0.1.0; later successful local publications increment the patch version. Existing consumer source may be retired only after the installed package, supported artifact repair and exact transfer inventory are verified. Existing consumers remain on their old binding in the meantime. This document authorizes no effects and records no user Runtime acceptance.
+The coordinator reports C:/_temp/creatio-sample with PATH vida-agent0.1.3 and a
+local Source checkout at b549951. Local Core stopped under the human Source handoff.
+Cloud did not inspect that Windows filesystem or invoke its installed executable.
 
-The source repository already has its initialization receipt. An initializer's refusal to overwrite that receipt is expected; fresh Plugin work needs no re-initialization or overwrite. Its current configured source prefix is `packages/agent`, so the runtime code path is `packages/agent/bin/run.mjs`.
+The latest readonly inventory reports vida-agent/node_modules with13 ordinary
+files,67 directories and0 reparse points. All files are Babel
+@babel/compat-data/data JSON in six nested dependency trees: native-modules.json,
+overlapping-plugins.json, plugin-bugfixes.json and plugins.json. No project config,
+agent instruction, work/DB or custom runtime JS/TS was found in that subtree.
+These are third-party dependency data, not consumer-authored runtime Source.
 
-## Consumer inventory evidence
+Other consumer runtime paths already have foreign tracked deletions. Preserve
+their Git attribution; this handoff neither performs nor restores those deletions.
+package.json still points at absent local bin/{run,init,documentation-clear,bun,
+install}.mjs. Sidecar still names a local bundle owner. The root configuration,
+AGENTS, Sidecar, product code/docs and new .agent/work evidence remain protected.
+.agent/coordination/ownership.v1.json is absent; absence does not prove quiescence.
 
-The coordinator identified active old bundle/source/test/tooling/staging copies in `C:/_temp/creatio-sample`. Active dependencies include root YAML runtime and schema roots, its refactoring project and registry/quality/module references, generated AGENTS, project-owned Sidecar, root documentation policy, the 3mob policy's local schema pointer, and the agent instruction index. The installed-binding repair must cover each actual pointer and its dependent receipt/selector/generated context; an absent-only initializer or executor-model rebind is insufficient.
+## Source custody
 
-Product code and deliverables, the 3mob product, 103 Creatio/clio skills, project documentation, configured values, and unrelated dirty files remain protected. Generated AGENTS may change through its maintained template; Sidecar/YAML/policies remain owner-controlled data and require a guarded exact change. Operational state and uncertain issued outcomes remain provenance, not cleanup permission. Old tasks are not resurrected or fabricated as completed/no-effect; new authorized work starts with fresh binding.
+Published Source before the current packet is
+bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e in pomazanbohdan/vida-stack-lite.
+The original b549951 tree remains in Git. Runtime code, schemas, instructions,
+tests and tooling belong in packages/agent; current handwritten entrypoints are
+TypeScript. Current equivalents of the old bin names are run.ts, init.ts,
+documentation-clear.ts, bun.ts and install.ts. Their migration is not a claim
+that every previously deleted consumer byte equals current Source.
 
-## Source-transfer audit
+Exact custom-code retention requires its path/content lineage, not a category
+count. The reported remaining Babel data contains no custom runtime Source.
+Its retirement does not require importing that dependency tree into Source.
+Preserve the reported existing code deletions and historical migration receipts.
 
-The current 0.1.0 npm archive contains 247 files. Machine verification compared its exact packaged entries with the current package bytes before system installation. This establishes current payload consistency, not full behavioral equivalence or user acceptance. Root Git/history/origin remain intact. The predecessor framework is preserved under `.tmp/archive/predecessor-20260930`, outside active product source.
+## Current runtime resolution
 
-Production `src` and `bin` contained no predecessor importer, facade or upgrader. Two one-time differential/parity tools targeted absent predecessor directories; the writer archived them under `.tmp/archive/predecessor-20260930/migration-diagnostics` and removed their npm allowlist/scripts/current aggregate entries. Their deferred historical comparison is not an installed-runtime prerequisite. Repository-only controller/cutover tests still legitimately inspect old paths as migration inputs; they are not a production fallback. Current v1 identifiers such as `agent-runtime.config.v1.yaml` remain schema identities.
+[The repository delivery decision](../../AGENT.sidecar.md#native-only-public-delivery-decision)
+selects one native executable with embedded Bun. npm artifacts serve SDK imports.
+Consumer runtime commands use the selected installed executable, not copied
+local MJS entrypoints or a newly installed SDK.
 
-## Required transfer acceptance and open evidence
+Current Source declares version/help and instructions --path NAME. The executing
+bundle owns instructions, schemas and templates. Explicit --project-root anchors
+consumer configuration, products and work data. Read the ACTUAL installed help
+before choosing options; current Source metadata does not prove0.1.3 parity.
 
-The coordinator owns consumer retirement only after verified repair and ownership release. Its exact manifest must list every transferred agent-owned source/test/tooling/copy, preserved provenance destination, protected product path, changed integration pointer and post-switch check. No broad `.agent`, `.codex`, Git cleanup or blanket deletion is authorized by an inventory label.
+The reported version proves neither native bytes/target nor instruction discovery,
+config/receipt binding, repair readiness or Runtime acceptance. No new install,
+old state recovery or global-suite run follows from this coordination request.
+[Installation](../../packages/agent/docs/installation.md) and the package lifecycle
+own guarded relocation/rebind. Do not initialize over an existing receipt or
+replace loader pointers merely because copied files are missing.
 
-Global installation of the current 0.1.0 archive completed after three actual fresh isolated review and candidate reverse PASS outcomes and current public CLEAR verification. Independent PowerShell PATH execution passed version, installed instruction discovery and prerequisite checks. A unique fresh consumer passed initialization and scope, then returned prepared/suspended/resume-ready at revision 1 with three next actions and zero issued actions. No wave, report or provider call occurred. Evidence is `.tmp/qa/installed-cli-smoke-20260930-130756-8f5c9ae9.json`; the durable release operation is `local-6952382b-0aaa-4044-b54a-51f1175d84cd`. These observations do not grant user Runtime acceptance or prove existing-consumer cutover.
+## Cleanup classification
 
-Coordinator chat `01a0f0d9-a3d5-7fb0-9217-33342a37f265` reports an actual read-only `planInstalledMigration` result with 30 exact entries across five state, five runtime-code, seven one-time tooling, three PowerShell, two GSD and eight test entries. The structured manifest pointer and exact path list are awaiting handoff; category counts do not substitute for that manifest. APPLY remains blocked on protected local instructions, actual module pointers, quiescence and first-admission rollback evidence. Public consumer loader/module compatibility research is pending. Consumer repair/recovery, actual cutover, retirement, numeric quality/post-switch checks and attributable user Runtime acceptance remain open.
+| Path/selection                                                                           | Disposition                                                                            | Condition                                                                                                                                                          |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| vida-agent/node_modules                                                                  | Exact candidate cleanup ROOT, third-party data only according to coordinator inventory | Bind the current13-file/67-directory/0-reparse inventory, ownership and quiescence before an effect. Stop on new entries, linked paths or changed bindings.        |
+| vida-agent/                                                                              | Retained integration root                                                              | Its deletion would affect the configured refactoring root. Resolve integration/config pointers first. The candidate above does not authorize removing this parent. |
+| package.json old local-bin aliases                                                       | Existing integration defect; preserve the file                                         | Change only the approved aliases after inspecting installed command support and exact preimage. Do not restore copied runtime Source.                              |
+| AGENTS.md, AGENT.sidecar.md, agent-runtime.config.v1.yaml                                | Protected from deletion                                                                | Guarded integration edits need their own owner-authorized exact change.                                                                                            |
+| Product Source, docs, configured values, unrelated dirty/staged files                    | Protected                                                                              | Preserve existing owners and bytes.                                                                                                                                |
+| .agent/, .codex/, new developer artifacts, original receipts/results and uncertain state | Protected from broad cleanup                                                           | Retain exact evidence and UNKNOWN custody. Never fabricate absent ownership records.                                                                               |
+| .tmp/repair-source/clean-npm-consumer-migration.mjs and its .1/.2 plans                  | Historical provenance, not executable cleanup                                          | Never replay these helpers/plans as a current operation.                                                                                                           |
 
-The active decision authority reader rejects predecessor protocol v2/v3 and
-accepts only v4. Its dormant WorkCheckpoint/v2 reader and migration-lineage
-helpers remain an explicit cleanup gap; current HostState emission is v1.
-The unfinished installation-binding proof module is preserved only in
-`.tmp/repair-source/installation-binding-proof.mjs` and is not shipped or
-exported. Fresh Plugin admission in this source repository uses a fresh work
-binding; existing-consumer repair remains a distinct prerequisite for consumer
-retirement. Formal CLEAR requires an accepted scope artifact and public
-baseline, closeout and verify operations. The repository-level documentation
-policy legitimately binds both products. No checkpoint or approval is inferred.
+Counts and the four basename categories are not the13 exact relative paths or
+their hashes. The coordinator owns that full effect-time manifest. Source can
+classify the candidate root now; no fabricated per-file list or consumer effect
+is supplied by this handoff.
 
-## Consumer one-time tooling crosswalk
+## Minimal coordinator sequence
 
-Independent read-only crosswalk classified seven consumer modules and their tests. `Prepare-VidaAgentPayload.mjs` stages a consumer candidate; generic package build/packed boundaries and repository source-provenance tests cover only reusable portions. `Stage-VidaAgentCutover.mjs` and `Cutover-VidaAgent.mjs` are initial consumer cutover/rollback tools, not equivalents of forward-generation prepare/finalize. `Verify-VidaEntrypoints.mjs` verifies old selectors/wrappers, beyond the current package CLI tests. `Archive-VidaAgentInactive.mjs` preserves old paths; its archive/receipt must survive even when the consumer command is retired. `Refresh-VidaAgentRepairSet.mjs` owns a bespoke consumer repair-set ledger, not the package's generic current-v1 reconciliation contract. `Repair-VidaAgentLauncher.mjs` is a one-time old-generation launcher repair, not an installed runtime API.
+1. Preserve dirty/staged attribution and bind the exact current candidate manifest.
+   Establish current consumer ownership and supported quiescence. Old operations,
+   leases, DB rows and UNKNOWN outcomes are never replay inputs.
+2. Observe the selected installed executable's version, bytes/target, help and
+   instructions --path development-lifecycle. Keep these distinct from readiness.
+3. Inspect actual configuration, initialization receipt, selectors and refactoring
+   root. Use only the installed bundle's supported repair/rebind route. Missing
+   relocation support, stale bindings or unresolved issued effects remain GAP.
+4. Apply only the separately approved minimal integration changes under exact
+   preimage/CAS guards. Protect config/instructions from deletion. Then retire
+   the candidate node_modules root if its manifest and quiescence still agree.
+5. Verify installed instruction resolution, explicit project-root binding, old
+   alias removal and readonly scope/readiness with the same selected executable.
+   Preserve original receipts and report actual effects and remaining gaps.
 
-These modules still reside in the consumer and require the coordinator's exact manifest-backed retirement. Keep necessary evidence through cleanup, then archive their results/receipts and dispose of the consumer code copies lawfully. Do not import them into the npm package or claim repository forward tests prove initial consumer cutover. The large prepared-install test belongs to one-time staging evidence. Production/package ownership, repository-only forward/source-provenance verification and consumer migration operations remain distinct.
+Cloud remains the Source writer. The coordinator remains the consumer writer.
+The coordinator reads this handoff in the Source chat; no external message was sent.
+
+## Historical provenance
+
+The pre-cleanup consumer-retirement narrative and previous transfer receipts are
+retained at bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:docs/migration/consumer-source-retirement.md.
+Its0.1.0 npm/Windows observations are historical, not current0.1.3 readiness.
+This contour does not reinstate old consumer unblock as a CLEAR prerequisite.

@@ -8,9 +8,9 @@ history separate from the reusable runtime.
 
 ## Products
 
-| Product | Purpose | Location |
-| --- | --- | --- |
-| **Vida Agent** | Standalone CLI and development-workflow runtime | [packages/agent](packages/agent) |
+| Product        | Purpose                                                                    | Location                           |
+| -------------- | -------------------------------------------------------------------------- | ---------------------------------- |
+| **Vida Agent** | Standalone CLI and development-workflow runtime                            | [packages/agent](packages/agent)   |
 | **Vida Codex** | Codex integration for workspace tools, project views and agent interaction | [packages/plugin](packages/plugin) |
 
 The visible product names differ from the stable internal project IDs:
@@ -103,28 +103,28 @@ resolving the cause.
 
 ## Documentation
 
-| Topic | Reference |
-| --- | --- |
-| Runtime behavior and boundaries | [System specification](packages/agent/docs/system-specification.md) |
-| Installation and update | [Installation guide](packages/agent/docs/installation.md) |
-| Development lifecycle | [Lifecycle instruction](packages/agent/instructions/development-lifecycle.md) |
-| Runtime verification | [Testing policy](packages/agent/TESTING.md) |
-| Agent package details | [Agent README](packages/agent/README.md) |
-| Project source map and authority | [AGENT.sidecar.md](AGENT.sidecar.md) |
+| Topic                            | Reference                                                                     |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| Runtime behavior and boundaries  | [System specification](packages/agent/docs/system-specification.md)           |
+| Installation and update          | [Installation guide](packages/agent/docs/installation.md)                     |
+| Development lifecycle            | [Lifecycle instruction](packages/agent/instructions/development-lifecycle.md) |
+| Runtime verification             | [Testing policy](packages/agent/TESTING.md)                                   |
+| Agent package details            | [Agent README](packages/agent/README.md)                                      |
+| Project source map and authority | [AGENT.sidecar.md](AGENT.sidecar.md)                                          |
 
 ## Source development
 
-Consumer requirements differ from source-tooling requirements. For agent
-development, the current [package manifest](packages/agent/package.json) declares
-Node.js **24.19.0**, npm **11.x** and Bun **1.4.2**. Use the maintained lockfile
-and package tooling.
+For Source development, use the Bun version selected by the
+[package manifest](packages/agent/package.json) and [.bun-version](packages/agent/.bun-version).
+Node/npm engine declarations describe SDK consumer compatibility.
+Use the maintained package lockfile and Bun commands.
 
 Run agent development checks from `packages/agent`. For example, with the
 declared development tools available:
 
 ```powershell
 Set-Location packages/agent
-npm test
+bun run test
 ```
 
 Choose the applicable checks from [TESTING.md](packages/agent/TESTING.md).

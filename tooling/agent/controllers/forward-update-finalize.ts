@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import {
   closeSync,
   constants,
@@ -20,6 +20,11 @@ import {
 } from './forward-update-prepare.ts';
 import { withForwardInvocationLock } from './forward-invocation-lock.ts';
 import { assertProjectOwnedIntegrationRetirement } from './forward-update-plan.ts';
+import {
+  isRecord,
+  prettyJSON as json,
+  sha256 as sha,
+} from '../../../packages/agent/src/contracts/forward-controller-values.ts';
 
 type JsonRecord = Record<string, unknown>;
 type PayloadEntry = JsonRecord & { readonly path: string; readonly sha256: string; readonly size: number };
@@ -46,11 +51,6 @@ type FinalizeOptions = {
   readonly documentationWorkId?: string | null;
 };
 
-const sha = (value: string | Uint8Array): string => createHash('sha256').update(value).digest('hex');
-const json = (value: unknown): Buffer => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
-function isRecord(value: unknown): value is JsonRecord {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
 function hasCode(value: unknown, code: string): boolean {
   return isRecord(value) && value.code === code;
 }

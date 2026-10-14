@@ -1,9 +1,10 @@
 /** Reproducible development-host tools; no product install, suites or auto-index. */
 import { createHash } from 'node:crypto';
-import { appendFile, chmod, copyFile, mkdir, mkdtemp, readFile, rename, rm } from 'node:fs/promises';
+import { chmod, copyFile, mkdir, mkdtemp, readFile, rename, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseCloudToolLock, parseCloudToolReceipt, repairCloudToolProfile } from './cloud-tooling-contracts.ts';
 
 const args = process.argv.slice(2);
 if (args.length > 1 || args.some((arg) => !['--with-semantic-model', '--prepare-index'].includes(arg))) {
@@ -42,10 +43,7 @@ if (args.includes('--prepare-index')) {
   );
   process.exit(await child.exited);
 }
-const lock = (await Bun.file(join(root, '.codex/cloud-tooling.lock.json')).json()) as {
-  tools: { name: string; version: string; url: string; sha256: string; archive: 'tar' | 'zip'; binaries: string[] }[];
-  semanticModel: { repository: string; revision: string; files: Record<string, string> };
-};
+const lock = parseCloudToolLock(await Bun.file(join(root, '.codex/cloud-tooling.lock.json')).text());
 if (process.platform !== 'linux' || process.arch !== 'x64') {
   throw new Error('This reviewed environment template supports Linux x86_64 glibc only.');
 }
@@ -76,13 +74,13 @@ const profile = await readFile(profilePath).catch((error: NodeJS.ErrnoException)
   if (error.code !== 'ENOENT') throw error;
   return Buffer.alloc(0);
 });
-if (!profile.includes(profileMarker)) {
-  const environmentPath = shellQuote(join(cache, 'environment.sh'));
-  await appendFile(
-    profilePath,
-    `\n${profileMarker}\n` + `if [ -f ${environmentPath} ]; then . ${environmentPath}; fi\n`,
-  );
-}
+const environmentPath = shellQuote(join(cache, 'environment.sh'));
+const repairedProfile = repairCloudToolProfile(
+  profile,
+  profileMarker,
+  `if [ -f ${environmentPath} ]; then . ${environmentPath}; fi`,
+);
+if (!profile.equals(repairedProfile)) await Bun.write(profilePath, repairedProfile);
 const run = (argv: string[], cwd = root) => {
   const result = Bun.spawnSync(argv, { cwd, stdout: 'pipe', stderr: 'pipe' });
   if (result.exitCode !== 0) throw new Error(`${argv[0]} exited ${result.exitCode}: ${result.stderr.toString()}`);
@@ -129,12 +127,11 @@ const download = (url: string, output: string) =>
   ]);
 for (const tool of lock.tools) {
   const receiptPath = join(cache, `${tool.name}.json`);
-  const receipt = (await Bun.file(receiptPath)
-    .json()
-    .catch(() => null)) as {
-    archiveSha256: string;
-    binaries: Record<string, string>;
-  } | null;
+  const receipt = parseCloudToolReceipt(
+    await Bun.file(receiptPath)
+      .text()
+      .catch(() => ''),
+  );
   let current = receipt?.archiveSha256 === tool.sha256;
   for (const binary of tool.binaries) {
     current = current && receipt?.binaries[binary] === (await digest(join(bin, binary)).catch(() => ''));

@@ -11,12 +11,16 @@
   },
   "counts": {
     "retained": 1126,
-    "new": 290,
+    "new": 294,
     "removed": 1,
-    "current_roles": 1416,
-    "source_files": 84
+    "current_roles": 1420,
+    "source_files": 85
   },
   "source_bindings": [
+    {
+      "file": "src/contracts/forward-controller-values.ts",
+      "sha256": "d82dc8f60e1599370f660658bb7579e1a1a97f59eb73c9793032312f0113bac4"
+    },
     {
       "file": "src/config/initialization-record.ts",
       "sha256": "5a887373fab19781a262037cb23b4cbc8c53bf5ff306a4284055e8613e4b8b43"
@@ -27654,6 +27658,30 @@
     }
   ],
   "new_functions": [
+    {
+      "identity": "src/contracts/forward-controller-values.ts#fn:sha256#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New package-owned raw byte/text hashing callable extracted from repository-only forward controllers. No published b549951 package callable exists at this owner. Blind current-source review confirms one exported declaration, unchanged byte semantics and migrated callers. Prospective prior10/10 policy only; no inherited merged ceilings, coverage, CRAP or mutant admission."
+    },
+    {
+      "identity": "src/contracts/forward-controller-values.ts#fn:prettyJSON#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New package-owned controller JSON byte encoder preserving pretty formatting, trailing newline and exact thrown error propagation. Direct Source body/caller review identifies one declaration, not ordinal/hash correspondence to a baseline callable. Prospective prior10/10 only; partial remains non-executable and non-exhaustive."
+    },
+    {
+      "identity": "src/contracts/forward-controller-values.ts#fn:isRecord#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New package-owned broad non-null/non-array object predicate for existing repository controllers. It intentionally differs from the stricter existing plain-record contract. Blind Source review approves exact predicate and caller narrowing; prior10/10 ceiling is not derived from current complexity. No baseline allowance transfers to the extracted callable."
+    },
+    {
+      "identity": "src/contracts/forward-controller-values.ts#fn:errorMessage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New package-owned Error.message/String renderer for equivalent controller callers only. Richer invocation-lock rendering remains separate. Direct body/caller review approves one declaration with prospective prior10/10, never a baseline ordinal/body-hash pairing or numeric qualification."
+    },
     {
       "identity": "src/contracts/canonical-json-core.ts#fn:isCanonicalJsonNumber#0",
       "max_complexity": 10,
