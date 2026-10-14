@@ -42,7 +42,11 @@ CI-formed SDK outputs with their now-selected formation receipt before the
 complete selection. Maintained aliases now prepare the distinct CI SDK test-input
 artifact through the repository adapter; exact Source/output freshness remains
 with the existing capture owner. Test compilation is not a product release or
-version-baseline confirmation. Actual CI availability still needs observation.
+version-baseline confirmation. Current CI formation, connector transport and SDK
+capture join passed; see WORK for exact commits/artifacts. The subsequent serial
+campaign exceeded the five-minute allowance and remains UNKNOWN. Optimize its
+completed slow fixture flows and qualify resource custody before a new full run;
+do not replay that incomplete operation or claim a numeric report.
 The former Stryker successor/custody defect is corrected;
 qualify the complete campaign separately. Rebind only actual reviewed shard
 resources to the final captured inputs; a retained stale artifact grants no

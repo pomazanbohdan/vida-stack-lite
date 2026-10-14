@@ -244,9 +244,10 @@ test('a spent pre-publication budget preserves the prior dist and retains its fa
   const root = publicationRoot();
   const priorBytes = Buffer.from('prior SDK output\n');
   const { files, sdkReceiptBytes } = publicationFiles();
+  let budgetChecks = 0;
   const warnings = capturedWarnings(() => {
     assert.throws(
-      () => publishSdkTestInputs(root, files, downloadReceipt(sdkReceiptBytes), () => 0),
+      () => publishSdkTestInputs(root, files, downloadReceipt(sdkReceiptBytes), () => (++budgetChecks === 1 ? 10_000 : 0)),
       /budget is spent/u,
     );
   });
@@ -256,6 +257,13 @@ test('a spent pre-publication budget preserves the prior dist and retains its fa
     (name) => name.startsWith('sdk-test-inputs-') && !name.startsWith('sdk-test-inputs-prior-dist-'),
   );
   assert.equal(stages.length, 1);
+  for (const [pathname, bytes] of payloads) {
+    assert.deepEqual(readFileSync(path.join(root, 'coverage/sdk-test-inputs', stages[0]!, 'dist', pathname)), bytes);
+    assert.equal(
+      classifyMaintainedSourcePath(`packages/agent/coverage/sdk-test-inputs/${stages[0]!}/dist/${pathname}`),
+      'generated',
+    );
+  }
   assert.match(warnings[0] ?? '', /Retained failed SDK test-input stage/u);
 });
 

@@ -558,7 +558,33 @@ The one exact prior backup was renamed into that boundary with original dev/ino;
 nothing was deleted. Independent blind review confirmed both affected paths and
 unchanged atomic/rollback guards. All12archive/publication regressions passed,
 0fail,858ms: `/workspace/attachments/sdk-generated-custody-tests-20261014.log`.
-Current post-custody CI and coverage remain pending.
+Custody correctiond2850f003fbe27121a537373d431cde8b97ca5df passed strict
+commit/push. SDK run38636491196/attempt1 completed SUCCESS;
+artifact11928142188,625157bytes, digest
+sha256:15bcf7290395d2833a75c62bc5d4b6799f05e5640f815bfc785e7742e181fa2f.
+Current coverage admitted its exact connector bytes and the single SDK freshness
+join. TS-only470files/0JS violations and typechecks469/0 plus Source101/0 passed.
+The serial test producer launched; the five-minute supervisor allowance expired.
+Outcome e3a02ae2-0ee2-48f4-8940-b675a28b4c79 is UNKNOWN: observed timeout/SIGKILL,
+direct producer3385 accounted, resourceSafeToAdvance:false, incomplete/no report.
+Retain its snapshot, supervisor and test-effect custody; no unchanged retry or
+resource waiver. Log:
+`/workspace/attachments/coverage-after-sdk-custody-d2850f0-20261014.log`.
+Observed partial log counts152PASS/1FAIL/1SKIP are not a suite result or coverage.
+The actual initialization FAIL was stale prose expectations after the canonical
+AGENTS template cleanup. Its correction checks the exact rendered current template,
+retaining command-resolution, raw hashes and idempotent-repeat assertions.
+Fresh isolated focused case passed1/0,2.96s:
+`/workspace/attachments/initialization-template-current-regression-20261014.log`.
+The failed-stage custody regression now writes the complete generated files before
+the pre-promotion budget denial and checks their bytes/classification plus unchanged
+prior dist. All12focused archive/publication cases passed0fail,784ms:
+`/workspace/attachments/sdk-generated-custody-strengthened-tests-20261014.log`.
+Independent timing review identified completed65.229s final-assurance,
+25.349s fresh session-init and21.308s retained-release denial cases as campaign
+contributors, not proof of a single timeout cause. Optimize these real fixture
+flows with per-case isolation and unchanged assertions before another qualified
+full run. No next test start is proved by the final captured stdout.
 Signed artifact URLs are not evidence locators.
 
 Cloud restart was observed as starting/offline at spec2339. Access recovered;
@@ -579,8 +605,8 @@ official1.4.2 evidence is non-executable provenance. Current1.4.3 consumer valid
 Actual final-owner preflight reports full crap-budgets.v1.json absent and SDK
 receipt inputs differing from current Source:
 `/workspace/attachments/quality-current-prerequisites-20261014.json`.
-That SDK freshness gap was subsequently corrected and verified by the current
-CI/connector join above; generated-custody correction is still pending a full run.
+That SDK freshness and generated-custody gap was subsequently corrected and verified
+by the current CI/connector/capture and typecheck join above.
 Finish exhaustive frozen mapping/plan and qualify current shard resources before
 one complete capture. No local formation, Source fallback or unchanged full retry.
 Workflow GET works; repository-variable GET returned HTTP403, not proof that all

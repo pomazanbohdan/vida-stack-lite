@@ -236,8 +236,8 @@ v8CoverageTest(
     expect(agents).toContain('vida-agent instructions --path development-lifecycle');
     expect(agents).toContain('vida-agent instructions --path NAME');
     expect(agents).not.toContain('tools/agents/instructions/');
-    expect(agents.replace(/\s+/g, ' ')).toContain('after the sidecar and before planning or mutation');
-    expect(agents.replace(/\s+/g, ' ')).toContain('steps without losing required quality');
+    const agentTemplate = await readFile(path.join(bundle, 'templates/AGENTS.template.md'), 'utf8');
+    expect(agents).toBe(agentTemplate.replaceAll('{{BUNDLE}}', config.runtime.bundle));
     expect(agents).not.toContain('{{BUNDLE}}');
     const receipt = await readInitializationReceipt(path.join(root, '.agent/runtime-initialization.v1.json'));
     expect(receipt.schema).toBe('RuntimeInitialization/v1');
