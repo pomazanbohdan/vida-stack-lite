@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `daf1141f099bacd0e1dfc3b197558b2afa03c427` at origin/main.
+- Published input: `df7e2221b8f2b75e6e8e9fa6c7a08bb8f0c72801` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -83,7 +83,9 @@ complete current bindings. Receipt:
 Its inventory held7697roles;5895current and4387baseline dispositions were absent.
 Partial stays NON_EXECUTABLE/NOT_EXHAUSTIVE; no final coverage/CRAP/mutation result.
 
-## Current paired-lock and synthesis correction
+## Published paired-lock and synthesis correction
+
+Packetdf7e222 passed the ordinary strict hook and its remote commit was confirmed.
 
 Native-delivery planning and the shared release repair lock owner masked primary
 and earlier close errors in nested finally. Actual causal RED:2FAIL, no aggregate
@@ -121,6 +123,27 @@ remain absent. Four new lock callbacks eachCC1≤10 remain explicitly unjoined p
 complete owner-family review; shared public lock owner remainsCC1, originalcap1.
 Receipt: `/workspace/attachments/lineage-repair-wave3-20261014.json`.
 Partial remains NON_EXECUTABLE/NOT_EXHAUSTIVE. No final numeric PASS is asserted.
+
+## Current Host repair serialization correction
+
+The producer-fenced read-only dispatch commit serialized the same rebuilt plan
+twice. It now serializes the caller plan first, the immutable rebuilt plan second,
+and reuses the latter bytes for equality and storage. The original native row
+guard, malformed-row diagnostic, transaction fence and CAS order remain unchanged.
+No measured elapsed speedup is claimed. The existing idempotence case now denies
+conflicting strings and native BLOB values in both stored columns, preserving
+the conflicting row and unchanged Host/Journal before restoring the exact receipt.
+
+Independent correctness review approves. Format/lint PASS,431file types0:
+`/workspace/attachments/host-repair-types-preflight-20261014.log`.
+Both complete affected files15PASS/0FAIL/129expect calls/33.45s:
+`/workspace/attachments/host-repair-completion-20261014.log`.
+Single Host Source refresh confirms1127roles, zero ID changes,7701global roles:
+`/workspace/attachments/host-repair-current-capture-20261014.json`.
+The commit callback remainsCC5 against original3. Planner remains43 against40;
+simple optional-access changes do not reduce the inventory's counted decisions.
+These blockers require a reviewed design, not disguised decisions or raised caps.
+The1945-role partial and all full numeric prerequisites remain incomplete.
 
 ## Complete numeric prerequisites
 

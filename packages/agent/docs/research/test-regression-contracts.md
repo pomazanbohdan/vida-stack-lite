@@ -159,6 +159,14 @@ and a sole cleanup error by identity. Planning, custody and apply share that
 owner; planning releases its pair before custody reacquires it. These controls
 qualify error aggregation and ordering, not native SQLite I/O failure behavior.
 
+Read-only dispatch repair replay checks the exact persisted payload and digest.
+The existing Host-backed idempotence case rejects conflicting strings and BLOBs
+in either column with the same generation-conflict diagnostic, preserves Host,
+Journal and the conflicting row, then restores the exact original receipt.
+Reuse the rebuilt plan's serialization only within this validated transaction;
+preserve caller-plan serialization before rebuilt-plan serialization and keep
+every producer fence, current-version check and deterministic rebuild fresh.
+
 ### Failed prewriter recovery
 
 Use the cases in `tests/delivered-work-continuation.test.ts` for owner recovery

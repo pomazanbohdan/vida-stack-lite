@@ -8468,8 +8468,10 @@ export class HostStateStore {
         timestamp: plan.timestamp,
         snapshot: { host, journal },
       });
+      const planPayload = canonicalJson(plan);
+      const payload = canonicalJson(rebuilt);
       requireState(
-        canonicalJson(plan) === canonicalJson(rebuilt),
+        planPayload === payload,
         'read-only dispatch repair plan is stale or differs from deterministic current state',
       );
       this.#database.exec(
@@ -8481,7 +8483,6 @@ export class HostStateStore {
           'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=?',
         )
         .get(...key);
-      const payload = canonicalJson(rebuilt);
       if (prior !== null) {
         requireState(
           isPlainRecord(prior) && prior.digest === rebuilt.digest && prior.payload === payload,

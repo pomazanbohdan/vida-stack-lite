@@ -822,6 +822,13 @@ planning reuses that owner before its separate custody phase. No new cleanup
 framework, approval or storage authority is introduced. Focused real-close fault
 controls qualify cause aggregation, not SQLite I/O failure or native delivery.
 
+The same review uses [Bun SQLite datatype documentation](https://bun.com/docs/runtime/sqlite#datatypes):
+Uint8Array bindings and BLOB results are not canonical JSON records. A persisted
+row's TEXT declaration does not justify bypassing actual-value checks or replacing
+its stable corruption diagnostic with a serialization error. The current read-only
+repair keeps exact row comparisons and reuses only the immutable rebuilt plan's
+already-needed serialization within its existing producer-fenced transaction.
+
 [Bun Archive](https://bun.sh/docs/runtime/archive) provides archive creation and regular-file enumeration. Extraction can include links and overwrite files; use exact owned immutable payload checks and reject unsafe, conflicting or tampered materialization. Cedar loads its WASM from a package-relative path and LibSQL uses computed platform addon resolution, so a successful thin compiled probe cannot qualify their full resource closure.
 
 [Bun install](https://bun.sh/docs/pm/cli/install) documents warm-cache preference and platform backends. Preserve frozen dependencies and physical immutable controller custody; a hardlinked cache is not that custody. [npm config](https://docs.npmjs.com/cli/v11/using-npm/config/) defines prefer-offline as bypassing cache staleness requests while fetching missing data. This is a Source/library tooling fact, not an authorized public agent installation. [Node filesystem APIs](https://nodejs.org/docs/latest-v24.x/api/fs.html) offer standard file copies and renames; apply them only where ownership, exact bytes and failure recovery remain intact. No native timing or size improvement is established by these references.

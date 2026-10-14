@@ -487,6 +487,63 @@ test('read-only dispatch repair binds old unknown issue and idempotently prepare
     expect(
       typeof repairCount === 'object' && repairCount !== null && 'count' in repairCount ? repairCount.count : undefined,
     ).toBe(1);
+    const storedRow: unknown = value.database
+      .query('SELECT payload,digest FROM agent_host_readonly_dispatch_repair')
+      .get();
+    if (
+      typeof storedRow !== 'object' ||
+      storedRow === null ||
+      !('payload' in storedRow) ||
+      typeof storedRow.payload !== 'string' ||
+      !('digest' in storedRow) ||
+      typeof storedRow.digest !== 'string'
+    )
+      throw new Error('persisted read-only dispatch repair row is malformed');
+    const originalPayload = storedRow.payload;
+    const originalDigest = storedRow.digest;
+    for (const corrupted of [
+      { column: 'payload', value: 'conflicting payload' },
+      { column: 'digest', value: 'conflicting digest' },
+      { column: 'payload', value: new Uint8Array([0]) },
+      { column: 'digest', value: new Uint8Array([0]) },
+    ] as const) {
+      const changed = value.database
+        .query(
+          `UPDATE agent_host_readonly_dispatch_repair SET ${corrupted.column}=? WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=1`,
+        )
+        .run(corrupted.value, value.input.workspaceId, value.input.workId, value.input.attempt, value.input.actionId);
+      expect(changed.changes).toBe(1);
+      const conflictingRows = readRepairRows(value.database);
+      expect(() => applyReadOnlyDispatchRepair({ database: value.database, plan, current: value.input })).toThrow(
+        'existing read-only dispatch repair generation differs',
+      );
+      expect({
+        host: value.database
+          .query(
+            'SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state ORDER BY workspace_id,kind,id',
+          )
+          .all(),
+        journal: value.database
+          .query('SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
+          .all(),
+      }).toEqual(before);
+      expect(readRepairRows(value.database)).toEqual(conflictingRows);
+      expect(
+        value.database
+          .query(
+            'UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=1',
+          )
+          .run(
+            originalPayload,
+            originalDigest,
+            value.input.workspaceId,
+            value.input.workId,
+            value.input.attempt,
+            value.input.actionId,
+          ).changes,
+      ).toBe(1);
+      expect(readRepairRows(value.database)).toEqual(firstRepairRows);
+    }
     passed = true;
   } finally {
     closeFixture(value, !passed);
