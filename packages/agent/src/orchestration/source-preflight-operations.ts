@@ -44,7 +44,7 @@ import {
 import type { LocalSourceWriteAuthorization } from './local-source-authorization.js';
 import type { LifecycleArtifactReference } from '../lifecycle/lifecycle-state.js';
 import type { MastraLedgerItem, MastraSessionLedgerSnapshot } from './persistent-session-handoff.js';
-import { parseSessionBridgeObservation, type SessionBridgeObservation } from './mastra-session-bridge.js';
+import { parseSessionBridgeObservation, type SessionBridgeObservation } from './mastra-session-bridge-contract.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 
 type PolicyDerivedInput =

@@ -12,10 +12,10 @@ import type { CoordinationLedger } from '../contracts/envelopes.js';
 import {
   parseSessionBridgeRequest,
   buildSessionBridgeRequest,
-  configuredContextForStage,
-  type SessionBridgeSnapshot,
   type SessionBridgeRequest,
-} from './mastra-session-bridge.js';
+} from './mastra-session-bridge-contract.js';
+import { configuredContextForStage } from './configured-context.js';
+import { type SessionBridgeSnapshot } from './mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './scoped-source-snapshot.js';
 import { compareScopedSourceSnapshots, type ScopedSourceChange } from './scoped-source-snapshot.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';

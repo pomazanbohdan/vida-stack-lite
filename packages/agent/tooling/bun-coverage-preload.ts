@@ -75,7 +75,8 @@ if (!manifestPath || !reportDirectory || !snapshotDirectory)
 const manifestValue: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
 if (!isRecord(manifestValue)) throw new Error('Bun coverage manifest must be an object.');
 const manifest = manifestValue as RunManifest;
-const preverifiedVersionedBootstrap = new Map<string, SourceDigest>();
+const preverifiedBootstrap = new Map<string, SourceDigest>();
+let shardAssignedTests: readonly string[] = manifest.tests;
 let coverageOutputPathsSha256ForReceipt:
   | ((paths: import('./coverage-shard-evidence.ts').CoverageShardInvocation['output_paths']) => string)
   | undefined;
@@ -132,15 +133,20 @@ if (manifest.schema === 'VidaBunCoverageRun/v3') {
     invocation.output_paths.temp_directory !== process.env.VIDA_BUN_COVERAGE_TEMP_DIRECTORY
   )
     throw new Error('Versioned coverage preload outputs differ from the sealed shard invocation.');
-  if (!Array.isArray(assignedValue) || assignedValue.some((entry) => typeof entry !== 'string'))
-    throw new Error('Versioned coverage preload assigned tests are malformed.');
+  if (!Array.isArray(assignedValue)) throw new Error('Versioned coverage preload assigned tests are malformed.');
+  const assignedTests: string[] = [];
+  for (const entry of assignedValue) {
+    if (typeof entry !== 'string') throw new Error('Versioned coverage preload assigned tests are malformed.');
+    assignedTests.push(entry);
+  }
+  shardAssignedTests = Object.freeze(assignedTests);
   if (!Array.isArray(manifest.tool_inputs)) throw new Error('Versioned coverage tooling custody is missing.');
   for (const file of ['tooling/coverage-shard-evidence.ts', 'tooling/coverage-counters.ts']) {
     const expected = manifest.tool_inputs.find((entry) => entry.path === file)?.sha256;
     if (!expected) throw new Error('Versioned coverage bootstrap input is absent: ' + file);
     const bytes = readFileSync(path.join(path.resolve(snapshotDirectory), ...file.split('/')));
     if (digest(bytes) !== expected) throw new Error('Versioned coverage bootstrap bytes differ: ' + file);
-    preverifiedVersionedBootstrap.set(file, { path: file, sha256: expected });
+    preverifiedBootstrap.set(file, { path: file, sha256: expected });
   }
   const shardEvidence = await import('./coverage-shard-evidence.ts');
   coverageOutputPathsSha256ForReceipt = shardEvidence.coverageOutputPathsSha256;
@@ -161,7 +167,7 @@ if (manifest.schema === 'VidaBunCoverageRun/v3') {
     },
     plan: manifest.coverage_plan,
     shard_id: shardId,
-    assigned_tests: assignedValue,
+    assigned_tests: shardAssignedTests,
     shard_selection_sha256: process.env.VIDA_BUN_COVERAGE_SHARD_SELECTION_SHA256 ?? '',
   });
 }
@@ -224,6 +230,10 @@ const preloadDigest = toolDigests.get('tooling/bun-coverage-preload.ts');
 if (!preloadDigest || path.resolve(preloadPath) !== path.join(snapshotRoot, 'tooling', 'bun-coverage-preload.ts'))
   throw new Error('Coverage preload was not loaded from its private snapshot path.');
 snapshotBytes('tooling/bun-coverage-preload.ts', preloadDigest);
+preverifiedBootstrap.set('tooling/bun-coverage-preload.ts', {
+  path: 'tooling/bun-coverage-preload.ts',
+  sha256: preloadDigest,
+});
 const bootstrapInputs = [
   'tooling/bun-coverage-preload.ts',
   'tooling/bun-coverage-evidence.ts',
@@ -240,7 +250,7 @@ const bootstrapInputs = [
 ].map((file) => {
   const expectedHash = toolDigests.get(file);
   if (!expectedHash) throw new Error('Coverage bootstrap dependency is absent from tooling custody: ' + file);
-  if (!preverifiedVersionedBootstrap.has(file)) snapshotBytes(file, expectedHash);
+  if (!preverifiedBootstrap.has(file)) snapshotBytes(file, expectedHash);
   return { path: file, sha256: expectedHash };
 });
 // Fixture children are subjects; observe direct APIs without granting counters
@@ -282,12 +292,6 @@ const expectedInputDigests = new Map(
   [...manifest.sources, ...manifest.test_inputs, ...manifest.tool_inputs].map((entry) => [entry.path, entry.sha256]),
 );
 const selectedTestPaths = new Set(manifest.tests);
-const shardAssignedTests =
-  manifest.schema === 'VidaBunCoverageRun/v3'
-    ? (JSON.parse(process.env.VIDA_BUN_COVERAGE_ASSIGNED_TESTS ?? 'null') as unknown[]).filter(
-        (entry): entry is string => typeof entry === 'string',
-      )
-    : manifest.tests;
 const shardAssignedTestSet = new Set(shardAssignedTests);
 const expectedModules = capturedModuleInputs({
   sources: manifest.sources,

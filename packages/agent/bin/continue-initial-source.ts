@@ -20,7 +20,7 @@ import type { ScopedSourceSnapshot } from '../src/orchestration/scoped-source-sn
 // Keep that root anchor when rebasing this research artifact.
 import { createHash } from 'node:crypto';
 import { lstatSync, realpathSync } from 'node:fs';
-import { parseSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge.ts';
+import { parseSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import {
   canonicalJsonDigest,
   freezeJsonValue,

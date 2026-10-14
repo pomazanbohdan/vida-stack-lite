@@ -8,6 +8,15 @@ description: Use when writing, migrating, reviewing, running or optimizing TypeS
 Use the smallest contract-backed check that resolves the current uncertainty.
 Keep behavior, timing and numerical qualification as separate evidence.
 
+For cold import controls, install Bun's resolver denial in a fresh native child,
+exercise the actual pure consumer and decode its bounded diagnostic. Parent
+module spies prove calls, not child evaluation. HostState requires a real
+file-backed DB even in an isolated cold control; assert its exact close.
+For preload assignment controls, mutate the captured bootstrap's environment
+with its bytes/hash closure consistent, then assert denial before the sibling's
+top-level marker. Reuse the originally validated frozen assignment across later
+guards and receipt construction, not a second environment parse.
+
 For work-plus-close faults, preserve both original causes through the existing
 shared database cleanup owner. Inject before native close, observe the exact
 source/gate and retry that owner after restoring spies. Await the owned async

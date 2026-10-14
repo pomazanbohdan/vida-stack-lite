@@ -24,7 +24,7 @@ import {
   parseSessionBridgeObservation,
   type SessionBridgeObservation,
   type SessionBridgeRequest,
-} from './mastra-session-bridge.js';
+} from './mastra-session-bridge-contract.js';
 
 const sha256 = (bytes: Buffer): string => createHash('sha256').update(bytes).digest('hex');
 const substantiveKeys = [

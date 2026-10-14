@@ -18,7 +18,7 @@ import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { validateResearchJournalItem, type MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { parseMastraSessionLedgerState } from './mastra-session-ledger-codec.js';
 import { correctiveExecutionSchema } from './final-assurance.js';
-import { parseSessionBridgeRequest, parseSessionBridgeObservation } from './mastra-session-bridge.js';
+import { parseSessionBridgeRequest, parseSessionBridgeObservation } from './mastra-session-bridge-contract.js';
 import { readSessionEngineSnapshot } from './session-engine-snapshot.js';
 import type { WorkflowLifecycleRisk } from './workflow-plan.js';
 import { withHostStateExclusiveTransaction } from '../host-state.js';

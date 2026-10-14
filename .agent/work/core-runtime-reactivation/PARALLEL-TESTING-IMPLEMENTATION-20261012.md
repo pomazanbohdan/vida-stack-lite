@@ -12,6 +12,17 @@
 
 ## Current dispatch — 2026-10-14
 
+Published978d206 qualifies combined work/close custody and closed-WAL image
+deserialization. The dependency-ready v9 packet removes eager pure-contract
+engine edges and duplicate preload assignment/self-byte work. Its actual
+negative control proves bootstrap environment mutation admitted a sibling
+before its marker; the fixed guard must deny that effect using the originally
+validated frozen assignment. Two existing positive assignments and all prior
+preload custody controls remain selected. Root owns final checks/publication;
+blind readers review Source and next repair mechanics without running checks.
+SDK formation and fresh current coverage follow the checked concrete correction;
+no numeric PASS or shard-resource advancement is inferred from partial results.
+
 Current published426b5e7 ran the correctly bound189-file initial wave in
 runbc5cd2f0-ae3c-4093-abdf-f6512ef48427. Both actual direct children timed out
 with durable UNKNOWN/SIGKILL observations; no numeric report is admitted.

@@ -4917,7 +4917,7 @@ async function captureRetiredSource(args: string[]) {
   const { loadRuntimeConfig, runtimeConfigDigest } = await import('../src/config/runtime-config.ts');
   const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
   const { sessionHandoffDatabasePath } = await import('../src/config/project-paths.ts');
-  const { parseSessionBridgeObservation } = await import('../src/orchestration/mastra-session-bridge.ts');
+  const { parseSessionBridgeObservation } = await import('../src/orchestration/mastra-session-bridge-contract.ts');
   const { deriveWorkspaceId } = await import('../src/workspace-identity.ts');
   if (
     args.length !== 6 ||
@@ -5237,21 +5237,21 @@ async function retireInterruptedSourceOwner(args: string[]) {
 }
 
 /**
- * @param {typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest} build
- * @param {Omit<Parameters<typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest>[0], 'correctiveExecution'>} args
- * @param {Parameters<typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest>[0]['correctiveExecution']} correctiveExecution
- * @returns {ReturnType<typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest>}
+ * @param {typeof import('../src/orchestration/mastra-session-bridge-contract.ts').buildSessionBridgeRequest} build
+ * @param {Omit<Parameters<typeof import('../src/orchestration/mastra-session-bridge-contract.ts').buildSessionBridgeRequest>[0], 'correctiveExecution'>} args
+ * @param {Parameters<typeof import('../src/orchestration/mastra-session-bridge-contract.ts').buildSessionBridgeRequest>[0]['correctiveExecution']} correctiveExecution
+ * @returns {ReturnType<typeof import('../src/orchestration/mastra-session-bridge-contract.ts').buildSessionBridgeRequest>}
  */
 function buildReadonlyReleaseRequest(
-  build: typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest,
+  build: typeof import('../src/orchestration/mastra-session-bridge-contract.ts').buildSessionBridgeRequest,
   args: Omit<
-    Parameters<typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest>[0],
+    Parameters<typeof import('../src/orchestration/mastra-session-bridge-contract.ts').buildSessionBridgeRequest>[0],
     'correctiveExecution'
   >,
   correctiveExecution: Parameters<
-    typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest
+    typeof import('../src/orchestration/mastra-session-bridge-contract.ts').buildSessionBridgeRequest
   >[0]['correctiveExecution'],
-): ReturnType<typeof import('../src/orchestration/mastra-session-bridge.ts').buildSessionBridgeRequest> {
+): ReturnType<typeof import('../src/orchestration/mastra-session-bridge-contract.ts').buildSessionBridgeRequest> {
   return build(correctiveExecution === undefined ? args : { ...args, correctiveExecution });
 }
 
@@ -5272,13 +5272,13 @@ async function releaseCompletedReadonly(args: string[]) {
   const { readAdmittedSessionIntake } = await import('../src/orchestration/admitted-session-execution.ts');
   const {
     buildSessionBridgeRequest,
-    configuredContextForStage,
     parseSessionBridgeObservation,
     parseSessionBridgeRequest,
     parseSessionBridgeRunState,
-    sessionBridgeDatabasePath,
     sessionBridgeRunId,
-  } = await import('../src/orchestration/mastra-session-bridge.ts');
+  } = await import('../src/orchestration/mastra-session-bridge-contract.ts');
+  const { configuredContextForStage } = await import('../src/orchestration/configured-context.ts');
+  const { sessionBridgeDatabasePath } = await import('../src/config/project-paths.ts');
   const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
   const config = loadRuntimeConfig(root),
     access = requireSafeRepositoryAccess(root);
@@ -6786,11 +6786,19 @@ export async function run(args: string[] = process.argv.slice(2)) {
         );
     }
   }
-  if (!values.issue_wave && !values.report && !values.correct && !values.prepare_assurance && !values.reconcile)
+  if (
+    !values.inspect &&
+    !values.issue_wave &&
+    !values.report &&
+    !values.correct &&
+    !values.prepare_assurance &&
+    !values.reconcile
+  )
     await advanceCutoff(selector, values);
   {
-    const { MastraSessionBridge, configuredContextForStage, parseSessionBridgeObservation, sessionBridgeRunId } =
-      await import('../src/orchestration/mastra-session-bridge.ts');
+    const { parseSessionBridgeObservation, sessionBridgeRunId } =
+      await import('../src/orchestration/mastra-session-bridge-contract.ts');
+    const { configuredContextForStage } = await import('../src/orchestration/configured-context.ts');
     const { openConfiguredMastraSessionLedger } = await import('../src/orchestration/persistent-session-handoff.ts');
     const { sessionActionsForWave } = await import('../src/orchestration/session-handoff.ts');
     const { requireSafeRepositoryAccess } = await import('../src/config/safe-repository-access.ts');
@@ -7027,6 +7035,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
             requireReportedCompleteObservation(observation);
             return observation;
           });
+          const { MastraSessionBridge } = await import('../src/orchestration/mastra-session-bridge.ts');
           const bridge = await MastraSessionBridge.open({
             repositoryRoot: values.project_root,
             config,
@@ -8505,7 +8514,10 @@ export async function run(args: string[] = process.argv.slice(2)) {
           : {}),
       };
       /** @returns {Promise<RunSessionBridge>} */
-      const openBridge = async () => (bridge ??= await MastraSessionBridge.open(bridgeArgs));
+      const openBridge = async () =>
+        (bridge ??= await (
+          await import('../src/orchestration/mastra-session-bridge.ts')
+        ).MastraSessionBridge.open(bridgeArgs));
       const {
         readSessionEngineSnapshot,
         readConfiguredContinuationSessionEngineSnapshot,

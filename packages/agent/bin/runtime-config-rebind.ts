@@ -27,14 +27,20 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { queryWorkspaceRowUnknown, queryWorkspaceRowsUnknown } from '../src/config/workspace-database.ts';
-import { sessionHandoffDatabasePath, projectConfigurationRebindPath } from '../src/config/project-paths.ts';
-import { PROJECT_CONFIGURATION_PATHS, PROJECT_INITIALIZATION_PATH } from '../src/config/project-paths.ts';
+import {
+  sessionHandoffDatabasePath,
+  sessionBridgeDatabasePath,
+  projectConfigurationRebindPath,
+  PROJECT_CONFIGURATION_PATHS,
+  PROJECT_INITIALIZATION_PATH,
+  bindLoadedConfigurationSource,
+  runtimeConfigurationSourceFor,
+} from '../src/config/project-paths.ts';
 import {
   parseProjectConfiguration,
   splitRuntimeConfig,
   projectConfigurationInputDigest,
 } from '../src/config/project-configuration.ts';
-import { bindLoadedConfigurationSource, runtimeConfigurationSourceFor } from '../src/config/project-paths.ts';
 import {
   readProjectInitializationReceipt,
   validateProjectInitializationReceipt,
@@ -42,20 +48,17 @@ import {
 import { inspectHistoricalOwnerWork } from '../src/orchestration/suspend-local-work.ts';
 import { readAdmittedSessionIntake } from '../src/orchestration/admitted-session-execution.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
-import {
-  parseSessionBridgeRequest,
-  sessionBridgeRunId,
-  sessionBridgeDatabasePath,
-} from '../src/orchestration/mastra-session-bridge.ts';
 import workSchema from '../schemas/work-state.v1.schema.json' with { type: 'json' };
 import { runtimeExecutableInventory } from '../tooling/maintained-source-inventory.ts';
 import { compareScopedSourceSnapshots, snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import {
+  parseSessionBridgeRequest,
+  sessionBridgeRunId,
   parseSessionBridgeObservation,
   parseSessionBridgeRunState,
   buildSessionBridgeRequest,
-  configuredContextForStage,
-} from '../src/orchestration/mastra-session-bridge.ts';
+} from '../src/orchestration/mastra-session-bridge-contract.ts';
+import { configuredContextForStage } from '../src/orchestration/configured-context.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import { admittedResearchResultsForSynthesis } from '../src/orchestration/observed-synthesis-result.ts';
 import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-session-ledger-codec.js';

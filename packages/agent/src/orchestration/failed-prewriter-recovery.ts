@@ -2,7 +2,7 @@ import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { CoordinationLedger } from '../contracts/envelopes.js';
 import type { WorkState } from '../host-state.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
-import { parseSessionBridgeObservation } from './mastra-session-bridge.js';
+import { parseSessionBridgeObservation } from './mastra-session-bridge-contract.js';
 import type { ConfiguredFrontierReceipt } from './delivered-work-continuation-repair.js';
 import { validateConfiguredFrontierReceiptStructure } from './delivered-work-continuation-repair.js';
 

@@ -22,7 +22,10 @@ import {
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './config/safe-repository-access.js';
 import { HostStateStore, type StateVersion, type WorkIdentity } from './host-state.js';
 import { qualifiedResearchSourceCatalog, resolveQualifiedResearchSource } from './research-source-catalog.js';
-import { parseSessionBridgeObservation, type SessionBridgeObservation } from './orchestration/mastra-session-bridge.js';
+import {
+  parseSessionBridgeObservation,
+  type SessionBridgeObservation,
+} from './orchestration/mastra-session-bridge-contract.js';
 import {
   assertCanonicalJsonValue,
   canonicalJson,

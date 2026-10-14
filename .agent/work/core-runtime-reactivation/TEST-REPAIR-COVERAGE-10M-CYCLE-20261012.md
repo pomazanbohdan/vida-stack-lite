@@ -30,6 +30,13 @@ The five-minute (300000ms) global operation deadline issued on2026-10-13 superse
 
 ## Global Constraints
 
+Current execution packet (2026-10-14): checked978d206 is published. Root fixes
+the causally reproduced preload bootstrap-assignment mutation and pure contract
+engine evaluation. Joined v8 tests retain original v3 positive/negative cases;
+v9 blind reviews have no overlapping writers. Static checks precede native
+cases, then strict hook/push, SDK formation separately, one fresh reviewed
+300000ms full operation. Latestbc5cd2f0 remains UNKNOWN; no unchanged retry.
+
 - Global test/coverage operation deadline300000ms; default5000ms per individual test, existing justified case exceptions remain distinct.
 - Exact100% functions/lines/statements/branches for every maintained source and aggregate; every mapped function must have valid execution evidence.
 - Frozen complexity/CRAP correspondence and ceilings; never derive new ceilings from candidate failures.

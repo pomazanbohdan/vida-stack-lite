@@ -12,7 +12,7 @@ import { loadRuntimeConfig, runtimePackageAccess, runtimePackageCodePaths } from
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 
 import { sessionHandoffDatabasePath } from '../src/config/project-paths.ts';
-import { parseSessionBridgeObservation } from '../src/orchestration/mastra-session-bridge.ts';
+import { parseSessionBridgeObservation } from '../src/orchestration/mastra-session-bridge-contract.ts';
 import {
   compareScopedSourceSnapshots,
   snapshotDeclaredSources,

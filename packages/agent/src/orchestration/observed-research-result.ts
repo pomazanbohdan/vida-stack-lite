@@ -17,7 +17,7 @@ import {
   parseSessionBridgeObservation,
   type SessionBridgeObservation,
   type SessionBridgeRequest,
-} from './mastra-session-bridge.js';
+} from './mastra-session-bridge-contract.js';
 
 const substantiveKeys = [
   'schema',

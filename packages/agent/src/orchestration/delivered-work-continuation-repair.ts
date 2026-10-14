@@ -14,7 +14,8 @@ import {
   type CoordinationLedger,
 } from '../contracts/envelopes.js';
 import type { DeliveredWorkContinuationReceipt, WorkState, StateVersion } from '../host-state.js';
-import { parseSessionBridgeRequest, type SessionBridgeSnapshot } from './mastra-session-bridge.js';
+import { parseSessionBridgeRequest } from './mastra-session-bridge-contract.js';
+import { type SessionBridgeSnapshot } from './mastra-session-bridge.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import {
   projectConfiguredFrontierContinuationAction,

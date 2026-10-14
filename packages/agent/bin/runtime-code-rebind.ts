@@ -40,9 +40,9 @@ import {
 } from '../src/orchestration/scoped-source-snapshot.ts';
 import {
   buildSessionBridgeRequest,
-  configuredContextForStage,
   parseSessionBridgeRequest,
-} from '../src/orchestration/mastra-session-bridge.ts';
+} from '../src/orchestration/mastra-session-bridge-contract.ts';
+import { configuredContextForStage } from '../src/orchestration/configured-context.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import {

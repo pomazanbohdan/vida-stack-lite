@@ -10919,6 +10919,74 @@ remain separate; no installed Runtime or unblock notice is claimed.
 
 ### Current two-shard cost correction — 2026-10-14
 
+Latest checked custody/WAL packet is published978d206; strict staged hook and
+ordinary push passed. Current follow-up fixes two evidenced execution costs and
+one preload selection defect. The fresh cold Host control denied seven eager
+bridge resolver edges before DB creation (cold-host-contract-causal-red-diagnostic.log).
+The captured preload's bootstrap changed assigned-test environment; its second
+parse admitted tests/two.test.ts and its top-level marker before failing in Bun
+test registration (preload-assignment-causal-red.log). That is not an
+assertion-confirmed Killed or coverage result.
+
+Root routes pure parsers/builders/run identity to the existing contract owner,
+configured context/path helpers to their existing owners, and keeps engine
+Snapshot imports type-only. The same run-ID implementation moves once with
+bridge alias re-export; reviewed frozen identity relocation remains required.
+Both actual run bridge opens retain their awaited guard order with a local late
+class import. Source and SDK closure remains declared. Preload freezes the
+original typed assignment before bootstrap import and reuses it for sibling
+guards/receipt; its already-checked self digest is reused only inside that
+immediate bootstrap interval. Later module/snapshot freshness checks remain.
+
+Blind v8 writers joined before checks; v9 reviews are read-only and no worker
+runs suites/compilers or refreshes the shared index. Full current check reports
+450capturedTS/449program0diagnostics and100Source0; typed lint passes.
+One fixture's optional array element matcher was narrowed explicitly, without
+suppression. Root is running the joined native affected cases. Latest full
+numeric attempt remainsbc5cd2f0 UNKNOWN; no new numeric result is claimed.
+
+Joined native pure/preload batch is14PASS/1FAIL/178assertions15.61s: the remaining
+failure is the cold fixture's in-memory DB, which the real Host contract denies.
+Corrected file-backed control is1PASS/3assertions4.09s, no denied resolver edge
+and exact DB close. The assignment mutation and both original positive v3
+assignments pass; all other preload lifecycle controls pass. No product guard
+was relaxed for the fixture. Native readonly caller batch is3PASS/27assertions
+107.91s with actual unchanged justified per-case exceptions. Its intended
+delivered-work filter selects zero cases and gives no proof for that path.
+
+Independent v9 review finds one reachable P0: ordinary --inspect advances the
+cutoff witness before inspection, even for an absent Work and before Host
+recordAdmissionAttempt. The specification permits cutoff only on a first
+admitted attempt. A disjoint existing-file writer prepares actual selected
+runtime/empty-witness regression; Root keeps the correction limited to inspect.
+The default/continuation admission path remains a separate positive control.
+No helper/branch is added to lazy openBridge: original nullish assignment owns
+the late import expression and preserves its original short circuit/complexity.
+
+Held-main review corrects its preliminary proposal: the real probe's first SQL
+is PRAGMA locking_mode=EXCLUSIVE, not BEGIN EXCLUSIVE. It acquires on the next
+read and checkpoints outside a transaction. Current overlap guard rejects
+before merge_preparing, so a stranded live operation is not reproduced. Future
+repair/activation still requires exact held-source/same-operation semantics;
+no speculative current P0 or guard lift is admitted. Controller-cost review
+finds no safely removable integrity/authorization check in the measured setup.
+
+The corrected distinct inspection parser reaches the actual witness regression:
+inspect-cutoff-causal-red-witness.log1FAIL/8assertions5.31s at changed cutoff
+bytes after successful session_absent inspection. Root excludes only inspect
+from the original advanceCutoff condition. Final native joined control is
+inspect-cutoff-and-delivered-native-green.log2PASS/136assertions86.20s:
+inspection preserves exact selector/witness and zero Host admissions; the
+existing real admission and selector/cutoff corruption controls still pass.
+The delivered-work inspect/issue/report/retry/conflict case also passes2.20s
+without opening the old engine. Eight ordinary cases skipped by the existing
+mutation-part test selector are not counted as proof. This is behavior under
+the fixture selector, not a mutation campaign or numeric report. Final current
+TS/Source and typed lint checks pass; independent pure/preload/guard reviews
+find no blocker. Root will publish this checked packet before fresh formation
+or full measurement. Pending SDK version-owner review must preserve monotonic
+selection and cannot fabricate a confirmed build/publication baseline.
+
 Published f24aa93 to origin/main. Run9364aa69-a223-4a4d-8ffb-2f659eea36a6
 prepared and launched from the same repository origin, admitting the reviewed
 189-file initial wave:94private/95shared. Actual direct PIDs462014/462015 both

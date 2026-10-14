@@ -9,7 +9,7 @@ import {
   type HostStateStore,
   type WorkflowAttemptApprovalVerifier,
 } from '../host-state.js';
-import { sessionBridgeRunId } from './mastra-session-bridge.js';
+import { sessionBridgeRunId } from './mastra-session-bridge-contract.js';
 import {
   produceSourceWritePreflightApproval,
   type SourceWritePreflightContextResolver,

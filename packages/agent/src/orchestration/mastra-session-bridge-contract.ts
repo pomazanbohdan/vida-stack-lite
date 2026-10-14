@@ -6,6 +6,10 @@ import type { ConfiguredContext } from './configured-context.js';
 import type { CorrectiveExecution } from './corrective-execution-contract.js';
 import { correctiveExecutionSchema } from './corrective-execution-contract.js';
 
+export function sessionBridgeRunId(workspaceId: string, context: SessionHandoffContext, workflowId: string): string {
+  return 'vida-' + canonicalJsonDigest({ workspaceId, context, workflowId });
+}
+
 export const observationSchema = z
   .object({
     schema: z.literal('VidaSessionObservation/v1'),

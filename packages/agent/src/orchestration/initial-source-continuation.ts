@@ -15,11 +15,11 @@ import type { StateVersion, WorkArtifactReference, WorkIdentity, WorkState } fro
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import {
   buildSessionBridgeRequest,
-  configuredContextForStage,
   parseSessionBridgeRequest,
   type SessionBridgeRequest,
-  type SessionBridgeSnapshot,
-} from './mastra-session-bridge.js';
+} from './mastra-session-bridge-contract.js';
+import { configuredContextForStage } from './configured-context.js';
+import { type SessionBridgeSnapshot } from './mastra-session-bridge.js';
 import {
   compareScopedSourceSnapshots,
   type ScopedSourceChange,

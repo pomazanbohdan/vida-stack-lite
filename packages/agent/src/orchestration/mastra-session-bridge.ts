@@ -42,6 +42,7 @@ import {
 } from './failed-prewriter-transition.js';
 import type { ScopedSourceSnapshot } from './scoped-source-snapshot.js';
 import {
+  sessionBridgeRunId,
   observationSchema,
   requestSchema,
   runStateSchema,
@@ -52,6 +53,7 @@ import {
 } from './mastra-session-bridge-contract.js';
 import type { SessionBridgeObservation, SessionBridgeRequest } from './mastra-session-bridge-contract.js';
 export {
+  sessionBridgeRunId,
   parseSessionBridgeObservation,
   parseSessionBridgeRequest,
   parseSessionBridgeRunState,
@@ -61,10 +63,6 @@ export type { SessionBridgeObservation, SessionBridgeRequest } from './mastra-se
 
 const suspendSchema = z.object({ requests: z.array(requestSchema).min(1) });
 const resumeSchema = z.object({ observations: z.array(observationSchema).min(1) });
-
-export function sessionBridgeRunId(workspaceId: string, context: SessionHandoffContext, workflowId: string): string {
-  return 'vida-' + canonicalJsonDigest({ workspaceId, context, workflowId });
-}
 
 export interface SessionBridgeSnapshot {
   readonly run_id: string;

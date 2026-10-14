@@ -27,7 +27,7 @@ import {
   snapshotRuntimePackageSources,
 } from './scoped-source-snapshot.js';
 import { type SessionHandoffContext } from './session-handoff.js';
-import { sessionBridgeRunId } from './mastra-session-bridge.js';
+import { sessionBridgeRunId } from './mastra-session-bridge-contract.js';
 import type { MastraSessionLedgerState } from './persistent-session-handoff.js';
 import { readLocalSourceWriteAuthorization } from './local-source-authorization.js';
 import { resolveCurrentTaskSourceFileRoot } from './task-source-binding.js';

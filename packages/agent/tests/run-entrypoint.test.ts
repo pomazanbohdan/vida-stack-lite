@@ -2167,12 +2167,12 @@ if (mutationMode || v8CoverageMode) {
     ];
     return { args, initialization, initializationPath, fixtureBundle, config };
   };
-  const invokeMutation = (
+  const invokeMutationRecord = (
     args: readonly string[],
     expectedStatus = 0,
     entrypoint = launcher,
     options: PublicRunChildOptions = {},
-  ): TestRunPayload => {
+  ): Record<string, unknown> => {
     const result = invoke(args, {}, entrypoint, options);
     expect(Number.isInteger(result.status)).toBe(true);
     expect(result.signal).toBeNull();
@@ -2184,7 +2184,7 @@ if (mutationMode || v8CoverageMode) {
     }
     const output = expectedStatus === 0 ? result.stdout : result.stderr;
     if (typeof output !== 'string') throw Error('mutation run output is not UTF-8 text');
-    const payload = parseTestRunPayload(parseJsonUnknown(output.trim()));
+    const payload = requireRecord(parseJsonUnknown(output.trim()), 'mutation run result');
     if (expectedStatus !== 0) {
       expect(payload).toMatchObject({ schema: 'VidaAgentRunResult/v1', status: 'blocked' });
       if (typeof payload.message !== 'string') throw Error('blocked CLI message is missing');
@@ -2192,18 +2192,27 @@ if (mutationMode || v8CoverageMode) {
     }
     return payload;
   };
-
   const ownedMutationFixture = (root: string, caseTimeout: number, entrypoint = launcher) => {
     const budget = executionBudget(caseTimeout, 250);
     let unknown = false;
+    const invokeOwnedRecord = (
+      args: readonly string[],
+      status: number,
+      selectedEntrypoint: string,
+    ): Record<string, unknown> => {
+      if (unknown) throw new Error(`Refusing to reuse retained run fixture: ${root}`);
+      return invokeMutationRecord(args, status, selectedEntrypoint, {
+        budget,
+        childTimeout: caseTimeout,
+        onUnknown: () => (unknown = true),
+      });
+    };
     return {
       invoke(args: readonly string[], status = 0, selectedEntrypoint = entrypoint): TestRunPayload {
-        if (unknown) throw new Error(`Refusing to reuse retained run fixture: ${root}`);
-        return invokeMutation(args, status, selectedEntrypoint, {
-          budget,
-          childTimeout: caseTimeout,
-          onUnknown: () => (unknown = true),
-        });
+        return parseTestRunPayload(invokeOwnedRecord(args, status, selectedEntrypoint));
+      },
+      invokeInspection(args: readonly string[], selectedEntrypoint = entrypoint): Record<string, unknown> {
+        return invokeOwnedRecord(args, 0, selectedEntrypoint);
       },
       hasUnknown: () => unknown,
     };
@@ -3114,6 +3123,42 @@ if (mutationMode || v8CoverageMode) {
               first_admitted_work_attempt: null,
             }),
           );
+          if (selectorPhase === 'released') {
+            const databasePath = path.join(root, config.control.work_root, 'session-handoff.v1.sqlite');
+            mkdirSync(path.dirname(databasePath), { recursive: true });
+            const database = new Database(databasePath, { strict: true });
+            new HostStateStore(
+              database,
+              deriveWorkspaceId(config.repository.repository_id, root),
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              root,
+            );
+            database.close();
+
+            const inspectWorkId = `inspect-absent-${randomUUID()}`;
+            const inspectArgs = admitted.args.map((value, index) =>
+              admitted.args[index - 1] === '--work-id' ? inspectWorkId : value,
+            );
+            const selectorPath = path.join(root, '.agent', 'active-runtime-selector.v1.json');
+            const cutoffPath = path.join(generationRoot, 'cutoff-witness.json');
+            const selectorBytes = readFileSync(selectorPath);
+            const cutoffBytes = readFileSync(cutoffPath);
+            const inspected = fixture.invokeInspection([...inspectArgs, '--inspect', 'true'], selectedLauncher);
+            expect(inspected).toMatchObject({ schema: 'VidaLocalSessionInspection/v1', status: 'inspected' });
+            expect(inspected.diagnosis).toMatchObject({ reason: 'session_absent' });
+            expect(readFileSync(selectorPath).equals(selectorBytes)).toBe(true);
+            expect(readFileSync(cutoffPath).equals(cutoffBytes)).toBe(true);
+            expect(
+              inspectHostWorkspaceDatabase(
+                root,
+                path.relative(root, databasePath).replaceAll('\\', '/'),
+                deriveWorkspaceId(config.repository.repository_id, root),
+              ).admission_attempts,
+            ).toEqual([]);
+          }
           expect(fixture.invoke(admitted.admissionArgs, 0, selectedLauncher).runtime_selector_observed).toBe(true);
           if (selectorPhase === 'released') {
             for (const [name, value, changed] of records) {

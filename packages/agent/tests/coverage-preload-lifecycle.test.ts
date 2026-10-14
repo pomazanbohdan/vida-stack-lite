@@ -412,6 +412,215 @@ test.each([1, 2] as const)(
   20_000,
 );
 
+test('captured preload denies a sibling after bootstrap changes the assigned-test environment', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-preload-v3-sibling-guard-'));
+  let passed = false;
+  try {
+    const runId = randomUUID();
+    const snapshotRelative = `coverage/bun-unified/runs/${runId}/snapshot`;
+    const snapshot = path.join(root, snapshotRelative);
+    const testFiles = ['tests/one.test.ts', 'tests/two.test.ts'];
+    const siblingMarker = path.join(root, 'sibling-loaded.marker');
+    const inputs = new Map(capturedTools);
+    inputs.set('src/fixture.ts', Buffer.from('export function hit() { return 1; }\n'));
+    inputs.set(
+      testFiles[0]!,
+      Buffer.from(
+        "import { test, expect } from 'bun:test';\n" +
+          "test('assigned test requests an unassigned sibling', async () => {\n" +
+          "  await import('./two.test.ts');\n" +
+          '  expect(true).toBe(true);\n' +
+          '});\n',
+      ),
+    );
+    inputs.set(
+      testFiles[1]!,
+      Buffer.from(
+        "import { test, expect } from 'bun:test';\n" +
+          "import { writeFileSync } from 'node:fs';\n" +
+          `writeFileSync(${JSON.stringify(siblingMarker)}, 'loaded');\n` +
+          "test('unassigned sibling effect', () => expect(true).toBe(true));\n",
+      ),
+    );
+    const bootstrap = inputs.get('tooling/coverage-shard-evidence.ts');
+    if (!bootstrap) throw new Error('Captured v3 bootstrap input is absent.');
+    inputs.set(
+      'tooling/coverage-shard-evidence.ts',
+      Buffer.concat([
+        Buffer.from(`process.env.VIDA_BUN_COVERAGE_ASSIGNED_TESTS = ${JSON.stringify(JSON.stringify(testFiles))};\n`),
+        bootstrap,
+      ]),
+    );
+    for (const [file, bytes] of inputs) {
+      for (const directory of [root, snapshot]) {
+        const target = path.join(directory, file);
+        mkdirSync(path.dirname(target), { recursive: true });
+        writeFileSync(target, bytes);
+      }
+    }
+    writeFileSync(path.join(root, 'bunfig.toml'), '[test]\n');
+    symlinkSync(path.join(packageRoot, 'node_modules'), path.join(root, 'node_modules'), 'dir');
+    const digestRows = (files: readonly string[]) =>
+      files.map((file) => {
+        const bytes = inputs.get(file);
+        if (!bytes) throw new Error('Missing sibling-guard preload input: ' + file);
+        return { path: file, sha256: sha256(bytes) };
+      });
+    const sources = digestRows(['src/fixture.ts']);
+    const testInputs = digestRows(testFiles);
+    const toolInputs = digestRows(coverageToolInputs);
+    const runtimeHash = sha256(readFileSync(process.execPath));
+    const selection = { mode: 'full-current-test-set' as const, tests: testFiles };
+    const reviewScope = 'c'.repeat(64);
+    const reviews = testInputs.map((entry) => ({
+      test_file: entry.path,
+      test_sha256: entry.sha256,
+      review_scope_sha256: reviewScope,
+      shared_resources: [],
+      exclusive_run: false,
+      reviewer_ref: 'synthetic-sibling-guard-control',
+    }));
+    const assignmentPlan = planCoverageShards(testInputs, reviews, 2, reviewScope);
+    const assignments = assignmentPlan.waves[0]!.assignments;
+    expect(assignments).toHaveLength(2);
+    const assignedTest = testFiles[0];
+    const siblingTest = testFiles[1];
+    if (!assignedTest || !siblingTest) throw new Error('Sibling-guard fixture requires both tests.');
+    const selectedAssignment = assignments.find(({ tests }) => tests.includes(assignedTest));
+    if (!selectedAssignment) throw new Error('Global v3 plan omitted the assigned test.');
+    expect(selectedAssignment.tests).toEqual([assignedTest]);
+    expect(assignments.some(({ tests }) => tests.includes(siblingTest))).toBe(true);
+    const outputRoot = path.join(root, 'coverage', 'bun-unified', 'runs', runId);
+    const makeInvocation = (assignment: (typeof assignments)[number]) => {
+      const outputPaths = {
+        coverage_directory: path.join(outputRoot, 'shards', assignment.shard_id, 'coverage'),
+        junit_file: path.join(outputRoot, 'shards', assignment.shard_id, 'suite.junit.xml'),
+        log_file: path.join(outputRoot, 'shards', assignment.shard_id, 'child.log'),
+        receipt_directory: path.join(outputRoot, 'processes', assignment.shard_id),
+        temp_directory: path.join(outputRoot, 'shards', assignment.shard_id, 'tmp'),
+      };
+      const argv = [
+        'test',
+        '--timeout',
+        '5000',
+        '--parallel=1',
+        '--no-isolate',
+        '--config=' + path.join(snapshot, 'bunfig.toml'),
+        '--preload',
+        path.join(snapshot, 'tooling/bun-coverage-preload.ts'),
+        ...assignment.tests.map((file) => './' + file),
+      ];
+      const environment: NodeJS.ProcessEnv = {
+        ...process.env,
+        BUN_OPTIONS: '',
+        VIDA_BUN_COVERAGE_ROOT: root,
+        VIDA_BUN_COVERAGE_MANIFEST: path.join(root, 'manifest.json'),
+        VIDA_BUN_COVERAGE_REPORT_DIRECTORY: outputPaths.receipt_directory,
+        VIDA_BUN_COVERAGE_SNAPSHOT_DIRECTORY: snapshot,
+        VIDA_BUN_COVERAGE_RUN_ID: runId,
+        VIDA_BUN_COVERAGE_SOURCE_FINGERPRINT: sha256(JSON.stringify(sources)),
+        VIDA_BUN_COVERAGE_TEST_FINGERPRINT: sha256(JSON.stringify(testInputs)),
+        VIDA_BUN_COVERAGE_TOOL_FINGERPRINT: sha256(JSON.stringify(toolInputs)),
+        VIDA_BUN_COVERAGE_TEST_SELECTION_MODE: selection.mode,
+        VIDA_BUN_COVERAGE_ACTIVE_ARGV: JSON.stringify(argv),
+        VIDA_BUN_COVERAGE_SHARD_ID: assignment.shard_id,
+        VIDA_BUN_COVERAGE_ASSIGNED_TESTS: JSON.stringify(assignment.tests),
+        VIDA_BUN_COVERAGE_SHARD_SELECTION_SHA256: assignment.selection_sha256,
+        VIDA_BUN_COVERAGE_OUTPUT_COVERAGE_DIRECTORY: outputPaths.coverage_directory,
+        VIDA_BUN_COVERAGE_JUNIT_FILE: outputPaths.junit_file,
+        VIDA_BUN_COVERAGE_LOG_FILE: outputPaths.log_file,
+        VIDA_BUN_COVERAGE_TEMP_DIRECTORY: outputPaths.temp_directory,
+        BUN_TEST_WORKER_ID: '1',
+        JEST_WORKER_ID: '1',
+        AGENT_RUNTIME_NATIVE_COVERAGE_MAIN: '1',
+      };
+      delete environment.BUN_OPTIONS;
+      return {
+        shard_id: assignment.shard_id,
+        argv,
+        cwd: root,
+        environment_sha256: coverageEnvironmentSha256(environment),
+        output_paths: outputPaths,
+        environment,
+      };
+    };
+    const invocations = assignments.map(makeInvocation);
+    const selectedInvocation = invocations.find(({ shard_id }) => shard_id === selectedAssignment.shard_id);
+    if (!selectedInvocation) throw new Error('Global v3 plan omitted the selected invocation.');
+    const instrumented = instrumentSource(path.join(root, 'src/fixture.ts'), 'export function hit() { return 1; }\n');
+    const artifactBytes = Buffer.from(instrumented.code);
+    const artifactPath = '__coverage_instrumented__/src/fixture.ts';
+    mkdirSync(path.dirname(path.join(snapshot, artifactPath)), { recursive: true });
+    writeFileSync(path.join(snapshot, artifactPath), artifactBytes);
+    const assignmentPlanSha256 = coverageAssignmentPlanSha256(
+      assignmentPlan,
+      invocations.map(({ shard_id, argv, cwd, environment_sha256, output_paths }) => ({
+        shard_id,
+        argv,
+        cwd,
+        environment_sha256,
+        output_paths,
+      })),
+    );
+    const manifestPath = path.join(root, 'manifest.json');
+    const manifest = {
+      schema: 'VidaBunCoverageRun/v3',
+      run_id: runId,
+      snapshot_directory: snapshotRelative,
+      source_fingerprint: sha256(JSON.stringify(sources)),
+      test_fingerprint: sha256(JSON.stringify(testInputs)),
+      tool_fingerprint: sha256(JSON.stringify(toolInputs)),
+      runtime_executable_sha256: runtimeHash,
+      sources,
+      tests: selection.tests,
+      test_inputs: testInputs,
+      tool_inputs: toolInputs,
+      module_inputs: capturedModuleInputs({ sources, test_inputs: testInputs, tool_inputs: toolInputs }),
+      test_selection: selection,
+      active_argv: [],
+      execution_scope: { qualification: 'isolated-v3-sibling-guard-lifecycle-only' },
+      instrumented_sources: [
+        {
+          path: 'src/fixture.ts',
+          source_sha256: sources[0]!.sha256,
+          artifact_path: artifactPath,
+          artifact_sha256: sha256(artifactBytes),
+        },
+      ],
+      source_maps: { [path.join(root, 'src/fixture.ts')]: instrumented.fileCoverage },
+      coverage_plan: assignmentPlan,
+      assignment_plan_sha256: assignmentPlanSha256,
+      shard_invocations: invocations.map(({ shard_id, argv, cwd, environment_sha256, output_paths }) => ({
+        shard_id,
+        argv,
+        cwd,
+        environment_sha256,
+        output_paths,
+      })),
+    };
+    writeFileSync(manifestPath, JSON.stringify(manifest));
+    const result = spawnSync(process.execPath, selectedInvocation.argv, {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 5_000,
+      maxBuffer: 1024 * 1024,
+      env: selectedInvocation.environment,
+    });
+    expect(Number.isSafeInteger(result.pid) && result.pid > 0).toBe(true);
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status, result.stderr).toBe(1);
+    expect(result.stderr).toContain(
+      'Coverage shard requested a sibling test outside its assignment: tests/two.test.ts',
+    );
+    expect(existsSync(siblingMarker)).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error('Preserved failed v3 sibling-guard lifecycle fixture at ' + root);
+  }
+});
+
 test('synthetic two-shard pilot joins supervised Bun terminals to real v2 receipts and one sparse merge', async () => {
   const budget = executionBudget(20_000, 1_000);
   const root = mkdtempSync(path.join(os.tmpdir(), 'untrusted-two-shard-coverage-pilot-'));

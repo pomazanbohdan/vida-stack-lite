@@ -134,9 +134,9 @@ import {
   parseSessionBridgeRequest,
   parseSessionBridgeObservation,
   type SessionBridgeObservation,
-  type SessionBridgeSnapshot,
   type SessionBridgeRequest,
-} from './orchestration/mastra-session-bridge.js';
+} from './orchestration/mastra-session-bridge-contract.js';
+import { type SessionBridgeSnapshot } from './orchestration/mastra-session-bridge.js';
 import type { ScopedSourceSnapshot } from './orchestration/scoped-source-snapshot.js';
 import {
   initialSourceFrontierCodeRebindRecord,

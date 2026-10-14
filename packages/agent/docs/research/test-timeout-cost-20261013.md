@@ -193,3 +193,24 @@ Existing bundle-owned repair must configure EXCLUSIVE before the first identity
 SQL and retain its exact source owners through preparation and publication;
 the current close-then-image contract cannot establish that. The active guard,
 layouts and loaders remain unchanged pending that repair qualification.
+
+The exact probe uses `PRAGMA locking_mode=EXCLUSIVE` as first SQL, not
+`BEGIN EXCLUSIVE`. Lock acquisition occurs on the following read; checkpoint
+is outside an active transaction. [SQLite locking mode](https://www.sqlite.org/pragma.html#pragma_locking_mode)
+documents held connection locks and the distinct WAL behavior. Do not generalize
+the native WAL probe to all modes or lift the legacy-overlap guard. Public
+preparation currently rejects that guard before merge_preparing journal write;
+future activation still needs explicit same-operation recovery, not an invented
+currently reachable stranded-operation defect.
+
+Cold consumer controls use a fresh native child with a resolver-denial plugin.
+[Bun plugins](https://bun.com/docs/runtime/plugins#onresolve) documents runtime
+resolution callbacks on executed imports. The actual Host cold control denied
+seven bridge edges before correction; after pure-owner routing no engine edge
+resolves and a real file-backed Host DB closes successfully. An in-process class
+spy establishes no open call only. This import correction preserves declared
+Source/SDK closure and does not establish native artifact qualification or a
+matched speedup. Current contained prepare+verify is53493.925ms, of which install
+is4221ms and snapshot366ms. Its separate authorization fixtures, lifecycle calls
+and pre/post integrity checks protect different boundaries; no justified removal
+was found. Keep this diagnostic separate from case timings and full coverage.

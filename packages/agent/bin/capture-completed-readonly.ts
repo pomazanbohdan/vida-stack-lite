@@ -17,13 +17,13 @@ import { parseMastraSessionLedgerState } from '../src/orchestration/mastra-sessi
 import { createSessionActionProjector } from '../src/orchestration/session-handoff.js';
 import {
   buildSessionBridgeRequest,
-  configuredContextForStage,
   parseSessionBridgeObservation,
   parseSessionBridgeRequest,
   parseSessionBridgeRunState,
-  sessionBridgeDatabasePath,
   sessionBridgeRunId,
-} from '../src/orchestration/mastra-session-bridge.js';
+} from '../src/orchestration/mastra-session-bridge-contract.js';
+import { configuredContextForStage } from '../src/orchestration/configured-context.js';
+import { sessionBridgeDatabasePath } from '../src/config/project-paths.ts';
 import { suspendCompletedReadOnlyWork } from '../src/orchestration/suspend-local-work.js';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.js';
 import { parseScopedSourceSnapshot } from '../src/orchestration/scoped-source-snapshot.js';
