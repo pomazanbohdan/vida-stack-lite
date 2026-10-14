@@ -136,3 +136,10 @@ custody. Formation and packing run no test suites.
 
 Latest user instruction: finish this correction cycle, launch tests, then pause
 the integrator. No next analysis/fix cycle or automatic retry after that launch.
+
+Follow-up7f4c265passedstrictstagedhook and was actually pushed. A newly formed
+archive's own extracted verifier nowpasses (v18-new-archive-own-verifier.log).
+No Source fallback stands in for its verifier. N01–N05 scopedcorrections are
+qualified; K01 was alreadyclosed. Final globalmetrics/frozen/native remainOPEN.
+The integrator willlaunch one current five-minutecoverageoperation and pause
+without a further correctioncycle, as now explicitly requested.
