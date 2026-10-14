@@ -14,6 +14,7 @@ script, with the checked-out repository as cwd and package-selected Bun availabl
 ```sh
 export PATH="$HOME/.local/bin:$HOME/.bun/bin:$PATH"
 bun tooling/agent/cloud-tooling-setup.ts
+. "$HOME/.cache/vida-cloud-tooling/environment.sh"
 ```
 
 The reviewable script patch is `cloud-environment.patch.json`; apply its script
@@ -24,11 +25,12 @@ cannot save that configuration. The deployment editor must retain the setup
 script and PATH; an interactive shell edit alone does not persist a template.
 
 Setup needs Bun (currently selected by `packages/agent/package.json`), curl, tar,
-unzip and getconf. It inherits the environment's proxy and CA settings. Native
+unzip, getconf and taskset. It inherits the environment's proxy and CA settings. Native
 binaries are installed in `~/.local/bin`; verified receipts/staging in
 `~/.cache/vida-cloud-tooling`. Repeat runs check installed digests and skip tool
-and model downloads when current. Setup never builds VIDA, runs test suites,
-indexes Source, installs hooks or changes product/runtime databases.
+and model downloads when current. The enabled semantic setting automatically prepares
+the pinned model. Setup never builds VIDA, runs test suites,
+automatically indexes Source, installs interception hooks or changes product/runtime databases.
 
 The setup owns only its marked LeanCTX global config, identifies the real config
 path through the installed CLI and preserves any pre-existing unmanaged config.
@@ -52,25 +54,60 @@ LEAN_CTX_* overrides before accepting the effective configuration.
 | Human file/log context                        | `ctx_read`, `ctx_shell`; recover via `ctx_expand`              |
 | Function IDs, type/semantic and numeric proof | existing Babel/TypeScript/Bun gate owners                      |
 
-Vex is the sole primary navigation index. Do not concurrently refresh ast-index
-or its graph; its existing CLI/skill remain inactive fallback material. One lead
-initializes `vex index --no-semantic --no-pattern-index --jobs 2` and refreshes with
-`vex update --no-semantic` after writers join. No watcher/auto-update during frozen
-checks. `vex status --coverage --format json` reports unsupported/excluded files;
-JSON and other unsupported formats still use rg. Keep `packages/agent/bin` in
-scope. Top-K is a preview, not an exhaustive audit. An empty candidate reference
-set never establishes safe deletion; verify current Source and TS bindings.
+Vex is the sole primary navigation index. Semantic and auto-update are enabled,
+with async_update=false: a stale query waits for refresh rather than returning
+a knowingly old answer. Vex serializes index writes with its native advisory
+lock; no watcher or second cache coordinator is installed. ast-index is inactive
+fallback material. One lead builds the initial index separately from install:
 
-Optional `bun tooling/agent/cloud-tooling-setup.ts --with-semantic-model` prepares
-the pinned model cache; default setup avoids this download. The MiniLM downloader rejects the Cloud proxy CA. Setup prefetches the
-pinned model through curl, verifies every file, and seeds fastembed/hf-hub's cache
-without disabling TLS verification. This cache adapter uses the inspected fastembed/hf-hub layout, not an upstream
-CLI feature. Model loading progressed, but full semantic indexing was terminated
-with SIGKILL/exit 137; embeddings were not published. `.vex.toml` disables
-semantic by default. Structural symbols, BM25 and graphs are qualified; semantic
-search requires a separate memory-qualified pilot and is not claimed ready. Cache location follows VEX_CACHE_DIR/XDG
-(or HF_HOME, which fastembed overrides directly). Model files and index remain
-outside the project. The hf-hub refs/main pointer must have no trailing newline.
+```sh
+. "$HOME/.cache/vida-cloud-tooling/environment.sh"
+bun tooling/agent/cloud-tooling-setup.ts --prepare-index
+# Subsequent ordinary navigation; auto-update maintains freshness.
+taskset --cpu-list "$VIDA_VEX_CPU" vex search "retry recovery" --limit 10
+```
+
+Prefix Vex calls with taskset as above. fastembed uses available_parallelism for
+ONNX threads; CPU affinity controls this on Linux. --jobs only controls parsing,
+not embedding batch size (fixed by this Vex build). The first allowed CPU is
+selected from /proc/self/status by setup, not assumed to be CPU 0 on future hosts.
+Do not add redundant per-agent update/rebuild calls. After a large settled edit
+batch, the lead can warm one `vex update --semantic` before parallel navigation.
+Stop Vex calls during frozen runtime/numeric measurement. For a deliberately
+frozen pre-warmed navigation snapshot outside measurement, use --no-stale-check
+on commands that support it and explicitly report freshness as unverified.
+There is no --no-auto-update flag. Missing indexes still require lead bootstrap.
+
+This Cloud host has a 16-GiB cgroup limit and RAM-backed /tmp and /dev/shm. Retained
+fixtures occupied most of that budget when the unrestricted semantic build was
+SIGKILL/137. Setup now creates disk-backed scratch under
+~/.cache/vida-cloud-tooling/tmp and emits environment.sh with TMPDIR and the
+first allowed VIDA_VEX_CPU. Apply those values as host runtime variables when
+startup shell exports do not persist. Existing retained evidence is not moved
+or deleted. Setup appends an idempotent source block to the first Bash login
+profile without rewriting its original bytes; current login shells consequently
+use the disk-backed TMPDIR. Hosts that do not load login profiles need the
+explicit startup source or runtime variables. CPU affinity is a tested operating-system control, not a guarantee
+of low embedding memory; full semantic readiness remains tied to actual success. --prepare-index checks
+for 6 GiB cgroup headroom before launching; this is an admission margin, not a
+guaranteed maximum. Run static checks first and serialize heavy qualification.
+With the current retained tmpfs evidence, the guarded cold build rejects before
+effects. A one-CPU attempt was also SIGKILL/137 after 9m23s when a compiler ran
+alongside it. Until a cold build succeeds, status reports embeddings=false;
+use rg/ast-grep and do not start auto-updating queries that would rebuild it.
+
+The MiniLM downloader rejects the Cloud proxy CA. Setup prefetches the pinned
+model through curl and verifies every file without disabling TLS. The cache
+adapter follows the inspected fastembed/hf-hub layout; it is not an upstream CLI
+feature. Cache location follows VEX_CACHE_DIR/XDG or HF_HOME. refs/main must have
+no trailing newline. Tool/model/index caches remain outside the repository.
+Optional --with-semantic-model still explicitly prepares the model if semantic
+is disabled in a reviewed future configuration.
+
+Use `vex status --coverage --format json` to inspect unsupported/excluded files;
+keep packages/agent/bin in scope and use rg for unsupported JSON/config text.
+Top-K and strict-reference candidates never establish exhaustive semantic proof
+or permission to delete. Preserve current Source, TS binding checks and all gates.
 
 ## LeanCTX integration and evidence
 
@@ -120,4 +157,20 @@ matched Source. Git-summary archive did not contain complete native stdout, so
 it is explicitly excluded from exact evidence. TS check passed with zero errors;
 ast-grep matching/nonmatching snapshots and diagnostic message were verified.
 Vex structural/BM25 index and actual TS strict-reference candidates worked;
-semantic build exit 137 is retained as failed qualification, not PASS.
+The earlier semantic exit 137 remains failed evidence. Enabling the settings is
+not a claim of completed semantic qualification; inspect the latest build and
+semantic-channel result before claiming readiness.
+
+Updated qualification (2026-10-14): a disk-backed isolated fixture passed model
+loading, a semantic index, an automatic refresh after a Source edit, and an
+actual semantic_cosine result. A changed-symbol check with --no-stale-check kept
+the previous snapshot; the next normal check refreshed it. `vex check` reports
+exists=false with exit 0, so inspect the JSON boolean. This small pilot does not
+qualify the full maintained Source index, which still reports embeddings=false.
+The cold headroom guard rejected this crowded host before starting Vex; repeat
+setup retained the same login profile bytes and verified installed binaries/model.
+
+Setup checks the package's Bun pin and copies that qualified executing Bun into
+~/.local/bin, so it remains available outside ephemeral repository scratch.
+This does not bootstrap a missing Bun in a fresh image; choose package-selected
+Bun in the host template before running the TS setup script.

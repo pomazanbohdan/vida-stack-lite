@@ -1,15 +1,47 @@
 /** Reproducible development-host tools; no product install, suites or auto-index. */
 import { createHash } from 'node:crypto';
-import { chmod, copyFile, mkdir, mkdtemp, readFile, rename, rm } from 'node:fs/promises';
+import { appendFile, chmod, copyFile, mkdir, mkdtemp, readFile, rename, rm } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const args = process.argv.slice(2);
-if (args.length > 1 || args.some((arg) => arg !== '--with-semantic-model')) {
-  throw new Error('Supported optional flag: --with-semantic-model');
+if (args.length > 1 || args.some((arg) => !['--with-semantic-model', '--prepare-index'].includes(arg))) {
+  throw new Error('Supported optional flag: --with-semantic-model or --prepare-index');
 }
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const bunPin = (await Bun.file(join(root, 'packages/agent/.bun-version')).text()).trim();
+if (process.versions.bun !== bunPin) throw new Error(`Run Cloud setup with package-selected Bun ${bunPin}.`);
+const allowedCpus = (await readFile('/proc/self/status', 'utf8')).match(/^Cpus_allowed_list:\s+([\d,-]+)$/m)?.[1];
+const firstCpu = allowedCpus?.split(/[,-]/)[0];
+if (!firstCpu) throw new Error('Could not determine the Cloud CPU affinity.');
+if (args.includes('--prepare-index')) {
+  // Explicit separate operation, after setup/static checks; never part of install.
+  const current = BigInt((await readFile('/sys/fs/cgroup/memory.current', 'utf8')).trim());
+  const rawLimit = (await readFile('/sys/fs/cgroup/memory.max', 'utf8')).trim();
+  const reserve = 6n * 1024n ** 3n;
+  if (rawLimit !== 'max' && BigInt(rawLimit) - current < reserve) {
+    throw new Error(
+      'Semantic index not started: require 6 GiB cgroup headroom. ' +
+        'Preserve retained tmpfs evidence; use a clean/more spacious host and disk-backed scratch.',
+    );
+  }
+  const child = Bun.spawn(
+    [
+      'taskset',
+      '--cpu-list',
+      firstCpu,
+      join(homedir(), '.local/bin/vex'),
+      'index',
+      '--semantic',
+      '--no-pattern-index',
+      '--jobs',
+      '1',
+    ],
+    { cwd: root, stdin: 'inherit', stdout: 'inherit', stderr: 'inherit' },
+  );
+  process.exit(await child.exited);
+}
 const lock = (await Bun.file(join(root, '.codex/cloud-tooling.lock.json')).json()) as {
   tools: { name: string; version: string; url: string; sha256: string; archive: 'tar' | 'zip'; binaries: string[] }[];
   semanticModel: { repository: string; revision: string; files: Record<string, string> };
@@ -21,6 +53,36 @@ const bin = join(homedir(), '.local/bin');
 const cache = join(homedir(), '.cache/vida-cloud-tooling');
 await mkdir(bin, { recursive: true });
 await mkdir(cache, { recursive: true });
+// This Cloud host mounts /tmp and /dev/shm in RAM. Keep future scratch on disk.
+const scratch = join(cache, 'tmp');
+await mkdir(scratch, { recursive: true });
+const shellQuote = (value: string) => "'" + value.replaceAll("'", "'\\''") + "'";
+await Bun.write(
+  join(cache, 'environment.sh'),
+  `# managed-by: vida-cloud-tooling; source in the host startup shell\n` +
+    `export TMPDIR=${shellQuote(scratch)}\nexport VIDA_VEX_CPU=${shellQuote(firstCpu)}\n`,
+);
+// Bash login shells otherwise keep using the RAM-backed /tmp after setup exits.
+const profiles = ['.bash_profile', '.bash_login', '.profile'].map((file) => join(homedir(), file));
+let profilePath = profiles[2]!;
+for (const candidate of profiles) {
+  if (await Bun.file(candidate).exists()) {
+    profilePath = candidate;
+    break;
+  }
+}
+const profileMarker = '# vida-cloud-tooling environment';
+const profile = await readFile(profilePath).catch((error: NodeJS.ErrnoException) => {
+  if (error.code !== 'ENOENT') throw error;
+  return Buffer.alloc(0);
+});
+if (!profile.includes(profileMarker)) {
+  const environmentPath = shellQuote(join(cache, 'environment.sh'));
+  await appendFile(
+    profilePath,
+    `\n${profileMarker}\n` + `if [ -f ${environmentPath} ]; then . ${environmentPath}; fi\n`,
+  );
+}
 const run = (argv: string[], cwd = root) => {
   const result = Bun.spawnSync(argv, { cwd, stdout: 'pipe', stderr: 'pipe' });
   if (result.exitCode !== 0) throw new Error(`${argv[0]} exited ${result.exitCode}: ${result.stderr.toString()}`);
@@ -36,6 +98,18 @@ const digest = async (path: string) =>
   createHash('sha256')
     .update(await readFile(path))
     .digest('hex');
+// Preserve the qualified executing Bun outside ephemeral repository scratch.
+const hostBun = join(bin, 'bun');
+if (process.execPath !== hostBun && (await digest(process.execPath)) !== (await digest(hostBun).catch(() => ''))) {
+  const temporary = `${hostBun}.vida-${process.pid}`;
+  try {
+    await copyFile(process.execPath, temporary);
+    await chmod(temporary, 0o755);
+    await rename(temporary, hostBun);
+  } finally {
+    await rm(temporary, { force: true });
+  }
+}
 const download = (url: string, output: string) =>
   run([
     'curl',
@@ -98,7 +172,8 @@ for (const tool of lock.tools) {
     await rm(stage, { recursive: true, force: true });
   }
 }
-if (args.includes('--with-semantic-model')) {
+const vexSettings = Bun.TOML.parse(await Bun.file(join(root, '.vex.toml')).text()) as { semantic?: boolean };
+if (vexSettings.semantic || args.includes('--with-semantic-model')) {
   // Vex's hf-hub downloader does not accept this host's proxy CA. Prefetch via
   // curl with inherited proxy/CA, verify all bytes, then use the qualified cache.
   const model = lock.semanticModel;

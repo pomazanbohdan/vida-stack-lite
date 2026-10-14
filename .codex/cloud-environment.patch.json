@@ -3,8 +3,19 @@
   "target": "existing Cloud Environment setup/startup script",
   "platform": "linux-x64-glibc>=2.35",
   "workingDirectory": "repository checkout root",
-  "prerequisites": ["package-selected Bun", "curl", "tar", "unzip", "getconf"],
-  "script": "export PATH=\"$HOME/.local/bin:$HOME/.bun/bin:$PATH\"\nbun tooling/agent/cloud-tooling-setup.ts\n",
+  "prerequisites": ["package-selected Bun", "curl", "tar", "unzip", "getconf", "taskset"],
+  "script": "export PATH=\"$HOME/.local/bin:$HOME/.bun/bin:$PATH\"\nbun tooling/agent/cloud-tooling-setup.ts\n. \"$HOME/.cache/vida-cloud-tooling/environment.sh\"\n",
   "projectMcpConfig": ".codex/config.toml",
-  "configurationSaveStatus": "requires supported host configuration editor; not saved by runtime-status API"
+  "configurationSaveStatus": "requires supported host configuration editor; not saved by runtime-status API",
+  "runtimeEnvironmentRecommendations": {
+    "TMPDIR": "disk-backed path emitted by environment.sh; apply as runtime variable if startup exports do not persist",
+    "VIDA_VEX_CPU": "first allowed CPU emitted by environment.sh; use taskset for Vex",
+    "PATH": "include ~/.local/bin and package-selected Bun"
+  },
+  "memoryPolicy": "Keep retained existing tmpfs evidence; future scratch on disk. Cold semantic index is lead-owned, separate from install, and must pass before semantic readiness is claimed.",
+  "optionalIndexPreparation": "bun tooling/agent/cloud-tooling-setup.ts --prepare-index (separate from install, after static checks; requires 6 GiB cgroup headroom)",
+  "resourceRecommendations": {
+    "memory": "A clean 16-GiB host may suffice with disk-backed scratch; retaining current ~12-GiB tmpfs data plus model/compiler requires additional headroom. Adjust in provider editor if available; no quota change is applied here.",
+    "concurrency": "One cold semantic build; do not overlap with compilers/coverage or other model jobs."
+  }
 }

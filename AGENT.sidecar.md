@@ -106,9 +106,23 @@ Vex references, graph edges and impact verdicts are candidates, never compiler
 proof or permission to delete. Empty/unsupported/stale/truncated results require
 current Source and an appropriate fallback. Preserve Babel identities and gates.
 
-One designated lead builds `vex index --no-semantic --no-pattern-index --jobs 2`
-initially and runs `vex update --no-semantic` once after writers join. Readers never
-refresh independently. No watcher or refresh during frozen numeric/runtime checks.
+Cloud setup enables semantic and synchronous auto-update (async_update=false).
+Source the generated host environment file; prefix Vex calls with
+`taskset --cpu-list "$VIDA_VEX_CPU"` to bound ONNX CPU threads on this Cloud host.
+One lead performs `bun tooling/agent/cloud-tooling-setup.ts --prepare-index`
+after static checks; it checks cgroup headroom before a separate cold build;
+ordinary queries then refresh stale inputs under Vex's native single-writer lock.
+Do not add watchers or redundant per-agent manual update/rebuild calls. Before a
+large edit batch completes, the lead may warm `vex update --semantic` once.
+During frozen numeric/runtime measurements stop Vex queries/refreshes entirely.
+For a deliberately frozen, pre-warmed navigation snapshot outside measurement,
+`--no-stale-check` suppresses refresh on supported commands; explicitly label
+that result as a frozen snapshot, not freshness proof. No `--no-auto-update` flag
+exists. Model readiness requires a completed semantic index and actual semantic
+results, not the configured boolean. If status has embeddings=false, use rg and
+ast-grep until guarded preparation succeeds; avoid queries that trigger a full
+semantic rebuild. Preserve old failed evidence and do not compete with a cold
+model build using compilers or parallel test processes.
 Check `vex status --coverage`; JSON/config or unsupported files stay on rg.
 Keep caches outside the repository and product workspace database. ast-index
 and its original skill are retained as an inactive fallback; do not maintain a

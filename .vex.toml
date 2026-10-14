@@ -1,8 +1,7 @@
-# One lead-owned refresh per settled edit batch; no watcher during frozen checks.
+# Synchronous freshness in development; no watcher or queries during frozen checks.
 format = "compact"
-# Full semantic build was SIGKILL (137) on this host; explicit pilot only.
-semantic = false
-auto_update = false
+semantic = true
+auto_update = true
 async_update = false
 exclude = [
   "BASE/**", ".agent/**", ".tmp/**", ".planning/**", ".lean-ctx/**",
