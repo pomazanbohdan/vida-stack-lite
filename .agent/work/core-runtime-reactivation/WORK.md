@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `a6eeda7c160dd58f2bc9c5ce463ed3e7ac055512` at origin/main.
+- Published input: `08840482e2afd04bd1e7c398b1897f33e951c443` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -411,7 +411,7 @@ Packeta6eeda7 passed the ordinary strict hook:464checked files/0errors,
 Logs: `/workspace/attachments/custody-release-strict-commit-20261014.log` and
 `custody-release-push-20261014.log` in that root. BASE/root bun.lock stay untouched.
 
-## Current release descriptor correction
+## Published release descriptor correction
 
 Bounded same-pattern review found masking closes in the release byte reader and
 state saver. A disjoint writer added regressions; Root corrected its read draft
@@ -453,6 +453,24 @@ The49unrelated release/CI cases were filtered. This is scoped behavior proof,
 not a full release, SDK, numeric or native acceptance result. Independent review
 approves the current Source/test boundary:
 `/workspace/attachments/release-descriptor-final-review-20261014.md`.
+
+## Requested current coverage launch
+
+The user requested coverage after0884048. Root ran the unchanged maintained
+`bun bin/bun.ts run test:coverage:pinned` launcher on qualified Bun1.4.3 with
+its300000ms operation allowance and no competing Vex/test/compiler producer.
+The original operation ended BLOCKED during preflight, exit1, session58943:
+`/workspace/attachments/coverage-request-0884048-20261014.log`.
+Current static checks passed:464checked files/0errors,465captured TS files with
+zero TS-only violations, and101Source files/0errors. No test producer launched.
+
+Exact outcome: `packages/agent/coverage/bun-unified/operation-outcomes/ca62c77f-8741-4adf-8b2b-e723ef94dd2f.json`.
+It binds current Source/tests/tools and records launched_count0, execution/report
+incomplete and retention_required:true. The SDK formation receipt does not match
+selected current package bytes. No new coverage percentage or CRAP result exists.
+Keep this BLOCKED distinct from timeout, UNKNOWN and test failure; do not bypass
+SDK freshness, use Source fallback, form locally or retry unchanged. Retrieve
+fresh CI-formed SDK with its selected receipt before another complete launch.
 
 ## Complete numeric prerequisites
 
