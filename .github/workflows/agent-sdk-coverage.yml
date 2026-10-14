@@ -25,7 +25,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
-      BUN_INSTALL_CACHE_DIR: ${{ runner.temp }}/vida-bun-install-cache
       SDK_SOURCE_COMMIT: ${{ github.sha }}
       SDK_REQUESTED_COMMIT: ${{ inputs.source_commit }}
     steps:
@@ -33,6 +32,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          printf 'BUN_INSTALL_CACHE_DIR=%s/vida-bun-install-cache\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
           if [[ "$GITHUB_REPOSITORY" != "pomazanbohdan/vida-stack-lite" ]]; then
             echo "Unexpected repository: $GITHUB_REPOSITORY" >&2
             exit 1

@@ -241,6 +241,8 @@ The separate GitLab runner target remains unanswered.
 ## Validation and safety
 
 Development checks are owned by packages/agent/TESTING.md and its package scripts.
+Workflow edits require the [focused workflow check](.codex/README.md#focused-checks)
+before publication; YAML parsing alone does not validate GitHub contexts.
 Formation and installation run no test suites. The manual Windows workflow runs
 native-build, emits exact artifact/provenance/integrity metadata and publishes it.
 The approved provider, selected Source and repository-variable controls remain.

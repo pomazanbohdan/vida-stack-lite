@@ -509,6 +509,26 @@ dependency-type owner; no ignores or widened helper-entry globs. Corrected
 repository test types passed133files/0errors. Failed hook log is retained at
 `/workspace/attachments/sdk-readiness-strict-commit-20261014.log`.
 
+Published correctiona8e3c447e5d2c665757bf0783a27fa5464f36a42 passed ordinary strict
+precommit:469types/0errors,463formatted files, lint/Knip. Non-force push and remote
+main equality were observed. New SDK run38632564091 failed before any job (jobs0):
+https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/38632564091.
+Official GitHub context availability and actionlint1.7.12 reproduce the cause:
+runner.temp is invalid in job-level env. The same defect existed in native CI.
+Both now propagate the runner-local cache path from the first runtime step;
+both workflows pass qualified actionlint. Causal RED and final static logs:
+`/workspace/attachments/sdk-readiness-workflow-actionlint-causal-red-20261014.log`
+and `sdk-readiness-workflow-actionlint-final-20261014.log` in the same root.
+No native dispatch or archived operation was issued.
+The existing tooling lock/setup now includes verified actionlint1.7.12, archive
+SHA8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8.
+Bootstrap requires workflow context validation before publication. Generic host
+qualification now accepts both standalone and prefixed first-line versions;
+two setup passes and corrected host qualification passed. The initial parser
+failure remains at `sdk-workflow-tooling-check-20261014.log`; current proof:
+`/workspace/attachments/sdk-workflow-tooling-check-corrected-20261014.log`.
+Actual corrected CI/retrieval/coverage remain pending observation.
+
 Cloud restart was observed as starting/offline at spec2339. Access recovered;
 Git diff/new files and Bun1.4.3 persisted. New cgroup counters were zero and uptime
 was55s; they do not establish the prior restart's cause. No duplicate producer

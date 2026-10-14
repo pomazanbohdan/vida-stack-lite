@@ -15,7 +15,8 @@ const bin = join(homedir(), '.local/bin');
 const lock = parseCloudToolLock(await Bun.file(join(root, '.codex/cloud-tooling.lock.json')).text());
 for (const tool of lock.tools) {
   const result = Bun.spawnSync([join(bin, tool.name), '--version'], { stdout: 'pipe', stderr: 'pipe' });
-  const version = result.stdout.toString().trim().split(/\s+/)[1]?.replace(/^v/, '');
+  const firstLine = result.stdout.toString().trim().split(/\r?\n/u)[0] ?? '';
+  const version = /(?:^|\s)v?(\d+\.\d+\.\d+)(?:\s|$)/u.exec(firstLine)?.[1];
   if (result.exitCode !== 0 || version !== tool.version) {
     throw new Error(`Unqualified ${tool.name}: ${result.stderr.toString()}`);
   }

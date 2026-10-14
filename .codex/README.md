@@ -158,6 +158,19 @@ host. Root's sidecar owns task-method precedence and native Luna delegation.
 
 ## Focused checks
 
+Before publishing changes to GitHub workflows, use the qualified native
+actionlint from the tooling lock:
+
+```sh
+actionlint -pyflakes= -shellcheck= .github/workflows/*.yml
+```
+
+This checks workflow syntax and GitHub expression contexts; it does not claim
+shell or Python validation. Plain YAML parsing does not check those contexts.
+`runner` is unavailable in job-level env. Resolve runner-local paths in a step
+and propagate them through GITHUB_ENV. Source formation/install still run no
+test suites, and a static workflow PASS is not an observed CI result.
+
 After a tooling/config change, run setup twice and the relevant check once:
 
 ```sh
