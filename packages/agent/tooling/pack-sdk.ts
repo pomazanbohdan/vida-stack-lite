@@ -231,6 +231,7 @@ export function sdkCompatibilityManifest(input: { root: string }): { value: Pack
   ];
   const verifierFileSet = new Set(verifierFiles);
   value.files = value.files.filter((entry) => {
+    if (entry === 'bun.lock') return false;
     if (entry === 'bin/standalone-resources.ts') return true;
     if (/standalone|release-notes|release-publish/.test(entry)) return false;
     if (entry === 'TESTING.md' || entry === 'tsconfig.json' || entry === '.oxfmtrc.json') return false;
@@ -338,17 +339,17 @@ export async function verifySdkPackage(input: { root: string }): Promise<void> {
       regular(root, 'schemas/' + file),
       `SDK schema copy differs: ${file}`,
     );
-  assert.deepEqual(
-    regular(root, 'dist/portable/bun.lock'),
-    regular(root, 'bun.lock'),
-    'SDK portable frozen lock differs',
-  );
+  const rootLockExists = lstatSync(path.join(root, 'bun.lock'), { throwIfNoEntry: false }) !== undefined;
+  const lockRelative = rootLockExists ? 'bun.lock' : 'dist/portable/bun.lock';
+  const lockBytes = regular(root, lockRelative);
+  if (rootLockExists)
+    assert.deepEqual(regular(root, 'dist/portable/bun.lock'), lockBytes, 'SDK portable frozen lock differs');
   assertCandidatePreflight(root);
   run(
     bun,
     [
       '-e',
-      `import assert from 'node:assert/strict'; const lock=Bun.JSONC.parse(await Bun.file('bun.lock').text()); const manifest=await Bun.file('package.json').json(); assert.deepEqual(lock.workspaces[''].dependencies,manifest.dependencies); assert.deepEqual(lock.workspaces[''].devDependencies,manifest.devDependencies); for(const [name,version] of Object.entries(manifest.dependencies)){const installed=await Bun.file('node_modules/'+name+'/package.json').json();assert.equal(installed.version,version,'frozen dependency '+name)}; for(const name of ['index','trusted-host']){const source=await Bun.file('src/'+name+'.ts').text();const expected=new Bun.Transpiler({loader:'ts'}).scan(source).exports.sort();const actual=await import('./dist/src/'+name+'.js'); assert.deepEqual(Object.keys(actual).sort(),expected);assert.ok(Object.keys(actual).every(key=>!/^createTest|TestIssuer|ForTests/.test(key)))};`,
+      `import assert from 'node:assert/strict'; const lock=Bun.JSONC.parse(await Bun.file(${JSON.stringify(lockRelative)}).text()); const manifest=await Bun.file('package.json').json(); assert.deepEqual(lock.workspaces[''].dependencies,manifest.dependencies); assert.deepEqual(lock.workspaces[''].devDependencies,manifest.devDependencies); for(const [name,version] of Object.entries(manifest.dependencies)){const installed=await Bun.file('node_modules/'+name+'/package.json').json();assert.equal(installed.version,version,'frozen dependency '+name)}; for(const name of ['index','trusted-host']){const source=await Bun.file('src/'+name+'.ts').text();const expected=new Bun.Transpiler({loader:'ts'}).scan(source).exports.sort();const actual=await import('./dist/src/'+name+'.js'); assert.deepEqual(Object.keys(actual).sort(),expected);assert.ok(Object.keys(actual).every(key=>!/^createTest|TestIssuer|ForTests/.test(key)))};`,
     ],
     root,
     env,

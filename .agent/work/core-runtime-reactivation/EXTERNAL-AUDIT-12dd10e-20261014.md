@@ -114,3 +114,25 @@ than counting unrelated admission safety checks. Other reviewed callback,
 budget, mutation and SDK boundaries have no remaining confirmed findings.
 The plan negative fixture now uses an inline non-executable marker, removing an
 uncaptured .agent file dependency from the coverage snapshot.
+
+## Publication and real archive follow-up
+
+Strict staged hook passed (format451 files, compiler455 files0); Source packet
+`d86372ffe53ecf3731d9ec3b114c081f12e7f40b` was actually pushed to origin/main.
+Build and genuine SDK pack passed without test suites. Extracting that archive
+found a remaining N05 consequence: Bun excludes root bun.lock even when it is
+listed. The published verifier incorrectly required it on an extracted package.
+Retain the real archive and extracted root as causal evidence; no ordinary SDK
+library import failure was established. Remove the unavailable advertised root
+lock from projection. Verify the shipped portable lock when root lock is absent;
+when Source root lock exists, retain exact root/portable equality. Keep dependency
+and devDependency checks, and reject symlink/type/other IO faults.
+
+Projection regression5PASS; current Source verifier against the actual extracted
+payload passes with portable lock. Form a new archive after strict follow-up
+publication and invoke that archive's own verifier before treating N05 as closed.
+External node_modules remains a declared dependency trust limit, not payload
+custody. Formation and packing run no test suites.
+
+Latest user instruction: finish this correction cycle, launch tests, then pause
+the integrator. No next analysis/fix cycle or automatic retry after that launch.

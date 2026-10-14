@@ -23,13 +23,18 @@ function sourceVersions(): { bun: string; node: string; npm: string } {
   return { bun: readPin(packageRoot), node: values.node, npm: values.npm };
 }
 
-function writeManifest(root: string, versions: { bun: string; node: string }, npm: unknown): void {
+function writeManifest(
+  root: string,
+  versions: { bun: string; node: string },
+  npm: unknown,
+  files: string[] = [],
+): void {
   writeFileSync(
     path.join(root, 'package.json'),
     JSON.stringify({
       name: 'vida-agent',
       version: '0.0.0',
-      files: [],
+      files,
       scripts: {},
       exports: {},
       main: 'index.js',
@@ -97,6 +102,19 @@ test('SDK compatibility manifest keeps only the SDK prepack hook and payload', (
     'tooling/preflight.ts',
   ])
     expect(value.files).toContain(file);
+});
+
+test('SDK compatibility manifest omits root bun.lock while retaining the portable lock', () => {
+  const temporary = mkdtempSync(path.join(tmpdir(), 'vida-sdk-lock-projection-'));
+  try {
+    const versions = sourceVersions();
+    writeManifest(temporary, versions, versions.npm, ['bun.lock', 'dist/portable/bun.lock']);
+    const { value } = sdkCompatibilityManifest({ root: temporary });
+    expect(value.files).not.toContain('bun.lock');
+    expect(value.files).toContain('dist/portable/bun.lock');
+  } finally {
+    rmSync(temporary, { recursive: true, force: true });
+  }
 });
 
 test('SDK compatibility manifest accepts npm whole-major x-ranges', () => {

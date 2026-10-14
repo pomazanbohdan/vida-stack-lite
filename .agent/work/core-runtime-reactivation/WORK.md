@@ -11524,3 +11524,14 @@ find no actionable defect. Root now performs strict staging/publication, then
 actual SDK formation and extracted archive verification. This is a Source
 packet, not final metrics or Native acceptance. Original UNKNOWN resources
 still forbid unsupported successor/replay; do not launch obsolete preparers.
+
+v18 publication: strict hookPASS(format451,compiler4550), actualpushd86372f.
+SDKbuild+packPASSwithout suites. Extracted verifier exposed rootbun.lock omission
+by Bun pack; retain actualarchive/extractedroot. N05follow-up chooses shipped
+portablelock onlywhen rootlockabsent, preservingroot/portablecomparison otherwise,
+IO/symlinkdenial and frozen dependencychecks. SDKprojection5PASS; current Source
+verifier onactualextractedpayloadPASS. Follow-up strictpublication and newly
+extracted verifier qualification pending; no Runtime/releaseacceptance inferred.
+
+User now directs: finish this cycle, launchfulltests, then integratorPAUSE.
+Do not dispatch a new analysis/fix cycle or retry its failures after launch.
