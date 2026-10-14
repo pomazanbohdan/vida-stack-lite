@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `08840482e2afd04bd1e7c398b1897f33e951c443` at origin/main.
+- Published input: `66c3c947d069fcf51dee61f447f90ed035a7a670` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -471,6 +471,48 @@ selected current package bytes. No new coverage percentage or CRAP result exists
 Keep this BLOCKED distinct from timeout, UNKNOWN and test failure; do not bypass
 SDK freshness, use Source fallback, form locally or retry unchanged. Retrieve
 fresh CI-formed SDK with its selected receipt before another complete launch.
+
+## Automatic SDK test-input readiness correction
+
+The stale SDK preflight is addressed in Source by one CI test-input workflow and
+one repository retrieval adapter used by maintained coverage aliases. The same
+SDK builder emits a distinct CandidateSdkTestInputs/v1/development-tests receipt;
+product delivery rejects it before Bun/destination effects. This does not select
+or confirm a release version. No archived release operation was replayed.
+The adapter binds package-clean Git HEAD, exact CI job/run/attempt/artifact,
+ZIP digest, qualified reader admission and actual output bytes. It retains prior
+dist and failed stages. Coverage retains the sole Source capture/freshness join
+and its original300000ms outer budget/30000ms report reserve.
+Shared SDK fixture and receipt/ZIP owners remove duplicate implementation.
+
+Affected full selection:67PASS/0FAIL across four files,3.90s, exit0:
+`/workspace/attachments/sdk-readiness-final-tests-20261014.log`.
+Current static:469checked/0errors,470captured TS/0violations,101Source/0errors:
+`/workspace/attachments/sdk-readiness-final-static-20261014.log`.
+Repository test types:133files/0errors; repo tooling185files/0errors.
+Scoped lint passed after correcting three diagnostics; independent review is at
+`/workspace/attachments/sdk-ci-unblock-design-review-20261014.md`.
+Final publication-fixture lint exposed the same unbound-warning capture pattern
+in three cases. A single local warning/restoration helper replaces it; those
+three affected cases passed again, exit0,319ms:
+`/workspace/attachments/sdk-readiness-publication-final-tests-20261014.log`.
+Their corrected lint has zero diagnostics. The earlier67-case result is retained;
+this targeted recheck does not claim a new complete numeric run.
+Earlier failed diagnostics remain retained. These are affected checks, not full
+numeric acceptance or proof that the new CI workflow actually completed.
+Publication, actual CI SDK retrieval and the subsequent coverage outcome remain
+pending until observed. SDK unavailability stays a GAP without local formation.
+The first ordinary commit stopped on strict Knip: the pinned-launcher child was
+not a declared entrypoint and the repository test's JSZip type crossed workspace
+dependency ownership. Declare only that concrete CLI entry and reuse the package
+dependency-type owner; no ignores or widened helper-entry globs. Corrected
+repository test types passed133files/0errors. Failed hook log is retained at
+`/workspace/attachments/sdk-readiness-strict-commit-20261014.log`.
+
+Cloud restart was observed as starting/offline at spec2339. Access recovered;
+Git diff/new files and Bun1.4.3 persisted. New cgroup counters were zero and uptime
+was55s; they do not establish the prior restart's cause. No duplicate producer
+or old UNKNOWN successor was launched during the outage.
 
 ## Complete numeric prerequisites
 

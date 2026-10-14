@@ -346,67 +346,73 @@ test('reuses a supplied pinned executable, still verifies its version, and clean
   assert.equal(calls[1]!.options.detached, process.platform !== 'win32');
 });
 
-test('coverage iteration defaults to one propagated five-minute launcher deadline', () => {
-  const { root, pin } = fixture();
-  const executable = path.join(root, 'coverage-bun');
-  const calls: LauncherCall[] = [];
-  const started = Date.now();
-  const status = runPinnedBun(['tooling/run-bun-coverage.ts'], {
-    root,
-    executable,
-    spawn(command, argv, options) {
-      calls.push({ command, argv, options });
-      return calls.length === 1 ? success(pin) : success('');
-    },
-  });
-  assert.equal(status, 0);
-  assert.equal(calls.length, 2);
-  for (const call of calls) {
-    const timeout = call.options.timeout;
-    const environment = call.options.env;
-    assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 300_000);
-    const childBudget = Number(environment?.VIDA_PINNED_COMMAND_BUDGET_MS);
-    const childDeadline = Number(environment?.VIDA_PINNED_COMMAND_DEADLINE_MS);
-    assert.equal(childBudget, timeout);
-    assert.ok(childDeadline > started && childDeadline <= started + 300_050);
-  }
-});
+test.each(['tooling/run-bun-coverage.ts', '../../tooling/agent/run-coverage.ts'])(
+  'coverage iteration defaults to one propagated five-minute launcher deadline: %s',
+  (entry) => {
+    const { root, pin } = fixture();
+    const executable = path.join(root, 'coverage-bun');
+    const calls: LauncherCall[] = [];
+    const started = Date.now();
+    const status = runPinnedBun([entry], {
+      root,
+      executable,
+      spawn(command, argv, options) {
+        calls.push({ command, argv, options });
+        return calls.length === 1 ? success(pin) : success('');
+      },
+    });
+    assert.equal(status, 0);
+    assert.equal(calls.length, 2);
+    for (const call of calls) {
+      const timeout = call.options.timeout;
+      const environment = call.options.env;
+      assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 300_000);
+      const childBudget = Number(environment?.VIDA_PINNED_COMMAND_BUDGET_MS);
+      const childDeadline = Number(environment?.VIDA_PINNED_COMMAND_DEADLINE_MS);
+      assert.equal(childBudget, timeout);
+      assert.ok(childDeadline > started && childDeadline <= started + 300_050);
+    }
+  },
+);
 
-test('current coverage wrapper replaces ambient review clocks and preserves caller ceilings in semantic policy', () => {
-  const { root, pin } = fixture();
-  const calls: LauncherCall[] = [];
-  const callerExpiry = String(Date.now() + 300000);
-  runPinnedBun(['tooling/run-bun-coverage.ts'], {
-    root,
-    executable: path.join(root, 'coverage-bun'),
-    env: {
-      VIDA_COVERAGE_REVIEW_CLOCK_POLICY: 'ambient-forged-claim',
-      VIDA_PINNED_COMMAND_BUDGET_MS: '240000',
-      VIDA_PINNED_COMMAND_DEADLINE_MS: callerExpiry,
-    },
-    spawn(command, argv, options) {
-      calls.push({ command, argv, options });
-      return calls.length === 1 ? success(pin) : success('');
-    },
-  });
-  assert.equal(calls.length, 2);
-  assert.equal(calls[0]?.options.env?.VIDA_COVERAGE_REVIEW_CLOCK_POLICY, undefined);
-  const environment = calls[1]?.options.env;
-  assert.ok(environment);
-  const raw = environment.VIDA_COVERAGE_REVIEW_CLOCK_POLICY;
-  assert.ok(typeof raw === 'string');
-  const policy: unknown = JSON.parse(raw);
-  assert.ok(typeof policy === 'object' && policy !== null && !Array.isArray(policy));
-  assert.equal(Reflect.get(policy, 'original_duration_ms'), '240000');
-  assert.equal(Reflect.get(policy, 'original_expiry_ms'), callerExpiry);
-  assert.equal(Reflect.get(policy, 'budget_ms'), environment.VIDA_PINNED_COMMAND_BUDGET_MS);
-  assert.equal(Reflect.get(policy, 'deadline_ms'), environment.VIDA_PINNED_COMMAND_DEADLINE_MS);
-  assert.ok(Number(environment.VIDA_PINNED_COMMAND_BUDGET_MS) <= 240000);
-  assert.ok(Number(environment.VIDA_PINNED_COMMAND_DEADLINE_MS) <= Number(callerExpiry));
-  assert.ok(calls[1]?.argv.includes('--wrapper-review-clocks'));
-  assert.notEqual(coverageReviewEnvironmentSha256(environment, true), coverageEnvironmentSha256(environment));
-  assert.equal(coverageReviewEnvironmentSha256(environment), coverageEnvironmentSha256(environment));
-});
+test.each(['tooling/run-bun-coverage.ts', '../../tooling/agent/run-coverage.ts'])(
+  'current coverage wrapper replaces ambient review clocks and preserves caller ceilings in semantic policy: %s',
+  (entry) => {
+    const { root, pin } = fixture();
+    const calls: LauncherCall[] = [];
+    const callerExpiry = String(Date.now() + 300000);
+    runPinnedBun([entry], {
+      root,
+      executable: path.join(root, 'coverage-bun'),
+      env: {
+        VIDA_COVERAGE_REVIEW_CLOCK_POLICY: 'ambient-forged-claim',
+        VIDA_PINNED_COMMAND_BUDGET_MS: '240000',
+        VIDA_PINNED_COMMAND_DEADLINE_MS: callerExpiry,
+      },
+      spawn(command, argv, options) {
+        calls.push({ command, argv, options });
+        return calls.length === 1 ? success(pin) : success('');
+      },
+    });
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0]?.options.env?.VIDA_COVERAGE_REVIEW_CLOCK_POLICY, undefined);
+    const environment = calls[1]?.options.env;
+    assert.ok(environment);
+    const raw = environment.VIDA_COVERAGE_REVIEW_CLOCK_POLICY;
+    assert.ok(typeof raw === 'string');
+    const policy: unknown = JSON.parse(raw);
+    assert.ok(typeof policy === 'object' && policy !== null && !Array.isArray(policy));
+    assert.equal(Reflect.get(policy, 'original_duration_ms'), '240000');
+    assert.equal(Reflect.get(policy, 'original_expiry_ms'), callerExpiry);
+    assert.equal(Reflect.get(policy, 'budget_ms'), environment.VIDA_PINNED_COMMAND_BUDGET_MS);
+    assert.equal(Reflect.get(policy, 'deadline_ms'), environment.VIDA_PINNED_COMMAND_DEADLINE_MS);
+    assert.ok(Number(environment.VIDA_PINNED_COMMAND_BUDGET_MS) <= 240000);
+    assert.ok(Number(environment.VIDA_PINNED_COMMAND_DEADLINE_MS) <= Number(callerExpiry));
+    assert.ok(calls[1]?.argv.includes('--wrapper-review-clocks'));
+    assert.notEqual(coverageReviewEnvironmentSha256(environment, true), coverageEnvironmentSha256(environment));
+    assert.equal(coverageReviewEnvironmentSha256(environment), coverageEnvironmentSha256(environment));
+  },
+);
 
 test('native wrapper issuance opts into review clocks while a direct ambient claim keeps exact hashing', () => {
   const { root } = fixture();
@@ -900,7 +906,7 @@ test('every public developer script enters the pinned bootstrap without recursio
       task === 'test'
         ? 'bun bin/bun.ts run test:pinned && bun bin/bun.ts run test:repair:pinned && bun bin/bun.ts run test:host-state:pinned && bun bin/bun.ts run test:run-entrypoint:pinned'
         : task === 'test:coverage'
-          ? 'bun bin/bun.ts tooling/run-bun-coverage.ts'
+          ? 'bun bin/bun.ts ../../tooling/agent/run-coverage.ts'
           : `bun bin/bun.ts run ${task}:pinned`,
     );
     assert.equal(script.includes(`run ${task} `), false);

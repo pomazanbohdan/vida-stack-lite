@@ -13,6 +13,8 @@ const config = {
         'tooling/agent/cloud-tooling-check.ts',
         'tooling/agent/cloud-pstack-setup.ts',
         'tooling/agent/check-documentation.ts',
+        // Package coverage scripts select this child through the pinned launcher.
+        'tooling/agent/run-coverage.ts',
         'tooling/agent/controllers/forward-update-prepare.ts',
         'tooling/agent/controllers/forward-update-finalize.ts',
         'tooling/agent/controllers/forward-documentation-phase.ts',

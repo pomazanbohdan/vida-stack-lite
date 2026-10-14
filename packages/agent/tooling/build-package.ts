@@ -353,7 +353,17 @@ export async function captureSdkFormationInputs(root: string): Promise<Map<strin
   });
 }
 
-async function buildPackage(root: string): Promise<void> {
+/** Test compilation is a distinct input artifact, never a deliverable product build. */
+export function sdkBuildReceiptIdentity(
+  args: readonly string[],
+): { schema: 'CandidatePackageBuild/v1' } | { schema: 'CandidateSdkTestInputs/v1'; purpose: 'development-tests' } {
+  if (args.length === 0) return { schema: 'CandidatePackageBuild/v1' };
+  if (args.length === 1 && args[0] === '--test-inputs')
+    return { schema: 'CandidateSdkTestInputs/v1', purpose: 'development-tests' };
+  throw new Error('Unsupported SDK build argument.');
+}
+
+async function buildPackage(root: string, identity: ReturnType<typeof sdkBuildReceiptIdentity>): Promise<void> {
   resourceDirectory(root);
   if (Bun.version !== readPin(root)) throw new Error('SDK formation requires the package-selected Bun.');
   checkManifest(root, Bun.version);
@@ -394,6 +404,7 @@ async function buildPackage(root: string): Promise<void> {
         }));
     const receipt = {
       ...result,
+      ...identity,
       bun_version: Bun.version,
       inputs: identities(inputs),
       outputs: identities(outputBytes),
@@ -437,4 +448,4 @@ async function buildPackage(root: string): Promise<void> {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
-  await buildPackage(path.resolve(import.meta.dirname, '..'));
+  await buildPackage(path.resolve(import.meta.dirname, '..'), sdkBuildReceiptIdentity(process.argv.slice(2)));

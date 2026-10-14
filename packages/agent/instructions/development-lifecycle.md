@@ -470,6 +470,15 @@ This checkpoint does not grant user Runtime acceptance or registry publication.
 
 ### Formation and installation policy
 
+Development SDK compilation with `build-package.ts --test-inputs` emits only
+`CandidateSdkTestInputs/v1` with `purpose: development-tests`. Its Source version
+is a compatibility binding, not a release baseline. This distinct input artifact
+is not a product build or delivery: it never selects, advances or confirms a
+release version, enters a native release operation, or permits installation.
+The SDK delivery verifier and packer reject this receipt before delivery effects.
+CI may prepare these inputs independently; it runs no test suites. Development
+coverage retains its exact selected-input and emitted-output validation.
+
 Each new successful build advances the product version. The release owner
 selects the next version before Source publication and formation. Default to
 the last confirmed successful build's PATCH plus one. An explicit human request

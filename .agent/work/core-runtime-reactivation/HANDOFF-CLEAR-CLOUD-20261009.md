@@ -78,6 +78,8 @@ Requested model/service settings are distinct from observed host capabilities.
 - A new successful build strictly increases version, patch by default. Failed or
   UNKNOWN formation does not consume the baseline. Reusing exact formed bytes
   is not a new build; delivered components retain equal version/binding.
+  The lifecycle separately owns non-deliverable SDK test-input compilation;
+  its distinct receipt grants no release/version or installation authority.
 - Commit/push completed correction packets under standing ordinary non-force
   Source authority after applicable checks. Preserve partial staging and exact
   checked index bytes. Historical hook overrides are not blanket future permission.

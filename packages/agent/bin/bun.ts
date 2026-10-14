@@ -626,7 +626,7 @@ function coverageIterationBudget(
   options: BunOptions,
 ): { maximum: number; budget: ExecutionBudget | undefined; reviewPolicy?: CoverageReviewClockPolicy | undefined } {
   const isCoverageEntry =
-    args[0] === 'tooling/run-bun-coverage.ts' &&
+    (args[0] === 'tooling/run-bun-coverage.ts' || args[0] === '../../tooling/agent/run-coverage.ts') &&
     (args.length === 1 || (args.length === 2 && args[1] === '--published-baseline=b549951'));
   const requestedMaximum = options.timeoutMs === undefined ? Infinity : options.timeoutMs;
   const maximum = isCoverageEntry ? Math.min(requestedMaximum, 300_000) : requestedMaximum;

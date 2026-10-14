@@ -1160,7 +1160,7 @@ function isQualifiedArchiveModule(value: unknown): value is AgentFsSafeArchiveMo
     typeof value.loadZipArchiveWithPreflight === 'function'
   );
 }
-async function qualifiedZIPReader(root: string): Promise<QualifiedZipReader> {
+export async function qualifiedZIPReader(root: string): Promise<QualifiedZipReader> {
   try {
     const archiveEntry = fsSafeArchiveEntry(path.join(root, 'packages/agent'));
     const fsSafe = parseJSON(readFileSync(path.join(path.dirname(archiveEntry), '../package.json'), 'utf8'));

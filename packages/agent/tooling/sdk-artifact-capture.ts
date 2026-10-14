@@ -78,10 +78,8 @@ function validateSelectedManifest(selectedInputs: ReadonlyMap<string, Buffer>): 
   };
 }
 
-function validateReceiptInputs(receiptValue: Record<string, unknown>, selectedRows: ReceiptEntry[]): void {
-  const inputRows = parseEntries(receiptValue.inputs, 'input').sort((left, right) =>
-    left.path.localeCompare(right.path),
-  );
+function validateReceiptInputs(receiptInputs: ReceiptEntry[], selectedRows: ReceiptEntry[]): void {
+  const inputRows = [...receiptInputs].sort((left, right) => left.path.localeCompare(right.path));
   if (
     inputRows.length !== selectedRows.length ||
     inputRows.some((row, index) => {
@@ -118,9 +116,11 @@ function validateReceiptIdentity(
 }
 
 function hasReceiptEnvelope(receiptValue: Record<string, unknown>): boolean {
+  const testInputs = receiptValue.schema === 'CandidateSdkTestInputs/v1';
+  const keys = testInputs ? [...receiptKeys, 'purpose'] : receiptKeys;
   return (
-    Object.keys(receiptValue).sort().join(',') === [...receiptKeys].sort().join(',') &&
-    receiptValue.schema === 'CandidatePackageBuild/v1' &&
+    Object.keys(receiptValue).sort().join(',') === [...keys].sort().join(',') &&
+    (testInputs ? receiptValue.purpose === 'development-tests' : receiptValue.schema === 'CandidatePackageBuild/v1') &&
     receiptValue.declaration_runtime === 'bun' &&
     receiptValue.bun_version === Bun.version &&
     receiptValue.test_issuers_shipped === false
@@ -150,12 +150,21 @@ function isValidFormationReceipt(value: unknown): value is Record<string, unknow
   return isRecord(value) && hasReceiptEnvelope(value) && hasReceiptCustody(value) && hasVirtualRuntimeEntry(value);
 }
 
+/** Decode receipt syntax once; callers still establish selected input and output identity. */
+export function decodeSdkFormationReceipt(value: unknown): {
+  value: Record<string, unknown>;
+  inputs: ReceiptEntry[];
+  outputs: ReceiptEntry[];
+} {
+  if (!isValidFormationReceipt(value)) throw new Error('SDK formation output receipt is invalid.');
+  return { value, inputs: parseEntries(value.inputs, 'input'), outputs: parseEntries(value.outputs, 'output') };
+}
+
 function validateReceiptOutputs(
-  receiptValue: Record<string, unknown>,
+  outputRows: ReceiptEntry[],
   artifacts: ReadonlyMap<string, Buffer>,
   outputPaths: string[],
 ): Map<string, Buffer> {
-  const outputRows = parseEntries(receiptValue.outputs, 'output');
   const expected = new Set(outputPaths);
   const javascriptRows = outputRows.filter((entry) => entry.path.endsWith('.js'));
   if (javascriptRows.length !== expected.size || javascriptRows.some((entry) => !expected.has(entry.path)))
@@ -209,12 +218,11 @@ function validateCapturedSdkJavascriptOutputs(
   const { manifestValue, selectedPin } = validateSelectedManifest(ownedInputs);
   const receiptBytes = ownedArtifacts.get('dist/sdk-formation.json');
   if (!receiptBytes) throw new Error('SDK formation output receipt is missing.');
-  const receiptValue: unknown = JSON.parse(receiptBytes.toString('utf8'));
-  if (!isValidFormationReceipt(receiptValue)) throw new Error('SDK formation output receipt is invalid.');
+  const receipt = decodeSdkFormationReceipt(JSON.parse(receiptBytes.toString('utf8')) as unknown);
 
-  validateReceiptInputs(receiptValue, selectedRows);
-  validateReceiptIdentity(receiptValue, manifestValue, selectedPin);
-  return capturedResult(outputPaths, validateReceiptOutputs(receiptValue, ownedArtifacts, outputPaths));
+  validateReceiptInputs(receipt.inputs, selectedRows);
+  validateReceiptIdentity(receipt.value, manifestValue, selectedPin);
+  return capturedResult(outputPaths, validateReceiptOutputs(receipt.outputs, ownedArtifacts, outputPaths));
 }
 
 /**

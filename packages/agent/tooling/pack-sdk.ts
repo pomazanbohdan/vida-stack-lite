@@ -286,9 +286,21 @@ function regular(root: string, relative: string): Buffer {
   return readFileSync(file);
 }
 
+/** Test-only emitted inputs must never enter verification or packaging for delivery. */
+export function assertSdkDeliveryReceipt(root: string): void {
+  const file = path.join(root, 'dist/sdk-formation.json');
+  if (!lstatSync(file, { throwIfNoEntry: false })) return;
+  const value: unknown = JSON.parse(regular(root, 'dist/sdk-formation.json').toString('utf8'));
+  assert.ok(
+    isRecord(value) && value.schema === 'CandidatePackageBuild/v1' && !Object.hasOwn(value, 'purpose'),
+    'SDK test inputs cannot be used for product delivery',
+  );
+}
+
 export async function verifySdkPackage(input: { root: string }): Promise<void> {
   const { root } = input;
   absoluteRoot(root);
+  assertSdkDeliveryReceipt(root);
   const manifest = sdkCompatibilityManifest({ root }).value;
   const { bun, env } = tools(root);
   const pin = readPin(root);
@@ -366,6 +378,7 @@ async function packSdkCompatibilityOperation(input: {
 }): Promise<{ archive: string; metadata: BunPackEntry[]; manifest: { value: PackageManifest; bytes: Buffer } }> {
   const { root, destination } = input;
   absoluteRoot(root);
+  assertSdkDeliveryReceipt(root);
   const { bun: pinnedBun, env: rootEnv } = tools(root);
   assert.ok(
     typeof destination === 'string' && path.isAbsolute(destination),

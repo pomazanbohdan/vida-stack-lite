@@ -82,6 +82,7 @@ export type CurrentCoverageReviewCallback = (input: {
 }) => unknown;
 export type RunBunCoverageOptions = {
   reviewCurrentInputs?: CurrentCoverageReviewCallback;
+  prepareSdkInputs?: (input: { root: string; remainingMs: () => number }) => Promise<void>;
 };
 
 function freezeCopiedReviewValue(value: unknown): unknown {
@@ -875,7 +876,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     throw new Error('Unsupported Bun coverage runner argument.');
   if (args.length > 1) throw new Error('Bun coverage runner accepts one baseline selection flag.');
   const selectionMode = args.length ? 'published-baseline-bun-native' : 'current';
-  if (options.reviewCurrentInputs && selectionMode !== 'current')
+  if ((options.reviewCurrentInputs || options.prepareSdkInputs) && selectionMode !== 'current')
     throw new Error('Current input review callbacks are unsupported for historical coverage.');
   const pinnedBun = await readBunPin(root);
   if (process.versions.bun !== pinnedBun) throw new Error(`Unified coverage requires Bun ${pinnedBun}.`);
@@ -1194,6 +1195,8 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     // only current production runs the current Source typecheck.
     if (selectionMode === 'current') {
       if ((process.env.BUN_OPTIONS ?? '').trim()) throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
+      await options.prepareSdkInputs?.({ root, remainingMs: () => commandBudget.remaining() });
+      commandBudget.remaining();
       const typecheckAllowance = commandBudget.remaining();
       const typecheck = spawnSync(process.execPath, ['run', 'typecheck:pinned'], {
         cwd: root,

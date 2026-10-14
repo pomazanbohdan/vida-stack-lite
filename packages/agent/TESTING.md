@@ -174,6 +174,19 @@ build/install do not run suites. External dependency bytes remain outside
 snapshot custody. This join proves selected input freshness and output integrity,
 not authenticated formation origin or Native Runtime acceptance.
 
+The repository coverage adapter obtains SDK test inputs from the successful
+selected-commit `agent-sdk-coverage.yml` run. That CI job reuses the SDK builder
+with `--test-inputs` and emits a distinct `CandidateSdkTestInputs/v1` receipt,
+with exact `purpose: development-tests`. SDK regression accepts that exact
+envelope or the existing product receipt; mixed identities deny. Test inputs
+cannot enter SDK delivery verification or packaging. Their version binds Source
+compatibility only; the lifecycle's product-release version policy remains intact.
+The adapter validates the archive, emitted bytes and CI identity before replacing
+dist, retaining previous outputs and failed staging. Unavailable or failed CI
+remains an actionable preflight GAP; there is no local compilation fallback.
+It performs no second Source inventory/hash pass: coverage derives freshness
+from the one existing capture below. Cache reuse verifies actual output bytes.
+
 Before a current full selection containing configured-workflow tests launches,
 coverage captures the SDK builder inputs, receipt and four emitted JS members
 in its existing input capture. Derive the formation subset from maintained
@@ -1141,14 +1154,16 @@ callback does not establish authorization of the original candidate or public
 route acceptance. Check unchanged authoritative state after each denial.
 Malformed output-role sets still need an explicit structural denial.
 
-The maintained coverage aliases launch `tooling/run-bun-coverage.ts` directly
+The maintained coverage aliases launch the repository adapter
+`../../tooling/agent/run-coverage.ts`, which calls the existing coverage owner
 through the pinned bootstrap, with one300000ms outer wall allowance beginning
 before package checks and runtime resolution. Stricter caller limits remain
 ceilings; supplied budgets cannot bypass malformed-duration validation before
 version probes. Other developer commands retain their existing default budgets.
 The runner reuses the inherited monotonic allowance, reserves30000ms for
-terminal/report work and runs one current typecheck under its acquired lock
-before one capture/preparation. Producer and CRAP launches spend the remainder;
+terminal/report work, prepares selected CI SDK inputs and runs one current
+typecheck under its acquired lock before one capture/preparation. SDK retrieval,
+producer and CRAP launches spend the same remainder;
 CRAP also retains its300000ms upper bound. Check the remainder between CPU
 phases; the pinned parent supplies the hard bound while a synchronous phase
 cannot service a timer. An outer timeout remains UNKNOWN and cannot prove
