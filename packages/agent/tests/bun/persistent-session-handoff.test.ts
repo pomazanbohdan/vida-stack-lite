@@ -3,12 +3,15 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Database } from 'bun:sqlite';
 import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import type { WorkItemSelection } from '../../src/config/runtime-config.ts';
 import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
-import type { Database } from 'bun:sqlite';
+import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
+import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
+import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import type {
   MastraLedgerItem,
   MastraSessionLedgerSnapshot,
@@ -34,6 +37,8 @@ import {
 import {
   MastraSessionLedger,
   PersistentSessionHandoffStore,
+  openConfiguredMastraSessionLedger,
+  openConfiguredSessionHandoffStore,
   sessionHandoffDatabasePath,
 } from '../../src/orchestration/persistent-session-handoff.ts';
 import { sessionActionsForWave } from '../../src/orchestration/session-handoff.ts';
@@ -53,6 +58,7 @@ const flows: [string, WorkItemSelection['kind'], WorkItemSelection['intent']][] 
   ['task_execution', 'task', 'task_execution'],
 ];
 let scratch: string | undefined;
+let retainScratch = false;
 const stores: PersistentSessionHandoffStore[] = [];
 const mastraLedgers: MastraSessionLedger[] = [];
 
@@ -273,15 +279,136 @@ function mastraObservation(
 afterEach(async () => {
   for (const instance of mastraLedgers.splice(0)) instance.close();
   for (const instance of stores.splice(0)) instance.close();
-  if (scratch) await rm(scratch, { recursive: true, force: true });
+  if (scratch && retainScratch) console.error(`Retained failed session handoff fixture root: ${scratch}`);
+  else if (scratch) await rm(scratch, { recursive: true, force: true });
   scratch = undefined;
+  retainScratch = false;
 });
+
+async function configuredFactoryFixture(name: string): Promise<string> {
+  const repositoryRoot = await makeFreshRepository(`session-handoff-${name}-`);
+  scratch = repositoryRoot;
+  return repositoryRoot;
+}
+
+function combinedConstructorAndCloseFailure(
+  repositoryRoot: string,
+  factory: (repositoryRoot: string) => unknown,
+): void {
+  const fixtureConfig = loadRuntimeConfig(repositoryRoot);
+  const fixtureWorkspaceId = deriveWorkspaceId(fixtureConfig.repository.repository_id, repositoryRoot);
+  const originalExec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+  const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+  const admittedDatabases: Database[] = [];
+  let constructorError: Error | undefined;
+  let closeError: Error | undefined;
+  let synchronousFullCount = 0;
+  const order: string[] = [];
+  const nativeCloseReceivers: Database[] = [];
+  const observedExec = function (this: Database, sql: string) {
+    if (sql === 'PRAGMA journal_mode=WAL' && admittedDatabases.length === 0) {
+      const main = this.query<{ name: string; file: string }, []>('PRAGMA database_list')
+        .all()
+        .find((entry) => entry.name === 'main');
+      if (main?.file === sessionHandoffDatabasePath(repositoryRoot, fixtureConfig)) admittedDatabases.push(this);
+    }
+    if (this === admittedDatabases[0] && sql === 'PRAGMA synchronous=FULL') {
+      synchronousFullCount += 1;
+      if (synchronousFullCount === 2) {
+        constructorError ??= new Error('injected Host constructor SQL failure');
+        order.push('constructor');
+        throw constructorError;
+      }
+    }
+    return originalExec.call(this, sql);
+  } as typeof Database.prototype.exec;
+  const observedClose = function (this: Database, throwOnError?: boolean) {
+    if (this === admittedDatabases[0]) {
+      nativeCloseReceivers.push(this);
+      closeError ??= new Error('injected native admitted database close failure');
+      if (nativeCloseReceivers.length <= 2) {
+        if (nativeCloseReceivers.length === 1) order.push('close');
+        throw closeError;
+      }
+    }
+    return originalClose.call(this, throwOnError);
+  } as typeof Database.prototype.close;
+
+  Database.prototype.exec = observedExec;
+  Database.prototype.close = observedClose;
+  let caught: unknown;
+  try {
+    factory(repositoryRoot);
+  } catch (error) {
+    caught = error;
+  } finally {
+    Database.prototype.exec = originalExec;
+  }
+  let assertionError: unknown;
+  let retrySucceeded = false;
+  try {
+    const admittedDatabase = admittedDatabases[0];
+    expect(admittedDatabase).toBeDefined();
+    if (admittedDatabase === undefined) throw new Error('configured factory did not open its admitted source');
+    expect(constructorError).toBeDefined();
+    expect(closeError).toBeDefined();
+    expect(caught).toBeInstanceOf(AggregateError);
+    const aggregate = caught as AggregateError;
+    const originalCauses = (error: unknown): unknown[] =>
+      error instanceof AggregateError ? error.errors.flatMap(originalCauses) : [error];
+    const causes = originalCauses(aggregate);
+    expect(causes).toHaveLength(2);
+    expect(causes[0]).toBe(constructorError);
+    expect(causes[1]).toBe(closeError);
+    expect(order).toEqual(['constructor', 'close']);
+    expect(nativeCloseReceivers).toEqual([admittedDatabase]);
+
+    let contenderError: unknown;
+    try {
+      openHostStateDatabase(
+        repositoryRoot,
+        path.relative(repositoryRoot, sessionHandoffDatabasePath(repositoryRoot, fixtureConfig)),
+        fixtureWorkspaceId,
+      );
+    } catch (error) {
+      contenderError = error;
+    }
+    expect(contenderError).toBeDefined();
+    expect(nativeCloseReceivers).toEqual([admittedDatabase, admittedDatabase]);
+  } catch (error) {
+    assertionError = error;
+  } finally {
+    Database.prototype.close = originalClose;
+    try {
+      retryPendingWorkspaceDatabaseCloses();
+      retrySucceeded = true;
+    } catch (error) {
+      retainScratch = true;
+      assertionError ??= error;
+    }
+  }
+  if (assertionError !== undefined) throw assertionError;
+  expect(retrySucceeded).toBe(true);
+  const admittedDatabase = admittedDatabases[0];
+  if (admittedDatabase === undefined) throw new Error('configured factory did not retain its admitted source');
+  expect(() => admittedDatabase.query('SELECT 1').get()).toThrow();
+}
 
 describe('persistent advisory session handoff', () => {
   test('derives one state file from root YAML work root', () => {
     expect(sessionHandoffDatabasePath(root, config)).toBe(
       path.join(root, config.control.work_root, 'session-handoff.v1.sqlite'),
     );
+  });
+
+  test.each([
+    ['handoff store', openConfiguredSessionHandoffStore],
+    ['Mastra ledger', openConfiguredMastraSessionLedger],
+  ] as const)('preserves constructor and close failures for the configured %s factory', async (name, factory) => {
+    const repositoryRoot = await configuredFactoryFixture(name.replaceAll(' ', '-'));
+    retainScratch = true;
+    combinedConstructorAndCloseFailure(repositoryRoot, factory);
+    retainScratch = false;
   });
 
   test.each(flows)('persists issue and report barriers for %s', async (workflow, kind, intent) => {

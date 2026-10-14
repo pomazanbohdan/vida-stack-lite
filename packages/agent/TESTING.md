@@ -1157,6 +1157,16 @@ before a native close prove this custody contract; they do not prove native
 SQLite I/O failure behavior. These controls do not qualify auxiliary-gate
 retirement or the pending one-workspace-DB cutover.
 
+The shared close accumulator accepts the exact owner callback, including an
+awaited async adapter close. Tag work outcomes explicitly so `throw undefined`
+remains a failure; retain original work then cleanup causes, and rethrow a sole
+failure by identity. Large caller bodies keep their existing control flow and
+ownership transfer; constructor success must leave its returned owner live.
+Exercise real configured factory and public TaskSource failure paths separately
+from opaque ledger/bridge protocol controls. Capture live admission before
+close starts: its read authority deliberately expires on the first close attempt.
+Restore injected faults before registered retry, and retain failed fixture roots.
+
 Exclusive verifiers and callbacks transfer each raw handle through their source
 owner before post-open guards. Its registered retry closes each pending source
 once per pass and releases the exact gate only after every source is closed.

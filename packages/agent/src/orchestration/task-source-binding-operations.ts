@@ -5,6 +5,7 @@ import { loadProjectSetContext } from '../config/project-context.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { closeWorkspaceDatabaseWithAdmission } from '../config/storage-read-admission.js';
+import { withWorkspaceDatabaseClose, withWorkspaceDatabaseCloseAsync } from '../config/workspace-database-raw.js';
 import { sessionHandoffDatabaseRelativePath } from '../config/project-paths.js';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { compareScopedSourceSnapshots, type ScopedSourceSnapshot } from './scoped-source-snapshot.js';
@@ -319,73 +320,78 @@ export async function executeTaskSourceBindingOperation(input: {
   assertExistingTaskSourceHostDatabase(root, databasePath);
   if (input.mode === 'issue') {
     const ledger = openConfiguredMastraSessionLedger(root);
-    try {
-      return await ledger.hostState.issueTaskSourceBindingOperation({ request, identity });
-    } finally {
-      ledger.close();
-    }
+    return withWorkspaceDatabaseCloseAsync(
+      ledger,
+      () => ledger.hostState.issueTaskSourceBindingOperation({ request, identity }),
+      (owner) => owner.close(),
+      'Task source issue and owned ledger close both failed',
+    );
   }
   const database = openHostStateDatabase(
     root,
     sessionHandoffDatabaseRelativePath(config),
     deriveWorkspaceId(config.repository.repository_id, root),
   );
-  try {
-    const store = new HostStateStore(
-        database,
-        deriveWorkspaceId(config.repository.repository_id, root),
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        root,
-      ),
-      initialContinuation = readInitialSourceContinuationLineageView(store, identity, request.attempt),
-      verifyCurrent = (context: {
-        readonly work: NonNullable<HostStateSnapshot['work']>;
-        readonly ledger: NonNullable<HostStateSnapshot['ledger']>;
-        readonly journal: MastraSessionLedgerState;
-      }) => {
-        const currentConfig = loadRuntimeConfig(root),
-          currentProject = loadProjectSetContext(root, currentConfig, request.repository_id, request.project_ids);
-        requireOperation(
-          runtimeConfigDigest(currentConfig) === request.config_digest &&
-            currentProject.project_context_digest === request.project_context_digest,
-          'task source configuration or ProjectContext changed during preparation',
-        );
-        return currentSourceAuthority(
+  return withWorkspaceDatabaseClose(
+    database,
+    () => {
+      const store = new HostStateStore(
+          database,
+          deriveWorkspaceId(config.repository.repository_id, root),
+          undefined,
+          undefined,
+          undefined,
+          undefined,
           root,
-          request,
-          context.work,
-          context.journal,
-          currentConfig,
-          identity,
-          initialContinuation,
-        );
-      };
-    if (input.mode === 'prepare') return store.prepareTaskSourceBindingOperation({ request, identity, verifyCurrent });
-    if (input.mode === 'inspect') {
-      const operation = store.inspectTaskSourceBindingOperation({ request, identity, verifyCurrent });
-      return Object.freeze({
-        ...operation,
-        source_execution_context: readSourceExecutionContext({
-          store,
-          identity,
-          threadId: request.thread_id,
-          attempt: request.attempt,
-          canonicalHostRoot: root,
-        }),
+        ),
+        initialContinuation = readInitialSourceContinuationLineageView(store, identity, request.attempt),
+        verifyCurrent = (context: {
+          readonly work: NonNullable<HostStateSnapshot['work']>;
+          readonly ledger: NonNullable<HostStateSnapshot['ledger']>;
+          readonly journal: MastraSessionLedgerState;
+        }) => {
+          const currentConfig = loadRuntimeConfig(root),
+            currentProject = loadProjectSetContext(root, currentConfig, request.repository_id, request.project_ids);
+          requireOperation(
+            runtimeConfigDigest(currentConfig) === request.config_digest &&
+              currentProject.project_context_digest === request.project_context_digest,
+            'task source configuration or ProjectContext changed during preparation',
+          );
+          return currentSourceAuthority(
+            root,
+            request,
+            context.work,
+            context.journal,
+            currentConfig,
+            identity,
+            initialContinuation,
+          );
+        };
+      if (input.mode === 'prepare')
+        return store.prepareTaskSourceBindingOperation({ request, identity, verifyCurrent });
+      if (input.mode === 'inspect') {
+        const operation = store.inspectTaskSourceBindingOperation({ request, identity, verifyCurrent });
+        return Object.freeze({
+          ...operation,
+          source_execution_context: readSourceExecutionContext({
+            store,
+            identity,
+            threadId: request.thread_id,
+            attempt: request.attempt,
+            canonicalHostRoot: root,
+          }),
+        });
+      }
+      if (input.mode === 'recover') return store.inspectTaskSourceBindingAction({ request, identity, verifyCurrent });
+      const report = readReport(root, input.reportPath!);
+      return store.reportTaskSourceBindingOperation({
+        request,
+        identity,
+        expectedActionStateVersion: report.expected_action_state_version,
+        report: report.report,
       });
-    }
-    if (input.mode === 'recover') return store.inspectTaskSourceBindingAction({ request, identity, verifyCurrent });
-    const report = readReport(root, input.reportPath!);
-    return store.reportTaskSourceBindingOperation({
-      request,
-      identity,
-      expectedActionStateVersion: report.expected_action_state_version,
-      report: report.report,
-    });
-  } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-  }
+    },
+    closeWorkspaceDatabaseWithAdmission,
+    'Task source operation and owned database close both failed',
+  );
 }

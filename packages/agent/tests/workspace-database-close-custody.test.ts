@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
   closeNativeWorkspaceDatabase,
+  finishWorkspaceDatabaseCloseAsync,
   openUnadmittedWorkspaceDatabase,
   retainFailedWorkspaceDatabaseClose,
   retryPendingWorkspaceDatabaseCloses,
@@ -124,6 +125,18 @@ function thrownBy(work: () => unknown): {
 } {
   try {
     return { threw: false, value: work() };
+  } catch (error) {
+    return { threw: true, error };
+  }
+}
+
+async function thrownByAsync(work: () => Promise<unknown>): Promise<{
+  readonly threw: boolean;
+  readonly value?: unknown;
+  readonly error?: unknown;
+}> {
+  try {
+    return { threw: false, value: await work() };
   } catch (error) {
     return { threw: true, error };
   }
@@ -265,6 +278,149 @@ test('native async close waits for owned work before closing its handle', async 
   expect(await pending).toBe('settled result');
   expect(closeAttempts).toBe(1);
   expect(() => database.query('SELECT 1').get()).toThrow();
+});
+
+test('native async close waits for delayed owned cleanup before returning or rethrowing', async () => {
+  const bodyError = new Error('async body failed before delayed close');
+
+  for (const bodyFails of [false, true]) {
+    const database = new Database(':memory:');
+    let signalCloseStarted: (() => void) | undefined;
+    let releaseClose: (() => void) | undefined;
+    const closeStarted = new Promise<void>((resolve) => {
+      signalCloseStarted = resolve;
+    });
+    const blockedClose = new Promise<void>((resolve) => {
+      releaseClose = resolve;
+    });
+    let closeAttempts = 0;
+    let settled = false;
+    const pending = withWorkspaceDatabaseCloseAsync(
+      database,
+      async () => {
+        if (bodyFails) throw bodyError;
+        return 'native result';
+      },
+      async (owned) => {
+        expect(owned).toBe(database);
+        closeAttempts += 1;
+        signalCloseStarted?.();
+        await blockedClose;
+        closeNativeWorkspaceDatabase(owned);
+      },
+      `async delayed close with bodyFails=${bodyFails}`,
+    ).finally(() => {
+      settled = true;
+    });
+
+    await closeStarted;
+    expect(settled).toBe(false);
+    expect(closeAttempts).toBe(1);
+    expect(database.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
+    releaseClose?.();
+
+    if (bodyFails) {
+      const outcome = await thrownByAsync(() => pending);
+      expect(outcome.threw).toBe(true);
+      expect(outcome.error).toBe(bodyError);
+    } else {
+      expect(await pending).toBe('native result');
+    }
+    expect(settled).toBe(true);
+    expect(closeAttempts).toBe(1);
+    expect(() => database.query('SELECT 1').get()).toThrow();
+  }
+});
+
+test('native async close-only and body-plus-close failures preserve exact causes, including undefined', async () => {
+  const closeError = new Error('async close failed');
+
+  for (const bodyFails of [false, true]) {
+    const database = new Database(':memory:');
+    let closeAttempts = 0;
+    let outcome: unknown;
+    try {
+      await withWorkspaceDatabaseCloseAsync(
+        database,
+        async () => {
+          if (bodyFails) throw undefined;
+          return 'native result';
+        },
+        async (owned) => {
+          expect(owned).toBe(database);
+          closeAttempts += 1;
+          await Promise.resolve();
+          throw closeError;
+        },
+        `async failing close with bodyFails=${bodyFails}`,
+      );
+    } catch (error) {
+      outcome = error;
+    }
+
+    expect(closeAttempts).toBe(1);
+    if (bodyFails) {
+      expect(outcome).toBeInstanceOf(AggregateError);
+      expect((outcome as AggregateError).errors).toEqual([undefined, closeError]);
+    } else {
+      expect(outcome).toBe(closeError);
+    }
+    expect(database.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
+    closeNativeWorkspaceDatabase(database);
+  }
+});
+
+test('opaque ledger/bridge protocol control attempts both closes and preserves nested cause order', async () => {
+  // This owner control proves callback and accumulator ordering only; it does not model runtime admission.
+  const bodyError = new Error('owned operation failed');
+  const ledgerError = new Error('owned ledger close failed');
+  const bridgeError = new Error('owned bridge close failed');
+  const closeOrder: string[] = [];
+  const owner = {
+    ledgerAttempts: 0,
+    bridgeAttempts: 0,
+    async closeLedger(): Promise<void> {
+      this.ledgerAttempts += 1;
+      closeOrder.push('ledger');
+      await Promise.resolve();
+      throw ledgerError;
+    },
+    async closeBridge(): Promise<void> {
+      this.bridgeAttempts += 1;
+      closeOrder.push('bridge');
+      await Promise.resolve();
+      throw bridgeError;
+    },
+  };
+
+  let ledgerOutcome: { readonly ok: true; readonly value: undefined } | { readonly ok: false; readonly error: unknown };
+  try {
+    await owner.closeLedger();
+    ledgerOutcome = { ok: true, value: undefined };
+  } catch (error) {
+    ledgerOutcome = { ok: false, error };
+  }
+  const outcome = await thrownByAsync(() =>
+    finishWorkspaceDatabaseCloseAsync(
+      owner,
+      { ok: false, error: bodyError },
+      async (owned) => {
+        await finishWorkspaceDatabaseCloseAsync(
+          owned,
+          ledgerOutcome,
+          (nestedOwner) => nestedOwner.closeBridge(),
+          'owned ledger and bridge close both failed',
+        );
+      },
+      'owned operation and ledger/bridge close both failed',
+    ),
+  );
+
+  expect(outcome.threw).toBe(true);
+  expect(flattenErrors(outcome.error)).toEqual([bodyError, ledgerError, bridgeError]);
+  expect(owner.ledgerAttempts).toBe(1);
+  expect(owner.bridgeAttempts).toBe(1);
+  expect(closeOrder).toEqual(['ledger', 'bridge']);
 });
 
 for (const failurePoint of ['schema', 'sentinel'] as const) {

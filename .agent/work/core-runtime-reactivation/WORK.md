@@ -10987,6 +10987,87 @@ find no blocker. Root will publish this checked packet before fresh formation
 or full measurement. Pending SDK version-owner review must preserve monotonic
 selection and cannot fabricate a confirmed build/publication baseline.
 
+Publishedb7e7244 through strict staged hook449program0diagnostics and ordinary
+push; fetch showed0/0divergence. Reviewed full Source attempt377d441a-769b-4786-a9e7-5195e1dfc82b
+uses189tests/94private/95shared and scopef714594b031101f734c8b772de38a991aaf9ff87ea5d97caa2db7c3801cab262.
+Actual direct PIDs479901/479902 terminate nullstatus/SIGKILL/UNKNOWN at the
+producer allowance, accounted in native supervisor.json. Reservation release
+does not grant resource advancement. Partial294/154PASS rows emit no assertion
+failures; no numeric report, current CRAP or mutation score is admitted. An
+independent cost reader initially mixed archived91b9 metadata with this live
+run; its claim is retracted. Root admits only this run's actual terminals.
+
+SDK review identifies the exact required freshness control: configured-workflow
+distributed runtime denies implicit governance even with test process flags.
+It must join current146SDK formation inputs and all four emitted JS members;
+old0.1.3dist is not a current substitute. Starting the above full attempt before
+fixing that known artifact freshness was premature; no full retry before fresh
+formation and its focused control. Source-only partial results do not qualify
+the selected whole run. Compatibility/capture fixture tests are distinct.
+
+Existing release owner has no confirmed/pending/formed pointer in this clean
+checkout; do not reconstruct one from the old log. To advance beyond the actual
+last known successful SDK0.1.3 without re-forming that version, Root uses the
+supported higher-version preparation route for next PATCH0.1.4 under standing
+human monotonic-build instruction. sdk-next-patch-owner-preparation.log records
+fresh operationlocal-aab49fb0-12bb-4a68-b187-5f8e679571cb awaiting_assurance.
+Its exact CAS preparation changes only manifest version and writes its own
+fresh repository release/admission coordination. It is not a restored operation,
+confirmed baseline, public artifact publication, installation or Runtime right.
+Keep this pending version/operation for retries; do not allocate another.
+Publish checked version Source before separate no-suite SDK formation. The
+compatibility repository release admission DB is not target workspace/AUX
+retirement; one-main-file repair and source exclusion remain explicit GAPs.
+
+Next family correction: task-source operation's raw admitted DB finally and
+abstract ledger finally can mask body failure with close failure. A disjoint
+test writer prepares native combined-fault controls without replacing ledger
+close or bypassing its pending paired owner. Root owns the shared Source fix.
+
+Joined v12 correction generalizes that existing tagged close owner over opaque
+store/bridge adapters and adds one shared outcome combiner plus an awaited async
+finisher. TaskSource prepare uses admitted cleanup; issue awaits its real Host
+operation and closes the owning ledger. Both configured constructor catches
+retain their original error plus close failure; successful construction keeps
+ownership with the returned store. Run keeps its large bodies and original
+returns: eight finalizers, one ledger-before-bridge finalizer, six constructor
+catches and five validation branches now preserve work/close causes. No private
+DB extraction, admission bypass, extra cleanup retry or UNKNOWN replay is added.
+
+Actual task-source-close-causal-red.log has2FAIL because both public callers
+lost their body cause. Joined static check caught optional native handle typing,
+unbound-method and synchronous matcher awaits; Root corrected them without
+suppression. owned-close-family-static-v12-final.log and the corrected caller
+static log pass450capturedTS/449program0 plus100Source0 and typed lint0.
+owned-close-custody-native-v12.log13PASS/137assertions/2.12s covers original
+outcome/custody cases, awaited adapter cleanup and labeled opaque-owner ordering.
+First caller batch4FAIL is fixture-only: missing required config references,
+uppercase repository ID, and live-admission asserted after authority expired at
+close start. Reuse the maintained fresh-repository fixture and capture live
+admission earlier; no product guard changed. Corrected native caller batch is
+4PASS/65assertions/19.91s; all four individual bodies are110/84/268/230ms under
+the5000ms default. Actual constructor and TaskSource faults retain both causes,
+held gate and exact registered cleanup retry. Failed roots remain retained.
+
+Three independent Source reviews find no blocker in the settled helpers,
+configured callers and run cleanup/order. These are not native Runtime or full
+numeric proof. The extracted combiner and new async finisher require current
+canonical function/scenario joins; keep prior finisher split correspondence and
+changed retained wrapper roles. Saved pre-change inventories and non-exhaustive
+partial budgets are not current executable allowances. Exact coverage, dynamic
+CRAP/frozen correspondence and assertion-confirmed mutation remain OPEN.
+Root runs the two affected public run controls before strict publication. The
+existing90s case exception stays; SDK formation follows publication separately,
+then exact freshness check and one new current reviewed coverage attempt.
+
+owned-close-run-callers-native-v12.log2PASS/136assertions/62.83s confirms
+delivered inspect/issue/report retry without old engine and the real released
+journal/maintenance admission plus selector/cutoff corruption denials. Its
+body times1.44s/59.84s retain the existing justified90s admission exception;
+eight selector-skipped ordinary cases are not counted. No isolated speedup
+claim follows from different case timings. Root publishes the joined packet
+through ordinary strict staged hook, preserving unrelated BASE/ and bun.lock.
+
 Published f24aa93 to origin/main. Run9364aa69-a223-4a4d-8ffb-2f659eea36a6
 prepared and launched from the same repository origin, admitting the reviewed
 189-file initial wave:94private/95shared. Actual direct PIDs462014/462015 both

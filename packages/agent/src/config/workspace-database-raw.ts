@@ -10,31 +10,74 @@ export interface WorkspaceDatabaseFileIdentity {
 const openedFileIdentities = new WeakMap<Database, WorkspaceDatabaseFileIdentity>();
 const pendingDatabaseCloses = new Map<Database, (database: Database) => void>();
 
-type DatabaseWorkOutcome<T> =
+export type DatabaseWorkOutcome<T> =
   | { readonly ok: true; readonly value: T }
   | { readonly ok: false; readonly error: unknown };
 
-function finishWorkspaceDatabaseClose<T>(
-  database: Database,
+function finishWorkspaceDatabaseWork<T>(
   outcome: DatabaseWorkOutcome<T>,
-  close: (database: Database) => void,
+  closeOutcome: DatabaseWorkOutcome<void>,
   message: string,
 ): T {
-  try {
-    close(database);
-  } catch (closeError) {
-    if (!outcome.ok) throw new AggregateError([outcome.error, closeError], message);
-    throw closeError;
+  if (!closeOutcome.ok) {
+    if (!outcome.ok) throw new AggregateError([outcome.error, closeOutcome.error], message);
+    throw closeOutcome.error;
   }
   if (!outcome.ok) throw outcome.error;
   return outcome.value;
 }
 
-/** Preserve operation and cleanup failures; the caller supplies the exact native or paired close owner. */
-export function withWorkspaceDatabaseClose<T>(
-  database: Database,
+export function finishWorkspaceDatabaseClose<Owner>(
+  database: Owner,
+  outcome: { readonly ok: false; readonly error: unknown },
+  close: (database: Owner) => void,
+  message: string,
+): never;
+export function finishWorkspaceDatabaseClose<T, Owner = Database>(
+  database: Owner,
+  outcome: DatabaseWorkOutcome<T>,
+  close: (database: Owner) => void,
+  message: string,
+): T;
+/** Complete an existing try/finally without moving its body or exposing an adapter's private database. */
+export function finishWorkspaceDatabaseClose<T, Owner = Database>(
+  database: Owner,
+  outcome: DatabaseWorkOutcome<T>,
+  close: (database: Owner) => void,
+  message: string,
+): T {
+  let closeOutcome: DatabaseWorkOutcome<void>;
+  try {
+    close(database);
+    closeOutcome = { ok: true, value: undefined };
+  } catch (error) {
+    closeOutcome = { ok: false, error };
+  }
+  return finishWorkspaceDatabaseWork(outcome, closeOutcome, message);
+}
+
+/** Await the exact adapter cleanup, then join its outcome through the same error accumulator. */
+export async function finishWorkspaceDatabaseCloseAsync<T, Owner = Database>(
+  database: Owner,
+  outcome: DatabaseWorkOutcome<T>,
+  close: (database: Owner) => Promise<void> | void,
+  message: string,
+): Promise<T> {
+  let closeOutcome: DatabaseWorkOutcome<void>;
+  try {
+    await close(database);
+    closeOutcome = { ok: true, value: undefined };
+  } catch (error) {
+    closeOutcome = { ok: false, error };
+  }
+  return finishWorkspaceDatabaseWork(outcome, closeOutcome, message);
+}
+
+/** Preserve work and cleanup failures; the caller supplies the exact native, paired or adapter close owner. */
+export function withWorkspaceDatabaseClose<T, Owner = Database>(
+  database: Owner,
   work: () => T,
-  close: (database: Database) => void,
+  close: (database: Owner) => void,
   message: string,
 ): T {
   let outcome: DatabaseWorkOutcome<T>;
@@ -47,10 +90,10 @@ export function withWorkspaceDatabaseClose<T>(
 }
 
 /** Await the owned operation before the same cleanup/error accumulator runs. */
-export async function withWorkspaceDatabaseCloseAsync<T>(
-  database: Database,
+export async function withWorkspaceDatabaseCloseAsync<T, Owner = Database>(
+  database: Owner,
   work: () => Promise<T> | T,
-  close: (database: Database) => void,
+  close: (database: Owner) => Promise<void> | void,
   message: string,
 ): Promise<T> {
   let outcome: DatabaseWorkOutcome<T>;
@@ -59,7 +102,7 @@ export async function withWorkspaceDatabaseCloseAsync<T>(
   } catch (error) {
     outcome = { ok: false, error };
   }
-  return finishWorkspaceDatabaseClose(database, outcome, close, message);
+  return finishWorkspaceDatabaseCloseAsync(database, outcome, close, message);
 }
 
 /** Keep only exact package-owned handles and their existing native or paired cleanup owner. */

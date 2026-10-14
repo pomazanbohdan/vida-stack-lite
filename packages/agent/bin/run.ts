@@ -42,6 +42,9 @@ const {
   openCliHostStateDatabase,
   openCliWorkspaceDatabase,
 } = await import('./workspace-database-cli.ts');
+const { finishWorkspaceDatabaseClose, withWorkspaceDatabaseClose, withWorkspaceDatabaseCloseAsync } =
+  await import('../src/config/workspace-database-raw.ts');
+type RunLedgerCloseOutcome = import('../src/config/workspace-database-raw.ts').DatabaseWorkOutcome<void>;
 const { verifyForwardReviewSet } = await import('./forward-review-proof.ts');
 const {
   parseDocumentationPolicyTransitionEnvelope,
@@ -5104,6 +5107,7 @@ async function retireInterruptedSourceOwner(args: string[]) {
   if (project.integrations_digest !== input.identity.integrations_digest)
     throw Error('Interrupted Source retirement ProjectContext differs');
   const ledger = openConfiguredMastraSessionLedger(root);
+  let retirementCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
   try {
     const store = ledger.hostState,
       snapshot = store.readWorkSessionSnapshot(input.identity, input.attempt),
@@ -5231,8 +5235,16 @@ async function retireInterruptedSourceOwner(args: string[]) {
       attempt_outcome_resolved: false,
       journal_version: after.version,
     };
+  } catch (error) {
+    retirementCloseOutcome = { ok: false, error };
+    throw error;
   } finally {
-    ledger.close();
+    finishWorkspaceDatabaseClose(
+      ledger,
+      retirementCloseOutcome,
+      (owner) => owner.close(),
+      'Run operation and owned ledger close both failed',
+    );
   }
 }
 
@@ -6185,6 +6197,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
       pathProject.project_id,
     ]);
     const selectionLedger = openConfiguredMastraSessionLedger(values.project_root);
+    let selectionCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
     try {
       const work = selectionLedger.hostState.readHostStateSnapshot({
         repository_id: project.repository_id,
@@ -6206,8 +6219,16 @@ export async function run(args: string[] = process.argv.slice(2)) {
         if (canonicalJsonDigest(selectedWorkItem) !== work.binding.work_item_digest)
           fail('GAP-VIDA-RUN-CONTEXT-001', 'Current admitted work item changed.');
       }
+    } catch (error) {
+      selectionCloseOutcome = { ok: false, error };
+      throw error;
     } finally {
-      selectionLedger.close();
+      finishWorkspaceDatabaseClose(
+        selectionLedger,
+        selectionCloseOutcome,
+        (owner) => owner.close(),
+        'Run operation and owned ledger close both failed',
+      );
     }
   }
   const selectionBase = workflowSelectionBase(
@@ -6325,6 +6346,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
       work_id: values.work_id,
     };
     const ledger = openConfiguredMastraSessionLedger(values.project_root);
+    let recoveryCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
     try {
       const journal = ledger.resume(values.work_id, recoveryAttempt);
       const host = ledger.hostState.readHostStateSnapshot(identity);
@@ -6559,8 +6581,16 @@ export async function run(args: string[] = process.argv.slice(2)) {
         workId: values.work_id,
         attempt: Number(values.attempt),
       });
+    } catch (error) {
+      recoveryCloseOutcome = { ok: false, error };
+      throw error;
     } finally {
-      ledger.close();
+      finishWorkspaceDatabaseClose(
+        ledger,
+        recoveryCloseOutcome,
+        (owner) => owner.close(),
+        'Run operation and owned ledger close both failed',
+      );
     }
   }
   if (values.renew_lease) {
@@ -6590,6 +6620,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
       work_id: values.work_id,
     };
     const ledger = openConfiguredMastraSessionLedger(values.project_root);
+    let renewalCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
     try {
       const renewalAttempt = Number(requireOption(values.attempt, '--attempt')),
         nativeSessionHandle = requireOption(values.native_session_handle, '--native-session-handle'),
@@ -6757,8 +6788,16 @@ export async function run(args: string[] = process.argv.slice(2)) {
         workId: values.work_id,
         attempt: Number(values.attempt),
       });
+    } catch (error) {
+      renewalCloseOutcome = { ok: false, error };
+      throw error;
     } finally {
-      ledger.close();
+      finishWorkspaceDatabaseClose(
+        ledger,
+        renewalCloseOutcome,
+        (owner) => owner.close(),
+        'Run operation and owned ledger close both failed',
+      );
     }
   }
   {
@@ -6868,8 +6907,12 @@ export async function run(args: string[] = process.argv.slice(2)) {
           return response;
         }
       } catch (error) {
-        ledger.close();
-        throw error;
+        return finishWorkspaceDatabaseClose(
+          ledger,
+          { ok: false, error: error },
+          (owner) => owner.close(),
+          'Run operation and owned ledger close both failed',
+        );
       }
     }
     const { loadProjectSetContext: loadAdmissionProjectContext } = await import('../src/config/project-context.ts');
@@ -6882,8 +6925,12 @@ export async function run(args: string[] = process.argv.slice(2)) {
         values.projects,
       );
     } catch (error) {
-      ledger.close();
-      throw error;
+      return finishWorkspaceDatabaseClose(
+        ledger,
+        { ok: false, error: error },
+        (owner) => owner.close(),
+        'Run operation and owned ledger close both failed',
+      );
     }
     let admissionHost;
     const admissionIdentity = {
@@ -6895,8 +6942,12 @@ export async function run(args: string[] = process.argv.slice(2)) {
     try {
       admissionHost = ledger.hostState.readHostStateSnapshot(admissionIdentity);
     } catch (error) {
-      ledger.close();
-      throw error;
+      return finishWorkspaceDatabaseClose(
+        ledger,
+        { ok: false, error: error },
+        (owner) => owner.close(),
+        'Run operation and owned ledger close both failed',
+      );
     }
     const continuationLookup = ledger.hostState.readDeliveredWorkContinuation(admissionIdentity, context.attempt);
     if (continuationLookup?.receipt.request.action.kind === 'configured_frontier') {
@@ -6904,6 +6955,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
         admissionHost,
         'Delivered prewriter continuation has no current Host work.',
       );
+      let prewriterCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
       try {
         const intake = assertAdmittedRuntimeCodeCurrent(values.project_root, ledger.hostState, admissionIdentity);
         if (values.prepare_assurance || values.correct || values.reconcile)
@@ -7124,8 +7176,16 @@ export async function run(args: string[] = process.argv.slice(2)) {
           runtime_accepted: false,
           initialization_status: initialization.workspace_binding_status,
         };
+      } catch (error) {
+        prewriterCloseOutcome = { ok: false, error };
+        throw error;
       } finally {
-        ledger.close();
+        finishWorkspaceDatabaseClose(
+          ledger,
+          prewriterCloseOutcome,
+          (owner) => owner.close(),
+          'Run operation and owned ledger close both failed',
+        );
       }
     }
     if (continuationLookup) {
@@ -7144,8 +7204,16 @@ export async function run(args: string[] = process.argv.slice(2)) {
         continuationLookup.journal.state.items.length !== 1 ||
         continuationLookup.journal.state.step_id !== actionRequest.stage_id
       ) {
-        ledger.close();
-        fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work review differs from the current Work, Journal or workflow.');
+        return withWorkspaceDatabaseClose(
+          ledger,
+          () =>
+            fail(
+              'GAP-VIDA-RUN-CONTEXT-001',
+              'Delivered-work review differs from the current Work, Journal or workflow.',
+            ),
+          (owner) => owner.close(),
+          'Run validation and owned ledger close both failed',
+        );
       }
       const candidates = sessionActionsForWave(
         config,
@@ -7179,21 +7247,36 @@ export async function run(args: string[] = process.argv.slice(2)) {
         (configuredContext?.digest ?? undefined) !== actionRequest.configured_context_digest ||
         canonicalJsonDigest(configuredFiles) !== canonicalJsonDigest(actionRequest.configured_context_files ?? [])
       ) {
-        ledger.close();
-        fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work review action or configured context is stale.');
+        return withWorkspaceDatabaseClose(
+          ledger,
+          () => fail('GAP-VIDA-RUN-CONTEXT-001', 'Delivered-work review action or configured context is stale.'),
+          (owner) => owner.close(),
+          'Run validation and owned ledger close both failed',
+        );
       }
       if (continuationLookup.action_status !== 'reported' && (values.prepare_assurance || values.correct)) {
-        ledger.close();
-        fail(
-          'GAP-VIDA-RUN-CONTEXT-001',
-          'The retained-source review must be reported before final assurance or correction.',
+        return withWorkspaceDatabaseClose(
+          ledger,
+          () =>
+            fail(
+              'GAP-VIDA-RUN-CONTEXT-001',
+              'The retained-source review must be reported before final assurance or correction.',
+            ),
+          (owner) => owner.close(),
+          'Run validation and owned ledger close both failed',
         );
       }
       if (values.reconcile) {
-        ledger.close();
-        fail('GAP-VIDA-RUN-EXECUTION-001', 'Delivered-work review does not permit native-attempt reconciliation.');
+        return withWorkspaceDatabaseClose(
+          ledger,
+          () =>
+            fail('GAP-VIDA-RUN-EXECUTION-001', 'Delivered-work review does not permit native-attempt reconciliation.'),
+          (owner) => owner.close(),
+          'Run validation and owned ledger close both failed',
+        );
       }
       if (values.issue_wave || values.report || values.inspect || !(values.prepare_assurance || values.correct)) {
+        let continuationCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
         try {
           let reviewLookup = continuationLookup,
             reviewStatus = 'continuation_review_ready';
@@ -7338,8 +7421,16 @@ export async function run(args: string[] = process.argv.slice(2)) {
             initialization_status: initialization.workspace_binding_status,
           };
           return response;
+        } catch (error) {
+          continuationCloseOutcome = { ok: false, error };
+          throw error;
         } finally {
-          ledger.close();
+          finishWorkspaceDatabaseClose(
+            ledger,
+            continuationCloseOutcome,
+            (owner) => owner.close(),
+            'Run operation and owned ledger close both failed',
+          );
         }
       }
     }
@@ -7357,6 +7448,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
     }
     let finalJournal = ledger.hostState.readFinalAssurance(admissionIdentity, context.attempt);
     if (values.prepare_assurance || (finalJournal && !values.correct)) {
+      let assuranceCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
       try {
         const {
           prepareFinalAssurance,
@@ -7502,16 +7594,28 @@ export async function run(args: string[] = process.argv.slice(2)) {
           runtime_acceptance: 'pending_attributable_user_testing',
           initialization_status: initialization.workspace_binding_status,
         };
+      } catch (error) {
+        assuranceCloseOutcome = { ok: false, error };
+        throw error;
       } finally {
-        ledger.close();
+        finishWorkspaceDatabaseClose(
+          ledger,
+          assuranceCloseOutcome,
+          (owner) => owner.close(),
+          'Run operation and owned ledger close both failed',
+        );
       }
     }
     let admissionIntake;
     try {
       admissionIntake = values.intake ? await readLocalSessionIntake(values.intake) : null;
     } catch (error) {
-      ledger.close();
-      throw error;
+      return finishWorkspaceDatabaseClose(
+        ledger,
+        { ok: false, error: error },
+        (owner) => owner.close(),
+        'Run operation and owned ledger close both failed',
+      );
     }
     if (admissionIntake) {
       if (
@@ -7521,8 +7625,12 @@ export async function run(args: string[] = process.argv.slice(2)) {
         admissionIntake.work_item.project_id !== selection.project ||
         /\p{Cc}/u.test(admissionIntake.native_session_handle)
       ) {
-        ledger.close();
-        fail('GAP-VIDA-RUN-CONTEXT-001', 'Intake identity differs from current configured work.');
+        return withWorkspaceDatabaseClose(
+          ledger,
+          () => fail('GAP-VIDA-RUN-CONTEXT-001', 'Intake identity differs from current configured work.'),
+          (owner) => owner.close(),
+          'Run validation and owned ledger close both failed',
+        );
       }
       try {
         ledger.hostState.recordAdmissionAttempt(context.work_id, context.attempt, {
@@ -7533,11 +7641,16 @@ export async function run(args: string[] = process.argv.slice(2)) {
           acceptancePath: admissionIntake.acceptance_path,
         });
       } catch (error) {
-        ledger.close();
-        throw error;
+        return finishWorkspaceDatabaseClose(
+          ledger,
+          { ok: false, error: error },
+          (owner) => owner.close(),
+          'Run operation and owned ledger close both failed',
+        );
       }
     }
     if (values.correct) {
+      let correctionCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
       try {
         const { correctiveExecutionPlanSchema, prepareLifecycleForCorrection } =
           await import('../src/orchestration/final-assurance.ts');
@@ -7595,8 +7708,16 @@ export async function run(args: string[] = process.argv.slice(2)) {
           next_operation: 'resume_same_work_attempt',
           initialization_status: initialization.workspace_binding_status,
         };
+      } catch (error) {
+        correctionCloseOutcome = { ok: false, error };
+        throw error;
       } finally {
-        ledger.close();
+        finishWorkspaceDatabaseClose(
+          ledger,
+          correctionCloseOutcome,
+          (owner) => owner.close(),
+          'Run operation and owned ledger close both failed',
+        );
       }
     }
     if (admissionHost.work?.lease && !ledger.resume(context.work_id, context.attempt)?.state.corrective_execution) {
@@ -7625,8 +7746,12 @@ export async function run(args: string[] = process.argv.slice(2)) {
           },
         });
       } catch (error) {
-        ledger.close();
-        throw error;
+        return finishWorkspaceDatabaseClose(
+          ledger,
+          { ok: false, error: error },
+          (owner) => owner.close(),
+          'Run operation and owned ledger close both failed',
+        );
       }
     }
     /** @type {RunSessionBridge | null} */
@@ -8057,6 +8182,7 @@ export async function run(args: string[] = process.argv.slice(2)) {
       }
       return null;
     };
+    let runCloseOutcome: RunLedgerCloseOutcome = { ok: true, value: undefined };
     try {
       if ((values.issue_wave || values.report) && !values.intake) {
         const paused = ledger.resume(context.work_id, context.attempt);
@@ -9349,12 +9475,24 @@ export async function run(args: string[] = process.argv.slice(2)) {
         result.action_statuses = result.action_statuses.map(markUncertainResearchStatus);
       }
       return result;
+    } catch (error) {
+      runCloseOutcome = { ok: false, error };
+      throw error;
     } finally {
-      try {
-        ledger.close();
-      } finally {
-        if (bridge) await closeRunSessionBridge(bridge);
-      }
+      await withWorkspaceDatabaseCloseAsync(
+        bridge,
+        () =>
+          finishWorkspaceDatabaseClose(
+            ledger,
+            runCloseOutcome,
+            (owner) => owner.close(),
+            'Run operation and owned ledger close both failed',
+          ),
+        async (owner) => {
+          if (owner) await closeRunSessionBridge(owner);
+        },
+        'Run operation or ledger close and owned bridge close both failed',
+      );
     }
   }
 }

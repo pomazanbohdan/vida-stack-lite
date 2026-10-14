@@ -18,6 +18,7 @@ import {
 } from '../config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import { closeWorkspaceDatabaseWithAdmission } from '../config/storage-read-admission.js';
+import { finishWorkspaceDatabaseClose } from '../config/workspace-database-raw.js';
 import { canonicalJson, canonicalJsonDigest, freezeJsonValue } from '../contracts/public-ingress.js';
 import {
   readWorkspaceMastraSqlRow,
@@ -674,8 +675,12 @@ export function openConfiguredSessionHandoffStore(repositoryRoot: string): Persi
     new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, repositoryRoot);
     return new PersistentSessionHandoffStore(database, workspaceId, config, repositoryRoot);
   } catch (error) {
-    closeWorkspaceDatabaseWithAdmission(database);
-    throw error;
+    finishWorkspaceDatabaseClose(
+      database,
+      { ok: false, error },
+      closeWorkspaceDatabaseWithAdmission,
+      'Session handoff construction and owned database close both failed',
+    );
   }
 }
 
@@ -2437,7 +2442,11 @@ export function openConfiguredMastraSessionLedger(repositoryRoot: string): Mastr
     ledger = new MastraSessionLedger(database, workspaceId, config, repositoryRoot, hostState);
     return ledger;
   } catch (error) {
-    closeWorkspaceDatabaseWithAdmission(database);
-    throw error;
+    finishWorkspaceDatabaseClose(
+      database,
+      { ok: false, error },
+      closeWorkspaceDatabaseWithAdmission,
+      'Mastra ledger construction and owned database close both failed',
+    );
   }
 }

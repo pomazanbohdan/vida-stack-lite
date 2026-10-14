@@ -1,14 +1,20 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
-import type { Database } from 'bun:sqlite';
+import { Database, type Changes, type SQLQueryBindings } from 'bun:sqlite';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
+import {
+  assertWorkspaceDatabaseAdmission,
+  closeWorkspaceDatabaseWithAdmission,
+  openAdmittedWorkspaceDatabase,
+} from '../src/config/storage-read-admission.ts';
+import { retryPendingWorkspaceDatabaseCloses } from '../src/config/workspace-database-raw.ts';
 import {
   HostStateStore,
+  initializeTaskSourceBindingWorkProjectionSchema,
   openHostStateDatabase,
   type CoordinationLedger,
   type HostStateSnapshot,
@@ -2489,6 +2495,172 @@ test('configured inspect and admitted packet/result read current TaskSource byte
       rmSync(hostRoot, { recursive: true, force: true });
   }
 });
+
+test.each(['prepare', 'issue'] as const)(
+  'public TaskSource %s preserves its Host validation error when the admitted database close fails',
+  async (mode) => {
+    const fixture = makeConfiguredFixtureRoot(),
+      { repositoryRoot, config, project } = fixture,
+      workspaceId = deriveWorkspaceId(config.repository.repository_id, repositoryRoot),
+      databasePath = sessionHandoffDatabasePath(repositoryRoot, config),
+      databaseRelativePath = path.relative(repositoryRoot, databasePath),
+      requestPath = '.agent/work/task-source-close-fault-request.json';
+    let closeSpy: { mockRestore(): void } | undefined;
+    let execSpy: { mockRestore(): void } | undefined;
+    let issueSpy: { mockRestore(): void } | undefined;
+    let sourceHandle: Database | undefined;
+    const sourceHandles: Database[] = [];
+    const gateHandles: Database[] = [];
+    let issueBodyError: unknown;
+    let passed = false;
+    try {
+      mkdirSync(path.dirname(databasePath), { recursive: true });
+      const setupDatabase = openFixtureDatabase(repositoryRoot, databasePath, workspaceId);
+      new HostStateStore(setupDatabase, workspaceId, undefined, undefined, undefined, undefined, repositoryRoot);
+      closeWorkspaceDatabaseWithAdmission(setupDatabase);
+      const setupLedger = openConfiguredMastraSessionLedger(repositoryRoot);
+      setupLedger.close();
+      const schemaDatabase = openFixtureDatabase(repositoryRoot, databasePath, workspaceId);
+      initializeTaskSourceBindingWorkProjectionSchema(schemaDatabase);
+      closeWorkspaceDatabaseWithAdmission(schemaDatabase);
+      const databaseBefore = readFileSync(databasePath),
+        request: TaskSourceBindingRequest = {
+          schema: 'TaskSourceBindingRequest/v1',
+          operation: 'propose-create',
+          operation_id: 'task-source-close-fault-operation',
+          request_id: 'task-source-close-fault-request',
+          branch_ref: 'refs/heads/codex/task-source-close-fault',
+          expected_host: {
+            work: { revision: 1, digest: 'a'.repeat(64) },
+            ledger: { revision: 1, digest: 'b'.repeat(64) },
+            journal: { attempt: 1, version: { revision: 1, digest: 'c'.repeat(64) } },
+            maintenance_generation: 0,
+          },
+          canonical_host_root: repositoryRoot,
+          work_id: 'task-source-close-fault-work',
+          attempt: 1,
+          thread_id: 'task-source-close-fault-thread',
+          repository_id: config.repository.repository_id,
+          project_ids: [...project.project_ids],
+          config_digest: runtimeConfigDigest(config),
+          project_context_digest: project.project_context_digest,
+        };
+      mkdirSync(path.dirname(path.join(repositoryRoot, requestPath)), { recursive: true });
+      writeFileSync(path.join(repositoryRoot, requestPath), canonicalJson(request));
+      const closeError = new Error('injected admitted Host native close failure'),
+        originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close,
+        originalExec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec,
+        originalIssue = Reflect.get(
+          HostStateStore.prototype,
+          'issueTaskSourceBindingOperation',
+        ) as HostStateStore['issueTaskSourceBindingOperation'],
+        gatePath = path.join(repositoryRoot, '.vida/storage-admission.v1.sqlite'),
+        closeHandles: Database[] = [];
+      assert.ok(existsSync(gatePath), 'fixture setup must bootstrap the native admission gate before injection');
+      closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+        this: Database,
+        force?: boolean,
+      ): void {
+        if (path.resolve(this.filename) === databasePath) {
+          closeHandles.push(this);
+          if (closeHandles.length === 1) throw closeError;
+        }
+        originalClose.call(this, force);
+      });
+      execSpy = spyOn(Database.prototype, 'exec').mockImplementation(function <ParamsType extends SQLQueryBindings[]>(
+        this: Database,
+        sql: string,
+        ...bindings: ParamsType[]
+      ): Changes {
+        if (path.resolve(this.filename) === databasePath && sql === 'PRAGMA synchronous=FULL' && !sourceHandle) {
+          assertWorkspaceDatabaseAdmission(this, repositoryRoot, databaseRelativePath, workspaceId);
+          sourceHandles.push(this);
+          sourceHandle = sourceHandles[0];
+        }
+        if (path.resolve(this.filename) === gatePath && sql.trim().toUpperCase() === 'BEGIN DEFERRED')
+          gateHandles.push(this);
+        return originalExec.call(this, sql, ...bindings);
+      });
+      if (mode === 'issue')
+        issueSpy = spyOn(HostStateStore.prototype, 'issueTaskSourceBindingOperation').mockImplementation(function (
+          this: HostStateStore,
+          input: Parameters<HostStateStore['issueTaskSourceBindingOperation']>[0],
+        ) {
+          return originalIssue.call(this, input).catch((error: unknown) => {
+            issueBodyError = error;
+            throw error;
+          });
+        });
+
+      const failure = await executeTaskSourceBindingOperation({
+        repositoryRoot,
+        mode,
+        requestPath,
+      }).then(
+        () => undefined,
+        (error: unknown) => error,
+      );
+      expect(failure).toBeInstanceOf(AggregateError);
+      if (!(failure instanceof AggregateError)) throw new Error('TaskSource prepare did not preserve both failures');
+      expect(failure.errors).toHaveLength(2);
+      const bodyError: unknown = failure.errors[0],
+        cleanupError: unknown = failure.errors[1];
+      expect(bodyError).toBeInstanceOf(Error);
+      expect(bodyError).toHaveProperty('code', 'GAP-HOST-STATE-001');
+      if (mode === 'prepare')
+        expect(bodyError).toHaveProperty('message', 'task source preparation Host work is missing');
+      else {
+        expect(bodyError).toHaveProperty('message', 'task source operation must be prepared before issue');
+        expect(issueBodyError).toBe(bodyError);
+      }
+      expect(cleanupError).toBeInstanceOf(AggregateError);
+      if (!(cleanupError instanceof AggregateError)) throw new Error('Native close failure was not retained');
+      expect(cleanupError.errors).toEqual([closeError]);
+      expect(cleanupError.errors[0]).toBe(closeError);
+      expect(sourceHandle).toBeInstanceOf(Database);
+      expect(gateHandles.at(-1)).toBeInstanceOf(Database);
+      const admittedSource = sourceHandle;
+      const admittedGate = gateHandles.at(-1);
+      if (!admittedSource || !admittedGate) throw new Error('Admitted source or its paired gate was not captured');
+      expect(closeHandles).toEqual([admittedSource]);
+      expect(admittedSource.query<{ value: number }, []>('SELECT 1 AS value').get()?.value).toBe(1);
+      expect(admittedGate.inTransaction).toBe(true);
+      expect(
+        admittedSource
+          .query<{ operation_id: string }, [string, string]>(
+            'SELECT operation_id FROM agent_host_task_source_binding_operation WHERE workspace_id=? AND operation_id=?',
+          )
+          .get(workspaceId, request.operation_id),
+      ).toBeNull();
+      expect(readFileSync(databasePath)).toEqual(databaseBefore);
+
+      retryPendingWorkspaceDatabaseCloses();
+      expect(closeHandles).toEqual([admittedSource, admittedSource]);
+      expect(() => admittedSource.query('SELECT 1 AS value').get()).toThrow();
+      expect(() => admittedGate.query('SELECT 1 AS value').get()).toThrow();
+      closeSpy.mockRestore();
+      closeSpy = undefined;
+      execSpy.mockRestore();
+      execSpy = undefined;
+      issueSpy?.mockRestore();
+      issueSpy = undefined;
+      const admitted = openAdmittedWorkspaceDatabase(repositoryRoot, databaseRelativePath, workspaceId, false);
+      closeWorkspaceDatabaseWithAdmission(admitted);
+      expect(readFileSync(databasePath)).toEqual(databaseBefore);
+      passed = true;
+    } finally {
+      closeSpy?.mockRestore();
+      execSpy?.mockRestore();
+      issueSpy?.mockRestore();
+      try {
+        retryPendingWorkspaceDatabaseCloses();
+      } catch {
+        // Preserve the fixture if the registered close owner still cannot settle.
+      }
+      if (passed) rmSync(repositoryRoot, { recursive: true, force: true });
+    }
+  },
+);
 
 test.each([
   ['source-planner', 'security-prewriter'],

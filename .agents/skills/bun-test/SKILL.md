@@ -573,6 +573,14 @@ owns cleanup on callback failure. Distinguish an injected pre-native close
 interruption from a real SQLite I/O close fault. Preserve body and cleanup
 errors, and retain failed or expired fixture roots.
 
+In combined constructor/close controls, reuse the maintained fresh-repository
+fixture so required configuration references are present. Observe the exact
+admitted source before closing; checking live admission inside native close
+tests the intentionally expired authority instead of the injected close fault.
+Await adapter cleanup before observing its outcome. Preserve sole error identity,
+explicit failed-undefined outcomes and work-before-cleanup cause order. An opaque
+owner ordering control remains separate from native configured-caller evidence.
+
 For public consumer migration reader tests, use the existing public-store fixture
 option rather than its synthetic workspace. Reset close observations when the
 selected verified capture starts; count completed native closes, preserving the

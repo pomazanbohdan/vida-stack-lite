@@ -12,6 +12,19 @@
 
 ## Current dispatch — 2026-10-14
 
+Latest publishedb7e7244 full run377d441a ends with both actual direct children
+SIGKILL/UNKNOWN, no numeric report and no resource advancement. Partial PASS
+rows are not whole-file weights. Current dependency-ready v12 packet closes
+the evidenced work/close masking family across TaskSource, configured store
+constructors and run cleanup; three Source reviews find no blocker. Native
+close owner13PASS and actual caller4PASS qualify scoped behavior only. Root
+finishes affected run controls, strict publication, then forms SDK0.1.4 under
+the exact supported pending operationlocal-aab49fb0-12bb-4a68-b187-5f8e679571cb.
+Run the exact distributed SDK freshness case before any new complete selection;
+build/install run no suites. Reuse current captured inventory/review owners,
+refresh changed source/test/dist bindings once, keep the one300000ms entry budget
+and30000ms terminal/report reserve. All final numeric gates remain OPEN.
+
 Published978d206 qualifies combined work/close custody and closed-WAL image
 deserialization. The dependency-ready v9 packet removes eager pure-contract
 engine edges and duplicate preload assignment/self-byte work. Its actual
