@@ -251,11 +251,11 @@ function finishSessionEngineRead(
     (owner) => {
       closeWorkspaceDatabaseWithAdmission(owner);
       assertProjectUpgradeInactive(access);
-      const after = lstatSync(target);
+      const after = lstatSync(target, { bigint: true });
       requireEngine(
         after.isFile() &&
           !after.isSymbolicLink() &&
-          after.nlink === 1 &&
+          after.nlink === 1n &&
           after.dev === before.dev &&
           after.ino === before.ino,
         substitutedMessage,

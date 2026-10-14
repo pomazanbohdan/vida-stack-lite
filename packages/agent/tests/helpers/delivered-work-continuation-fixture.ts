@@ -197,6 +197,7 @@ const fixtureIdentity: WorkIdentity = {
 };
 const fixtureRoots: string[] = [];
 const fixtureDatabases: Database[] = [];
+const closedFixtureDatabases = new WeakSet<Database>();
 
 export function lifecycleFor(binding: WorkState['binding'], revision = 1): WorkState['lifecycle'] {
   return {
@@ -280,11 +281,12 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
   fixtureDatabases.push(db);
   let databaseClosed = false;
   const closeDatabase = () => {
-    if (databaseClosed) return;
+    if (databaseClosed || closedFixtureDatabases.has(db)) return;
+    db.close();
     databaseClosed = true;
+    closedFixtureDatabases.add(db);
     const index = fixtureDatabases.indexOf(db);
     if (index >= 0) fixtureDatabases.splice(index, 1);
-    db.close();
   };
   const principal = 'fixture:delivered-work-continuation',
     maintenancePrincipal = 'fixture:maintenance',
@@ -721,46 +723,107 @@ export function trackContinuationFixtureRoot(root: string) {
   return root;
 }
 
-const uncertainFixtureRoots = new Set();
+// Exact absolute roots in this set have an explicit retained disposition, not a future deletion retry.
+const uncertainFixtureRoots = new Set<string>();
 export function retainContinuationFixtureRoot(root: string) {
   uncertainFixtureRoots.add(path.resolve(root));
 }
 
 export function cleanupContinuationFixtures() {
-  const retained = new Set(uncertainFixtureRoots);
-  for (const database of fixtureDatabases.splice(0)) {
-    const filename = path.resolve(database.filename);
-    if (hasUnresolvedFixtureOperations(database)) {
-      for (const root of fixtureRoots) {
-        const relative = path.relative(path.resolve(root), filename);
-        if (relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep))
-          retained.add(path.resolve(root));
+  const errors: unknown[] = [];
+  const retainRootsForDatabase = (database: Database): void => {
+    let filename: string;
+    try {
+      filename = path.resolve(database.filename);
+    } catch (error) {
+      for (const root of fixtureRoots) uncertainFixtureRoots.add(path.resolve(root));
+      errors.push(error);
+      return;
+    }
+    let matched = false;
+    for (const root of fixtureRoots) {
+      const resolvedRoot = path.resolve(root);
+      const relative = path.relative(resolvedRoot, filename);
+      if (relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)) {
+        uncertainFixtureRoots.add(resolvedRoot);
+        matched = true;
       }
     }
-    database.close();
+    if (!matched) for (const root of fixtureRoots) uncertainFixtureRoots.add(path.resolve(root));
+  };
+  const removeTrackedRoot = (root: string): void => {
+    for (let index = fixtureRoots.length - 1; index >= 0; index -= 1)
+      if (path.resolve(fixtureRoots[index] ?? '') === root) fixtureRoots.splice(index, 1);
+  };
+
+  for (const database of [...fixtureDatabases]) {
+    try {
+      if (hasUnresolvedFixtureOperations(database)) retainRootsForDatabase(database);
+    } catch (error) {
+      retainRootsForDatabase(database);
+      errors.push(error);
+    }
+    try {
+      database.close();
+      closedFixtureDatabases.add(database);
+      const index = fixtureDatabases.indexOf(database);
+      if (index >= 0) fixtureDatabases.splice(index, 1);
+    } catch (error) {
+      retainRootsForDatabase(database);
+      errors.push(error);
+    }
   }
-  const scratchPath = path.join(runtimeRoot, '.tmp'),
-    scratchStat = lstatSync(scratchPath, { throwIfNoEntry: false });
-  const parents = [
-    realpathSync(tmpdir()),
-    ...(scratchStat?.isDirectory() && !scratchStat.isSymbolicLink() ? [realpathSync(scratchPath)] : []),
-  ];
-  for (const root of new Set(fixtureRoots.splice(0).map((value) => path.resolve(value)))) {
-    if (retained.has(root)) {
-      process.stderr.write('Preserved continuation fixture with unresolved operation: ' + root + '\n');
+
+  let parents: string[] | undefined;
+  try {
+    const scratchPath = path.join(runtimeRoot, '.tmp'),
+      scratchStat = lstatSync(scratchPath, { throwIfNoEntry: false });
+    parents = [
+      realpathSync(tmpdir()),
+      ...(scratchStat?.isDirectory() && !scratchStat.isSymbolicLink() ? [realpathSync(scratchPath)] : []),
+    ];
+  } catch (error) {
+    for (const root of fixtureRoots) uncertainFixtureRoots.add(path.resolve(root));
+    errors.push(error);
+  }
+  for (const root of new Set(fixtureRoots.map((value) => path.resolve(value)))) {
+    if (uncertainFixtureRoots.has(root)) {
+      try {
+        process.stderr.write('Preserved continuation fixture with unresolved operation: ' + root + '\n');
+      } catch (error) {
+        errors.push(error);
+      }
+      removeTrackedRoot(root);
       continue;
     }
-    const stat = lstatSync(root, { throwIfNoEntry: false });
-    if (!stat) continue;
-    const resolved = realpathSync(root);
-    const owned = parents.some((parent) => {
-      const relative = path.relative(parent, resolved);
-      return (
-        relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)
-      );
-    });
-    if (!stat.isDirectory() || stat.isSymbolicLink() || !owned)
-      throw new Error('Continuation fixture cleanup target is outside the owned temporary roots');
-    rmSync(resolved, { recursive: true, force: true });
+    try {
+      if (!parents) {
+        uncertainFixtureRoots.add(root);
+        removeTrackedRoot(root);
+        continue;
+      }
+      const stat = lstatSync(root, { throwIfNoEntry: false });
+      if (!stat) {
+        removeTrackedRoot(root);
+        continue;
+      }
+      const resolved = realpathSync(root);
+      const owned = parents.some((parent) => {
+        const relative = path.relative(parent, resolved);
+        return (
+          relative !== '' && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep)
+        );
+      });
+      if (!stat.isDirectory() || stat.isSymbolicLink() || !owned)
+        throw new Error('Continuation fixture cleanup target is outside the owned temporary roots');
+      rmSync(resolved, { recursive: true, force: true });
+      removeTrackedRoot(root);
+    } catch (error) {
+      uncertainFixtureRoots.add(root);
+      removeTrackedRoot(root);
+      errors.push(error);
+    }
   }
+  if (errors.length)
+    throw new AggregateError(errors, 'Continuation fixture cleanup failed; uncertain roots were retained');
 }

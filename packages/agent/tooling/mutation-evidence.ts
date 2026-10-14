@@ -487,6 +487,7 @@ export const mutationToolInputs = [
   'tooling/mutation-gate.ts',
   'tooling/mutation-command-runner.ts',
   'tooling/mutation-evidence.ts',
+  'tooling/mutation-assertion-context.ts',
   'tooling/mutation-test-adapter.ts',
   'tooling/mutation-test-preload.ts',
   'bin/bun.ts',

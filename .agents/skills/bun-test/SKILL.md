@@ -8,6 +8,33 @@ description: Use when writing, migrating, reviewing, running or optimizing TypeS
 Use the smallest contract-backed check that resolves the current uncertainty.
 Keep behavior, timing and numerical qualification as separate evidence.
 
+Use the coverage operation outcome separately from numeric reports. An owned
+deadline firing and SIGKILL are distinct observations; an injected external
+spawn timeout need not fire the supervisor's timer. Preserve producer and
+operation records independently before checking a spent allowance. Bind report
+validation to that exact run even if the later CRAP budget check fails.
+
+For real caller overlap, first prove that the selected operation reaches the
+target verified descriptor. A missing-Work/factory-close denial may finish
+before any instruction read. Place a test-only phase bracket around the actual
+configured-context call, coordinate both cold children at that descriptor, and
+compare exact bytes and CAS sidecars. Reuse the JUnit validator; filtered cases
+are explicit skipped rows, not missing completion. Only the selected case must
+execute, and both native terminals and drained outputs must be observed.
+
+Stat identity uses bigint at its initial capture, including post-close fences.
+Large-inode injection with a real open proves the boundary, not a huge inode on
+the physical filesystem. For SQLite RETURNING, drain DML once and read effects
+on the same connection without yielding; SELECT must not inherit old changes.
+Cast metadata integers to SQL TEXT when exact rowid is needed across both Bun
+safeIntegers modes. Do not execute DML again to collect metadata.
+
+Mutation assertion consumption applies to node:assert and Bun matchers.
+Successful throws/rejects must clear the consumed error from its body context.
+Each expanded row needs its own JUnit-bound body ID and original callback
+arguments/object identity. Repeated retry IDs remain denied, never silently
+credited. Copied preload/context templates need explicit tool-input bindings.
+
 For cold import controls, install Bun's resolver denial in a fresh native child,
 exercise the actual pure consumer and decode its bounded diagnostic. Parent
 module spies prove calls, not child evaluation. HostState requires a real

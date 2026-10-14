@@ -47,12 +47,19 @@ import {
 } from './coverage-instrumented-sources.ts';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from './coverage-run-lock.js';
 import {
+  buildCoverageRunOutcome,
+  type CoveragePhaseProducerObservation,
+  type CoverageRunOutcomeInput,
+} from './coverage-run-outcome.ts';
+import { captureSelectedSdkJavascriptOutputsFromCapturedBytes } from './sdk-artifact-capture.ts';
+import {
   coverageEnvironmentSha256,
   coverageReviewEnvironmentSha256,
   coverageInputs,
   instrumentSource,
   isExternalModulePath,
   readBunPin,
+  sdkFormationInputsFromQualityCapture,
   sha256,
 } from './bun-coverage-evidence.ts';
 import type { CoverageShardPlan } from './coverage-shard-plan.ts';
@@ -60,6 +67,24 @@ import type { CoverageShardInvocation } from './coverage-shard-evidence.ts';
 
 import type { FileCoverageData } from 'istanbul-lib-instrument';
 import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
+import { expectedJavascriptFiles } from './maintained-source-inventory.ts';
+
+/** Deny stale emitted SDKs before allocating coverage outputs or launching tests. */
+export function assertCurrentCoverageSdkFreshness(root: string, inputs: CoverageInputs): void {
+  if (
+    inputs.test_selection.mode !== 'full-current-test-set' ||
+    !inputs.tests.includes('tests/configured-workflow.test.ts')
+  )
+    return;
+  const selected = sdkFormationInputsFromQualityCapture(inputs);
+  const artifacts = new Map<string, Buffer>();
+  for (const file of ['dist/sdk-formation.json', ...expectedJavascriptFiles.map((member) => `dist/src/${member}`)]) {
+    const bytes = inputs.input_bytes[file];
+    if (!bytes) throw new Error(`Captured SDK formation artifact is missing: ${file}`);
+    artifacts.set(file, bytes);
+  }
+  captureSelectedSdkJavascriptOutputsFromCapturedBytes(root, selected.selectedInputs, artifacts);
+}
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 
 type SourceDigest = InputDigest;
@@ -98,6 +123,23 @@ type ChildOutcome = {
   unknown: boolean;
 };
 
+class CoverageReportRejectedError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'CoverageReportRejectedError';
+  }
+}
+
+function reportRejected(message: string): never {
+  throw new CoverageReportRejectedError(message);
+}
+
+function rejectPureReportValidator(error: unknown): never {
+  if (error instanceof Error && error.constructor === Error && !Object.hasOwn(error, 'code'))
+    reportRejected(error.message);
+  throw error;
+}
+
 export type PreparedCoverageProducer = {
   shard_id: string;
   args: readonly string[];
@@ -109,6 +151,8 @@ export type PreparedCoverageProducer = {
 };
 
 export type CoverageProducerOutcome = ChildOutcome & {
+  /** Parent-owned deadline observation; a signal alone does not establish timeout. */
+  timeout_observed?: boolean | null;
   producer_pid: number | null;
   launch_attempted: boolean;
   producerTerminalKnown: boolean;
@@ -135,6 +179,25 @@ export function recordCoverageProducerGroup(file: string, runId: string, group: 
     run_id: runId,
     ...group,
   });
+}
+
+/** Attempt each diagnostic destination; one I/O failure must not suppress the other. */
+function recordCoverageTerminalObservations(
+  supervisorPath: string,
+  runId: string,
+  group: CoverageProducerGroup,
+  recordOutcome: () => void,
+): void {
+  const errors: unknown[] = [];
+  for (const record of [() => recordCoverageProducerGroup(supervisorPath, runId, group), recordOutcome]) {
+    try {
+      record();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length === 1) throw errors[0];
+  if (errors.length) throw new AggregateError(errors, 'Coverage terminal observation writes failed.');
 }
 
 type ShardReportManifest = Pick<
@@ -170,22 +233,26 @@ export function collectCoverageShardReport(input: {
   group: CoverageProducerGroup;
 }) {
   const { root, manifestPath, manifest, group } = input;
-  validateCoverageShardLaunchBinding(
-    {
-      ...manifest,
-      selected_test_inputs: manifest.test_inputs.filter((row) => manifest.tests.includes(row.path)),
-      snapshot_directory: path.resolve(root, manifest.snapshot_directory),
-    },
-    manifest.coverage_plan,
-    root,
-    manifest.shard_temporary_root,
-  );
+  try {
+    validateCoverageShardLaunchBinding(
+      {
+        ...manifest,
+        selected_test_inputs: manifest.test_inputs.filter((row) => manifest.tests.includes(row.path)),
+        snapshot_directory: path.resolve(root, manifest.snapshot_directory),
+      },
+      manifest.coverage_plan,
+      root,
+      manifest.shard_temporary_root,
+    );
+  } catch (error) {
+    rejectPureReportValidator(error);
+  }
   if (
     !group.reservationSafeToRelease ||
     group.outcomes.length !== manifest.shard_invocations.length ||
     new Set(group.outcomes.map((outcome) => outcome.shard_id)).size !== group.outcomes.length
   )
-    throw new Error('Coverage shard producer group is incomplete or unaccounted.');
+    reportRejected('Coverage shard producer group is incomplete or unaccounted.');
   const shards = group.outcomes.map((outcome) => successfulCoverageShardTerminal(manifest, outcome));
   const processes = manifest.shard_invocations.flatMap((invocation) => {
     const terminal = shards.find((row) => row.shard_id === invocation.shard_id);
@@ -248,10 +315,15 @@ function capturedCoverageShardReceipts(invocation: CoverageShardInvocation, term
   const names = readdirSync(invocation.output_paths.receipt_directory)
     .filter((name) => name.endsWith('.json'))
     .sort();
-  if (!names.length) throw new Error('Coverage shard has no process receipts.');
+  if (!names.length) reportRejected('Coverage shard has no process receipts.');
   return names.map((name) => {
     const bytes = readFileSync(path.join(invocation.output_paths.receipt_directory, name));
-    const raw: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    let raw: unknown;
+    try {
+      raw = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    } catch {
+      reportRejected('Coverage shard process receipt is not valid JSON: ' + name);
+    }
     const receipt = decodeCoverageShardProcessEvidence(raw);
     if (
       !receipt ||
@@ -259,7 +331,7 @@ function capturedCoverageShardReceipts(invocation: CoverageShardInvocation, term
       receipt.shard_id !== terminal.shard_id ||
       receipt.pid !== terminal.pid
     )
-      throw new Error('Coverage shard receipt does not match its accounted native terminal.');
+      reportRejected('Coverage shard receipt does not match its accounted native terminal.');
     return {
       file: terminal.shard_id + '/' + name,
       pid: receipt.pid,
@@ -574,6 +646,7 @@ function unattemptedCoverageProducer(
     producerTerminalKnown: false,
     directProducerAccounted: false,
     resourceSafeToAdvance: false,
+    timeout_observed: null,
   };
 }
 
@@ -589,7 +662,6 @@ function runCoverageProducer(
       cwd: launch.cwd,
       env: launch.env,
       stdio: ['ignore', output, output],
-      timeout: allowance,
       killSignal: 'SIGKILL',
       windowsHide: true,
     });
@@ -643,10 +715,12 @@ function observeCoverageProducerClose(
   return new Promise((resolve) => {
     let settled = false;
     let spawnError: Error | undefined;
+    let timeoutObserved = false;
     const finish = (code: number | null, signalValue: NodeJS.Signals | null | undefined, timedOut: boolean) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
+      clearTimeout(deadlineTimer);
       const signal = signalValue ?? null;
       if (timedOut) {
         try {
@@ -655,8 +729,20 @@ function observeCoverageProducerClose(
         child.unref();
       }
       const error = spawnError ?? (timedOut ? 'Producer close was not observed within its bounded wait.' : null);
-      resolve(coverageProducerOutcome(launch, pid, code, signal, error === null ? null : String(error)));
+      resolve({
+        ...coverageProducerOutcome(launch, pid, code, signal, error === null ? null : String(error)),
+        timeout_observed: timeoutObserved,
+        unknown: timeoutObserved || Boolean(error) || signal !== null || !Number.isInteger(code) || pid === null,
+      });
     };
+    const deadlineTimer = setTimeout(() => {
+      timeoutObserved = true;
+      try {
+        child.kill('SIGKILL');
+      } catch (error) {
+        spawnError = error instanceof Error ? error : new Error(String(error));
+      }
+    }, allowance);
     const timer = setTimeout(() => finish(null, null, true), allowance + terminalWait);
     child.once('error', (error: Error) => {
       spawnError = error;
@@ -682,6 +768,48 @@ export function coverageProducerReservationSafeToRelease(
       : null;
   return result.pid === 0 && result.status === null && result.signal === null && errorCode === 'ENOENT';
 }
+
+function ownErrorString(error: unknown, key: 'name' | 'code' | 'message'): string | null {
+  if ((typeof error !== 'object' && typeof error !== 'function') || error === null) return null;
+  try {
+    const descriptor = Object.getOwnPropertyDescriptor(error, key);
+    return descriptor && 'value' in descriptor && typeof descriptor.value === 'string'
+      ? descriptor.value.slice(0, 512)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+export function coveragePhaseProducerObservation(
+  phase: CoveragePhaseProducerObservation['phase'],
+  result: SpawnSyncReturns<unknown>,
+): CoveragePhaseProducerObservation {
+  const producerTerminalKnown = coverageProducerTerminalKnown(result);
+  const reservationSafeToRelease = producerTerminalKnown || coverageProducerReservationSafeToRelease(result);
+  const error = result.error ?? null;
+  const errorCode = ownErrorString(error, 'code');
+  return {
+    phase,
+    launch_attempted: true,
+    pid: Number.isInteger(result.pid) ? result.pid : null,
+    status: result.status,
+    signal: result.signal,
+    error: error
+      ? {
+          name: ownErrorString(error, 'name'),
+          code: errorCode,
+          message: ownErrorString(error, 'message'),
+        }
+      : null,
+    timeout_observed: errorCode === 'ETIMEDOUT',
+    producerTerminalKnown,
+    directProducerAccounted: producerTerminalKnown,
+    reservationSafeToRelease,
+    unknown: Boolean(error) || result.signal !== null || !Number.isInteger(result.status) || !producerTerminalKnown,
+  };
+}
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputRoot = path.join(root, 'coverage', 'bun-unified');
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
@@ -702,7 +830,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     return typeof value === 'object' && value !== null && !Array.isArray(value);
   }
   function record(value: unknown, description: string): Record<string, unknown> {
-    if (!isRecord(value)) throw new Error(`Invalid Istanbul map: ${description}`);
+    if (!isRecord(value)) reportRejected(`Invalid Istanbul map: ${description}`);
     return value;
   }
   function childEnvironment(
@@ -795,17 +923,21 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const sourcePaths = Object.keys(record(receipt.coverage, `${name}.coverage`)).map((file) =>
       path.relative(root, path.resolve(file)).replaceAll('\\', '/'),
     );
-    assertPublishedFixtureProcess(manifest.test_selection.published_fixture, receipt, [
-      ...manifest.tests,
-      ...sourcePaths,
-    ]);
-    assertPublishedFixtureChildren(
-      manifest.test_selection.published_fixture,
-      receipt,
-      manifest.test_selection.published_fixture
-        ? path.join(root, manifest.snapshot_directory, manifest.test_selection.published_fixture.directory)
-        : undefined,
-    );
+    try {
+      assertPublishedFixtureProcess(manifest.test_selection.published_fixture, receipt, [
+        ...manifest.tests,
+        ...sourcePaths,
+      ]);
+      assertPublishedFixtureChildren(
+        manifest.test_selection.published_fixture,
+        receipt,
+        manifest.test_selection.published_fixture
+          ? path.join(root, manifest.snapshot_directory, manifest.test_selection.published_fixture.directory)
+          : undefined,
+      );
+    } catch (error) {
+      rejectPureReportValidator(error);
+    }
     requireSnapshotIdentity(receipt, manifest, name);
     requireSnapshotLoadedInputs(receipt, manifest, name);
   }
@@ -816,13 +948,13 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       JSON.stringify(receipt.execution_scope) !== JSON.stringify(manifest.execution_scope) ||
       JSON.stringify(receipt.active_argv) !== JSON.stringify(manifest.active_argv)
     )
-      throw new Error('Coverage process snapshot metadata differs from its manifest: ' + name);
+      reportRejected('Coverage process snapshot metadata differs from its manifest: ' + name);
     const preload = manifest.tool_inputs.find((entry) => entry.path === 'tooling/bun-coverage-preload.ts');
     if (
       JSON.stringify(receipt.preload_input) !==
       JSON.stringify({ path: 'tooling/bun-coverage-preload.ts', sha256: preload?.sha256 })
     )
-      throw new Error('Coverage process preload identity differs from its manifest: ' + name);
+      reportRejected('Coverage process preload identity differs from its manifest: ' + name);
   }
 
   function requireSnapshotLoadedInputs(receipt: Record<string, unknown>, manifest: RunManifest, name: string) {
@@ -834,22 +966,22 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       ]),
     );
     const loaded = receipt.loaded_inputs;
-    if (!Array.isArray(loaded)) throw new Error('Coverage process loaded-input receipt is missing: ' + name);
+    if (!Array.isArray(loaded)) reportRejected('Coverage process loaded-input receipt is missing: ' + name);
     const loadedItems: unknown[] = loaded;
     const seen = snapshotLoadedPaths(loadedItems, expected, name);
     for (const test of manifest.tests)
-      if (!seen.has(test)) throw new Error('Selected test was not snapshot-loaded: ' + test);
+      if (!seen.has(test)) reportRejected('Selected test was not snapshot-loaded: ' + test);
     for (const required of [
       'tooling/bun-coverage-preload.ts',
       'tooling/bun-coverage-evidence.ts',
       'tooling/coverage-instrumented-sources.ts',
       'tooling/maintained-source-inventory.ts',
     ])
-      if (!seen.has(required)) throw new Error('Snapshot bootstrap dependency was not attested: ' + required);
+      if (!seen.has(required)) reportRejected('Snapshot bootstrap dependency was not attested: ' + required);
   }
 
   function requireExternalModuleInputs(values: unknown, name: string) {
-    if (!Array.isArray(values)) throw new Error('Coverage process external-module receipt is missing: ' + name);
+    if (!Array.isArray(values)) reportRejected('Coverage process external-module receipt is missing: ' + name);
     const seen = new Set<string>();
     const items: unknown[] = values;
     for (const value of items) {
@@ -862,7 +994,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         seen.has(item.path) ||
         !isExternalModulePath(item.path)
       )
-        throw new Error('Coverage process external-module classification is invalid: ' + name);
+        reportRejected('Coverage process external-module classification is invalid: ' + name);
       seen.add(item.path);
     }
   }
@@ -877,7 +1009,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         seen.has(item.path) ||
         expected.get(item.path) !== item.sha256
       )
-        throw new Error('Coverage process loaded an unbound local input: ' + name);
+        reportRejected('Coverage process loaded an unbound local input: ' + name);
       seen.add(item.path);
     }
     return seen;
@@ -901,12 +1033,23 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       });
       return outcomeFromSynchronousProducer(result);
     }
+    operationOutcome.test_reservation_safe_to_release = false;
     const group = await superviseCoverageProducers(
       [{ shard_id: 'bun-test', args: invocation.args, cwd: invocation.cwd, env: invocation.env }],
       commandBudget,
     );
-    terminalKnown = group.reservationSafeToRelease;
-    recordCoverageProducerGroup(path.join(reportDirectory, 'observations', 'supervisor.json'), manifest.run_id, group);
+    operationOutcome.producer_group = group;
+    operationOutcome.test_reservation_safe_to_release = group.reservationSafeToRelease;
+    terminalKnown =
+      group.reservationSafeToRelease &&
+      (operationOutcome.phase_producer_observations ?? []).every((observation) => observation.reservationSafeToRelease);
+    operationOutcome.execution_complete = true;
+    recordCoverageTerminalObservations(
+      path.join(reportDirectory, 'observations', 'supervisor.json'),
+      manifest.run_id,
+      group,
+      persistOperationOutcome,
+    );
     const outcome = group.outcomes[0];
     if (!outcome) throw new Error('Coverage producer supervisor returned no outcome.');
     return {
@@ -923,6 +1066,31 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   function outcomeFromSynchronousProducer(
     result: SpawnSyncReturns<unknown>,
   ): ChildOutcome & { producerTerminalKnown: boolean; reservationSafeToRelease: boolean } {
+    const producerTerminalKnown = coverageProducerTerminalKnown(result);
+    terminalKnown = producerTerminalKnown || coverageProducerReservationSafeToRelease(result);
+    operationOutcome.producer_group = {
+      outcomes: [
+        {
+          shard_id: 'bun-test',
+          status: result.status,
+          signal: result.signal,
+          error: result.error ? String(result.error) : null,
+          unknown: Boolean(result.error) || result.signal !== null || !Number.isInteger(result.status),
+          producer_pid: positivePid(result.pid),
+          launch_attempted: true,
+          producerTerminalKnown,
+          directProducerAccounted: producerTerminalKnown,
+          resourceSafeToAdvance: false,
+          timeout_observed: result.error && 'code' in result.error && result.error.code === 'ETIMEDOUT' ? true : null,
+        },
+      ],
+      reservationSafeToRelease: producerTerminalKnown || coverageProducerReservationSafeToRelease(result),
+      resourceSafeToAdvance: false,
+    };
+    operationOutcome.test_reservation_safe_to_release =
+      producerTerminalKnown || coverageProducerReservationSafeToRelease(result);
+    operationOutcome.execution_complete = true;
+    persistOperationOutcome();
     if (result.error || result.signal || !Number.isInteger(result.status))
       return {
         shard_id: 'bun-test',
@@ -946,6 +1114,23 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   }
 
   const lock = acquireCoverageRunLock(outputRoot);
+  const runId = randomUUID();
+  const operationOutcome: CoverageRunOutcomeInput = {
+    run_id: runId,
+    selection: { mode: selectionMode, fingerprint: null },
+    input_fingerprints: { source: null, tests: null, tools: null },
+    phase: 'preflight',
+    expected_producer_count: 1,
+    execution_complete: null,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+  };
+  function persistOperationOutcome(): void {
+    const directory = path.join(outputRoot, 'operation-outcomes');
+    mkdirSync(directory, { recursive: true, mode: 0o700 });
+    writeAtomic(path.join(directory, runId + '.json'), buildCoverageRunOutcome(operationOutcome));
+  }
   let terminalKnown = true;
   let executionFailed = false;
   let executionError: unknown;
@@ -969,23 +1154,37 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         windowsHide: true,
       });
       if (typecheck.error || typecheck.signal || !Number.isInteger(typecheck.status)) {
-        const producerTerminalKnown = coverageProducerTerminalKnown(typecheck);
-        terminalKnown = producerTerminalKnown || coverageProducerReservationSafeToRelease(typecheck);
+        const observation = coveragePhaseProducerObservation('typecheck', typecheck);
+        operationOutcome.phase_producer_observations = [observation];
+        terminalKnown = observation.reservationSafeToRelease;
+        persistOperationOutcome();
         throw new Error(
-          producerTerminalKnown
+          observation.producerTerminalKnown
             ? 'Pinned coverage typecheck outcome is UNKNOWN; direct producer terminated; preserve run evidence.'
             : terminalKnown
               ? 'Pinned coverage typecheck outcome is UNKNOWN; producer did not start; preserve run evidence.'
               : 'Pinned coverage typecheck outcome is UNKNOWN; preserve the run lock.',
         );
       }
+      const typecheckObservation = coveragePhaseProducerObservation('typecheck', typecheck);
+      operationOutcome.phase_producer_observations = [typecheckObservation];
+      terminalKnown = typecheckObservation.reservationSafeToRelease;
+      persistOperationOutcome();
       if (typecheck.status !== 0) throw new Error('Pinned coverage typecheck failed.');
     }
     const lockedInputs = await coverageInputs(root, selectionMode);
+    operationOutcome.selection.fingerprint = lockedInputs.test_fingerprint;
+    operationOutcome.input_fingerprints = {
+      source: lockedInputs.source_fingerprint,
+      tests: lockedInputs.test_fingerprint,
+      tools: lockedInputs.tool_fingerprint,
+    };
+    operationOutcome.input_proofs = { source: true, tests: true, configuration: true, hashes: true };
     commandBudget.remaining();
     const capturedPin = lockedInputs.input_bytes['.bun-version'];
     if (!capturedPin || new TextDecoder('utf-8', { fatal: true }).decode(capturedPin).trim() !== pinnedBun)
       throw new Error('Captured Bun version differs from the selected runtime pin.');
+    assertCurrentCoverageSdkFreshness(root, lockedInputs);
     const consumerConfiguration =
       selectionMode === 'current' &&
       lockedInputs.test_inputs.some((entry) => entry.path === 'tests/configured-context.ts')
@@ -993,7 +1192,6 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         : undefined;
     commandBudget.remaining();
     const runtimeExecutableSha256 = sha256(readFileSync(process.execPath));
-    const runId = randomUUID();
     const { input_bytes: inputBytes, ...evidence } = lockedInputs;
     const externalTemporaryRoot = path.resolve(process.env.TMPDIR ?? tmpdir());
     const shardPreparation =
@@ -1011,6 +1209,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
           })
         : undefined;
     const preparedShards = shardPreparation?.status === 'prepared' ? shardPreparation : undefined;
+    operationOutcome.expected_producer_count = preparedShards?.launches.length ?? 1;
+    operationOutcome.phase = 'prepared';
+    persistOperationOutcome();
     const runDirectory = path.join(outputRoot, 'runs', runId);
     const snapshotDirectory = path.join(runDirectory, 'snapshot');
     const reportDirectory = path.join(runDirectory, 'processes');
@@ -1151,6 +1352,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     chmodSync(runDirectory, 0o500);
     let shardGroup: CoverageProducerGroup | undefined;
     let outcome: ChildOutcome | undefined;
+    operationOutcome.phase = 'execution';
     if (preparedShards) {
       const launches = preparedShards.launches.map((launch, index) => {
         const logFd = openShardLogFds[index];
@@ -1160,9 +1362,22 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       const errors: unknown[] = [];
       try {
         terminalKnown = false;
+        operationOutcome.test_reservation_safe_to_release = false;
         shardGroup = await superviseCoverageProducers(launches, commandBudget);
-        terminalKnown = shardGroup.reservationSafeToRelease;
-        recordCoverageProducerGroup(path.join(reportDirectory, 'observations', 'supervisor.json'), runId, shardGroup);
+        operationOutcome.test_reservation_safe_to_release = shardGroup.reservationSafeToRelease;
+        terminalKnown =
+          shardGroup.reservationSafeToRelease &&
+          (operationOutcome.phase_producer_observations ?? []).every(
+            (observation) => observation.reservationSafeToRelease,
+          );
+        operationOutcome.producer_group = shardGroup;
+        operationOutcome.execution_complete = true;
+        recordCoverageTerminalObservations(
+          path.join(reportDirectory, 'observations', 'supervisor.json'),
+          runId,
+          shardGroup,
+          persistOperationOutcome,
+        );
       } catch (error) {
         errors.push(error);
       }
@@ -1181,7 +1396,11 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       const { producerTerminalKnown, reservationSafeToRelease, ...serialOutcome } = result;
       outcome = serialOutcome;
       if (outcome.unknown) {
-        terminalKnown = reservationSafeToRelease;
+        terminalKnown =
+          reservationSafeToRelease &&
+          (operationOutcome.phase_producer_observations ?? []).every(
+            (observation) => observation.reservationSafeToRelease,
+          );
         throw new Error(
           producerTerminalKnown
             ? 'Bun Test outcome is UNKNOWN; direct coverage producer terminated; preserve run directory and test-effect custody.'
@@ -1193,12 +1412,19 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       if (outcome.status !== 0 && !(publishedFixture && outcome.status === 1))
         throw new Error('Bun Test coverage suite failed.');
     }
+    operationOutcome.phase = 'report';
     commandBudget.remaining();
     const historicalJUnitBytes =
       publishedFixture && outcome?.status === 1
         ? readFileSync(path.join(reportDirectory, 'suite.junit.xml'))
         : undefined;
-    if (historicalJUnitBytes) historicalReferenceJUnit(historicalJUnitBytes, fixtureRoot!, evidence.tests);
+    if (historicalJUnitBytes) {
+      try {
+        historicalReferenceJUnit(historicalJUnitBytes, fixtureRoot!, evidence.tests);
+      } catch (error) {
+        rejectPureReportValidator(error);
+      }
+    }
     let historicalInventory: { process_file: string; pid: number; child_id: number } | undefined;
     if (publishedFixture) assertCoverageSnapshotBytes(snapshotDirectory, inputBytes);
 
@@ -1217,7 +1443,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       const reportFiles = readdirSync(reportDirectory)
         .filter((file) => file.endsWith('.json'))
         .sort();
-      if (!reportFiles.length) throw new Error('Bun coverage run produced no per-process reports.');
+      if (!reportFiles.length) reportRejected('Bun coverage run produced no per-process reports.');
       const childCoverageMaps: Record<string, unknown>[] = [];
       const processReceipts: { file: string; pid: number; shard_id: 'bun-test'; sha256: string }[] = [];
       const expectedPaths = evidence.sources.map((entry) => path.resolve(root, entry.path)).sort();
@@ -1225,7 +1451,12 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       for (const name of reportFiles) {
         const reportPath = path.join(reportDirectory, name);
         const processBytes = readFileSync(reportPath);
-        const reportValue: unknown = JSON.parse(processBytes.toString('utf8'));
+        let reportValue: unknown;
+        try {
+          reportValue = JSON.parse(processBytes.toString('utf8'));
+        } catch {
+          reportRejected('Per-process coverage report is not valid JSON: ' + name);
+        }
         const report = record(reportValue, `${name}.report`);
         if (
           report.schema !== 'VidaBunCoverageProcess/v1' ||
@@ -1237,9 +1468,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
           report.runtime_executable_sha256 !== manifest.runtime_executable_sha256 ||
           JSON.stringify(report.sources) !== JSON.stringify(evidence.sources)
         )
-          throw new Error('Foreign or stale per-process coverage report: ' + name);
+          reportRejected('Foreign or stale per-process coverage report: ' + name);
         if (typeof report.pid !== 'number' || !Number.isSafeInteger(report.pid) || report.pid < 1)
-          throw new Error('Invalid coverage report process identity.');
+          reportRejected('Invalid coverage report process identity.');
         requireSnapshotReceipt(report, manifest, name);
         if (historicalJUnitBytes && publishedFixture && fixtureRoot) {
           if (historicalInventory) throw new Error('Historical inventory has duplicate process observations.');
@@ -1254,7 +1485,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
           .map((file) => path.resolve(file))
           .sort();
         if (paths.some((file) => !expectedPaths.includes(file)))
-          throw new Error('Per-process report contains an unexpected source: ' + name);
+          reportRejected('Per-process report contains an unexpected source: ' + name);
         childCoverageMaps.push(coverage);
         processReceipts.push({
           file: name,
@@ -1268,25 +1499,29 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         .map((file) => path.resolve(file))
         .sort();
       if (JSON.stringify(mergedPaths) !== JSON.stringify(expectedPaths))
-        throw new Error('Merged coverage source set differs from maintained inventory.');
-      publishedReference = historicalJUnitBytes
-        ? parseHistoricalReference(
-            {
-              schema: 'PublishedBaselineReference/v1',
-              kind: 'measurement_admitted',
-              suite_passed: false,
-              quality_passed: false,
-              failure_id: 'b549951/mutation-inventory-gap-37',
-              junit: {
-                path: path.relative(root, path.join(reportDirectory, 'suite.junit.xml')).replaceAll('\\', '/'),
-                sha256: sha256(historicalJUnitBytes),
-                bytes: historicalJUnitBytes.length,
+        reportRejected('Merged coverage source set differs from maintained inventory.');
+      try {
+        publishedReference = historicalJUnitBytes
+          ? parseHistoricalReference(
+              {
+                schema: 'PublishedBaselineReference/v1',
+                kind: 'measurement_admitted',
+                suite_passed: false,
+                quality_passed: false,
+                failure_id: 'b549951/mutation-inventory-gap-37',
+                junit: {
+                  path: path.relative(root, path.join(reportDirectory, 'suite.junit.xml')).replaceAll('\\', '/'),
+                  sha256: sha256(historicalJUnitBytes),
+                  bytes: historicalJUnitBytes.length,
+                },
+                inventory: historicalInventory,
               },
-              inventory: historicalInventory,
-            },
-            runId,
-          )
-        : undefined;
+              runId,
+            )
+          : undefined;
+      } catch (error) {
+        rejectPureReportValidator(error);
+      }
       finalReport = {
         ...(publishedReference ? { published_reference: publishedReference } : {}),
         schema: 'VidaBunCoverageReport/v1',
@@ -1321,33 +1556,83 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       process.exitCode = 1;
     }
     for (const gateScript of selectionMode === 'current' ? ['tooling/crap-gate.ts'] : []) {
+      operationOutcome.phase = 'quality';
       const capturedGate = path.join(snapshotDirectory, ...gateScript.split('/'));
       const gate = spawnSync(process.execPath, [capturedGate], {
         cwd: root,
-        env: { ...process.env, VIDA_BUN_COVERAGE_ROOT: root, VIDA_BUN_COVERAGE_REPORT: finalPath },
+        env: {
+          ...process.env,
+          VIDA_BUN_COVERAGE_ROOT: root,
+          VIDA_BUN_COVERAGE_REPORT: finalPath,
+          VIDA_COVERAGE_RECORD_VALIDATION: '1',
+        },
         timeout: commandBudget.remaining(300_000),
         killSignal: 'SIGKILL',
         encoding: 'utf8',
         maxBuffer: 64 * 1024 * 1024,
         windowsHide: true,
       });
+      const qualityObservation = coveragePhaseProducerObservation('quality', gate);
+      operationOutcome.phase_producer_observations = [
+        ...(operationOutcome.phase_producer_observations ?? []),
+        qualityObservation,
+      ];
+      terminalKnown =
+        qualityObservation.reservationSafeToRelease &&
+        (operationOutcome.producer_group?.reservationSafeToRelease ?? true) &&
+        operationOutcome.phase_producer_observations.every((observation) => observation.reservationSafeToRelease);
+      if (!gate.error && !gate.signal && Number.isInteger(gate.status)) {
+        operationOutcome.quality_complete = true;
+        operationOutcome.quality_passed = gate.status === 0;
+      }
+      persistOperationOutcome();
       process.stdout.write(gate.stdout ?? '');
       process.stderr.write(gate.stderr ?? '');
+      const validationObservationPath = path.join(reportDirectory, 'observations', 'report-validation.json');
+      let validationBytes: Buffer | undefined;
+      try {
+        validationBytes = readFileSync(validationObservationPath);
+      } catch (error) {
+        if (!isRecord(error) || error.code !== 'ENOENT') throw error;
+      }
+      if (validationBytes) {
+        let observation: unknown;
+        try {
+          observation = JSON.parse(validationBytes.toString('utf8'));
+        } catch {
+          reportRejected('Coverage report validation observation is not valid JSON.');
+        }
+        if (
+          !isRecord(observation) ||
+          Object.keys(observation).sort().join(',') !==
+            'run_id,schema,source_fingerprint,test_fingerprint,tool_fingerprint,validated' ||
+          observation.schema !== 'VidaBunCoverageReportValidationObservation/v1' ||
+          observation.run_id !== runId ||
+          observation.source_fingerprint !== evidence.source_fingerprint ||
+          observation.test_fingerprint !== evidence.test_fingerprint ||
+          observation.tool_fingerprint !== evidence.tool_fingerprint ||
+          observation.validated !== true
+        )
+          reportRejected('Coverage report validation observation does not match this operation.');
+        operationOutcome.report_validated = true;
+      }
       if (gate.error || gate.signal || gate.status === null) {
-        const producerTerminalKnown = coverageProducerTerminalKnown(gate);
-        const reservationSafeToRelease = producerTerminalKnown || coverageProducerReservationSafeToRelease(gate);
-        terminalKnown = reservationSafeToRelease;
         throw new Error(
-          producerTerminalKnown
+          qualityObservation.producerTerminalKnown
             ? `${gateScript} outcome is UNKNOWN; direct gate producer terminated; preserve run evidence.`
-            : reservationSafeToRelease
+            : qualityObservation.reservationSafeToRelease
               ? `${gateScript} outcome is UNKNOWN; gate producer did not start; preserve run evidence.`
               : `${gateScript} outcome is UNKNOWN; preserve the run lock for reconciliation.`,
         );
       }
       if (gate.status !== 0) throw new Error(`${gateScript} failed.`);
+      if (operationOutcome.report_validated !== true)
+        throw new Error('Coverage quality producer did not record report validation completion.');
     }
+    operationOutcome.phase = 'complete';
+    persistOperationOutcome();
   } catch (error) {
+    if (error instanceof CoverageReportRejectedError) operationOutcome.report_rejected = true;
     executionFailed = true;
     const closeErrors: unknown[] = [];
     while (openShardLogFds.length) {
@@ -1361,6 +1646,15 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     executionError = closeErrors.length
       ? new AggregateError([error, ...closeErrors], 'Coverage execution and caller-owned shard log closure failed.')
       : error;
+    operationOutcome.original_error = executionError;
+    try {
+      persistOperationOutcome();
+    } catch (recordError) {
+      executionError = new AggregateError(
+        [executionError, recordError],
+        'Coverage execution and operation recording failed.',
+      );
+    }
   }
   let cleanupFailed = false;
   let cleanupError: unknown;
@@ -1370,6 +1664,17 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     } catch (error) {
       cleanupFailed = true;
       cleanupError = error;
+      operationOutcome.original_error = executionFailed
+        ? new AggregateError([executionError, error], 'Coverage execution and lock cleanup both failed.')
+        : error;
+      try {
+        persistOperationOutcome();
+      } catch (recordError) {
+        cleanupError = new AggregateError(
+          [error, recordError],
+          'Coverage lock cleanup and operation recording failed.',
+        );
+      }
     }
   }
   if (executionFailed && cleanupFailed)

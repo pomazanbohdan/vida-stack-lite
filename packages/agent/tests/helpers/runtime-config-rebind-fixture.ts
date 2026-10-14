@@ -31,12 +31,7 @@ import { admittedResearchResultsForSynthesis } from '../../src/orchestration/obs
 import { MastraSessionLedger, mastraLedgerStatus } from '../../src/orchestration/persistent-session-handoff.ts';
 import { parseMastraSessionLedgerState } from '../../src/orchestration/mastra-session-ledger-codec.ts';
 import { sessionActionsForWave } from '../../src/orchestration/session-handoff.ts';
-import {
-  sessionBridgeRunId,
-  buildSessionBridgeRequest,
-  configuredContextForStage,
-  parseSessionBridgeRunState,
-} from '../../src/orchestration/mastra-session-bridge.ts';
+import { configuredContextForStage, type ConfiguredContext } from '../../src/orchestration/configured-context.ts';
 import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.ts';
 import { requireSafeRepositoryAccess } from '../../src/config/safe-repository-access.ts';
 import { compileDevelopmentWorkflow } from '../../src/orchestration/workflow-plan.ts';
@@ -55,6 +50,9 @@ import type {
 } from '../../src/host-state.ts';
 import type { MastraLedgerItem, MastraSessionLedgerState } from '../../src/orchestration/persistent-session-handoff.ts';
 import {
+  sessionBridgeRunId,
+  buildSessionBridgeRequest,
+  parseSessionBridgeRunState,
   parseSessionBridgeObservation,
   parseSessionBridgeRequest,
   type SessionBridgeRequest,
@@ -70,7 +68,7 @@ import type { ScopedSourceSnapshot } from '../../src/orchestration/scoped-source
 import { validateHostOperationReservation, type OperationReservation } from '../../src/governance/edictum-boundary.ts';
 import { hasUnresolvedFixtureOperations } from './unresolved-governance-fixture.ts';
 import type { SpawnSyncReturns } from 'node:child_process';
-import type { ConfiguredContext } from '../../src/orchestration/configured-context.ts';
+import { closeNativeWorkspaceDatabase, withWorkspaceDatabaseClose } from '../../src/config/workspace-database-raw.js';
 import {
   parseWorkflowSessionReservationData,
   workflowWorkItemSchema,
@@ -82,24 +80,67 @@ export function registerRuntimeConfigFixtureCleanup(): void {
       throw Error('Cannot begin a runtime config fixture case while a prior fixture call is unresolved');
     resetSourceCorrectionNativeRuntime();
   });
-  afterEach(() => {
-    const hasPendingCalls = pendingFixtureCalls.size !== 0;
-    for (const root of fixtureRoots.splice(0)) {
-      if (pendingFixtureCalls.has(root)) console.warn(`Retained fixture with an unresolved operation: ${root}`);
-      else if (failedFixtureRoots.has(root)) console.warn(`Retained failed historical inspection fixture: ${root}`);
-      else if (fixtureHasUnresolvedOperations(root))
-        console.warn(`Retained fixture with unresolved governance: ${root}`);
-      else rmSync(root, { recursive: true, force: true });
-      fixtureDatabasePaths.delete(root);
+  afterEach(() => cleanupRuntimeConfigFixtureRoots());
+}
+
+export function cleanupRuntimeConfigFixtureRoots(removeRoot: typeof rmSync = rmSync): void {
+  const hasPendingCalls = pendingFixtureCalls.size !== 0;
+  const errors: unknown[] = [];
+  const warnRetained = (message: string): void => {
+    try {
+      console.warn(message);
+    } catch (error) {
+      errors.push(error);
     }
-    if (!hasPendingCalls) resetSourceCorrectionNativeRuntime();
-  });
+  };
+  for (const root of [...fixtureRoots]) {
+    let terminalDisposition = false;
+    try {
+      if (pendingFixtureCalls.has(root)) {
+        failedFixtureRoots.add(root);
+        warnRetained(`Retained fixture with an unresolved operation: ${root}`);
+        terminalDisposition = true;
+      } else if (failedFixtureRoots.has(root)) {
+        warnRetained(`Retained fixture after failed operation or cleanup: ${root}`);
+        terminalDisposition = true;
+      } else if (fixtureHasUnresolvedOperations(root)) {
+        failedFixtureRoots.add(root);
+        warnRetained(`Retained fixture with unresolved governance: ${root}`);
+        terminalDisposition = true;
+      } else {
+        removeRoot(root, { recursive: true, force: true });
+        fixtureDatabasePaths.delete(root);
+        failedFixtureRoots.delete(root);
+        terminalDisposition = true;
+      }
+    } catch (error) {
+      failedFixtureRoots.add(root);
+      errors.push(error);
+      warnRetained(`Retained fixture after failed cleanup: ${root}`);
+      terminalDisposition = true;
+    }
+    if (terminalDisposition) {
+      // Explicit retention is not permission for a later automatic deletion retry.
+      const index = fixtureRoots.indexOf(root);
+      if (index >= 0) fixtureRoots.splice(index, 1);
+    }
+  }
+  if (!hasPendingCalls) {
+    try {
+      resetSourceCorrectionNativeRuntime();
+    } catch (error) {
+      errors.push(error);
+    }
+  }
+  if (errors.length)
+    throw new AggregateError(errors, 'Runtime config fixture cleanup failed; failed roots were retained');
 }
 
 function resetSourceCorrectionNativeRuntime(): void {
   sourceCorrectionNativeRuntime.value = null;
   if (sourceCorrectionNativeRuntime.previousPath !== undefined) {
-    process.env.PATH = sourceCorrectionNativeRuntime.previousPath;
+    if (sourceCorrectionNativeRuntime.previousPath === null) delete process.env.PATH;
+    else process.env.PATH = sourceCorrectionNativeRuntime.previousPath;
     sourceCorrectionNativeRuntime.previousPath = undefined;
   }
 }
@@ -366,6 +407,7 @@ export const fixtureContextPath = 'docs/project-context.md';
 
 const fixtureRoots: string[] = [];
 const fixtureDatabasePaths = new Map<string, string>();
+// Retained roots leave the active queue only after this custody set updates; exact database paths stay mapped.
 const failedFixtureRoots = new Set<string>();
 
 const pendingFixtureCalls = new Map<string | undefined, number>();
@@ -373,14 +415,35 @@ const pendingFixtureCalls = new Map<string | undefined, number>();
 function fixtureHasUnresolvedOperations(root: string): boolean {
   const databasePath = fixtureDatabasePaths.get(root);
   if (databasePath === undefined || !existsSync(databasePath)) return true;
-  let database: Database | undefined;
+  let database: Database;
   try {
     database = new Database(databasePath, { readonly: true, strict: true });
-    return hasUnresolvedFixtureOperations(database);
   } catch {
     return true;
-  } finally {
-    database?.close();
+  }
+  let inspectionFailed = false;
+  let inspectionError: unknown;
+  try {
+    return withWorkspaceDatabaseClose(
+      database,
+      () => {
+        try {
+          return hasUnresolvedFixtureOperations(database);
+        } catch (error) {
+          inspectionFailed = true;
+          inspectionError = error;
+          throw error;
+        }
+      },
+      closeNativeWorkspaceDatabase,
+      'Fixture governance inspection and database close failed',
+    );
+  } catch (error) {
+    // Inspection errors already mean unresolved custody. A paired close error
+    // must still escape with the original inspection error preserved.
+    if (inspectionFailed && error === inspectionError) return true;
+    failedFixtureRoots.add(root);
+    throw error;
   }
 }
 
@@ -398,7 +461,7 @@ export function withHistoricalInspectionFixtureCustody<TResult>(body: () => TRes
 export const sourceCorrectionNativeRuntime: {
   value: StandaloneRuntime | null;
   mocked: boolean;
-  previousPath: string | undefined;
+  previousPath: string | null | undefined;
 } = { value: null, mocked: false, previousPath: undefined };
 
 export const sourceCorrectionPriorVersion = '0.1.2';
@@ -441,6 +504,7 @@ export async function fixtureCall<TResult>(
     else pendingFixtureCalls.delete(root);
   }
   if (cleanupError !== undefined) {
+    failedFixtureRoots.add(root);
     if (!outcome.ok)
       throw new AggregateError([outcome.error, cleanupError], 'Fixture call and custody cleanup both failed', {
         cause: outcome.error,
@@ -1648,10 +1712,9 @@ export async function sourceCorrectionRebindWithNative(
   runtime: StandaloneRuntime,
 ): Promise<SourceCorrectionRebindRunner> {
   if (sourceCorrectionNativeRuntime.previousPath === undefined) {
-    sourceCorrectionNativeRuntime.previousPath = process.env.PATH ?? '';
-    process.env.PATH = [path.dirname(runtime.executable), sourceCorrectionNativeRuntime.previousPath]
-      .filter(Boolean)
-      .join(path.delimiter);
+    const originalPath = process.env.PATH;
+    sourceCorrectionNativeRuntime.previousPath = originalPath === undefined ? null : originalPath;
+    process.env.PATH = [path.dirname(runtime.executable), originalPath ?? ''].filter(Boolean).join(path.delimiter);
   }
   const bunPath = new URL('../../bin/bun.ts', import.meta.url).href;
   if (!sourceCorrectionNativeRuntime.mocked) {
@@ -1895,21 +1958,17 @@ export function withDatabase<TResult>(
     path.join(f.root, '.agent/work/session-handoff.v1.sqlite'),
     readonly ? { readonly: true, strict: true } : { create: true, strict: true },
   );
-  let outcome: { ok: true; value: TResult } | { ok: false; error: unknown };
   try {
-    outcome = { ok: true, value: callback(db) };
+    return withWorkspaceDatabaseClose(
+      db,
+      () => callback(db),
+      closeNativeWorkspaceDatabase,
+      'Database fixture callback and cleanup failed',
+    );
   } catch (error) {
-    outcome = { ok: false, error };
+    failedFixtureRoots.add(f.root);
+    throw error;
   }
-  try {
-    db.close();
-  } catch (cleanupError) {
-    if (!outcome.ok)
-      throw new AggregateError([outcome.error, cleanupError], 'Database fixture callback and cleanup both failed');
-    throw cleanupError;
-  }
-  if (!outcome.ok) throw outcome.error;
-  return outcome.value;
 }
 
 export function databaseState(f: RuntimeFixture): FixtureDatabaseState {

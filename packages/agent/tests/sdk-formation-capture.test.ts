@@ -1,10 +1,18 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { linkSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { captureSdkFormationInputs } from '../tooling/build-package.ts';
+import { captureSdkFormationInputs, projectSdkFormationInputBytes } from '../tooling/build-package.ts';
 import { readPin } from '../bin/bun.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
+import {
+  coverageToolInputs,
+  qualityInputs,
+  sdkFormationInputsFromQualityCapture,
+  sha256,
+} from '../tooling/bun-coverage-evidence.ts';
+import { expectedJavascriptFiles } from '../tooling/maintained-source-inventory.ts';
+import { assertCurrentCoverageSdkFreshness } from '../tooling/run-bun-coverage.ts';
 
 const ownedRoots: string[] = [];
 
@@ -37,6 +45,116 @@ async function expectRejected(action: () => Promise<unknown>, expected: RegExp):
 }
 
 describe('SDK formation capture projection', () => {
+  test('joins current quality capture to SDK formation without another input read and rejects stale artifacts', async () => {
+    const root = fixtureRoot();
+    const write = (relative: string, bytes: string | Buffer): void => {
+      const target = path.join(root, relative);
+      mkdirSync(path.dirname(target), { recursive: true });
+      writeFileSync(target, bytes);
+    };
+    for (const file of coverageToolInputs) {
+      if (['package.json', 'bun.lock', '.bun-version', 'bunfig.toml'].includes(file)) continue;
+      write(file, 'export const inert = true;\n');
+    }
+    write(
+      'package.json',
+      JSON.stringify({ version: '1.2.3', files: ['src/**', 'bin/**'], engines: { node: '24.x' }, scripts: {} }),
+    );
+    write('bin/cli-metadata.ts', 'export const inert = true;\n');
+    write('tests/configured-workflow.test.ts', 'export const inert = true;\n');
+    write('templates/inert.yaml', 'inert: true\n');
+    write('instructions/inert.md', 'inert\n');
+    write('tooling/build-package.ts', "import './sdk-leaf.ts';\n");
+    write('tooling/sdk-leaf.ts', "import './build-package.ts';\n");
+    const sdkInputs = await captureSdkFormationInputs(root);
+    const outputs = expectedJavascriptFiles.map((member) => {
+      const file = 'dist/src/' + member;
+      const bytes = Buffer.from('export const inert = true;\n');
+      write(file, bytes);
+      return { path: file, bytes: bytes.length, sha256: sha256(bytes) };
+    });
+    write(
+      'dist/sdk-formation.json',
+      JSON.stringify({
+        schema: 'CandidatePackageBuild/v1',
+        version: '1.2.3',
+        declared_node_engine: '24.x',
+        declaration_runtime: 'bun',
+        bun_version: Bun.version,
+        production_entrypoints: ['dist/src/index.js', 'dist/src/trusted-host.js'],
+        test_issuers_shipped: false,
+        schemas: 1,
+        inputs: [...sdkInputs].map(([file, bytes]) => ({ path: file, bytes: bytes.length, sha256: sha256(bytes) })),
+        outputs,
+        virtual_runtime_entry: { path: 'src/runtime.ts', sha256: 'a'.repeat(64) },
+        dependency_custody:
+          'External node_modules is linked; selected manifest and frozen lock are captured, dependency bytes are outside snapshot custody.',
+      }),
+    );
+    const inputs = await qualityInputs(root);
+    const projected = sdkFormationInputsFromQualityCapture(inputs);
+    expect([...projected.selectedInputs.keys()]).toEqual([...sdkInputs.keys()]);
+    for (const [file, bytes] of sdkInputs) expect(projected.selectedInputs.get(file)).toEqual(bytes);
+    write('src/value.ts', 'changed live Source bytes\n');
+    expect(() => assertCurrentCoverageSdkFreshness(root, inputs)).not.toThrow();
+    const member = inputs.input_bytes['dist/src/index.js'];
+    if (!member) throw new Error('SDK output fixture was not captured.');
+    const first = member[0];
+    member[0] = 0;
+    expect(() => assertCurrentCoverageSdkFreshness(root, inputs)).toThrow(/differs from its formation receipt/u);
+    member[0] = first!;
+    const capturedSource = inputs.input_bytes['src/value.ts'];
+    if (!capturedSource) throw new Error('SDK Source fixture was not captured.');
+    capturedSource[0] = 0;
+    expect(() => sdkFormationInputsFromQualityCapture(inputs)).toThrow(/capture bytes changed/u);
+    expect(() => sdkFormationInputsFromQualityCapture({ ...inputs })).toThrow(/unavailable/u);
+    rmSync(path.join(root, 'dist/sdk-formation.json'));
+    await expectRejected(() => qualityInputs(root), /missing|rejected/u);
+  });
+  test('projects the formation inventory from already captured bytes', async () => {
+    const root = fixtureRoot();
+    writeFileSync(
+      path.join(root, 'tooling/build-package.ts'),
+      "import './leaf.js';\nimport 'fixture-external-package';\n",
+    );
+    writeFileSync(path.join(root, 'tooling/leaf.ts'), "import './cycle.mjs';\n");
+    writeFileSync(path.join(root, 'tooling/cycle.ts'), "import './leaf.js';\n");
+    const captured = await captureSdkFormationInputs(root);
+    const projected = projectSdkFormationInputBytes({
+      inputBytes: new Map([...captured.keys()].map((file) => [file, readFileSync(path.join(root, file))])),
+      sourcePaths: ['src/index.ts', 'src/value.ts'],
+      schemaPaths: ['schemas/example.schema.json'],
+      buildToolPaths: ['tooling/leaf.ts', 'tooling/cycle.ts'],
+    });
+    expect([...projected.keys()]).toEqual([...captured.keys()]);
+    for (const [file, bytes] of captured) expect(projected.get(file)).toEqual(bytes);
+  });
+
+  test('rejects missing bytes and additional captured source or schema drift', () => {
+    const base = {
+      inputBytes: new Map<string, Buffer>([
+        ['src/index.ts', Buffer.from('index')],
+        ['schemas/example.schema.json', Buffer.from('{}')],
+        ['package.json', Buffer.from('{}')],
+        ['bun.lock', Buffer.from('lock')],
+        ['.bun-version', Buffer.from('1.4.2')],
+        ['bunfig.toml', Buffer.from('')],
+        ['tsconfig.json', Buffer.from('{}')],
+        ['tooling/build-package.ts', Buffer.from('')],
+      ]),
+      sourcePaths: ['src/index.ts'],
+      schemaPaths: ['schemas/example.schema.json'],
+      buildToolPaths: [],
+    };
+    expect(() => projectSdkFormationInputBytes(base)).not.toThrow();
+    const missing = new Map(base.inputBytes);
+    missing.delete('bun.lock');
+    expect(() => projectSdkFormationInputBytes({ ...base, inputBytes: missing })).toThrow(/missing input bytes/u);
+    const drift = new Map(base.inputBytes);
+    drift.set('schemas/new.schema.json', Buffer.from('{}'));
+    expect(() => projectSdkFormationInputBytes({ ...base, inputBytes: drift })).toThrow(/schema drift/u);
+  });
+
   test('retains the finite selected bytes after live files change', async () => {
     const root = fixtureRoot();
     const captured = await captureSdkFormationInputs(root);

@@ -4,8 +4,8 @@ import path from 'node:path';
 import { requireSafeRepositoryAccess } from './safe-repository-access.js';
 
 export interface WorkspaceDatabaseFileIdentity {
-  readonly dev: number;
-  readonly ino: number;
+  readonly dev: bigint;
+  readonly ino: bigint;
 }
 const openedFileIdentities = new WeakMap<Database, WorkspaceDatabaseFileIdentity>();
 const pendingDatabaseCloses = new Map<Database, (database: Database) => void>();
@@ -183,8 +183,8 @@ export function queryWorkspaceRowUnknown(
 }
 
 function regularDatabase(file: string): WorkspaceDatabaseFileIdentity {
-  const info = lstatSync(file);
-  requireDatabase(info.isFile() && !info.isSymbolicLink() && info.nlink === 1, 'unsafe existing file');
+  const info = lstatSync(file, { bigint: true });
+  requireDatabase(info.isFile() && !info.isSymbolicLink() && info.nlink === 1n, 'unsafe existing file');
   return { dev: info.dev, ino: info.ino };
 }
 

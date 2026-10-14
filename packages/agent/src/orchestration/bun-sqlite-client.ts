@@ -72,6 +72,99 @@ function statement(input: string | SqliteStatement): { sql: string; bindings: SQ
   };
 }
 
+type SqlStatementKind = 'insert' | 'write' | 'other';
+
+interface SqlToken {
+  readonly kind: 'word' | 'identifier' | 'string' | 'punctuation';
+  readonly value: string;
+}
+
+const SQL_TOKEN =
+  /\s+|--[^\r\n]*(?:\r?\n|$)|\/\*[\s\S]*?\*\/|'(?:''|[^'])*'|"(?:""|[^"])*"|`(?:``|[^`])*`|\[(?:[^\]]|\]\])*\]|[\p{L}_][\p{L}\p{N}_$]*|[(),]|[\s\S]/uy;
+
+function* sqlTokens(sql: string): Generator<SqlToken, void> {
+  let offset = 0;
+  while (offset < sql.length) {
+    SQL_TOKEN.lastIndex = offset;
+    const match = SQL_TOKEN.exec(sql);
+    if (!match) return;
+    offset = SQL_TOKEN.lastIndex;
+    const text = match[0];
+    if (/^\s|^--|^\/\*/.test(text)) continue;
+    if (text.startsWith("'")) yield { kind: 'string', value: text };
+    else if (/^["`[]/.test(text)) yield { kind: 'identifier', value: text };
+    else if (/^[\p{L}_]/u.test(text)) yield { kind: 'word', value: text.toUpperCase() };
+    else yield { kind: 'punctuation', value: text };
+  }
+}
+
+function nextToken(tokens: Iterator<SqlToken, void>): SqlToken | undefined {
+  const next = tokens.next();
+  return next.done ? undefined : next.value;
+}
+
+function isWord(token: SqlToken | undefined, value: string): boolean {
+  return token?.kind === 'word' && token.value === value;
+}
+
+function isPunctuation(token: SqlToken | undefined, value: string): boolean {
+  return token?.kind === 'punctuation' && token.value === value;
+}
+
+/** Consume a CTE column list or body after its opening parenthesis. */
+function skipParentheses(tokens: Iterator<SqlToken, void>): boolean {
+  let depth = 1;
+  while (true) {
+    const token = nextToken(tokens);
+    if (!token) return false;
+    if (isPunctuation(token, '(')) depth += 1;
+    else if (isPunctuation(token, ')')) {
+      depth -= 1;
+      if (depth === 0) return true;
+    }
+  }
+}
+
+function afterCteBody(tokens: Iterator<SqlToken, void>): SqlToken | undefined {
+  let token = nextToken(tokens);
+  if (isPunctuation(token, '(')) {
+    if (!skipParentheses(tokens)) return undefined;
+    token = nextToken(tokens);
+  }
+  if (!isWord(token, 'AS')) return undefined;
+  token = nextToken(tokens);
+  if (isWord(token, 'NOT')) {
+    if (!isWord(nextToken(tokens), 'MATERIALIZED')) return undefined;
+    token = nextToken(tokens);
+  } else if (isWord(token, 'MATERIALIZED')) token = nextToken(tokens);
+  if (!isPunctuation(token, '(') || !skipParentheses(tokens)) return undefined;
+  return nextToken(tokens);
+}
+
+function afterWithClause(tokens: Iterator<SqlToken, void>): SqlToken | undefined {
+  let token = nextToken(tokens);
+  if (isWord(token, 'RECURSIVE')) token = nextToken(tokens);
+  while (token?.kind === 'word' || token?.kind === 'identifier') {
+    const afterBody = afterCteBody(tokens);
+    if (!afterBody || !isPunctuation(afterBody, ',')) return afterBody;
+    token = nextToken(tokens);
+  }
+  return undefined;
+}
+
+function statementKind(token: SqlToken | undefined): SqlStatementKind {
+  if (isWord(token, 'INSERT') || isWord(token, 'REPLACE')) return 'insert';
+  if (isWord(token, 'UPDATE') || isWord(token, 'DELETE')) return 'write';
+  return 'other';
+}
+
+/** Ordinary statements stop at the first token; only WITH parses CTE structure. */
+function sqliteStatementKind(sql: string): SqlStatementKind {
+  const tokens = sqlTokens(sql);
+  const first = nextToken(tokens);
+  return isWord(first, 'WITH') ? statementKind(afterWithClause(tokens)) : statementKind(first);
+}
+
 /** Execute once and preserve column positions, duplicate names, blobs and exact large integers. */
 function execute(database: Database, input: string | SqliteStatement): SqliteResultSet {
   const parsed = statement(input);
@@ -91,7 +184,24 @@ function execute(database: Database, input: string | SqliteStatement): SqliteRes
     const values = query.values(...parsed.bindings);
     const columnTypes = query.declaredTypes.map((type) => type ?? '');
     const rows = values.map((values) => resultRow(values, columns));
-    return { columns, columnTypes, rows, rowsAffected: 0 };
+    const kind = sqliteStatementKind(parsed.sql);
+    if (kind === 'other') return { columns, columnTypes, rows, rowsAffected: 0 };
+
+    const effects = database
+      .query<{ changes: string; last_insert_rowid: string }, []>(
+        'SELECT CAST(changes() AS TEXT) AS changes, CAST(last_insert_rowid() AS TEXT) AS last_insert_rowid',
+      )
+      .get();
+    requireClient(effects !== null, 'SQLite did not return DML execution metadata');
+    const rowsAffected = Number(effects.changes);
+    requireClient(Number.isSafeInteger(rowsAffected) && rowsAffected >= 0, 'SQLite change count is out of range');
+    return {
+      columns,
+      columnTypes,
+      rows,
+      rowsAffected,
+      ...(kind === 'insert' && rowsAffected > 0 ? { lastInsertRowid: BigInt(effects.last_insert_rowid) } : {}),
+    };
   } finally {
     query.finalize();
   }

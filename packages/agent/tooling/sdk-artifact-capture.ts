@@ -47,60 +47,38 @@ function parseEntries(value: unknown, label: string): ReceiptEntry[] {
   });
 }
 
-function identity(pathname: string, bytes: Buffer): ReceiptEntry {
-  return { path: pathname, bytes: bytes.length, sha256: sha256(bytes) };
+function snapshotBytes(source: ReadonlyMap<string, Buffer>, label: string): Map<string, Buffer> {
+  const captured = new Map<string, Buffer>();
+  for (const [pathname, bytes] of source) {
+    if (typeof pathname !== 'string' || pathname.length === 0 || !Buffer.isBuffer(bytes))
+      throw new Error(`${label} are not captured bytes: ${pathname}`);
+    captured.set(pathname, Buffer.from(bytes));
+  }
+  return captured;
 }
 
-/**
- * Join emitted JS to one caller-selected, immutable SDK input capture.
- * This establishes input freshness and output integrity, not formation origin
- * authentication or dependency-byte custody.
- */
-export async function captureSelectedSdkJavascriptOutputs(
-  root: string,
-  selectedInputs: ReadonlyMap<string, Buffer>,
-): Promise<{
-  evidence: 'selected-input-inventory-and-output-integrity';
-  paths: readonly string[];
-  readBytes(relative: string): Buffer;
-}> {
-  if (!path.isAbsolute(root)) throw new Error('SDK artifact capture root must be absolute.');
-  const outputPaths = expectedJavascriptFiles.map((file) => `dist/src/${file}`).sort();
-  // Freeze the selected byte identities before awaiting the bounded artifact read.
-  const selectedRows = [...selectedInputs]
-    .map(([pathname, bytes]) => {
-      if (!Buffer.isBuffer(bytes)) throw new Error(`Selected SDK formation input is not captured bytes: ${pathname}`);
-      return identity(pathname, bytes);
-    })
-    .sort((left, right) => left.path.localeCompare(right.path));
+function selectedInputRows(selectedInputs: ReadonlyMap<string, Buffer>): ReceiptEntry[] {
+  const rows = [...selectedInputs].map(([pathname, bytes]) => {
+    return { path: pathname, bytes: bytes.length, sha256: sha256(bytes) };
+  });
+  return rows.sort((left, right) => left.path.localeCompare(right.path));
+}
+
+function validateSelectedManifest(selectedInputs: ReadonlyMap<string, Buffer>): {
+  manifestValue: unknown;
+  selectedPin: string;
+} {
   const selectedManifestBytes = selectedInputs.get('package.json');
   const selectedPinBytes = selectedInputs.get('.bun-version');
   if (!selectedManifestBytes || !selectedPinBytes)
     throw new Error('Selected SDK formation is missing its manifest or Bun pin.');
-  const manifestValue: unknown = JSON.parse(Buffer.from(selectedManifestBytes).toString('utf8'));
-  const selectedPin = Buffer.from(selectedPinBytes).toString('utf8').trim();
-  const artifacts = await readQualityInputs(root, ['dist/sdk-formation.json', ...outputPaths]);
-  const receiptBytes = artifacts.get('dist/sdk-formation.json');
-  if (!receiptBytes) throw new Error('SDK formation output receipt is missing.');
-  const receiptValue: unknown = JSON.parse(receiptBytes.toString('utf8'));
-  if (
-    !isRecord(receiptValue) ||
-    Object.keys(receiptValue).sort().join(',') !== [...receiptKeys].sort().join(',') ||
-    receiptValue.schema !== 'CandidatePackageBuild/v1' ||
-    receiptValue.declaration_runtime !== 'bun' ||
-    receiptValue.bun_version !== Bun.version ||
-    receiptValue.test_issuers_shipped !== false ||
-    receiptValue.dependency_custody !==
-      'External node_modules is linked; selected manifest and frozen lock are captured, dependency bytes are outside snapshot custody.' ||
-    !Number.isSafeInteger(receiptValue.schemas) ||
-    (receiptValue.schemas as number) < 1 ||
-    !isRecord(receiptValue.virtual_runtime_entry) ||
-    Object.keys(receiptValue.virtual_runtime_entry).sort().join(',') !== 'path,sha256' ||
-    receiptValue.virtual_runtime_entry.path !== 'src/runtime.ts' ||
-    !isDigest(receiptValue.virtual_runtime_entry.sha256)
-  )
-    throw new Error('SDK formation output receipt is invalid.');
+  return {
+    manifestValue: JSON.parse(Buffer.from(selectedManifestBytes).toString('utf8')) as unknown,
+    selectedPin: Buffer.from(selectedPinBytes).toString('utf8').trim(),
+  };
+}
 
+function validateReceiptInputs(receiptValue: Record<string, unknown>, selectedRows: ReceiptEntry[]): void {
   const inputRows = parseEntries(receiptValue.inputs, 'input').sort((left, right) =>
     left.path.localeCompare(right.path),
   );
@@ -112,7 +90,13 @@ export async function captureSelectedSdkJavascriptOutputs(
     })
   )
     throw new Error('SDK formation receipt inputs differ from the selected package formation bytes.');
+}
 
+function validateReceiptIdentity(
+  receiptValue: Record<string, unknown>,
+  manifestValue: unknown,
+  selectedPin: string,
+): void {
   if (
     !isRecord(manifestValue) ||
     typeof manifestValue.version !== 'string' ||
@@ -131,7 +115,46 @@ export async function captureSelectedSdkJavascriptOutputs(
     entrypoints[1] !== 'dist/src/trusted-host.js'
   )
     throw new Error('SDK formation production entrypoints are invalid.');
+}
 
+function hasReceiptEnvelope(receiptValue: Record<string, unknown>): boolean {
+  return (
+    Object.keys(receiptValue).sort().join(',') === [...receiptKeys].sort().join(',') &&
+    receiptValue.schema === 'CandidatePackageBuild/v1' &&
+    receiptValue.declaration_runtime === 'bun' &&
+    receiptValue.bun_version === Bun.version &&
+    receiptValue.test_issuers_shipped === false
+  );
+}
+
+function hasReceiptCustody(receiptValue: Record<string, unknown>): boolean {
+  return (
+    receiptValue.dependency_custody ===
+      'External node_modules is linked; selected manifest and frozen lock are captured, dependency bytes are outside snapshot custody.' &&
+    Number.isSafeInteger(receiptValue.schemas) &&
+    (receiptValue.schemas as number) >= 1
+  );
+}
+
+function hasVirtualRuntimeEntry(receiptValue: Record<string, unknown>): boolean {
+  const entry = receiptValue.virtual_runtime_entry;
+  return (
+    isRecord(entry) &&
+    Object.keys(entry).sort().join(',') === 'path,sha256' &&
+    entry.path === 'src/runtime.ts' &&
+    isDigest(entry.sha256)
+  );
+}
+
+function isValidFormationReceipt(value: unknown): value is Record<string, unknown> {
+  return isRecord(value) && hasReceiptEnvelope(value) && hasReceiptCustody(value) && hasVirtualRuntimeEntry(value);
+}
+
+function validateReceiptOutputs(
+  receiptValue: Record<string, unknown>,
+  artifacts: ReadonlyMap<string, Buffer>,
+  outputPaths: string[],
+): Map<string, Buffer> {
   const outputRows = parseEntries(receiptValue.outputs, 'output');
   const expected = new Set(outputPaths);
   const javascriptRows = outputRows.filter((entry) => entry.path.endsWith('.js'));
@@ -146,6 +169,10 @@ export async function captureSelectedSdkJavascriptOutputs(
       throw new Error(`SDK emitted JavaScript differs from its formation receipt: ${output.path}`);
     captured.set(output.path, Buffer.from(bytes));
   }
+  return captured;
+}
+
+function capturedResult(outputPaths: string[], captured: ReadonlyMap<string, Buffer>) {
   return Object.freeze({
     evidence: 'selected-input-inventory-and-output-integrity' as const,
     paths: Object.freeze(outputPaths),
@@ -155,4 +182,61 @@ export async function captureSelectedSdkJavascriptOutputs(
       return Buffer.from(bytes);
     },
   });
+}
+
+/**
+ * Validate one already captured input/output set synchronously, hashing its
+ * owned byte snapshot instead of accepting caller-supplied identities.
+ */
+export function captureSelectedSdkJavascriptOutputsFromCapturedBytes(
+  root: string,
+  selectedInputs: ReadonlyMap<string, Buffer>,
+  artifacts: ReadonlyMap<string, Buffer>,
+): ReturnType<typeof capturedResult> {
+  if (!path.isAbsolute(root)) throw new Error('SDK artifact capture root must be absolute.');
+  const ownedInputs = snapshotBytes(selectedInputs, 'Selected SDK formation input');
+  const ownedArtifacts = snapshotBytes(artifacts, 'SDK artifact');
+  return validateCapturedSdkJavascriptOutputs(root, ownedInputs, ownedArtifacts, selectedInputRows(ownedInputs));
+}
+
+function validateCapturedSdkJavascriptOutputs(
+  root: string,
+  ownedInputs: ReadonlyMap<string, Buffer>,
+  ownedArtifacts: ReadonlyMap<string, Buffer>,
+  selectedRows: ReceiptEntry[],
+): ReturnType<typeof capturedResult> {
+  const outputPaths = expectedJavascriptFiles.map((file) => `dist/src/${file}`).sort();
+  const { manifestValue, selectedPin } = validateSelectedManifest(ownedInputs);
+  const receiptBytes = ownedArtifacts.get('dist/sdk-formation.json');
+  if (!receiptBytes) throw new Error('SDK formation output receipt is missing.');
+  const receiptValue: unknown = JSON.parse(receiptBytes.toString('utf8'));
+  if (!isValidFormationReceipt(receiptValue)) throw new Error('SDK formation output receipt is invalid.');
+
+  validateReceiptInputs(receiptValue, selectedRows);
+  validateReceiptIdentity(receiptValue, manifestValue, selectedPin);
+  return capturedResult(outputPaths, validateReceiptOutputs(receiptValue, ownedArtifacts, outputPaths));
+}
+
+/**
+ * Join emitted JS to one caller-selected, immutable SDK input capture.
+ * This establishes input freshness and output integrity, not formation origin
+ * authentication or dependency-byte custody.
+ */
+export async function captureSelectedSdkJavascriptOutputs(
+  root: string,
+  selectedInputs: ReadonlyMap<string, Buffer>,
+): Promise<{
+  evidence: 'selected-input-inventory-and-output-integrity';
+  paths: readonly string[];
+  readBytes(relative: string): Buffer;
+}> {
+  if (!path.isAbsolute(root)) throw new Error('SDK artifact capture root must be absolute.');
+  const outputPaths = expectedJavascriptFiles.map((file) => `dist/src/${file}`).sort();
+  // Freeze selected bytes and their identities before awaiting the bounded artifact read.
+  const ownedInputs = snapshotBytes(selectedInputs, 'Selected SDK formation input');
+  const selectedRows = selectedInputRows(ownedInputs);
+  validateSelectedManifest(ownedInputs);
+  const artifacts = await readQualityInputs(root, ['dist/sdk-formation.json', ...outputPaths]);
+  const ownedArtifacts = snapshotBytes(artifacts, 'SDK artifact');
+  return validateCapturedSdkJavascriptOutputs(root, ownedInputs, ownedArtifacts, selectedRows);
 }

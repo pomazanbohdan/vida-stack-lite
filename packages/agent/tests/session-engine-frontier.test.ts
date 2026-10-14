@@ -1,5 +1,6 @@
 import { expect, spyOn, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
+import * as fs from 'node:fs';
 import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync, linkSync, renameSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -926,5 +927,43 @@ test('rejects a substituted database inode and duplicate retained run rows', () 
       database.close();
     }
     expect(() => readRetainedUnissuedSessionEngineSnapshot(binding, { work, journal })).toThrow(/ambiguous/);
+  });
+});
+
+test('rejects adjacent large inode identities at the admitted snapshot close fence', () => {
+  withFixture(({ binding, work, journal, databasePath }) => {
+    const expectedDev = 9_007_199_254_740_992n;
+    const originalIno = 9_007_199_254_740_992n;
+    let matchingStats = 0;
+    const originalStat = fs.lstatSync;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      const observed = originalStat(...args);
+      if (
+        observed !== undefined &&
+        args[0] === databasePath &&
+        args[1] !== undefined &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      ) {
+        matchingStats += 1;
+        const ino = matchingStats <= 2 ? originalIno : originalIno + 1n;
+        const exact = Object.create(observed) as typeof observed;
+        Reflect.set(exact, 'dev', expectedDev);
+        Reflect.set(exact, 'ino', ino);
+        return exact;
+      }
+      return observed;
+    }) as typeof fs.lstatSync);
+    try {
+      expect(() =>
+        readRetainedUnissuedSessionEngineSnapshot(binding, {
+          work,
+          journal: parseMastraSessionLedgerState(journal),
+        }),
+      ).toThrow(/database was substituted/u);
+      expect(matchingStats).toBe(3);
+    } finally {
+      stats.mockRestore();
+    }
   });
 });

@@ -237,6 +237,24 @@ describe('final quality input projections', () => {
     }
   });
 
+  test('binds the copied mutation assertion context into the mutation tool fingerprint', async () => {
+    const root = fixtureRoot();
+    const selection = { coverage: [], mutation: [...mutationToolInputs], guard: [] };
+    const before = await qualityInputProjections(root, selection);
+    const context = 'tooling/mutation-assertion-context.ts';
+    expect(mutationToolInputs).toContain(context);
+    expect(before.mutation.tool_inputs.map(({ path: file }) => file)).toContain(context);
+
+    writeFileSync(path.join(root, context), 'export const fixtureRevision = 2;\n');
+    const after = await qualityInputProjections(root, selection);
+
+    expect(after.mutation.input_bytes[context]).toEqual(Buffer.from('export const fixtureRevision = 2;\n'));
+    expect(after.mutation.source_fingerprint).toBe(before.mutation.source_fingerprint);
+    expect(after.mutation.test_fingerprint).toBe(before.mutation.test_fingerprint);
+    expect(after.mutation.tool_fingerprint).not.toBe(before.mutation.tool_fingerprint);
+    expect(qualityFingerprint(after.mutation)).not.toBe(qualityFingerprint(before.mutation));
+  });
+
   test('admits captured package metadata and a named package-root developer config only', async () => {
     const root = fixtureRoot();
     writeFileSync(

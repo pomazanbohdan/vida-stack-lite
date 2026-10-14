@@ -357,3 +357,13 @@ WORK; ці зміни не закривають повні числові гей
 Усі4копійовані recovery workflows, host admission/repair та first-use control
 пройшли точково7PASS; static439TS/438program, lint і review PASS. Глобальні gates
 і resource-safe паралельні quarantine-контури залишаються OPEN.
+
+2026-10-14: supplied db88bb2 audit F01–F08 confirmed and corrected in one
+reviewed P0/P1 packet; per-group evidence is in current core-runtime-reactivation
+EXTERNAL-AUDIT-db88bb2-20261014.md. Final bounded product/mutation-adapter69PASS,
+context13PASS, strict452TS/451program/Source100/typedlint0. Additive coverage
+operation diagnostics, same-capture SDK preflight and typed fixture custody do
+not replace complete-run evidence. A real two-reader pilot passes only its
+configured instruction read; successor/resource quiescence and global five-minute
+coverage remain OPEN. Exhaustive frozen mapping, dynamic CRAP, confirmed Killed,
+bundle repair/legacy exclusion and isolated Runtime qualification stay OPEN.

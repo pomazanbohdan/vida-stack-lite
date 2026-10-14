@@ -168,7 +168,23 @@ test('real Bun coverage runner captures once under its owned lock and cleans up 
       throw new Error('Owned lock observation is missing.');
     expect(existsSync(path.join(outputRoot, 'coverage-run.lock'))).toBe(false);
     expect(existsSync(path.join(outputRoot, 'runs'))).toBe(false);
-    expect(readdirSync(outputRoot)).toEqual([]);
+    expect(readdirSync(outputRoot)).toEqual(['operation-outcomes']);
+    const outcomeDirectory = path.join(outputRoot, 'operation-outcomes');
+    const outcomeFiles = readdirSync(outcomeDirectory);
+    expect(outcomeFiles).toHaveLength(1);
+    const outcomeFile = outcomeFiles[0];
+    if (!outcomeFile) throw new Error('Controlled capture failure outcome was not recorded.');
+    const operation: unknown = JSON.parse(readFileSync(path.join(outcomeDirectory, outcomeFile), 'utf8'));
+    expect(operation).toMatchObject({
+      schema: 'VidaBunCoverageOperationOutcome/v1',
+      status: 'BLOCKED',
+      phase: 'preflight',
+      producer_outcomes: [],
+      execution_complete: false,
+      report_complete: false,
+      quality_complete: false,
+      original_error_diagnostic: { message: 'controlled capture failure' },
+    });
     passed = true;
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });
@@ -462,6 +478,7 @@ mock.module('node:child_process', () => ({
           producer_pid: child.pid,
           status: null,
           signal: 'SIGKILL',
+          timeout_observed: false,
           error: null,
           unknown: true,
           launch_attempted: true,
@@ -477,11 +494,22 @@ mock.module('node:child_process', () => ({
     if (typeof child !== 'object' || child === null || !('timeout_ms' in child))
       throw new Error('Expected bounded native async producer timeout');
     expect(child.timeout_ms).toBe(100);
-    expect(child).toHaveProperty('suite_timeout');
-    if (typeof child !== 'object' || child === null || !('suite_timeout' in child))
-      throw new Error('Expected bounded coverage child deadline');
-    expect(child.suite_timeout).toBeGreaterThan(0);
-    expect(child.suite_timeout).toBeLessThanOrEqual(570000);
+    // The owner uses its explicit timer, rather than an opaque spawn timeout.
+    expect(child).not.toHaveProperty('suite_timeout');
+    const operation: unknown = JSON.parse(
+      readFileSync(path.join(outputRoot, 'operation-outcomes', runId + '.json'), 'utf8'),
+    );
+    expect(operation).toMatchObject({
+      run_id: runId,
+      status: 'UNKNOWN',
+      retention_required: true,
+      execution_complete: false,
+      report_complete: false,
+      quality_complete: false,
+      direct_accounted_count: 1,
+      resource_safe_to_advance: false,
+      producer_observations: [{ timeout_observed: false, sigkill_observed: true, unknown: true }],
+    });
     expect(child).toHaveProperty('error', null);
     expect(existsSync(path.join(outputRoot, 'coverage-run.lock'))).toBe(false);
     passed = true;

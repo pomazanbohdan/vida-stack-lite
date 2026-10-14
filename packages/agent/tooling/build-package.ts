@@ -13,6 +13,66 @@ import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 
 const runtimeEntryBytes = "export * from './index.js';\nexport * from './trusted-host.js';\n";
 
+const sdkFormationBaseInputs = ['package.json', 'bun.lock', '.bun-version', 'bunfig.toml', 'tsconfig.json'] as const;
+
+export type SdkFormationProjectionCapture = {
+  inputBytes: ReadonlyMap<string, Buffer>;
+  sourcePaths: readonly string[];
+  schemaPaths: readonly string[];
+  buildToolPaths: readonly string[];
+};
+
+function checkedProjectionPaths(label: string, paths: readonly string[], prefix: string): string[] {
+  if (!Array.isArray(paths)) throw new Error(`SDK formation ${label} inventory is invalid.`);
+  const checked: string[] = [];
+  const candidates: readonly unknown[] = paths;
+  for (const file of candidates) {
+    if (
+      typeof file !== 'string' ||
+      !file.startsWith(prefix) ||
+      file.includes('\\') ||
+      file.includes('\0') ||
+      path.posix.isAbsolute(file) ||
+      file.split('/').some((part) => part === '' || part === '.' || part === '..')
+    )
+      throw new Error(`SDK formation ${label} inventory is invalid.`);
+    checked.push(file);
+  }
+  if (new Set(checked).size !== checked.length) throw new Error(`SDK formation ${label} inventory is invalid.`);
+  return checked.sort((left, right) => left.localeCompare(right));
+}
+
+/** Project the SDK's exact input inventory from an existing authoritative byte capture. */
+export function projectSdkFormationInputBytes(capture: SdkFormationProjectionCapture): Map<string, Buffer> {
+  const sourcePaths = checkedProjectionPaths('source', capture.sourcePaths, 'src/');
+  const schemaPaths = checkedProjectionPaths('schema', capture.schemaPaths, 'schemas/');
+  const buildToolPaths = checkedProjectionPaths('build-tool', capture.buildToolPaths, '');
+  if (buildToolPaths.some((file) => !/^(?:bin|tooling)\//u.test(file)))
+    throw new Error('SDK formation build-tool inventory is outside maintained tool roots.');
+  const selectedPaths = [
+    ...sourcePaths,
+    ...schemaPaths,
+    ...sdkFormationBaseInputs,
+    'tooling/build-package.ts',
+    ...buildToolPaths,
+  ];
+  if (new Set(selectedPaths).size !== selectedPaths.length)
+    throw new Error('SDK formation input inventory contains duplicates.');
+
+  const selectedSet = new Set(selectedPaths);
+  for (const file of capture.inputBytes.keys()) {
+    if ((file.startsWith('src/') || file.startsWith('schemas/')) && !selectedSet.has(file))
+      throw new Error(`SDK formation captured source or schema drift: ${file}`);
+  }
+  const result = new Map<string, Buffer>();
+  for (const file of selectedPaths.sort()) {
+    const bytes = capture.inputBytes.get(file);
+    if (!bytes) throw new Error(`SDK formation capture is missing input bytes: ${file}`);
+    result.set(file, bytes);
+  }
+  return result;
+}
+
 async function filesUnder(directory: string, depth = 0, counter = { paths: 0 }): Promise<string[]> {
   const metadata = lstatSync(directory);
   if (!metadata.isDirectory() || metadata.isSymbolicLink())
@@ -277,15 +337,20 @@ export async function captureSdkFormationInputs(root: string): Promise<Map<strin
   const inputBytes = await readQualityInputs(root, [
     ...sources,
     ...schemas,
-    'package.json',
-    'bun.lock',
-    '.bun-version',
-    'bunfig.toml',
-    'tsconfig.json',
+    ...sdkFormationBaseInputs,
     'tooling/build-package.ts',
   ]);
-  await captureRuntimeInputClosure(root, ['tooling/build-package.ts'], sources, [], inputBytes);
-  return inputBytes;
+  const buildToolPaths = (
+    await captureRuntimeInputClosure(root, ['tooling/build-package.ts'], sources, [], inputBytes)
+  ).filter(
+    (file) => file !== 'tooling/build-package.ts' && !sdkFormationBaseInputs.some((selected) => selected === file),
+  );
+  return projectSdkFormationInputBytes({
+    inputBytes,
+    sourcePaths: sources,
+    schemaPaths: schemas,
+    buildToolPaths,
+  });
 }
 
 async function buildPackage(root: string): Promise<void> {

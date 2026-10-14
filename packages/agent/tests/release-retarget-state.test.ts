@@ -1,6 +1,15 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -610,6 +619,39 @@ async function fixture({ success = false }: { success?: boolean } = {}): Promise
 const plan = (value: RetargetFixture) => planReleaseRetarget({ ...value.input, actor: 'isolated human controller' });
 
 const ciContext = { schema: 'ProjectContext/v1', repository_id: 'vida-agent', project_ids: ['agent'] };
+test('Windows delivery source manifest names existing maintained regular files without extension fallback', () => {
+  const sourceRoot = path.resolve(import.meta.dirname, '../../..');
+  const workflow = readFileSync(path.join(sourceRoot, '.github/workflows/agent-native-delivery.yml'), 'utf8');
+  const declaration = /\$files\s*=\s*@\(([\s\S]*?)\)/u.exec(workflow);
+  assert.ok(declaration, 'workflow must declare its isolated-source copy list');
+  const body = declaration[1];
+  if (body === undefined) throw new Error('Workflow copy list body is missing.');
+  const files = [...body.matchAll(/'([^']+)'/gu)].map((match) => {
+    const file = match[1];
+    if (file === undefined) throw new Error('Workflow copy path is missing.');
+    return file;
+  });
+  assert.ok(files.length > 0, 'workflow copy list must contain literal paths');
+  assert.equal(body.replace(/'[^']+'/gu, '').replace(/[\s,]/gu, ''), '', 'copy list must contain only path literals');
+  assert.deepEqual(
+    files.filter((file) =>
+      /(?:^|\/)release-assurance\.(?:mjs|ts)$|(?:^|\/)forward-review-proof\.(?:mjs|ts)$/u.test(file),
+    ),
+    ['tooling/agent/release-assurance.ts', 'tooling/agent/controllers/forward-review-proof.ts'],
+  );
+  for (const file of files) {
+    assert.ok(!path.isAbsolute(file) && !file.split(/[\\/]/u).includes('..'), `copy path must stay in Source: ${file}`);
+    assert.ok(lstatSync(path.join(sourceRoot, file)).isFile(), `copy input must be a maintained regular file: ${file}`);
+  }
+  for (const stalePath of [
+    'tooling/agent/release-assurance.mjs',
+    'tooling/agent/controllers/forward-review-proof.mjs',
+  ]) {
+    assert.ok(!files.includes(stalePath), `workflow must not use extension fallback for ${stalePath}`);
+    assert.equal(existsSync(path.join(sourceRoot, stalePath)), false, `stale path must remain absent: ${stalePath}`);
+  }
+});
+
 test('CI dormant invocation binds exact repository job published commit and native target', async () => {
   const value = await fixture();
   const request = requestForCI({ ...value.input, context: ciContext, target: 'bun-windows-x64' });

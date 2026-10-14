@@ -4,23 +4,24 @@ import { runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../../src/config/project-context.ts';
 import { compileDevelopmentWorkflow } from '../../src/orchestration/workflow-plan.ts';
 import { sessionActionsForWave } from '../../src/orchestration/session-handoff.ts';
-import { buildSessionBridgeRequest } from '../../src/orchestration/mastra-session-bridge.ts';
+import { buildSessionBridgeRequest } from '../../src/orchestration/mastra-session-bridge-contract.ts';
 import { compareScopedSourceSnapshots } from '../../src/orchestration/scoped-source-snapshot.ts';
 import { projectConfiguredFrontierContinuationAction } from '../../src/orchestration/delivered-work-continuation.ts';
 import * as continuationProjection from '../../src/orchestration/delivered-work-continuation.ts';
 import type { AgentRuntimeConfig, WorkItemSelection } from '../../src/config/runtime-config.ts';
 import type { CoordinationLedger } from '../../src/contracts/envelopes.ts';
-import type { WorkState, StateVersion } from '../../src/host-state.ts';
+import type { WorkState, StateVersion, WorkIdentity } from '../../src/host-state.ts';
 import type { ScopedSourceSnapshot } from '../../src/orchestration/scoped-source-snapshot.ts';
 import type {
   SessionBridgeObservation,
   SessionBridgeRequest,
-  SessionBridgeSnapshot,
-} from '../../src/orchestration/mastra-session-bridge.ts';
+} from '../../src/orchestration/mastra-session-bridge-contract.ts';
+import type { SessionBridgeSnapshot } from '../../src/orchestration/mastra-session-bridge.ts';
 import type { MastraSessionLedgerState } from '../../src/orchestration/persistent-session-handoff.ts';
 import type { ConfiguredFrontierReceipt } from '../../src/orchestration/delivered-work-continuation-repair.ts';
 import type { DeliveredWorkContinuationRequest } from '../../src/orchestration/delivered-work-continuation.ts';
 import type { SessionAgentAction, SessionHandoffContext } from '../../src/orchestration/session-handoff.ts';
+import { hostJournalFixture, hostStateLeaseFixture, hostWorkStateFixture } from './host-journal-lease-fixture.ts';
 import {
   requestFixture,
   sourceScope,
@@ -142,17 +143,15 @@ export function prewriterProjectionFixture(
     requests: [oldRequest],
     observations,
   };
-  const journal: Journal = {
-    schema: 'MastraSessionLedger/v1',
-    workspace_id: workspaceId,
-    work_id: context.work_id,
-    attempt: 1,
-    run_id: engine.run_id,
-    source_scope: source,
-    step_id: engine.step_id,
+  const journal = hostJournalFixture({
+    workspaceId,
+    context,
+    runId: engine.run_id,
+    sourceScope: source,
+    stepId: engine.step_id,
     completed,
     items: [{ request: oldRequest, issue_id: null, observation: null }],
-  };
+  });
   const binding: PrewriterContinuationBinding = {
     repositoryRoot,
     config,
@@ -259,17 +258,22 @@ export function configuredFrontierRepairFixture(
         context: { ...projection.binding.context, scope_digest: targetScope.digest },
       },
     };
-  const priorJournal: Journal = projection?.journal ?? {
-      schema: 'MastraSessionLedger/v1',
-      workspace_id: runtime.workspaceId,
+  const fixtureContext: SessionHandoffContext = {
       work_id: requestBase.identity.work_id,
       attempt: requestBase.attempt,
-      run_id: requestBase.action.run_id,
-      source_scope: source,
-      step_id: requestBase.action.step_id,
-      items: [{ request: requestBase.action.request, issue_id: null, observation: null }],
-      completed: [],
+      scope_digest: source.digest,
     },
+    priorJournal: Journal =
+      projection?.journal ??
+      hostJournalFixture({
+        workspaceId: runtime.workspaceId,
+        context: fixtureContext,
+        runId: requestBase.action.run_id,
+        sourceScope: source,
+        stepId: requestBase.action.step_id,
+        items: [{ request: requestBase.action.request, issue_id: null, observation: null }],
+        completed: [],
+      }),
     engine: SessionBridgeSnapshot = projection?.engine ?? {
       run_id: requestBase.action.run_id,
       status: 'suspended',
@@ -283,6 +287,13 @@ export function configuredFrontierRepairFixture(
       targetConfigDigest: requestBase.targetConfigDigest,
       currentSourceScope: targetScope,
     }),
+    expiresAt = new Date(Date.now() + 60_000).toISOString(),
+    fixtureIdentity: WorkIdentity = {
+      repository_id: requestBase.identity.repository_id,
+      project_ids: requestBase.identity.project_ids,
+      integrations_digest: requestBase.identity.integrations_digest,
+      work_id: requestBase.identity.work_id,
+    },
     priorBinding = {
       repository_id: requestBase.identity.repository_id,
       integrations_digest: requestBase.identity.integrations_digest,
@@ -308,10 +319,13 @@ export function configuredFrontierRepairFixture(
       ...packet?.host.work.binding,
       project_ids: [...(packet?.host.work.binding.project_ids ?? requestBase.identity.project_ids)],
     } satisfies WorkState['binding'],
-    priorWork = {
-      schema: 'WorkState/v1',
-      workspace_id: runtime.workspaceId,
+    priorWork = hostWorkStateFixture({
+      identity: fixtureIdentity,
+      workspaceId: runtime.workspaceId,
       revision: 10,
+      sourceScope: source,
+      context: fixtureContext,
+      runId: action.run_id,
       binding: priorBinding,
       contracts: packet?.host.work.contracts ?? {
         scope: {
@@ -346,7 +360,7 @@ export function configuredFrontierRepairFixture(
         },
       },
       artifacts: packet?.host.work.artifacts ?? [],
-    } satisfies WorkState,
+    }),
     resources = [
       'execution:' + requestBase.identity.work_id,
       ...priorWork.binding.implementation_paths.map((path) => 'file:' + path),
@@ -399,6 +413,17 @@ export function configuredFrontierRepairFixture(
       decision_pointer: 'owner:original-release-disposition',
       created_at: '2026-10-07T00:00:00.000Z',
     },
+    repairTicket: CoordinationLedger['tickets'][number] = {
+      ...priorTicket,
+      ticket_id: 'repair-ticket',
+      sequence: 2,
+      status: 'active',
+      source_revision: targetScope.digest,
+      claim_ids: ['repair-claim'],
+      expires_at: expiresAt,
+      active_resources: resources,
+      created_at: '2026-10-07T00:00:01.000Z',
+    },
     priorLedger: CoordinationLedger = {
       schema: 'CoordinationLedger/v1',
       workspace_id: runtime.workspaceId,
@@ -438,7 +463,12 @@ export function configuredFrontierRepairFixture(
         schema_digest: request.targetSchemaDigest,
         work_source_revision: targetScope.digest,
       },
-      lease: { ticket_id: 'repair-ticket', thread_id: request.nativeSessionHandle, generation: 1 },
+      lease: hostStateLeaseFixture({
+        ticket: repairTicket,
+        identity: fixtureIdentity,
+        nativeSessionHandle: request.nativeSessionHandle,
+        generation: 1,
+      }),
       execution: { ...priorWork.execution, status: 'active', phase: 'review', assignment_attempts: [] },
     } satisfies WorkState,
     successorJournal: Journal = projection
@@ -450,25 +480,11 @@ export function configuredFrontierRepairFixture(
             .map((request) => ({ request, issue_id: null, observation: null })),
         }
       : priorJournal,
-    expiresAt = new Date(Date.now() + 60_000).toISOString(),
     successorLedger: CoordinationLedger = {
       ...priorLedger,
       revision: 96,
       next_sequence: 3,
-      tickets: [
-        priorTicket,
-        {
-          ...priorTicket,
-          ticket_id: 'repair-ticket',
-          sequence: 2,
-          status: 'active',
-          source_revision: targetScope.digest,
-          claim_ids: ['repair-claim'],
-          expires_at: expiresAt,
-          active_resources: resources,
-          created_at: '2026-10-07T00:00:01.000Z',
-        },
-      ],
+      tickets: [priorTicket, repairTicket],
       claims: [
         priorClaim,
         {

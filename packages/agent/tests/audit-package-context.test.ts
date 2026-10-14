@@ -57,7 +57,19 @@ test('package context works without a copied bundle and ignores a consumer packa
     source_ids: ['runtime-development-lifecycle', 'project-context'],
     skill_refs: [],
   };
-  const first = buildConfiguredContext(root, config, request);
+  const pilotPhaseKey = 'VIDA_CALLER_RESOURCE_PILOT_PHASE';
+  const callerPilot = process.env.VIDA_CALLER_RESOURCE_PILOT_ID?.startsWith('configured-context-') ?? false;
+  const previousPilotPhase = process.env[pilotPhaseKey];
+  let first: ReturnType<typeof buildConfiguredContext>;
+  try {
+    if (callerPilot) process.env[pilotPhaseKey] = 'operation';
+    first = buildConfiguredContext(root, config, request);
+  } finally {
+    if (callerPilot) {
+      if (previousPilotPhase === undefined) delete process.env[pilotPhaseKey];
+      else process.env[pilotPhaseKey] = previousPilotPhase;
+    }
+  }
   const packageEntry = first.entries.find((entry) => entry.id === 'runtime-development-lifecycle');
   if (!packageEntry) throw Error('package context entry is missing');
   const source = await readFile(path.join(packageRoot, 'instructions/development-lifecycle.md'));

@@ -7,7 +7,11 @@ import type { Dirent } from 'node:fs';
 import path from 'node:path';
 import { openRootFileSync, readFileDescriptorBoundedSync } from '@openclaw/fs-safe/advanced';
 import { instrumentSource as instrumentCapturedSource } from './source-instrumentation.ts';
-import { maintainedSourceInventory, selectMaintainedSourcePaths } from './maintained-source-inventory.ts';
+import {
+  expectedJavascriptFiles,
+  maintainedSourceInventory,
+  selectMaintainedSourcePaths,
+} from './maintained-source-inventory.ts';
 import type { PublishedFixtureIdentity } from './published-coverage-inputs.js';
 import {
   assertPublishedCoverageInputs,
@@ -76,8 +80,14 @@ type QualityInputCapture = {
   inputBytes: Map<string, Buffer>;
   inputDigests: Map<string, InputDigest>;
   runtimeToolPaths: string[];
+  sdkBuilderToolPaths?: string[];
   publishedContract?: PublishedContract;
 };
+export type SdkFormationQualityInputCapture = {
+  readonly selectedInputs: ReadonlyMap<string, Buffer>;
+  readonly inputDigests: ReadonlyMap<string, string>;
+};
+const sdkFormationQualityInputs = new WeakMap<CoverageInputs, SdkFormationQualityInputCapture>();
 const maxInputFileBytes = 4 * 1024 * 1024;
 const maxInputBytes = 128 * 1024 * 1024;
 const maxInputPaths = 20000;
@@ -116,6 +126,8 @@ export const coverageToolInputs: string[] = [
   'tooling/istanbul-public-api.d.ts',
   'tooling/maintained-source-inventory.ts',
   'tooling/run-bun-coverage.ts',
+  'tooling/coverage-run-outcome.ts',
+  'tooling/sdk-artifact-capture.ts',
 ];
 
 export const sha256 = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
@@ -661,6 +673,19 @@ function qualityToolInputPaths(
   return [...new Set([...coverageToolInputs, ...additionalToolInputs, ...contractInputs, ...baselineInputs])].sort();
 }
 
+function sdkFormationToolInputPaths(
+  selectionMode: 'current' | 'published-baseline-bun-native',
+  selection: TestSelection,
+): string[] {
+  if (selectionMode !== 'current' || !selection.tests.includes('tests/configured-workflow.test.ts')) return [];
+  return [
+    'tooling/build-package.ts',
+    'tsconfig.json',
+    'dist/sdk-formation.json',
+    ...expectedJavascriptFiles.map((file) => `dist/src/${file}`),
+  ];
+}
+
 function verifyPublishedBaselineInputs(
   root: string,
   inputBytes: Map<string, Buffer>,
@@ -799,6 +824,7 @@ export async function captureRuntimeInputClosure(
   sourcePaths: readonly string[],
   testPaths: readonly string[],
   inputBytes: Map<string, Buffer>,
+  observeResolvedEdge?: (importer: string, resolved: string) => void,
 ): Promise<string[]> {
   const scanners = new Map<Bun.Loader, Bun.Transpiler>();
   const sources = new Set(sourcePaths);
@@ -862,6 +888,7 @@ export async function captureRuntimeInputClosure(
         }
       }
       if (!resolved) throw new Error(`Unresolved package-local runtime import: ${importer} -> ${specifier}`);
+      observeResolvedEdge?.(importer, resolved);
       const firstPathPart = resolved.split('/')[0] ?? '';
       if (
         !sources.has(resolved) &&
@@ -873,6 +900,38 @@ export async function captureRuntimeInputClosure(
     }
   }
   return [...runtimeTools].sort();
+}
+
+function reachableSdkBuilderToolPaths(
+  entrypoint: string,
+  edges: ReadonlyMap<string, ReadonlySet<string>>,
+  sourcePaths: readonly string[],
+  testPaths: readonly string[],
+  schemaPaths: readonly string[],
+): string[] {
+  const sources = new Set(sourcePaths);
+  const tests = new Set(testPaths);
+  const schemas = new Set(schemaPaths);
+  const selectedBase = new Set(['package.json', 'bun.lock', '.bun-version', 'bunfig.toml', 'tsconfig.json']);
+  const visited = new Set<string>();
+  const pending = [entrypoint];
+  while (pending.length) {
+    const current = pending.pop();
+    if (!current || visited.has(current)) continue;
+    visited.add(current);
+    for (const resolved of edges.get(current) ?? []) pending.push(resolved);
+  }
+  return [...visited]
+    .filter(
+      (file) =>
+        file !== entrypoint &&
+        !sources.has(file) &&
+        !tests.has(file) &&
+        !schemas.has(file) &&
+        !selectedBase.has(file) &&
+        !resourceRoots.some((directory) => file.startsWith(`${directory}/`)),
+    )
+    .sort();
 }
 
 // Types above keep the three projections bound to one captured input snapshot.
@@ -936,15 +995,41 @@ async function captureQualityInputBase(
       ['schemas', 'templates', 'instructions'].map((directory) => walkFiles(root, path.join(root, directory))),
     )
   ).flat();
-  const tools = qualityToolInputPaths(additionalToolInputs, contractInputs, selectionMode);
+  const sdkFormationTools = sdkFormationToolInputPaths(selectionMode, testSelection);
+  const tools = qualityToolInputPaths([...additionalToolInputs, ...sdkFormationTools], contractInputs, selectionMode);
   const allInputs = [...new Set([...sources, ...testInputsAll, ...tools])].sort();
   const inputBytes = await readQualityInputs(root, allInputs);
   if (selectionMode === 'published-baseline-bun-native')
     verifyPublishedBaselineInputs(root, inputBytes, sources, testInputsAll);
+  const sdkBuilderEntrypoint =
+    selectionMode === 'current' && inputBytes.has('tooling/build-package.ts') ? 'tooling/build-package.ts' : undefined;
+  const sdkBuilderEdges = new Map<string, Set<string>>();
   const runtimeToolPaths =
     selectionMode === 'current'
-      ? await captureRuntimeInputClosure(root, testSelection.tests, sources, testInputsAll, inputBytes)
+      ? await captureRuntimeInputClosure(
+          root,
+          [...testSelection.tests, ...(sdkBuilderEntrypoint ? [sdkBuilderEntrypoint] : [])],
+          sources,
+          testInputsAll,
+          inputBytes,
+          sdkBuilderEntrypoint
+            ? (importer, resolved) => {
+                const children = sdkBuilderEdges.get(importer) ?? new Set<string>();
+                children.add(resolved);
+                sdkBuilderEdges.set(importer, children);
+              }
+            : undefined,
+        )
       : [];
+  const sdkBuilderToolPaths = sdkBuilderEntrypoint
+    ? reachableSdkBuilderToolPaths(
+        sdkBuilderEntrypoint,
+        sdkBuilderEdges,
+        sources.filter((file) => file.startsWith('src/')),
+        [],
+        contractInputs.filter((file) => file.startsWith('schemas/')),
+      )
+    : undefined;
   const digestPaths = [...new Set([...sources, ...testInputsAll, ...tools, ...runtimeToolPaths])];
   const inputDigests = new Map(
     digestPaths.map((file) => {
@@ -964,6 +1049,7 @@ async function captureQualityInputBase(
     inputBytes,
     inputDigests,
     runtimeToolPaths,
+    ...(sdkBuilderToolPaths ? { sdkBuilderToolPaths } : {}),
     ...(selectionMode === 'published-baseline-bun-native'
       ? { publishedContract: capturePublishedBaselineContract(root) }
       : {}),
@@ -984,15 +1070,16 @@ function qualityInputDigests(
   });
 }
 
-function projectQualityInputCapture(
+async function projectQualityInputCapture(
   capture: QualityInputCapture,
   additionalToolInputs: readonly string[],
   selectionMode: 'current' | 'published-baseline-bun-native',
-): CoverageInputs {
+): Promise<CoverageInputs> {
   const tools = [
     ...new Set([
       ...qualityToolInputPaths(additionalToolInputs, capture.contractInputs, selectionMode),
       ...capture.runtimeToolPaths,
+      ...sdkFormationToolInputPaths(selectionMode, capture.testSelection),
     ]),
   ].sort();
   const sourceJson = canonicalJson(capture.sources);
@@ -1027,7 +1114,7 @@ function projectQualityInputCapture(
     Object.values(inputBytes).reduce((total, value) => total + value.byteLength, 0) > maxInputBytes
   )
     throw new Error('Combined fixture/measurement snapshot exceeds its input limits.');
-  return {
+  const projected: CoverageInputs = {
     sources: capture.sources,
     source_fingerprint: sourceFingerprint,
     tests: capture.testSelection.tests,
@@ -1043,6 +1130,41 @@ function projectQualityInputCapture(
     }),
     input_bytes: inputBytes,
   };
+  if (selectionMode === 'current' && capture.sdkBuilderToolPaths) {
+    const { projectSdkFormationInputBytes } = await import('./build-package.ts');
+    const sourcePaths = capture.sources.map((entry) => entry.path).filter((file) => file.startsWith('src/'));
+    const schemaPaths = capture.contractInputs.filter((file) => file.startsWith('schemas/'));
+    const selectedInputs = projectSdkFormationInputBytes({
+      inputBytes: capture.inputBytes,
+      sourcePaths,
+      schemaPaths,
+      buildToolPaths: capture.sdkBuilderToolPaths,
+    });
+    const inputDigests = new Map<string, string>();
+    for (const file of selectedInputs.keys()) {
+      const digest = capture.inputDigests.get(file)?.sha256;
+      if (!digest) throw new Error(`SDK formation capture is missing the selected input digest: ${file}`);
+      inputDigests.set(file, digest);
+    }
+    const privateBytes = new Map([...selectedInputs].map(([file, bytes]) => [file, Buffer.from(bytes)] as const));
+    sdkFormationQualityInputs.set(projected, Object.freeze({ selectedInputs: privateBytes, inputDigests }));
+  }
+  return projected;
+}
+
+/** Return the SDK projection tied to this exact current quality capture. */
+export function sdkFormationInputsFromQualityCapture(inputs: CoverageInputs): SdkFormationQualityInputCapture {
+  const captured = sdkFormationQualityInputs.get(inputs);
+  if (!captured) throw new Error('SDK formation inputs are unavailable for this quality capture.');
+  for (const [file, snapshot] of captured.selectedInputs) {
+    const exposed = inputs.input_bytes[file];
+    if (!Buffer.isBuffer(exposed) || !exposed.equals(snapshot))
+      throw new Error(`SDK formation quality capture bytes changed: ${file}`);
+  }
+  return Object.freeze({
+    selectedInputs: new Map([...captured.selectedInputs].map(([file, bytes]) => [file, Buffer.from(bytes)])),
+    inputDigests: new Map(captured.inputDigests),
+  });
 }
 
 function freezeQualityProjection(inputs: CoverageInputs): CoverageInputs {
@@ -1065,9 +1187,9 @@ export async function qualityInputProjections(
   const unionAdditionalTools = [...new Set([...checked.coverage, ...checked.mutation, ...checked.guard])].sort();
   const capture = await captureQualityInputBase(root, unionAdditionalTools, 'current');
   return Object.freeze({
-    coverage: freezeQualityProjection(projectQualityInputCapture(capture, checked.coverage, 'current')),
-    mutation: freezeQualityProjection(projectQualityInputCapture(capture, checked.mutation, 'current')),
-    guard: freezeQualityProjection(projectQualityInputCapture(capture, checked.guard, 'current')),
+    coverage: freezeQualityProjection(await projectQualityInputCapture(capture, checked.coverage, 'current')),
+    mutation: freezeQualityProjection(await projectQualityInputCapture(capture, checked.mutation, 'current')),
+    guard: freezeQualityProjection(await projectQualityInputCapture(capture, checked.guard, 'current')),
   });
 }
 

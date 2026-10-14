@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { confirmedRunnerOutcome, junitOutcome, parseMutationBodyEvents } from '../tooling/mutation-evidence.js';
+import { expectRejection } from './helpers/expect-rejection.ts';
 
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
 
@@ -128,6 +129,91 @@ test.each(['sync', 'async'] as const)(
     }
   },
 );
+
+test.each(['sync', 'async'] as const)(
+  'real adapter clears a consumed node assert %s callback failure before a later body throw',
+  async (mode) => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-consumed-node-assert-'));
+    try {
+      const failing =
+        mode === 'sync'
+          ? `const fail = () => { try { assert.equal(1, 2); } catch (error) { saved = error; throw error; } }; assert.throws(fail);`
+          : `const fail = async () => { try { assert.equal(1, 2); } catch (error) { saved = error; throw error; } }; await assert.rejects(fail);`;
+      const child = await runAdapterChild(
+        root,
+        `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\ntest('consumed node assertion then body error', async () => { let saved: unknown; ${failing} throw saved; });\n`,
+        `node-${mode}`,
+      );
+      const classified = junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome;
+      expect(classified).toBe('unproven');
+      expect(confirmedRunnerOutcome(child.exitCode, classified)).toBe('unknown');
+      expect(child.events).toMatchObject([{ kind: 'body', assertion_cause: false, assertion_source: null }]);
+      expect(child.events).toHaveLength(1);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  },
+);
+
+test('real adapter binds each expanded table row to its own body ID', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-each-rows-'));
+  try {
+    const child = await runAdapterChild(
+      root,
+      `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\ntest.each([[1], [2]])('row %i', value => { assert.equal(value, 0); });\n`,
+      'each-rows',
+    );
+    expect(child.events).toMatchObject([
+      { kind: 'body', body_id: 1, assertion_cause: true, assertion_source: 'node-assert' },
+      { kind: 'body', body_id: 2, assertion_cause: true, assertion_source: 'node-assert' },
+    ]);
+    expect(junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome).toBe('killed');
+
+    const objectRows = await runAdapterChild(
+      root,
+      `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\ntest.each([{ value: 1 }, { value: 2 }])('object row $value', ({ value }) => { assert.equal(value, 0); });\n`,
+      'each-object-rows',
+    );
+    expect(objectRows.events).toMatchObject([
+      { kind: 'body', body_id: 1, assertion_cause: true, assertion_source: 'node-assert' },
+      { kind: 'body', body_id: 2, assertion_cause: true, assertion_source: 'node-assert' },
+    ]);
+    expect(junitOutcome(objectRows.junit, [objectRows.selectedTest], [], objectRows.events).outcome).toBe('killed');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('real adapter rejects repeated body IDs from retried executions', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-retry-rows-'));
+  try {
+    await expectRejection(
+      runAdapterChild(
+        root,
+        `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\ntest('retry assertion failure', () => { assert.equal(1, 2); }, { retry: 1 });\n`,
+        'retry-rows',
+      ),
+      /repeats a body ID/u,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('real adapter preserves direct node assertion evidence when no consumer catches it', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-node-assert-positive-'));
+  try {
+    const child = await runAdapterChild(
+      root,
+      `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\ntest('direct node assertion failure', () => { assert.equal(1, 2); });\n`,
+      'node-positive',
+    );
+    expect(child.events).toMatchObject([{ kind: 'body', assertion_cause: true, assertion_source: 'node-assert' }]);
+    expect(junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome).toBe('killed');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 test.each(['sync', 'async'] as const)('real adapter confirms an escaping %s callback matcher failure', async (mode) => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-escaping-matcher-'));

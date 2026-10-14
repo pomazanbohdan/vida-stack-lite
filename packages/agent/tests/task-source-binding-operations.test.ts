@@ -74,9 +74,9 @@ import type {
 import { workflowWorkItemSchema } from '../src/orchestration/workflow-session-reservation-contract.ts';
 import {
   buildSessionBridgeRequest,
-  configuredContextForStage,
   type SessionBridgeObservation,
-} from '../src/orchestration/mastra-session-bridge.ts';
+} from '../src/orchestration/mastra-session-bridge-contract.ts';
+import { configuredContextForStage } from '../src/orchestration/configured-context.ts';
 import { run } from '../bin/run.ts';
 import { fixtureInitializationTemplates } from './helpers/runtime-initialization-fixture.ts';
 
@@ -2592,7 +2592,8 @@ test.each(['prepare', 'issue'] as const)(
           });
         });
 
-      const failure = await executeTaskSourceBindingOperation({
+      let failure: unknown;
+      failure = await executeTaskSourceBindingOperation({
         repositoryRoot,
         mode,
         requestPath,

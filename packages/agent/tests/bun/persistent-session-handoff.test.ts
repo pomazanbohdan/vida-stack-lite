@@ -18,10 +18,13 @@ import type {
   MastraSessionLedgerState,
   PersistentSessionSnapshot,
 } from '../../src/orchestration/persistent-session-handoff.ts';
-import type {
-  SessionBridgeObservation,
-  SessionBridgeRequest,
+import {
+  buildSessionBridgeRequest,
+  sessionBridgeRunId,
+  type SessionBridgeObservation,
+  type SessionBridgeRequest,
 } from '../../src/orchestration/mastra-session-bridge-contract.ts';
+import { configuredContextForStage } from '../../src/orchestration/configured-context.ts';
 import type {
   SessionAgentAction,
   SessionAgentOutcome,
@@ -29,11 +32,6 @@ import type {
 } from '../../src/orchestration/session-handoff.ts';
 import { validateActivationUse } from '../../src/research-decision.ts';
 import type { ObservedActivationUseWritePlan } from '../../src/research-decision.ts';
-import {
-  buildSessionBridgeRequest,
-  configuredContextForStage,
-  sessionBridgeRunId,
-} from '../../src/orchestration/mastra-session-bridge.ts';
 import {
   MastraSessionLedger,
   PersistentSessionHandoffStore,

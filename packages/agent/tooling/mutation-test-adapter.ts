@@ -16,6 +16,9 @@ type AssertionSource = 'bun-expect' | 'node-assert';
 type BodyState = MutationBodyState;
 type Callable = (this: unknown, ...args: unknown[]) => unknown;
 type TestCallback = Callable;
+type EachInput =
+  | { kind: 'array'; ids: Set<number> }
+  | { kind: 'object'; key: string; rows: WeakMap<object, { id: number; row: unknown }> };
 const receiptFile = process.env.AGENT_MUTATION_BODY_RECEIPTS;
 let bodyId = 0;
 const file = new URL(import.meta.url).searchParams.get('file');
@@ -35,6 +38,14 @@ function noteAssertion(error: unknown, source: AssertionSource): void {
   if (current) {
     current.assertionError = error;
     current.assertionSource = source;
+  }
+}
+
+function clearAssertion(): void {
+  const current = bodyContext.getStore();
+  if (current) {
+    current.assertionError = null;
+    current.assertionSource = null;
   }
 }
 
@@ -73,15 +84,22 @@ function callAssertion(
   receiver: unknown,
   args: unknown[],
   source: AssertionSource = 'node-assert',
+  consumesThrownError = false,
 ): unknown {
   try {
     const result: unknown = Reflect.apply(target as Callable, receiver, args);
     if (result !== null && (typeof result === 'object' || typeof result === 'function') && 'then' in result) {
-      return Promise.resolve(result).catch((error: unknown) => {
-        noteAssertion(error, source);
-        throw error;
-      });
+      return Promise.resolve(result)
+        .catch((error: unknown) => {
+          noteAssertion(error, source);
+          throw error;
+        })
+        .then((value: unknown) => {
+          if (consumesThrownError) clearAssertion();
+          return value;
+        });
     }
+    if (consumesThrownError) clearAssertion();
     return result;
   } catch (error) {
     noteAssertion(error, source);
@@ -99,7 +117,9 @@ function assertionTree(value: unknown): unknown {
     get(current, key) {
       const member: unknown = Reflect.get(current, key, current);
       if (typeof member === 'function') {
-        const callMethod = (...args: unknown[]) => callAssertion(member, target, args);
+        const consumesThrownError = key === 'throws' || key === 'rejects';
+        const callMethod = (...args: unknown[]) =>
+          callAssertion(member, target, args, 'node-assert', consumesThrownError);
         return callMethod;
       }
       return assertionTree(member);
@@ -125,18 +145,33 @@ const expect = new Proxy(bunExpect, {
   },
 });
 
-function withBody(callback: TestCallback, id: number, expectedFailure: boolean): TestCallback {
+function withBody(callback: TestCallback, id: number, expectedFailure: boolean, eachInput?: EachInput): TestCallback {
   return function mutationBody(this: unknown, ...args: unknown[]) {
-    const state: BodyState = { id, assertionError: null, assertionSource: null };
+    let bodyId = id;
+    let bodyArgs = args;
+    if (eachInput?.kind === 'array') {
+      const candidate = args[0];
+      if (typeof candidate !== 'number' || !Number.isSafeInteger(candidate) || !eachInput.ids.has(candidate))
+        throw new Error('Mutation body adapter could not bind a parametrized array row.');
+      bodyId = candidate;
+      bodyArgs = args.slice(1);
+    } else if (eachInput?.kind === 'object') {
+      const candidate = args[0];
+      const binding = candidate !== null && typeof candidate === 'object' ? eachInput.rows.get(candidate) : undefined;
+      if (!binding) throw new Error('Mutation body adapter could not bind a parametrized object row.');
+      bodyId = binding.id;
+      bodyArgs = [binding.row, ...args.slice(1)];
+    }
+    const state: BodyState = { id: bodyId, assertionError: null, assertionSource: null };
     const run = () => {
       let result;
       try {
-        result = callback.apply(this, args);
+        result = callback.apply(this, bodyArgs);
       } catch (error) {
         if (!expectedFailure)
           append({
             kind: 'body',
-            body_id: id,
+            body_id: bodyId,
             assertion_cause: state.assertionError === error,
             assertion_source: state.assertionSource,
           });
@@ -147,7 +182,7 @@ function withBody(callback: TestCallback, id: number, expectedFailure: boolean):
           if (!expectedFailure)
             append({
               kind: 'body',
-              body_id: id,
+              body_id: bodyId,
               assertion_cause: state.assertionError === error,
               assertion_source: state.assertionSource,
             });
@@ -182,6 +217,7 @@ function registerArgs(
   bodies: boolean,
   expectedFailure: boolean,
   eachArgumentCount: number | null,
+  eachInput?: EachInput,
 ): unknown[] {
   const next = [...args];
   if (!bodies) return next;
@@ -190,10 +226,12 @@ function registerArgs(
   const callback = next[callbackIndex] as Callable;
   if (eachArgumentCount === null ? callback.length > 0 : callback.length > eachArgumentCount)
     throw new Error('Mutation body adapter does not support Bun done-callback test forms.');
-  const id = ++bodyId;
   if (typeof next[0] !== 'string') throw new Error('Mutation body adapter requires a test title string.');
-  next[0] = `[mutation-body:${id}] ${next[0]}`;
-  next[callbackIndex] = withBody(next[callbackIndex] as TestCallback, id, expectedFailure);
+  const id = eachInput ? 0 : ++bodyId;
+  if (eachInput?.kind === 'array') next[0] = `[mutation-body:%i] ${next[0]}`;
+  else if (eachInput?.kind === 'object') next[0] = `[mutation-body:$${eachInput.key}] ${next[0]}`;
+  else next[0] = `[mutation-body:${id}] ${next[0]}`;
+  next[callbackIndex] = withBody(next[callbackIndex] as TestCallback, id, expectedFailure, eachInput);
   return next;
 }
 
@@ -206,27 +244,84 @@ function tableArgumentCount(args: unknown[]): number | null {
   return Array.isArray(first) ? first.length : 1;
 }
 
+function instrumentEachTable(args: unknown[]): { args: unknown[]; input: EachInput } {
+  const table = args[0];
+  if (!Array.isArray(table)) throw new Error('Mutation body adapter requires a Bun test.each table.');
+  const rows: unknown[] = table;
+  const next = [...args];
+  if (!rows.length) return { args: next, input: { kind: 'array', ids: new Set() } };
+  const first = rows[0];
+  if (Array.isArray(first)) {
+    if (rows.some((row) => !Array.isArray(row)))
+      throw new Error('Mutation body adapter does not support mixed Bun test.each row shapes.');
+    const ids = new Set<number>();
+    next[0] = rows.map((row) => {
+      const id = ++bodyId;
+      ids.add(id);
+      const values: unknown[] = [id, ...(row as unknown[])];
+      return values;
+    });
+    return { args: next, input: { kind: 'array', ids } };
+  }
+  if (first !== null && typeof first === 'object') {
+    if (rows.some((row) => row === null || typeof row !== 'object' || Array.isArray(row)))
+      throw new Error('Mutation body adapter does not support mixed Bun test.each row shapes.');
+    let key = '__vidaMutationBodyId';
+    while (rows.some((row) => key in (row as object))) key += '_';
+    const bound = new WeakMap<object, { id: number; row: unknown }>();
+    next[0] = rows.map((row) => {
+      const id = ++bodyId;
+      const original = row as object;
+      const copy = Object.create(Object.getPrototypeOf(original) as object | null) as object;
+      Object.defineProperties(copy, Object.getOwnPropertyDescriptors(original));
+      Object.defineProperty(copy, key, { value: id, enumerable: true, configurable: true });
+      bound.set(copy, { id, row: original });
+      return copy;
+    });
+    return { args: next, input: { kind: 'object', key, rows: bound } };
+  }
+  if (rows.some((row) => row !== null && typeof row === 'object'))
+    throw new Error('Mutation body adapter does not support mixed Bun test.each row shapes.');
+  const ids = new Set<number>();
+  next[0] = rows.map((row) => {
+    const id = ++bodyId;
+    ids.add(id);
+    const values: unknown[] = [id, row];
+    return values;
+  });
+  return { args: next, input: { kind: 'array', ids } };
+}
+
 function registrationProxy(
   target: unknown,
   bodies: boolean,
   expectedFailure = false,
   eachArgumentCount: number | null = null,
+  eachInput?: EachInput,
 ): unknown {
   if (typeof target !== 'function') return target;
   return new Proxy(target, {
     apply(fn, thisArg, args) {
-      return Reflect.apply(fn as Callable, thisArg, registerArgs(args, bodies, expectedFailure, eachArgumentCount));
+      return Reflect.apply(
+        fn as Callable,
+        thisArg,
+        registerArgs(args, bodies, expectedFailure, eachArgumentCount, eachInput),
+      );
     },
     get(fn, key) {
       const member: unknown = Reflect.get(fn, key, fn);
       if (key === 'each' && typeof member === 'function') {
-        const each = (...args: unknown[]) =>
-          registrationProxy(
-            Reflect.apply(member as Callable, fn, args),
+        const each = (...args: unknown[]) => {
+          if (!bodies) return registrationProxy(Reflect.apply(member as Callable, fn, args), bodies);
+          const instrumented = instrumentEachTable(args);
+          return registrationProxy(
+            Reflect.apply(member as Callable, fn, instrumented.args),
             bodies,
             expectedFailure,
             tableArgumentCount(args),
+            instrumented.input,
           );
+        };
         return each;
       }
       if (typeof member === 'function') {
@@ -235,10 +330,10 @@ function registrationProxy(
           const result: unknown = Reflect.apply(
             member as Callable,
             fn,
-            bodies ? registerArgs(args, true, expectedFailure || failingMethod, eachArgumentCount) : args,
+            bodies ? registerArgs(args, true, expectedFailure || failingMethod, eachArgumentCount, eachInput) : args,
           );
           return typeof result === 'function'
-            ? registrationProxy(result, bodies, expectedFailure || failingMethod, eachArgumentCount)
+            ? registrationProxy(result, bodies, expectedFailure || failingMethod, eachArgumentCount, eachInput)
             : result;
         };
         return callModifier;

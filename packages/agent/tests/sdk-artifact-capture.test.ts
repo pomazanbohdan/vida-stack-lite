@@ -3,7 +3,10 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import os from 'node:os';
 import path from 'node:path';
 import { sha256 } from '../tooling/bun-coverage-evidence.ts';
-import { captureSelectedSdkJavascriptOutputs } from '../tooling/sdk-artifact-capture.ts';
+import {
+  captureSelectedSdkJavascriptOutputs,
+  captureSelectedSdkJavascriptOutputsFromCapturedBytes,
+} from '../tooling/sdk-artifact-capture.ts';
 import { expectedJavascriptFiles } from '../tooling/maintained-source-inventory.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 
@@ -55,7 +58,12 @@ function fixture() {
     writeFileSync(path.join(root, 'dist/sdk-formation.json'), JSON.stringify(value) + '\n');
   };
   writeReceipt();
-  return { root, outputs, receipt, selectedInputs, writeReceipt };
+  const artifacts = () =>
+    new Map<string, Buffer>([
+      ['dist/sdk-formation.json', Buffer.from(JSON.stringify(receipt()) + '\n')],
+      ...outputs.map(({ path: file, bytes }) => [file, Buffer.from(bytes)] as const),
+    ]);
+  return { root, outputs, receipt, selectedInputs, writeReceipt, artifacts };
 }
 
 afterEach(() => {
@@ -75,6 +83,41 @@ test('joins exact selected input inventory to four emitted members and retains p
   const original = value.outputs.find((output) => output.path === member);
   if (!original) throw new Error('fixture member bytes are missing');
   expect(captured.readBytes(member)).toEqual(original.bytes);
+});
+
+test('captured-byte validation matches the bounded reader', async () => {
+  const value = fixture();
+  const artifacts = value.artifacts();
+  const sync = captureSelectedSdkJavascriptOutputsFromCapturedBytes(value.root, value.selectedInputs, artifacts);
+  const asyncCapture = await captureSelectedSdkJavascriptOutputs(value.root, value.selectedInputs);
+  expect(sync.evidence).toBe(asyncCapture.evidence);
+  expect(sync.paths).toEqual(asyncCapture.paths);
+  const member = sync.paths[0];
+  if (!member) throw new Error('fixture member is missing');
+  expect(sync.readBytes(member)).toEqual(asyncCapture.readBytes(member));
+});
+
+test('captured-byte validation denies stale selected inputs and missing or changed outputs synchronously', () => {
+  const value = fixture();
+  const staleInputs = new Map(value.selectedInputs);
+  staleInputs.set('src/nested/transitive.ts', Buffer.from('export const other = true;\n'));
+  expect(() =>
+    captureSelectedSdkJavascriptOutputsFromCapturedBytes(value.root, staleInputs, value.artifacts()),
+  ).toThrow(/selected package formation bytes/u);
+
+  const missingOutput = value.artifacts();
+  missingOutput.delete(value.outputs[0]?.path ?? '');
+  expect(() =>
+    captureSelectedSdkJavascriptOutputsFromCapturedBytes(value.root, value.selectedInputs, missingOutput),
+  ).toThrow(/JavaScript is missing/u);
+
+  const changedOutput = value.artifacts();
+  const output = value.outputs[0];
+  if (!output) throw new Error('fixture output is missing');
+  changedOutput.set(output.path, Buffer.from('changed emitted bytes\n'));
+  expect(() =>
+    captureSelectedSdkJavascriptOutputsFromCapturedBytes(value.root, value.selectedInputs, changedOutput),
+  ).toThrow(/differs from its formation receipt/u);
 });
 
 test('rejects stale selected transitive source bytes even when the receipt is self-consistent', async () => {

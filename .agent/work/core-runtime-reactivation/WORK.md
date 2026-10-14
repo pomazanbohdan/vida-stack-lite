@@ -11314,3 +11314,64 @@ handle. Root captures the already validated exact handle as a stable const,
 preserving runtime behavior; current typecheck and typed lint pass again. No hook
 bypass or commit was performed on the rejected snapshot; native Source evidence
 above is unchanged. Re-stage that precise correction before publication.
+
+## 2026-10-14 — supplied db88bb2 audit and joined evidence batch
+
+Root read the complete supplied vida-audit-db88bb2.md. All eight static findings
+are confirmed and corrected in the current dirty batch; bounded native controls
+cover real mutation adapter, input projection, Windows copy manifest, exact
+file identities, actual repair entrypoint, retained fixture cleanup and native
+SQL effects. See EXTERNAL-AUDIT-db88bb2-20261014.md for per-finding disposition.
+External audit counterexamples are not reported as executed causal RED.
+
+The five requested improvements share this packet: durable operation result,
+same-capture SDK freshness, typed Host/Journal/Lease fixture operands, owned
+body/close/retained cleanup, and real concurrent configured reader pilot. Pilot
+1PASS47assertions/1.96s qualifies only the observed instruction descriptor, not
+complete coverage or successor resource admission. Failed/UNKNOWN roots remain.
+
+Final blind reviews found missing typecheck/quality phase observations, known
+report rejection classification, absent-PATH restoration and duplicated context
+validation reads. Corrections preserve explicit uncertainty and per-call config
+freshness. Joined verification97PASS/2FAIL isolated the issuer/root guard order
+regression and a scan-count fixture that used coincident repository roots; both
+are corrected before publication. All other97cases passed, including absent
+PATH and phase outcome controls. Latest static452capturedTS/451program/Source100
+reports0diagnostics and lintPASS; changed-byte final checks remain in progress.
+Untracked BASE/ and root bun.lock remain untouched. origin/main equals HEAD
+db88bb2; no ff integration was needed.
+
+All global exact coverage/CRAP/confirmed mutation and exhaustive frozen role
+correspondence remain OPEN. No release operation, loader/layout/AUX exclusion,
+installed Runtime or old UNKNOWN replay is inferred. After strict publication,
+form current SDK without suites, then qualify current resource admission before
+the sole final-check owner launches a fresh300000ms coverage selection.
+
+Changed-byte correction qualification: batch-v15-final-static-green.log reports
+452capturedTS/451program0diagnostics, Source100/0diagnostics and typedlintPASS.
+batch-v15-context-final-native.log13PASS/166assertions/2.02s includes issuer/root
+denial before malformed config IO, fresh terminal config drift rejection, and
+one exact target check per logical path binding (shared aliases are distinct
+required operands, ancestor traversal is not counted as a target check).
+Corrected runner/custody31cases passed in the preceding three-file selection;
+SDK/projection/lifecycle cases passed unchanged in the joined seven-file run.
+batch-v15-final-role-inventory.json reuses the existing Babel owner for only the
+two changed product modules:173roles, noneCC>10. This is static inventory only,
+not reviewed exhaustive frozen correspondence or a CRAP result. No candidate
+ceilings were minted. Final product/mutation bounded requalification is running
+before strict publication; no campaign, Runtime or global numeric pass claimed.
+
+Final product/mutation-native69PASS/634assertions/7.23s, five files, on the final
+current product and adapter bytes. The two blind re-reviewers confirm corrected
+issuer/root ordering and pure receipt-denial classification without remaining
+blockers in their assigned contours. No score inferred. All writers/reviewers
+have joined; Root stages only the reviewed batch and selected trace documents,
+then runs ordinary strict commit/push. No Source reads/edits by agents during
+the hook; unrelated BASE/ and root bun.lock remain untracked and untouched.
+
+The ordinary hook rejected four unused exported diagnostic aliases and the
+cleanup API whose genuine consumers are generated lifecycle child tests. Make
+the aliases module-private; declare that exact generated-child fixture entry in
+existing Knip config, with no blanket ignore. Current static remains452TS0 and
+typedlintPASS. Retry the ordinary strict hook on this precise restaged correction;
+no hook bypass and no runtime behavior change or duplicate suite required.

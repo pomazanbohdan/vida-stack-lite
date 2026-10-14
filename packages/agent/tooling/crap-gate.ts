@@ -579,6 +579,33 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   if (baselineCheck.status !== 0 || baselineCheck.signal || baselineCheck.error)
     throw new Error('Published CRAP baseline commit is unavailable.');
   const currentCoverage = await validateCoverageReport(coveragePath, root);
+  // This diagnostic records the validator's completed work even if the later
+  // budget-plan or CRAP check fails. It grants no numeric quality admission.
+  if (process.env.VIDA_COVERAGE_RECORD_VALIDATION === '1') {
+    const report = currentCoverage.report;
+    const observationPath = path.join(
+      root,
+      'coverage',
+      'bun-unified',
+      'runs',
+      String(report.run_id),
+      'processes',
+      'observations',
+      'report-validation.json',
+    );
+    await writeFile(
+      observationPath,
+      JSON.stringify({
+        schema: 'VidaBunCoverageReportValidationObservation/v1',
+        run_id: report.run_id,
+        source_fingerprint: report.source_fingerprint,
+        test_fingerprint: report.test_fingerprint,
+        tool_fingerprint: report.tool_fingerprint,
+        validated: true,
+      }) + '\n',
+      { flag: 'wx', mode: 0o600 },
+    );
+  }
   const planBytes = await readFile(planPath);
   const planValue: unknown = JSON.parse(planBytes.toString('utf8'));
   const plan = await checkedPlan(planValue);

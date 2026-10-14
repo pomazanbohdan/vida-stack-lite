@@ -16,6 +16,7 @@ import path from 'node:path';
 import { executionBudget } from '../bin/bun.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from '../tooling/coverage-run-lock.ts';
+import { buildCoverageRunOutcome } from '../tooling/coverage-run-outcome.ts';
 import { superviseCoverageProducers } from '../tooling/run-bun-coverage.ts';
 import {
   coverageProducerReservationSafeToRelease,
@@ -197,6 +198,7 @@ test('a timed out producer stays accounted alongside a held sibling', async () =
       shard_id: 'timeout',
       status: null,
       signal: 'SIGKILL',
+      timeout_observed: true,
       unknown: true,
       producer_pid: Number(readMarker(root, 'timeout.ready')),
       producerTerminalKnown: true,
@@ -230,6 +232,7 @@ test('a real signal termination is terminal but never proves resource safety', a
     expect(group.outcomes[0]).toMatchObject({
       status: null,
       signal: 'SIGTERM',
+      timeout_observed: false,
       unknown: true,
       producer_pid: pid,
       producerTerminalKnown: true,
@@ -414,6 +417,458 @@ test('only a qualified explicit not-started spawn failure may release producer r
       error: Object.assign(new Error('missing executable'), { code: 'ENOENT' }),
     }),
   ).toBe(false);
+});
+
+test('operation outcome admits PASS only with complete direct success, validated report, and quality PASS', () => {
+  const first = {
+    shard_id: 'one',
+    status: 0,
+    signal: null,
+    error: null,
+    unknown: false,
+    producer_pid: 101,
+    launch_attempted: true,
+    producerTerminalKnown: true,
+    directProducerAccounted: true,
+    resourceSafeToAdvance: false as const,
+  };
+  const second = { ...first, shard_id: 'two', producer_pid: 102 };
+  const group = { outcomes: [first, second], reservationSafeToRelease: true, resourceSafeToAdvance: false as const };
+  const result = buildCoverageRunOutcome({
+    run_id: 'run-1',
+    selection: { mode: 'current', fingerprint: 'selection-sha' },
+    input_fingerprints: { source: 'source-sha', tests: 'tests-sha', configuration: 'config-sha', hashes: 'hashes-sha' },
+    phase: 'complete',
+    expected_producer_count: 2,
+    producer_group: group,
+    execution_complete: true,
+    report_validated: true,
+    quality_complete: true,
+    quality_passed: true,
+  });
+  expect(result).toMatchObject({
+    status: 'PASS',
+    retention_required: true,
+    launched_count: 2,
+    unattempted_count: 0,
+    direct_accounted_count: 2,
+    reservation_safe_to_release: true,
+    resource_safe_to_advance: false,
+    execution_complete: true,
+    report_complete: true,
+    quality_complete: true,
+    quality_passed: true,
+  });
+  expect(result.input_fingerprints).toEqual({
+    source: 'source-sha',
+    tests: 'tests-sha',
+    configuration: 'config-sha',
+    hashes: 'hashes-sha',
+  });
+  expect(result.input_proofs).toEqual({ source: null, tests: null, configuration: null, hashes: null });
+  expect(result.producer_observations).toEqual([
+    { shard_id: 'one', timeout_observed: null, sigkill_observed: false, unknown: false },
+    { shard_id: 'two', timeout_observed: null, sigkill_observed: false, unknown: false },
+  ]);
+  expect(
+    buildCoverageRunOutcome({
+      run_id: 'run-1',
+      selection: { mode: 'current', fingerprint: 'selection-sha' },
+      input_fingerprints: {},
+      phase: 'complete',
+      expected_producer_count: 2,
+      producer_group: group,
+      execution_complete: true,
+      report_validated: true,
+      quality_complete: true,
+      quality_passed: false,
+    }).status,
+  ).toBe('FAIL');
+  expect(
+    buildCoverageRunOutcome({
+      run_id: 'run-1',
+      selection: { mode: 'current', fingerprint: 'selection-sha' },
+      input_fingerprints: {},
+      phase: 'complete',
+      expected_producer_count: 2,
+      producer_group: group,
+      execution_complete: true,
+      report_validated: null,
+      quality_complete: false,
+      quality_passed: null,
+    }).status,
+  ).not.toBe('PASS');
+  expect(
+    buildCoverageRunOutcome({
+      run_id: 'run-1',
+      selection: { mode: 'current', fingerprint: 'selection-sha' },
+      input_fingerprints: {},
+      phase: 'complete',
+      expected_producer_count: 0,
+      producer_group: group,
+      execution_complete: true,
+      report_validated: true,
+      quality_complete: true,
+      quality_passed: true,
+    }).status,
+  ).not.toBe('PASS');
+  expect(
+    buildCoverageRunOutcome({
+      run_id: 'run-1',
+      selection: { mode: 'current', fingerprint: 'selection-sha' },
+      input_fingerprints: {},
+      phase: 'complete',
+      expected_producer_count: 1.5,
+      producer_group: group,
+      execution_complete: true,
+      report_validated: true,
+      quality_complete: true,
+      quality_passed: true,
+    }).status,
+  ).not.toBe('PASS');
+  expect(
+    buildCoverageRunOutcome({
+      run_id: 'run-1',
+      selection: { mode: 'current', fingerprint: 'selection-sha' },
+      input_fingerprints: {},
+      phase: 'complete',
+      expected_producer_count: 2,
+      producer_group: { ...group, outcomes: [first, { ...second, shard_id: 'one' }] },
+      execution_complete: true,
+      report_validated: true,
+      quality_complete: true,
+      quality_passed: true,
+    }).status,
+  ).not.toBe('PASS');
+  expect(
+    buildCoverageRunOutcome({
+      run_id: 'run-1',
+      selection: { mode: 'current', fingerprint: 'selection-sha' },
+      input_fingerprints: {},
+      phase: 'complete',
+      expected_producer_count: 2,
+      producer_group: { ...group, outcomes: [first, { ...second, producer_pid: first.producer_pid }] },
+      execution_complete: true,
+      report_validated: true,
+      quality_complete: true,
+      quality_passed: true,
+    }).status,
+  ).not.toBe('PASS');
+  expect(
+    buildCoverageRunOutcome({
+      run_id: 'run-1',
+      selection: { mode: 'current', fingerprint: 'selection-sha' },
+      input_fingerprints: {},
+      phase: 'complete',
+      expected_producer_count: 2,
+      producer_group: { ...group, outcomes: [first, { ...second, timeout_observed: true }] },
+      execution_complete: true,
+      report_validated: true,
+      quality_complete: true,
+      quality_passed: true,
+    }).status,
+  ).not.toBe('PASS');
+  const cleanupFailure = buildCoverageRunOutcome({
+    run_id: 'run-1',
+    selection: { mode: 'current', fingerprint: 'selection-sha' },
+    input_fingerprints: {},
+    phase: 'complete',
+    expected_producer_count: 2,
+    producer_group: group,
+    execution_complete: true,
+    report_validated: true,
+    quality_complete: true,
+    quality_passed: true,
+    original_error: undefined,
+  });
+  expect(cleanupFailure.status).toBe('UNKNOWN');
+  expect(Object.hasOwn(cleanupFailure, 'original_error')).toBe(true);
+  expect(cleanupFailure.original_error_diagnostic?.kind).toBe('undefined');
+});
+
+test('operation outcome keeps timeout unknown, SIGKILL, and unattempted accounting distinct', () => {
+  const killed = {
+    shard_id: 'killed',
+    status: null,
+    signal: 'SIGKILL' as const,
+    error: null,
+    unknown: true,
+    producer_pid: 103,
+    launch_attempted: true,
+    producerTerminalKnown: true,
+    directProducerAccounted: true,
+    resourceSafeToAdvance: false as const,
+  };
+  const result = buildCoverageRunOutcome({
+    run_id: 'run-2',
+    selection: { mode: 'current', fingerprint: null },
+    input_fingerprints: {},
+    phase: 'execution',
+    expected_producer_count: 2,
+    producer_group: { outcomes: [killed], reservationSafeToRelease: false, resourceSafeToAdvance: false },
+    execution_complete: null,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+    original_error: new Error('producer budget ended'),
+  });
+  expect(result).toMatchObject({ status: 'UNKNOWN', retention_required: true });
+  expect(result.launched_count).toBe(1);
+  expect(result.unattempted_count).toBe(1);
+  expect(result.direct_accounted_count).toBe(1);
+  expect(result.producer_observations).toEqual([
+    { shard_id: 'killed', timeout_observed: null, sigkill_observed: true, unknown: true },
+  ]);
+  expect(result.original_error).toBeInstanceOf(Error);
+  expect(Object.keys(result)).not.toContain('original_error');
+  const serialized: unknown = JSON.parse(JSON.stringify(result));
+  expect(serialized).toMatchObject({
+    original_error_diagnostic: {
+      kind: 'object',
+      message: 'producer budget ended',
+    },
+  });
+  const blocked = buildCoverageRunOutcome({
+    run_id: 'run-3',
+    selection: { mode: 'current', fingerprint: null },
+    input_fingerprints: {},
+    phase: 'preflight',
+    expected_producer_count: 2,
+    execution_complete: false,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+  });
+  expect(blocked).toMatchObject({
+    status: 'BLOCKED',
+    launched_count: 0,
+    unattempted_count: 2,
+    direct_accounted_count: 0,
+  });
+});
+
+test('operation outcome serializes bounded diagnostics without traversing hostile errors', () => {
+  const hostile = new Proxy(
+    {},
+    {
+      getOwnPropertyDescriptor: () => {
+        throw new Error('hostile descriptor');
+      },
+    },
+  );
+  const result = buildCoverageRunOutcome({
+    run_id: 'run-4',
+    selection: { mode: 'current', fingerprint: null },
+    input_fingerprints: {},
+    phase: 'report',
+    expected_producer_count: 1,
+    execution_complete: null,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+    original_error: hostile,
+  });
+  expect(result.original_error).toBe(hostile);
+  expect(result.original_error_diagnostic).toEqual({ kind: 'object', name: null, message: null, code: null });
+  expect(() => JSON.stringify(result)).not.toThrow();
+});
+
+test('operation outcome uses an explicit timeout observation independently from its signal', () => {
+  const timed = {
+    shard_id: 'timed',
+    status: null,
+    signal: 'SIGTERM' as const,
+    error: null,
+    unknown: true,
+    producer_pid: 104,
+    launch_attempted: true,
+    producerTerminalKnown: true,
+    directProducerAccounted: true,
+    resourceSafeToAdvance: false as const,
+    timeout_observed: true,
+  };
+  const result = buildCoverageRunOutcome({
+    run_id: 'run-5',
+    selection: { mode: 'current', fingerprint: null },
+    input_fingerprints: {},
+    phase: 'execution',
+    expected_producer_count: 1,
+    producer_group: { outcomes: [timed], reservationSafeToRelease: true, resourceSafeToAdvance: false },
+    execution_complete: null,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+  });
+  expect(result.producer_observations).toEqual([
+    { shard_id: 'timed', timeout_observed: true, sigkill_observed: false, unknown: true },
+  ]);
+});
+
+test('direct typecheck and quality phase observations stay separate from Bun test producer counts', () => {
+  const typecheckFailure = buildCoverageRunOutcome({
+    run_id: 'phase-typecheck-fail',
+    selection: { mode: 'current', fingerprint: 'selection-sha' },
+    input_fingerprints: {},
+    phase: 'preflight',
+    expected_producer_count: 1,
+    phase_producer_observations: [
+      {
+        phase: 'typecheck',
+        launch_attempted: true,
+        pid: 201,
+        status: 2,
+        signal: null,
+        error: null,
+        timeout_observed: false,
+        producerTerminalKnown: true,
+        directProducerAccounted: true,
+        reservationSafeToRelease: true,
+        unknown: false,
+      },
+    ],
+    execution_complete: false,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+  });
+  expect(typecheckFailure.status).toBe('FAIL');
+  expect(typecheckFailure.phase_producer_observations).toMatchObject([{ phase: 'typecheck', pid: 201, status: 2 }]);
+  expect(typecheckFailure.launched_count).toBe(0);
+  expect(typecheckFailure.unattempted_count).toBe(1);
+  expect(typecheckFailure.reservation_safe_to_release).toBe(true);
+
+  const timedQuality = buildCoverageRunOutcome({
+    run_id: 'phase-quality-timeout',
+    selection: { mode: 'current', fingerprint: 'selection-sha' },
+    input_fingerprints: {},
+    phase: 'quality',
+    expected_producer_count: 1,
+    phase_producer_observations: [
+      {
+        phase: 'quality',
+        launch_attempted: true,
+        pid: 202,
+        status: null,
+        signal: 'SIGKILL',
+        error: { name: 'Error', code: 'ETIMEDOUT', message: 'timed out' },
+        timeout_observed: true,
+        producerTerminalKnown: true,
+        directProducerAccounted: true,
+        reservationSafeToRelease: true,
+        unknown: true,
+      },
+    ],
+    execution_complete: false,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+  });
+  expect(timedQuality.status).toBe('UNKNOWN');
+  expect(timedQuality.phase_producer_observations).toMatchObject([
+    { phase: 'quality', pid: 202, signal: 'SIGKILL', error: { code: 'ETIMEDOUT' }, timeout_observed: true },
+  ]);
+  expect(timedQuality.producer_outcomes).toEqual([]);
+  expect(timedQuality.unattempted_count).toBe(1);
+  expect(timedQuality.reservation_safe_to_release).toBe(true);
+
+  const missingTypecheck = buildCoverageRunOutcome({
+    run_id: 'phase-typecheck-enoent',
+    selection: { mode: 'current', fingerprint: 'selection-sha' },
+    input_fingerprints: {},
+    phase: 'preflight',
+    expected_producer_count: 1,
+    phase_producer_observations: [
+      {
+        phase: 'typecheck',
+        launch_attempted: true,
+        pid: 0,
+        status: null,
+        signal: null,
+        error: { name: 'Error', code: 'ENOENT', message: 'missing executable' },
+        timeout_observed: false,
+        producerTerminalKnown: false,
+        directProducerAccounted: false,
+        reservationSafeToRelease: true,
+        unknown: true,
+      },
+    ],
+    execution_complete: false,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+  });
+  expect(missingTypecheck.status).toBe('UNKNOWN');
+  expect(missingTypecheck.phase_producer_observations[0]).toMatchObject({
+    pid: 0,
+    error: { code: 'ENOENT' },
+    producerTerminalKnown: false,
+    directProducerAccounted: false,
+    reservationSafeToRelease: true,
+  });
+  expect(missingTypecheck.reservation_safe_to_release).toBe(true);
+
+  const qualityFailure = buildCoverageRunOutcome({
+    run_id: 'phase-quality-fail',
+    selection: { mode: 'current', fingerprint: 'selection-sha' },
+    input_fingerprints: {},
+    phase: 'quality',
+    expected_producer_count: 1,
+    phase_producer_observations: [
+      {
+        phase: 'quality',
+        launch_attempted: true,
+        pid: 203,
+        status: 4,
+        signal: null,
+        error: null,
+        timeout_observed: false,
+        producerTerminalKnown: true,
+        directProducerAccounted: true,
+        reservationSafeToRelease: true,
+        unknown: false,
+      },
+    ],
+    execution_complete: true,
+    report_validated: true,
+    quality_complete: true,
+    quality_passed: false,
+  });
+  expect(qualityFailure.status).toBe('FAIL');
+});
+
+test('known report rejection fails while filesystem errors remain unknown', () => {
+  const reportRejected = buildCoverageRunOutcome({
+    run_id: 'report-rejected',
+    selection: { mode: 'current', fingerprint: 'selection-sha' },
+    input_fingerprints: {},
+    phase: 'report',
+    expected_producer_count: 1,
+    report_rejected: true,
+    execution_complete: false,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+  });
+  expect(reportRejected).toMatchObject({ status: 'FAIL', report_rejected: true, report_validated: null });
+
+  const filesystemError = Object.assign(new Error('coverage report could not be read'), { code: 'EIO' });
+  const unknown = buildCoverageRunOutcome({
+    run_id: 'report-io-unknown',
+    selection: { mode: 'current', fingerprint: 'selection-sha' },
+    input_fingerprints: {},
+    phase: 'report',
+    expected_producer_count: 1,
+    original_error: filesystemError,
+    execution_complete: false,
+    report_validated: null,
+    quality_complete: false,
+    quality_passed: null,
+  });
+  expect(unknown).toMatchObject({
+    status: 'UNKNOWN',
+    report_rejected: false,
+    original_error_diagnostic: { code: 'EIO' },
+  });
 });
 
 test('a qualified not-started result releases only its exact owned coverage reservation', () => {

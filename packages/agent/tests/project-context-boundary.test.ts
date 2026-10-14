@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, test } from 'bun:test';
+import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from 'bun:test';
 import {
   loadProjectContext,
   loadProjectSetContext,
@@ -20,6 +20,7 @@ import {
   type PathProfileResolutionOptions,
 } from '../src/config/project-context.ts';
 import * as projectContext from '../src/config/project-context.ts';
+import * as fs from 'node:fs';
 import {
   loadRuntimeConfig,
   type AgentRuntimeConfig,
@@ -458,6 +459,34 @@ describe('project context path boundary', () => {
     }
   });
 
+  test('path profile identities preserve large stat values exactly', () => {
+    const expectedDev = 9_007_199_254_740_992n;
+    const expectedIno = 9_007_199_254_740_993n;
+    const originalStat = fs.lstatSync;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      const observed = originalStat(...args);
+      if (
+        observed !== undefined &&
+        args[0] === repositoryRoot &&
+        args[1] !== undefined &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      ) {
+        const exact = Object.create(observed) as typeof observed;
+        Reflect.set(exact, 'dev', expectedDev);
+        Reflect.set(exact, 'ino', expectedIno);
+        return exact;
+      }
+      return observed;
+    }) as typeof fs.lstatSync);
+    try {
+      const profile = resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository' });
+      expect(profile.path_identities.repository_root).toBe(`${expectedDev}:${expectedIno}`);
+    } finally {
+      stats.mockRestore();
+    }
+  });
+
   test('issues canonical profiles and validates bindings, identities, and path kinds', () => {
     const whole = resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository' });
     expect(whole.schema).toBe('ResolvedPathProfile/v1');
@@ -558,6 +587,95 @@ describe('project context path boundary', () => {
       expect(error.code).toBe(pathProfileGap);
     }
   });
+
+  test('validates each selected project path profile with one filesystem scan', () => {
+    const trusted_overrides = Object.fromEntries(
+      [projectId, secondProjectId].map((id) => {
+        const base = loadProjectContext(repositoryRoot, config, config.repository.repository_id, id);
+        return [
+          id,
+          issueTestTrustedPathProfileOverride({
+            schema: 'TrustedPathProfileOverride/v1',
+            scope_id: binding(base, id).path_profile.scope_id,
+            paths: { project_root: 'products/' + id },
+          }),
+        ];
+      }),
+    );
+    const context = loadProjectSetContext(
+      repositoryRoot,
+      config,
+      config.repository.repository_id,
+      [projectId, secondProjectId],
+      { trusted_overrides },
+    );
+    const targets = new Map(
+      context.project_bindings.map((entry) => [entry.path_profile.resolved_paths.project_root, 0]),
+    );
+    const expectedTargetReads = [...targets.keys()].map(
+      (target) =>
+        context.path_profiles
+          .flatMap((profile) => Object.values(profile.resolved_paths))
+          .filter((value) => value === target).length,
+    );
+    const originalStat = fs.lstatSync;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      const target = path.resolve(String(args[0]));
+      if (
+        targets.has(target) &&
+        args[1] !== null &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      )
+        targets.set(target, (targets.get(target) ?? 0) + 1);
+      return originalStat(...args);
+    }) as typeof fs.lstatSync);
+    try {
+      expect(validateProjectContext(context, repositoryRoot)).toBe(context);
+      expect(targets.size).toBe(2);
+      expect([...targets.values()]).toEqual(expectedTargetReads);
+    } finally {
+      stats.mockRestore();
+    }
+  });
+
+  test('rejects unissued and foreign-root profiles before reading runtime configuration', () => {
+    writeFileSync(runtimeConfigPath, 'not a runtime config');
+    expect(() => validateResolvedPathProfile({}, repositoryRoot)).toThrow(
+      'resolved path profile must be issued by resolvePathProfile',
+    );
+    expect(() =>
+      validateResolvedPathProfile(binding(project, projectId).path_profile, path.join(repositoryRoot, 'missing')),
+    ).toThrow('resolved path profile identity is invalid');
+  });
+
+  test('rejects a runtime config change during project path validation', () => {
+    const target = binding(project, projectId).path_profile.resolved_paths.project_root;
+    const originalStat = fs.lstatSync;
+    let changed = false;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      if (!changed && path.resolve(String(args[0])) === target) {
+        changed = true;
+        writeFileSync(
+          runtimeConfigPath,
+          JSON.stringify({
+            ...structuredClone(config),
+            control: { ...config.control, checkpoint_name: config.control.checkpoint_name + '-changed' },
+          }) + '\n',
+        );
+      }
+      return originalStat(...args);
+    }) as typeof fs.lstatSync);
+    try {
+      expect(() => validateProjectContext(project, repositoryRoot)).toThrow(
+        'project context configuration changed during validation',
+      );
+      expect(changed).toBe(true);
+    } finally {
+      stats.mockRestore();
+    }
+  });
+
   test('binds current-v1 repository and project contours', async () => {
     expect.assertions(13);
     const repositoryConfig = loadConfigFixture({

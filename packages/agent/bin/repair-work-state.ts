@@ -13,6 +13,7 @@ import { requireSafeRepositoryAccess } from '../src/config/safe-repository-acces
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import type { HostStateStore } from '../src/host-state.ts';
 import { sessionHandoffDatabasePath, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
+import { withWorkspaceDatabaseClose } from '../src/config/workspace-database-raw.js';
 
 type WorkStateRepairInput = Parameters<HostStateStore['repairCorrectionGeneration']>[0];
 function requireRepair(value: unknown, message: string): asserts value {
@@ -86,16 +87,19 @@ export function runWorkStateRepair(args: readonly string[]) {
   if (mode === 'inspect' && !values['--authority'])
     return inspectCliHostWorkspaceDatabase(root, databasePath, workspaceId);
   const database = openCliHostStateDatabase(root, databasePath, workspaceId);
-  try {
-    const store = createCliHostStateStore(database, workspaceId);
-    const operation =
-      values['--authority'] === 'correction-generation'
-        ? store.repairCorrectionGeneration.bind(store)
-        : store.repairRequestTransitionFields.bind(store);
-    return operation(input);
-  } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-  }
+  return withWorkspaceDatabaseClose(
+    database,
+    () => {
+      const store = createCliHostStateStore(database, workspaceId);
+      const operation =
+        values['--authority'] === 'correction-generation'
+          ? store.repairCorrectionGeneration.bind(store)
+          : store.repairRequestTransitionFields.bind(store);
+      return operation(input);
+    },
+    closeWorkspaceDatabaseWithAdmission,
+    'Work-state repair operation and admitted database close failed',
+  );
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {

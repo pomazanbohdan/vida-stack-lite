@@ -161,6 +161,45 @@ build/install do not run suites. External dependency bytes remain outside
 snapshot custody. This join proves selected input freshness and output integrity,
 not authenticated formation origin or Native Runtime acceptance.
 
+Before a current full selection containing configured-workflow tests launches,
+coverage captures the SDK builder inputs, receipt and four emitted JS members
+in its existing input capture. Derive the formation subset from maintained
+Source/schema inventories and the builder edges observed in that one closure
+pass, never from the receipt's claimed input list. Validate that subset against
+the receipt before staging or producer launch. A copied quality object or a
+mutated exposed buffer cannot inherit the owner's private SDK projection.
+Captured-byte validation hashes actual bytes, never caller-supplied digests.
+Missing/stale artifacts block the run; form them separately without suites.
+
+Every acquired coverage operation records a separate diagnostic under
+`coverage/bun-unified/operation-outcomes/<run-id>.json`. Native producer close
+observations are recorded before a spent budget can stop report assembly.
+Keep timeout timer observations, SIGKILL, UNKNOWN, direct accounting, report
+validation and quality completion separate. Attempt both supervisor and operation
+record writes even if one fails; preserve all write and cleanup errors.
+The CRAP producer records report validation before checking its budget plan,
+so a later quality failure cannot erase that completed validation. This record
+is diagnostic, not a coverage receipt, CRAP report or resource-quiescence proof.
+Metric PASS still retains custody while resource advancement is unsafe.
+
+Record current typecheck and CRAP child observations separately from test shards:
+actual PID, status/signal, spawn error, observed timeout and direct reservation
+disposition. Persist each observation before reading child output or report
+markers. A known nonzero exit and an explicit deterministic report rejection
+are FAIL; missing terminals, timeout, signals and filesystem uncertainty remain
+UNKNOWN. Test counts never include these phase producers. Direct termination
+alone does not establish descendant quiescence or resource advancement.
+
+Typed HostState, Journal and Lease fixtures receive explicit identity, context,
+source, revisions and ticket operands. Validate their actual codecs/schemas;
+do not manufacture authorization defaults or normalize intentionally stale
+predecessor state. Cleanup attempts each registered resource independently.
+Only successful close removes a native handle; failed/UNKNOWN file roots keep
+their retained disposition and metadata. A transient deletion failure does not
+authorize automatic deletion of retained evidence on a later cleanup call.
+Environment restoration distinguishes an originally absent PATH from an empty
+PATH and from an uncaptured value; restore absence by deleting the variable.
+
 Public run fixtures prepare real intake, scope and acceptance bytes before the
 first admission. Keep admission arguments separate from persisted invocation
 arguments; changing modes reject `--intake`. Test independent pre-admission

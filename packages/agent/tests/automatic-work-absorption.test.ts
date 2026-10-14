@@ -14,6 +14,7 @@ import { loadRuntimeConfig, type AgentRuntimeConfig, type WorkItemSelection } fr
 import * as runtimeConfig from '../src/config/runtime-config.js';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
+import { retryPendingWorkspaceDatabaseCloses } from '../src/config/workspace-database-raw.ts';
 import { parseScopedSourceSnapshot, snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import {
   HostStateStore,
@@ -1820,6 +1821,84 @@ test('work-state inspection CLI refuses missing canonical SQLite without creatin
     f.close();
   }
 });
+
+for (const { bodyFails, closeFails } of [
+  { bodyFails: false, closeFails: false },
+  { bodyFails: true, closeFails: false },
+  { bodyFails: false, closeFails: true },
+  { bodyFails: true, closeFails: true },
+])
+  test(`work-state repair preserves operation and admitted-close outcomes (body=${bodyFails},close=${closeFails})`, () => {
+    const f = fixture(false, true);
+    const bodyError = new Error('repair operation failed'),
+      closeError = new Error('repair database close failed');
+    const originalRepair = Reflect.get(
+      HostStateStore.prototype,
+      'repairCorrectionGeneration',
+    ) as HostStateStore['repairCorrectionGeneration'];
+    const originalClose = Reflect.get(Database.prototype, 'close') as Database['close'];
+    let closeFaultInjected = false;
+    let repairStarted = false;
+    const repairSpy = spyOn(HostStateStore.prototype, 'repairCorrectionGeneration').mockImplementation(function (
+      this: HostStateStore,
+      input,
+    ) {
+      repairStarted = true;
+      if (bodyFails) throw bodyError;
+      return originalRepair.call(this, input);
+    });
+    const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, force) {
+      if (closeFails && repairStarted && !closeFaultInjected && this.filename === f.database.filename) {
+        closeFaultInjected = true;
+        throw closeError;
+      }
+      return originalClose.call(this, force);
+    });
+    let caught: unknown;
+    try {
+      try {
+        const result = runWorkStateRepair([
+          '--kind',
+          'work-state',
+          '--authority',
+          'correction-generation',
+          '--mode',
+          'inspect',
+          '--project-root',
+          f.root,
+          '--repair-id',
+          'close-contract',
+        ]);
+        expect(bodyFails).toBe(false);
+        expect(result).toBeDefined();
+      } catch (error) {
+        caught = error;
+      }
+      expect(repairSpy).toHaveBeenCalledTimes(1);
+      expect(closeFaultInjected).toBe(closeFails);
+      if (!bodyFails && !closeFails) expect(caught).toBeUndefined();
+      if (bodyFails && !closeFails) expect(caught).toBe(bodyError);
+      if (!bodyFails && closeFails) {
+        expect(caught).toBeInstanceOf(AggregateError);
+        if (!(caught instanceof AggregateError)) throw new Error('Expected admitted close failure');
+        expect(caught.errors[0]).toBe(closeError);
+      }
+      if (bodyFails && closeFails) {
+        expect(caught).toBeInstanceOf(AggregateError);
+        if (!(caught instanceof AggregateError)) throw new Error('Expected repair and admitted close failures');
+        expect(caught.errors[0]).toBe(bodyError);
+        expect(caught.errors[1]).toBeInstanceOf(AggregateError);
+        const admittedCloseError: unknown = caught.errors[1];
+        if (!(admittedCloseError instanceof AggregateError)) throw new Error('Expected retained admitted close owner');
+        expect(admittedCloseError.errors[0]).toBe(closeError);
+      }
+    } finally {
+      repairSpy.mockRestore();
+      closeSpy.mockRestore();
+      retryPendingWorkspaceDatabaseCloses();
+      f.close();
+    }
+  });
 
 test('valid public intake records the admission cutoff before failed scope preparation', async () => {
   const f = fixture();

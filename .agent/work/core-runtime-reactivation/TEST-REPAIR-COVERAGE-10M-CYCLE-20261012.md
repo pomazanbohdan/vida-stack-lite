@@ -196,3 +196,15 @@ owns synthetic denials and real producer custody controls. Root reviews and
 runs focused qualification after all writes settle. Tamper, row bijection,
 path/symlink, canonical code, legacy-reader and query identity controls precede
 publication. No measured speed improvement is claimed from static analysis.
+
+## Current 2026-10-14 audit/evidence cycle
+
+The current entry ceiling is300000ms, with5000ms per-test default and the existing
+justified exceptions. The filename's historical10M does not change that ceiling.
+Complete the joined db88bb2 audit batch before another full run. Phase producer
+observations and report validation are diagnostic facts, never mutation Killed or
+coverage PASS. SDK freshness uses the existing input capture before staging.
+The actual configured-context two-reader pilot passes only that descriptor path;
+keep common resource tags and descendant-quiescence requirements unchanged.
+Root alone runs final checks and Git; workers do not duplicate full suites,
+AST/input captures or formation. Full numeric admission remains OPEN.

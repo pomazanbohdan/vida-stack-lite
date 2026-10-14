@@ -1,5 +1,6 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
+import * as fs from 'node:fs';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -72,6 +73,41 @@ describe('fresh storage admission gate', () => {
       expect(readFileSync(file)).toEqual(initialBytes);
     } finally {
       rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+
+  test('matches exact large stat identities while initializing the real zero-byte gate', () => {
+    const fixture = openRepositoryFixture('large-stat-storage-gate-');
+    const file = path.join(fixture.root, '.vida/storage-admission.v1.sqlite');
+    const expectedDev = 9_007_199_254_740_992n;
+    const expectedIno = 9_007_199_254_740_993n;
+    const originalStat = fs.lstatSync;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      const observed = originalStat(...args);
+      if (
+        observed !== undefined &&
+        args[0] === file &&
+        args[1] !== undefined &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      ) {
+        const exact = Object.create(observed) as typeof observed;
+        Reflect.set(exact, 'dev', expectedDev);
+        Reflect.set(exact, 'ino', expectedIno);
+        return exact;
+      }
+      return observed;
+    }) as typeof fs.lstatSync);
+    let passed = false;
+    try {
+      const lease = acquireStorageReadAdmission(fixture.root, fixture.workspaceId, '.vida/unused.sqlite');
+      lease.close();
+      expect(readFileSync(file).length).toBeGreaterThan(0);
+      passed = true;
+    } finally {
+      stats.mockRestore();
+      if (passed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error(`Retained large stat storage gate fixture: ${fixture.root}`);
     }
   });
 

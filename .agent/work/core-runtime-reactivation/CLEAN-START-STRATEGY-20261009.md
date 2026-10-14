@@ -1531,3 +1531,27 @@ switch, final numerical evidence or Windows/NTFS qualification is inferred.
 After publication, continue the Source/artifact SDK join using a single actual
 byte-capture owner, then remaining frozen/numerical/clean-native work. No duplicate
 whole scans/suites or tests during formation/install.
+
+#### Current audit and evidence batch — 2026-10-14, db88bb2
+
+The supplied external audit's eight groups are confirmed against current Source;
+the disposition owner is EXTERNAL-AUDIT-db88bb2-20261014.md. Keep the existing
+inventory and mutation classifier: repair consumed assertion evidence, expanded
+each IDs, exact context fingerprint closure, Windows literal copy paths, bigint
+file identity, actual repair caller cleanup, retained fixture custody and DML
+RETURNING metadata. Bounded native controls pass; final joined checks are running.
+
+The same batch records coverage operation completeness independently of metrics,
+observes typecheck/quality children separately, and checks SDK freshness through
+the existing captured input owner before producers. Typed fixtures keep explicit
+Host/Journal/Lease identities. A real concurrent configured-context reader pilot
+passes but qualifies only its actual instruction read, not a resource successor.
+Private same-call project validation reuse retains terminal config freshness;
+blind review requires preserving issuer/root denial before configuration IO.
+
+Order: join writers/reviews, complete static and affected native checks, record
+exact role correspondence without candidate-derived budgets, strict commit/push,
+then form current SDK without suites. Requalify current resource admission before
+one fresh five-minute coverage run. Exact metrics, exhaustive frozen mapping,
+dynamic CRAP, confirmed Killed and isolated native Runtime remain OPEN. No loader,
+AUX exclusion or release acceptance changes are authorized by this batch.

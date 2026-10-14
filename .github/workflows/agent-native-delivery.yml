@@ -87,9 +87,9 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Frozen producer dependencies unavailable' }
           } finally { Pop-Location }
           $files = @('package.json','agent-runtime.config.v1.yaml','AGENT.sidecar.md',
-            'tooling/agent/release-local.ts','tooling/agent/release-assurance.mjs',
+            'tooling/agent/release-local.ts','tooling/agent/release-assurance.ts',
             'tooling/agent/release-ci-evidence.ts','tooling/agent/native-ci-delivery.ts',
-            'tooling/agent/controllers/forward-review-proof.mjs','.github/workflows/agent-native-delivery.yml')
+            'tooling/agent/controllers/forward-review-proof.ts','.github/workflows/agent-native-delivery.yml')
           foreach ($file in $files) {
             $source = Join-Path $env:GITHUB_WORKSPACE $file
             $entry = Get-Item -LiteralPath $source

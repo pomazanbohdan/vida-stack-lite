@@ -46,22 +46,22 @@ function gateIdentity(
   checkSidecars = true,
 ): {
   readonly parent: string;
-  readonly dev: string;
-  readonly ino: string;
-  readonly size: string;
+  readonly dev: bigint;
+  readonly ino: bigint;
+  readonly size: bigint;
 } {
   const access = requireSafeRepositoryAccess(root);
   const parent = access.directoryIdentity('.vida', gateLabel);
   const stat = lstatSync(path.join(root, gateRelative), { bigint: true });
   requireAdmission(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1n, 'gate must be a private regular file');
   if (checkSidecars) assertNoGateSidecars(access);
-  return { parent, dev: String(stat.dev), ino: String(stat.ino), size: String(stat.size) };
+  return { parent, dev: stat.dev, ino: stat.ino, size: stat.size };
 }
 
 function assertGateIdentity(
   root: string,
   expected: ReturnType<typeof gateIdentity>,
-  expectedSize?: string,
+  expectedSize?: bigint,
   checkSidecars = true,
 ): void {
   const actual = gateIdentity(root, checkSidecars);
@@ -139,10 +139,10 @@ function initializeEmptyGate(
 ): void {
   const opened = workspaceDatabaseFileIdentity(database);
   requireAdmission(
-    expected.size === '0' && String(opened.dev) === expected.dev && String(opened.ino) === expected.ino,
+    expected.size === 0n && opened.dev === expected.dev && opened.ino === expected.ino,
     'only the exact zero-byte gate preimage may be initialized',
   );
-  assertGateIdentity(root, expected, '0', false);
+  assertGateIdentity(root, expected, 0n, false);
   const pages = database.query<{ page_count: number | bigint }, []>('PRAGMA page_count').get()?.page_count;
   requireAdmission(pages !== undefined && BigInt(pages) === 1n, 'partially initialized gate is not recoverable');
   database.exec(gateSql);

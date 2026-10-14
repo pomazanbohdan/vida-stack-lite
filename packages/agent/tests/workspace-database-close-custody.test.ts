@@ -1,5 +1,6 @@
 import { expect, spyOn, test } from 'bun:test';
 import { Database, type Changes, type SQLQueryBindings } from 'bun:sqlite';
+import * as fs from 'node:fs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -766,10 +767,48 @@ test('raw open without capture keeps verified identity and normal native close b
     });
 
     const identity = workspaceDatabaseFileIdentity(database);
-    expect(identity.dev).toBeGreaterThanOrEqual(0);
-    expect(identity.ino).toBeGreaterThan(0);
+    expect(identity.dev).toBeGreaterThanOrEqual(0n);
+    expect(identity.ino).toBeGreaterThan(0n);
     expect(database.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
     closeNativeWorkspaceDatabase(database);
     closed = true;
+  });
+});
+
+test('raw open preserves exact large stat identities from the native stat boundary', () => {
+  withExistingDatabaseFixture('workspace-db-large-stat-identity-', (fixture, addCleanup) => {
+    const expectedDev = 9_007_199_254_740_992n;
+    const expectedIno = 9_007_199_254_740_993n;
+    const originalStat = fs.lstatSync;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      const observed = originalStat(...args);
+      if (
+        observed !== undefined &&
+        args[0] === fixture.file &&
+        args[1] !== undefined &&
+        typeof args[1] === 'object' &&
+        Reflect.get(args[1], 'bigint') === true
+      ) {
+        const exact = Object.create(observed) as typeof observed;
+        Reflect.set(exact, 'dev', expectedDev);
+        Reflect.set(exact, 'ino', expectedIno);
+        return exact;
+      }
+      return observed;
+    }) as typeof fs.lstatSync);
+    let database: Database | undefined;
+    try {
+      database = openUnadmittedWorkspaceDatabase(fixture.root, 'db/workspace.sqlite', false);
+      addCleanup(() => {
+        stats.mockRestore();
+        if (database) closeNativeWorkspaceDatabase(database);
+      });
+      const identity = workspaceDatabaseFileIdentity(database);
+      expect(identity.dev).toBe(expectedDev);
+      expect(identity.ino).toBe(expectedIno);
+      expect(identity.dev).not.toBe(identity.ino);
+    } finally {
+      if (!database) stats.mockRestore();
+    }
   });
 });

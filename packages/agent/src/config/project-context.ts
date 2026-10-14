@@ -1,4 +1,4 @@
-import { lstatSync } from 'node:fs';
+import { lstatSync, type BigIntStats } from 'node:fs';
 import path from 'node:path';
 import {
   PATH_PROFILE_KEYS,
@@ -423,7 +423,7 @@ function validatePresentTarget(
   target: string,
   kind: 'directory' | 'file' | 'file-parent',
   label: string,
-  stat: NonNullable<ReturnType<typeof lstatSync>>,
+  stat: BigIntStats,
 ): { readonly resolved: string; readonly identity: string } {
   enforce(
     choose(
@@ -437,7 +437,7 @@ function validatePresentTarget(
       () => label + ' must be a file',
     ),
   );
-  enforce(!HARD_LINK_CHECK_KINDS.has(kind) || !(stat.nlink > 1), label + ' must not be hard-linked');
+  enforce(!HARD_LINK_CHECK_KINDS.has(kind) || !(stat.nlink > 1n), label + ' must not be hard-linked');
   return { resolved: target, identity: String(stat.dev) + ':' + String(stat.ino) };
 }
 
@@ -450,7 +450,7 @@ function validatePathTarget(
 ): { readonly resolved: string; readonly identity: string | null } {
   const target = containedPath(repositoryRoot, relative);
   assertNoReparseAncestors(repositoryRoot, target, label);
-  const stat = lstatSync(target, { throwIfNoEntry: false });
+  const stat = lstatSync(target, { throwIfNoEntry: false, bigint: true });
   return choose<{ readonly resolved: string; readonly identity: string | null }>(
     stat === undefined,
     () =>
@@ -652,6 +652,14 @@ export function resolvePathProfile(
 ): ResolvedPathProfile {
   const root = requireAbsoluteRepositoryRoot(repositoryRoot);
   const config = currentConfig(root, suppliedConfig);
+  return resolvePathProfileFromCurrentConfig(root, config, options);
+}
+
+function resolvePathProfileFromCurrentConfig(
+  root: string,
+  config: AgentRuntimeConfig,
+  options: PathProfileResolutionOptions,
+): ResolvedPathProfile {
   const processingScope = choose(
     options.processing_scope === undefined,
     () => config.paths.processing_scope,
@@ -754,10 +762,26 @@ export function validateResolvedPathProfile(input: unknown, trustedRepositoryRoo
   const root = requireAbsoluteRepositoryRoot(trustedRepositoryRoot);
   enforce(profile.repository_root === root, 'resolved path profile identity is invalid');
   const config = loadRuntimeConfig(root);
+  validateResolvedPathProfileAgainstConfig(profile, root, config);
+  assertCurrentConfigSnapshot(root, config, 'runtime config changed during path profile validation');
+  return profile;
+}
+
+function validateResolvedPathProfileAgainstConfig(
+  input: unknown,
+  root: string,
+  config: AgentRuntimeConfig,
+): ResolvedPathProfile {
+  enforce(issued(input, TRUSTED_PATH_PROFILES), 'resolved path profile must be issued by resolvePathProfile');
+  const profile = input as ResolvedPathProfile;
+  enforce(profile.repository_root === root, 'resolved path profile identity is invalid');
   enforce(profile.path_config_hash === pathConfigurationHash(config), 'resolved path profile config is stale');
-  const expected = resolvePathProfile(root, config, selectedProfileOptions(profile));
+  const expected = resolvePathProfileFromCurrentConfig(root, config, selectedProfileOptions(profile));
   enforce(expected.digest === profile.digest, 'resolved path profile is stale or forged');
   return profile;
+}
+function assertCurrentConfigSnapshot(root: string, config: AgentRuntimeConfig, message: string): void {
+  enforce(runtimeConfigDigest(loadRuntimeConfig(root)) === runtimeConfigDigest(config), message);
 }
 function integrationBinding(config: AgentRuntimeConfig, projectId: string): ProjectIntegrationBinding {
   const provider = config.integrations.providers.find((entry) => entry.project_id === projectId);
@@ -805,6 +829,26 @@ export function loadProjectSetContext(
 ): ProjectContext {
   const root = requireAbsoluteRepositoryRoot(repositoryRoot);
   const config = currentConfig(root, suppliedConfig);
+  const ids = prepareProjectSetContext(config, repositoryId, projectIds, options);
+  const profiles = ids.map((projectId) =>
+    resolvePathProfile(root, config, {
+      processing_scope: 'selected_project',
+      repository_id: repositoryId,
+      project_id: projectId,
+      ...(options.trusted_overrides?.[projectId] === undefined
+        ? {}
+        : { trusted_override: options.trusted_overrides[projectId] }),
+    }),
+  );
+  return buildProjectSetContext(config, repositoryId, ids, profiles);
+}
+
+function prepareProjectSetContext(
+  config: AgentRuntimeConfig,
+  repositoryId: string,
+  projectIds: readonly string[],
+  options: ProjectSetContextOptions,
+): readonly string[] {
   enforce(repositoryId === config.repository.repository_id, 'project context repository identity is invalid');
   enforce(config.paths.repository_mode === 'monorepo', 'project context requires monorepo mode');
   const ids = normalizeProjectIds(projectIds);
@@ -813,16 +857,20 @@ export function loadProjectSetContext(
     overrideKeys.length === 0 || canonicalJsonDigest(overrideKeys) === canonicalJsonDigest(ids),
     'trusted project overrides must bind exactly the selected project set',
   );
-  const project_bindings = ids.map((projectId) => {
+  return ids;
+}
+
+function buildProjectSetContext(
+  config: AgentRuntimeConfig,
+  repositoryId: string,
+  ids: readonly string[],
+  profiles: readonly ResolvedPathProfile[],
+): ProjectContext {
+  const project_bindings = ids.map((projectId, index) => {
     const project = configuredProject(config, repositoryId, projectId);
     const integration_binding = integrationBinding(config, projectId);
-    const trustedOverride = options.trusted_overrides?.[projectId];
-    const profile = resolvePathProfile(root, config, {
-      processing_scope: 'selected_project',
-      repository_id: repositoryId,
-      project_id: projectId,
-      ...(trustedOverride === undefined ? {} : { trusted_override: trustedOverride }),
-    });
+    const profile = profiles[index];
+    enforce(profile !== undefined, 'project context path profile is unavailable: ' + projectId);
     return freezeJsonValue({
       schema: 'ProjectContextProjectBinding/v1' as const,
       project_id: projectId,
@@ -832,8 +880,8 @@ export function loadProjectSetContext(
       delivery_group: project.delivery_group,
       project_root: project.project_root,
       integration_binding,
-      path_profile: profile,
-      path_bindings: buildBindings(profile),
+      path_profile: profile!,
+      path_bindings: buildBindings(profile!),
     });
   });
   const integration_bindings = project_bindings.map((binding) => binding.integration_binding);
@@ -879,8 +927,24 @@ export function projectBindingFor(context: ProjectContext, projectId: string): P
   return context.project_bindings.find((binding) => binding.project_id === projectId) ?? null;
 }
 export function validateProjectContextBinding(value: unknown, trustedRepositoryRoot: string): ProjectContext {
+  const context = issuedProjectContext(value);
+  const root = requireAbsoluteRepositoryRoot(trustedRepositoryRoot);
+  const config = loadRuntimeConfig(root);
+  validateProjectContextBindingAgainstConfig(context, root, config);
+  assertCurrentConfigSnapshot(root, config, 'runtime config changed during project context validation');
+  return context;
+}
+
+function issuedProjectContext(value: unknown): ProjectContext {
   enforce(issued(value, TRUSTED_PROJECT_CONTEXTS), 'project context must be issued by loadProjectSetContext');
-  const context = value as ProjectContext;
+  return value as ProjectContext;
+}
+
+function validateProjectContextBindingAgainstConfig(
+  context: ProjectContext,
+  root: string,
+  config: AgentRuntimeConfig,
+): ResolvedPathProfile[] {
   enforce(
     canonicalJsonDigest(context.project_ids) === canonicalJsonDigest(normalizeProjectIds(context.project_ids)),
     'project context project set is not canonical',
@@ -895,30 +959,25 @@ export function validateProjectContextBinding(value: unknown, trustedRepositoryR
   );
   enforce(context.path_profiles.length === context.project_ids.length, 'project context path profiles are incomplete');
   enforce(context.path_bindings.length === context.project_ids.length, 'project context path bindings are incomplete');
+  const profiles: ResolvedPathProfile[] = [];
   for (const projectId of context.project_ids) {
     const binding = projectBindingFor(context, projectId);
     enforce(binding !== null, 'project context project binding is unavailable: ' + projectId);
     enforce(binding!.integration_binding.project_id === projectId, 'project context integration membership is invalid');
-    validateResolvedPathProfile(binding!.path_profile, trustedRepositoryRoot);
+    profiles.push(validateResolvedPathProfileAgainstConfig(binding!.path_profile, root, config));
   }
-  return context;
+  return profiles;
 }
 export function validateProjectContext(value: unknown, trustedRepositoryRoot: string): ProjectContext {
-  const context = validateProjectContextBinding(value, trustedRepositoryRoot);
+  const context = issuedProjectContext(value);
   const root = requireAbsoluteRepositoryRoot(trustedRepositoryRoot);
   const config = loadRuntimeConfig(root);
+  const profiles = validateProjectContextBindingAgainstConfig(context, root, config);
   enforce(context.config_digest === runtimeConfigDigest(config), 'project context configuration is stale');
-  const trusted_overrides = Object.fromEntries(
-    context.project_bindings.map((binding) => [
-      binding.project_id,
-      selectedProfileOptions(binding.path_profile).trusted_override,
-    ]),
-  );
-  const expected = loadProjectSetContext(root, config, context.repository_id, context.project_ids, {
-    trusted_overrides,
-  });
+  const expected = buildProjectSetContext(config, context.repository_id, context.project_ids, profiles);
   enforce(context.integrations_digest === expected.integrations_digest, 'project context integrations are stale');
   enforce(context.path_bindings_digest === expected.path_bindings_digest, 'project context paths are stale');
   enforce(context.project_context_digest === expected.project_context_digest, 'project context binding is stale');
+  assertCurrentConfigSnapshot(root, config, 'project context configuration changed during validation');
   return context;
 }
