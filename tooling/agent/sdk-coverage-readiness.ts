@@ -9,6 +9,7 @@ import { decodeSdkFormationReceipt } from '../../packages/agent/tooling/sdk-arti
 import { expectedJavascriptFiles } from '../../packages/agent/tooling/maintained-source-inventory.ts';
 import { ownedDirectoryIdentity, removeOwnedDirectoryOrThrow } from '../../packages/agent/tooling/owned-staging.ts';
 import { resourceDirectory } from '../../packages/agent/bin/standalone-resources.ts';
+import { readQualityInputs } from '../../packages/agent/tooling/bun-coverage-evidence.ts';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const packageRoot = path.join(repositoryRoot, 'packages/agent');
@@ -405,6 +406,7 @@ async function fetchCurrentArtifact(
   root: string,
   head: string,
   remainingMs: () => number,
+  archivePath?: string,
 ): Promise<{
   archive: Buffer;
   receipt: Omit<DownloadReceipt, 'sdk_receipt_sha256' | 'outputs'>;
@@ -522,15 +524,36 @@ async function fetchCurrentArtifact(
     artifactExpires <= Date.now()
   )
     throw new Error('The SDK test-input artifact is outside the formation job interval or expired.');
-  const archive = await command(
-    'gh',
-    ['api', '--hostname', 'github.com', '--method', 'GET', `repos/${repository}/actions/artifacts/${artifact.id}/zip`],
-    root,
-    remainingMs,
-    archiveLimit,
-  );
-  if (archive.length === 0 || archive.length > archiveLimit || `sha256:${sha256(archive)}` !== artifact.digest)
-    throw new Error('The downloaded SDK test-input ZIP differs from the API artifact digest.');
+  let archive: Buffer;
+  const transportIdentity = `run ${run.id}, attempt ${run.run_attempt}, artifact ${artifact.id}`;
+  if (archivePath !== undefined) {
+    if (!path.isAbsolute(archivePath)) throw new Error('SDK transport archive path must be absolute.');
+    const captured = await readQualityInputs(path.dirname(archivePath), [path.basename(archivePath)]);
+    const bytes = captured.get(path.basename(archivePath));
+    if (!bytes) throw new Error('SDK transport archive was not captured.');
+    archive = bytes;
+  } else {
+    archive = await command(
+      'gh',
+      [
+        'api',
+        '--hostname',
+        'github.com',
+        '--method',
+        'GET',
+        `repos/${repository}/actions/artifacts/${artifact.id}/zip`,
+      ],
+      root,
+      remainingMs,
+      archiveLimit,
+    ).catch((cause: unknown) => {
+      throw new Error(
+        `SDK ZIP transport unavailable for ${transportIdentity}. Use the selected connector transport and VIDA_SDK_TEST_INPUT_ARCHIVE; integrity checks remain required.`,
+        { cause },
+      );
+    });
+  }
+  assertSdkArtifactDigest(archive, artifact.digest);
   return {
     archive,
     receipt: {
@@ -670,14 +693,23 @@ export function publishSdkTestInputs(
   }
 }
 
-export async function ensureSdkCoverageInputs(input: { root: string; remainingMs: () => number }): Promise<void> {
+export function assertSdkArtifactDigest(archive: Buffer, expected: string): void {
+  if (archive.length === 0 || archive.length > archiveLimit || `sha256:${sha256(archive)}` !== expected)
+    throw new Error('The downloaded SDK test-input ZIP differs from the API artifact digest.');
+}
+
+export async function ensureSdkCoverageInputs(input: {
+  root: string;
+  remainingMs: () => number;
+  archivePath?: string | undefined;
+}): Promise<void> {
   const root = path.resolve(input.root);
   if (root !== packageRoot || !path.isAbsolute(input.root))
     throw new Error('SDK test-input preparation is bound to the VIDA agent package root.');
   const head = await cleanHead(input.remainingMs);
   const identity = parseVersionPin(root);
   if (currentSidecar(root, head, identity)) return;
-  const fetched = await fetchCurrentArtifact(root, head, input.remainingMs);
+  const fetched = await fetchCurrentArtifact(root, head, input.remainingMs, input.archivePath);
   const files = await validateSdkTestArchive(fetched.archive, identity);
   const sdkBytes = files.get(receiptPath);
   if (!sdkBytes) throw new Error('Validated SDK test-input receipt is missing.');

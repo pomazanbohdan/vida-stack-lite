@@ -5,7 +5,11 @@ import { ensureSdkCoverageInputs } from './sdk-coverage-readiness.ts';
 
 async function runCoverage(): Promise<void> {
   await runBunCoverage({
-    prepareSdkInputs: (input: { root: string; remainingMs: () => number }) => ensureSdkCoverageInputs(input),
+    prepareSdkInputs: (input: { root: string; remainingMs: () => number }) =>
+      ensureSdkCoverageInputs({
+        ...input,
+        archivePath: process.env.VIDA_SDK_TEST_INPUT_ARCHIVE,
+      }),
   });
 }
 

@@ -7,7 +7,11 @@ import path from 'node:path';
 import type { AgentJSZipModule } from '../../packages/agent/tooling/release-dependency-types.ts';
 import { sha256 } from '../../packages/agent/tooling/bun-coverage-evidence.ts';
 import { expectedJavascriptFiles } from '../../packages/agent/tooling/maintained-source-inventory.ts';
-import { publishSdkTestInputs, validateSdkTestArchive } from '../../tooling/agent/sdk-coverage-readiness.ts';
+import {
+  assertSdkArtifactDigest,
+  publishSdkTestInputs,
+  validateSdkTestArchive,
+} from '../../tooling/agent/sdk-coverage-readiness.ts';
 
 const JSZip = createRequire(new URL('../../packages/agent/package.json', import.meta.url))('jszip') as AgentJSZipModule;
 const identity = { version: '1.2.3', bunVersion: Bun.version };
@@ -18,6 +22,15 @@ const payloads = new Map(
   ]),
 );
 const roots: string[] = [];
+
+test('the SDK transport bridge accepts only the exact API-bound ZIP bytes', () => {
+  const bytes = Buffer.from('transport fixture');
+  const expected = `sha256:${sha256(bytes)}`;
+  assert.doesNotThrow(() => assertSdkArtifactDigest(bytes, expected));
+  assert.throws(() => assertSdkArtifactDigest(Buffer.from('changed'), expected), /API artifact digest/u);
+  assert.throws(() => assertSdkArtifactDigest(Buffer.alloc(0), expected), /API artifact digest/u);
+  assert.throws(() => assertSdkArtifactDigest(bytes, sha256(bytes)), /API artifact digest/u);
+});
 
 function capturedWarnings(body: () => void): string[] {
   const original: unknown = Reflect.get(process, 'emitWarning');

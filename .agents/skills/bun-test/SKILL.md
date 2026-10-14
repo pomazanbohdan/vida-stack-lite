@@ -28,6 +28,13 @@ typecheck success. Runtime and declaration versions are independent. Use the
 selected Bun pin and manifest/lock declarations without embedding the current
 runtime version in tests. Keep build and install free of test suites.
 
+For full coverage SDK readiness, use the maintained coverage alias and its
+repository adapter. A Cloud artifact-storage403 may require the selected GitHub
+connector/uploaded-file transport bridge described in TESTING. Keep the actual
+run/attempt/artifact identity and ZIP digest; never copy Source into dist, compile
+locally, rewrite a receipt or disable freshness. Transport preparation is not
+Runtime acceptance. Do not print temporary signed URLs or credential bytes.
+
 ## Design a regression
 
 Start from the contract and the function or boundary that owns it. Map each

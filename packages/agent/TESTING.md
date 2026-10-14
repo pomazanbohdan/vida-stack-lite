@@ -186,6 +186,13 @@ dist, retaining previous outputs and failed staging. Unavailable or failed CI
 remains an actionable preflight GAP; there is no local compilation fallback.
 It performs no second Source inventory/hash pass: coverage derives freshness
 from the one existing capture below. Cache reuse verifies actual output bytes.
+If Cloud denies the CLI's artifact-storage redirect, the selected GitHub connector
+may download that same observed artifact and materialize its returned file through
+the uploaded-file downloader. Pass its absolute path as
+`VIDA_SDK_TEST_INPUT_ARCHIVE` to the maintained coverage command. The repository
+adapter still validates current CI/run/attempt/artifact metadata, exact API ZIP
+digest, bounded archive and the final Source join; a local file grants no proof.
+This is a transport bridge, never local formation or an SDK freshness bypass.
 
 Before a current full selection containing configured-workflow tests launches,
 coverage captures the SDK builder inputs, receipt and four emitted JS members

@@ -527,7 +527,23 @@ qualification now accepts both standalone and prefixed first-line versions;
 two setup passes and corrected host qualification passed. The initial parser
 failure remains at `sdk-workflow-tooling-check-20261014.log`; current proof:
 `/workspace/attachments/sdk-workflow-tooling-check-corrected-20261014.log`.
-Actual corrected CI/retrieval/coverage remain pending observation.
+Context correction0abc0ec5655489b868d33a686ace048a854658af passed ordinary strict
+hook and push. Corrected SDK run38634267359/attempt1 completed SUCCESS:
+https://github.com/pomazanbohdan/vida-stack-lite/actions/runs/38634267359.
+Artifact11926573863 is625158bytes, digest
+sha256:0099eb090348985ac97f70f57911644ff8922ed6a9b94c411967723b482fbf25.
+The next requested coverage ended BLOCKED before tests because Cloud's CLI
+artifact-storage redirect returned403; metadata API access remains available.
+Outcome d5016920-5868-432e-b43e-e35fca9d5cad has launched0/incomplete/no report.
+Log: `/workspace/attachments/coverage-after-sdk-readiness-0abc0ec-20261014.log`.
+The selected GitHub connector downloaded the same artifact successfully; the
+uploaded-file transport materialized its unchanged ZIP. A bounded optional
+VIDA_SDK_TEST_INPUT_ARCHIVE bridge now retains exact API metadata/digest/ZIP and
+final Source verification. No local compilation/receipt rewriting or fabricated
+proof. Its wrong/empty/unprefixed-digest controls passed1case, exit0; types133/0;
+corrected scoped lint has zero diagnostics. Independent transport review found
+no bypass, in the existing review artifact. Current post-bridge CI/retrieval and
+coverage remain pending. Signed artifact URLs are not evidence locators.
 
 Cloud restart was observed as starting/offline at spec2339. Access recovered;
 Git diff/new files and Bun1.4.3 persisted. New cgroup counters were zero and uptime
