@@ -118,6 +118,15 @@ test('MCP replies preserve explicit failures and reject malformed shapes', () =>
   assert.throws(() => parseCloudMcpReply('{"jsonrpc":"2.0","id":2}'), /MCP/i);
 });
 
+test('cloud MCP reader accepts valid notifications without treating them as replies', () => {
+  const value = parseCloudMcpReply(
+    '{"jsonrpc":"2.0","method":"notifications/message","params":{"level":"info","data":"ready"}}',
+  );
+  assert.equal(value.id, undefined);
+  assert.equal(value.result, undefined);
+  assert.throws(() => parseCloudMcpReply('{"jsonrpc":"2.0","params":{}}'), /MCP/i);
+});
+
 test('cloud MCP reply buffering accepts the limit and rejects an oversized line', () => {
   assert.equal(appendBoundedCloudReply('x'.repeat(cloudReplyBufferLimit - 1), 'x').length, cloudReplyBufferLimit);
   assert.throws(() => appendBoundedCloudReply('x'.repeat(cloudReplyBufferLimit), 'x'), /buffer limit/i);

@@ -69,6 +69,12 @@ suites. It reports GAP/ENOENT for crap-budgets.v1.json. Reviewed partial lineage
 including the four new helpers, remains non-executable/non-exhaustive. Full numeric
 acceptance requires the complete reviewed plan; no unchanged full retry was made.
 
+Final protocol follow-up preserves valid MCP notifications without resolving a
+request. Official JSON-RPC/MCP notification semantics supplied the counterexample:
+causal RED1, then current Cloud8PASS/15ms and actual LeanCTX qualification PASS.
+The per-reply cap preserves coalesced messages; work/cleanup failures retain both
+causes. No consumer, install, schema/loader or numeric effects follow.
+
 The existing consumer cleanup handoff is
 [consumer-source-retirement.md](../../../docs/migration/consumer-source-retirement.md).
 Windows facts are coordinator-attributed:13 Babel data files,67directories,

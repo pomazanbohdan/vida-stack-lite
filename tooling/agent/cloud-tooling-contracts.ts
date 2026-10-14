@@ -125,6 +125,16 @@ export function parseCloudMcpReply(source: string): CloudMcpReply {
     throw new Error('Malformed MCP reply JSON.');
   }
   if (
+    record(value) &&
+    value.jsonrpc === '2.0' &&
+    value.id === undefined &&
+    nonempty(value.method) &&
+    value.result === undefined &&
+    value.error === undefined &&
+    (value.params === undefined || record(value.params))
+  )
+    return {};
+  if (
     !record(value) ||
     value.jsonrpc !== '2.0' ||
     !Number.isSafeInteger(value.id) ||
