@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `89dea90` at origin/main.
+- Published input: `a6b0c7e` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -722,6 +722,44 @@ tags alone. Review those effects and current captured inputs before qualificatio
 do not retarget stale rows or remove package/consumer resource tags. Retained
 UNKNOWN operations remain fenced. Review:
 `quality-coverage-resource-refresh-design-20261014.md` in the attachments directory.
+
+## Bridge moves and three further frozen families
+
+Terminal packet `a6b0c7e` passed the ordinary strict hook: format463files,
+maintained typecheck469files/0errors and lint/Knip enforcement. Its non-force
+push to origin/main succeeded; logs are
+`/workspace/attachments/quality-bun-terminal-corrected-strict-commit-20261014.log`
+and `quality-bun-terminal-push-20261014.log` in that directory. Earlier failed
+fixture attempts remain retained and are not PASS evidence.
+
+The next correspondence batch adds108 current roles: bridge31, historical
+normalization36, initial-source CLI37 and four executable-wave roles. It also
+corrects two existing configured-context roles from prospective10/10 to their
+genuine moved original ceilings4/4 and1/1. Their current complexity is4 and1.
+The original stage-membership and zero-assignment predicates moved to the
+workflow-plan projection helper; they were not deleted or moved to execute.
+Their original allowances follow the nested some/every callsites once. The
+new outer projection and flatMap receive prospective10/10; bridge open retains
+its own original57/57. Candidate new rows already carried valid identities;
+missing current_identity on those new-role rows did not mean missing binding.
+
+Root corrected the four misleading candidate removals and the overlap before
+joining. Five selected files were refreshed; other inventory rows were reused.
+Partial totals2172roles,1617retained/555new/6removed,111bound files. Global
+inventory remains7713roles;5541current and4078original dispositions are missing.
+This selected batch has no new static ceiling exceptions, but the whole plan
+remains NON_EXECUTABLE/NOT_EXHAUSTIVE and all final numeric gates remain open.
+Receipt: `/workspace/attachments/quality-lineage-three-join-receipt-20261014.json`.
+Independent reviews: `quality-lineage-three-independent-20261014.md` and
+`quality-bridge-move-final-review-20261014.md` in that directory. No Source
+behavior changed in this metadata batch, so no additional suite was launched.
+
+The five previously omitted resource files now have static effects reviews:
+`quality-five-resource-reviews-20261014.json` and `.md` in that directory.
+They retain the physical package-owner tag; no exercised consumer-root read
+was found. Process-local mocks/environment restoration still need complete
+same-child ordering qualification. These reviews are not current scope/hash
+admission and do not release retained UNKNOWN effects or activate parallelism.
 
 Genuine b549951 was measured once: runfe54f83c-6a70-4223-9872-f43f1ac784e9,
 SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.

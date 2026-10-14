@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 1531,
-    "new": 533,
+    "retained": 1617,
+    "new": 555,
     "removed": 6,
-    "current_roles": 2064,
-    "source_files": 107
+    "current_roles": 2172,
+    "source_files": 111
   },
   "source_bindings": [
     {
@@ -171,7 +171,7 @@
     },
     {
       "file": "src/orchestration/configured-context.ts",
-      "sha256": "e33d49e9de76f7b44358e3a9c6556fa94464ace292c42b4f578c2d8f1d8fc688"
+      "sha256": "120236214e4f1b55899a56d567815d61e23b9f647e2fbabd73107f6c055196fd"
     },
     {
       "file": "src/orchestration/observed-research-result.ts",
@@ -444,6 +444,22 @@
     {
       "file": "src/orchestration/task-source-binding.ts",
       "sha256": "f342bca0c6b99639ca3722f0c6914e497207d3c663857ebf0adf23102726b8df"
+    },
+    {
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "sha256": "eef5d2416d70e835788ad2b3664c85e538d21ddc1cc8e2a18f870b3f995b7bdb"
+    },
+    {
+      "file": "src/orchestration/workflow-plan.ts",
+      "sha256": "c63fc6aad04f5b6507c21461d49c7678726d22694ab30cfaff7a53e297afc6be"
+    },
+    {
+      "file": "bin/historical-normalization-resume.ts",
+      "sha256": "22c61bc0880c57f13d350c6a6faf46b812b88c7d55ca46809e1f11dbd31c8da4"
+    },
+    {
+      "file": "bin/continue-initial-source.ts",
+      "sha256": "8e1d7bc8c9d80e55eeb67bd40f346a692438c107a0875b53dfa5a6435a555103"
     }
   ],
   "baseline_functions": [
@@ -19353,13 +19369,13 @@
       "max_crap": 6,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 41,
+        "line": 46,
         "column": 0,
-        "start": 1410,
-        "end": 1562,
-        "bodyLine": 41,
+        "start": 1452,
+        "end": 1604,
+        "bodyLine": 46,
         "bodyColumn": 80,
-        "bodyEndLine": 43,
+        "bodyEndLine": 48,
         "bodyEndColumn": 1
       }
     },
@@ -19373,13 +19389,13 @@
       "max_crap": 6,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 45,
+        "line": 50,
         "column": 0,
-        "start": 1564,
-        "end": 2136,
-        "bodyLine": 45,
+        "start": 1606,
+        "end": 2178,
+        "bodyLine": 50,
         "bodyColumn": 84,
-        "bodyEndLine": 54,
+        "bodyEndLine": 59,
         "bodyEndColumn": 1
       }
     },
@@ -19393,13 +19409,13 @@
       "max_crap": 12,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 48,
+        "line": 53,
         "column": 17,
-        "start": 1799,
-        "end": 1878,
-        "bodyLine": 48,
+        "start": 1841,
+        "end": 1920,
+        "bodyLine": 53,
         "bodyColumn": 28,
-        "bodyEndLine": 48,
+        "bodyEndLine": 53,
         "bodyEndColumn": 96
       }
     },
@@ -19413,13 +19429,13 @@
       "max_crap": 12,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 51,
+        "line": 56,
         "column": 34,
-        "start": 1966,
-        "end": 2025,
-        "bodyLine": 51,
+        "start": 2008,
+        "end": 2067,
+        "bodyLine": 56,
         "bodyColumn": 52,
-        "bodyEndLine": 51,
+        "bodyEndLine": 56,
         "bodyEndColumn": 92
       }
     },
@@ -19433,13 +19449,13 @@
       "max_crap": 6,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 56,
+        "line": 61,
         "column": 0,
-        "start": 2138,
-        "end": 2386,
-        "bodyLine": 56,
+        "start": 2180,
+        "end": 2428,
+        "bodyLine": 61,
         "bodyColumn": 51,
-        "bodyEndLine": 62,
+        "bodyEndLine": 67,
         "bodyEndColumn": 1
       }
     },
@@ -19453,13 +19469,13 @@
       "max_crap": 6,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 64,
+        "line": 89,
         "column": 0,
-        "start": 2388,
-        "end": 3856,
-        "bodyLine": 69,
+        "start": 3074,
+        "end": 4803,
+        "bodyLine": 96,
         "bodyColumn": 89,
-        "bodyEndLine": 94,
+        "bodyEndLine": 135,
         "bodyEndColumn": 1
       }
     },
@@ -19473,13 +19489,13 @@
       "max_crap": 72,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 97,
+        "line": 138,
         "column": 7,
-        "start": 3956,
-        "end": 6601,
-        "bodyLine": 101,
+        "start": 4903,
+        "end": 7794,
+        "bodyLine": 142,
         "bodyColumn": 21,
-        "bodyEndLine": 160,
+        "bodyEndLine": 211,
         "bodyEndColumn": 1
       }
     },
@@ -19493,13 +19509,13 @@
       "max_crap": 2,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 116,
+        "line": 157,
         "column": 52,
-        "start": 4944,
-        "end": 4972,
-        "bodyLine": 116,
+        "start": 5891,
+        "end": 5919,
+        "bodyLine": 157,
         "bodyColumn": 64,
-        "bodyEndLine": 116,
+        "bodyEndLine": 157,
         "bodyEndColumn": 80
       }
     },
@@ -19513,13 +19529,13 @@
       "max_crap": 30,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 157,
+        "line": 208,
         "column": 15,
-        "start": 6324,
-        "end": 6419,
-        "bodyLine": 157,
+        "start": 7517,
+        "end": 7612,
+        "bodyLine": 208,
         "bodyColumn": 26,
-        "bodyEndLine": 157,
+        "bodyEndLine": 208,
         "bodyEndColumn": 109
       }
     },
@@ -40755,6 +40771,2758 @@
       "max_complexity": 2,
       "max_crap": 6,
       "rationale": "The published callable and current callable serve the same named responsibility at the corresponding recovery-flow callsite. Pairing is by responsibility and callsite; the historical allowance remains unchanged, and baseline zero coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:constructor#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:constructor#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:constructor",
+      "source_address": {
+        "line": 235,
+        "column": 2,
+        "start": 8875,
+        "end": 10542,
+        "bodyLine": 250,
+        "bodyColumn": 4,
+        "bodyEndLine": 273,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 151,
+        "column": 2,
+        "start": 6673,
+        "end": 8359,
+        "bodyLine": 166,
+        "bodyColumn": 4,
+        "bodyEndLine": 189,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 7,
+      "baseline_coverage": 1,
+      "baseline_crap": 7,
+      "max_complexity": 7,
+      "max_crap": 7,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:open",
+      "source_address": {
+        "line": 275,
+        "column": 2,
+        "start": 10546,
+        "end": 28304,
+        "bodyLine": 288,
+        "bodyColumn": 35,
+        "bodyEndLine": 646,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 191,
+        "column": 2,
+        "start": 8363,
+        "end": 25462,
+        "bodyLine": 204,
+        "bodyColumn": 35,
+        "bodyEndLine": 554,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 57,
+      "baseline_coverage": 1,
+      "baseline_crap": 57,
+      "max_complexity": 57,
+      "max_crap": 57,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 353,
+        "column": 37,
+        "start": 14710,
+        "end": 14768,
+        "bodyLine": 353,
+        "bodyColumn": 59,
+        "bodyEndLine": 353,
+        "bodyEndColumn": 95
+      },
+      "current_source_address": {
+        "line": 283,
+        "column": 37,
+        "start": 13031,
+        "end": 13084,
+        "bodyLine": 283,
+        "bodyColumn": 59,
+        "bodyEndLine": 283,
+        "bodyEndColumn": 90
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "property:execute",
+      "source_address": {
+        "line": 432,
+        "column": 19,
+        "start": 18636,
+        "end": 24520,
+        "bodyLine": 432,
+        "bodyColumn": 65,
+        "bodyEndLine": 543,
+        "bodyEndColumn": 11
+      },
+      "current_source_address": {
+        "line": 360,
+        "column": 19,
+        "start": 16758,
+        "end": 22586,
+        "bodyLine": 360,
+        "bodyColumn": 65,
+        "bodyEndLine": 465,
+        "bodyEndColumn": 11
+      },
+      "baseline_complexity": 35,
+      "baseline_coverage": 1,
+      "baseline_crap": 35,
+      "max_complexity": 35,
+      "max_crap": 35,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/binding:requests/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/binding:requests/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 490,
+        "column": 41,
+        "start": 21909,
+        "end": 22496,
+        "bodyLine": 491,
+        "bodyColumn": 14,
+        "bodyEndLine": 507,
+        "bodyEndColumn": 16
+      },
+      "current_source_address": {
+        "line": 412,
+        "column": 41,
+        "start": 19975,
+        "end": 20562,
+        "bodyLine": 413,
+        "bodyColumn": 14,
+        "bodyEndLine": 429,
+        "bodyEndColumn": 16
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/binding:expected/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/binding:expected/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 510,
+        "column": 50,
+        "start": 22628,
+        "end": 22658,
+        "bodyLine": 510,
+        "bodyColumn": 63,
+        "bodyEndLine": 510,
+        "bodyEndColumn": 80
+      },
+      "current_source_address": {
+        "line": 432,
+        "column": 50,
+        "start": 20694,
+        "end": 20724,
+        "bodyLine": 432,
+        "bodyColumn": 63,
+        "bodyEndLine": 432,
+        "bodyEndColumn": 80
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 513,
+        "column": 50,
+        "start": 22857,
+        "end": 22883,
+        "bodyLine": 513,
+        "bodyColumn": 61,
+        "bodyEndLine": 513,
+        "bodyEndColumn": 76
+      },
+      "current_source_address": {
+        "line": 435,
+        "column": 50,
+        "start": 20923,
+        "end": 20949,
+        "bodyLine": 435,
+        "bodyColumn": 61,
+        "bodyEndLine": 435,
+        "bodyEndColumn": 76
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#1",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 514,
+        "column": 46,
+        "start": 22958,
+        "end": 22998,
+        "bodyLine": 514,
+        "bodyColumn": 57,
+        "bodyEndLine": 514,
+        "bodyEndColumn": 86
+      },
+      "current_source_address": {
+        "line": 436,
+        "column": 46,
+        "start": 21024,
+        "end": 21064,
+        "bodyLine": 436,
+        "bodyColumn": 57,
+        "bodyEndLine": 436,
+        "bodyEndColumn": 86
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#2",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#2",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 518,
+        "column": 44,
+        "start": 23146,
+        "end": 23215,
+        "bodyLine": 518,
+        "bodyColumn": 55,
+        "bodyEndLine": 518,
+        "bodyEndColumn": 113
+      },
+      "current_source_address": {
+        "line": 440,
+        "column": 44,
+        "start": 21212,
+        "end": 21281,
+        "bodyLine": 440,
+        "bodyColumn": 55,
+        "bodyEndLine": 440,
+        "bodyEndColumn": 113
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#3",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#3",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 522,
+        "column": 14,
+        "start": 23352,
+        "end": 23445,
+        "bodyLine": 522,
+        "bodyColumn": 25,
+        "bodyEndLine": 522,
+        "bodyEndColumn": 107
+      },
+      "current_source_address": {
+        "line": 444,
+        "column": 14,
+        "start": 21418,
+        "end": 21511,
+        "bodyLine": 444,
+        "bodyColumn": 25,
+        "bodyEndLine": 444,
+        "bodyEndColumn": 107
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/binding:observed/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/binding:observed/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 524,
+        "column": 60,
+        "start": 23524,
+        "end": 23571,
+        "bodyLine": 524,
+        "bodyColumn": 71,
+        "bodyEndLine": 524,
+        "bodyEndColumn": 107
+      },
+      "current_source_address": {
+        "line": 446,
+        "column": 60,
+        "start": 21590,
+        "end": 21637,
+        "bodyLine": 446,
+        "bodyColumn": 71,
+        "bodyEndLine": 446,
+        "bodyEndColumn": 107
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#4",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#4",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 528,
+        "column": 48,
+        "start": 23773,
+        "end": 23811,
+        "bodyLine": 528,
+        "bodyColumn": 59,
+        "bodyEndLine": 528,
+        "bodyEndColumn": 86
+      },
+      "current_source_address": {
+        "line": 450,
+        "column": 48,
+        "start": 21839,
+        "end": 21877,
+        "bodyLine": 450,
+        "bodyColumn": 59,
+        "bodyEndLine": 450,
+        "bodyEndColumn": 86
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/binding:observed/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/binding:observed/closure:CallExpression:arguments[0]#1",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 529,
+        "column": 60,
+        "start": 23876,
+        "end": 23923,
+        "bodyLine": 529,
+        "bodyColumn": 71,
+        "bodyEndLine": 529,
+        "bodyEndColumn": 107
+      },
+      "current_source_address": {
+        "line": 451,
+        "column": 60,
+        "start": 21942,
+        "end": 21989,
+        "bodyLine": 451,
+        "bodyColumn": 71,
+        "bodyEndLine": 451,
+        "bodyEndColumn": 107
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#5",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/property:execute#0/closure:CallExpression:arguments[0]#5",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 534,
+        "column": 44,
+        "start": 24142,
+        "end": 24189,
+        "bodyLine": 534,
+        "bodyColumn": 55,
+        "bodyEndLine": 534,
+        "bodyEndColumn": 91
+      },
+      "current_source_address": {
+        "line": 456,
+        "column": 44,
+        "start": 22208,
+        "end": 22255,
+        "bodyLine": 456,
+        "bodyColumn": 55,
+        "bodyEndLine": 456,
+        "bodyEndColumn": 91
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:close#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:close#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:close",
+      "source_address": {
+        "line": 648,
+        "column": 2,
+        "start": 28308,
+        "end": 28375,
+        "bodyLine": 648,
+        "bodyColumn": 31,
+        "bodyEndLine": 650,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 556,
+        "column": 2,
+        "start": 25466,
+        "end": 25533,
+        "bodyLine": 556,
+        "bodyColumn": 31,
+        "bodyEndLine": 558,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:snapshot#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:snapshot#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:snapshot",
+      "source_address": {
+        "line": 652,
+        "column": 2,
+        "start": 28379,
+        "end": 29039,
+        "bodyLine": 652,
+        "bodyColumn": 58,
+        "bodyEndLine": 667,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 560,
+        "column": 2,
+        "start": 25537,
+        "end": 26197,
+        "bodyLine": 560,
+        "bodyColumn": 58,
+        "bodyEndLine": 575,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 1,
+      "baseline_crap": 4,
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#readConfiguredFrontierView#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#readConfiguredFrontierView#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:#readConfiguredFrontierView",
+      "source_address": {
+        "line": 669,
+        "column": 2,
+        "start": 29043,
+        "end": 31198,
+        "bodyLine": 669,
+        "bodyColumn": 64,
+        "bodyEndLine": 708,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 577,
+        "column": 2,
+        "start": 26201,
+        "end": 28356,
+        "bodyLine": 577,
+        "bodyColumn": 64,
+        "bodyEndLine": 616,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 15,
+      "baseline_coverage": 0,
+      "baseline_crap": 240,
+      "max_complexity": 15,
+      "max_crap": 240,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#reserve#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#reserve#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:#reserve",
+      "source_address": {
+        "line": 710,
+        "column": 2,
+        "start": 31202,
+        "end": 31768,
+        "bodyLine": 714,
+        "bodyColumn": 4,
+        "bodyEndLine": 725,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 618,
+        "column": 2,
+        "start": 28360,
+        "end": 28926,
+        "bodyLine": 622,
+        "bodyColumn": 4,
+        "bodyEndLine": 633,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 1,
+      "baseline_crap": 4,
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#readInitialSourceContinuationView#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#readInitialSourceContinuationView#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:#readInitialSourceContinuationView",
+      "source_address": {
+        "line": 727,
+        "column": 2,
+        "start": 31772,
+        "end": 33171,
+        "bodyLine": 727,
+        "bodyColumn": 62,
+        "bodyEndLine": 757,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 635,
+        "column": 2,
+        "start": 28930,
+        "end": 30329,
+        "bodyLine": 635,
+        "bodyColumn": 62,
+        "bodyEndLine": 665,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:#assertInitialSourceSynthesisIsCanonical",
+      "source_address": {
+        "line": 759,
+        "column": 2,
+        "start": 33175,
+        "end": 37686,
+        "bodyLine": 759,
+        "bodyColumn": 66,
+        "bodyEndLine": 850,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 667,
+        "column": 2,
+        "start": 30333,
+        "end": 34844,
+        "bodyLine": 667,
+        "bodyColumn": 66,
+        "bodyEndLine": 758,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 17,
+      "baseline_coverage": 1,
+      "baseline_crap": 17,
+      "max_complexity": 17,
+      "max_crap": 17,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:OptionalCallExpression:arguments[0]",
+      "source_address": {
+        "line": 773,
+        "column": 8,
+        "start": 34023,
+        "end": 34063,
+        "bodyLine": 773,
+        "bodyColumn": 19,
+        "bodyEndLine": 773,
+        "bodyEndColumn": 48
+      },
+      "current_source_address": {
+        "line": 681,
+        "column": 8,
+        "start": 31181,
+        "end": 31221,
+        "bodyLine": 681,
+        "bodyColumn": 19,
+        "bodyEndLine": 681,
+        "bodyEndColumn": 48
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0/binding:item/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0/binding:item/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 777,
+        "column": 42,
+        "start": 34261,
+        "end": 34317,
+        "bodyLine": 777,
+        "bodyColumn": 53,
+        "bodyEndLine": 777,
+        "bodyEndColumn": 98
+      },
+      "current_source_address": {
+        "line": 685,
+        "column": 42,
+        "start": 31419,
+        "end": 31475,
+        "bodyLine": 685,
+        "bodyColumn": 53,
+        "bodyEndLine": 685,
+        "bodyEndColumn": 98
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0/binding:matchingArtifacts/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0/binding:matchingArtifacts/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 789,
+        "column": 6,
+        "start": 35001,
+        "end": 35211,
+        "bodyLine": 790,
+        "bodyColumn": 8,
+        "bodyEndLine": 793,
+        "bodyEndColumn": 46
+      },
+      "current_source_address": {
+        "line": 697,
+        "column": 6,
+        "start": 32159,
+        "end": 32369,
+        "bodyLine": 698,
+        "bodyColumn": 8,
+        "bodyEndLine": 701,
+        "bodyEndColumn": 46
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0/binding:checked/property:readCurrent#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertInitialSourceSynthesisIsCanonical#0/binding:checked/property:readCurrent#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "property:readCurrent",
+      "source_address": {
+        "line": 841,
+        "column": 19,
+        "start": 37381,
+        "end": 37431,
+        "bodyLine": 841,
+        "bodyColumn": 25,
+        "bodyEndLine": 841,
+        "bodyEndColumn": 69
+      },
+      "current_source_address": {
+        "line": 749,
+        "column": 19,
+        "start": 34539,
+        "end": 34589,
+        "bodyLine": 749,
+        "bodyColumn": 25,
+        "bodyEndLine": 749,
+        "bodyEndColumn": 69
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertEngineFile#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#assertEngineFile#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:#assertEngineFile",
+      "source_address": {
+        "line": 852,
+        "column": 2,
+        "start": 37690,
+        "end": 38100,
+        "bodyLine": 852,
+        "bodyColumn": 28,
+        "bodyEndLine": 862,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 760,
+        "column": 2,
+        "start": 34848,
+        "end": 35288,
+        "bodyLine": 760,
+        "bodyColumn": 28,
+        "bodyEndLine": 772,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 1,
+      "baseline_crap": 5,
+      "max_complexity": 5,
+      "max_crap": 5,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#syncProducer#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:#syncProducer#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:#syncProducer",
+      "source_address": {
+        "line": 864,
+        "column": 2,
+        "start": 38104,
+        "end": 38949,
+        "bodyLine": 868,
+        "bodyColumn": 19,
+        "bodyEndLine": 887,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 774,
+        "column": 2,
+        "start": 35292,
+        "end": 36137,
+        "bodyLine": 778,
+        "bodyColumn": 19,
+        "bodyEndLine": 797,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:start#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:start#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:start",
+      "source_address": {
+        "line": 889,
+        "column": 2,
+        "start": 38953,
+        "end": 40277,
+        "bodyLine": 889,
+        "bodyColumn": 95,
+        "bodyEndLine": 914,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 799,
+        "column": 2,
+        "start": 36141,
+        "end": 37465,
+        "bodyLine": 799,
+        "bodyColumn": 95,
+        "bodyEndLine": 824,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:resume#0",
+      "current_identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:resume#0",
+      "file": "src/orchestration/mastra-session-bridge.ts",
+      "name": "method:resume",
+      "source_address": {
+        "line": 916,
+        "column": 2,
+        "start": 40281,
+        "end": 41355,
+        "bodyLine": 920,
+        "bodyColumn": 36,
+        "bodyEndLine": 935,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 826,
+        "column": 2,
+        "start": 37469,
+        "end": 38543,
+        "bodyLine": 830,
+        "bodyColumn": 36,
+        "bodyEndLine": 845,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "Same callable identity and owning parent/callsite in the published b549951 function inventory and current final Bun inventory. Historical complexity, coverage, and CRAP ceiling are copied unchanged; zero baseline coverage is not current coverage evidence."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:sha256#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:sha256#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "fn:sha256",
+      "source_address": {
+        "line": 7,
+        "column": 0,
+        "start": 167,
+        "end": 252,
+        "bodyLine": 7,
+        "bodyColumn": 23,
+        "bodyEndLine": 9,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 34,
+        "column": 0,
+        "start": 1271,
+        "end": 1376,
+        "bodyLine": 34,
+        "bodyColumn": 43,
+        "bodyEndLine": 36,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The byte-digest helper remains the same helper at its callsite for current record and changelog bindings. Original CC/coverage/CRAP caps carry forward unchanged."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:fail#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:fail#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "fn:fail",
+      "source_address": {
+        "line": 11,
+        "column": 0,
+        "start": 254,
+        "end": 327,
+        "bodyLine": 11,
+        "bodyColumn": 23,
+        "bodyEndLine": 13,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 39,
+        "column": 0,
+        "start": 1409,
+        "end": 1497,
+        "bodyLine": 39,
+        "bodyColumn": 38,
+        "bodyEndLine": 41,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The operation-prefixed error helper remains the shared failure owner at the same guard callsites. Original caps carry forward unchanged."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:exactKeys#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:exactKeys#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "fn:exactKeys",
+      "source_address": {
+        "line": 15,
+        "column": 0,
+        "start": 329,
+        "end": 572,
+        "bodyLine": 15,
+        "bodyColumn": 43,
+        "bodyEndLine": 23,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 44,
+        "column": 0,
+        "start": 1587,
+        "end": 1917,
+        "bodyLine": 48,
+        "bodyColumn": 44,
+        "bodyEndLine": 56,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "The exact object-key assertion remains the same shape guard, now also used by extracted request parsing and identity validation. Original caps carry forward unchanged."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:repositoryRelative#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:repositoryRelative#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "fn:repositoryRelative",
+      "source_address": {
+        "line": 25,
+        "column": 0,
+        "start": 574,
+        "end": 888,
+        "bodyLine": 25,
+        "bodyColumn": 35,
+        "bodyEndLine": 35,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 64,
+        "column": 0,
+        "start": 2205,
+        "end": 2545,
+        "bodyLine": 64,
+        "bodyColumn": 61,
+        "bodyEndLine": 74,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "baseline_crap": 56,
+      "max_complexity": 7,
+      "max_crap": 56,
+      "rationale": "The repository-relative path predicate remains the same reusable path validator at argument validation. Original caps carry forward unchanged."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:repositoryRelative#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:repositoryRelative#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 33,
+        "column": 27,
+        "start": 833,
+        "end": 880,
+        "bodyLine": 33,
+        "bodyColumn": 37,
+        "bodyEndLine": 33,
+        "bodyEndColumn": 74
+      },
+      "current_source_address": {
+        "line": 72,
+        "column": 27,
+        "start": 2490,
+        "end": 2537,
+        "bodyLine": 72,
+        "bodyColumn": 37,
+        "bodyEndLine": 72,
+        "bodyEndColumn": 74
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "The path-part callback remains under repositoryRelative and still rejects empty, dot, and parent segments. Original caps carry forward unchanged."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:validateInspection#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:validateInspection#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "fn:validateInspection",
+      "source_address": {
+        "line": 37,
+        "column": 0,
+        "start": 890,
+        "end": 1988,
+        "bodyLine": 37,
+        "bodyColumn": 80,
+        "bodyEndLine": 60,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 119,
+        "column": 0,
+        "start": 4532,
+        "end": 5010,
+        "bodyLine": 125,
+        "bodyColumn": 8,
+        "bodyEndLine": 132,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "The inspection validator remains the apply/resume decision point called by the resume orchestration. Resume-specific comparison moved to validateResumeInspection; this row retains only the original callable allowance and does not grant it to the new helper."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:validateInspection#0/binding:withoutFileBindings/binding:withoutFileBindings#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:withoutFileBindings#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "binding:withoutFileBindings",
+      "source_address": {
+        "line": 43,
+        "column": 30,
+        "start": 1218,
+        "end": 1348,
+        "bodyLine": 44,
+        "bodyColumn": 4,
+        "bodyEndLine": 44,
+        "bodyEndColumn": 119
+      },
+      "current_source_address": {
+        "line": 82,
+        "column": 0,
+        "start": 2778,
+        "end": 2988,
+        "bodyLine": 82,
+        "bodyColumn": 72,
+        "bodyEndLine": 86,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The prior local normalization binding is now a standalone helper called by validateResumeInspection. Its responsibility and filter are preserved; the historical allowance follows that responsibility."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:validateInspection#0/binding:withoutFileBindings/binding:withoutFileBindings#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:withoutFileBindings#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 44,
+        "column": 52,
+        "start": 1281,
+        "end": 1346,
+        "bodyLine": 44,
+        "bodyColumn": 63,
+        "bodyEndLine": 44,
+        "bodyEndColumn": 117
+      },
+      "current_source_address": {
+        "line": 84,
+        "column": 33,
+        "start": 2914,
+        "end": 2979,
+        "bodyLine": 84,
+        "bodyColumn": 44,
+        "bodyEndLine": 84,
+        "bodyEndColumn": 98
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The key-filter callback remains beneath withoutFileBindings and filters only the two file-binding fields. Original caps carry forward unchanged."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:validateInspection#0/binding:allowedPair/binding:allowedPair#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:hasAllowedFileBindingPair#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "binding:allowedPair",
+      "source_address": {
+        "line": 50,
+        "column": 22,
+        "start": 1561,
+        "end": 1720,
+        "bodyLine": 51,
+        "bodyColumn": 4,
+        "bodyEndLine": 53,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 89,
+        "column": 0,
+        "start": 3075,
+        "end": 3521,
+        "bodyLine": 89,
+        "bodyColumn": 108,
+        "bodyEndLine": 98,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The prior local allowed-pair predicate is now hasAllowedFileBindingPair, called for both supplied and current inspections. Its responsibility is unchanged."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:validateInspection#0/binding:allowedPair/binding:allowedPair#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:hasAllowedFileBindingPair#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 52,
+        "column": 6,
+        "start": 1606,
+        "end": 1713,
+        "bodyLine": 52,
+        "bodyColumn": 31,
+        "bodyEndLine": 52,
+        "bodyEndColumn": 113
+      },
+      "current_source_address": {
+        "line": 96,
+        "column": 4,
+        "start": 3406,
+        "end": 3513,
+        "bodyLine": 96,
+        "bodyColumn": 29,
+        "bodyEndLine": 96,
+        "bodyEndColumn": 111
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "The allowed-pair some callback remains beneath the extracted helper and compares the record/changelog binding pair. Original caps carry forward unchanged."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:parseArgs#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:parseArgs#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "fn:parseArgs",
+      "source_address": {
+        "line": 62,
+        "column": 0,
+        "start": 1990,
+        "end": 2988,
+        "bodyLine": 62,
+        "bodyColumn": 25,
+        "bodyEndLine": 83,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 193,
+        "column": 0,
+        "start": 7223,
+        "end": 7462,
+        "bodyLine": 193,
+        "bodyColumn": 47,
+        "bodyEndLine": 197,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 15,
+      "baseline_coverage": 0,
+      "baseline_crap": 240,
+      "max_complexity": 15,
+      "max_crap": 240,
+      "rationale": "The public argument parser remains the entry point used by resumeHistoricalNormalization. Flag extraction and value validation moved to named helpers, while this parser still enforces the exact argument count and composes them."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:resumeHistoricalNormalization#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:resumeHistoricalNormalization#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "fn:resumeHistoricalNormalization",
+      "source_address": {
+        "line": 85,
+        "column": 7,
+        "start": 2997,
+        "end": 15117,
+        "bodyLine": 85,
+        "bodyColumn": 58,
+        "bodyEndLine": 325,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 353,
+        "column": 7,
+        "start": 13967,
+        "end": 24635,
+        "bodyLine": 353,
+        "bodyColumn": 102,
+        "bodyEndLine": 558,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 13,
+      "baseline_coverage": 0,
+      "baseline_crap": 182,
+      "max_complexity": 13,
+      "max_crap": 182,
+      "rationale": "The exported resume operation remains the public orchestration entrypoint called by the CLI and owns inspect/apply/resume behavior. Host and request checks were factored into helpers; its original cap remains attached only to this operation."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:resumeHistoricalNormalization#0/binding:inspectCurrent/binding:inspectCurrent#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:resumeHistoricalNormalization#0/binding:inspectCurrent/binding:inspectCurrent#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "binding:inspectCurrent",
+      "source_address": {
+        "line": 126,
+        "column": 27,
+        "start": 5678,
+        "end": 12315,
+        "bodyLine": 126,
+        "bodyColumn": 41,
+        "bodyEndLine": 259,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 383,
+        "column": 27,
+        "start": 16059,
+        "end": 21885,
+        "bodyLine": 383,
+        "bodyColumn": 65,
+        "bodyEndLine": 497,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 50,
+      "baseline_coverage": 0,
+      "baseline_crap": 2550,
+      "max_complexity": 50,
+      "max_crap": 2550,
+      "rationale": "The inspectCurrent closure remains nested in resumeHistoricalNormalization and is called for initial and latest owner inspection. Owner snapshot and lease checks moved to named helpers; this closure still assembles the journal action, normalization binding, result and inspection."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:resumeHistoricalNormalization#0/binding:inspectCurrent/binding:inspectCurrent#0/binding:ticket/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:findHistoricalOwnerTicket#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 138,
+        "column": 46,
+        "start": 6303,
+        "end": 6350,
+        "bodyLine": 138,
+        "bodyColumn": 57,
+        "bodyEndLine": 138,
+        "bodyEndColumn": 93
+      },
+      "current_source_address": {
+        "line": 229,
+        "column": 29,
+        "start": 8923,
+        "end": 8970,
+        "bodyLine": 229,
+        "bodyColumn": 40,
+        "bodyEndLine": 229,
+        "bodyEndColumn": 76
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The inspectCurrent closure remains nested in resumeHistoricalNormalization and is called for initial and latest owner inspection. Owner snapshot and lease checks moved to named helpers; this closure still assembles the journal action, normalization binding, result and inspection."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:resumeHistoricalNormalization#0/binding:inspectCurrent/binding:inspectCurrent#0/binding:claims/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:findHistoricalOwnerClaims#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 140,
+        "column": 8,
+        "start": 6409,
+        "end": 6660,
+        "bodyLine": 141,
+        "bodyColumn": 10,
+        "bodyEndLine": 145,
+        "bodyEndColumn": 35
+      },
+      "current_source_address": {
+        "line": 239,
+        "column": 4,
+        "start": 9341,
+        "end": 9572,
+        "bodyLine": 240,
+        "bodyColumn": 6,
+        "bodyEndLine": 244,
+        "bodyEndColumn": 31
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "The inspectCurrent closure remains nested in resumeHistoricalNormalization and is called for initial and latest owner inspection. Owner snapshot and lease checks moved to named helpers; this closure still assembles the journal action, normalization binding, result and inspection."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:resumeHistoricalNormalization#0/binding:inspectCurrent/binding:inspectCurrent#0/binding:items/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:resumeHistoricalNormalization#0/binding:inspectCurrent/binding:inspectCurrent#0/binding:items/closure:CallExpression:arguments[0]#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 167,
+        "column": 48,
+        "start": 7770,
+        "end": 7790,
+        "bodyLine": 167,
+        "bodyColumn": 58,
+        "bodyEndLine": 167,
+        "bodyEndColumn": 68
+      },
+      "current_source_address": {
+        "line": 396,
+        "column": 48,
+        "start": 16892,
+        "end": 16912,
+        "bodyLine": 396,
+        "bodyColumn": 58,
+        "bodyEndLine": 396,
+        "bodyEndColumn": 68
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The inspectCurrent closure remains nested in resumeHistoricalNormalization and is called for initial and latest owner inspection. Owner snapshot and lease checks moved to named helpers; this closure still assembles the journal action, normalization binding, result and inspection."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.mjs#fn:resumeHistoricalNormalization#0/binding:inspectCurrent/binding:inspectCurrent#0/binding:matches/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/historical-normalization-resume.ts#fn:resumeHistoricalNormalization#0/binding:inspectCurrent/binding:inspectCurrent#0/binding:matches/closure:CallExpression:arguments[0]#0",
+      "file": "bin/historical-normalization-resume.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 168,
+        "column": 35,
+        "start": 7845,
+        "end": 7896,
+        "bodyLine": 168,
+        "bodyColumn": 45,
+        "bodyEndLine": 168,
+        "bodyEndColumn": 86
+      },
+      "current_source_address": {
+        "line": 397,
+        "column": 35,
+        "start": 16967,
+        "end": 17018,
+        "bodyLine": 397,
+        "bodyColumn": 45,
+        "bodyEndLine": 397,
+        "bodyEndColumn": 86
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "The inspectCurrent closure remains nested in resumeHistoricalNormalization and is called for initial and latest owner inspection. Owner snapshot and lease checks moved to named helpers; this closure still assembles the journal action, normalization binding, result and inspection."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#binding:requireInitial/binding:requireInitial#0",
+      "current_identity": "bin/continue-initial-source.ts#binding:requireInitial/binding:requireInitial#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "binding:requireInitial",
+      "source_address": {
+        "line": 57,
+        "column": 23,
+        "start": 2986,
+        "end": 3087,
+        "bodyLine": 57,
+        "bodyColumn": 47,
+        "bodyEndLine": 59,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 60,
+        "column": 83,
+        "start": 2668,
+        "end": 2769,
+        "bodyLine": 60,
+        "bodyColumn": 107,
+        "bodyEndLine": 62,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same named continuation responsibility: Central continuation precondition assertion and error prefix. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#binding:same/binding:same#0",
+      "current_identity": "bin/continue-initial-source.ts#binding:same/binding:same#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "binding:same",
+      "source_address": {
+        "line": 61,
+        "column": 13,
+        "start": 3154,
+        "end": 3227,
+        "bodyLine": 61,
+        "bodyColumn": 30,
+        "bodyEndLine": 61,
+        "bodyEndColumn": 86
+      },
+      "current_source_address": {
+        "line": 63,
+        "column": 13,
+        "start": 2784,
+        "end": 2884,
+        "bodyLine": 63,
+        "bodyColumn": 57,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 113
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same named continuation responsibility: Canonical JSON digest equality used for typed and retained evidence comparisons. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#binding:compareText/binding:compareText#0",
+      "current_identity": "bin/continue-initial-source.ts#binding:compareText/binding:compareText#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "binding:compareText",
+      "source_address": {
+        "line": 63,
+        "column": 20,
+        "start": 3299,
+        "end": 3358,
+        "bodyLine": 63,
+        "bodyColumn": 38,
+        "bodyEndLine": 63,
+        "bodyEndColumn": 78
+      },
+      "current_source_address": {
+        "line": 64,
+        "column": 20,
+        "start": 2906,
+        "end": 2989,
+        "bodyLine": 64,
+        "bodyColumn": 62,
+        "bodyEndLine": 64,
+        "bodyEndColumn": 102
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Same named continuation responsibility: Stable lexical ordering for canonical key and path lists. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#binding:keys/binding:keys#0",
+      "current_identity": "bin/continue-initial-source.ts#binding:keys/binding:keys#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "binding:keys",
+      "source_address": {
+        "line": 65,
+        "column": 13,
+        "start": 3419,
+        "end": 3476,
+        "bodyLine": 65,
+        "bodyColumn": 24,
+        "bodyEndLine": 65,
+        "bodyEndColumn": 70
+      },
+      "current_source_address": {
+        "line": 65,
+        "column": 13,
+        "start": 3004,
+        "end": 3094,
+        "bodyLine": 65,
+        "bodyColumn": 57,
+        "bodyEndLine": 65,
+        "bodyEndColumn": 103
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same named continuation responsibility: Canonical sorted object-key representation used by exact-shape validation. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#binding:sha256/binding:sha256#0",
+      "current_identity": "bin/continue-initial-source.ts#binding:sha256/binding:sha256#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "binding:sha256",
+      "source_address": {
+        "line": 67,
+        "column": 15,
+        "start": 3522,
+        "end": 3581,
+        "bodyLine": 67,
+        "bodyColumn": 26,
+        "bodyEndLine": 67,
+        "bodyEndColumn": 74
+      },
+      "current_source_address": {
+        "line": 66,
+        "column": 15,
+        "start": 3111,
+        "end": 3186,
+        "bodyLine": 66,
+        "bodyColumn": 42,
+        "bodyEndLine": 66,
+        "bodyEndColumn": 90
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same named continuation responsibility: SHA-256 digest of bounded Source or contract bytes. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:exactKeys#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:exactKeys#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:exactKeys",
+      "source_address": {
+        "line": 74,
+        "column": 0,
+        "start": 3704,
+        "end": 3835,
+        "bodyLine": 74,
+        "bodyColumn": 36,
+        "bodyEndLine": 76,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 68,
+        "column": 0,
+        "start": 3189,
+        "end": 3382,
+        "bodyLine": 68,
+        "bodyColumn": 98,
+        "bodyEndLine": 70,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same named continuation responsibility: Exact plain-record key-set guard for external and persisted values. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:readBoundedBytes#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:readBoundedBytes#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:readBoundedBytes",
+      "source_address": {
+        "line": 85,
+        "column": 0,
+        "start": 3988,
+        "end": 4220,
+        "bodyLine": 85,
+        "bodyColumn": 62,
+        "bodyEndLine": 89,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 72,
+        "column": 0,
+        "start": 3384,
+        "end": 3670,
+        "bodyLine": 72,
+        "bodyColumn": 116,
+        "bodyEndLine": 76,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same named continuation responsibility: Safe repository read plus nonempty and size-bound enforcement. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:parsePlainJson#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:parsePlainJson#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:parsePlainJson",
+      "source_address": {
+        "line": 96,
+        "column": 0,
+        "start": 4318,
+        "end": 4612,
+        "bodyLine": 96,
+        "bodyColumn": 38,
+        "bodyEndLine": 106,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 78,
+        "column": 0,
+        "start": 3672,
+        "end": 3991,
+        "bodyLine": 78,
+        "bodyColumn": 79,
+        "bodyEndLine": 87,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same named continuation responsibility: Strict JSON parse into a plain record, with normalized failure. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:validateRelativeRequestPath#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:validateRelativeRequestPath#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:validateRelativeRequestPath",
+      "source_address": {
+        "line": 112,
+        "column": 0,
+        "start": 4669,
+        "end": 5126,
+        "bodyLine": 112,
+        "bodyColumn": 44,
+        "bodyEndLine": 125,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 89,
+        "column": 0,
+        "start": 3993,
+        "end": 4467,
+        "bodyLine": 89,
+        "bodyColumn": 61,
+        "bodyEndLine": 102,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Same named continuation responsibility: Canonical project-relative path validation before repository access. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:validateRelativeRequestPath#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:validateRelativeRequestPath#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 121,
+        "column": 29,
+        "start": 4981,
+        "end": 5039,
+        "bodyLine": 121,
+        "bodyColumn": 39,
+        "bodyEndLine": 121,
+        "bodyEndColumn": 87
+      },
+      "current_source_address": {
+        "line": 98,
+        "column": 29,
+        "start": 4322,
+        "end": 4380,
+        "bodyLine": 98,
+        "bodyColumn": 39,
+        "bodyEndLine": 98,
+        "bodyEndColumn": 87
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: split-path segment .every predicate. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:validateRoot#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:validateRoot#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:validateRoot",
+      "source_address": {
+        "line": 128,
+        "column": 0,
+        "start": 5156,
+        "end": 5653,
+        "bodyLine": 128,
+        "bodyColumn": 28,
+        "bodyEndLine": 144,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 104,
+        "column": 0,
+        "start": 4469,
+        "end": 4969,
+        "bodyLine": 104,
+        "bodyColumn": 42,
+        "bodyEndLine": 119,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Same named continuation responsibility: Canonical real-directory validation before project access. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isStringArray#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isStringArray#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:isStringArray",
+      "source_address": {
+        "line": 147,
+        "column": 0,
+        "start": 5714,
+        "end": 5852,
+        "bodyLine": 147,
+        "bodyColumn": 30,
+        "bodyEndLine": 149,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 121,
+        "column": 0,
+        "start": 4971,
+        "end": 5123,
+        "bodyLine": 121,
+        "bodyColumn": 58,
+        "bodyEndLine": 123,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same named continuation responsibility: String-array type guard for admitted work-item data. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isStringArray#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isStringArray#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 148,
+        "column": 45,
+        "start": 5791,
+        "end": 5848,
+        "bodyLine": 148,
+        "bodyColumn": 78,
+        "bodyEndLine": 148,
+        "bodyEndColumn": 102
+      },
+      "current_source_address": {
+        "line": 122,
+        "column": 45,
+        "start": 5076,
+        "end": 5119,
+        "bodyLine": 122,
+        "bodyColumn": 64,
+        "bodyEndLine": 122,
+        "bodyEndColumn": 88
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: array .every string predicate. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isWorkItemKind#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isWorkItemKind#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:isWorkItemKind",
+      "source_address": {
+        "line": 152,
+        "column": 0,
+        "start": 5930,
+        "end": 6082,
+        "bodyLine": 152,
+        "bodyColumn": 31,
+        "bodyEndLine": 154,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 125,
+        "column": 0,
+        "start": 5125,
+        "end": 5322,
+        "bodyLine": 125,
+        "bodyColumn": 76,
+        "bodyEndLine": 127,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same named continuation responsibility: Supported canonical work-item kind guard. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isFlowIntent#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isFlowIntent#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:isFlowIntent",
+      "source_address": {
+        "line": 157,
+        "column": 0,
+        "start": 6162,
+        "end": 6364,
+        "bodyLine": 157,
+        "bodyColumn": 29,
+        "bodyEndLine": 162,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 129,
+        "column": 0,
+        "start": 5324,
+        "end": 5573,
+        "bodyLine": 129,
+        "bodyColumn": 76,
+        "bodyEndLine": 134,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same named continuation responsibility: Supported workflow-intent guard. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isTextList#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isTextList#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:isTextList",
+      "source_address": {
+        "line": 165,
+        "column": 0,
+        "start": 6425,
+        "end": 6622,
+        "bodyLine": 165,
+        "bodyColumn": 27,
+        "bodyEndLine": 171,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 136,
+        "column": 0,
+        "start": 5575,
+        "end": 5786,
+        "bodyLine": 136,
+        "bodyColumn": 55,
+        "bodyEndLine": 142,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Same named continuation responsibility: Bounded nonempty-string-list guard for work-item metadata. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isTextList#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isTextList#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 169,
+        "column": 16,
+        "start": 6535,
+        "end": 6614,
+        "bodyLine": 169,
+        "bodyColumn": 50,
+        "bodyEndLine": 169,
+        "bodyEndColumn": 95
+      },
+      "current_source_address": {
+        "line": 140,
+        "column": 16,
+        "start": 5713,
+        "end": 5778,
+        "bodyLine": 140,
+        "bodyColumn": 36,
+        "bodyEndLine": 140,
+        "bodyEndColumn": 81
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: array .every bounded-text predicate. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:parseWorkItemSelection#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:parseWorkItemSelection#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:parseWorkItemSelection",
+      "source_address": {
+        "line": 174,
+        "column": 7,
+        "start": 6711,
+        "end": 8032,
+        "bodyLine": 174,
+        "bodyColumn": 52,
+        "bodyEndLine": 216,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 144,
+        "column": 7,
+        "start": 5795,
+        "end": 7152,
+        "bodyLine": 144,
+        "bodyColumn": 88,
+        "bodyEndLine": 186,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 18,
+      "baseline_coverage": 0,
+      "baseline_crap": 342,
+      "max_complexity": 18,
+      "max_crap": 342,
+      "rationale": "Same named continuation responsibility: Protected intake work-item parsing and field validation. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isWorkIdentity#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isWorkIdentity#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:isWorkIdentity",
+      "source_address": {
+        "line": 218,
+        "column": 0,
+        "start": 8096,
+        "end": 8810,
+        "bodyLine": 218,
+        "bodyColumn": 31,
+        "bodyEndLine": 233,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 187,
+        "column": 0,
+        "start": 7153,
+        "end": 7899,
+        "bodyLine": 187,
+        "bodyColumn": 63,
+        "bodyEndLine": 202,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 11,
+      "baseline_coverage": 0,
+      "baseline_crap": 132,
+      "max_complexity": 11,
+      "max_crap": 132,
+      "rationale": "Same named continuation responsibility: Work identity shape and field guard. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isWorkIdentity#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isWorkIdentity#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 226,
+        "column": 21,
+        "start": 8479,
+        "end": 8528,
+        "bodyLine": 226,
+        "bodyColumn": 31,
+        "bodyEndLine": 226,
+        "bodyEndColumn": 70
+      },
+      "current_source_address": {
+        "line": 195,
+        "column": 21,
+        "start": 7568,
+        "end": 7617,
+        "bodyLine": 195,
+        "bodyColumn": 31,
+        "bodyEndLine": 195,
+        "bodyEndColumn": 70
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: required identity-field .every predicate. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:validateIdentity#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:validateIdentity#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:validateIdentity",
+      "source_address": {
+        "line": 241,
+        "column": 0,
+        "start": 9002,
+        "end": 9705,
+        "bodyLine": 241,
+        "bodyColumn": 66,
+        "bodyEndLine": 254,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 204,
+        "column": 0,
+        "start": 7901,
+        "end": 8714,
+        "bodyLine": 208,
+        "bodyColumn": 76,
+        "bodyEndLine": 221,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 10,
+      "baseline_coverage": 0,
+      "baseline_crap": 110,
+      "max_complexity": 10,
+      "max_crap": 110,
+      "rationale": "Same named continuation responsibility: Validated work identity, attempt, and native-session-handle boundary. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:loadBoundProject#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:loadBoundProject#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:loadBoundProject",
+      "source_address": {
+        "line": 261,
+        "column": 0,
+        "start": 9867,
+        "end": 10565,
+        "bodyLine": 261,
+        "bodyColumn": 42,
+        "bodyEndLine": 281,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 223,
+        "column": 0,
+        "start": 8716,
+        "end": 9526,
+        "bodyLine": 226,
+        "bodyColumn": 85,
+        "bodyEndLine": 246,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same named continuation responsibility: Load project configuration and verify it remains bound to the work identity. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isScopedSourceEntries#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isScopedSourceEntries#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:isScopedSourceEntries",
+      "source_address": {
+        "line": 284,
+        "column": 0,
+        "start": 10649,
+        "end": 11685,
+        "bodyLine": 284,
+        "bodyColumn": 38,
+        "bodyEndLine": 315,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 248,
+        "column": 0,
+        "start": 9528,
+        "end": 10612,
+        "bodyLine": 248,
+        "bodyColumn": 89,
+        "bodyEndLine": 278,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 19,
+      "baseline_coverage": 0,
+      "baseline_crap": 380,
+      "max_complexity": 19,
+      "max_crap": 380,
+      "rationale": "Same named continuation responsibility: Ordered, canonical Source snapshot-entry shape validation. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isScopedSourceEntries#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isScopedSourceEntries#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 295,
+        "column": 35,
+        "start": 11091,
+        "end": 11149,
+        "bodyLine": 295,
+        "bodyColumn": 45,
+        "bodyEndLine": 295,
+        "bodyEndColumn": 93
+      },
+      "current_source_address": {
+        "line": 258,
+        "column": 35,
+        "start": 10018,
+        "end": 10076,
+        "bodyLine": 258,
+        "bodyColumn": 45,
+        "bodyEndLine": 258,
+        "bodyEndColumn": 93
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: entry.path.split(\"/\").every canonical path-segment predicate. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isScopedSourceSnapshot#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isScopedSourceSnapshot#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:isScopedSourceSnapshot",
+      "source_address": {
+        "line": 318,
+        "column": 0,
+        "start": 11758,
+        "end": 12160,
+        "bodyLine": 318,
+        "bodyColumn": 39,
+        "bodyEndLine": 328,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 280,
+        "column": 0,
+        "start": 10614,
+        "end": 11056,
+        "bodyLine": 280,
+        "bodyColumn": 79,
+        "bodyEndLine": 290,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "Same named continuation responsibility: Scoped snapshot envelope and canonical digest validation. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isInitialUnissuedJournal#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isInitialUnissuedJournal#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:isInitialUnissuedJournal",
+      "source_address": {
+        "line": 331,
+        "column": 0,
+        "start": 12237,
+        "end": 13747,
+        "bodyLine": 331,
+        "bodyColumn": 41,
+        "bodyEndLine": 365,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 292,
+        "column": 0,
+        "start": 11058,
+        "end": 12596,
+        "bodyLine": 292,
+        "bodyColumn": 85,
+        "bodyEndLine": 325,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 27,
+      "baseline_coverage": 0,
+      "baseline_crap": 756,
+      "max_complexity": 27,
+      "max_crap": 756,
+      "rationale": "Same named continuation responsibility: Initial unissued Journal state shape and invariant validation. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isInitialUnissuedJournal#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:isInitialUnissuedJournal#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 336,
+        "column": 20,
+        "start": 12561,
+        "end": 12595,
+        "bodyLine": 336,
+        "bodyColumn": 29,
+        "bodyEndLine": 336,
+        "bodyEndColumn": 54
+      },
+      "current_source_address": {
+        "line": 297,
+        "column": 20,
+        "start": 11426,
+        "end": 11460,
+        "bodyLine": 297,
+        "bodyColumn": 29,
+        "bodyEndLine": 297,
+        "bodyEndColumn": 54
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: required journal-key .every own-property predicate. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:isInitialUnissuedJournal#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "bin/continue-initial-source.ts#fn:isInitialUnissuedJournal#0/closure:CallExpression:arguments[0]#1",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 337,
+        "column": 30,
+        "start": 12630,
+        "end": 12660,
+        "bodyLine": 337,
+        "bodyColumn": 39,
+        "bodyEndLine": 337,
+        "bodyEndColumn": 60
+      },
+      "current_source_address": {
+        "line": 298,
+        "column": 30,
+        "start": 11495,
+        "end": 11525,
+        "bodyLine": 298,
+        "bodyColumn": 39,
+        "bodyEndLine": 298,
+        "bodyEndColumn": 60
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: journal-key .every allowed-key predicate. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:readCurrentState#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:readCurrentState#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:readCurrentState",
+      "source_address": {
+        "line": 367,
+        "column": 0,
+        "start": 13862,
+        "end": 14644,
+        "bodyLine": 367,
+        "bodyColumn": 43,
+        "bodyEndLine": 390,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 326,
+        "column": 0,
+        "start": 12597,
+        "end": 13455,
+        "bodyLine": 326,
+        "bodyColumn": 105,
+        "bodyEndLine": 350,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "Same named continuation responsibility: Read the current Host Work, Ledger, Journal, and version tuple. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:observeVerifiedCurrent#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:observeVerifiedCurrent#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:observeVerifiedCurrent",
+      "source_address": {
+        "line": 404,
+        "column": 0,
+        "start": 14970,
+        "end": 24248,
+        "bodyLine": 414,
+        "bodyColumn": 3,
+        "bodyEndLine": 618,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 351,
+        "column": 0,
+        "start": 13456,
+        "end": 23005,
+        "bodyLine": 371,
+        "bodyColumn": 3,
+        "bodyEndLine": 575,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 48,
+      "baseline_coverage": 0,
+      "baseline_crap": 2352,
+      "max_complexity": 48,
+      "max_crap": 2352,
+      "rationale": "Same named continuation responsibility: Re-observe retained evidence, Source scope, permissions, runtime, and initial request before continuation. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:observeVerifiedCurrent#0/binding:intakeReferences/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:observeVerifiedCurrent#0/binding:intakeReferences/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 424,
+        "column": 49,
+        "start": 15553,
+        "end": 15616,
+        "bodyLine": 424,
+        "bodyColumn": 64,
+        "bodyEndLine": 424,
+        "bodyEndColumn": 112
+      },
+      "current_source_address": {
+        "line": 381,
+        "column": 49,
+        "start": 14310,
+        "end": 14373,
+        "bodyLine": 381,
+        "bodyColumn": 64,
+        "bodyEndLine": 381,
+        "bodyEndColumn": 112
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: work.artifacts.filter selecting local-session-intake. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:observeVerifiedCurrent#0/binding:approvals/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:observeVerifiedCurrent#0/binding:approvals/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 474,
+        "column": 4,
+        "start": 17852,
+        "end": 18074,
+        "bodyLine": 475,
+        "bodyColumn": 6,
+        "bodyEndLine": 478,
+        "bodyEndColumn": 41
+      },
+      "current_source_address": {
+        "line": 431,
+        "column": 4,
+        "start": 16609,
+        "end": 16831,
+        "bodyLine": 432,
+        "bodyColumn": 6,
+        "bodyEndLine": 435,
+        "bodyEndColumn": 41
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: work.lifecycle.references.filter selecting current approved execution authorization. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:observeVerifiedCurrent#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:observeVerifiedCurrent#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 524,
+        "column": 52,
+        "start": 20613,
+        "end": 20660,
+        "bodyLine": 524,
+        "bodyColumn": 64,
+        "bodyEndLine": 524,
+        "bodyEndColumn": 99
+      },
+      "current_source_address": {
+        "line": 481,
+        "column": 52,
+        "start": 19370,
+        "end": 19417,
+        "bodyLine": 481,
+        "bodyColumn": 64,
+        "bodyEndLine": 481,
+        "bodyEndColumn": 99
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: sourceChanges.every documentation-path predicate. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:observeVerifiedCurrent#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "bin/continue-initial-source.ts#fn:observeVerifiedCurrent#0/closure:CallExpression:arguments[0]#1",
+      "file": "bin/continue-initial-source.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 570,
+        "column": 26,
+        "start": 22471,
+        "end": 22493,
+        "bodyLine": 570,
+        "bodyColumn": 36,
+        "bodyEndLine": 570,
+        "bodyEndColumn": 48
+      },
+      "current_source_address": {
+        "line": 527,
+        "column": 26,
+        "start": 21228,
+        "end": 21250,
+        "bodyLine": 527,
+        "bodyColumn": 36,
+        "bodyEndLine": 527,
+        "bodyEndColumn": 48
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: journal.items.map projecting request for engine-snapshot comparison. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:receiptResult#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:receiptResult#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:receiptResult",
+      "source_address": {
+        "line": 624,
+        "column": 0,
+        "start": 24414,
+        "end": 24791,
+        "bodyLine": 624,
+        "bodyColumn": 40,
+        "bodyEndLine": 636,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 577,
+        "column": 0,
+        "start": 23007,
+        "end": 23510,
+        "bodyLine": 580,
+        "bodyColumn": 2,
+        "bodyEndLine": 592,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same named continuation responsibility: Return the constrained continuation status and non-acceptance flags. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:continueInitialSource#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:continueInitialSource#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "fn:continueInitialSource",
+      "source_address": {
+        "line": 640,
+        "column": 7,
+        "start": 24936,
+        "end": 30793,
+        "bodyLine": 640,
+        "bodyColumn": 44,
+        "bodyEndLine": 783,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 594,
+        "column": 7,
+        "start": 23519,
+        "end": 29383,
+        "bodyLine": 594,
+        "bodyColumn": 63,
+        "bodyEndLine": 735,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 20,
+      "baseline_coverage": 0,
+      "baseline_crap": 420,
+      "max_complexity": 20,
+      "max_crap": 420,
+      "rationale": "Same named continuation responsibility: Public inspect/apply flow, admission, request validation, receipt handling, verification, and close ownership. The retained and current Source use the same callable owner and corresponding continuation callsites."
+    },
+    {
+      "identity": "bin/continue-initial-source.mjs#fn:continueInitialSource#0/binding:verifyApply/binding:verifyApply#0",
+      "current_identity": "bin/continue-initial-source.ts#fn:continueInitialSource#0/binding:verifyApply/binding:verifyApply#0",
+      "file": "bin/continue-initial-source.ts",
+      "name": "binding:verifyApply",
+      "source_address": {
+        "line": 763,
+        "column": 24,
+        "start": 30233,
+        "end": 30534,
+        "bodyLine": 763,
+        "bodyColumn": 35,
+        "bodyEndLine": 776,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 715,
+        "column": 24,
+        "start": 28766,
+        "end": 29099,
+        "bodyLine": 715,
+        "bodyColumn": 67,
+        "bodyEndLine": 728,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Same callback parent and concrete callsite responsibility in the retained continuation flow: apply callback re-observes evidence against the typed request before mutation. The exact parent/callsite path is preserved in both inventory identities."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#fn:configuredContextForStage#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:configuredContextForStage#0",
+      "file": "src/orchestration/configured-context.ts",
+      "name": "fn:configuredContextForStage",
+      "source_address": {
+        "line": 174,
+        "column": 7,
+        "start": 6395,
+        "end": 7109,
+        "bodyLine": 180,
+        "bodyColumn": 28,
+        "bodyEndLine": 193,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 213,
+        "column": 7,
+        "start": 7803,
+        "end": 8517,
+        "bodyLine": 219,
+        "bodyColumn": 28,
+        "bodyEndLine": 232,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 1,
+      "baseline_crap": 4,
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "Original bridge stage-context responsibility moved intact to its configured-context owner. Correct prior family-local new-role classification: historical allowance follows the moved callable once; prior prospective 10/10 row is removed rather than duplicated."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#fn:configuredContextForStage#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "current_identity": "src/orchestration/configured-context.ts#fn:configuredContextForStage#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "src/orchestration/configured-context.ts",
+      "name": "closure:OptionalCallExpression:arguments[0]",
+      "source_address": {
+        "line": 181,
+        "column": 58,
+        "start": 6650,
+        "end": 6681,
+        "bodyLine": 181,
+        "bodyColumn": 69,
+        "bodyEndLine": 181,
+        "bodyEndColumn": 89
+      },
+      "current_source_address": {
+        "line": 220,
+        "column": 58,
+        "start": 8058,
+        "end": 8089,
+        "bodyLine": 220,
+        "bodyColumn": 69,
+        "bodyEndLine": 220,
+        "bodyEndColumn": 89
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Original bridge stage-context responsibility moved intact to its configured-context owner. Correct prior family-local new-role classification: historical allowance follows the moved callable once; prior prospective 10/10 row is removed rather than duplicated."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/orchestration/workflow-plan.ts#fn:executableWorkflowWaveIndices#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/orchestration/workflow-plan.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 423,
+        "column": 44,
+        "start": 18265,
+        "end": 18324,
+        "bodyLine": 423,
+        "bodyColumn": 55,
+        "bodyEndLine": 423,
+        "bodyEndColumn": 103
+      },
+      "current_source_address": {
+        "line": 38,
+        "column": 41,
+        "start": 1544,
+        "end": 1592,
+        "bodyLine": 38,
+        "bodyColumn": 52,
+        "bodyEndLine": 38,
+        "bodyEndColumn": 89
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Original wave.some stage-membership predicate moved into the executable-wave projection helper used by bridge construction and snapshot reconstruction. Distinct from the selectedWave corrective filter. Its historical allowance follows this predicate once."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/closure:CallExpression:arguments[0]#2",
+      "current_identity": "src/orchestration/workflow-plan.ts#fn:executableWorkflowWaveIndices#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#1",
+      "file": "src/orchestration/workflow-plan.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 424,
+        "column": 21,
+        "start": 18358,
+        "end": 18399,
+        "bodyLine": 424,
+        "bodyColumn": 32,
+        "bodyEndLine": 424,
+        "bodyEndColumn": 62
+      },
+      "current_source_address": {
+        "line": 39,
+        "column": 22,
+        "start": 1628,
+        "end": 1669,
+        "bodyLine": 39,
+        "bodyColumn": 33,
+        "bodyEndLine": 39,
+        "bodyEndColumn": 63
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Original wave.every zero-assignment predicate moved into the executable-wave projection helper. Retain its original allowance once; the enclosing open role keeps its own historical allowance."
     }
   ],
   "new_functions": [
@@ -41802,38 +44570,6 @@
         "bodyColumn": 93,
         "bodyEndLine": 71,
         "bodyEndColumn": 1
-      }
-    },
-    {
-      "identity": "src/orchestration/configured-context.ts#fn:configuredContextForStage#0",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
-      "current_source_address": {
-        "line": 162,
-        "column": 7,
-        "start": 6610,
-        "end": 7324,
-        "bodyLine": 168,
-        "bodyColumn": 28,
-        "bodyEndLine": 181,
-        "bodyEndColumn": 1
-      }
-    },
-    {
-      "identity": "src/orchestration/configured-context.ts#fn:configuredContextForStage#0/binding:stage/closure:OptionalCallExpression:arguments[0]#0",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "rationale": "Separately inventoried current callable has no published standalone counterpart in this scope. Retained parent allowances remain attached to those parents. Existing prospective10/10 policy is fixed before current numeric measurement; extraction is not P2 capability expansion.",
-      "current_source_address": {
-        "line": 169,
-        "column": 58,
-        "start": 6865,
-        "end": 6896,
-        "bodyLine": 169,
-        "bodyColumn": 69,
-        "bodyEndLine": 169,
-        "bodyEndColumn": 89
       }
     },
     {
@@ -49437,6 +52173,414 @@
         "bodyEndColumn": 1
       },
       "rationale": "New standalone native manifest field validation helper called by readNativeManifest. The old manifest reader remains retained at its outer read/digest/return callsites; this extraction has no separate published allowance. Prospective 10/10 ceiling only; it does not supply current numeric qualification, coverage, or CRAP evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#fn:workflowDatabaseIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 83,
+        "column": 0,
+        "start": 3834,
+        "end": 4092,
+        "bodyLine": 83,
+        "bodyColumn": 56,
+        "bodyEndLine": 87,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New named physical database identity guard called by initializeWorkflowStorage; the historical inlined lstat/path safety check has no separately addressable callable allowance. Prospective 10/10 ceiling only; no current numeric qualification, coverage, or CRAP evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#fn:initializeWorkflowStorage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 7,
+      "current_source_address": {
+        "line": 89,
+        "column": 0,
+        "start": 4094,
+        "end": 5960,
+        "bodyLine": 93,
+        "bodyColumn": 24,
+        "bodyEndLine": 136,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New named workflow storage initialization owner called from MastraSessionBridge.open; the published open body contained inline initialization and cleanup, but no separately addressable callable allowance. Prospective 10/10 ceiling only; no current numeric qualification, coverage, or CRAP evidence."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#class:MastraSessionBridge/method:open#0/binding:storage/closure:CallExpression:arguments[2]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 512,
+        "column": 76,
+        "start": 24219,
+        "end": 24286,
+        "bodyLine": 513,
+        "bodyColumn": 6,
+        "bodyEndLine": 513,
+        "bodyEndColumn": 61
+      },
+      "rationale": "New storage initialization producer assertion callback passed at the initializeWorkflowStorage callsite; no published standalone callback has this owner/callsite. Prospective 10/10 ceiling only; no current numeric qualification, coverage, or CRAP evidence."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:requireRecord#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 4,
+      "current_source_address": {
+        "line": 59,
+        "column": 0,
+        "start": 1971,
+        "end": 2173,
+        "bodyLine": 59,
+        "bodyColumn": 96,
+        "bodyEndLine": 61,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New object-shape assertion used at request and accepted-scope trust boundaries; no historical standalone callable owned this responsibility."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:isInspectionRecord#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 77,
+        "column": 0,
+        "start": 2577,
+        "end": 2730,
+        "bodyLine": 77,
+        "bodyColumn": 71,
+        "bodyEndLine": 79,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New inspection-record type guard extracted for resume inspection validation; no historical standalone callable had this owner."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:validateResumeInspection#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 6,
+      "current_source_address": {
+        "line": 101,
+        "column": 0,
+        "start": 3678,
+        "end": 4350,
+        "bodyLine": 106,
+        "bodyColumn": 8,
+        "bodyEndLine": 116,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New dedicated resume-mode validator split from historical validateInspection; its parent keeps the original allowance, so this helper receives only prospective 10/10."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:parseFlagPairs#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 135,
+        "column": 0,
+        "start": 5042,
+        "end": 5424,
+        "bodyLine": 135,
+        "bodyColumn": 64,
+        "bodyEndLine": 144,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New flag/value map parser split from historical parseArgs; no separate historical allowance moves to it."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:isResumeMode#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 147,
+        "column": 0,
+        "start": 5455,
+        "end": 5585,
+        "bodyLine": 147,
+        "bodyColumn": 57,
+        "bodyEndLine": 149,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New resume mode type predicate extracted from historical parseArgs; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:isAbsoluteProjectRoot#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 152,
+        "column": 0,
+        "start": 5622,
+        "end": 5725,
+        "bodyLine": 152,
+        "bodyColumn": 61,
+        "bodyEndLine": 154,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New project-root predicate extracted from historical parseArgs; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:isSafeNativeSessionHandle#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 157,
+        "column": 0,
+        "start": 5770,
+        "end": 5930,
+        "bodyLine": 157,
+        "bodyColumn": 73,
+        "bodyEndLine": 159,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New native handle predicate extracted from historical parseArgs; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:areRepositoryRequests#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 162,
+        "column": 0,
+        "start": 5994,
+        "end": 6154,
+        "bodyLine": 162,
+        "bodyColumn": 81,
+        "bodyEndLine": 164,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New grouped baseline/request path predicate extracted from historical parseArgs; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:validateResumeArgs#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 10,
+      "current_source_address": {
+        "line": 167,
+        "column": 0,
+        "start": 6202,
+        "end": 7191,
+        "bodyLine": 167,
+        "bodyColumn": 72,
+        "bodyEndLine": 190,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New full typed argument validator extracted from historical parseArgs; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:requireHistoricalHostSnapshot#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 10,
+      "current_source_address": {
+        "line": 200,
+        "column": 0,
+        "start": 7600,
+        "end": 8600,
+        "bodyLine": 209,
+        "bodyColumn": 2,
+        "bodyEndLine": 222,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New Host snapshot CAS assertion extracted from historical inspectCurrent, now using the maintained Host snapshot owner. It receives no parent complexity or CRAP allowance."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:findHistoricalOwnerTicket#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 225,
+        "column": 0,
+        "start": 8700,
+        "end": 8974,
+        "bodyLine": 228,
+        "bodyColumn": 75,
+        "bodyEndLine": 230,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New lookup wrapper around the historical ticket callback; callback lineage is retained separately and this wrapper receives no moved cap."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:findHistoricalOwnerClaims#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 233,
+        "column": 0,
+        "start": 9106,
+        "end": 9580,
+        "bodyLine": 237,
+        "bodyColumn": 54,
+        "bodyEndLine": 246,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New claim-query wrapper around the historical claims callback; callback lineage is retained separately and this wrapper receives no moved cap."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:isExactHistoricalOwnerLease#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 6,
+      "current_source_address": {
+        "line": 249,
+        "column": 0,
+        "start": 9877,
+        "end": 10537,
+        "bodyLine": 255,
+        "bodyColumn": 11,
+        "bodyEndLine": 264,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New lease/ticket/claim consistency predicate extracted from historical inspectCurrent; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:requireHistoricalOwnerLease#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 8,
+      "current_source_address": {
+        "line": 267,
+        "column": 0,
+        "start": 10751,
+        "end": 11600,
+        "bodyLine": 273,
+        "bodyColumn": 35,
+        "bodyEndLine": 290,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New owner lease assertion extracted from historical inspectCurrent; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:requireHistoricalIdentity#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 6,
+      "current_source_address": {
+        "line": 293,
+        "column": 0,
+        "start": 11632,
+        "end": 12289,
+        "bodyLine": 293,
+        "bodyColumn": 65,
+        "bodyEndLine": 309,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New typed identity validator extracted from historical request validation; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:requireHistoricalIdentity#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 300,
+        "column": 29,
+        "start": 12017,
+        "end": 12061,
+        "bodyLine": 300,
+        "bodyColumn": 44,
+        "bodyEndLine": 300,
+        "bodyEndColumn": 73
+      },
+      "rationale": "New extracted support responsibility with no corresponding historical callable; prospective 10/10 only, no historical cap transferred."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:requireHistoricalBase#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 10,
+      "current_source_address": {
+        "line": 312,
+        "column": 0,
+        "start": 12400,
+        "end": 13195,
+        "bodyLine": 316,
+        "bodyColumn": 21,
+        "bodyEndLine": 336,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New typed request base validator extracted from historical request validation; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:parseHistoricalRequest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 339,
+        "column": 0,
+        "start": 13258,
+        "end": 13928,
+        "bodyLine": 342,
+        "bodyColumn": 78,
+        "bodyEndLine": 350,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New bounded request decoder and validator extracted from historical resume orchestration; prospective 10/10 only."
+    },
+    {
+      "identity": "bin/historical-normalization-resume.ts#fn:parseHistoricalRequest#0/binding:rawBase/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 347,
+        "column": 68,
+        "start": 13714,
+        "end": 13745,
+        "bodyLine": 347,
+        "bodyColumn": 79,
+        "bodyEndLine": 347,
+        "bodyEndColumn": 99
+      },
+      "rationale": "New extracted support responsibility with no corresponding historical callable; prospective 10/10 only, no historical cap transferred."
+    },
+    {
+      "identity": "src/orchestration/workflow-plan.ts#fn:executableWorkflowWaveIndices#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 33,
+        "column": 7,
+        "start": 1295,
+        "end": 1698,
+        "bodyLine": 36,
+        "bodyColumn": 21,
+        "bodyEndLine": 41,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New executable-wave index projection/flatMap owner combines the old inline selection branches without inheriting the enclosing open budget. Nested original predicates retain their own ceilings once. Prospective 10/10 policy remains unchanged."
+    },
+    {
+      "identity": "src/orchestration/workflow-plan.ts#fn:executableWorkflowWaveIndices#0/closure:CallExpression:arguments[0]#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 4,
+      "current_source_address": {
+        "line": 37,
+        "column": 28,
+        "start": 1480,
+        "end": 1694,
+        "bodyLine": 37,
+        "bodyColumn": 49,
+        "bodyEndLine": 40,
+        "bodyEndColumn": 3
+      },
+      "rationale": "New executable-wave index projection/flatMap owner combines the old inline selection branches without inheriting the enclosing open budget. Nested original predicates retain their own ceilings once. Prospective 10/10 policy remains unchanged."
     }
   ],
   "removed_functions": [
@@ -49881,32 +53025,27 @@
   "quality_continuation_current_bindings": {
     "schema": "ReviewedLineageJoin/v1",
     "status": "SCOPED_SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
-    "input_sha256": "fd576bcc7e585862ff4c07dc966da8a9f2aa05eb44857c7d2fee34f2887ef345",
+    "input_sha256": "ebbc8f13361c5ca87e399aa1f8b69479fa0d3676fb9430ec5426640cd67f32e7",
     "candidate_refs": [
-      "/workspace/attachments/quality-lineage-task-binding-20261014.json",
-      "/workspace/attachments/quality-lineage-recovery-family-20261014.json"
+      "/workspace/attachments/quality-lineage-bridge-family-20261014.json",
+      "/workspace/attachments/quality-lineage-normalization-family-20261014.json",
+      "/workspace/attachments/quality-lineage-initial-family-20261014.json"
     ],
     "independent_review_refs": [
-      "/workspace/attachments/quality-lineage-next-independent-20261014.md",
-      "/workspace/attachments/quality-bun-terminal-final-review-20261014.md"
+      "/workspace/attachments/quality-lineage-three-independent-20261014.md",
+      "/workspace/attachments/quality-bridge-move-final-review-20261014.md"
     ],
     "counts": {
-      "retained": 1531,
-      "new": 533,
+      "retained": 1617,
+      "new": 555,
       "removed": 6,
-      "current_roles": 2064,
-      "source_files": 107
+      "current_roles": 2172,
+      "source_files": 111
     },
-    "missing_current_dispositions": 5649,
-    "missing_original_dispositions": 4164,
-    "current_inventory_ref": "/workspace/attachments/quality-current-inventory-terminal-final-20261014.json",
-    "scoped_complexity_exceptions": [
-      {
-        "identity": "bin/recover-completed-source-report.ts#fn:isPassedNativeBuildCheck#0",
-        "complexity": 3,
-        "ceiling": 2
-      }
-    ],
-    "limits": "64 additional family roles and one new public relay. Original classifier ceiling follows the actual predicate once. Current complete coverage and dynamic CRAP are absent; exhaustive correspondence remains open."
+    "missing_current_dispositions": 5541,
+    "missing_original_dispositions": 4078,
+    "current_inventory_ref": "/workspace/attachments/quality-current-inventory-three-final-20261014.json",
+    "scoped_complexity_exceptions": [],
+    "limits": "Three complete current families and four executable-wave roles. Two existing stage-context roles are reclassified to their genuine original ceilings, and two old predicates are moved rather than removed. Numeric coverage and dynamic CRAP remain unknown."
   }
 }

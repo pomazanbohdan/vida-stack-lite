@@ -38,7 +38,7 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and older binding refreshes rather than recreating inventories.
-The reviewed partial now binds2064roles; Host callback3<=3, terminal guard10<=10
+The reviewed partial now binds2172roles; Host callback3<=3, terminal guard10<=10
 and coverage policy owners8/5/5<=10 have scoped proof. Keep original installer/planner and newly
 observed retained Bun deficits open. WORK owns their exact ceilings and receipts.
 Retrieve current CI-formed SDK outputs with their selected formation receipt before the
