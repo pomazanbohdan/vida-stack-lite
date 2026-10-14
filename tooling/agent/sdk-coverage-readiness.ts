@@ -633,7 +633,7 @@ export function publishSdkTestInputs(
   remainingMs: () => number,
 ): void {
   const rootIdentity = ownedDirectoryIdentity(root);
-  const temporaryRoot = path.join(root, '.tmp');
+  const temporaryRoot = path.join(root, 'coverage/sdk-test-inputs');
   resourceDirectory(temporaryRoot, true);
   const temporaryIdentity = ownedDirectoryIdentity(temporaryRoot);
   const stage = mkdtempSync(path.join(temporaryRoot, 'sdk-test-inputs-'));

@@ -7,6 +7,7 @@ import path from 'node:path';
 import type { AgentJSZipModule } from '../../packages/agent/tooling/release-dependency-types.ts';
 import { sha256 } from '../../packages/agent/tooling/bun-coverage-evidence.ts';
 import { expectedJavascriptFiles } from '../../packages/agent/tooling/maintained-source-inventory.ts';
+import { classifyMaintainedSourcePath } from '../../packages/agent/tooling/ts-only-source-gate.ts';
 import {
   assertSdkArtifactDigest,
   publishSdkTestInputs,
@@ -223,7 +224,7 @@ test('publishes validated files and receipt while retaining the previous dist an
     receiptValue,
   );
   for (const [pathname, bytes] of payloads) assert.deepEqual(readFileSync(path.join(root, 'dist', pathname)), bytes);
-  const temporaryRoot = path.join(root, '.tmp');
+  const temporaryRoot = path.join(root, 'coverage/sdk-test-inputs');
   const entries = readdirSync(temporaryRoot);
   const backups = entries.filter((name) => name.startsWith('sdk-test-inputs-prior-dist-'));
   const stages = entries.filter(
@@ -232,6 +233,10 @@ test('publishes validated files and receipt while retaining the previous dist an
   assert.equal(backups.length, 1);
   assert.match(backups[0]!, /^sdk-test-inputs-prior-dist-[0-9a-f-]+$/u);
   assert.deepEqual(readFileSync(path.join(temporaryRoot, backups[0]!, 'prior.js')), priorBytes);
+  assert.equal(
+    classifyMaintainedSourcePath(`packages/agent/coverage/sdk-test-inputs/${backups[0]!}/prior.js`),
+    'generated',
+  );
   assert.deepEqual(stages, []);
 });
 
@@ -246,7 +251,7 @@ test('a spent pre-publication budget preserves the prior dist and retains its fa
     );
   });
   assert.deepEqual(readFileSync(path.join(root, 'dist/prior.js')), priorBytes);
-  const entries = readdirSync(path.join(root, '.tmp'));
+  const entries = readdirSync(path.join(root, 'coverage/sdk-test-inputs'));
   const stages = entries.filter(
     (name) => name.startsWith('sdk-test-inputs-') && !name.startsWith('sdk-test-inputs-prior-dist-'),
   );

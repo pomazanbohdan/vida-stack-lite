@@ -543,7 +543,23 @@ final Source verification. No local compilation/receipt rewriting or fabricated
 proof. Its wrong/empty/unprefixed-digest controls passed1case, exit0; types133/0;
 corrected scoped lint has zero diagnostics. Independent transport review found
 no bypass, in the existing review artifact. Current post-bridge CI/retrieval and
-coverage remain pending. Signed artifact URLs are not evidence locators.
+coverage were checked at Sourcebaf6138b80f82d2bd768293a5a9fa7937e3579cb.
+SDK run38636070335/attempt1 completed SUCCESS, artifact11928296363,
+625189bytes, digest
+sha256:7fed382b512704a5e883b09bff78aade7626457a115ce03ccdbf8923b76716d0.
+The connector bridge retrieved and admitted those exact bytes. Coverage then
+ended FAIL at the Source TS-only preflight, outcome
+ee460f82-aa0e-4c08-bcfa-161d29fc3b59, before launching tests: the adapter's
+retained generated dist backup was under scanned package .tmp.
+Log: `/workspace/attachments/coverage-after-sdk-bridge-baf6138-20261014.log`.
+Both successful backup and failed-stage custody now use the existing generated
+boundary `packages/agent/coverage/sdk-test-inputs`. The Source gate is unchanged.
+The one exact prior backup was renamed into that boundary with original dev/ino;
+nothing was deleted. Independent blind review confirmed both affected paths and
+unchanged atomic/rollback guards. All12archive/publication regressions passed,
+0fail,858ms: `/workspace/attachments/sdk-generated-custody-tests-20261014.log`.
+Current post-custody CI and coverage remain pending.
+Signed artifact URLs are not evidence locators.
 
 Cloud restart was observed as starting/offline at spec2339. Access recovered;
 Git diff/new files and Bun1.4.3 persisted. New cgroup counters were zero and uptime
@@ -563,8 +579,9 @@ official1.4.2 evidence is non-executable provenance. Current1.4.3 consumer valid
 Actual final-owner preflight reports full crap-budgets.v1.json absent and SDK
 receipt inputs differing from current Source:
 `/workspace/attachments/quality-current-prerequisites-20261014.json`.
-Later Source changes preserve these gaps. Retrieve fresh CI SDK including receipt,
-finish exhaustive frozen mapping/plan and qualify current shard resources before
+That SDK freshness gap was subsequently corrected and verified by the current
+CI/connector join above; generated-custody correction is still pending a full run.
+Finish exhaustive frozen mapping/plan and qualify current shard resources before
 one complete capture. No local formation, Source fallback or unchanged full retry.
 Workflow GET works; repository-variable GET returned HTTP403, not proof that all
 Actions APIs are unavailable or that CI ran.

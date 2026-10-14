@@ -183,7 +183,9 @@ cannot enter SDK delivery verification or packaging. Their version binds Source
 compatibility only; the lifecycle's product-release version policy remains intact.
 The adapter validates the archive, emitted bytes and CI identity before replacing
 dist, retaining previous outputs and failed staging. Unavailable or failed CI
-remains an actionable preflight GAP; there is no local compilation fallback.
+remains an actionable preflight GAP; generated staging and prior dist custody
+live under `coverage/sdk-test-inputs`, outside maintained handwritten Source.
+There is no local compilation fallback.
 It performs no second Source inventory/hash pass: coverage derives freshness
 from the one existing capture below. Cache reuse verifies actual output bytes.
 If Cloud denies the CLI's artifact-storage redirect, the selected GitHub connector
