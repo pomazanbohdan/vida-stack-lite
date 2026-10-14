@@ -99,8 +99,10 @@ root is retained; no old operation or producer was replayed.
 
 Current affected completion:47PASS/0FAIL/371 assertions across6files,991ms,
 `/workspace/attachments/quality-resume-behavior-final-20261014.log`.
-Combined CLI/tooling check:199files/0type errors. Strict staged publication
-checks remain the packet closeout owner. No full campaign or numerical PASS.
+Combined CLI/tooling check:199files/0type errors. Strict staged gate PASS:
+format458files, compiler463files/0diagnostics, all required hook checks passed.
+The13-file correction packet is published as `5958b32` at origin/main. No full
+campaign or numerical PASS. Untracked root bun.lock and BASE remain untouched.
 
 The one current static inventory contains7695roles/149Sources. The partial now
 represents1433current roles:1127retained/306new, plus1published removal and
@@ -120,6 +122,10 @@ The complete `crap-budgets.v1.json` is still absent. Current SDK receipt/output
 formation and current shard review remain prerequisites; no local build ran.
 The workflow read is available, but repository-variable inspection returned
 HTTP403 `Resource not accessible by integration`; it proves no CI activation.
+After publication, the actual current prerequisite owners report two GAPs:
+ENOENT for the complete frozen plan, and SDK receipt inputs differing from
+selected current formation bytes. No suite or build was launched by this probe.
+Receipt: `/workspace/attachments/quality-current-prerequisites-20261014.json`.
 
 ## Historical record
 
