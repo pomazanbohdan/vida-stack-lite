@@ -345,10 +345,7 @@ function isSortedProjectIds(value: unknown): value is readonly string[] {
   return (
     Array.isArray(value) &&
     value.length > 0 &&
-    value.every((id: unknown, index: number) => {
-      const previous: unknown = value[index - 1];
-      return typeof id === 'string' && (index === 0 || (typeof previous === 'string' && previous < id));
-    })
+    value.every((id: unknown, index: number) => typeof id === 'string' && (index === 0 || value[index - 1] < id))
   );
 }
 

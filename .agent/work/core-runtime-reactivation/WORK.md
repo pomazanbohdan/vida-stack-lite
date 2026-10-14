@@ -5,8 +5,8 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `f871b653fe3a538cd8291bb473e2be4cff87c0d2` at origin/main.
-  Current help/resource packet is below. Source is distinct from formation,
+- Published input: `daf1141f099bacd0e1dfc3b197558b2afa03c427` at origin/main.
+  Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
   help/inventory repairs and Vitest retirement are implemented. Old1271 CLI
@@ -47,7 +47,9 @@ Source staged gates passed on both packets:463checked files/0type errors plus
 format/lint/Knip. These are scoped published proofs, not a combined full suite.
 Historical failed restoration/lint attempts remain in their exact records.
 
-## Current help/resource correction
+## Published help/resource correction
+
+Packetdaf1141 passed the ordinary strict hook and its remote commit was confirmed.
 
 Existing static ceilings failed at resolver12>new10 and component6>retained5:
 `/workspace/attachments/help-resource-budget-red-20261014.log`.
@@ -74,12 +76,51 @@ behavior, not SDK/native delivery qualification or a measured speedup.
 
 Root joins33retained/56new reviewed roles from original measured data. Metadata
 contributes2historical roles plus30new, not32new. Only changed Source files were
-re-inventoried; controller rows were reused. Partial now holds1802current roles:
+re-inventoried; controller rows were reused. That packet held1802current roles:
 1311retained/491new,3baseline removals,100bound files. Four selected families have
 complete current bindings. Receipt:
 `/workspace/attachments/lineage-help-resource-join-20261014.json`.
-Inventory remains7697roles;5895current and4387baseline dispositions are absent.
+Its inventory held7697roles;5895current and4387baseline dispositions were absent.
 Partial stays NON_EXECUTABLE/NOT_EXHAUSTIVE; no final coverage/CRAP/mutation result.
+
+## Current paired-lock and synthesis correction
+
+Native-delivery planning and the shared release repair lock owner masked primary
+and earlier close errors in nested finally. Actual causal RED:2FAIL, no aggregate
+causes, `/workspace/attachments/paired-lock-causal-red-20261014.log`.
+The shared owner now nests the existing async close accumulator; native planning
+uses it for the unchanged publication body and releases before custody reacquires.
+Acquisition, CAS, foreign UNKNOWN guard and publication order stay unchanged.
+Static module ownership replaces two repeated dynamic lookups. Both real closes
+are attempted worker→admission; all three causes and throwundefined survive.
+The expected-UNKNOWN positive fixture remains retained at
+`/home/agent/.cache/vida-cloud-tooling/tmp/native-delivery-repair-l0F6WW`.
+Causal failed fixtures remain at native-delivery-repair-IIt4WP and
+native-delivery-repair-9RBmQo under the same disk-backed temporary root.
+
+Synthesis drops a redundant predecessor type check only for dense CLI/canonical
+stored-plan inputs, preserving strict sorting, uniqueness and validation order.
+Duplicate/reverse CLI identities deny with unchanged Host/session rows and no
+plan. The correctly mapped nested callback is now CC3 against the original3;
+the outer shape helper is independently new. No casts, new helper or cap increase.
+
+Final Source format/lint PASS and431file typecheck0:
+`/workspace/attachments/paired-lock-types-corrected-20261014.log`.
+Complete affected native repair file37PASS/0FAIL/13.85s:
+`/workspace/attachments/paired-lock-completion-20261014.log`.
+Synthesis selection2PASS/0FAIL/25expect calls/9.63s:
+`/workspace/attachments/synthesis-callback-completion-20261014.log`.
+These are two bounded selections, not full numerical or delivered Runtime proof.
+Missing import and mock-type lint attempts were corrected before behavior checks;
+their original logs remain retained. Independent correctness/join reviews approve.
+
+Root joined127retained and16new reviewed roles: envelopes82, delivered continuation29,
+synthesis32. Partial now1945roles (1438retained/507new/3removed,103bound files).
+Single changed-Source refresh yields7701roles;5756current and4260baseline dispositions
+remain absent. Four new lock callbacks eachCC1≤10 remain explicitly unjoined pending
+complete owner-family review; shared public lock owner remainsCC1, originalcap1.
+Receipt: `/workspace/attachments/lineage-repair-wave3-20261014.json`.
+Partial remains NON_EXECUTABLE/NOT_EXHAUSTIVE. No final numeric PASS is asserted.
 
 ## Complete numeric prerequisites
 

@@ -149,6 +149,16 @@ body may keep its original try/returns with a tagged outcome and synchronous
 finisher when its exact cleanup owner is synchronous. These are Source regressions,
 not installation, Runtime or complete numeric evidence.
 
+The native-delivery repair planning regression rejects a foreign repair namespace
+under both release locks before reservation or plan publication. Its real Bun
+close spies inject errors after closing each connection. Preserve the UNKNOWN
+body cause, worker-close cause and admission-close cause in that order, attempt
+both closes, and retain the expected-UNKNOWN fixture even after assertions pass.
+The shared `withReleaseRepairLocks` controls also preserve `throw undefined`
+and a sole cleanup error by identity. Planning, custody and apply share that
+owner; planning releases its pair before custody reacquires it. These controls
+qualify error aggregation and ordering, not native SQLite I/O failure behavior.
+
 ### Failed prewriter recovery
 
 Use the cases in `tests/delivered-work-continuation.test.ts` for owner recovery

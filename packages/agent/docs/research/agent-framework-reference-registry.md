@@ -45,7 +45,7 @@ Work trace: `.agent/work/vida-final-assurance-finish-20261001/WORK.md`.
 
 ## Mastra and Edictum
 
-Source pins `@mastra/core` 1.75.0 and has no `@edictum/core` dependency.
+Source pins belong to `packages/agent/package.json`; it has no `@edictum/core` dependency.
 Mastra owns the development graph and persisted execution. Its
 [tool hooks](https://mastra.ai/blog/introducing-tool-hooks) intercept Agent tool
 calls; [approval](https://mastra.ai/docs/agents/human-in-the-loop) and
@@ -807,7 +807,20 @@ Checked 2026-10-04. The Mastra maintainers' [workflow state reader issue](https:
 
 ## Standalone build and installation primitives
 
-Checked 2026-10-04. Official [Bun executable documentation](https://bun.sh/docs/bundler/executables) describes compiled executables, embedded files, WASM and direct N-API addon inclusion. Setting BUN_BE_BUN=1 makes the same executable its Bun child runtime, so a second Bun executable is unnecessary. Compile options can disable ambient dotenv and bunfig loading. Verify these capabilities with pinned Bun 1.4.2; current online documentation alone proves no VIDA target readiness.
+Checked 2026-10-04. Official [Bun executable documentation](https://bun.sh/docs/bundler/executables) describes compiled executables, embedded files, WASM and direct N-API addon inclusion. Setting BUN_BE_BUN=1 makes the same executable its Bun child runtime, so a second Bun executable is unnecessary. Compile options can disable ambient dotenv and bunfig loading. Verify these capabilities with the package-selected Bun in `.bun-version`; current online documentation alone proves no VIDA target readiness.
+
+## Release repair cleanup causes
+
+Checked 2026-10-14. The official [ECMAScript try/finally evaluation](https://tc39.es/ecma262/multipage/ecmascript-language-statements-and-declarations.html#sec-try-statement)
+allows a throwing finally block to replace a prior body completion. [Bun SQLite close](https://bun.com/reference/bun/sqlite/Database/close)
+can throw; its direct connection semantics do not establish descendant or effect
+quiescence. VIDA's existing close accumulator joins tagged work and cleanup
+outcomes, preserving a thrown undefined value and exact sole-error identity.
+Nested use in the existing release lock owner preserves body, worker and admission
+causes while attempting both closes in their original order. Native repair
+planning reuses that owner before its separate custody phase. No new cleanup
+framework, approval or storage authority is introduced. Focused real-close fault
+controls qualify cause aggregation, not SQLite I/O failure or native delivery.
 
 [Bun Archive](https://bun.sh/docs/runtime/archive) provides archive creation and regular-file enumeration. Extraction can include links and overwrite files; use exact owned immutable payload checks and reject unsafe, conflicting or tampered materialization. Cedar loads its WASM from a package-relative path and LibSQL uses computed platform addon resolution, so a successful thin compiled probe cannot qualify their full resource closure.
 

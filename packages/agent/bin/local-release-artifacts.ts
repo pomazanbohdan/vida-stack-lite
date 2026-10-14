@@ -20,6 +20,7 @@ import {
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Stats } from 'node:fs';
+import { withWorkspaceDatabaseCloseAsync } from '../src/config/workspace-database-raw.js';
 
 type ReleaseStatus =
   | 'awaiting_assurance'
@@ -429,18 +430,21 @@ export async function withReleaseRepairLocks<T>(
   action: () => T | Promise<T>,
 ): Promise<T> {
   const admission = admissionMutex(root);
-  let worker: SqliteConnection | null | undefined;
-  try {
-    worker = operationMutex(root, operation);
-    requireRelease(worker, 'operation busy');
-    return await action();
-  } finally {
-    try {
-      worker?.close();
-    } finally {
-      admission.close();
-    }
-  }
+  return withWorkspaceDatabaseCloseAsync(
+    admission,
+    async () => {
+      const worker = operationMutex(root, operation);
+      requireRelease(worker, 'operation busy');
+      return withWorkspaceDatabaseCloseAsync(
+        worker,
+        action,
+        (database) => database.close(),
+        'release repair worker close failed',
+      );
+    },
+    (database) => database.close(),
+    'release repair admission close failed',
+  );
 }
 
 function isPackedMetadata(value: unknown): value is [PackedMetadataEntry] {

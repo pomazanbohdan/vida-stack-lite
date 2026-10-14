@@ -7,8 +7,7 @@ import { existsSync, lstatSync, mkdirSync, opendirSync, readFileSync, realpathSy
 import path from 'node:path';
 import { root as safeRoot } from '@openclaw/fs-safe/root';
 import {
-  admissionMutex,
-  operationMutex,
+  withReleaseRepairLocks,
   createRepairSourcePass,
   releaseDigest as sha,
   releaseJSON as json,
@@ -1265,7 +1264,6 @@ async function finishPlan(
   const api = await access(root),
     custodyDir = repair(operation) + '/custody',
     entries = plan.beforeimages;
-  const { withReleaseRepairLocks } = await import('./local-release-artifacts.ts');
   return withReleaseRepairLocks(root, operation, async () => {
     const state = phase(root, operation, plan);
     require(state?.phase === 'planning', 'planning phase differs');
@@ -1340,11 +1338,7 @@ export async function planNativeDeliveryEvidenceRepair(
     beforeimages,
   });
   const api = await access(root);
-  const admission = admissionMutex(root);
-  let worker;
-  try {
-    worker = operationMutex(root, operation);
-    require(worker, 'operation busy');
+  await withReleaseRepairLocks(root, operation, async () => {
     const sourcePass = createRepairSourcePass();
     eligibleForPlan(root, operation, sourcePass);
     sameClosure(root, frozen, operation, sourcePass);
@@ -1352,13 +1346,7 @@ export async function planNativeDeliveryEvidenceRepair(
     reserve(root, operation);
     await api.create(planFile(operation), json(plan));
     await savePhase(api, operation, plan, 'planning');
-  } finally {
-    try {
-      worker?.close();
-    } finally {
-      admission.close();
-    }
-  }
+  });
   return finishPlan(root, operation, plan, options);
 }
 
@@ -1372,7 +1360,6 @@ async function apply(
   require(initial, 'repair phase missing; UNKNOWN');
   custodyRows(root, operation, plan);
   const api = await access(root);
-  const { withReleaseRepairLocks } = await import('./local-release-artifacts.ts');
   return withReleaseRepairLocks(root, operation, async () => {
     const current = phase(root, operation, plan);
     require(current, 'repair phase missing; UNKNOWN');

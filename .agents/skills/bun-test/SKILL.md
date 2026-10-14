@@ -56,6 +56,12 @@ finisher can join a tagged outcome in finally without moving returns or callback
 identities. Use the async owner when cleanup itself requires awaiting. Preserve
 both native failure causes and the retained retry owner in the public regression.
 
+For paired lock cleanup, nest the existing close accumulator in ownership order.
+Assert every close attempt and preserve all work/cleanup causes, including a
+thrown undefined value and a sole cleanup error by identity. A fault injected
+after a real native close proves cause aggregation, not SQLite I/O failure.
+Retain an expected-UNKNOWN fixture independently of successful assertions.
+
 ## Run focused checks safely
 
 Use explicit test paths and an anchored `--test-name-pattern` for a focused

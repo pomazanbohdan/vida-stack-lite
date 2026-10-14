@@ -1105,6 +1105,34 @@ test('synthesis observation dispatcher plans the real provenance collision and p
     '--timestamp',
     timestamp,
   ];
+  const database = new Database(path.join(context.root, '.agent/work/session-handoff.v1.sqlite'));
+  databases.push(database);
+  const hostRowsBefore = database
+    .query('SELECT kind,id,revision,payload,digest FROM agent_host_state ORDER BY kind,id')
+    .all();
+  const sessionRowsBefore = database
+    .query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
+    .all();
+  for (const projectIds of ['agent,agent', 'plugin,agent']) {
+    const invalidProjects = args('inspect');
+    invalidProjects[invalidProjects.indexOf('--projects') + 1] = projectIds;
+    await Promise.resolve(
+      expect(runReconcileArtifacts(invalidProjects)).rejects.toThrow(
+        'correction identity or owner attribution invalid',
+      ),
+    );
+    expect(
+      database.query('SELECT kind,id,revision,payload,digest FROM agent_host_state ORDER BY kind,id').all(),
+    ).toEqual(hostRowsBefore);
+    expect(
+      database.query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger').all(),
+    ).toEqual(sessionRowsBefore);
+    expect(() =>
+      readFileSync(
+        path.join(context.root, '.agent/work/correction-test/synthesis-observation-correction-plan.v1.json'),
+      ),
+    ).toThrow();
+  }
   expect(await runReconcileArtifacts(args('inspect'))).toMatchObject({
     status: 'correctable_current_v1',
     retained_native_outcome: 'reported_complete',
@@ -1125,8 +1153,6 @@ test('synthesis observation dispatcher plans the real provenance collision and p
   );
   expect(plan.original_item.observation).toEqual(stored.item.observation);
   expect(plan.predecessor_refs).toEqual(results.map(({ result_id, digest }) => ({ result_id, digest })));
-  const database = new Database(path.join(context.root, '.agent/work/session-handoff.v1.sqlite'));
-  databases.push(database);
   const row = sqlRow(database, 'SELECT payload FROM agent_host_mastra_session_ledger', 'Mastra session ledger');
   const rowPayload = parseRecord(stringField(row, 'payload', 'Mastra session ledger'), 'Mastra session ledger');
   expect(

@@ -13,7 +13,8 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
-import { afterEach, test } from 'bun:test';
+import { afterEach, spyOn, test } from 'bun:test';
+import { Database } from 'bun:sqlite';
 import {
   admissionMutex,
   createRepairSourcePass,
@@ -21,6 +22,7 @@ import {
   releaseJSON as json,
   releaseSourceBinding,
   parseReleaseSourceObservation,
+  withReleaseRepairLocks,
 } from '../bin/local-release-artifacts.ts';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import { verifyForwardReviewSet } from '../bin/forward-review-proof.ts';
@@ -349,6 +351,27 @@ afterEach(() => {
 });
 const input = (root: string) => ({ root, operation: op });
 const plan = (root: string) => planNativeDeliveryEvidenceRepair({ ...input(root), actor: 'synthetic repair operator' });
+function flattenErrors(error: unknown): unknown[] {
+  if (!(error instanceof AggregateError)) return [error];
+  const errors: unknown = error.errors;
+  if (!Array.isArray(errors)) return [error];
+  const entries: unknown[] = errors;
+  return entries.flatMap(flattenErrors);
+}
+function retainRoot(root: string, label: string): void {
+  const index = roots.indexOf(root);
+  if (index >= 0) roots.splice(index, 1);
+  console.error(`${label}; retained root: ${root}`);
+}
+async function outcomeOf(
+  action: () => Promise<unknown>,
+): Promise<{ threw: boolean; error?: unknown; value?: unknown }> {
+  try {
+    return { threw: false, value: await action() };
+  } catch (error) {
+    return { threw: true, error };
+  }
+}
 function addOperationInputReference(f: RepairFixture, reference: unknown): void {
   const testsPath = base + '/tests.json';
   const tests = parseRecord(readFileSync(path.join(f.root, testsPath), 'utf8'));
@@ -755,6 +778,97 @@ test('missing assurance stays absent and foreign current seals are reported as G
     existsSync(path.join(reserved.root, '.agent/work/agent-local-release', op, 'native-delivery-evidence')),
     false,
   );
+});
+
+test('public planning preserves UNKNOWN and both paired-lock close failures without reserving', async () => {
+  const f = fixture();
+  retainRoot(f.root, 'Expected UNKNOWN cleanup regression fixture retained');
+  const repairRoot = base + '/native-delivery-evidence';
+  const foreignMarker = repairRoot + '/foreign-owner.json';
+  write(f.root, foreignMarker, '{"owner":"foreign"}\n');
+  const foreignBytes = readFileSync(path.join(f.root, foreignMarker));
+  const workerPath = path.resolve(f.root, '.agent/work/agent-local-release/' + op + '/worker.sqlite');
+  const admissionPath = path.resolve(f.root, '.agent/work/agent-local-release/admission.sqlite');
+  const bodyError = /partial or foreign repair namespace is UNKNOWN/;
+  const workerCloseError = new Error('injected worker close failure');
+  const admissionCloseError = new Error('injected admission close failure');
+  const attempts: string[] = [];
+  const originalClose: unknown = Reflect.get(Database.prototype, 'close');
+  if (typeof originalClose !== 'function') throw new Error('Bun SQLite close method unavailable');
+  const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+    this: Database,
+    force?: boolean,
+  ): void {
+    const filename = path.resolve(this.filename);
+    const owner = filename === workerPath ? 'worker' : filename === admissionPath ? 'admission' : null;
+    Reflect.apply(originalClose, this, [force]);
+    if (owner) {
+      attempts.push(owner);
+      throw owner === 'worker' ? workerCloseError : admissionCloseError;
+    }
+  });
+  let outcome: Awaited<ReturnType<typeof outcomeOf>>;
+  try {
+    outcome = await outcomeOf(() => plan(f.root));
+  } finally {
+    closeSpy.mockRestore();
+  }
+
+  assert.equal(outcome.threw, true);
+  assert.ok(outcome.error instanceof AggregateError);
+  const failures = flattenErrors(outcome.error);
+  assert.equal(failures.length, 3);
+  assert.match(String(failures[0]), bodyError);
+  assert.equal(failures[1], workerCloseError);
+  assert.equal(failures[2], admissionCloseError);
+  assert.deepEqual(attempts, ['worker', 'admission']);
+  assert.equal(existsSync(path.join(f.root, repairRoot + '/plan.json')), false);
+  assert.equal(existsSync(path.join(f.root, repairRoot + '/state.json')), false);
+  assert.deepEqual(readFileSync(path.join(f.root, foreignMarker)), foreignBytes);
+  assert.deepEqual(readFileSync(path.join(f.root, base + '/release.json')), f.releaseBytes);
+  assert.deepEqual(readFileSync(path.join(f.root, '.agent/work/agent-local-release/pending.json')), f.pendingBytes);
+  for (const [relative, bytes] of f.protectedBytes) assert.deepEqual(readFileSync(path.join(f.root, relative)), bytes);
+});
+
+test('paired repair locks attempt both closes after undefined work failure and preserve a lone close error', async () => {
+  const f = fixture();
+  const workerPath = path.resolve(f.root, '.agent/work/agent-local-release/' + op + '/worker.sqlite');
+  const admissionPath = path.resolve(f.root, '.agent/work/agent-local-release/admission.sqlite');
+  const attempts: string[] = [];
+  const workerCloseError = new Error('injected worker close failure');
+  const originalClose: unknown = Reflect.get(Database.prototype, 'close');
+  if (typeof originalClose !== 'function') throw new Error('Bun SQLite close method unavailable');
+  let completed = false;
+  let closeSpy: { mockRestore(): void } | undefined;
+  try {
+    closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, force?: boolean): void {
+      const filename = path.resolve(this.filename);
+      const owner = filename === workerPath ? 'worker' : filename === admissionPath ? 'admission' : null;
+      Reflect.apply(originalClose, this, [force]);
+      if (owner) attempts.push(owner);
+      if (owner === 'worker') throw workerCloseError;
+    });
+    const undefinedWork = await outcomeOf(() =>
+      withReleaseRepairLocks(f.root, op, () => {
+        throw undefined;
+      }),
+    );
+    assert.equal(undefinedWork.threw, true);
+    assert.ok(undefinedWork.error instanceof AggregateError);
+    assert.deepEqual(flattenErrors(undefinedWork.error), [undefined, workerCloseError]);
+    assert.deepEqual(attempts, ['worker', 'admission']);
+
+    attempts.length = 0;
+    const value = { completed: true };
+    const success = await outcomeOf(() => withReleaseRepairLocks(f.root, op, () => value));
+    assert.equal(success.threw, true);
+    assert.equal(success.error, workerCloseError);
+    assert.deepEqual(attempts, ['worker', 'admission']);
+    completed = true;
+  } finally {
+    closeSpy?.mockRestore();
+    if (!completed) retainRoot(f.root, 'Failed paired repair lock cleanup regression fixture retained');
+  }
 });
 
 for (const lockName of ['admission', 'operation']) {
