@@ -20,6 +20,7 @@ import { pinnedEnvironment, readPin } from '../bin/bun.ts';
 import {
   releaseDigest as sha,
   releaseJSON as json,
+  parseReleaseState,
   releaseSourceBinding,
   releaseState,
   operationMutex,
@@ -220,6 +221,35 @@ function fixtureRecord(value: unknown): value is Record<string, unknown> {
 }
 const obj = (root: string, file: string): Record<string, unknown> =>
   typedFixtureIO(read(root, file).toString('utf8'), fixtureRecord);
+
+test('release state accepts supported JSON data and preserves its persisted representation', () => {
+  const state = { schema: 'VidaLocalReleaseState/v1', operation_id: operation, version, status: 'running' };
+  assert.equal(parseReleaseState(state), state);
+
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-retarget-state-'));
+  roots.add(root);
+  const file = path.join(root, 'release.json');
+  writeFileSync(file, json(state));
+  assert.deepEqual(releaseState(file), state);
+});
+
+test('release state rejects unsupported JSON data with the stable diagnostic', () => {
+  const valid = { schema: 'VidaLocalReleaseState/v1', operation_id: operation, version, status: 'running' };
+  const invalidStates: Array<[string, Record<string, unknown>]> = [
+    ['numeric version', { ...valid, version: 1 }],
+    ['null version', { ...valid, version: null }],
+    ['missing version', { schema: valid.schema, operation_id: valid.operation_id, status: valid.status }],
+    ['malformed version', { ...valid, version: '1.2' }],
+    ['invalid schema', { ...valid, schema: 'VidaLocalReleaseState/v2' }],
+    ['invalid operation', { ...valid, operation_id: '../escape' }],
+    ['invalid status', { ...valid, status: 'unknown' }],
+    ['unknown key', { ...valid, unexpected: true }],
+  ];
+  for (const [label, state] of invalidStates) {
+    assert.throws(() => parseReleaseState(state), { message: 'Local release: current state invalid' }, label);
+  }
+});
+
 function isRetargetPlanFixture(value: unknown): value is RetargetPlanFixture {
   if (!isFixtureRecord(value) || !Array.isArray(value.custody) || !isFixtureRecord(value.release_after)) return false;
   return (

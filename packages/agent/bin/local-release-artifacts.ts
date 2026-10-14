@@ -294,7 +294,6 @@ function isReleaseState(value: unknown): value is ReleaseState {
     value.schema === 'VidaLocalReleaseState/v1' &&
     typeof value.operation_id === 'string' &&
     releaseIdPattern.test(value.operation_id) &&
-    typeof value.version === 'string' &&
     parseReleaseVersion(value.version) !== null &&
     isReleaseStatus(value.status) &&
     Object.keys(value).every((key) => allowed.has(key))

@@ -829,6 +829,20 @@ self-reexecution. Preserve caller environment overrides and the existing child
 budget, terminal-outcome and UNKNOWN predicates. Cache preparation grants no
 project, thread or trusted initialization authority.
 
+The shared uninitialized run fixture latches UNKNOWN for its selected root
+before invoking caller cleanup notices. Its single close owner retains and
+reports the root during both the direct control and afterAll. An inert timed
+child's passing UNKNOWN assertion does not clear that latch or permit deletion.
+Keep unrelated roots under their existing caller-owned cleanup contracts.
+
+Recovery request comparisons use an independent model from the validated
+pre-inspect Host snapshot and declared fixture inputs. Calling the same
+production builder as both public path and test oracle duplicates work and can
+share a defect. Bind all expected fields, versions and seeded maintenance state;
+retain fresh post-call no-effect snapshots. Reuse a prior fixture snapshot only
+across preparation that cannot change those rows, never as live authority.
+Time public operation returns separately from oracle and witness work.
+
 For callable CLI diagnostics, pass the supported local exit recipient to main
 and assert its exitCode. Do not mutate the test process exitCode and restore
 undefined. A qualified Bun probe left1 after that restoration, despite all

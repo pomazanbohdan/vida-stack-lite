@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `31e4b1f83bdecc2d3ffd68f9ddf0c7957b25e74f` at origin/main.
+- Published input: `66ec9d505c7c2c12aad1b1ab6ccdec098dddc89f` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -275,7 +275,7 @@ admission lease and must retain their native close owner. Reports:
 `entrypoint-fixture-custody-analysis-20261014.md` in that root. Actual late-work
 overlap is not proven. Do not replay old operations or infer quiescence from timeout.
 
-## Current recovery test correction
+## Published recovery test correction
 
 The blind writer handed tests/run-entrypoint.test.ts back to Root. Independent
 three-row identity drift and six-row retained-evidence denial matrices now use
@@ -329,16 +329,82 @@ auto-updated the changed file. Receipts:
 and `.log` in that root. All workers inherit this default and freeze queries
 during Root checks. No per-worker rebuild or second index was introduced.
 
-Follow-up custody GAP: the unrelated shared uninitialized fixture still has an
-unconditional afterAll removal. Its UNKNOWN branch needs its own retention
-correction/control; this recovery-fixture packet does not claim that path fixed.
+The shared uninitialized fixture's UNKNOWN retention correction is in the next
+packet below; it was not part of the66ec9d5 recovery correction.
 
 Independent release-family validation covers172current/98historical roles:
 93retained/79new/5removed-or-moved, without duplicate/stale/foreign IDs or cap
 changes. Artifact: `/workspace/attachments/release-lineage-membership-validation-20261014.json`.
 The shared reader is inside that two-file scope; candidate wording saying outside
-is incorrect. Current isReleaseState8>original7 and testLane2>original1 stay open.
+is incorrect. The release-state ceiling correction is below; testLane2>original1
+remains open because its earlier guard changes malformed-input diagnostics.
 No candidate is joined into the canonical1945-role partial in this packet.
+
+## Current shared fixture and release-state correction
+
+Root fetched origin/main and confirmed66ec9d5; there was no ff-only advance.
+Two blind research lanes and a disjoint release-test writer completed before
+Root's checks. Independent final review found no scoped blocker:
+`/workspace/attachments/custody-release-packet-final-review-20261014.md`.
+Workers read no current PASS into the still-running selection.
+
+Shared-root causal RED0PASS/1FAIL at755.38ms proves the original cleanup deletes
+the fixture after the existing UNKNOWN classifier fires. Log:
+`/workspace/attachments/shared-fixture-custody-causal-red-20261014.log`.
+The inert timer-only child performs no VIDA operation or replay. The same close
+owner now serves the control and afterAll, retains/reports the selected shared
+root after UNKNOWN, and never resets that state. Caller onUnknown callbacks
+remain additive; unrelated roots do not acquire this root's retention latch.
+Bounded related-helper review found no second confirmed shared-root defect:
+`/workspace/attachments/shared-fixture-custody-review-20261014.md`.
+
+The release-state guard delegates its duplicate version type check to the
+existing parseReleaseVersion. Record/schema/operation/status/exact-key checks
+and the public diagnostic remain. Supported callers decode persisted JSON;
+stateful getter/proxy compatibility is not qualified. Scoped original-budget
+RED8>7 then GREEN7<=7 reuse the genuine measured ceiling:
+`/workspace/attachments/release-state-frozen-budget-red-20261014.json` and
+`release-state-frozen-budget-green-20261014.json` in that root. No cap increase.
+Two JSON behavior controls passed, preserving input identity, persisted values
+and all invalid-input diagnostics; these controls are not causal RED evidence.
+Only the changed Source was re-inventoried:67roles, global7708/149Sources:
+`/workspace/attachments/quality-resume-current-inventory-release-state-20261014.json`.
+The1945-role partial and missing5763current/4260historical dispositions remain.
+
+The affected selection ended exit1,47PASS/1FAIL/261expect/48cases in103.54s,
+session72454. It contains all46entrypoint cases and two focused release controls;
+49unrelated release/CI cases were filtered, so it is not their full suite.
+Log: `/workspace/attachments/custody-release-affected-selection-20261014.log`.
+The new custody and release controls passed. The unchanged dependent recovery
+case timed out at8587.92ms against its8s allowance and retained its root.
+An exec-server disconnect was transient; the original session reached terminal,
+without a duplicate producer. Current provider status reported running/connected.
+
+Finer phase instrumentation in that failing case ended exit1 at9501.09ms with
+all26assertions but expired custody; session1588:
+`/workspace/attachments/unprepared-operation-phase-probe-20261014.log`.
+The direct Host inspection oracle consumed1084ms and calls the same production
+builder as the public inspect. Root replaces this duplicate oracle with a model
+from actual pre-inspect Work/Ledger versions, rows and declared fixture inputs.
+A tiny maintenance-row absence check binds its seeded generation0. The validated
+post-diagnosis snapshot is reused across YAML-only preparation; public effects
+still perform fresh production guards and keep every no-effect snapshot.
+The8s allowance,5000ms default and2s operation target are unchanged. This removes
+one whole builder invocation and one redundant snapshot, not a measured speedup.
+Readonly finding: `/workspace/attachments/unprepared-sequence-latency-current-20261014.md`.
+
+Independent final model review finds no dropped required assertions or authority
+cache: `/workspace/attachments/unprepared-independent-oracle-review-20261014.md`.
+The changed case recheck exited0 with1PASS/0FAIL/30assertions,5910.79ms case time
+and8.48s command time, session73329. Complete retained raw log:
+`/workspace/attachments/unprepared-independent-model-affected-20261014.log`.
+Its root was removed only after actual successful assertions within its8s
+deadline. This one observed result is not a repeatable speedup or a fresh full
+48-case/numeric PASS; the prior47PASS/1FAIL complete command remains failed.
+Final current432-file types, scoped lint and format passed at
+`unprepared-independent-model-types-20261014.log`,
+`unprepared-independent-model-lint-20261014.log` and
+`unprepared-independent-model-format-20261014.log` in that attachments root.
 
 ## Complete numeric prerequisites
 

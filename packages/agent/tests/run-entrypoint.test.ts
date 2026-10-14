@@ -1136,6 +1136,7 @@ describe('unprepared recovery', () => {
     phase('fixture-created');
     try {
       const beforeDiagnosis = f.observed();
+      phase('diagnosis-before-observed');
       const diagnosis = inspectLocalSession({
         repositoryRoot: f.root,
         config: f.config,
@@ -1144,6 +1145,7 @@ describe('unprepared recovery', () => {
         workId: f.identity.work_id,
         attempt: 1,
       });
+      phase('diagnosis-returned');
       expect(diagnosis).toMatchObject({
         diagnosis: {
           reason: 'preparation_incomplete',
@@ -1159,14 +1161,37 @@ describe('unprepared recovery', () => {
       expect(diagnosis.journal_version).toBeNull();
       expect(diagnosis.work_version).not.toBeNull();
       expect(diagnosis.lease).not.toBeNull();
-      expect(f.observed()).toEqual(beforeDiagnosis);
+      const diagnosedState = f.observed();
+      expect(diagnosedState).toEqual(beforeDiagnosis);
       phase('diagnosis-complete');
       const baseline = readFileSync(path.join(f.root, 'baseline.yaml'));
       const delivered = baseline.toString('utf8').replace('config_revision: 1', 'config_revision: 2');
       writeFileSync(path.join(f.root, 'agent-runtime.config.v1.yaml'), delivered);
       expect(loadRuntimeConfig(f.root).config_revision).toBe(2);
       expect(f.config.config_revision).toBe(1);
-      const before = f.observed();
+      const before = diagnosedState;
+      const originalWork = before.work[0];
+      const originalTicket = before.ledger?.tickets[0];
+      if (!originalWork || !originalTicket || !before.ledger || !before.ledger_version)
+        throw Error('seeded recovery work or ledger is missing');
+      expect(before.work).toHaveLength(1);
+      expect(before.ledger.tickets).toHaveLength(1);
+      expect(before.ledger.claims).toHaveLength(1);
+      expect(
+        f.db.query('SELECT COUNT(*) AS count FROM agent_host_maintenance WHERE workspace_id=?').get(f.workspace),
+      ).toEqual({ count: 0 });
+      const expectedRequest = {
+        identity: f.identity,
+        attempt: 1,
+        operatorHandle: f.input.operatorHandle,
+        decisionPointer: f.input.decisionPointer,
+        expectedWork: originalWork.version,
+        expectedLedger: before.ledger_version,
+        expectedMaintenanceGeneration: 0,
+        originalWork: originalWork.state,
+        originalTicket,
+        originalClaims: before.ledger.claims,
+      };
       const base = {
         identity: f.identity,
         attempt: 1,
@@ -1186,7 +1211,9 @@ describe('unprepared recovery', () => {
         '--request',
         'inspect.json',
       ];
-      const inspected = parseUnpreparedRecoveryResult(await run(args));
+      const inspectedResult = await run(args);
+      phase('public-inspect-returned');
+      const inspected = parseUnpreparedRecoveryResult(inspectedResult);
       const inspectedEnvelope = requireRecord(inspected.request, 'unprepared recovery request envelope');
       if (
         inspected.next_operation !== 'release_unprepared_work' ||
@@ -1195,15 +1222,16 @@ describe('unprepared recovery', () => {
       )
         throw Error('unprepared recovery inspection result is invalid');
       const inspectedRequest = inspectedEnvelope.request;
-      const currentRequest = f.store.inspectUnpreparedWorkRecovery(f.input);
-      expect(inspectedRequest).toEqual({ ...currentRequest });
+      expect(inspectedRequest).toEqual(expectedRequest);
       expect(f.observed()).toEqual(before);
       phase('inspect-complete');
       writeFileSync(path.join(f.root, 'apply.json'), JSON.stringify(inspectedEnvelope));
       const apply = args.map((value, index) =>
         args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
       );
-      const released = parseUnpreparedRecoveryResult(await run(apply));
+      const releasedResult = await run(apply);
+      phase('public-apply-returned');
+      const released = parseUnpreparedRecoveryResult(releasedResult);
       if (released.status !== 'unprepared_execution_released' || released.rights_granted !== false)
         throw Error('unprepared recovery release result is invalid');
       const after = f.observed();
@@ -1220,18 +1248,20 @@ describe('unprepared recovery', () => {
       expect(after.journals).toEqual(before.journals);
       phase('apply-complete');
       const operation = after.ledger.operations.find(
-        (item) => item.kind === 'release' && item.ticket_id === currentRequest.originalTicket.ticket_id,
+        (item) => item.kind === 'release' && item.ticket_id === expectedRequest.originalTicket.ticket_id,
       );
       if (!operation || typeof operation.created_at !== 'string') throw Error('release operation is missing');
       expect(rfc3339TimestampMilliseconds(operation.created_at)).not.toBeNull();
       const releasedClaims = after.ledger.claims.filter((item) => item.ticket_id === operation.ticket_id);
-      expect(releasedClaims.length).toBe(currentRequest.originalClaims.length);
+      expect(releasedClaims.length).toBe(expectedRequest.originalClaims.length);
       for (const claim of releasedClaims) {
         expect(claim.status).toBe('released');
         expect(claim.renewed_at).toBe(operation.created_at);
       }
       f.reopen();
-      const retried = parseUnpreparedRecoveryResult(await run(apply));
+      const retriedResult = await run(apply);
+      phase('public-retry-returned');
+      const retried = parseUnpreparedRecoveryResult(retriedResult);
       expect(retried.work_version).toEqual(released.work_version);
       expect(retried.ledger_version).toEqual(released.ledger_version);
       expect(f.observed()).toEqual(after);
@@ -1247,6 +1277,7 @@ describe('unprepared recovery', () => {
           run(apply.map((value, index) => (apply[index - 1] === '--request' ? 'changed.json' : value))),
         ).rejects.toThrow(),
       );
+      phase('changed-request-rejected');
       expect(f.observed()).toEqual(after);
       phase('changed-request-denied');
       f.complete();
@@ -1729,7 +1760,22 @@ describe('unprepared recovery', () => {
   });
 });
 const repositoryRoot = mkdtempSync(path.join(tmpdir(), 'vida-run-uninitialized-'));
-afterAll(() => rmSync(repositoryRoot, { recursive: true, force: true }));
+let sharedRunOutcomeUnknown = false;
+function closeUninitializedRunFixture(): void {
+  if (sharedRunOutcomeUnknown) {
+    console.error(
+      JSON.stringify({
+        operation: 'uninitialized-run-fixture',
+        root: repositoryRoot,
+        cleanup: 'retained',
+        reason: 'child-outcome-unknown',
+      }),
+    );
+    return;
+  }
+  rmSync(repositoryRoot, { recursive: true, force: true });
+}
+afterAll(closeUninitializedRunFixture);
 writeFileSync(
   path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'),
   readFileSync(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8')
@@ -1960,6 +2006,8 @@ function invoke(
     `public run ${path.basename(entrypoint)}`,
   );
   if (commandOutcomeUnknown(result) || !isTerminalUtf8SpawnResult(result)) {
+    if (args.some((argument, index) => argument === '--project-root' && args[index + 1] === repositoryRoot))
+      sharedRunOutcomeUnknown = true;
     options.onUnknown?.();
     const tail = (value: unknown): string => {
       if (typeof value === 'string') return value.slice(-2048);
@@ -1976,6 +2024,30 @@ function invoke(
 }
 
 describe('vida-agent run entrypoint fast checks', () => {
+  test('unknown public child result retains the shared uninitialized fixture at cleanup', () => {
+    const program = path.join(repositoryRoot, 'inert-timeout-fixture.ts');
+    const configFile = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
+    const before = readFileSync(configFile);
+    writeFileSync(program, "console.log('inert-child-started'); setInterval(() => {}, 1000);\n");
+    let failure: unknown;
+    try {
+      invoke(['--project-root', repositoryRoot], {}, program, {
+        budget: executionBudget(1_000, 250),
+        childTimeout: 1_000,
+      });
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toBeInstanceOf(Error);
+    if (!(failure instanceof Error)) throw Error('inert child did not produce an UNKNOWN error');
+    expect(failure.message).toContain('Public run child outcome is unknown');
+    expect(failure.message).toContain('inert-child-started');
+    closeUninitializedRunFixture();
+    expect(existsSync(repositoryRoot)).toBe(true);
+    expect(readFileSync(configFile)).toEqual(before);
+    expect(readFileSync(program, 'utf8')).toContain('inert-child-started');
+  });
+
   test('blocks admission while the selected cutover still holds maintenance', () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-maintenance-'));
     const selectedGeneration: ActiveSelectorState = {

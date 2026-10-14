@@ -22,6 +22,12 @@ checks the actual CLEAR fixture cleanup and public runner receipts in isolated
 mocked-child namespaces; it does not qualify real process interruption or CLI
 coverage. Keep the existing child and case bounds.
 
+The run-entrypoint shared-root control uses a real inert timer-only Bun child
+and the same close owner as afterAll. Confirm its startup marker, UNKNOWN
+classification, root retention and unchanged config bytes. Keep the selected
+root latch after the passing negative assertion, preserve caller notices and
+do not interpret direct termination as product or descendant quiescence.
+
 The same private public-CLI timing owner also records parent phase starts for
 the corrective fixtures, including setup and in-process runs, to attribute the
 intervals between CLI children. `PrivatePublicCliFixturePhaseTiming/v1` carries
@@ -289,6 +295,12 @@ error, including undefined, alongside cleanup errors through the existing close
 finisher. A fault after real native close proves cause aggregation, not SQLite
 I/O failure. Test incomplete retention, completed cleanup, expired retention
 and ordered body/close causes separately.
+
+Compare the public recovery request to a model from the actual pre-inspect
+Work/Ledger rows and declared fixture identity, owner and decision. Bind both
+versions, original Work, ticket, claims and maintenance generation. Preserve
+every fresh post-call state comparison and lost-ack retry check; the public
+request builder cannot also serve as the expected-value oracle.
 
 Use actual SQLite JSONB fixtures. Cover unrelated valid state, matching run ID, same-work alias, malformed BLOB, NULL and JSON5. A record within the 8 MiB storage bound whose decoded JSON exceeds 8 MiB must deny before projected payload fetch. Preserve physical/count preflight and bounded decoding. Text-only records do not prove store-codec behavior.
 

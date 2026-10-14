@@ -108,6 +108,14 @@ For callable CLI main tests, use its injected local exit recipient. Preserve
 the exit-code assertion without mutating the Bun test process. Check native
 command exit independently from the printed case counters.
 
+An expected-UNKNOWN child control keeps its fixture retained after assertions
+pass. Use the same cleanup owner as the real caller, with retention scoped to
+the selected root and without resetting caller custody callbacks.
+For request comparisons, derive expected values from independently seeded or
+persisted fixture facts. Avoid invoking the production request builder again
+as its own oracle. Keep versions and maintenance state explicit and never
+reuse a test snapshot as production authority.
+
 In copied snapshot fixtures, pass explicit `./` test paths so Bun does not
 rediscover copied tests. Assert exact child file and case counts when fixture
 cardinality matters. Keep fixture preparation separate from the case deadline.
