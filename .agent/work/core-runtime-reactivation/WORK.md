@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `66ec9d505c7c2c12aad1b1ab6ccdec098dddc89f` at origin/main.
+- Published input: `a6eeda7c160dd58f2bc9c5ce463ed3e7ac055512` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -340,7 +340,7 @@ is incorrect. The release-state ceiling correction is below; testLane2>original1
 remains open because its earlier guard changes malformed-input diagnostics.
 No candidate is joined into the canonical1945-role partial in this packet.
 
-## Current shared fixture and release-state correction
+## Published shared fixture and release-state correction
 
 Root fetched origin/main and confirmed66ec9d5; there was no ff-only advance.
 Two blind research lanes and a disjoint release-test writer completed before
@@ -405,6 +405,54 @@ Final current432-file types, scoped lint and format passed at
 `unprepared-independent-model-types-20261014.log`,
 `unprepared-independent-model-lint-20261014.log` and
 `unprepared-independent-model-format-20261014.log` in that attachments root.
+
+Packeta6eeda7 passed the ordinary strict hook:464checked files/0errors,
+459formatted files plus lint/Knip. Its exact SHA was confirmed at origin/main.
+Logs: `/workspace/attachments/custody-release-strict-commit-20261014.log` and
+`custody-release-push-20261014.log` in that root. BASE/root bun.lock stay untouched.
+
+## Current release descriptor correction
+
+Bounded same-pattern review found masking closes in the release byte reader and
+state saver. A disjoint writer added regressions; Root corrected its read draft
+before checks because unlinking after open violates the earlier nlink1 guard.
+The final causal controls reach actual open/read/close and open/write/close:
+0PASS/2FAIL with one error cause instead of two, session25172,1.423s command.
+Retained RED log: `/workspace/attachments/release-descriptor-causal-red-20261014.log`.
+Root used the existing generic synchronous close owner for both descriptors,
+preserving their native open, bounds, path/afterimage, write/fsync/rename order.
+Failed saves retain the same exclusively created temp; no cleanup replay.
+
+Read and undefined-write failures remain ordered before the injected close
+failure. Injection follows successful real native close and is not native I/O
+failure qualification. Restored aliases, ordinary save/read, and previous
+controller regressions share the affected selection. Fault roots and bytes stay
+retained even when their negative assertions pass. Types432files/0errors,
+scoped lint and format passed in `release-descriptor-final-types-20261014.log`,
+`release-descriptor-final-lint-20261014.log` and
+`release-descriptor-final-format-20261014.log` under /workspace/attachments.
+
+One changed Source was re-inventoried, reusing all other rows. Two real work
+callbacks are new roles, complexity4 and1, and no old identity is removed.
+The release-state frozen guard remains7. Current capture69roles in that file,
+global7710/149Sources:
+`/workspace/attachments/quality-resume-current-inventory-release-descriptor-20261014.json`.
+Receipt: `/workspace/attachments/release-descriptor-source-capture-20261014.json`.
+The1945-role partial stays non-executable; missing current dispositions5765,
+historical4260. The research memo's suggestion that callback reuse adds no role
+is incorrect; actual Babel inventory above owns those counts.
+
+Directory traversal and admission rollback/close are separate bounded review
+candidates, not confirmed fixed by these descriptor controls. Memo:
+`/workspace/attachments/release-descriptor-cleanup-next-20261014.md`.
+
+The complete6-case controller/descriptor file plus two focused JSON release
+controls ended exit0,8PASS/0FAIL/46assertions,1.421s command, session79636:
+`/workspace/attachments/release-descriptor-complete-affected-20261014.log`.
+The49unrelated release/CI cases were filtered. This is scoped behavior proof,
+not a full release, SDK, numeric or native acceptance result. Independent review
+approves the current Source/test boundary:
+`/workspace/attachments/release-descriptor-final-review-20261014.md`.
 
 ## Complete numeric prerequisites
 

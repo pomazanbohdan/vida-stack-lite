@@ -296,6 +296,13 @@ finisher. A fault after real native close proves cause aggregation, not SQLite
 I/O failure. Test incomplete retention, completed cleanup, expired retention
 and ordered body/close causes separately.
 
+Release state-save and bounded-read controls preserve the body and descriptor
+close causes in order, including undefined write errors. Keep read fixtures
+regular with one link so an injected read failure reaches that boundary.
+Restoring filesystem aliases precedes byte and identity observations. Retain
+fault roots and owned save temps; rename follows successful write, fsync and
+close. A close fault injected after native close proves aggregation only.
+
 Compare the public recovery request to a model from the actual pre-inspect
 Work/Ledger rows and declared fixture identity, owner and decision. Bind both
 versions, original Work, ticket, claims and maintenance generation. Preserve

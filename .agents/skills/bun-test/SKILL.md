@@ -71,6 +71,12 @@ Assert effects and all retained causes, not only the mock calls. Exercise denied
 exclusive creation and a foreign afterimage after successful rename separately;
 neither grants ownership of a file created by another actor.
 
+For a bounded release read fault, keep the file regular with one link until the
+read begins. Unlinking after open triggers the earlier identity guard and cannot
+qualify a later read-error assertion. Preserve target/temp bytes and restore
+aliases before observation; real close followed by an injected error proves
+cause aggregation, not failed native I/O.
+
 ## Run focused checks safely
 
 Use explicit test paths and an anchored `--test-name-pattern` for a focused

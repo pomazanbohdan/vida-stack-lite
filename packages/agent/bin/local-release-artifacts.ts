@@ -20,7 +20,7 @@ import {
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Stats } from 'node:fs';
-import { withWorkspaceDatabaseCloseAsync } from '../src/config/workspace-database-raw.js';
+import { withWorkspaceDatabaseClose, withWorkspaceDatabaseCloseAsync } from '../src/config/workspace-database-raw.js';
 
 type ReleaseStatus =
   | 'awaiting_assurance'
@@ -187,18 +187,21 @@ function readReleaseFileBytes(file: string, limit: number, currentPath: () => st
     'release read byte bound invalid',
   );
   const descriptor = openSync(file, fileConstants.O_RDONLY | (fileConstants.O_NOFOLLOW ?? 0));
-  try {
-    const before = fstatSync(descriptor);
-    requireRelease(before.isFile() && before.nlink === 1 && before.size <= limit, 'release file unsafe or oversized');
-    const bytes = readBoundedReleaseDescriptor(descriptor, before.size);
-    requireRelease(
-      sameReleaseFileImage(before, fstatSync(descriptor)) && sameReleaseFileImage(before, lstatSync(currentPath())),
-      'release file changed during read',
-    );
-    return bytes;
-  } finally {
-    closeSync(descriptor);
-  }
+  return withWorkspaceDatabaseClose(
+    descriptor,
+    () => {
+      const before = fstatSync(descriptor);
+      requireRelease(before.isFile() && before.nlink === 1 && before.size <= limit, 'release file unsafe or oversized');
+      const bytes = readBoundedReleaseDescriptor(descriptor, before.size);
+      requireRelease(
+        sameReleaseFileImage(before, fstatSync(descriptor)) && sameReleaseFileImage(before, lstatSync(currentPath())),
+        'release file changed during read',
+      );
+      return bytes;
+    },
+    closeSync,
+    'Release byte read and descriptor close both failed',
+  );
 }
 
 export function releaseRelative(value: unknown): string {
@@ -319,12 +322,15 @@ export function releaseState(file: string): ReleaseState {
 export function saveReleaseState(file: string, value: unknown): void {
   const temporary = file + '.' + randomUUID() + '.tmp';
   const descriptor = openSync(temporary, 'wx', 0o600);
-  try {
-    writeFileSync(descriptor, releaseJSON(value));
-    fsyncSync(descriptor);
-  } finally {
-    closeSync(descriptor);
-  }
+  withWorkspaceDatabaseClose(
+    descriptor,
+    () => {
+      writeFileSync(descriptor, releaseJSON(value));
+      fsyncSync(descriptor);
+    },
+    closeSync,
+    'Release state save and descriptor close both failed',
+  );
   renameSync(temporary, file);
 }
 
