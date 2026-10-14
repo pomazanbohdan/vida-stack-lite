@@ -12,6 +12,10 @@ Status date: 2026-10-14. This page is the current execution record. It does not 
 - Exhaustive frozen function correspondence and the complete frozen CRAP plan remain open. A partial budget file is not a substitute.
 - Current full coverage, exact numeric acceptance, assertion-confirmed mutation, native Runtime qualification, active `.vida` loader/native cutover, and one-database disk cutover remain open.
 - No current full-suite or whole-runtime result is claimed here.
+- The later retained full operation `bc5cd2f0-ae3c-4093-abdf-f6512ef48427`
+  also ended UNKNOWN. Its native supervisor records two SIGKILL direct producers,
+  direct accounting and `resourceSafeToAdvance:false`; no report was admitted.
+  Its review does not qualify current inputs or authorize a resource successor.
 
 ## Authorized implementation order
 
@@ -82,6 +86,40 @@ Windows facts are coordinator-attributed:13 Babel data files,67directories,
 configs/instructions, product bytes and evidence stay protected. Consumer effects,
 installed0.1.3 readiness, exact effect-time manifest and repair binding belong to
 the consumer coordinator, not this Source packet.
+
+## Current test-contour correction
+
+Continuing the authorized complete test cycle from published `b426884`, Root
+joined six blind Luna research lanes. The concrete corrections fence Stryker
+scratch successors after UNKNOWN or missing owned-group proof, make mutation
+gate imports inert, and retain the SDK formation receipt in the existing TGZ.
+Initial causal scheduler/payload/probe failures remain in
+`/workspace/attachments/*-red-20261014.log`. The unsafe orphan control's failed
+root is retained; no old operation or producer was replayed.
+
+Current affected completion:47PASS/0FAIL/371 assertions across6files,991ms,
+`/workspace/attachments/quality-resume-behavior-final-20261014.log`.
+Combined CLI/tooling check:199files/0type errors. Strict staged publication
+checks remain the packet closeout owner. No full campaign or numerical PASS.
+
+The one current static inventory contains7695roles/149Sources. The partial now
+represents1433current roles:1127retained/306new, plus1published removal and
+87bound files. Four stale current IDs are repaired. Independent review corrected
+a candidate's false uncovered claim before the retained budget was joined from
+the admitted historical inventory. All allowances remain unchanged.
+Selected rows have fresh scope bindings; eight older whole-file bindings differ
+and still require their remaining family review. This remains non-executable,
+non-exhaustive lineage, with6262current and4573baseline dispositions unrepresented.
+
+Root retained byte-identical official Bun1.4.2 evidence at
+`.tmp/tooling-research/baseline-runtime-evidence-20261014/bun`, mode0600.
+Current1.4.3 consumer validation passes108Sources against the original report,
+with historical suite/quality false and no historical runtime execution.
+Receipt: `/workspace/attachments/baseline-current-consumer-20261014.json`.
+The complete `crap-budgets.v1.json` is still absent. Current SDK receipt/output
+formation and current shard review remain prerequisites; no local build ran.
+The workflow read is available, but repository-variable inspection returned
+HTTP403 `Resource not accessible by integration`; it proves no CI activation.
 
 ## Historical record
 

@@ -102,6 +102,19 @@ reviewed disposition and remains a GAP under the current executable gate.
 Ordinary task authorization does not automatically launch mutation. Pending
 manual mutation proof is reported as pending, never as achieved qualification.
 
+Stryker partitions reuse one scratch root. Record each process receipt and
+post-run input check before deciding whether another partition may start.
+UNKNOWN, incomplete output, signal, spawn error or missing owned-group termination
+proof stops that sequence. A direct exit, including exit0, is not group proof.
+On supported POSIX hosts, a normal owned-group exit probes group absence without
+waiting or issuing another signal; a failed probe retains the direct observation
+and reports unobserved group custody. Unsupported group observation remains GAP.
+The current observer is qualified on Linux; a native Windows campaign cannot
+establish this proof through a direct-child result and remains unqualified.
+Known nonzero exits stay available for reporting; they permit another partition
+only with affirmative group termination. Importing the mutation gate runs no
+campaign or inventory. These controls do not establish Killed mutants.
+
 Rewritten test and shared-helper assertion adapters share one async context per
 child while retaining exact file and test-body identities. A consumed assertion,
 runtime error or overlapping body's assertion is not proof for another body's
@@ -911,7 +924,8 @@ have the bare64-hex contract. The existing loader recapture owns freshness.
 Inert runner fixtures copy the real eager CLI/provider/source-identity closure,
 without substituting constants or weakening product readers.
 An authoritative current resource review and complete production qualification
-remain pending; the fixed artifact is absent until that review is complete.
+remain pending. A retained fixed-path artifact may belong to older inputs;
+its existence does not make its rows eligible for the current captured scope.
 
 Launch preparation and report admission share the canonical output-layout owner.
 Prepared child temporary directories are distinct run/shard children outside the

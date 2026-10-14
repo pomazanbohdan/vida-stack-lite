@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import strykerConfig from '../stryker.config.ts';
 import {
   buildMutationTestCommand,
@@ -325,6 +325,62 @@ describe('mutation execution receipts', () => {
     expect(failed).toMatchObject({ exitCode: 7, signal: null, spawnError: null, timedOut: false });
     expect(missing).toMatchObject({ exitCode: null, spawnError: 'ENOENT', timedOut: false });
     expect(timeout).toMatchObject({ spawnError: null, timedOut: true });
+  });
+
+  test.skipIf(process.platform === 'win32')(
+    'keeps normal direct exit UNKNOWN when its owned process-group probe fails',
+    async () => {
+      const originalKill = process.kill.bind(process);
+      let groupProbeObserved = false;
+      const kill = spyOn(process, 'kill').mockImplementation((...args: Parameters<typeof process.kill>) => {
+        if (args[0] < 0 && args[1] === 0) {
+          groupProbeObserved = true;
+          throw Object.assign(new Error('owned process-group probe denied'), { code: 'EPERM' });
+        }
+        return originalKill(...args);
+      });
+      try {
+        const result = await executeMutationCommand(
+          [process.execPath, '-e', "process.stdout.write('parent-ready\\n'); process.exit(0)"],
+          process.cwd(),
+          1000,
+          { ownedProcessGroup: true },
+        );
+
+        expect(groupProbeObserved).toBe(true);
+        expect(result).toMatchObject({
+          exitCode: 0,
+          signal: null,
+          spawnError: 'process-group-termination-unobserved',
+          timedOut: false,
+          processCustody: {
+            scope: 'owned-process-group',
+            terminationObserved: true,
+            processGroupTerminationObserved: false,
+          },
+        });
+      } finally {
+        kill.mockRestore();
+      }
+    },
+  );
+
+  test.skipIf(process.platform === 'win32')('observes an empty owned process group after normal exit', async () => {
+    const result = await executeMutationCommand([process.execPath, '-e', 'process.exit(0)'], process.cwd(), 1000, {
+      ownedProcessGroup: true,
+    });
+
+    expect(result).toMatchObject({
+      exitCode: 0,
+      signal: null,
+      spawnError: null,
+      timedOut: false,
+      processCustody: {
+        scope: 'owned-process-group',
+        terminationObserved: true,
+        processGroupTerminationObserved: true,
+      },
+    });
   });
 
   test('escalates a timed-out inert child and records observed termination', async () => {

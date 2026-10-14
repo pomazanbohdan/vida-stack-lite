@@ -85,6 +85,7 @@ test('SDK compatibility manifest keeps only the SDK prepack hook and payload', (
   expect(value.files).toContain('dist/src/runtime.js');
   expect(value.files).toContain('dist/src/documentation/transition-proof.js');
   expect(value.files).toContain('dist/src/trusted-host.js');
+  expect(value.files).toContain('dist/sdk-formation.json');
   expect(value.files).toContain('dist/src/**/*.d.ts');
   expect(value.files).toContain('schemas/agent-runtime-config.v1.schema.json');
   expect(value.files).toContain('templates/**');

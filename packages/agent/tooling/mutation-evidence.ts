@@ -884,16 +884,17 @@ async function observeMutationProcess(
   const initial = await observeExit(child.exited, timeoutMs);
   let result;
   if (initial.observed) {
+    const processGroupTerminationObserved = ownedProcessGroup ? await waitForOwnedProcessGroup(child.pid, 0) : null;
     result = {
       exitCode: initial.exitCode,
       signal: child.signalCode,
-      spawnError: null,
+      spawnError: ownedProcessGroup && !processGroupTerminationObserved ? 'process-group-termination-unobserved' : null,
       timedOut: false,
       processCustody: {
         pid: child.pid,
         scope: processCustodyScope(ownedProcessGroup),
         terminationObserved: true,
-        processGroupTerminationObserved: null,
+        processGroupTerminationObserved,
         unrefCalled: false,
         attempts: [],
       },

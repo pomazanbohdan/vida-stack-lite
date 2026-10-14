@@ -5,6 +5,7 @@ import { expect, test } from 'bun:test';
 import { readPin } from '../bin/bun.ts';
 import strykerConfig from '../stryker.config.ts';
 import { buildMutationTestCommand } from '../tooling/mutation-evidence.js';
+import { runStrykerPartitions, type MutationRunnerResult } from '../tooling/mutation-gate.ts';
 import {
   mutationPartitionSourceBinding,
   mutationPartitionSourceBindingMatches,
@@ -12,6 +13,30 @@ import {
 import { maintainedSourceInventory } from '../tooling/maintained-source-inventory.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+function runnerResult(overrides: Partial<MutationRunnerResult> = {}): MutationRunnerResult {
+  return {
+    exitCode: 0,
+    observed_exit_code: 0,
+    signalCode: null,
+    output_complete: true,
+    timed_out: false,
+    deadline_ms: 90_000,
+    spawn_error: null,
+    process_custody: {
+      pid: 4312,
+      scope: 'owned-process-group',
+      terminationObserved: true,
+      processGroupTerminationObserved: true,
+      unrefCalled: false,
+      attempts: [],
+    },
+    process_receipt: 'stryker-partition.process.json',
+    stdout_capture: { file: 'partition.stdout.log', complete: true },
+    stderr_capture: { file: 'partition.stderr.log', complete: true },
+    ...overrides,
+  };
+}
 
 interface MutationInventory {
   schema: string;
@@ -38,6 +63,146 @@ test('mutation command builder constructs the exact pinned Bun test argv', () =>
     '--reporter=junit',
     '--reporter-outfile=/reports/a.xml',
   ]);
+});
+
+test('mutation partition scheduling retains UNKNOWN results and fences every unknown successor path', async () => {
+  const unobservedTimeout = runnerResult({
+    exitCode: null,
+    observed_exit_code: null,
+    output_complete: false,
+    timed_out: true,
+    spawn_error: 'process-group-termination-unobserved',
+    process_custody: {
+      pid: 4312,
+      scope: 'owned-process-group',
+      terminationObserved: false,
+      processGroupTerminationObserved: false,
+      unrefCalled: true,
+      attempts: [{ signal: 'SIGTERM', target: 'process-group', outcome: 'sent' }],
+    },
+  });
+  const unknownResults: Array<{ label: string; result: MutationRunnerResult }> = [
+    { label: 'unobserved timeout', result: unobservedTimeout },
+    { label: 'signal with direct exit status', result: runnerResult({ signalCode: 'SIGTERM' }) },
+    { label: 'incomplete output with direct exit status', result: runnerResult({ output_complete: false }) },
+    { label: 'timeout with direct exit status', result: runnerResult({ timed_out: true }) },
+    { label: 'spawn error', result: runnerResult({ exitCode: null, spawn_error: 'ENOENT' }) },
+    {
+      label: 'unobserved owned process group after direct success',
+      result: runnerResult({
+        process_custody: {
+          pid: 4312,
+          scope: 'owned-process-group',
+          terminationObserved: true,
+          processGroupTerminationObserved: false,
+          unrefCalled: false,
+          attempts: [],
+        },
+      }),
+    },
+    { label: 'unclassified null exit', result: runnerResult({ exitCode: null }) },
+  ];
+
+  for (const { label, result } of unknownResults) {
+    const launches: string[] = [];
+    const runs = await runStrykerPartitions(
+      [
+        { name: 'unknown', report: 'unknown.json' },
+        { name: 'successor', report: 'successor.json' },
+      ],
+      async (partition, recordRun) => {
+        launches.push(partition.name);
+        recordRun({ ...partition, report: partition.report ?? `${partition.name}.json`, result });
+        return true;
+      },
+    );
+
+    expect({ label, launches }).toEqual({ label, launches: ['unknown'] });
+    expect(runs).toHaveLength(1);
+    expect(runs[0]?.result).toBe(result);
+  }
+});
+
+test('mutation partition scheduling preserves reports after a known nonzero runner exit', async () => {
+  const launches: string[] = [];
+  const knownFailure = runnerResult({
+    exitCode: 1,
+    observed_exit_code: 1,
+    process_custody: {
+      pid: 4312,
+      scope: 'owned-process-group',
+      terminationObserved: true,
+      processGroupTerminationObserved: true,
+      unrefCalled: false,
+      attempts: [],
+    },
+  });
+
+  const runs = await runStrykerPartitions(
+    [
+      { name: 'known-failure', report: 'known-failure.json' },
+      { name: 'successor', report: 'successor.json' },
+    ],
+    async (partition, recordRun) => {
+      launches.push(partition.name);
+      recordRun({ ...partition, report: partition.report ?? `${partition.name}.json`, result: knownFailure });
+      return true;
+    },
+  );
+
+  expect(launches).toEqual(['known-failure', 'successor']);
+  expect(runs.map(({ name }) => name)).toEqual(['known-failure', 'successor']);
+  expect(runs[0]?.result.exitCode).toBe(1);
+});
+
+test('mutation partition scheduling preserves an explicitly stopped recorded run', async () => {
+  const result = runnerResult({ exitCode: null, spawn_error: 'input-drift' });
+  const launches: string[] = [];
+  const runs = await runStrykerPartitions(
+    [
+      { name: 'stopped', report: 'stopped.json' },
+      { name: 'successor', report: 'successor.json' },
+    ],
+    async (partition, recordRun) => {
+      launches.push(partition.name);
+      recordRun({ ...partition, report: partition.report ?? `${partition.name}.json`, result });
+      return false;
+    },
+  );
+
+  expect(launches).toEqual(['stopped']);
+  expect(runs).toHaveLength(1);
+  expect(runs[0]?.result).toBe(result);
+});
+
+test('mutation partition scheduling propagates callback exceptions', async () => {
+  const failure = new Error('partition observation failed');
+  const launches: string[] = [];
+
+  const observed = await runStrykerPartitions(
+    [
+      { name: 'throws', report: 'throws.json' },
+      { name: 'successor', report: 'successor.json' },
+    ],
+    async (partition) => {
+      launches.push(partition.name);
+      throw failure;
+    },
+  ).catch((error: unknown) => error);
+
+  expect(observed).toBe(failure);
+  expect(launches).toEqual(['throws']);
+});
+
+test('mutation partition scheduling launches nothing for an empty selection', async () => {
+  let launches = 0;
+  const runs = await runStrykerPartitions([], async () => {
+    launches += 1;
+    return true;
+  });
+
+  expect(launches).toBe(0);
+  expect(runs).toEqual([]);
 });
 
 test('configured mutation adapter builds worker argv from the already selected pinned runtime', () => {

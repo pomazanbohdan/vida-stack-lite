@@ -10,11 +10,11 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 1126,
-    "new": 294,
+    "retained": 1127,
+    "new": 306,
     "removed": 1,
-    "current_roles": 1420,
-    "source_files": 85
+    "current_roles": 1433,
+    "source_files": 87
   },
   "source_bindings": [
     {
@@ -356,6 +356,14 @@
     {
       "file": "src/documentation/transition-proof.ts",
       "sha256": "24c52ab8e16666b0c21ffe1512883bedf931f76f081b3e0b84dfab42e29fb065"
+    },
+    {
+      "file": "src/contracts/work-state-schema.ts",
+      "sha256": "5348f7d7a3c0c1713ce0bde3a8e4f1fbb5576465c7634f73014c93bdcdae1053"
+    },
+    {
+      "file": "src/config/storage-read-admission.ts",
+      "sha256": "f42c3e2a056242b7fb2beb75d82e90c49c18f54ef03289bf1551fcca5adf185f"
     }
   ],
   "baseline_functions": [
@@ -22126,23 +22134,23 @@
     },
     {
       "identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/binding:verifyCurrent/binding:verifyCurrent#0",
-      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/binding:verifyCurrent/binding:verifyCurrent#0",
+      "current_identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/closure:CallExpression:arguments[1]#1/binding:verifyCurrent/binding:verifyCurrent#0",
       "file": "src/orchestration/task-source-binding-operations.ts",
       "baseline_complexity": 2,
       "baseline_coverage": 0,
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/binding:verifyCurrent/binding:verifyCurrent#0: current current configuration and ProjectContext revalidation callback before Host effects has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility.",
+      "rationale": "Retained from Git b549951 as src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/binding:verifyCurrent/binding:verifyCurrent#0: current current configuration and ProjectContext revalidation callback before Host effects has the same semantic role and enclosing operation. The current edits add typed ledger/snapshot access and close the database through its admission-aware owner; they preserve this role's responsibility. The old b549951 callback revalidated current runtime configuration and ProjectContext before Host effects, then called currentSourceAuthority. The current callback has that same semantic responsibility but is nested under the new withWorkspaceDatabaseClose callback, so the old current identity is stale; remap this one retained role to this exact current ID. Preserve the baseline ceiling; do not transfer parent allowance. Independent current semantic remap; all original allowances unchanged. Review scope 20261014-quality-contour.",
       "current_source_address": {
-        "line": 344,
-        "column": 22,
-        "start": 14704,
-        "end": 15582,
-        "bodyLine": 348,
-        "bodyColumn": 12,
-        "bodyEndLine": 365,
-        "bodyEndColumn": 7
+        "line": 348,
+        "column": 24,
+        "start": 14994,
+        "end": 15914,
+        "bodyLine": 352,
+        "bodyColumn": 14,
+        "bodyEndLine": 369,
+        "bodyEndColumn": 9
       }
     },
     {
@@ -23107,7 +23115,9 @@
           "callsite": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
           "receiver_callee": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:authorizationAttempt"],
+          "receivers": [
+            "binding:authorizationAttempt"
+          ],
           "control": [],
           "enclosing_context": [
             "binding:authorizationAttempt",
@@ -23123,7 +23133,9 @@
           "callsite": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
           "receiver_callee": "MemberExpression(computed:false;object:Identifier(name:\"Result\");property:Identifier(name:\"fromThrowable\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:authorizationAttempt"],
+          "receivers": [
+            "binding:authorizationAttempt"
+          ],
           "control": [],
           "enclosing_context": [
             "binding:authorizationAttempt",
@@ -23174,7 +23186,10 @@
           "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:authorizationAttempt", "binding:claimValid"],
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:claimValid"
+          ],
           "control": [],
           "enclosing_context": [
             "binding:claimValid",
@@ -23189,7 +23204,10 @@
           "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:authorizationAttempt", "binding:claimValid"],
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:claimValid"
+          ],
           "control": [],
           "enclosing_context": [
             "binding:claimValid",
@@ -23239,7 +23257,10 @@
           "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:authorizationAttempt", "binding:claimValid"],
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:claimValid"
+          ],
           "control": [],
           "enclosing_context": [
             "binding:claimValid",
@@ -23254,7 +23275,10 @@
           "callsite": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "receiver_callee": "OptionalMemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"contextFields\");property:Identifier(name:\"integration_bindings\"));optional:true;property:Identifier(name:\"some\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:authorizationAttempt", "binding:claimValid"],
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:claimValid"
+          ],
           "control": [],
           "enclosing_context": [
             "binding:claimValid",
@@ -23363,7 +23387,10 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": ["binding:diagnostics", "array-index:0"],
+          "enclosing_context": [
+            "binding:diagnostics",
+            "array-index:0"
+          ],
           "enclosing_context_detail": []
         },
         "current": {
@@ -23374,7 +23401,10 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": ["binding:diagnostics", "array-index:0"],
+          "enclosing_context": [
+            "binding:diagnostics",
+            "array-index:0"
+          ],
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
@@ -23418,7 +23448,11 @@
           "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:authorizationAttempt", "binding:execute", "binding:diagnostics"],
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:execute",
+            "binding:diagnostics"
+          ],
           "control": [],
           "enclosing_context": [
             "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))[argument:0]"
@@ -23431,7 +23465,11 @@
           "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:authorizationAttempt", "binding:execute", "binding:diagnostics"],
+          "receivers": [
+            "binding:authorizationAttempt",
+            "binding:execute",
+            "binding:diagnostics"
+          ],
           "control": [],
           "enclosing_context": [
             "call:MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))[argument:0]"
@@ -23481,7 +23519,10 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": ["binding:diagnostics", "array-index:1"],
+          "enclosing_context": [
+            "binding:diagnostics",
+            "array-index:1"
+          ],
           "enclosing_context_detail": []
         },
         "current": {
@@ -23492,7 +23533,10 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": ["binding:diagnostics", "array-index:1"],
+          "enclosing_context": [
+            "binding:diagnostics",
+            "array-index:1"
+          ],
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
@@ -23538,7 +23582,10 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": ["binding:factories", "array-index:0"],
+          "enclosing_context": [
+            "binding:factories",
+            "array-index:0"
+          ],
           "enclosing_context_detail": []
         },
         "current": {
@@ -23549,7 +23596,10 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": ["binding:factories", "array-index:0"],
+          "enclosing_context": [
+            "binding:factories",
+            "array-index:0"
+          ],
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
@@ -23898,7 +23948,9 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": ["return"],
+          "enclosing_context": [
+            "return"
+          ],
           "enclosing_context_detail": []
         },
         "current": {
@@ -23909,7 +23961,9 @@
           "argument_role": null,
           "receivers": [],
           "control": [],
-          "enclosing_context": ["return"],
+          "enclosing_context": [
+            "return"
+          ],
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
@@ -24470,7 +24524,10 @@
           "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:failure", "property:diagnostics"],
+          "receivers": [
+            "binding:failure",
+            "property:diagnostics"
+          ],
           "control": [],
           "enclosing_context": [
             "property:diagnostics",
@@ -24484,7 +24541,10 @@
           "callsite": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "receiver_callee": "MemberExpression(computed:false;object:MemberExpression(computed:false;object:Identifier(name:\"failureResult\");property:Identifier(name:\"errors\"));property:Identifier(name:\"map\"))",
           "argument_role": "argument:0",
-          "receivers": ["binding:failure", "property:diagnostics"],
+          "receivers": [
+            "binding:failure",
+            "property:diagnostics"
+          ],
           "control": [],
           "enclosing_context": [
             "property:diagnostics",
@@ -27655,6 +27715,38 @@
       "baseline_crap": 6,
       "max_crap": 6,
       "rationale": "Independent direct Original/current Source semantic review corroborates this declared callable or enclosing callback responsibility. Exact published report counter/body-location join supplies Original CC/coverage/CRAP; candidate identity equality only applies that reviewed pair. No ordinal/hash inference or candidate-derived ceiling."
+    },
+    {
+      "identity": "src/orchestration/mastra-session-bridge.ts#fn:sessionBridgeRunId#0",
+      "current_identity": "src/orchestration/mastra-session-bridge-contract.ts#fn:sessionBridgeRunId#0",
+      "file": "src/orchestration/mastra-session-bridge-contract.ts",
+      "name": "fn:sessionBridgeRunId",
+      "source_address": {
+        "line": 202,
+        "column": 7,
+        "start": 7408,
+        "end": 7598,
+        "bodyLine": 202,
+        "bodyColumn": 116,
+        "bodyEndLine": 204,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 9,
+        "column": 7,
+        "start": 481,
+        "end": 671,
+        "bodyLine": 9,
+        "bodyColumn": 116,
+        "bodyEndLine": 11,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Same named deterministic run identity function moved from mastra-session-bridge.ts into the bridge contract module. Genuine b549951 AST row and report row are bound below; retain the historical complexity/CRAP ceiling without candidate-derived changes. Independent review corrected candidate coverage: use the admitted historical inventory only. Review scope 20261014-quality-contour."
     }
   ],
   "new_functions": [
@@ -30369,22 +30461,6 @@
       }
     },
     {
-      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withDatabaseClose#0",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
-      "current_source_address": {
-        "line": 78,
-        "column": 0,
-        "start": 3635,
-        "end": 4077,
-        "bodyLine": 78,
-        "bodyColumn": 85,
-        "bodyEndLine": 94,
-        "bodyEndColumn": 1
-      }
-    },
-    {
       "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:checkpointAndClose#0",
       "max_complexity": 10,
       "max_crap": 10,
@@ -30478,22 +30554,6 @@
         "bodyColumn": 10,
         "bodyEndLine": 224,
         "bodyEndColumn": 5
-      }
-    },
-    {
-      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[1]#0",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
-      "current_source_address": {
-        "line": 221,
-        "column": 8,
-        "start": 9692,
-        "end": 9722,
-        "bodyLine": 221,
-        "bodyColumn": 14,
-        "bodyEndLine": 221,
-        "bodyEndColumn": 38
       }
     },
     {
@@ -30830,22 +30890,6 @@
         "bodyColumn": 32,
         "bodyEndLine": 295,
         "bodyEndColumn": 1
-      }
-    },
-    {
-      "identity": "src/config/project-upgrade-storage.ts#fn:inspectWorkspaceBootstrapSentinel#0/closure:CallExpression:arguments[0]#0",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "rationale": "Same semantic role exists in the bounded HEAD^ source module, but the b549951 published tree contains neither target module and no corresponding published row. Therefore this is NEW for allowance lineage and inherits no historical allowance.",
-      "current_source_address": {
-        "line": 288,
-        "column": 55,
-        "start": 12260,
-        "end": 12293,
-        "bodyLine": 288,
-        "bodyColumn": 64,
-        "bodyEndLine": 288,
-        "bodyEndColumn": 88
       }
     },
     {
@@ -32271,6 +32315,261 @@
         "bodyEndColumn": 112
       },
       "rationale": "New lazy schema factory and its returned validator closure, independently reviewed as two new roles with no published callable counterpart. Fixed prospective authorized10/10, not candidate-derived."
+    },
+    {
+      "identity": "src/orchestration/configured-context.ts#fn:readConfiguredBytes#0",
+      "file": "src/orchestration/configured-context.ts",
+      "current_source_address": {
+        "line": 69,
+        "column": 0,
+        "start": 2430,
+        "end": 3072,
+        "bodyLine": 76,
+        "bodyColumn": 10,
+        "bodyEndLine": 87,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New helper extracted around selected configured-source reads; b549951 keeps readBytes and package routing inline in readLocal/buildConfiguredContext and has no standalone readConfiguredBytes callable. Keep prospective 10/10 ceilings as the existing reviewed new-role policy; do not inherit the enclosing readLocal allowance. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/orchestration/inspect-local-session.ts#fn:localSessionDiagnosis#0",
+      "file": "src/orchestration/inspect-local-session.ts",
+      "current_source_address": {
+        "line": 35,
+        "column": 0,
+        "start": 1632,
+        "end": 2328,
+        "bodyLine": 40,
+        "bodyColumn": 25,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New callable for advisory diagnosis; the genuine b549951 inspectLocalSession returned recovery_required but had no standalone diagnosis classifier. Keep the existing prospective 10/10 ceiling; do not pair to the enclosing transaction by ordinal or transfer its allowance. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "bin/repair-work-state.ts#fn:runWorkStateRepair#0/closure:CallExpression:arguments[1]#0",
+      "file": "bin/repair-work-state.ts",
+      "current_source_address": {
+        "line": 92,
+        "column": 4,
+        "start": 4013,
+        "end": 4325,
+        "bodyLine": 92,
+        "bodyColumn": 10,
+        "bodyEndLine": 99,
+        "bodyEndColumn": 5
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New callback introduced as the work-state operation body passed to withWorkspaceDatabaseClose. b549951 runWorkStateRepair used a direct try/finally and had no separately inventoried callback. Keep the existing prospective 10/10 new-role ceiling; do not transfer parent runWorkStateRepair allowance. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/contracts/work-state-schema.ts#fn:validateWorkState#0",
+      "file": "src/contracts/work-state-schema.ts",
+      "current_source_address": {
+        "line": 13,
+        "column": 7,
+        "start": 551,
+        "end": 721,
+        "bodyLine": 13,
+        "bodyColumn": 70,
+        "bodyEndLine": 15,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New shared schema predicate extracted from inline validator construction/use in b549951 callers; the old Source has no standalone validateWorkState callable or work-state-schema module. Keep the existing prospective 10/10 new-role ceiling; do not transfer caller allowances. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:checkpointSource#0",
+      "file": "src/config/project-upgrade-existing-storage-admission.ts",
+      "current_source_address": {
+        "line": 83,
+        "column": 0,
+        "start": 3706,
+        "end": 4102,
+        "bodyLine": 83,
+        "bodyColumn": 52,
+        "bodyEndLine": 93,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Neither target module has a published b549951 counterpart per the retained v765 receipt. Use the fixed prospective 10/10 ceiling for a new role; do not infer a published ceiling or reset any pre-existing retained role. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:checkpointAndClose#0/closure:CallExpression:arguments[1]#0",
+      "file": "src/config/project-upgrade-existing-storage-admission.ts",
+      "current_source_address": {
+        "line": 99,
+        "column": 4,
+        "start": 4370,
+        "end": 4402,
+        "bodyLine": 99,
+        "bodyColumn": 10,
+        "bodyEndLine": 99,
+        "bodyEndColumn": 36
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "No published b549951 counterpart; this is a current source relocation from the named prior partial identity. Preserve that prospective ceiling rather than recalculating it. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[2]#0/binding:fence/closure:CallExpression:arguments[1]#0",
+      "file": "src/config/project-upgrade-existing-storage-admission.ts",
+      "current_source_address": {
+        "line": 201,
+        "column": 8,
+        "start": 9146,
+        "end": 9277,
+        "bodyLine": 201,
+        "bodyColumn": 14,
+        "bodyEndLine": 205,
+        "bodyEndColumn": 9
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Neither target module has a published b549951 counterpart per the retained v765 receipt. Use the fixed prospective 10/10 ceiling for a new role; do not infer a published ceiling or reset any pre-existing retained role. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:inspectInitialWorkspaceDatabaseImage#0/closure:CallExpression:arguments[1]#0",
+      "file": "src/config/project-upgrade-storage.ts",
+      "current_source_address": {
+        "line": 215,
+        "column": 4,
+        "start": 8708,
+        "end": 8955,
+        "bodyLine": 215,
+        "bodyColumn": 10,
+        "bodyEndLine": 221,
+        "bodyEndColumn": 5
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Neither target module has a published b549951 counterpart per the retained v765 receipt. Use the fixed prospective 10/10 ceiling for a new role; do not infer a published ceiling or reset any pre-existing retained role. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:inspectWorkspaceBootstrapSentinel#0/closure:CallExpression:arguments[1]#0",
+      "file": "src/config/project-upgrade-storage.ts",
+      "current_source_address": {
+        "line": 277,
+        "column": 4,
+        "start": 11606,
+        "end": 12575,
+        "bodyLine": 277,
+        "bodyColumn": 10,
+        "bodyEndLine": 295,
+        "bodyEndColumn": 5
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Neither target module has a published b549951 counterpart per the retained v765 receipt. Use the fixed prospective 10/10 ceiling for a new role; do not infer a published ceiling or reset any pre-existing retained role. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:inspectWorkspaceBootstrapSentinel#0/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/config/project-upgrade-storage.ts",
+      "current_source_address": {
+        "line": 294,
+        "column": 57,
+        "start": 12510,
+        "end": 12543,
+        "bodyLine": 294,
+        "bodyColumn": 66,
+        "bodyEndLine": 294,
+        "bodyEndColumn": 90
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "No published b549951 counterpart; this is a current source relocation from the named prior partial identity. Preserve that prospective ceiling rather than recalculating it. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/config/workspace-database-raw.ts#fn:withWorkspaceDatabaseClose#0",
+      "file": "src/config/workspace-database-raw.ts",
+      "current_source_address": {
+        "line": 77,
+        "column": 7,
+        "start": 2613,
+        "end": 2994,
+        "bodyLine": 82,
+        "bodyColumn": 5,
+        "bodyEndLine": 90,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Shared work/cleanup wrapper; it runs work then delegates exact close owner and preserves both failures. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/config/storage-read-admission.ts#fn:closeWorkspaceDatabaseWithAdmission#0",
+      "file": "src/config/storage-read-admission.ts",
+      "current_source_address": {
+        "line": 367,
+        "column": 7,
+        "start": 13858,
+        "end": 14776,
+        "bodyLine": 367,
+        "bodyColumn": 78,
+        "bodyEndLine": 395,
+        "bodyEndColumn": 1
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Distinct paired admission close owner: closes source database before releasing its gate lease, preserving custody on failure. It is not a HostState opener/transaction counterpart. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/closure:CallExpression:arguments[1]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "current_source_address": {
+        "line": 325,
+        "column": 6,
+        "start": 14211,
+        "end": 14288,
+        "bodyLine": 325,
+        "bodyColumn": 12,
+        "bodyEndLine": 325,
+        "bodyEndColumn": 83
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Issue operation callback passed to withWorkspaceDatabaseCloseAsync; b549951 had inline try/finally and no corresponding callable callback. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/closure:CallExpression:arguments[2]#0",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "current_source_address": {
+        "line": 326,
+        "column": 6,
+        "start": 14296,
+        "end": 14320,
+        "bodyLine": 326,
+        "bodyColumn": 17,
+        "bodyEndLine": 326,
+        "bodyEndColumn": 30
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Async ledger owner-close callback introduced for withWorkspaceDatabaseCloseAsync; b549951 used ledger.close() in finally and had no callable callback. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
+    },
+    {
+      "identity": "src/orchestration/task-source-binding-operations.ts#fn:executeTaskSourceBindingOperation#0/closure:CallExpression:arguments[1]#1",
+      "file": "src/orchestration/task-source-binding-operations.ts",
+      "current_source_address": {
+        "line": 337,
+        "column": 4,
+        "start": 14617,
+        "end": 16886,
+        "bodyLine": 337,
+        "bodyColumn": 10,
+        "bodyEndLine": 393,
+        "bodyEndColumn": 5
+      },
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Main Host operation callback introduced for withWorkspaceDatabaseClose; b549951 held equivalent store construction and mode routing inline inside try/finally, with no separately callable callback. Independently reviewed current callable; unchanged prospective 10/10 policy, no published allowance transfer. Review scope 20261014-quality-contour; partial remains non-executable."
     }
   ],
   "removed_functions": [
@@ -32283,7 +32582,8 @@
     "owner": "Root integrator",
     "independence": "Blind Luna selected-scope semantic reviews plus Root Source review and independent v736 join review. Policy predicate correction has separate v737/v739 review. Three blind v746 selected-scope reviews, Root callback-role correction and independent v746 complete 114-role partition/caps/address review approve the twelve additional scopes.",
     "classification": "New inventoried callable is distinct from new engine capability. Original retained callers keep their allowances; only genuine callable relocations transfer a published identity.",
-    "prospective_new_function_policy": "Fixed complexity/CRAP 10/10 before current measurement; no current-derived ceilings."
+    "prospective_new_function_policy": "Fixed complexity/CRAP 10/10 before current measurement; no current-derived ceilings.",
+    "current_scope": "20261014-quality-contour: independent Luna role reviews and Root join; runtime-byte consumer measurement validation only. Full-file freshness and exhaustive partitions remain pending."
   },
   "limits": [
     "This operational checkpoint preserves selected semantic lineage only. It is not VidaCrapBudgetPlan/v1 and is never selected by the default CRAP gate.",
@@ -32342,7 +32642,9 @@
   "scope_review_v794": {
     "status": "APPROVED_SOURCE_LINEAGE_ONLY_NOT_EXHAUSTIVE",
     "source_parent": "1c5fa9e",
-    "scope": ["bin/project-mapping-contract.ts"],
+    "scope": [
+      "bin/project-mapping-contract.ts"
+    ],
     "counts": {
       "retained": 17,
       "new": 1,
@@ -32371,7 +32673,11 @@
       "crap-review-operation-policy-v1002/review.json",
       "crap-review-dispatch-repair-v999/review.json"
     ],
-    "independent_review_lanes": ["frozen_cedar_join_v1028", "frozen_policy_join_v1029", "frozen_dispatch_join_v1030"],
+    "independent_review_lanes": [
+      "frozen_cedar_join_v1028",
+      "frozen_policy_join_v1029",
+      "frozen_dispatch_join_v1030"
+    ],
     "frozen_ceilings": "Exact original measured rows corroborated by original.baseline; never original.current or candidate CC.",
     "historical_measurement": "measurement_admitted=true, suite_passed=false, quality_passed=false",
     "numeric_status": "Current exhaustive coverage/CRAP/mutation qualification remains pending."
@@ -32413,7 +32719,10 @@
     "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
     "source_parent": "10103da",
     "captured_run_id": "0bf13f37-50cb-4e7f-b605-14aa195a62d4",
-    "scope": ["src/contracts/acceptance-manifest-schema.ts", "src/documentation/clear-checkpoint-validator.ts"],
+    "scope": [
+      "src/contracts/acceptance-manifest-schema.ts",
+      "src/documentation/clear-checkpoint-validator.ts"
+    ],
     "retained_added": 0,
     "new_added": 2,
     "review": "Independent blind review approves exactly two new extracted schema predicate declarations with prospective fixed10/10. Existing rows, caps and bindings remain unchanged. Changed consumer bindings require their separate refresh; this partial remains non-executable and non-exhaustive.",
@@ -32423,7 +32732,10 @@
     "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
     "source_parent": "10103da",
     "captured_run_id": "0bf13f37-50cb-4e7f-b605-14aa195a62d4",
-    "scope": ["src/orchestration/observed-research-result.ts", "src/documentation/policy-transition.ts"],
+    "scope": [
+      "src/orchestration/observed-research-result.ts",
+      "src/documentation/policy-transition.ts"
+    ],
     "roles_refreshed": 31,
     "review": "Independent per-scope Original semantic review and Root canonical snapshot correspondence retain exact31existing role identities, Original source addresses and all frozen ceilings. Only current Source addresses and two byte bindings refresh. No synthesis/transition-proof additions or complete/default plan activation.",
     "input": ".tmp/p0p1-3f3dc1a/shared-consumer-role-rows.json"
@@ -32433,8 +32745,73 @@
     "source_parent": "e07c478",
     "retained_added": 61,
     "new_added": 2,
-    "scope": ["src/orchestration/observed-synthesis-result.ts", "src/documentation/transition-proof.ts"],
+    "scope": [
+      "src/orchestration/observed-synthesis-result.ts",
+      "src/documentation/transition-proof.ts"
+    ],
     "review": "Separate blind Original semantic reviews and independent structural proposal review approve61retained+2new roles. Root matches selected Original bytes and report SHA to admitted fe54f83c reference, derives actual fnMap/counter evidence with existing coverage math, preserves inherited CC/CRAP and prospective10/10. Prior rows/bindings unchanged. Not the old private seed; no exhaustive/default or current numeric admission.",
     "input": ".tmp/p0p1-3f3dc1a/synthesis-proof-frozen-proposal.json"
-  }
+  },
+  "selected_scope_current_bindings": {
+    "scope": "20261014-quality-contour",
+    "files": [
+      {
+        "file": "src/orchestration/configured-context.ts",
+        "sha256": "120236214e4f1b55899a56d567815d61e23b9f647e2fbabd73107f6c055196fd"
+      },
+      {
+        "file": "src/orchestration/inspect-local-session.ts",
+        "sha256": "a4c838f92c685942c0c1a010ed3368b839517b7cd1431f29edfa6748ffd6445d"
+      },
+      {
+        "file": "src/orchestration/mastra-session-bridge-contract.ts",
+        "sha256": "d927df42fec29ae2960609f5622eaf313f93221e1559ebcf87ff2c9c0f5d4760"
+      },
+      {
+        "file": "bin/repair-work-state.ts",
+        "sha256": "7af89f378fbb2b0c735890c84e786c3e33483bd69c283d307d482a35aa5378ea"
+      },
+      {
+        "file": "src/contracts/work-state-schema.ts",
+        "sha256": "5348f7d7a3c0c1713ce0bde3a8e4f1fbb5576465c7634f73014c93bdcdae1053"
+      },
+      {
+        "file": "src/config/project-upgrade-existing-storage-admission.ts",
+        "sha256": "324ba3d8e741d86e5ce521cd30ff5216071eba11a2a794b30d7e6b7156053dd1"
+      },
+      {
+        "file": "src/config/project-upgrade-storage.ts",
+        "sha256": "7129cbc24e61e0a457632d364b362d5f494f1da34e39ac183ff0a38395973cb0"
+      },
+      {
+        "file": "src/config/workspace-database-raw.ts",
+        "sha256": "b4a1d4415700ef4d58c06bc6461855beb05ef5ee9e1eafee3a40892892f6f363"
+      },
+      {
+        "file": "src/config/storage-read-admission.ts",
+        "sha256": "f42c3e2a056242b7fb2beb75d82e90c49c18f54ef03289bf1551fcca5adf185f"
+      },
+      {
+        "file": "src/orchestration/task-source-binding-operations.ts",
+        "sha256": "2c91337b0c847a23af3eab4aeac74e48d5a3ac8f9516a21dd50421f5d0f00548"
+      }
+    ],
+    "limits": "These bindings attest only the independently reviewed selected rows. Older whole-file Source bindings differ and require their remaining role-family review before reuse."
+  },
+  "retired_source_added_roles": [
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withDatabaseClose#0",
+      "rationale": "Absent current Source-added role; original prospective policy preserved for independently reviewed current roles. No published baseline removal or allowance transfer."
+    },
+    {
+      "identity": "src/config/project-upgrade-existing-storage-admission.ts#fn:withExistingStorageMergeCapability#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[1]#0",
+      "rationale": "Absent current Source-added role; original prospective policy preserved for independently reviewed current roles. No published baseline removal or allowance transfer."
+    },
+    {
+      "identity": "src/config/project-upgrade-storage.ts#fn:inspectWorkspaceBootstrapSentinel#0/closure:CallExpression:arguments[0]#0",
+      "rationale": "Absent current Source-added role; original prospective policy preserved for independently reviewed current roles. No published baseline removal or allowance transfer."
+    }
+  ],
+  "baseline_coverage_report_ref": ".tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/coverage/bun-unified/coverage-final.json",
+  "baseline_runtime_executable_ref": ".tmp/tooling-research/baseline-runtime-evidence-20261014/bun"
 }

@@ -94,11 +94,19 @@ node_modules outside payload custody. This is not native qualification.
 The complete launch in .tmp/p0p1-resume-f553252/current-b9a4108-full-paused.log
 ended UNKNOWN at run-bun-coverage.ts:1459. No numeric report is admitted.
 Preserve its original run/fixture custody and do not reopen/replay it.
+The later retained full runbc5cd2f0 also ended UNKNOWN with two directly
+accounted SIGKILL producers and resourceSafeToAdvance:false. Its old review
+does not qualify current bytes. See WORK for the exact retained supervisor.
 
 The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
+The current partial represents1433roles and has no stale current IDs; older
+whole-file binding refreshes remain pending. Current Bun1.4.3 validates the
+retained measurement against byte-identical1.4.2 runtime evidence without
+executing it. Current SDK formation must include its selected receipt; local
+formation, Source fallback and partial numeric claims remain prohibited.
 Current Source interruption/activation cases have focused proof in retained WORK
 history; they do not qualify active .vida cutover or native Runtime.
 

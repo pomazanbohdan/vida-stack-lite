@@ -34,6 +34,16 @@ Migrate current callers to the shared helpers, then delete forward-only duplicat
 
 Complete exact frozen function correspondence against the genuine `b549951` baseline. Complete and review the full CRAP plan before using dynamic CRAP as an acceptance gate. Qualify resource custody and shard behavior before running the complete numeric suite. Require 100% functions, lines, statements, and branches, plus 100% assertion-confirmed Killed mutants. Keep the required tests and SDK in the final input set. Record CRAP results and these outcomes from one admitted current capture. A timeout, incomplete report, partial budget, or split set of focused runs does not satisfy full numeric acceptance.
 
+Resume from the current captured inventory and reviewed partial in WORK. The
+historical runtime-byte prerequisite is now qualified without executing that
+runtime; current checks remain on Bun1.4.3. Finish the remaining role families
+and older binding refreshes rather than recreating inventories. Retrieve current
+CI-formed SDK outputs with their now-selected formation receipt before the
+complete selection. The former Stryker successor/custody defect is corrected;
+qualify the complete campaign separately. Rebind only actual reviewed shard
+resources to the final captured inputs; a retained stale artifact grants no
+eligibility. Do not replay the `bc5cd2f0` UNKNOWN producers.
+
 ### 5. One database and native Runtime
 
 Remove the separate admission database only after lifetime exclusion and bundle-owned repair are qualified. Prove disk creation, backup, restart, and rollback on the target path; in-memory tests do not establish disk behavior. Qualify the active `.vida` init and loader cutover from a ready repair and a fresh native matrix. Then verify supported native flows and actual Runtime delivery. Do not claim runtime acceptance from source tests, packaging, or an isolated verifier.

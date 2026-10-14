@@ -74,6 +74,7 @@
     "dist/src/documentation/transition-proof.js",
     "dist/src/trusted-host.d.ts",
     "dist/src/trusted-host.js",
+    "dist/sdk-formation.json",
     "dist/schemas/acceptance-manifest.v1.schema.json",
     "dist/schemas/agent-runtime-config.v1.schema.json",
     "dist/schemas/project-configuration.v1.schema.json",

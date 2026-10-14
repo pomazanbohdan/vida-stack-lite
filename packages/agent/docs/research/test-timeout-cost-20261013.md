@@ -7,6 +7,56 @@ and the existing CLEAR repair/parallel implementation plans.
 
 ## Observed boundaries
 
+### Mutation scratch successors — 2026-10-14
+
+The sequential Stryker gate formerly launched a successor even after an
+unobserved timeout. Causal scheduler controls reproduced that transition.
+A second review found that ordinary direct exit left group termination
+unobserved too. A native inert child plus a denied group probe reproduced
+the missing observation; a separate empty-group control qualifies the normal
+POSIX probe. The corrected owner records the raw direct result and fences
+successors until affirmative group termination. It does not raise timeouts.
+
+[Stryker configuration](https://stryker-mutator.io/docs/stryker-js/configuration/)
+documents that `tempDirName` contains source copies and is entirely removed
+after a successful run with `cleanTempDir:true`. The shared root cannot be
+reused while a predecessor's effects remain uncertain.
+[Bun subprocess documentation](https://bun.com/docs/runtime/child-process.md)
+defines `exited`, `exitCode` and `signalCode` for the direct subprocess;
+these do not attest descendant termination. Reuse the existing owned-group
+observer rather than introducing another supervisor or quiescence provider.
+
+The initial real orphan-descendant control could not observe group cleanup on
+this host and masked its primary assertion. Its failed root remains retained
+at `/home/agent/.cache/vida-cloud-tooling/tmp/vida-mutation-owned-group-T3fkGn`.
+It was not retried or removed. The replacement control creates no descendant
+and restores its probe fault in `finally`; it qualifies refusal on missing
+observation, not physical descendant cleanup. Root's affected completion run
+passed47 cases across6 files. Logs remain under `/workspace/attachments/` as
+`mutation-native-group-probe-red-20261014.log` and
+`quality-resume-behavior-final-20261014.log`. This is not a mutation campaign.
+
+### SDK freshness delivery — 2026-10-14
+
+The existing native CI chain also forms the SDK and uploads its TGZ. Its
+package file list omitted `dist/sdk-formation.json`, while retaining emitted
+JavaScript. A payload projection regression reproduced that omission; adding
+the receipt to the existing file list preserves the evidence through the
+existing artifact route without another workflow or suite. Current local
+outputs remain stale until separately formed current CI bytes and their receipt
+are retrieved and joined. No local formation or stale-output fallback was used.
+
+### Retained baseline runtime — 2026-10-14
+
+Current development and tests remain on package-selected Bun1.4.3. The genuine
+historical measurement binds1.4.2. Root retrieved the official historical binary
+as non-executable evidence, matched its bytes to the retained report, and used
+the current read-only consumer to validate108 historical Sources. No historical
+runtime or suite ran. The exhaustive correspondence and executable CRAP plan
+remain open; this receipt proves only baseline measurement compatibility.
+
+### Original continuation cost observations
+
 Selected runtime: Bun1.4.3; package dependencies: Mastra Core1.76.0 and
 LibSQL1.26.0. Three blind read-only reviews and an independent custody review
 separated two different problems:

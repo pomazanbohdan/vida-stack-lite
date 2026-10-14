@@ -1,5 +1,10 @@
 # Test Repair and Coverage Cycle Implementation Plan
 
+Class: supporting implementation reference, not a second current work order.
+The canonical [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns next work;
+[WORK](WORK.md) owns current terminal evidence. Earlier execution narratives
+below retain their historical scope and do not schedule unchanged retries.
+
 Current scheduling extension: PARALLEL-TESTING-DESIGN-20261012.md and
 PARALLEL-TESTING-IMPLEMENTATION-20261012.md. Their explicit shard architecture
 is reviewed/pending, not deployed. Existing repair/numeric constraints remain.
@@ -30,12 +35,13 @@ The five-minute (300000ms) global operation deadline issued on2026-10-13 superse
 
 ## Global Constraints
 
-Current execution packet (2026-10-14): checked978d206 is published. Root fixes
-the causally reproduced preload bootstrap-assignment mutation and pure contract
-engine evaluation. Joined v8 tests retain original v3 positive/negative cases;
-v9 blind reviews have no overlapping writers. Static checks precede native
-cases, then strict hook/push, SDK formation separately, one fresh reviewed
-300000ms full operation. Latestbc5cd2f0 remains UNKNOWN; no unchanged retry.
+Current next work: exhaustive frozen correspondence and full budget plan,
+current SDK formation evidence, and resource-safe qualification against settled
+bytes. The current Source already includes the map-custody timer observation,
+scope-schema deferral and shared fixture-root cleanup corrections listed later.
+Do not dispatch those again from their historical pending wording. Latest
+retainedbc5cd2f0 remains UNKNOWN; no unchanged retry. Current Source corrections
+and checks are recorded once in WORK.
 
 - Global test/coverage operation deadline300000ms; default5000ms per individual test, existing justified case exceptions remain distinct.
 - Exact100% functions/lines/statements/branches for every maintained source and aggregate; every mapped function must have valid execution evidence.
@@ -209,16 +215,16 @@ keep common resource tags and descendant-quiescence requirements unchanged.
 Root alone runs final checks and Git; workers do not duplicate full suites,
 AST/input captures or formation. Full numeric admission remains OPEN.
 
-## Current12dd10e iteration and next corrections
+## Historical12dd10e iteration and correction scope
 
 Automatic review discovery and freshly formed SDK qualify actual input admission
 for run3dfba6c4-64f5-45a4-9365-6707f48cca8b. Both direct producers reached
 explicit timeout/SIGKILL/UNKNOWN; complete report, current CRAP and mutation
 score remain absent. One emitted assertion failure is the map-custody test's
-stale opaque native-timeout observation. Next batch fixes that observer, defers
-the remaining eager scope-schema compiler using the existing deferred owner,
-and repairs plain fixture root retention through a minimal shared test helper.
-Join writers and perform static plus affected native checks, strict commit/push,
-then refresh SDK only if formation inputs changed. No unchanged full retry,
+stale opaque native-timeout observation. That batch fixed the observer, deferred
+the scope-schema compiler through its existing owner, and implemented the shared
+plain-root cleanup helper. Laterbc5cd2f0 records the corrected observer passing;
+it still provides no full numeric result. Reuse those corrections and retained
+checks; current next work is in CLEAR strategy/WORK. No unchanged full retry,
 timeout increase, resource-tag retirement, partial PASS promotion or old UNKNOWN
 replay. Remaining exhaustive frozen correspondence is a separate required gate.
