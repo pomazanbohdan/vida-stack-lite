@@ -101,6 +101,11 @@ const currentShardBuilder = () => {
     environment: NodeJS.ProcessEnv;
     wrappedInvocation?: boolean;
     consumerConfiguration?: Awaited<ReturnType<typeof coverageConsumerBinding.captureCoverageConsumerBinding>>;
+    reviewCurrentInputs?: (review: {
+      metadata: Omit<CoverageInputs, 'input_bytes'>;
+      scope: CoverageReviewScope;
+      consumer_configuration?: Awaited<ReturnType<typeof coverageConsumerBinding.captureCoverageConsumerBinding>>;
+    }) => unknown;
   }) => ReturnType<typeof prepareCoverageShardLaunches>;
 };
 
@@ -200,9 +205,12 @@ function writeCurrentShardReview(
 
 function callCurrentShardBuilder(
   fixture: ReturnType<typeof currentShardPolicyFixture>,
-  overrides: Partial<Parameters<ReturnType<typeof currentShardBuilder>>[0]> = {},
+  overrides: Partial<Parameters<ReturnType<typeof currentShardBuilder>>[0]> & {
+    omitConsumerConfiguration?: boolean;
+  } = {},
 ) {
-  return currentShardBuilder()({
+  const { omitConsumerConfiguration, ...inputOverrides } = overrides;
+  const input = {
     root: fixture.root,
     temporary_root: fixture.temporaryRoot,
     run_id: fixture.runId,
@@ -212,8 +220,13 @@ function callCurrentShardBuilder(
     environment: fixture.environment,
     wrappedInvocation: true,
     consumerConfiguration: fixture.consumerConfiguration,
-    ...overrides,
-  });
+    ...inputOverrides,
+  };
+  if (omitConsumerConfiguration) {
+    const { consumerConfiguration: _consumerConfiguration, ...withoutConsumerConfiguration } = input;
+    return currentShardBuilder()(withoutConsumerConfiguration);
+  }
+  return currentShardBuilder()(input);
 }
 
 const clockEnvironment = (
@@ -606,6 +619,197 @@ describe('prepareCurrentCoverageShardLaunches', () => {
     } finally {
       if (passed) rmSync(fixture.root, { recursive: true, force: true });
       else console.error('Preserved failed current shard policy fixture at ' + fixture.root);
+    }
+  });
+
+  test('offers copied captured metadata and the current owner scope to an optional review callback', () => {
+    const fixture = currentShardPolicyFixture();
+    let passed = false;
+    try {
+      const expectedScope = buildCoverageReviewScope({
+        packageAccess: requireSafeRepositoryAccess(fixture.root),
+        inputs: fixture.inputs,
+        runtimeExecutableSha256: fixture.runtimeExecutableSha256,
+        bunVersion: fixture.bunVersion,
+        environment: {
+          ...fixture.environment,
+          TMPDIR: fixture.temporaryRoot,
+          AGENT_RUNTIME_TEST_REPOSITORY_ROOT: fixture.consumerConfiguration.repository_root,
+        },
+        wrappedInvocation: true,
+        consumerConfiguration: fixture.consumerConfiguration,
+      });
+      const expectedScopeHash = canonicalCoverageReviewScope(expectedScope);
+      const expectedEnvelope = envelope(fixture.testInputs, {
+        scope: expectedScope,
+        reviews: fixture.testInputs.map((row) => ({
+          ...review(row, expectedScopeHash),
+          shared_resources: [],
+        })),
+      });
+      let callbackCount = 0;
+      const prepared = callCurrentShardBuilder(fixture, {
+        reviewCurrentInputs: (review) => {
+          callbackCount++;
+          const { metadata, scope: actualScope } = review;
+          expect(Object.isFrozen(metadata)).toBe(true);
+          expect(Object.isFrozen(metadata.sources)).toBe(true);
+          expect(Object.isFrozen(metadata.sources[0])).toBe(true);
+          expect(Object.isFrozen(metadata.tests)).toBe(true);
+          expect(Object.isFrozen(metadata.test_selection)).toBe(true);
+          expect(Object.isFrozen(metadata.test_selection.tests)).toBe(true);
+          expect(Object.isFrozen(metadata.test_inputs)).toBe(true);
+          expect(Object.isFrozen(metadata.test_inputs[0])).toBe(true);
+          expect(Object.isFrozen(metadata.tool_inputs)).toBe(true);
+          expect(Object.isFrozen(metadata.tool_inputs[0])).toBe(true);
+          expect(Object.hasOwn(metadata, 'input_bytes')).toBe(false);
+          expect(metadata).not.toBe(fixture.inputs);
+          expect(metadata.sources).not.toBe(fixture.inputs.sources);
+          expect(metadata.test_selection).not.toBe(fixture.inputs.test_selection);
+          expect(metadata.test_inputs).not.toBe(fixture.inputs.test_inputs);
+          expect(metadata.tool_inputs).not.toBe(fixture.inputs.tool_inputs);
+          expect(metadata.sources).toEqual(fixture.inputs.sources);
+          expect(metadata.tests).toEqual(fixture.inputs.tests);
+          expect(metadata.test_inputs).toEqual(fixture.inputs.test_inputs);
+          expect(metadata.tool_inputs).toEqual(fixture.inputs.tool_inputs);
+          expect(actualScope).toEqual(expectedScope);
+          expect(Object.isFrozen(actualScope)).toBe(true);
+          expect(review.consumer_configuration).toEqual(fixture.consumerConfiguration);
+          expect(review.consumer_configuration).not.toBe(fixture.consumerConfiguration);
+          expect(Object.isFrozen(review.consumer_configuration)).toBe(true);
+          return expectedEnvelope;
+        },
+      });
+
+      expect(callbackCount).toBe(1);
+      expect(prepared.status).toBe('prepared');
+      expect(existsSync(path.join(fixture.root, 'coverage', 'bun-unified', 'runs', fixture.runId))).toBe(false);
+      passed = true;
+    } finally {
+      if (passed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Preserved review callback fixture at ' + fixture.root);
+    }
+  });
+
+  test.each([
+    ['malformed', null, 'eligibility-envelope-malformed'],
+    [
+      'stale',
+      {
+        schema: 'VidaCoverageShardEligibility/v1',
+        scope: { ...scope, source_fingerprint: '8'.repeat(64) },
+        review_scope_sha256: canonicalCoverageReviewScope(scope),
+        reviews: [],
+      },
+      'review-scope-stale-or-mismatched',
+    ],
+  ] as const)(
+    'keeps serial fallback when the optional review callback returns %s eligibility',
+    (_label, eligibility, reason) => {
+      const fixture = currentShardPolicyFixture();
+      let passed = false;
+      try {
+        let callbackCount = 0;
+        const result = callCurrentShardBuilder(fixture, {
+          reviewCurrentInputs: () => {
+            callbackCount++;
+            return eligibility;
+          },
+        });
+        expect(result.status).toBe('serial-fallback');
+        expect('launches' in result).toBe(false);
+        expect(callbackCount).toBe(1);
+        if (result.status !== 'serial-fallback') throw new Error('Invalid callback eligibility did not fall back.');
+        expect(result.reason).toBe(reason);
+        expect(existsSync(path.join(fixture.root, 'coverage', 'bun-unified', 'runs', fixture.runId))).toBe(false);
+        passed = true;
+      } finally {
+        if (passed) rmSync(fixture.root, { recursive: true, force: true });
+        else console.error('Preserved invalid review callback fixture at ' + fixture.root);
+      }
+    },
+  );
+
+  test('does not infer resource approval when the callback returns an incomplete current review', () => {
+    const fixture = currentShardPolicyFixture();
+    let passed = false;
+    try {
+      const currentScope = buildCoverageReviewScope({
+        packageAccess: requireSafeRepositoryAccess(fixture.root),
+        inputs: fixture.inputs,
+        runtimeExecutableSha256: fixture.runtimeExecutableSha256,
+        bunVersion: fixture.bunVersion,
+        environment: {
+          ...fixture.environment,
+          TMPDIR: fixture.temporaryRoot,
+          AGENT_RUNTIME_TEST_REPOSITORY_ROOT: fixture.consumerConfiguration.repository_root,
+        },
+        wrappedInvocation: true,
+        consumerConfiguration: fixture.consumerConfiguration,
+      });
+      let callbackCount = 0;
+      const result = callCurrentShardBuilder(fixture, {
+        reviewCurrentInputs: () => {
+          callbackCount++;
+          return envelope([], { scope: currentScope, reviews: [] });
+        },
+      });
+      expect(result.status).toBe('serial-fallback');
+      expect(callbackCount).toBe(1);
+      if (result.status !== 'serial-fallback') throw new Error('Incomplete review did not fall back.');
+      expect(result.reason).toBe('review-selection-incomplete');
+      expect(existsSync(path.join(fixture.root, 'coverage', 'bun-unified', 'runs', fixture.runId))).toBe(false);
+      passed = true;
+    } finally {
+      if (passed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Preserved incomplete review callback fixture at ' + fixture.root);
+    }
+  });
+
+  test('omits consumer configuration when the owner did not capture a binding', () => {
+    const fixture = currentShardPolicyFixture();
+    let passed = false;
+    try {
+      let callbackCount = 0;
+      const result = callCurrentShardBuilder(fixture, {
+        omitConsumerConfiguration: true,
+        reviewCurrentInputs: (review) => {
+          callbackCount++;
+          expect(Object.hasOwn(review, 'consumer_configuration')).toBe(false);
+          return null;
+        },
+      });
+      expect(callbackCount).toBe(1);
+      expect(result.status).toBe('serial-fallback');
+      if (result.status !== 'serial-fallback') throw new Error('Malformed callback result did not fall back.');
+      expect(result.reason).toBe('eligibility-envelope-malformed');
+      passed = true;
+    } finally {
+      if (passed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Preserved missing consumer binding review fixture at ' + fixture.root);
+    }
+  });
+
+  test('treats an asynchronous callback result as a malformed eligibility envelope', () => {
+    const fixture = currentShardPolicyFixture();
+    let passed = false;
+    try {
+      let callbackCount = 0;
+      const result = callCurrentShardBuilder(fixture, {
+        reviewCurrentInputs: () => {
+          callbackCount++;
+          return Promise.resolve(envelope(fixture.testInputs));
+        },
+      });
+      expect(result.status).toBe('serial-fallback');
+      expect(callbackCount).toBe(1);
+      if (result.status !== 'serial-fallback') throw new Error('Asynchronous callback result did not fall back.');
+      expect(result.reason).toBe('eligibility-envelope-malformed');
+      expect(existsSync(path.join(fixture.root, 'coverage', 'bun-unified', 'runs', fixture.runId))).toBe(false);
+      passed = true;
+    } finally {
+      if (passed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Preserved asynchronous review callback fixture at ' + fixture.root);
     }
   });
 

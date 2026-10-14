@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { mutationToolInputs, executeMutationCommand } from './mutation-evidence.js';
 import { qualityInputProjections, qualityFingerprint, readBunPin, sha256 } from './bun-coverage-evidence.ts';
 import { validateCurrentCoverageReportWithInputs } from './bun-coverage-report-validator.js';
+import { assertCrapPlanPrerequisites } from './crap-gate.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryRoot = path.resolve(packageRoot, '../..');
@@ -90,13 +91,14 @@ function parseRecord(bytes: Buffer, label: string): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-async function readBudgetPlan(): Promise<Budget> {
+export async function readBudgetPlan(): Promise<Budget> {
   const file = path.resolve(
     process.env.VIDA_CRAP_BUDGET_PLAN ??
       path.join(repositoryRoot, '.agent/work/core-runtime-reactivation/crap-budgets.v1.json'),
   );
   const bytes = await readBoundedRegularFile(file, 'Frozen CRAP budget plan', 4 * 1024 * 1024);
-  parseRecord(bytes, 'Frozen CRAP budget plan');
+  const value = parseRecord(bytes, 'Frozen CRAP budget plan');
+  assertCrapPlanPrerequisites(value, repositoryRoot);
   return { path: file, sha256: sha256(bytes) };
 }
 

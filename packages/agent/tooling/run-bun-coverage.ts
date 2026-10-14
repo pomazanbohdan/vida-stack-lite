@@ -69,6 +69,36 @@ import type { FileCoverageData } from 'istanbul-lib-instrument';
 import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
 import { expectedJavascriptFiles } from './maintained-source-inventory.ts';
 
+type DeepReadonly<T> = T extends readonly unknown[]
+  ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
+  : T extends object
+    ? { readonly [Key in keyof T]: DeepReadonly<T[Key]> }
+    : T;
+export type CoverageReviewMetadata = DeepReadonly<Omit<CoverageInputs, 'input_bytes'>>;
+export type CurrentCoverageReviewCallback = (input: {
+  metadata: CoverageReviewMetadata;
+  scope: Readonly<CoverageReviewScope>;
+  consumer_configuration?: DeepReadonly<Awaited<ReturnType<typeof captureCoverageConsumerBinding>>>;
+}) => unknown;
+export type RunBunCoverageOptions = {
+  reviewCurrentInputs?: CurrentCoverageReviewCallback;
+};
+
+function freezeCopiedReviewValue(value: unknown): unknown {
+  if (Array.isArray(value)) return Object.freeze(value.map(freezeCopiedReviewValue));
+  if (typeof value === 'object' && value !== null) {
+    const copy: Record<string, unknown> = {};
+    for (const [key, member] of Object.entries(value)) copy[key] = freezeCopiedReviewValue(member);
+    return Object.freeze(copy);
+  }
+  return value;
+}
+
+function freezeCopiedReviewMetadata(inputs: CoverageInputs): CoverageReviewMetadata {
+  const { input_bytes: _privateCapture, ...metadata } = inputs;
+  return freezeCopiedReviewValue(metadata) as CoverageReviewMetadata;
+}
+
 /** Deny stale emitted SDKs before allocating coverage outputs or launching tests. */
 export function assertCurrentCoverageSdkFreshness(root: string, inputs: CoverageInputs): void {
   if (
@@ -468,6 +498,7 @@ export function prepareCurrentCoverageShardLaunches(input: {
   environment: NodeJS.ProcessEnv;
   wrappedInvocation?: boolean;
   consumerConfiguration?: Awaited<ReturnType<typeof captureCoverageConsumerBinding>>;
+  reviewCurrentInputs?: CurrentCoverageReviewCallback;
 }) {
   if ((input.environment.BUN_OPTIONS ?? '').trim())
     throw new Error('Ambient BUN_OPTIONS are unsupported for coverage.');
@@ -486,25 +517,27 @@ export function prepareCurrentCoverageShardLaunches(input: {
   } catch {
     return fallback('package-safe-access-unavailable');
   }
-  if (typeof packageAccess.readVerifiedCaptureBytes !== 'function')
-    return fallback('verified-review-reader-unavailable');
-
-  let bytes: Buffer;
-  try {
-    bytes = packageAccess.readVerifiedCaptureBytes(
-      coverageShardEligibilityPath,
-      'current coverage shard eligibility review',
-      maxCoverageShardEligibilityBytes,
-    );
-  } catch {
-    return fallback('review-artifact-unavailable');
-  }
-  const artifactSha256 = sha256(bytes);
   let envelope: unknown;
-  try {
-    envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
-  } catch {
-    return fallback('review-artifact-malformed', artifactSha256);
+  let artifactSha256: string | undefined;
+  if (!input.reviewCurrentInputs) {
+    if (typeof packageAccess.readVerifiedCaptureBytes !== 'function')
+      return fallback('verified-review-reader-unavailable');
+    let bytes: Buffer;
+    try {
+      bytes = packageAccess.readVerifiedCaptureBytes(
+        coverageShardEligibilityPath,
+        'current coverage shard eligibility review',
+        maxCoverageShardEligibilityBytes,
+      );
+    } catch {
+      return fallback('review-artifact-unavailable');
+    }
+    artifactSha256 = sha256(bytes);
+    try {
+      envelope = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+    } catch {
+      return fallback('review-artifact-malformed', artifactSha256);
+    }
   }
 
   const environment = { ...input.environment };
@@ -530,6 +563,25 @@ export function prepareCurrentCoverageShardLaunches(input: {
     new Set(selectedTestInputs.map((row) => row.path)).size !== input.inputs.tests.length
   )
     return fallback('captured-test-selection-incomplete', artifactSha256, reviewScopeSha256);
+  if (input.reviewCurrentInputs) {
+    const metadata = freezeCopiedReviewMetadata(input.inputs);
+    const frozenScope = Object.freeze({ ...scope });
+    try {
+      envelope = input.reviewCurrentInputs({
+        metadata,
+        scope: frozenScope,
+        ...(input.consumerConfiguration
+          ? {
+              consumer_configuration: freezeCopiedReviewValue(input.consumerConfiguration) as DeepReadonly<
+                Awaited<ReturnType<typeof captureCoverageConsumerBinding>>
+              >,
+            }
+          : {}),
+      });
+    } catch {
+      return fallback('review-callback-failed', undefined, reviewScopeSha256);
+    }
+  }
   const prepared = prepareCoverageShardLaunches({
     root: input.root,
     temporary_root: temporaryRoot,
@@ -544,7 +596,7 @@ export function prepareCurrentCoverageShardLaunches(input: {
     return fallback(prepared.reason, artifactSha256, prepared.reviewScopeSha256 ?? reviewScopeSha256);
   return {
     ...prepared,
-    artifact_sha256: artifactSha256,
+    ...(artifactSha256 === undefined ? {} : { artifact_sha256: artifactSha256 }),
     review_scope_sha256: reviewScopeSha256,
   };
 }
@@ -812,7 +864,7 @@ export function coveragePhaseProducerObservation(
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputRoot = path.join(root, 'coverage', 'bun-unified');
-if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
+export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promise<void> {
   // One command-entry allowance covers pin resolution, current typecheck,
   // capture, the direct producer, CRAP and final report work.
   const commandBudget = executionBudget(300_000, 30_000);
@@ -823,6 +875,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     throw new Error('Unsupported Bun coverage runner argument.');
   if (args.length > 1) throw new Error('Bun coverage runner accepts one baseline selection flag.');
   const selectionMode = args.length ? 'published-baseline-bun-native' : 'current';
+  if (options.reviewCurrentInputs && selectionMode !== 'current')
+    throw new Error('Current input review callbacks are unsupported for historical coverage.');
   const pinnedBun = await readBunPin(root);
   if (process.versions.bun !== pinnedBun) throw new Error(`Unified coverage requires Bun ${pinnedBun}.`);
 
@@ -1205,6 +1259,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
             bunVersion: pinnedBun,
             environment: process.env,
             wrappedInvocation,
+            ...(options.reviewCurrentInputs ? { reviewCurrentInputs: options.reviewCurrentInputs } : {}),
             ...(consumerConfiguration ? { consumerConfiguration } : {}),
           })
         : undefined;
@@ -1682,3 +1737,5 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   if (executionFailed) throw executionError;
   if (cleanupFailed) throw cleanupError;
 }
+
+if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) await runBunCoverage();

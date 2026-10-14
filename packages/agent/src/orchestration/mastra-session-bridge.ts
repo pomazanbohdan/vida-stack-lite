@@ -81,9 +81,9 @@ interface InitialSourceContinuationKey {
 
 /** Mastra owns stage order; the session ledger only issues and records effects. */
 function workflowDatabaseIdentity(file: string): string {
-  const stat = lstatSync(file);
-  requireBridge(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1, 'Mastra database path is unsafe');
-  return stat.dev + ':' + stat.ino;
+  const stat = lstatSync(file, { bigint: true });
+  requireBridge(stat.isFile() && !stat.isSymbolicLink() && stat.nlink === 1n, 'Mastra database path is unsafe');
+  return `${stat.dev}:${stat.ino}`;
 }
 
 async function initializeWorkflowStorage(
@@ -143,7 +143,7 @@ export class MastraSessionBridge {
   readonly #binding: SessionEngineBinding;
   readonly #ledger: MastraSessionLedger;
   readonly #projectIds: readonly string[];
-  readonly #engineIdentity: { readonly dev: number; readonly ino: number };
+  readonly #engineIdentity: { readonly dev: bigint; readonly ino: bigint };
   readonly #correctiveExecution: CorrectiveExecution | undefined;
   readonly #configuredFrontier: { readonly identity: WorkIdentity; readonly attempt: number } | undefined;
   readonly #initialSourceContinuation: InitialSourceContinuationKey | undefined;
@@ -180,9 +180,9 @@ export class MastraSessionBridge {
     this.#initialSourceContinuation = initialSourceContinuation
       ? structuredClone(initialSourceContinuation)
       : undefined;
-    const physical = lstatSync(sessionBridgeDatabasePath(repositoryRoot, config));
+    const physical = lstatSync(sessionBridgeDatabasePath(repositoryRoot, config), { bigint: true });
     requireBridge(
-      physical.isFile() && !physical.isSymbolicLink() && physical.nlink === 1,
+      physical.isFile() && !physical.isSymbolicLink() && physical.nlink === 1n,
       'Mastra database path is unsafe',
     );
     this.#engineIdentity = { dev: physical.dev, ino: physical.ino };
@@ -758,11 +758,13 @@ export class MastraSessionBridge {
   }
 
   #assertEngineFile(): void {
-    const physical = lstatSync(sessionBridgeDatabasePath(this.#binding.repositoryRoot, this.#binding.config));
+    const physical = lstatSync(sessionBridgeDatabasePath(this.#binding.repositoryRoot, this.#binding.config), {
+      bigint: true,
+    });
     requireBridge(
       physical.isFile() &&
         !physical.isSymbolicLink() &&
-        physical.nlink === 1 &&
+        physical.nlink === 1n &&
         physical.dev === this.#engineIdentity.dev &&
         physical.ino === this.#engineIdentity.ino,
       'Mastra database was substituted',

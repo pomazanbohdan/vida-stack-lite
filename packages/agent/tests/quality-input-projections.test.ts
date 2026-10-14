@@ -10,6 +10,7 @@ import { expectedJavascriptFiles } from '../tooling/maintained-source-inventory.
 import {
   capturedModuleInputs,
   coverageToolInputs,
+  type CoverageReviewGitChange,
   coverageReviewInputPaths,
   sdkFormationToolInputPaths,
   qualityFingerprint,
@@ -71,15 +72,37 @@ describe('final quality deadlines', () => {
 
 describe('final quality input projections', () => {
   test('review input delta discovers helpers and owned SDK inputs without selecting helper files as tests', () => {
-    const discovered = coverageReviewInputPaths(
-      {
-        sources: [{ path: 'src/current.ts', sha256: 'a'.repeat(64) }],
-        test_inputs: [{ path: 'tests/configured-workflow.test.ts', sha256: 'b'.repeat(64) }],
-        tool_inputs: [{ path: 'tooling/bun-coverage-evidence.ts', sha256: 'c'.repeat(64) }],
-        test_selection: { mode: 'full-current-test-set', tests: ['tests/configured-workflow.test.ts'] },
-      },
-      ['tests/helpers/new-fixture.ts', 'tests/new-case.test.ts', 'src/current.ts'],
-    );
+    const anchor = {
+      sources: [{ path: 'src/current.ts', sha256: 'a'.repeat(64) }],
+      test_inputs: [{ path: 'tests/configured-workflow.test.ts', sha256: 'b'.repeat(64) }],
+      tool_inputs: [{ path: 'tooling/bun-coverage-evidence.ts', sha256: 'c'.repeat(64) }],
+      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/configured-workflow.test.ts'] },
+    };
+    const currentSelection = {
+      mode: 'full-current-test-set' as const,
+      tests: ['tests/configured-workflow.test.ts', 'tests/new-case.test.ts'],
+    };
+    const current = {
+      sources: anchor.sources,
+      test_inputs: [
+        ...anchor.test_inputs,
+        { path: 'tests/helpers/new-fixture.ts', sha256: 'd'.repeat(64) },
+        { path: 'tests/new-case.test.ts', sha256: 'e'.repeat(64) },
+      ],
+      tool_inputs: [
+        ...anchor.tool_inputs,
+        ...[...new Set([...coverageToolInputs, ...sdkFormationToolInputPaths('current', currentSelection)])].map(
+          (file) => ({ path: file, sha256: 'f'.repeat(64) }),
+        ),
+      ],
+      test_selection: currentSelection,
+    };
+    const changes: CoverageReviewGitChange[] = [
+      { status: 'A', path: 'tests/helpers/new-fixture.ts' },
+      { status: 'A', path: 'tests/new-case.test.ts' },
+      { status: 'M', path: 'src/current.ts' },
+    ];
+    const discovered = coverageReviewInputPaths(anchor, changes, current);
     expect(discovered).toMatchObject({
       added_tests: ['tests/helpers/new-fixture.ts', 'tests/new-case.test.ts'],
       selected_tests: ['tests/configured-workflow.test.ts', 'tests/new-case.test.ts'],
@@ -98,6 +121,185 @@ describe('final quality input projections', () => {
       'dist/sdk-formation.json',
     ])
       expect(discovered.refresh_paths).toContain(file);
+  });
+
+  test('review input reconciliation applies typed A/M/D/R changes to every owner inventory', () => {
+    const anchor = {
+      sources: [
+        { path: 'src/modified.ts', sha256: 'a'.repeat(64) },
+        { path: 'src/deleted.ts', sha256: 'b'.repeat(64) },
+        { path: 'src/renamed-old.ts', sha256: 'c'.repeat(64) },
+      ],
+      test_inputs: [
+        { path: 'tests/modified.test.ts', sha256: 'd'.repeat(64) },
+        { path: 'tests/deleted.test.ts', sha256: 'e'.repeat(64) },
+        { path: 'tests/renamed-old.test.ts', sha256: 'f'.repeat(64) },
+        { path: 'tests/helpers/old-helper.ts', sha256: '1'.repeat(64) },
+      ],
+      tool_inputs: [
+        { path: 'schemas/modified.schema.json', sha256: '2'.repeat(64) },
+        { path: 'schemas/deleted.schema.json', sha256: '3'.repeat(64) },
+        { path: 'schemas/renamed-old.schema.json', sha256: '4'.repeat(64) },
+        { path: 'templates/old-template.yaml', sha256: '5'.repeat(64) },
+        { path: 'tooling/modified-runtime.ts', sha256: '6'.repeat(64) },
+        { path: 'tooling/deleted-runtime.ts', sha256: '7'.repeat(64) },
+        { path: 'tooling/renamed-old-runtime.ts', sha256: '8'.repeat(64) },
+      ],
+      test_selection: {
+        mode: 'full-current-test-set' as const,
+        tests: ['tests/deleted.test.ts', 'tests/modified.test.ts', 'tests/renamed-old.test.ts'],
+      },
+    };
+    const current = {
+      sources: [
+        { path: 'src/added.ts', sha256: '9'.repeat(64) },
+        { path: 'src/modified.ts', sha256: 'a'.repeat(64) },
+        { path: 'src/renamed-new.ts', sha256: 'b'.repeat(64) },
+      ],
+      test_inputs: [
+        { path: 'tests/added.test.ts', sha256: 'c'.repeat(64) },
+        { path: 'tests/helpers/new-helper.ts', sha256: 'd'.repeat(64) },
+        { path: 'tests/modified.test.ts', sha256: 'e'.repeat(64) },
+        { path: 'tests/renamed-new.test.ts', sha256: 'f'.repeat(64) },
+      ],
+      tool_inputs: [
+        { path: 'schemas/added.schema.json', sha256: '1'.repeat(64) },
+        { path: 'schemas/modified.schema.json', sha256: '2'.repeat(64) },
+        { path: 'schemas/renamed-new.schema.json', sha256: '3'.repeat(64) },
+        { path: 'templates/new-template.yaml', sha256: '4'.repeat(64) },
+        { path: 'tooling/added-runtime.ts', sha256: '5'.repeat(64) },
+        { path: 'tooling/modified-runtime.ts', sha256: '6'.repeat(64) },
+        { path: 'tooling/renamed-new-runtime.ts', sha256: '7'.repeat(64) },
+      ],
+      test_selection: {
+        mode: 'full-current-test-set' as const,
+        tests: ['tests/added.test.ts', 'tests/modified.test.ts', 'tests/renamed-new.test.ts'],
+      },
+    };
+    const changes = [
+      { status: 'A' as const, path: 'src/added.ts' },
+      { status: 'M' as const, path: 'src/modified.ts' },
+      { status: 'D' as const, path: 'src/deleted.ts' },
+      { status: 'R' as const, old_path: 'src/renamed-old.ts', path: 'src/renamed-new.ts' },
+      { status: 'A' as const, path: 'tests/added.test.ts' },
+      { status: 'A' as const, path: 'tests/helpers/new-helper.ts' },
+      { status: 'M' as const, path: 'tests/modified.test.ts' },
+      { status: 'D' as const, path: 'tests/deleted.test.ts' },
+      { status: 'D' as const, path: 'tests/helpers/old-helper.ts' },
+      {
+        status: 'R' as const,
+        old_path: 'tests/renamed-old.test.ts',
+        path: 'tests/renamed-new.test.ts',
+      },
+      { status: 'A' as const, path: 'schemas/added.schema.json' },
+      { status: 'M' as const, path: 'schemas/modified.schema.json' },
+      { status: 'D' as const, path: 'schemas/deleted.schema.json' },
+      {
+        status: 'R' as const,
+        old_path: 'schemas/renamed-old.schema.json',
+        path: 'schemas/renamed-new.schema.json',
+      },
+      { status: 'A' as const, path: 'templates/new-template.yaml' },
+      { status: 'D' as const, path: 'templates/old-template.yaml' },
+      { status: 'A' as const, path: 'tooling/added-runtime.ts' },
+      { status: 'M' as const, path: 'tooling/modified-runtime.ts' },
+      { status: 'D' as const, path: 'tooling/deleted-runtime.ts' },
+      {
+        status: 'R' as const,
+        old_path: 'tooling/renamed-old-runtime.ts',
+        path: 'tooling/renamed-new-runtime.ts',
+      },
+    ];
+
+    const reconciled = coverageReviewInputPaths(anchor, changes, current);
+    expect(reconciled.sources.map(({ path: file }) => file)).toEqual([
+      'src/added.ts',
+      'src/modified.ts',
+      'src/renamed-new.ts',
+    ]);
+    expect(reconciled.test_inputs.map(({ path: file }) => file)).toEqual([
+      'tests/added.test.ts',
+      'tests/helpers/new-helper.ts',
+      'tests/modified.test.ts',
+      'tests/renamed-new.test.ts',
+    ]);
+    expect(reconciled.tool_inputs.map(({ path: file }) => file)).toEqual([
+      'schemas/added.schema.json',
+      'schemas/modified.schema.json',
+      'schemas/renamed-new.schema.json',
+      'templates/new-template.yaml',
+      'tooling/added-runtime.ts',
+      'tooling/modified-runtime.ts',
+      'tooling/renamed-new-runtime.ts',
+    ]);
+    expect(reconciled.selected_tests).toEqual([
+      'tests/added.test.ts',
+      'tests/modified.test.ts',
+      'tests/renamed-new.test.ts',
+    ]);
+    expect(reconciled.refresh_paths).toEqual(
+      [
+        'schemas/added.schema.json',
+        'schemas/modified.schema.json',
+        'schemas/renamed-new.schema.json',
+        'src/added.ts',
+        'src/modified.ts',
+        'src/renamed-new.ts',
+        'templates/new-template.yaml',
+        'tests/added.test.ts',
+        'tests/helpers/new-helper.ts',
+        'tests/modified.test.ts',
+        'tests/renamed-new.test.ts',
+        'tooling/added-runtime.ts',
+        'tooling/modified-runtime.ts',
+        'tooling/renamed-new-runtime.ts',
+      ].sort(),
+    );
+    expect(reconciled.removed_paths).toEqual([
+      'schemas/deleted.schema.json',
+      'schemas/renamed-old.schema.json',
+      'src/deleted.ts',
+      'src/renamed-old.ts',
+      'templates/old-template.yaml',
+      'tests/deleted.test.ts',
+      'tests/helpers/old-helper.ts',
+      'tests/renamed-old.test.ts',
+      'tooling/deleted-runtime.ts',
+      'tooling/renamed-old-runtime.ts',
+    ]);
+    expect(reconciled.renamed_paths).toEqual([
+      { old_path: 'schemas/renamed-old.schema.json', new_path: 'schemas/renamed-new.schema.json' },
+      { old_path: 'src/renamed-old.ts', new_path: 'src/renamed-new.ts' },
+      { old_path: 'tests/renamed-old.test.ts', new_path: 'tests/renamed-new.test.ts' },
+      { old_path: 'tooling/renamed-old-runtime.ts', new_path: 'tooling/renamed-new-runtime.ts' },
+    ]);
+  });
+
+  test('review refreshes captured SDK outputs whose bound digests changed without Git path records', () => {
+    const anchor = {
+      sources: [],
+      test_inputs: [],
+      tool_inputs: [
+        { path: 'dist/sdk-formation.json', sha256: 'a'.repeat(64) },
+        { path: 'dist/src/index.js', sha256: 'b'.repeat(64) },
+        { path: 'dist/src/runtime.js', sha256: 'c'.repeat(64) },
+      ],
+      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/configured-workflow.test.ts'] },
+    };
+    const current = {
+      sources: [],
+      test_inputs: [],
+      tool_inputs: [
+        { path: 'dist/sdk-formation.json', sha256: 'd'.repeat(64) },
+        { path: 'dist/src/index.js', sha256: 'e'.repeat(64) },
+        { path: 'dist/src/runtime.js', sha256: 'c'.repeat(64) },
+      ],
+      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/configured-workflow.test.ts'] },
+    };
+
+    const result = coverageReviewInputPaths(anchor, [], current);
+
+    expect(result.refresh_paths).toEqual(['dist/sdk-formation.json', 'dist/src/index.js']);
   });
 
   test('review input discovery shares the current SDK artifact inventory and excludes inert or historical selections', () => {
@@ -131,17 +333,31 @@ describe('final quality input projections', () => {
           test_selection: { mode: 'published-baseline-bun-native', tests: [] },
         },
         [],
+        {
+          sources: [],
+          test_inputs: [],
+          tool_inputs: [],
+          test_selection: { mode: 'published-baseline-bun-native', tests: [] },
+        },
       ),
     ).toThrow('requires a current test selection');
-    const result = coverageReviewInputPaths(
-      {
-        sources: [],
-        test_inputs: [{ path: 'tests/old.test.ts', sha256: 'a'.repeat(64) }],
-        tool_inputs: coverageToolInputs.map((file) => ({ path: file, sha256: 'b'.repeat(64) })),
-        test_selection: { mode: 'full-current-test-set', tests: ['tests/old.test.ts'] },
-      },
-      ['tests/new.test.ts', 'tests/new.test.ts', 'tests/old.test.ts', 'README.md'],
-    );
+    const anchor = {
+      sources: [],
+      test_inputs: [{ path: 'tests/old.test.ts', sha256: 'a'.repeat(64) }],
+      tool_inputs: coverageToolInputs.map((file) => ({ path: file, sha256: 'b'.repeat(64) })),
+      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/old.test.ts'] },
+    };
+    const current = {
+      ...anchor,
+      test_inputs: [...anchor.test_inputs, { path: 'tests/new.test.ts', sha256: 'c'.repeat(64) }],
+      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/new.test.ts', 'tests/old.test.ts'] },
+    };
+    const changes: CoverageReviewGitChange[] = [
+      { status: 'A', path: 'tests/new.test.ts' },
+      { status: 'M', path: 'tests/old.test.ts' },
+      { status: 'M', path: 'README.md' },
+    ];
+    const result = coverageReviewInputPaths(anchor, changes, current);
     expect(result.added_tests).toEqual(['tests/new.test.ts']);
     expect(result.added_tools).toEqual([]);
     expect(result.selected_tests).toEqual(['tests/new.test.ts', 'tests/old.test.ts']);

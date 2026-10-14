@@ -286,7 +286,7 @@
     "bun:version": "bun bin/bun.ts run bun:version:pinned",
     "bun:version:pinned": "bun --version && bun --revision",
     "preflight": "bun bin/bun.ts run preflight:pinned",
-    "preflight:pinned": "bun -e \"const {existsSync}=await import('node:fs');const forbidden=['config/agent-profiles.v1.json','config/authorization/cedar-policy.v1.cedar','config/authorization/cedar-schema.v1.json','config/differential-normalization.v1.json','config/governance/edictum-policy.v1.json','config/integrations/edictum-workflow.v1.yml','config/orchestration/mastra-policy.v1.json','config/platform-knowledge.sources.json','config/runtime-operations.v1.json','dist/schemas/runtime-config.v1.schema.json','schemas/runtime-config.v1.schema.json'];const present=forbidden.filter(existsSync);if(present.length){console.error('candidate preflight found obsolete files:\\n'+present.join('\\n'));process.exit(1)}\"",
+    "preflight:pinned": "bun tooling/preflight.ts",
     "clean": "bun bin/bun.ts run clean:pinned",
     "clean:pinned": "bun tooling/clean.ts",
     "fingerprint": "bun bin/bun.ts run fingerprint:pinned",

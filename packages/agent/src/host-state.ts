@@ -4929,7 +4929,7 @@ export function openHostStateDatabase(
     const database = new Database(databasePath, { create: true, strict: true });
     capture(database);
     assertHostStateDatabasePathSafe(databasePath);
-    const opened = lstatSync(databasePath);
+    const opened = lstatSync(databasePath, { bigint: true });
     const main = database
       .query<{ name: string; file: string }, []>('PRAGMA database_list')
       .all()
@@ -4942,10 +4942,12 @@ export function openHostStateDatabase(
     database.exec('PRAGMA journal_mode=WAL');
     database.exec('PRAGMA synchronous=FULL');
     database.exec('PRAGMA busy_timeout=1000');
-    const after = lstatSync(databasePath);
+    const after = lstatSync(databasePath, { bigint: true });
     assertHostStateDatabaseSidecarsSafe(databasePath);
     requireState(
-      opened.dev === after.dev &&
+      opened.nlink === 1n &&
+        after.nlink === 1n &&
+        opened.dev === after.dev &&
         opened.ino === after.ino &&
         access.directoryIdentity(parentRelative, 'initialized Host database parent') === parentIdentity,
       'Host database identity changed during initialization',
@@ -5256,7 +5258,7 @@ export function initializeTaskSourceBindingWorkProjectionSchema(database: Databa
 export class HostStateStore {
   readonly #database: Database;
   #storedWorkHistoryReadCache: StoredWorkHistoryReadCache | undefined;
-  readonly #producerDatabaseIdentity: { readonly dev: number; readonly ino: number } | undefined;
+  readonly #producerDatabaseIdentity: { readonly dev: bigint; readonly ino: bigint } | undefined;
   readonly #sessionProducers = new WeakMap<
     SessionProducerHandle,
     { ledger: MastraSessionLedger; input: SessionProducerInput }
@@ -5313,7 +5315,7 @@ export class HostStateStore {
       repositoryRoot === undefined
         ? undefined
         : (() => {
-            const stat = lstatSync(database.filename);
+            const stat = lstatSync(database.filename, { bigint: true });
             return { dev: stat.dev, ino: stat.ino };
           })();
     this.#workspaceId = workspaceId;
@@ -5969,11 +5971,11 @@ export class HostStateStore {
       'unprepared recovery caller or intent invalid',
     );
     const current = loadRuntimeConfig(this.#repositoryRoot);
-    const physical = lstatSync(this.#database.filename);
+    const physical = lstatSync(this.#database.filename, { bigint: true });
     requireState(
       physical.isFile() &&
         !physical.isSymbolicLink() &&
-        physical.nlink === 1 &&
+        physical.nlink === 1n &&
         physical.dev === this.#producerDatabaseIdentity?.dev &&
         physical.ino === this.#producerDatabaseIdentity?.ino &&
         realpathSync.native(this.#database.filename) ===
@@ -6259,11 +6261,11 @@ export class HostStateStore {
     readonly initialContinuation: InitialSourceContinuationReceipt | null;
   } {
     const bound = MastraSessionLedger.prototype.sessionProducerBinding.call(ledger);
-    const physical = lstatSync(this.#database.filename);
+    const physical = lstatSync(this.#database.filename, { bigint: true });
     requireState(
       physical.isFile() &&
         !physical.isSymbolicLink() &&
-        physical.nlink === 1 &&
+        physical.nlink === 1n &&
         physical.dev === this.#producerDatabaseIdentity?.dev &&
         physical.ino === this.#producerDatabaseIdentity?.ino,
       'session producer Host database was substituted',
@@ -7394,11 +7396,11 @@ export class HostStateStore {
     const access = requireSafeRepositoryAccess(repositoryRoot);
     const parent = path.posix.dirname(relative);
     const parentIdentity = access.directoryIdentity(parent, 'Host database parent');
-    const physical = lstatSync(this.#database.filename);
+    const physical = lstatSync(this.#database.filename, { bigint: true });
     requireState(
       physical.isFile() &&
         !physical.isSymbolicLink() &&
-        physical.nlink === 1 &&
+        physical.nlink === 1n &&
         physical.dev === this.#producerDatabaseIdentity?.dev &&
         physical.ino === this.#producerDatabaseIdentity?.ino,
       'configured Host database was substituted',

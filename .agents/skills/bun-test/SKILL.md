@@ -571,6 +571,18 @@ Successful async coverage observer cases read the owner's scheduled timer delays
 and join native PID to receipt; use the existing timeout/signal controls for
 actual expiry, keeping configured time and observed timeout distinct.
 
+For review-input lifecycle tests, supply current owner inventories and typed Git
+A/M/D/R records; cover added Source/schema/tool inputs, helper-vs-test selection,
+deletions and rename old/new paths. Exercise the trusted runner review callback
+after its existing capture, assert copied frozen metadata without private bytes,
+and check exact resolver failures rather than unavailable-artifact fallback.
+Consumer identity comes from the already captured binding; do not read it again.
+Repeated test.each registrars need fresh native rows and per-registration row
+IDs, with original object identity/argument counts and duplicate-retry denial.
+Stat-boundary controls must distinguish synthetic large values from physical
+filesystem inodes, reach the intended guard and register returned handles before
+assertions. An opener fence and later store/bridge fences are separate controls.
+
 For the pending shard launch seam, use the existing eligibility resolver and
 canonical layout guard; do not reproduce their checks in a caller. Bind the
 reviewed base environment as well as configuration/provider and captured input

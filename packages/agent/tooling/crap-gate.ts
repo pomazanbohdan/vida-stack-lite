@@ -41,6 +41,60 @@ const root = path.resolve(
   process.env.VIDA_BUN_COVERAGE_ROOT ?? path.join(path.dirname(fileURLToPath(import.meta.url)), '..'),
 );
 const { createCoverageMap } = coverageApi;
+const baselineRef = 'b549951';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function assertCrapPlanIdentity(value: unknown): asserts value is Record<string, unknown> {
+  if (!isRecord(value) || value.schema !== 'VidaCrapBudgetPlan/v1' || value.baseline_ref !== baselineRef)
+    throw new Error('CRAP budget plan schema or published baseline ref is invalid.');
+  if (
+    value.exhaustive === false ||
+    value.executable === false ||
+    (typeof value.status === 'string' && /non[-_ ]?(?:executable|exhaustive)|partial/iu.test(value.status))
+  )
+    throw new Error('CRAP budget plan is explicitly non-executable or non-exhaustive.');
+}
+
+function assertCrapPlanDispositions(value: Record<string, unknown>): void {
+  if (
+    !Array.isArray(value.baseline_functions) ||
+    !Array.isArray(value.new_functions) ||
+    !Array.isArray(value.removed_functions) ||
+    !Array.isArray(value.new_sources) ||
+    !Array.isArray(value.removed_sources)
+  )
+    throw new Error('CRAP budget plan requires reviewed baseline and exact source/function addition/removal arrays.');
+  if (value.baseline_functions.length + value.removed_functions.length === 0)
+    throw new Error('CRAP budget plan must include published baseline function dispositions.');
+}
+
+function assertCrapPlanEvidence(value: Record<string, unknown>, repoRoot: string): void {
+  if (
+    typeof value.baseline_coverage_report_ref !== 'string' ||
+    value.baseline_coverage_report_ref.trim().length < 8 ||
+    typeof value.baseline_coverage_report_sha256 !== 'string' ||
+    !/^[0-9a-f]{64}$/u.test(value.baseline_coverage_report_sha256)
+  )
+    throw new Error('CRAP budget plan has no bound baseline coverage evidence.');
+  const evidencePath = path.resolve(repoRoot, value.baseline_coverage_report_ref);
+  const relativePath = path.relative(repoRoot, evidencePath).replaceAll('\\', '/');
+  if (!relativePath || relativePath === '..' || relativePath.startsWith('../') || path.isAbsolute(relativePath))
+    throw new Error('Baseline coverage evidence must remain inside the Source repository.');
+}
+
+/** Checks only frozen-plan prerequisites. Exact baseline/current correspondence remains checkedPlan's job. */
+export function assertCrapPlanPrerequisites(
+  value: unknown,
+  repoRoot: string,
+): asserts value is Record<string, unknown> {
+  assertCrapPlanIdentity(value);
+  assertCrapPlanDispositions(value);
+  assertCrapPlanEvidence(value, repoRoot);
+}
+
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   const repoRootResult = spawnSync('git', ['rev-parse', '--show-toplevel'], {
     cwd: root,
@@ -52,7 +106,6 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   if (repoRootResult.status !== 0 || repoRootResult.signal || repoRootResult.error)
     throw new Error('CRAP budget gate cannot identify the Source repository root.');
   const repoRoot = path.resolve(repoRootResult.stdout.trim());
-  const baselineRef = 'b549951';
   const planPath = path.resolve(
     process.env.VIDA_CRAP_BUDGET_PLAN ??
       path.join(repoRoot, '.agent/work/core-runtime-reactivation/crap-budgets.v1.json'),
@@ -62,9 +115,6 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   );
   const reportPath = path.join(root, 'coverage', 'bun-unified', 'crap-budget-report.json');
 
-  function isRecord(value: unknown): value is Record<string, unknown> {
-    return typeof value === 'object' && value !== null && !Array.isArray(value);
-  }
   const maintainedSources = maintainedSourceInventory(root).mutationSources;
   if (process.argv[2] === '--inventory') {
     const requested = process.argv.slice(3);
@@ -99,23 +149,12 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   let baselineSourcePaths: string[] | undefined;
 
   function requirePlanRecord(value: unknown): asserts value is Record<string, unknown> {
-    if (!isRecord(value) || value.schema !== 'VidaCrapBudgetPlan/v1' || value.baseline_ref !== baselineRef)
-      throw new Error('CRAP budget plan schema or published baseline ref is invalid.');
+    assertCrapPlanPrerequisites(value, repoRoot);
   }
 
   function evidencePathForPlan(value: Record<string, unknown>): string {
-    if (
-      typeof value.baseline_coverage_report_ref !== 'string' ||
-      value.baseline_coverage_report_ref.trim().length < 8 ||
-      typeof value.baseline_coverage_report_sha256 !== 'string' ||
-      !/^[0-9a-f]{64}$/u.test(value.baseline_coverage_report_sha256)
-    )
-      throw new Error('CRAP budget plan has no bound baseline coverage evidence.');
-    const evidencePath = path.resolve(repoRoot, value.baseline_coverage_report_ref);
-    const relativePath = path.relative(repoRoot, evidencePath).replaceAll('\\', '/');
-    if (!relativePath || relativePath.startsWith('../') || path.isAbsolute(relativePath))
-      throw new Error('Baseline coverage evidence must remain inside the Source repository.');
-    return evidencePath;
+    assertCrapPlanPrerequisites(value, repoRoot);
+    return path.resolve(repoRoot, value.baseline_coverage_report_ref as string);
   }
 
   async function historicalRuntimePathForPlan(value: Record<string, unknown>): Promise<string | undefined> {
@@ -154,14 +193,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   }
 
   function requirePlanArrays(value: Record<string, unknown>) {
-    if (
-      !Array.isArray(value.baseline_functions) ||
-      !Array.isArray(value.new_functions) ||
-      !Array.isArray(value.removed_functions) ||
-      !Array.isArray(value.new_sources) ||
-      !Array.isArray(value.removed_sources)
-    )
-      throw new Error('CRAP budget plan requires reviewed baseline and exact source/function addition/removal arrays.');
+    assertCrapPlanPrerequisites(value, repoRoot);
   }
 
   function isPositiveSafeInteger(value: unknown): value is number {

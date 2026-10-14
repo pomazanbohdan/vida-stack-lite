@@ -367,3 +367,12 @@ not replace complete-run evidence. A real two-reader pilot passes only its
 configured instruction read; successor/resource quiescence and global five-minute
 coverage remain OPEN. Exhaustive frozen mapping, dynamic CRAP, confirmed Killed,
 bundle repair/legacy exclusion and isolated Runtime qualification stay OPEN.
+
+2026-10-14 follow-up audit12dd10e: disposition is in core-runtime-reactivation/
+EXTERNAL-AUDIT-12dd10e-20261014.md. K01 already publisheded0528b. Current batch
+repairs confirmed SQLite precision/SQL prefixes, all Host/Mastra identity fences,
+reused registrar evidence, SDK-library projection/preflight closure, typed Git
+lifecycle with one captured-input review seam, within-capture SDK reuse and shared
+final-plan preflight. One writer per shared file; Root owns joined verification
+and strict publication. These Source repairs do not close final numeric/frozen/
+native/one-DB gates; final qualification is pending.

@@ -88,6 +88,7 @@ export type SdkFormationQualityInputCapture = {
   readonly inputDigests: ReadonlyMap<string, string>;
 };
 const sdkFormationQualityInputs = new WeakMap<CoverageInputs, SdkFormationQualityInputCapture>();
+const sdkFormationCaptureInputs = new WeakMap<QualityInputCapture, SdkFormationQualityInputCapture>();
 const maxInputFileBytes = 4 * 1024 * 1024;
 const maxInputBytes = 128 * 1024 * 1024;
 const maxInputPaths = 20000;
@@ -688,34 +689,92 @@ export function sdkFormationToolInputPaths(
 }
 
 /** Incremental review membership only; execution still captures and verifies its full closure. */
+export type CoverageReviewGitChange =
+  | { status: 'A' | 'M' | 'D'; path: string }
+  | { status: 'R'; old_path: string; path: string };
+export type CoverageReviewInventory = Pick<
+  CoverageInputs,
+  'sources' | 'test_inputs' | 'tool_inputs' | 'test_selection'
+>;
+export type CoverageReviewInputPathResult = CoverageReviewInventory & {
+  added_sources: string[];
+  added_tests: string[];
+  added_tools: string[];
+  selected_tests: string[];
+  refresh_paths: string[];
+  removed_paths: string[];
+  renamed_paths: { old_path: string; new_path: string }[];
+};
+
+function changedCapturedInputPaths(anchor: CoverageReviewInventory, current: CoverageReviewInventory): string[] {
+  const anchorDigests = new Map(
+    [...anchor.sources, ...anchor.test_inputs, ...anchor.tool_inputs].map(({ path: file, sha256: digest }) => [
+      file,
+      digest,
+    ]),
+  );
+  return [...current.sources, ...current.test_inputs, ...current.tool_inputs]
+    .filter((entry) => anchorDigests.has(entry.path) && anchorDigests.get(entry.path) !== entry.sha256)
+    .map((entry) => entry.path);
+}
+
 export function coverageReviewInputPaths(
-  anchor: Pick<CoverageInputs, 'sources' | 'test_inputs' | 'tool_inputs' | 'test_selection'>,
-  publishedChanged: readonly string[],
-): { added_tests: string[]; added_tools: string[]; selected_tests: string[]; refresh_paths: string[] } {
+  anchor: CoverageReviewInventory,
+  changes: readonly CoverageReviewGitChange[],
+  current: CoverageReviewInventory,
+): CoverageReviewInputPathResult {
   if (anchor.test_selection.mode !== 'full-current-test-set')
     throw new Error('Incremental review discovery requires a current test selection.');
-  const known = new Set([...anchor.sources, ...anchor.test_inputs, ...anchor.tool_inputs].map((row) => row.path));
-  const added_tests = [
-    ...new Set(publishedChanged.filter((file) => file.startsWith('tests/') && !known.has(file))),
-  ].sort();
-  const selected_tests = [
-    ...new Set([
-      ...anchor.test_selection.tests,
-      ...added_tests.filter((file) => /\.(?:test|spec)\.(?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$/u.test(file)),
-    ]),
-  ].sort();
-  const sdkPaths = sdkFormationToolInputPaths('current', { mode: 'full-current-test-set', tests: selected_tests });
-  const toolPaths = new Set(anchor.tool_inputs.map((row) => row.path));
-  const added_tools = [...new Set([...coverageToolInputs, ...sdkPaths])].filter((file) => !toolPaths.has(file)).sort();
+  if (current.test_selection.mode !== 'full-current-test-set')
+    throw new Error('Incremental review discovery requires a current test selection.');
+  const anchorSources = new Set(anchor.sources.map((row) => row.path));
+  const anchorTests = new Set(anchor.test_inputs.map((row) => row.path));
+  const anchorTools = new Set(anchor.tool_inputs.map((row) => row.path));
+  const currentSources = new Set(current.sources.map((row) => row.path));
+  const currentTests = new Set(current.test_inputs.map((row) => row.path));
+  const currentTools = new Set(current.tool_inputs.map((row) => row.path));
+  const anchorPaths = new Set([...anchorSources, ...anchorTests, ...anchorTools]);
+  const currentPaths = new Set([...currentSources, ...currentTests, ...currentTools]);
+  const added_sources = [...currentSources].filter((file) => !anchorSources.has(file)).sort();
+  const added_tests = [...currentTests].filter((file) => !anchorTests.has(file)).sort();
+  const added_tools = [...currentTools].filter((file) => !anchorTools.has(file)).sort();
+  const removed_paths = [...anchorPaths].filter((file) => !currentPaths.has(file)).sort();
+  const changedPaths = new Set<string>();
+  const renamed_paths = changes
+    .filter((change): change is Extract<CoverageReviewGitChange, { status: 'R' }> => change.status === 'R')
+    .map(({ old_path, path: new_path }) => ({ old_path, new_path }))
+    .sort((left, right) =>
+      left.old_path === right.old_path
+        ? left.new_path.localeCompare(right.new_path)
+        : left.old_path.localeCompare(right.old_path),
+    );
+  for (const change of changes) {
+    if (change.status !== 'D') changedPaths.add(change.path);
+  }
   const refresh_paths = [
     ...new Set([
-      ...publishedChanged.filter((file) => known.has(file)),
+      ...added_sources,
       ...added_tests,
       ...added_tools,
-      ...sdkPaths.filter((file) => file.startsWith('dist/')),
+      ...changedPaths,
+      ...changedCapturedInputPaths(anchor, current),
     ]),
-  ].sort();
-  return { added_tests, added_tools, selected_tests, refresh_paths };
+  ]
+    .filter((file) => currentPaths.has(file))
+    .sort();
+  return {
+    sources: [...current.sources],
+    test_inputs: [...current.test_inputs],
+    tool_inputs: [...current.tool_inputs],
+    test_selection: { ...current.test_selection, tests: [...current.test_selection.tests] },
+    added_sources,
+    added_tests,
+    added_tools,
+    selected_tests: [...current.test_selection.tests],
+    refresh_paths,
+    removed_paths,
+    renamed_paths,
+  };
 }
 
 function verifyPublishedBaselineInputs(
@@ -1163,25 +1222,33 @@ async function projectQualityInputCapture(
     input_bytes: inputBytes,
   };
   if (selectionMode === 'current' && capture.sdkBuilderToolPaths) {
-    const { projectSdkFormationInputBytes } = await import('./build-package.ts');
-    const sourcePaths = capture.sources.map((entry) => entry.path).filter((file) => file.startsWith('src/'));
-    const schemaPaths = capture.contractInputs.filter((file) => file.startsWith('schemas/'));
-    const selectedInputs = projectSdkFormationInputBytes({
-      inputBytes: capture.inputBytes,
-      sourcePaths,
-      schemaPaths,
-      buildToolPaths: capture.sdkBuilderToolPaths,
-    });
-    const inputDigests = new Map<string, string>();
-    for (const file of selectedInputs.keys()) {
-      const digest = capture.inputDigests.get(file)?.sha256;
-      if (!digest) throw new Error(`SDK formation capture is missing the selected input digest: ${file}`);
-      inputDigests.set(file, digest);
-    }
-    const privateBytes = new Map([...selectedInputs].map(([file, bytes]) => [file, Buffer.from(bytes)] as const));
-    sdkFormationQualityInputs.set(projected, Object.freeze({ selectedInputs: privateBytes, inputDigests }));
+    sdkFormationQualityInputs.set(projected, await sdkFormationInputsForCapture(capture));
   }
   return projected;
+}
+
+async function sdkFormationInputsForCapture(capture: QualityInputCapture): Promise<SdkFormationQualityInputCapture> {
+  const retained = sdkFormationCaptureInputs.get(capture);
+  if (retained) return retained;
+  const { projectSdkFormationInputBytes } = await import('./build-package.ts');
+  const selectedInputs = projectSdkFormationInputBytes({
+    inputBytes: capture.inputBytes,
+    sourcePaths: capture.sources.map((entry) => entry.path).filter((file) => file.startsWith('src/')),
+    schemaPaths: capture.contractInputs.filter((file) => file.startsWith('schemas/')),
+    buildToolPaths: capture.sdkBuilderToolPaths ?? [],
+  });
+  const inputDigests = new Map<string, string>();
+  for (const file of selectedInputs.keys()) {
+    const digest = capture.inputDigests.get(file)?.sha256;
+    if (!digest) throw new Error(`SDK formation capture is missing the selected input digest: ${file}`);
+    inputDigests.set(file, digest);
+  }
+  const snapshot = Object.freeze({
+    selectedInputs: new Map([...selectedInputs].map(([file, bytes]) => [file, Buffer.from(bytes)] as const)),
+    inputDigests,
+  });
+  sdkFormationCaptureInputs.set(capture, snapshot);
+  return snapshot;
 }
 
 /** Return the SDK projection tied to this exact current quality capture. */

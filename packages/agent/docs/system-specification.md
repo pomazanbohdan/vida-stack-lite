@@ -2789,6 +2789,13 @@ and rejects unsafe or duplicate entries. It does not parse human CLI summaries.
 Existing SDK payload-byte checks, no-replace publication, ownership and cleanup
 remain required; tool selection does not establish freshness or Runtime acceptance.
 
+The projected SDK command map contains only its required prepack verifier.
+Repository test, coverage, mutation, lint and build commands remain in Source;
+their tests and quality-only tooling are omitted from the SDK projection. Keep
+maintained public exports, declarations, runtime resources and the verifier's
+own local closure. Source and SDK reuse one candidate-preflight policy helper;
+SDK verification calls it directly without relying on a Source script.
+
 SDK formation captures a finite Source/configuration/schema/build-tool closure
 once through the same bounded byte reader as quality capture. It performs no
 test discovery. Declaration emission and both Bun builds consume that one

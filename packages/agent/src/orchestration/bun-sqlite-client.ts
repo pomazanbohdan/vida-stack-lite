@@ -144,7 +144,7 @@ function afterCteBody(tokens: Iterator<SqlToken, void>): SqlToken | undefined {
 function afterWithClause(tokens: Iterator<SqlToken, void>): SqlToken | undefined {
   let token = nextToken(tokens);
   if (isWord(token, 'RECURSIVE')) token = nextToken(tokens);
-  while (token?.kind === 'word' || token?.kind === 'identifier') {
+  while (token?.kind === 'word' || token?.kind === 'identifier' || token?.kind === 'string') {
     const afterBody = afterCteBody(tokens);
     if (!afterBody || !isPunctuation(afterBody, ',')) return afterBody;
     token = nextToken(tokens);
@@ -161,8 +161,42 @@ function statementKind(token: SqlToken | undefined): SqlStatementKind {
 /** Ordinary statements stop at the first token; only WITH parses CTE structure. */
 function sqliteStatementKind(sql: string): SqlStatementKind {
   const tokens = sqlTokens(sql);
-  const first = nextToken(tokens);
+  let first = nextToken(tokens);
+  while (isPunctuation(first, ';')) first = nextToken(tokens);
   return isWord(first, 'WITH') ? statementKind(afterWithClause(tokens)) : statementKind(first);
+}
+
+function exactInsertRowid(database: Database, candidate: number | bigint | string): bigint {
+  if (typeof candidate === 'bigint' || typeof candidate === 'string') return BigInt(candidate);
+  if (Number.isSafeInteger(candidate)) return BigInt(candidate);
+  const row = database
+    .query<{ last_insert_rowid: string }, []>('SELECT CAST(last_insert_rowid() AS TEXT) AS last_insert_rowid')
+    .get();
+  requireClient(row !== null, 'SQLite did not return the exact inserted rowid');
+  return BigInt(row.last_insert_rowid);
+}
+
+function executionEffects(
+  database: Database,
+  kind: Exclude<SqlStatementKind, 'other'>,
+): {
+  readonly rowsAffected: number;
+  readonly lastInsertRowid?: bigint;
+} {
+  const effects = database
+    .query<{ changes: string; last_insert_rowid: string }, []>(
+      'SELECT CAST(changes() AS TEXT) AS changes, CAST(last_insert_rowid() AS TEXT) AS last_insert_rowid',
+    )
+    .get();
+  requireClient(effects !== null, 'SQLite did not return DML execution metadata');
+  const rowsAffected = Number(effects.changes);
+  requireClient(Number.isSafeInteger(rowsAffected) && rowsAffected >= 0, 'SQLite change count is out of range');
+  return {
+    rowsAffected,
+    ...(kind === 'insert' && rowsAffected > 0
+      ? { lastInsertRowid: exactInsertRowid(database, effects.last_insert_rowid) }
+      : {}),
+  };
 }
 
 /** Execute once and preserve column positions, duplicate names, blobs and exact large integers. */
@@ -173,6 +207,18 @@ function execute(database: Database, input: string | SqliteStatement): SqliteRes
     const columns = [...query.columnNames];
     if (columns.length === 0) {
       const changes = query.run(...parsed.bindings);
+      const kind = sqliteStatementKind(parsed.sql);
+      if (kind !== 'other') {
+        return {
+          columns: [],
+          columnTypes: [],
+          rows: [],
+          rowsAffected: changes.changes,
+          ...(kind === 'insert' && changes.changes > 0
+            ? { lastInsertRowid: exactInsertRowid(database, changes.lastInsertRowid) }
+            : {}),
+        };
+      }
       return {
         columns: [],
         columnTypes: [],
@@ -186,22 +232,7 @@ function execute(database: Database, input: string | SqliteStatement): SqliteRes
     const rows = values.map((values) => resultRow(values, columns));
     const kind = sqliteStatementKind(parsed.sql);
     if (kind === 'other') return { columns, columnTypes, rows, rowsAffected: 0 };
-
-    const effects = database
-      .query<{ changes: string; last_insert_rowid: string }, []>(
-        'SELECT CAST(changes() AS TEXT) AS changes, CAST(last_insert_rowid() AS TEXT) AS last_insert_rowid',
-      )
-      .get();
-    requireClient(effects !== null, 'SQLite did not return DML execution metadata');
-    const rowsAffected = Number(effects.changes);
-    requireClient(Number.isSafeInteger(rowsAffected) && rowsAffected >= 0, 'SQLite change count is out of range');
-    return {
-      columns,
-      columnTypes,
-      rows,
-      rowsAffected,
-      ...(kind === 'insert' && rowsAffected > 0 ? { lastInsertRowid: BigInt(effects.last_insert_rowid) } : {}),
-    };
+    return { columns, columnTypes, rows, ...executionEffects(database, kind) };
   } finally {
     query.finalize();
   }
@@ -241,8 +272,8 @@ function readTransactionDatabase(database: Database, location: ClientLocation): 
 }
 
 function databaseIdentity(database: Database): string {
-  const file = lstatSync(database.filename);
-  requireClient(file.isFile() && !file.isSymbolicLink() && file.nlink === 1, 'database path is unsafe');
+  const file = lstatSync(database.filename, { bigint: true });
+  requireClient(file.isFile() && !file.isSymbolicLink() && file.nlink === 1n, 'database path is unsafe');
   return file.dev + ':' + file.ino;
 }
 

@@ -49,6 +49,56 @@ function packageFixture(npm: unknown, node: string): string {
   return root;
 }
 
+test('SDK compatibility manifest keeps only the SDK prepack hook and payload', () => {
+  const source = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')) as {
+    exports: unknown;
+    main: string;
+    types: string;
+  };
+  const { value } = sdkCompatibilityManifest({ root: packageRoot });
+
+  expect(value.scripts).toEqual({ prepack: 'bun bin/bun.ts tooling/pack-sdk.ts --verify' });
+  expect(value.files.some((entry) => entry.startsWith('tests/'))).toBe(false);
+  expect(value.files).not.toContain('TESTING.md');
+  expect(value.files).not.toContain('.oxfmtrc.json');
+  expect(value.files).not.toContain('oxlint.config.json');
+  expect(value.files).not.toContain('stryker.config.ts');
+  expect(value.files).not.toContain('vitest.config.ts');
+  expect(value.files.filter((entry) => entry.startsWith('tooling/')).sort()).toEqual([
+    'tooling/bun-pack-metadata.ts',
+    'tooling/maintained-source-inventory.ts',
+    'tooling/owned-cleanup-completion.ts',
+    'tooling/owned-staging.ts',
+    'tooling/pack-sdk.ts',
+    'tooling/preflight.ts',
+  ]);
+
+  expect(value.exports).toEqual(source.exports);
+  expect(value.main).toBe(source.main);
+  expect(value.types).toBe(source.types);
+  expect(value.files).toContain('dist/src/index.js');
+  expect(value.files).toContain('dist/src/runtime.js');
+  expect(value.files).toContain('dist/src/documentation/transition-proof.js');
+  expect(value.files).toContain('dist/src/trusted-host.js');
+  expect(value.files).toContain('dist/src/**/*.d.ts');
+  expect(value.files).toContain('schemas/agent-runtime-config.v1.schema.json');
+  expect(value.files).toContain('templates/**');
+  expect(value.files).toContain('instructions/**');
+  expect(value.files).toContain('dist/portable/bun.lock');
+  for (const file of [
+    'bin/bun.ts',
+    'bin/cli-error-properties.ts',
+    'bin/standalone-resources.ts',
+    'tooling/pack-sdk.ts',
+    'tooling/bun-pack-metadata.ts',
+    'tooling/owned-staging.ts',
+    'tooling/owned-cleanup-completion.ts',
+    'tooling/maintained-source-inventory.ts',
+    'tooling/preflight.ts',
+  ])
+    expect(value.files).toContain(file);
+});
+
 test('SDK compatibility manifest accepts npm whole-major x-ranges', () => {
   const temporary = mkdtempSync(path.join(tmpdir(), 'vida-sdk-engine-range-'));
   try {

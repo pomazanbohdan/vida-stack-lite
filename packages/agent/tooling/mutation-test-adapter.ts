@@ -17,8 +17,12 @@ type BodyState = MutationBodyState;
 type Callable = (this: unknown, ...args: unknown[]) => unknown;
 type TestCallback = Callable;
 type EachInput =
+  | { kind: 'array'; tableRows: unknown[][] }
+  | { kind: 'object'; key: string; tableRows: Array<{ copy: object; row: unknown }> };
+type BoundEachInput =
   | { kind: 'array'; ids: Set<number> }
   | { kind: 'object'; key: string; rows: WeakMap<object, { id: number; row: unknown }> };
+type EachFactory = { method: Callable; receiver: unknown; args: unknown[] };
 const receiptFile = process.env.AGENT_MUTATION_BODY_RECEIPTS;
 let bodyId = 0;
 const file = new URL(import.meta.url).searchParams.get('file');
@@ -145,7 +149,12 @@ const expect = new Proxy(bunExpect, {
   },
 });
 
-function withBody(callback: TestCallback, id: number, expectedFailure: boolean, eachInput?: EachInput): TestCallback {
+function withBody(
+  callback: TestCallback,
+  id: number,
+  expectedFailure: boolean,
+  eachInput?: BoundEachInput,
+): TestCallback {
   return function mutationBody(this: unknown, ...args: unknown[]) {
     let bodyId = id;
     let bodyArgs = args;
@@ -217,7 +226,7 @@ function registerArgs(
   bodies: boolean,
   expectedFailure: boolean,
   eachArgumentCount: number | null,
-  eachInput?: EachInput,
+  eachInput?: BoundEachInput,
 ): unknown[] {
   const next = [...args];
   if (!bodies) return next;
@@ -235,6 +244,25 @@ function registerArgs(
   return next;
 }
 
+function bindEachInput(input: EachInput): BoundEachInput {
+  if (input.kind === 'array') {
+    const ids = new Set<number>();
+    for (const row of input.tableRows) {
+      const id = ++bodyId;
+      row[0] = id;
+      ids.add(id);
+    }
+    return { kind: 'array', ids };
+  }
+  const rows = new WeakMap<object, { id: number; row: unknown }>();
+  for (const { copy, row } of input.tableRows) {
+    const id = ++bodyId;
+    Object.defineProperty(copy, input.key, { value: id, enumerable: true, configurable: true });
+    rows.set(copy, { id, row });
+  }
+  return { kind: 'object', key: input.key, rows };
+}
+
 function tableArgumentCount(args: unknown[]): number | null {
   const table = args[0];
   if (!Array.isArray(table)) return null;
@@ -249,47 +277,35 @@ function instrumentEachTable(args: unknown[]): { args: unknown[]; input: EachInp
   if (!Array.isArray(table)) throw new Error('Mutation body adapter requires a Bun test.each table.');
   const rows: unknown[] = table;
   const next = [...args];
-  if (!rows.length) return { args: next, input: { kind: 'array', ids: new Set() } };
+  if (!rows.length) return { args: next, input: { kind: 'array', tableRows: [] } };
   const first = rows[0];
   if (Array.isArray(first)) {
     if (rows.some((row) => !Array.isArray(row)))
       throw new Error('Mutation body adapter does not support mixed Bun test.each row shapes.');
-    const ids = new Set<number>();
-    next[0] = rows.map((row) => {
-      const id = ++bodyId;
-      ids.add(id);
-      const values: unknown[] = [id, ...(row as unknown[])];
-      return values;
-    });
-    return { args: next, input: { kind: 'array', ids } };
+    const tableRows = rows.map((row) => [0, ...(row as unknown[])]);
+    next[0] = tableRows;
+    return { args: next, input: { kind: 'array', tableRows } };
   }
   if (first !== null && typeof first === 'object') {
     if (rows.some((row) => row === null || typeof row !== 'object' || Array.isArray(row)))
       throw new Error('Mutation body adapter does not support mixed Bun test.each row shapes.');
     let key = '__vidaMutationBodyId';
     while (rows.some((row) => key in (row as object))) key += '_';
-    const bound = new WeakMap<object, { id: number; row: unknown }>();
-    next[0] = rows.map((row) => {
-      const id = ++bodyId;
+    const tableRows = rows.map((row) => {
       const original = row as object;
       const copy = Object.create(Object.getPrototypeOf(original) as object | null) as object;
       Object.defineProperties(copy, Object.getOwnPropertyDescriptors(original));
-      Object.defineProperty(copy, key, { value: id, enumerable: true, configurable: true });
-      bound.set(copy, { id, row: original });
-      return copy;
+      Object.defineProperty(copy, key, { value: 0, enumerable: true, configurable: true });
+      return { copy, row: original };
     });
-    return { args: next, input: { kind: 'object', key, rows: bound } };
+    next[0] = tableRows.map(({ copy }) => copy);
+    return { args: next, input: { kind: 'object', key, tableRows } };
   }
   if (rows.some((row) => row !== null && typeof row === 'object'))
     throw new Error('Mutation body adapter does not support mixed Bun test.each row shapes.');
-  const ids = new Set<number>();
-  next[0] = rows.map((row) => {
-    const id = ++bodyId;
-    ids.add(id);
-    const values: unknown[] = [id, row];
-    return values;
-  });
-  return { args: next, input: { kind: 'array', ids } };
+  const tableRows = rows.map((row) => [0, row]);
+  next[0] = tableRows;
+  return { args: next, input: { kind: 'array', tableRows } };
 }
 
 function registrationProxy(
@@ -297,15 +313,16 @@ function registrationProxy(
   bodies: boolean,
   expectedFailure = false,
   eachArgumentCount: number | null = null,
-  eachInput?: EachInput,
+  eachFactory?: EachFactory,
 ): unknown {
   if (typeof target !== 'function') return target;
   return new Proxy(target, {
     apply(fn, thisArg, args) {
+      const registration = eachFactory ? makeEachRegistration(eachFactory) : { target: fn, input: undefined };
       return Reflect.apply(
-        fn as Callable,
+        registration.target as Callable,
         thisArg,
-        registerArgs(args, bodies, expectedFailure, eachArgumentCount, eachInput),
+        registerArgs(args, bodies, expectedFailure, eachArgumentCount, registration.input),
       );
     },
     get(fn, key) {
@@ -313,13 +330,12 @@ function registrationProxy(
       if (key === 'each' && typeof member === 'function') {
         const each = (...args: unknown[]) => {
           if (!bodies) return registrationProxy(Reflect.apply(member as Callable, fn, args), bodies);
-          const instrumented = instrumentEachTable(args);
           return registrationProxy(
-            Reflect.apply(member as Callable, fn, instrumented.args),
+            Reflect.apply(member as Callable, fn, args),
             bodies,
             expectedFailure,
             tableArgumentCount(args),
-            instrumented.input,
+            { method: member as Callable, receiver: fn, args: [...args] },
           );
         };
         return each;
@@ -327,13 +343,20 @@ function registrationProxy(
       if (typeof member === 'function') {
         const callModifier = (...args: unknown[]) => {
           const failingMethod = key === 'failing' || (key === 'failingIf' && args[0] === true);
+          const registration = eachFactory ? makeEachRegistration(eachFactory) : { target: fn, input: undefined };
+          const registrationMember: unknown = eachFactory
+            ? Reflect.get(registration.target, key, registration.target)
+            : member;
+          if (typeof registrationMember !== 'function') return registrationMember;
           const result: unknown = Reflect.apply(
-            member as Callable,
-            fn,
-            bodies ? registerArgs(args, true, expectedFailure || failingMethod, eachArgumentCount, eachInput) : args,
+            registrationMember as Callable,
+            registration.target,
+            bodies
+              ? registerArgs(args, true, expectedFailure || failingMethod, eachArgumentCount, registration.input)
+              : args,
           );
           return typeof result === 'function'
-            ? registrationProxy(result, bodies, expectedFailure || failingMethod, eachArgumentCount, eachInput)
+            ? registrationProxy(result, bodies, expectedFailure || failingMethod, eachArgumentCount, eachFactory)
             : result;
         };
         return callModifier;
@@ -341,6 +364,18 @@ function registrationProxy(
       return member;
     },
   });
+}
+
+function isCallable(value: unknown): value is Callable {
+  return typeof value === 'function';
+}
+
+function makeEachRegistration(factory: EachFactory): { target: Callable; input: BoundEachInput } {
+  const instrumented = instrumentEachTable(factory.args);
+  const input = bindEachInput(instrumented.input);
+  const value: unknown = Reflect.apply(factory.method, factory.receiver, instrumented.args);
+  if (!isCallable(value)) throw new Error('Mutation body adapter requires Bun test.each to return a registrar.');
+  return { target: value, input };
 }
 
 function lifecycle(register: unknown, name: string): unknown {

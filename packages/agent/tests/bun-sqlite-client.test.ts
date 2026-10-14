@@ -1,7 +1,12 @@
-import { expect, test } from 'bun:test';
+import { expect, spyOn, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { createInMemoryBunSqliteClient } from '../src/orchestration/bun-sqlite-client.ts';
+import path from 'node:path';
 import type { SqliteClient } from '@mastra/libsql';
+import * as fs from 'node:fs';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
+import { createInMemoryBunSqliteClient, openBunSqliteClient } from '../src/orchestration/bun-sqlite-client.ts';
+import { openCustodyFixture } from './helpers/service-custody-fixture.ts';
+import { expectRejection } from './helpers/expect-rejection.ts';
 
 type MemoryClient = SqliteClient & { settle(): Promise<void> };
 
@@ -41,6 +46,137 @@ async function withMemoryClient<T>(
   if (failed) throw failure;
   return result;
 }
+
+interface SyntheticFileIdentity {
+  readonly dev: bigint;
+  readonly ino: bigint;
+}
+
+function syntheticFileStats(file: string, identity: () => SyntheticFileIdentity) {
+  const originalLstat = fs.lstatSync;
+  return spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+    const observed = originalLstat(...args);
+    if (observed === undefined || args[0] !== file) return observed;
+    const exact = Object.create(observed) as typeof observed;
+    const current = identity();
+    const usesBigint = args[1] !== undefined && typeof args[1] === 'object' && Reflect.get(args[1], 'bigint') === true;
+    Reflect.set(exact, 'dev', usesBigint ? current.dev : Number(current.dev));
+    Reflect.set(exact, 'ino', usesBigint ? current.ino : Number(current.ino));
+    return exact;
+  }) as typeof fs.lstatSync);
+}
+
+const largeFileIdentityA: SyntheticFileIdentity = {
+  dev: 9_007_199_254_740_993n,
+  ino: 9_007_199_254_740_992n,
+};
+const largeFileIdentityB: SyntheticFileIdentity = {
+  dev: 9_007_199_254_740_993n,
+  ino: 9_007_199_254_740_993n,
+};
+
+test('file-backed SQLite client keeps its actual database identity through client and transaction guards', async () => {
+  const fixture = openCustodyFixture('bun-sqlite-client-file-identity-');
+  closeWorkspaceDatabaseWithAdmission(fixture.database);
+  let client: SqliteClient | undefined;
+  let passed = false;
+  try {
+    client = openBunSqliteClient(fixture.root, fixture.relative, fixture.workspaceId);
+    await client.execute('CREATE TABLE file_identity_guard (id INTEGER PRIMARY KEY)');
+    expect((await client.execute('SELECT COUNT(*) AS count FROM file_identity_guard')).rows[0]?.count).toBe(0);
+    const transaction = await client.transaction('write');
+    await transaction.execute('INSERT INTO file_identity_guard (id) VALUES (1)');
+    await transaction.rollback();
+    expect((await client.execute('SELECT COUNT(*) AS count FROM file_identity_guard')).rows[0]?.count).toBe(0);
+    passed = true;
+  } finally {
+    await client?.close();
+    if (passed) fs.rmSync(fixture.root, { recursive: true, force: true });
+    else console.error(`Retained failed SQLite client identity fixture: ${fixture.root}`);
+  }
+});
+
+test('client identity rejects an adjacent synthetic large inode before an operation', async () => {
+  const fixture = openCustodyFixture('bun-sqlite-client-large-inode-pre-');
+  closeWorkspaceDatabaseWithAdmission(fixture.database);
+  const databasePath = path.join(fixture.root, fixture.relative);
+  let currentIdentity = largeFileIdentityA;
+  const stats = syntheticFileStats(databasePath, () => currentIdentity);
+  let client: SqliteClient | undefined;
+  let passed = false;
+  try {
+    client = openBunSqliteClient(fixture.root, fixture.relative, fixture.workspaceId);
+    currentIdentity = largeFileIdentityB;
+    await expectRejection(client.execute('SELECT 1 AS value'), /database was replaced/u);
+    passed = true;
+  } finally {
+    stats.mockRestore();
+    await client?.close();
+    if (passed) fs.rmSync(fixture.root, { recursive: true, force: true });
+    else console.error(`Retained failed SQLite client large-inode fixture: ${fixture.root}`);
+  }
+});
+
+test('client identity rechecks an adjacent synthetic large inode after an operation', async () => {
+  const fixture = openCustodyFixture('bun-sqlite-client-large-inode-post-');
+  closeWorkspaceDatabaseWithAdmission(fixture.database);
+  const databasePath = path.join(fixture.root, fixture.relative);
+  let currentIdentity = largeFileIdentityA;
+  let operationIdentities: SyntheticFileIdentity[] = [];
+  const stats = syntheticFileStats(databasePath, () => operationIdentities.shift() ?? currentIdentity);
+  let client: SqliteClient | undefined;
+  let passed = false;
+  try {
+    client = openBunSqliteClient(fixture.root, fixture.relative, fixture.workspaceId);
+    await client.execute('CREATE TABLE large_inode_post_guard (id INTEGER PRIMARY KEY)');
+    operationIdentities = [largeFileIdentityA, largeFileIdentityB];
+    await expectRejection(
+      client.execute('INSERT INTO large_inode_post_guard (id) VALUES (1)'),
+      /database was replaced/u,
+    );
+    currentIdentity = largeFileIdentityA;
+    expect((await client.execute('SELECT COUNT(*) AS count FROM large_inode_post_guard')).rows[0]?.count).toBe(1);
+    passed = true;
+  } finally {
+    stats.mockRestore();
+    await client?.close();
+    if (passed) fs.rmSync(fixture.root, { recursive: true, force: true });
+    else console.error(`Retained failed SQLite client post-operation identity fixture: ${fixture.root}`);
+  }
+});
+
+test('transaction identity guards detect adjacent synthetic large inodes before and after execution', async () => {
+  const fixture = openCustodyFixture('bun-sqlite-client-large-inode-transaction-');
+  closeWorkspaceDatabaseWithAdmission(fixture.database);
+  const databasePath = path.join(fixture.root, fixture.relative);
+  let currentIdentity = largeFileIdentityA;
+  let operationIdentities: SyntheticFileIdentity[] = [];
+  const stats = syntheticFileStats(databasePath, () => operationIdentities.shift() ?? currentIdentity);
+  let client: SqliteClient | undefined;
+  let passed = false;
+  try {
+    client = openBunSqliteClient(fixture.root, fixture.relative, fixture.workspaceId);
+    await client.execute('CREATE TABLE large_inode_transaction_guard (id INTEGER PRIMARY KEY)');
+    const transaction = await client.transaction('write');
+    currentIdentity = largeFileIdentityB;
+    await expectRejection(transaction.execute('SELECT 1 AS value'), /database was replaced/u);
+
+    currentIdentity = largeFileIdentityA;
+    operationIdentities = [largeFileIdentityA, largeFileIdentityB];
+    await expectRejection(
+      transaction.execute('INSERT INTO large_inode_transaction_guard (id) VALUES (1)'),
+      /database was replaced/u,
+    );
+    currentIdentity = largeFileIdentityA;
+    await transaction.rollback();
+    passed = true;
+  } finally {
+    stats.mockRestore();
+    await client?.close();
+    if (passed) fs.rmSync(fixture.root, { recursive: true, force: true });
+    else console.error(`Retained failed SQLite transaction identity fixture: ${fixture.root}`);
+  }
+});
 
 test('SQLite batch rolls back all earlier statements when a later statement fails', async () => {
   await withMemoryClient(async (_database, client) => {
@@ -197,6 +333,51 @@ test('INSERT RETURNING preserves an exact large rowid when database safeIntegers
     expect(inserted.rowsAffected).toBe(1);
     expect(inserted.lastInsertRowid).toBe(rowid);
   }, false);
+});
+
+test.each([
+  { returning: false, safeIntegers: true, rowid: 7n },
+  { returning: false, safeIntegers: true, rowid: 9_007_199_254_740_993n },
+  { returning: false, safeIntegers: false, rowid: 7n },
+  { returning: false, safeIntegers: false, rowid: 9_007_199_254_740_993n },
+  { returning: true, safeIntegers: true, rowid: 7n },
+  { returning: true, safeIntegers: true, rowid: 9_007_199_254_740_993n },
+  { returning: true, safeIntegers: false, rowid: 7n },
+  { returning: true, safeIntegers: false, rowid: 9_007_199_254_740_993n },
+])('INSERT metadata is exact for returning=$returning safeIntegers=$safeIntegers rowid=$rowid', async (scenario) => {
+  await withMemoryClient(async (_database, client) => {
+    await client.execute('CREATE TABLE insert_metadata_matrix (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+    const sql = `INSERT INTO insert_metadata_matrix (id, value) VALUES (?, ?)${scenario.returning ? ' RETURNING CAST(id AS TEXT) AS id_text' : ''}`;
+    const inserted = await client.execute({ sql, args: [scenario.rowid, 'once'] });
+
+    expect(inserted.rowsAffected).toBe(1);
+    expect(inserted.lastInsertRowid).toBe(scenario.rowid);
+    expect(inserted.rows.map((row) => row.id_text)).toEqual(scenario.returning ? [scenario.rowid.toString()] : []);
+    expect((await client.execute('SELECT COUNT(*) AS count FROM insert_metadata_matrix')).rows[0]?.count).toBe(1);
+  }, scenario.safeIntegers);
+});
+
+test('RETURNING statement classification recognizes semicolon and single-quoted CTE prefixes', async () => {
+  await withMemoryClient(async (_database, client) => {
+    await client.execute(
+      "CREATE TABLE returning_prefix_controls (id INTEGER PRIMARY KEY, v TEXT NOT NULL, value TEXT NOT NULL DEFAULT '')",
+    );
+
+    const semicolon = await client.execute('; INSERT INTO returning_prefix_controls(v) VALUES("x") RETURNING id');
+    expect(semicolon.rows).toHaveLength(1);
+    expect(semicolon.rows[0]?.id).toBe(1);
+    expect(semicolon.rowsAffected).toBe(1);
+    expect(semicolon.lastInsertRowid).toBe(1n);
+
+    const singleQuotedCte = await client.execute(
+      `WITH 'seed' AS (SELECT 'x' AS v) INSERT INTO returning_prefix_controls(v) SELECT v FROM 'seed' RETURNING id`,
+    );
+    expect(singleQuotedCte.rows).toHaveLength(1);
+    expect(singleQuotedCte.rows[0]?.id).toBe(2);
+    expect(singleQuotedCte.rowsAffected).toBe(1);
+    expect(singleQuotedCte.lastInsertRowid).toBe(2n);
+    expect((await client.execute('SELECT COUNT(*) AS count FROM returning_prefix_controls')).rows[0]?.count).toBe(2);
+  });
 });
 
 test('RETURNING metadata handles zero-row DML, triggers, and later SELECTs', async () => {

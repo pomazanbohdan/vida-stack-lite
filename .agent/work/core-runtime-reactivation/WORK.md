@@ -11473,3 +11473,54 @@ default5000ms; no45s exception was added. Actual producer observation PID joins
 both report entry and process receipt. Together with preceding43PASS, all
 affected contours have bounded current-byte proofs; this is not a full suite.
 Root stages this exact packet and publishes normally through the strict hook.
+
+### 2026-10-14 — follow-up supplied audit 12dd10e, current v18 batch
+
+Full audit read and dispositioned in EXTERNAL-AUDIT-12dd10e-20261014.md against
+published ed0528b. Fetch origin/main is current (0 ahead / 0 behind); preserve
+untracked BASE/ and root bun.lock. K01 is already published, not a new closure.
+Blind Luna writers repair disjoint SQLite, HostState/Mastra, mutation registrar,
+owner inventory, runner callback, SDK projection and shared prerequisites. One
+writer owns the HostState test file for both consumers; Root owns checks/Git.
+
+Causal native RED: SQL/registrar36PASS6FAIL; SDK/review27PASS2FAIL; late Host/
+bridge2FAIL. Independent review found the additional Host opener numeric fence;
+targeted opener1PASS1FAIL6assertions/1.81s reaches both intended stat reads.
+The earlier mistyped opener filter matched0 tests and establishes no evidence.
+Callback absence and missing prerequisite exports are feature-absence RED only.
+Candidate preflight2PASS12assertions/14ms was already GREEN when Root launched;
+do not claim an observed pre-implementation RED. Preserve all original failed
+and UNKNOWN roots, including prior 3dfba6c4; no replay or active layout switch.
+
+SDK-only projection exposed its own Source preflight dependency; extract the
+existing policy to one TS helper and call it directly from the verifier. Source
+script uses the same helper. N01 review now uses typed A/M/D/R plus current
+owner inventories; trusted runner callback reuses the execution capture and
+existing consumer binding, with copied frozen metadata and unchanged resolver.
+Root's new ignored current-capture-review-v18.ts replaces the obsolete local
+two-argument preparer for future runs; it has not launched a coverage operation.
+O01 shares one private SDK snapshot per capture; no hash/time-savings claim.
+O02 shares plan prerequisites but keeps later exact fresh correspondence.
+
+Initial static TS456/455program0 and Source1000; lint exposed async-test and
+unknown registrar-result issues, corrected without suppressions. Current final
+static/native/review and strict publication are in progress. Final global exact
+coverage, exhaustive frozen mapping/dynamic CRAP, confirmed Killed, five-minute
+completion, clean native Runtime and legacy/AUX exclusion remain OPEN.
+
+v18 joined qualification: TS456/455program0, Source1000; final lint0. Initial
+affected143cases140PASS3FAIL/890assertions3.78s. Corrected overlapping3files
+30PASS180assertions2.13s; Host/bridge4PASS1FAIL fixed to originalcommit_unknown
+rev2 rather than no-effects fiction. Final retained/prerequisite6PASS26assertions
+3.17s and reconciliation25PASS289assertions1.202s. Native UNKNOWN control keeps
+its engine afterimage even though classifier assertions pass. One additional
+causal RED catches ignored SDK output/receipt digest drift; reconciliation uses
+existing digest rows without extra IO/hash. An uncaptured .agent fixture read
+was replaced with a rejection-only marker, not an accepted baseline.
+
+Blind correctness review caught the additional Host opener numeric fence;
+it is corrected and qualified. Remaining callback/budget/SDK/adapter reviews
+find no actionable defect. Root now performs strict staging/publication, then
+actual SDK formation and extracted archive verification. This is a Source
+packet, not final metrics or Native acceptance. Original UNKNOWN resources
+still forbid unsupported successor/replay; do not launch obsolete preparers.

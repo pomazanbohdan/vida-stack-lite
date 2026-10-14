@@ -22,6 +22,7 @@ import { checkManifest, pinnedEnvironment, readPin, resolvePinnedBun } from '../
 import { readBunPackMetadata, type BunPackEntry } from './bun-pack-metadata.ts';
 import { resourceDirectory } from '../bin/standalone-resources.ts';
 import { assertRuntimePackageExports, runtimeExecutableInventory } from './maintained-source-inventory.ts';
+import { assertCandidatePreflight } from './preflight.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 import {
   cleanupOwnedWorkspace,
@@ -220,16 +221,27 @@ export function sdkCompatibilityManifest(input: { root: string }): { value: Pack
   assert.equal(value.name, 'vida-agent');
   npmEngineMajor(value.engines.npm);
   nodeEngineVersion(value.engines.node);
-  value.files = value.files.filter((entry) => !/standalone|release-notes|release-publish/.test(entry));
-  for (const name of Object.keys(value.scripts))
-    if (/standalone|^test:resources/.test(name)) delete value.scripts[name];
-  delete value.bin;
-  value.files = [
-    ...new Set([...value.files, 'tooling/pack-sdk.ts', 'tooling/owned-staging.ts', 'tooling/bun-pack-metadata.ts']),
+  const verifierFiles = [
+    'tooling/pack-sdk.ts',
+    'tooling/bun-pack-metadata.ts',
+    'tooling/owned-staging.ts',
+    'tooling/owned-cleanup-completion.ts',
+    'tooling/maintained-source-inventory.ts',
+    'tooling/preflight.ts',
   ];
-  value.files.push('!tests/standalone.test.ts');
-  value.scripts.prepack = 'bun bin/bun.ts tooling/pack-sdk.ts --verify';
-  value.scripts['prepack:pinned'] = 'bun tooling/pack-sdk.ts --verify';
+  const verifierFileSet = new Set(verifierFiles);
+  value.files = value.files.filter((entry) => {
+    if (entry === 'bin/standalone-resources.ts') return true;
+    if (/standalone|release-notes|release-publish/.test(entry)) return false;
+    if (entry === 'TESTING.md' || entry === 'tsconfig.json' || entry === '.oxfmtrc.json') return false;
+    if (['oxlint.config.json', 'stryker.config.ts', 'vitest.config.ts'].includes(entry)) return false;
+    if (entry.startsWith('tests/')) return false;
+    if (entry.startsWith('tooling/')) return verifierFileSet.has(entry);
+    return true;
+  });
+  delete value.bin;
+  value.files = [...new Set([...value.files, ...verifierFiles])];
+  value.scripts = { prepack: 'bun bin/bun.ts tooling/pack-sdk.ts --verify' };
   return { value, bytes: Buffer.from(JSON.stringify(value, null, 2) + '\n') };
 }
 
@@ -331,7 +343,7 @@ export async function verifySdkPackage(input: { root: string }): Promise<void> {
     regular(root, 'bun.lock'),
     'SDK portable frozen lock differs',
   );
-  run(bun, ['run', 'preflight:pinned'], root, env);
+  assertCandidatePreflight(root);
   run(
     bun,
     [

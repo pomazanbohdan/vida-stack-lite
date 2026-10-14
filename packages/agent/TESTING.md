@@ -171,13 +171,26 @@ mutated exposed buffer cannot inherit the owner's private SDK projection.
 Captured-byte validation hashes actual bytes, never caller-supplied digests.
 Missing/stale artifacts block the run; form them separately without suites.
 
-Incremental review preparation reuses `coverageReviewInputPaths` from the same
-input owner. It adds published Git test inputs, keeps helpers out of the selected
-test set, and derives runner/SDK inputs from maintained inventories. Refresh
-changed inputs and current SDK outputs with one bounded delta read. This is
-review metadata only: it does not authorize resources, replace the execution
-capture, or infer an import closure from the formation receipt. The actual
-captured closure must still match the reviewed scope before any producer starts.
+Review preparation reuses `coverageReviewInputPaths(anchor, changes, current)`
+with typed Git A/M/D/R changes and the current owner's complete inventories.
+Reconcile Source, test/helper, schema/resource and transitive tool memberships;
+deleted and renamed-old paths are not live refresh inputs. Selected tests come
+from the current owner, separately from helpers. The trusted `runBunCoverage`
+callback receives copied frozen metadata, its actual review scope and any already
+captured consumer binding after the existing capture, without private bytes or
+a second scan/hash/capture. Its result still passes the eligibility resolver;
+missing, stale, malformed or incomplete review preserves fallback/denial. The
+default CLI keeps verified artifact review. No callback or Git path creates
+resource authority, substitutes for capture, or derives closure from a receipt.
+SDK projections share one private snapshot only within that capture; getters
+still return fresh copies and reject changed exposed bytes.
+
+Final-quality preflight reuses the CRAP owner's plan prerequisite validator
+before inventory or coverage launch. Schema, baseline, disposition arrays,
+published roles and in-repository bound evidence must be present; explicit
+non-executable/non-exhaustive plans deny. Preflight shape acceptance is not
+baseline/current correspondence or numeric admission. Full fresh validation
+remains mandatory, and standalone diagnostic coverage stays available.
 
 Every acquired coverage operation records a separate diagnostic under
 `coverage/bun-unified/operation-outcomes/<run-id>.json`. Native producer close

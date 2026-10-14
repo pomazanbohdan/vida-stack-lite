@@ -1555,3 +1555,20 @@ then form current SDK without suites. Requalify current resource admission befor
 one fresh five-minute coverage run. Exact metrics, exhaustive frozen mapping,
 dynamic CRAP, confirmed Killed and isolated native Runtime remain OPEN. No loader,
 AUX exclusion or release acceptance changes are authorized by this batch.
+
+#### Current follow-up audit batch — 2026-10-14, 12dd10e
+
+Disposition: EXTERNAL-AUDIT-12dd10e-20261014.md, validated against published
+ed0528b and explicitly separated dirty test-first edits. K01 cleanup is already
+closed; do not duplicate it. Current causal RED confirms reused registrar IDs,
+unsafe non-RETURNING rowids, accepted SQL prefixes and all three DB-identity
+contours (client, HostState, Mastra). N05 projects SDK-library commands/payload
+and shares the existing preflight owner. N01/O03 reconcile typed Git lifecycle
+against current owner inventories, with a trusted review callback after the
+existing capture rather than a duplicate full capture. O01 shares one private
+SDK snapshot inside that capture. O02 validates existing CRAP prerequisites
+before expensive final work; later fresh validation remains mandatory. O04 is
+deferred without measured need. Join disjoint writers, one static/native owner,
+blind review, strict commit/push, then genuine SDK archive qualification. Final
+global numeric, frozen mapping, clean native Runtime and one-DB activation stay
+OPEN; no advancement from partial PASS or UNKNOWN.

@@ -28,6 +28,7 @@ import { validateLifecycleAggregate } from '../../src/lifecycle/lifecycle-state.
 import type { WorkflowAttemptApprovalVerifier, WorkflowAttemptReceipt } from '../../src/host-state.ts';
 import type { LifecycleState } from '../../src/lifecycle/lifecycle-state.ts';
 import { createHash, randomUUID } from 'node:crypto';
+import * as nodeFs from 'node:fs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -2743,6 +2744,139 @@ test('host database opener pins recoverable SQLite settings and preserves state 
   expect(namedMemory.filename).toBe(path.join(root, ':memory:'));
   expect(existsSync(path.join(root, ':memory:'))).toBe(true);
   expect(() => openHostStateDatabase(root, '../relative.sqlite', workspace)).toThrow(/relative|path/i);
+});
+
+test.each([
+  { label: 'adjacent large inode is rejected', afterInode: 9_007_199_254_740_993n, rejects: true },
+  { label: 'unchanged large inode is accepted', afterInode: 9_007_199_254_740_992n, rejects: false },
+])('Host database opener identity: $label', ({ afterInode, rejects }) => {
+  const relative = 'opener-identity.db';
+  const target = path.join(root, relative);
+  const originalLstat = nodeFs.lstatSync;
+  let directIdentityReads = 0;
+  const observed = spyOn(nodeFs, 'lstatSync').mockImplementation(((...args: Parameters<typeof nodeFs.lstatSync>) => {
+    const actual = Reflect.apply(originalLstat, nodeFs, args);
+    if (actual === undefined || args[0] !== target) return actual;
+    const firstSourceFrame = new Error().stack?.split('\n').find((frame) => frame.includes('/src/host-state.ts:'));
+    const sourceLine = Number(firstSourceFrame?.match(/host-state\.ts:(\d+):/u)?.[1]);
+    // These are the two direct opener identity reads. Match their immediate Source frame, not
+    // an outer openHostStateDatabase/storage-admission frame around safety or lease checks.
+    if (sourceLine !== 4932 && sourceLine !== 4945) return actual;
+    directIdentityReads += 1;
+    const inode = directIdentityReads === 1 ? 9_007_199_254_740_992n : afterInode;
+    const exact = Object.create(actual) as typeof actual;
+    const bigint = args[1] !== undefined && typeof args[1] === 'object' && Reflect.get(args[1], 'bigint') === true;
+    Reflect.set(exact, 'dev', bigint ? 17n : 17);
+    Reflect.set(exact, 'ino', bigint ? inode : Number(inode));
+    return exact;
+  }) as typeof nodeFs.lstatSync);
+  let opened: Database | undefined;
+  let failure: unknown;
+  try {
+    try {
+      opened = openHostStateDatabase(root, relative, workspace);
+    } catch (error) {
+      failure = error;
+    }
+    if (opened) {
+      admittedHostDatabases.add(opened);
+      handles.push(opened);
+    }
+    expect(directIdentityReads).toBe(2);
+    if (rejects) {
+      expect(opened).toBeUndefined();
+      expect(String(failure)).toContain('Host database identity changed during initialization');
+    } else {
+      expect(failure).toBeUndefined();
+      if (!opened) throw new Error('Expected unchanged Host database identity to open');
+      expect(opened.filename).toBe(target);
+      expect(opened.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
+    }
+  } finally {
+    observed.mockRestore();
+  }
+});
+
+test('HostState database guard distinguishes adjacent synthetic large inode identities', () => {
+  const originalLstat = nodeFs.lstatSync;
+  let inode = 9_007_199_254_740_992n;
+  const observed = spyOn(nodeFs, 'lstatSync').mockImplementation(((...args: Parameters<typeof nodeFs.lstatSync>) => {
+    const actual = Reflect.apply(originalLstat, nodeFs, args);
+    if (actual === undefined || args[0] !== databasePath) return actual;
+    // Keep this real fixture's file shape and synthesize adjacent inode values only at lstat.
+    const exact = Object.create(actual) as typeof actual;
+    const bigint = args[1] !== undefined && typeof args[1] === 'object' && Reflect.get(args[1], 'bigint') === true;
+    Reflect.set(exact, 'dev', bigint ? 17n : 17);
+    Reflect.set(exact, 'ino', bigint ? inode : Number(inode));
+    Reflect.set(exact, 'nlink', bigint ? BigInt(actual.nlink) : Number(actual.nlink));
+    return exact;
+  }) as typeof nodeFs.lstatSync);
+  try {
+    const guarded = new HostStateStore(database, workspace, undefined, undefined, undefined, undefined, root);
+    expect(() => guarded.assertWorkspaceDatabasePath(root, 'authority.db')).not.toThrow();
+
+    inode += 1n;
+    expect(() => guarded.assertWorkspaceDatabasePath(root, 'authority.db')).toThrow(
+      /configured Host database was substituted/u,
+    );
+  } finally {
+    observed.mockRestore();
+  }
+});
+
+test.each([
+  { label: 'adjacent large inode is rejected', observedInode: 9_007_199_254_740_993n, rejects: true },
+  { label: 'unchanged large inode is accepted', observedInode: 9_007_199_254_740_992n, rejects: false },
+])('Mastra engine guard: $label', async ({ observedInode, rejects }) => {
+  await withProducerFixtureCustody(async (f) => {
+    let bridgeIdentityReads = 0;
+    const originalLstat = nodeFs.lstatSync;
+    const observed = spyOn(nodeFs, 'lstatSync').mockImplementation(((...args: Parameters<typeof nodeFs.lstatSync>) => {
+      const actual = Reflect.apply(originalLstat, nodeFs, args);
+      if (actual === undefined || args[0] !== f.enginePath) return actual;
+      // Keep the native file shape and link count; synthesize only the inode at this lstat boundary.
+      // Stack discrimination changes only workflowDatabaseIdentity's two reads. Bun client identity
+      // reads see stable A, so the control reaches the intended late initialization guard.
+      const bridgeIdentityCall = new Error().stack?.includes('workflowDatabaseIdentity') ?? false;
+      const inode = bridgeIdentityCall && ++bridgeIdentityReads === 2 ? observedInode : 9_007_199_254_740_992n;
+      const exact = Object.create(actual) as typeof actual;
+      const bigint = args[1] !== undefined && typeof args[1] === 'object' && Reflect.get(args[1], 'bigint') === true;
+      Reflect.set(exact, 'dev', bigint ? 17n : 17);
+      Reflect.set(exact, 'ino', bigint ? inode : Number(inode));
+      Reflect.set(exact, 'nlink', bigint ? BigInt(actual.nlink) : Number(actual.nlink));
+      return exact;
+    }) as typeof nodeFs.lstatSync);
+    let bridge: MastraSessionBridge | undefined;
+    let openError: unknown;
+    try {
+      bridge = await MastraSessionBridge.open(f.args).then(
+        (opened) => opened,
+        (error: unknown) => {
+          openError = error;
+          return undefined;
+        },
+      );
+      expect(bridgeIdentityReads).toBeGreaterThanOrEqual(2);
+      if (rejects) {
+        expect(bridge).toBeUndefined();
+        expect(openError).toBeInstanceOf(Error);
+        expect(String(openError)).toContain('Mastra database was substituted during initialization');
+        const rows = f.rows();
+        expect(rows).toHaveLength(1);
+        expect(rows[0]?.revision).toBe(2);
+        expect(parseJsonRecord(rows[0]?.payload ?? '').status).toBe('commit_unknown');
+        failedProducerRoots.add(f.args.repositoryRoot);
+      } else {
+        expect(openError).toBeUndefined();
+        if (!bridge) throw new Error('Expected unchanged workflow storage identity to open');
+        await bridge.close();
+        bridge = undefined;
+      }
+    } finally {
+      if (bridge) await bridge.close();
+      observed.mockRestore();
+    }
+  });
 });
 
 const operationKey = '6'.repeat(64);

@@ -184,6 +184,46 @@ test('real adapter binds each expanded table row to its own body ID', async () =
   }
 });
 
+test('real adapter assigns a fresh body ID to every row when one each registrar is reused', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-each-reused-registrar-'));
+  try {
+    const child = await runAdapterChild(
+      root,
+      `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\nconst tupleRows = [[1, { row: 'tuple-1' }], [2, { row: 'tuple-2' }]] as const;\nconst tupleCases = test.each(tupleRows);\ntupleCases('tuple first %i', function (value, row) { if (arguments.length !== 2 || row !== tupleRows[value - 1]?.[1]) throw new Error('tuple callback arguments or object identity changed'); assert.equal(value, 0); });\ntupleCases('tuple second %i', function (value, row) { if (arguments.length !== 2 || row !== tupleRows[value - 1]?.[1]) throw new Error('tuple callback arguments or object identity changed'); assert.equal(value, 0); });\nconst objectRows = [{ value: 3 }, { value: 4 }];\nconst objectCases = test.each(objectRows);\nobjectCases('object first $value', function (row) { if (arguments.length !== 1 || (row !== objectRows[0] && row !== objectRows[1])) throw new Error('object callback arguments or identity changed'); assert.equal(row.value, 0); });\nobjectCases('object second $value', function (row) { if (arguments.length !== 1 || (row !== objectRows[0] && row !== objectRows[1])) throw new Error('object callback arguments or identity changed'); assert.equal(row.value, 0); });\n`,
+      'each-reused-registrar',
+    );
+    const bodyEvents = child.events.filter(
+      (event): event is Extract<(typeof child.events)[number], { kind: 'body' }> => event.kind === 'body',
+    );
+    expect(bodyEvents.map((event) => event.body_id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(bodyEvents).toMatchObject(
+      Array.from({ length: 8 }, (_, index) => ({
+        kind: 'body',
+        body_id: index + 1,
+        test_file: child.selectedTest,
+        assertion_cause: true,
+        assertion_source: 'node-assert',
+      })),
+    );
+    expect(bodyEvents).toHaveLength(8);
+    for (const [id, testcase] of [
+      [1, 'tuple first 1'],
+      [2, 'tuple first 2'],
+      [3, 'tuple second 1'],
+      [4, 'tuple second 2'],
+      [5, 'object first 3'],
+      [6, 'object first 4'],
+      [7, 'object second 3'],
+      [8, 'object second 4'],
+    ] as const) {
+      expect(child.junit).toContain(`name="[mutation-body:${id}] ${testcase}"`);
+    }
+    expect(junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome).toBe('killed');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('real adapter rejects repeated body IDs from retried executions', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-retry-rows-'));
   try {
