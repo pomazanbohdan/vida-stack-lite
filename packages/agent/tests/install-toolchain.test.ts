@@ -75,3 +75,134 @@ test('missing declared dependency fails without installation or initialization e
   assert.deepEqual(readFileSync(path.join(root, 'bun.lock')), lock);
   assert.equal(existsSync(path.join(root, 'node_modules')), false);
 });
+
+for (const initialize of [false, true])
+  test(`Bun installer preserves runner options and initialization order (init=${initialize})`, () => {
+    const { root, pin } = fixture();
+    const events: string[] = [];
+    const env = { PATH: '' };
+    const spawn: NonNullable<NonNullable<Parameters<typeof install>[1]>['spawn']> = () =>
+      assert.fail('injected runner owns dispatch');
+    const args = initialize ? ['--project-root', root, '--repository', 'fixture', '--project', 'app=.'] : [];
+    const runBun: NonNullable<Parameters<typeof install>[1]>['runBun'] = (argv, options) => {
+      events.push(argv.includes('--eval') ? 'dependencies' : 'initialization');
+      assert.deepEqual(options, { root, cwd: root, executable: process.execPath, timeoutMs: 1234, spawn, env });
+      if (argv.includes('--eval')) {
+        assert.deepEqual(argv.slice(0, 3), [
+          '--no-env-file',
+          '--no-install',
+          `--config=${path.join(root, 'bunfig.toml')}`,
+        ]);
+        assert.equal(argv.at(-1), '[]');
+      } else assert.deepEqual(argv, [path.join(root, 'bin/init.ts'), ...args]);
+      return 0;
+    };
+    const result = install(args, {
+      root,
+      get bunExecutable() {
+        events.push('executable');
+        return process.execPath;
+      },
+      get runBun() {
+        events.push('runner');
+        return runBun;
+      },
+      get bunTimeoutMs() {
+        events.push('timeout');
+        return 1234;
+      },
+      get env() {
+        events.push('env');
+        return env;
+      },
+      get spawn() {
+        events.push('spawn');
+        return spawn;
+      },
+    });
+    assert.deepEqual(events, [
+      'executable',
+      'runner',
+      'timeout',
+      'spawn',
+      'spawn',
+      'env',
+      'env',
+      'dependencies',
+      ...(initialize ? ['initialization'] : []),
+    ]);
+    assert.deepEqual(result, {
+      status: 'bun_dependencies_valid',
+      bun_pin: pin,
+      initialization: initialize ? 'delegated_successfully' : 'not_requested',
+      runtime_activation: 'not_performed',
+    });
+  });
+
+test('Bun check returns before reading runner options or dispatching a process', () => {
+  const { root } = fixture();
+  const fail = (): never => assert.fail('check must not read runner options');
+  const result = install(['--check'], {
+    root,
+    get runBun() {
+      return fail();
+    },
+    get bunTimeoutMs() {
+      return fail();
+    },
+    get spawn() {
+      return fail();
+    },
+    get env() {
+      return fail();
+    },
+  });
+  assert.equal(result.status, 'prerequisites_valid');
+});
+
+test.each([
+  'dependency-failure',
+  'dependency-drift',
+  'initialization-failure',
+  'initialization-throw',
+  'initialization-drift',
+  'initialization-throw-and-drift',
+] as const)('Bun installer retains causal guards for %s', (fault) => {
+  const { root } = fixture();
+  const argv = ['--project-root', root, '--repository', 'fixture', '--project', 'app=.'];
+  const events: string[] = [];
+  const bodyError = new Error('initializer body failed');
+  const runBun: NonNullable<Parameters<typeof install>[1]>['runBun'] = (args) => {
+    const dependency = args.includes('--eval');
+    events.push(dependency ? 'dependencies' : 'initialization');
+    if ((dependency && fault === 'dependency-drift') || (!dependency && fault.endsWith('drift')))
+      writeFileSync(path.join(root, 'bun.lock'), 'foreign change\n');
+    if (!dependency && fault.includes('throw')) throw bodyError;
+    return (dependency && fault === 'dependency-failure') || (!dependency && fault === 'initialization-failure')
+      ? 7
+      : 0;
+  };
+  const expected = fault.includes('drift')
+    ? /Installer inputs changed/
+    : fault === 'dependency-failure'
+      ? /Bun dependency entrypoint check failed/
+      : /Project initialization failed/;
+  if (fault === 'initialization-throw')
+    assert.throws(
+      () => install(argv, { root, runBun }),
+      (error) => error === bodyError,
+    );
+  else if (fault === 'dependency-failure' || fault === 'initialization-failure')
+    assert.throws(
+      () => install(argv, { root, runBun }),
+      (error) => {
+        assert.ok(error instanceof Error);
+        assert.match(error.message, expected);
+        assert.ok('exitCode' in error);
+        assert.equal(error.exitCode, 7);
+        return true;
+      },
+    );
+  else assert.throws(() => install(argv, { root, runBun }), expected);
+  assert.deepEqual(events, fault.startsWith('dependency-') ? ['dependencies'] : ['dependencies', 'initialization']);
+});

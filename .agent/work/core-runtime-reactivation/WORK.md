@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `6577659` at origin/main.
+- Published predecessor: `23ad33b` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -814,13 +814,62 @@ named its old location; Root verified its actual observed-receipt-evidence
 binding and did not duplicate it. Eight selected files were refreshed; all
 other inventory rows were reused.
 
-Partial totals2546roles,1816retained/730new/6removed,118bound files. Inventory
+That packet's partial totals2546roles,1816retained/730new/6removed,118bound files. Inventory
 7713roles leaves5167current and3879original dispositions missing. Full executable
 CRAP plan, exact coverage and assertion-confirmed mutation qualification remain
 open. Receipt: `/workspace/attachments/quality-lineage-eight-join-receipt-20261014.json`.
 Independent family reviews: `quality-lineage-five-review-a-20261014.md`,
 `quality-lineage-five-review-b-20261014.md`,
 `quality-new-storage-sqlite-review-20261014.md` in that directory.
+
+## Installer protocol and correspondence correction
+
+The private ordinary Bun installer protocol and runner-options builder now own
+their existing pin/check/dependency/init route. The explicit Node compatibility
+dependency-entry subprocess and its bounded diagnostic have one private owner.
+Embedded routing, option getter order, protected-input snapshots, initialization
+finally precedence, diagnostics and exit status stay at their original boundaries.
+No manifest-shape normalization or preparation-callback framework was adopted.
+Scoped Babel complexity: installer44→27 against unchanged original31; new
+protocol/options/dependency owners9/4/7, each under its prospective10 ceiling.
+This is static complexity proof, not current dynamic CRAP acceptance.
+
+The affected Bun installer file passes12cases/0fail in126ms. Nine added cases
+cover option/dispatch ordering, check-mode non-dispatch, dependency failure/drift,
+initialization success/failure and body-error/finally-drift precedence. The later
+focused two-case check passes2/0 in44ms and confirms status7 stays exitCode7.
+Source typecheck passes101files/0diagnostics. Logs in `/workspace/attachments/`:
+`quality-installer-protocol-corrected-tests-20261014.log`,
+`quality-installer-protocol-exit-code-tests-20261014.log`,
+`quality-installer-protocol-source-types-20261014.log`. Independent plan/final
+reviews use `quality-installer-protocol-{plan,final}-review-20261014.md` there.
+
+The current partial now binds3268roles,2234retained/1034new/18removed,132files.
+722additional current roles are reviewed and joined. Selected refresh gives
+7716roles;4448current and3449original dispositions remain missing. The old
+native-import recognizer is retained once at the current finish owner32/1056;
+its current38 remains a blocker. Eight obsolete callback structures are folded
+into that owner. Three installer-local duplicate callbacks are consolidated
+into the existing shared project-mapping owner, not falsely already joined or
+assigned a second allowance. Historical capture callbacks retain their actual
+ceilings, including the moved Host request owner; extracted context helpers
+still exceed their retained1 ceilings at2/4. Controller3>2, init-context5>4,
+native loaders5>4 and remaining forward/native recipe deficits stay open.
+The shared release-byte reader keeps the retarget CLI's actual original2/6
+allowance, replacing its mistaken new10/10 disposition exactly once.
+Receipt: `/workspace/attachments/quality-lineage-twelve-final-join-receipt-20261014.json`.
+It records the exact candidate and independent review locators. Independent
+global review found stale current addresses in older joined rows. Root captured
+each of the132bound Source files once for AST+SHA, corrected949addresses and
+18stale file hashes without changing any identity or frozen allowance. All3268
+joined IDs resolve to those captured bytes; unbound inventory rows remain reused.
+Receipt: `/workspace/attachments/quality-bound-source-refresh-receipt-20261014.json`.
+Independent refresh review: `/workspace/attachments/quality-bound-refresh-final-review-20261014.md`.
+The obsolete current-commit claim is retained as prior provenance; active binding
+states worktree bytes and the published predecessor rather than claiming a
+formed/installed artifact. Twenty static complexity overages remain open. The partial
+is non-executable. Full frozen plan, exact coverage and assertion-confirmed
+mutation gates remain open; no full run or UNKNOWN successor was issued.
 
 Genuine b549951 was measured once: runfe54f83c-6a70-4223-9872-f43f1ac784e9,
 SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.
@@ -849,8 +898,9 @@ report/resource successor. Preserve original custody and stale review.
 
 ## Next bounded work
 
-1. Complete correspondence/original-budget corrections: installer44>31, pure
-   read-only planner43>40 and unresolved fs-safe owner moves. Host callback3<=3
+1. Complete correspondence/original-budget corrections: pure
+   read-only planner43>40, native recognizer38>32, new recipe owners19/29>10,
+   and retained callback/context deficits recorded above. Installer27<=31 and Host callback3<=3
    has scoped Source proof above; full dynamic CRAP acceptance remains pending.
    Do not relabel roles or raise caps to force acceptance.
 2. Continue same-pattern cleanup review in remaining affected owners, preserving
