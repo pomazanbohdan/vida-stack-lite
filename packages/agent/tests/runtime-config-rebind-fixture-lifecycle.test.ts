@@ -141,7 +141,7 @@ test('an unresolved fixture call retains its root and shared native state', asyn
   } finally {
     if (!retain) rmSync(controlRoot, { recursive: true, force: true });
   }
-}, 45_000);
+});
 
 test.each(['reserved', 'commit_unknown'] as const)(
   'a settled fixture call retains its root when its governance operation remains %s',
@@ -267,7 +267,7 @@ test('a settled fixture call preserves its result and performs normal cleanup', 
   } finally {
     if (!retain) rmSync(controlRoot, { recursive: true, force: true });
   }
-}, 45_000);
+});
 
 test('native PATH setup restores an originally absent PATH in an isolated fixture child', async () => {
   const controlRoot = mkdtempSync(path.join(tmpdir(), 'vida-runtime-config-rebind-absent-path-control-'));
@@ -548,6 +548,144 @@ for (const failedIndex of [0, 1, 2])
       if (!retain) rmSync(controlRoot, { recursive: true, force: true });
     }
   }, 5_000);
+
+for (const failedIndex of [0, 1, 2])
+  test(`tracked filesystem-root cleanup retains native rm failure at position ${failedIndex}`, async () => {
+    const controlRoot = mkdtempSync(path.join(tmpdir(), 'vida-tracked-fixture-root-cleanup-'));
+    const resultPath = path.join(controlRoot, 'result.json');
+    const helperUrl = pathToFileURL(path.resolve(import.meta.dirname, 'helpers/tracked-fixture-root-cleanup.ts')).href;
+    const source = `
+      import { afterAll, expect, test } from 'bun:test';
+      import { existsSync, mkdtempSync, rmdirSync, writeFileSync } from 'node:fs';
+      import { rm } from 'node:fs/promises';
+      import path from 'node:path';
+      import { tmpdir } from 'node:os';
+      const { cleanupTrackedFixtureRoots } = await import(${JSON.stringify(helperUrl)});
+      const roots = Array.from({ length: 3 }, () => mkdtempSync(path.join(tmpdir(), 'vida-tracked-root-')));
+      const tracked = new Set(roots);
+      const retained = new Set();
+      const failedRoot = roots[${failedIndex}];
+      if (!failedRoot) throw new Error('Native-fault fixture root is missing');
+      writeFileSync(path.join(failedRoot, 'retained-evidence.bin'), 'retain native fault evidence');
+      const attempts = [];
+      let nativeError;
+      let caught;
+      const removeRoot = async (root, options) => {
+        attempts.push(root);
+        if (root === failedRoot) {
+          try { rmdirSync(root); } catch (error) { nativeError = error; throw error; }
+        }
+        await rm(root, options);
+      };
+      test('all native cleanup attempts settle and a retained root is never retried', async () => {
+        try { await cleanupTrackedFixtureRoots(tracked, retained, removeRoot); } catch (error) { caught = error; }
+        expect(caught).toBeInstanceOf(AggregateError);
+        expect(caught.errors).toHaveLength(1);
+        expect(caught.errors[0]).toBe(nativeError);
+        expect(typeof nativeError?.code).toBe('string');
+        expect(new Set(attempts)).toEqual(new Set(roots));
+        expect(attempts).toHaveLength(roots.length);
+        expect(tracked.size).toBe(0);
+        expect(retained.has(failedRoot)).toBe(true);
+        await cleanupTrackedFixtureRoots(tracked, retained, removeRoot);
+        expect(attempts).toHaveLength(roots.length);
+        expect(roots.map((root) => existsSync(root))).toEqual(roots.map((root) => root === failedRoot));
+        expect(existsSync(path.join(failedRoot, 'retained-evidence.bin'))).toBe(true);
+      });
+      afterAll(() => writeFileSync(${JSON.stringify(resultPath)}, JSON.stringify({ roots, failedRoot })));
+    `;
+    let retain = true;
+    try {
+      const { child } = await runActualFixtureChild(`tracked-native-rm-${failedIndex}`, source);
+      expect(child.closeObserved).toBe(true);
+      expect(child.timedOut).toBe(false);
+      expect(child.exitCode, child.stderr.toString()).toBe(0);
+      const capture: unknown = JSON.parse(readFileSync(resultPath, 'utf8'));
+      expect(isRecord(capture)).toBe(true);
+      if (!isRecord(capture)) throw Error('Tracked-root native-fault control produced an invalid capture');
+      expect(Array.isArray(capture.roots)).toBe(true);
+      if (!Array.isArray(capture.roots)) throw Error('Tracked-root native-fault control omitted roots');
+      for (const root of capture.roots) {
+        if (typeof root !== 'string') throw Error('Tracked-root native-fault control captured a malformed root');
+        rmSync(root, { recursive: true, force: true });
+      }
+      retain = false;
+    } finally {
+      if (!retain) rmSync(controlRoot, { recursive: true, force: true });
+    }
+  });
+
+test('tracked filesystem-root cleanup preserves a thrown undefined without retrying', async () => {
+  const controlRoot = mkdtempSync(path.join(tmpdir(), 'vida-tracked-fixture-root-undefined-'));
+  const resultPath = path.join(controlRoot, 'result.json');
+  const helperUrl = pathToFileURL(path.resolve(import.meta.dirname, 'helpers/tracked-fixture-root-cleanup.ts')).href;
+  const source = `
+    import { afterAll, expect, test } from 'bun:test';
+    import { existsSync, mkdtempSync, writeFileSync } from 'node:fs';
+    import { rm } from 'node:fs/promises';
+    import path from 'node:path';
+    import { tmpdir } from 'node:os';
+    const { cleanupTrackedFixtureRoots } = await import(${JSON.stringify(helperUrl)});
+    const roots = [mkdtempSync(path.join(tmpdir(), 'vida-tracked-undefined-')), mkdtempSync(path.join(tmpdir(), 'vida-tracked-undefined-'))];
+    const failedRoot = roots[0];
+    const initiallyRetainedRoot = roots[1];
+    if (!failedRoot || !initiallyRetainedRoot) throw new Error('Thrown-undefined fixture root is missing');
+    writeFileSync(path.join(failedRoot, 'retained-evidence.bin'), 'retain thrown undefined evidence');
+    writeFileSync(path.join(initiallyRetainedRoot, 'initially-retained.bin'), 'already retained');
+    const tracked = new Set(roots);
+    const retained = new Set([initiallyRetainedRoot]);
+    const attempts = [];
+    const aliasAttempts = [];
+    let caught;
+    const removeRoot = async (root, options) => {
+      attempts.push(root);
+      if (root === failedRoot) throw undefined;
+      await rm(root, options);
+    };
+    test('aggregate preserves undefined and leaves the original root retained', async () => {
+      const aliased = new Set([failedRoot]);
+      let aliasError;
+      try { await cleanupTrackedFixtureRoots(aliased, aliased, async (root) => aliasAttempts.push(root)); }
+      catch (error) { aliasError = error; }
+      expect(aliasError).toBeInstanceOf(Error);
+      expect(aliasAttempts).toHaveLength(0);
+      expect(aliased.has(failedRoot)).toBe(true);
+      try { await cleanupTrackedFixtureRoots(tracked, retained, removeRoot); } catch (error) { caught = error; }
+      expect(caught).toBeInstanceOf(AggregateError);
+      expect(caught.errors).toHaveLength(1);
+      expect(caught.errors[0]).toBeUndefined();
+      expect(attempts).toEqual([failedRoot]);
+      expect(tracked.size).toBe(0);
+      expect(retained.has(failedRoot)).toBe(true);
+      expect(retained.has(initiallyRetainedRoot)).toBe(true);
+      await cleanupTrackedFixtureRoots(tracked, retained, removeRoot);
+      expect(attempts).toHaveLength(1);
+      expect(roots.map((root) => existsSync(root))).toEqual([true, true]);
+      expect(existsSync(path.join(failedRoot, 'retained-evidence.bin'))).toBe(true);
+      expect(existsSync(path.join(initiallyRetainedRoot, 'initially-retained.bin'))).toBe(true);
+    });
+    afterAll(() => writeFileSync(${JSON.stringify(resultPath)}, JSON.stringify({ roots })));
+  `;
+  let retain = true;
+  try {
+    const { child } = await runActualFixtureChild('tracked-undefined', source);
+    expect(child.closeObserved).toBe(true);
+    expect(child.timedOut).toBe(false);
+    expect(child.exitCode, child.stderr.toString()).toBe(0);
+    const capture: unknown = JSON.parse(readFileSync(resultPath, 'utf8'));
+    expect(isRecord(capture)).toBe(true);
+    if (!isRecord(capture)) throw Error('Tracked-root undefined-fault control produced an invalid capture');
+    expect(Array.isArray(capture.roots)).toBe(true);
+    if (!Array.isArray(capture.roots)) throw Error('Tracked-root undefined-fault control omitted roots');
+    for (const root of capture.roots) {
+      if (typeof root !== 'string') throw Error('Tracked-root undefined-fault control captured a malformed root');
+      rmSync(root, { recursive: true, force: true });
+    }
+    retain = false;
+  } finally {
+    if (!retain) rmSync(controlRoot, { recursive: true, force: true });
+  }
+});
 
 test.each([0, 1, 2])(
   'continuation cleanup reaches roots after unsafe root at position %s',

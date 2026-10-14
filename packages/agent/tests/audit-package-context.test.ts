@@ -1,12 +1,13 @@
 import { afterEach, expect, test } from 'bun:test';
 import { createHash } from 'node:crypto';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stringify } from 'yaml';
 import { loadRuntimeConfig, parseRuntimeConfigYaml } from '../src/config/runtime-config.ts';
 import { buildConfiguredContext } from '../src/orchestration/configured-context.ts';
+import { cleanupTrackedFixtureRoots } from './helpers/tracked-fixture-root-cleanup.ts';
 import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 
 interface ConsumerFixture {
@@ -16,14 +17,13 @@ interface ConsumerFixture {
 }
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const roots: string[] = [];
-afterEach(async () => {
-  await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
-});
+const roots = new Set<string>();
+const retainedRoots = new Set<string>();
+afterEach(async () => cleanupTrackedFixtureRoots(roots, retainedRoots));
 
 async function consumer(): Promise<ConsumerFixture> {
   const root = await mkdtemp(path.join(tmpdir(), 'audit-package-context-'));
-  roots.push(root);
+  roots.add(root);
   const template = (await readFile(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
     .replaceAll('{{REPOSITORY}}', 'context-consumer')
     .replaceAll('{{PROJECT}}', 'sample')

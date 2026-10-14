@@ -11416,3 +11416,60 @@ deduplicated and no resource authorization is inferred. Root alone publishes
 the exact small packet through ordinary strict hook; no Source reads/edits by
 workers during the hook. The retained incremental preparation now consumes the
 package-owned path discovery instead of a handwritten additions list.
+
+12dd10e ordinary strict commit/push completed; origin/main matches. Fresh SDK
+formation v16-current-sdk-formation.log ran no suites. Automatic preparation
+updated91delta paths,189selected files, actual review scope
+c4f3557846fcfb96e9725adac5805b617bbf6a8b0e87facb64126fae5c4fa35b;
+initial assignments94private/95shared remain conservative and no successor is
+authorized. Actual input capture matched the scope and launched both producers.
+
+Current run3dfba6c4-64f5-45a4-9365-6707f48cca8b ends UNKNOWN at the inherited
+five-minute ceiling. Actual PIDs506065/506066 have nullstatus/SIGKILL and explicit
+timeout_observed=true; direct accounting and reservation disposal are known,
+resource_safe_to_advance=false. Typecheck PID506042 exited0. Durable operation
+and supervisor observations were written before budget exhaustion blocked
+report work. Partial logs contain305PASS in shard1 and157PASS/1FAIL in shard2;
+these are incomplete reporter rows, not a numeric receipt or measured speedup.
+FAIL: coverage-producer-map-custody expects the removed opaque async spawn
+timeout option. Fix its observer to read the actual owned timer scheduling delay
+while preserving shared decreasing allowance, exact PID/terminal proof, one
+capture and pristine map/artifact checks. Failed fixture and run roots remain.
+No unchanged full retry is planned; fix this contour and the confirmed cold
+scope-validator compilation/fixture-root cleanup families before remeasurement.
+
+Current contour correction v17: actual map-observer FAIL is fixed by observing
+the real producer expiry and terminal-wait timers, keeping the decreasing shared
+allowance and joining observed PID to the report and process receipt. Existing
+supervisor cases separately exercise actual expiry/SIGKILL; the successful map
+case does not claim its timer fired. Scope compiler cold-import regression is
+genuine RED1FAIL (received1compile instead of0); Source reuses the existing
+deferred validator with identical schema/options/guard order. No async CLI
+rewrite, proof-result cache or removed freshness reads. Cold selected-forward
+scope first-use positive remains an explicit scenario GAP.
+
+The F07 plain-filesystem analogue now uses one shared test-only active/retained
+Set owner. Each file registers its own hook; all removal attempts settle before
+errors aggregate; failed/previously retained roots are never automatically retried.
+Alias sets deny before effects; raw undefined rejection is preserved. Initial
+four controls fail because the helper module is absent (feature-absence proof,
+not a causal native old-cleanup regression). Current native nonempty-directory
+faults and positive caller proof are under Root qualification.
+
+v17-final-static.log:453capturedTS/452program0diagnostics, Source100/0 and lintPASS.
+v17-affected-native.log43PASS/325assertions/15.50s across five files includes the
+actual inert coverage producer+validator, supervisor expiry/accounting, public
+documentation transition/CLEAR and configured package-context callers. The final
+PID-join and complete lifecycle packet are running; Source frozen during checks.
+Two fresh blind reviewers find no implementation blocker; both identify the
+scope first-use and configured-vs-fired timer evidence distinctions above.
+Root alone owns ordinary strict publication after that run. All complete numeric,
+frozen correspondence, real native Runtime and existing-source exclusion gaps
+remain OPEN. Current old UNKNOWN3dfba6c4 and its failed fixture are preserved.
+
+Final v17 lifecycle/map qualification:23PASS/283assertions/40.48s across two
+files. The four new native tracked-root cases finish in milliseconds under
+default5000ms; no45s exception was added. Actual producer observation PID joins
+both report entry and process receipt. Together with preceding43PASS, all
+affected contours have bounded current-byte proofs; this is not a full suite.
+Root stages this exact packet and publishes normally through the strict hook.

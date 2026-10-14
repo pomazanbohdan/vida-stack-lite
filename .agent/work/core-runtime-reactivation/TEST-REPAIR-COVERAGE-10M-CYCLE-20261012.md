@@ -177,10 +177,10 @@ No additional unchanged full run is launched for this fixture-only packet.
 ca5209ff remains UNKNOWN at600000ms without an admitted numeric report. Broader
 late-timeout custody, parallel eligibility and frozen correspondence stay open.
 
-## Next reviewed P1 packet: retain the existing transform result
+## Implemented P1 seam: retain the existing transform result
 
-The producer currently discards generated code from its map transform; the
-preload transforms loaded sources again. New manifests use VidaBunCoverageRun/v2
+The implemented producer retains generated code from its map transform; the
+preload verifies and loads that artifact. New manifests use VidaBunCoverageRun/v2
 with exhaustive ordered instrumented_sources binding source path/hash to a
 canonical private artifact path/hash. Retain code and map from the existing
 producer pass, write artifacts before snapshot sealing, and verify original
@@ -208,3 +208,17 @@ The actual configured-context two-reader pilot passes only that descriptor path;
 keep common resource tags and descendant-quiescence requirements unchanged.
 Root alone runs final checks and Git; workers do not duplicate full suites,
 AST/input captures or formation. Full numeric admission remains OPEN.
+
+## Current12dd10e iteration and next corrections
+
+Automatic review discovery and freshly formed SDK qualify actual input admission
+for run3dfba6c4-64f5-45a4-9365-6707f48cca8b. Both direct producers reached
+explicit timeout/SIGKILL/UNKNOWN; complete report, current CRAP and mutation
+score remain absent. One emitted assertion failure is the map-custody test's
+stale opaque native-timeout observation. Next batch fixes that observer, defers
+the remaining eager scope-schema compiler using the existing deferred owner,
+and repairs plain fixture root retention through a minimal shared test helper.
+Join writers and perform static plus affected native checks, strict commit/push,
+then refresh SDK only if formation inputs changed. No unchanged full retry,
+timeout increase, resource-tag retirement, partial PASS promotion or old UNKNOWN
+replay. Remaining exhaustive frozen correspondence is a separate required gate.

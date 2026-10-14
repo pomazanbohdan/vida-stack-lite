@@ -142,6 +142,16 @@ test('documentation consumers do not compile duplicate CLEAR checkpoint validato
   }
 });
 
+test('forward proof import captures scope schema without compiling its Ajv validator', async () => {
+  const compilation = observeAjvCompiles((schema) => schemaId(schema) === schemaIds.scope);
+  try {
+    await import(`../src/documentation/transition-proof.ts?cold-scope=${randomUUID()}`);
+    expect(compilation.schemas).toHaveLength(0);
+  } finally {
+    compilation.restore();
+  }
+});
+
 test('forward proof parsers compile private Ajv validators on first use', async () => {
   const compilation = observeAjvCompiles((schema) => schemaId(schema) !== undefined);
   const observedSchemaIds = () => compilation.schemas.map(schemaId);
@@ -163,7 +173,9 @@ test('forward proof parsers compile private Ajv validators on first use', async 
     const fresh = (await import(
       `../src/documentation/transition-proof.ts?lazy=${randomUUID()}`
     )) as typeof import('../src/documentation/transition-proof.ts');
-    expect(observedSchemaIds()).toEqual([...producerCompilations, schemaIds.scope]);
+    // Import captures the scope schema but defers Ajv compilation until the
+    // selected-forward proof validates accepted scope bytes.
+    expect(observedSchemaIds()).toEqual(producerCompilations);
 
     const parsers = [
       {

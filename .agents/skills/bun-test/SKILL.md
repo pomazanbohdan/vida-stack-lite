@@ -561,6 +561,16 @@ functions/lines/statements/branches admission.
 
 ## Maintain this reference
 
+For plain filesystem fixture cleanup, reuse the file-owned active/retained Set
+contract in `tests/helpers/tracked-fixture-root-cleanup.ts`; it settles each
+removal, preserves raw rejection reasons and never retries retained roots.
+Each consuming file still registers its own hook. Native nonempty-directory
+removal failures at first/middle/last positions qualify continuation and custody;
+missing-helper RED proves only absence, not the old caller's causal failure.
+Successful async coverage observer cases read the owner's scheduled timer delays
+and join native PID to receipt; use the existing timeout/signal controls for
+actual expiry, keeping configured time and observed timeout distinct.
+
 For the pending shard launch seam, use the existing eligibility resolver and
 canonical layout guard; do not reproduce their checks in a caller. Bind the
 reviewed base environment as well as configuration/provider and captured input

@@ -21,7 +21,7 @@ const digest = (value: unknown): string => sha(canonicalize(value)!);
 const Constructor = Ajv2020 as unknown as new (options: object) => {
   compile<T = RecordValue>(schema: object): ValidateFunction<T>;
 };
-const validScope = new Constructor({ strict: true, allErrors: true }).compile<ScopeProjection>(scopeSchema);
+const validScope = deferredValidator<ScopeProjection>(scopeSchema, { strict: true, allErrors: true });
 function deferredValidator<T = RecordValue>(schema: object, options: object): (value: unknown) => value is T {
   // Capture the same import-time schema as eager compilation; never retain
   // consumer proof bytes or validated state between calls.

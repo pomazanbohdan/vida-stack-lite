@@ -73,6 +73,13 @@ import * as evidence from './bun-coverage-evidence.ts';
 import { mock } from 'bun:test';
 import { writeFileSync } from 'node:fs';
 const observations: Array<Record<string, unknown>> = [];
+const originalSetTimeout = globalThis.setTimeout;
+let activeTestProducerTimers: number[] | undefined;
+globalThis.setTimeout = ((...args: Parameters<typeof setTimeout>) => {
+  const delay = args[1];
+  if (activeTestProducerTimers && typeof delay === 'number') activeTestProducerTimers.push(delay);
+  return originalSetTimeout(...args);
+}) as typeof setTimeout;
 const run = childProcess.spawnSync;
 const runAsync = childProcess.spawn;
 import * as consumerBinding from './coverage-consumer-binding.ts';
@@ -96,15 +103,19 @@ mock.module('node:child_process', () => ({
   spawn(command: string, args: string[], options: Record<string, unknown>) {
     const started_ms = performance.now();
     const child = runAsync(command, args, options as Parameters<typeof childProcess.spawn>[2]);
+    const producerTimers: number[] = [];
+    activeTestProducerTimers = producerTimers;
     let spawnError: unknown;
     child.once('error', (error) => { spawnError = error; });
     child.once('close', (status, signal) => {
       const childEnvironment = options.env as NodeJS.ProcessEnv | undefined;
       observations.push({ phase: 'test', started_ms, finished_ms: performance.now(), timeout_ms: options.timeout,
+        owned_timer_delays_ms: [...producerTimers],
         pid: child.pid, status, signal, error: spawnError === undefined ? null : String(spawnError),
         consumer_repository_root: childEnvironment?.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ?? null,
         stdio: options.stdio, kill_signal: options.killSignal, buffered_output: Object.hasOwn(options, 'maxBuffer'),
         test_timeout: args[args.indexOf('--timeout') + 1] });
+      if (activeTestProducerTimers === producerTimers) activeTestProducerTimers = undefined;
       writeFileSync(${JSON.stringify(observationPath)}, JSON.stringify(observations));
     });
     return child;
@@ -169,9 +180,18 @@ mock.module('./bun-coverage-evidence.ts', () => ({
     expect(launches.map((value) => record(value).phase)).toEqual(['typecheck', 'test', 'crap']);
     const timeoutFor = (index: number): number => {
       const row: unknown = launches[index];
-      if (typeof row !== 'object' || row === null || !('timeout_ms' in row) || typeof row.timeout_ms !== 'number')
-        throw new Error('Observed child timeout is missing.');
-      return row.timeout_ms;
+      if (typeof row !== 'object' || row === null) throw new Error('Observed child timeout is missing.');
+      if (
+        'phase' in row &&
+        row.phase === 'test' &&
+        'owned_timer_delays_ms' in row &&
+        Array.isArray(row.owned_timer_delays_ms)
+      ) {
+        const ownedTimeout: unknown = row.owned_timer_delays_ms[0];
+        if (typeof ownedTimeout === 'number') return ownedTimeout;
+      }
+      if ('timeout_ms' in row && typeof row.timeout_ms === 'number') return row.timeout_ms;
+      throw new Error('Observed child timeout is missing.');
     };
     const typecheckTimeout = timeoutFor(0);
     const testTimeout = timeoutFor(1);
@@ -183,6 +203,15 @@ mock.module('./bun-coverage-evidence.ts', () => ({
     expect(crapTimeout).toBeGreaterThan(0);
     expect(crapTimeout).toBeLessThan(300000);
     const producer = record(launches[1]);
+    expect(producer.owned_timer_delays_ms).toHaveLength(2);
+    if (!Array.isArray(producer.owned_timer_delays_ms))
+      throw new Error('Owned producer timer observations are missing.');
+    const observedTimers: unknown[] = producer.owned_timer_delays_ms;
+    const expiry = observedTimers[0],
+      terminalBound = observedTimers[1];
+    if (typeof expiry !== 'number' || typeof terminalBound !== 'number')
+      throw new Error('Owned producer timer delays are not numeric.');
+    expect(terminalBound).toBeGreaterThan(expiry);
     expect(producer.pid).toBeGreaterThan(0);
     expect(producer.status).toBe(0);
     expect(producer.signal).toBeNull();
@@ -247,6 +276,8 @@ mock.module('./bun-coverage-evidence.ts', () => ({
       const receiptPath = path.join(path.dirname(manifestPath), 'processes', String(receipt.file));
       const receiptBytes = readFileSync(receiptPath);
       const originalChild = record(JSON.parse(receiptBytes.toString('utf8')));
+      expect(receipt.pid).toBe(producer.pid);
+      expect(originalChild.pid).toBe(producer.pid);
       chmodSync(manifestPath, 0o600);
       for (const missing of [true, false]) {
         const alteredManifest = structuredClone(manifest);

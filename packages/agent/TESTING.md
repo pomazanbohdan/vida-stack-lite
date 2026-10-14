@@ -207,6 +207,17 @@ their retained disposition and metadata. A transient deletion failure does not
 authorize automatic deletion of retained evidence on a later cleanup call.
 Environment restoration distinguishes an originally absent PATH from an empty
 PATH and from an uncaptured value; restore absence by deleting the variable.
+Plain filesystem fixtures may share `tests/helpers/tracked-fixture-root-cleanup.ts`:
+keep active and retained sets distinct and file-owned; await every removal before
+reporting aggregate failure. This helper registers no Bun hooks and grants no
+database, process, governance or retained-evidence disposal rights. Failed roots
+leave the active queue only after retained custody is recorded; later cleanup
+calls skip them. Preserve even a thrown undefined value as a failed outcome.
+
+Observe asynchronous coverage deadlines through the actual owner timer scheduling,
+not a removed native spawn timeout option. Join observed native PID/terminal to
+the generated receipt; keep deadline expiry/kill controls separate from successful
+map/artifact custody controls. A configured timer alone does not prove it fired.
 
 Public run fixtures prepare real intake, scope and acceptance bytes before the
 first admission. Keep admission arguments separate from persisted invocation
