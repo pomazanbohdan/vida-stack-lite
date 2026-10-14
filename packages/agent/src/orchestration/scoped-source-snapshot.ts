@@ -44,7 +44,7 @@ export function snapshotRuntimePackageSources(
   reader: RuntimeSourceReader,
   bundlePath: string,
   paths: readonly string[],
-): ScopedSourceSnapshot {
+): IssuedScopedSourceSnapshot {
   const prefix = `${bundlePath}/`;
   const packagePath = (relative: string): string => {
     requireSnapshot(relative.startsWith(prefix), 'runtime source is outside the configured package identity');
@@ -77,6 +77,16 @@ export interface ScopedSourceSnapshot {
   readonly schema: 'ScopedSourceSnapshot/v1';
   readonly entries: readonly ScopedSourceEntry[];
   readonly digest: string;
+}
+
+type IssuedScopedSourceEntry = ScopedSourceEntry &
+  (
+    | { readonly exists: true; readonly bytes: number; readonly sha256: string }
+    | { readonly exists: false; readonly bytes: null; readonly sha256: null }
+  );
+
+interface IssuedScopedSourceSnapshot extends ScopedSourceSnapshot {
+  readonly entries: readonly IssuedScopedSourceEntry[];
 }
 
 const persistedScopePathPattern = /^[A-Za-z]:/;
@@ -441,8 +451,8 @@ function readScopedSourceBytes(reader: SourceReader, relativePath: string, remai
 }
 
 /** Cooperative evidence read. It never prevents a human or native tool from editing a file. */
-export function snapshotDeclaredSources(reader: SourceReader, paths: readonly string[]): ScopedSourceSnapshot {
-  const entries: ScopedSourceEntry[] = [];
+export function snapshotDeclaredSources(reader: SourceReader, paths: readonly string[]): IssuedScopedSourceSnapshot {
+  const entries: IssuedScopedSourceEntry[] = [];
   let totalBytes = 0;
   for (const relativePath of canonicalPaths(paths)) {
     const bytes = readScopedSourceBytes(reader, relativePath, 64 * 1024 * 1024 - totalBytes);

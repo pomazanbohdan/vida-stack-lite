@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published input: `a6b0c7e` at origin/main.
+- Published input: `6577659` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -760,6 +760,67 @@ They retain the physical package-owner tag; no exercised consumer-root read
 was found. Process-local mocks/environment restoration still need complete
 same-child ordering qualification. These reviews are not current scope/hash
 admission and do not release retained UNKNOWN effects or activate parallelism.
+
+## Issued snapshot shape and eight further families
+
+Bridge correspondence packet `6577659` passed the ordinary strict hook and its
+non-force push succeeded. Exact logs in `/workspace/attachments/`:
+`quality-lineage-three-strict-commit-20261014.log` and
+`quality-lineage-three-push-20261014.log`.
+
+The two fresh snapshot factories now expose a private present/absent subtype
+matching their existing frozen entries, array and snapshot. Exported broad input
+interfaces, persisted parsing and comparison guards remain unchanged. Admission
+keeps its all-files-present and explicit schema-entry-exists fences but removes
+the repeated string check on the same freshly captured immutable digest. No
+helper, reread, rehash, cache or runtime authorization mechanism was added.
+Scoped static admission70>69 is corrected to69<=the original69/4830 ceiling.
+The runtime snapshot adapter2>original1 remains open.
+
+Source types101files/0errors; stable/package-reader files26PASS/0FAIL/237expects,
+4.91s. New mutation-attempt controls passed before the refactor and preserve the
+producer digest. Independent plan/final review found no correctness blocker.
+Evidence in `/workspace/attachments/`: `quality-issued-snapshot-source-types-20261014.log`,
+`quality-issued-snapshot-read-tests-20261014.log`,
+`quality-issued-snapshot-controls-before-20261014.log`,
+`quality-issued-snapshot-plan-review-20261014.md` and
+`quality-issued-snapshot-final-review-20261014.md`.
+
+The first complete admission affected file failed4PASS/2FAIL/1error. Its real
+lease integration exceeded the default5s at19.107s; its async body overlapped
+the next malformed-UTF8 spy, causing an undefined-access error and unhandled
+rejection. Preserve `quality-issued-snapshot-admission-tests-20261014.log` and
+the two retained absorption fixture roots. Do not replay their effects.
+Two proposed minimal fixture drafts were rejected by actual runtime authority
+and then Source-journal scope guards; their focused FAIL logs remain retained.
+The original real bridge/producer flow and every renewal/CAS/Source assertion
+were restored. Only this real integration now has a documented30s exception,
+also used by its retention deadline. Default5s and total coverage300000ms stay
+fixed. Final affected file6PASS/0FAIL/38expects/28.37s; real case22.575s. This is
+completion proof, not a speedup or product latency qualification. Its slow flow
+and possible lingering-body risk on a future timeout remain open.
+Final log/review: `quality-issued-snapshot-admission-corrected-tests-20261014.log`
+and `quality-real-renew-exception-review-20261014.md` in that directory.
+No bailout was added to numeric coverage: its existing native control shows
+preload finalization/receipt loss. Point-test bailout is not numeric evidence.
+
+Root joins374 additional roles across eight complete selected families:
+199retained/175new. Source preflight, scoped snapshots, local admission, workflow
+plan and initial continuation account213roles; new upgrade storage, service
+custody and Bun SQLite account161roles. All new10/10 caps apply per callable,
+not to family size. The erroneous SQLite family-count ceiling was rejected.
+The source-preflight candidate's already-joined currentJournalEvidence marker
+named its old location; Root verified its actual observed-receipt-evidence
+binding and did not duplicate it. Eight selected files were refreshed; all
+other inventory rows were reused.
+
+Partial totals2546roles,1816retained/730new/6removed,118bound files. Inventory
+7713roles leaves5167current and3879original dispositions missing. Full executable
+CRAP plan, exact coverage and assertion-confirmed mutation qualification remain
+open. Receipt: `/workspace/attachments/quality-lineage-eight-join-receipt-20261014.json`.
+Independent family reviews: `quality-lineage-five-review-a-20261014.md`,
+`quality-lineage-five-review-b-20261014.md`,
+`quality-new-storage-sqlite-review-20261014.md` in that directory.
 
 Genuine b549951 was measured once: runfe54f83c-6a70-4223-9872-f43f1ac784e9,
 SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.

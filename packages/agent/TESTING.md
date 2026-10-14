@@ -1058,6 +1058,16 @@ For late renewal caller tests, initialize the real Mastra bridge journal through
 its producer owner. The absorption helper's minimal journal omits Source scope
 and cannot reach the late schema fence. A successful renewal advances Journal
 CAS while preserving its payload and digest; assert these separately.
+The Linux late-renewal case in `tests/runtime-package-access-reuse.test.ts`
+has an explicit30000ms exception covering real producer bootstrap, renewal and
+awaited close. Keep the ordinary5000ms test default. This control requires the
+real producer-bound Source journal; the minimal admission journal fails before
+the late schema read. Do not substitute fabricated journal postimages. Its
+exception is not a product latency qualification or an increase to the complete
+coverage300000ms budget. Keep the same allowance in the fixture retention
+deadline. A timed-out async body may continue owning spies; stop the affected
+pool on failure, retain its root, and await terminal observation before any new
+pool. Neither timeout nor a sent signal proves effects are quiescent.
 Project-split rebind caller checks reuse an already activated upgrade fixture
 after its original assertions. Supply the consumer selector prerequisite as
 explicit isolated fixture data, not installation evidence. Let the public planner

@@ -43,6 +43,21 @@ test('source snapshots use one stable read per canonical path and retain absent 
   expect(result.entries[1]).toMatchObject({ path: 'present.ts', exists: true, bytes: 12 });
   expect(result.digest).toBe(canonicalJsonDigest({ schema: 'ScopedSourceSnapshot/v1', entries: result.entries }));
   expect(Object.isFrozen(result.entries[0])).toBe(true);
+  const present = result.entries[1];
+  if (present?.exists !== true) throw new Error('present captured entry is unavailable');
+  expect(present.sha256).toMatch(/^[a-f0-9]{64}$/u);
+  expect(Object.isFrozen(present)).toBe(true);
+  expect(Object.isFrozen(result.entries)).toBe(true);
+  expect(Object.isFrozen(result)).toBe(true);
+  const digest = result.digest;
+  expect(Reflect.set(present, 'sha256', null)).toBe(false);
+  expect(Reflect.set(present, 'exists', false)).toBe(false);
+  expect(Reflect.set(result.entries, '0', present)).toBe(false);
+  expect(Reflect.set(result, 'digest', 'changed')).toBe(false);
+  expect(result.entries[0]?.exists).toBe(false);
+  expect(result.entries[1]?.exists).toBe(true);
+  expect(result.digest).toBe(digest);
+  expect(result.digest).toBe(canonicalJsonDigest({ schema: result.schema, entries: result.entries }));
 });
 
 test('stable source snapshots retain exact per-file aggregate and canonical path bounds', () => {

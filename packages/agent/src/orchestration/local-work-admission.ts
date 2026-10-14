@@ -171,10 +171,7 @@ export function admitLocalSessionWork(input: LocalWorkAdmissionInput): {
   const schemaEntry = runtimeCode.entries.find(
     (entry) => entry.path === config.runtime.bundle + '/schemas/agent-runtime-config.v1.schema.json',
   );
-  requireAdmission(
-    schemaEntry?.exists === true && typeof schemaEntry.sha256 === 'string',
-    'runtime schema binding is absent from the captured package snapshot',
-  );
+  requireAdmission(schemaEntry?.exists === true, 'runtime schema binding is absent from the captured package snapshot');
   const schemaDigest = schemaEntry.sha256;
   const codeDigest = runtimeCode.digest;
   const canonicalIntakePath =

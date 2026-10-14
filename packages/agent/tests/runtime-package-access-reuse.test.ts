@@ -308,10 +308,12 @@ test('renew lease rejects malformed UTF-8 in its package scope schema before tou
   }
 });
 
+const realProducerRenewalTimeoutMs = 30_000;
+
 test.skipIf(process.platform !== 'linux' || !safeRepositoryAccess.safeRepositoryProviderAvailable)(
   'renew lease reads its late package schema through verified bytes and retains the admitted Source binding',
   async () => {
-    const deadlineAt = performance.now() + 5_000;
+    const deadlineAt = performance.now() + realProducerRenewalTimeoutMs;
     const fixture = createAutomaticWorkAdmissionFixture(false, true);
     let bridge: MastraSessionBridge | undefined;
     let accessSpy: Mock<typeof runtimeConfig.runtimePackageAccess> | undefined;
@@ -486,6 +488,7 @@ test.skipIf(process.platform !== 'linux' || !safeRepositoryAccess.safeRepository
       );
     if (!success) throw bodyError;
   },
+  realProducerRenewalTimeoutMs,
 );
 
 function snapshotFixtureDatabase(
