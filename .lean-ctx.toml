@@ -1,0 +1,61 @@
+# Explicit context delivery only. Native shell owns diagnostic and machine evidence.
+tools_enabled = ["ctx_shell", "ctx_read", "ctx_expand", "ctx_context"]
+disabled_tools = ["ctx_call", "ctx_execute", "ctx_edit", "ctx_patch"]
+shadow_mode = false
+shell_activation = "agents-only"
+shell_hook_mode = "rewrite"
+excluded_commands = ["vex", "ast-grep", "sg"]
+shell_security = "enforce"
+shell_allow_writes = false
+shell_allowlist_extra = ["vex", "ast-grep", "git", "bun"]
+read_redirect = "off"
+read_dedup = "off"
+cache_policy = "safe"
+cache_max_tokens = 100000
+prefer_native_editor = true
+rules_injection = "off"
+prompt_reinject = "off"
+terse_agent = "off"
+bypass_hints = "off"
+behavior_nudges = "off"
+savings_footer = "never"
+semantic_mode = "off"
+auto_capture = false
+proxy_enabled = false
+buddy_enabled = false
+update_check_disabled = true
+
+[search]
+dense_enabled = false
+[graph]
+traversal_edges = false
+[archive]
+enabled = true
+ephemeral = true
+ephemeral_min_tokens = 2500
+max_age_hours = 72
+max_disk_mb = 500
+[autonomy]
+enabled = false
+cognition_loop_enabled = false
+[decision_loop]
+enabled = false
+[gateway]
+enabled = false
+[llm]
+enabled = false
+[cross_agent]
+auto_extract = false
+cross_agent_sync = false
+semantic_search = false
+[solution]
+enabled = false
+[secret_detection]
+enabled = true
+redact = true
+[setup]
+auto_inject_rules = false
+auto_inject_skills = false
+manage_hooks = false
+[telemetry]
+enabled = false

@@ -14,13 +14,13 @@ before searching or reading implementation files. Select the tool by purpose:
 | ---------------------------------------------------------------------------- | ------------------------------------------------ |
 | File names, symbol names, messages and configuration text                    | `rg`, `rg --files`                               |
 | Call shapes, repeated syntax and refactoring candidates                      | `ast-grep run` or `ast-grep scan`                |
-| Indexed definitions and reference candidates                                | `ast-index symbol`, `refs`, `usages`              |
-| Navigation to declarations, imports and direct members before reading bodies | `ast-index outline` or `ast-grep outline`         |
+| Indexed definitions and reference candidates                                 | `vex check`, `show`, `usages`, `callers`         |
+| Navigation to declarations, imports and direct members before reading bodies | `vex outline` or `ast-grep outline`              |
 | Maintained function inventory and identities; type and semantic checks       | Existing Babel inventory and TypeScript compiler |
 
 Delegation includes the repository root and this bootstrap pointer, including
-for blind agents. Agents read the relevant project skill before using
-`ast-index` or `ast-grep`; inspect only the selected paths and reuse current results. If the
+for blind agents. Agents read [.codex/README.md](.codex/README.md) for Vex/LeanCTX and the relevant
+project skill for ast-grep; inspect selected paths and reuse current results. If the
 CLI is unavailable or its version differs from the pin, report that limitation
 and use the existing tools without claiming that tool's check. Syntax findings
 remain review candidates; all validation and evidence gates stay with their
@@ -94,40 +94,36 @@ other applications from using it.
 
 ## Structural code search
 
-Use [ast-index](.agents/skills/ast-index/SKILL.md) for indexed TS/TSX definitions,
-reference candidates and compact context. Qualified native CLI: `ast-index 3.56.0`,
-installed on the development host; version/provenance/license are in
-`.agents/skills/ast-index.upstream.json`. It adds no product dependency or runtime
-database. Run from this repository's root. `.ast-index.yaml` scopes the index to
-maintained packages/tests/tooling and excludes generated/dependency trees; the
-reconstructable SQLite index stays in the host cache returned by `ast-index db-path`.
+Use Vex as the single primary indexed navigation tool; the qualified environment
+setup, versions, cache and recovery contract live in [.codex/README.md](.codex/README.md).
+Known symbol body -> `vex show X` directly; existence -> `vex check X`;
+unknown concept -> `vex search "description" --limit 10`; selected references ->
+`vex usages X --strict`; call chains -> `vex callers/callees X`.
+Use `vex bundle --mode symbol --symbol X` when its full unscoped body and related
+facts are needed; bundle symbol mode ignores scope filters. Keep `rg` first for
+file/name/text searches and direct ast-grep for targeted structural patterns.
+Vex references, graph edges and impact verdicts are candidates, never compiler
+proof or permission to delete. Empty/unsupported/stale/truncated results require
+current Source and an appropriate fallback. Preserve Babel identities and gates.
 
-One designated agent refreshes the shared index after writers join: rebuild
-initially, then update once per settled edit batch. The updater compares mtime
-in seconds and size; same-size edits within that second, restored timestamps or
-uncertain freshness require a coordinated rebuild. Plain queries do not refresh.
-Do not refresh during frozen runtime/numeric checks or run an automatic watcher.
-Readers receive repository root and refresh status; they do not each rebuild.
-An optional symbol graph has its own `graph build`/`graph status` lifecycle;
-index update leaves it stale. Reuse existing results within the same input state.
+One designated lead builds `vex index --no-semantic --no-pattern-index --jobs 2`
+initially and runs `vex update --no-semantic` once after writers join. Readers never
+refresh independently. No watcher or refresh during frozen numeric/runtime checks.
+Check `vex status --coverage`; JSON/config or unsupported files stay on rg.
+Keep caches outside the repository and product workspace database. ast-index
+and its original skill are retained as an inactive fallback; do not maintain a
+parallel ast-index index/graph while Vex is primary. A switch has one refresh owner.
 
-Keep `rg` first for file/name/text searches, ast-index for indexed navigation,
-direct ast-grep for selected structural patterns, and Babel/TypeScript for
-maintained identities/semantic proof. Choose one first; do not launch both AST
-tools for every query or add a search router/reducer service. Narrow scope and
-limits, return path/symbol/line or range/relevant snippet, and report truncation.
-Read a returned body again only for omitted context or after its input changes.
-Verify current Source before edits. ast-index `refs` are name-based candidates;
-`callers` is a live textual scan and can match comments/strings. A graph may have
-ambiguous/unresolved edges. Empty results never prove safe deletion or replace
-Knip, function correspondence, coverage, assertion or mutation evidence.
-
-The native `ast-index agrep` bridge exists but reparses through an external
-ast-grep, scans the discovered root and does not reuse the index/include scope.
-Use direct ast-grep with explicit files for our structural searches. Qualified
-commands and observed upstream documentation differences are in the skill;
-do not adopt its upstream "always first" or exhaustive-usage claims. Preserve
-one original project skill under `.agents/skills`, not `.vida/skills`.
+LeanCTX is explicit context delivery only: `ctx_read` for compact exploration,
+`ctx_shell` for human summaries of successful commands/logs, `ctx_expand` for
+archived output and `ctx_context` for cache status. Require the qualified four-tool
+MCP surface; disabled `ctx_call` must not expose unlisted tools. Use native shell
+for Vex/ast-grep, machine JSON, diffs, compiler/test failures and exact evidence: even
+`ctx_shell(raw=true)` merges streams, redacts and can truncate. Recover existing
+archives before rerunning expensive work; native current reads guard edits.
+No automatic LeanCTX hook, instruction, skill, proxy or background-search setup.
+Codex project MCP configuration affects supported future sessions; check actual
+tool availability before claiming it is active in the current Cloud session.
 
 Use `ast-grep` as an additional development tool for structural searches and
 compact file outlines. Its CLI is pinned to `@ast-grep/cli@0.50.0`; verify

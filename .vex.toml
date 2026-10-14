@@ -1,0 +1,11 @@
+# One lead-owned refresh per settled edit batch; no watcher during frozen checks.
+format = "compact"
+# Full semantic build was SIGKILL (137) on this host; explicit pilot only.
+semantic = false
+auto_update = false
+async_update = false
+exclude = [
+  "BASE/**", ".agent/**", ".tmp/**", ".planning/**", ".lean-ctx/**",
+  "**/node_modules/**", "**/dist/**", "**/build/**", "**/coverage/**",
+  "**/.stryker-tmp*/**", ".git/**"
+]

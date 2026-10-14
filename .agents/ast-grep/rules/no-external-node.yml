@@ -1,0 +1,14 @@
+id: no-external-node
+language: TypeScript
+severity: error
+message: Use package-selected Bun for repository execution; external Node is unsupported.
+files:
+  - tooling/agent/**/*.ts
+  - packages/agent/tooling/**/*.ts
+  - packages/agent/bin/**/*.ts
+rule:
+  any:
+    - pattern: Bun.spawn(['node', $$$ARGS])
+    - pattern: Bun.spawn(['node', $$$ARGS], $$$OPTIONS)
+    - pattern: Bun.spawnSync(['node', $$$ARGS])
+    - pattern: Bun.spawnSync(['node', $$$ARGS], $$$OPTIONS)

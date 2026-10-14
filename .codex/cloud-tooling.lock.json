@@ -1,0 +1,43 @@
+{
+  "platform": "linux-x64-glibc",
+  "tools": [
+    {
+      "name": "vex",
+      "version": "1.27.4",
+      "license": "MIT",
+      "url": "https://github.com/tenatarika/vex/releases/download/v1.27.4/vex-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "9f4416b4cbc277f20d725f801aaa9300ade8e7e7fe2d1534a9f0aa36dac92465",
+      "archive": "tar",
+      "binaries": ["vex"]
+    },
+    {
+      "name": "lean-ctx",
+      "version": "3.11.4",
+      "license": "Apache-2.0 public host; see upstream LICENSE.md and notices",
+      "url": "https://github.com/yvgude/lean-ctx/releases/download/v3.11.4/lean-ctx-x86_64-unknown-linux-gnu.tar.gz",
+      "sha256": "5044d0393f7b51bbb861435bd9d98694339678b4f827a690216d870b6719d56a",
+      "archive": "tar",
+      "binaries": ["lean-ctx"]
+    },
+    {
+      "name": "ast-grep",
+      "version": "0.50.0",
+      "license": "MIT",
+      "url": "https://github.com/ast-grep/ast-grep/releases/download/0.50.0/app-x86_64-unknown-linux-gnu.zip",
+      "sha256": "0fd3f489639abb8465a914b74b8779171577582318d8a940d00399f59dba81c5",
+      "archive": "zip",
+      "binaries": ["ast-grep", "sg"]
+    }
+  ],
+  "semanticModel": {
+    "repository": "Qdrant/all-MiniLM-L6-v2-onnx",
+    "revision": "5f1b8cd78bc4fb444dd171e59b18f3a3af89a079",
+    "files": {
+      "model.onnx": "bbd7b466f6d58e646fdc2bd5fd67b2f5e93c0b687011bd4548c420f7bd46f0c5",
+      "tokenizer.json": "da0e79933b9ed51798a3ae27893d3c5fa4a201126cef75586296df9b4d2c62a0",
+      "config.json": "1b4d8e2a3988377ed8b519a31d8d31025a25f1c5f8606998e8014111438efcd7",
+      "special_tokens_map.json": "5d5b662e421ea9fac075174bb0688ee0d9431699900b90662acd44b2a350503a",
+      "tokenizer_config.json": "bd2e06a5b20fd1b13ca988bedc8763d332d242381b4fbc98f8fead4524158f79"
+    }
+  }
+}

@@ -1,0 +1,4 @@
+ruleDirs:
+  - .agents/ast-grep/rules
+testConfigs:
+  - testDir: .agents/ast-grep/rule-tests

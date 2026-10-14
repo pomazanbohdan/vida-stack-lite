@@ -1,0 +1,14 @@
+# Project-scoped Codex CLI registration. Cloud hosts must support project MCP config.
+# No Vex/ast-grep MCP, hooks, automatic instruction injection or proxy.
+[mcp_servers.lean-ctx]
+command = "lean-ctx"
+args = ["mcp"]
+enabled_tools = ["ctx_shell", "ctx_read", "ctx_expand", "ctx_context"]
+startup_timeout_sec = 30
+
+[mcp_servers.lean-ctx.env]
+LEAN_CTX_PATH_JAIL_SCOPE = "project"
+LEAN_CTX_TOOL_PROFILE = ""
+LEAN_CTX_SHADOW_MODE = "false"
+LEAN_CTX_RULES_INJECTION = "off"
+LEAN_CTX_PROMPT_REINJECT = "off"

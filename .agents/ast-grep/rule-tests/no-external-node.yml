@@ -1,0 +1,8 @@
+id: no-external-node
+valid:
+  - Bun.spawn(['bun', 'script.ts']);
+  - Bun.spawnSync(['bun', 'script.ts'], {cwd});
+  - const documentation = "Bun.spawn(['node', 'script.ts'])";
+invalid:
+  - Bun.spawn(['node', 'script.ts']);
+  - Bun.spawnSync(['node', 'script.ts'], {cwd});

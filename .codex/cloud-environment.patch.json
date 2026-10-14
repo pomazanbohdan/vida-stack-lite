@@ -1,0 +1,10 @@
+{
+  "schema": "vida-cloud-tooling-template/v1",
+  "target": "existing Cloud Environment setup/startup script",
+  "platform": "linux-x64-glibc>=2.35",
+  "workingDirectory": "repository checkout root",
+  "prerequisites": ["package-selected Bun", "curl", "tar", "unzip", "getconf"],
+  "script": "export PATH=\"$HOME/.local/bin:$HOME/.bun/bin:$PATH\"\nbun tooling/agent/cloud-tooling-setup.ts\n",
+  "projectMcpConfig": ".codex/config.toml",
+  "configurationSaveStatus": "requires supported host configuration editor; not saved by runtime-status API"
+}

@@ -8,6 +8,9 @@ const config = {
     '.': {
       // Child-process entrypoints and the source template have concrete consumers.
       entry: [
+        // Invoked by the repository-owned Cloud Environment setup template.
+        'tooling/agent/cloud-tooling-setup.ts',
+        'tooling/agent/cloud-tooling-check.ts',
         'tooling/agent/controllers/forward-update-prepare.ts',
         'tooling/agent/controllers/forward-update-finalize.ts',
         'tooling/agent/controllers/forward-documentation-phase.ts',
