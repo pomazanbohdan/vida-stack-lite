@@ -3,13 +3,15 @@
 Current scheduling extension: PARALLEL-TESTING-DESIGN-20261012.md and
 PARALLEL-TESTING-IMPLEMENTATION-20261012.md. Their explicit shard architecture
 is reviewed/pending, not deployed. Existing repair/numeric constraints remain.
-Current full runca5209ff is terminal UNKNOWN under the600000ms cap; no admitted
-coverage report. Its emitted rows contain no assertion FAIL before interruption;
-all5natural quarantine cases pass, but the complete selection is unfinished.
-Earlier run3ad33c8f's stale synthetic fixture path is fixed and focused-qualified.
-Earlier run counts are historical observations, not the current gate result.
-Do not repeat identical complete serial input merely to seek green; prioritize
-measured repeated Host validation and qualified resource overlap below.
+Current full run9364aa69-a223-4a4d-8ffb-2f659eea36a6 is terminal UNKNOWN
+under300000ms, with two actual reviewed direct shards and durable supervisor
+observations; no admitted coverage report. All four recovery routes emitted
+PASS, but the complete189-file selection is unfinished. Partial268/154PASS
+rows and nested parent/child timings are not complete file weights. Current
+correction removes one redundant status child per recovery route while retaining
+fresh-report CAS and revision-advance assertions. Earlier run counts remain
+historical observations. Publish the checked correction before a fresh reviewed
+attempt; do not repeat unchanged full inputs merely to seek green.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans task-by-task. Root owns runtime verification; blind Luna workers own disjoint implementation files and independent reviews.
 

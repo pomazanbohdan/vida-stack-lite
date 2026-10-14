@@ -10,7 +10,21 @@
 
 **Spec:** PARALLEL-TESTING-DESIGN-20261012.md in this directory; current TESTING.md and test repair cycle plan.
 
-## Current dispatch — 2026-10-13
+## Current dispatch — 2026-10-14
+
+Current published f24aa93 ran the correctly bound189-file initial wave in
+run9364aa69-a223-4a4d-8ffb-2f659eea36a6. Both actual direct children timed out
+with durable UNKNOWN/SIGKILL observations; no numeric report is admitted.
+All four private recovery routes passed, but partial268/154PASS rows cannot
+serve as complete file weights. Keep nested parent/child rows deduplicated by
+actual custody, not names alone. No unchanged full retry.
+
+Next joined correction removes four redundant recovery status children while
+preserving original expected CAS on fresh report and explicit revision advance.
+Root completes static/affected behavior, executes the bounded partial-timings
+and held-main mechanics controls, publishes the checked packet, and only then
+prepares a fresh current reviewed run. Failed/UNKNOWN roots remain retained;
+exact coverage, frozen CC/CRAP and assertion-confirmed Killed gates stay OPEN.
 
 Published corrections `d296ceb` and `12626b6` preserve unrelated `BASE/` and root
 `bun.lock`; origin/main matches, actual Bun1.4.3. The terminal

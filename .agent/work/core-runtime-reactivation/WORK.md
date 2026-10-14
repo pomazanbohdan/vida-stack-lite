@@ -10916,3 +10916,46 @@ threshold, frozen budget or mutation assertion requirement changed. Root keeps
 PWD and all other caller fields bound, and will invoke the next reviewed full
 run from the same repository origin as review preparation. Source/build suites
 remain separate; no installed Runtime or unblock notice is claimed.
+
+### Current two-shard cost correction — 2026-10-14
+
+Published f24aa93 to origin/main. Run9364aa69-a223-4a4d-8ffb-2f659eea36a6
+prepared and launched from the same repository origin, admitting the reviewed
+189-file initial wave:94private/95shared. Actual direct PIDs462014/462015 both
+terminated nullstatus/SIGKILL/UNKNOWN within the300000ms entry budget. The
+supervisor observation is durable; reservationSafeToRelease=true does not grant
+resource reuse (resourceSafeToAdvance=false). No numeric report, current CRAP
+or assertion-confirmed mutation score is admitted. Retain run/effect roots.
+
+All four recovery routes emitted PASS: research55235.27ms, new60841.10ms,
+change47622.77ms, bug43885.99ms. Shards emitted268/154partialPASS rows and no
+assertion-failure rows. These omit unobserved cases, startup and fixture costs;
+nested publication parent/child PASS rows describe one physical case and must
+not become duplicate timing weights. Reuse shard-cost-summary.json and native
+supervisor/log bytes; do not rerun unchanged inputs.
+
+Joined writer and independent CAS review remove only the extra status launch
+after wrong-action denial in each recovery route. The next fresh report retains
+the original expected revision/digest, must avoid report_retrieved and advance
+revision. Replay remains a separate proof: its early return cannot witness CAS.
+Keep the first route's distinct preparation_incomplete status observation and
+all malformed, oversized, hardlink, stale-CAS and replay controls. This removes
+four native child launches; no measured speedup or complete-suite success yet.
+
+Independent publication-cost review keeps the warm public inspect: it is the
+sole positive direct inspect assertion and costs only562ms, whereas actual
+controller verify costs37857ms. Existing bounded initial-Source timing support
+can expose its genuine command phases without another instrumenter. Two blind
+writers prepare owned, <=10s native mechanics probes: Bun partial timing flush
+and EXCLUSIVE-first/checkpoint/serialize on one held SQLite connection. Root
+alone executes after static checks. Neither probe grants numeric admission,
+closed-image capability, legacy exclusion, AUX retirement or active cutover.
+
+recovery-cas-static.log:450capturedTS/449program0diagnostics; typed lint PASS0.
+First anchored filter incorrectly included Bun reporter's ` > ` separator and
+matched0; it is not behavior evidence. Correct case-suffix filter selects one
+research route: recovery-cas-native-actual.log1PASS/50assertions/44.40s, three
+other routes filtered. Actual fresh-report assertions pass after removing the
+status child. Earlier48.77s batch included other callers; no matched speedup
+claim. One exec-server transport failure recovered on the next read; it does
+not establish a restart cause or loss of tracked changes.

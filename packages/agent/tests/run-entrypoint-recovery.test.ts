@@ -485,12 +485,14 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
               writeFileSync(reportFile, JSON.stringify({ ...outcome, action_id: 'wrong-action' }));
               const mismatched = call([...expected(version), '--report', reportFile]);
               expect(mismatched.status).toBe(1);
-              expect(requireStateVersion(call().payload.state_version)).toEqual(version);
             }
             writeFileSync(reportFile, JSON.stringify(outcome));
             final = call([...expected(version), '--report', reportFile]);
             expect(final.status, final.stderr).toBe(0);
-            version = requireStateVersion(final.payload.state_version);
+            expect(final.payload.status).not.toBe('report_retrieved');
+            const reportedVersion = requireStateVersion(final.payload.state_version);
+            expect(reportedVersion.revision).toBeGreaterThan(version.revision);
+            version = reportedVersion;
           }
           if (!final) throw Error('report sequence produced no final result');
           const finalActions = requireNextActions(final.payload);
