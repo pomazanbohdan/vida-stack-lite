@@ -104,9 +104,10 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents3268roles; one132file AST+SHA refresh corrects all
+The current partial represents4099roles; one132file AST+SHA refresh corrects all
 joined current address bindings without changing identities or frozen allowances.
-Installer27<=31 has scoped proof; native recognizer38>32 and retained
+Installer27<=31, native loaders4<=4 and controller target2<=2 have scoped proof;
+native recognizer38>32 and retained
 callback/context deficits remain open. Unbound Source inventory freshness
 and exhaustive mapping remain pending. Current Bun1.4.3 validates the
 retained measurement against byte-identical1.4.2 runtime evidence without

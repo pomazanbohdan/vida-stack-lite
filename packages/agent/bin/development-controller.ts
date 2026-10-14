@@ -69,8 +69,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isRuntimeConfigModule(value: unknown): value is RuntimeConfigModule {
-  return isRecord(value) && typeof value.loadRuntimeConfig === 'function';
+function requireRuntimeConfigModule(value: unknown): asserts value is RuntimeConfigModule {
+  if (!isRecord(value) || typeof value.loadRuntimeConfig !== 'function')
+    throw new Error('Development controller runtime config API is invalid.');
 }
 
 function isFileEntry(value: unknown): value is FileEntry {
@@ -424,7 +425,7 @@ async function targetIdentity(root: string): Promise<{ repository_id: string; pr
   const runtimeConfig: unknown = await import(
     pathToFileURL(path.join(executingRoot, 'src/config/runtime-config.ts')).href
   );
-  if (!isRuntimeConfigModule(runtimeConfig)) throw new Error('Development controller runtime config API is invalid.');
+  requireRuntimeConfigModule(runtimeConfig);
   const config = runtimeConfig.loadRuntimeConfig(root);
   if (config.runtime.bundle !== 'packages/agent')
     throw new Error('Development controller is restricted to the Source logical packages/agent bundle.');

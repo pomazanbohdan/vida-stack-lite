@@ -395,9 +395,45 @@ const nativeDenials: readonly [string, string, string, number][] = [
   ],
   [
     'shadowed loader',
-    'function matchesAttestedNativeBinding(binding: unknown): boolean {',
-    'function matchesAttestedNativeBinding(binding: unknown): boolean { const moduleRequire = foreignRequire;',
+    'function matchesAttestedNativeBinding(binding: unknown, packageStillAttested: boolean): boolean {',
+    'function matchesAttestedNativeBinding(binding: unknown, packageStillAttested: boolean): boolean { const moduleRequire = foreignRequire;',
     1,
+  ],
+  [
+    'missing private identity attestation parameter',
+    'function matchesAttestedNativeBinding(binding: unknown, packageStillAttested: boolean): boolean {',
+    'function matchesAttestedNativeBinding(binding: unknown): boolean {',
+    1,
+  ],
+  [
+    'missing current identity attestation gate',
+    'if (!packageStillAttested || !binding) return false;',
+    'if (!binding) return false;',
+    1,
+  ],
+  [
+    'late identity attestation gate',
+    'if (!packageStillAttested || !binding) return false;',
+    'if (!binding || !packageStillAttested) return false;',
+    1,
+  ],
+  [
+    'unchecked identity attestation flag',
+    'matchesAttestedNativeBinding(binding, packageStillAttested)',
+    'matchesAttestedNativeBinding(binding, true)',
+    2,
+  ],
+  [
+    'missing identity attestation argument',
+    'matchesAttestedNativeBinding(binding, packageStillAttested)',
+    'matchesAttestedNativeBinding(binding)',
+    2,
+  ],
+  [
+    'reversed identity attestation arguments',
+    'matchesAttestedNativeBinding(binding, packageStillAttested)',
+    'matchesAttestedNativeBinding(packageStillAttested, binding)',
+    2,
   ],
   ['extra native call argument', 'packageRequire.resolve(name)', 'packageRequire.resolve(name, foreignOptions)', 1],
 ];

@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `23ad33b` at origin/main.
+- Published predecessor: `cebd8fb` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -844,7 +844,7 @@ Source typecheck passes101files/0diagnostics. Logs in `/workspace/attachments/`:
 `quality-installer-protocol-source-types-20261014.log`. Independent plan/final
 reviews use `quality-installer-protocol-{plan,final}-review-20261014.md` there.
 
-The current partial now binds3268roles,2234retained/1034new/18removed,132files.
+That packet's partial binds3268roles,2234retained/1034new/18removed,132files.
 722additional current roles are reviewed and joined. Selected refresh gives
 7716roles;4448current and3449original dispositions remain missing. The old
 native-import recognizer is retained once at the current finish owner32/1056;
@@ -870,6 +870,52 @@ states worktree bytes and the published predecessor rather than claiming a
 formed/installed artifact. Twenty static complexity overages remain open. The partial
 is non-executable. Full frozen plan, exact coverage and assertion-confirmed
 mutation gates remain open; no full run or UNKNOWN successor was issued.
+
+## Native identity gate, module guard and Host correspondence
+
+Both native loaders now carry complexity4 against original4. Their existing
+private identity helper owns the existing attestation short circuit before
+binding/root/require checks; the helper is3 under unchanged new-role10 policy.
+All method, platform, current package-hash and identity checks remain. Its exact
+AST recipe accepts only the new two-argument guarded form; initializer1,
+identity return2 and seven finite references are unchanged. Six source-mutation
+controls assert real occurrence counts and reject omitted/reordered/literal
+attestation gates. A review's contradictory initializer2 advice was rejected
+and corrected against the actual unchanged three-statement body.
+Affected scanner/attestation files pass76cases/0fail/240expects in1.51s;
+Source typecheck passes101files/0diagnostics. Evidence in `/workspace/attachments/`:
+`quality-native-identity-gate-tests-20261014.log`,
+`quality-native-identity-gate-source-types-20261014.log`,
+`quality-native-identity-gate-{plan,final}-review-20261014.md`.
+
+The existing controller module predicate becomes an assertion owner carrying
+the same record/callable guard and diagnostic. No helper/call or type cast is
+added. Caller targetIdentity is2 against original2; guard3 remains under10.
+Four public early-denial cases prove invalid API, foreign bundle, original loader
+error and thrown undefined before resolution/construction/copy/install. They
+restore the actual module export and retain failed scratch. Point4/0 and the
+complete affected observation file13/0 in1.34s are separate evidence; its
+expected UNKNOWN fixtures remain retained and are not reissued. No prohibited
+controller construction test ran. Evidence: `quality-controller-module-guard-file-tests-20261014.log`,
+`quality-controller-module-guard-restored-tests-20261014.log` and
+`quality-controller-module-guard-final-review-20261014.md` in that directory.
+
+Root joins831more current roles:569Host roles approved from owner/callsite/context
+review,75preflight,94final-assurance and93retarget. Twenty-three byte-identical
+Host candidates lack sufficient surrounding-context proof and remain unjoined.
+All75preflight CRAP fields were wrongly null in the proposal; each is restored
+from its exact genuine measurement. The obsolete forwarding wrapper is absorbed
+without a second cap; journalEvidence's prior removal is not duplicated.
+Current partial4099roles=3030retained/1069new,22removed,132bound files. Reused
+inventory7716 leaves3617current and2649original dispositions missing; partial
+mapping progress53.1% is not coverage. Three changed Source files are refreshed
+once, all others reuse the qualified bound capture. Eighteen complexity
+overages remain. Full executable CRAP plan, exact coverage and assertion-
+confirmed mutation stay open. Receipt:
+`/workspace/attachments/quality-native-controller-final-join-receipt-20261014.json`.
+Independent integration review accepts this scoped join, unchanged frozen caps,
+source addresses and exclusion of the 23 unqualified Host candidates:
+`/workspace/attachments/quality-native-controller-join-review-20261014.md`.
 
 Genuine b549951 was measured once: runfe54f83c-6a70-4223-9872-f43f1ac784e9,
 SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.
@@ -900,7 +946,8 @@ report/resource successor. Preserve original custody and stale review.
 
 1. Complete correspondence/original-budget corrections: pure
    read-only planner43>40, native recognizer38>32, new recipe owners19/29>10,
-   and retained callback/context deficits recorded above. Installer27<=31 and Host callback3<=3
+   and retained callback/context deficits recorded above. Installer27<=31,
+   native loaders4<=4, controller target2<=2 and Host callback3<=3
    has scoped Source proof above; full dynamic CRAP acceptance remains pending.
    Do not relabel roles or raise caps to force acceptance.
 2. Continue same-pattern cleanup review in remaining affected owners, preserving

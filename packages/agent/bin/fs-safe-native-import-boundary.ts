@@ -424,11 +424,11 @@ export function createFsSafeNativeImportBoundary(
       ) ||
       !functionMatches(
         functions.get('matchesAttestedNativeBinding'),
-        ['binding'],
+        ['binding', 'packageStillAttested'],
         [
           {
             type: 'IfStatement',
-            test: unary('!', id('binding')),
+            test: logical('||', unary('!', id('packageStillAttested')), unary('!', id('binding'))),
             consequent: returned({ type: 'BooleanLiteral', value: false }),
             alternate: null,
           },
@@ -589,7 +589,7 @@ export function createFsSafeNativeImportBoundary(
                 id('all'),
                 ...(platform === 'linux' ? [binary('===', member(id('process'), 'platform'), text('linux'))] : []),
                 still,
-                logical('&&', still, call(id('matchesAttestedNativeBinding'), id('binding'))),
+                call(id('matchesAttestedNativeBinding'), id('binding'), still),
                 ...methods.map((method) =>
                   binary(
                     '===',

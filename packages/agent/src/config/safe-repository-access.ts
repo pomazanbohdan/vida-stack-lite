@@ -226,8 +226,8 @@ const fsSafePackageNativeTarget = fsSafeNativeTarget();
 const fsSafePackageAttested =
   fsSafePackageTreeHash(fsSafePackageRoot, fsSafePackageNativeTarget) ===
   fsSafePackageTreeSha256ByNativeTarget[fsSafePackageNativeTarget];
-function matchesAttestedNativeBinding(binding: unknown): boolean {
-  if (!binding) return false;
+function matchesAttestedNativeBinding(binding: unknown, packageStillAttested: boolean): boolean {
+  if (!packageStillAttested || !binding) return false;
   const nativeRoot = resolveFsSafeNativePackageRoot(fsSafePackageRoot, fsSafePackageNativeTarget);
   return binding === moduleRequire(path.join(nativeRoot, 'fs-safe-native.node'));
 }
@@ -243,7 +243,7 @@ function loadLinuxNativeBinding(): LinuxNativeBinding | undefined {
   const available = all(
     process.platform === 'linux',
     packageStillAttested,
-    packageStillAttested && matchesAttestedNativeBinding(binding),
+    matchesAttestedNativeBinding(binding, packageStillAttested),
     typeof binding?.cloneFileExclusive === 'function',
     typeof binding?.renameNoReplace === 'function',
     typeof binding?.renameReplace === 'function',
@@ -261,7 +261,7 @@ function loadWindowsNativeBinding(): WindowsNativeBinding | undefined {
     expected !== undefined && fsSafePackageTreeHash(fsSafePackageRoot, fsSafePackageNativeTarget) === expected;
   const available = all(
     packageStillAttested,
-    packageStillAttested && matchesAttestedNativeBinding(binding),
+    matchesAttestedNativeBinding(binding, packageStillAttested),
     typeof binding?.renameNoReplace === 'function',
     typeof binding?.renameReplace === 'function',
     typeof binding?.openBeneath === 'function',

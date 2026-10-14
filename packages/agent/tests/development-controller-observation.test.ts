@@ -11,11 +11,13 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { afterEach, test } from 'bun:test';
+import { afterEach, mock, test } from 'bun:test';
 import { readPin } from '../bin/bun.ts';
 import { invokeObservedControllerChild } from '../bin/development-controller-observation.ts';
+import { prepareDevelopmentController } from '../bin/development-controller.ts';
 
 type ChildInvocation = Parameters<typeof invokeObservedControllerChild>[0];
 type ObservedChildResult = ReturnType<typeof invokeObservedControllerChild>;
@@ -151,6 +153,55 @@ afterEach(() => {
   }
   preserve.clear();
 });
+
+const runtimeConfigUrl = pathToFileURL(path.join(packageRoot, 'src/config/runtime-config.ts')).href;
+const originalRuntimeConfig = { ...(await import('../src/config/runtime-config.ts')) };
+
+for (const mode of ['invalid-api', 'foreign-bundle', 'loader-error', 'loader-undefined'] as const)
+  test(`controller module guard preserves failure-before-construction for ${mode}`, async () => {
+    const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-module-'));
+    roots.push(scratch);
+    preserve.add(scratch);
+    const controllerRoot = path.join(scratch, 'controller');
+    const calls: string[] = [];
+    const bodyError = new Error('runtime config loader failed');
+    const loadRuntimeConfig =
+      mode === 'invalid-api'
+        ? 42
+        : (root: string) => {
+            calls.push(root);
+            if (mode === 'loader-error') throw bodyError;
+            if (mode === 'loader-undefined') throw undefined;
+            return { runtime: { bundle: 'foreign' } };
+          };
+    let completed = false;
+    try {
+      await mock.module(runtimeConfigUrl, () => ({ ...originalRuntimeConfig, loadRuntimeConfig }));
+      const expected =
+        mode === 'invalid-api'
+          ? 'Development controller runtime config API is invalid.'
+          : 'Development controller is restricted to the Source logical packages/agent bundle.';
+      await assert.rejects(
+        () => prepareDevelopmentController({ target: repositoryRoot, controllerRoot }),
+        (error) => {
+          if (mode === 'loader-error') return error === bodyError;
+          if (mode === 'loader-undefined') return error === undefined;
+          assert.ok(error instanceof Error);
+          assert.equal(error.message, expected);
+          return true;
+        },
+      );
+      assert.deepEqual(calls, mode === 'invalid-api' ? [] : [repositoryRoot]);
+      assert.equal(existsSync(controllerRoot), false);
+      completed = true;
+    } finally {
+      await mock.module(runtimeConfigUrl, () => originalRuntimeConfig);
+      const restored: unknown = await import(runtimeConfigUrl);
+      assert.ok(isJsonRecord(restored));
+      assert.equal(restored.loadRuntimeConfig, originalRuntimeConfig.loadRuntimeConfig);
+      if (completed) preserve.delete(scratch);
+    }
+  });
 
 function privatePackage(controllerRoot: string): { readonly root: string; readonly observer: string } {
   const root = path.join(controllerRoot, 'private-package');
