@@ -483,6 +483,19 @@ test('read-only dispatch repair binds old unknown issue and idempotently prepare
         .all(),
     }).toEqual(before);
     expect(readRepairRows(value.database)).toEqual(firstRepairRows);
+    class NativeReceiptWrapper {}
+    const receiptStatement = value.database.query(
+      'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=?',
+    );
+    receiptStatement.as(NativeReceiptWrapper);
+    try {
+      expect(() => applyReadOnlyDispatchRepair({ database: value.database, plan, current: value.input })).toThrow(
+        'existing read-only dispatch repair generation differs',
+      );
+      expect(readRepairRows(value.database)).toEqual(firstRepairRows);
+    } finally {
+      receiptStatement.as(Object);
+    }
     const repairCount = value.database.query('SELECT COUNT(*) AS count FROM agent_host_readonly_dispatch_repair').get();
     expect(
       typeof repairCount === 'object' && repairCount !== null && 'count' in repairCount ? repairCount.count : undefined,

@@ -594,6 +594,42 @@ or old UNKNOWN successor was launched during the outage.
 
 ## Complete numeric prerequisites
 
+Current poteto-mode iteration starts from publishedbe1c47b882c5d5be1deae0a4b9c05ff5c448604f.
+Six blind Luna prerequisite lanes and bounded follow-up designs completed. Root
+owns integration/checks/Git. The standalone-resources proposal was rejected as
+duplicate: all29roles were already joined. The installer DRY candidate was not
+integrated: the maintained inventory still measuredCC44, with more adapter roles.
+Current Vex status and bounded navigation observed synchronous refresh of20changed
+files,9756symbols. No cold indexing overlapped checks.
+
+Host commit callback now measuresCC3 against the unchanged genuine original3,
+with1127Host/global7710roles and no new callable identities. Its original owner is
+the published read-only repair applier's transaction callback. Expected-version
+comparison already treats absent and null actual versions equally; two callers
+remove redundant null normalization. Native row shape and exact payload/digest
+checks remain, with unchanged diagnostic and transaction/CAS/maintenance order.
+The exploratory native-row type assumption was disproved by Bun cachedStatement.as.
+Its failed draft was never published; the original shape guard is retained.
+Causal draft control0PASS/1FAIL, then final1PASS/0FAIL/36expect assertions:
+`/workspace/attachments/quality-host-native-row-shape-red-20261014.log` and
+`quality-host-native-row-shape-green-20261014.log` in that root. Final complete
+affected file12PASS/0FAIL/82expect/22.07s:
+`/workspace/attachments/quality-host-budget-final-affected-tests-20261014.log`.
+Source101types/0errors and independent final correctness review passed:
+`/workspace/attachments/quality-host-budget-final-source-types-20261014.log` and
+`quality-host-final-review-20261014.md`. Static ceiling proof:
+`/workspace/attachments/quality-host-budget-red-20261014.json` and
+`quality-host-budget-final-green-20261014.json`. This is not dynamic CRAP or final
+coverage. Full correspondence and original planner/installer gaps remain open.
+
+Coverage instrumentation review found parent AST/transform capture already single
+pass and child counters already sparse. Child preloads still decode the22,983,396-
+byte complete manifest. That is a code-level repeated cost, not measured CPU
+attribution. Keep required CLI transitions and all canonical maps/custody; inspect
+that owner before adding caches or a second profiler. Mutation keeps its full
+assertion-confirmed evidence join; current complete coverage/CRAP prerequisites
+remain absent. New partition selectors were not added.
+
 Genuine b549951 was measured once: runfe54f83c-6a70-4223-9872-f43f1ac784e9,
 SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.
 Report: `.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/coverage/bun-unified/coverage-final.json`.
@@ -622,7 +658,8 @@ report/resource successor. Preserve original custody and stale review.
 ## Next bounded work
 
 1. Complete correspondence/original-budget corrections: installer44>31, pure
-   read-only planner43>40, Host commit callback5>3, unresolved fs-safe owner moves.
+   read-only planner43>40 and unresolved fs-safe owner moves. Host callback3<=3
+   has scoped Source proof above; full dynamic CRAP acceptance remains pending.
    Do not relabel roles or raise caps to force acceptance.
 2. Continue same-pattern cleanup review in remaining affected owners, preserving
    causal fixtures and ownership/CAS/UNKNOWN contracts. The native/research packets

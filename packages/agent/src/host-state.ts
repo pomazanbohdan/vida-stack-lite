@@ -4649,7 +4649,7 @@ function validateProgress(
 function version(value: { readonly revision: number } | null, kind: 'work' | 'ledger' = 'work'): StateVersion | null {
   return value ? { revision: value.revision, digest: stateRecord(kind, value).digest } : null;
 }
-function matchesExpected(actual: StateVersion | null, expected: StateVersion | null): void {
+function matchesExpected(actual: StateVersion | null | undefined, expected: StateVersion | null): void {
   if (expected !== null)
     requireState(
       expected &&
@@ -6312,7 +6312,7 @@ export class HostStateStore {
     matchesExpected(host.ledgerVersion, input.expectedLedger);
     this.#assertMaintenanceGeneration(input.maintenanceGeneration);
     const journal = MastraSessionLedger.prototype.resume.call(ledger, input.context.work_id, input.context.attempt);
-    matchesExpected(journal?.version ?? null, journalExpected);
+    matchesExpected(journal?.version, journalExpected);
     requireState(
       Number.isSafeInteger(input.context.attempt) &&
         input.context.attempt > 0 &&
@@ -8452,7 +8452,7 @@ export class HostStateStore {
       matchesExpected(host.workVersion, plan.work_version);
       matchesExpected(host.ledgerVersion, plan.ledger_version);
       const journal = this.#readWorkSessionJournal(identity, host.work, plan.attempt);
-      matchesExpected(journal?.version ?? null, plan.mastra_version);
+      matchesExpected(journal?.version, plan.mastra_version);
       const rebuilt = buildReadOnlyDispatchRepairPlan({
         repositoryRoot,
         config: loadRuntimeConfig(repositoryRoot),
@@ -8478,16 +8478,15 @@ export class HostStateStore {
         'CREATE TABLE IF NOT EXISTS agent_host_readonly_dispatch_repair (workspace_id TEXT NOT NULL, work_id TEXT NOT NULL, attempt INTEGER NOT NULL, logical_action_id TEXT NOT NULL, generation INTEGER NOT NULL, payload TEXT NOT NULL, digest TEXT NOT NULL, PRIMARY KEY(workspace_id,work_id,attempt,logical_action_id,generation))',
       );
       const key = [this.#workspaceId, plan.work_id, plan.attempt, plan.logical_action_id, 1] as const;
-      const prior: unknown = this.#database
-        .query(
+      const prior = this.#database
+        .query<{ payload: unknown; digest: unknown }, [string, string, number, string, number]>(
           'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=?',
         )
         .get(...key);
       if (prior !== null) {
-        requireState(
-          isPlainRecord(prior) && prior.digest === rebuilt.digest && prior.payload === payload,
-          'existing read-only dispatch repair generation differs',
-        );
+        const conflict = 'existing read-only dispatch repair generation differs';
+        requireState(isPlainRecord(prior), conflict);
+        requireState(prior.digest === rebuilt.digest && prior.payload === payload, conflict);
       } else {
         this.#database
           .query('INSERT INTO agent_host_readonly_dispatch_repair VALUES(?,?,?,?,?,?,?)')
