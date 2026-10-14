@@ -36,6 +36,7 @@ import {
   type WorkspaceBootstrapBinding,
 } from './project-upgrade-storage.js';
 import { closeWorkspaceDatabaseWithAdmission, openAdmittedWorkspaceDatabase } from './storage-read-admission.js';
+import { withWorkspaceDatabaseCloseAsync } from './workspace-database-raw.js';
 import { assertOnlyStorageAdmissionGate, STORAGE_ADMISSION_GATE_FILE } from './storage-read-admission.js';
 import {
   existingMergeBindingSchema,
@@ -1284,22 +1285,25 @@ async function withConfiguredExistingUpgradeHost<T>(
       };
     },
   };
-  try {
-    store = new HostStateStore(
-      database,
-      current.plan.workspace_id,
-      undefined,
-      undefined,
-      undefined,
-      verifier,
-      repositoryRoot,
-    );
-    observedFence = store.readMaintenanceFence();
-    assertUpgradeOwner(access, store, current);
-    return await action(store, closeHostOwner);
-  } finally {
-    closeHostOwner();
-  }
+  return withWorkspaceDatabaseCloseAsync(
+    database,
+    async () => {
+      store = new HostStateStore(
+        database,
+        current.plan.workspace_id,
+        undefined,
+        undefined,
+        undefined,
+        verifier,
+        repositoryRoot,
+      );
+      observedFence = store.readMaintenanceFence();
+      assertUpgradeOwner(access, store, current);
+      return await action(store, closeHostOwner);
+    },
+    closeHostOwner,
+    'Existing upgrade Host operation and close failed',
+  );
 }
 
 function retainedFence(store: HostStateStore, operation: ProjectUpgradeOperation): MaintenanceFenceReceipt {

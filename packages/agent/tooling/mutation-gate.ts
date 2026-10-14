@@ -830,6 +830,7 @@ const partitions: MutationPartition[] = [
     environment: 'pending',
     sources: ['src/config/project-upgrade-existing-storage.ts', 'src/config/project-upgrade.ts'],
     intendedTests: [
+      'tests/project-upgrade-existing-storage.test.ts',
       'tests/project-upgrade-lifecycle.test.ts',
       'tests/bun/project-upgrade-existing-storage-admission.test.ts',
     ],

@@ -12,18 +12,22 @@
 
 ## Current dispatch — 2026-10-14
 
-Current published f24aa93 ran the correctly bound189-file initial wave in
-run9364aa69-a223-4a4d-8ffb-2f659eea36a6. Both actual direct children timed out
+Current published426b5e7 ran the correctly bound189-file initial wave in
+runbc5cd2f0-ae3c-4093-abdf-f6512ef48427. Both actual direct children timed out
 with durable UNKNOWN/SIGKILL observations; no numeric report is admitted.
-All four private recovery routes passed, but partial268/154PASS rows cannot
+All four private recovery routes passed, but partial291/156PASS rows cannot
 serve as complete file weights. Keep nested parent/child rows deduplicated by
 actual custody, not names alone. No unchanged full retry.
 
-Next joined correction removes four redundant recovery status children while
-preserving original expected CAS on fresh report and explicit revision advance.
-Root completes static/affected behavior, executes the bounded partial-timings
-and held-main mechanics controls, publishes the checked packet, and only then
-prepares a fresh current reviewed run. Failed/UNKNOWN roots remain retained;
+The checked four-launch correction is published and its fresh reports preserve
+original expected CAS plus revision advance. Bounded native probes establish
+that timings are absent after interrupted file execution, while held-main
+checkpoint/serialize succeeds with a documented normalized deserialize copy.
+Neither qualifies numeric gates or legacy exclusion. Current joined batch fixes
+bootstrap validation/close error masking and closed-WAL image deserialization;
+direct mutation tests are added only to the pending scope. Root completes
+static/affected behavior and publication. Another full run requires a concrete
+cost/resource correction; no unchanged retry. Failed/UNKNOWN roots remain retained;
 exact coverage, frozen CC/CRAP and assertion-confirmed Killed gates stay OPEN.
 
 Published corrections `d296ceb` and `12626b6` preserve unrelated `BASE/` and root

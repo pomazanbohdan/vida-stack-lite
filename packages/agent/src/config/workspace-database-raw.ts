@@ -10,6 +10,58 @@ export interface WorkspaceDatabaseFileIdentity {
 const openedFileIdentities = new WeakMap<Database, WorkspaceDatabaseFileIdentity>();
 const pendingDatabaseCloses = new Map<Database, (database: Database) => void>();
 
+type DatabaseWorkOutcome<T> =
+  | { readonly ok: true; readonly value: T }
+  | { readonly ok: false; readonly error: unknown };
+
+function finishWorkspaceDatabaseClose<T>(
+  database: Database,
+  outcome: DatabaseWorkOutcome<T>,
+  close: (database: Database) => void,
+  message: string,
+): T {
+  try {
+    close(database);
+  } catch (closeError) {
+    if (!outcome.ok) throw new AggregateError([outcome.error, closeError], message);
+    throw closeError;
+  }
+  if (!outcome.ok) throw outcome.error;
+  return outcome.value;
+}
+
+/** Preserve operation and cleanup failures; the caller supplies the exact native or paired close owner. */
+export function withWorkspaceDatabaseClose<T>(
+  database: Database,
+  work: () => T,
+  close: (database: Database) => void,
+  message: string,
+): T {
+  let outcome: DatabaseWorkOutcome<T>;
+  try {
+    outcome = { ok: true, value: work() };
+  } catch (error) {
+    outcome = { ok: false, error };
+  }
+  return finishWorkspaceDatabaseClose(database, outcome, close, message);
+}
+
+/** Await the owned operation before the same cleanup/error accumulator runs. */
+export async function withWorkspaceDatabaseCloseAsync<T>(
+  database: Database,
+  work: () => Promise<T> | T,
+  close: (database: Database) => void,
+  message: string,
+): Promise<T> {
+  let outcome: DatabaseWorkOutcome<T>;
+  try {
+    outcome = { ok: true, value: await work() };
+  } catch (error) {
+    outcome = { ok: false, error };
+  }
+  return finishWorkspaceDatabaseClose(database, outcome, close, message);
+}
+
 /** Keep only exact package-owned handles and their existing native or paired cleanup owner. */
 export function retainFailedWorkspaceDatabaseClose(database: Database, retry: (database: Database) => void): void {
   const previous = pendingDatabaseCloses.get(database);

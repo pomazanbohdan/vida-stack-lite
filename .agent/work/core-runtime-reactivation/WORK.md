@@ -10959,3 +10959,113 @@ other routes filtered. Actual fresh-report assertions pass after removing the
 status child. Earlier48.77s batch included other callers; no matched speedup
 claim. One exec-server transport failure recovered on the next read; it does
 not establish a restart cause or loss of tracked changes.
+
+Published426b5e7 through strict hook (format/449program0diagnostics) and
+ordinary push. Only BASE/ and root bun.lock remain unrelated/untracked.
+Root starts one fresh current reviewed coverage attempt from the same repo
+origin, after the four-launch correction. Six blind Luna readers cover
+controller verify cost, quarantine isolation, held-image repair contracts,
+bounded cost inputs, pending mutation qualification and analogous P0 custody.
+No workers execute checks or mutate measured inputs during this freeze.
+
+Native timing probe first exposed an observer bug: successful control markers
+were not supplied to the script, although actual native exit0/version1/files
+existed. Corrected observer then qualifies the control and exact interrupted
+child467299/nullstatus/SIGKILL. Native timings are ENOENT both after completed
+first-file hook/second-file start and after actual close. Retain both probe
+roots. Bun --update-timings is not qualified as incremental completed-file cost
+input; do not substitute partial PASS sums or add another full suite.
+
+Held-main primitive probe first failed to serialize bigint diagnostics; the
+next observed attempt records actual raw-WAL deserialize failure. Official
+https://www.sqlite.org/c3ref/deserialize.html explicitly prohibits WAL images
+and permits copied header bytes18/19=1. Root applies that change only to an
+in-memory deserialize copy, preserving raw serialize/main-file equality.
+held-main-image-probe-normalized.log1PASS/32assertions/272ms: actual readers
+467859/467864 exit0/nullsignal, old reader blocks EXCLUSIVE-first, held owner
+blocks new reader, same connection writes/checkpoints/captures exact main bytes,
+BLOB/bigint logical rows survive, reader succeeds after exact owner close.
+Bun1.4.3 embeds SQLite3.53.4 here. While held, WAL is present with0bytes and
+SHM is present with32768bytes;
+this is not ClosedDatabaseImage, source quiescence, old-bundle exclusion, AUX
+retirement or active layout/loader qualification. Failed roots stay retained.
+
+Root rejects an independent review's claimed duplicate bug_fix registration:
+current Source has four unique routes, corroborated by actual1selected/3filtered
+tests. Reviewer retracts its unproven claim; no registration was removed.
+Fresh pre/post copied-package scans protect distinct integrity boundaries and
+remain unchanged.
+
+The fresh426b5e7 attempt is runbc5cd2f0-ae3c-4093-abdf-f6512ef48427,
+review scope9442678860fc04e986b28255ffcd876142cd064c68a5a88f81be510a5efd751c.
+It also ends UNKNOWN at the producer allowance: actualPIDs468249/468250,
+nullstatus/SIGKILL, durable direct accounting, reservationSafeToRelease=true,
+resourceSafeToAdvance=false. No numeric report/currentCRAP/Killed score.
+shard-cost-426b5e7-summary.json records291/156partialPASS rows, no emitted
+assertion failures. All four recovery routes pass with strengthened CAS:
+research54455.82ms/new45400.19ms/change37268.53ms/bug32833.18ms. These are
+actual samples under differing overlap/load, not an isolated speedup estimate.
+Nested publication and initial-Source reporter pairs still describe one case.
+Keep run roots; do not retry the unchanged full selection.
+
+Six-reader cycle finds one reachable P0 family: fresh bootstrap schema and
+sentinel inspectors close in finally, masking their validation error if the
+exact source close also fails. Paired close custody survives; error precedence
+does not. Root will reuse one synchronous work+owned-close accumulator for both
+inspectors and existing merge admission, with native combined-fault regressions.
+The main-image probe also supplies a separate supported WAL deserialization
+correction for closed, checkpointed images. Root retains source hash/bytes and
+normalizes only the private deserialize copy. Test writers own existing custody
+and merge files; no active layout/loader or AUX/legacy flag changes.
+
+Joined correction: workspace-database-raw owns one tagged outcome/close
+accumulator, with synchronous and awaited async adapters. Bootstrap schema and
+sentinel inspectors and existing merge admission use it; configured-existing
+Host planning uses its async adapter without changing guards or exact idempotent
+paired owner. Single failures preserve their identity, dual failures preserve
+both, including undefined as a distinct failed outcome. No arbitrary native
+closer bypasses paired custody. Existing withDatabaseClose is extracted, not
+duplicated; executable frozen correspondence for its split roles remains OPEN.
+
+closed-wal-image-causal-red.log3FAIL are actualSQLITE_CANTOPEN at image schema
+query; bootstrap-close-causal-red.log2FAIL lack the original validation cause.
+Source applies documented2/2-to1/1 normalization only to a private deserialize
+copy after original size/hash checks. Current native caller batch
+bootstrap-wal-native-green.log29PASS/246assertions/3.20s includes unchanged
+admission/fence denials, sync/async outcomes, deferred close, both combined
+inspection faults and all three on-disk WAL roles. Shared merge oracle checks
+Host duplicate/BLOB/bigint/sequence and the seeded Mastra thread; raw/disk bytes
+and source binding hashes remain unchanged.
+
+configured-existing public regression initially expected a later legacy guard;
+actual planner rejects earlier with configuration requires a prepared existing
+merge image, before journal publication. Corrected case keeps that actual
+boundary and no journal/fence side effect. A second fixture correction matches
+its real safeIntegers bigint result. configured-host-close-native-green.log
+1PASS/18assertions/6.91s command,4476.34ms case under5000ms default: both causes
+survive, exact Host retries before release and new admission, DB bytes unchanged.
+This is the public denial path, not a positive existing upgrade or Runtime
+acceptance. Failed fixtures stay retained.
+
+Final current static450capturedTS/449program0diagnostics and typed lint PASS0;
+new test typing and unbound-method/await-matcher diagnostics were corrected,
+not suppressed. Six blind reviewers find no critical code regression and correct
+the held WAL/SHM wording to their actual present/size observations. Direct merge
+tests now appear in intendedTests only; the combined mutation partition remains
+pending and denies campaigns. No score or denominator exemption is claimed.
+
+Next evidenced cost unit: HostState imports two pure parsers through the engine
+bridge, which eagerly loads Mastra/LibSQL. Existing contract module owns both
+implementations. Run recovery handlers likewise need pure contracts only;
+sessionBridgeRunId can move once with compatible re-export. Ordinary engine
+loading may move to actual openBridge after route review. The coverage preload
+also decodes assigned tests twice and verifies its own bytes twice per child;
+reuse the existing validated values within that bootstrap, retain all later
+Source/receipt drift boundaries. These are candidates, not speed claims or
+permission to bypass source binding, CAS, old legacy exclusion or UNKNOWN.
+
+Strict precommit initially denies the public-case callback's possibly-undefined
+handle. Root captures the already validated exact handle as a stable const,
+preserving runtime behavior; current typecheck and typed lint pass again. No hook
+bypass or commit was performed on the rejected snapshot; native Source evidence
+above is unchanged. Re-stage that precise correction before publication.

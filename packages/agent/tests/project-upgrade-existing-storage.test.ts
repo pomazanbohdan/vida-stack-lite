@@ -1,8 +1,11 @@
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
+import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { describe, expect, test } from 'bun:test';
 import { LibSQLStore } from '@mastra/libsql';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { initializeHostDatabaseSchema } from '../src/host-state.js';
 import {
   prepareUnifiedExistingStorageImage,
@@ -160,6 +163,110 @@ function openUnified(bytesBase64: string): Database {
   return Database.deserialize(Buffer.from(bytesBase64, 'base64'), { strict: true, safeIntegers: true });
 }
 
+function preserveMergeFixture(merged: Database): void {
+  const rows = merged
+    .query<{ group_id: string; ordinal: number | bigint; body: Uint8Array }, []>(
+      'SELECT group_id,ordinal,body FROM merge_sequence_fixture ORDER BY id',
+    )
+    .all();
+  expect(
+    rows.map((row) => ({
+      group_id: row.group_id,
+      ordinal: row.ordinal,
+      body_base64: Buffer.from(row.body).toString('base64'),
+    })),
+  ).toEqual([
+    { group_id: 'same-group', ordinal: 9007199254740993n, body_base64: 'AAF/gP8=' },
+    { group_id: 'same-group', ordinal: 9007199254740993n, body_base64: 'AAF/gP8=' },
+  ]);
+  expect(
+    merged
+      .query<{ seq: number | bigint }, []>("SELECT seq FROM sqlite_sequence WHERE name='merge_sequence_fixture'")
+      .get()?.seq,
+  ).toBe(9007199254740993n);
+  const thread = merged
+    .query<{ id: string; title: string; resourceId: string }, [string]>(
+      'SELECT id,title,"resourceId" FROM mastra_threads WHERE id=?',
+    )
+    .get('merge-thread-1');
+  expect(thread).toEqual({
+    id: 'merge-thread-1',
+    title: 'merge preservation fixture',
+    resourceId: 'merge-resource-1',
+  });
+}
+
+function materializeClosedWalImage(root: string, name: string, source: ClosedDatabaseImage): ClosedDatabaseImage {
+  const file = path.join(root, name);
+  writeFileSync(file, source.bytes, { flag: 'wx' });
+  const database = new Database(file, { create: false, strict: true, safeIntegers: true });
+  try {
+    const journal = database.query<{ journal_mode: string }, []>('PRAGMA journal_mode=WAL').get();
+    expect(journal?.journal_mode.toLowerCase()).toBe('wal');
+    const checkpoint = database
+      .query<{ busy: number | bigint; log: number | bigint; checkpointed: number | bigint }, []>(
+        'PRAGMA wal_checkpoint(TRUNCATE)',
+      )
+      .get();
+    expect(checkpoint).not.toBeNull();
+    if (checkpoint === null) throw new Error('WAL checkpoint returned no row');
+    expect(BigInt(checkpoint.busy)).toBe(0n);
+    expect(BigInt(checkpoint.checkpointed)).toBe(BigInt(checkpoint.log));
+  } finally {
+    database.close();
+  }
+  const bytes = readFileSync(file);
+  expect(bytes[18]).toBe(2);
+  expect(bytes[19]).toBe(2);
+  for (const suffix of ['-wal', '-shm', '-journal']) expect(existsSync(file + suffix)).toBe(false);
+  const info = statSync(file, { bigint: true });
+  return {
+    device: String(info.dev),
+    inode: String(info.ino),
+    size: bytes.byteLength,
+    sha256: sha256(bytes),
+    bytes: Uint8Array.from(bytes),
+  };
+}
+
+async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promise<void> {
+  const root = mkdtempSync(path.join(tmpdir(), 'existing-storage-wal-'));
+  let passed = false;
+  try {
+    const originalHost = makeHost();
+    const originalMastra = await makeMastra();
+    const host = walHost ? materializeClosedWalImage(root, 'host.sqlite', originalHost) : originalHost;
+    const mastra = walMastra ? materializeClosedWalImage(root, 'mastra.sqlite', originalMastra) : originalMastra;
+    const hostBytes = Uint8Array.from(host.bytes);
+    const mastraBytes = Uint8Array.from(mastra.bytes);
+    const hostDigest = sha256(hostBytes);
+    const mastraDigest = sha256(mastraBytes);
+    const image = await prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra));
+
+    expect(image.binding.source_host_digest).toBe(hostDigest);
+    expect(image.binding.source_mastra_digest).toBe(mastraDigest);
+    expect(host.sha256).toBe(hostDigest);
+    expect(mastra.sha256).toBe(mastraDigest);
+    expect(Buffer.from(host.bytes).equals(Buffer.from(hostBytes))).toBe(true);
+    expect(Buffer.from(mastra.bytes).equals(Buffer.from(mastraBytes))).toBe(true);
+    if (walHost)
+      expect(Buffer.from(readFileSync(path.join(root, 'host.sqlite'))).equals(Buffer.from(hostBytes))).toBe(true);
+    if (walMastra)
+      expect(Buffer.from(readFileSync(path.join(root, 'mastra.sqlite'))).equals(Buffer.from(mastraBytes))).toBe(true);
+
+    const merged = openUnified(image.bytes_base64);
+    try {
+      preserveMergeFixture(merged);
+    } finally {
+      merged.close(true);
+    }
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Retained failed WAL merge fixture: ${root}`);
+  }
+}
+
 describe('existing storage image preparation', () => {
   test('preserves source rows including duplicate values, exact BLOBs, large integers, and AUTOINCREMENT sequence', async () => {
     const host = makeHost();
@@ -168,29 +275,22 @@ describe('existing storage image preparation', () => {
 
     const merged = openUnified(image.bytes_base64);
     try {
-      const rows = merged
-        .query<{ group_id: string; ordinal: number | bigint; body: Uint8Array }, []>(
-          'SELECT group_id,ordinal,body FROM merge_sequence_fixture ORDER BY id',
-        )
-        .all();
-      expect(
-        rows.map((row) => ({
-          group_id: row.group_id,
-          ordinal: row.ordinal,
-          body_base64: Buffer.from(row.body).toString('base64'),
-        })),
-      ).toEqual([
-        { group_id: 'same-group', ordinal: 9007199254740993n, body_base64: 'AAF/gP8=' },
-        { group_id: 'same-group', ordinal: 9007199254740993n, body_base64: 'AAF/gP8=' },
-      ]);
-      expect(
-        merged
-          .query<{ seq: number | bigint }, []>("SELECT seq FROM sqlite_sequence WHERE name='merge_sequence_fixture'")
-          .get()?.seq,
-      ).toBe(9007199254740993n);
+      preserveMergeFixture(merged);
     } finally {
       merged.close(true);
     }
+  });
+
+  test('normalizes a WAL Host image copy while binding unchanged raw bytes', async () => {
+    await assertWalImageMerge(true, false);
+  });
+
+  test('normalizes a WAL Mastra image copy while binding unchanged raw bytes', async () => {
+    await assertWalImageMerge(false, true);
+  });
+
+  test('normalizes both WAL image copies while binding unchanged raw bytes', async () => {
+    await assertWalImageMerge(true, true);
   });
 
   test.each([

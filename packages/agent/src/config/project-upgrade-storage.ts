@@ -8,6 +8,7 @@ import { initializeHostDatabaseSchema, initializeTaskSourceBindingWorkProjection
 import { createInMemoryBunSqliteClient } from '../orchestration/bun-sqlite-client.js';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './safe-repository-access.js';
 import { assertWorkspaceDatabaseRelativePath } from './workspace-database.js';
+import { withWorkspaceDatabaseClose } from './workspace-database-raw.js';
 import { openAdmittedWorkspaceDatabase, closeWorkspaceDatabaseWithAdmission } from './storage-read-admission.js';
 import { initializeServiceOperationCustodySchema } from './service-operation-custody.js';
 
@@ -209,15 +210,18 @@ export function inspectInitialWorkspaceDatabaseImage(
     'initial database afterimage differs',
   );
   const database = openAdmittedWorkspaceDatabase(repositoryRoot, relative, expected.binding.workspace_id, true, true);
-  try {
-    requireStorage(
-      canonicalJson(databaseSchema(database)) === canonicalJson(expected.database_schema),
-      'initial schema closure differs',
-    );
-    assertEmptyInitialTables(database, expected.database_schema);
-  } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-  }
+  withWorkspaceDatabaseClose(
+    database,
+    () => {
+      requireStorage(
+        canonicalJson(databaseSchema(database)) === canonicalJson(expected.database_schema),
+        'initial schema closure differs',
+      );
+      assertEmptyInitialTables(database, expected.database_schema);
+    },
+    closeWorkspaceDatabaseWithAdmission,
+    'Workspace schema inspection and close failed',
+  );
   requireStorage(
     canonicalJson(inspectClosedWorkspaceDatabaseImage(repositoryRoot, relative)) === canonicalJson(image),
     'initial image changed during schema inspection',
@@ -268,27 +272,30 @@ function inspectWorkspaceBootstrapSentinel(
   const binding = validateWorkspaceBootstrapBinding(expected);
   const before = inspectClosedWorkspaceDatabaseImage(repositoryRoot, relative);
   const database = openAdmittedWorkspaceDatabase(repositoryRoot, relative, binding.workspace_id, true);
-  try {
-    const schema = database
-      .query<{ sql: string }, []>(
-        "SELECT sql FROM sqlite_master WHERE type='table' AND name='vida_workspace_bootstrap'",
-      )
-      .get();
-    requireStorage(schema?.sql === bootstrapSql, 'unsupported bootstrap schema');
-    const rows = database
-      .query<{ id: number; payload: string; digest: string }, []>(`SELECT id,payload,digest FROM ${bootstrapTable}`)
-      .all();
-    requireStorage(rows.length === 1, 'bootstrap sentinel count differs');
-    const row = rows[0]!;
-    requireStorage(
-      row.id === 1 && row.payload === canonicalJson(binding) && row.digest === canonicalJsonDigest(binding),
-      'bootstrap sentinel belongs to another operation',
-    );
-    const checked = database.query<{ quick_check: string }, []>('PRAGMA quick_check').all();
-    requireStorage(checked.length > 0 && checked.every((row) => row.quick_check === 'ok'), 'database is corrupt');
-  } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
-  }
+  withWorkspaceDatabaseClose(
+    database,
+    () => {
+      const schema = database
+        .query<{ sql: string }, []>(
+          "SELECT sql FROM sqlite_master WHERE type='table' AND name='vida_workspace_bootstrap'",
+        )
+        .get();
+      requireStorage(schema?.sql === bootstrapSql, 'unsupported bootstrap schema');
+      const rows = database
+        .query<{ id: number; payload: string; digest: string }, []>(`SELECT id,payload,digest FROM ${bootstrapTable}`)
+        .all();
+      requireStorage(rows.length === 1, 'bootstrap sentinel count differs');
+      const row = rows[0]!;
+      requireStorage(
+        row.id === 1 && row.payload === canonicalJson(binding) && row.digest === canonicalJsonDigest(binding),
+        'bootstrap sentinel belongs to another operation',
+      );
+      const checked = database.query<{ quick_check: string }, []>('PRAGMA quick_check').all();
+      requireStorage(checked.length > 0 && checked.every((row) => row.quick_check === 'ok'), 'database is corrupt');
+    },
+    closeWorkspaceDatabaseWithAdmission,
+    'Workspace bootstrap inspection and close failed',
+  );
   const after = inspectClosedWorkspaceDatabaseImage(repositoryRoot, relative);
   requireStorage(canonicalJson(before) === canonicalJson(after), 'bootstrap database changed during inspection');
   return after;

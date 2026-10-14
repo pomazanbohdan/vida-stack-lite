@@ -162,3 +162,34 @@ fixtures now use an executable RAM-backed directory outside the repository with
 capacity checked before launch. This is environment selection, not a production
 durability change or a matched performance comparison. Do not delete old failed
 or UNKNOWN roots to make a benchmark faster.
+
+## Current timing and storage mechanics, 2026-10-14
+
+One bounded Bun1.4.3 timing probe reuses the selected runtime/environment and
+one9s allowance. Its successful one-file control writes the documented
+version1/files map after actual exit0. The two-file child emits a first-file
+afterAll marker and a second-file start marker; the timing file is ENOENT there
+and after observed SIGKILL. This rejects incremental timing reuse for partial
+production attempts. [Bun timings](https://bun.com/docs/test/parallel#balancing-with-timings)
+documents whole-file costs, not a guaranteed in-progress flush. No new profiler
+or duplicate suite is adopted; partial/nested PASS rows remain diagnostic only.
+
+A separate <=10s native SQLite primitive control on Bun1.4.3/SQLite3.53.4 holds
+an ordinary reader, then observes EXCLUSIVE-first BUSY. After that reader's
+actual successful terminal, one fresh held source connection writes, performs
+complete TRUNCATE checkpoint and serializes bytes identical to the same-inode
+main file. Another real reader is denied until exact source close. While held,
+WAL is present with0bytes and SHM with32768bytes. Raw WAL-header deserialization
+fails SQLITE_CANTOPEN, as [SQLite explicitly documents](https://www.sqlite.org/c3ref/deserialize.html).
+Setting copied bytes18/19 to1 before deserialize is its documented workaround.
+The distinct normalized memory copy preserves BLOBs and unsafe-range bigint
+values; the bound source bytes and main file stay unchanged. Native primitive
+qualification is1PASS/32assertions/272ms, with both reader terminals exit0.
+
+The image merge owner now applies that workaround to closed, checkpointed
+source copies only after validating original size/hash. It does not grant a
+live-source capability, old-bundle quiescence, legacy exclusion or AUX removal.
+Existing bundle-owned repair must configure EXCLUSIVE before the first identity
+SQL and retain its exact source owners through preparation and publication;
+the current close-then-image contract cannot establish that. The active guard,
+layouts and loaders remain unchanged pending that repair qualification.

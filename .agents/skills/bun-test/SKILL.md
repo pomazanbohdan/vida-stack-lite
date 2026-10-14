@@ -8,6 +8,17 @@ description: Use when writing, migrating, reviewing, running or optimizing TypeS
 Use the smallest contract-backed check that resolves the current uncertainty.
 Keep behavior, timing and numerical qualification as separate evidence.
 
+For work-plus-close faults, preserve both original causes through the existing
+shared database cleanup owner. Inject before native close, observe the exact
+source/gate and retry that owner after restoring spies. Await the owned async
+promise before an assertion; a synchronous Bun matcher is not a promise.
+For checkpointed WAL images, compare raw serialization to the main file first,
+then use the documented rollback header workaround only on a deserialize copy.
+Assert both Host and Mastra payloads and unchanged source bytes. This does not
+qualify held-source cutover or AUX retirement. Native timing files were absent
+at a completed-file marker and after SIGKILL on qualified Bun1.4.3; partial
+PASS rows cannot replace complete whole-file costs.
+
 For a denied current shard plan, inspect the retained manifest's
 `execution_scope.shard_eligibility` status/reason and available hashes. Compare
 the existing captured input rows and caller environment before another run.

@@ -108,7 +108,14 @@ function openImage(image: ClosedDatabaseImage, label: string): Database {
     image.size === image.bytes.byteLength && digest(image.bytes) === image.sha256,
     label + ' image digest differs',
   );
-  return Database.deserialize(Buffer.from(image.bytes), { readonly: true, strict: true, safeIntegers: true });
+  const copy = Buffer.from(image.bytes);
+  // sqlite3_deserialize requires rollback-mode headers. Keep the bound raw image unchanged.
+  // https://www.sqlite.org/c3ref/deserialize.html
+  if (copy[18] === 2 && copy[19] === 2) {
+    copy[18] = 1;
+    copy[19] = 1;
+  }
+  return Database.deserialize(copy, { readonly: true, strict: true, safeIntegers: true });
 }
 
 function schema(database: Database): SchemaObject[] {

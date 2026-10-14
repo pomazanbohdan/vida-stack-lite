@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from 'bun:test';
-import { Database } from 'bun:sqlite';
-import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { Database, type Changes, type SQLQueryBindings } from 'bun:sqlite';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
@@ -8,6 +8,8 @@ import {
   openUnadmittedWorkspaceDatabase,
   retainFailedWorkspaceDatabaseClose,
   retryPendingWorkspaceDatabaseCloses,
+  withWorkspaceDatabaseClose,
+  withWorkspaceDatabaseCloseAsync,
   workspaceDatabaseFileIdentity,
 } from '../src/config/workspace-database-raw.js';
 import {
@@ -17,6 +19,15 @@ import {
   openDatabaseWithStorageAdmission,
   openExistingWorkspaceDatabaseWithAdmission,
 } from '../src/config/storage-read-admission.js';
+import {
+  PROJECT_ACTIVATION_PATH,
+  PROJECT_UPGRADE_OPERATION_PATH,
+  PROJECT_WORKSPACE_DATABASE_PATH,
+} from '../src/config/project-paths.js';
+import {
+  inspectInitialWorkspaceDatabaseImage,
+  prepareInitialWorkspaceDatabaseImage,
+} from '../src/config/project-upgrade-storage.js';
 
 const testBudgetNs = 5_000_000_000n;
 
@@ -30,6 +41,7 @@ type FixtureCleanup = () => void;
 function withExistingDatabaseFixture(
   prefix: string,
   body: (fixture: ExistingDatabaseFixture, addCleanup: (cleanup: FixtureCleanup) => void) => void,
+  relative = 'db/workspace.sqlite',
 ): void {
   const started = process.hrtime.bigint();
   const cleanups: FixtureCleanup[] = [];
@@ -41,8 +53,8 @@ function withExistingDatabaseFixture(
 
   try {
     root = mkdtempSync(path.join(tmpdir(), prefix));
-    mkdirSync(path.join(root, 'db'));
-    const file = path.join(root, 'db/workspace.sqlite');
+    const file = path.join(root, relative);
+    mkdirSync(path.dirname(file), { recursive: true });
     writeFileSync(file, '', { flag: 'wx' });
     body({ root, file }, (cleanup) => cleanups.push(cleanup));
     bodyPassed = true;
@@ -86,6 +98,288 @@ function withExistingDatabaseFixture(
       cleanupErrors,
       `workspace database fixture cleanup failed; retained root: ${root ?? '(root creation failed)'}`,
     );
+}
+
+const bootstrapBinding = {
+  schema: 'VidaWorkspaceBootstrap/v1' as const,
+  operation_id: 'close-custody-inspection-001',
+  workspace_id: '0'.repeat(64),
+  plan_digest: '1'.repeat(64),
+  bundle_digest: '2'.repeat(64),
+  input_digest: '3'.repeat(64),
+  authority_digest: '4'.repeat(64),
+  token_digest: '5'.repeat(64),
+};
+
+function flattenErrors(value: unknown, seen = new Set<unknown>()): unknown[] {
+  if (!(value instanceof AggregateError) || seen.has(value)) return [value];
+  seen.add(value);
+  return value.errors.flatMap((error) => flattenErrors(error, seen));
+}
+
+function thrownBy(work: () => unknown): {
+  readonly threw: boolean;
+  readonly value?: unknown;
+  readonly error?: unknown;
+} {
+  try {
+    return { threw: false, value: work() };
+  } catch (error) {
+    return { threw: true, error };
+  }
+}
+
+test('native sync close accumulator preserves each exact terminal outcome', () => {
+  const bodyError = new Error('sync body failed');
+  const closeError = new Error('sync close failed');
+  const cases = [
+    { name: 'success', bodyFails: false, closeFails: false },
+    { name: 'body only', bodyFails: true, closeFails: false },
+    { name: 'close only', bodyFails: false, closeFails: true },
+    { name: 'body and close', bodyFails: true, closeFails: true },
+  ] as const;
+
+  for (const scenario of cases) {
+    const database = new Database(':memory:');
+    let closeAttempts = 0;
+    const result = thrownBy(() =>
+      withWorkspaceDatabaseClose(
+        database,
+        () => {
+          if (scenario.bodyFails) throw bodyError;
+          return 'native result';
+        },
+        (owned) => {
+          expect(owned).toBe(database);
+          closeAttempts += 1;
+          if (scenario.closeFails) throw closeError;
+          closeNativeWorkspaceDatabase(owned);
+        },
+        `sync ${scenario.name}`,
+      ),
+    );
+
+    expect(closeAttempts).toBe(1);
+    if (!scenario.bodyFails && !scenario.closeFails) {
+      expect(result).toEqual({ threw: false, value: 'native result' });
+      expect(() => database.query('SELECT 1').get()).toThrow();
+    } else if (scenario.bodyFails && !scenario.closeFails) {
+      expect(result).toEqual({ threw: true, error: bodyError });
+      expect(() => database.query('SELECT 1').get()).toThrow();
+    } else if (!scenario.bodyFails) {
+      expect(result).toEqual({ threw: true, error: closeError });
+      closeNativeWorkspaceDatabase(database);
+    } else {
+      expect(result.threw).toBe(true);
+      expect(result.error).toBeInstanceOf(AggregateError);
+      expect((result.error as AggregateError).errors).toEqual([bodyError, closeError]);
+      closeNativeWorkspaceDatabase(database);
+    }
+  }
+});
+
+test('native async close accumulator awaits work and preserves each exact terminal outcome', async () => {
+  const bodyError = new Error('async body failed');
+  const closeError = new Error('async close failed');
+  const cases = [
+    { name: 'success', bodyFails: false, closeFails: false },
+    { name: 'body only', bodyFails: true, closeFails: false },
+    { name: 'close only', bodyFails: false, closeFails: true },
+    { name: 'body and close', bodyFails: true, closeFails: true },
+  ] as const;
+
+  for (const scenario of cases) {
+    const database = new Database(':memory:');
+    let closeAttempts = 0;
+    let result: { readonly threw: boolean; readonly error?: unknown };
+    try {
+      const value = await withWorkspaceDatabaseCloseAsync(
+        database,
+        async () => {
+          await Promise.resolve();
+          if (scenario.bodyFails) throw bodyError;
+          return 'native result';
+        },
+        (owned) => {
+          expect(owned).toBe(database);
+          closeAttempts += 1;
+          if (scenario.closeFails) throw closeError;
+          closeNativeWorkspaceDatabase(owned);
+        },
+        `async ${scenario.name}`,
+      );
+      result = { threw: false, error: value };
+    } catch (error) {
+      result = { threw: true, error };
+    }
+
+    expect(closeAttempts).toBe(1);
+    if (!scenario.bodyFails && !scenario.closeFails) {
+      expect(result).toEqual({ threw: false, error: 'native result' });
+      expect(() => database.query('SELECT 1').get()).toThrow();
+    } else if (scenario.bodyFails && !scenario.closeFails) {
+      expect(result).toEqual({ threw: true, error: bodyError });
+      expect(() => database.query('SELECT 1').get()).toThrow();
+    } else if (!scenario.bodyFails) {
+      expect(result).toEqual({ threw: true, error: closeError });
+      closeNativeWorkspaceDatabase(database);
+    } else {
+      expect(result.threw).toBe(true);
+      expect(result.error).toBeInstanceOf(AggregateError);
+      expect((result.error as AggregateError).errors).toEqual([bodyError, closeError]);
+      closeNativeWorkspaceDatabase(database);
+    }
+  }
+});
+
+test('native async close waits for owned work before closing its handle', async () => {
+  const database = new Database(':memory:');
+  let signalStarted: (() => void) | undefined;
+  let releaseWork: (() => void) | undefined;
+  const started = new Promise<void>((resolve) => {
+    signalStarted = resolve;
+  });
+  const blockedWork = new Promise<void>((resolve) => {
+    releaseWork = resolve;
+  });
+  let closeAttempts = 0;
+  const pending = withWorkspaceDatabaseCloseAsync(
+    database,
+    async () => {
+      signalStarted?.();
+      await blockedWork;
+      return 'settled result';
+    },
+    (owned) => {
+      expect(owned).toBe(database);
+      closeAttempts += 1;
+      closeNativeWorkspaceDatabase(owned);
+    },
+    'async deferred work and close',
+  );
+
+  await started;
+  expect(closeAttempts).toBe(0);
+  expect(database.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
+  releaseWork?.();
+  expect(await pending).toBe('settled result');
+  expect(closeAttempts).toBe(1);
+  expect(() => database.query('SELECT 1').get()).toThrow();
+});
+
+for (const failurePoint of ['schema', 'sentinel'] as const) {
+  test(`initial image ${failurePoint} denial preserves its cause and paired close custody`, async () => {
+    const image = await prepareInitialWorkspaceDatabaseImage(bootstrapBinding);
+    const relative = PROJECT_WORKSPACE_DATABASE_PATH;
+    withExistingDatabaseFixture(
+      `workspace-db-upgrade-${failurePoint}-close-`,
+      (fixture, addCleanup) => {
+        writeFileSync(fixture.file, Buffer.from(image.bytes_base64, 'base64'));
+        const before = readFileSync(fixture.file);
+        const expected =
+          failurePoint === 'schema'
+            ? {
+                ...image,
+                database_schema: image.database_schema.map((entry, index) =>
+                  index === 0 ? { ...entry, sql: (entry.sql ?? '') + ' /* changed */' } : entry,
+                ),
+              }
+            : {
+                ...image,
+                binding: { ...image.binding, operation_id: image.binding.operation_id + '-foreign' },
+              };
+        const validationMessage =
+          failurePoint === 'schema'
+            ? 'VIDA upgrade storage: initial schema closure differs'
+            : 'VIDA upgrade storage: bootstrap sentinel belongs to another operation';
+        const sourceCloseError = new Error(`injected ${failurePoint} inspection close interruption`);
+        const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+        const originalExec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+        const sourceHandles: Database[] = [];
+        const gateHandles: Database[] = [];
+        let sourceCloseAttempts = 0;
+        let closeSpyRestored = false;
+        const failOnAttempt = failurePoint === 'schema' ? 2 : 1;
+        const closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+          this: Database,
+          force?: boolean,
+        ): void {
+          if (path.resolve(this.filename) === fixture.file) {
+            sourceHandles.push(this);
+            sourceCloseAttempts += 1;
+            if (sourceCloseAttempts >= failOnAttempt) throw sourceCloseError;
+            originalClose.call(this, force);
+            return;
+          }
+          originalClose.call(this, force);
+        });
+        const execSpy = spyOn(Database.prototype, 'exec').mockImplementation(function <
+          ParamsType extends SQLQueryBindings[],
+        >(this: Database, sql: string, ...bindings: ParamsType[]): Changes {
+          if (
+            path.resolve(this.filename) === path.join(fixture.root, '.vida/storage-admission.v1.sqlite') &&
+            sql.trim().toUpperCase() === 'BEGIN DEFERRED'
+          )
+            gateHandles.push(this);
+          return originalExec.call(this, sql, ...bindings);
+        });
+        const restoreSpies = (): void => {
+          if (closeSpyRestored) return;
+          execSpy.mockRestore();
+          closeSpy.mockRestore();
+          closeSpyRestored = true;
+        };
+        addCleanup(restoreSpies);
+        addCleanup(() => {
+          restoreSpies();
+          retryPendingWorkspaceDatabaseCloses();
+        });
+
+        let failure: unknown;
+        try {
+          inspectInitialWorkspaceDatabaseImage(fixture.root, relative, expected);
+        } catch (error) {
+          failure = error;
+        }
+        expect(failure).toBeInstanceOf(AggregateError);
+        const flattened = flattenErrors(failure);
+        expect(flattened.some((error) => error instanceof Error && error.message === validationMessage)).toBe(true);
+        expect(flattened).toContain(sourceCloseError);
+        expect(sourceCloseAttempts).toBe(failOnAttempt);
+        expect(sourceHandles).toHaveLength(failOnAttempt);
+        const failedSource = sourceHandles.at(-1);
+        if (!failedSource) throw new Error('inspection did not expose its source connection');
+        const gate = gateHandles.at(-1);
+        if (!gate) throw new Error('inspection did not expose its paired admission gate');
+        expect(failedSource.query<{ value: number | bigint }, []>('SELECT 1 AS value').get()?.value).toBe(
+          failurePoint === 'schema' ? 1n : 1,
+        );
+        expect(gate.inTransaction).toBe(true);
+        expect(readFileSync(fixture.file)).toEqual(before);
+        expect(existsSync(path.join(fixture.root, PROJECT_UPGRADE_OPERATION_PATH))).toBe(false);
+        expect(existsSync(path.join(fixture.root, PROJECT_ACTIVATION_PATH))).toBe(false);
+        expect(() => acquireStorageReadAdmission(fixture.root, image.binding.workspace_id, relative)).toThrow(
+          /pending workspace database closes remain unresolved/u,
+        );
+        expect(sourceCloseAttempts).toBe(failOnAttempt + 1);
+        expect(sourceHandles.at(-1)).toBe(failedSource);
+        expect(failedSource.query<{ value: number | bigint }, []>('SELECT 1 AS value').get()?.value).toBe(
+          failurePoint === 'schema' ? 1n : 1,
+        );
+        expect(gate.inTransaction).toBe(true);
+        expect(readFileSync(fixture.file)).toEqual(before);
+
+        restoreSpies();
+        retryPendingWorkspaceDatabaseCloses();
+        expect(() => failedSource.query('SELECT 1 AS value').get()).toThrow();
+        expect(() => gate.query('SELECT 1 AS value').get()).toThrow();
+        const admitted = acquireStorageReadAdmission(fixture.root, image.binding.workspace_id, relative);
+        admitted.close();
+        expect(readFileSync(fixture.file)).toEqual(before);
+      },
+      relative,
+    );
+  });
 }
 
 test.skipIf(process.platform !== 'linux')('capture transfers cleanup custody before post-open identity guards', () => {

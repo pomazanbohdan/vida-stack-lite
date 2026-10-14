@@ -5,6 +5,7 @@ import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import {
   closeSync,
+  existsSync,
   fstatSync,
   fsyncSync,
   mkdirSync,
@@ -20,7 +21,13 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.js';
 import { HostStateStore } from '../src/host-state.js';
+import { deriveWorkspaceId } from '../src/workspace-identity.js';
 import * as actualAccess from '../src/config/safe-repository-access.js';
+import {
+  closeWorkspaceDatabaseWithAdmission,
+  openAdmittedWorkspaceDatabase,
+} from '../src/config/storage-read-admission.js';
+import { retryPendingWorkspaceDatabaseCloses } from '../src/config/workspace-database-raw.js';
 import {
   PROJECT_ACTIVATION_PATH,
   PROJECT_CONFIGURATION_PATHS,
@@ -29,6 +36,7 @@ import {
   PROJECT_UPGRADE_OPERATION_PATH,
   PROJECT_WORKSPACE_DATABASE_PATH,
   projectUpgradeHistoryPath,
+  sessionHandoffDatabaseRelativePath,
   runtimeConfigurationSourceFor,
 } from '../src/config/project-paths.js';
 import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
@@ -995,6 +1003,110 @@ test('upgrade bundle reads follow call-time async case context after its deadlin
     await finishCase(custody);
     expect(await readFile(markerPath)).toEqual(marker);
     settleCase(custody);
+  });
+});
+
+test('configured existing planning preserves its preparation denial across paired Host close failure and retry', async () => {
+  const custody = beginCase();
+  await bundleReadContext.run(custody, async () => {
+    let closeSpy: { mockRestore(): void } | undefined;
+    let configuredHandle: Database | undefined;
+    try {
+      const root = await makeFreshRepository();
+      addRoot(root, custody);
+      const config = runtimeConfig.loadRuntimeConfig(root);
+      const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+      const databaseRelative = sessionHandoffDatabaseRelativePath(config);
+      const databasePath = path.join(root, databaseRelative);
+      mkdirSync(path.dirname(databasePath), { recursive: true });
+      const seedDatabase = new Database(databasePath, { create: true, strict: true });
+      try {
+        new HostStateStore(seedDatabase, workspaceId, undefined, undefined, undefined, undefined, root);
+      } finally {
+        seedDatabase.close();
+      }
+      const databaseBefore = readFileSync(databasePath);
+      const closeError = new Error('fixture configured Host paired close failure');
+      const closedHandles: Database[] = [];
+      let injectCloseFailure = true;
+      const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+      closeSpy = spyOn(Database.prototype, 'close').mockImplementation(function (
+        this: Database,
+        force?: boolean,
+      ): void {
+        if (path.resolve(this.filename) === databasePath) {
+          closedHandles.push(this);
+          if (injectCloseFailure) {
+            injectCloseFailure = false;
+            throw closeError;
+          }
+        }
+        originalClose.call(this, force);
+      });
+
+      const failure = await upgrade
+        .planConfiguredProjectUpgradeRepair(root, {
+          operation_id: 'configured-existing-close-fault-001',
+          actor: 'test-owner: paired Host close',
+          instruction_ref: 'tests/project-upgrade-lifecycle.test.ts',
+        })
+        .then(
+          () => undefined,
+          (error: unknown) => error,
+        );
+      expect(failure).toBeInstanceOf(AggregateError);
+      if (!(failure instanceof AggregateError))
+        throw new Error('Configured existing repair did not retain both errors');
+      expect(failure.errors).toHaveLength(2);
+      const operationError: unknown = failure.errors[0];
+      const cleanupError: unknown = failure.errors[1];
+      expect(operationError).toBeInstanceOf(Error);
+      expect(operationError).toHaveProperty(
+        'message',
+        'VIDA project upgrade: configuration requires a prepared existing merge image',
+      );
+      expect(cleanupError).toBeInstanceOf(AggregateError);
+      if (!(cleanupError instanceof AggregateError)) throw new Error('Paired close failure was not retained');
+      expect(cleanupError.errors).toEqual([closeError]);
+      expect(cleanupError.errors[0]).toBe(closeError);
+      configuredHandle = closedHandles[0];
+      expect(configuredHandle).toBeInstanceOf(Database);
+      if (!configuredHandle) throw new Error('Configured planning did not retain the exact failed Host handle');
+      const retainedHost = configuredHandle;
+      expect(closedHandles).toEqual([retainedHost]);
+      expect(retainedHost.query<{ value: bigint }, []>('SELECT 1 AS value').get()?.value).toBe(1n);
+
+      const journalPath = path.join(root, PROJECT_UPGRADE_OPERATION_PATH);
+      expect(existsSync(journalPath)).toBe(false);
+
+      retryPendingWorkspaceDatabaseCloses();
+      expect(closedHandles).toHaveLength(2);
+      expect(closedHandles[1]).toBe(retainedHost);
+      expect(() => retainedHost.query('SELECT 1 AS value').get()).toThrow();
+      expect(existsSync(journalPath)).toBe(false);
+      expect(readFileSync(databasePath)).toEqual(databaseBefore);
+
+      closeSpy.mockRestore();
+      closeSpy = undefined;
+      const verifiedDatabase = new Database(databasePath, { readonly: true, strict: true });
+      try {
+        expect(
+          verifiedDatabase
+            .query<{ revision: number }, [string]>('SELECT revision FROM agent_host_maintenance WHERE workspace_id=?')
+            .all(workspaceId),
+        ).toEqual([]);
+      } finally {
+        verifiedDatabase.close();
+      }
+      const admitted = openAdmittedWorkspaceDatabase(root, databaseRelative, workspaceId, false, true);
+      closeWorkspaceDatabaseWithAdmission(admitted);
+      expect(existsSync(journalPath)).toBe(false);
+      completeRoot(root);
+    } finally {
+      closeSpy?.mockRestore();
+      retryPendingWorkspaceDatabaseCloses();
+      settleCase(custody);
+    }
   });
 });
 

@@ -266,6 +266,23 @@ source-before-gate ordering. Retain body plus close errors and verify retry of
 that same handle. Snapshot digest assertions use logical bundle-prefixed paths,
 not the physical reader's relative operands.
 
+Bootstrap-inspection fault controls target schema and sentinel validation
+separately, then inject failure before the exact native source close. Require
+both original causes, unchanged image/journal/activation bytes, the held paired
+gate and same-handle retry before another admission. Match SQLite integer mode:
+safeIntegers returns bigint. Shared work-and-close helpers preserve single and
+combined failures; async work must settle before close. Await the owned promise
+explicitly before a matcher instead of awaiting a synchronous matcher result.
+
+Closed checkpointed WAL-image controls preserve raw bytes/digests and physical
+source files. SQLite deserialize requires rollback headers: normalize bytes18/19
+only in a distinct copy when both are2. Cover Host, Mastra and both sources,
+BLOB/bigint/duplicate/sequence values and a seeded Mastra row. A held-connection
+mechanics pass does not qualify closed-image capabilities or legacy exclusion;
+WAL/SHM can remain present. Native Bun timing output is not an incremental
+completed-file source on an interrupted child; use only qualified complete-run
+file costs, never summed partial/nested PASS rows.
+
 Tests and comments describe current supported behavior. Do not include narratives about absent legacy implementations. Human authorization covers the strict Knip precommit gate. Qualify its staged snapshot, tool/config failures, formatter check, one strict maintained-TypeScript program, lint and focused-test enforcement. Hook activation proves enforcement, not quality closure: existing findings must continue to block commits. This authorization does not activate pre-push coverage, CRAP or mutation checks.
 
 ## Commands and pins

@@ -4,7 +4,11 @@ import { lstatSync } from 'node:fs';
 import path from 'node:path';
 import { canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { HostStateStore, type MaintenanceFenceBinding, type MaintenanceFenceReceipt } from '../host-state.js';
-import { assertWorkspaceDatabaseRelativePath, openUnadmittedWorkspaceDatabase } from './workspace-database-raw.js';
+import {
+  assertWorkspaceDatabaseRelativePath,
+  openUnadmittedWorkspaceDatabase,
+  withWorkspaceDatabaseClose,
+} from './workspace-database-raw.js';
 import { requireSafeRepositoryAccess } from './safe-repository-access.js';
 import {
   acquireStorageReadAdmission,
@@ -76,29 +80,6 @@ function closedImageIdentity(image: ClosedDatabaseImage) {
   return { device: image.device, inode: image.inode, size: image.size, sha256: image.sha256 };
 }
 
-function withDatabaseClose<T>(
-  database: Database,
-  work: () => T,
-  close: (database: Database) => void,
-  message: string,
-): T {
-  const errors: unknown[] = [];
-  let result: T | undefined;
-  try {
-    result = work();
-  } catch (error) {
-    errors.push(error);
-  }
-  try {
-    close(database);
-  } catch (error) {
-    errors.push(error);
-  }
-  if (errors.length === 1) throw errors[0];
-  if (errors.length > 1) throw new AggregateError(errors, message);
-  return result as T;
-}
-
 function checkpointSource(database: Database): void {
   const row = database
     .query<{ busy: number | bigint; log: number | bigint; checkpointed: number | bigint }, []>(
@@ -113,7 +94,7 @@ function checkpointSource(database: Database): void {
 
 function checkpointAndClose(root: string, relative: string, sourceOwner: ExclusiveStorageSourceOwner): void {
   const database = openUnadmittedWorkspaceDatabase(root, relative, false, true, sourceOwner.captureSource);
-  withDatabaseClose(
+  withWorkspaceDatabaseClose(
     database,
     () => checkpointSource(database),
     sourceOwner.closeSource,
@@ -215,7 +196,7 @@ export async function withExistingStorageMergeCapability<T>(input: {
         false,
         sourceOwner.captureSource,
       );
-      const fence = withDatabaseClose(
+      const fence = withWorkspaceDatabaseClose(
         host,
         () => {
           const verified = verifyCurrentFence(host);
