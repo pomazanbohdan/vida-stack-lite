@@ -464,13 +464,18 @@ async function runMutationGate(): Promise<void> {
   const mainSlices: MutationPartition[] = [
     {
       name: 'main-runtime-core',
-      sources: ['src/runtime-kernel.ts', 'src/runtime-timing.ts'],
+      sources: ['src/runtime-kernel.ts'],
       tests: [
         ...commonTests,
         'tests/runtime-kernel-boundary.test.ts',
         'tests/configured-workflow.test.ts',
         'tests/smoke.test.ts',
       ],
+    },
+    {
+      name: 'main-runtime-timing',
+      sources: ['src/runtime-timing.ts'],
+      tests: ['tests/runtime-timing-boundary.test.ts'],
     },
     {
       name: 'main-config',

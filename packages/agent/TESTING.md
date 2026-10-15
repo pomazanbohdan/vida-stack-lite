@@ -146,6 +146,12 @@ The full test selection and other mutation partitions retain the completeness
 file. Avoid eager configured-context/index setup in this narrow contour: a
 mutant's import/setup error cannot substitute for the target assertion.
 
+The main-runtime-timing contour owns only src/runtime-timing.ts and its direct
+runtime-timing-boundary test. Kernel keeps its existing core tests, including
+configured-workflow and smoke; SDK freshness remains required there. The full
+selection retains the timing public-output subprocess check separately. Do not
+substitute its child-health result for attributable target assertions.
+
 Mutation budgets have one data-only owner in
 [mutation-limits.ts](tooling/mutation-limits.ts). They do not replace the Bun
 per-test default or the full coverage deadline. A test command has a180000ms

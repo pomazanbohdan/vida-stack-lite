@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `6a708cb` at origin/main.
+- Published predecessor: `6a95ae4` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -95,7 +95,7 @@ as the single decision trail and the backlog as the task owner.
 | Order | Existing scope | Exit criterion |
 | --- | --- | --- |
 | Prerequisite | Runner capture, sandbox inputs and process custody | Original dry run actually executes; complete attributable reports, no unresolved process tree |
-| 1 | main-runtime-core, main-host, main-contracts | Each declared scope has complete mutant accounting and100% assertion-confirmed Killed |
+| 1 | main-host, main-runtime-timing, main-runtime-core, main-contracts | Each declared scope has complete mutant accounting and100% assertion-confirmed Killed |
 | 2 | main-config, main-cedar, main-governance; bun-host-state and workspace/storage owners | Same local gate, plus existing CAS, authorization, persistence and UNKNOWN controls |
 | 3 | Session/lifecycle, source-preflight/task binding, observation/recovery owners | Same local gate and reviewed scenarios/retained custody |
 | 4 | Public CLI, upgrade/apply/resume, documentation, delivery and platform scopes | Same local gate on the real required platform; unavailable platform stays GAP |
@@ -281,12 +281,52 @@ supported producer/partition; prepare independent bounded review before changes.
 
 ### Next core preparation
 
+Published6a95ae4 passed the strict473-file hook and ordinary push. Exact current
+SDK CI run38703771945/attempt1 succeeded. Native gh ZIP transport failed; the
+authorized GitHub connector downloaded the same artifact11957650893. The existing
+readiness owner admitted its exact API digest/archive/Source join and published
+the test inputs in2180ms, with no local compilation or suites in formation:
+quality-sdk-input-transport-preparation-6a95ae4-20261015.log. The real distributed
+SDK authentication test then passed1/0 with3assertions in3.96s; child terminal
+exit0,no signal,no timeout:
+quality-distributed-sdk-current-6a95ae4-20261015.log.
+
+The next bounded scope uses a natural file boundary: move only runtime-timing.ts
+from main-runtime-core into main-runtime-timing. Extract its existing direct
+timing assertions into runtime-timing-boundary.test.ts without eager index,
+configured context or SDK setup. Kernel and its existing configured/smoke tests
+remain together. Full Source assignments remain exhaustive and disjoint; the
+full test command includes the new file and the existing files glob already
+selects it. Child timing-output stays outside this mutation slice pending child
+causal attribution. Product Source and frozen roles/caps remain unchanged.
+This is a scope/test ownership correction, not a measured speedup. Root must
+verify preserved assertions, full inventory and strict checks before publishing.
+The extraction proposal was integrated by Root. Three affected files passed
+22tests/670assertions in4.19s, including the remaining kernel completeness case:
+quality-timing-extraction-focused-6a95-20261015.log. Inventory reports zero
+unassigned/foreign/overlapping/missing Sources and keeps all four kernel tests:
+quality-timing-partition-inventory-6a95-20261015.json. Fresh direct event checks
+require exactly one event and the console spy restores in finally. No duplicate
+required/untrusted helper or configured fixture was introduced.
+Independent blind actual review ACCEPT, with no omissions/findings:
+quality-timing-extraction-actual-review-6a95-20261015.md. Strict hook and ordinary
+publication precede fresh focused coverage and mutation measurements.
+The first strict hook caught RuntimeTimingEvent still used by the retained
+kernel case; its type import is restored. The review's eight-case count is a
+reporting error: direct declaration count is10before,9remaining,1moved. Preserve
+its original verdict and this correction, not a rewritten acceptance claim.
+Retain quality-timing-extraction-commit-6a95-20261015.log.
+Focused SDK support remains an explicit later capture task, using separate
+formation and coverage Source sets within the existing owner; design:
+quality-focused-sdk-minimal-design-6a95-20261015.md. It is not enabled here.
+
 Blind planning at quality-runtime-core-next-minimal-6a7-20261015.md confirms the
 existing runtime-core partition still requires configured-workflow/smoke and
 fresh CI-formed SDK inputs. No established replacement justifies dropping them.
 The plan's suggested timing-output partition addition is deferred: this child
 has no qualified causal assertion transport, while the current completeness
-selection already directly tests timing. No partition or gate is changed.
+selection already directly tests timing. This child is not added to mutation
+execution; the later natural Source-file split is recorded above.
 
 Root found the same health-assertion pattern in timing-output and the distributed
 SDK authentication check. Both now use the existing ordinary-error success guard,
