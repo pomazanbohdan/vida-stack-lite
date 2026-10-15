@@ -775,7 +775,7 @@ This route uses the same capture, instrumentation, preload, counter merge,
 currently rejects the SDK-dependent configured-workflow selection.
 
 Its `VidaBunFocusedCoverageDiagnostic/v1` report lives under
-`coverage/bun-unified/diagnostics/runs/<run-id>/focused-coverage.json` and never
+`coverage/bun-unified/diagnostics/<run-id>.focused-coverage.json` and never
 replaces coverage-final.json. It reports four local coverage metrics plus exact
 Babel function IDs, CC and the existing function-entry-based CRAP calculation.
 The original AST is observed before Istanbul inserts counters, without a second
@@ -785,6 +785,8 @@ An exit0 establishes diagnostic completion only; frozen budget qualification
 is explicitly pending. This report is not accepted by global coverage/CRAP
 gates and cannot establish scope or full-quality PASS. Preserve frozen caps and
 complete correspondence; the global plan remains required for final admission.
+The final report stays outside the sealed runs/<run-id> directory. Do not relax
+its read-only manifest/snapshot permissions to publish a diagnostic.
 
 These targets and frozen budgets govern development and truthful completion of
 its checks. They add no numeric barrier to the minimum native formation and

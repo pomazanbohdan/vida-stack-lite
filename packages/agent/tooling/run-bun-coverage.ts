@@ -1646,7 +1646,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       };
     }
     const finalPath = focused
-      ? path.join(runDirectory, 'focused-coverage.json')
+      ? path.join(runOutputRoot, runId + '.focused-coverage.json')
       : path.join(outputRoot, 'coverage-final.json');
     commandBudget.remaining();
     if (focused) {

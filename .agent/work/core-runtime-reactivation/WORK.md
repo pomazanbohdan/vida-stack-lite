@@ -314,6 +314,20 @@ Luna accepted the actual diff in quality-focused-producer-review-abba348-
 20261015.md. Documentation links/headings passed. Strict commit/push and the
 real diagnostic run remain the next steps; no dynamic coverage is claimed yet.
 
+Published7954f51 adds the focused producer route. Strict commit/push passed.
+The first real focused run1885330c-fcd2-4c2a-a627-beda1d89828a completed16PASS/
+357assertions in4.35s, but report writing failed EACCES: the selected target was
+inside the intentionally0500sealed run directory. Retain its UNKNOWN operation
+and counter receipts under coverage/bun-unified/diagnostics/runs/1885330c-
+fcd2-4c2a-a627-beda1d89828a and outer
+/workspace/attachments/quality-focused-supervised-7954f51-P1jt0p. Outer exit1,
+8.534s, no timeout, complete capture and owned-group termination observed.
+This is a new tooling output-path defect, not a product defect or numeric PASS.
+The correction moves only the diagnostic final output to its writable parent
+directory; sealed manifest/snapshot permissions remain unchanged. A new run
+after publication will supply the real before/after check; the failed run is
+not repaired or replayed in place.
+
 ## Root-owned rapid test and product audit
 
 This is a breadth-first Source review with targeted call-chain inspection, not
