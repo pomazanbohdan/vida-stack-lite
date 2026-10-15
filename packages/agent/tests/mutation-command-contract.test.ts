@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { expect, test } from 'bun:test';
 import { readPin } from '../bin/bun.ts';
 import strykerConfig from '../stryker.config.ts';
+import { mutationLimits } from '../tooling/mutation-limits.ts';
 import { buildMutationTestCommand } from '../tooling/mutation-evidence.js';
 import {
   runStrykerPartitions,
@@ -19,6 +20,24 @@ import { maintainedSourceInventory } from '../tooling/maintained-source-inventor
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+test('mutation timeout envelopes preserve per-test limits and leave room for command evidence', () => {
+  const command = buildMutationTestCommand(process.execPath, ['tests/one.test.ts'], '/tmp/mutation.xml');
+  const timeout = command.indexOf('--timeout');
+  expect(timeout).toBeGreaterThan(-1);
+  expect(Number(command[timeout + 1])).toBeLessThan(mutationLimits.commandMs);
+  expect(strykerConfig.dryRunTimeoutMinutes * 60_000).toBeGreaterThan(mutationLimits.commandMs);
+  expect(mutationLimits.partitionMs).toBeGreaterThan(strykerConfig.dryRunTimeoutMinutes * 60_000);
+  expect(strykerConfig.timeoutFactor).toBeGreaterThan(1);
+  expect(strykerConfig.timeoutMS).toBeGreaterThan(2_500);
+  expect(strykerConfig.timeoutFactor).toBe(mutationLimits.mutantTimeoutFactor);
+  expect(strykerConfig.timeoutMS).toBe(mutationLimits.mutantOverheadMs);
+  expect(strykerConfig.dryRunTimeoutMinutes * 60_000).toBe(mutationLimits.dryRunEnvelopeMs);
+  for (const value of Object.values(mutationLimits)) {
+    expect(Number.isSafeInteger(value)).toBe(true);
+    expect(value).toBeGreaterThan(0);
+  }
+});
 
 test('mutation selection preserves the complete default and exact declared pilot owner', () => {
   const runnable: MutationPartition = {

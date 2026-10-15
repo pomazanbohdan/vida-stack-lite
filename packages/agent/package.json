@@ -202,6 +202,7 @@
     "dist/standalone/**",
     "bin/cli-error-properties.ts",
     "tooling/mutation-command-runner.ts",
+    "tooling/mutation-limits.ts",
     "tooling/mutation-evidence.ts",
     "tests/mutation-evidence.test.ts",
     "tooling/mutation-test-adapter.ts",

@@ -128,6 +128,19 @@ acceptance. Preserve exact coverage and frozen complexity/CRAP requirements.
 Retained .tmp and coverage report/snapshot trees are evidence, not fresh Stryker
 sandbox inputs; keep them excluded from sandbox copying without deleting them.
 
+Mutation budgets have one data-only owner in
+[mutation-limits.ts](tooling/mutation-limits.ts). They do not replace the Bun
+per-test default or the full coverage deadline. A test command has a180000ms
+hard cap; Stryker's dry-run envelope is240000ms to leave termination/evidence
+headroom. Stryker derives a mutant allowance from twice its measured original
+baseline plus10000ms, bounded in practice by the command cap. A partition has
+a900000ms deadline. These are independent layers, not900000ms per test.
+Command receipts record their configured cap. The existing process observer
+owns termination escalation and output completion. If an outer Stryker deadline
+interrupts a command before a complete receipt, the result remains timeout or
+UNKNOWN; never infer an assertion-confirmed kill. Split oversized scopes rather
+than raising all budgets. Changed limit/tool inputs require fresh affected proof.
+
 Stryker partitions reuse one scratch root. Record each process receipt and
 post-run input check before deciding whether another partition may start.
 UNKNOWN, incomplete output, signal, spawn error or missing owned-group termination

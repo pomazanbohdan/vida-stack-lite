@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { mutationLimits } from './mutation-limits.ts';
 import type { Stats } from 'node:fs';
 import { lstat, mkdir, mkdtemp, open, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -30,7 +31,7 @@ import type {
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const junitByteLimit = 4 * 1024 * 1024;
 const reportByteLimit = 32 * 1024 * 1024;
-const strykerPartitionDeadlineMs = 90 * 60 * 1000;
+const strykerPartitionDeadlineMs = mutationLimits.partitionMs;
 const maximumStrykerDeadlineMs = 4 * 60 * 60 * 1000;
 
 type QualityInputs = Awaited<ReturnType<typeof qualityInputs>>;

@@ -1,4 +1,5 @@
 import type { PartialStrykerOptions } from '@stryker-mutator/api/core';
+import { mutationLimits } from './tooling/mutation-limits.ts';
 
 const [{ default: path }, { tmpdir }] = await Promise.all([import('node:path'), import('node:os')]);
 
@@ -43,8 +44,9 @@ const config = {
           break: null,
         },
   // Slice runs bound mutant execution and recycle only between bounded source slices.
-  timeoutMS: 60_000,
-  timeoutFactor: mutationSources?.length ? 1.5 : 2,
+  dryRunTimeoutMinutes: mutationLimits.dryRunEnvelopeMs / 60_000,
+  timeoutMS: mutationLimits.mutantOverheadMs,
+  timeoutFactor: mutationLimits.mutantTimeoutFactor,
   concurrency: mutationSources?.length ? 4 : linuxMutation || windowsMutation ? 1 : 12,
   maxTestRunnerReuse: mutationSources?.length ? 50 : 10,
   cleanTempDir: true,

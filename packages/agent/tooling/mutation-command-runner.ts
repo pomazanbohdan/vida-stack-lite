@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { mutationLimits } from './mutation-limits.ts';
 import { constants } from 'node:fs';
 import type { BigIntStats } from 'node:fs';
 import { lstat, mkdir, open, readFile } from 'node:fs/promises';
@@ -472,7 +473,7 @@ async function executeChild(command: string[], inputsMatch: boolean, logs: Runne
   if (!inputsMatch)
     return { exitCode: null, signal: null, spawnError: 'input-drift', timedOut: false, processCustody: null };
   try {
-    return await executeMutationCommand(command, process.cwd(), 45_000, {
+    return await executeMutationCommand(command, process.cwd(), mutationLimits.commandMs, {
       stdoutFile: logs.stdout,
       stderrFile: logs.stderr,
       env: mutationTestEnvironment(logs),
@@ -492,6 +493,7 @@ async function persistReceipt(
   const bodyEvents = await junitDigest(logs.bodyEvents, true);
   const receipt = {
     ...receiptData,
+    command_deadline_ms: mutationLimits.commandMs,
     junit_file: path.basename(junitPath),
     junit_sha256: junit?.sha256 ?? null,
     junit_bytes: junit?.bytes ?? null,

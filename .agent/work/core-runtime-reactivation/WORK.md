@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `dbf65f8` at origin/main.
+- Published predecessor: `3256fee` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -160,6 +160,68 @@ Blind Luna now investigates repeated configured-workflow setup from the actual
 timing log. The next core step is a passing bounded original baseline and
 complete nonoverlapping scopes, not repeated2121mutant attempts or a timeout
 increase. Product expectations and integration controls stay intact.
+
+The attestation regression was published in3256fee with the strict hook and
+nonforce push. Fresh same-scope mutation then passed7/7assertion-confirmed Killed,
+zero survivors/unknown/baseline/report errors in8207.943ms, full captured output
+and owned groups gone. Preserve quality-mutation-supervised-3256fee-eaB5s9 and
+package .tmp/mutation-evidence-b351c39f-0304-4e27-bc65-65203881b8c7-7xlHXr.
+This is local100% for that exact Source/test/tool closure, not a global score.
+
+Core three-case profiling passed3tests/18assertions. Observed bundle copying
+was3.8–6.1ms; cumulative config calls195–428ms and context calls35–72ms.
+These calls can nest, so do not add their durations. Setup through first context
+was138–445ms; no matched speedup is claimed. The profile supports investigating
+config/context work before optimizing the small copy cost. Evidence
+quality-core-setup-profile-3256fee-20261015.log and independent diagnosis
+quality-core-baseline-bottleneck-dbf65f8-20261015.md. Native51s core failure
+remains a partial original baseline, not an accepted campaign.
+
+Human now explicitly requests adequate independent mutation timeouts. Current
+shared mutation-limits data sets command180000ms, dry-run engine240000ms,
+Stryker mutant2xbaseline+10000ms and partition900000ms, retaining per-case5000ms
+and existing termination/output observers. This replaces the mismatched45000ms
+command ceiling and90minute partition ceiling. Command receipts expose the cap.
+Focused timeout/identity/scheduling contracts29PASS/296assertions:
+quality-mutation-timeouts-focused-3256fee-20261015.log. New limit/tool inputs
+invalidate affected current mutation proof; the preceding7/7 remains bound to
+its recorded3256fee closure until a fresh run. No full core run is authorized
+to claim100% from partial or budget-limited execution.
+
+The exec server disconnected during read-only installed Stryker inspection.
+Cloud status then reported a changed configuration followed by running/connected
+at spec2456. Read-only pickup verified HEAD3256fee and only the pre-existing
+untracked BASE/root bun.lock; no code changes were lost. All agents had completed
+their prior bounded work. The current timeout packet began after reconnection.
+
+Independent timeout review found one weak contract test, not an implementation
+timeout bypass. The test now binds the Stryker factor, overhead and dry-run
+envelope exactly to the shared limits while keeping relational checks.
+Focused correction1PASS/19assertions:
+quality-mutation-timeouts-review-regression-3256fee-20261015.log. Retain the
+original ISSUES verdict in quality-mutation-timeouts-review-3256fee-20261015.md;
+the root applied its exact requested correction without relabeling that review.
+
+### First joint contour cycle
+
+Human now requires each contour to measure coverage, frozen complexity/CRAP and
+assertion-confirmed mutation together before moving on. First core scope is the
+existing main-host partition, src/config/host-capability.ts, with its declared
+coverage-completeness and host-capability-boundary tests. Prepare a clearly
+local diagnostic report using the existing Babel inventory and coverage owner;
+do not label selected tests full-current-test-set or admit it as a global gate.
+Use the same captured source/tests/config/tool fingerprints across the three
+metrics. Dynamic CRAP is pending until attributable function coverage exists.
+Generated scenarios remain unreviewed; frozen caps and function correspondence
+must not be rebased to current values.
+
+The host boundary tests launch isolated Bun children without an explicit
+coverage preload. Child counter completeness is therefore a dependency to
+verify, not a presumed supported path. Blind Luna has a bounded design assignment
+for reuse of capture/preload/CRAP owners and the smallest safe diagnostic mode.
+The first cycle is in preparation, with no new coverage/CRAP or host mutation
+score claimed. Earlier attestation7/7 is a different, constants-only scope and
+does not qualify this function contour.
 
 ## Root-owned rapid test and product audit
 
