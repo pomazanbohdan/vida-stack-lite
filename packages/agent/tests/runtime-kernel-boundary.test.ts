@@ -80,6 +80,11 @@ function invokeUntrusted(
 }
 const fixtureProjectName = 'kernel';
 const localDispatchCaseMs = 10000;
+const malformedProjectIdLists = [
+  ['duplicate', 'duplicate'],
+  ['z', 'a'],
+  ['a', 0],
+];
 afterEach(retainPendingAutomaticWorkAdmissionCase);
 const repositoryRoot = await createRuntimeRepositoryRoot();
 const config = loadRuntimeConfig(repositoryRoot);
@@ -1005,6 +1010,29 @@ describe('runtime kernel boundary', () => {
       expect(identityCalls).toBe(1);
       expect(approvalCalls).toBe(1);
       expect(writeCalls).toBe(1);
+      const denied = await composeTrustedHost({
+        ...input,
+        services: {
+          ...input.services,
+          resolveIdentity: () => {
+            identityCalls += 1;
+            return null;
+          },
+        },
+      });
+      await assert.rejects(
+        () => denied.runtimeKernel.runGovernedWrite(fixture.input),
+        (error: unknown) => {
+          assert.ok(error instanceof Error);
+          expect(error.message).toBe('governed write identity or project authorization was rejected');
+          assert.ok(error.cause instanceof Error);
+          expect(error.cause.message).toBe('trusted authenticated identity context is unavailable');
+          return true;
+        },
+      );
+      expect(identityCalls).toBe(2);
+      expect(approvalCalls).toBe(1);
+      expect(writeCalls).toBe(1);
     } finally {
       await Promise.all([
         rm(reservationPath, { force: true }),
@@ -1299,6 +1327,10 @@ describe('runtime kernel boundary', () => {
     }
     expect(() => invokeUntrusted(createRuntimeKernelHost, [null])).toThrow('runtime kernel host bindings are required');
     expect(() => invokeUntrusted(createRuntimeKernelHost, [0])).toThrow('runtime kernel host bindings are required');
+    for (const projectIds of malformedProjectIdLists)
+      expect(() => invokeUntrusted(createRuntimeKernelHost, [{ ...base, projectIds }])).toThrow(
+        'runtime kernel host project ids must be sorted',
+      );
   });
   test('rejects malformed host callbacks before creating a trusted host', () => {
     const base = hostBindings();
@@ -1557,6 +1589,7 @@ describe('runtime kernel boundary', () => {
       { ...valid, repositoryRoot: '' },
       { ...valid, repositoryId: '' },
       { ...valid, projectIds: [] },
+      ...malformedProjectIdLists.map((projectIds) => ({ ...valid, projectIds })),
       { ...valid, integrationsDigest: '' },
       { ...valid, principal: '' },
       { ...valid, configRevision: 0 },

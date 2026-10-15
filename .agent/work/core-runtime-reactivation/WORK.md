@@ -1414,6 +1414,38 @@ The blind capture review identifies missing selected-failure joins, scoped hook
 ancestry, todo accounting, observed-empty distinction and canonical dry-run
 reconciliation: quality-pertest-capture-next-controls-resume-20261015.md.
 
+### Kernel authority-boundary consolidation
+
+The residual review found supported malformed project lists and a null trusted
+identity result, plus unreachable compatibility branches after authenticated
+repository validation: quality-kernel-residual-branches-review-resume-
+20261015.md. Its independent plan review accepts the following narrow cleanup.
+Keep the local admitted-work denial in one explicit type-narrowing guard,
+removing its unreachable second null guard. Normalize repository/project/
+integration binding directly from the already authenticated current project,
+removing two undefined-repository conditional spreads. Preserve every reachable
+error, live admission check, capability, approval, CAS and UNKNOWN boundary.
+No new function or alternative Source owner is added; existing closure/function
+identity correspondence must be checked from the producer's next inventory.
+
+The existing boundary fixture now shares duplicate/descending/non-string
+project-ID inputs across host and authentication ingress. Its bound governed
+write case also checks null identity denial with the public Edictum error and
+original cause, one additional resolver call and no additional approval/CAS.
+The initial draft expected the inner cause as the public message; the existing
+error wrapper correctly retained both, so correct the test expectation. Retain
+quality-kernel-residual-behavior-before-cleanup-resume-20261015.log; the corrected
+three affected cases pass3/0/34assertions in1.424s before the Source cleanup.
+After cleanup the entire boundary file passes33/0/175assertions in4.67s, with
+complete owned output/same boot/group gone:
+quality-kernel-residual-behavior-after-cleanup-resume-20261015.log and owner
+quality-retirement-kernel-boundary-9pKCC1. Current static checks pass478captured/
+477checkedTS plus101Source/0diagnostics: quality-kernel-residual-static-after-
+cleanup-resume-20261015.log. Previous kernel numeric proof now describes its
+previous Source bytes; fresh metrics remain pending. Independent blind actual
+review found no blocker and inspected the sole production admitted-composition
+caller: quality-kernel-normalization-actual-review-resume-20261015.md.
+
 ### Current product correction packet
 
 Human ended the high-token audit mode and resumed ordinary bounded fixes.

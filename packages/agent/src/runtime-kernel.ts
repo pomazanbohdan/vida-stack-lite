@@ -1039,11 +1039,8 @@ export async function createTrustedLocalSessionComposition(input: {
           work_id: admitted.workId,
         };
   const requireLiveAdmission = (workId: string): HostStateSnapshot => {
-    requireCondition(
-      identity !== null && admitted !== undefined && workId === identity.work_id,
-      'local workflow work item is not the admitted work',
-    );
-    if (identity === null || admitted === undefined) throw new Error('local workflow admission is unavailable');
+    if (identity === null || admitted === undefined || workId !== identity.work_id)
+      throw new Error('local workflow work item is not the admitted work');
     return requireLiveLocalSessionAdmission({
       repositoryRoot: root,
       identity,
@@ -1661,12 +1658,9 @@ function issueWorkflowExecutionCapability(
       ...parsedWorkContext,
       binding: {
         ...parsedWorkContext.binding,
-        ...(authentication.repositoryId === undefined
-          ? {}
-          : { repository_id: currentProject.repository_id, project_ids: [...currentProject.project_ids].sort() }),
-        ...(authentication.repositoryId === undefined
-          ? {}
-          : { integrations_digest: currentProject.integrations_digest }),
+        repository_id: currentProject.repository_id,
+        project_ids: [...currentProject.project_ids].sort(),
+        integrations_digest: currentProject.integrations_digest,
       },
     });
     const reboundWorkContext = freezeJsonValue({
