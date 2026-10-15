@@ -64,6 +64,7 @@ export function mutationPartitions(): MutationPartition[] {
       sources: ['src/governance/edictum-boundary.ts'],
       tests: [
         ...commonTests,
+        'tests/workflow-approval-consumption-contract.test.ts',
         'tests/governance-completeness.test.ts',
         'tests/edictum-workflow-completeness.test.ts',
         'tests/smoke.test.ts',

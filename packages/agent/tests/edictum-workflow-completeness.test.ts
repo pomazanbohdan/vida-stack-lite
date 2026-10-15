@@ -4,8 +4,12 @@ import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { initializeProject } from '../bin/init.ts';
-import { loadRuntimeConfig, type AgentRuntimeConfig } from '../src/config/runtime-config.js';
-import { runtimeConfigurationSourceFor } from '../src/config/project-paths.js';
+import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.js';
+import { loadRuntimeConfig, runtimeConfigDigest, type AgentRuntimeConfig } from '../src/config/runtime-config.js';
+import { runtimeConfigurationSourceFor, sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.js';
+import { HostStateStore, inspectHostWorkspaceDatabase, openHostStateDatabase } from '../src/host-state.js';
+import { deriveWorkspaceId } from '../src/workspace-identity.js';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import {
   computeEdictumWorkflowApprovalEvidenceDigest,
   createConfiguredEdictumWorkflow,
@@ -92,9 +96,10 @@ function invokeUnknown(target: (...args: never[]) => unknown, receiver: unknown,
   return Reflect.apply(target, receiver, args);
 }
 
-async function createInitializedFixture(): Promise<string> {
+async function createInitializedFixture(onCreated?: (root: string) => void): Promise<string> {
   const root = mkdtempSync(path.join(tmpdir(), 'edictum-workflow-'));
   try {
+    onCreated?.(root);
     mkdirSync(path.join(root, '.git'));
     await initializeProject({ projectRoot: root, repository: 'workflow-fixture', projectMappings: ['workflow=.'] });
     const config: AgentRuntimeConfig = loadRuntimeConfig(root);
@@ -104,7 +109,7 @@ async function createInitializedFixture(): Promise<string> {
       throw new Error('initialized workflow fixture did not use its current loaded configuration source');
     return root;
   } catch (error: unknown) {
-    rmSync(root, { recursive: true, force: true });
+    if (onCreated === undefined) rmSync(root, { recursive: true, force: true });
     throw error;
   }
 }
@@ -536,4 +541,114 @@ describe('configured Edictum workflow completeness', () => {
       rmSync(storeRoot, { recursive: true, force: true });
     }
   });
+
+  test.skipIf(!nativeNoFollowAvailable)(
+    'composition proof binds a native HostState workflow capability and consumes approval once',
+    async () => {
+      const caseDeadline = performance.now() + 5_000;
+      let root: string | undefined;
+      let database: ReturnType<typeof openHostStateDatabase> | undefined;
+      let bodyFailed = false;
+      let bodyError: unknown;
+      let bodyPassed = false;
+      try {
+        root = await createInitializedFixture((created) => {
+          root = created;
+        });
+        const config = loadRuntimeConfig(root);
+        const configuredStoreId = config.governance.edictum.workflow_id;
+        const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
+        const databaseRelativePath = sessionHandoffDatabaseRelativePath(config);
+        mkdirSync(path.join(root, path.dirname(databaseRelativePath)), { recursive: true });
+        database = openHostStateDatabase(root, databaseRelativePath, workspaceId);
+        const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, undefined, root);
+        expect(store.workspaceId).toBe(workspaceId);
+
+        const principal = 'human:native-workflow-reviewer';
+        const proof = createWorkflowHostAuthenticationProofForCompositionRoot(root, principal);
+        const host = await createFileWorkflowHostCapabilityWithProof(proof, store.governanceCapability);
+        expect(host).toMatchObject({
+          authenticatedPrincipal: principal,
+          repositoryRoot: root,
+          storeId: configuredStoreId,
+          configDigest: runtimeConfigDigest(config),
+        });
+
+        const binding: WorkflowApprovalBinding = {
+          stage_id: 'governed-write-approval',
+          approval_id: 'native-host-' + randomUUID(),
+          ...operationFor(root),
+        };
+        const inspect = () => inspectHostWorkspaceDatabase(root!, databaseRelativePath, workspaceId).governance;
+        const before = inspect();
+        let callbackCalls = 0;
+        await Promise.resolve(
+          expect(
+            host.consumeApproval({ ...binding, stage_id: '' }, async () => {
+              callbackCalls += 1;
+            }),
+          ).rejects.toThrow(/binding is invalid/),
+        );
+        expect(callbackCalls).toBe(0);
+        expect(inspect()).toEqual(before);
+
+        await host.consumeApproval(binding, async () => {
+          callbackCalls += 1;
+        });
+        expect(callbackCalls).toBe(1);
+        const applied = inspect();
+        expect(applied).toHaveLength(1);
+        expect(applied[0]).toMatchObject({
+          store_id: configuredStoreId,
+          kind: 'approval',
+          state: {
+            schema: 'EdictumWorkflowApprovalConsumption/v1',
+            store_id: configuredStoreId,
+            status: 'applied',
+            binding,
+          },
+        });
+
+        await Promise.resolve(
+          expect(
+            host.consumeApproval(binding, async () => {
+              callbackCalls += 1;
+            }),
+          ).rejects.toThrow(/replay/),
+        );
+        expect(callbackCalls).toBe(1);
+        expect(inspect()).toEqual(applied);
+        bodyPassed = true;
+      } catch (error: unknown) {
+        bodyFailed = true;
+        bodyError = error;
+      }
+
+      try {
+        completeOwnedCleanup(
+          [
+            () => {
+              if (database !== undefined) {
+                closeWorkspaceDatabaseWithAdmission(database);
+                database = undefined;
+              }
+              if (!bodyPassed || root === undefined || performance.now() >= caseDeadline) {
+                if (root !== undefined) {
+                  console.error('Retained failed or expired native workflow fixture root: ' + root);
+                }
+                return undefined;
+              }
+              rmSync(root, { recursive: true, force: true });
+              return undefined;
+            },
+          ],
+          bodyFailed ? { error: bodyError } : undefined,
+        );
+      } catch (cleanupError: unknown) {
+        if (root !== undefined) console.error('Retained native workflow fixture after cleanup failure: ' + root);
+        throw cleanupError;
+      }
+      if (bodyFailed) throw bodyError;
+    },
+  );
 });

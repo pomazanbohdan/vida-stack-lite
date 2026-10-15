@@ -143,6 +143,19 @@ exact deny diagnostic in the measured process. Reuse this boundary case instead
 of a child-only validator replacement; a child assertion cannot cover the
 parent's error-normalization branch.
 
+Governance contour selection retains the approval-consumption contract tests.
+Test HostState adapter wiring with a real file-backed SQLite capability and
+actual emitted records, not callback-only persistence. Check duplicate reserve,
+request digest, wrong-store rejection, reserved/commit_unknown/applied/aborted
+transitions and reopen through the public adapter. Native workflow composition
+uses the config-selected workspace DB, proof-bound root/principal/store/config,
+invalid-binding no-effect, one applied callback and unchanged replay denial.
+These are facade/SQLite behavior checks; they do not qualify OS-crash durability
+or physical provider authority. Enroll a new async fixture before its first
+suspension, retain it by default, and admit removal only after successful close
+and a fresh monotonic case-deadline check. Successful close with intentional
+body-failure retention is not an additional cleanup failure.
+
 Property tests generate supported and unsupported values separately and require
 acceptance or refusal for every sample. Do not condition the acceptance oracle
 on the production validator accepting a value. A general JSON arbitrary may

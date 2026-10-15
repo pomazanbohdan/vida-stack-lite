@@ -738,6 +738,78 @@ without repeating these complete coverage selections unless affected changes
 or unresolved evidence justify another run. Do not launch the oversized kernel
 mutation campaign until that runner prerequisite is genuinely qualified.
 
+## Main-governance contour: current measured gaps and assigned packet
+
+Capturec5dd7d76-cce4-415d-898b-6abbda8af27a at published5fae51e uses the
+unchanged original four-file main-governance selection and completes54PASS/
+0FAIL/867assertions in5.17s Bun/8705.449727ms owned outer time. Actual diagnostic:
+F184/205,L622/695,S639/721,B58/100,maxCC6/entryCRAP20. Parent outcome remains
+separate BLOCKED; no timeout/signal/spawn failure and full outer output/same-boot
+namespace/group termination are retained. Root:
+`/workspace/attachments/quality-declared-main-governance-XEcV6n`.
+Validated gap extraction reuses the current report's maps/counters and the
+maintained contour/Istanbul validators; no new AST or Source hash pass. Evidence:
+quality-main-governance-{coverage,open-counters}-5fae-20261015.{log,jsonl}
+(coverage is .log; open-counters is .jsonl).
+
+One selection omission is confirmed: the existing approval-consumption contract
+test calls validateHostWorkflowApprovalRecord but main-governance omitted it.
+Add that existing file to the registry rather than duplicating its parser tests.
+The other main missing roles are real HostState-backed capability, operation
+reservation and workflow approval adapters, plus failure cleanup closures.
+Do not add the whole large HostState suite merely to cover those facades.
+
+Assigned two blind native Luna writers to disjoint existing files:
+governance-completeness owns a focused real SQLite/opaque capability reservation
+adapter case; edictum-workflow-completeness owns the native proof-backed workflow
+capability and real approval consume/replay controls. Root owns Source, registry,
+docs, checks/Git and the final numerical freeze. Use actual file-backed
+HostStateStore capabilities and transitions, preserve failed fixture custody,
+default5s cases, real CAS and UNKNOWN boundaries. No :memory: journal bypass,
+fabricated provider authority or callback-only persistence substitutes. The
+current gap counts remain unchanged until actual post-change measurement.
+
+The two native case implementations are ready. Root targeted reservation
+control1PASS/19assertions (16.43ms case,1.53s process) and native workflow
+control1PASS/11assertions (336.82ms case,2.07s process) use genuine capabilities
+and persisted records. Reservation test retains its dedicated raw file-backed
+SQLite root on body/close/late settlement failure; it is facade integration,
+not another consumer DB or crash-durability proof. Workflow test uses the actual
+configured workspace DB and admitted close owner, checks the default configured
+store identity, zero-effect invalid binding, applied callback once and immutable
+replay denial. No provider or user authorization is inferred from callback counts.
+
+Root integration corrected two new fixture custody defects before final capture:
+intentional body-failure retention must not synthesize a cleanup failure, and
+pending/late passing bodies must not become eligible for deletion. The native
+workflow root is enrolled before initializeProject first suspends via the
+existing fixture helper's optional creation callback; it remains retained until
+successful admitted close before its5s monotonic deadline. Reservation removal
+also rechecks that deadline after close. No shared fixture framework or new
+production policy was introduced. The remaining legacy fixture cases are not
+claimed to have acquired this new case's custody qualification.
+
+Complete current five-file governance selection73PASS/0FAIL/897assertions in
+5.87s; strict tests448files and tooling184files pass. Full Source remains
+unchanged by this test/selection packet. Evidence under attachments:
+quality-governance-native-{reservation-controls,workflow-controls,selection,
+tests-ts,tooling-ts}-5fae-20261015.log. Independent review and post-publication
+numerical capture remain the next final-check steps; old observed gaps remain
+visible until that capture actually changes them.
+
+Independent native-case review found one further deadline gap: a checked-close
+case made its root eligible for deferred afterEach deletion, which could begin
+after the deadline. Root removed the new deferred cleanup/sets instead of adding
+another scheduler or deadline map. The single case-owned cleanup now closes,
+checks success/deadline, then rmSyncs synchronously in the same callback; pending,
+failed or expired bodies have no external remover. Re-review confirms the finding
+is resolved. Corrected native workflow control1PASS/11assertions in290.25ms
+case/1.81s process; log quality-governance-native-workflow-cleanup-corrected-
+5fae-20261015.log. The pending-timeout retention path is structurally reviewed,
+not a newly executed expected-timeout child control. Source/Runtime custody
+qualification is not inferred from this functional test. Actual review:
+quality-governance-native-actual-review-5fae-20261015.md under attachments.
+
 ## Automatic contour progress projection
 
 The human requested durable per-contour metrics and one automatic consolidated

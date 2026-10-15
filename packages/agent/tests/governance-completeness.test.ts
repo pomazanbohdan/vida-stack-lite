@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, test } from 'bun:test';
+import { Database } from 'bun:sqlite';
 import path from 'node:path';
 import os from 'node:os';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -11,6 +12,7 @@ import {
   loadRuntimeConfig,
 } from '../src/index.ts';
 import { toAuthorizationReceipt } from '../src/contracts/public-ingress.ts';
+import { computeGovernedWriteRequestDigest } from '../src/contracts/public-ingress.ts';
 import type {
   GovernedWriteIntent,
   TrustedProjectIdentity,
@@ -21,6 +23,7 @@ import {
   createCompositionRootControlKernel,
   createCompositionRootGovernanceGuard,
   createFileOperationReservationStore,
+  createHostOperationReservationStore,
   createGovernanceGuard,
   createTestGovernanceGuard,
   createTestOperationReservationStore,
@@ -29,8 +32,11 @@ import {
   isTrustedGovernanceControlKernel,
   loadConfiguredEdictumGovernancePolicy,
   runGovernedWrite,
+  validateHostOperationReservation,
 } from '../src/governance/edictum-boundary.ts';
 import type { GovernanceBindings } from '../src/governance/edictum-boundary.ts';
+import { HostStateStore } from '../src/host-state.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
 const repositoryRoot = await createInitializedRepositoryRoot();
 const config = loadRuntimeConfig(repositoryRoot);
@@ -387,6 +393,119 @@ describe('governed write completeness', () => {
       expect(() => createTestOperationReservationStore(repositoryRoot, '')).toThrow(/id/);
     },
   );
+
+  test('HostState reservation adapter persists native reservation transitions across reopen', async () => {
+    const caseDeadline = performance.now() + 5_000;
+    const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-host-reservation-'));
+    const openDatabases = new Set<Database>();
+    const closeAttempted = new Set<Database>();
+    let bodyFailure: { readonly error: unknown } | undefined;
+    let caseSucceeded = false;
+
+    try {
+      const databasePath = path.join(temporaryRoot, 'governance.sqlite');
+      const workspaceId = 'a'.repeat(64);
+      const database = new Database(databasePath, { create: true, strict: true });
+      openDatabases.add(database);
+      database.exec('PRAGMA journal_mode=DELETE');
+      database.exec('PRAGMA synchronous=FULL');
+      const host = new HostStateStore(database, workspaceId);
+      const storeId = 'native-reservation-test';
+      const store = createHostOperationReservationStore(host.governanceCapability, storeId);
+      const otherStore = createHostOperationReservationStore(host.governanceCapability, 'other-reservation-test');
+      const firstFixture = evidence();
+
+      expect(store.scope).toBe('host-sqlite');
+      expect(await store.inspect(firstFixture.operationHash)).toBeNull();
+      const first = await store.reserve(firstFixture.operationHash, firstFixture.request);
+      if (first === null) throw new Error('native reservation was not created');
+      expect(validateHostOperationReservation(first)).toEqual(first);
+      expect(first).toMatchObject({
+        store_id: storeId,
+        operation_key: firstFixture.operationHash,
+        request_digest: computeGovernedWriteRequestDigest(firstFixture.request),
+        status: 'reserved',
+      });
+      expect(await store.reserve(firstFixture.operationHash, firstFixture.request)).toBeNull();
+      expect(await store.inspect(firstFixture.operationHash)).toEqual(first);
+
+      expect(() => otherStore.markCommitStarted(first)).toThrow(/different store/);
+      expect(() => {
+        Reflect.apply(createHostOperationReservationStore, undefined, [{}, storeId]);
+      }).toThrow(/opaque/);
+      expect(await store.inspect(firstFixture.operationHash)).toEqual(first);
+
+      await store.markCommitStarted(first);
+      const unknown = await store.inspect(firstFixture.operationHash);
+      if (unknown === null) throw new Error('commit-unknown reservation is missing');
+      expect(validateHostOperationReservation(unknown)).toEqual(unknown);
+      expect(unknown).toMatchObject({ status: 'commit_unknown', request_digest: first.request_digest });
+      const resultDigest = 'b'.repeat(64);
+      await store.complete(first, resultDigest);
+      const applied = await store.inspect(firstFixture.operationHash);
+      if (applied === null) throw new Error('applied reservation is missing');
+      expect(validateHostOperationReservation(applied)).toEqual(applied);
+      expect(applied).toMatchObject({ status: 'applied', result_digest: resultDigest });
+
+      const secondFixture = evidence();
+      const second = await store.reserve(secondFixture.operationHash, secondFixture.request);
+      if (second === null) throw new Error('second native reservation was not created');
+      await store.abort(second);
+      const aborted = await store.inspect(secondFixture.operationHash);
+      if (aborted === null) throw new Error('aborted reservation is missing');
+      expect(validateHostOperationReservation(aborted)).toEqual(aborted);
+      expect(aborted).toMatchObject({ status: 'aborted', request_digest: second.request_digest });
+
+      closeAttempted.add(database);
+      database.close(true);
+      openDatabases.delete(database);
+
+      const reopenedDatabase = new Database(databasePath, { strict: true });
+      openDatabases.add(reopenedDatabase);
+      reopenedDatabase.exec('PRAGMA synchronous=FULL');
+      const reopenedHost = new HostStateStore(reopenedDatabase, workspaceId);
+      const reopenedStore = createHostOperationReservationStore(reopenedHost.governanceCapability, storeId);
+      const reopenedApplied = await reopenedStore.inspect(firstFixture.operationHash);
+      const reopenedAborted = await reopenedStore.inspect(secondFixture.operationHash);
+      if (reopenedApplied === null || reopenedAborted === null)
+        throw new Error('reopened native reservation records are missing');
+      expect(validateHostOperationReservation(reopenedApplied)).toEqual(reopenedApplied);
+      expect(validateHostOperationReservation(reopenedAborted)).toEqual(reopenedAborted);
+      expect(reopenedApplied).toEqual(applied);
+      expect(reopenedAborted).toEqual(aborted);
+
+      caseSucceeded = true;
+    } catch (error) {
+      bodyFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            const closeErrors: unknown[] = [];
+            for (const database of openDatabases) {
+              if (closeAttempted.has(database)) {
+                continue;
+              }
+              closeAttempted.add(database);
+              try {
+                database.close(true);
+                openDatabases.delete(database);
+              } catch (error) {
+                closeErrors.push(error);
+              }
+            }
+            if (closeErrors.length > 0)
+              throw new AggregateError(closeErrors, 'Native reservation database close failed');
+            if (!caseSucceeded || bodyFailure !== undefined || performance.now() >= caseDeadline) return undefined;
+            rmSync(temporaryRoot, { recursive: true, force: true });
+            return 'removed';
+          },
+        ],
+        bodyFailure,
+      );
+    }
+  });
 
   test.skipIf(!nativeNoFollowAvailable)(
     'preparation rejects malformed wrappers, stale envelopes, missing authorities, and binding drift',

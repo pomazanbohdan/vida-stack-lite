@@ -19,7 +19,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded |
 | main-contracts | 102/102 · 296/296 · 325/325 · 152/152 | 15 / 15 | unknown | BLOCKED | open / unknown |
 | main-cedar | 25/25 · 56/56 · 60/60 · 21/21 | 6 / 6 | unknown | BLOCKED | open / unknown |
-| main-governance | unknown | unknown | unknown | not imported | open / unknown |
+| main-governance | 184/205 · 622/695 · 639/721 · 58/100 | 6 / 20 | unknown | BLOCKED | open / unknown |
 | main-mastra | unknown | unknown | unknown | not imported | open / unknown |
 | main-exports | unknown | unknown | unknown | not imported | N/A: static exports |
 | bun-fs-safe-attestation | unknown | unknown | unknown | not imported | open / unknown |
@@ -138,6 +138,19 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | e8ce05a3-9517-4a8c-a9f4-0c0825eda470 | not-captured | 2026-10-15T17:11:41.850Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/e8ce05a3-9517-4a8c-a9f4-0c0825eda470.json |
 | coverage | 7e174372-c1b9-4f34-945a-5910e1c4ab6b | 5f01f954de53a3861c12a07d2f2772172f89f27d | 2026-10-15T17:16:31.127Z | focused-diagnostic; owner accepted locally; selection bound | 25/25 · 56/56 · 60/60 · 21/21 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/7e174372-c1b9-4f34-945a-5910e1c4ab6b.focused-coverage.json |
 | coverage-outcome | 7e174372-c1b9-4f34-945a-5910e1c4ab6b | not-captured | 2026-10-15T17:16:31.134Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/7e174372-c1b9-4f34-945a-5910e1c4ab6b.json |
+
+Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
+
+### main-governance
+
+Historical complete local closure: not recorded.
+Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Frozen complexity/CRAP and exact coverage qualification: pending.
+
+| Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
+| --- | --- | --- | --- | --- | --- | --- |
+| coverage | c5dd7d76-cce4-415d-898b-6abbda8af27a | 5fae51e8b69d627d0344f2efd68d70d8d2515e87 | 2026-10-15T17:18:10.096Z | focused-diagnostic; owner accepted locally; selection bound | 184/205 · 622/695 · 639/721 · 58/100 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/c5dd7d76-cce4-415d-898b-6abbda8af27a.focused-coverage.json |
+| coverage-outcome | c5dd7d76-cce4-415d-898b-6abbda8af27a | not-captured | 2026-10-15T17:18:10.105Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/c5dd7d76-cce4-415d-898b-6abbda8af27a.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
