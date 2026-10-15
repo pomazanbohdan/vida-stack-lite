@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `32a0dc4` at origin/main.
+- Published predecessor: `4479a37` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -562,6 +562,37 @@ envelope file10PASS/0FAIL,978assertions in2.74s. These are schema/semantics unit
 projections, not real claim retirement or state replay. Log:
 `quality-contracts-resource-history-file-32a-20261015.log`. Publish and capture
 again before promoting the observed statement/branch metrics.
+
+The strict hook passed483TS roots and the resource/history follow-up was
+committed/pushed as4479a37. Capture376940e4-e4d9-40f5-9bd1-38cf16f5dc10 now
+completes41PASS/0FAIL,14151assertions in5.21s Bun /8233.111464ms owned outer time
+at `/workspace/attachments/quality-contour-coverage-contracts-bp4sEk`.
+Actual main-contracts metrics: F102/102,L296/296,S325/325,B154/158;
+maxCC/entryCRAP16. All three non-branch metrics are now100%; four defensive
+branch counters stay open. Reuse the current report before planning another
+case; do not fabricate impossible month/validator states or relax exact gates.
+The kernel's last whole-selection result stays255PASS with F/L/S100%,B398/400,
+maxCC/entryCRAP31. Runtime/installation and global/frozen/mutation acceptance
+remain separate pending work; there is no new complete four-metric closure.
+
+The automatic contour document retains19observations, including each original
+parent BLOCKED result. It never replaces that result with outer success. Current
+freshness remains explicitly unverified and2/44historical compatible local
+closures plus1static contour are preserved. Last report/merge evidence:
+`quality-main-contracts-{coverage,metrics}-447-20261015.{log,json}` and
+`quality-contours-update-447-20261015.log` under attachments (the coverage output
+is .log and metrics output is .json). Root remains the only final-check/Git owner.
+
+Next continue the existing native per-test parent admission work: current full
+selection and declaration/map custody, sealed dependency/config/environment and
+artifact origin, static/full-selection fallback and scoped filtered lifecycle.
+Use the successful bounded real-instrumenter pilot and existing joins; do not
+run another capture-only toy or the oversized kernel campaign as a substitute.
+Kernel native Windows and invariant-backed expiry disposition stay explicit;
+contracts' four residual branch counters need contract-backed cases or a reviewed
+behavior-preserving simplification, never a coverage waiver. All published fixes
+and test packets are retained in Source/Git; no active loader/schema or consumer
+state was changed and no install=unblock notice was sent.
 
 ## Automatic contour progress projection
 
