@@ -439,3 +439,68 @@ test('deletion requires a typed event and removal of stale map links, then a new
     disposeFixture(root);
   }
 }, 60_000);
+
+test('closeout rejects an otherwise current baseline whose status is blocked', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-blocked-baseline-'));
+  let passed = false;
+  try {
+    initializeFixture(root);
+    const policy = {
+      schema: 'DocumentationPolicy/v1',
+      policy_id: 'clear-blocked-baseline',
+      project_id: 'refactoring',
+      source_path: 'docs/agent-instructions/documentation-policy.v1.json',
+      owner: 'project:refactoring',
+      required: true,
+      canonical_roots: ['docs/agent-instructions'],
+      map_paths: ['docs/agent-instructions/index.md'],
+      excluded_roots: ['.agent', '.planning'],
+      changelog_required: false,
+      changelog_path: null,
+      relations: ['owns'],
+      updated_at: new Date().toISOString(),
+    };
+    write(root, policy.source_path, JSON.stringify(policy) + '\n');
+    write(root, policy.map_paths[0]!, 'Current documentation map\n');
+    write(root, 'docs/agent-instructions/current.md', 'Current governed document\n');
+    write(
+      root,
+      '.agent/work/doc-clear-test/scope.json',
+      JSON.stringify({
+        schema: 'ImplementationScope/v1',
+        work_id: 'doc-clear-test',
+        source_revision: 'revision-one',
+        allowed_paths: ['docs/agent-instructions/current.md'],
+      }) + '\n',
+    );
+    const baselineResult = successful(() => run(root, 'baseline'));
+    const baselinePath = path.join(root, baselineResult.path as string);
+    const baselineBytes = readFileSync(baselinePath);
+    const parsed: unknown = JSON.parse(baselineBytes.toString('utf8'));
+    expect(parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)).toBe(true);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed))
+      throw new Error('Expected persisted documentation baseline object.');
+    const { digest: _oldDigest, ...baselineBody } = parsed as Record<string, unknown>;
+    const blockedBody = { ...baselineBody, status: 'blocked' as const };
+    const blockedBaseline: Record<string, unknown> = { ...blockedBody, digest: canonicalJsonDigest(blockedBody) };
+    expect(blockedBaseline.status).toBe('blocked');
+    expect(blockedBaseline.phase).toBe('baseline');
+    expect(blockedBaseline.repository_id).toBe('creatio-sample-repository');
+    expect(blockedBaseline.project_id).toBe('refactoring');
+    expect(blockedBaseline.work_id).toBe('doc-clear-test');
+    expect(blockedBaseline.source_revision).toBe('revision-one');
+    writeFileSync(baselinePath, JSON.stringify(blockedBaseline, null, 2) + '\n');
+    const blockedBytes = readFileSync(baselinePath);
+
+    const closeout = run(root, 'closeout');
+    expect(closeout.status).toBe(1);
+    expect(closeout.stderr.trim()).toBe('documentation CLEAR blocked: GAP-DOCUMENTATION-BASELINE-STALE-001');
+    expect(readFileSync(baselinePath)).toEqual(blockedBytes);
+    expect(existsSync(path.join(root, '.agent/work/doc-clear-test/documentation-closeout-0001.v1.json'))).toBe(false);
+    expect(readFileSync(baselinePath)).not.toEqual(baselineBytes);
+    passed = true;
+  } finally {
+    if (passed) disposeFixture(root);
+    else console.error(`Retained failed blocked-baseline CLEAR fixture: ${root}`);
+  }
+}, 60_000);

@@ -379,7 +379,7 @@
     },
     {
       "file": "src/documentation/clear.ts",
-      "sha256": "8c82c87e100b966e68a6f2c611ff41a98f352a8b8a83c8cbc16ade60952d8f13"
+      "sha256": "5474e5dc268132a6203199af3dd9cdf0b9fb2ad14ebf76f15219a5a2b3728b3e"
     },
     {
       "file": "src/orchestration/initial-source-frontier-code-rebind.ts",
@@ -220966,5 +220966,23 @@
     },
     "frozen_cap_action": "Keep all saved retained ceilings and the three individually published new-role caps unchanged; no cap is copied from the former compatibility entrypoint.",
     "limitations": "Independent Source correspondence review only; existing saved caps unchanged. No original runtime measurement admitted. Exact inventory partitions, full current coverage and scoped proof remain executable gates. No numerical, global or runtime qualification from metadata."
+  },
+  "documentation_blocked_baseline_correction_20261015": {
+    "status": "SOURCE_CORRECTION_PENDING_NUMERICAL_QUALIFICATION",
+    "prior_source_ref": "560d5bf",
+    "files": [
+      "src/documentation/clear.ts"
+    ],
+    "bindings": [
+      {
+        "file": "src/documentation/clear.ts",
+        "previous_sha256": "8c82c87e100b966e68a6f2c611ff41a98f352a8b8a83c8cbc16ade60952d8f13",
+        "sha256": "5474e5dc268132a6203199af3dd9cdf0b9fb2ad14ebf76f15219a5a2b3728b3e"
+      }
+    ],
+    "reason": "Reproduced public closeout acceptance of a current self-digested blocked baseline. Deny blocked status before closeout publication; fold existing unconditional binding checks into the canonical tuple without changing the policy-transition exception, time guard or not_required admission.",
+    "independent_review": "/workspace/attachments/quality-doc-blocked-baseline-final-source-review-20261015.md",
+    "source_roles": "No callable addition/removal or responsibility transfer. Measured static owner CC44 remains under saved original ceiling47; all saved retained/new rows and caps unchanged.",
+    "limits": "Targeted Source regression only; no fresh numerical or global qualification from this correction."
   }
 }

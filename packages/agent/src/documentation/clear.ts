@@ -182,17 +182,28 @@ export function produceDocumentationClearCheckpoint(input: DocumentationClearInp
         currentPolicyBytes,
       );
       if (
+        input.baseline.status === 'blocked' ||
         canonicalJson([
           input.baseline.repository_id,
           input.baseline.project_id,
           input.baseline.policy_id,
           input.baseline.work_id,
-        ]) !== canonicalJson([input.repository_id, input.project_id, policy.policy_id, input.work_id]) ||
-        input.baseline.source_revision !== input.source_revision ||
-        input.baseline.project_context_digest !== context.project_context_digest ||
+          input.baseline.source_revision,
+          input.baseline.project_context_digest,
+          input.baseline.config_digest,
+          input.baseline.scope_digest,
+        ]) !==
+          canonicalJson([
+            input.repository_id,
+            input.project_id,
+            policy.policy_id,
+            input.work_id,
+            input.source_revision,
+            context.project_context_digest,
+            runtimeConfigDigest(config),
+            canonicalJsonDigest(scoped),
+          ]) ||
         (input.baseline.policy_digest !== policyDigest && transitionMaps.length === 0) ||
-        input.baseline.config_digest !== runtimeConfigDigest(config) ||
-        input.baseline.scope_digest !== canonicalJsonDigest(scoped) ||
         Date.parse(input.baseline.created_at) > Date.now()
       )
         gaps.push('GAP-DOCUMENTATION-BASELINE-STALE-001');

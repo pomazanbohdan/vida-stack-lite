@@ -5061,6 +5061,33 @@ denial completed successfully at owned root
 complete capture/process-group termination, unchanged boot. This is development
 proof only. Exact numerical contour qualification remains the next serial action.
 
+## Reproduced P0: blocked baseline accepted by closeout
+
+After560d5bf, a public CLI regression generated a valid current passing baseline,
+changed only its status to blocked, recomputed its canonical digest, and requested
+closeout. The RED result was0PASS/1FAIL: closeout returned exit0 instead of1.
+Root retained /tmp/vida-clear-blocked-baseline-1UW9nQ. Log:
+/workspace/attachments/quality-doc-blocked-baseline-red-20261015.log.
+
+The closeout producer now rejects a blocked baseline at its existing stale-binding
+gate, before checkpoint publication. Its unconditional identity/source/context/
+config/scope comparisons use the existing canonical tuple; the policy-map change
+exception and timestamp check remain separate. Not-required baseline admission is
+unchanged. No callable role was added/removed, and all frozen rows/caps remain
+unchanged. Existing function inventory measured owner CC44 against saved ceiling47;
+this static result is not dynamic CRAP proof. The exact Source binding is refreshed
+with pending numerical status. Independent final review:
+/workspace/attachments/quality-doc-blocked-baseline-final-source-review-20261015.md.
+
+Complete CLEAR and policy-transition files passed18cases/160assertions in23.14s;
+the separate transition-proof file passed4cases/41assertions in1.261s. Logs:
+/workspace/attachments/quality-doc-blocked-baseline-green-20261015.log and
+/workspace/attachments/quality-doc-blocked-baseline-transition-proof-20261015.log.
+Tests450 TypeScript PASS. The regression verifies exact denial, unchanged blocked
+baseline bytes and no closeout file. Claims about future closeout timestamps or
+diagnostic gaps were not accepted as authorization bugs without a contract-backed
+effect. Fresh contour numerical proof remains pending.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
