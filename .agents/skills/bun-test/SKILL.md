@@ -99,6 +99,14 @@ cause aggregation, not failed native I/O.
 
 ## Run focused checks safely
 
+Qualify an optional profiler on an inert pass and an intentional assertion
+failure before using it on an owned product case. A runtime export, accepted
+flag or successful test does not prove a usable profile was emitted. Record
+missing output or native crash separately; retain the original process result.
+For repeated stage probes, aggregate fixed-label counters instead of emitting
+one row per nested read. Keep nested intervals separate and bounded; diagnostic
+limits must not be mistaken for product failures or numeric qualification.
+
 Use explicit test paths and an anchored `--test-name-pattern` for a focused
 development check. Inspect the exit code and assertions. A name filter is not
 complete-selection evidence. Bun applies the default timeout per individual

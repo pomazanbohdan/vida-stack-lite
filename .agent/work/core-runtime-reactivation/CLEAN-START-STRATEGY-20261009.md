@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `5151227`; current correction details are in WORK.
+- Published predecessor: `cbd675f`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. Exact7c9d139 CI SDK inputs were accepted for the current serial diagnostic; changed Source needs its matching inputs. WORK owns run/artifact receipts.
 - Current serial run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Keep its fresh physical checkout and all older UNKNOWN evidence retained; no replay or resource successor. WORK owns exact custody and fingerprints.
@@ -54,7 +54,7 @@ and counter equality, exact original ceilings and one-to-one correspondence.
 The latest join adds98independently reviewed retained roles, including18
 shifted identities confirmed by actual owner/dataflow review. A changed-owner
 HostState receipt reader remains unbound. Current7729-role inventory leaves
-741current and190original dispositions missing,
+741current and184original dispositions missing,
 with20represented static overages after sharing the native lane/path string
 boundary. Both projections are1<=original1 and the new parser2<=own3.
 Finite child option/environment preparation now shares one condition;
@@ -69,6 +69,9 @@ C0-or-colon predicate at1/1 and deletes an unbudgeted duplicate record guard in
 favor of the existing generic owner. Both affected files44PASS/0FAIL/10.30s;
 past missing budget proof is not backdated. One scoped capture reuses148bindings.
 Another23retained roles now have actual owner and independent metadata review.
+Six original callables have independently reviewed removal dispositions without
+cap transfer; the retained bounded-reader deficit remains open. WORK owns the
+prospective reviewed alias-closure algorithm plan; publish it before coding.
 The newly represented bounded-reader6>original1 deficit stays open; no cap was
 increased and149Source byte bindings were reused without another AST/hash pass.
 The full affected launcher file passed51/0 in2.26s. These are static/focused

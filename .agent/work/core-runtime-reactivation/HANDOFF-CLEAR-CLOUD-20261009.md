@@ -116,10 +116,14 @@ observer6<=own10 now has scoped proof. Rebind stable-version is5<=original5.
 The latest join adds98independently reviewed retained roles, including18
 shifted callbacks whose actual producers/consumers match. A moved HostState
 receipt-reader responsibility remains unbound after independent rejection.
-Retained callback/context deficits remain open. Nineteen represented static
-overages and764current/213original dispositions remain; this is not coverage
+Retained callback/context deficits remain open. Twenty represented static
+overages and741current/184original dispositions remain; this is not coverage
 progress. The current join validates original caps, one-to-one roles and actual
 counter/array equality before saving and after reading back the saved partial.
+The latest23retained roles and6original removals have independent actual Source
+review. ReadBoundedBuffer's newly represented6>original1 remains open; no cap
+transfer/reset. WORK owns current terminal diagnostics and the prospective
+forward alias-closure plan, which must be published before implementation.
 Finite child timeout/environment preparation shares one condition, keeping
 boundedSpawnSync21<=original21. Reusing one environment selection closes
 runPinnedBun16<=original16. Another67retained roles have independent actual-role

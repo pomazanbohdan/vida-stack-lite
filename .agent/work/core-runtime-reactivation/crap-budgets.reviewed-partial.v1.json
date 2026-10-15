@@ -12,7 +12,7 @@
   "counts": {
     "retained": 5433,
     "new": 1555,
-    "removed": 78,
+    "removed": 84,
     "current_roles": 6988,
     "source_files": 149
   },
@@ -203400,6 +203400,116 @@
       "identity": "bin/repair-native-delivery-evidence.mjs#fn:read#0",
       "rationale": "Original local release-byte reader is removed and its callsites use the imported readReleaseBytes as read from bin/local-release-artifacts.ts. The actual native repair Source contains no replacement local function. Its prior limit/releasePath/read validation is consolidated under that maintained shared owner; no historical allowance is copied to it. Independent native remaining review accepts only this removal, leaving all94current candidate roles and other unresolved original roles unqualified.",
       "review_ref": "/workspace/attachments/quality-native-remaining-independent-20261015.json"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0",
+      "rationale": "The published recursive worker is no longer a separate callable. Its repeated read, size-bound check, chunk accumulation, EOF return, and continuation are implemented by the loop inside the existing readBoundedBuffer owner. No one-to-one current callable remains for this worker, and its ceiling is not transferred to that owner.",
+      "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:822-840",
+      "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:996-1025 (readBoundedBuffer); callers include readBoundedText and existing byte, recovery, and move paths",
+      "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+      "source_address": {
+        "line": 822,
+        "column": 0,
+        "start": 30612,
+        "end": 31380,
+        "bodyLine": 822,
+        "bodyColumn": 108,
+        "bodyEndLine": 840,
+        "bodyEndColumn": 1
+      }
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/binding:nextChunks/closure:CallExpression:arguments[1]#0",
+      "rationale": "The old choose branch selecting the complete buffer or its used subarray is folded into the current loop's chunk accumulation and buffer growth. It has no separate current closure; no ceiling transfers.",
+      "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:831",
+      "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1013-1018 (readBoundedBuffer loop)",
+      "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+      "source_address": {
+        "line": 831,
+        "column": 6,
+        "start": 31152,
+        "end": 31164,
+        "bodyLine": 831,
+        "bodyColumn": 12,
+        "bodyEndLine": 831,
+        "bodyEndColumn": 18
+      }
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/binding:nextChunks/closure:CallExpression:arguments[2]#0",
+      "rationale": "The old choose branch selecting the read buffer or its used subarray is folded into the current loop's chunk accumulation and buffer growth. It has no separate current closure; no ceiling transfers.",
+      "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:832",
+      "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1013-1018 (readBoundedBuffer loop)",
+      "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+      "source_address": {
+        "line": 832,
+        "column": 6,
+        "start": 31172,
+        "end": 31207,
+        "bodyLine": 832,
+        "bodyColumn": 12,
+        "bodyEndLine": 832,
+        "bodyEndColumn": 41
+      }
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/closure:CallExpression:arguments[1]#0",
+      "rationale": "The old EOF-versus-recursion branch is now the current loop's EOF return versus another iteration. Neither branch remains a separately callable closure; no ceiling transfers.",
+      "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:837",
+      "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1008-1021 (readBoundedBuffer loop)",
+      "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+      "source_address": {
+        "line": 837,
+        "column": 4,
+        "start": 31263,
+        "end": 31305,
+        "bodyLine": 837,
+        "bodyColumn": 10,
+        "bodyEndLine": 837,
+        "bodyEndColumn": 46
+      }
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/closure:CallExpression:arguments[2]#0",
+      "rationale": "The old EOF-versus-recursion branch is now the current loop's EOF return versus another iteration. Neither branch remains a separately callable closure; no ceiling transfers.",
+      "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:838",
+      "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1008-1021 (readBoundedBuffer loop)",
+      "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+      "source_address": {
+        "line": 838,
+        "column": 4,
+        "start": 31311,
+        "end": 31372,
+        "bodyLine": 838,
+        "bodyColumn": 10,
+        "bodyEndLine": 838,
+        "bodyEndColumn": 65
+      }
+    },
+    {
+      "identity": "bin/forward-review-proof.mjs#fn:verifyForwardReviewSet#0/closure:CallExpression:arguments[0]#0",
+      "old_anchor": "published-worktree/packages/agent/bin/forward-review-proof.mjs:44",
+      "current_owner": "packages/agent/bin/forward-review-proof.ts:65 reviewKind; called at :184",
+      "rationale": "The old inline item.kind projection is replaced by the existing reviewKind helper in the same required-kind guard. It validates exact item keys and kind type, while subsequent isReviewItem and provenance checks remain. This supports disposition of this callback only.",
+      "classification": "removed_inlined_into_existing_owner",
+      "allowance_effect": "none_proposed",
+      "primary_ref": "/workspace/attachments/quality-original-other-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+      "source_address": {
+        "line": 44,
+        "column": 11,
+        "start": 1905,
+        "end": 1924,
+        "bodyLine": 44,
+        "bodyColumn": 21,
+        "bodyEndLine": 44,
+        "bodyEndColumn": 30
+      }
     }
   ],
   "review": {
@@ -203785,282 +203895,146 @@
     "limits": "Only three complete selected families. Other repair/new lock callback correspondence remains pending; no executable/numeric qualification."
   },
   "quality_continuation_current_bindings": {
-    "schema": "ReviewedLineageJoin/v1",
-    "status": "SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
-    "predecessor_commit": "515122729bb4a2c52ef05c4e4225719c0f7a359f",
+    "schema": "ReviewedOriginalRemovalJoin/v1",
+    "status": "SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_EXHAUSTIVE_NOT_NUMERIC",
+    "predecessor_commit": "cbd675f",
     "counts": {
       "retained": 5433,
       "new": 1555,
-      "removed": 78,
+      "removed": 84,
       "current_roles": 6988,
       "source_files": 149
     },
-    "retained_added": 23,
+    "removed_added": 6,
     "admitted": [
       {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0",
+        "rationale": "The published recursive worker is no longer a separate callable. Its repeated read, size-bound check, chunk accumulation, EOF return, and continuation are implemented by the loop inside the existing readBoundedBuffer owner. No one-to-one current callable remains for this worker, and its ceiling is not transferred to that owner.",
+        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:822-840",
+        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:996-1025 (readBoundedBuffer); callers include readBoundedText and existing byte, recovery, and move paths",
+        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+        "source_address": {
+          "line": 822,
+          "column": 0,
+          "start": 30612,
+          "end": 31380,
+          "bodyLine": 822,
+          "bodyColumn": 108,
+          "bodyEndLine": 840,
+          "bodyEndColumn": 1
+        }
       },
       {
-        "identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/binding:nextChunks/closure:CallExpression:arguments[1]#0",
+        "rationale": "The old choose branch selecting the complete buffer or its used subarray is folded into the current loop's chunk accumulation and buffer growth. It has no separate current closure; no ceiling transfers.",
+        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:831",
+        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1013-1018 (readBoundedBuffer loop)",
+        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+        "source_address": {
+          "line": 831,
+          "column": 6,
+          "start": 31152,
+          "end": 31164,
+          "bodyLine": 831,
+          "bodyColumn": 12,
+          "bodyEndLine": 831,
+          "bodyEndColumn": 18
+        }
       },
       {
-        "identity": "src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/binding:nextChunks/closure:CallExpression:arguments[2]#0",
+        "rationale": "The old choose branch selecting the read buffer or its used subarray is folded into the current loop's chunk accumulation and buffer growth. It has no separate current closure; no ceiling transfers.",
+        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:832",
+        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1013-1018 (readBoundedBuffer loop)",
+        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+        "source_address": {
+          "line": 832,
+          "column": 6,
+          "start": 31172,
+          "end": 31207,
+          "bodyLine": 832,
+          "bodyColumn": 12,
+          "bodyEndLine": 832,
+          "bodyEndColumn": 41
+        }
       },
       {
-        "identity": "src/config/safe-repository-access.ts#fn:readableClonedFile#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:readableClonedFile#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/closure:CallExpression:arguments[1]#0",
+        "rationale": "The old EOF-versus-recursion branch is now the current loop's EOF return versus another iteration. Neither branch remains a separately callable closure; no ceiling transfers.",
+        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:837",
+        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1008-1021 (readBoundedBuffer loop)",
+        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+        "source_address": {
+          "line": 837,
+          "column": 4,
+          "start": 31263,
+          "end": 31305,
+          "bodyLine": 837,
+          "bodyColumn": 10,
+          "bodyEndLine": 837,
+          "bodyEndColumn": 46
+        }
       },
       {
-        "identity": "src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/closure:CallExpression:arguments[2]#0",
+        "rationale": "The old EOF-versus-recursion branch is now the current loop's EOF return versus another iteration. Neither branch remains a separately callable closure; no ceiling transfers.",
+        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:838",
+        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1008-1021 (readBoundedBuffer loop)",
+        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+        "source_address": {
+          "line": 838,
+          "column": 4,
+          "start": 31311,
+          "end": 31372,
+          "bodyLine": 838,
+          "bodyColumn": 10,
+          "bodyEndLine": 838,
+          "bodyEndColumn": 65
+        }
       },
       {
-        "identity": "src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:fsSafeOpen#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:fsSafeOpen#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsOpenParent#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsOpenParent#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxRemoveFile#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxRemoveFile#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsAccess#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsAccess#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxAccess#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxAccess#0",
-        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "bin/run.mjs#fn:advanceLockedCutoff#0",
-        "current_identity": "bin/run.ts#fn:advanceLockedCutoff#0",
-        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "bin/run.mjs#fn:readLocalSessionIntake#0",
-        "current_identity": "bin/run.ts#fn:readLocalSessionIntake#0",
-        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "bin/run.mjs#fn:readBoundedReport#0",
-        "current_identity": "bin/run.ts#fn:readBoundedReport#0",
-        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "bin/run.mjs#fn:retiredSourceEffects#0",
-        "current_identity": "bin/run.ts#fn:retiredSourceEffects#0",
-        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "bin/run.mjs#fn:installedBundleInventory#0/fn:walk#0",
-        "current_identity": "bin/run.ts#fn:installedBundleInventory#0/fn:walk#0",
-        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
-      },
-      {
-        "identity": "bin/run.mjs#fn:main#0",
-        "current_identity": "bin/run.ts#fn:main#0",
-        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+        "identity": "bin/forward-review-proof.mjs#fn:verifyForwardReviewSet#0/closure:CallExpression:arguments[0]#0",
+        "old_anchor": "published-worktree/packages/agent/bin/forward-review-proof.mjs:44",
+        "current_owner": "packages/agent/bin/forward-review-proof.ts:65 reviewKind; called at :184",
+        "rationale": "The old inline item.kind projection is replaced by the existing reviewKind helper in the same required-kind guard. It validates exact item keys and kind type, while subsequent isReviewItem and provenance checks remain. This supports disposition of this callback only.",
+        "classification": "removed_inlined_into_existing_owner",
+        "allowance_effect": "none_proposed",
+        "primary_ref": "/workspace/attachments/quality-original-other-dispositions-cbd-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+        "source_address": {
+          "line": 44,
+          "column": 11,
+          "start": 1905,
+          "end": 1924,
+          "bodyLine": 44,
+          "bodyColumn": 21,
+          "bodyEndLine": 44,
+          "bodyEndColumn": 30
+        }
       }
     ],
     "inventory_ref": "/workspace/attachments/quality-current-inventory-native-lint-comment-c744-20261015.json",
+    "previous_lineage_receipt": "/workspace/attachments/quality-reviewed23-lineage-join-515-20261015.json",
+    "source_capture_ref": "/workspace/attachments/quality-native-lint-comment-bindings-c744-20261015.json",
     "scoped_byte_capture_files": [],
     "reused_source_bindings": 149,
-    "source_capture_ref": "/workspace/attachments/quality-native-lint-comment-bindings-c744-20261015.json",
-    "scoped_complexity_exceptions": [
-      {
-        "identity": "bin/recover-completed-source-report.ts#fn:isPassedNativeBuildCheck#0",
-        "complexity": 3,
-        "ceiling": 2
-      },
-      {
-        "identity": "src/orchestration/scoped-source-snapshot.ts#fn:snapshotRuntimePackageSources#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0",
-        "complexity": 11,
-        "ceiling": 9
-      },
-      {
-        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:loader/binding:loader#0",
-        "complexity": 13,
-        "ceiling": 10
-      },
-      {
-        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:visit/binding:visit#0",
-        "complexity": 33,
-        "ceiling": 26
-      },
-      {
-        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:visit/binding:visit#0/binding:runtimeSpecifier/closure:CallExpression:arguments[0]#1",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/init-core.ts#fn:initializationContext#0",
-        "complexity": 5,
-        "ceiling": 4
-      },
-      {
-        "identity": "bin/historical-terminal-synthesis-capture.ts#fn:configuredContextFromAction#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/historical-terminal-synthesis-capture.ts#fn:isRetainedConfiguredContext#0",
-        "complexity": 4,
-        "ceiling": 1
-      },
-      {
-        "identity": "src/orchestration/session-engine-snapshot.ts#fn:readInitialSourceContinuationSessionEngineSnapshot#0/binding:currentObservations/closure:CallExpression:arguments[0]#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/reconcile-synthesis-qualification.ts#fn:journalForArtifact#0",
-        "complexity": 6,
-        "ceiling": 2
-      },
-      {
-        "identity": "src/orchestration/persistent-session-handoff.ts#fn:sourceWritePreflightResolver#0/closure:ReturnStatement:argument[0]#0/binding:assertCurrent/binding:assertCurrent#0",
-        "complexity": 12,
-        "ceiling": 11
-      },
-      {
-        "identity": "src/orchestration/persistent-session-handoff.ts#fn:taskSourceMutationPolicyResolver#0/closure:ReturnStatement:argument[0]#0/binding:assertCurrent/binding:assertCurrent#0",
-        "complexity": 11,
-        "ceiling": 10
-      },
-      {
-        "identity": "src/orchestration/persistent-session-handoff.ts#class:MastraSessionLedger/method:activateReadOnlyReplacement#0/closure:CallExpression:arguments[0]#0",
-        "complexity": 20,
-        "ceiling": 19
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:withExclusiveLock#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:withExclusiveLockAsync#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxFileExists#0",
-        "complexity": 4,
-        "ceiling": 3
-      },
-      {
-        "identity": "bin/runtime-config-rebind.ts#fn:readExternalBytes#0",
-        "complexity": 35,
-        "ceiling": 30
-      },
-      {
-        "identity": "bin/runtime-config-rebind.ts#fn:streamedNativeAssetDigest#0",
-        "complexity": 16,
-        "ceiling": 9
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
-        "complexity": 6,
-        "ceiling": 1
-      }
-    ],
     "missing_current_dispositions": 741,
-    "missing_original_dispositions": 190,
-    "filtered_duplicate_candidates": 23,
-    "original_fields_unchanged": true,
-    "review_metadata_correction": {
-      "identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
-      "original_complexity": 9,
-      "original_crap": 9,
-      "source": "Authoritative genuine original inventory. Secondary prose mistakenly said allowance1; no numeric value is read from reviewer prose. Actual original/current full owner read confirms9/9.",
-      "not_new_allowance": true
-    },
-    "limits": "No new AST/hash or product Source change.23 retained pairs accepted from actual original/current owners with independent review.20 host alreadybound and3 generic alreadydisposed candidates were excluded. readBoundedBuffer newlyrepresented overage6>original1 remains open: static deficits19→20 is additional visibility, not code regression or widened cap. Full correspondence, CRAP plan, coverage, mutation and Runtime remain unqualified."
+    "missing_original_dispositions": 184,
+    "static_deficits": 20,
+    "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
+    "limits": "Six original callables replaced/inlined into already represented owners. No existing owner removed, allowance transferred/reset, new current budget or Source change. Current readBoundedBuffer6>original1 stays open. No AST/hash/test/coverage/mutation/Runtime claim."
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
-    "source_commit": "515122729bb4a2c52ef05c4e4225719c0f7a359f",
+    "source_commit": "cbd675f",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-reviewed23-lineage-join-515-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-reviewed6-removal-join-cbd-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",

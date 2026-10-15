@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `5151227` at origin/main.
+- Published predecessor: `cbd675f` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -19,12 +19,104 @@ operations or a claim of complete quality/Runtime acceptance.
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
 - Current quality preparation:6988of7729roles,149Source byte bindings,
-  741current/190original dispositions missing and20represented static deficits.
+  741current/184original dispositions missing and20represented static deficits.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
+## Prospective forward alias-closure correction plan
+
+Before implementation, replace only runtimeImports' repeated all-declarations
+fixed-point scan with one cohesive alias-closure owner. Keep both existing AST
+walks, node identities, fs-safe observe/finish order, current global-require
+shadowing rule and second-walk import/error order unchanged. This corrects
+quadratic repeated work in a supported admission mechanism; no engine feature,
+active loader cutover or authorization policy change is proposed.
+
+The new private closeRuntimeLoaderAliases(declarations, constructors, loaders)
+owns one reverse adjacency map and mutates only the caller-owned loader Set.
+One forEach callback skips non-Identifier/uninitialized declarators, records
+Identifier initializer edges, and seeds exact ordinary createRequire call
+bindings with the current constructor checks. Then iterate the loader Set and
+its adjacency lists, adding aliases to that same Set. Native Set iteration
+visits appended unique entries, so cycles/duplicates converge and every
+declaration/edge is considered a bounded number of times:O(D+A), replacing
+O(D²). Returned imports still follow the unchanged second AST walk.
+
+Freeze these corrected-version roles before coding. Independent actual plan
+review ACCEPT is `quality-forward-prospective-plan-review-cbd-20261015.md`;
+publish this plan before implementation:
+
+- bin/forward-candidate-admission.ts#fn:closeRuntimeLoaderAliases#0:
+  max_complexity4/max_crap4 at100%coverage. The owner has two for-of iterations
+  and one missing-adjacency default; other classification belongs to the single
+  per-declaration callback below. One map and the existing Set are sufficient;
+  no queue array, indexed lookup guard or general traversal abstraction.
+- Its sole forEach callback, closure:CallExpression:arguments[0]#0:
+  max_complexity8/max_crap8 at100%coverage. Required decisions:skip invalid
+  binding/uninitialized declaration, distinguish Identifier alias from exact
+  ordinary constructor call, default the alias list, and check constructor
+  callee identity/membership. No predicate wrappers or additional callables.
+
+These are prospective bounds from the specified algorithm/required cases,
+not allowances recomputed from implemented candidate complexity. The existing
+runtimeImports original9/CRAP and discover/loader/visit ceilings remain exact;
+no parent's allowance is assigned to an extracted role. This helper is justified
+by replacing the repeated closure algorithm, not by hiding individual guards.
+If the design requires more callables or exceeds either ceiling, stop before
+admitting it and revisit the substantive design without widening frozen caps.
+
+Controls:existing alias/import-equals, shadowed require, optional/computed
+resolver, computed-call rejection and exact fs-safe attestation cases. Extend
+the public scan fixture with a reverse-declared chain/use-before-declaration,
+seeded/unseeded cycles and duplicate alias edges; assert exact source-order
+imports and retain the computed-call denial. No new production test API or
+operation-counter seam. Static checks first; one focused completion owner and
+independent actual code review. Reuse the captured inventory/148other Source
+bindings, capture only this changed file and bind the two prospectively reviewed
+roles after implementation. Keep all remaining correspondence/static/numeric
+gaps explicit; this plan does not activate a full CRAP or coverage/mutation gate.
+
 ## Current reviewed lineage continuation and bounded diagnostics
+
+Packetcbd675f passed the ordinary strict hook and was pushed nonforce to main;
+logs `quality-reviewed23-{strict-commit,push}-515-20261015.log`. Another six
+original callables now have primary and independent actual Source removal
+review:the old recursive read worker/four choose callbacks are inlined into
+readBoundedBuffer, and the old forward-review kind callback uses already-bound
+reviewKind. No cap transfers. Current5433retained/1555new/84removed,6988mapped,
+149bindings;741current/184original gaps and20static deficits. All retained/new
+rows and Source bindings stayed byte-equivalent as metadata during this join.
+Receipt `quality-reviewed6-removal-join-cbd-20261015.json`; actual review
+`quality-original-removal-actual-review-cbd-20261015.md`. This metadata and the
+prospective forward plan are pending strict publication; Source remains unchanged.
+
+The corrected aggregate-only temporary probe completed the same case:
+1PASS/0FAIL/230assertions,125651.114ms native command, no signal and same boot.
+Fresh independent checkout `/tmp/quality-fresh-stage-aggregate-515-ynInO0`
+accepted exact5151227 CI SDK inputs in2494.807ms before temporary test/bin
+instrumentation. Static473captured/472checked/0diagnostics after correcting
+callback narrowing by capturing already-validated Work/Ledger version records.
+No main Source instrumentation or sampler. Native receipt/logs:
+`quality-stage-aggregate-native-launch-515-20261015.*` in attachments.
+Keep this entire outer root retained. This is diagnostic completion, not current
+coverage/CRAP/mutation admission or comparable speedup. The declared Bun60s
+case limit did not bound this fake-clock case's wall time; the independent
+180s child watchdog remains the physical bound. No timeout was increased.
+
+The completed aggregate records expired-recovery CLI4383.630ms, with lineage
+view1354.922ms, Host recovery2392.332ms (nested verifier350.638ms), inspection
+37.165ms and close0.425ms. Its longest other CLI call was35954.211ms; nested
+totals cannot be summed. Initial package snapshot103.758ms and three verifier
+snapshots402.793ms total again reject them as whole-case dominant work.
+No performance correction is proven from these differing diagnostic scopes.
+The optional JSC sampler was checked separately on an inert preload/test control:
+native Bun1.4.3 crashed139 before that test, so the expected-failure control was
+not attempted and no usable profile exists. Preserve
+`/tmp/quality-jsc-profiler-control-515-f4gmeG` and
+`quality-jsc-profiler-inert-control-515-20261015.log`; no product fixture was
+launched by that control. API export/docs alone did not qualify this collector.
+Use aggregate timing; do not add the failed sampler to product runs.
 
 The published YAML correction5151227 passed the ordinary strict hook:
 format465, TypeScript471/0, configured lint/Knip; nonforce push confirmed main.
