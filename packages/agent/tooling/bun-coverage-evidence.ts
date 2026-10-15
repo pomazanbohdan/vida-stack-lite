@@ -90,6 +90,7 @@ type QualityInputCapture = {
   inputDigests: Map<string, InputDigest>;
   runtimeToolPaths: string[];
   sdkBuilderToolPaths?: string[];
+  sdkFormationSourcePaths?: string[];
   publishedContract?: PublishedContract;
 };
 export type SdkFormationQualityInputCapture = {
@@ -129,6 +130,7 @@ export const coverageToolInputs: string[] = [
   'tooling/coverage-consumer-binding.ts',
   'tooling/coverage-shard-evidence.ts',
   'tooling/coverage-run-lock.ts',
+  'tooling/owned-cleanup-completion.ts',
   'tooling/published-coverage-inputs.ts',
   'tooling/published-baseline-reference.ts',
   'tooling/fixture-child-observation.ts',
@@ -706,8 +708,6 @@ function checkedFocusedDiagnosticSelection(
     if (foreign.length)
       throw new Error(`Focused diagnostic ${label} path is outside the ${inventoryName}: ${foreign.join(', ')}`);
   }
-  if (selection.tests.includes('tests/configured-workflow.test.ts'))
-    throw new Error('SDK-dependent focused diagnostic selection is unsupported.');
   return {
     mode: 'focused-diagnostic',
     contour: selection.contour,
@@ -1138,6 +1138,10 @@ async function captureQualityInputBase(
     ? checkedFocusedDiagnosticSelection(focused, maintainedSources, supportedTests)
     : selectTestSelection(root, testInputsAll, supportedTest, selectionMode);
   const sources = testSelection.mode === 'focused-diagnostic' ? testSelection.sources : maintainedSources;
+  const sdkFormationSourcePaths =
+    focused && testSelection.tests.includes('tests/configured-workflow.test.ts')
+      ? maintainedSources.filter((file) => file.startsWith('src/'))
+      : undefined;
   const capturedTestPaths = focused ? testSelection.tests : testInputsAll;
   const contractInputs = (
     await Promise.all(
@@ -1146,7 +1150,9 @@ async function captureQualityInputBase(
   ).flat();
   const sdkFormationTools = sdkFormationToolInputPaths(selectionMode, testSelection);
   const tools = qualityToolInputPaths([...additionalToolInputs, ...sdkFormationTools], contractInputs, selectionMode);
-  const allInputs = [...new Set([...sources, ...capturedTestPaths, ...tools])].sort();
+  const allInputs = [
+    ...new Set([...sources, ...(sdkFormationSourcePaths ?? []), ...capturedTestPaths, ...tools]),
+  ].sort();
   const inputBytes = await readQualityInputs(root, allInputs);
   if (selectionMode === 'published-baseline-bun-native')
     verifyPublishedBaselineInputs(root, inputBytes, sources, testInputsAll);
@@ -1175,7 +1181,7 @@ async function captureQualityInputBase(
     ? reachableSdkBuilderToolPaths(
         sdkBuilderEntrypoint,
         sdkBuilderEdges,
-        sources.filter((file) => file.startsWith('src/')),
+        sdkFormationSourcePaths ?? sources.filter((file) => file.startsWith('src/')),
         [],
         contractInputs.filter((file) => file.startsWith('schemas/')),
       )
@@ -1186,7 +1192,15 @@ async function captureQualityInputBase(
   const capturedRuntimeTools = focused
     ? runtimeToolPaths.filter((file) => !file.startsWith('tests/'))
     : runtimeToolPaths;
-  const digestPaths = [...new Set([...sources, ...capturedTestInputs, ...tools, ...capturedRuntimeTools])];
+  const digestPaths = [
+    ...new Set([
+      ...sources,
+      ...(sdkFormationSourcePaths ?? []),
+      ...capturedTestInputs,
+      ...tools,
+      ...capturedRuntimeTools,
+    ]),
+  ];
   const inputDigests = new Map(
     digestPaths.map((file) => {
       const bytes = inputBytes.get(file);
@@ -1206,6 +1220,7 @@ async function captureQualityInputBase(
     inputDigests,
     runtimeToolPaths: capturedRuntimeTools,
     ...(sdkBuilderToolPaths ? { sdkBuilderToolPaths } : {}),
+    ...(sdkFormationSourcePaths ? { sdkFormationSourcePaths } : {}),
     ...(selectionMode === 'published-baseline-bun-native'
       ? { publishedContract: capturePublishedBaselineContract(root) }
       : {}),
@@ -1236,6 +1251,9 @@ async function projectQualityInputCapture(
       ...qualityToolInputPaths(additionalToolInputs, capture.contractInputs, selectionMode),
       ...capture.runtimeToolPaths,
       ...sdkFormationToolInputPaths(selectionMode, capture.testSelection),
+      ...(capture.sdkFormationSourcePaths ?? []).filter(
+        (file) => !capture.sources.some((entry) => entry.path === file),
+      ),
     ]),
   ].sort();
   const sources = capture.sources;
@@ -1297,7 +1315,9 @@ async function sdkFormationInputsForCapture(capture: QualityInputCapture): Promi
   const { projectSdkFormationInputBytes } = await import('./build-package.ts');
   const selectedInputs = projectSdkFormationInputBytes({
     inputBytes: capture.inputBytes,
-    sourcePaths: capture.sources.map((entry) => entry.path).filter((file) => file.startsWith('src/')),
+    sourcePaths:
+      capture.sdkFormationSourcePaths ??
+      capture.sources.map((entry) => entry.path).filter((file) => file.startsWith('src/')),
     schemaPaths: capture.contractInputs.filter((file) => file.startsWith('schemas/')),
     buildToolPaths: capture.sdkBuilderToolPaths ?? [],
   });

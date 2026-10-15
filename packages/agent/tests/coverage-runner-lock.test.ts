@@ -85,20 +85,97 @@ mock.module('./bun-coverage-evidence.ts', () => ({
   return preload;
 }
 
-function launchRunner(root: string, preload?: string, environment: NodeJS.ProcessEnv = {}, args: string[] = []) {
+function launchRunner(
+  root: string,
+  preload?: string,
+  environment: NodeJS.ProcessEnv = {},
+  args: string[] = [],
+  options: { entrypoint?: string; timeoutMs?: number } = {},
+) {
   return spawnSync(
     process.execPath,
-    [...(preload ? ['--preload', preload] : []), path.join(root, 'tooling', 'run-bun-coverage.ts'), ...args],
+    [
+      ...(preload ? ['--preload', preload] : []),
+      path.join(root, options.entrypoint ?? 'tooling/run-bun-coverage.ts'),
+      ...args,
+    ],
     {
       cwd: root,
       encoding: 'utf8',
-      timeout: 60_000,
+      timeout: options.timeoutMs ?? 60_000,
       maxBuffer: 2 * 1024 * 1024,
       windowsHide: true,
       env: { ...process.env, BUN_OPTIONS: '', ...environment },
     },
   );
 }
+
+test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy: %s', (mode) => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    const prepared = path.join(root, 'sdk-preparation.json');
+    const capture = path.join(root, 'coverage-capture-probe.json');
+    const typecheck = path.join(root, 'typecheck.marker');
+    write(root, 'tests/configured-workflow.test.ts', 'export const inert = true;\n');
+    const preload = writeCaptureProbe(
+      root,
+      `
+      if (!existsSync(${JSON.stringify(prepared)})) throw new Error('capture ran before SDK preparation');
+      throw new Error('focused SDK capture stop');
+    `,
+    );
+    const entrypoint = 'tooling/focused-sdk-options-probe.ts';
+    write(
+      root,
+      entrypoint,
+      `
+      import { existsSync, writeFileSync } from 'node:fs';
+      import { runBunCoverage } from './run-bun-coverage.ts';
+      await runBunCoverage({
+        focusedDiagnostic: {
+          mode: 'focused-diagnostic', contour: 'sdk-policy-fixture',
+          sources: ['src/runtime-kernel.ts'],
+          tests: [${JSON.stringify(mode === 'no-sdk' ? 'tests/fixture.test.mjs' : 'tests/configured-workflow.test.ts')}],
+        },
+        prepareSdkInputs: async ({ root: preparedRoot }) => {
+          writeFileSync(${JSON.stringify(prepared)}, JSON.stringify({
+            root: preparedRoot, typecheck_seen: existsSync(${JSON.stringify(typecheck)}),
+            capture_seen: existsSync(${JSON.stringify(capture)}),
+          }));
+        },
+        ${mode === 'review' ? 'reviewCurrentInputs: async () => { throw new Error("review must not run"); },' : ''}
+      });
+    `,
+    );
+    const result = launchRunner(root, preload, {}, [], { entrypoint, timeoutMs: 4_000 });
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    if (mode === 'sdk') {
+      expect(result.stderr).toContain('focused SDK capture stop');
+      const preparation: unknown = JSON.parse(readFileSync(prepared, 'utf8'));
+      expect(preparation).toEqual({ root, typecheck_seen: false, capture_seen: false });
+      expect(existsSync(typecheck)).toBe(true);
+      const captured: unknown = JSON.parse(readFileSync(capture, 'utf8'));
+      expect(captured).toMatchObject({ calls: 1 });
+    } else {
+      expect(result.stderr).toContain(
+        mode === 'review'
+          ? 'Focused coverage diagnostics cannot use historical selection or input review callbacks.'
+          : 'Focused SDK preparation requires the configured-workflow test.',
+      );
+      expect(existsSync(prepared)).toBe(false);
+      expect(existsSync(typecheck)).toBe(false);
+      expect(existsSync(capture)).toBe(false);
+    }
+    expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-final.json'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Retained failed focused SDK preparation fixture: ${root}`);
+  }
+});
 
 test('real Bun coverage runner preserves a foreign lock and artifacts before staging a run', () => {
   const root = createRunnerCandidate();

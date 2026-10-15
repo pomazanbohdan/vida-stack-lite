@@ -124,6 +124,10 @@ For local coverage/CC/CRAP diagnosis, use TESTING's focusedDiagnostic route in
 the existing producer. Its diagnostic exit0 and function-entry counters are not
 exact coverage or frozen-budget acceptance. Keep the diagnostic schema/output
 separate from global reports and retain explicit child-counter gaps.
+For configured-workflow, the focused capture retains complete SDK formation
+inputs privately while instrumenting only selected coverage Source. Prepare
+through the existing SDK readiness callback before capture; input review remains
+forbidden in focused mode. Never use the coverage subset as the SDK inventory.
 
 For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and

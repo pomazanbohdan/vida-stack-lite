@@ -797,7 +797,7 @@ describe('final quality input projections', () => {
     );
   });
 
-  test('rejects a focused selection that depends on SDK formation inputs', async () => {
+  test('requires the SDK artifacts for a focused configured-workflow selection', async () => {
     const root = fixtureRoot();
     writeFileSync(path.join(root, 'tests/configured-workflow.test.ts'), "test('sdk', () => {});\n");
     await expectRejected(
@@ -808,7 +808,7 @@ describe('final quality input projections', () => {
           sources: ['src/host-state.ts'],
           tests: ['tests/configured-workflow.test.ts'],
         }),
-      /SDK-dependent focused diagnostic selection is unsupported/u,
+      /missing|rejected/u,
     );
   });
 

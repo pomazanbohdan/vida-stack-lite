@@ -812,8 +812,23 @@ sources, tests } })`. Both path sets must be nonempty, unique and members of
 their maintained inventories. The selected import closure binds transitive
 test helpers and unselected dependencies without claiming their coverage.
 This route uses the same capture, instrumentation, preload, counter merge,
-300000ms budget and shared coverage lock. It remains serial. The focused route
-currently rejects the SDK-dependent configured-workflow selection.
+300000ms budget and shared coverage lock. It remains serial.
+
+A focused configured-workflow selection retains the full maintained SDK Source
+inventory privately in that same capture. Omitted SDK Source is bound as tool
+input, with no added coverage claim. Formation projection and freshness use
+those complete captured bytes. The existing prepareSdkInputs callback is allowed
+only when this SDK-dependent test is selected and runs before typecheck/capture.
+Focused input-review callbacks and historical preparation remain forbidden.
+Full-current Source/tool classification and historical SDK behavior stay intact.
+Use the maintained SDK readiness owner; do not form SDK outputs locally.
+
+The coverage lock retains an open descriptor and an immutable, exact in-memory
+owner handle until terminal cleanup. This prevents inode reuse from authorizing
+removal of a foreign replacement. Copies, changed paths and hardlinked paths
+cannot release the lock. Keep descriptor/path checks, original and close errors,
+and UNKNOWN retention. This does not make pathname unlink atomic against a
+concurrent namespace swap; no hostile-local-caller exclusion is claimed.
 
 Its `VidaBunFocusedCoverageDiagnostic/v1` report lives under
 `coverage/bun-unified/diagnostics/<run-id>.focused-coverage.json` and never

@@ -45,37 +45,37 @@ async function expectRejected(action: () => Promise<unknown>, expected: RegExp):
 }
 
 describe('SDK formation capture projection', () => {
-  test('joins current quality capture to SDK formation without another input read and rejects stale artifacts', async () => {
-    const root = fixtureRoot();
-    const write = (relative: string, bytes: string | Buffer): void => {
-      const target = path.join(root, relative);
-      mkdirSync(path.dirname(target), { recursive: true });
-      writeFileSync(target, bytes);
-    };
-    for (const file of coverageToolInputs) {
-      if (['package.json', 'bun.lock', '.bun-version', 'bunfig.toml'].includes(file)) continue;
-      write(file, 'export const inert = true;\n');
-    }
-    write(
-      'package.json',
-      JSON.stringify({ version: '1.2.3', files: ['src/**', 'bin/**'], engines: { node: '24.x' }, scripts: {} }),
-    );
-    write('bin/cli-metadata.ts', 'export const inert = true;\n');
-    write('tests/configured-workflow.test.ts', 'export const inert = true;\n');
-    write('templates/inert.yaml', 'inert: true\n');
-    write('instructions/inert.md', 'inert\n');
-    write('tooling/build-package.ts', "import './sdk-leaf.ts';\n");
-    write('tooling/sdk-leaf.ts', "import './build-package.ts';\n");
-    const sdkInputs = await captureSdkFormationInputs(root);
-    const outputs = expectedJavascriptFiles.map((member) => {
-      const file = 'dist/src/' + member;
-      const bytes = Buffer.from('export const inert = true;\n');
-      write(file, bytes);
-      return { path: file, bytes: bytes.length, sha256: sha256(bytes) };
-    });
-    write(
-      'dist/sdk-formation.json',
-      JSON.stringify({
+  test.each(['full', 'focused', 'focused-bin'] as const)(
+    'joins %s quality capture to SDK formation without another input read and rejects stale artifacts',
+    async (mode) => {
+      const root = fixtureRoot();
+      const write = (relative: string, bytes: string | Buffer): void => {
+        const target = path.join(root, relative);
+        mkdirSync(path.dirname(target), { recursive: true });
+        writeFileSync(target, bytes);
+      };
+      for (const file of coverageToolInputs) {
+        if (['package.json', 'bun.lock', '.bun-version', 'bunfig.toml'].includes(file)) continue;
+        write(file, 'export const inert = true;\n');
+      }
+      write(
+        'package.json',
+        JSON.stringify({ version: '1.2.3', files: ['src/**', 'bin/**'], engines: { node: '24.x' }, scripts: {} }),
+      );
+      write('bin/cli-metadata.ts', 'export const inert = true;\n');
+      write('tests/configured-workflow.test.ts', "import '../bin/cli-metadata.ts';\n");
+      write('templates/inert.yaml', 'inert: true\n');
+      write('instructions/inert.md', 'inert\n');
+      write('tooling/build-package.ts', "import './sdk-leaf.ts';\n");
+      write('tooling/sdk-leaf.ts', "import './build-package.ts';\n");
+      const sdkInputs = await captureSdkFormationInputs(root);
+      const outputs = expectedJavascriptFiles.map((member) => {
+        const file = 'dist/src/' + member;
+        const bytes = Buffer.from('export const inert = true;\n');
+        write(file, bytes);
+        return { path: file, bytes: bytes.length, sha256: sha256(bytes) };
+      });
+      const receipt = {
         schema: 'CandidatePackageBuild/v1',
         version: '1.2.3',
         declared_node_engine: '24.x',
@@ -89,28 +89,65 @@ describe('SDK formation capture projection', () => {
         virtual_runtime_entry: { path: 'src/runtime.ts', sha256: 'a'.repeat(64) },
         dependency_custody:
           'External node_modules is linked; selected manifest and frozen lock are captured, dependency bytes are outside snapshot custody.',
-      }),
-    );
-    const inputs = await qualityInputs(root);
-    const projected = sdkFormationInputsFromQualityCapture(inputs);
-    expect([...projected.selectedInputs.keys()]).toEqual([...sdkInputs.keys()]);
-    for (const [file, bytes] of sdkInputs) expect(projected.selectedInputs.get(file)).toEqual(bytes);
-    write('src/value.ts', 'changed live Source bytes\n');
-    expect(() => assertCurrentCoverageSdkFreshness(root, inputs)).not.toThrow();
-    const member = inputs.input_bytes['dist/src/index.js'];
-    if (!member) throw new Error('SDK output fixture was not captured.');
-    const first = member[0];
-    member[0] = 0;
-    expect(() => assertCurrentCoverageSdkFreshness(root, inputs)).toThrow(/differs from its formation receipt/u);
-    member[0] = first!;
-    const capturedSource = inputs.input_bytes['src/value.ts'];
-    if (!capturedSource) throw new Error('SDK Source fixture was not captured.');
-    capturedSource[0] = 0;
-    expect(() => sdkFormationInputsFromQualityCapture(inputs)).toThrow(/capture bytes changed/u);
-    expect(() => sdkFormationInputsFromQualityCapture({ ...inputs })).toThrow(/unavailable/u);
-    rmSync(path.join(root, 'dist/sdk-formation.json'));
-    await expectRejected(() => qualityInputs(root), /missing|rejected/u);
-  });
+      };
+      write('dist/sdk-formation.json', JSON.stringify(receipt));
+      const selectedSource = mode === 'focused-bin' ? 'bin/cli-metadata.ts' : 'src/index.ts';
+      const inputs = await qualityInputs(
+        root,
+        [],
+        mode === 'full'
+          ? 'current'
+          : {
+              mode: 'focused-diagnostic',
+              contour: 'sdk-fixture',
+              sources: [selectedSource],
+              tests: ['tests/configured-workflow.test.ts'],
+            },
+      );
+      const projected = sdkFormationInputsFromQualityCapture(inputs);
+      expect([...projected.selectedInputs.keys()]).toEqual([...sdkInputs.keys()]);
+      for (const [file, bytes] of sdkInputs) expect(projected.selectedInputs.get(file)).toEqual(bytes);
+      if (mode === 'full') expect(inputs.sources.map((entry) => entry.path)).toContain('bin/cli-metadata.ts');
+      if (mode === 'focused') expect(inputs.tool_inputs.map((entry) => entry.path)).toContain('bin/cli-metadata.ts');
+      else expect(inputs.tool_inputs.map((entry) => entry.path)).not.toContain('bin/cli-metadata.ts');
+      if (mode !== 'full') {
+        expect(inputs.sources.map((entry) => entry.path)).toEqual([selectedSource]);
+        expect(inputs.tool_inputs.find((entry) => entry.path === 'src/value.ts')?.sha256).toBe(
+          sha256(inputs.input_bytes['src/value.ts']!),
+        );
+        expect(inputs.source_fingerprint).toBe(
+          sha256(JSON.stringify([{ path: selectedSource, sha256: sha256(inputs.input_bytes[selectedSource]!) }])),
+        );
+      }
+      const receiptBytes = inputs.input_bytes['dist/sdk-formation.json']!;
+      inputs.input_bytes['dist/sdk-formation.json'] = Buffer.from(
+        JSON.stringify({ ...receipt, inputs: receipt.inputs.filter((entry) => entry.path !== 'src/value.ts') }),
+      );
+      expect(() => assertCurrentCoverageSdkFreshness(root, inputs)).toThrow(/formation receipt|input/u);
+      inputs.input_bytes['dist/sdk-formation.json'] = receiptBytes;
+      expect(() =>
+        assertCurrentCoverageSdkFreshness(root, {
+          ...inputs,
+          test_selection: { mode: 'published-baseline-bun-native', tests: inputs.tests },
+        }),
+      ).not.toThrow();
+      write('src/value.ts', 'changed live Source bytes\n');
+      expect(() => assertCurrentCoverageSdkFreshness(root, inputs)).not.toThrow();
+      const member = inputs.input_bytes['dist/src/index.js'];
+      if (!member) throw new Error('SDK output fixture was not captured.');
+      const first = member[0];
+      member[0] = 0;
+      expect(() => assertCurrentCoverageSdkFreshness(root, inputs)).toThrow(/differs from its formation receipt/u);
+      member[0] = first!;
+      const capturedSource = inputs.input_bytes['src/value.ts'];
+      if (!capturedSource) throw new Error('SDK Source fixture was not captured.');
+      capturedSource[0] = 0;
+      expect(() => sdkFormationInputsFromQualityCapture(inputs)).toThrow(/capture bytes changed/u);
+      expect(() => sdkFormationInputsFromQualityCapture({ ...inputs })).toThrow(/unavailable/u);
+      rmSync(path.join(root, 'dist/sdk-formation.json'));
+      await expectRejected(() => qualityInputs(root), /missing|rejected/u);
+    },
+  );
   test('projects the formation inventory from already captured bytes', async () => {
     const root = fixtureRoot();
     writeFileSync(

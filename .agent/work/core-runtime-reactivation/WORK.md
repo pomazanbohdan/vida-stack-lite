@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `0245d77` at origin/main.
+- Published predecessor: `e2d0331` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -417,6 +417,90 @@ checks passed7/0with237assertions in98ms after correction:
 quality-timing-untrusted-after-0245d77-20261015.log. Independent blind actual review
 ACCEPT: quality-timing-input-guard-actual-review-024-20261015.md. Strict publication
 and fresh numeric measurements follow. Prior149-mutant evidence stays at0245d77.
+
+Publishede2d0331 passed the strict474-file hook and ordinary push. Focused report
+347591de-e597-4284-9294-db5832518cf9 completed exit0 in4142ms: functions36/36,
+lines72/72,statements81/81,branches1/1, all100%; max CC/entry-CRAP1. Its36function
+IDs exactly match the previous report. Captured Source SHA is
+7b8aae1369af322245a64209d3b4154991b38bf471055adfc111ddb7e0cbf526.
+This reviewed retained-role correction does not rebase frozen caps or complete
+global correspondence. Current SDK CI38708658751/attempt1/artifact11959751648
+was admitted through the existing owner in1894ms. Fresh mutation completed
+in93497ms, exit0, same boot, complete output and observed owned-group termination:
+151/151assertion-confirmedKilled100%, zeroTimeout/UNKNOWN/survivors. Evidence:
+quality-mutation-supervised-e2d0331-wIyEvA and package
+.tmp/mutation-evidence-82d2cb76-e6bc-4371-99bf-46296af2f6d0-UbQiYX; compact
+quality-runtime-timing-input-guard-{focused,mutation}-summary-e2d0331-20261015.json.
+The timing local contour is complete at these inputs; full/joint frozen gates
+and Runtime remain open.
+
+### Kernel SDK capture preparation and coverage-lock repair
+
+Root integrated only the tooling part of the external focused-SDK proposal,
+correcting two independently reviewed defects before adoption: historical
+freshness must skip current private projections; runtime closure must keep its
+selected bin/Source membership. The private complete SDK Source list is needed
+only for focused SDK selection, so full-current capture avoids a redundant
+inventory filter. Source is read/hashed once in the existing capture; omitted
+SDK Source becomes tool input, never added coverage. Review:
+quality-focused-sdk-proposal-review-e2d-20261015.md. Original external proposal
+stays unverified at quality-focused-sdk-proposal-024-20261015.patch.
+
+Instead of duplicating SDK fixture/receipt construction, the existing formation
+case now runs full/focused/focused-bin modes. Exact same-capture bytes, omitted
+Source digest, selected fingerprint, copied-capture rejection, stale outputs,
+forged subset receipt and historical freshness skip are checked together.
+Before:1PASS/3FAIL at the intended unsupported-selection boundary. After:
+40PASS/429assertions across the two projection files in995ms. Native runner
+controls verify prepare-before-typecheck/capture plus rejection of no-SDK and
+focused review callbacks; child bound4000ms inside the default5000ms case.
+They stop at the existing controlled capture seam; real kernel numeric execution
+is still pending. Logs: quality-focused-sdk-{before,projection-after,callbacks}-
+e2d0331-20261015.log.
+
+The first combined52-case completion exposed a pre-existing P0: foreign lock
+replacement reused the original inode after the acquisition descriptor closed.
+Both retained identity records report dev27/ino1528074, and cleanup deleted the
+foreign bytes. Preserve failed root
+/home/agent/.cache/vida-cloud-tooling/tmp/coverage-runner-lock-candidate-WFYz4d
+and quality-focused-sdk-completion-e2d0331-20261015.log. Two new controls failed
+before repair: copied identity authorized release; unlink/recreate reused inode.
+Coverage lock now keeps its descriptor in a private exact-handle map, freezes
+the handle, verifies opened/path identities and single link, and closes once
+through the existing cleanup accumulator. Work and close errors both survive;
+UNKNOWN producers do not call release. No lock schema or active Runtime changes.
+The known lstat/unlink namespace interval remains; no atomic-unlink claim.
+Blind bounded review: quality-coverage-lock-aba-review-e2d0331-20261015.md.
+
+The initial repaired runner fixtures lacked the newly shared cleanup import;
+their12module-load failures are retained, not product assertion evidence.
+Adding the owner once to coverageToolInputs lets the existing fixture loader and
+capture include it. Subsequent custody/runner check36PASS/278assertions/8.02s:
+quality-coverage-lock-aba-closure-after-e2d0331-20261015.log. Native close-after-
+actual-close fault controls also pass2/0, preserving write-or-mismatch plus close
+causes and proving the descriptor closed exactly once. Final affected completion,
+actual reviews, strict publication and real kernel metrics follow.
+
+Combined affected completion passed81tests/723assertions across5files in8.00s:
+quality-focused-sdk-lock-completion-e2d0331-20261015.log. SDK actual review ACCEPT
+is quality-focused-sdk-actual-review-e2d-20261015.md. Lock actual review found one
+remaining lifetime edge: an initial fstat failure retired an unverified still-
+open descriptor. The corrected guard preserves its exact mapping and lock for
+an explicit same-handle retry after the fault is restored. A native control
+proves no close during failure, then exactly one close and EBADF after successful
+retry. Reintroducing the former guard fails that control; restored Source passes,
+with complete group receipts: quality-coverage-lock-stat-owner-control-e2d-
+20261015.log. Preserve original and final independent reviews at
+quality-coverage-lock-aba-{actual-review-e2d0331,final-review-e2d}-20261015.md.
+Final affected custody/runner completion passed40tests/285assertions in7.80s:
+quality-coverage-lock-final-completion-e2d0331-20261015.log. Unchanged passing SDK
+projection tests were not repeated. Strict publication follows; no kernel
+numeric result or current full-quality acceptance is inferred.
+
+Overlay headroom was214MB after removing only the byte-identical87MB ONNX
+download duplicate. Installed Vex model, research receipts and all FAILED/UNKNOWN
+roots remain. Kernel functional fixture scratch should use qualified retained
+host tmpfs, not consume the nearly full overlay; durability claims stay separate.
 
 Blind planning at quality-runtime-core-next-minimal-6a7-20261015.md confirms the
 existing runtime-core partition still requires configured-workflow/smoke and

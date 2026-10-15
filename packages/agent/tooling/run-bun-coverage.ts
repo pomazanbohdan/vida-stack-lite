@@ -109,7 +109,7 @@ function freezeCopiedReviewMetadata(inputs: CoverageInputs): CoverageReviewMetad
 /** Deny stale emitted SDKs before allocating coverage outputs or launching tests. */
 export function assertCurrentCoverageSdkFreshness(root: string, inputs: CoverageInputs): void {
   if (
-    inputs.test_selection.mode !== 'full-current-test-set' ||
+    (inputs.test_selection.mode !== 'full-current-test-set' && inputs.test_selection.mode !== 'focused-diagnostic') ||
     !inputs.tests.includes('tests/configured-workflow.test.ts')
   )
     return;
@@ -883,8 +883,10 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
   if (args.length > 1) throw new Error('Bun coverage runner accepts one baseline selection flag.');
   const selectionMode = args.length ? 'published-baseline-bun-native' : 'current';
   const focused = options.focusedDiagnostic;
-  if (focused && (args.length || options.reviewCurrentInputs || options.prepareSdkInputs))
-    throw new Error('Focused coverage diagnostics cannot use historical selection or full-current callbacks.');
+  if (focused && (args.length || options.reviewCurrentInputs))
+    throw new Error('Focused coverage diagnostics cannot use historical selection or input review callbacks.');
+  if (focused && options.prepareSdkInputs && !focused.tests.includes('tests/configured-workflow.test.ts'))
+    throw new Error('Focused SDK preparation requires the configured-workflow test.');
   const runOutputRoot = focused ? path.join(outputRoot, 'diagnostics') : outputRoot;
   if ((options.reviewCurrentInputs || options.prepareSdkInputs) && selectionMode !== 'current')
     throw new Error('Current input review callbacks are unsupported for historical coverage.');

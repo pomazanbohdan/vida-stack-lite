@@ -2,6 +2,7 @@ import { expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import {
   existsSync,
+  linkSync,
   lstatSync,
   mkdirSync,
   mkdtempSync,
@@ -9,12 +10,14 @@ import {
   renameSync,
   rmSync,
   symlinkSync,
+  unlinkSync,
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { executionBudget } from '../bin/bun.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
+import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { acquireCoverageRunLock, releaseCoverageRunLock } from '../tooling/coverage-run-lock.ts';
 import { buildCoverageRunOutcome } from '../tooling/coverage-run-outcome.ts';
 import { superviseCoverageProducers } from '../tooling/run-bun-coverage.ts';
@@ -928,30 +931,161 @@ test('coverage lock acquisition owns a private lock file that its exact handle c
   });
 });
 
-test.each(['file', 'directory', 'symlink'] as const)('release preserves a replaced %s lock path', (replacement) => {
+test('copied coverage lock identity does not authorize release', () => {
   const outputRoot = fixture();
   cleanupAfterPass(outputRoot, () => {
     const lock = acquireCoverageRunLock(outputRoot);
-    const lockPath = path.join(outputRoot, 'coverage-run.lock');
-    const originalPath = path.join(outputRoot, 'original-owned-lock');
-    renameSync(lockPath, originalPath);
-    const replacementBytes = Buffer.from('replacement custody\n');
-    const targetPath = path.join(outputRoot, 'replacement-target');
-    if (replacement === 'file') writeFileSync(lockPath, replacementBytes);
-    else if (replacement === 'directory') mkdirSync(lockPath);
-    else {
-      writeFileSync(targetPath, replacementBytes);
-      // A relative target keeps the fixture portable across temporary root locations.
-      symlinkSync(path.basename(targetPath), lockPath);
-    }
-
-    expect(() => releaseCoverageRunLock(lock)).toThrow(/no longer identifies the owned lock/);
-    expect(readFileSync(originalPath, 'utf8')).toContain('VidaBunCoverageLock/v1');
-    if (replacement === 'file') expect(readFileSync(lockPath)).toEqual(replacementBytes);
-    else if (replacement === 'directory') expect(lstatSync(lockPath).isDirectory()).toBe(true);
-    else {
-      expect(lstatSync(lockPath).isSymbolicLink()).toBe(true);
-      expect(readFileSync(targetPath)).toEqual(replacementBytes);
-    }
+    const original = readFileSync(lock.path);
+    expect(() => releaseCoverageRunLock({ ...lock })).toThrow(/no longer identifies the owned lock/);
+    expect(readFileSync(lock.path)).toEqual(original);
+    expect(releaseCoverageRunLock(lock)).toBe(true);
   });
 });
+
+test('release preserves an unlinked and recreated foreign coverage lock', () => {
+  const outputRoot = fixture();
+  cleanupAfterPass(outputRoot, () => {
+    const lock = acquireCoverageRunLock(outputRoot);
+    unlinkSync(lock.path);
+    const foreign = Buffer.from('new foreign custody\n');
+    writeFileSync(lock.path, foreign, { flag: 'wx' });
+    const replacement = lstatSync(lock.path, { bigint: true });
+    expect(replacement.ino).not.toBe(lock.ino);
+    expect(() => releaseCoverageRunLock(lock)).toThrow(/no longer identifies the owned lock/);
+    expect(readFileSync(lock.path)).toEqual(foreign);
+  });
+});
+
+test.each(['acquire-write', 'release-mismatch', 'release-stat'] as const)(
+  'coverage lock retains %s and close failure causes',
+  (mode) => {
+    const outputRoot = fixture();
+    cleanupAfterPass(outputRoot, () => {
+      const marker = 'coverage lock close fault qualified';
+      const result = spawnSync(
+        process.execPath,
+        [
+          '--no-env-file',
+          '--no-install',
+          '-e',
+          `
+      import assert from 'node:assert/strict';
+      import * as fs from 'node:fs';
+      import path from 'node:path';
+      import { mock } from 'bun:test';
+      const real = { ...fs };
+      const root = process.env.LOCK_CASE_ROOT;
+      const mode = process.env.LOCK_CASE_MODE;
+      const lockPath = path.join(root, 'coverage-run.lock');
+      const writeError = new Error('controlled lock write failure');
+      const closeError = new Error('controlled lock close failure');
+      const statError = new Error('controlled lock stat failure');
+      let ownedFd;
+      let closes = 0;
+      let statFault = false;
+      await mock.module('node:fs', () => ({
+        ...real,
+        openSync(...args) {
+          const fd = real.openSync(...args);
+          if (args[0] === lockPath) ownedFd = fd;
+          return fd;
+        },
+        writeFileSync(...args) {
+          if (mode === 'acquire-write' && args[0] === ownedFd) throw writeError;
+          return real.writeFileSync(...args);
+        },
+        fstatSync(fd, ...args) {
+          if (mode === 'release-stat' && statFault && fd === ownedFd) { statFault = false; throw statError; }
+          return real.fstatSync(fd, ...args);
+        },
+        closeSync(fd) {
+          real.closeSync(fd);
+          if (fd === ownedFd) { closes += 1; if (mode !== 'release-stat') throw closeError; }
+        },
+      }));
+      const owner = await import(${JSON.stringify(new URL('../tooling/coverage-run-lock.ts', import.meta.url).href)});
+      let failure;
+      try {
+        const lock = owner.acquireCoverageRunLock(root);
+        if (mode === 'release-stat') {
+          statFault = true;
+          assert.throws(() => owner.releaseCoverageRunLock(lock), error => error === statError);
+          assert.equal(closes, 0);
+          assert.equal(real.fstatSync(ownedFd).isFile(), true);
+          assert.equal(real.existsSync(lockPath), true);
+          assert.equal(owner.releaseCoverageRunLock(lock), true);
+        } else {
+          assert.equal(mode, 'release-mismatch');
+          real.renameSync(lock.path, path.join(root, 'original-owned-lock'));
+          real.writeFileSync(lock.path, 'foreign custody');
+          owner.releaseCoverageRunLock(lock);
+        }
+      } catch (error) { failure = error; }
+      if (mode === 'release-stat') {
+        assert.equal(failure, undefined);
+        assert.equal(real.existsSync(lockPath), false);
+      } else if (mode === 'acquire-write') {
+        assert.ok(failure instanceof AggregateError);
+        assert.equal(failure.errors[0], writeError);
+        assert.ok(failure.errors[1] instanceof AggregateError);
+        assert.equal(failure.errors[1].errors[0], closeError);
+        assert.equal(real.existsSync(lockPath), false);
+      } else {
+        assert.ok(failure instanceof AggregateError);
+        assert.match(failure.errors[0].message, /no longer identifies the owned lock/);
+        assert.equal(failure.errors[1], closeError);
+        assert.equal(real.readFileSync(lockPath, 'utf8'), 'foreign custody');
+      }
+      assert.equal(closes, 1);
+      assert.throws(() => real.fstatSync(ownedFd), { code: 'EBADF' });
+      console.log(${JSON.stringify(marker)});
+    `,
+        ],
+        {
+          cwd: outputRoot,
+          encoding: 'utf8',
+          timeout: 2_000,
+          maxBuffer: 1024 * 1024,
+          env: { ...process.env, LOCK_CASE_ROOT: outputRoot, LOCK_CASE_MODE: mode },
+        },
+      );
+      requireSynchronousChildSuccess(result, marker);
+      expect(result.stdout.trim()).toBe(marker);
+    });
+  },
+);
+
+test.each(['file', 'directory', 'symlink', 'hardlink'] as const)(
+  'release preserves a replaced %s lock path',
+  (replacement) => {
+    const outputRoot = fixture();
+    cleanupAfterPass(outputRoot, () => {
+      const lock = acquireCoverageRunLock(outputRoot);
+      const lockPath = path.join(outputRoot, 'coverage-run.lock');
+      const originalPath = path.join(outputRoot, 'original-owned-lock');
+      renameSync(lockPath, originalPath);
+      const replacementBytes = Buffer.from('replacement custody\n');
+      const targetPath = path.join(outputRoot, 'replacement-target');
+      if (replacement === 'file') writeFileSync(lockPath, replacementBytes);
+      else if (replacement === 'directory') mkdirSync(lockPath);
+      else if (replacement === 'hardlink') linkSync(originalPath, lockPath);
+      else {
+        writeFileSync(targetPath, replacementBytes);
+        // A relative target keeps the fixture portable across temporary root locations.
+        symlinkSync(path.basename(targetPath), lockPath);
+      }
+
+      expect(() => releaseCoverageRunLock(lock)).toThrow(/no longer identifies the owned lock/);
+      expect(readFileSync(originalPath, 'utf8')).toContain('VidaBunCoverageLock/v1');
+      if (replacement === 'file') expect(readFileSync(lockPath)).toEqual(replacementBytes);
+      else if (replacement === 'directory') expect(lstatSync(lockPath).isDirectory()).toBe(true);
+      else if (replacement === 'hardlink') {
+        expect(readFileSync(lockPath)).toEqual(readFileSync(originalPath));
+        expect(lstatSync(lockPath).nlink).toBe(2);
+      } else {
+        expect(lstatSync(lockPath).isSymbolicLink()).toBe(true);
+        expect(readFileSync(targetPath)).toEqual(replacementBytes);
+      }
+    });
+  },
+);
