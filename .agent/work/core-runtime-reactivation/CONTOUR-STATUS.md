@@ -5,9 +5,9 @@
 Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.
 
 Historical complete coverage + assertion-confirmed mutation pair closures: **3/44**; static contours: **1**.
-Separate same-coverage-run local triples with scoped frozen CRAP: **2/44**.
+Separate same-coverage-run local triples with scoped frozen CRAP: **3/44**.
 Executable contours without a recorded coverage + mutation pair: **41**.
-Executable contours without a recorded complete local triple: **42**.
+Executable contours without a recorded complete local triple: **41**.
 
 Current freshness is unverified. Parent operation statuses are owner-reported without re-admitting their receipts. The scoped frozen CRAP lane records its owner-issued local measurements; exact coverage qualification and global frozen-gate acceptance remain pending. A local triple is not global acceptance.
 
@@ -16,7 +16,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | Contour | Latest F / L / S / B | CC / entry CRAP | Latest mutation | Reported coverage operation | Historical coverage + mutation pair | Latest frozen CC / CRAP | Same-run local triple |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | main-runtime-core | 162/162 · 602/602 · 632/632 · 398/400 | 31 / 31 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
-| main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded | unknown | open / unknown |
+| main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 1 / 1 | local triple recorded |
 | main-config | 338/350 · 924/966 · 977/1024 · 223/266 | 16 / 42 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 3 / 3 | local triple recorded |
 | main-contracts | 102/102 · 296/296 · 325/325 · 152/152 | 15 / 15 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
@@ -83,16 +83,20 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 ### main-runtime-timing
 
-Historical complete local closure: `3b329dc8-aa22-4644-9357-b325e7a19146` + `28688866-7cf8-4d11-b200-d8fc32481eca`.
+Historical complete local closure: `513bb97f-8a9d-4976-b853-e8229a4b0cc1` + `22358a98-345f-4b07-9b50-b45a2cb039f6`.
 Achieved in that closure: F/L/S/B 36/36 · 72/72 · 81/81 · 1/1; CC / entry CRAP 1 / 1; mutation 151/151 (pilot-pass; assertion-confirmed).
-Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
-Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Historical complete local coverage + mutation + frozen CRAP closure: `513bb97f-8a9d-4976-b853-e8229a4b0cc1` + `22358a98-345f-4b07-9b50-b45a2cb039f6` + `513bb97f-8a9d-4976-b853-e8229a4b0cc1`.
+Frozen CRAP measurement in that closure: 1 / 1; scoped receipt coverage run: `513bb97f-8a9d-4976-b853-e8229a4b0cc1`.
 Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
 | coverage | 3b329dc8-aa22-4644-9357-b325e7a19146 | bc68cd7a910ee468f2542b551f54a1d7cef5432d | 2026-10-15T14:42:50.270Z | focused-diagnostic; owner accepted locally; selection bound | 36/36 · 72/72 · 81/81 · 1/1 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/3b329dc8-aa22-4644-9357-b325e7a19146.focused-coverage.json |
 | mutation | 28688866-7cf8-4d11-b200-d8fc32481eca | bc68cd7a910ee468f2542b551f54a1d7cef5432d | 2026-10-15T14:42:50.270Z | pilot-pass; owner accepted locally; selection bound | 151/151 (pilot-pass; assertion-confirmed) | /workspace/attachments/quality-retirement-mutation-timing-TPXAPc/0.stdout.log |
+| coverage | 513bb97f-8a9d-4976-b853-e8229a4b0cc1 | db93d0cfe6e02794a113538efca9e2a59c8bcb00 | 2026-10-15T19:41:41.316Z | focused-diagnostic; owner accepted locally; selection bound | 36/36 · 72/72 · 81/81 · 1/1 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/513bb97f-8a9d-4976-b853-e8229a4b0cc1.focused-coverage.json |
+| coverage-outcome | 513bb97f-8a9d-4976-b853-e8229a4b0cc1 | not-captured | 2026-10-15T19:41:41.371Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/513bb97f-8a9d-4976-b853-e8229a4b0cc1.json |
+| mutation | 22358a98-345f-4b07-9b50-b45a2cb039f6 | db93d0cfe6e02794a113538efca9e2a59c8bcb00 | 2026-10-15T19:42:42.110Z | pilot-pass; owner accepted locally; selection bound | 151/151 (pilot-pass; assertion-confirmed) | /workspace/attachments/quality-mutation-main-runtime-timing-T8pBbL/stdout.log |
+| frozen-crap | 513bb97f-8a9d-4976-b853-e8229a4b0cc1 | db93d0cfe6e02794a113538efca9e2a59c8bcb00 | 2026-10-15T19:42:54.257Z | scoped-proof-pass; owner accepted locally; selection bound | 1 / 1 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/513bb97f-8a9d-4976-b853-e8229a4b0cc1.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

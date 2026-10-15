@@ -4733,20 +4733,41 @@ at76a0f28:.agent/work/core-runtime-reactivation/WORK.md. Independent admission
 review: /workspace/attachments/quality-host-scoped-admission-review-20261015.md.
 No product Source change or budget relaxation was needed for host completion.
 
-## Next contour candidate: main-runtime-timing
+## Complete local contour: main-runtime-timing
 
-Independent blind Luna review passes manual correspondence for all36retained
-roles against literal b549951 Source. Identity pairs and frozen maxCC1 stay
-unchanged; saved maxCRAP stays1 for26roles and2 for10roles. Existing safe-value
-selection fixes in readClock, safeStringProperty/read and invokeTimed preserve
-roles; they neither grant higher caps nor establish numerical acceptance.
-The existing partial now records that review without changing frozen rows.
-Review memo: /workspace/attachments/quality-timing-frozen-lineage-review-20261015.md.
-The existing gate now binds its exact published6e4655b1 review key without
-expanding either prior review's Source scope. Next run the owner's exhaustive
-original/current join with fresh exact coverage, scoped CRAP and full mutation.
-Historical coverage+151/151mutation remains historical. Missing global artifacts
-and the partial's non-executable/non-exhaustive status remain unchanged.
+All36retained roles have a compatible local triple at
+db93d0cfe6e02794a113538efca9e2a59c8bcb00. Coverage run
+513bb97f-8a9d-4976-b853-e8229a4b0cc1 records6PASS/0FAIL/232assertions,
+381ms Bun/3168.897838ms owned outer, exact F36/36,L72/72,S81/81,B1/1.
+Its same-run scoped frozen proof passes all36identities with maxCC1/maxCRAP1,
+using original b549951 Source and published6e4655b1 independent review.
+Complete mutation22358a98-345f-4b07-9b50-b45a2cb039f6 records151/151
+assertion-confirmed Killed, effective score1, zero UNKNOWN/survivors/provenance/
+report/Source errors,33955.016669ms owned outer. Output is complete and process-group termination observed on the same boot. Retained roots:
+/workspace/attachments/quality-declared-main-runtime-timing-Ci62rK and
+/workspace/attachments/quality-mutation-main-runtime-timing-T8pBbL.
+Exact coverage/proof reports use the513bb97f-8a9d-4976-b853-e8229a4b0cc1 prefix
+under packages/agent/coverage/bun-unified/diagnostics/.
+
+The automatic projection retains65observations,3/44historical pairs and3/44
+complete local triples;41triples remain open. Original measurements, frozen
+caps and all historical FAIL/UNKNOWN records are unchanged. The12focused
+admission/prerequisite controls and numerical proof bind the gate published at
+db93d0c. Global qualification and formed Runtime remain pending.
+The independent timing lineage review, semantic dispositions and unchanged
+frozen caps remain at db93d0c:.agent/work/core-runtime-reactivation/WORK.md and
+/workspace/attachments/quality-timing-frozen-lineage-review-20261015.md.
+
+## Next contour candidate: bun-runtime-facade
+
+Use the existing registry Source src/lifecycle/runtime-facade.ts and full declared
+tests/smoke.test.ts. The existing partial contains24retained roles and no added
+or removed functions for this Source. An independent blind Luna lane reviews
+original/current correspondence and saved caps, with no duplicate numerical
+passes. Publish the actual bounded review before admitting a scoped proof;
+then capture exact coverage, frozen CC/CRAP and full confirmed mutation.
+The partial stays non-executable/non-exhaustive and missing global historical
+artifacts are not admitted by these local receipts.
 
 ## Historical provenance
 
