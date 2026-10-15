@@ -8,6 +8,7 @@ import { loadConfiguredEdictumGovernancePolicy } from '../src/governance/edictum
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 import { createRuntimeKernelHostProofForCompositionRoot } from '../src/runtime-kernel.ts';
 import { stable } from '../src/lifecycle/runtime-facade.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import type {
   AuthorizationAction,
   ProjectAuthorizationRequest,
@@ -72,36 +73,47 @@ function errorMessage(error: unknown): string | undefined {
   return error instanceof Error ? error.message : undefined;
 }
 
+function expectObjectReturned<T extends object>(operation: () => T): T {
+  const result: T = expectReturned(operation);
+  expect(result).not.toBeNull();
+  expect(typeof result).toBe('object');
+  return result;
+}
+
 describe('clean v1 package surface', () => {
   test('exposes derived assurance context and a validated same-work status delta', () => {
-    const first = runtime.buildRuntimeAssuranceContext({
-      work_id: 'migration-work',
-      revision: 1,
-      source_revision: 'source-a',
-      lifecycle_state: 'EXECUTE',
-      next_action: 'Continue implementation.',
-    });
+    const first = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext({
+        work_id: 'migration-work',
+        revision: 1,
+        source_revision: 'source-a',
+        lifecycle_state: 'EXECUTE',
+        next_action: 'Continue implementation.',
+      }),
+    );
     expect(first.schema).toBe('RuntimeAssuranceContext/v1');
     expect(Object.isFrozen(first)).toBe(true);
-    expect(runtime.validateRuntimeAssuranceContext(first)).toBe(first);
-    const compact = runtime.compactRuntimeAssuranceContext(first);
+    expect(expectReturned(() => runtime.validateRuntimeAssuranceContext(first))).toBe(first);
+    const compact = expectObjectReturned(() => runtime.compactRuntimeAssuranceContext(first));
     expect(compact.context_id).toBe(first.context_id);
     expect(compact).not.toHaveProperty('platform_knowledge_digest');
     expect(() => runtime.compactRuntimeAssuranceContext({ ...first, context_id: '0'.repeat(64) })).toThrow(
       /digest invalid/,
     );
-    const unchanged = runtime.statusDelta(first, first);
+    const unchanged = expectObjectReturned(() => runtime.statusDelta(first, first));
     expect(unchanged.status).toBe('unchanged');
-    expect(runtime.validateStatusDelta(unchanged)).toBe(unchanged);
-    const second = runtime.buildRuntimeAssuranceContext({
-      ...first,
-      revision: 2,
-      lifecycle_state: 'VERIFY',
-      next_action: 'Verify result.',
-    });
-    const delta = runtime.statusDelta(first, second);
+    expect(expectReturned(() => runtime.validateStatusDelta(unchanged))).toBe(unchanged);
+    const second = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext({
+        ...first,
+        revision: 2,
+        lifecycle_state: 'VERIFY',
+        next_action: 'Verify result.',
+      }),
+    );
+    const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
     expect(delta.schema).toBe('RuntimeStatusDelta/v1');
-    expect(runtime.validateStatusDelta(delta)).toBe(delta);
+    expect(expectReturned(() => runtime.validateStatusDelta(delta))).toBe(delta);
     expect(delta.status).toBe('changed');
     expect(delta.changed).toContainEqual({ field: 'revision', value: 2 });
     expect(delta.watermark).toEqual({ context_id: second.context_id, revision: 2 });
@@ -109,14 +121,18 @@ describe('clean v1 package surface', () => {
       /authority invalid/,
     );
     expect(() => runtime.statusDelta(first, { ...second, work_id: 'other-work' })).toThrow();
-    const otherWork = runtime.buildRuntimeAssuranceContext(assuranceInput({ work_id: 'other-work' }));
+    const otherWork = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(assuranceInput({ work_id: 'other-work' })),
+    );
     expect(() => runtime.statusDelta(first, otherWork)).toThrow(/work id mismatch/);
   });
 
   test('canonicalizes nested context values without changing array order', () => {
-    expect(stable({ b: [2, { y: 2, x: 1 }], a: 1 })).toBe('{"a":1,"b":[2,{"x":1,"y":2}]}');
-    expect(stable({ a: 1, b: [2, { x: 1, y: 2 }] })).toBe(stable({ b: [2, { y: 2, x: 1 }], a: 1 }));
-    expect(stable([1, 2])).not.toBe(stable([2, 1]));
+    expect(expectReturned(() => stable({ b: [2, { y: 2, x: 1 }], a: 1 }))).toBe('{"a":1,"b":[2,{"x":1,"y":2}]}');
+    expect(expectReturned(() => stable({ a: 1, b: [2, { x: 1, y: 2 }] }))).toBe(
+      expectReturned(() => stable({ b: [2, { y: 2, x: 1 }], a: 1 })),
+    );
+    expect(expectReturned(() => stable([1, 2]))).not.toBe(expectReturned(() => stable([2, 1])));
   });
 
   test('rejects malformed assurance identities before they become status evidence', () => {
@@ -148,10 +164,17 @@ describe('clean v1 package surface', () => {
     for (const [field, values] of invalidFields)
       for (const value of values)
         expect(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ [field]: value }))).toThrow();
-    expect(runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: null })).revision).toBeNull();
-    expect(runtime.buildRuntimeAssuranceContext(assuranceInput({ packet_version: null })).packet_version).toBeNull();
     expect(
-      runtime.buildRuntimeAssuranceContext(assuranceInput({ source_revision: ' source-a ' })).source_revision,
+      expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: null }))).revision,
+    ).toBeNull();
+    expect(
+      expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ packet_version: null })))
+        .packet_version,
+    ).toBeNull();
+    expect(
+      expectObjectReturned(() =>
+        runtime.buildRuntimeAssuranceContext(assuranceInput({ source_revision: ' source-a ' })),
+      ).source_revision,
     ).toBe('source-a');
     const notText = { toString: () => 'a'.repeat(64) };
     const identityCases: readonly (readonly [string, unknown])[] = [
@@ -177,31 +200,43 @@ describe('clean v1 package surface', () => {
       wave: 4,
       generation: 5,
     };
-    const inherited = runtime.buildRuntimeAssuranceContext(assuranceInput({ packet }));
+    const inherited = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ packet })));
     for (const [field, value] of Object.entries(packet)) expect(inherited[field]).toEqual(value);
-    const explicit = runtime.buildRuntimeAssuranceContext(
-      assuranceInput({ packet, sealed_revision: 6, packet_id: 'packet-b' }),
+    const explicit = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(assuranceInput({ packet, sealed_revision: 6, packet_id: 'packet-b' })),
     );
     expect(explicit.sealed_revision).toBe(6);
     expect(explicit.packet_id).toBe('packet-b');
     expect(explicit.context_id).not.toBe(inherited.context_id);
-    expect(runtime.buildRuntimeAssuranceContext(assuranceInput({ packet: null })).packet_id).toBeNull();
+    expect(
+      expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ packet: null }))).packet_id,
+    ).toBeNull();
     const callablePacket = Object.assign(() => {}, { packet_id: 'not-an-object' });
-    expect(runtime.buildRuntimeAssuranceContext(assuranceInput({ packet: callablePacket })).packet_id).toBeNull();
+    expect(
+      expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ packet: callablePacket })))
+        .packet_id,
+    ).toBeNull();
     expect(inherited).not.toHaveProperty('documentation_clear_id');
-    const documented = runtime.buildRuntimeAssuranceContext(assuranceInput({ documentation_clear_id: 'clear-a' }));
+    const documented = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(assuranceInput({ documentation_clear_id: 'clear-a' })),
+    );
     expect(documented.documentation_clear_id).toBe('clear-a');
     expect(documented.documentation_inventory_digest).toBeNull();
     expect(documented.current_documentation_artifact).toBeNull();
-    const artifactOnly = runtime.buildRuntimeAssuranceContext(
-      assuranceInput({ current_documentation_artifact: 'doc-a' }),
+    const artifactOnly = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(assuranceInput({ current_documentation_artifact: 'doc-a' })),
     );
     expect(artifactOnly.current_documentation_artifact).toBe('doc-a');
     expect(artifactOnly.documentation_clear_id).toBeNull();
-    expect(runtime.buildRuntimeAssuranceContext(assuranceInput()).documentation_skill_validation_status).toBeNull();
+    expect(
+      expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()))
+        .documentation_skill_validation_status,
+    ).toBeNull();
     for (const status of [undefined, null, 'pass', 'warning', 'changes_required'])
       expect(
-        runtime.buildRuntimeAssuranceContext(assuranceInput({ documentation_skill_validation_status: status })),
+        expectObjectReturned(() =>
+          runtime.buildRuntimeAssuranceContext(assuranceInput({ documentation_skill_validation_status: status })),
+        ),
       ).toBeDefined();
     for (const status of ['unknown', 1, {}, []])
       expect(() =>
@@ -210,12 +245,14 @@ describe('clean v1 package surface', () => {
   });
 
   test('reports every bound assurance status change with the current watermark', () => {
-    const baseline = runtime.buildRuntimeAssuranceContext(
-      assuranceInput({
-        documentation_clear_id: null,
-        documentation_inventory_digest: null,
-        current_documentation_artifact: null,
-      }),
+    const baseline = expectObjectReturned(() =>
+      runtime.buildRuntimeAssuranceContext(
+        assuranceInput({
+          documentation_clear_id: null,
+          documentation_inventory_digest: null,
+          current_documentation_artifact: null,
+        }),
+      ),
     );
     const changes: readonly (readonly [string, unknown])[] = [
       ['revision', 2],
@@ -240,22 +277,22 @@ describe('clean v1 package surface', () => {
       ['next_action', 'Verify result.'],
     ];
     for (const [field, value] of changes) {
-      const current = runtime.buildRuntimeAssuranceContext({ ...baseline, [field]: value });
-      const delta = runtime.statusDelta(baseline, current);
+      const current = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext({ ...baseline, [field]: value }));
+      const delta = expectObjectReturned(() => runtime.statusDelta(baseline, current));
       expect(delta.status).toBe('changed');
       expect(delta.changed).toEqual([{ field, value }]);
       expect(delta.from_revision).toBe(baseline.revision);
       expect(delta.to_revision).toBe(current.revision);
       expect(delta.context_id).toBe(current.context_id);
       expect(delta.watermark).toEqual({ context_id: current.context_id, revision: current.revision });
-      expect(runtime.validateStatusDelta(delta)).toBe(delta);
+      expect(expectReturned(() => runtime.validateStatusDelta(delta))).toBe(delta);
     }
   });
 
   test('rejects malformed status deltas and tampered contexts', () => {
-    const first = runtime.buildRuntimeAssuranceContext(assuranceInput());
-    const second = runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 }));
-    const delta = runtime.statusDelta(first, second);
+    const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
+    const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
+    const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
     for (const changed of [
       { schema: 'Wrong/v1' },
       { status: 'approved' },
@@ -308,7 +345,9 @@ describe('clean v1 package surface', () => {
       Object.entries(first).filter(([key]) => !['schema', 'context_id', 'next_action', 'authority'].includes(key)),
     );
     const invalidStatus = { ...identityValues, documentation_skill_validation_status: 'invalid' };
-    const invalidDigest = createHash('sha256').update(stable(invalidStatus)).digest('hex');
+    const invalidSerialized = expectReturned(() => stable(invalidStatus));
+    expect(typeof invalidSerialized).toBe('string');
+    const invalidDigest = createHash('sha256').update(invalidSerialized).digest('hex');
     expect(() =>
       runtime.validateRuntimeAssuranceContext({
         ...first,
@@ -319,9 +358,9 @@ describe('clean v1 package surface', () => {
   });
 
   test('requires complete v1 delta shape and a matching watermark', () => {
-    const first = runtime.buildRuntimeAssuranceContext(assuranceInput());
-    const second = runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 }));
-    const delta = runtime.statusDelta(first, second);
+    const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
+    const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
+    const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
     for (const field of Object.keys(delta)) {
       const incomplete = { ...delta };
       delete incomplete[field];
@@ -343,22 +382,25 @@ describe('clean v1 package surface', () => {
       { ...delta, changed: [{ field: 'revision', value: 2, extra: true }] },
     ])
       expect(() => runtime.validateStatusDelta(invalid)).toThrow();
-    expect(runtime.validateStatusDelta(delta)).toBe(delta);
+    expect(expectReturned(() => runtime.validateStatusDelta(delta))).toBe(delta);
   });
 
   test('blocks malformed v1 delta objects with governed diagnostics', () => {
-    const first = runtime.buildRuntimeAssuranceContext(assuranceInput());
-    const second = runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 }));
-    const delta = runtime.statusDelta(first, second);
+    const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
+    const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
+    const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
     const blocked = (input: unknown, message?: string) => {
+      let rejected = false;
+      let failure: unknown;
       try {
         runtime.validateStatusDelta(input);
       } catch (error) {
-        expect(errorCode(error)).toBe('GATE_BLOCKED');
-        if (message) expect(errorMessage(error)).toBe(message);
-        return;
+        rejected = true;
+        failure = error;
       }
-      throw new Error('malformed delta was accepted');
+      expect(rejected).toBe(true);
+      expect(errorCode(failure)).toBe('GATE_BLOCKED');
+      if (message) expect(errorMessage(failure)).toBe(message);
     };
     blocked({ ...delta, extra: true }, 'assurance status delta fields invalid');
     blocked({ ...delta, from_revision: undefined }, 'assurance status delta revisions invalid');
@@ -419,9 +461,9 @@ describe('clean v1 package surface', () => {
       expect(errorMessage(error)).toBe('assurance context documentation validation status invalid');
     }
 
-    const first = runtime.buildRuntimeAssuranceContext(assuranceInput());
-    const second = runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 }));
-    const delta = runtime.statusDelta(first, second);
+    const first = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput()));
+    const second = expectObjectReturned(() => runtime.buildRuntimeAssuranceContext(assuranceInput({ revision: 2 })));
+    const delta = expectObjectReturned(() => runtime.statusDelta(first, second));
     const deltaCases: readonly { readonly change: Record<string, unknown>; readonly suffix: string }[] = [
       { change: { work_id: '' }, suffix: 'delta work id missing' },
       { change: { from_revision: 0 }, suffix: 'delta from revision invalid' },
