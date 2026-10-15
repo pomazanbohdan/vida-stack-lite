@@ -1025,6 +1025,14 @@ v1033's review of other contours. Main-runtime-timing uses its own independently
 reviewed `--budget-ref 6e4655b1db2a32d08ae722940ff50b10d9e56ca6`.
 The independent bun-runtime-facade review uses
 `--budget-ref 64f18b3148a80644787a1c2b997ad7a1ff6e5d5d`.
+The facade partition executes the complete `tests/runtime-facade-boundary.test.ts`
+file, retaining all nine public behavior cases with direct Source-module imports.
+The seven package integration cases remain in `tests/smoke.test.ts`; that owner
+also verifies identity of all five facade package-root exports. Keep both owners
+registered and run the integration evidence for changes affecting that boundary.
+Do not repeat unrelated integration operations for every pure facade mutant.
+Changed test/module selection needs fresh compatible coverage, scoped proof and
+complete assertion-confirmed mutation; no old result is relabeled current.
 The gate accepts only these pinned review/key
 pairs and each review's actual Source scope. Caller-supplied correspondence
 versions are rejected. The shared

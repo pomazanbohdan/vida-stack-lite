@@ -667,7 +667,7 @@ function counts(attempt: Attempt | undefined): string {
   if (attempt.lane === 'coverage-outcome') return 'no metric evidence';
   if (attempt.lane === 'mutation' && attempt.mutants === null) return 'unknown (' + attempt.status + ')';
   if (attempt.lane === 'mutation')
-    return `${attempt.killed}/${attempt.mutants} (${attempt.status}; ${attempt.accepted ? 'assertion-confirmed' : 'unqualified'})`;
+    return `${attempt.killed}/${attempt.mutants} (${attempt.status}; ${attempt.accepted ? 'assertion-confirmed' : 'raw runner Killed; unqualified'})`;
   if (attempt.lane === 'frozen-crap')
     return `${attempt.max_cc} / ${attempt.max_entry_crap} (scoped proof; owner measured)`;
   return metrics.map((name) => `${attempt.coverage![name].covered}/${attempt.coverage![name].total}`).join(' · ');

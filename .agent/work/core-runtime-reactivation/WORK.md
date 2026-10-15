@@ -4784,11 +4784,17 @@ expected-completion/object/string oracles and negative-rejection correction are
 retained at e9629b3:.agent/work/core-runtime-reactivation/WORK.md with exact
 failed/UNKNOWN evidence locators. No failure was relabeled PASS.
 
-P1 follow-up: split the nine pure facade cases from the seven unrelated package
-integration cases using the existing registry. Preserve every behavioral
-assertion and all five root re-export identity contracts; no test-name filter,
-new runner or numerical waiver. Independent bounded architecture review accepts
-this route: /workspace/attachments/quality-facade-test-boundary-efficiency-20261015.md.
+P1 split implemented: all nine pure facade cases and their oracles move into
+tests/runtime-facade-boundary.test.ts with direct Source-module imports. All seven
+package integration cases remain in smoke.test.ts, with five explicit facade
+root-export identity checks. The existing registry selects the entire new file;
+there is no substring/per-mutant filter. The untrusted-call helper is shared by
+both files instead of duplicated. Root verifies16PASS/0FAIL/682assertions across
+both files; tests450/tooling184 TypeScript and45projection controls pass.
+Unknown mutation rows now explicitly label their count as raw runner Killed,
+never assertion-confirmed. Regeneration preserves all75historical observations
+and four recorded local triples. Independent bounded architecture review:
+/workspace/attachments/quality-facade-test-boundary-efficiency-20261015.md.
 A full fresh coverage/proof/318-mutant rerun must qualify the changed selection;
 no speedup is claimed from the existing unlike timing observations.
 

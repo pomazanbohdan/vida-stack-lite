@@ -131,7 +131,7 @@ export function mutationPartitions(): MutationPartition[] {
       name: 'bun-runtime-facade',
       environment: 'bun',
       sources: ['src/lifecycle/runtime-facade.ts'],
-      tests: ['tests/smoke.test.ts'],
+      tests: ['tests/runtime-facade-boundary.test.ts'],
       report: 'mutation-bun-runtime-facade.json',
     },
     {
