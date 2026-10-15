@@ -124,10 +124,14 @@ For local coverage/CC/CRAP diagnosis, use TESTING's focusedDiagnostic route in
 the existing producer. Its diagnostic exit0 and function-entry counters are not
 exact coverage or frozen-budget acceptance. Keep the diagnostic schema/output
 separate from global reports and retain explicit child-counter gaps.
-For configured-workflow, the focused capture retains complete SDK formation
+For sdk-package-compatibility, the focused capture retains complete SDK formation
 inputs privately while instrumenting only selected coverage Source. Prepare
 through the existing SDK readiness callback before capture; input review remains
 forbidden in focused mode. Never use the coverage subset as the SDK inventory.
+Keep emitted-SDK integrity cases in that artifact owner, separate from Source
+mutation partitions. Stryker instruments even the dry-run Source, which cannot
+match a receipt for unmutated CI formation. Preserve the complete ordinary
+selection and SDK freshness; never rebuild or waive receipt checks per mutant.
 
 For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and

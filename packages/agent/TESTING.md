@@ -148,7 +148,10 @@ mutant's import/setup error cannot substitute for the target assertion.
 
 The main-runtime-timing contour owns only src/runtime-timing.ts and its direct
 runtime-timing-boundary test. Kernel keeps its existing core tests, including
-configured-workflow and smoke; SDK freshness remains required there. The full
+configured-workflow and smoke. The emitted-SDK regression belongs to
+sdk-package-compatibility and remains in the full selection with SDK freshness.
+Never compare Stryker-instrumented Source with an unmutated CI formation receipt
+or rebuild dist per mutant. The full
 selection retains the timing public-output subprocess check separately. Do not
 substitute its child-health result for attributable target assertions.
 
@@ -258,7 +261,7 @@ does not apply an18s deadline to individual tests. Check all four named results,
 terminal process status, complete counters and four distinct retained-root
 records. Keep every original provider, journal, UNKNOWN and no-replay assertion.
 
-The distributed SDK regression joins a fresh selected formation input map to
+The distributed SDK regression in tests/sdk-package-compatibility.test.ts joins a fresh selected formation input map to
 the complete receipt input inventory, then captures the exact four emitted
 JavaScript members. It executes copies of those captured outputs, preserving
 the SDK subject. Stale or missing formation receipts deny; no Source fallback
@@ -289,7 +292,7 @@ adapter still validates current CI/run/attempt/artifact metadata, exact API ZIP
 digest, bounded archive and the final Source join; a local file grants no proof.
 This is a transport bridge, never local formation or an SDK freshness bypass.
 
-Before a current full selection containing configured-workflow tests launches,
+Before a current full selection containing the SDK package compatibility test launches,
 coverage captures the SDK builder inputs, receipt and four emitted JS members
 in its existing input capture. Derive the formation subset from maintained
 Source/schema inventories and the builder edges observed in that one closure
@@ -814,7 +817,7 @@ test helpers and unselected dependencies without claiming their coverage.
 This route uses the same capture, instrumentation, preload, counter merge,
 300000ms budget and shared coverage lock. It remains serial.
 
-A focused configured-workflow selection retains the full maintained SDK Source
+A focused SDK package compatibility selection retains the full maintained SDK Source
 inventory privately in that same capture. Omitted SDK Source is bound as tool
 input, with no added coverage claim. Formation projection and freshness use
 those complete captured bytes. The existing prepareSdkInputs callback is allowed

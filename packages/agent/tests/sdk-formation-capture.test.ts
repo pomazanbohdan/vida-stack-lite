@@ -63,7 +63,7 @@ describe('SDK formation capture projection', () => {
         JSON.stringify({ version: '1.2.3', files: ['src/**', 'bin/**'], engines: { node: '24.x' }, scripts: {} }),
       );
       write('bin/cli-metadata.ts', 'export const inert = true;\n');
-      write('tests/configured-workflow.test.ts', "import '../bin/cli-metadata.ts';\n");
+      write('tests/sdk-package-compatibility.test.ts', "import '../bin/cli-metadata.ts';\n");
       write('templates/inert.yaml', 'inert: true\n');
       write('instructions/inert.md', 'inert\n');
       write('tooling/build-package.ts', "import './sdk-leaf.ts';\n");
@@ -101,7 +101,7 @@ describe('SDK formation capture projection', () => {
               mode: 'focused-diagnostic',
               contour: 'sdk-fixture',
               sources: [selectedSource],
-              tests: ['tests/configured-workflow.test.ts'],
+              tests: ['tests/sdk-package-compatibility.test.ts'],
             },
       );
       const projected = sdkFormationInputsFromQualityCapture(inputs);

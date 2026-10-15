@@ -62,6 +62,12 @@ Stale, unsupported, empty or truncated results require current Source fallback.
 Use native shell for AST search, machine JSON, diffs, compiler/test failures and
 exact evidence. LeanCTX raw output can merge streams, redact and truncate.
 
+The lead owns staged checks and Git mutations. Delegated readers make no Git
+calls during those checks. Outside that freeze, use `git --no-optional-locks`
+for status/diff inspection: default status can refresh the index and invalidate
+the hook's captured identity even when staged content is unchanged. Keep the
+identity guard strict; serialize inspection instead of bypassing it.
+
 Vex is the single primary index. ast-index and its original skill are inactive
 fallback material; never maintain both indexes simultaneously. A switch has one
 refresh owner. Unsupported configuration/JSON remains on rg.

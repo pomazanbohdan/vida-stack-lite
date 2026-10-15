@@ -725,12 +725,14 @@ function qualityToolInputPaths(
   return [...new Set([...coverageToolInputs, ...additionalToolInputs, ...contractInputs, ...baselineInputs])].sort();
 }
 
+export const sdkArtifactTestPath = 'tests/sdk-package-compatibility.test.ts';
+
 /** Shared capture/review inventory; membership comes from selection and the maintained SDK owner. */
 export function sdkFormationToolInputPaths(
   selectionMode: 'current' | 'published-baseline-bun-native',
   selection: TestSelection,
 ): string[] {
-  if (selectionMode !== 'current' || !selection.tests.includes('tests/configured-workflow.test.ts')) return [];
+  if (selectionMode !== 'current' || !selection.tests.includes(sdkArtifactTestPath)) return [];
   return [
     'tooling/build-package.ts',
     'tsconfig.json',
@@ -1139,7 +1141,7 @@ async function captureQualityInputBase(
     : selectTestSelection(root, testInputsAll, supportedTest, selectionMode);
   const sources = testSelection.mode === 'focused-diagnostic' ? testSelection.sources : maintainedSources;
   const sdkFormationSourcePaths =
-    focused && testSelection.tests.includes('tests/configured-workflow.test.ts')
+    focused && testSelection.tests.includes(sdkArtifactTestPath)
       ? maintainedSources.filter((file) => file.startsWith('src/'))
       : undefined;
   const capturedTestPaths = focused ? testSelection.tests : testInputsAll;

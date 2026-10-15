@@ -64,6 +64,7 @@ import {
   isExternalModulePath,
   readBunPin,
   sdkFormationInputsFromQualityCapture,
+  sdkArtifactTestPath,
   sha256,
 } from './bun-coverage-evidence.ts';
 import type { CoverageShardPlan } from './coverage-shard-plan.ts';
@@ -110,7 +111,7 @@ function freezeCopiedReviewMetadata(inputs: CoverageInputs): CoverageReviewMetad
 export function assertCurrentCoverageSdkFreshness(root: string, inputs: CoverageInputs): void {
   if (
     (inputs.test_selection.mode !== 'full-current-test-set' && inputs.test_selection.mode !== 'focused-diagnostic') ||
-    !inputs.tests.includes('tests/configured-workflow.test.ts')
+    !inputs.tests.includes(sdkArtifactTestPath)
   )
     return;
   const selected = sdkFormationInputsFromQualityCapture(inputs);
@@ -885,8 +886,8 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
   const focused = options.focusedDiagnostic;
   if (focused && (args.length || options.reviewCurrentInputs))
     throw new Error('Focused coverage diagnostics cannot use historical selection or input review callbacks.');
-  if (focused && options.prepareSdkInputs && !focused.tests.includes('tests/configured-workflow.test.ts'))
-    throw new Error('Focused SDK preparation requires the configured-workflow test.');
+  if (focused && options.prepareSdkInputs && !focused.tests.includes(sdkArtifactTestPath))
+    throw new Error('Focused SDK preparation requires the SDK package compatibility test.');
   const runOutputRoot = focused ? path.join(outputRoot, 'diagnostics') : outputRoot;
   if ((options.reviewCurrentInputs || options.prepareSdkInputs) && selectionMode !== 'current')
     throw new Error('Current input review callbacks are unsupported for historical coverage.');

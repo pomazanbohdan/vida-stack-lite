@@ -76,13 +76,13 @@ describe('final quality input projections', () => {
   test('review input delta discovers helpers and owned SDK inputs without selecting helper files as tests', () => {
     const anchor = {
       sources: [{ path: 'src/current.ts', sha256: 'a'.repeat(64) }],
-      test_inputs: [{ path: 'tests/configured-workflow.test.ts', sha256: 'b'.repeat(64) }],
+      test_inputs: [{ path: 'tests/sdk-package-compatibility.test.ts', sha256: 'b'.repeat(64) }],
       tool_inputs: [{ path: 'tooling/bun-coverage-evidence.ts', sha256: 'c'.repeat(64) }],
-      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/configured-workflow.test.ts'] },
+      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/sdk-package-compatibility.test.ts'] },
     };
     const currentSelection = {
       mode: 'full-current-test-set' as const,
-      tests: ['tests/configured-workflow.test.ts', 'tests/new-case.test.ts'],
+      tests: ['tests/sdk-package-compatibility.test.ts', 'tests/new-case.test.ts'],
     };
     const current = {
       sources: anchor.sources,
@@ -107,7 +107,7 @@ describe('final quality input projections', () => {
     const discovered = coverageReviewInputPaths(anchor, changes, current);
     expect(discovered).toMatchObject({
       added_tests: ['tests/helpers/new-fixture.ts', 'tests/new-case.test.ts'],
-      selected_tests: ['tests/configured-workflow.test.ts', 'tests/new-case.test.ts'],
+      selected_tests: ['tests/sdk-package-compatibility.test.ts', 'tests/new-case.test.ts'],
     });
     for (const file of [
       'tooling/coverage-run-outcome.ts',
@@ -286,7 +286,7 @@ describe('final quality input projections', () => {
         { path: 'dist/src/index.js', sha256: 'b'.repeat(64) },
         { path: 'dist/src/runtime.js', sha256: 'c'.repeat(64) },
       ],
-      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/configured-workflow.test.ts'] },
+      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/sdk-package-compatibility.test.ts'] },
     };
     const current = {
       sources: [],
@@ -296,7 +296,7 @@ describe('final quality input projections', () => {
         { path: 'dist/src/index.js', sha256: 'e'.repeat(64) },
         { path: 'dist/src/runtime.js', sha256: 'c'.repeat(64) },
       ],
-      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/configured-workflow.test.ts'] },
+      test_selection: { mode: 'full-current-test-set' as const, tests: ['tests/sdk-package-compatibility.test.ts'] },
     };
 
     const result = coverageReviewInputPaths(anchor, [], current);
@@ -308,7 +308,7 @@ describe('final quality input projections', () => {
     expect(
       sdkFormationToolInputPaths('current', {
         mode: 'full-current-test-set',
-        tests: ['tests/configured-workflow.test.ts'],
+        tests: ['tests/sdk-package-compatibility.test.ts'],
       }),
     ).toEqual([
       'tooling/build-package.ts',
@@ -318,9 +318,15 @@ describe('final quality input projections', () => {
     ]);
     expect(sdkFormationToolInputPaths('current', { mode: 'full-current-test-set', tests: [] })).toEqual([]);
     expect(
+      sdkFormationToolInputPaths('current', {
+        mode: 'full-current-test-set',
+        tests: ['tests/configured-workflow.test.ts'],
+      }),
+    ).toEqual([]);
+    expect(
       sdkFormationToolInputPaths('published-baseline-bun-native', {
         mode: 'published-baseline-bun-native',
-        tests: ['tests/configured-workflow.test.ts'],
+        tests: ['tests/sdk-package-compatibility.test.ts'],
       }),
     ).toEqual([]);
   });
@@ -797,16 +803,16 @@ describe('final quality input projections', () => {
     );
   });
 
-  test('requires the SDK artifacts for a focused configured-workflow selection', async () => {
+  test('requires the SDK artifacts for a focused SDK compatibility selection', async () => {
     const root = fixtureRoot();
-    writeFileSync(path.join(root, 'tests/configured-workflow.test.ts'), "test('sdk', () => {});\n");
+    writeFileSync(path.join(root, 'tests/sdk-package-compatibility.test.ts'), "test('sdk', () => {});\n");
     await expectRejected(
       () =>
         coverageInputs(root, {
           mode: 'focused-diagnostic',
           contour: 'sdk-contour',
           sources: ['src/host-state.ts'],
-          tests: ['tests/configured-workflow.test.ts'],
+          tests: ['tests/sdk-package-compatibility.test.ts'],
         }),
       /missing|rejected/u,
     );

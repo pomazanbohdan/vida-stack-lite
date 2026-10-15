@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
-import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
-import { spawnSync } from 'node:child_process';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import { boundedSpawnSync, executionBudget, requireTerminalCommand } from '../bin/bun.ts';
-import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,8 +8,6 @@ import { stringify } from 'yaml';
 import { randomUUID } from 'node:crypto';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { createInitializationBundle } from './helpers/init-bundle.ts';
-import { captureSelectedSdkJavascriptOutputs } from '../tooling/sdk-artifact-capture.ts';
-import { captureSdkFormationInputs } from '../tooling/build-package.ts';
 import { selectCorrectiveEvidence } from '../src/orchestration/final-assurance.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
@@ -407,7 +402,6 @@ const {
 
 const bundle = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 let root: string;
-const retainedSdkFixtureRoots = new Set<string>();
 let yaml: string;
 let config: AgentRuntimeConfig;
 let calls: TrustedWorkflowAssignment[];
@@ -504,8 +498,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   configuredWorkflowTestDoublesActive = false;
-  if (retainedSdkFixtureRoots.has(root)) console.error('Retained failed SDK fixture: ' + root);
-  else if (root) await rm(root, { recursive: true, force: true });
+  if (root) await rm(root, { recursive: true, force: true });
 });
 
 function publicPacketInput(
@@ -1207,74 +1200,6 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       if (previous === undefined) delete process.env.NODE_ENV;
       else process.env.NODE_ENV = previous;
     }
-  });
-
-  test('distributed runtime denies implicit governance even with test process flags', async () => {
-    retainedSdkFixtureRoots.add(root);
-    const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
-    const selectedInputs = await captureSdkFormationInputs(packageRoot);
-    const emitted = await captureSelectedSdkJavascriptOutputs(packageRoot, selectedInputs);
-    const sdkSubject = path.join(root, 'sdk-subject');
-    for (const relative of emitted.paths) {
-      const destination = path.join(sdkSubject, relative);
-      await mkdir(path.dirname(destination), { recursive: true });
-      await writeFile(destination, emitted.readBytes(relative), { flag: 'wx' });
-    }
-    await writeFile(path.join(sdkSubject, 'package.json'), '{"type":"module"}\n', { flag: 'wx' });
-    await symlink(
-      path.join(packageRoot, 'node_modules'),
-      path.join(sdkSubject, 'node_modules'),
-      process.platform === 'win32' ? 'junction' : 'dir',
-    );
-    const bindings = {
-      repositoryRoot: root,
-      repositoryId: config.repository.repository_id,
-      projectIds: [...config.projects.map((entry) => entry.project_id)].sort(),
-      integrationsDigest: fixtureIntegrationsDigest(),
-    };
-    const script = `
-      import assert from 'node:assert/strict';
-      const distributed = await import('./dist/src/index.js');
-      const bindings = {
-        ...${JSON.stringify(bindings)},
-        resolveIdentity: () => null,
-        verifyApproval: () => null,
-        runtimeRevision: () => ({ sourceRevision: 'fixture', currentRevision: 1 }),
-        casWriter: () => undefined,
-      };
-      assert.throws(() => distributed.createRuntimeKernelHost(bindings), /authentication proof is required/);
-      assert.equal(Object.keys(distributed).some((name) => name.startsWith('createTest')), false);
-      console.log('distributed authentication denial verified');
-    `;
-    const result = boundedSpawnSync(
-      spawnSync,
-      process.execPath,
-      ['-e', script],
-      {
-        cwd: sdkSubject,
-        env: { ...process.env, NODE_ENV: 'test', BUN_TEST: '1', VITEST: 'true' },
-        windowsHide: true,
-        encoding: 'utf8',
-        maxBuffer: 128 * 1024,
-        timeout: 4_000,
-        budget: executionBudget(4_000, 250),
-        diagnostics: true,
-      },
-      'distributed SDK authentication denial',
-    );
-    requireTerminalCommand(result, 'distributed SDK authentication denial');
-    requireSynchronousChildSuccess(result, 'distributed authentication denial verified');
-    if (typeof result.stdout !== 'string' || typeof result.stderr !== 'string')
-      throw new Error('SDK child UTF-8 output is unavailable.');
-    expect(result.stderr).toBe('');
-    expect(result.stdout.trim()).toBe('distributed authentication denial verified');
-    const bundled = emitted.readBytes('dist/src/runtime.js').toString('utf8');
-    expect(
-      /requireCondition\d*\(false, "test-only trusted host issuer is unavailable outside a test process"\)/.test(
-        bundled,
-      ),
-    ).toBe(true);
-    retainedSdkFixtureRoots.delete(root);
   });
 
   test('a rejected provider result leaves the effect uncertain and blocks replay', async () => {

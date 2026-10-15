@@ -1,9 +1,13 @@
 import { expect, test } from 'bun:test';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readPin } from '../bin/bun.ts';
+import { readPin, boundedSpawnSync, executionBudget, requireTerminalCommand } from '../bin/bun.ts';
+import { spawnSync } from 'node:child_process';
+import { captureSelectedSdkJavascriptOutputs } from '../tooling/sdk-artifact-capture.ts';
+import { captureSdkFormationInputs } from '../tooling/build-package.ts';
+import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { sdkCompatibilityManifest, verifySdkPackage } from '../tooling/pack-sdk.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 
@@ -168,5 +172,78 @@ test('SDK verification checks the exact Bun pin before package artifacts', async
     await expectRejection(verifySdkPackage({ root }), /Bun manifest mirrors differ/);
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('distributed runtime denies implicit governance even with test process flags', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-sdk-authentication-'));
+  let passed = false;
+  try {
+    const selectedInputs = await captureSdkFormationInputs(packageRoot);
+    const emitted = await captureSelectedSdkJavascriptOutputs(packageRoot, selectedInputs);
+    const sdkSubject = path.join(root, 'sdk-subject');
+    for (const relative of emitted.paths) {
+      const destination = path.join(sdkSubject, relative);
+      mkdirSync(path.dirname(destination), { recursive: true });
+      writeFileSync(destination, emitted.readBytes(relative), { flag: 'wx' });
+    }
+    writeFileSync(path.join(sdkSubject, 'package.json'), '{"type":"module"}\n', { flag: 'wx' });
+    symlinkSync(
+      path.join(packageRoot, 'node_modules'),
+      path.join(sdkSubject, 'node_modules'),
+      process.platform === 'win32' ? 'junction' : 'dir',
+    );
+    const bindings = {
+      repositoryRoot: root,
+      repositoryId: 'sdk-authentication-fixture',
+      projectIds: ['sdk'],
+      integrationsDigest: 'f'.repeat(64),
+    };
+    const script = `
+      import assert from 'node:assert/strict';
+      const distributed = await import('./dist/src/index.js');
+      const bindings = {
+        ...${JSON.stringify(bindings)},
+        resolveIdentity: () => null,
+        verifyApproval: () => null,
+        runtimeRevision: () => ({ sourceRevision: 'fixture', currentRevision: 1 }),
+        casWriter: () => undefined,
+      };
+      assert.throws(() => distributed.createRuntimeKernelHost(bindings), /authentication proof is required/);
+      assert.equal(Object.keys(distributed).some((name) => name.startsWith('createTest')), false);
+      console.log('distributed authentication denial verified');
+    `;
+    const result = boundedSpawnSync(
+      spawnSync,
+      process.execPath,
+      ['-e', script],
+      {
+        cwd: sdkSubject,
+        env: { ...process.env, NODE_ENV: 'test', BUN_TEST: '1', VITEST: 'true' },
+        windowsHide: true,
+        encoding: 'utf8',
+        maxBuffer: 128 * 1024,
+        timeout: 4_000,
+        budget: executionBudget(4_000, 250),
+        diagnostics: true,
+      },
+      'distributed SDK authentication denial',
+    );
+    requireTerminalCommand(result, 'distributed SDK authentication denial');
+    requireSynchronousChildSuccess(result, 'distributed authentication denial verified');
+    if (typeof result.stdout !== 'string' || typeof result.stderr !== 'string')
+      throw new Error('SDK child UTF-8 output is unavailable.');
+    expect(result.stderr).toBe('');
+    expect(result.stdout.trim()).toBe('distributed authentication denial verified');
+    const bundled = emitted.readBytes('dist/src/runtime.js').toString('utf8');
+    expect(
+      /requireCondition\d*\(false, "test-only trusted host issuer is unavailable outside a test process"\)/.test(
+        bundled,
+      ),
+    ).toBe(true);
+    passed = true;
+  } finally {
+    if (passed) rmSync(root, { recursive: true, force: true });
+    else console.error('Retained failed SDK authentication fixture: ' + root);
   }
 });

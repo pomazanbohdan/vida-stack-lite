@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `0dbc0f2` at origin/main.
+- Published predecessor: `8ba3fa5` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -664,6 +664,68 @@ correctly rejected Bun matcher thenable typing; the completed-result control now
 uses the already qualified narrow doesNotReject observer and separate value
 assertion. No lint or hook bypass. Strict publication and fresh numerical
 evidence follow.
+
+### Kernel post-repair measurement and SDK mutation boundary
+
+Published8ba3fa5 passed strict hooks and ordinary push. Current CI SDK inputs:
+run38714334601/attempt1, artifact11961996012, ZIP digest
+7a86c7e261f63d6123391ada1772ad7b6e884b12f2e10872c4a41f47ad80c5d6.
+Fresh complete four-file focused kernel run210PASS/1529assertions, exit0 in
+35753.809ms, complete output, same boot and owned-group termination observed.
+Report55a6f0eb-f14d-4cc2-9f72-3837285ec506.focused-coverage.json binds kernel
+2814149966489e6c254876b0299bd876324566581ab8d04aade90d3034b512f4.
+Functions132/157(84.07%), lines514/586(87.71%), statements540/617(87.52%),
+branches345/402(85.82%). Max CC31; max entry-CRAP182→42. New terminal assertion
+and marking owner have measured entry-CRAP2/1; completer12, executor13. Global
+and original frozen-budget qualification remain pending. Retain
+quality-focused-kernel-8ba3fa5-Ycadxb and quality-kernel-focused-summary-8ba-
+20261015.json, including the25unexecuted functions.
+
+One unchanged main-runtime-core mutation pilot generated1962mutants but ran
+none: dry run209PASS/1FAIL. Emitted-SDK integrity compared Stryker-instrumented
+Source against the unmutated CI formation receipt and correctly rejected it.
+This is a test-boundary defect, not Killed evidence. Outer exit1 in32436.450ms,
+complete output, same boot, inner/outer groups accounted. Retain
+quality-mutation-kernel-8ba3fa5-hbioo2 and host tmpfs root
+/tmp/quality-kernel-mutation-functional-Am4nWX, including package-tmp/
+mutation-evidence-9a12d697-4e23-4fe7-89bf-c4ae41a0e5f7-7nBuVe and scratch/
+configured-workflow-unit-IS7EJx. Child package .tmp and /tmp were bound to these
+retained functional paths because overlay has only~136MBfree; original evidence
+was neither removed nor replayed. The mount mapping is in launch.json; no
+power-loss durability claim. Limits remain180000/240000/900000ms, factor2+10000.
+
+Move the complete emitted-SDK denial case to the existing SDK compatibility
+test owner. Its exact captured-output checks and native child remain unchanged;
+a local fixture retains failures and provides raw bindings rejected before
+configuration access. It no longer pays the unrelated configured-workflow hooks.
+All ordinary tests remain selected; the kernel mutation file list stays the
+same. One sdkArtifactTestPath constant routes SDK capture/private projection,
+freshness and focused preparation to that owner. No parent-SDK bypass, per-mutant
+build, missing test, extra capture or weakened receipt check. Stryker's official
+[configuration reference](https://stryker-mutator.io/docs/stryker-js/configuration/#dryrunonly-boolean)
+confirms even dry run instruments Source. Independent review ACCEPT:
+quality-sdk-owner-move-actual-review-8ba-20261015.md.
+
+Before builder-route changes, the relocated real SDK case passed1/3assertions
+in1838ms with fresh8ba inputs; the earlier wrong-root invocation ran no tests
+and is not evidence. Route regression controls failed2/2before, then affected
+capture/projection/runner completion53PASS/554assertions/8.23s. Controls retain
+full/focused/bin capture, copied/forged/stale receipt denial, historical skip,
+callback order and Source-only configured-workflow preparation denial. Static
+475capturedTS/474checked/0diagnostics, handwrittenJS0. Logs:
+quality-sdk-owner-{move-positive-corrected,selection-before,selection-after,
+move-static}-8ba-20261015.log. Fresh current-commit SDK artifact regression and
+new kernel numeric/mutation execution follow publication; old reports remain
+bound to their original inputs. The independent local-session test patch stays
+unapplied until this prerequisite cycle ends.
+
+The first SDK-owner strict commit passed format/type checks but correctly
+rejected a changed active index identity. Root and reviewer had performed
+default status inspection during the check; status can refresh the index even
+without a staged-content edit. Preserve quality-sdk-owner-move-commit-8ba-
+20261015.log. Serialize Git reads during staged checks, and use
+git --no-optional-locks for ordinary read-only inspection, now documented in the
+shared bootstrap search guide. No index guard relaxation or hook bypass.
 
 ### Current product correction packet
 
