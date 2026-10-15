@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `f73d0bc` at origin/main.
+- Published predecessor: `20b2e04` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1314,6 +1314,24 @@ quality-protected-and-isolated-push-resume-20261015.log. Restore pre-push's
 previous non-executable mode to match the lifecycle policy; strict precommit
 stays active. This correction does not waive any explicit numeric gate or claim
 the rejected full launch passed. No test ran in that rejected launch.
+
+The corrected packet is published at20b2e04. Its expanded five-file focused
+kernel capture completed235PASS/0FAIL/1774Bunassertions in87.76s (owned outer
+90.733s), within the unchanged300s budget. Same boot, complete output and owned
+group termination are observed. Evidence: quality-kernel-expanded-coverage-
+resume-20261015.log and retained owner quality-retirement-coverage-fGuhlW;
+report packages/agent/coverage/bun-unified/diagnostics/
+e4b9b93e-3823-4ee7-9467-6fdbc180e26d.focused-coverage.json. Its Source-local
+metrics are160/162functions(98.76%),599/602lines(99.50%),626/633statements
+(98.89%),385/414branches(92.99%),maxCC31/maxfunction-entryCRAP31. Historical
+four-file counters were153/587/613/382; the expanded file selection gains
+7functions/12lines/13statements/3branches on the unchanged kernel Source.
+This diagnostic remains full_qualification:false/frozen_budget_qualification:
+pending; it is not a mutation score or exact global/frozen closure.
+The two unexecuted function bodies are the protected native effect-entry abort
+cleanup callbacks at runtime-kernel.ts:1880. Preserve the exact residual map in
+quality-kernel-expanded-uncovered{-compact}-resume-20261015.json and target that
+real boundary next, without a broad oversized mutation rerun.
 
 ### Current product correction packet
 
