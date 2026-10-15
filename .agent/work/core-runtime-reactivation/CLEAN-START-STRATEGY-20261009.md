@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `245e568`; current correction details are in WORK.
+- Published predecessor: `8df1b5d`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. Exact7c9d139 CI SDK inputs were accepted for the current serial diagnostic; changed Source needs its matching inputs. WORK owns run/artifact receipts.
 - Current serial run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Keep its fresh physical checkout and all older UNKNOWN evidence retained; no replay or resource successor. WORK owns exact custody and fingerprints.
@@ -34,6 +34,15 @@ Migrate current callers to the shared helpers, then delete forward-only duplicat
 ### 4. Frozen quality prerequisites and complete run
 
 Complete exact frozen function correspondence against the genuine `b549951` baseline. Complete and review the full CRAP plan before using dynamic CRAP as an acceptance gate. Qualify resource custody and shard behavior before running the complete numeric suite. Require 100% functions, lines, statements, and branches, plus 100% assertion-confirmed Killed mutants. Keep the required tests and SDK in the final input set. Record CRAP results and these outcomes from one admitted current capture. A timeout, incomplete report, partial budget, or split set of focused runs does not satisfy full numeric acceptance.
+
+The global canonical mutant map is implemented across the maintained Source and
+partition registry. Public Stryker plan/events and parent assertion confirmation
+retain separate authority. Missing, omitted and platform-pending assignments stay
+explicitly unqualified; full acceptance requires the exact Source/partition matrix.
+Use the shared map owner and captured inputs, not a second AST/hash pipeline.
+The real main-host contour has complete local proof; WORK owns counts and receipts.
+Next qualify native Bun per-test selection before rerunning the oversized kernel
+contour. Capture-only per-test maps do not authorize filtering or numeric admission.
 
 Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that

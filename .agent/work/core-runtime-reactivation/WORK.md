@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `4ff4714` at origin/main.
+- Published predecessor: `8df1b5d` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1151,6 +1151,27 @@ downgrade path was reviewed but not fault-injected at gate level; controlled-fil
 tests prove identity drift detection, not an executed gate-level downgrade.
 Publish after strict checks, then repeat the same69mutant contour once to verify score and measure
 the new boundary timings. Do not infer speedup from reduced operation counts.
+
+Packet8df1b5d passed the strict staged format/type/lint/Knip hook and nonforce
+push. Its fresh main-host repeat passed69/69assertion-confirmed Killed with
+0unknown/non-killed/provenance/baseline/source mismatches. The actual canonical
+69identity universe equals the retained4ff plan exactly. Global map retains
+149Source files/45contours and remains globally unqualified. Outer39041.744ms
+versus previous131095.313ms is an observed70.22% elapsed reduction from two
+runs, not a distribution or an attribution of every saved millisecond.
+Stryker still reports35s. Parent receipt validation1391.978ms includes exactly
+2full identity observations545.037ms and1lifecycle analysis168.020ms.
+Full output, same boot and owned process-group absence are confirmed. Evidence:
+quality-global-mutant-map-host-summary-8df-20261015.json and
+quality-global-mutant-map-host-pilot-8df-20261015.log. Retain outer
+quality-mutation-global-map-host-8df1b5d-ctATZZ and physical host-tmpfs root
+/tmp/quality-global-map-host-functional-nwP6ID/package-tmp/mutation-evidence-
+cdbfdda1-d609-47c7-a6ec-2d8e1c29fac0-w6QAqY. Map SHA256
+de207578c8c1219df32e8d8dc6b0b708d22bbe3073e7d05613d519dbe66de963,
+40876bytes. This is selected contour proof, not full mutation/coverage/frozen
+CRAP or installed Runtime acceptance. Next kernel work keeps the existing
+capture-only per-test evidence unqualified until its runner/selection controls
+are complete; do not repeat the unchanged whole-kernel1962mutant timeout.
 
 Range-only mutation slicing is not generally complete for ancestor-spanning
 mutants. Installed Stryker supports mutator-name exclusion buckets as a candidate
