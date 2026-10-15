@@ -4,66 +4,70 @@
 
 Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.
 
-Complete compatible local coverage + assertion-confirmed mutation closures: **2/44**; static contours: **1**.
-Executable contours without a recorded complete compatible closure: **42**.
+Historical complete coverage + assertion-confirmed mutation pair closures: **2/44**; static contours: **1**.
+Separate same-coverage-run local triples with scoped frozen CRAP: **0/44**.
+Executable contours without a recorded coverage + mutation pair: **42**.
+Executable contours without a recorded complete local triple: **44**.
 
-Current freshness is unverified. Parent operation statuses are owner-reported without re-admitting their receipts. Frozen complexity/CRAP and exact coverage qualification: pending. The view currently consumes focused coverage and confirmed mutation summaries; it never infers a frozen-gate result.
+Current freshness is unverified. Parent operation statuses are owner-reported without re-admitting their receipts. The scoped frozen CRAP lane records its owner-issued local measurements; exact coverage qualification and global frozen-gate acceptance remain pending. A local triple is not global acceptance.
 
 F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-binary coverage. They do not replace frozen per-function ceilings or exact coverage gates. No report means unknown, never zero. A failed or partial last attempt does not erase a historical complete closure. Different Source/test/config closures are never combined into a synthetic maximum.
 
-| Contour | Latest F / L / S / B | CC / entry CRAP | Latest mutation | Reported coverage operation | Historical compatible closure |
-| --- | --- | --- | --- | --- | --- |
-| main-runtime-core | 162/162 · 602/602 · 632/632 · 398/400 | 31 / 31 | unknown | BLOCKED | open / unknown |
-| main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded |
-| main-config | 338/350 · 924/966 · 977/1024 · 223/266 | 16 / 42 | unknown | BLOCKED | open / unknown |
-| main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded |
-| main-contracts | 102/102 · 296/296 · 325/325 · 152/152 | 15 / 15 | unknown | BLOCKED | open / unknown |
-| main-cedar | 25/25 · 56/56 · 60/60 · 21/21 | 6 / 6 | 180/195 (unknown; unqualified) | BLOCKED | open / unknown |
-| main-governance | 200/202 · 682/691 · 702/716 · 82/90 | 6 / 6 | unknown | BLOCKED | open / unknown |
-| main-mastra | unknown | unknown | unknown | not imported | open / unknown |
-| main-exports | unknown | unknown | unknown | not imported | N/A: static exports |
-| bun-fs-safe-attestation | unknown | unknown | unknown | not imported | open / unknown |
-| bun-service-operation-custody | unknown | unknown | unknown | not imported | open / unknown |
-| bun-host-state | unknown | unknown | unknown | not imported | open / unknown |
-| bun-session-handoff | unknown | unknown | unknown | not imported | open / unknown |
-| bun-runtime-facade | unknown | unknown | unknown | not imported | open / unknown |
-| bun-lifecycle-state | unknown | unknown | unknown | not imported | open / unknown |
-| bun-final-assurance | unknown | unknown | unknown | not imported | open / unknown |
-| bun-runtime-initialization | unknown | unknown | unknown | not imported | open / unknown |
-| bun-development-controller | unknown | unknown | unknown | not imported | open / unknown |
-| bun-cli-public-entrypoints | unknown | unknown | unknown | not imported | open / unknown |
-| bun-cli-toolchain | unknown | unknown | unknown | not imported | open / unknown |
-| bun-cli-init | unknown | unknown | unknown | not imported | open / unknown |
-| bun-cli-run | unknown | unknown | unknown | not imported | open / unknown |
-| bun-doc-clear | unknown | unknown | unknown | not imported | open / unknown |
-| bun-observed-validation | unknown | unknown | unknown | not imported | open / unknown |
-| bun-observed-research | unknown | unknown | unknown | not imported | open / unknown |
-| main-local-entrypoint | unknown | unknown | unknown | not imported | open / unknown |
-| bun-dispatch-repair | unknown | unknown | unknown | not imported | open / unknown |
-| bun-runtime-code-rebind | unknown | unknown | unknown | not imported | open / unknown |
-| bun-specialized-repair | unknown | unknown | unknown | not imported | open / unknown |
-| bun-runtime-config-rebind | unknown | unknown | unknown | not imported | open / unknown |
-| bun-documentation-policy-transition | unknown | unknown | unknown | not imported | open / unknown |
-| bun-forward-candidate-admission | unknown | unknown | unknown | not imported | open / unknown |
-| bun-completed-readonly-capture | unknown | unknown | unknown | not imported | open / unknown |
-| bun-cli-routing-contracts | unknown | unknown | unknown | not imported | open / unknown |
-| bun-project-configuration-lifecycle | unknown | unknown | unknown | not imported | open / unknown |
-| bun-governance-and-public-contracts | unknown | unknown | unknown | not imported | open / unknown |
-| bun-project-upgrade-lifecycle | unknown | unknown | unknown | not imported | open / unknown |
-| bun-project-upgrade-storage-admission | unknown | unknown | unknown | not imported | open / unknown |
-| bun-project-upgrade-existing-storage-image | unknown | unknown | unknown | not imported | open / unknown |
-| bun-orchestration-recovery-contracts | unknown | unknown | unknown | not imported | open / unknown |
-| bun-cli-release-and-installation | unknown | unknown | unknown | not imported | open / unknown |
-| bun-controller-observation | unknown | unknown | unknown | not imported | open / unknown |
-| bun-source-preflight-and-task-binding | unknown | unknown | unknown | not imported | open / unknown |
-| linux | unknown | unknown | unknown | not imported | open / unknown |
-| windows | unknown | unknown | unknown | not imported | open / unknown |
+| Contour | Latest F / L / S / B | CC / entry CRAP | Latest mutation | Reported coverage operation | Historical coverage + mutation pair | Latest frozen CC / CRAP | Same-run local triple |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| main-runtime-core | 162/162 · 602/602 · 632/632 · 398/400 | 31 / 31 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded | unknown | open / unknown |
+| main-config | 338/350 · 924/966 · 977/1024 · 223/266 | 16 / 42 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded | unknown | open / unknown |
+| main-contracts | 102/102 · 296/296 · 325/325 · 152/152 | 15 / 15 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| main-cedar | 25/25 · 56/56 · 60/60 · 21/21 | 6 / 6 | 180/195 (unknown; unqualified) | BLOCKED | open / unknown | unknown | open / unknown |
+| main-governance | 200/202 · 682/691 · 702/716 · 82/90 | 6 / 6 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| main-mastra | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| main-exports | unknown | unknown | unknown | not imported | N/A: static exports | unknown | open / unknown |
+| bun-fs-safe-attestation | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-service-operation-custody | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-host-state | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-session-handoff | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-runtime-facade | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-lifecycle-state | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-final-assurance | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-runtime-initialization | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-development-controller | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-cli-public-entrypoints | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-cli-toolchain | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-cli-init | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-cli-run | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-doc-clear | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-observed-validation | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-observed-research | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| main-local-entrypoint | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-dispatch-repair | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-runtime-code-rebind | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-specialized-repair | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-runtime-config-rebind | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-documentation-policy-transition | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-forward-candidate-admission | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-completed-readonly-capture | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-cli-routing-contracts | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-project-configuration-lifecycle | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-governance-and-public-contracts | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-project-upgrade-lifecycle | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-project-upgrade-storage-admission | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-project-upgrade-existing-storage-image | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-orchestration-recovery-contracts | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-cli-release-and-installation | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-controller-observation | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| bun-source-preflight-and-task-binding | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| linux | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
+| windows | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
 
 ### main-runtime-core
 
 Historical complete local closure: not recorded.
 Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Frozen complexity/CRAP and exact coverage qualification: pending.
+Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -81,7 +85,9 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 Historical complete local closure: `3b329dc8-aa22-4644-9357-b325e7a19146` + `28688866-7cf8-4d11-b200-d8fc32481eca`.
 Achieved in that closure: F/L/S/B 36/36 · 72/72 · 81/81 · 1/1; CC / entry CRAP 1 / 1; mutation 151/151 (pilot-pass; assertion-confirmed).
-Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Frozen complexity/CRAP and exact coverage qualification: pending.
+Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -94,7 +100,9 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 Historical complete local closure: not recorded.
 Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Frozen complexity/CRAP and exact coverage qualification: pending.
+Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -111,7 +119,9 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 Historical complete local closure: `4a7029fa-1af2-4d0d-b34f-e4fa761bd2f5` + `49d41595-921b-4fd9-9cf6-4b9da0b163b8`.
 Achieved in that closure: F/L/S/B 7/7 · 21/21 · 22/22 · 11/11; CC / entry CRAP 3 / 3; mutation 69/69 (pilot-pass; assertion-confirmed).
-Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Frozen complexity/CRAP and exact coverage qualification: pending.
+Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -124,7 +134,9 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 Historical complete local closure: not recorded.
 Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Frozen complexity/CRAP and exact coverage qualification: pending.
+Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -147,7 +159,9 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 Historical complete local closure: not recorded.
 Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Frozen complexity/CRAP and exact coverage qualification: pending.
+Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -168,7 +182,9 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 Historical complete local closure: not recorded.
 Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Frozen complexity/CRAP and exact coverage qualification: pending.
+Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
+Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |

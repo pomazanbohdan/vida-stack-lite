@@ -664,7 +664,9 @@ describe('direct maintained-source completeness', () => {
     expect(() => invokeUntrusted(requireAbsoluteRepositoryRoot, [null])).toThrow(/absolute/);
     expect(() => validateResolvedPathProfile(null, repositoryRoot)).toThrow(/issued/);
     const invalidCedar = validateCedarPolicySet('not cedar');
-    expect(invalidCedar.valid).toBe(false);
+    expect(invalidCedar).toMatchObject({ valid: false });
+    expect(Array.isArray(invalidCedar.diagnostics)).toBe(true);
+    expect(typeof invalidCedar.diagnostics[0]).toBe('string');
     expect(invalidCedar.diagnostics[0]).toMatch(/parse|token|input/i);
     const authorize = expectReturned(() => createConfiguredProjectAuthorizer(repositoryRoot, config));
     expect(typeof authorize).toBe('function');
@@ -677,6 +679,7 @@ describe('direct maintained-source completeness', () => {
       'invalid schema',
     );
     expect(invalidSchemaResult).toMatchObject({ decision: 'deny' });
+    expect(Array.isArray(invalidSchemaResult.diagnostics)).toBe(true);
     expect(invalidSchemaResult.diagnostics.length).toBeGreaterThan(0);
     const invalidPolicyResult = authorizeProject(
       authorizationRequest('a'.repeat(64)),
@@ -686,10 +689,12 @@ describe('direct maintained-source completeness', () => {
       'not cedar',
       config.authorization.cedar.schema_text,
     );
-    expect(invalidPolicyResult.decision).toBe('deny');
+    expect(invalidPolicyResult).toMatchObject({ decision: 'deny' });
+    expect(Array.isArray(invalidPolicyResult.diagnostics)).toBe(true);
     expect(invalidPolicyResult.diagnostics.length).toBeGreaterThan(0);
-    expect(required(invalidPolicyResult.diagnostics[0], 'invalid Cedar diagnostic')).toMatch(/parse|token|input/i);
-    expect(authorize(authorizationRequest('a'.repeat(64)), identity(), project).decision).toBe('allow');
+    expect(typeof invalidPolicyResult.diagnostics[0]).toBe('string');
+    expect(invalidPolicyResult.diagnostics[0]).toMatch(/parse|token|input/i);
+    expect(authorize(authorizationRequest('a'.repeat(64)), identity(), project)).toMatchObject({ decision: 'allow' });
     const validAuthorization = authorizationRequest('a'.repeat(64));
     const validIdentity = identity();
     const allowed = authorizeProject(
@@ -854,7 +859,7 @@ describe('direct maintained-source completeness', () => {
         diagnostics: ['authorization claims do not satisfy the configured project boundary'],
       });
     }
-    expect(authorize({}, identity(), project).decision).toBe('deny');
+    expect(authorize({}, identity(), project)).toMatchObject({ decision: 'deny' });
     expect(authorize(validAuthorization, undefined, project)).toEqual({
       decision: 'deny',
       diagnostics: ['authorization claims do not satisfy the configured project boundary'],

@@ -1054,9 +1054,14 @@ the producer's gate result.
 
 Keep the last observation, historical complete closure and current freshness
 separate. Four covered/total counters and max CC/function-entry CRAP are measured
-values, not exact/frozen qualification. The projection currently leaves those
-gate statuses pending; it does not adapt a frozen CRAP budget report. Generated
-scenarios and absent scenario/function/test links gain no approval from it.
+values, not global exact/frozen qualification. The separate frozen-crap lane
+records the CRAP owner's conservative local receipt, without re-admitting it.
+A complete local triple requires that receipt's exact same coverage run,
+function denominator and identical Source/test/tool/module closure plus the
+compatible assertion-confirmed mutation result. Historical coverage/mutation
+pairs remain separately counted. Global gate statuses and current freshness
+stay pending; generated scenarios and absent scenario/function/test links gain
+no approval from this projection.
 
 A historical local completion requires full declared Source and executed-test
 selection, compatible captured Source/test/config/dependency digests, and the

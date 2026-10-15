@@ -6,12 +6,7 @@ import coverageApi from 'istanbul-lib-coverage';
 import { maintainedSourceInventory, selectMaintainedSourcePaths } from './maintained-source-inventory.js';
 import { canonicalTestSelection, sha256 } from './bun-coverage-evidence.ts';
 import { functionInventory } from './function-inventory.js';
-import {
-  validateCoverageReport,
-  validateFocusedCoverageReport,
-  validateHistoricalBaselineCoverageReport,
-} from './bun-coverage-report-validator.js';
-import { mutationPartitions } from './mutation-partitions.ts';
+import { validateCoverageReport, validateHistoricalBaselineCoverageReport } from './bun-coverage-report-validator.js';
 import { baselineFunctionEvidenceForSource, exactFullCoverage, validateCoverageLocations } from './coverage-math.js';
 import type { BaselineFunctionEvidence } from './coverage-math.js';
 
@@ -681,6 +676,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
   }
 
   if (scoped) {
+    const { mutationPartitions } = await import('./mutation-partitions.ts');
+    const { validateFocusedCoverageReport } = await import('./bun-coverage-report-validator.js');
     const partition = mutationPartitions().find((row) => row.name === scopedArguments[1]);
     if (
       !partition?.sources?.length ||
@@ -750,6 +747,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       budget_file: budgetFile,
       budget_sha256: sha256(budgetBytes),
       original_sources: originalSources,
+      run_id: report.run_id,
       coverage_run_id: report.run_id,
       coverage_report: coveragePath,
       coverage_report_sha256: validation.report_sha256,

@@ -78,6 +78,19 @@ contour qualifies this through actual injected mutants and the real assertion
 adapter; a passing original test alone does not prove mutation causality.
 Check value shape/type before a property access or regex matcher can throw its
 own argument error. Preserve unproven results without padding assertion counts.
+Use the existing `expectReturned` helper for expected-success synchronous setup
+inside a test body; do not construct the mutable subject at module scope.
+For a synchronous Cedar function spy, finish imports before installing it and
+restore it in finally without an intervening await. Confirm restoration with a
+real subsequent call. Module replacement and asynchronous provider cases retain
+their separate namespace-restoration rules below.
+Lifecycle discovery treats strict JSON imports as data, even when their strings
+mention hook names. Malformed JSON and executable-module parse failures still
+fail closed; never skip an executable dependency to obtain a Killed result.
+On Bun1.4.3, avoid asymmetric matchers inside `toMatchObject` when the value is
+read afterward: the matcher can replace actual fields (verified upstream issue
+https://github.com/oven-sh/bun/issues/24551). Assert object discriminants, then
+`Array.isArray`, scalar types and exact values separately; preserve fixture bytes.
 
 For an existing awaited try-body with synchronous owned cleanup, the package
 finisher can join a tagged outcome in finally without moving returns or callback

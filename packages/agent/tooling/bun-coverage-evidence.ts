@@ -123,6 +123,7 @@ export const coverageToolInputs: string[] = [
   'tooling/captured-module-contents.ts',
   'tooling/bun-coverage-report-validator.ts',
   'tooling/crap-gate.ts',
+  'tooling/mutation-partitions.ts',
   'tooling/coverage-math.ts',
   'tooling/coverage-counters.ts',
   'tooling/coverage-shard-plan.ts',

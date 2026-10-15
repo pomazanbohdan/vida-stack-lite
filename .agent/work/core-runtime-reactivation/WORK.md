@@ -4730,6 +4730,22 @@ mutation acceptance. Its receipt alone cannot close or advance the contour.
 Fresh coverage, scoped proof and complete confirmed mutation remain pending
 after this code/test/tool correction packet.
 
+597c2a6 publishes that correction with strict pre-commit PASS and26focused
+controls passing. Follow-up integration binds the declared contour registry into
+coverage tool inputs and limits its CRAP import to scoped execution, preserving
+the existing global mocked-validator contracts (18CLI/correspondence PASS).
+The automatic owner now records a separate frozen-crap lane and same-coverage-run
+triple, matching the function denominator and exact captured closure. Historical
+pairs stay separately visible. It performs no new AST/hash/test pass.
+
+Native Bun1.4.3 also reproduces upstream24551: asymmetric matchers inside
+toMatchObject replace actual fields. Explicit shape/type/array assertions now
+preserve Cedar fixture values and strengthen failure attribution; seven focused
+Cedar/fuzz/kernel cases pass. The Bun Test skill records this verified pattern,
+strict JSON handling and synchronous spy restoration, including a real native
+post-restore authorization control. Final numerical runs still follow the last
+published Source/test/tool packet; no old measurements are relabeled current.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

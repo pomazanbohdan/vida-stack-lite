@@ -167,6 +167,7 @@ describe('deterministic shrinking fuzz boundaries', () => {
       fc.property(unknownValue, (value) => {
         const result = authorizer(value, undefined, context);
         expect(result).toMatchObject({ decision: 'deny' });
+        expect(Array.isArray(result.diagnostics)).toBe(true);
         expect(result.diagnostics.length).toBeGreaterThan(0);
       }),
       parameters,
@@ -205,6 +206,7 @@ describe('deterministic shrinking fuzz boundaries', () => {
           expect(() => validateAuthorizationRequest(malformed)).toThrow();
           const result = authorizer(malformed, identity, context);
           expect(result).toMatchObject({ decision: 'deny' });
+          expect(Array.isArray(result.diagnostics)).toBe(true);
           expect(result.diagnostics.length).toBeGreaterThan(0);
         },
       ),

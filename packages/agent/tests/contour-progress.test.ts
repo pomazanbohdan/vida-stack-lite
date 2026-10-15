@@ -83,6 +83,52 @@ function mutation() {
     ],
   };
 }
+function frozenCrap(c = coverage()) {
+  return {
+    schema: 'VidaScopedCrapBudgetReport/v1',
+    status: 'scoped-proof-pass',
+    contour: 'main-host',
+    qualification_scope: 'declared-contour-original-source-lower-bound',
+    full_qualification: false,
+    historical_measurement_admitted: false,
+    historical_coverage_runtime_artifacts: 'not-consumed/not-admitted',
+    baseline_ref: 'b549951',
+    baseline_commit: 'e'.repeat(40),
+    budget_commit: 'f'.repeat(40),
+    budget_file: '.agent/work/crap.json',
+    budget_sha256: 'd'.repeat(64),
+    original_sources: [digest('src/config/host-capability.ts')],
+    run_id: c.run_id,
+    coverage_run_id: c.run_id,
+    coverage_report: '/retained/coverage.json',
+    coverage_report_sha256: 'a'.repeat(64),
+    manifest_sha256: 'b'.repeat(64),
+    sources: structuredClone(c.sources),
+    test_inputs: structuredClone(c.test_inputs),
+    tool_inputs: structuredClone(c.tool_inputs),
+    module_inputs: structuredClone(c.module_inputs),
+    test_selection: {
+      ...structuredClone(c.test_selection),
+      mode: 'focused-diagnostic',
+      sources: c.sources.map((row) => row.path),
+    },
+    functions: [
+      {
+        identity: 'original#function',
+        current_identity: 'current#function',
+        original_source_complexity: 2,
+        maximum_complexity: 2,
+        maximum_crap: 2,
+        conservative_crap_ceiling: 2,
+        complexity: 2,
+        coverage: 1,
+        crap: 2,
+        rationale: 'Scoped owner proof row.',
+      },
+    ],
+    limits: 'Local proof only.',
+  };
+}
 function projected(c = coverage(), m = mutation()) {
   return mergeContourProgress(empty, [...contourAttempts(c, receipt), ...contourAttempts(m, receipt)]);
 }
@@ -107,6 +153,69 @@ test('compatible complete observations record a local maximum without claiming f
   expect(report).toContain('qualification: pending');
   expect(snapshot.attempts.map((row) => row.tool_fingerprint)).toEqual(['b'.repeat(64), 'c'.repeat(64)]);
 });
+
+test('coverage and mutation pair remains recorded when the scoped frozen CRAP receipt is absent', () => {
+  const report = renderContourProgress(projected());
+  expect(report).toContain('Historical complete coverage + assertion-confirmed mutation pair closures: **1/44**');
+  expect(report).toContain('Separate same-coverage-run local triples with scoped frozen CRAP: **0/44**');
+});
+
+test.each(['coverage-run', 'source', 'test', 'tool', 'closure', 'functions'] as const)(
+  'scoped frozen CRAP with mismatched %s cannot complete a local triple',
+  (kind) => {
+    const c = coverage();
+    const crap = frozenCrap(c);
+    if (kind === 'coverage-run') {
+      crap.run_id = 'coverage-other';
+      crap.coverage_run_id = 'coverage-other';
+    }
+    if (kind === 'source') {
+      crap.sources[0]!.sha256 = 'd'.repeat(64);
+      for (const input of crap.module_inputs) if (input.path === crap.sources[0]!.path) input.sha256 = 'd'.repeat(64);
+    }
+    if (kind === 'test') crap.test_inputs[0]!.sha256 = 'd'.repeat(64);
+    if (kind === 'tool') crap.tool_inputs[0]!.sha256 = 'd'.repeat(64);
+    if (kind === 'closure') crap.module_inputs.push(digest('src/extra-dependency.ts', 'd'));
+    if (kind === 'functions')
+      crap.functions.push({ ...crap.functions[0]!, identity: 'original#extra', current_identity: 'current#extra' });
+    const snapshot = mergeContourProgress(empty, [
+      ...contourAttempts(c, receipt),
+      ...contourAttempts(mutation(), receipt),
+      ...contourAttempts(crap, receipt),
+    ]);
+    const report = renderContourProgress(snapshot);
+    expect(report).toContain('Historical complete coverage + assertion-confirmed mutation pair closures: **1/44**');
+    expect(report).toContain('Separate same-coverage-run local triples with scoped frozen CRAP: **0/44**');
+  },
+);
+
+test('compatible exact coverage, scoped frozen CRAP and assertion-confirmed mutation form a separate local triple', () => {
+  const c = coverage();
+  const snapshot = mergeContourProgress(empty, [
+    ...contourAttempts(c, receipt),
+    ...contourAttempts(mutation(), receipt),
+    ...contourAttempts(frozenCrap(c), receipt),
+  ]);
+  const report = renderContourProgress(snapshot);
+  expect(report).toContain('Historical complete coverage + assertion-confirmed mutation pair closures: **1/44**');
+  expect(report).toContain('Separate same-coverage-run local triples with scoped frozen CRAP: **1/44**');
+  expect(report).toContain(
+    'Historical complete local coverage + mutation + frozen CRAP closure: `coverage-1` + `mutation-1` + `coverage-1`.',
+  );
+  expect(report).toContain('Current freshness: unverified');
+  expect(report).toContain('qualification: pending');
+});
+
+test.each(['malformed', 'global-claim', 'selection-mode'] as const)(
+  'scoped CRAP %s metadata is rejected instead of becoming frozen evidence',
+  (kind) => {
+    const crap = frozenCrap();
+    if (kind === 'malformed') crap.full_qualification = true;
+    else if (kind === 'selection-mode') crap.test_selection.mode = 'full-current-test-set';
+    else Object.assign(crap, { global_qualification_accepted: true });
+    expect(() => contourAttempts(crap, receipt)).toThrow();
+  },
+);
 
 test.each(['source', 'test', 'tool', 'missing-test', 'missing-tool', 'dependency'] as const)(
   'incompatible %s closure cannot assemble a synthetic maximum',

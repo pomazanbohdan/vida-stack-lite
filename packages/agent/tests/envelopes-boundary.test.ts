@@ -902,5 +902,15 @@ describe('runtime envelope canonicalization boundary', () => {
     } finally {
       authorization.mockRestore();
     }
+    expect(
+      cedar.authorizeProject(
+        request,
+        trustedIdentity,
+        project,
+        root,
+        config.authorization.cedar.policy,
+        config.authorization.cedar.schema_text,
+      ),
+    ).toMatchObject({ decision: 'allow', diagnostics: ['policy1'] });
   });
 });
