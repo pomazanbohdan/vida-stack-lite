@@ -265,7 +265,11 @@ function suiteRoots(document: Record<string, unknown>): {
   return { root, suites };
 }
 
-function assertSelectedTestFiles(suites: Record<string, unknown>[], expectedTests: string[]) {
+function assertSelectedTestFiles(
+  suites: Record<string, unknown>[],
+  expectedTests: string[],
+  allowIncompleteKilled = false,
+): boolean {
   const expected = new Set(expectedTests.map((file) => file.replaceAll('\\', '/').replace(/^\.\//u, '')));
   const actual = suites.map((suite) => {
     if (!evidenceRecord(suite) || typeof suite['@_file'] !== 'string')
@@ -274,11 +278,13 @@ function assertSelectedTestFiles(suites: Record<string, unknown>[], expectedTest
   });
   if (
     expected.size !== expectedTests.length ||
-    actual.length !== expected.size ||
     new Set(actual).size !== actual.length ||
     actual.some((file) => !expected.has(file))
   )
     throw new Error('JUnit suite files do not match the selected test files.');
+  const complete = actual.length === expected.size;
+  if (!complete && !allowIncompleteKilled) throw new Error('JUnit suite files do not match the selected test files.');
+  return complete;
 }
 
 function countTopLevelSuites(
@@ -327,12 +333,14 @@ function junitOutcomeFromDocument(
   unattributedHookFiles: string[] = [],
   bodyEvents: MutationBodyEvent[] = [],
   observe?: CaseObserver,
+  allowIncompleteKilled = false,
 ): { tests: number; assertions: number; failures: number; errors: number; skipped: number; outcome: string } {
   const { root, suites } = suiteRoots(document);
-  assertSelectedTestFiles(suites, expectedTests);
+  const completeSelectedFiles = assertSelectedTestFiles(suites, expectedTests, allowIncompleteKilled);
   const totals = countTopLevelSuites(suites, new Set(unattributedHookFiles), bodyEvents, observe);
   if (root !== suites[0] || root['@_name'] === 'bun test') assertCounters(root, totals);
-  return { ...totals, outcome: outcomeFromJUnitTotals(totals, bodyEvents) };
+  const outcome = outcomeFromJUnitTotals(totals, bodyEvents);
+  return { ...totals, outcome: !completeSelectedFiles && outcome !== 'killed' ? 'unproven' : outcome };
 }
 
 function bodyEventHeader(value: unknown, allowed: Set<string>): value is Record<string, unknown> {
@@ -401,11 +409,19 @@ export function junitOutcome(
   unattributedHookFiles: string[] = [],
   bodyEvents: MutationBodyEvent[] = [],
   observe?: CaseObserver,
+  allowIncompleteKilled = false,
 ) {
   if (XMLValidator.validate(xml) !== true) throw new Error('JUnit XML is malformed.');
   const document = parser.parse(xml) as unknown;
   if (!evidenceRecord(document)) throw new Error('JUnit root is malformed.');
-  return junitOutcomeFromDocument(document, expectedTests, unattributedHookFiles, bodyEvents, observe);
+  return junitOutcomeFromDocument(
+    document,
+    expectedTests,
+    unattributedHookFiles,
+    bodyEvents,
+    observe,
+    allowIncompleteKilled,
+  );
 }
 
 function declarationModuleSpecifier(current: unknown): string | null {
@@ -631,6 +647,8 @@ export function buildMutationTestCommand(executable: string, tests: string[], ju
     executable,
     'test',
     ...tests,
+    '--max-concurrency=1',
+    '--bail=1',
     '--timeout',
     '5000',
     '--preload=./tooling/mutation-test-preload.ts',

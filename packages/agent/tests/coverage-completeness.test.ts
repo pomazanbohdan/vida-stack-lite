@@ -1,6 +1,7 @@
 import { expectReturned, rejectionReason } from './helpers/expect-rejection.ts';
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
+import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -133,6 +134,7 @@ function governedEvidence(): {
       registryHash: project.registry_hash,
     }),
   );
+  expect(operationHash).toMatch(/^[a-f0-9]{64}$/);
   const approvedAt = new Date(Date.now() - 1_000).toISOString();
   const expiresAt = new Date(Date.now() + 60_000).toISOString();
   const intent: GovernedWriteIntent = {
@@ -153,7 +155,11 @@ function governedEvidence(): {
   const receipt = expectReturned(() =>
     toAuthorizationReceipt(authorizationRequest(operationHash), 'decision-1', approvedAt),
   );
-  if (!receipt) throw new Error('Expected write authorization to produce a receipt.');
+  assert.ok(receipt);
+  expect(receipt).toMatchObject({
+    schema: 'AuthorizationReceipt/v1',
+    operation_hash: operationHash,
+  });
   const approval: VerifiedApprovalEvidence = {
     ...intent.approval,
     verified: true,
@@ -166,19 +172,19 @@ function governedEvidence(): {
 
 describe('direct maintained-source completeness', () => {
   test('canonical JSON rejects hostile descriptors and preserves deterministic data', () => {
-    expect(isPlainRecord({})).toBe(true);
-    expect(isPlainRecord(Object.create(null))).toBe(true);
-    expect(isPlainRecord(null)).toBe(false);
-    expect(isPlainRecord([])).toBe(false);
-    expect(isPlainRecord(new Date())).toBe(false);
-    expect(isPlainRecord('record')).toBe(false);
+    expect(expectReturned(() => isPlainRecord({}))).toBe(true);
+    expect(expectReturned(() => isPlainRecord(Object.create(null)))).toBe(true);
+    expect(expectReturned(() => isPlainRecord(null))).toBe(false);
+    expect(expectReturned(() => isPlainRecord([]))).toBe(false);
+    expect(expectReturned(() => isPlainRecord(new Date()))).toBe(false);
+    expect(expectReturned(() => isPlainRecord('record'))).toBe(false);
     for (const value of [null, true, 1, 'text', { nested: [false] }])
-      expect(() => assertCanonicalJsonValue(value)).not.toThrow();
+      expectReturned(() => assertCanonicalJsonValue(value));
     expect(() => assertCanonicalJsonValue(new Date(0))).toThrow(/non-canonical JSON object/);
     expect(() => canonicalJson(new Date(0))).toThrow(/non-canonical JSON object/);
-    expect(canonicalJson({ z: 1, a: [true, null, 'x'] })).toBe('{"a":[true,null,"x"],"z":1}');
-    expect(canonicalJsonDigest({ a: 1 })).toMatch(/^[a-f0-9]{64}$/);
-    expect(canonicalJson({ nested: { b: 2, a: 1 }, items: [3, 2, 1] })).toBe(
+    expect(expectReturned(() => canonicalJson({ z: 1, a: [true, null, 'x'] }))).toBe('{"a":[true,null,"x"],"z":1}');
+    expect(expectReturned(() => canonicalJsonDigest({ a: 1 }))).toMatch(/^[a-f0-9]{64}$/);
+    expect(expectReturned(() => canonicalJson({ nested: { b: 2, a: 1 }, items: [3, 2, 1] }))).toBe(
       '{"items":[3,2,1],"nested":{"a":1,"b":2}}',
     );
     for (const value of [undefined, 1n, Symbol('x'), () => true, Number.NaN, Infinity, -0]) {
@@ -229,14 +235,15 @@ describe('direct maintained-source completeness', () => {
     expect(() => assertCanonicalJsonValue('x', '$', new WeakSet(), 0, { nodes: 0, bytes: 8_388_608 })).toThrow(/byte/);
     const frozenCycle: Record<string, unknown> = {};
     frozenCycle.self = frozenCycle;
-    expect(freezeJsonValue(frozenCycle)).toBe(frozenCycle);
+    expect(expectReturned(() => freezeJsonValue(frozenCycle))).toBe(frozenCycle);
     expect(Object.isFrozen(frozenCycle)).toBe(true);
-    const frozen = freezeJsonValue({ nested: [{ value: 1 }] });
+    const frozen = expectReturned(() => freezeJsonValue({ nested: [{ value: 1 }] }));
+    expect(frozen).toMatchObject({ nested: [{ value: 1 }] });
     expect(Object.isFrozen(frozen)).toBe(true);
     expect(Object.isFrozen(frozen.nested)).toBe(true);
     expect(Object.isFrozen(frozen.nested[0])).toBe(true);
-    expect(freezeJsonValue(1)).toBe(1);
-    expect(freezeJsonValue(null)).toBeNull();
+    expect(expectReturned(() => freezeJsonValue(1))).toBe(1);
+    expect(expectReturned(() => freezeJsonValue(null))).toBeNull();
     let getterCalls = 0;
     const frozenAccessor = Object.defineProperty({}, 'value', {
       enumerable: true,
@@ -245,53 +252,53 @@ describe('direct maintained-source completeness', () => {
         return { value: 1 };
       },
     });
-    expect(freezeJsonValue(frozenAccessor)).toBe(frozenAccessor);
+    expect(expectReturned(() => freezeJsonValue(frozenAccessor))).toBe(frozenAccessor);
     expect(Object.isFrozen(frozenAccessor)).toBe(true);
     expect(getterCalls).toBe(0);
-    expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00Z')).toBe(true);
-    expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00.12Z')).toBe(true);
-    expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00+00:00')).toBe(true);
-    expect(isStrictRfc3339Timestamp('2024-02-29T10:00:00Z')).toBe(true);
-    expect(isStrictRfc3339Timestamp('2016-12-31T23:59:60Z')).toBe(true);
-    expect(isStrictRfc3339Timestamp('2024-01-01T00:00:60Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2024-01-01T23:59:60Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2016-12-31T23:59:60+00:00')).toBe(true);
-    expect(isStrictRfc3339Timestamp('2016-12-31T23:59:60+01:00')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00.1234567890Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2026-02-29T10:00:00Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2026-02-31T10:00:00Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2026-04-31T10:00:00Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2026-13-30T10:00:00Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2026-08-30T24:00:00Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00+24:00')).toBe(false);
-    expect(isStrictRfc3339Timestamp('x2026-08-30T10:00:00Z')).toBe(false);
-    expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00Zx')).toBe(false);
-    expect(isStrictRfc3339Timestamp(null)).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-08-30T10:00:00Z'))).toBe(true);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-08-30T10:00:00.12Z'))).toBe(true);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-08-30T10:00:00+00:00'))).toBe(true);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2024-02-29T10:00:00Z'))).toBe(true);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2016-12-31T23:59:60Z'))).toBe(true);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2024-01-01T00:00:60Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2024-01-01T23:59:60Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2016-12-31T23:59:60+00:00'))).toBe(true);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2016-12-31T23:59:60+01:00'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-08-30T10:00:00.1234567890Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-02-29T10:00:00Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-02-31T10:00:00Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-04-31T10:00:00Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-13-30T10:00:00Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-08-30T24:00:00Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-08-30T10:00:00+24:00'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('x2026-08-30T10:00:00Z'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp('2026-08-30T10:00:00Zx'))).toBe(false);
+    expect(expectReturned(() => isStrictRfc3339Timestamp(null))).toBe(false);
   });
 
   test('timestamp parsing rejects trailing line terminators', () => {
     const timestamp = '2026-10-15T00:00:00Z';
-    expect(rfc3339TimestampMilliseconds(timestamp)).toBe(Date.UTC(2026, 9, 15));
+    expect(expectReturned(() => rfc3339TimestampMilliseconds(timestamp))).toBe(Date.UTC(2026, 9, 15));
     for (const suffix of ['\n', '\r', '\r\n', '\u2028', '\u2029']) {
       const input = timestamp + suffix;
-      expect(rfc3339TimestampMilliseconds(input)).toBeNull();
-      expect(isStrictRfc3339Timestamp(input)).toBe(false);
+      expect(expectReturned(() => rfc3339TimestampMilliseconds(input))).toBeNull();
+      expect(expectReturned(() => isStrictRfc3339Timestamp(input))).toBe(false);
     }
   });
 
   test('timestamp parsing fails closed when the native parser returns a non-finite time', () => {
     const timestamp = '2026-10-15T00:00:00Z';
     const expected = Date.UTC(2026, 9, 15);
-    expect(rfc3339TimestampMilliseconds(timestamp)).toBe(expected);
+    expect(expectReturned(() => rfc3339TimestampMilliseconds(timestamp))).toBe(expected);
     const parse = spyOn(Date, 'parse').mockReturnValue(NaN);
     try {
-      expect(rfc3339TimestampMilliseconds(timestamp)).toBeNull();
-      expect(isStrictRfc3339Timestamp(timestamp)).toBe(false);
+      expect(expectReturned(() => rfc3339TimestampMilliseconds(timestamp))).toBeNull();
+      expect(expectReturned(() => isStrictRfc3339Timestamp(timestamp))).toBe(false);
       expect(parse.mock.calls).toEqual([[timestamp], [timestamp]]);
     } finally {
       parse.mockRestore();
     }
-    expect(rfc3339TimestampMilliseconds(timestamp)).toBe(expected);
+    expect(expectReturned(() => rfc3339TimestampMilliseconds(timestamp))).toBe(expected);
   });
 
   const RFC3339_KNOWN_LEAP_DATES_FOR_TEST = [
@@ -329,8 +336,14 @@ describe('direct maintained-source completeness', () => {
 
     for (const date of RFC3339_KNOWN_LEAP_DATES_FOR_TEST) {
       const utc = `${date}T23:59:60Z`;
-      expect(isStrictRfc3339Timestamp(utc), utc).toBe(true);
-      expect(rfc3339TimestampMilliseconds(utc), utc).not.toBeNull();
+      expect(
+        expectReturned(() => isStrictRfc3339Timestamp(utc)),
+        utc,
+      ).toBe(true);
+      expect(
+        expectReturned(() => rfc3339TimestampMilliseconds(utc)),
+        utc,
+      ).not.toBeNull();
     }
 
     const equivalentInstants = [
@@ -343,14 +356,20 @@ describe('direct maintained-source completeness', () => {
       ['2017-01-01T00:59:60.5+01:00', '2016-12-31T23:59:60.5Z'],
     ] as const;
     for (const [local, utc] of equivalentInstants) {
-      expect(isStrictRfc3339Timestamp(local), local).toBe(true);
-      expect(rfc3339TimestampMilliseconds(local), local).toBe(rfc3339TimestampMilliseconds(utc));
+      expect(
+        expectReturned(() => isStrictRfc3339Timestamp(local)),
+        local,
+      ).toBe(true);
+      expect(
+        expectReturned(() => rfc3339TimestampMilliseconds(local)),
+        local,
+      ).toBe(expectReturned(() => rfc3339TimestampMilliseconds(utc)));
     }
 
     // -00:00 has zero numeric offset for instant computation, but its unknown
     // local-offset provenance remains in the original evidence string.
-    expect(rfc3339TimestampMilliseconds(equivalentInstants[3]![0])).toBe(
-      rfc3339TimestampMilliseconds(equivalentInstants[3]![1]),
+    expect(expectReturned(() => rfc3339TimestampMilliseconds(equivalentInstants[3]![0]))).toBe(
+      expectReturned(() => rfc3339TimestampMilliseconds(equivalentInstants[3]![1])),
     );
 
     const rejected = [
@@ -370,8 +389,14 @@ describe('direct maintained-source completeness', () => {
       '2016-12-31T23:59:60Z\u2029',
     ];
     for (const value of rejected) {
-      expect(rfc3339TimestampMilliseconds(value), value).toBeNull();
-      expect(isStrictRfc3339Timestamp(value), value).toBe(false);
+      expect(
+        expectReturned(() => rfc3339TimestampMilliseconds(value)),
+        value,
+      ).toBeNull();
+      expect(
+        expectReturned(() => isStrictRfc3339Timestamp(value)),
+        value,
+      ).toBe(false);
     }
   });
 
@@ -495,8 +520,10 @@ describe('direct maintained-source completeness', () => {
       expectedRevision: 1,
       payload: { value: true },
     };
-    expect(validateRuntimeEnvelope(envelope)).toBe(envelope);
-    expect(consumeRuntimeEnvelope(envelope, { sourceRevision: 'source-1', currentRevision: 1 })).toBe(envelope);
+    expect(expectReturned(() => validateRuntimeEnvelope(envelope))).toBe(envelope);
+    expect(
+      expectReturned(() => consumeRuntimeEnvelope(envelope, { sourceRevision: 'source-1', currentRevision: 1 })),
+    ).toBe(envelope);
     expect(() => validateRuntimeEnvelope({ ...envelope, payload: 1n })).toThrow(/non-canonical/);
     expect(() => validateRuntimeEnvelope({ ...envelope, kind: '', operation: '' })).toThrow(
       'runtime envelope rejected: must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._/-]*$"; must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._:/-]*$"',
@@ -520,26 +547,40 @@ describe('direct maintained-source completeness', () => {
       'runtime envelope expected revision is stale',
     );
     expect(
-      localToolEnvelope.parse({ tool: 'source.read', tenant: 'tenant', project: 'project', input: {} }),
+      expectReturned(() =>
+        localToolEnvelope.parse({ tool: 'source.read', tenant: 'tenant', project: 'project', input: {} }),
+      ),
     ).toStrictEqual({
       tool: 'source.read',
       tenant: 'tenant',
       project: 'project',
       input: {},
     });
-    expect(localToolEnvelope.safeParse({ tool: '', tenant: 'tenant', project: 'project', input: {} }).success).toBe(
-      false,
+    const invalidTool = expectReturned(() =>
+      localToolEnvelope.safeParse({ tool: '', tenant: 'tenant', project: 'project', input: {} }),
     );
-    expect(
-      localToolEnvelope.safeParse({ tool: 'source.read', tenant: 'tenant', project: 'project', input: {}, extra: true })
-        .success,
-    ).toBe(false);
+    expect(invalidTool).toMatchObject({ success: false });
+    const extraToolField = expectReturned(() =>
+      localToolEnvelope.safeParse({
+        tool: 'source.read',
+        tenant: 'tenant',
+        project: 'project',
+        input: {},
+        extra: true,
+      }),
+    );
+    expect(extraToolField).toMatchObject({ success: false });
   });
 
   test('governed write builders bind and validate all evidence', () => {
     const { approval, intent, operationHash, receipt } = governedEvidence();
     expect(receipt.operation_hash).toBe(operationHash);
     const request = expectReturned(() => buildGovernedWriteRequest(intent, receipt, approval));
+    assert.ok(isPlainRecord(request));
+    expect(request.operation).toBe(intent.operation);
+    expect(request.payload).toEqual(intent.payload);
+    assert.ok(isPlainRecord(request.authorization));
+    assert.ok(isPlainRecord(request.approval));
     const unchangedAuthorization: Partial<typeof request.authorization> = {};
     const unchangedApproval: Partial<typeof request.approval> = {};
     expect(expectReturned(() => validateGovernedWriteRequest(request))).toBe(request);
@@ -570,7 +611,9 @@ describe('direct maintained-source completeness', () => {
       operation_hash: operationHash,
       issued_at: approval.approved_at,
     });
-    expect(toAuthorizationReceipt(authorizationRequest(), 'read-decision', new Date().toISOString())).toBeUndefined();
+    expect(
+      expectReturned(() => toAuthorizationReceipt(authorizationRequest(), 'read-decision', new Date().toISOString())),
+    ).toBeUndefined();
     for (const field of [
       'principal',
       'role',
@@ -624,6 +667,7 @@ describe('direct maintained-source completeness', () => {
           registryHash: authorization.registry_hash,
         }),
       );
+      expect(nextHash).toMatch(/^[a-f0-9]{64}$/);
       return {
         ...request,
         authorization: { ...authorization, operation_hash: nextHash },
@@ -854,7 +898,9 @@ describe('direct maintained-source completeness', () => {
     );
     expect(allowed).toMatchObject({ decision: 'allow', diagnostics: ['policy1'] });
     const decisionId = allowed.receipt?.decision_id;
-    const expectedDecisionId = 'cedar-' + canonicalJsonDigest(validAuthorization).slice(0, 24);
+    const authorizationDigest = expectReturned(() => canonicalJsonDigest(validAuthorization));
+    expect(authorizationDigest).toMatch(/^[a-f0-9]{64}$/);
+    const expectedDecisionId = 'cedar-' + authorizationDigest.slice(0, 24);
     expect(allowed.receipt).toMatchObject({
       schema: 'AuthorizationReceipt/v1',
       source: 'cedar',
@@ -1171,6 +1217,7 @@ describe('direct maintained-source completeness', () => {
           ...crossAuthorization,
         }),
       );
+      expect(crossOperationHash).toMatch(/^[a-f0-9]{64}$/);
       const crossIntent = {
         ...fixture.intent,
         authorization: crossAuthorization,

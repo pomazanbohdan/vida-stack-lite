@@ -5226,6 +5226,48 @@ qualified by these reviews. Baseline and Survived still require full selection;
 timeout, runtime/hook errors and incomplete custody remain UNKNOWN. Local triple
 count remains4/44 until fresh complete numerical evidence is admitted.
 
+## Mutation early-stop preparation and rolling contour queue
+
+Completed native Luna lanes immediately receive the next independent contour or
+bounded review. Root retains one writer for checkout/shared files and all final
+checks/Git. Copied candidates are preparation, not numerical closure. Current
+rolling assignments cover governance, lifecycle state, CLI toolchain and final
+assurance, with independent reviews of final contracts and mutation evidence.
+
+Mutation commands now seal the same full file argv, max-concurrency1 and bail1
+for baseline and mutants, retaining single-process execution. Baseline remains
+strict. Only an actual mutant can admit incomplete allowlisted JUnit files and
+only through existing causal assertion Killed proof; partial PASS stays unproven.
+Survived retains the complete exact baseline census. No new AST/hash/parser or
+module-end marker producer was added. Coverage does not use bail. The CLI cache
+scoped review now resolves the immutable72c6dc3b29f9ad9f3960d82ab89bbb5d846ea2bd pin.
+
+Initial owned mutation controls passed95cases and failed2 at
+/workspace/attachments/quality-rolling-cli-check-eBwJgL. Both exposed incorrect
+new expectations: hook errors are rejected by the parser, and a real concurrent
+Bun matcher failure reports zero JUnit assertions and remains unproven. Guards
+were preserved. The corrected complete async controls plus scoped CLI controls
+passed76cases/483assertions in9.65s at
+/workspace/attachments/quality-rolling-cli-check-YiWCp2. Evidence/command cases
+already passed in the initial run. A complete real Stryker pilot is still pending.
+
+Four selected main-contracts files now observe expected-success target returns
+before retaining their exact value/shape assertions; negative assertions remain.
+The full selection passed46cases and failed1 at
+/workspace/attachments/quality-rolling-cli-check-JrrKcu. Bun1.4.3 asymmetric
+toMatchObject matchers mutated a request fixture; explicit shape/scalar guards
+replace them. The corrected complete completeness file passed14cases and12543
+assertions in2.75s at /workspace/attachments/quality-rolling-cli-check-mKYZiO;
+the other three files passed in the preceding full selection. Strict test typing
+passed after preserving receipt narrowing and reverting a wrapped type predicate.
+These are development checks. No fresh numeric triple is claimed; historical
+compatible local triples remain4/44 and40contours remain open.
+
+Next: publish this checked preparation, qualify the actual serial/bail Stryker
+route on the complete69-mutant main-host partition, then refresh main-contracts
+coverage, scoped CRAP and complete mutation evidence. Freeze inputs during each
+numeric run; use the rolling workers only for copied preparation/review.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

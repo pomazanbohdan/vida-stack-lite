@@ -5,7 +5,7 @@ import { expect, test } from 'bun:test';
 import { readPin } from '../bin/bun.ts';
 import strykerConfig from '../stryker.config.ts';
 import { mutationLimits } from '../tooling/mutation-limits.ts';
-import { buildMutationTestCommand } from '../tooling/mutation-evidence.js';
+import { buildMutationTestCommand, recordedMutationCommand } from '../tooling/mutation-evidence.js';
 import {
   runStrykerPartitions,
   selectMutationPartitions,
@@ -220,16 +220,32 @@ function isMutationInventory(value: unknown): value is MutationInventory {
 }
 
 test('mutation command builder constructs the exact pinned Bun test argv', () => {
-  expect(buildMutationTestCommand('/pinned/bun', ['tests/a.test.mjs', 'tests/b.test.mjs'], '/reports/a.xml')).toEqual([
+  const command = buildMutationTestCommand('/pinned/bun', ['tests/a.test.mjs', 'tests/b.test.mjs'], '/reports/a.xml');
+  expect(command).toEqual([
     '/pinned/bun',
     'test',
     'tests/a.test.mjs',
     'tests/b.test.mjs',
+    '--max-concurrency=1',
+    '--bail=1',
     '--timeout',
     '5000',
     '--preload=./tooling/mutation-test-preload.ts',
     '--reporter=junit',
     '--reporter-outfile=/reports/a.xml',
+  ]);
+  expect(recordedMutationCommand(command)).toEqual([
+    '/pinned/bun',
+    'test',
+    'tests/a.test.mjs',
+    'tests/b.test.mjs',
+    '--max-concurrency=1',
+    '--bail=1',
+    '--timeout',
+    '5000',
+    '--preload=./tooling/mutation-test-preload.ts',
+    '--reporter=junit',
+    '--reporter-outfile=<a.xml>',
   ]);
 });
 
@@ -380,6 +396,8 @@ test('configured mutation adapter builds worker argv from the already selected p
     process.execPath,
     'test',
     'tests/a.test.ts',
+    '--max-concurrency=1',
+    '--bail=1',
     '--timeout',
     '5000',
     '--preload=./tooling/mutation-test-preload.ts',

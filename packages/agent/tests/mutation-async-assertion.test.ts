@@ -22,13 +22,27 @@ async function runAdapterChild(
   root: string,
   body: string,
   suffix: string,
-  options: { capture?: boolean; exitCode?: 0 | 1; pattern?: string; bail?: boolean } = {},
+  options: {
+    additionalFiles?: readonly { suffix: string; body: string }[];
+    bail?: boolean;
+    capture?: boolean;
+    exitCode?: 0 | 1;
+    maxConcurrency?: number;
+    parallel?: number;
+    pattern?: string;
+  } = {},
 ) {
-  const sourceFile = path.join(root, 'tests', `child-${suffix}.test.ts`);
+  const sourceFiles = [{ suffix, body }, ...(options.additionalFiles ?? [])].map(
+    ({ suffix: fileSuffix, body: fileBody }) => ({
+      file: path.join(root, 'tests', `child-${fileSuffix}.test.ts`),
+      body: fileBody,
+    }),
+  );
+  const sourceFile = sourceFiles[0]!.file;
   const receiptFile = path.join(root, `body-${suffix}.jsonl`);
   const junitFile = path.join(root, `junit-${suffix}.xml`);
-  await mkdir(path.dirname(sourceFile), { recursive: true });
-  await writeFile(sourceFile, body);
+  await mkdir(path.join(root, 'tests'), { recursive: true });
+  for (const entry of sourceFiles) await writeFile(entry.file, entry.body);
   await writeFile(receiptFile, '');
   const child = Bun.spawn(
     [
@@ -38,10 +52,12 @@ async function runAdapterChild(
       'test',
       '--preload',
       preloadPath,
-      sourceFile,
+      ...sourceFiles.map(({ file }) => file),
       '--timeout=10000',
       '--reporter=junit',
       ...(options.bail ? ['--bail=1'] : []),
+      ...(options.parallel === undefined ? [] : [`--parallel=${options.parallel}`]),
+      ...(options.maxConcurrency === undefined ? [] : [`--max-concurrency=${options.maxConcurrency}`]),
       `--reporter-outfile=${junitFile}`,
       ...(options.pattern ? ['--test-name-pattern', options.pattern] : []),
     ],
@@ -72,9 +88,13 @@ async function runAdapterChild(
     exitCode,
     stderr,
     junit,
-    events: parseMutationBodyEvents(bodyEventBytes, [path.relative(root, sourceFile)]),
+    events: parseMutationBodyEvents(
+      bodyEventBytes,
+      sourceFiles.map(({ file }) => path.relative(root, file)),
+    ),
     bodyEventBytes,
     selectedTest: path.relative(root, sourceFile),
+    selectedTests: sourceFiles.map(({ file }) => path.relative(root, file)),
   };
 }
 
@@ -299,6 +319,192 @@ writeFileSync(${JSON.stringify(registered)}, 'registered');
   } finally {
     if (passed) await rm(root, { recursive: true, force: true });
     else console.error('Retained expected-Bun-bail diagnostic fixture: ' + root);
+  }
+});
+
+test('diagnostic: bail keeps the full two-file selection and accepts only a causal partial Killed report', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-bail-multifile-'));
+  let passed = false;
+  try {
+    const firstLoaded = path.join(root, 'first-file-loaded');
+    const sameFileLaterBody = path.join(root, 'same-file-later-body-ran');
+    const secondFileLoaded = path.join(root, 'second-file-loaded');
+    const secondFileBody = path.join(root, 'second-file-body-ran');
+    const passingFirstFile = `import { expect, test } from 'bun:test';
+import { writeFileSync } from 'node:fs';
+test('first causal assertion', () => expect(1).toBe(1));
+test('later same-file body', () => writeFileSync(${JSON.stringify(sameFileLaterBody)}, 'ran'));
+writeFileSync(${JSON.stringify(firstLoaded)}, 'loaded');
+`;
+    const failingFirstFile = passingFirstFile.replace('expect(1).toBe(1)', 'expect(1).toBe(2)');
+    expect(failingFirstFile).not.toBe(passingFirstFile);
+    const secondFile = `import { test } from 'bun:test';
+import { writeFileSync } from 'node:fs';
+test('later selected file body', () => writeFileSync(${JSON.stringify(secondFileBody)}, 'ran'));
+writeFileSync(${JSON.stringify(secondFileLoaded)}, 'loaded');
+`;
+
+    const baseline = await runAdapterChild(root, passingFirstFile, 'bail-multifile', {
+      additionalFiles: [{ suffix: 'bail-multifile-later', body: secondFile }],
+      exitCode: 0,
+    });
+    expect(baseline.selectedTests).toEqual([
+      'tests/child-bail-multifile.test.ts',
+      'tests/child-bail-multifile-later.test.ts',
+    ]);
+    expect(baseline.events).toEqual([]);
+    expect(junitOutcome(baseline.junit, baseline.selectedTests, [], baseline.events)).toMatchObject({
+      tests: 3,
+      failures: 0,
+      errors: 0,
+      skipped: 0,
+      outcome: 'passed',
+    });
+    for (const marker of [firstLoaded, sameFileLaterBody, secondFileLoaded, secondFileBody])
+      expect(existsSync(marker)).toBe(true);
+
+    await Promise.all(
+      [firstLoaded, sameFileLaterBody, secondFileLoaded, secondFileBody].map((marker) => rm(marker, { force: true })),
+    );
+    const bailed = await runAdapterChild(root, failingFirstFile, 'bail-multifile', {
+      additionalFiles: [{ suffix: 'bail-multifile-later', body: secondFile }],
+      bail: true,
+    });
+    expect(bailed.selectedTests).toEqual(baseline.selectedTests);
+    expect(existsSync(firstLoaded)).toBe(true);
+    expect(existsSync(sameFileLaterBody)).toBe(false);
+    expect(existsSync(secondFileLoaded)).toBe(false);
+    expect(existsSync(secondFileBody)).toBe(false);
+
+    const cases: MutationJUnitCase[] = [];
+    const incompleteKilled = junitOutcome(
+      bailed.junit,
+      bailed.selectedTests,
+      [],
+      bailed.events,
+      (row) => cases.push(row),
+      true,
+    );
+    expect(incompleteKilled).toMatchObject({ tests: 1, failures: 1, errors: 0, skipped: 0, outcome: 'killed' });
+    expect(cases).toHaveLength(1);
+    expect(cases[0]).toMatchObject({ test_file: bailed.selectedTests[0], outcome: 'failed' });
+    expect(bailed.events).toEqual([
+      {
+        schema: 'MutationBodyEvent/v1',
+        test_file: bailed.selectedTests[0]!,
+        kind: 'body',
+        body_id: 1,
+        assertion_cause: true,
+        assertion_source: 'bun-expect',
+      },
+    ]);
+    expect(confirmedRunnerOutcome(bailed.exitCode, incompleteKilled.outcome)).toBe('killed');
+    expect(() => junitOutcome(bailed.junit, bailed.selectedTests, [], bailed.events)).toThrow(
+      'JUnit suite files do not match the selected test files.',
+    );
+    expect(junitOutcome(bailed.junit, bailed.selectedTests, [], [], undefined, true).outcome).toBe('unproven');
+
+    const partialPass = await runAdapterChild(root, passingFirstFile, 'bail-multifile', { exitCode: 0 });
+    expect(
+      junitOutcome(partialPass.junit, bailed.selectedTests, [], partialPass.events, undefined, true),
+    ).toMatchObject({ errors: 0, failures: 0, outcome: 'unproven' });
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained expected multi-file Bun-bail diagnostic fixture: ' + root);
+  }
+});
+
+test('diagnostic: bail serializes concurrent bodies while zero assertion counts stay unproven', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-bail-concurrent-slot-'));
+  let passed = false;
+  try {
+    const secondStarted = path.join(root, 'second-concurrent-body-started');
+    const secondSettled = path.join(root, 'second-concurrent-body-settled');
+    const child = await runAdapterChild(
+      root,
+      `import { expect, test } from 'bun:test';
+import { writeFileSync } from 'node:fs';
+test.concurrent('first causal failure', async () => {
+  await Promise.resolve();
+  expect(1).toBe(2);
+});
+test.concurrent('second queued body', async () => {
+  writeFileSync(${JSON.stringify(secondStarted)}, 'started');
+  await new Promise((resolve) => setTimeout(resolve, 25));
+  writeFileSync(${JSON.stringify(secondSettled)}, 'settled');
+});
+`,
+      'bail-concurrent-slot',
+      { bail: true, maxConcurrency: 1 },
+    );
+    const cases: MutationJUnitCase[] = [];
+    const outcome = junitOutcome(child.junit, [child.selectedTest], [], child.events, (row) => cases.push(row));
+    expect(outcome).toMatchObject({ tests: 1, assertions: 0, failures: 1, errors: 0, skipped: 0, outcome: 'unproven' });
+    expect(cases).toHaveLength(1);
+    expect(child.events).toMatchObject([
+      {
+        kind: 'body',
+        body_id: 1,
+        assertion_cause: true,
+        assertion_source: 'bun-expect',
+      },
+    ]);
+    expect(existsSync(secondStarted)).toBe(false);
+    expect(existsSync(secondSettled)).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained expected concurrent-slot Bun-bail diagnostic fixture: ' + root);
+  }
+});
+
+test('incomplete bail reports with runtime errors or hook failures remain unproven', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-bail-negative-controls-'));
+  let passed = false;
+  try {
+    const selected = 'tests/child-bail-runtime-error.test.ts';
+    const later = `import { test } from 'bun:test';
+test('later file body', () => {});
+`;
+    const runtimeError = await runAdapterChild(
+      root,
+      `import { test } from 'bun:test';
+test('runtime error', () => { throw new Error('runtime failure'); });
+`,
+      'bail-runtime-error',
+      { additionalFiles: [{ suffix: 'bail-runtime-error-later', body: later }], bail: true },
+    );
+    expect(runtimeError.selectedTests).toContain(selected);
+    expect(() =>
+      junitOutcome(runtimeError.junit, runtimeError.selectedTests, [], runtimeError.events, undefined, true),
+    ).toThrow('JUnit failure is not proven to be a Bun assertion failure.');
+
+    const hookFailure = await runAdapterChild(
+      root,
+      `import { beforeEach, test } from 'bun:test';
+beforeEach(() => { throw new Error('hook failure'); });
+test('body blocked by hook', () => {});
+`,
+      'bail-hook-error',
+      { additionalFiles: [{ suffix: 'bail-hook-error-later', body: later }], bail: true },
+    );
+    const hookFile = hookFailure.selectedTest;
+    expect(hookFailure.events).toContainEqual({
+      schema: 'MutationBodyEvent/v1',
+      test_file: hookFile,
+      kind: 'hook',
+      hook: 'beforeEach',
+      error_observed: true,
+    });
+    expect(() =>
+      junitOutcome(hookFailure.junit, hookFailure.selectedTests, [hookFile], hookFailure.events, undefined, true),
+    ).toThrow('JUnit failure is not proven to be a Bun assertion failure.');
+    expect(hookFailure.events.some((event) => event.kind === 'body')).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained expected incomplete-bail negative-control fixture: ' + root);
   }
 });
 

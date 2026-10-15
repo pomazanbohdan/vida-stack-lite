@@ -117,7 +117,10 @@ describe('runtime envelope canonicalization boundary', () => {
       '*',
       ...controls,
     ])
-      expect(safeWorkflowOwnedPath(`docs/${segment}/file.txt`), segment).toBe(false);
+      expect(
+        expectReturned(() => safeWorkflowOwnedPath(`docs/${segment}/file.txt`)),
+        segment,
+      ).toBe(false);
     for (const value of [
       'docs/ї🚀.txt',
       'docs/clocK$.txt',
@@ -129,10 +132,15 @@ describe('runtime envelope canonicalization boundary', () => {
       'docs/.GiT\u2028',
       'docs/\u2029',
     ])
-      expect(safeWorkflowOwnedPath(value), value).toBe(true);
+      expect(
+        expectReturned(() => safeWorkflowOwnedPath(value)),
+        value,
+      ).toBe(true);
     for (const value of [null, undefined, 1, {}, []]) {
-      expect(Reflect.apply(safeWorkflowOwnedPath, undefined, [value])).toBe(false);
-      expect(Reflect.apply(safeHistoricalWorkflowOwnedPath, undefined, [value])).toBe(false);
+      expect(expectReturned((): unknown => Reflect.apply(safeWorkflowOwnedPath, undefined, [value]))).toBe(false);
+      expect(expectReturned((): unknown => Reflect.apply(safeHistoricalWorkflowOwnedPath, undefined, [value]))).toBe(
+        false,
+      );
     }
     const ordinarySegment = fc
       .array(fc.constantFrom('a', 'Z', '0', '_', '-', 'ї', 'α', 'K', 'ſ'), {
@@ -145,8 +153,8 @@ describe('runtime envelope canonicalization boundary', () => {
       .map((segments) => segments.join('/'));
     assertProperty(
       fc.property(ordinaryPath, fc.constantFrom(...controls), (value, control) => {
-        expect(safeWorkflowOwnedPath(value)).toBe(true);
-        expect(safeWorkflowOwnedPath(`${value}${control}.txt`)).toBe(false);
+        expect(expectReturned(() => safeWorkflowOwnedPath(value))).toBe(true);
+        expect(expectReturned(() => safeWorkflowOwnedPath(`${value}${control}.txt`))).toBe(false);
       }),
       { seed: 20261011, numRuns: 256 },
     );
@@ -159,7 +167,9 @@ describe('runtime envelope canonicalization boundary', () => {
         fc.oneof(arbitraryPath, fc.constantFrom('src/**', 'docs/[a-z]/{x,y}.?', 'a\\b', '.git/**')),
         (value) => {
           const probe = Array.from(value, (character) => (probeCharacters.has(character) ? 'x' : character)).join('');
-          expect(safeHistoricalWorkflowOwnedPath(value)).toBe(safeWorkflowOwnedPath(probe));
+          const historical = expectReturned(() => safeHistoricalWorkflowOwnedPath(value));
+          const current = expectReturned(() => safeWorkflowOwnedPath(probe));
+          expect(historical).toBe(current);
         },
       ),
       { seed: 20261012, numRuns: 256 },
@@ -205,9 +215,15 @@ describe('runtime envelope canonicalization boundary', () => {
       expect(() => consumeRuntimeEnvelope(envelope, binding)).toThrow(message);
 
     for (const unsafe of ['', '.', '..', '.git/config', 'folder/../file', 'folder\\file', 'C:/file', 'NUL.txt'])
-      expect(safeWorkflowOwnedPath(unsafe), unsafe).toBe(false);
+      expect(
+        expectReturned(() => safeWorkflowOwnedPath(unsafe)),
+        unsafe,
+      ).toBe(false);
     for (const safe of ['WORK.md', '.agent/work/run/WORK.md', 'folder name/file.json'])
-      expect(safeWorkflowOwnedPath(safe), safe).toBe(true);
+      expect(
+        expectReturned(() => safeWorkflowOwnedPath(safe)),
+        safe,
+      ).toBe(true);
   });
 
   test("rejects a ticket that lists another ticket's claim", async () => {
@@ -615,7 +631,10 @@ describe('runtime envelope canonicalization boundary', () => {
       frozen: true,
       created_at: '2026-09-18T00:00:00.000Z',
     };
-    const contour = { ...contourIdentity, contour_digest: canonicalJsonDigest(contourIdentity) };
+    const contourDigest = expectReturned(() => canonicalJsonDigest(contourIdentity));
+    expect(typeof contourDigest).toBe('string');
+    expect(contourDigest).toMatch(/^[a-f0-9]{64}$/);
+    const contour = { ...contourIdentity, contour_digest: contourDigest };
     const assurance = {
       schema: 'CoordinationOperation/v1',
       operation_id: 'operation-assurance-1',

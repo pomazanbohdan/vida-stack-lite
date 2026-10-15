@@ -113,8 +113,114 @@ describe('mutation JUnit attribution', () => {
     expect(strykerConfig.commandRunner.command).toBe('bun tooling/mutation-command-runner.ts');
   });
 
+  test('binds serial fail-fast flags into the exact baseline and mutant command', () => {
+    expect(buildMutationTestCommand('/pinned/bun', ['tests/a.test.ts', 'tests/b.test.ts'], '/reports/run.xml')).toEqual(
+      [
+        '/pinned/bun',
+        'test',
+        'tests/a.test.ts',
+        'tests/b.test.ts',
+        '--max-concurrency=1',
+        '--bail=1',
+        '--timeout',
+        '5000',
+        '--preload=./tooling/mutation-test-preload.ts',
+        '--reporter=junit',
+        '--reporter-outfile=/reports/run.xml',
+      ],
+    );
+  });
+
   test('accepts a nonempty passing report with reconciled suite counters', () => {
     expect(junitOutcome(report(), ['tests/one.test.mjs']).outcome).toBe('passed');
+  });
+
+  test('permits selected-suite subsets only for causally confirmed assertion kills', () => {
+    const selected = ['tests/a.test.ts', 'tests/b.test.ts'];
+    const failing = (file: string, id: number) =>
+      `<testsuites name="bun test" tests="1" assertions="1" failures="1" skipped="0"><testsuite file="${file}" tests="1" assertions="1" failures="1" skipped="0"><testcase name="[mutation-body:${id}] assert" file="${file}" assertions="1"><failure type="AssertionError">expected value</failure></testcase></testsuite></testsuites>`;
+    const passing = (file: string) =>
+      `<testsuites name="bun test" tests="1" assertions="1" failures="0" skipped="0"><testsuite file="${file}" tests="1" assertions="1" failures="0" skipped="0"><testcase name="ok" file="${file}" assertions="1"/></testsuite></testsuites>`;
+    const matchingBody = [
+      {
+        schema: 'MutationBodyEvent/v1' as const,
+        test_file: 'tests/a.test.ts',
+        kind: 'body' as const,
+        body_id: 7,
+        assertion_cause: true,
+        assertion_source: 'bun-expect' as const,
+      },
+    ];
+
+    expect(() => junitOutcome(failing('tests/a.test.ts', 7), selected, [], matchingBody)).toThrow(
+      /selected test files/u,
+    );
+    const killed = junitOutcome(failing('tests/a.test.ts', 7), selected, [], matchingBody, undefined, true);
+    expect(killed.outcome).toBe('killed');
+    expect(confirmedRunnerOutcome(1, killed.outcome)).toBe('killed');
+
+    const partialPass = junitOutcome(passing('tests/a.test.ts'), selected, [], [], undefined, true);
+    expect(partialPass.outcome).toBe('unproven');
+    expect(confirmedRunnerOutcome(0, partialPass.outcome)).toBe('unknown');
+  });
+
+  test('subset mode retains foreign, duplicate, counter, body, hook, runtime and XML denials', () => {
+    const selected = ['tests/a.test.ts', 'tests/b.test.ts'];
+    const body = {
+      schema: 'MutationBodyEvent/v1' as const,
+      test_file: 'tests/a.test.ts',
+      kind: 'body' as const,
+      body_id: 7,
+      assertion_cause: true,
+      assertion_source: 'bun-expect' as const,
+    };
+    const singleFailure = (file: string, id: number, rootTests = 1, suiteTests = 1) =>
+      `<testsuites name="bun test" tests="${rootTests}" assertions="1" failures="1" skipped="0"><testsuite file="${file}" tests="${suiteTests}" assertions="1" failures="1" skipped="0"><testcase name="[mutation-body:${id}] assert" file="${file}" assertions="1"><failure type="AssertionError">expected value</failure></testcase></testsuite></testsuites>`;
+
+    expect(() =>
+      junitOutcome(singleFailure('tests/foreign.test.ts', 7), selected, [], [body], undefined, true),
+    ).toThrow(/selected test files/u);
+    const duplicateSuite = `<testsuites name="bun test" tests="2" assertions="2" failures="0" skipped="0"><testsuite file="tests/a.test.ts" tests="1" assertions="1" failures="0" skipped="0"><testcase name="one" file="tests/a.test.ts" assertions="1"/></testsuite><testsuite file="tests/a.test.ts" tests="1" assertions="1" failures="0" skipped="0"><testcase name="two" file="tests/a.test.ts" assertions="1"/></testsuite></testsuites>`;
+    expect(() => junitOutcome(duplicateSuite, selected, [], [], undefined, true)).toThrow(/selected test files/u);
+    expect(() => junitOutcome(singleFailure('tests/a.test.ts', 7, 2), selected, [], [body], undefined, true)).toThrow(
+      /counter/u,
+    );
+
+    const unmatched = { ...body, body_id: 8 };
+    const unmatchedResult = junitOutcome(
+      singleFailure('tests/a.test.ts', 7),
+      selected,
+      [],
+      [unmatched],
+      undefined,
+      true,
+    );
+    expect(unmatchedResult.outcome).toBe('unproven');
+    expect(confirmedRunnerOutcome(1, unmatchedResult.outcome)).toBe('unknown');
+
+    const hookResult = junitOutcome(
+      singleFailure('tests/a.test.ts', 7),
+      selected,
+      [],
+      [
+        body,
+        {
+          schema: 'MutationBodyEvent/v1',
+          test_file: 'tests/a.test.ts',
+          kind: 'hook',
+          hook: 'afterEach',
+          error_observed: true,
+        },
+      ],
+      undefined,
+      true,
+    );
+    expect(hookResult.outcome).toBe('unproven');
+    const runtimeError = `<testsuites name="bun test" tests="1" assertions="0" failures="0" errors="1" skipped="0"><testsuite file="tests/a.test.ts" tests="1" assertions="0" failures="0" errors="1" skipped="0"><testcase name="runtime error" file="tests/a.test.ts" assertions="0"><error type="Error">runtime failed</error></testcase></testsuite></testsuites>`;
+    const errorResult = junitOutcome(runtimeError, selected, [], [], undefined, true);
+    expect(errorResult.outcome).toBe('unproven');
+    expect(confirmedRunnerOutcome(1, errorResult.outcome)).toBe('unknown');
+    expect(() => junitOutcome('<testsuites><', selected, [], [], undefined, true)).toThrow(/malformed/u);
   });
 
   test('accepts a passing baseline with uninstrumented lifecycle hooks', () => {

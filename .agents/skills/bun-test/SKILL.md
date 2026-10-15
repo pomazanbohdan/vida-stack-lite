@@ -154,6 +154,16 @@ For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and
 check the descriptor's rejection stage before investigating assertions. A
 known survivor is a mutation failure; an input/process failure is UNKNOWN.
+For mutation-only early stopping, keep the full selected file argv and identical
+`--max-concurrency=1 --bail=1` settings for baseline and mutants. Preserve the
+single-process runner. Baseline and Survived require complete native JUnit
+evidence; only an actual mutant may use a nonempty allowlisted file subset to
+prove the existing causal assertion Killed outcome. Partial PASS is unproven.
+Reuse the sealed command, body events and receipt parser; do not add module-end
+markers or depend on afterAll completion after bail. Bun's concurrent-case
+zero-assertion counter remains unproven even with a body matcher event. Qualify
+this route with real Bun controls and a complete declared Stryker partition
+before relying on throughput. Coverage remains complete and non-bailing.
 For opt-in per-test capture controls, join the exact body/file token, runtime
 coverage key, causal assertion event and full JUnit skipped counts. Absent and
 observed-empty coverage maps are distinct. Callback-less todo/skip registrations

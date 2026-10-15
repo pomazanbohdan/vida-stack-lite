@@ -795,6 +795,24 @@ not qualify Stryker's full mutant universe or parallel coverage shards.
 Stryker's score-based process exit is disabled; VIDA alone enforces100%
 assertion-confirmed Killed after admitting complete process and receipt evidence.
 A surviving mutant remains a gate failure, not an infrastructure UNKNOWN.
+
+Mutation baseline and mutant commands share the full selected file argv,
+`--max-concurrency=1 --bail=1`, the5s case limit and the existing reporter/preload.
+Keep the existing single-process file mode; do not add workers or test filters.
+The exact command remains bound by the existing execution identity and receipt.
+Coverage keeps its complete non-bailing command.
+
+Baseline admission retains strict selected-file completeness and the passing
+native JUnit case census. A Survived candidate must preserve its exact raw
+file/name/outcome multiset, including intentional skips and duplicate rows.
+Only confirmation of an actual mutant ID may accept a subset of selected JUnit
+suite files, and only when the existing exact assertion/body proof classifies it
+as Killed. Omitted cases remain unobserved. Foreign/duplicate files, inconsistent
+counters, runtime/hook errors, incomplete receipts, timeout, signal or uncertain
+process custody remain UNKNOWN. A partial passing report cannot establish PASS.
+Qualify behavior with owned Bun controls and a real complete declared-partition
+Stryker pilot before relying on this path; controls alone are not a score.
+
 An explicit child environment replaces inheritance; removed parent variables
 must not reappear. Completed output capture must dispose of its deadline timer.
 Static Source inventory excludes only declared package-root .tmp evidence
@@ -1354,6 +1372,10 @@ On the qualified Bun 1.4.3, a local inert control showed that `[test] timeout`
 in TOML did not enforce the requested timeout; use the CLI option. Another
 control showed `--bail=1` skips preload `afterAll` finalization on first failure.
 Do not enable bailout in final coverage or admit a missing process receipt.
+The concurrent-body bail control emitted a zero JUnit assertion count despite a
+causal Bun matcher event. It remains unproven under the current strict classifier;
+do not infer Killed from the body event alone or confuse this with the separately
+qualified zero-count Node assertion case.
 
 The launcher and ordinary test phases have no implicit aggregate deadline. Explicit caller, case, probe, repair, installation and cleanup bounds still apply. Do not turn an unbounded duration into an infinite native timeout value.
 

@@ -85,7 +85,9 @@ describe('deterministic shrinking fuzz boundaries', () => {
       fc.property(valid, (value) => {
         expect(() => assertCanonicalJsonValue(value)).not.toThrow();
         const expected: unknown = JSON.parse(JSON.stringify(value));
-        const actual: unknown = JSON.parse(canonicalJson(value));
+        const serialized = expectReturned(() => canonicalJson(value));
+        expect(typeof serialized).toBe('string');
+        const actual: unknown = JSON.parse(serialized);
         expect(actual).toEqual(expected);
       }),
       parameters,
@@ -110,7 +112,9 @@ describe('deterministic shrinking fuzz boundaries', () => {
     expect(value.left).toBe(value.right);
     expect(() => assertCanonicalJsonValue(value)).not.toThrow();
     const expected: unknown = JSON.parse(JSON.stringify(value));
-    const actual: unknown = JSON.parse(canonicalJson(value));
+    const serialized = expectReturned(() => canonicalJson(value));
+    expect(typeof serialized).toBe('string');
+    const actual: unknown = JSON.parse(serialized);
     expect(actual).toEqual(expected);
     expect(value.left).toBe(value.right);
   });
@@ -165,7 +169,8 @@ describe('deterministic shrinking fuzz boundaries', () => {
     const authorizer = configuredAuthorizer();
     assertProperty(
       fc.property(unknownValue, (value) => {
-        const result = authorizer(value, undefined, context);
+        const result = expectReturned(() => authorizer(value, undefined, context));
+        expect(result).toBeDefined();
         expect(result).toMatchObject({ decision: 'deny' });
         expect(Array.isArray(result.diagnostics)).toBe(true);
         expect(result.diagnostics.length).toBeGreaterThan(0);
@@ -196,7 +201,9 @@ describe('deterministic shrinking fuzz boundaries', () => {
       project: request.project,
       registry_hash: context.registry_hash,
     };
-    expect(authorizer(request, identity, context)).toMatchObject({ decision: 'allow' });
+    const allowed = expectReturned(() => authorizer(request, identity, context));
+    expect(allowed).toBeDefined();
+    expect(allowed).toMatchObject({ decision: 'allow' });
     assertProperty(
       fc.property(
         fc.constantFrom('principal', 'role', 'action', 'tenant', 'project', 'registryHash', 'operationHash'),
@@ -204,7 +211,8 @@ describe('deterministic shrinking fuzz boundaries', () => {
         (field, value) => {
           const malformed = { ...request, [field]: value };
           expect(() => validateAuthorizationRequest(malformed)).toThrow();
-          const result = authorizer(malformed, identity, context);
+          const result = expectReturned(() => authorizer(malformed, identity, context));
+          expect(result).toBeDefined();
           expect(result).toMatchObject({ decision: 'deny' });
           expect(Array.isArray(result.diagnostics)).toBe(true);
           expect(result.diagnostics.length).toBeGreaterThan(0);

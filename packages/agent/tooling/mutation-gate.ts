@@ -435,6 +435,7 @@ async function confirmRunnerReceipt(
       hookGaps,
       bodyEvents,
       (row) => cases.push(row),
+      mutantId !== null,
     );
     const result = confirmedRunnerOutcome(receipt.exit_code, outcome.outcome);
     if (result === 'passed') {

@@ -641,7 +641,12 @@ describe('machine-checked public export ZOMBIES matrix', () => {
   test('Many: repeated public computations remain deterministic and isolated', () => {
     const digests = Array.from({ length: 64 }, () => runtime.runtimeConfigDigest(config));
     expect(new Set(digests).size).toBe(1);
-    expect(Array.from({ length: 64 }, () => runtime.validateRuntimeEnvelope(validEnvelope()))).toHaveLength(64);
+    const envelopes = Array.from({ length: 64 }, () => {
+      const input = validEnvelope();
+      return { input, returned: runtime.validateRuntimeEnvelope(input) };
+    });
+    expect(envelopes).toHaveLength(64);
+    for (const { input, returned } of envelopes) expect(returned).toBe(input);
   });
 
   test('Boundary: traversal and stale revision edges are rejected', () => {
