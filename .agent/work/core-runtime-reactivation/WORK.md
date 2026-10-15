@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `41441b0` at origin/main.
+- Published predecessor: `bbb5c2a` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -84,6 +84,14 @@ project copy, and an omitted second-project integration binding. Corrected
 fixtures reach the intended kernel boundary; these are not reported product
 bugs. No-effect caller qualification, native Windows semantics and the per-test
 runner remain open. Do not fabricate these paths or replay old UNKNOWN effects.
+
+Packet bbb5c2a passed the strict hook and was pushed to main. The two-project
+control was then strengthened to return schema-valid unsorted project IDs from
+the resolver itself, so a missing normalization cannot hide behind an already
+sorted fixture callback. The public invocation must still contain the exact
+authenticated sorted set; this control passes1/1 with9assertions, while the test
+program again passes445files. Evidence:
+`quality-kernel-multiproject-rebound-vbbb-20261015.log` under attachments.
 
 After checked Source publication, collect one fresh unchanged five-file kernel
 coverage/CC/entry-CRAP diagnostic, compare its function inventory/ceilings and

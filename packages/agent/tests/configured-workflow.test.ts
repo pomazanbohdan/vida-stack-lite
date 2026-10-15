@@ -1450,7 +1450,15 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       'a-project',
       'example-project',
     ]).integrations_digest;
-    const host = await compose();
+    const host = await compose(undefined, undefined, undefined, (invocation) => {
+      const context = fixtureWorkContext(invocation);
+      setFixtureField(
+        context.binding,
+        'project_ids',
+        config.projects.map((entry) => entry.project_id),
+      );
+      return context;
+    });
     await assert.doesNotReject(() => dispatchFixture(host.workflowExecutionCapability, request()));
     const context = requireFixtureValue(calls[0]).workContext;
     expect(context.schema).toBe('WorkExecutionContext/v1');
