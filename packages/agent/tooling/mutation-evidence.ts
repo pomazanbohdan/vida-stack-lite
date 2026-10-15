@@ -1017,3 +1017,17 @@ export async function collectExecutionIdentity(input: {
     tool_fingerprint: input.toolFingerprint,
   };
 }
+
+/** Parent projection only; the byte observation needs fresh full hashes at both validation boundaries. */
+export function executionIdentityForInvocation(
+  observation: Awaited<ReturnType<typeof collectExecutionIdentity>>,
+  command: readonly string[],
+  tests: readonly string[],
+) {
+  return {
+    ...observation,
+    bun_executable_file: { ...observation.bun_executable_file },
+    command: [...command],
+    test_files: [...tests],
+  };
+}

@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `e191740` at origin/main.
+- Published predecessor: `4ff4714` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1109,6 +1109,48 @@ corrected without weakening identity or cleanup semantics. Independent review:
 quality-global-mutant-map-actual-review-e19-20261015.md. Next publish this coherent
 packet, then qualify one real existing small partition with required map
 artifacts before returning to kernel per-test runner and remaining12functions.
+
+Packet4ff4714 passed strict format/type/lint/Knip and nonforce push. Its real
+main-host pilot passed69/69assertion-confirmed Killed, effective score1,
+0unknown/non-killed/provenance/baseline/source mismatches. Pilot v2/global map
+v1 remain globally unqualified; the index retains149Source files and45contours.
+Outer131095.313ms, full output, same boot and owned groups observed gone:
+quality-global-mutant-map-host-pilot-4ff-20261015.log and compact
+quality-global-mutant-map-host-summary-4ff-20261015.json. Retain outer
+quality-mutation-global-map-host-4ff4714-N3uRhj and physical host-tmpfs root
+/tmp/quality-global-map-host-functional-ZfIVnN/package-tmp/mutation-evidence-
+0ef3a8d3-58c8-4359-afac-e33175ef5939-Ci0CvT. No installed/native acceptance.
+
+Stryker reports35s; the remaining~96s has no phase attribution yet. Independent
+bounded review found concrete parent duplication:70full hashes of the same
+89979072byte Bun (~6.3GB) and70analyses of the identical captured test/import
+closure. This is a counted workload, not a measured cause for all overhead:
+quality-mutation-capture-cost-review-4ff-20261015.md.
+
+Current bounded optimization prepares one byte-bound parent validation context
+per reported partition, including one lifecycle analysis of captured bytes.
+Each receipt derives only its exact command/test selection from that context;
+arrays/file metadata are copied. A fresh complete executable identity/hash after
+all receipt joins must match the before observation exactly. Drift or failed
+after-check revokes affected confirmed Killed/Survived to UNKNOWN, invalidates
+baseline/provenance and keeps its map unqualified. Child before/after full hashes,
+receipt schema, current Source checks and all assertion/custody gates stay intact.
+No global cache or stat-only shortcut. New aggregate receipt-validation timing
+records identity/lifecycle time and actual observation/analysis counts.
+
+Focused74PASS/450assertions/4files/1.032s, including real controlled-file byte
+drift, same-byte inode replacement, fresh-projection equality and alias isolation;
+existing stale/wrong-command/hook/UNKNOWN controls remain selected. Independent
+review found the missing direct after-digest rejection control; it now changes
+only execution_identity_after_digest and confirms receipt rejection.
+Static478captured/477checkedTS and101Sourcechecked/0diagnostics:
+quality-mutation-parent-context-reviewed-focused-4ff-20261015.log and
+quality-mutation-parent-context-static-4ff-20261015.log. Source review:
+quality-mutation-parent-context-actual-review-4ff-20261015.md. The final partition
+downgrade path was reviewed but not fault-injected at gate level; controlled-file
+tests prove identity drift detection, not an executed gate-level downgrade.
+Publish after strict checks, then repeat the same69mutant contour once to verify score and measure
+the new boundary timings. Do not infer speedup from reduced operation counts.
 
 Range-only mutation slicing is not generally complete for ancestor-spanning
 mutants. Installed Stryker supports mutator-name exclusion buckets as a candidate

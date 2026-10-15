@@ -23,6 +23,8 @@ import { qualityInputs, qualityFingerprint, repositoryRootForPackage, sha256 } f
 import {
   buildMutationTestCommand,
   collectExecutionIdentity,
+  executionIdentityForInvocation,
+  executionIdentityDigest,
   confirmedRunnerOutcome,
   executeMutationCommand,
   junitOutcome,
@@ -45,6 +47,10 @@ const strykerPartitionDeadlineMs = mutationLimits.partitionMs;
 const maximumStrykerDeadlineMs = 4 * 60 * 60 * 1000;
 
 type QualityInputs = Awaited<ReturnType<typeof qualityInputs>>;
+type ReceiptValidationContext = {
+  identity: Awaited<ReturnType<typeof collectExecutionIdentity>>;
+  hookFiles: string[];
+};
 export type MutationPartition = {
   name: string;
   environment?: string;
@@ -367,26 +373,14 @@ async function confirmRunnerReceipt(
   fingerprint: string,
   partitionSources: string[],
   partitionSourceFingerprint: string,
+  context: ReceiptValidationContext,
 ): Promise<ReceiptOutcome> {
   try {
     const junitFile = junitName(partition, mutantId);
     const command = buildMutationTestCommand(process.execPath, tests, path.join(reportDirectory, junitFile));
     const testContext = mutationTestContextBinding(path.join(reportDirectory, junitFile), inputs.tool_inputs);
     const sandboxRoot = path.join(reportDirectory, 'stryker-tmp');
-    const expectedIdentity = await collectExecutionIdentity({
-      executable: process.execPath,
-      cwd: sandboxRoot,
-      packageRoot: sandboxRoot,
-      sandboxRoot,
-      command,
-      tests,
-      sourceFingerprint: inputs.source_fingerprint,
-      testFingerprint: inputs.test_fingerprint,
-      toolFingerprint: inputs.tool_fingerprint,
-      bunVersion: process.versions.bun ?? '',
-      platform: process.platform,
-      arch: process.arch,
-    });
+    const expectedIdentity = executionIdentityForInvocation(context.identity, command, tests);
     const receiptBytes = await readBoundedEvidence(reportDirectory, receiptName(partition, mutantId));
     const receipt: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(receiptBytes));
     const stdoutFile = junitFile.replace(/\.xml$/u, '.stdout.log');
@@ -426,7 +420,7 @@ async function confirmRunnerReceipt(
     if (sha256(bodyBytes) !== receipt.body_events_sha256 || bodyBytes.length !== receipt.body_events_bytes)
       throw new Error('Mutation body events differ from the runner receipt.');
     const bodyEvents = parseMutationBodyEvents(bodyBytes, tests);
-    const hookGaps = testFilesWithLifecycleHooks(tests, inputs.input_bytes);
+    const hookGaps = context.hookFiles;
     const outcome = junitOutcome(
       new TextDecoder('utf-8', { fatal: true }).decode(junitBytes),
       tests,
@@ -1290,9 +1284,54 @@ async function runMutationGate(): Promise<void> {
       }
     }
 
+    const validationStarted = performance.now();
+    const validationTiming = {
+      elapsed_ms: 0,
+      identity_ms: 0,
+      lifecycle_ms: 0,
+      identity_observations: 0,
+      lifecycle_analyses: 0,
+    };
+    const contexts = new Map<string, ReceiptValidationContext>();
+    const readParentIdentity = async (tests: string[]) => {
+      const start = performance.now();
+      validationTiming.identity_observations++;
+      const sandboxRoot = path.join(reportDirectory, 'stryker-tmp');
+      try {
+        return await collectExecutionIdentity({
+          executable: process.execPath,
+          cwd: sandboxRoot,
+          packageRoot: sandboxRoot,
+          sandboxRoot,
+          command: [],
+          tests,
+          sourceFingerprint: inputs.source_fingerprint,
+          testFingerprint: inputs.test_fingerprint,
+          toolFingerprint: inputs.tool_fingerprint,
+          bunVersion: process.versions.bun ?? '',
+          platform: process.platform,
+          arch: process.arch,
+        });
+      } finally {
+        validationTiming.identity_ms += performance.now() - start;
+      }
+    };
+    for (const report of reports) {
+      try {
+        const identity = await readParentIdentity(report.tests ?? []);
+        const start = performance.now();
+        const hookFiles = testFilesWithLifecycleHooks(report.tests ?? [], inputs.input_bytes);
+        validationTiming.lifecycle_ms += performance.now() - start;
+        validationTiming.lifecycle_analyses++;
+        contexts.set(report.name, { identity, hookFiles });
+      } catch (error) {
+        provenanceErrors.push({ partition: report.name, error: `Receipt validation context: ${String(error)}` });
+      }
+    }
     const baselineChecks = new Map<string, ReceiptOutcome>();
     const baselineErrors: Array<{ partition: string } & ReceiptOutcome> = [];
     for (const { name, tests, result, sources, requiredReportedSource } of reports) {
+      const context = contexts.get(name);
       const sourceBinding = mutationPartitionSourceBinding(
         name,
         sources ?? (requiredReportedSource ? [requiredReportedSource] : []),
@@ -1300,7 +1339,7 @@ async function runMutationGate(): Promise<void> {
       );
       const outcome: ReceiptOutcome =
         result.exitCode === 0 && !result.timed_out && !result.signalCode && result.output_complete
-          ? sourceBinding
+          ? sourceBinding && context
             ? await confirmRunnerReceipt(
                 reportDirectory,
                 runId,
@@ -1311,8 +1350,9 @@ async function runMutationGate(): Promise<void> {
                 fingerprint,
                 sourceBinding.sources,
                 sourceBinding.fingerprint,
+                context,
               )
-            : { status: 'unknown', reason: 'Partition source binding is incomplete.' }
+            : { status: 'unknown', reason: 'Partition source or byte-bound validation context is incomplete.' }
           : { status: 'unknown', reason: 'Stryker partition did not exit cleanly inside its trusted deadline.' };
       baselineChecks.set(name, outcome);
       if (outcome.status !== 'passed') baselineErrors.push({ partition: name, ...outcome });
@@ -1365,6 +1405,7 @@ async function runMutationGate(): Promise<void> {
             confirmationReason = 'Stryker did not execute tests for this mutant.';
           } else if (typeof mutant.id === 'string' && ['Killed', 'Survived'].includes(mutant.status)) {
             const sourceBinding = sourceBindings.get(name);
+            const context = contexts.get(name);
             const baseline = baselineChecks.get(name);
             const observed =
               result.exitCode === 0 &&
@@ -1372,7 +1413,7 @@ async function runMutationGate(): Promise<void> {
               !result.signalCode &&
               result.output_complete &&
               baseline?.status === 'passed'
-                ? sourceBinding
+                ? sourceBinding && context
                   ? await confirmRunnerReceipt(
                       reportDirectory,
                       runId,
@@ -1383,6 +1424,7 @@ async function runMutationGate(): Promise<void> {
                       fingerprint,
                       sourceBinding.sources,
                       sourceBinding.fingerprint,
+                      context,
                     )
                   : { status: 'unknown', reason: 'Partition source binding is incomplete.' }
                 : (baseline ?? { status: 'unknown', reason: 'Partition baseline is missing.' });
@@ -1422,6 +1464,26 @@ async function runMutationGate(): Promise<void> {
       values[mutant.status] = (values[mutant.status] ?? 0) + 1;
       return values;
     }, {});
+    for (const [name, context] of contexts) {
+      try {
+        const current = await readParentIdentity(context.identity.test_files);
+        if (executionIdentityDigest(current) !== executionIdentityDigest(context.identity))
+          throw new Error('Pinned Bun identity changed across parent receipt validation.');
+      } catch (error) {
+        const reason = String(error);
+        provenanceErrors.push({ partition: name, error: reason });
+        const unknown = { status: 'unknown', reason } as const;
+        baselineChecks.set(name, unknown);
+        baselineErrors.push({ partition: name, ...unknown });
+        for (const mutant of mutants)
+          if (mutant.partition === name && ['Killed', 'Survived'].includes(mutant.confirmed_status)) {
+            mutant.confirmed_status = 'unknown';
+            mutant.confirmation_reason = reason;
+            unknownMutants.push({ partition: name, mutant_id: mutant.id, reason });
+          }
+      }
+    }
+    validationTiming.elapsed_ms = performance.now() - validationStarted;
     const mapObservations = new Map<
       string,
       {
@@ -1570,6 +1632,7 @@ async function runMutationGate(): Promise<void> {
               : 'pilot-pass'
             : 'fail',
       runner_exit_codes: runnerExitCodes,
+      receipt_validation_timing: validationTiming,
       runner_outputs: runs.map(({ name, result }) => ({
         partition: name,
         stdout: result.stdout_capture,

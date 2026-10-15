@@ -1,9 +1,14 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import strykerConfig from '../stryker.config.ts';
+import { mkdtemp, writeFile, rm, rename } from 'node:fs/promises';
+import path from 'node:path';
+import os from 'node:os';
 import {
   buildMutationTestCommand,
   confirmedRunnerOutcome,
   executionIdentityDigest,
+  collectExecutionIdentity,
+  executionIdentityForInvocation,
   executeMutationCommand,
   junitOutcome,
   mutationReceiptMatches,
@@ -11,6 +16,85 @@ import {
   settleTimedOutChild,
   testFilesWithLifecycleHooks,
 } from '../tooling/mutation-evidence.ts';
+
+test('parent invocation projection matches a fresh identity and isolates command/test/file metadata aliases', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'mutation-parent-identity-'));
+  let passed = false;
+  try {
+    const executable = path.join(root, 'fixture-executable');
+    await writeFile(executable, 'controlled byte identity fixture');
+    const input = {
+      executable,
+      cwd: root,
+      packageRoot: root,
+      sandboxRoot: root,
+      command: [],
+      tests: [],
+      sourceFingerprint: 'a'.repeat(64),
+      testFingerprint: 'b'.repeat(64),
+      toolFingerprint: 'c'.repeat(64),
+      bunVersion: process.versions.bun!,
+      platform: process.platform,
+      arch: process.arch,
+    };
+    const observation = await collectExecutionIdentity(input);
+    const command = ['bun', 'test', './tests/one.test.ts'];
+    const tests = ['tests/one.test.ts'];
+    const projected = executionIdentityForInvocation(observation, command, tests);
+    const fresh = await collectExecutionIdentity({ ...input, command, tests });
+    expect(projected).toEqual(fresh);
+    expect(executionIdentityDigest(projected)).toBe(executionIdentityDigest(fresh));
+    command.push('changed');
+    tests.push('tests/foreign.test.ts');
+    expect(projected.command).toEqual(['bun', 'test', './tests/one.test.ts']);
+    expect(projected.test_files).toEqual(['tests/one.test.ts']);
+    projected.bun_executable_file.inode = 'changed';
+    expect(observation.bun_executable_file.inode).not.toBe('changed');
+    expect(observation.test_files).toEqual([]);
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained parent identity projection fixture: ' + root);
+  }
+});
+
+test('fresh validation boundary detects both byte drift and same-byte inode replacement', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'mutation-parent-identity-drift-'));
+  let passed = false;
+  try {
+    const executable = path.join(root, 'fixture-executable');
+    await writeFile(executable, 'original controlled image');
+    const input = {
+      executable,
+      cwd: root,
+      packageRoot: root,
+      sandboxRoot: root,
+      command: [],
+      tests: [],
+      sourceFingerprint: 'a'.repeat(64),
+      testFingerprint: 'b'.repeat(64),
+      toolFingerprint: 'c'.repeat(64),
+      bunVersion: process.versions.bun!,
+      platform: process.platform,
+      arch: process.arch,
+    };
+    const original = await collectExecutionIdentity(input);
+    await writeFile(executable, 'modified controlled image');
+    const modified = await collectExecutionIdentity(input);
+    expect(modified.bun_executable_sha256).not.toBe(original.bun_executable_sha256);
+    expect(executionIdentityDigest(modified)).not.toBe(executionIdentityDigest(original));
+    const replacement = path.join(root, 'replacement');
+    await writeFile(replacement, 'modified controlled image');
+    await rename(replacement, executable);
+    const replaced = await collectExecutionIdentity(input);
+    expect(replaced.bun_executable_sha256).toBe(modified.bun_executable_sha256);
+    expect(executionIdentityDigest(replaced)).not.toBe(executionIdentityDigest(modified));
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained parent identity drift fixture: ' + root);
+  }
+});
 
 const report = ({
   tests = 1,
@@ -352,6 +436,12 @@ describe('mutation execution receipts', () => {
 
   test('binds baseline receipt to the exact test, command, runtime, cwd and sandbox', () => {
     expect(mutationReceiptMatches(receipt(), expected)).toBe(true);
+  });
+
+  test('rejects a changed after-execution identity digest with the original identity otherwise intact', () => {
+    expect(mutationReceiptMatches({ ...receipt(), execution_identity_after_digest: '0'.repeat(64) }, expected)).toBe(
+      false,
+    );
   });
 
   test('binds a configured context receipt to its private root and exact captured inputs', () => {

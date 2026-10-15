@@ -829,6 +829,16 @@ global map and its exact Source domain; a local pilot cannot qualify it globally
 Function/scenario associations without a current shared inventory stay explicit
 gaps; no extra Source parse, scan or hash pass is added for this projection.
 
+Parent receipt validation reuses one partition-local execution observation and
+lifecycle-hook analysis of the already captured immutable test/import bytes.
+Each receipt still binds its exact command, tests, sources, tools, JUnit, context
+and assertion evidence. Full executable observations bracket all parent joins;
+an after-check failure or any byte/file-identity drift revokes the partition's
+confirmations to UNKNOWN. Worker before/after full executable hashes are unchanged.
+No process-global or stat-only cache is admitted. The summary's aggregate
+`receipt_validation_timing` separates measured identity/lifecycle cost and counts
+from a reduction in repeated operations; only a real contour run proves timing.
+
 The shared mutation preload accepts diagnostic `AGENT_MUTATION_PER_TEST_CAPTURE=1`
 and writes `per-test-coverage.json` exclusively inside its invocation-owned
 adapter directory. `MutationPerTestCapture/v1` records file/body registrations,
