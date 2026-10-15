@@ -2,11 +2,17 @@ import { describe, expect, test } from 'bun:test';
 import { existsSync, mkdtempSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { PROJECT_CONFIGURATION_PATHS } from '../src/config/project-paths.ts';
+import {
+  INITIALIZED_PROJECT_PATHS,
+  PROJECT_ACTIVATION_PATH,
+  PROJECT_CONFIGURATION_PATHS,
+} from '../src/config/project-paths.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { configuredTestContext } from './configured-context.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
+import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
+  activeRuntimeConfigurationSource,
   assertLoadedRuntimeConfig,
   capturedRuntimeConfigurationBinding,
   loadRuntimeConfig,
@@ -59,6 +65,46 @@ function closeLegacyConfigFixture(
 }
 
 describe('current-v1 exact-byte config repair boundary', () => {
+  test.each([
+    ['prepared upgrade intent staging', '.vida/.upgrade-intent-reader-barrier.json'],
+    ['activation staging', '.vida/.activation-reader-barrier.json'],
+    ['workspace database staging', INITIALIZED_PROJECT_PATHS.work + '/.upgrade-reader-barrier.sqlite'],
+    ['fixed sidecar output', INITIALIZED_PROJECT_PATHS.sidecar],
+    ['published instruction output', INITIALIZED_PROJECT_PATHS.instructions + '/reader-barrier.md'],
+  ])('keeps legacy configuration blocked while %s remains without activation', (_label, relativePath) => {
+    const fixture = createLegacyConfigFixture();
+    const { root, configFile } = fixture;
+    try {
+      if (performance.now() >= fixture.deadlineAt) throw new Error('Configuration reader fixture deadline expired.');
+      const legacy = loadRuntimeConfig(root);
+      const access = requireSafeRepositoryAccess(root);
+      expect(capturedRuntimeConfigurationBinding(legacy).source).toBe('agent-runtime.config.v1.yaml');
+      expect(activeRuntimeConfigurationSource(access)).toBe('agent-runtime.config.v1.yaml');
+      expect(readFileSync(configFile)).toEqual(sourceBytes);
+
+      const outputPath = path.join(root, relativePath);
+      const outputBytes = Buffer.from('retained reader barrier evidence\n');
+      mkdirSync(path.dirname(outputPath), { recursive: true });
+      writeFileSync(outputPath, outputBytes);
+      expect(existsSync(path.join(root, PROJECT_ACTIVATION_PATH))).toBe(false);
+      if (performance.now() >= fixture.deadlineAt) throw new Error('Configuration reader fixture deadline expired.');
+
+      expect(() => loadRuntimeConfig(root)).toThrow(
+        'Project activation is missing while current .vida outputs remain; recover the existing upgrade before configuration access.',
+      );
+      expect(() => activeRuntimeConfigurationSource(access)).toThrow(
+        'Project activation is missing while current .vida outputs remain; recover the existing upgrade before configuration access.',
+      );
+      expect(readFileSync(outputPath)).toEqual(outputBytes);
+      expect(readFileSync(configFile)).toEqual(sourceBytes);
+      expect(existsSync(path.join(root, PROJECT_ACTIVATION_PATH))).toBe(false);
+    } finally {
+      // The missing-activation barrier remains unresolved even when denial assertions pass.
+      // No other cleanup owner tracks this independently created root.
+      process.stderr.write(`Retained blocked configuration reader fixture: ${root}\n`);
+    }
+  });
+
   test('rejects the previous physical identity after replacing a consumer directory at the same path', async () => {
     const original = createLegacyConfigFixture();
     const replacement = createLegacyConfigFixture();

@@ -750,16 +750,17 @@ frozen-budget, current-freshness, mutation or formed-Runtime acceptance.
 | Contour | PASS/FAIL/assertions | F / L / S / B | maxCC / entryCRAP | Bun / outer |
 | --- | --- | --- | --- | --- |
 | main-governance | 82/0/1003 | 200/202 · 682/691 · 702/716 · 82/90 | 6 / 6 | 5.57s / 8544.623484ms |
-| main-config | 42/0/11502 | 317/350 · 892/966 · 939/1024 · 203/266 | 16 / 42 | 4.48s / 7433.15574ms |
+| main-config | 108/0/11956 | 331/350 · 910/966 · 961/1024 · 205/266 | 16 / 42 | 7.24s / 10278.205719ms |
 
 Governance report46d8707b-f42f-4155-a57a-93e068438db0 and config report
-cbb99aff-ea8e-416e-baea-12fe9e2dab07 are under
+dd4ba944-6447-461f-91d9-c7a2609eac75 are under
 packages/agent/coverage/bun-unified/diagnostics/*.focused-coverage.json.
 Retained roots: quality-declared-main-governance-kb6WyN and
-quality-declared-main-config-0qPGCB under /workspace/attachments.
+quality-declared-main-config-kJe7HP under /workspace/attachments.
 Their exact validated gaps reuse report maps and maintained validators, with no
-new AST/hash scan: quality-main-{governance,config}-open-counters-ac4-20261015.jsonl.
-Automatic CONTOUR-STATUS preserves37observations,2/44historical compatible local
+new AST/hash scan: quality-main-governance-open-counters-ac4-20261015.jsonl and
+quality-main-config-open-counters-ee1-20261015.jsonl.
+Automatic CONTOUR-STATUS preserves39observations,2/44historical compatible local
 coverage+assertion-confirmed mutation closures,42open and1separate static contour.
 No different Source/test closures are combined into a synthetic maximum.
 
@@ -814,7 +815,8 @@ Original retained artifacts keep their bytes. First failed race expectations
 were corrected against the persisted winner; lint/type errors were repaired,
 with no hook bypass or relaxed gate. Current capture logs:
 quality-governance-recovery-race-coverage-ac4-20261015.log and
-quality-main-config-coverage-ac4-20261015.log.
+quality-main-config-coverage-ee1-20261015.log. Config selection is published as
+ee199254d28c136466a843ba76dc9b796edc4351; runtime Source is unchanged by it.
 
 Next bounded work: reuse already-maintained config tests omitted from selection
 before adding duplicates; qualify genuine governance cross-process contention
@@ -824,16 +826,44 @@ root owns Source/registry/checks/Git and freezes all writers for numeric runs.
 No runtime cutover, old state replay, installation-as-unblock or owner notice.
 
 Readonly selection review identifies the already-maintained runtime-config-yaml
-suite as the direct selectWorkflow behavior owner. Add that existing file to
+suite as the direct selectWorkflow behavior owner. Added that existing file to
 main-config's shared registry; no duplicate scenarios or new AST/hash path.
 The large project-upgrade lifecycle suite has a positive activated-reader case,
 but adding all unrelated lifecycle cases to each mutation is not justified now.
 Its negative staging/input/output/closure reader proofs remain explicit gaps;
 prefer a focused real public-reader fixture rather than fabricated activations.
 Review: quality-main-config-selection-review-ac4-20261015.md. Tooling184 TS
-typecheck passes; one post-publication capture will measure selection cost and
-coverage, rather than assuming a gain. Current Source budgets are unchanged.
+typecheck and strict hook pass. Actual post-publication capture raises covered
+functions317→331 and branches203→205 without writing duplicate tests. The five-file
+selection's108tests take7.24s; this is an observed contour runtime, not a controlled
+speedup benchmark. Current Source budgets are unchanged. Root next assigns the
+existing repair-boundary test owner a narrow real legacy-reader staging/output
+denial packet; no activation/schema switch or fabricated valid receipts.
 
+Cross-process design review confirms even a child start barrier cannot guarantee
+both workers pass readReservation before synchronous O_EXCL. Existing bounded
+subprocess custody can test observable cross-process linearization, but callback
+coverage must remain measured/unproven. Do not introduce synchronization/provider
+hooks solely to force it: quality-governance-crossprocess-design-ac4-20261015.md.
+
+The focused config reader packet now checks five fresh staging/output paths
+through both loadRuntimeConfig and activeRuntimeConfigurationSource. Each first
+proves legacy loading, then checks exact marker/config bytes and absence of
+activation after denial. Roots remain retained on success or failure; no schema,
+loader, receipt or operation activation is manufactured. Targeted5PASS/0FAIL/
+45assertions in1.191s and tests448 TS pass:
+quality-config-staging-{controls,tests-ts}-ee1-20261015.log. Independent actual
+review finds no defect: quality-config-staging-actual-review-ee1-20261015.md.
+
+Root also finds a real missing selected-membership scenario in the already-
+declared project-context boundary case: its successful resolveSelected path had
+only an unowned repository path, never a contained path. Add contained shared-root
+selection, contained ambiguity and a foreign nested-root denial to that same
+case. This covers a distinct selected-set contract rather than repeating the
+single-project resolver's existing cases. Focused control is
+quality-config-selected-membership-controls-ee1-20261015.log. No Source changes,
+new fixture framework or additional file selection is required. Numerical
+metrics remain the previous report until the next published capture.
 
 ## Automatic contour progress projection
 

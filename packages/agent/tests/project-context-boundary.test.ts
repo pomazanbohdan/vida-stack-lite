@@ -178,6 +178,14 @@ describe('project context path boundary', () => {
       project_root: 'packages/a',
       specificity: 2,
     });
+    expect(resolveSelectedProjectForRepositoryPath(equalRoots, 'packages/a/src', ['bb'])).toEqual({
+      project_id: 'bb',
+      project_root: 'packages/a',
+      specificity: 2,
+    });
+    expect(() => resolveSelectedProjectForRepositoryPath(equalRoots, 'packages/a/src', ['aa', 'bb'])).toThrow(
+      /ambiguous selected project membership/,
+    );
     expect(projectMayScopeRepositoryPath(equalRoots, 'packages/a/src', 'aa')).toBe(true);
     expect(projectMayScopeRepositoryPath(equalRoots, 'packages/a/src', 'bb')).toBe(true);
     expect(projectMayScopeRepositoryPath(equalRoots, 'wiki/skills/guide.md', 'aa')).toBe(true);
@@ -198,6 +206,9 @@ describe('project context path boundary', () => {
     expect(resolveProjectPathMembership(nestedRoots, 'products/foreign/src/main.ts').project_ids).toEqual(['foreign']);
     expect(projectMayScopeRepositoryPath(nestedRoots, 'products/foreign/src/main.ts', 'parent')).toBe(false);
     expect(projectMayScopeRepositoryPath(nestedRoots, 'products/foreign/src/main.ts', 'foreign')).toBe(true);
+    expect(() =>
+      resolveSelectedProjectForRepositoryPath(nestedRoots, 'products/foreign/src/main.ts', ['parent']),
+    ).toThrow(/outside the selected projects/);
     expect(
       resolveProjectPathMembership(nestedRoots, 'products/foreign/src/main.ts', { platform: 'win32' }).project_ids,
     ).toEqual(['foreign']);
