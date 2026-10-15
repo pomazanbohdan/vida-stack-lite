@@ -104,6 +104,11 @@ Keep its source/test selection unchanged and its diagnostic schema distinct
 from full qualification. A matching input fingerprint and a perfect partial
 score cannot make the pilot a complete campaign. Inventory remains campaign-free.
 
+For local coverage/CC/CRAP diagnosis, use TESTING's focusedDiagnostic route in
+the existing producer. Its diagnostic exit0 and function-entry counters are not
+exact coverage or frozen-budget acceptance. Keep the diagnostic schema/output
+separate from global reports and retain explicit child-counter gaps.
+
 For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and
 check the descriptor's rejection stage before investigating assertions. A

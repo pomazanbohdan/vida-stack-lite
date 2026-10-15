@@ -12,6 +12,9 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import coverageApi from 'istanbul-lib-coverage';
+import { functionInventory, type FunctionRow } from './function-inventory.ts';
+import { baselineFunctionEvidenceForSource, validateCoverageLocations } from './coverage-math.ts';
 import { spawn as spawnChild, spawnSync, type ChildProcess, type SpawnSyncReturns } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -57,6 +60,7 @@ import {
   coverageReviewEnvironmentSha256,
   coverageInputs,
   instrumentSource,
+  readQualityInputs,
   isExternalModulePath,
   readBunPin,
   sdkFormationInputsFromQualityCapture,
@@ -67,6 +71,7 @@ import type { CoverageShardInvocation } from './coverage-shard-evidence.ts';
 
 import type { FileCoverageData } from 'istanbul-lib-instrument';
 import type { CoverageInputs, InputDigest } from './bun-coverage-evidence.ts';
+import type { FocusedDiagnosticSelection } from './bun-coverage-evidence.ts';
 import { expectedJavascriptFiles } from './maintained-source-inventory.ts';
 
 type DeepReadonly<T> = T extends readonly unknown[]
@@ -81,6 +86,7 @@ export type CurrentCoverageReviewCallback = (input: {
   consumer_configuration?: DeepReadonly<Awaited<ReturnType<typeof captureCoverageConsumerBinding>>>;
 }) => unknown;
 export type RunBunCoverageOptions = {
+  focusedDiagnostic?: FocusedDiagnosticSelection;
   reviewCurrentInputs?: CurrentCoverageReviewCallback;
   prepareSdkInputs?: (input: { root: string; remainingMs: () => number }) => Promise<void>;
 };
@@ -876,6 +882,10 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     throw new Error('Unsupported Bun coverage runner argument.');
   if (args.length > 1) throw new Error('Bun coverage runner accepts one baseline selection flag.');
   const selectionMode = args.length ? 'published-baseline-bun-native' : 'current';
+  const focused = options.focusedDiagnostic;
+  if (focused && (args.length || options.reviewCurrentInputs || options.prepareSdkInputs))
+    throw new Error('Focused coverage diagnostics cannot use historical selection or full-current callbacks.');
+  const runOutputRoot = focused ? path.join(outputRoot, 'diagnostics') : outputRoot;
   if ((options.reviewCurrentInputs || options.prepareSdkInputs) && selectionMode !== 'current')
     throw new Error('Current input review callbacks are unsupported for historical coverage.');
   const pinnedBun = await readBunPin(root);
@@ -1182,7 +1192,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     quality_passed: null,
   };
   function persistOperationOutcome(): void {
-    const directory = path.join(outputRoot, 'operation-outcomes');
+    const directory = path.join(runOutputRoot, 'operation-outcomes');
     mkdirSync(directory, { recursive: true, mode: 0o700 });
     writeAtomic(path.join(directory, runId + '.json'), buildCoverageRunOutcome(operationOutcome));
   }
@@ -1229,7 +1239,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       persistOperationOutcome();
       if (typecheck.status !== 0) throw new Error('Pinned coverage typecheck failed.');
     }
-    const lockedInputs = await coverageInputs(root, selectionMode);
+    const lockedInputs = await coverageInputs(root, focused ?? selectionMode);
     operationOutcome.selection.fingerprint = lockedInputs.test_fingerprint;
     operationOutcome.input_fingerprints = {
       source: lockedInputs.source_fingerprint,
@@ -1252,7 +1262,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     const { input_bytes: inputBytes, ...evidence } = lockedInputs;
     const externalTemporaryRoot = path.resolve(process.env.TMPDIR ?? tmpdir());
     const shardPreparation =
-      selectionMode === 'current'
+      selectionMode === 'current' && !focused
         ? prepareCurrentCoverageShardLaunches({
             root,
             temporary_root: externalTemporaryRoot,
@@ -1270,7 +1280,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     operationOutcome.expected_producer_count = preparedShards?.launches.length ?? 1;
     operationOutcome.phase = 'prepared';
     persistOperationOutcome();
-    const runDirectory = path.join(outputRoot, 'runs', runId);
+    const runDirectory = path.join(runOutputRoot, 'runs', runId);
     const snapshotDirectory = path.join(runDirectory, 'snapshot');
     const reportDirectory = path.join(runDirectory, 'processes');
     mkdirSync(snapshotDirectory, { recursive: true, mode: 0o700 });
@@ -1291,6 +1301,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     if (fixtureDependencyLink) symlinkSync(path.join(root, 'node_modules'), fixtureDependencyLink, 'dir');
     for (const directory of fixtureOutputs) mkdirSync(directory, { recursive: true, mode: 0o700 });
     const sourceMapEntries: [string, FileCoverageData][] = [];
+    const focusedFunctions: FunctionRow[] = [];
     const instrumentedSources: InstrumentedSourceDigest[] = [];
     let instrumentedTotalBytes = 0;
     for (const entry of evidence.sources) {
@@ -1298,7 +1309,11 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       const bytes = inputBytes[entry.path];
       if (!bytes) throw new Error(`Immutable source snapshot is missing: ${entry.path}`);
       const source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-      const transformed = instrumentSource(absolute, source);
+      const transformed = instrumentSource(
+        absolute,
+        source,
+        focused ? (ast) => focusedFunctions.push(...functionInventory(source, entry.path, ast)) : undefined,
+      );
       const artifactBytes = Buffer.from(transformed.code, 'utf8');
       if (
         artifactBytes.length > maxInstrumentedArtifactBytes ||
@@ -1582,7 +1597,33 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       }
       finalReport = {
         ...(publishedReference ? { published_reference: publishedReference } : {}),
-        schema: 'VidaBunCoverageReport/v1',
+        schema: focused ? 'VidaBunFocusedCoverageDiagnostic/v1' : 'VidaBunCoverageReport/v1',
+        ...(focused
+          ? {
+              qualification_scope: 'focused-diagnostic',
+              full_qualification: false,
+              frozen_budget_qualification: 'pending',
+              function_coverage_kind: 'function-entry-binary',
+              metrics: evidence.sources.map((entry) => {
+                const absolute = path.resolve(root, entry.path);
+                const fileCoverage = mergedCoverage[absolute];
+                if (!fileCoverage) throw new Error('Focused diagnostic source counters are missing: ' + entry.path);
+                validateCoverageLocations(entry.path, inputBytes[entry.path]!.toString('utf8'), fileCoverage);
+                return {
+                  file: entry.path,
+                  coverage: coverageApi
+                    .createCoverageMap({ [absolute]: fileCoverage })
+                    .getCoverageSummary()
+                    .toJSON(),
+                  functions: baselineFunctionEvidenceForSource(
+                    entry.path,
+                    focusedFunctions.filter((row) => row.file === entry.path),
+                    fileCoverage,
+                  ),
+                };
+              }),
+            }
+          : {}),
         run_id: runId,
         manifest_path: path.relative(root, manifestPath).replaceAll('\\', '/'),
         manifest_sha256: manifestDigest,
@@ -1604,16 +1645,29 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
         coverage: mergedCoverage,
       };
     }
-    const finalPath = path.join(outputRoot, 'coverage-final.json');
+    const finalPath = focused
+      ? path.join(runDirectory, 'focused-coverage.json')
+      : path.join(outputRoot, 'coverage-final.json');
     commandBudget.remaining();
+    if (focused) {
+      assertCoverageSnapshotBytes(snapshotDirectory, inputBytes);
+      const currentInputs = await readQualityInputs(root, Object.keys(inputBytes));
+      for (const [file, bytes] of currentInputs)
+        if (!bytes.equals(inputBytes[file]!)) throw new Error('Focused coverage input changed: ' + file);
+      commandBudget.remaining();
+    }
     writeAtomic(finalPath, finalReport);
+    if (focused)
+      process.stdout.write(
+        JSON.stringify({ schema: 'VidaBunFocusedCoverageDiagnosticLocation/v1', report: finalPath }) + '\n',
+      );
     if (publishedReference) {
       process.stderr.write(
         'Historical measurement admitted; published suite remains FAIL, current quality remains unqualified.\n',
       );
       process.exitCode = 1;
     }
-    for (const gateScript of selectionMode === 'current' ? ['tooling/crap-gate.ts'] : []) {
+    for (const gateScript of selectionMode === 'current' && !focused ? ['tooling/crap-gate.ts'] : []) {
       operationOutcome.phase = 'quality';
       const capturedGate = path.join(snapshotDirectory, ...gateScript.split('/'));
       const gate = spawnSync(process.execPath, [capturedGate], {

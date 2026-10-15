@@ -24,7 +24,11 @@ function enterWithPrivateMethods(path: NodePath<types.Program>, visitor: ReturnT
 }
 
 /** One parse/generation; all counters use original Source locations. */
-export function instrumentSource(file: string, source: string): { code: string; fileCoverage: FileCoverageData } {
+export function instrumentSource(
+  file: string,
+  source: string,
+  observeOriginalAst?: (ast: unknown) => void,
+): { code: string; fileCoverage: FileCoverageData } {
   let fileCoverage: FileCoverageData | undefined;
   const transformed = transformSync(source, {
     filename: file,
@@ -44,6 +48,7 @@ export function instrumentSource(file: string, source: string): { code: string; 
           visitor: {
             Program: {
               enter(path: NodePath<types.Program>) {
+                observeOriginalAst?.(path.node);
                 enterWithPrivateMethods(path, visitor);
               },
               exit(path: NodePath<types.Program>) {

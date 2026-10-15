@@ -20,8 +20,14 @@ import {
 } from './published-coverage-inputs.ts';
 
 export type InputDigest = { path: string; sha256: string };
+export type FocusedDiagnosticSelection = {
+  mode: 'focused-diagnostic';
+  contour: string;
+  sources: readonly string[];
+  tests: readonly string[];
+};
+type QualityInputSelectionMode = 'current' | 'published-baseline-bun-native' | FocusedDiagnosticSelection;
 type TestSelection = {
-  mode: 'full-current-test-set' | 'published-baseline-bun-native';
   baseline_ref?: string;
   package_script?: string;
   native_runner?: string;
@@ -43,7 +49,10 @@ type TestSelection = {
     instrumentation_note: string;
     counter_trust_scope: string;
   };
-};
+} & (
+  | { mode: 'full-current-test-set' | 'published-baseline-bun-native'; contour?: never; sources?: never }
+  | { mode: 'focused-diagnostic'; contour: string; sources: string[] }
+);
 export type CoverageInputs = {
   sources: InputDigest[];
   source_fingerprint: string;
@@ -594,8 +603,10 @@ function publishedBaselineSelection(root: string): TestSelection {
   };
 }
 
-export function instrumentSource(file: string, source: string): ReturnType<typeof instrumentCapturedSource> {
-  return instrumentCapturedSource(file, source);
+export function instrumentSource(
+  ...args: Parameters<typeof instrumentCapturedSource>
+): ReturnType<typeof instrumentCapturedSource> {
+  return instrumentCapturedSource(...args);
 }
 
 async function walkFiles(root: string, directory: string, depth = 0): Promise<string[]> {
@@ -671,6 +682,38 @@ function selectTestSelection(
   else throw new Error('Unsupported Bun coverage test selection mode.');
   if (!selection.tests.length) throw new Error('Bun Test coverage selection is empty.');
   return selection;
+}
+
+function checkedFocusedDiagnosticSelection(
+  selection: FocusedDiagnosticSelection,
+  sources: readonly string[],
+  supportedTests: readonly string[],
+): TestSelection {
+  if (typeof selection.contour !== 'string' || !selection.contour.trim())
+    throw new Error('Focused diagnostic contour must be non-empty.');
+  for (const [label, paths, inventoryName, inventory] of [
+    ['source', selection.sources, 'maintained source inventory', sources],
+    ['test', selection.tests, 'supported test inventory', supportedTests],
+  ] as const) {
+    if (!Array.isArray(paths) || paths.length === 0)
+      throw new Error(`Focused diagnostic ${label} selection must be non-empty.`);
+    if (!paths.every(isSafeProjectionPath))
+      throw new Error(`Focused diagnostic ${label} selection contains an unsafe path.`);
+    if (new Set(paths).size !== paths.length)
+      throw new Error(`Focused diagnostic ${label} selection contains a duplicate path.`);
+    const admitted = new Set(inventory);
+    const foreign = paths.filter((file) => !admitted.has(file));
+    if (foreign.length)
+      throw new Error(`Focused diagnostic ${label} path is outside the ${inventoryName}: ${foreign.join(', ')}`);
+  }
+  if (selection.tests.includes('tests/configured-workflow.test.ts'))
+    throw new Error('SDK-dependent focused diagnostic selection is unsupported.');
+  return {
+    mode: 'focused-diagnostic',
+    contour: selection.contour,
+    sources: [...selection.sources],
+    tests: [...selection.tests],
+  };
 }
 
 function qualityToolInputPaths(
@@ -1076,19 +1119,26 @@ function checkedFinalQualityProjectionInputs(value: unknown): FinalQualityProjec
 async function captureQualityInputBase(
   root: string,
   additionalToolInputs: readonly string[],
-  selectionMode: 'current' | 'published-baseline-bun-native',
+  selection: QualityInputSelectionMode,
 ): Promise<QualityInputCapture> {
+  const focused = typeof selection === 'string' ? undefined : selection;
+  const selectionMode = typeof selection === 'string' ? selection : 'current';
   walkedPathCount = 0;
   const inventory = maintainedSourceInventory(root);
-  const sources = inventory.mutationSources;
-  if (!sources.length || sources.some((file) => !/^src\/.+\.ts$|^bin\/.+\.(?:mjs|ts)$/u.test(file)))
+  const maintainedSources = inventory.mutationSources;
+  if (!maintainedSources.length || maintainedSources.some((file) => !/^src\/.+\.ts$|^bin\/.+\.(?:mjs|ts)$/u.test(file)))
     throw new Error('Maintained coverage inventory is empty or contains an unsupported source path.');
   const testInputsAll = await walkFiles(root, path.join(root, 'tests'));
   const supportedTest = /\.(?:test|spec)\.(?:js|mjs|cjs|jsx|ts|mts|cts|tsx)$/u;
   const testLike = /\.(?:test|spec)\./u;
   const unsupported = testInputsAll.filter((file) => testLike.test(file) && !supportedTest.test(file));
   if (unsupported.length) throw new Error(`Unsupported Bun test extension: ${unsupported.join(', ')}`);
-  const testSelection = selectTestSelection(root, testInputsAll, supportedTest, selectionMode);
+  const supportedTests = testInputsAll.filter((file) => supportedTest.test(file));
+  const testSelection = focused
+    ? checkedFocusedDiagnosticSelection(focused, maintainedSources, supportedTests)
+    : selectTestSelection(root, testInputsAll, supportedTest, selectionMode);
+  const sources = testSelection.mode === 'focused-diagnostic' ? testSelection.sources : maintainedSources;
+  const capturedTestPaths = focused ? testSelection.tests : testInputsAll;
   const contractInputs = (
     await Promise.all(
       ['schemas', 'templates', 'instructions'].map((directory) => walkFiles(root, path.join(root, directory))),
@@ -1096,20 +1146,21 @@ async function captureQualityInputBase(
   ).flat();
   const sdkFormationTools = sdkFormationToolInputPaths(selectionMode, testSelection);
   const tools = qualityToolInputPaths([...additionalToolInputs, ...sdkFormationTools], contractInputs, selectionMode);
-  const allInputs = [...new Set([...sources, ...testInputsAll, ...tools])].sort();
+  const allInputs = [...new Set([...sources, ...capturedTestPaths, ...tools])].sort();
   const inputBytes = await readQualityInputs(root, allInputs);
   if (selectionMode === 'published-baseline-bun-native')
     verifyPublishedBaselineInputs(root, inputBytes, sources, testInputsAll);
   const sdkBuilderEntrypoint =
     selectionMode === 'current' && inputBytes.has('tooling/build-package.ts') ? 'tooling/build-package.ts' : undefined;
   const sdkBuilderEdges = new Map<string, Set<string>>();
+  const runtimeTestPaths = focused ? testSelection.tests : testInputsAll;
   const runtimeToolPaths =
     selectionMode === 'current'
       ? await captureRuntimeInputClosure(
           root,
           [...testSelection.tests, ...(sdkBuilderEntrypoint ? [sdkBuilderEntrypoint] : [])],
           sources,
-          testInputsAll,
+          runtimeTestPaths,
           inputBytes,
           sdkBuilderEntrypoint
             ? (importer, resolved) => {
@@ -1129,7 +1180,13 @@ async function captureQualityInputBase(
         contractInputs.filter((file) => file.startsWith('schemas/')),
       )
     : undefined;
-  const digestPaths = [...new Set([...sources, ...testInputsAll, ...tools, ...runtimeToolPaths])];
+  const capturedTestInputs = focused
+    ? [...new Set([...capturedTestPaths, ...runtimeToolPaths.filter((file) => file.startsWith('tests/'))])].sort()
+    : capturedTestPaths;
+  const capturedRuntimeTools = focused
+    ? runtimeToolPaths.filter((file) => !file.startsWith('tests/'))
+    : runtimeToolPaths;
+  const digestPaths = [...new Set([...sources, ...capturedTestInputs, ...tools, ...capturedRuntimeTools])];
   const inputDigests = new Map(
     digestPaths.map((file) => {
       const bytes = inputBytes.get(file);
@@ -1138,7 +1195,7 @@ async function captureQualityInputBase(
     }),
   );
   const sourceInputs = qualityInputDigests(sources, inputBytes, inputDigests);
-  const testInputs = qualityInputDigests(testInputsAll, inputBytes, inputDigests);
+  const testInputs = qualityInputDigests(capturedTestInputs, inputBytes, inputDigests);
   return {
     sources: sourceInputs,
     testInputs,
@@ -1147,7 +1204,7 @@ async function captureQualityInputBase(
     contractInputs,
     inputBytes,
     inputDigests,
-    runtimeToolPaths,
+    runtimeToolPaths: capturedRuntimeTools,
     ...(sdkBuilderToolPaths ? { sdkBuilderToolPaths } : {}),
     ...(selectionMode === 'published-baseline-bun-native'
       ? { publishedContract: capturePublishedBaselineContract(root) }
@@ -1181,7 +1238,8 @@ async function projectQualityInputCapture(
       ...sdkFormationToolInputPaths(selectionMode, capture.testSelection),
     ]),
   ].sort();
-  const sourceJson = canonicalJson(capture.sources);
+  const sources = capture.sources;
+  const sourceJson = canonicalJson(sources);
   if (sourceJson === undefined) throw new Error('Coverage source identity is not serializable.');
   const sourceFingerprint = sha256(sourceJson);
   const testFingerprint = testSelectionFingerprint(capture.testSelection, capture.testInputs);
@@ -1189,7 +1247,7 @@ async function projectQualityInputCapture(
   const toolJson = canonicalJson(toolInputs);
   if (toolJson === undefined) throw new Error('Coverage tool identity is not serializable.');
   const projectedPaths = [
-    ...new Set([...capture.sources.map((entry) => entry.path), ...capture.testInputsAll, ...tools]),
+    ...new Set([...sources.map((entry) => entry.path), ...capture.testInputs.map((entry) => entry.path), ...tools]),
   ].sort();
   const inputBytes: Record<string, Buffer> = {};
   for (const file of projectedPaths) {
@@ -1212,7 +1270,7 @@ async function projectQualityInputCapture(
   )
     throw new Error('Combined fixture/measurement snapshot exceeds its input limits.');
   const projected: CoverageInputs = {
-    sources: capture.sources,
+    sources,
     source_fingerprint: sourceFingerprint,
     tests: capture.testSelection.tests,
     test_selection: capture.testSelection,
@@ -1301,15 +1359,19 @@ export async function qualityInputProjections(
 export async function qualityInputs(
   root: string,
   additionalToolInputs: readonly string[] = [],
-  selectionMode: 'current' | 'published-baseline-bun-native' = 'current',
+  selectionMode: QualityInputSelectionMode = 'current',
 ): Promise<CoverageInputs> {
   const capture = await captureQualityInputBase(root, additionalToolInputs, selectionMode);
-  return projectQualityInputCapture(capture, additionalToolInputs, selectionMode);
+  return projectQualityInputCapture(
+    capture,
+    additionalToolInputs,
+    typeof selectionMode === 'string' ? selectionMode : 'current',
+  );
 }
 
 export const coverageInputs = (
   root: string,
-  selectionMode: 'current' | 'published-baseline-bun-native' = 'current',
+  selectionMode: QualityInputSelectionMode = 'current',
 ): Promise<CoverageInputs> => qualityInputs(root, [], selectionMode);
 
 export function capturedModuleInputs(

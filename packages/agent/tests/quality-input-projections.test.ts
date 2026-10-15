@@ -8,6 +8,7 @@ import { orchestrationDeadline, remainingChildTimeoutMs } from '../tooling/quali
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { expectedJavascriptFiles } from '../tooling/maintained-source-inventory.ts';
 import {
+  coverageInputs,
   capturedModuleInputs,
   coverageToolInputs,
   type CoverageReviewGitChange,
@@ -16,6 +17,7 @@ import {
   qualityFingerprint,
   qualityInputProjections,
   readQualityInputs,
+  testSelectionFingerprint,
 } from '../tooling/bun-coverage-evidence.ts';
 
 const temporaryRoots: string[] = [];
@@ -710,6 +712,104 @@ describe('final quality input projections', () => {
 
     expect(after.guard.tool_fingerprint).not.toBe(before.guard.tool_fingerprint);
     expect(qualityFingerprint(after.guard)).not.toBe(qualityFingerprint(before.guard));
+  });
+
+  test('captures an explicitly focused diagnostic selection and fingerprints only its selected inputs', async () => {
+    const root = fixtureRoot();
+    writeFileSync(
+      path.join(root, 'tests/fixture.test.mjs'),
+      "import '../src/lifecycle/lifecycle-state.ts';\nimport '../tooling/selected-runtime.ts';\nimport './helpers/selected.ts';\ntest('selected', () => {});\n",
+    );
+    writeFileSync(
+      path.join(root, 'tests/other.test.ts'),
+      "import '../tooling/unselected-runtime.ts';\ntest('unselected', () => {});\n",
+    );
+    writeFileSync(path.join(root, 'tooling/selected-runtime.ts'), 'export const selected = true;\n');
+    writeFileSync(path.join(root, 'tooling/unselected-runtime.ts'), 'export const unselected = true;\n');
+    mkdirSync(path.join(root, 'tests/helpers'));
+    writeFileSync(path.join(root, 'tests/helpers/selected.ts'), 'export const helper = true;\n');
+
+    const selected = await coverageInputs(root, {
+      mode: 'focused-diagnostic',
+      contour: 'fixture-contour',
+      sources: ['src/host-state.ts'],
+      tests: ['tests/fixture.test.mjs'],
+    });
+    const otherTest = await coverageInputs(root, {
+      mode: 'focused-diagnostic',
+      contour: 'fixture-contour',
+      sources: ['src/host-state.ts'],
+      tests: ['tests/other.test.ts'],
+    });
+    const otherSource = await coverageInputs(root, {
+      mode: 'focused-diagnostic',
+      contour: 'fixture-contour',
+      sources: ['src/runtime-kernel.ts'],
+      tests: ['tests/fixture.test.mjs'],
+    });
+
+    expect(selected.test_selection).toEqual({
+      mode: 'focused-diagnostic',
+      contour: 'fixture-contour',
+      sources: ['src/host-state.ts'],
+      tests: ['tests/fixture.test.mjs'],
+    });
+    expect(selected.sources.map(({ path: file }) => file)).toEqual(['src/host-state.ts']);
+    expect(selected.tests).toEqual(['tests/fixture.test.mjs']);
+    expect(selected.test_inputs.map(({ path: file }) => file)).toEqual([
+      'tests/fixture.test.mjs',
+      'tests/helpers/selected.ts',
+    ]);
+    expect(selected.tool_inputs.map(({ path: file }) => file)).not.toContain('tests/helpers/selected.ts');
+    expect(selected.test_fingerprint).toBe(testSelectionFingerprint(selected.test_selection, selected.test_inputs));
+    expect(otherTest.test_fingerprint).not.toBe(selected.test_fingerprint);
+    expect(otherSource.source_fingerprint).not.toBe(selected.source_fingerprint);
+    expect(selected.tool_inputs.map(({ path: file }) => file)).toContain('src/lifecycle/lifecycle-state.ts');
+    expect(selected.tool_inputs.map(({ path: file }) => file)).toContain('tooling/selected-runtime.ts');
+    expect(selected.tool_inputs.map(({ path: file }) => file)).not.toContain('tooling/unselected-runtime.ts');
+    expect(selected.input_bytes['src/lifecycle/lifecycle-state.ts']).toBeDefined();
+    expect(selected.input_bytes['tests/other.test.ts']).toBeUndefined();
+    expect(selected.input_bytes['src/runtime-kernel.ts']).toBeUndefined();
+  });
+
+  test('rejects empty, duplicate and foreign focused diagnostic selections', async () => {
+    const root = fixtureRoot();
+    const select = (sources: string[], tests: string[]) =>
+      coverageInputs(root, { mode: 'focused-diagnostic', contour: 'fixture-contour', sources, tests });
+
+    await expectRejected(() => select([], ['tests/fixture.test.mjs']), /non-empty/u);
+    await expectRejected(() => select(['src/host-state.ts'], []), /non-empty/u);
+    await expectRejected(
+      () => select(['src/host-state.ts', 'src/host-state.ts'], ['tests/fixture.test.mjs']),
+      /duplicate/u,
+    );
+    await expectRejected(
+      () => select(['src/not-maintained.ts'], ['tests/fixture.test.mjs']),
+      /maintained source inventory/u,
+    );
+    await expectRejected(
+      () => select(['src/host-state.ts'], ['tests/helpers/fixture.ts']),
+      /supported test inventory/u,
+    );
+    await expectRejected(
+      () => select(['src/host-state.ts'], ['tests/fixture.test.mjs', 'tests/fixture.test.mjs']),
+      /duplicate/u,
+    );
+  });
+
+  test('rejects a focused selection that depends on SDK formation inputs', async () => {
+    const root = fixtureRoot();
+    writeFileSync(path.join(root, 'tests/configured-workflow.test.ts'), "test('sdk', () => {});\n");
+    await expectRejected(
+      () =>
+        coverageInputs(root, {
+          mode: 'focused-diagnostic',
+          contour: 'sdk-contour',
+          sources: ['src/host-state.ts'],
+          tests: ['tests/configured-workflow.test.ts'],
+        }),
+      /SDK-dependent focused diagnostic selection is unsupported/u,
+    );
   });
 
   test('keeps imported maintained Source bound through source fingerprints', async () => {

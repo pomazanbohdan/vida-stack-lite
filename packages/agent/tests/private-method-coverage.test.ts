@@ -8,6 +8,17 @@ import { instrumentSource } from '../tooling/bun-coverage-evidence.ts';
 import { functionInventory } from '../tooling/function-inventory.ts';
 import { baselineFunctionEvidenceForSource } from '../tooling/coverage-math.ts';
 
+test('instrumentation exposes original function identities before counter insertion', () => {
+  const source = 'class Box { #hidden() { return [1].map(value => value + 1); } run() { return this.#hidden(); } }';
+  const expected = functionInventory(source, 'src/observed.ts');
+  let observed: typeof expected | undefined;
+  const result = instrumentSource('/tmp/vida-observed.ts', source, (ast) => {
+    observed = functionInventory(source, 'src/observed.ts', ast);
+  });
+  assert.deepEqual(observed, expected);
+  assert.equal(Object.keys(result.fileCoverage.fnMap).length, expected.length);
+});
+
 test('instrumentation rejects invalid syntax and previously instrumented Source without weakening subsequent maps', () => {
   const file = path.resolve('/tmp/vida-private-method-invalid.ts');
   assert.throws(() => instrumentSource(file, 'class C { #hidden( { }'));

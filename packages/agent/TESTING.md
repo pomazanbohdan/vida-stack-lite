@@ -765,6 +765,27 @@ CRAP plan, or establish a numeric quality PASS. The coverage and CRAP gates run
 only when their tool files are invoked directly; importing them does not run a
 gate or coverage collection.
 
+For contour development, the existing producer API accepts
+`runBunCoverage({ focusedDiagnostic: { mode: 'focused-diagnostic', contour,
+sources, tests } })`. Both path sets must be nonempty, unique and members of
+their maintained inventories. The selected import closure binds transitive
+test helpers and unselected dependencies without claiming their coverage.
+This route uses the same capture, instrumentation, preload, counter merge,
+300000ms budget and shared coverage lock. It remains serial. The focused route
+currently rejects the SDK-dependent configured-workflow selection.
+
+Its `VidaBunFocusedCoverageDiagnostic/v1` report lives under
+`coverage/bun-unified/diagnostics/runs/<run-id>/focused-coverage.json` and never
+replaces coverage-final.json. It reports four local coverage metrics plus exact
+Babel function IDs, CC and the existing function-entry-based CRAP calculation.
+The original AST is observed before Istanbul inserts counters, without a second
+parse. Function-entry coverage does not imply full body/branch coverage. Child
+processes still need explicit bound instrumentation to contribute counters.
+An exit0 establishes diagnostic completion only; frozen budget qualification
+is explicitly pending. This report is not accepted by global coverage/CRAP
+gates and cannot establish scope or full-quality PASS. Preserve frozen caps and
+complete correspondence; the global plan remains required for final admission.
+
 These targets and frozen budgets govern development and truthful completion of
 its checks. They add no numeric barrier to the minimum native formation and
 installation profile or supported developer unblocking. Follow the lifecycle

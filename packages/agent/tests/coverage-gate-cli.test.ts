@@ -15,6 +15,10 @@ test.each([
   ['null report', Buffer.from('null')],
   ['unbound pass claim', Buffer.from('{"status":"pass","schema":"CandidateCoverageReport/v3"}')],
   [
+    'focused diagnostic',
+    Buffer.from(JSON.stringify({ schema: 'VidaBunFocusedCoverageDiagnostic/v1', scope_passed: true })),
+  ],
+  [
     'decoded shape without provenance',
     Buffer.from(
       JSON.stringify({

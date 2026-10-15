@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `4c6b0d8` at origin/main.
+- Published predecessor: `abba348` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -275,6 +275,44 @@ affected files passed34/0 with1029assertions:
 quality-child-health-final-files-23ae277-20261015.log. Retain the original ISSUES
 review quality-child-health-review-23ae-20261015.md; do not relabel it ACCEPT.
 No product bug, numeric score or speedup is inferred.
+
+Publishedabba348 preserves strict child-health checks and ordinary errors;
+strict pre-commit and push succeeded. Fresh second main-host cycle completed
+in135590ms without timeout, with complete output and observed owned-group
+termination: /workspace/attachments/quality-mutation-supervised-abba348-OYshlg.
+Evidence: packages/agent/.tmp/mutation-evidence-
+1b4b1648-50c2-423a-973e-bb286f211336-15PKyo. Baseline is now admitted
+(16PASS/357assertions/5.24s); all69Stryker Killed remain unconfirmed. The gate
+correctly reports UNKNOWN, killed0/effective_score0. Source import/setup errors
+and ordinary child-health failures are not body assertion kills. No product
+bug is established by failures caused only by injected mutations.
+
+Root implemented the first focused diagnostic route through the existing
+capture/producer, not a second collection pipeline. Blind Luna proposed the
+bounded capture patch; Root corrected its projection-mode normalization,
+encoded focused selection as a discriminated type, avoided reading unselected
+Source upfront, and retained transitive tests/* helpers in test_inputs. The
+helper-membership regression failed before correction; this also preserves
+configured consumer binding. Unselected imported Source remains captured module
+input without receiving selected coverage. Configured-workflow SDK selection
+is explicitly unsupported in this initial route; full SDK freshness is unchanged.
+
+An optional original-AST observer feeds existing functionInventory before
+Istanbul counter insertion. Its private-method/nested-closure identity regression
+failed before support and passed after. No repeated parse or second inventory
+owner was introduced. A distinct diagnostic schema/path prevents global report
+replacement; existing global admission rejects the diagnostic control. Reports
+contain four local coverage metrics, IDs/CC and existing binary function-entry
+CRAP, with frozen-budget qualification pending. Child counters stay unqualified.
+Final affected capture/instrumentation/gate/preload contracts passed51/0 with546
+assertions in12.89s: quality-focused-producer-final-contracts-abba348-20261015.log.
+Initial static check found the newly used Istanbul API outside maintained type
+declarations; Root changed it to the existing public createCoverageMap summary
+API. Final strict typecheck checked473files with0diagnostics:
+quality-focused-producer-types-final-abba348-20261015.log. Independent blind
+Luna accepted the actual diff in quality-focused-producer-review-abba348-
+20261015.md. Documentation links/headings passed. Strict commit/push and the
+real diagnostic run remain the next steps; no dynamic coverage is claimed yet.
 
 ## Root-owned rapid test and product audit
 
