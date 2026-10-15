@@ -807,7 +807,10 @@ function fixtureAttempts(): AttemptFixture {
       authorization: WorkflowAttemptApprovalAuthorization,
     ): Promise<WorkflowAttemptApprovalAuthorization> {
       if (authorization.approval?.status !== 'reserved') throw new Error('approval reservation invalid');
-      return { ...authorization, approval: { ...authorization.approval, status: 'commit_unknown' } };
+      return {
+        ...authorization,
+        approval: { ...authorization.approval, status: 'commit_unknown', terminal_at: new Date().toISOString() },
+      };
     },
     async completeWorkflowAttemptWithApproval(
       authorization: WorkflowAttemptApprovalAuthorization,
@@ -1095,10 +1098,13 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       );
       if (foreign)
         await expectRejection(dispatchFixture(host.workflowExecutionCapability, request()), /reconciliation binding/);
-      else
-        expect(await dispatchFixture(host.workflowExecutionCapability, request())).toEqual({
-          recovered: true,
+      else {
+        let recovered: unknown;
+        await assert.doesNotReject(async () => {
+          recovered = await dispatchFixture(host.workflowExecutionCapability, request());
         });
+        expect(recovered).toEqual({ recovered: true });
+      }
       expect(dispatched).toBe(0);
       expect(validated).toBe(foreign ? 0 : 1);
     },
@@ -1392,7 +1398,7 @@ describe('semantic current-v1 work context and live permits (unit authority adap
 
   test('keeps provider and lifecycle work identities distinct and freezes the host context', async () => {
     const host = await compose();
-    await dispatchFixture(host.workflowExecutionCapability, request());
+    await assert.doesNotReject(() => dispatchFixture(host.workflowExecutionCapability, request()));
     const context = requireFixtureValue(calls[0]).workContext;
     expect(context.schema).toBe('WorkExecutionContext/v1');
     expect(context.binding.provider_work_item_id).toBe(workItem.id);
@@ -1538,13 +1544,13 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       validated.push(invocation.workContext);
     });
     const input = request();
-    await dispatchFixture(host.workflowExecutionCapability, input);
+    await assert.doesNotReject(() => dispatchFixture(host.workflowExecutionCapability, input));
     contextState.checkpointRevision++;
     contextState.checkpointDigest = 'f'.repeat(64);
     contextState.runtimeRevision++;
     contextState.ledgerRevision++;
     contextState.expiresAt = new Date(Date.parse(contextState.expiresAt) + 3600000).toISOString();
-    await dispatchFixture(host.workflowExecutionCapability, input);
+    await assert.doesNotReject(() => dispatchFixture(host.workflowExecutionCapability, input));
     expect(calls).toHaveLength(1);
     expect(requireFixtureValue(validated[1]).permit.checkpoint_revision).toBe(2);
   });
@@ -1553,7 +1559,7 @@ describe('semantic current-v1 work context and live permits (unit authority adap
     contextState.checkpointRevision = contextState.ledgerRevision = contextState.runtimeRevision = 2;
     const host = await compose();
     const input = request();
-    await dispatchFixture(host.workflowExecutionCapability, input);
+    await assert.doesNotReject(() => dispatchFixture(host.workflowExecutionCapability, input));
     contextState[
       kind === 'checkpoint' ? 'checkpointRevision' : kind === 'ledger' ? 'ledgerRevision' : 'runtimeRevision'
     ] = 1;
@@ -1564,7 +1570,7 @@ describe('semantic current-v1 work context and live permits (unit authority adap
   test('rejects changed checkpoint bytes without a new revision', async () => {
     const host = await compose();
     const input = request();
-    await dispatchFixture(host.workflowExecutionCapability, input);
+    await assert.doesNotReject(() => dispatchFixture(host.workflowExecutionCapability, input));
     contextState.checkpointDigest = 'f'.repeat(64);
     await expectRejection(dispatchFixture(host.workflowExecutionCapability, input), /without revision/);
     expect(calls).toHaveLength(1);
@@ -1589,7 +1595,7 @@ describe('semantic current-v1 work context and live permits (unit authority adap
         () => {},
         resolve,
       );
-      await dispatchFixture(host.workflowExecutionCapability, request());
+      await assert.doesNotReject(() => dispatchFixture(host.workflowExecutionCapability, request()));
       changed = true;
       const changedContext = resolve({
         workItem,
@@ -1937,6 +1943,164 @@ describe('configured workflow host dispatch (isolated persistence adapters)', ()
     ['develop_change', 'source.write'],
     ['prepare_delivery', 'delivery.execute'],
   ];
+  function protectedSourceRequest(): ReturnType<typeof request> {
+    workItem = {
+      ...workItem,
+      provider: 'azure',
+      provider_type: 'Feature',
+      canonical_kind: 'feature',
+      intent: 'implementation_new',
+    };
+    return request({ workflowId: 'implementation_new', stageId: 'develop_change' });
+  }
+
+  test.each([
+    ['provider', 'reserved'],
+    ['provider', 'foreign-fence'],
+    ['native', 'reserved'],
+    ['native', 'foreign-fence'],
+  ] as const)(
+    'keeps a protected effect fenced when entry acknowledgement is invalid: %s/%s',
+    async (surface, malformed) => {
+      const input = protectedSourceRequest();
+      const attempts = fixtureAttempts();
+      const begin = attempts.beginWorkflowAttemptEffect.bind(attempts);
+      attempts.beginWorkflowAttemptEffect = async (authorization) => {
+        const entered = await begin(authorization);
+        if (malformed === 'reserved') return authorization;
+        return {
+          ...entered,
+          approval: {
+            ...requireFixtureValue(entered.approval ?? undefined),
+            fencing_token: '00000000-0000-0000-0000-000000000000',
+          },
+        };
+      };
+      const mark = attempts.markWorkflowAttemptUncertain.bind(attempts);
+      let uncertain: WorkflowAttemptReceipt | undefined;
+      attempts.markWorkflowAttemptUncertain = async (receipt) => {
+        uncertain = await mark(receipt);
+        return uncertain;
+      };
+      const abort = attempts.abortUnstartedWorkflowAttempt.bind(attempts);
+      let aborts = 0;
+      attempts.abortUnstartedWorkflowAttempt = async (authorization) => {
+        aborts++;
+        return abort(authorization);
+      };
+      let dispatched = 0;
+      const host = await compose(
+        ['workflow', 'runtime.write'],
+        () => {
+          dispatched++;
+          return { accepted: true };
+        },
+        () => {},
+        fixtureWorkContext,
+        attempts,
+        undefined,
+        async (_invocation, _action, _digest, apply) => apply(),
+      );
+      const capability = requireWorkflowCapability(host);
+      if (surface === 'provider')
+        await expectRejection(dispatchFixture(capability, input), /workflow approval entry receipt invalid/);
+      else
+        await expectRejection(
+          reserveWorkflowAssignmentForSession(capability, input),
+          /workflow approval entry receipt invalid/,
+        );
+      expect(dispatched).toBe(0);
+      expect(aborts).toBe(0);
+      expect(uncertain?.attempt.status).toBe('uncertain');
+      await expectRejection(dispatchFixture(capability, input), /reconciliation/);
+    },
+  );
+
+  test.each([
+    ['provider', 'commit-unknown'],
+    ['provider', 'foreign-fence'],
+    ['native', 'commit-unknown'],
+    ['native', 'foreign-fence'],
+  ] as const)(
+    'rejects a completed attempt without its matching applied approval acknowledgement: %s/%s',
+    async (surface, malformed) => {
+      const input = protectedSourceRequest();
+      const attempts = fixtureAttempts();
+      const complete = attempts.completeWorkflowAttemptWithApproval.bind(attempts);
+      attempts.completeWorkflowAttemptWithApproval = async (authorization, result) => {
+        const completed = await complete(authorization, result);
+        const approval = requireFixtureValue(completed.approval ?? undefined);
+        return {
+          ...completed,
+          approval:
+            malformed === 'commit-unknown'
+              ? { ...approval, status: 'commit_unknown' as const }
+              : { ...approval, fencing_token: '00000000-0000-0000-0000-000000000000' },
+        };
+      };
+      let dispatched = 0;
+      const host = await compose(
+        ['workflow', 'runtime.write'],
+        () => {
+          dispatched++;
+          return { accepted: true };
+        },
+        () => {},
+        fixtureWorkContext,
+        attempts,
+        undefined,
+        async (_invocation, _action, _digest, apply) => apply(),
+      );
+      const capability = requireWorkflowCapability(host);
+      if (surface === 'provider')
+        await expectRejection(dispatchFixture(capability, input), /workflow approval completion receipt invalid/);
+      else {
+        const reservation = await reserveWorkflowAssignmentForSession(capability, input);
+        await expectRejection(
+          completeWorkflowAssignmentForSession(capability, reservation, {
+            status: 'reported_complete',
+            native_result: 'finished',
+          }),
+          /workflow approval completion receipt invalid/,
+        );
+      }
+      expect(dispatched).toBe(surface === 'provider' ? 1 : 0);
+    },
+  );
+
+  test.each([
+    ['transition error', new Error('uncertainty persistence failed')],
+    ['undefined transition error', undefined],
+  ] as const)('retains provider and uncertainty transition errors in order: %s', async (_label, transitionFailure) => {
+    const attempts = fixtureAttempts();
+    const providerFailure = new Error('provider outcome unknown');
+    attempts.markWorkflowAttemptUncertain = async () => {
+      throw transitionFailure;
+    };
+    const host = await compose(
+      ['workflow', 'runtime.write'],
+      () => {
+        throw providerFailure;
+      },
+      () => {},
+      fixtureWorkContext,
+      attempts,
+    );
+    let failure: unknown;
+    try {
+      await dispatchFixture(host.workflowExecutionCapability, request());
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError)) throw new Error('both workflow failures must be retained');
+    expect(failure.errors).toHaveLength(2);
+    expect(failure.errors[0]).toBe(providerFailure);
+    expect(failure.errors[1]).toBe(transitionFailure);
+    expect(attempts.attemptCount()).toBe(1);
+    await expectRejection(dispatchFixture(host.workflowExecutionCapability, request()), /reconciliation/);
+  });
+
   test.each(protectedApprovalCases)(
     'consumes the configured %s approval before provider dispatch',
     async (stageId: string, action: 'source.write' | 'delivery.execute') => {
@@ -2902,10 +3066,21 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
         settled = true;
       },
     );
-    await started;
-    expect(settled).toBe(false);
-    expect(peerFinished).toBe(false);
-    unblock();
+    try {
+      const startObserved = await Promise.race([
+        started.then(() => true),
+        run.then(
+          () => false,
+          () => false,
+        ),
+      ]);
+      expect(startObserved).toBe(true);
+      expect(settled).toBe(false);
+      expect(peerFinished).toBe(false);
+    } finally {
+      unblock();
+      await Promise.allSettled([run]);
+    }
     await expectRejection(run, /execution failed/);
     expect(peerFinished).toBe(true);
     expect(calls.every((call) => call.stage.kind === 'research')).toBe(true);
@@ -2947,14 +3122,22 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
         settled = true;
       },
     );
-    await started;
-    rejectEngine(new Error('injected engine rejection'));
-    await new Promise<void>((resolve) => setImmediate(resolve));
     try {
+      const startObserved = await Promise.race([
+        started.then(() => true),
+        run.then(
+          () => false,
+          () => false,
+        ),
+      ]);
+      expect(startObserved).toBe(true);
+      rejectEngine(new Error('injected engine rejection'));
+      await new Promise<void>((resolve) => setImmediate(resolve));
       expect(settled).toBe(false);
       expect(finished).toBe(0);
     } finally {
       unblock();
+      await Promise.allSettled([run, ...engineFault.pending]);
     }
     await expectRejection(run, 'injected engine rejection');
     await Promise.allSettled(engineFault.pending);

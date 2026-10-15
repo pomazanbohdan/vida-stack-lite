@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `8ba3fa5` at origin/main.
+- Published predecessor: `9c8ca93` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -726,6 +726,105 @@ without a staged-content edit. Preserve quality-sdk-owner-move-commit-8ba-
 20261015.log. Serialize Git reads during staged checks, and use
 git --no-optional-locks for ordinary read-only inspection, now documented in the
 shared bootstrap search guide. No index guard relaxation or hook bypass.
+
+### Current kernel mutation cycle: bounded execution and next repairs
+
+Published9c8ca93 passed the ordinary strict hook and push. The retry serialized
+Git inspection; the index identity guard stayed strict. Current CI SDK inputs:
+run38715881802/attempt1, artifact11962657647, ZIP digest
+48f78c38c4f95aec4a157e86ce2e53908eb8b757b4a13ba824286aaf43003498.
+Maintained readiness admitted them in1869ms; entire SDK owner7PASS/47assertions/
+2.36s. Source-only kernel selected all four declared files:209PASS/1526assertions,
+exit0 in34974.154ms, complete output/same boot/owned-group termination observed.
+The relocated SDK case remains in complete ordinary selection. Report
+946c0ba6-b15f-4ef6-8dfb-2af657b72824.focused-coverage.json retains the same kernel
+digest and all previous coverage/CC/entry-CRAP numbers; SDK artifacts are absent
+from this focused projection. Frozen/global acceptance stays pending. Logs:
+quality-sdk-owner-{input-preparation,full-completion}-9c8-20261015.log and
+quality-runtime-kernel-focused-cycle4-9c8-20261015.log.
+
+The fresh unchanged kernel mutation pilot passed its original209-test dry run
+in24814ms and generated1962mutants. It reached the900000ms Stryker deadline;
+the outer command completed exit1 in901764.780ms, no outer timeout, full output,
+same boot, inner/outer groups terminated. This is incomplete/UNKNOWN mutation
+qualification, not a zero score or Killed proof. Retain
+quality-mutation-kernel-9c8ca93-W0kCLj and the complete mapped host tmpfs root
+/tmp/quality-kernel-mutation-functional-3tYDoA, especially package-tmp/
+mutation-evidence-7674a5e1-250d-4e5f-8cd6-c8dfb1f0eb51-rmudtm. The terminal
+receipt/timing diagnostic is quality-kernel-mutation-terminal-summary-9c8-
+20261015.json. Do not repeat this unchanged whole partition; qualify bounded
+execution and fix the observed failure patterns first, without raising caps.
+
+Bounded blind reviews found raw expected-success throws and two graph tests
+waiting for start after their operation already failed. Their unapplied test
+proposal preserves exact assertions and races existing start/terminal signals
+without new timers. Another review confirms workers' private package sandboxes
+still share the checkout consumer root through AGENT_RUNTIME_TEST_REPOSITORY_ROOT;
+the root .vida CAS lock collides. Keep that repository binding for captured
+_repository tooling and isolate consumer test context, preserving CAS/reclaim/
+UNKNOWN guards. No unmutated product persistence defect is inferred from the
+contention. Review artifacts: quality-kernel-{mutant-assertion-causes,
+shared-lock-contamination}-9c8-20261015.md.
+
+The real pinned Bun bail control rules out simply adding --bail=1: an assertion
+in the first of two selected files produces a missing-file JUnit report and
+skips afterAll. The current classifier correctly returns UNKNOWN. Last-file
+assertion is causally Killed, all-pass is complete PASS, runtime/hook errors stay
+UNKNOWN; all five child groups terminate. Preserve
+/tmp/quality-mutation-bail-shape-xWdOKg and quality-mutation-bail-shape-controls-
+9c8-20261015.log. No production mutation argv/parser/timeout was changed. Keep
+exact selection/custody admission rather than loosening it for bailout.
+
+Same-contour blind product review identified two unvalidated approval
+acknowledgements (entry and completion) and loss of the original provider error
+if uncertainty recording fails. These remain findings until native regressions
+reproduce them. Current proposals are external/unapplied; parent is the only
+Source writer. Artifact: quality-kernel-terminal-acknowledgement-review-9c8-
+20261015.md. Apply verified root-cause/custody corrections, then qualify bounded
+mutation slices before another numeric cycle. No original baseline cap moves.
+
+The three acknowledgement/error findings now have10real failing public-boundary
+controls:8invalid provider/native approval acknowledgements were accepted, and
+2uncertainty failures lost the provider cause (including throwundefined).
+quality-kernel-approval-errors-before-9c8-20261015.log. Before implementation,
+freeze one new cohesive approval-transition validator at prospective CC/CRAP9/9:
+schema admission, phase selection, immutable approval binding, original attempt
+and entry receipt equality must stay together. Reuse the existing approval
+schema and canonical digest; never add fields to a trusted identity silently.
+The existing failure/abort accumulator is generalized by private rename only,
+retaining its original CC3 role/cap, to preserve body+recovery causes for both
+uncertainty and abort paths. New thin callbacks receive prospective1/1 ceilings.
+No original frozen allowance is increased or transferred; global correspondence
+remains incomplete. Validate entry outside the unstarted-abort wrapper after a
+resolved effect-entry call, so invalid acknowledgement cannot clear a possibly
+committed marker. Provider's entered flag must be set before acknowledgement
+validation; native invalid acknowledgements record uncertainty through the same
+owner. Completion keeps its existing result/attempt checks and validates the
+applied fenced approval as well. Before assertions, update the fake port's
+commit_unknown terminal timestamp to the existing real HostState schema and use
+a valid distinct UUID for the foreign-fence mutation.
+
+Implemented approval entry/completion validation through the existing schema,
+immutable approval identity and exact original-attempt binding. Native entry
+validation stays outside unstarted cleanup; provider marks entry before checking
+the returned acknowledgement. The shared failure-cleanup owner preserves both
+provider and uncertainty causes, including thrown undefined. Applied narrow
+expected-success assertion observers and graph start/terminal races; both graph
+paths release and settle started peers in finally even when the start assertion
+fails. No bailout, timeout increase, CAS relaxation or active Runtime change.
+Selected controls14PASS/80assertions, then the complete configured-workflow file
+170PASS/806assertions/71.08s. Independent actual review found no blocker:
+quality-kernel-approval-actual-review-9c8-20261015.md. Initial static validation
+found three optional/union typing defects; corrected with the existing record
+type and explicit non-null fixture admission, without changing behavior.
+Final static475captured/474checkedTS/0diagnostics:
+quality-kernel-approval-static-qualified-9c8-20261015.log. Complete-file log:
+quality-kernel-approval-causal-full-file-9c8-20261015.log. New validator CC9,
+Final post-typing controls10PASS/54assertions/6.91s:
+quality-kernel-approval-final-controls-9c8-20261015.log.
+renamed failure-cleanup CC3; no original ceilings move. Numeric kernel results
+at9c8describe its prior Source bytes, not this modified Source. Fresh focused
+coverage/CRAP and complete mutation qualification remain pending.
 
 ### Current product correction packet
 

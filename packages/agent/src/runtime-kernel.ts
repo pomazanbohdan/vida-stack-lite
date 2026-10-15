@@ -8,6 +8,7 @@ import {
 } from './orchestration/workflow-session-reservation-contract.js';
 export type { WorkExecutionContext } from './orchestration/workflow-session-reservation-contract.js';
 import z from 'zod';
+import { workflowApprovalConsumptionRecordSchema } from './governance/workflow-approval-consumption-contract.js';
 import type {
   AssignmentAttempt,
   WorkflowAttemptReceipt,
@@ -37,6 +38,7 @@ import {
   type GovernedWriteCommitContext,
   type WorkflowHostCapability,
   type HostGovernanceCapability,
+  type WorkflowApprovalConsumptionRecord,
 } from './governance/edictum-boundary.js';
 import { createConfiguredProjectAuthorizer, type ProjectAuthorizer } from './authorization/cedar-boundary.js';
 import {
@@ -298,19 +300,19 @@ export interface RuntimeKernel {
 function requireCondition(condition: boolean, message: string): void {
   if (!condition) throw new Error(message);
 }
-/** Abort only through the Host's unstarted check; a committed UNKNOWN marker cannot be cleared. */
-async function withUnstartedWorkflowCleanup<T>(
+/** Preserve the failed operation and its owned recovery transition. */
+async function withWorkflowFailureCleanup<T>(
   validate: () => Promise<T>,
-  abort: () => Promise<unknown>,
+  cleanup: () => Promise<unknown>,
   message: string,
 ): Promise<T> {
   try {
     return await validate();
   } catch (error) {
     try {
-      await abort();
-    } catch (abortError) {
-      throw new AggregateError([error, abortError], message);
+      await cleanup();
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], message);
     }
     throw error;
   }
@@ -1498,6 +1500,30 @@ function validateAttemptReceipt(
   return freezeJsonValue(receipt) as WorkflowAttemptReceipt;
 }
 
+function validateWorkflowApprovalTransition(
+  value: WorkflowAttemptApprovalAuthorization,
+  original: WorkflowAttemptApprovalAuthorization,
+  phase: 'entry' | 'completion',
+): WorkflowAttemptApprovalAuthorization {
+  assertCanonicalJsonValue(value, '$');
+  const approval = workflowApprovalConsumptionRecordSchema.safeParse(value?.approval);
+  const expectedStatus = phase === 'entry' ? 'commit_unknown' : 'applied';
+  const message = `workflow approval ${phase} receipt invalid`;
+  if (!approval.success || original.approval === null) throw new Error(message);
+  const current: WorkflowApprovalConsumptionRecord = approval.data;
+  const { status: _currentStatus, terminal_at: _currentTerminal, ...currentIdentity } = current;
+  const { status: _originalStatus, terminal_at: _originalTerminal, ...originalIdentity } = original.approval;
+  requireCondition(
+    approval.data.status === expectedStatus &&
+      approval.data.attempt_id === original.receipt.attempt.attempt_id &&
+      value.receipt?.attempt?.attempt_id === original.receipt.attempt.attempt_id &&
+      canonicalJsonDigest(currentIdentity) === canonicalJsonDigest(originalIdentity) &&
+      (phase !== 'entry' || canonicalJsonDigest(value.receipt) === canonicalJsonDigest(original.receipt)),
+    message,
+  );
+  return freezeJsonValue(value);
+}
+
 function requireMatchingTerminalAttempt(
   receipt: WorkflowAttemptReceipt,
   original: WorkflowAttemptReceipt,
@@ -1793,7 +1819,7 @@ function issueWorkflowExecutionCapability(
           ? null
           : await attempts.claimWorkflowAssignmentWithApproval!(invocation, requestDigest, approvalAction);
       const claimed = authorization?.receipt ?? (await attempts.claimWorkflowAssignment(invocation, requestDigest));
-      return withUnstartedWorkflowCleanup(
+      return withWorkflowFailureCleanup(
         async () => {
           const receipt = validateAttemptReceipt(claimed, invocation, requestDigest, attempts.reconciliationPrincipal);
           if (authorization !== null)
@@ -1839,7 +1865,7 @@ function issueWorkflowExecutionCapability(
       'workflow session action was already completed or requires reconciliation',
     );
     if (reserved.approvalAction === null) return reserved;
-    const entered = await withUnstartedWorkflowCleanup(
+    const entered = await withWorkflowFailureCleanup(
       () =>
         serializeState(async () => {
           const fresh = await resolve(request, request.stageId, request.assignmentIndex);
@@ -1854,7 +1880,15 @@ function issueWorkflowExecutionCapability(
       () => serializeState(async () => attempts.abortUnstartedWorkflowAttempt!(reserved.authorization!)),
       'Workflow effect entry and unstarted abort failed',
     );
-    return freezeJsonValue({ ...reserved, authorization: entered });
+    return withWorkflowFailureCleanup(
+      async () =>
+        freezeJsonValue({
+          ...reserved,
+          authorization: validateWorkflowApprovalTransition(entered, reserved.authorization!, 'entry'),
+        }),
+      () => markUncertain(reserved.receipt, reserved.invocation, reserved.requestDigest),
+      'Workflow entry acknowledgement and uncertainty recording failed',
+    );
   });
   workflowSessionCompleters.set(capability, async (reservation, observed) => {
     requireCondition(
@@ -1896,10 +1930,12 @@ function issueWorkflowExecutionCapability(
     const completed =
       reservation.approvalAction === null
         ? await serializeState(async () => attempts.completeWorkflowAttempt(reservation.receipt, observed))
-        : (
+        : validateWorkflowApprovalTransition(
             await serializeState(async () =>
               attempts.completeWorkflowAttemptWithApproval!(reservation.authorization!, observed),
-            )
+            ),
+            reservation.authorization!,
+            'completion',
           ).receipt;
     const checked = validateAttemptReceipt(
       completed,
@@ -1942,6 +1978,7 @@ function issueWorkflowExecutionCapability(
           });
           activeAuthorization = await serializeState(async () => attempts.beginWorkflowAttemptEffect!(authorization!));
           entered = true;
+          activeAuthorization = validateWorkflowApprovalTransition(activeAuthorization, authorization!, 'entry');
         }
         const output = await dispatch(dispatchedInvocation);
         assertCanonicalJsonValue(output, '$');
@@ -1950,10 +1987,12 @@ function issueWorkflowExecutionCapability(
         completed = validateAttemptReceipt(
           approvalAction === null
             ? await serializeState(async () => attempts.completeWorkflowAttempt(receipt, snapshot))
-            : (
+            : validateWorkflowApprovalTransition(
                 await serializeState(async () =>
                   attempts.completeWorkflowAttemptWithApproval!(activeAuthorization!, snapshot),
-                )
+                ),
+                activeAuthorization!,
+                'completion',
               ).receipt,
           invocation,
           requestDigest,
@@ -1968,7 +2007,14 @@ function issueWorkflowExecutionCapability(
           } catch {
             // The entry marker may have committed before acknowledgement; retain uncertainty.
           }
-        if (!aborted) await markUncertain(receipt, invocation, requestDigest);
+        if (!aborted)
+          await withWorkflowFailureCleanup(
+            async () => {
+              throw error;
+            },
+            () => markUncertain(receipt, invocation, requestDigest),
+            'Workflow execution and uncertainty recording failed',
+          );
         throw error;
       }
       const current = await serializeState(async () => resolve(request, request.stageId, request.assignmentIndex));
