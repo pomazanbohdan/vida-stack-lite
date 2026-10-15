@@ -23,6 +23,8 @@ const config = {
       : ['src/**/*.ts', '!src/config/safe-repository-access.ts'],
   // Core 10 defaults to its bundled command runner; no external runner plugin is required.
   commandRunner: { command: 'bun tooling/mutation-command-runner.ts' },
+  // Retained evidence/sandboxes are not fresh execution inputs.
+  ignorePatterns: ['.tmp/**'],
   tsconfigFile: '.stryker-no-tsconfig.json',
   coverageAnalysis: 'off',
   reporters: ['clear-text', 'json'],

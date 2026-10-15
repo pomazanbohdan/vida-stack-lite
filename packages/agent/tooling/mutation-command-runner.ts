@@ -5,7 +5,12 @@ import { lstat, mkdir, open, readFile } from 'node:fs/promises';
 import type { FileHandle } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { canonicalJson, sha256, testSelectionFingerprint } from './bun-coverage-evidence.ts';
+import {
+  canonicalJson,
+  capturedModuleAbsolutePath,
+  sha256,
+  testSelectionFingerprint,
+} from './bun-coverage-evidence.ts';
 import {
   buildMutationTestCommand,
   collectExecutionIdentity,
@@ -370,7 +375,10 @@ function descriptorMatchesParent(
 
 async function verifyDescriptorFiles(root: string, entries: MutationInputDigest[]): Promise<void> {
   for (const entry of entries) {
-    const absolute = path.join(root, entry.path);
+    const packageRoot = entry.path.startsWith('_repository/')
+      ? path.join(required(process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT, 'test repository root'), 'packages/agent')
+      : root;
+    const absolute = capturedModuleAbsolutePath(packageRoot, entry.path);
     const info = await lstat(absolute);
     if (!info.isFile() || info.isSymbolicLink()) throw new Error('Mutation input is not a regular file.');
     const contents = await readFile(absolute);

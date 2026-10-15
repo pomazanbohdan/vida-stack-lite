@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `5e55147` at origin/main.
+- Published predecessor: `e0fdf60` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -26,43 +26,61 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current bounded mutation execution plan
 
-Human resumed work and requested a root-owned rapid contour-by-contour audit
-of tests and product Source. Blind Luna design reviews completed; root remains
-the sole Source/check/Git writer. Packet50aad81 passed
-the strict hook and was pushed nonforce; logs
-quality-mutation-pilot-{strict-commit,push}-df9-20261015.log.
+Root remains the sole Source/check/Git writer. Human requested ordinary bounded
+development, Pstack practices for every contour and agent, and planning/delegation.
+Apply Fix Root Causes through a real failing control before correction and
+Sequence Verifiable Units through focused checks and strict commit/push per
+packet. Two fresh blind native Luna lanes own only independent review/planning
+artifacts. Astra stay stopped. No duplicate test owner, broad audit or ledger.
+Cloud Superpowers is currently unavailable and no local skill was found;
+repository planning/debug/review rules remain the available execution route.
 
-Real selected bun-fs-safe-attestation pilot completed in8838.507ms with native
-exit1/nullsignal, same boot. Stryker instrumented7mutants but its dry-run runner
-rejected inputs before launching Bun tests; test/tool fingerprints in the
-retained receipt are empty, spawn_error=input-drift and process_custody=null.
-No mutant execution or confirmed Killed score was established. The outer
-Stryker receipt observed direct exit1 but group termination was unobserved;
-the diagnostic remains UNKNOWN and retains its entire evidence directory:
-packages/agent/.tmp/mutation-evidence-5f464f3a-634b-430c-8b93-d1b594972bb1-jt39oi.
-Native envelope quality-mutation-pilot-native-50a-20261015.{json,log,stdout.log,stderr.log}.
-Do not reuse/replay this run/root or reinterpret it as a failing assertion.
+Published4513b7d fixes the full-selection/partition fingerprint mismatch with
+one shared owner and v3 descriptor, retains exact byte checks and adds rejection
+stages. Its former pilot is immutable UNKNOWN; retain
+packages/agent/.tmp/mutation-evidence-5f464f3a-634b-430c-8b93-d1b594972bb1-jt39oi
+and quality-mutation-pilot-native-50a-20261015.*. Do not replay or relabel it.
 
-Confirmed input-contract defect: the parent fingerprints
-{selection:capture.testSelection,files:capture.testInputs}, while the runner's
-descriptorFingerprintsMatch fingerprints {selection:partitionTests,files:test_inputs}.
-The descriptor currently omits the captured full test-selection object. This
-is a Source-confirmed mismatch; the old runner suppressed the exact verification
-stage, so an additional earlier mismatch in that old run remains unexcluded.
-The current batch introduces one shared fingerprint owner, a v3 descriptor
-carrying full test_selection separately from partition tests, exact subset and
-input-byte checks, and bounded rejection-stage diagnostics before child launch.
-Historical coverage identity bytes remain unchanged.
+Fresh native controls demonstrated both the reaper requirement and its limit.
+Plain bwrap reaps inside its PID namespace but left host zombie70924 under
+PID1/tail in group70923; outer operation is UNKNOWN and retained at
+quality-reaper-e0f-20261015-xjiCcc. Tini0.19.0 is the latest official release
+observed via GitHub API and its downloaded binary matches the official SHA256.
+Official README documents -s subreaping. It is session tooling, not a new
+mandatory repository prerequisite. Tini-s plus normal bwrap reaper passed clean,
+adopted-orphan and live-descendant controls, including outer group ESRCH:
+quality-reaper-supervised-e0f-HssFNC. The live-descendant receipt remains correctly
+UNKNOWN until the later independent absence observation; it is not a PASS receipt.
 
-Readonly process inspection found an orphan zombie67047 in group67033 under
-host PID1(tail), which is not a new group-termination receipt. bwrap's installed
-help confirms --as-pid-1 disables its PID1 reaper. Consider a fresh qualified
-native reaper topology without that flag; do not weaken the existing group
-absence guard or replay archived UNKNOWN. Fresh reaper qualification remains
-pending. Read-only findings are retained in attachments:
-quality-mutation-process-reaper-50a-20261015.md,
-quality-input-shared-architecture-50a-20261015.md and
-quality-mutation-admission-global-20261015.md.
+Fresh selected pilot at e0fdf60 completed in20430.443ms, native exit1, same boot,
+complete output, inner and outer group termination observed. It still ran no
+mutants: dry run rejected tool-inputs. Root
+quality-mutation-supervised-pilot-e0f-kU21QV retains its outer receipt; package
+evidence stays at .tmp/mutation-evidence-5db59fd1-4e10-47a6-9a4f-e03475ca1c4b-jT7que.
+These results establish neither Killed nor a global mutation score.
+
+Bounded inspection found exactly9missing logical _repository/tooling/agent
+inputs among112tool entries. The runner incorrectly joined them under the
+sandbox. Current correction reuses capturedModuleAbsolutePath with the already
+parent-issued repository binding for those paths; package-local tools/tests
+stay sandbox-bound and all current digest/regular-file checks remain. Corrected
+regression reproduced tool-inputs before fixing; a first malformed ordering
+fixture was rejected at descriptor-shape and is retained as a test setup error.
+Changed parent bytes reject even with a matching sandbox decoy; absent binding
+also rejects. Focused28PASS/280assertions across2files:
+quality-mutation-repository-path-focused-e0f-20261015.log. Independent Luna
+review ACCEPT is retained in quality-mutation-repository-actual-review-e0f-
+20261015.md; its trust assumption is the existing parent-issued repository
+binding and descriptor digests, not a new authentication source.
+Stryker's own ProjectReader confirmed ignorePatterns is added
+to its always-ignore rules. Excluding only package .tmp avoids copying archived
+sandboxes; selected pilot previously enumerated38699files. No measured reduction
+is claimed until a fresh actual run. Reuse the current captured input owners.
+
+CI metadata for e0fdf60 SDK formation reports success at run38691935579;
+quality-sdk-ci-status-e0f-20261015.json. No artifact retrieval/admission or full
+coverage/CRAP qualification has occurred. After this correction is published,
+run one fresh selected pilot, then current SDK/resource/shard prerequisites.
 
 ## Root-owned rapid test and product audit
 

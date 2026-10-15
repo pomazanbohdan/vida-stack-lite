@@ -65,6 +65,7 @@ function fixture() {
     process.env[name] = value;
   }
   return {
+    root,
     descriptor,
     write,
     verify: async (value: unknown = descriptor) => {
@@ -99,6 +100,37 @@ test('mutation runner accepts a partition subset bound to the full captured test
   // The original source digest remains valid while Stryker changes the active subject.
   input.write('src/a.ts', 'mutated source');
   expect((await input.verify()).rejection).toBeNull();
+});
+
+test('mutation tool identity resolves repository inputs at the parent-bound repository without sandbox fallback', async () => {
+  const input = fixture();
+  const repository = path.join(input.root, 'parent-repository');
+  const packageRoot = path.join(repository, 'packages/agent');
+  const relative = '_repository/tooling/agent/release-local.ts';
+  const actual = path.join(repository, 'tooling/agent/release-local.ts');
+  mkdirSync(packageRoot, { recursive: true });
+  mkdirSync(path.dirname(actual), { recursive: true });
+  writeFileSync(actual, '// captured repository input\n');
+  input.descriptor.tool_inputs.unshift({ path: relative, sha256: sha256('// captured repository input\n') });
+  input.descriptor.tool_fingerprint = sha256(JSON.stringify(input.descriptor.tool_inputs));
+  input.descriptor.input_fingerprint = sha256(
+    JSON.stringify({
+      sources: input.descriptor.source_fingerprint,
+      tests: input.descriptor.test_fingerprint,
+      tooling: input.descriptor.tool_fingerprint,
+    }),
+  );
+  const repositoryVariable = 'AGENT_RUNTIME_TEST_REPOSITORY_ROOT';
+  savedEnvironment.set(repositoryVariable, process.env[repositoryVariable]);
+  process.env[repositoryVariable] = repository;
+  process.env.AGENT_RUNTIME_TOOL_FINGERPRINT = input.descriptor.tool_fingerprint;
+  process.env.AGENT_RUNTIME_INPUT_FINGERPRINT = input.descriptor.input_fingerprint;
+  expect((await input.verify()).rejection).toBeNull();
+  input.write(relative, '// captured repository input\n');
+  writeFileSync(actual, '// changed repository input\n');
+  expect(await input.verify()).toEqual({ descriptor: null, rejection: 'tool-inputs' });
+  delete process.env[repositoryVariable];
+  expect(await input.verify()).toEqual({ descriptor: null, rejection: 'tool-inputs' });
 });
 
 test.each([
