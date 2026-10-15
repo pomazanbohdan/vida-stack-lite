@@ -1,9 +1,16 @@
 import { afterEach, expect, test } from 'bun:test';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { sha256, testSelectionFingerprint } from '../tooling/bun-coverage-evidence.ts';
-import { mutationPartitionSourceBinding, verifyInputDescriptor } from '../tooling/mutation-command-runner.ts';
+import {
+  mutationPartitionSourceBinding,
+  verifyInputDescriptor,
+  mutationTestContextBinding,
+  materializeMutationTestContext,
+  assertMutationTestContext,
+} from '../tooling/mutation-command-runner.ts';
+import { expectRejection } from './helpers/expect-rejection.ts';
 
 const roots: string[] = [];
 const savedEnvironment = new Map<string, string | undefined>();
@@ -68,6 +75,19 @@ function fixture() {
     root,
     descriptor,
     write,
+    bindTools: () => {
+      descriptor.tool_inputs.sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
+      descriptor.tool_fingerprint = sha256(JSON.stringify(descriptor.tool_inputs));
+      descriptor.input_fingerprint = sha256(
+        JSON.stringify({
+          sources: descriptor.source_fingerprint,
+          tests: descriptor.test_fingerprint,
+          tooling: descriptor.tool_fingerprint,
+        }),
+      );
+      process.env.AGENT_RUNTIME_TOOL_FINGERPRINT = descriptor.tool_fingerprint;
+      process.env.AGENT_RUNTIME_INPUT_FINGERPRINT = descriptor.input_fingerprint;
+    },
     verify: async (value: unknown = descriptor) => {
       write('one.inputs.json', JSON.stringify(value));
       return verifyInputDescriptor(
@@ -112,25 +132,91 @@ test('mutation tool identity resolves repository inputs at the parent-bound repo
   mkdirSync(path.dirname(actual), { recursive: true });
   writeFileSync(actual, '// captured repository input\n');
   input.descriptor.tool_inputs.unshift({ path: relative, sha256: sha256('// captured repository input\n') });
-  input.descriptor.tool_fingerprint = sha256(JSON.stringify(input.descriptor.tool_inputs));
-  input.descriptor.input_fingerprint = sha256(
-    JSON.stringify({
-      sources: input.descriptor.source_fingerprint,
-      tests: input.descriptor.test_fingerprint,
-      tooling: input.descriptor.tool_fingerprint,
-    }),
-  );
+  input.bindTools();
   const repositoryVariable = 'AGENT_RUNTIME_TEST_REPOSITORY_ROOT';
   savedEnvironment.set(repositoryVariable, process.env[repositoryVariable]);
   process.env[repositoryVariable] = repository;
-  process.env.AGENT_RUNTIME_TOOL_FINGERPRINT = input.descriptor.tool_fingerprint;
-  process.env.AGENT_RUNTIME_INPUT_FINGERPRINT = input.descriptor.input_fingerprint;
   expect((await input.verify()).rejection).toBeNull();
   input.write(relative, '// captured repository input\n');
   writeFileSync(actual, '// changed repository input\n');
   expect(await input.verify()).toEqual({ descriptor: null, rejection: 'tool-inputs' });
   delete process.env[repositoryVariable];
   expect(await input.verify()).toEqual({ descriptor: null, rejection: 'tool-inputs' });
+});
+
+test('mutation context copies verified bytes into exclusive per-invocation roots and detects drift', async () => {
+  const input = fixture();
+  const repository = path.join(input.root, 'parent-repository');
+  const contextFiles = [
+    'AGENTS.md',
+    'AGENT.sidecar.md',
+    'agent-runtime.config.v1.yaml',
+    'docs/agent-instructions/documentation-policy.v1.json',
+  ];
+  const captured: Record<string, Buffer> = {};
+  for (const file of contextFiles) {
+    const absolute = path.join(repository, file);
+    mkdirSync(path.dirname(absolute), { recursive: true });
+    const bytes = Buffer.from(`captured ${file}\n`);
+    writeFileSync(absolute, bytes);
+    const logical = `_repository/test-context/${file}`;
+    captured[logical] = bytes;
+    input.descriptor.tool_inputs.push({ path: logical, sha256: sha256(bytes) });
+  }
+  input.bindTools();
+  const variable = 'AGENT_RUNTIME_TEST_REPOSITORY_ROOT';
+  savedEnvironment.set(variable, process.env[variable]);
+  process.env[variable] = repository;
+  const verified = await input.verify();
+  expect(verified.rejection).toBeNull();
+  expect(verified.contextInputs?.size).toBe(4);
+  const contextInputs = verified.contextInputs ?? new Map<string, Buffer>();
+  writeFileSync(path.join(repository, 'AGENTS.md'), 'changed after verification\n');
+  const bindings = ['first', 'second'].map((name) =>
+    mutationTestContextBinding(path.join(input.root, `${name}.xml`), input.descriptor.tool_inputs),
+  );
+  for (const binding of bindings) {
+    expect(binding).not.toBeNull();
+    if (!binding) throw new Error('Missing test context binding');
+    mkdirSync(path.dirname(binding.root));
+    await materializeMutationTestContext(binding, contextInputs);
+    await assertMutationTestContext(binding, captured);
+    expect(readFileSync(path.join(binding.root, 'AGENTS.md'), 'utf8')).toBe('captured AGENTS.md\n');
+    await expectRejection(materializeMutationTestContext(binding, contextInputs), /EEXIST/);
+  }
+  expect(bindings[0]?.root).not.toBe(bindings[1]?.root);
+  expect(await input.verify()).toEqual({ descriptor: null, rejection: 'tool-inputs' });
+  const first = bindings[0]!;
+  if (!first) throw new Error('Missing test context binding');
+  writeFileSync(path.join(first.root, 'AGENTS.md'), 'drift\n');
+  await expectRejection(assertMutationTestContext(first, captured), /bytes changed/);
+  writeFileSync(path.join(first.root, '.unexpected-state'), 'must not be admitted');
+  await expectRejection(assertMutationTestContext(first, captured), /layout changed/);
+  expect(() =>
+    mutationTestContextBinding(path.join(input.root, 'partial.xml'), input.descriptor.tool_inputs.slice(1)),
+  ).toThrow(/incomplete/);
+});
+
+test('mutation descriptor rejects missing configured context before launching its helper', async () => {
+  const input = fixture();
+  input.descriptor.test_inputs.push(input.write('tests/configured-context.ts', 'export const context = true;\n'));
+  input.descriptor.test_inputs.sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
+  input.descriptor.test_fingerprint = testSelectionFingerprint(
+    input.descriptor.test_selection,
+    input.descriptor.test_inputs,
+  );
+  process.env.AGENT_RUNTIME_TEST_FINGERPRINT = input.descriptor.test_fingerprint;
+  input.bindTools();
+  expect(await input.verify()).toEqual({ descriptor: null, rejection: 'tool-inputs' });
+});
+
+test('context-free partitions have no extra fixture and incomplete materialization cannot reuse a root', async () => {
+  const input = fixture();
+  expect(mutationTestContextBinding(path.join(input.root, 'none.xml'), input.descriptor.tool_inputs)).toBeNull();
+  await materializeMutationTestContext(null, new Map());
+  await assertMutationTestContext(null, {});
+  const binding = { root: path.join(input.root, 'missing'), inputs: [] };
+  await expectRejection(materializeMutationTestContext(binding, new Map()), /incomplete/);
 });
 
 test.each([

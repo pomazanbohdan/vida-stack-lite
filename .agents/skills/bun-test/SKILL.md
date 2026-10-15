@@ -137,6 +137,10 @@ For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and
 check the descriptor's rejection stage before investigating assertions. A
 known survivor is a mutation failure; an input/process failure is UNKNOWN.
+Use TESTING's per-invocation configured-context fixture for mutation workers;
+keep repository tooling and consumer context roots separate and never reuse
+an archived or another worker's context. Shared package sandboxes alone do not
+isolate configured consumer reads.
 For child runners, test explicit environment deletion as well as inheritance,
 and verify observation timers are disposed when output completes early.
 

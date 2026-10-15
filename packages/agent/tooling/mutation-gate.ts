@@ -8,7 +8,11 @@ import { parse } from '@babel/parser';
 import type { schema } from '@stryker-mutator/api/core';
 import { checkManifest, pinnedEnvironment, readPin } from '../bin/bun.ts';
 import { maintainedSourceInventory } from './maintained-source-inventory.ts';
-import { mutationPartitionSourceBinding } from './mutation-command-runner.ts';
+import {
+  mutationPartitionSourceBinding,
+  mutationTestContextBinding,
+  assertMutationTestContext,
+} from './mutation-command-runner.ts';
 import { qualityInputs, qualityFingerprint, repositoryRootForPackage, sha256 } from './bun-coverage-evidence.ts';
 import {
   buildMutationTestCommand,
@@ -359,6 +363,7 @@ async function confirmRunnerReceipt(
   try {
     const junitFile = junitName(partition, mutantId);
     const command = buildMutationTestCommand(process.execPath, tests, path.join(reportDirectory, junitFile));
+    const testContext = mutationTestContextBinding(path.join(reportDirectory, junitFile), inputs.tool_inputs);
     const sandboxRoot = path.join(reportDirectory, 'stryker-tmp');
     const expectedIdentity = await collectExecutionIdentity({
       executable: process.execPath,
@@ -394,6 +399,7 @@ async function confirmRunnerReceipt(
         stderrFile,
         bodyEventsFile,
         executionIdentity: expectedIdentity,
+        testContext,
       })
     )
       throw new Error('Runner receipt does not bind the active mutant to the current parent snapshot.');
@@ -403,6 +409,7 @@ async function confirmRunnerReceipt(
       JSON.stringify(receipt.partition_sources) !== JSON.stringify(partitionSources)
     )
       throw new Error('Runner receipt does not bind the current owned partition sources.');
+    await assertMutationTestContext(testContext, inputs.input_bytes);
     const junitBytes = await readBoundedEvidence(reportDirectory, receipt.junit_file);
     if (sha256(junitBytes) !== receipt.junit_sha256 || receipt.junit_bytes !== junitBytes.length)
       throw new Error('JUnit output does not match the runner receipt.');

@@ -354,6 +354,23 @@ describe('mutation execution receipts', () => {
     expect(mutationReceiptMatches(receipt(), expected)).toBe(true);
   });
 
+  test('binds a configured context receipt to its private root and exact captured inputs', () => {
+    const testContext = {
+      root: '/tmp/mutation-evidence/sample-dry-run.adapters/configured-test-context',
+      inputs: [{ path: '_repository/test-context/AGENTS.md', sha256: '1'.repeat(64) }],
+    };
+    const bound = { ...expected, testContext };
+    expect(mutationReceiptMatches({ ...receipt(), test_context: testContext }, bound)).toBe(true);
+    for (const changed of [
+      undefined,
+      null,
+      { ...testContext, root: '/tmp/shared-context' },
+      { ...testContext, inputs: [] },
+      { ...testContext, inputs: [{ ...testContext.inputs[0], sha256: '2'.repeat(64) }] },
+    ])
+      expect(mutationReceiptMatches({ ...receipt(), test_context: changed }, bound)).toBe(false);
+  });
+
   test('requires a passing baseline and pinned Bun assertion exit result', () => {
     expect(confirmedRunnerOutcome(0, 'passed')).toBe('passed');
     expect(confirmedRunnerOutcome(1, 'killed')).toBe('killed');

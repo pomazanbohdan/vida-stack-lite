@@ -2,13 +2,17 @@ import { createHash } from 'node:crypto';
 import { mutationLimits } from './mutation-limits.ts';
 import { constants } from 'node:fs';
 import type { BigIntStats } from 'node:fs';
-import { lstat, mkdir, open, readFile } from 'node:fs/promises';
+import { lstat, mkdir, open, readFile, readdir } from 'node:fs/promises';
 import type { FileHandle } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   canonicalJson,
   capturedModuleAbsolutePath,
+  readQualityInputs,
+  repositoryTestContextFiles,
+  repositoryTestContextInputPrefix,
+  repositoryTestContextRelativePath,
   sha256,
   testSelectionFingerprint,
 } from './bun-coverage-evidence.ts';
@@ -50,7 +54,13 @@ type MutationRunnerConfig = {
   runId: string;
 };
 type MutationProcessResult = import('./mutation-evidence.ts').MutationProcessResult;
-type RunnerLogs = { stdout: string; stderr: string; bodyEvents: string; adapterDirectory: string };
+type RunnerLogs = {
+  stdout: string;
+  stderr: string;
+  bodyEvents: string;
+  adapterDirectory: string;
+  testContext: ReturnType<typeof mutationTestContextBinding>;
+};
 type RunnerIdentity = Awaited<ReturnType<typeof collectExecutionIdentity>>;
 
 function digest(value: string): string {
@@ -195,7 +205,7 @@ async function junitDigest(file: string, allowEmpty = false): Promise<{ sha256: 
   }
 }
 
-async function durableCreate(target: string, contents: string): Promise<void> {
+async function durableCreate(target: string, contents: string | Buffer): Promise<void> {
   const handle = await open(target, 'wx', 0o600);
   try {
     await handle.writeFile(contents);
@@ -374,7 +384,8 @@ function descriptorMatchesParent(
   );
 }
 
-async function verifyDescriptorFiles(root: string, entries: MutationInputDigest[]): Promise<void> {
+async function verifyDescriptorFiles(root: string, entries: MutationInputDigest[]): Promise<Map<string, Buffer>> {
+  const contextInputs = new Map<string, Buffer>();
   for (const entry of entries) {
     const packageRoot = entry.path.startsWith('_repository/')
       ? path.join(required(process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT, 'test repository root'), 'packages/agent')
@@ -385,7 +396,53 @@ async function verifyDescriptorFiles(root: string, entries: MutationInputDigest[
     const contents = await readFile(absolute);
     if (contents.length !== info.size || sha256(contents) !== entry.sha256)
       throw new Error('Mutation input differs from its parent snapshot.');
+    if (repositoryTestContextRelativePath(entry.path) !== null) contextInputs.set(entry.path, contents);
   }
+  return contextInputs;
+}
+
+export function mutationTestContextBinding(junitPath: string, tools: readonly MutationInputDigest[]) {
+  const inputs = tools.filter((entry) => repositoryTestContextRelativePath(entry.path) !== null);
+  if (!inputs.length) return null;
+  if (inputs.length !== repositoryTestContextFiles.length || !junitPath.endsWith('.xml'))
+    throw new Error('Mutation test context binding is incomplete.');
+  return {
+    root: path.resolve(junitPath.slice(0, -4) + '.adapters', 'configured-test-context'),
+    inputs,
+  };
+}
+
+export async function materializeMutationTestContext(
+  binding: ReturnType<typeof mutationTestContextBinding>,
+  captured: ReadonlyMap<string, Buffer>,
+): Promise<void> {
+  if (binding === null) return;
+  if (captured.size !== repositoryTestContextFiles.length)
+    throw new Error('Mutation test context capture is incomplete.');
+  await mkdir(binding.root, { mode: 0o700 });
+  for (const file of repositoryTestContextFiles) {
+    const bytes = captured.get(`${repositoryTestContextInputPrefix}/${file}`);
+    if (!bytes) throw new Error('Mutation test context capture is incomplete.');
+    const target = path.join(binding.root, file);
+    await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
+    await durableCreate(target, bytes);
+  }
+}
+
+export async function assertMutationTestContext(
+  binding: ReturnType<typeof mutationTestContextBinding>,
+  captured: Readonly<Record<string, Buffer>>,
+): Promise<void> {
+  if (binding === null) return;
+  const expected = [...repositoryTestContextFiles, 'docs', 'docs/agent-instructions'].sort();
+  const actual = (await readdir(binding.root, { recursive: true }))
+    .map((file) => file.split(path.sep).join('/'))
+    .sort();
+  if (JSON.stringify(actual) !== JSON.stringify(expected)) throw new Error('Mutation test context layout changed.');
+  const bytes = await readQualityInputs(binding.root, repositoryTestContextFiles);
+  for (const file of repositoryTestContextFiles)
+    if (!bytes.get(file)?.equals(captured[`${repositoryTestContextInputPrefix}/${file}`]!))
+      throw new Error('Mutation test context bytes changed.');
 }
 
 function descriptorFingerprintsMatch(descriptor: MutationInputDescriptor): boolean {
@@ -414,7 +471,11 @@ export async function verifyInputDescriptor(
   sources: string[],
   partitionSourceFingerprint: string,
   sourceFingerprint: string,
-): Promise<{ descriptor: MutationInputDescriptor | null; rejection: InputRejection | null }> {
+): Promise<{
+  descriptor: MutationInputDescriptor | null;
+  rejection: InputRejection | null;
+  contextInputs?: Map<string, Buffer>;
+}> {
   let stage: InputRejection = 'descriptor-read';
   try {
     const value = await readInputDescriptor(reportDirectory, partition);
@@ -441,10 +502,15 @@ export async function verifyInputDescriptor(
     stage = 'test-inputs';
     await verifyDescriptorFiles(root, value.test_inputs);
     stage = 'tool-inputs';
-    await verifyDescriptorFiles(root, value.tool_inputs);
+    const contextInputs = await verifyDescriptorFiles(root, value.tool_inputs);
+    if (
+      (contextInputs.size > 0 || value.test_inputs.some((entry) => entry.path === 'tests/configured-context.ts')) &&
+      contextInputs.size !== repositoryTestContextFiles.length
+    )
+      throw new Error('Configured test context inputs are absent.');
     stage = 'fingerprint';
     if (!descriptorFingerprintsMatch(value)) throw new Error('Mutation input descriptor fingerprint is invalid.');
-    return { descriptor: value, rejection: null };
+    return { descriptor: value, rejection: null, contextInputs };
   } catch {
     return { descriptor: null, rejection: stage };
   }
@@ -466,13 +532,21 @@ function mutationTestEnvironment(logs: RunnerLogs): Record<string, string> {
     delete environment[name];
   environment.AGENT_MUTATION_BODY_RECEIPTS = logs.bodyEvents;
   environment.AGENT_MUTATION_ADAPTER_DIRECTORY = logs.adapterDirectory;
+  delete environment.AGENT_RUNTIME_TEST_CONTEXT_ROOT;
+  if (logs.testContext !== null) environment.AGENT_RUNTIME_TEST_CONTEXT_ROOT = logs.testContext.root;
   return environment;
 }
 
-async function executeChild(command: string[], inputsMatch: boolean, logs: RunnerLogs): Promise<MutationProcessResult> {
+async function executeChild(
+  command: string[],
+  inputsMatch: boolean,
+  logs: RunnerLogs,
+  contextInputs: ReadonlyMap<string, Buffer>,
+): Promise<MutationProcessResult> {
   if (!inputsMatch)
     return { exitCode: null, signal: null, spawnError: 'input-drift', timedOut: false, processCustody: null };
   try {
+    await materializeMutationTestContext(logs.testContext, contextInputs);
     return await executeMutationCommand(command, process.cwd(), mutationLimits.commandMs, {
       stdoutFile: logs.stdout,
       stderrFile: logs.stderr,
@@ -615,6 +689,10 @@ function runnerReceipt(
     timed_out: processResult.timedOut,
     process_custody: processResult.processCustody ?? null,
     output_capture: processResult.output_capture ?? null,
+    test_context: mutationTestContextBinding(
+      evidencePaths(config.reportDirectory, config.partition, activeMutant).junit,
+      descriptor?.tool_inputs ?? [],
+    ),
   };
 }
 
@@ -622,7 +700,7 @@ async function run(): Promise<void> {
   const config = runnerConfig();
   const paths = evidencePaths(config.reportDirectory, config.partition, activeMutant);
   const command = buildMutationTestCommand(process.execPath, config.tests, paths.junit);
-  const { descriptor, rejection } = await verifyInputDescriptor(
+  const { descriptor, rejection, contextInputs } = await verifyInputDescriptor(
     config.root,
     config.reportDirectory,
     config.partition,
@@ -636,12 +714,13 @@ async function run(): Promise<void> {
     stderr: paths.stderr,
     bodyEvents: paths.bodyEvents,
     adapterDirectory: paths.adapterDirectory,
+    testContext: mutationTestContextBinding(paths.junit, descriptor?.tool_inputs ?? []),
   };
   await durableCreate(paths.bodyEvents, '');
   await mkdir(paths.adapterDirectory, { mode: 0o700 });
   const identity = await runnerIdentity(config.root, config.tests, command, descriptor);
   const started = performance.now();
-  let processResult = await executeChild(command, descriptor !== null, logs);
+  let processResult = await executeChild(command, descriptor !== null, logs, contextInputs ?? new Map());
   let afterIdentity: RunnerIdentity;
   try {
     afterIdentity = await runnerIdentity(config.root, config.tests, command, descriptor);

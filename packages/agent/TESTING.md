@@ -760,6 +760,20 @@ MutationInputDescriptor/v3 keeps the complete captured test_selection separate
 from partition tests. Both producer and runner use the coverage owner's test
 fingerprint formula; selected tests must belong to that captured selection.
 Invalid descriptors retain an input_rejection stage and launch no test child.
+When the captured runtime closure includes tests/configured-context.ts, the
+same capture/tool fingerprint binds exactly four _repository/test-context
+inputs: root runtime config, AGENTS.md, AGENT.sidecar.md and the declared
+documentation-policy JSON. The mutation runner retains their already verified
+buffers and exclusively creates a fresh configured-test-context below that
+invocation's adapter directory. AGENT_RUNTIME_TEST_CONTEXT_ROOT selects it only
+for configuredTestContext(); AGENT_RUNTIME_TEST_REPOSITORY_ROOT keeps the parent
+tooling binding. Never copy .vida, work, databases or leases into this fixture.
+Parent admission verifies the deterministic root/digest receipt binding, exact
+layout and bytes before accepting an outcome. Failed materialization launches
+no tests. Retain the root with runner evidence on failure/UNKNOWN; never reuse
+it. These post-run checks assume trusted selected tests and do not authenticate
+the absence of adversarial mid-run substitution. A parallel runner control does
+not qualify Stryker's full mutant universe or parallel coverage shards.
 Stryker's score-based process exit is disabled; VIDA alone enforces100%
 assertion-confirmed Killed after admitting complete process and receipt evidence.
 A surviving mutant remains a gate failure, not an infrastructure UNKNOWN.

@@ -234,8 +234,8 @@ export function coverageReviewEnvironmentSha256(environment: NodeJS.ProcessEnv, 
   });
 }
 export const repositoryToolingInputPrefix = '_repository/tooling/agent';
-const repositoryTestContextInputPrefix = '_repository/test-context';
-const repositoryTestContextFiles: readonly string[] = Object.freeze([
+export const repositoryTestContextInputPrefix = '_repository/test-context';
+export const repositoryTestContextFiles: readonly string[] = Object.freeze([
   'agent-runtime.config.v1.yaml',
   'AGENTS.md',
   'AGENT.sidecar.md',
@@ -245,7 +245,7 @@ const repositoryTestContextPaths = new Map(
   repositoryTestContextFiles.map((file) => [`${repositoryTestContextInputPrefix}/${file}`, file]),
 );
 
-function repositoryTestContextRelativePath(logicalPath: string): string | null {
+export function repositoryTestContextRelativePath(logicalPath: string): string | null {
   return repositoryTestContextPaths.get(logicalPath) ?? null;
 }
 

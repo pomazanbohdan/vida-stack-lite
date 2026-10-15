@@ -530,6 +530,7 @@ export function mutationReceiptMatches(
     command: string[];
     sandboxRoot: string;
     executionIdentity: Record<string, unknown>;
+    testContext?: { root: string; inputs: { path: string; sha256: string }[] } | null;
   },
 ): value is MutationEvidenceReceipt {
   if (!evidenceRecord(value) || !evidenceRecord(value.execution_identity)) return false;
@@ -547,6 +548,7 @@ export function mutationReceiptMatches(
     executionIdentityDigest(value.execution_identity) === value.execution_identity_digest,
     value.execution_identity_after_digest === value.execution_identity_digest,
     matchesExecutionIdentity(value.execution_identity, expected.executionIdentity, expected.sandboxRoot),
+    canonicalEvidenceJson(value.test_context ?? null) === canonicalEvidenceJson(expected.testContext ?? null),
     value.junit_file === expected.junitFile,
     value.body_events_file === expected.bodyEventsFile,
     typeof value.body_events_sha256 === 'string' && /^[0-9a-f]{64}$/u.test(value.body_events_sha256),

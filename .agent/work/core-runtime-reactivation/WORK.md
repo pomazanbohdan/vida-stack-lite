@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `99431d5` at origin/main.
+- Published predecessor: `e2bfc67` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -859,6 +859,43 @@ it does not claim complete historical report admission for these external paths.
 The initial strict hook correctly rejected three premature exports as unused;
 they remain private until the worker integration actually consumes them. Keep
 Knip strict; no exclusions or hook bypass were added.
+
+Packet e2bfc67 passed the ordinary strict hook and push. Worker integration now
+retains only the four context buffers from the existing verified read/hash pass,
+materializes them exclusively below the per-invocation adapter directory, clears
+an inherited context override and supplies the private root to the test child.
+Repository/tooling binding is unchanged. A failed materialization uses the
+existing execution error/receipt path and never launches tests. Receipts bind the
+derived root and captured context digests; parent derives the same binding and
+checks exact layout and bytes through the bounded rooted reader before admission.
+No descriptor version, second snapshot/hash owner or cleanup/replay is introduced.
+The root remains retained with runner evidence, including failures and UNKNOWN.
+
+First contract run55PASS/1FAIL exposed fixture locale ordering incompatible with
+the descriptor's strict code-point ordering, corrected without relaxing admission.
+Then56PASS/393assertions/1.022s; quality-mutation-context-controls-corrected-e2b-
+20261015.log. Static475captured/474checkedTS/0diagnostics:
+quality-mutation-context-static-e2b-20261015.log. Blind actual review found no
+blocker: quality-mutation-context-actual-review-e2b-20261015.md. It correctly
+limits post-run byte checks to the existing trusted-test threat model: final
+bytes do not authenticate absence of adversarial mid-run replacement.
+
+A real four-worker runner control passed concurrently with one common parent
+repository binding and four distinct context roots. Every worker executed the
+actual smoke owner16PASS/411assertions, with complete capture, terminal child/
+parent groups and unchanged exact four-file contexts. An intentionally poisoned
+inherited context path was overridden by the runner. Retain
+quality-mutation-context-native-e2b-SFPCr5 and
+/tmp/quality-mutation-context-control-iBaXp8. This is runner integration evidence,
+not Stryker mutation execution, frozen/global acceptance or parallel coverage
+shard qualification. The unchanged1962-mutant pilot is not repeated. Complete
+nonoverlapping range slices and parent universe accounting remain the next gate.
+Final combined contracts89PASS/775assertions/1.148s:
+quality-mutation-context-final-e2b-20261015.log. Added explicit missing-helper-
+context rejection, context-free no-op, incomplete-copy refusal and forged receipt
+root/digest controls. TESTING owns the new fixture/retention contract; Bun skill
+points to it. Full current kernel coverage/CC/entry-CRAP and bounded Stryker
+mutation results remain pending, without weakening any exact/frozen gate.
 
 ### Current product correction packet
 
