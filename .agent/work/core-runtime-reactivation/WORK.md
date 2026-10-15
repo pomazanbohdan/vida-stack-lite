@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `bbb5c2a` at origin/main.
+- Published predecessor: `764b6d6` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -93,11 +93,33 @@ authenticated sorted set; this control passes1/1 with9assertions, while the test
 program again passes445files. Evidence:
 `quality-kernel-multiproject-rebound-vbbb-20261015.log` under attachments.
 
-After checked Source publication, collect one fresh unchanged five-file kernel
-coverage/CC/entry-CRAP diagnostic, compare its function inventory/ceilings and
-refresh the automatic contour document. Do not repeat the oversized mutation
-campaign until the existing native per-test admission prerequisite is qualified.
-Full exact/frozen gates, installation and Runtime acceptance remain open.
+The fresh unchanged five-file kernel diagnostic at764b6d6 completed246PASS,
+0FAIL,1869assertions in109.71s Bun /113121.149835ms owned outer time. Output is
+complete, the boot is unchanged, and outer process/group termination is observed:
+`/workspace/attachments/quality-retirement-coverage-xDjXLX`. Run
+`6f9cb678-1909-4a09-8d7d-1aa195141325` reports162/162functions,601/601lines,
+631/631statements and391/400branches(97.75%,previous393/408=96.32%). Open branch
+counters decrease15to9 through the reviewed simplification and added scenarios;
+this is not six newly executed branches. All162function IDs are unchanged.
+Wrapper CC/entry-CRAP decreases4to3 and context validator24to21; the other
+functions and contour maximum31are unchanged. Original ceilings are not raised.
+Comparison reuses the two captured reports without another Source parse/hash:
+`quality-kernel-numeric-delta-v764-20261015.{ts,jsonl}` under attachments.
+
+The automatic contour document now retains seven observations. The focused
+diagnostic is locally complete; its parent operation separately reports BLOCKED,
+execution_complete=true, no timeout/signal/error, resource_safe_to_advance=false
+and quality_complete=false. Outer custody does not rewrite that parent result.
+Exact/frozen and full dynamic CRAP qualification remain pending. The nine open
+counters include native Windows comparison, test-issuer gates, required-field
+fallbacks and real no-effect reconciliation. Do not fabricate native evidence.
+
+Next extend the existing per-test adapter child controls for selected failure
+attribution, observed-empty coverage and skipped/todo registration accounting.
+Required scoped lifecycle and canonical-map joins remain prerequisites; the
+capture is diagnostic-only. Do not repeat the oversized mutation campaign until
+the existing native per-test admission prerequisite is qualified. Full exact/
+frozen gates, installation and Runtime acceptance remain open.
 
 ## Automatic contour progress projection
 

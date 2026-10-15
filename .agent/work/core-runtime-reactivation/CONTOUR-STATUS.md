@@ -13,7 +13,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 
 | Contour | Latest F / L / S / B | CC / entry CRAP | Latest mutation | Reported coverage operation | Historical compatible closure |
 | --- | --- | --- | --- | --- | --- |
-| main-runtime-core | 162/162 · 602/602 · 632/632 · 393/408 | 31 / 31 | unknown | not imported | open / unknown |
+| main-runtime-core | 162/162 · 601/601 · 631/631 · 391/400 | 31 / 31 | unknown | BLOCKED | open / unknown |
 | main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded |
 | main-config | unknown | unknown | unknown | not imported | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded |
@@ -68,6 +68,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
 | --- | --- | --- | --- | --- | --- | --- |
 | coverage | 3d83dfcb-e3af-4f5e-91c7-55153680a74b | d320564520c53e7dccaa85baa740259d08dd29ad | 2026-10-15T14:42:50.242Z | focused-diagnostic; owner accepted locally; selection bound | 162/162 · 602/602 · 632/632 · 393/408 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/3d83dfcb-e3af-4f5e-91c7-55153680a74b.focused-coverage.json |
+| coverage | 6f9cb678-1909-4a09-8d7d-1aa195141325 | 764b6d6c456b7c1ec670c07897fc58f719208e0b | 2026-10-15T15:16:33.600Z | focused-diagnostic; owner accepted locally; selection bound | 162/162 · 601/601 · 631/631 · 391/400 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/6f9cb678-1909-4a09-8d7d-1aa195141325.focused-coverage.json |
+| coverage-outcome | 6f9cb678-1909-4a09-8d7d-1aa195141325 | not-captured | 2026-10-15T15:16:33.607Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/6f9cb678-1909-4a09-8d7d-1aa195141325.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
