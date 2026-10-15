@@ -27,6 +27,7 @@ import {
   selectedTarball,
 } from './local-release-artifacts.ts';
 import { verifyForwardReviewSet } from './forward-review-proof.ts';
+import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 type ReleaseState = import('./local-release-artifacts.ts').ReleaseState;
 type RepairSourcePass = ReturnType<typeof createRepairSourcePass>;
@@ -44,10 +45,6 @@ type DirectoryObservation = {
 type JsonRecord = Record<string, unknown>;
 type PackEntry = { filename: string; files: Array<{ path: string; size: number }> } & Record<string, unknown>;
 type ReleaseRecord = ReleaseState & { pack_metadata: [PackEntry]; source_binding: string; tarball_sha256: string };
-
-function isRecord(value: unknown): value is JsonRecord {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
 
 type DependencyClosure = {
   source_binding: string;
@@ -179,8 +176,8 @@ function closureDirectoryMembers(
 }
 
 function hasUnsafeReferenceCharacter(value: string) {
-  for (const character of value) if (character.charCodeAt(0) < 32 || character === ':') return true;
-  return false;
+  // oxlint-disable-next-line no-control-regex -- The reference boundary intentionally rejects exactly C0 controls and colon.
+  return /[\x00-\x1f:]/.test(value);
 }
 
 function addRef(

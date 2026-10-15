@@ -104,7 +104,7 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents6964roles across149bound files. The previous join
+The current partial represents6965roles across149bound files. The previous join
 added96independently reviewed retained roles and5new roles using cached inventories.
 The latest native shared-field parser adds one prospectively bounded3/3 function;
 both retained projections are now1<=original1. Full affected file40PASS/0FAIL.
@@ -117,7 +117,7 @@ The latest join adds98independently reviewed retained roles, including18
 shifted callbacks whose actual producers/consumers match. A moved HostState
 receipt-reader responsibility remains unbound after independent rejection.
 Retained callback/context deficits remain open. Nineteen represented static
-overages and766current/213original dispositions remain; this is not coverage
+overages and764current/213original dispositions remain; this is not coverage
 progress. The current join validates original caps, one-to-one roles and actual
 counter/array equality before saving and after reading back the saved partial.
 Finite child timeout/environment preparation shares one condition, keeping
@@ -129,7 +129,11 @@ unbound for changed or unestablished responsibilities. One configured-context
 package-prefix decision replaces redundant reader selection: buildConfiguredContext8
 equals original8/CRAP72, with no new helper or allowance. Full affected file
 7PASS/43assertions/0.999s. WORK freezes a reviewed future native two-role recovery
-plan before implementation; it does not backdate earlier missing budget proof.
+plan before implementation. It was published atc744678 before the native change:
+the existing generic record guard replaces a duplicate; one C0-or-colon predicate
+uses its prospectively reviewed1/1 design ceiling. Current inventory7729,
+6965represented roles; full affected44tests pass in10.30s. Earlier missing
+budget proof is not backdated and original allowances remain exact.
 Affected launcher51PASS/0FAIL/2.26s preserves malformed-status denial,
 integer-status returns, review clocks and timeout/UNKNOWN behavior. Fresh
 physical0558135 checkout accepted exact CI SDK inputs online, then through

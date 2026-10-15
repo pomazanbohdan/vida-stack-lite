@@ -491,12 +491,20 @@ test('VidaStandaloneBuild inputs reject malformed records and unsafe paths befor
 });
 
 test('malformed, out-of-root and linked declared dependency references block without reserving repair state', async () => {
-  for (const reference of ['bad\\path.json', '../outside.json']) {
+  for (const reference of [
+    'bad\\path.json',
+    '../outside.json',
+    'bad\u0000path.json',
+    'bad\u001fpath.json',
+    'bad:path.json',
+  ]) {
     const f = fixture();
     addOperationInputReference(f, reference);
     const inspected = await inspectRepair(f.root);
     assert.equal(inspected.status, 'blocked');
     assert.match(firstBlocker(inspected), /dependency reference invalid|invalid relative path/i);
+    if (reference.includes('\u0000') || reference.includes('\u001f') || reference.includes(':'))
+      assert.match(firstBlocker(inspected), /native evidence dependency reference invalid/i);
     assert.equal(existsSync(path.join(f.root, base + '/native-delivery-evidence')), false);
     await Promise.resolve(assert.rejects(() => plan(f.root), /dependency reference invalid|invalid relative path/i));
     assert.equal(existsSync(path.join(f.root, base + '/native-delivery-evidence')), false);
@@ -528,24 +536,25 @@ test('malformed, out-of-root and linked declared dependency references block wit
 });
 
 test('valid missing relative dependency remains an observed absence', async () => {
-  const f = fixture();
-  const missing = 'missing/relative-proof.json';
-  addOperationInputReference(f, missing);
-  assert.equal((await inspectRepair(f.root)).status, 'stale_qualification_repairable');
-  assert.equal((await plan(f.root)).status, 'planned');
-  const frozen = repairClosure(
-    parseRecord(readFileSync(path.join(f.root, base + '/native-delivery-evidence/plan.json'), 'utf8')),
-  );
-  assert.deepEqual(
-    frozen.files.find((entry) => entry.path === missing),
-    {
-      path: missing,
-      kind: 'file',
-      exists: false,
-      identity: null,
-      sha256: null,
-    },
-  );
+  for (const missing of ['missing/relative-proof.json', 'missing/café-proof.json']) {
+    const f = fixture();
+    addOperationInputReference(f, missing);
+    assert.equal((await inspectRepair(f.root)).status, 'stale_qualification_repairable');
+    assert.equal((await plan(f.root)).status, 'planned');
+    const frozen = repairClosure(
+      parseRecord(readFileSync(path.join(f.root, base + '/native-delivery-evidence/plan.json'), 'utf8')),
+    );
+    assert.deepEqual(
+      frozen.files.find((entry) => entry.path === missing),
+      {
+        path: missing,
+        kind: 'file',
+        exists: false,
+        identity: null,
+        sha256: null,
+      },
+    );
+  }
 });
 
 test('repair Source enumeration preserves default binding and observations while reusing one pass', () => {

@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `b9cfba8` at origin/main.
+- Published predecessor: `c744678` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,13 +18,70 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Current quality preparation:6964of7730roles,149Source byte bindings,
-  766current/213original dispositions missing and19represented static deficits.
+- Current quality preparation:6965of7729roles,149Source byte bindings,
+  764current/213original dispositions missing and19represented static deficits.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
-## Current configured-context correction
+## Current native two-role correction
+
+The exact prospective plan below was committed and pushed atc744678 before this
+native implementation. Delete native repair's unbudgeted duplicate isRecord
+and import the existing same-contract generic record guard. Replace the unsafe
+reference character loop with its planned single C0-or-colon regex predicate.
+No new callable or wrapper; the current inventory loses one duplicate function.
+The corrected predicate is now1<=prospective1/CRAP1. Its old missing ceiling
+provenance stays a historical GAP; no b549951 or existing new-role cap changes.
+
+The existing caller controls now include exact C0 endpoints0/31 and colon denial
+before repair reservation, plus exact absent-path observation for café as well
+as ASCII. Generic record controls retain Date, typed-array and class-instance
+acceptance. Actual Source/test review accepted the guarded scope. Static
+TypeScript471checked/472captured/0diagnostics and Source101/0; both affected
+files passed44tests/0FAIL in10.30s, with unchanged defaults. Attachments:
+`quality-native-two-role-{static,tests}-c744-20261015.log` and
+`quality-native-two-role-actual-review-c744-20261015.md`.
+
+One scoped Source AST+SHA reuses148bindings; exact original fields and all other
+new-role caps remain unchanged. Current7729functions,6965represented roles=
+5410retained+1555new,78removed,149Source bindings;764current/213original gaps,
+19static deficits. The current cache and receipt are
+`quality-current-inventory-native-two-role-c744-20261015.json` and
+`quality-native-two-role-bindings-c744-20261015.json`. The receipt binds an exact
+copy/digest of the published preimplementation plan and records duplicate
+deletion separately from original removals. No historical proof is fabricated.
+
+Next run one serial current development coverage through the existing owner
+after this stable Source is published and exact current CI SDK inputs are ready.
+The actual standalone runner writes/validates its measured report before the
+CRAP gate; missing full plan blocks combined quality completion, not that
+development capture. Mutation execution does not require the plan either, but
+final admission still requires all matching100%reports. Readiness note
+`quality-current-numeric-readiness-b9c-20261015.md` is design only. Its suggestion
+to mount all Source read-only is unsuitable for this full scope: legitimate CAS
+readers and package test fixtures need writes in an independently owned fresh
+checkout. Keep dependencies/dist read-only and preserve source-byte drift checks,
+private PID1 custody, old-root invisibility and the300000ms/30000ms reserve.
+Do not activate shards or replay an old UNKNOWN resource wave.
+Independent final metadata review accepted this packet without a correctness
+finding: `quality-native-two-role-metadata-review-c744-20261015.md`.
+Changed-document check3documents/4local links/0failures:
+`quality-native-two-role-docs-c744-20261015.log`. Ordinary strict publication pending.
+The first ordinary hook passed format465 and TypeScript471/0 but rejected the
+intentional C0 regex under no-control-regex. Retain
+`quality-native-two-role-strict-commit-c744-20261015.log`. A single expression-
+local directive explains the required C0/colon security contract; no global
+lint configuration or behavioral guard changes. Fresh narrow independent review
+accepted it: `quality-native-lint-comment-review-c744-20261015.md`.
+The44-test evidence predates this comment-only update, not an exact-byte numeric
+measurement. One additional scoped Source AST+SHA is justified by the changed
+comment and refreshes native addresses without changing identities or caps:
+`quality-native-lint-comment-bindings-c744-20261015.json` and latest cache
+`quality-current-inventory-native-lint-comment-c744-20261015.json`. All counters
+and19static deficits remain unchanged. Retry the ordinary hook without bypass.
+
+## Published configured-context correction
 
 Use one package-prefix decision and branch-local package access in
 buildConfiguredContext. The factory returns SafeRepositoryAccess or throws;
@@ -52,7 +109,9 @@ Independent final packet review accepted the exact join, frozen fields,
 addresses, focused evidence and explicit remaining gaps:
 `quality-context-host-packet-metadata-review-b9c-20261015.md`.
 Changed-document check4documents/6local links/0failures:
-`quality-context-host-docs-b9c-20261015.log`. Ordinary strict publication pending.
+`quality-context-host-docs-b9c-20261015.log`. Packetc744678 passed ordinary
+format465, TypeScript471/0 and configured lint/Knip; nonforce push confirmed.
+Logs `quality-context-host-{strict-commit,push}-b9c-20261015.log`.
 
 ## Prospective native two-role recovery plan
 
@@ -91,8 +150,9 @@ The first conceptual plan review did not read the ignored canonical WORK and
 was insufficient to freeze its exact text. Fresh independent review read this
 literal section and actual Source/tests, accepted its1/1 prospective ceiling,
 guard reuse and caller controls: `quality-native-plan-exact-review-b9c-20261015.md`.
-This reviewed plan is saved before native Source edits; its implementation,
-new current-version role binding and numeric qualification remain pending.
+This reviewed plan was published before native Source edits; its implementation
+and current-version role binding are recorded above. Full numeric qualification
+remains pending.
 
 ## Published environment and correspondence correction
 

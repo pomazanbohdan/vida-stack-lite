@@ -38,7 +38,7 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6964roles across149files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds6965roles across149files; installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
 The original planner is39<=40 and current-read evidence5<=5; keep
@@ -52,8 +52,8 @@ join adds96retained and5new roles. Both enforce array
 and counter equality, exact original ceilings and one-to-one correspondence.
 The latest join adds98independently reviewed retained roles, including18
 shifted identities confirmed by actual owner/dataflow review. A changed-owner
-HostState receipt reader remains unbound. Current7730-role inventory leaves
-766current and213original dispositions missing,
+HostState receipt reader remains unbound. Current7729-role inventory leaves
+764current and213original dispositions missing,
 with19represented static overages after sharing the native lane/path string
 boundary. Both projections are1<=original1 and the new parser2<=own3.
 Finite child option/environment preparation now shares one condition;
@@ -63,6 +63,10 @@ Another77Host roles were independently accepted;13changed/unestablished roles
 remain unbound. The configured-context branch now makes one package-prefix
 decision, preserving reader arguments and all guards; buildConfiguredContext8
 equals original8. Full affected file7PASS/43assertions/0.999s.
+The publishedc744678 preimplementation plan now admits one corrected native
+C0-or-colon predicate at1/1 and deletes an unbudgeted duplicate record guard in
+favor of the existing generic owner. Both affected files44PASS/0FAIL/10.30s;
+past missing budget proof is not backdated. One scoped capture reuses148bindings.
 The full affected launcher file passed51/0 in2.26s. These are static/focused
 checks, not dynamic CRAP or complete current coverage.
 Disputed41native extracted-helper additions

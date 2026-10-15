@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 5410,
-    "new": 1554,
+    "new": 1555,
     "removed": 78,
-    "current_roles": 6964,
+    "current_roles": 6965,
     "source_files": 149
   },
   "source_bindings": [
@@ -595,7 +595,7 @@
     },
     {
       "file": "bin/repair-native-delivery-evidence.ts",
-      "sha256": "bd6a2b91219c8d28e8b4c9d72c02baebb4714f736306b06983c8c574403d7209"
+      "sha256": "e9d161e90bb12645f95dc12fc8ce3327e6d5b2c2590ca736157e0f8f7ca628a9"
     },
     {
       "file": "bin/run.ts",
@@ -146376,13 +146376,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 909,
+        "line": 906,
         "column": 0,
-        "start": 34931,
-        "end": 35008,
-        "bodyLine": 909,
+        "start": 34912,
+        "end": 34989,
+        "bodyLine": 906,
         "bodyColumn": 38,
-        "bodyEndLine": 911,
+        "bodyEndLine": 908,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146409,13 +146409,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 913,
+        "line": 910,
         "column": 0,
-        "start": 35010,
-        "end": 35089,
-        "bodyLine": 913,
+        "start": 34991,
+        "end": 35070,
+        "bodyLine": 910,
         "bodyColumn": 39,
-        "bodyEndLine": 915,
+        "bodyEndLine": 912,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146442,13 +146442,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 132,
+        "line": 129,
         "column": 0,
-        "start": 4370,
-        "end": 4490,
-        "bodyLine": 132,
+        "start": 4305,
+        "end": 4425,
+        "bodyLine": 129,
         "bodyColumn": 57,
-        "bodyEndLine": 134,
+        "bodyEndLine": 131,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146475,13 +146475,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1096,
+        "line": 1093,
         "column": 0,
-        "start": 42235,
-        "end": 42360,
-        "bodyLine": 1096,
+        "start": 42216,
+        "end": 42341,
+        "bodyLine": 1093,
         "bodyColumn": 78,
-        "bodyEndLine": 1098,
+        "bodyEndLine": 1095,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146508,13 +146508,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 778,
+        "line": 775,
         "column": 0,
-        "start": 29822,
-        "end": 30018,
-        "bodyLine": 778,
+        "start": 29803,
+        "end": 29999,
+        "bodyLine": 775,
         "bodyColumn": 100,
-        "bodyEndLine": 781,
+        "bodyEndLine": 778,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146541,13 +146541,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1034,
+        "line": 1031,
         "column": 0,
-        "start": 40239,
-        "end": 40438,
-        "bodyLine": 1034,
+        "start": 40220,
+        "end": 40419,
+        "bodyLine": 1031,
         "bodyColumn": 50,
-        "bodyEndLine": 1038,
+        "bodyEndLine": 1035,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146574,13 +146574,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1419,
+        "line": 1416,
         "column": 7,
-        "start": 55392,
-        "end": 55642,
-        "bodyLine": 1422,
+        "start": 55373,
+        "end": 55623,
+        "bodyLine": 1419,
         "bodyColumn": 23,
-        "bodyEndLine": 1424,
+        "bodyEndLine": 1421,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146607,13 +146607,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 152,
+        "line": 149,
         "column": 0,
-        "start": 5442,
-        "end": 5704,
-        "bodyLine": 152,
+        "start": 5377,
+        "end": 5639,
+        "bodyLine": 149,
         "bodyColumn": 97,
-        "bodyEndLine": 157,
+        "bodyEndLine": 154,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -146640,13 +146640,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 125,
+        "line": 122,
         "column": 0,
-        "start": 4082,
-        "end": 4368,
-        "bodyLine": 125,
+        "start": 4017,
+        "end": 4303,
+        "bodyLine": 122,
         "bodyColumn": 88,
-        "bodyEndLine": 130,
+        "bodyEndLine": 127,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -149577,13 +149577,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 783,
+        "line": 780,
         "column": 0,
-        "start": 30020,
-        "end": 31115,
-        "bodyLine": 783,
+        "start": 30001,
+        "end": 31096,
+        "bodyLine": 780,
         "bodyColumn": 118,
-        "bodyEndLine": 806,
+        "bodyEndLine": 803,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 7,
@@ -157860,13 +157860,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 140,
+        "line": 137,
         "column": 0,
-        "start": 4689,
-        "end": 5440,
-        "bodyLine": 140,
+        "start": 4624,
+        "end": 5375,
+        "bodyLine": 137,
         "bodyColumn": 108,
-        "bodyEndLine": 150,
+        "bodyEndLine": 147,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -157893,13 +157893,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 186,
+        "line": 183,
         "column": 0,
-        "start": 6493,
-        "end": 6990,
-        "bodyLine": 191,
+        "start": 6474,
+        "end": 6971,
+        "bodyLine": 188,
         "bodyColumn": 2,
-        "bodyEndLine": 200,
+        "bodyEndLine": 197,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 7,
@@ -157926,13 +157926,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 276,
+        "line": 273,
         "column": 0,
-        "start": 9527,
-        "end": 10173,
-        "bodyLine": 281,
+        "start": 9508,
+        "end": 10154,
+        "bodyLine": 278,
         "bodyColumn": 2,
-        "bodyEndLine": 292,
+        "bodyEndLine": 289,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 29,
@@ -157959,13 +157959,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 375,
+        "line": 372,
         "column": 0,
-        "start": 13357,
-        "end": 18422,
-        "bodyLine": 381,
+        "start": 13338,
+        "end": 18403,
+        "bodyLine": 378,
         "bodyColumn": 21,
-        "bodyEndLine": 498,
+        "bodyEndLine": 495,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 22,
@@ -157992,13 +157992,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 500,
+        "line": 497,
         "column": 0,
-        "start": 18424,
-        "end": 20491,
-        "bodyLine": 500,
+        "start": 18405,
+        "end": 20472,
+        "bodyLine": 497,
         "bodyColumn": 113,
-        "bodyEndLine": 536,
+        "bodyEndLine": 533,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 10,
@@ -158025,13 +158025,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 548,
+        "line": 545,
         "column": 0,
-        "start": 20935,
-        "end": 22084,
-        "bodyLine": 548,
+        "start": 20916,
+        "end": 22065,
+        "bodyLine": 545,
         "bodyColumn": 100,
-        "bodyEndLine": 572,
+        "bodyEndLine": 569,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 7,
@@ -158058,13 +158058,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 633,
+        "line": 630,
         "column": 0,
-        "start": 24129,
-        "end": 25144,
-        "bodyLine": 633,
+        "start": 24110,
+        "end": 25125,
+        "bodyLine": 630,
         "bodyColumn": 119,
-        "bodyEndLine": 653,
+        "bodyEndLine": 650,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 8,
@@ -158091,13 +158091,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 715,
+        "line": 712,
         "column": 0,
-        "start": 27373,
-        "end": 28467,
-        "bodyLine": 721,
+        "start": 27354,
+        "end": 28448,
+        "bodyLine": 718,
         "bodyColumn": 11,
-        "bodyEndLine": 741,
+        "bodyEndLine": 738,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 15,
@@ -158124,13 +158124,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 767,
+        "line": 764,
         "column": 0,
-        "start": 29249,
-        "end": 29820,
-        "bodyLine": 767,
+        "start": 29230,
+        "end": 29801,
+        "bodyLine": 764,
         "bodyColumn": 91,
-        "bodyEndLine": 776,
+        "bodyEndLine": 773,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 5,
@@ -158157,13 +158157,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 808,
+        "line": 805,
         "column": 0,
-        "start": 31117,
-        "end": 31472,
-        "bodyLine": 812,
+        "start": 31098,
+        "end": 31453,
+        "bodyLine": 809,
         "bodyColumn": 51,
-        "bodyEndLine": 817,
+        "bodyEndLine": 814,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -158190,13 +158190,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1014,
+        "line": 1011,
         "column": 0,
-        "start": 39377,
-        "end": 39880,
-        "bodyLine": 1014,
+        "start": 39358,
+        "end": 39861,
+        "bodyLine": 1011,
         "bodyColumn": 86,
-        "bodyEndLine": 1026,
+        "bodyEndLine": 1023,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -165681,13 +165681,13 @@
         "bodyEndColumn": 60
       },
       "current_source_address": {
-        "line": 78,
+        "line": 75,
         "column": 13,
-        "start": 2649,
-        "end": 2712,
-        "bodyLine": 78,
+        "start": 2584,
+        "end": 2647,
+        "bodyLine": 75,
         "bodyColumn": 37,
-        "bodyEndLine": 78,
+        "bodyEndLine": 75,
         "bodyEndColumn": 76
       },
       "baseline_complexity": 1,
@@ -165714,13 +165714,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 80,
+        "line": 77,
         "column": 15,
-        "start": 2730,
-        "end": 2792,
-        "bodyLine": 80,
+        "start": 2665,
+        "end": 2727,
+        "bodyLine": 77,
         "bodyColumn": 39,
-        "bodyEndLine": 80,
+        "bodyEndLine": 77,
         "bodyEndColumn": 77
       },
       "baseline_complexity": 1,
@@ -165747,13 +165747,13 @@
         "bodyEndColumn": 112
       },
       "current_source_address": {
-        "line": 82,
+        "line": 79,
         "column": 16,
-        "start": 2811,
-        "end": 2950,
-        "bodyLine": 82,
+        "start": 2746,
+        "end": 2885,
+        "bodyLine": 79,
         "bodyColumn": 58,
-        "bodyEndLine": 86,
+        "bodyEndLine": 83,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -165780,13 +165780,13 @@
         "bodyEndColumn": 62
       },
       "current_source_address": {
-        "line": 123,
+        "line": 120,
         "column": 15,
-        "start": 3986,
-        "end": 4079,
-        "bodyLine": 123,
+        "start": 3921,
+        "end": 4014,
+        "bodyLine": 120,
         "bodyColumn": 71,
-        "bodyEndLine": 123,
+        "bodyEndLine": 120,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -165813,13 +165813,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 159,
+        "line": 156,
         "column": 0,
-        "start": 5706,
-        "end": 6317,
-        "bodyLine": 164,
+        "start": 5641,
+        "end": 6252,
+        "bodyLine": 161,
         "bodyColumn": 12,
-        "bodyEndLine": 179,
+        "bodyEndLine": 176,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -165846,13 +165846,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 178,
+        "line": 175,
         "column": 22,
-        "start": 6254,
-        "end": 6313,
-        "bodyLine": 178,
+        "start": 6189,
+        "end": 6248,
+        "bodyLine": 175,
         "bodyColumn": 40,
-        "bodyEndLine": 178,
+        "bodyEndLine": 175,
         "bodyEndColumn": 80
       },
       "baseline_complexity": 3,
@@ -165879,13 +165879,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 387,
+        "line": 384,
         "column": 18,
-        "start": 13746,
-        "end": 14055,
-        "bodyLine": 387,
+        "start": 13727,
+        "end": 14036,
+        "bodyLine": 384,
         "bodyColumn": 71,
-        "bodyEndLine": 394,
+        "bodyEndLine": 391,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -165912,13 +165912,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 405,
+        "line": 402,
         "column": 15,
-        "start": 14646,
-        "end": 15797,
-        "bodyLine": 405,
+        "start": 14627,
+        "end": 15778,
+        "bodyLine": 402,
         "bodyColumn": 63,
-        "bodyEndLine": 434,
+        "bodyEndLine": 431,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 14,
@@ -165945,13 +165945,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 441,
+        "line": 438,
         "column": 21,
-        "start": 16118,
-        "end": 16716,
-        "bodyLine": 441,
+        "start": 16099,
+        "end": 16697,
+        "bodyLine": 438,
         "bodyColumn": 70,
-        "bodyEndLine": 455,
+        "bodyEndLine": 452,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 6,
@@ -165978,13 +165978,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 472,
+        "line": 469,
         "column": 8,
-        "start": 17561,
-        "end": 17687,
-        "bodyLine": 473,
+        "start": 17542,
+        "end": 17668,
+        "bodyLine": 470,
         "bodyColumn": 10,
-        "bodyEndLine": 473,
+        "bodyEndLine": 470,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 2,
@@ -166011,13 +166011,13 @@
         "bodyEndColumn": 108
       },
       "current_source_address": {
-        "line": 521,
+        "line": 518,
         "column": 22,
-        "start": 19429,
-        "end": 19515,
-        "bodyLine": 521,
+        "start": 19410,
+        "end": 19496,
+        "bodyLine": 518,
         "bodyColumn": 29,
-        "bodyEndLine": 521,
+        "bodyEndLine": 518,
         "bodyEndColumn": 108
       },
       "baseline_complexity": 2,
@@ -166044,13 +166044,13 @@
         "bodyEndColumn": 55
       },
       "current_source_address": {
-        "line": 522,
+        "line": 519,
         "column": 19,
-        "start": 19536,
-        "end": 19572,
-        "bodyLine": 522,
+        "start": 19517,
+        "end": 19553,
+        "bodyLine": 519,
         "bodyColumn": 26,
-        "bodyEndLine": 522,
+        "bodyEndLine": 519,
         "bodyEndColumn": 55
       },
       "baseline_complexity": 1,
@@ -166077,13 +166077,13 @@
         "bodyEndColumn": 115
       },
       "current_source_address": {
-        "line": 527,
+        "line": 524,
         "column": 87,
-        "start": 19882,
-        "end": 19910,
-        "bodyLine": 527,
+        "start": 19863,
+        "end": 19891,
+        "bodyLine": 524,
         "bodyColumn": 97,
-        "bodyEndLine": 527,
+        "bodyEndLine": 524,
         "bodyEndColumn": 115
       },
       "baseline_complexity": 1,
@@ -166110,13 +166110,13 @@
         "bodyEndColumn": 76
       },
       "current_source_address": {
-        "line": 528,
+        "line": 525,
         "column": 48,
-        "start": 19961,
-        "end": 19989,
-        "bodyLine": 528,
+        "start": 19942,
+        "end": 19970,
+        "bodyLine": 525,
         "bodyColumn": 58,
-        "bodyEndLine": 528,
+        "bodyEndLine": 525,
         "bodyEndColumn": 76
       },
       "baseline_complexity": 1,
@@ -166143,13 +166143,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 987,
+        "line": 984,
         "column": 0,
-        "start": 38378,
-        "end": 38888,
-        "bodyLine": 987,
+        "start": 38359,
+        "end": 38869,
+        "bodyLine": 984,
         "bodyColumn": 63,
-        "bodyEndLine": 999,
+        "bodyEndLine": 996,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 16,
@@ -166176,13 +166176,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1028,
+        "line": 1025,
         "column": 0,
-        "start": 39882,
-        "end": 40237,
-        "bodyLine": 1028,
+        "start": 39863,
+        "end": 40218,
+        "bodyLine": 1025,
         "bodyColumn": 83,
-        "bodyEndLine": 1032,
+        "bodyEndLine": 1029,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166209,13 +166209,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1040,
+        "line": 1037,
         "column": 0,
-        "start": 40440,
-        "end": 40811,
-        "bodyLine": 1045,
+        "start": 40421,
+        "end": 40792,
+        "bodyLine": 1042,
         "bodyColumn": 2,
-        "bodyEndLine": 1057,
+        "bodyEndLine": 1054,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166242,13 +166242,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1059,
+        "line": 1056,
         "column": 0,
-        "start": 40813,
-        "end": 41370,
-        "bodyLine": 1059,
+        "start": 40794,
+        "end": 41351,
+        "bodyLine": 1056,
         "bodyColumn": 84,
-        "bodyEndLine": 1074,
+        "bodyEndLine": 1071,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -166275,13 +166275,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1100,
+        "line": 1097,
         "column": 0,
-        "start": 42362,
-        "end": 44591,
-        "bodyLine": 1107,
+        "start": 42343,
+        "end": 44572,
+        "bodyLine": 1104,
         "bodyColumn": 2,
-        "bodyEndLine": 1158,
+        "bodyEndLine": 1155,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 12,
@@ -166308,13 +166308,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1160,
+        "line": 1157,
         "column": 0,
-        "start": 44593,
-        "end": 45981,
-        "bodyLine": 1166,
+        "start": 44574,
+        "end": 45962,
+        "bodyLine": 1163,
         "bodyColumn": 2,
-        "bodyEndLine": 1191,
+        "bodyEndLine": 1188,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -166341,13 +166341,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1193,
+        "line": 1190,
         "column": 0,
-        "start": 45983,
-        "end": 46432,
-        "bodyLine": 1197,
+        "start": 45964,
+        "end": 46413,
+        "bodyLine": 1194,
         "bodyColumn": 69,
-        "bodyEndLine": 1204,
+        "bodyEndLine": 1201,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166374,13 +166374,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1223,
+        "line": 1220,
         "column": 7,
-        "start": 47197,
-        "end": 48006,
-        "bodyLine": 1229,
+        "start": 47178,
+        "end": 47987,
+        "bodyLine": 1226,
         "bodyColumn": 24,
-        "bodyEndLine": 1250,
+        "bodyEndLine": 1247,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 5,
@@ -166407,13 +166407,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1252,
+        "line": 1249,
         "column": 0,
-        "start": 48008,
-        "end": 49725,
-        "bodyLine": 1257,
+        "start": 47989,
+        "end": 49706,
+        "bodyLine": 1254,
         "bodyColumn": 23,
-        "bodyEndLine": 1293,
+        "bodyEndLine": 1290,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166440,13 +166440,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1261,
+        "line": 1258,
         "column": 49,
-        "start": 48354,
-        "end": 49721,
-        "bodyLine": 1261,
+        "start": 48335,
+        "end": 49702,
+        "bodyLine": 1258,
         "bodyColumn": 61,
-        "bodyEndLine": 1292,
+        "bodyEndLine": 1289,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -166473,13 +166473,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1295,
+        "line": 1292,
         "column": 7,
-        "start": 49734,
-        "end": 52135,
-        "bodyLine": 1298,
+        "start": 49715,
+        "end": 52116,
+        "bodyLine": 1295,
         "bodyColumn": 23,
-        "bodyEndLine": 1345,
+        "bodyEndLine": 1342,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -166506,13 +166506,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1312,
+        "line": 1309,
         "column": 42,
-        "start": 50779,
-        "end": 50973,
-        "bodyLine": 1312,
+        "start": 50760,
+        "end": 50954,
+        "bodyLine": 1309,
         "bodyColumn": 59,
-        "bodyEndLine": 1315,
+        "bodyEndLine": 1312,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 2,
@@ -166539,13 +166539,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1347,
+        "line": 1344,
         "column": 0,
-        "start": 52137,
-        "end": 55383,
-        "bodyLine": 1351,
+        "start": 52118,
+        "end": 55364,
+        "bodyLine": 1348,
         "bodyColumn": 23,
-        "bodyEndLine": 1417,
+        "bodyEndLine": 1414,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166572,13 +166572,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1357,
+        "line": 1354,
         "column": 49,
-        "start": 52553,
-        "end": 55379,
-        "bodyLine": 1357,
+        "start": 52534,
+        "end": 55360,
+        "bodyLine": 1354,
         "bodyColumn": 61,
-        "bodyEndLine": 1416,
+        "bodyEndLine": 1413,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 13,
@@ -166605,13 +166605,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1426,
+        "line": 1423,
         "column": 7,
-        "start": 55651,
-        "end": 56235,
-        "bodyLine": 1426,
+        "start": 55632,
+        "end": 56216,
+        "bodyLine": 1423,
         "bodyColumn": 91,
-        "bodyEndLine": 1435,
+        "bodyEndLine": 1432,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -166638,13 +166638,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1480,
+        "line": 1477,
         "column": 7,
-        "start": 57856,
-        "end": 58508,
-        "bodyLine": 1483,
+        "start": 57837,
+        "end": 58489,
+        "bodyLine": 1480,
         "bodyColumn": 23,
-        "bodyEndLine": 1493,
+        "bodyEndLine": 1490,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 11,
@@ -166671,13 +166671,13 @@
         "bodyEndColumn": 101
       },
       "current_source_address": {
-        "line": 119,
+        "line": 116,
         "column": 0,
-        "start": 3793,
-        "end": 3969,
-        "bodyLine": 119,
+        "start": 3728,
+        "end": 3904,
+        "bodyLine": 116,
         "bodyColumn": 89,
-        "bodyEndLine": 121,
+        "bodyEndLine": 118,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -166704,13 +166704,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 330,
+        "line": 327,
         "column": 28,
-        "start": 11739,
-        "end": 11802,
-        "bodyLine": 330,
+        "start": 11720,
+        "end": 11783,
+        "bodyLine": 327,
         "bodyColumn": 38,
-        "bodyEndLine": 330,
+        "bodyEndLine": 327,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -166737,13 +166737,13 @@
         "bodyEndColumn": 74
       },
       "current_source_address": {
-        "line": 347,
+        "line": 344,
         "column": 36,
-        "start": 12376,
-        "end": 12414,
-        "bodyLine": 347,
+        "start": 12357,
+        "end": 12395,
+        "bodyLine": 344,
         "bodyColumn": 46,
-        "bodyEndLine": 347,
+        "bodyEndLine": 344,
         "bodyEndColumn": 74
       },
       "baseline_complexity": 1,
@@ -166770,13 +166770,13 @@
         "bodyEndColumn": 86
       },
       "current_source_address": {
-        "line": 348,
+        "line": 345,
         "column": 48,
-        "start": 12465,
-        "end": 12503,
-        "bodyLine": 348,
+        "start": 12446,
+        "end": 12484,
+        "bodyLine": 345,
         "bodyColumn": 58,
-        "bodyEndLine": 348,
+        "bodyEndLine": 345,
         "bodyEndColumn": 86
       },
       "baseline_complexity": 1,
@@ -166803,13 +166803,13 @@
         "bodyEndColumn": 34
       },
       "current_source_address": {
-        "line": 660,
+        "line": 657,
         "column": 0,
-        "start": 25332,
-        "end": 25463,
-        "bodyLine": 660,
+        "start": 25313,
+        "end": 25444,
+        "bodyLine": 657,
         "bodyColumn": 42,
-        "bodyEndLine": 662,
+        "bodyEndLine": 659,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166836,13 +166836,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 711,
+        "line": 708,
         "column": 13,
-        "start": 27179,
-        "end": 27251,
-        "bodyLine": 711,
+        "start": 27160,
+        "end": 27232,
+        "bodyLine": 708,
         "bodyColumn": 27,
-        "bodyEndLine": 711,
+        "bodyEndLine": 708,
         "bodyEndColumn": 85
       },
       "baseline_complexity": 1,
@@ -166869,13 +166869,13 @@
         "bodyEndColumn": 45
       },
       "current_source_address": {
-        "line": 664,
+        "line": 661,
         "column": 0,
-        "start": 25465,
-        "end": 25612,
-        "bodyLine": 664,
+        "start": 25446,
+        "end": 25593,
+        "bodyLine": 661,
         "bodyColumn": 49,
-        "bodyEndLine": 666,
+        "bodyEndLine": 663,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -202143,13 +202143,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:retainJsonImage#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 136,
+        "line": 133,
         "column": 0,
-        "start": 4492,
-        "end": 4687,
-        "bodyLine": 136,
+        "start": 4427,
+        "end": 4622,
+        "bodyLine": 133,
         "bodyColumn": 99,
-        "bodyEndLine": 138,
+        "bodyEndLine": 135,
         "bodyEndColumn": 1
       },
       "current_complexity": 3,
@@ -202162,13 +202162,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:parseDirectoryObservation#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 874,
+        "line": 871,
         "column": 0,
-        "start": 33428,
-        "end": 34187,
-        "bodyLine": 874,
+        "start": 33409,
+        "end": 34168,
+        "bodyLine": 871,
         "bodyColumn": 73,
-        "bodyEndLine": 892,
+        "bodyEndLine": 889,
         "bodyEndColumn": 1
       },
       "current_complexity": 3,
@@ -202181,13 +202181,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:parseDirectoryObservation#0/binding:members/closure:CallExpression:arguments[0]#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 879,
+        "line": 876,
         "column": 36,
-        "start": 33758,
-        "end": 33918,
-        "bodyLine": 879,
+        "start": 33739,
+        "end": 33899,
+        "bodyLine": 876,
         "bodyColumn": 48,
-        "bodyEndLine": 883,
+        "bodyEndLine": 880,
         "bodyEndColumn": 3
       },
       "current_complexity": 1,
@@ -202200,13 +202200,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:parseDependencyClosure#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 894,
+        "line": 891,
         "column": 0,
-        "start": 34189,
-        "end": 34929,
-        "bodyLine": 894,
+        "start": 34170,
+        "end": 34910,
+        "bodyLine": 891,
         "bodyColumn": 67,
-        "bodyEndLine": 907,
+        "bodyEndLine": 904,
         "bodyEndColumn": 1
       },
       "current_complexity": 4,
@@ -202219,13 +202219,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:assertReleaseBeforeimage#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 972,
+        "line": 969,
         "column": 0,
-        "start": 37501,
-        "end": 38376,
-        "bodyLine": 972,
+        "start": 37482,
+        "end": 38357,
+        "bodyLine": 969,
         "bodyColumn": 62,
-        "bodyEndLine": 985,
+        "bodyEndLine": 982,
         "bodyEndColumn": 1
       },
       "current_complexity": 9,
@@ -202238,13 +202238,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:requiredRepairStringField#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 655,
+        "line": 652,
         "column": 0,
-        "start": 25146,
-        "end": 25330,
-        "bodyLine": 655,
+        "start": 25127,
+        "end": 25311,
+        "bodyLine": 652,
         "bodyColumn": 89,
-        "bodyEndLine": 658,
+        "bodyEndLine": 655,
         "bodyEndColumn": 1
       },
       "current_complexity": 2,
@@ -202252,6 +202252,27 @@
       "max_crap": 3,
       "review_ref": "/workspace/attachments/quality-native-string-field-actual-review-00d-20261015.md",
       "rationale": "Private shared unknown-record string-property boundary for the native lane/path projections, preserving caller error labels, empty-string acceptance and the original property access order. Own prospective3/3 declared in WORK before implementation; no original allowance transferred. Retained projections keep original1/1."
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:hasUnsafeReferenceCharacter#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "current_source_address": {
+        "line": 178,
+        "column": 0,
+        "start": 6254,
+        "end": 6472,
+        "bodyLine": 178,
+        "bodyColumn": 52,
+        "bodyEndLine": 181,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "review_ref": "/workspace/attachments/quality-native-two-role-actual-review-c744-20261015.md",
+      "prospective_plan_commit": "c744678",
+      "prospective_plan_ref": "/workspace/attachments/quality-native-prospective-plan-c744-20261015.md#prospective-native-two-role-recovery-plan",
+      "rationale": "Corrected future-version single primitive ASCII C0-or-colon membership predicate. Its1/1 design ceiling was independently reviewed and published in c744678 before this substantive loop-to-regex implementation. Prior absent ceiling provenance remains historical GAP; no original allowance is moved or raised."
     }
   ],
   "removed_functions": [
@@ -202982,1351 +203003,28 @@
     "limits": "Only three complete selected families. Other repair/new lock callback correspondence remains pending; no executable/numeric qualification."
   },
   "quality_continuation_current_bindings": {
-    "schema": "ReviewedLineageJoin/v1",
+    "schema": "ScopedSourceBindingUpdate/v1",
     "status": "SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
-    "predecessor_commit": "b9cfba8",
+    "predecessor_commit": "c744678",
     "counts": {
       "retained": 5410,
-      "new": 1554,
+      "new": 1555,
       "removed": 78,
-      "current_roles": 6964,
+      "current_roles": 6965,
       "source_files": 149
     },
-    "retained_added": 77,
-    "admitted": [
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:readCompletedSourceReportRecoveryReceipt#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:readCompletedSourceReportRecoveryReceipt#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#fn:storedQualifiedRuntimeCodeContinuations#0",
-        "current_identity": "src/host-state.ts#fn:storedQualifiedRuntimeCodeContinuations#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#readInitialSourceContinuationReceipt#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#readInitialSourceContinuationReceipt#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0/binding:readState/binding:readState#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0/binding:readState/binding:readState#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0/binding:readRecord/binding:readRecord#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0/binding:readRecord/binding:readRecord#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:readAction/binding:readAction#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:readAction/binding:readAction#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:readCompletedSourceReportRecoveryReceipt#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:readCompletedSourceReportRecoveryReceipt#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:withQualifiedRuntimeCodePlanRefresh#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:withQualifiedRuntimeCodePlanRefresh#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#readFailedPrewriterRecoveryReceipt#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#readFailedPrewriterRecoveryReceipt#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#fn:runConsumerMigrationState#0/binding:verifyWorkflowStore/binding:verifyWorkflowStore#0",
-        "current_identity": "src/host-state.ts#fn:runConsumerMigrationState#0/binding:verifyWorkflowStore/binding:verifyWorkflowStore#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#assertRecoveryReviewContext#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#assertRecoveryReviewContext#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#readInitialSourceFrontierCodeRebindReceipt#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#readInitialSourceFrontierCodeRebindReceipt#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#governanceRead#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#governanceRead#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#assertLiveTaskSourceOwner#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#assertLiveTaskSourceOwner#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:settleSessionProducer#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:settleSessionProducer#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:settleSessionProducer#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:settleSessionProducer#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:inspectTaskSourceBindingAction#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:inspectTaskSourceBindingAction#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#withGuardedArtifactMutation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#withGuardedArtifactMutation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:commitCompletedSourceReport#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitCompletedSourceReport#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:applyDeliveredWorkContinuationRepair#0/closure:CallExpression:arguments[0]#1",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:applyDeliveredWorkContinuationRepair#0/closure:CallExpression:arguments[0]#1",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:prepared/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:prepared/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#fn:validateTaskSourceActionPair#0",
-        "current_identity": "src/host-state.ts#fn:validateTaskSourceActionPair#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#assertUnpreparedWorkContext#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#assertUnpreparedWorkContext#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:releaseUnpreparedWork#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:releaseUnpreparedWork#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:commitFinalAssuranceDelivery#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitFinalAssuranceDelivery#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:releaseUnpreparedWork#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:releaseUnpreparedWork#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:applyDeliveredWorkContinuationRepair#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:applyDeliveredWorkContinuationRepair#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#inspectDeliveredWorkContinuationRepairInTransaction#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#inspectDeliveredWorkContinuationRepairInTransaction#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:renewActiveLocalLease#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:renewActiveLocalLease#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:recoverFailedPrewriterOwner#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:recoverFailedPrewriterOwner#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:reportTaskSourceBindingOperation#0/binding:stored/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:reportTaskSourceBindingOperation#0/binding:stored/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:inspectTaskSourceBindingOperation#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:inspectTaskSourceBindingOperation#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/closure:CallExpression:arguments[0]#1",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/closure:CallExpression:arguments[0]#1",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:renewActiveLocalLease#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:renewActiveLocalLease#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:recoverFailedPrewriterOwner#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:recoverFailedPrewriterOwner#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#resolveTaskSourceBinding#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#resolveTaskSourceBinding#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:reportTaskSourceBindingOperation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:reportTaskSourceBindingOperation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:inspectTaskSourceBindingOperation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:inspectTaskSourceBindingOperation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:beginSessionProducer#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:beginSessionProducer#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:snapshotHistoricalTaskSourceSources#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:snapshotHistoricalTaskSourceSources#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:constructor#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:constructor#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:snapshotHistoricalTaskSourceSources#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:snapshotHistoricalTaskSourceSources#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:transitionFailedPrewriter#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:transitionFailedPrewriter#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:retireInterruptedSourceOwner#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:retireInterruptedSourceOwner#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:transitionFailedPrewriter#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:transitionFailedPrewriter#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:admitSuccessorWork#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:admitSuccessorWork#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:continueDeliveredWork#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:continueDeliveredWork#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:captureHistoricalTerminalSynthesisAndRelease#0/closure:CallExpression:arguments[0]#3",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:captureHistoricalTerminalSynthesisAndRelease#0/closure:CallExpression:arguments[0]#3",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:continueDeliveredWork#0/binding:inspect/binding:inspect#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:continueDeliveredWork#0/binding:inspect/binding:inspect#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:authorizeCorrectiveExecution#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:authorizeCorrectiveExecution#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:retireInterruptedSourceOwner#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:retireInterruptedSourceOwner#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:admitSuccessorWork#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:admitSuccessorWork#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:commitReadOnlyFrontierRuntimeCode#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitReadOnlyFrontierRuntimeCode#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:authorizeCorrectiveExecution#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:authorizeCorrectiveExecution#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:readDeliveredWorkContinuation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:readDeliveredWorkContinuation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:captureStoppedSourceObservation#0/closure:CallExpression:arguments[0]#1",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:captureStoppedSourceObservation#0/closure:CallExpression:arguments[0]#1",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:captureHistoricalTerminalSynthesisAndRelease#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:captureHistoricalTerminalSynthesisAndRelease#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:continueInitialSource#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:continueInitialSource#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:continueInitialSource#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:continueInitialSource#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:captureStoppedSourceObservation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:captureStoppedSourceObservation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:captureRetiredSourceObservation#0/closure:CallExpression:arguments[0]#3",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:captureRetiredSourceObservation#0/closure:CallExpression:arguments[0]#3",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:commitCompletedSourceReportRecovery#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitCompletedSourceReportRecovery#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:commitCompletedSourceReportRecovery#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitCompletedSourceReportRecovery#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:captureRetiredSourceObservation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:captureRetiredSourceObservation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:continueDeliveredWork#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:continueDeliveredWork#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#repairWorkAuthority#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#repairWorkAuthority#0/closure:CallExpression:arguments[0]#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#repairWorkAuthority#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#repairWorkAuthority#0",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      }
+    "inventory_ref": "/workspace/attachments/quality-current-inventory-native-lint-comment-c744-20261015.json",
+    "scoped_byte_capture_files": [
+      "bin/repair-native-delivery-evidence.ts"
     ],
-    "independent_review_refs": [
-      "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json",
-      "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-    ],
-    "rejected_correspondences": [
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:checkSettled/binding:checkSettled#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:checkSettled/binding:checkSettled#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "HostStateStore.consumerMigrationState",
-          "source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-          "line": 4492,
-          "body_line": 4492,
-          "body_end_line": 4520
-        },
-        "old_source_address": {
-          "line": 4492,
-          "column": 25,
-          "start": 202161,
-          "end": 203437,
-          "bodyLine": 4492,
-          "bodyColumn": 37,
-          "bodyEndLine": 4520,
-          "bodyEndColumn": 5
-        },
-        "old_producer_consumer": {
-          "role": "validates journal schema and digest, then blocks consumer migration while native outcome remains unknown",
-          "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-          "owner_path_lines": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts:4492 — HostStateStore.consumerMigrationState declaration owns the old Host role",
-          "producer": {
-            "owner": "HostStateStore.consumerMigrationState",
-            "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-            "line": 4492,
-            "source_statement": "callable or nested binding entry shown at the cited source address"
-          },
-          "consumer": {
-            "owner": "HostStateStore.consumerMigrationState",
-            "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-            "line": 4520,
-            "source_statement": "result/transaction boundary at the cited callable body end"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "HostStateStore.consumerMigrationState",
-          "source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-          "line": 5566,
-          "body_line": 5566,
-          "body_end_line": 5595
-        },
-        "current_source_address": {
-          "line": 5566,
-          "column": 25,
-          "start": 246001,
-          "end": 247381,
-          "bodyLine": 5566,
-          "bodyColumn": 114,
-          "bodyEndLine": 5595,
-          "bodyEndColumn": 5
-        },
-        "current_producer_consumer": {
-          "role": "validates journal schema/settlement, consuming decoded payload whose digest integrity is established by the row-decoding owner",
-          "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-          "owner_path_lines": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts:5566 — HostStateStore.consumerMigrationState declaration owns the current Host role",
-          "producer": {
-            "owner": "HostStateStore.consumerMigrationState",
-            "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-            "line": 5566,
-            "source_statement": "callable or nested binding entry shown at the cited source address"
-          },
-          "consumer": {
-            "owner": "HostStateStore.consumerMigrationState",
-            "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-            "line": 5595,
-            "source_statement": "result/transaction boundary at the cited callable body end"
-          }
-        },
-        "rationale": "Rejected: the old checkSettled body itself verifies canonicalJsonDigest(journal) against row.digest before accepting the migration journal. In current source, the closure receives a decoded row via readMigrationRowValue and parseMastraSessionLedgerState, and no longer owns the digest comparison; the persisted-row decoding/codec path owns that integrity check. This is a validator-responsibility move, so same identity and surrounding migration check do not prove the same role.",
-        "independent_basis": "The cited old/current source responsibilities were compared directly. The role is excluded because the rationale identifies a changed public trust boundary or a validator/authority responsibility move; identity and surrounding behavior do not preserve that owner role.",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#correctiveAuthority#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#correctiveAuthority#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "method:#correctiveAuthority#0",
-          "source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-          "line": 13331,
-          "body_line": 13331,
-          "body_end_line": 13369
-        },
-        "old_source_address": {
-          "line": 13331,
-          "column": 2,
-          "start": 611489,
-          "end": 613656,
-          "bodyLine": 13331,
-          "bodyColumn": 118,
-          "bodyEndLine": 13369,
-          "bodyEndColumn": 3
-        },
-        "old_producer_consumer": {
-          "role": "performs the same Host-owned operation within its enclosing call path",
-          "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-          "owner_path_lines": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts:13331 — method:#correctiveAuthority#0 declaration owns the old Host role",
-          "producer": {
-            "owner": "method:#correctiveAuthority#0",
-            "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-            "line": 13331,
-            "source_statement": "callable or nested binding entry shown at the cited source address"
-          },
-          "consumer": {
-            "owner": "method:#correctiveAuthority#0",
-            "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-            "line": 13369,
-            "source_statement": "result/transaction boundary at the cited callable body end"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "method:#correctiveAuthority#0",
-          "source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-          "line": 14546,
-          "body_line": 14553,
-          "body_end_line": 14586
-        },
-        "current_source_address": {
-          "line": 14546,
-          "column": 2,
-          "start": 663026,
-          "end": 665037,
-          "bodyLine": 14553,
-          "bodyColumn": 65,
-          "bodyEndLine": 14586,
-          "bodyEndColumn": 3
-        },
-        "current_producer_consumer": {
-          "role": "performs the same Host-owned operation within its enclosing call path",
-          "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-          "owner_path_lines": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts:14546 — method:#correctiveAuthority#0 declaration owns the current Host role",
-          "producer": {
-            "owner": "method:#correctiveAuthority#0",
-            "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-            "line": 14546,
-            "source_statement": "callable or nested binding entry shown at the cited source address"
-          },
-          "consumer": {
-            "owner": "method:#correctiveAuthority#0",
-            "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-            "line": 14586,
-            "source_statement": "result/transaction boundary at the cited callable body end"
-          }
-        },
-        "rationale": "Rejected: the old method derives the correction authority from work and stage ID. The current method also accepts an optional externally verified authorization/payload, shifting authority-validation responsibility across the method boundary; same ID/body shape is insufficient to retain the prior role.",
-        "independent_basis": "The cited old/current source responsibilities were compared directly. The role is excluded because the rationale identifies a changed public trust boundary or a validator/authority responsibility move; identity and surrounding behavior do not preserve that owner role.",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#fn:openHostStateDatabase#0",
-        "current_identity": "src/host-state.ts#fn:openHostStateDatabase#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "openHostStateDatabase",
-          "source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-          "line": 3944,
-          "body_line": 3944,
-          "body_end_line": 3960
-        },
-        "old_source_address": {
-          "line": 3944,
-          "column": 7,
-          "start": 175222,
-          "end": 175808,
-          "bodyLine": 3944,
-          "bodyColumn": 70,
-          "bodyEndLine": 3960,
-          "bodyEndColumn": 1
-        },
-        "old_producer_consumer": {
-          "role": "reads or resolves persisted Host state for its owning call path",
-          "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-          "owner_path_lines": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts:3944 — openHostStateDatabase declaration owns the old Host role",
-          "producer": {
-            "owner": "openHostStateDatabase",
-            "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-            "line": 3944,
-            "source_statement": "callable or nested binding entry shown at the cited source address"
-          },
-          "consumer": {
-            "owner": "openHostStateDatabase",
-            "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-            "line": 3960,
-            "source_statement": "result/transaction boundary at the cited callable body end"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "openHostStateDatabase",
-          "source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-          "line": 4910,
-          "body_line": 4914,
-          "body_end_line": 4957
-        },
-        "current_source_address": {
-          "line": 4910,
-          "column": 7,
-          "start": 213428,
-          "end": 215597,
-          "bodyLine": 4914,
-          "bodyColumn": 12,
-          "bodyEndLine": 4957,
-          "bodyEndColumn": 1
-        },
-        "current_producer_consumer": {
-          "role": "reads or resolves persisted Host state for its owning call path",
-          "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-          "owner_path_lines": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts:4910 — openHostStateDatabase declaration owns the current Host role",
-          "producer": {
-            "owner": "openHostStateDatabase",
-            "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-            "line": 4910,
-            "source_statement": "callable or nested binding entry shown at the cited source address"
-          },
-          "consumer": {
-            "owner": "openHostStateDatabase",
-            "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-            "line": 4957,
-            "source_statement": "result/transaction boundary at the cited callable body end"
-          }
-        },
-        "rationale": "Rejected: the old callable accepts a single database path, while the current callable requires repository root, relative database path, and workspace ID. That changes its public responsibility and trust-boundary contract, so source identity cannot establish the same role.",
-        "independent_basis": "The cited old/current source responsibilities were compared directly. The role is excluded because the rationale identifies a changed public trust boundary or a validator/authority responsibility move; identity and surrounding behavior do not preserve that owner role.",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0",
-        "current_identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "inspectHostWorkspaceDatabase",
-          "source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-          "line": 3774,
-          "body_line": 3801,
-          "body_end_line": 3942
-        },
-        "old_source_address": {
-          "line": 3774,
-          "column": 7,
-          "start": 168278,
-          "end": 175213,
-          "bodyLine": 3801,
-          "bodyColumn": 2,
-          "bodyEndLine": 3942,
-          "bodyEndColumn": 1
-        },
-        "old_producer_consumer": {
-          "role": "reads or resolves persisted Host state for its owning call path",
-          "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-          "owner_path_lines": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts:3774 — inspectHostWorkspaceDatabase declaration owns the old Host role",
-          "producer": {
-            "owner": "inspectHostWorkspaceDatabase",
-            "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-            "line": 3774,
-            "source_statement": "callable or nested binding entry shown at the cited source address"
-          },
-          "consumer": {
-            "owner": "inspectHostWorkspaceDatabase",
-            "path": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-            "line": 3942,
-            "source_statement": "result/transaction boundary at the cited callable body end"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "inspectHostWorkspaceDatabase",
-          "source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-          "line": 4748,
-          "body_line": 4776,
-          "body_end_line": 4908
-        },
-        "current_source_address": {
-          "line": 4748,
-          "column": 7,
-          "start": 206648,
-          "end": 213419,
-          "bodyLine": 4776,
-          "bodyColumn": 2,
-          "bodyEndLine": 4908,
-          "bodyEndColumn": 1
-        },
-        "current_producer_consumer": {
-          "role": "reads or resolves persisted Host state for its owning call path",
-          "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-          "owner_path_lines": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts:4748 — inspectHostWorkspaceDatabase declaration owns the current Host role",
-          "producer": {
-            "owner": "inspectHostWorkspaceDatabase",
-            "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-            "line": 4748,
-            "source_statement": "callable or nested binding entry shown at the cited source address"
-          },
-          "consumer": {
-            "owner": "inspectHostWorkspaceDatabase",
-            "path": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-            "line": 4908,
-            "source_statement": "result/transaction boundary at the cited callable body end"
-          }
-        },
-        "rationale": "Rejected: the old inspection entry accepts a database path and workspace ID; the current entry accepts repository root, configured relative path, and workspace ID. The path-resolution and access contract moved into this entry, which is a contract/responsibility change.",
-        "independent_basis": "The cited old/current source responsibilities were compared directly. The role is excluded because the rationale identifies a changed public trust boundary or a validator/authority responsibility move; identity and surrounding behavior do not preserve that owner role.",
-        "independent_review_ref": "/workspace/attachments/quality-host45a-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:beginSessionProducer#0/binding:operation/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:beginSessionProducer#0/binding:operation/closure:CallExpression:arguments[0]#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "HostStateStore.beginSessionProducer",
-          "line": 5411,
-          "body_line": 5411,
-          "body_end_line": 5612
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 5411,
-          "column": 19,
-          "start": 242865,
-          "end": 252090,
-          "bodyLine": 5411,
-          "bodyColumn": 25,
-          "bodyEndLine": 5612,
-          "bodyEndColumn": 7
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.beginSessionProducer entry/owner",
-            "line": 5411,
-            "source_statement": ".transaction(() => {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.beginSessionProducer result/commit boundary",
-            "line": 5612,
-            "source_statement": "})"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "HostStateStore.beginSessionProducer",
-          "line": 6538,
-          "body_line": 6538,
-          "body_end_line": 6712
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 6538,
-          "column": 19,
-          "start": 288969,
-          "end": 296715,
-          "bodyLine": 6538,
-          "bodyColumn": 25,
-          "bodyEndLine": 6712,
-          "bodyEndColumn": 7
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.beginSessionProducer entry/owner",
-            "line": 6538,
-            "source_statement": ".transaction(() => {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.beginSessionProducer result/commit boundary",
-            "line": 6712,
-            "source_statement": "})"
-          }
-        },
-        "baseline_complexity": 50,
-        "baseline_coverage": 1,
-        "baseline_crap": 50,
-        "rationale": "The callback still reserves an OperationReservation, but responsibility for loading and validating journal/host/continuation context moved into #assertSessionProducerContext; this callback no longer owns the original context assembly. Reject this callback correspondence to avoid carrying its full old allowance across that handoff.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#fn:runConsumerMigrationState#0",
-        "current_identity": "src/host-state.ts#fn:runConsumerMigrationState#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "runConsumerMigrationState",
-          "line": 3996,
-          "body_line": 4013,
-          "body_end_line": 4176
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 3996,
-          "column": 7,
-          "start": 177182,
-          "end": 185026,
-          "bodyLine": 4013,
-          "bodyColumn": 3,
-          "bodyEndLine": 4176,
-          "bodyEndColumn": 1
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "runConsumerMigrationState entry/owner",
-            "line": 3996,
-            "source_statement": "export async function runConsumerMigrationState<T>("
-          },
-          "consumer": {
-            "symbol": "runConsumerMigrationState result/commit boundary",
-            "line": 4174,
-            "source_statement": "database.close(true);"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "runConsumerMigrationState",
-          "line": 5006,
-          "body_line": 5023,
-          "body_end_line": 5196
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 5006,
-          "column": 7,
-          "start": 217519,
-          "end": 225953,
-          "bodyLine": 5023,
-          "bodyColumn": 3,
-          "bodyEndLine": 5196,
-          "bodyEndColumn": 1
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "runConsumerMigrationState entry/owner",
-            "line": 5006,
-            "source_statement": "export async function runConsumerMigrationState<T>("
-          },
-          "consumer": {
-            "symbol": "runConsumerMigrationState result/commit boundary",
-            "line": 5195,
-            "source_statement": "return result;"
-          }
-        },
-        "baseline_complexity": 5,
-        "baseline_coverage": 0,
-        "baseline_crap": 30,
-        "rationale": "Current migration cleanup now collects migration and database-close failures and raises AggregateError when both occur. That is a new error-handling contract versus the old close/finally flow, so this is not a retained responsibility correspondence.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0/binding:commit/binding:commit#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0/binding:commit/binding:commit#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0/binding:commit/binding:commit#0",
-          "line": 17221,
-          "body_line": 17221,
-          "body_end_line": 17396
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 17221,
-          "column": 19,
-          "start": 793969,
-          "end": 803272,
-          "bodyLine": 17221,
-          "bodyColumn": 25,
-          "bodyEndLine": 17396,
-          "bodyEndColumn": 5
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0/binding:commit/binding:commit#0 entry/owner",
-            "line": 17221,
-            "source_statement": "const commit = () => {"
-          },
-          "consumer": {
-            "symbol": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0/binding:commit/binding:commit#0 result/commit boundary",
-            "line": 17396,
-            "source_statement": "};"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0/binding:commit/binding:commit#0",
-          "line": 18438,
-          "body_line": 18438,
-          "body_end_line": 18621
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 18438,
-          "column": 19,
-          "start": 846075,
-          "end": 855733,
-          "bodyLine": 18438,
-          "bodyColumn": 25,
-          "bodyEndLine": 18621,
-          "bodyEndColumn": 5
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0/binding:commit/binding:commit#0 entry/owner",
-            "line": 18438,
-            "source_statement": "const commit = () => {"
-          },
-          "consumer": {
-            "symbol": "src/host-state.ts#class:HostStateStore/method:#commitHostState#0/binding:commit/binding:commit#0 result/commit boundary",
-            "line": 18621,
-            "source_statement": "};"
-          }
-        },
-        "baseline_complexity": 45,
-        "baseline_coverage": 1,
-        "baseline_crap": 45,
-        "rationale": "The nested commit closure replaced its session-producer permission check with #assertCommitProducerFence(internalTransaction, producerFenceChecked). The fencing validator responsibility now belongs to a dedicated helper; reject this closure pairing.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#assertSessionProducerContext#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#assertSessionProducerContext#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "src/host-state.ts#class:HostStateStore/method:#assertSessionProducerContext#0",
-          "line": 5175,
-          "body_line": 5179,
-          "body_end_line": 5402
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 5175,
-          "column": 2,
-          "start": 232316,
-          "end": 242490,
-          "bodyLine": 5179,
-          "bodyColumn": 61,
-          "bodyEndLine": 5402,
-          "bodyEndColumn": 3
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "src/host-state.ts#class:HostStateStore/method:#assertSessionProducerContext#0 entry/owner",
-            "line": 5175,
-            "source_statement": "#assertSessionProducerContext("
-          },
-          "consumer": {
-            "symbol": "src/host-state.ts#class:HostStateStore/method:#assertSessionProducerContext#0 result/commit boundary",
-            "line": 5401,
-            "source_statement": "return currentConfig;"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "src/host-state.ts#class:HostStateStore/method:#assertSessionProducerContext#0",
-          "line": 6251,
-          "body_line": 6262,
-          "body_end_line": 6485
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 6251,
-          "column": 2,
-          "start": 276210,
-          "end": 286894,
-          "bodyLine": 6262,
-          "bodyColumn": 4,
-          "bodyEndLine": 6485,
-          "bodyEndColumn": 3
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "src/host-state.ts#class:HostStateStore/method:#assertSessionProducerContext#0 entry/owner",
-            "line": 6251,
-            "source_statement": "#assertSessionProducerContext("
-          },
-          "consumer": {
-            "symbol": "src/host-state.ts#class:HostStateStore/method:#assertSessionProducerContext#0 result/commit boundary",
-            "line": 6484,
-            "source_statement": "return { config: currentConfig, journal, host, identity, continuation, initialContinuation };"
-          }
-        },
-        "baseline_complexity": 57,
-        "baseline_coverage": 1,
-        "baseline_crap": 57,
-        "rationale": "The context helper now returns config, journal, host, identity, continuation, and initialContinuation and is consumed by the producer callback. The old helper returned config only; responsibility expanded and moved from caller assembly into this helper, so reject the old role correspondence.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:rebindRuntimeCode#0/closure:CallExpression:arguments[0]#1",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:rebindRuntimeCode#0/closure:CallExpression:arguments[0]#1",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "HostStateStore.rebindRuntimeCode",
-          "line": 10312,
-          "body_line": 10313,
-          "body_end_line": 10317
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 10312,
-          "column": 16,
-          "start": 470157,
-          "end": 470379,
-          "bodyLine": 10313,
-          "bodyColumn": 18,
-          "bodyEndLine": 10317,
-          "bodyEndColumn": 40
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.rebindRuntimeCode entry/owner",
-            "line": 10312,
-            "source_statement": "(value) =>"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.rebindRuntimeCode result/commit boundary",
-            "line": 10317,
-            "source_statement": "!/\\p{Cc}/u.test(value),"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "HostStateStore.rebindRuntimeCode",
-          "line": 11594,
-          "body_line": 11594,
-          "body_end_line": 11844
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 11594,
-          "column": 46,
-          "start": 523881,
-          "end": 535332,
-          "bodyLine": 11594,
-          "bodyColumn": 52,
-          "bodyEndLine": 11844,
-          "bodyEndColumn": 5
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.rebindRuntimeCode entry/owner",
-            "line": 11594,
-            "source_statement": "return this.#transactionWithProducerFence(() => {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.rebindRuntimeCode result/commit boundary",
-            "line": 11843,
-            "source_statement": "return this.#read(input.identity);"
-          }
-        },
-        "baseline_complexity": 5,
-        "baseline_coverage": 0,
-        "baseline_crap": 30,
-        "rationale": "The old closure is a scalar string predicate (trim/control-character/length validation); the current closure is a maintenance-fenced transactional state update that commits rebound runtime code. The identity/body match is not a role match.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "HostStateStore.recoverExpiredLocalLease",
-          "line": 15416,
-          "body_line": 15416,
-          "body_end_line": 15748
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 15416,
-          "column": 46,
-          "start": 708594,
-          "end": 722828,
-          "bodyLine": 15416,
-          "bodyColumn": 52,
-          "bodyEndLine": 15748,
-          "bodyEndColumn": 5
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.recoverExpiredLocalLease entry/owner",
-            "line": 15416,
-            "source_statement": "return this.#transactionWithProducerFence(() => {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.recoverExpiredLocalLease result/commit boundary",
-            "line": 15747,
-            "source_statement": "return this.#read(input.identity);"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "HostStateStore.recoverExpiredLocalLease",
-          "line": 16591,
-          "body_line": 16591,
-          "body_end_line": 16900
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 16591,
-          "column": 46,
-          "start": 758344,
-          "end": 771648,
-          "bodyLine": 16591,
-          "bodyColumn": 52,
-          "bodyEndLine": 16900,
-          "bodyEndColumn": 5
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.recoverExpiredLocalLease entry/owner",
-            "line": 16591,
-            "source_statement": "return this.#transactionWithProducerFence(() => {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.recoverExpiredLocalLease result/commit boundary",
-            "line": 16899,
-            "source_statement": "return this.#read(input.identity);"
-          }
-        },
-        "baseline_complexity": 48,
-        "baseline_coverage": 1,
-        "baseline_crap": 48,
-        "rationale": "The current lease-recovery closure owns a maintenance-generation fenced write and reconciliation notification. The original candidate had no declaration at this closure identity in the packet, so an old closure allowance cannot be assigned by ordinal; reject pending a separately established old owner.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:committed/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:committed/closure:CallExpression:arguments[0]#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "HostStateStore.issueTaskSourceBindingOperation",
-          "line": 8339,
-          "body_line": 8339,
-          "body_end_line": 8649
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 8339,
-          "column": 57,
-          "start": 376433,
-          "end": 391068,
-          "bodyLine": 8339,
-          "bodyColumn": 63,
-          "bodyEndLine": 8649,
-          "bodyEndColumn": 5
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.issueTaskSourceBindingOperation entry/owner",
-            "line": 8339,
-            "source_statement": "const committed = this.#transactionWithProducerFence(() => {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.issueTaskSourceBindingOperation result/commit boundary",
-            "line": 8648,
-            "source_statement": "return { status: 'issued' as const, action, state_version: { revision: action.revision, digest } };"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "HostStateStore.issueTaskSourceBindingOperation",
-          "line": 9638,
-          "body_line": 9638,
-          "body_end_line": 9930
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 9638,
-          "column": 57,
-          "start": 430345,
-          "end": 444223,
-          "bodyLine": 9638,
-          "bodyColumn": 63,
-          "bodyEndLine": 9930,
-          "bodyEndColumn": 5
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.issueTaskSourceBindingOperation entry/owner",
-            "line": 9638,
-            "source_statement": "const committed = this.#transactionWithProducerFence(() => {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.issueTaskSourceBindingOperation result/commit boundary",
-            "line": 9929,
-            "source_statement": "return { status: 'issued' as const, action, state_version: { revision: action.revision, digest } };"
-          }
-        },
-        "baseline_complexity": 59,
-        "baseline_coverage": 0,
-        "baseline_crap": 3540,
-        "rationale": "The current committed closure creates and inserts a TaskSourceBindingAction after policy/coordination checks. Its original declaration is absent from the packet, and this committed producer responsibility is not established for an old closure at this address; reject rather than infer correspondence from nesting ordinal.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:rebindRuntimeCode#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:rebindRuntimeCode#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "HostStateStore.rebindRuntimeCode",
-          "line": 10275,
-          "body_line": 10275,
-          "body_end_line": 10629
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 10275,
-          "column": 2,
-          "start": 467958,
-          "end": 485053,
-          "bodyLine": 10275,
-          "bodyColumn": 89,
-          "bodyEndLine": 10629,
-          "bodyEndColumn": 3
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.rebindRuntimeCode entry/owner",
-            "line": 10275,
-            "source_statement": "async rebindRuntimeCode(request: RuntimeCodeRebindRequest): Promise<HostStateSnapshot> {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.rebindRuntimeCode result/commit boundary",
-            "line": 10627,
-            "source_statement": "return this.#read(input.identity);"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "HostStateStore.rebindRuntimeCode",
-          "line": 11547,
-          "body_line": 11547,
-          "body_end_line": 11845
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 11547,
-          "column": 2,
-          "start": 521063,
-          "end": 535350,
-          "bodyLine": 11547,
-          "bodyColumn": 89,
-          "bodyEndLine": 11845,
-          "bodyEndColumn": 3
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "HostStateStore.rebindRuntimeCode entry/owner",
-            "line": 11547,
-            "source_statement": "async rebindRuntimeCode(request: RuntimeCodeRebindRequest): Promise<HostStateSnapshot> {"
-          },
-          "consumer": {
-            "symbol": "HostStateStore.rebindRuntimeCode result/commit boundary",
-            "line": 11843,
-            "source_statement": "return this.#read(input.identity);"
-          }
-        },
-        "baseline_complexity": 38,
-        "baseline_coverage": 0,
-        "baseline_crap": 1482,
-        "rationale": "The current rebindRuntimeCode method is a much smaller coordinator around rebind verification/commit helpers (complexity 14 vs old 38). Its former inline responsibilities have moved to helper owners; reject this method as an unchanged role allowance.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#fn:checkedStoredWork#0",
-        "current_identity": "src/host-state.ts#fn:checkedStoredWork#0",
-        "old_source": "/workspace/vida-stack-lite/.tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/src/host-state.ts",
-        "old_owner": {
-          "symbol": "checkedStoredWork",
-          "line": 2182,
-          "body_line": 2194,
-          "body_end_line": 3015
-        },
-        "old_source_address": {
-          "file": "src/host-state.ts",
-          "line": 2182,
-          "column": 0,
-          "start": 91101,
-          "end": 134036,
-          "bodyLine": 2194,
-          "bodyColumn": 13,
-          "bodyEndLine": 3015,
-          "bodyEndColumn": 1
-        },
-        "old_producer_consumer": {
-          "producer": {
-            "symbol": "checkedStoredWork entry/owner",
-            "line": 2182,
-            "source_statement": "function checkedStoredWork("
-          },
-          "consumer": {
-            "symbol": "checkedStoredWork result/commit boundary",
-            "line": 3014,
-            "source_statement": "return checked;"
-          }
-        },
-        "current_source": "/workspace/vida-stack-lite/packages/agent/src/host-state.ts",
-        "current_owner": {
-          "symbol": "checkedStoredWork",
-          "line": 3198,
-          "body_line": 3212,
-          "body_end_line": 3853
-        },
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 3198,
-          "column": 0,
-          "start": 131688,
-          "end": 166899,
-          "bodyLine": 3212,
-          "bodyColumn": 13,
-          "bodyEndLine": 3853,
-          "bodyEndColumn": 1
-        },
-        "current_producer_consumer": {
-          "producer": {
-            "symbol": "checkedStoredWork entry/owner",
-            "line": 3198,
-            "source_statement": "function checkedStoredWork("
-          },
-          "consumer": {
-            "symbol": "checkedStoredWork result/commit boundary",
-            "line": 3852,
-            "source_statement": "return checked;"
-          }
-        },
-        "baseline_complexity": 313,
-        "baseline_coverage": 1,
-        "baseline_crap": 313,
-        "rationale": "checkedStoredWork has current complexity 279 versus original 313 and now validates against additional persisted receipt/recovery structures. The responsibility partition has changed; reject unless a source-lineage review separately maps the moved validator roles.",
-        "independent_basis": "The old/current producer and consumer statements and owner extents were re-read at the cited source locations. This rejection is based on the responsibility boundary described in the rationale, not identity/body similarity or complexity movement.",
-        "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
-      }
-    ],
-    "inventory_ref": "/workspace/attachments/quality-current-inventory-context-branch-b9c-20261015.json",
-    "scoped_byte_capture_files": [],
-    "source_capture_ref": "/workspace/attachments/quality-context-branch-bindings-b9c-20261015.json",
+    "reused_source_bindings": 148,
+    "sha256": "e9d161e90bb12645f95dc12fc8ce3327e6d5b2c2590ca736157e0f8f7ca628a9",
+    "original_fields_unchanged": true,
+    "predicate": {
+      "complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1
+    },
     "scoped_complexity_exceptions": [
       {
         "identity": "bin/recover-completed-source-report.ts#fn:isPassedNativeBuildCheck#0",
@@ -204424,16 +203122,18 @@
         "ceiling": 9
       }
     ],
-    "missing_current_dispositions": 766,
+    "missing_current_dispositions": 764,
     "missing_original_dispositions": 213,
-    "limits": "No additional AST/hash pass; same settled context-branch inventory and149 Source bindings. All original frozen fields preserved. Thirteen changed/unestablished roles remain unbound. Full plan, coverage, dynamic CRAP, mutation and Runtime remain open."
+    "independent_review_ref": "/workspace/attachments/quality-native-two-role-actual-review-c744-20261015.md",
+    "limits": "One changed Source AST+SHA. Same7729identities; scoped intentional lint directive comment only; prior full role/plan receipt quality-native-two-role-bindings-c744-20261015.json and all original frozen fields. No new function/budget. Full plan, coverage, dynamic CRAP, mutation and Runtime remain open.",
+    "source_capture_ref": "/workspace/attachments/quality-native-lint-comment-bindings-c744-20261015.json"
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
-    "source_commit": "b9cfba8",
+    "source_commit": "c744678",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-host77-join-b9c-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-native-lint-comment-bindings-c744-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",
