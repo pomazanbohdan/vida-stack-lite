@@ -874,6 +874,26 @@ reservation assertion. Root reused the file's existing Promise.resolve matcher
 pattern; the retained failure is quality-governance-private-commit-6d05-20261015.log.
 No product defect or successful publication is inferred from that failed hook.
 
+Corrected strict hook passes477formatted files/483TS roots/Knip/lint and packet
+8b7b9db is published. Complete governance capturedd102ded-5943-4eb2-99d6-
+7b5791e589dc at8b7b9dbc36f3935faa15aca77fc499ce63ea98bf completes76PASS/
+0FAIL/929assertions in5.65s Bun/8756.807594ms outer. Current measured metrics:
+F199/202,L673/691,S692/716,B77/91,maxCC6/entryCRAP6. Compared with the prior
+capture, reachable covered functions rise197→199 and the3explicitly removed
+published dead callbacks reduce205→202; no removed branch is waived. Retained
+root quality-declared-main-governance-ZeL0EY has complete output/same boot and
+observed group termination. Parent BLOCKED remains separate; no numeric global,
+frozen or mutation closure is inferred. Exact validated gaps:
+quality-main-governance-open-counters-8b7-20261015.jsonl.
+
+Automatic projection now preserves33observations, still2/44historical compatible
+local coverage+confirmed-mutation closures and42open;1static is separate.
+Evidence quality-contours-update-governance-8b7-20261015.log. The next bounded
+cases target the actual UNKNOWN sidecar reader/recovery fallback and genuine
+concurrent terminal create/read, not another malformed-JSON duplicate. Three
+functions and14branch counters remain open. Two disjoint Luna test owners
+continue; root retains Source, checks, correspondence, Git and numerical freeze.
+
 ## Automatic contour progress projection
 
 The human requested durable per-contour metrics and one automatic consolidated
