@@ -11,14 +11,13 @@ export type MutationPartition = {
 
 /** Single partition owner; reading it performs no inventory, hashing or execution. */
 export function mutationPartitions(): MutationPartition[] {
-  const commonTests = ['tests/coverage-completeness.test.ts'];
   const mainSlices: MutationPartition[] = [
     {
       name: 'main-runtime-core',
       sources: ['src/runtime-kernel.ts'],
       tests: [
-        ...commonTests,
         'tests/runtime-kernel-boundary.test.ts',
+        'tests/runtime-kernel-composition.test.ts',
         'tests/configured-workflow.test.ts',
         'tests/smoke.test.ts',
         'tests/interrupted-source-retirement.test.ts',
@@ -27,13 +26,12 @@ export function mutationPartitions(): MutationPartition[] {
     {
       name: 'main-runtime-timing',
       sources: ['src/runtime-timing.ts'],
-      tests: ['tests/runtime-timing-boundary.test.ts'],
+      tests: ['tests/runtime-timing-boundary.test.ts', 'tests/runtime-kernel-composition.test.ts'],
     },
     {
       name: 'main-config',
       sources: ['src/config/runtime-config.ts', 'src/config/project-context.ts'],
       tests: [
-        ...commonTests,
         'tests/project-context-boundary.test.ts',
         'tests/fuzz.test.ts',
         'tests/runtime-config-repair-boundary.test.ts',
@@ -48,23 +46,22 @@ export function mutationPartitions(): MutationPartition[] {
     {
       name: 'main-contracts',
       sources: ['src/contracts/public-ingress.ts', 'src/contracts/envelopes.ts'],
-      tests: [...commonTests, 'tests/envelopes-boundary.test.ts', 'tests/fuzz.test.ts', 'tests/zombies.test.ts'],
+      tests: [
+        'tests/public-ingress-boundary.test.ts',
+        'tests/envelopes-boundary.test.ts',
+        'tests/fuzz.test.ts',
+        'tests/zombies.test.ts',
+      ],
     },
     {
       name: 'main-cedar',
       sources: ['src/authorization/cedar-boundary.ts'],
-      tests: [
-        ...commonTests,
-        'tests/cedar-validation.test.ts',
-        'tests/envelopes-boundary.test.ts',
-        'tests/fuzz.test.ts',
-      ],
+      tests: ['tests/cedar-validation.test.ts', 'tests/envelopes-boundary.test.ts', 'tests/fuzz.test.ts'],
     },
     {
       name: 'main-governance',
       sources: ['src/governance/edictum-boundary.ts'],
       tests: [
-        ...commonTests,
         'tests/workflow-approval-consumption-contract.test.ts',
         'tests/governance-completeness.test.ts',
         'tests/edictum-workflow-completeness.test.ts',
@@ -74,7 +71,7 @@ export function mutationPartitions(): MutationPartition[] {
     {
       name: 'main-mastra',
       sources: ['src/orchestration/mastra-boundary.ts'],
-      tests: [...commonTests, 'tests/runtime-config-yaml.test.ts', 'tests/smoke.test.ts', 'tests/zombies.test.ts'],
+      tests: ['tests/runtime-config-yaml.test.ts', 'tests/smoke.test.ts', 'tests/zombies.test.ts'],
     },
     {
       name: 'main-exports',
@@ -372,7 +369,7 @@ export function mutationPartitions(): MutationPartition[] {
         'bin/workspace-database-cli.ts',
       ],
       tests: [
-        ...commonTests,
+        'tests/project-mapping-contract.test.ts',
         'tests/cli-error-properties.test.ts',
         'tests/scope-help-parity.test.ts',
         'tests/project-upgrade-cli-options.test.ts',
@@ -401,7 +398,6 @@ export function mutationPartitions(): MutationPartition[] {
         'src/config/workspace-database.ts',
       ],
       tests: [
-        ...commonTests,
         'tests/initialization.test.ts',
         'tests/project-context-boundary.test.ts',
         'tests/bun/runtime-initialization.test.ts',
@@ -423,7 +419,7 @@ export function mutationPartitions(): MutationPartition[] {
         'src/governance/workflow-approval-consumption-contract.ts',
       ],
       tests: [
-        ...commonTests,
+        'tests/public-ingress-boundary.test.ts',
         'tests/envelopes-boundary.test.ts',
         'tests/forward-controller-values.test.ts',
         'tests/fuzz.test.ts',
@@ -442,21 +438,21 @@ export function mutationPartitions(): MutationPartition[] {
         'src/config/project-upgrade-storage.ts',
         'src/config/project-upgrade.ts',
       ],
-      tests: [...commonTests, 'tests/project-upgrade-lifecycle.test.ts'],
+      tests: ['tests/project-upgrade-lifecycle.test.ts'],
       report: 'mutation-bun-project-upgrade-lifecycle.json',
     },
     {
       name: 'bun-project-upgrade-storage-admission',
       environment: 'bun',
       sources: ['src/config/project-upgrade-existing-storage-admission.ts'],
-      tests: [...commonTests, 'tests/bun/project-upgrade-existing-storage-admission.test.ts'],
+      tests: ['tests/bun/project-upgrade-existing-storage-admission.test.ts'],
       report: 'mutation-bun-project-upgrade-storage-admission.json',
     },
     {
       name: 'bun-project-upgrade-existing-storage-image',
       environment: 'bun',
       sources: ['src/config/project-upgrade-existing-storage.ts'],
-      tests: [...commonTests, 'tests/project-upgrade-existing-storage.test.ts'],
+      tests: ['tests/project-upgrade-existing-storage.test.ts'],
       report: 'mutation-bun-project-upgrade-existing-storage-image.json',
     },
     {
@@ -489,7 +485,6 @@ export function mutationPartitions(): MutationPartition[] {
       tests: [
         'tests/completed-source-report-recovery-cli.test.ts',
         'tests/session-bridge-contract.test.ts',
-        ...commonTests,
         'tests/initial-source-continuation.test.ts',
         'tests/delivered-work-continuation.test.ts',
         'tests/historical-terminal-synthesis-capture.test.ts',
@@ -514,7 +509,6 @@ export function mutationPartitions(): MutationPartition[] {
         'bin/standalone.ts',
       ],
       tests: [
-        ...commonTests,
         'tests/development-controller.test.ts',
         'tests/native-delivery-evidence-repair.test.ts',
         'tests/release-retarget-state.test.ts',
@@ -529,11 +523,7 @@ export function mutationPartitions(): MutationPartition[] {
       name: 'bun-controller-observation',
       environment: 'bun',
       sources: ['bin/development-controller-observation.ts'],
-      tests: [
-        ...commonTests,
-        'tests/development-controller-observation.test.ts',
-        'tests/development-controller.test.ts',
-      ],
+      tests: ['tests/development-controller-observation.test.ts', 'tests/development-controller.test.ts'],
       report: 'mutation-bun-controller-observation.json',
     },
     {
@@ -546,7 +536,6 @@ export function mutationPartitions(): MutationPartition[] {
         'src/orchestration/task-source-binding.ts',
       ],
       tests: [
-        ...commonTests,
         'tests/source-preflight-producer.test.ts',
         'tests/source-preflight.test.ts',
         'tests/task-source-binding-operations.test.ts',

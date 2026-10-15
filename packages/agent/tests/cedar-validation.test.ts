@@ -6,9 +6,25 @@ import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { stringify as stringifyYaml } from 'yaml';
-import { assertConfiguredCedarPolicy, createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
+import {
+  assertConfiguredCedarPolicy,
+  authorizeProject,
+  createConfiguredProjectAuthorizer,
+  validateCedarPolicySet,
+} from '../src/authorization/cedar-boundary.ts';
+import {
+  canonicalJsonDigest,
+  type ProjectAuthorizationRequest,
+  type TrustedProjectIdentity,
+} from '../src/contracts/public-ingress.ts';
+import {
+  loadProjectSetContext,
+  requireAbsoluteRepositoryRoot,
+  validateResolvedPathProfile,
+} from '../src/config/project-context.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.ts';
 import { configuredTestContext } from './configured-context.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 const schema =
   'entity User; entity Group; entity Project; action read appliesTo { principal: User, resource: Project };';
@@ -113,3 +129,309 @@ test('configured authorizer validates Cedar from an authentic loaded repository 
     else console.error(`Retained Cedar configuration fixture: ${fixtureRoot}`);
   }
 }, 5_000);
+
+const completenessContext = configuredTestContext();
+const repositoryRoot = completenessContext.repositoryRoot;
+const config = completenessContext.config;
+const project = completenessContext.context;
+function required<T>(value: T | undefined, label: string): T {
+  if (value === undefined) throw new Error(`Expected ${label}.`);
+  return value;
+}
+const projectBinding = required(project.project_bindings[0], 'a configured project binding');
+function authorizationRequest(operationHash?: string): ProjectAuthorizationRequest {
+  return {
+    principal: 'principal-1',
+    role: 'developer-orchestrator',
+    action: 'write',
+    tenant: project.repository_id,
+    project: projectBinding.project_id,
+    resourceTenant: project.repository_id,
+    resourceProject: projectBinding.project_id,
+    registryHash: project.registry_hash,
+    ...(operationHash ? { operationHash } : {}),
+  };
+}
+function identity(): TrustedProjectIdentity {
+  return Object.freeze({
+    schema: 'TrustedProjectIdentity/v1',
+    source: 'authenticated-context',
+    principal: 'principal-1',
+    role: 'developer-orchestrator',
+    tenant: project.repository_id,
+    project: projectBinding.project_id,
+    registry_hash: project.registry_hash,
+  });
+}
+function identityWithChanges(changes: Readonly<Record<string, unknown>>): unknown {
+  const value = { ...identity() };
+  for (const [key, replacement] of Object.entries(changes))
+    Object.defineProperty(value, key, { configurable: true, enumerable: true, value: replacement });
+  return value;
+}
+function invokeUntrusted(
+  target: (...args: never[]) => unknown,
+  ...invocation: [readonly unknown[]] | [unknown, readonly unknown[]]
+): unknown {
+  const [receiver, args] = invocation.length === 1 ? [undefined, invocation[0]] : invocation;
+  return Reflect.apply(target, receiver, args);
+}
+test('Cedar capabilities fail closed on malformed boundaries', () => {
+  expect(expectReturned(() => validateCedarPolicySet('permit(principal, action, resource);'))).toEqual({
+    valid: true,
+    diagnostics: [],
+  });
+  expect(() => invokeUntrusted(requireAbsoluteRepositoryRoot, [null])).toThrow(/absolute/);
+  expect(() => validateResolvedPathProfile(null, repositoryRoot)).toThrow(/issued/);
+  const invalidCedar = expectReturned(() => validateCedarPolicySet('not cedar'));
+  expect(invalidCedar).toMatchObject({ valid: false });
+  expect(Array.isArray(invalidCedar.diagnostics)).toBe(true);
+  expect(typeof invalidCedar.diagnostics[0]).toBe('string');
+  expect(invalidCedar.diagnostics[0]).toMatch(/parse|token|input/i);
+  const authorize = expectReturned(() => createConfiguredProjectAuthorizer(repositoryRoot, config));
+  expect(typeof authorize).toBe('function');
+  const invalidSchemaResult = authorizeProject(
+    authorizationRequest('a'.repeat(64)),
+    identity(),
+    project,
+    repositoryRoot,
+    config.authorization.cedar.policy,
+    'invalid schema',
+  );
+  expect(invalidSchemaResult).toMatchObject({ decision: 'deny' });
+  expect(Array.isArray(invalidSchemaResult.diagnostics)).toBe(true);
+  expect(invalidSchemaResult.diagnostics.length).toBeGreaterThan(0);
+  const invalidPolicyResult = authorizeProject(
+    authorizationRequest('a'.repeat(64)),
+    identity(),
+    project,
+    repositoryRoot,
+    'not cedar',
+    config.authorization.cedar.schema_text,
+  );
+  expect(invalidPolicyResult).toMatchObject({ decision: 'deny' });
+  expect(Array.isArray(invalidPolicyResult.diagnostics)).toBe(true);
+  expect(invalidPolicyResult.diagnostics.length).toBeGreaterThan(0);
+  expect(typeof invalidPolicyResult.diagnostics[0]).toBe('string');
+  expect(invalidPolicyResult.diagnostics[0]).toMatch(/parse|token|input/i);
+  expect(authorize(authorizationRequest('a'.repeat(64)), identity(), project)).toMatchObject({ decision: 'allow' });
+  const validAuthorization = authorizationRequest('a'.repeat(64));
+  const validIdentity = identity();
+  const allowed = authorizeProject(
+    validAuthorization,
+    validIdentity,
+    project,
+    repositoryRoot,
+    config.authorization.cedar.policy,
+    config.authorization.cedar.schema_text,
+  );
+  expect(allowed).toMatchObject({ decision: 'allow', diagnostics: ['policy1'] });
+  const decisionId = allowed.receipt?.decision_id;
+  const authorizationDigest = expectReturned(() => canonicalJsonDigest(validAuthorization));
+  expect(authorizationDigest).toMatch(/^[a-f0-9]{64}$/);
+  const expectedDecisionId = 'cedar-' + authorizationDigest.slice(0, 24);
+  expect(allowed.receipt).toMatchObject({
+    schema: 'AuthorizationReceipt/v1',
+    source: 'cedar',
+    decision: 'allow',
+    operation_hash: validAuthorization.operationHash,
+  });
+  expect(required(allowed.receipt, 'authorization receipt').decision_id).toMatch(/^cedar-[a-f0-9]{24}$/);
+  expect(decisionId).toBe(expectedDecisionId);
+  expect(
+    authorizeProject(
+      validAuthorization,
+      validIdentity,
+      { ...project },
+      repositoryRoot,
+      config.authorization.cedar.policy,
+      config.authorization.cedar.schema_text,
+    ),
+  ).toEqual({
+    decision: 'deny',
+    diagnostics: ['GAP-RTNEW-PATH-PROFILE-001: project context must be issued by loadProjectSetContext'],
+  });
+  const { operationHash: _ignoredOperationHash, ...readAuthorization } = { ...validAuthorization, action: 'read' };
+  const readAllowed = authorizeProject(
+    readAuthorization,
+    validIdentity,
+    project,
+    repositoryRoot,
+    config.authorization.cedar.policy,
+    config.authorization.cedar.schema_text,
+  );
+  expect(readAllowed).toMatchObject({ decision: 'allow', diagnostics: ['policy0'] });
+  expect(readAllowed).not.toHaveProperty('receipt');
+  const { operationHash: _ignoredWriteHash, ...writeWithoutHash } = validAuthorization;
+  expect(
+    authorizeProject(
+      writeWithoutHash,
+      validIdentity,
+      project,
+      repositoryRoot,
+      config.authorization.cedar.policy,
+      config.authorization.cedar.schema_text,
+    ),
+  ).toEqual({
+    decision: 'deny',
+    diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+  });
+  const viewerAuthorization = { ...validAuthorization, role: 'viewer' };
+  expect(
+    invokeUntrusted(authorizeProject, [
+      viewerAuthorization,
+      identityWithChanges({ role: 'viewer' }),
+      project,
+      repositoryRoot,
+      config.authorization.cedar.policy,
+      config.authorization.cedar.schema_text,
+    ]),
+  ).toEqual({ decision: 'deny', diagnostics: [] });
+  const identityFieldChanges: readonly (readonly [string, string])[] = [
+    ['schema', 'TrustedProjectIdentity/v2'],
+    ['source', 'untrusted-context'],
+  ];
+  for (const [field, value] of identityFieldChanges) {
+    expect(
+      invokeUntrusted(authorizeProject, [
+        validAuthorization,
+        identityWithChanges({ [field]: value }),
+        project,
+        repositoryRoot,
+        config.authorization.cedar.policy,
+        config.authorization.cedar.schema_text,
+      ]),
+    ).toEqual({
+      decision: 'deny',
+      diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+    });
+  }
+  for (const field of ['principal', 'role', 'tenant', 'project']) {
+    expect(
+      invokeUntrusted(authorizeProject, [
+        validAuthorization,
+        identityWithChanges({ [field]: 'other-value' }),
+        project,
+        repositoryRoot,
+        config.authorization.cedar.policy,
+        config.authorization.cedar.schema_text,
+      ]),
+    ).toEqual({
+      decision: 'deny',
+      diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+    });
+  }
+  for (const requestChange of [
+    { tenant: 'other-tenant', resourceTenant: 'other-tenant' },
+    { project: 'other-project', resourceProject: 'other-project' },
+    { resourceTenant: 'other-tenant' },
+    { resourceProject: 'other-project' },
+    { registryHash: 'b'.repeat(64) },
+  ]) {
+    expect(
+      authorizeProject(
+        { ...validAuthorization, ...requestChange },
+        validIdentity,
+        project,
+        repositoryRoot,
+        config.authorization.cedar.policy,
+        config.authorization.cedar.schema_text,
+      ),
+    ).toEqual({
+      decision: 'deny',
+      diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+    });
+  }
+  expect(
+    invokeUntrusted(authorizeProject, [
+      validAuthorization,
+      identityWithChanges({ registry_hash: 'b'.repeat(64) }),
+      project,
+      repositoryRoot,
+      config.authorization.cedar.policy,
+      config.authorization.cedar.schema_text,
+    ]),
+  ).toEqual({
+    decision: 'deny',
+    diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+  });
+  const authorizationChanges: readonly (readonly [
+    Readonly<Record<string, unknown>>,
+    Readonly<Record<string, unknown>>,
+  ])[] = [
+    [{ tenant: 'other-tenant' }, { tenant: 'other-tenant' }],
+    [{ project: 'other-project' }, { project: 'other-project' }],
+    [{ resourceTenant: 'other-tenant' }, {}],
+    [{ resourceProject: 'other-project' }, {}],
+    [{ registryHash: 'b'.repeat(64) }, {}],
+    [{}, { registry_hash: 'b'.repeat(64) }],
+  ];
+  for (const [requestChange, identityChange] of authorizationChanges) {
+    expect(
+      invokeUntrusted(authorizeProject, [
+        { ...validAuthorization, ...requestChange },
+        identityWithChanges(identityChange),
+        project,
+        repositoryRoot,
+        config.authorization.cedar.policy,
+        config.authorization.cedar.schema_text,
+      ]),
+    ).toEqual({
+      decision: 'deny',
+      diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+    });
+  }
+  expect(authorize({}, identity(), project)).toMatchObject({ decision: 'deny' });
+  expect(authorize(validAuthorization, undefined, project)).toEqual({
+    decision: 'deny',
+    diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+  });
+  expect(authorize(validAuthorization, validIdentity, undefined)).toEqual({
+    decision: 'deny',
+    diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+  });
+  expect(authorize(authorizationRequest('a'.repeat(64)), identity(), undefined)).toEqual({
+    decision: 'deny',
+    diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+  });
+  expect(() =>
+    createConfiguredProjectAuthorizer(repositoryRoot, {
+      ...config,
+      authorization: { ...config.authorization, cedar: { ...config.authorization.cedar, policy: 'not cedar' } },
+    }),
+  ).toThrow('runtime config must come from loadRuntimeConfig');
+  expect(() => createConfiguredProjectAuthorizer(path.resolve(repositoryRoot, 'agent-runtime-new'), config)).toThrow(
+    'runtime config is not bound to the repository root',
+  );
+});
+
+test('Cedar membership independently bounds both projects in an authentic multi-project context', () => {
+  const projectIds = config.projects.map((entry) => entry.project_id);
+  expect(projectIds.length).toBeGreaterThan(1);
+  const context = loadProjectSetContext(repositoryRoot, config, project.repository_id, projectIds);
+  const permissivePolicy = 'permit(principal, action, resource);';
+  const request = authorizationRequest('a'.repeat(64));
+  const authorize = (requestChange: Partial<ProjectAuthorizationRequest>) => {
+    const changed = { ...request, ...requestChange };
+    return authorizeProject(
+      changed,
+      { ...identity(), tenant: changed.tenant, project: changed.project },
+      context,
+      repositoryRoot,
+      permissivePolicy,
+      config.authorization.cedar.schema_text,
+    );
+  };
+  // Every selected principal/resource pair is valid; another selected binding must not cause denial.
+  for (const principalProject of projectIds)
+    for (const resourceProject of projectIds) {
+      const result = authorize({ project: principalProject, resourceProject });
+      expect(result).toMatchObject({ decision: 'allow', receipt: { operation_hash: request.operationHash } });
+    }
+  // Matching trusted identity and permissive policy cannot waive either configured membership boundary.
+  for (const change of [{ project: 'outside-selected-projects' }, { resourceProject: 'outside-selected-projects' }])
+    expect(authorize(change)).toEqual({
+      decision: 'deny',
+      diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+    });
+});

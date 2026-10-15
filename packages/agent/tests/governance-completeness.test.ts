@@ -38,7 +38,7 @@ import type { GovernanceBindings } from '../src/governance/edictum-boundary.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
-import { expectReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectRejection, expectReturned } from './helpers/expect-rejection.ts';
 const repositoryRoot = await createInitializedRepositoryRoot();
 const config = loadRuntimeConfig(repositoryRoot);
 const selectedProject = config.projects[0];
@@ -724,6 +724,75 @@ describe('governed write completeness', () => {
     );
     expect(await abortStore.inspect(abortFixture.operationHash)).toMatchObject({ status: 'aborted' });
   });
+
+  test.skipIf(!nativeNoFollowAvailable)(
+    'durable reservation inspection rejects malformed emitted terminal rows and retains their bytes',
+    async () => {
+      const nonRecordRoot = mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-terminal-nonrecord-'));
+      const invalidDigestRoot = mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-terminal-digest-'));
+      try {
+        const nonRecordStore = await createFileOperationReservationStore(nonRecordRoot, 'quality-terminal-nonrecord');
+        const nonRecordFixture = evidence();
+        const nonRecordReservation = await expectAsyncReturned(async () =>
+          nonRecordStore.reserve(nonRecordFixture.operationHash, nonRecordFixture.request),
+        );
+        if (nonRecordReservation === null) throw new Error('non-record terminal reservation was not created');
+        await expectAsyncReturned(async () => nonRecordStore.markCommitStarted(nonRecordReservation));
+        const nonRecordFiles = readdirSync(nonRecordRoot).filter((name) => name.endsWith('.json'));
+        expect(nonRecordFiles).toHaveLength(1);
+        const nonRecordPath = path.join(nonRecordRoot, nonRecordFiles[0]!);
+        const nonRecordTerminalPath = nonRecordPath + '.terminal';
+        const baseBytesBefore = readFileSync(nonRecordPath, 'utf8');
+        const malformedNonRecordBytes = '[]';
+        writeFileSync(nonRecordTerminalPath, malformedNonRecordBytes, 'utf8');
+        await expectRejection(
+          Promise.resolve().then(() => nonRecordStore.inspect(nonRecordFixture.operationHash)),
+          'durable reservation terminal record is invalid',
+        );
+        expect(readFileSync(nonRecordPath, 'utf8')).toBe(baseBytesBefore);
+        expect(readFileSync(nonRecordTerminalPath, 'utf8')).toBe(malformedNonRecordBytes);
+
+        const invalidDigestStore = await createFileOperationReservationStore(
+          invalidDigestRoot,
+          'quality-terminal-invalid-digest',
+        );
+        const invalidDigestFixture = evidence();
+        const invalidDigestReservation = await expectAsyncReturned(async () =>
+          invalidDigestStore.reserve(invalidDigestFixture.operationHash, invalidDigestFixture.request),
+        );
+        if (invalidDigestReservation === null) throw new Error('invalid-digest reservation was not created');
+        // This direct store control has no external effect; complete emits a real applied terminal row.
+        await expectAsyncReturned(async () => invalidDigestStore.complete(invalidDigestReservation, 'a'.repeat(64)));
+        const invalidDigestFiles = readdirSync(invalidDigestRoot).filter((name) => name.endsWith('.json'));
+        expect(invalidDigestFiles).toHaveLength(1);
+        const invalidDigestPath = path.join(invalidDigestRoot, invalidDigestFiles[0]!);
+        const invalidDigestTerminalPath = invalidDigestPath + '.terminal';
+        const invalidDigestBaseBytes = readFileSync(invalidDigestPath, 'utf8');
+        const emittedAppliedBytes = readFileSync(invalidDigestTerminalPath, 'utf8');
+        const emittedApplied: unknown = JSON.parse(emittedAppliedBytes);
+        if (typeof emittedApplied !== 'object' || emittedApplied === null || Array.isArray(emittedApplied))
+          throw new Error('The emitted terminal must be a record.');
+        expect(emittedApplied).toMatchObject({
+          operation_key: invalidDigestFixture.operationHash,
+          fencing_token: invalidDigestReservation.fencing_token,
+          status: 'applied',
+          result_digest: 'a'.repeat(64),
+        });
+        const malformedApplied = { ...emittedApplied, result_digest: 'not-a-digest' };
+        const malformedAppliedBytes = JSON.stringify(malformedApplied);
+        writeFileSync(invalidDigestTerminalPath, malformedAppliedBytes, 'utf8');
+        await expectRejection(
+          Promise.resolve().then(() => invalidDigestStore.inspect(invalidDigestFixture.operationHash)),
+          'durable reservation terminal record is invalid',
+        );
+        expect(readFileSync(invalidDigestPath, 'utf8')).toBe(invalidDigestBaseBytes);
+        expect(readFileSync(invalidDigestTerminalPath, 'utf8')).toBe(malformedAppliedBytes);
+      } finally {
+        // These corrupt regular terminal rows are unresolved negative-test evidence; retain both roots.
+        process.stderr.write(`Retained malformed terminal fixtures: ${nonRecordRoot}, ${invalidDigestRoot}\n`);
+      }
+    },
+  );
 
   test.skipIf(!nativeNoFollowAvailable)(
     'durable reservation store rejects an obstructed terminal path and retains its reservation bytes',

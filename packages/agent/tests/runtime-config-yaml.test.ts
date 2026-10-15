@@ -1,4 +1,6 @@
 import { afterAll, describe, expect, test } from 'bun:test';
+import { configuredTestContext } from './configured-context.ts';
+import { rejectionReason } from './helpers/expect-rejection.ts';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 
 import { tmpdir } from 'node:os';
@@ -1933,3 +1935,43 @@ describe('final v1 artifact contracts', () => {
     ).toBe('DeliveryInstruction/v1');
   });
 });
+test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
+  const { repositoryRoot, config } = configuredTestContext();
+  expect(() => invokeUntrusted(sanitizeDiagnostic, [config, null])).toThrow(/diagnostic|string|non-empty/i);
+  expect(Buffer.byteLength(sanitizeDiagnostic(config, 'x'.repeat(10_000)), 'utf8')).toBeLessThanOrEqual(10_000);
+  expect(
+    Buffer.byteLength(
+      sanitizeDiagnostic({ ...config, observability: { ...config.observability, max_error_log_bytes: 5 } }, 'abcdefgh'),
+      'utf8',
+    ),
+  ).toBeLessThanOrEqual(5);
+  expect(sanitizeDiagnostic(config, 'url=https://alice:supersecret@example.com')).toContain(
+    'https://alice:[REDACTED]@example.com',
+  );
+  expect(() => sanitizeDiagnostic(config, 'x'.repeat(4 * 1024 * 1024 + 1))).toThrow(/bounded input/);
+  const configured = createConfiguredMastra(repositoryRoot);
+  expect(configured.workflowId).toBeTypeOf('string');
+  {
+    const failure = await rejectionReason(configured.dispatch(''));
+    expect(() => {
+      throw failure;
+    }).toThrow(/work item id/i);
+  }
+  {
+    const failure = await rejectionReason(configured.dispatch('work-coverage'));
+    expect(() => {
+      throw failure;
+    }).toThrow(/opaque host capability/);
+  }
+  const afterToolCall = configured.hooks.afterToolCall;
+  if (!afterToolCall) throw new Error('Expected the configured afterToolCall hook.');
+  expect(await afterToolCall({ toolName: 'source.read', input: {}, context: {} })).toBeUndefined();
+});
+
+function invokeUntrusted(
+  target: (...args: never[]) => unknown,
+  ...invocation: [readonly unknown[]] | [unknown, readonly unknown[]]
+): unknown {
+  const [receiver, args] = invocation.length === 1 ? [undefined, invocation[0]] : invocation;
+  return Reflect.apply(target, receiver, args);
+}

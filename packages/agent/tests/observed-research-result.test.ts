@@ -385,6 +385,12 @@ test('uses only substantive observed research and host-bound identity', async ()
   expect(() =>
     buildObservedResearchResult({
       ...input,
+      observation: { ...input.observation, summary: input.observation.summary + ' ' },
+    }),
+  ).toThrow('observed research result: native report is outside the admitted research action');
+  expect(() =>
+    buildObservedResearchResult({
+      ...input,
       observation: { ...input.observation, issue_id: '22222222-2222-4222-8222-222222222222' },
     }),
   ).toThrow('outside the admitted research action');

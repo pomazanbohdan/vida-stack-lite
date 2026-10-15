@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `5c240898867a0e331f10d3a95eb4c2c055537ce9` at origin/main.
+- Published predecessor: `82ae51f8a97ac3d1b312c8ae42609ced318d2604` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,7 +18,9 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Current reviewed quality preparation:6991roles,149Source byte bindings.
+- Reviewed preparation at7fd85e7:6991roles,149Source byte bindings;
+  the82ae51f packet did not change product Source. Older7731-role narration is
+  historical and does not supersede this Source-bound partial.
   Last broader inventory records736current/178original dispositions missing
   and19represented static deficits; its earlier total is not a fresh count.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
@@ -5418,6 +5420,64 @@ proof. The2-file run's other passing cases include CLI inspectScope causality.
 These are development results; the real parent custody pilot and new numeric
 contour measurements remain pending. Worker slots continue with disjoint copied
 preparation and independent review; no worker runs the final numeric lane.
+
+### Qualified baseline custody and owner-specific test selection
+
+Published82ae51f actual main-host capture pilot6cc081fb-40d5-497a-b665-84f8ea058188
+passed69/69 assertion-confirmed Killed in19256.012939ms. Root:
+/workspace/attachments/quality-pertest-custody-main-host-VKRQGS. Capture was
+complete, process groups closed and boot unchanged. Parent admitted the strict
+baseline capture; actual mutant receipt55 has no own capture field. Independent
+receipt review confirms that distinction. This qualifies local diagnostic custody,
+not public per-body joins, filtering or global acceptance. The maintained contour
+projection now records103observations; historical compatible triples remain4/44.
+
+The next packet moves all14 former coverage-completeness cases to their Source
+owners, preserving assertions, property seeds/counts and every ordinary case.
+One kernel/timing composition file belongs to both Source selections, without
+pulling unrelated kernel cases into timing. Independent review caught and Root
+corrected canonical-json-core's missing moved-case selection. The CLI routing
+partition also gains its existing direct project-mapping owner test; import
+reachability alone was not mistaken for the focused parser assertions.
+
+The warmed activated-config case now checks sidecar byte drift and exact
+restoration before its existing receipt-drift check, reusing one real upgrade.
+Other new assertions cover malformed emitted governance terminals with retained
+bytes, a Host close-callback exception before merge, documentation actor and
+instruction mismatch before writes, a stale research-summary digest, TaskSource
+success causality, and forward-inspect changelog/operation no-effect. No product
+Source or runtime activation changes are included.
+
+Development batch quality-rolling-cli-check-6GriEr passed166 and failed1 across
+10files in17592.574164ms. A moved case's new static envelopes import initialized
+canonicalAttempt before the isolated mock. Root restored lazy import inside that
+case; the complete envelope file then passed12tests/2834assertions in1301.059601ms
+at quality-rolling-cli-check-zMsI5J. Other passing cases from the first batch
+remain bounded development evidence; no synthetic full-suite PASS is claimed.
+TaskSource/research passed25tests/228assertions in8047.235683ms at
+quality-rolling-cli-check-I2zMrL. Forward no-effect passed1test/85assertions in
+20871.41972ms at quality-rolling-cli-check-iqRqwr. Registry/parser controls passed
+47tests/338assertions in1452.007823ms at quality-rolling-cli-check-e99T5i.
+Every root above is under /workspace/attachments; all captures were complete,
+groups closed and boot unchanged. TypeScript found copied missing Cedar imports
+and sync-or-async store signatures; Root corrected imports and Promise observers,
+then the453-file test project passed. These results are not fresh numeric gates.
+
+A blind controller receipt-forgery claim was independently retracted: its hostile
+same-user child is outside the documented cooperative boundary; the supported
+integrity-checked qualification entry already records real nested invocations.
+No Source fix or extra regression was accepted from that unsupported threat model.
+Two worker brief violations (Node metadata read; Python editing a scratch copy)
+were disclosed and corrected. Neither touched checkout/Git or ran suites, and
+neither command supplies verification evidence. Prompt guidance is not a sandbox.
+Subsequent agents receive fresh blind contexts and explicit execution exclusions.
+
+Next publish this checked selection packet, then refresh complete declared
+main-contracts coverage/scoped CRAP before a new mutation campaign. Its changed
+selection requires a fresh baseline census; old timeout artifacts remain UNKNOWN.
+The remaining full correspondence/budget, public selector/join and global5min
+acceptance prerequisites remain open. Do not alter frozen ceilings or activate
+parallel/filtered execution from these development checks.
 
 ## Historical provenance
 

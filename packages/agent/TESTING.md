@@ -151,12 +151,13 @@ exact result. Keep imports, mocks, hooks and runner health outside that assertio
 their failure cannot become a product assertion kill. Test Windows provider
 attestation and supported-filesystem proof independently, including false/true
 and true/false combinations; a positive pair alone cannot distinguish AND/OR.
-The full test selection and other mutation partitions retain the completeness
-file. Avoid eager configured-context/index setup in this narrow contour: a
+The full test selection retains all fourteen former completeness cases in their
+owner test files. Avoid eager configured-context/index setup in this narrow contour: a
 mutant's import/setup error cannot substitute for the target assertion.
 
-The main-runtime-timing contour owns only src/runtime-timing.ts and its direct
-runtime-timing-boundary test. Kernel keeps its existing core tests, including
+The main-runtime-timing contour owns only src/runtime-timing.ts and selects its
+direct runtime-timing-boundary test plus the single runtime-kernel-composition
+case shared with the kernel contour. Kernel keeps its existing core tests, including
 configured-workflow and smoke. The emitted-SDK regression belongs to
 sdk-package-compatibility and remains in the full selection with SDK freshness.
 Never compare Stryker-instrumented Source with an unmutated CI formation receipt

@@ -156,6 +156,10 @@ test('sealed public admin denies altered authority, root, closure and target bef
   const dbPath = path.join(f.root, '.agent/work/session-handoff.v1.sqlite');
   const dbBefore = readFileSync(dbPath);
   const baselineBefore = readFileSync(path.join(f.root, baseline.path));
+  const changelogPath = path.join(f.root, f.oldPolicy.changelog_path);
+  const changelogBefore = readFileSync(changelogPath);
+  const operationPath = path.join(f.root, '.agent', 'work', f.work, 'documentation-policy-transition.v1.json');
+  expect(existsSync(operationPath)).toBe(false);
   const invoke = (values: string[]) =>
     spawnSync(process.execPath, [path.join(bundle, 'bin/reconcile-artifacts.ts'), ...values], {
       cwd: f.root,
@@ -167,6 +171,8 @@ test('sealed public admin denies altered authority, root, closure and target bef
     expect(readFileSync(dbPath).equals(dbBefore)).toBe(true);
     expect(readFileSync(path.join(f.root, baseline.path)).equals(baselineBefore)).toBe(true);
     expect(readFileSync(path.join(f.root, f.policyPath), 'utf8')).toBe(f.json(f.oldPolicy));
+    expect(readFileSync(changelogPath)).toEqual(changelogBefore);
+    expect(existsSync(operationPath)).toBe(false);
   };
   const control = invoke(command);
   expect(control.status, control.stderr).toBe(0);

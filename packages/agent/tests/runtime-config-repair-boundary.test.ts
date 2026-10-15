@@ -386,6 +386,22 @@ describe('activated project config reader closure', () => {
       expect(binding.source_digest).toMatch(/^[0-9a-f]{64}$/u);
       expect(Object.isFrozen(binding)).toBe(true);
 
+      const outputPath = path.join(root, INITIALIZED_PROJECT_PATHS.sidecar);
+      const originalOutputBytes = readFileSync(outputPath);
+      const changedOutputBytes = Buffer.concat([
+        originalOutputBytes,
+        Buffer.from('\n# output drift after activation\n'),
+      ]);
+      writeFileSync(outputPath, changedOutputBytes);
+      expect(readFileSync(outputPath)).toEqual(changedOutputBytes);
+      expect(() => loadRuntimeConfig(root)).toThrow(
+        `activated project output changed: ${INITIALIZED_PROJECT_PATHS.sidecar}`,
+      );
+      expect(readFileSync(outputPath)).toEqual(changedOutputBytes);
+      writeFileSync(outputPath, originalOutputBytes);
+      expect(readFileSync(outputPath)).toEqual(originalOutputBytes);
+      expect(expectReturned(() => loadRuntimeConfig(root))).toBe(loaded);
+
       const receiptPath = path.join(root, PROJECT_INITIALIZATION_PATH);
       const receiptValue: unknown = JSON.parse(readFileSync(receiptPath, 'utf8'));
       const receipt = validateProjectInitializationReceipt(receiptValue);

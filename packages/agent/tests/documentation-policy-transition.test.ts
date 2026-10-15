@@ -5,7 +5,7 @@ import { policy, preparedFixture } from './helpers/documentation-policy-fixture.
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import { executeDocumentationClearFromWork } from '../src/documentation/clear.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import { expectAsyncReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
 import {
   documentationPolicyTransitionPath,
   validatePolicyMapAddition,
@@ -180,6 +180,33 @@ test('public policy planning denies an extra or substituted map outside exact sc
     );
   }
 }, 30000);
+
+test('public policy planning rejects caller or instruction identity drift before writing its operation', async () => {
+  const { f, baseline, args } = await preparedFixture();
+  const operationPath = path.join(f.root, documentationPolicyTransitionPath(f.work));
+  expect(existsSync(operationPath)).toBe(false);
+  const policyBytes = readFileSync(path.join(f.root, f.policyPath));
+  const changelogBytes = readFileSync(path.join(f.root, f.oldPolicy.changelog_path));
+  const baselineBytes = readFileSync(path.join(f.root, baseline.path));
+  for (const [option, wrongValue] of [
+    ['--actor', 'project:foreign-caller'],
+    ['--instruction-ref', 'TEST SETUP: foreign pointer'],
+  ] as const) {
+    const invocation = args('plan');
+    const optionIndex = invocation.indexOf(option);
+    if (optionIndex < 0 || invocation[optionIndex + 1] === undefined)
+      throw new Error(`fixture invocation omitted ${option}`);
+    invocation[optionIndex + 1] = wrongValue;
+    await expectRejection(
+      runReconcileArtifacts(invocation),
+      'documentation policy transition: actual source scope/attribution differs',
+    );
+    expect(existsSync(operationPath)).toBe(false);
+    expect(readFileSync(path.join(f.root, f.policyPath))).toEqual(policyBytes);
+    expect(readFileSync(path.join(f.root, f.oldPolicy.changelog_path))).toEqual(changelogBytes);
+    expect(readFileSync(path.join(f.root, baseline.path))).toEqual(baselineBytes);
+  }
+});
 
 test('public policy planning rejects foreign baseline identity fields before writing its operation', async () => {
   const { f, baseline, args } = await preparedFixture();

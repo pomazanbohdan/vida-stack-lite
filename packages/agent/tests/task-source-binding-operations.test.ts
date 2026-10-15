@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { Database, type Changes, type SQLQueryBindings } from 'bun:sqlite';
+import { expectAsyncReturned } from './helpers/expect-rejection.ts';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -2033,11 +2034,13 @@ test('configured inspect and admitted packet/result read current TaskSource byte
       expectedActionStateVersion: issued.state_version,
       report: sourceReport,
     });
-    const inspected = await executeTaskSourceBindingOperation({
-      repositoryRoot: hostRoot,
-      mode: 'inspect',
-      requestPath,
-    });
+    const inspected = await expectAsyncReturned(() =>
+      executeTaskSourceBindingOperation({
+        repositoryRoot: hostRoot,
+        mode: 'inspect',
+        requestPath,
+      }),
+    );
     if (!isRecord(inspected.source_execution_context) || typeof inspected.source_execution_context.cwd !== 'string')
       throw new Error('TaskSource inspect did not return a valid source execution context.');
     expect(inspected.source_execution_context).toMatchObject({

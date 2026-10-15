@@ -139,6 +139,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 84cad6af-eb01-4342-8f77-8ba2a726de6b | not-captured | 2026-10-15T22:26:44.840Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/84cad6af-eb01-4342-8f77-8ba2a726de6b.json |
 | mutation | 9a42adc6-bd4b-4f44-bb02-94be8bd65149 | 5c240898867a0e331f10d3a95eb4c2c055537ce9 | 2026-10-15T22:27:23.650Z | pilot-pass; owner accepted locally; selection bound | 69/69 (pilot-pass; assertion-confirmed) | /workspace/attachments/quality-mutation-main-host-YYMuSy/stdout.log |
 | frozen-crap | 84cad6af-eb01-4342-8f77-8ba2a726de6b | 5c240898867a0e331f10d3a95eb4c2c055537ce9 | 2026-10-15T22:58:30.730Z | scoped-proof-pass; owner accepted locally; selection bound | 3 / 3 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/84cad6af-eb01-4342-8f77-8ba2a726de6b.scoped-crap.json |
+| mutation | 6cc081fb-40d5-497a-b665-84f8ea058188 | 82ae51f8a97ac3d1b312c8ae42609ced318d2604 | 2026-10-15T23:15:11.761Z | pilot-pass; owner accepted locally; selection bound | 69/69 (pilot-pass; assertion-confirmed) | /workspace/attachments/quality-pertest-custody-main-host-VKRQGS/stdout.log |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

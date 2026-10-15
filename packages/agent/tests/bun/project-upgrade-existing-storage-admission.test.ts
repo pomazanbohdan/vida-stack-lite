@@ -376,6 +376,47 @@ describe('native existing-storage admission boundary', () => {
     await releaseFence(fixture.root, fixture.receipt);
   });
 
+  trackedTest('preserves an exact Host close-callback exception before invoking merge', async () => {
+    const fixture = freshFixture();
+    const closeFailure = new Error('exact Host owner close failed');
+    const fenceBefore = fixture.hostStore.readMaintenanceFence();
+    const hostBefore = readFileSync(path.join(fixture.root, hostRelative));
+    const mastraBefore = readFileSync(path.join(fixture.root, mastraRelative));
+    let closeAttempts = 0;
+    let operations = 0;
+    let caught: unknown;
+    try {
+      await withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt: fixture.receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => {
+          closeAttempts++;
+          // The exact owner remains live; this fixture still owns its cleanup.
+          throw closeFailure;
+        },
+        operation: async () => {
+          operations++;
+        },
+      });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBe(closeFailure);
+    expect(closeAttempts).toBe(1);
+    expect(operations).toBe(0);
+    expect(fixture.hostStore.readMaintenanceFence()).toEqual(fenceBefore);
+    expect(readFileSync(path.join(fixture.root, hostRelative))).toEqual(hostBefore);
+    expect(readFileSync(path.join(fixture.root, mastraRelative))).toEqual(mastraBefore);
+    closeHostOwner(fixture);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
   trackedTest('denies an incorrect request token before the owner-close or merge callback effects', async () => {
     const fixture = freshFixture();
     const fenceBefore = fixture.hostStore.readMaintenanceFence();

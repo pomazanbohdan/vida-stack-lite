@@ -19,6 +19,17 @@ import {
   type ProjectContextProjectBinding,
   type PathProfileResolutionOptions,
 } from '../src/config/project-context.ts';
+import { configuredTestContext } from './configured-context.ts';
+import {
+  runtimeConfigDigest,
+  resolveAgentRoleProfile,
+  resolveProviderWorkItemKind,
+  selectWorkflow,
+  validateCandidateIsolation,
+  validateConfiguredRepositoryAccess,
+  validateWorkflowConfiguration,
+  validateRuntimeConfig,
+} from '../src/config/runtime-config.ts';
 import * as projectContext from '../src/config/project-context.ts';
 import * as fs from 'node:fs';
 import {
@@ -799,4 +810,96 @@ describe('project context path boundary', () => {
       'resolved path profile is stale or forged',
     );
   });
+});
+test('configuration and project selectors cover valid and invalid interfaces', () => {
+  const { repositoryRoot, config, context: project } = configuredTestContext();
+  const projectBinding = required(project.project_bindings[0], 'a configured project binding');
+  expect(runtimeConfigDigest(validateRuntimeConfig(config, repositoryRoot))).toBe(runtimeConfigDigest(config));
+  expect(resolveAgentRoleProfile(repositoryRoot, 'executor').model).toBeTypeOf('string');
+  expect(() => resolveAgentRoleProfile(repositoryRoot, 'missing')).toThrow(/not registered/);
+  expect(resolveProviderWorkItemKind(config, 'azure', 'Epic')).toBe('epic');
+  expect(() => resolveProviderWorkItemKind(config, 'missing', 'missing')).toThrow(/not registered/);
+  expect(validateRuntimeConfig(config).schema).toBe('AgentRuntimeConfig/v1');
+  const optionalContours = structuredClone(config);
+  const firstProject = optionalContours.projects[0];
+  const defaultTeam = optionalContours.teams['default-development'];
+  if (!firstProject || !defaultTeam) throw new Error('Expected default configuration entries.');
+  Object.defineProperty(firstProject, 'path_overrides', {
+    value: { work_root: 'agent-runtime-new' },
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(defaultTeam, 'stage_overrides', {
+    value: { develop_fix: 'executor' },
+    enumerable: true,
+    configurable: true,
+    writable: true,
+  });
+  expect(validateRuntimeConfig(optionalContours).schema).toBe('AgentRuntimeConfig/v1');
+  const forged = {
+    ...config,
+    workflow_bindings: config.workflow_bindings.map((binding) => ({ ...binding, priority: binding.priority - 100 })),
+  };
+  expect(() =>
+    selectWorkflow(forged, {
+      team: 'default-development',
+      kind: 'bug',
+      intent: 'bug_fix',
+      project: projectBinding.project_id,
+      risk_flags: ['security'],
+      labels: [],
+    }),
+  ).toThrow(/loadRuntimeConfig/);
+  expect(() =>
+    selectWorkflow(config, {
+      team: 'missing',
+      kind: 'task',
+      intent: 'task_execution',
+      project: projectBinding.project_id,
+      risk_flags: [],
+      labels: [],
+    }),
+  ).toThrow();
+  expect(() => validateCandidateIsolation({ ...config, runtime: { ...config.runtime, bundle: 'other' } })).toThrow();
+  for (const rootKey of ['schema_root', 'instruction_root', 'tooling_root']) {
+    expect(() =>
+      validateCandidateIsolation({ ...config, runtime: { ...config.runtime, [rootKey]: 'agent-runtime' } }),
+    ).toThrow(/GAP-RTNEW-ISOLATION/);
+  }
+  const malformedWorkflow = structuredClone(config);
+  Object.defineProperty(malformedWorkflow.agents.role_instructions, 'fake', {
+    configurable: true,
+    enumerable: true,
+    value: {
+      description: 'fake',
+      consumes: ['DevelopmentTaskPacket/v1'],
+      produces: ['ImplementationResult/v1'],
+      rules: ['fake'],
+    },
+  });
+  const implementationWorkflow = required(
+    malformedWorkflow.workflows.implementation_new,
+    'implementation_new workflow',
+  );
+  Object.defineProperty(implementationWorkflow, 'stages', {
+    value: implementationWorkflow.stages.map((stage) =>
+      stage.kind === 'develop' ? { ...stage, assignments: [{ ...stage.assignments[0], role: 'fake' }] } : stage,
+    ),
+  });
+  expect(() => validateWorkflowConfiguration(malformedWorkflow)).toThrow(/developer-orchestrator/);
+  const duplicateDeveloper = structuredClone(config);
+  const duplicateWorkflow = required(duplicateDeveloper.workflows.implementation_new, 'implementation_new workflow');
+  Object.defineProperty(duplicateWorkflow, 'stages', {
+    value: duplicateWorkflow.stages.map((stage) =>
+      stage.kind === 'develop' ? { ...stage, assignments: [...stage.assignments, ...stage.assignments] } : stage,
+    ),
+  });
+  expect(() => validateWorkflowConfiguration(duplicateDeveloper)).toThrow(/developer-orchestrator/);
+  const whole = resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository' });
+  expect(validateResolvedPathProfile(whole, repositoryRoot)).toBe(whole);
+  expect(() => validateResolvedPathProfile({ ...whole }, repositoryRoot)).toThrow(/issued/);
+  expect(validateConfiguredRepositoryAccess(repositoryRoot).attested).toBe(true);
+  expect(validateProjectContext(project, repositoryRoot)).toBe(project);
+  expect(() => validateProjectContext({ ...project }, repositoryRoot)).toThrow(/issued/);
 });

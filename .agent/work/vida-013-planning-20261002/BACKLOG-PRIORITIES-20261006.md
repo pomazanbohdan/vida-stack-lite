@@ -3,12 +3,10 @@
 Status date: 2026-10-15. This page is the current priority index. The eight P0 and ten P1 rows are work contours, not counts of confirmed defects. Stable task IDs and historical decisions remain recoverable at `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md`.
 
 The execution order lives in [CLEAN-START-STRATEGY-20261009.md](../core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md). Current evidence lives in [WORK.md](../core-runtime-reactivation/WORK.md). Root owns integration and final acceptance.
-Latest quality preparation adds98reviewed retained roles and closes one static
-launch-budget deficit. Full affected launcher51PASS/0FAIL. SDK cache passed
-offline in a fresh native namespace; complete numeric acceptance remains open.
-The latest packet repairs reproduced same-buffer drift in two borrowed-reader
-boundaries and shares fixture beforeimage capture. Focused controls pass; the
-public Source-repair case still exceeds30s, so its speed acceptance stays open.
+Current preparation and terminal measurements are maintained once in
+[WORK.md](../core-runtime-reactivation/WORK.md) and its linked generated contour
+projection. Earlier role, test and timing counts are dated evidence, not current
+acceptance. Complete numeric qualification and runtime cutover remain open.
 
 ## Priority rules
 

@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `bc68cd7`; current correction details are in WORK.
+- Published predecessor: `82ae51f`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. The fresh host/timing pilots used accepted d320564 CI inputs. Changed inputs need matching CI formation; WORK owns run/artifact receipts.
 - Historical run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Preserve its custody and all older UNKNOWN evidence; do not replay it. Current attempts and source bindings are in WORK and the derived contour document.
@@ -47,17 +47,16 @@ After each terminal batch, one final owner refreshes it through TESTING's
 `quality:contours` command. Preserve/export its JSON snapshot after freezes before
 commit/push; never maintain manual duplicate percentage tables.
 
-The current development wave prepares five contours concurrently: Root owns
-`bun-lifecycle-state`; blind native Luna writers own `main-contracts`
-(`tests/envelopes-boundary.test.ts`), `bun-runtime-initialization`
-(`tests/bun/runtime-initialization.test.ts`), `bun-cli-toolchain`
-(`tests/bun-toolchain.test.ts`, `tests/bun-cache-routing.test.ts`) and
-`bun-final-assurance` (`tests/final-assurance.test.ts`,
-`tests/final-assurance-public.test.ts`). An independent read-only lane reviews
-the four scopes' original/current correspondence and prospective caps. Root owns
-Source, shared helpers, registry, frozen-plan metadata, documentation and Git.
-Workers return concrete contract regressions and terminal handoffs; they do not
-run competing checks, numerical producers, builds or installs.
+The current rolling wave uses six blind native Luna slots for disjoint copied
+preparation and independent review. A completed handoff immediately receives the
+next ready scope or review. Root has published baseline-only per-test custody;
+the actual main-host pilot passed69/69, while public body/JUnit joins remain open.
+The next integration batch moves fourteen mixed completeness cases to their
+source owners and strengthens activated-config, storage-admission, governance
+and documentation-policy denials. Root owns Source, shared helpers, registry,
+frozen-plan metadata, documentation, checks and Git. Workers do not run competing
+checks, numerical producers, builds or installs. Exact outcomes live in WORK;
+copied preparation does not close a contour.
 
 Prepare edits in parallel, then drain writers and review their actual diffs
 before one shared static/focused acceptance batch and publication. Freeze every
@@ -81,8 +80,12 @@ those candidates only after the producer's terminal custody outcome. Prefer
 reviewing/correcting queued packets over accumulating unreviewed changes. Keep
 five useful contour workers, one independent advisor/reviewer and Root as final
 owner; no additional orchestration store is introduced.
-Next qualify native Bun per-test selection before rerunning the oversized kernel
-contour. Capture-only per-test maps do not authorize filtering or numeric admission.
+Before filtered mutation, qualify actual public per-body Stryker dry-run rows,
+independent registration, the existing JUnit/body/canonical-map join and the Bun
+selector lifecycle. The generic command runner supplies only All tests, so it
+cannot establish that join. Baseline-only artifact custody passed its actual
+main-host pilot; capture-only maps still do not authorize filtering. Keep complete
+declared selections and do not repeat an unchanged oversized kernel campaign.
 The bounded native timing pilot now joins an independent registration invocation,
 actual instrumenter output and assertion-confirmed executions at three Source
 sites, plus a passing inactive control. It remains diagnostic: parent origin,

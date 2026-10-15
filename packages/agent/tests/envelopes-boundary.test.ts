@@ -1143,3 +1143,73 @@ describe('runtime envelope canonicalization boundary', () => {
     ).toMatchObject({ decision: 'allow', diagnostics: ['policy1'] });
   });
 });
+test('envelopes validate JSON data, revision bindings, and local tool inputs', async () => {
+  const { consumeRuntimeEnvelope, localToolEnvelope, validateRuntimeEnvelope } =
+    await import('../src/contracts/envelopes.js');
+  const envelope: RuntimeEnvelope<unknown> = {
+    schema: 'RuntimeEnvelope/v1',
+    kind: 'quality-check',
+    operation: 'runtime.read',
+    sourceRevision: 'source-1',
+    expectedRevision: 1,
+    payload: { value: true },
+  };
+  expect(expectReturned(() => validateRuntimeEnvelope(envelope))).toBe(envelope);
+  expect(
+    expectReturned(() => consumeRuntimeEnvelope(envelope, { sourceRevision: 'source-1', currentRevision: 1 })),
+  ).toBe(envelope);
+  expect(() => validateRuntimeEnvelope({ ...envelope, payload: 1n })).toThrow(/non-canonical/);
+  expect(() => validateRuntimeEnvelope({ ...envelope, kind: '', operation: '' })).toThrow(
+    'runtime envelope rejected: must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._/-]*$"; must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._:/-]*$"',
+  );
+  expect(() => invokeUntrusted(consumeRuntimeEnvelope, [envelope, { sourceRevision: 1, currentRevision: 1 }])).toThrow(
+    'runtime envelope source revision binding is required',
+  );
+  expect(() => invokeUntrusted(consumeRuntimeEnvelope, [envelope, undefined])).toThrow(
+    'runtime envelope source revision binding is required',
+  );
+  expect(() => invokeUntrusted(consumeRuntimeEnvelope, [envelope, { currentRevision: 1 }])).toThrow(
+    'runtime envelope source revision binding is required',
+  );
+  expect(() => consumeRuntimeEnvelope(envelope, { sourceRevision: '', currentRevision: 1 })).toThrow(
+    'runtime envelope source revision binding is required',
+  );
+  expect(() => consumeRuntimeEnvelope(envelope, { sourceRevision: 'source-1', currentRevision: 0 })).toThrow(
+    'runtime envelope current revision binding is invalid',
+  );
+  expect(() => consumeRuntimeEnvelope(envelope, { sourceRevision: 'source-1', currentRevision: 2 })).toThrow(
+    'runtime envelope expected revision is stale',
+  );
+  expect(
+    expectReturned(() =>
+      localToolEnvelope.parse({ tool: 'source.read', tenant: 'tenant', project: 'project', input: {} }),
+    ),
+  ).toStrictEqual({
+    tool: 'source.read',
+    tenant: 'tenant',
+    project: 'project',
+    input: {},
+  });
+  const invalidTool = expectReturned(() =>
+    localToolEnvelope.safeParse({ tool: '', tenant: 'tenant', project: 'project', input: {} }),
+  );
+  expect(invalidTool).toMatchObject({ success: false });
+  const extraToolField = expectReturned(() =>
+    localToolEnvelope.safeParse({
+      tool: 'source.read',
+      tenant: 'tenant',
+      project: 'project',
+      input: {},
+      extra: true,
+    }),
+  );
+  expect(extraToolField).toMatchObject({ success: false });
+});
+
+function invokeUntrusted(
+  target: (...args: never[]) => unknown,
+  ...invocation: [readonly unknown[]] | [unknown, readonly unknown[]]
+): unknown {
+  const [receiver, args] = invocation.length === 1 ? [undefined, invocation[0]] : invocation;
+  return Reflect.apply(target, receiver, args);
+}
