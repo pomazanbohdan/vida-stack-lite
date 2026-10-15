@@ -37,6 +37,11 @@ Runtime acceptance. Do not print temporary signed URLs or credential bytes.
 
 ## Design a regression
 
+For YAML/configured-root fixtures, follow [TESTING's fixture contract](../../../packages/agent/TESTING.md#new-and-modified-files).
+Use the bound config's registered and allowed projects; verify targeted negative
+mutations actually occurred before testing rejection. Keep portable-template
+and configured-root checks distinct from complete coverage qualification.
+
 Start from the contract and the function or boundary that owns it. Map each
 plausible regression to a fixture, a concrete case, and an assertion at that
 boundary. Use Zero, One, Many, Boundary, Interface, Exception and Simple. Add

@@ -236,14 +236,28 @@ function schemaRequiredFields(jsonText: string): string[] {
   return requiredStringArray(record(schema, 'schema')['required'], 'schema.required');
 }
 
-function applyBindingMismatch(binding: DeepMutable<WorkflowBinding>, field: string, value: unknown): void {
+function fixtureProject(config: AgentRuntimeConfig, excluded?: string): string {
+  const team = required(config.teams['default-development'], 'default team');
+  return required(
+    config.projects.find(
+      (project) => project.project_id !== excluded && team.allowed_projects.includes(project.project_id),
+    ),
+    'registered, allowed fixture project',
+  ).project_id;
+}
+
+function applyBindingMismatch(
+  binding: DeepMutable<WorkflowBinding>,
+  field: string,
+  value: unknown,
+  config: AgentRuntimeConfig,
+): void {
   if (field === 'team' && typeof value === 'string') binding.team = value;
   else if (field === 'work_item_kinds' && unknownArray(value, field).every((item) => item === 'feature'))
     binding.work_item_kinds = ['feature'];
   else if (field === 'intents' && unknownArray(value, field).every((item) => item === 'implementation_change'))
     binding.intents = ['implementation_change'];
-  else if (field === 'projects' && unknownArray(value, field).every((item) => item === 'refactoring'))
-    binding.projects = ['refactoring'];
+  else if (field === 'projects') binding.projects = [fixtureProject(config, fixtureProject(config))];
   else if (field === 'risks' && unknownArray(value, field).every((item) => item === 'security'))
     binding.risks = ['security'];
   else if (field === 'labels' && unknownArray(value, field).every((item) => item === 'urgent'))
@@ -340,7 +354,9 @@ async function configuredOperationVariant(id: string, field: string, value: unkn
 }
 
 async function expectYamlFailure(transform: (yaml: string) => string, pattern: RegExp): Promise<void> {
-  const root = await fixtureRoot(transform(authorityText));
+  const transformed = transform(authorityText);
+  expect(transformed).not.toBe(authorityText);
+  const root = await fixtureRoot(transformed);
   expect(() => loadRuntimeConfig(root)).toThrow(pattern);
 }
 
@@ -431,6 +447,7 @@ describe('one strict YAML authority', () => {
   });
 
   test('ignores environment, caller CWD, and alternate-file selectors', async () => {
+    const expectedConfigId = parseRuntimeConfigYaml(authorityText).config_id;
     const originalCwd = process.cwd.bind(process);
     const prior = process.env.AGENT_RUNTIME_CONFIG;
     const outside = await mkdtemp(path.join(tmpdir(), 'runtime-cwd-'));
@@ -438,7 +455,7 @@ describe('one strict YAML authority', () => {
     process.env.AGENT_RUNTIME_CONFIG = path.join(outside, 'malicious.yaml');
     process.cwd = () => outside;
     try {
-      expect(loadRuntimeConfig(repositoryRoot).config_id).toBe('creatio-sample');
+      expect(loadRuntimeConfig(repositoryRoot).config_id).toBe(expectedConfigId);
       expect(() => loadRuntimeConfig('.')).toThrow(/absolute/);
     } finally {
       process.cwd = originalCwd;
@@ -466,17 +483,19 @@ describe('one strict YAML authority', () => {
 
   test('rejects unknown fields, malformed scalars, unsafe paths, and literal credentials', async () => {
     await expectYamlFailure((yaml) => yaml + '\nunknown_setting: true\n', /additional properties|validation failed/i);
-    for (const [needle, replacement] of [
-      ['  checkpoint_name: resume.json', '  derived_root: .planning/agent-flow\n  checkpoint_name: resume.json'],
-      ['  processing_scope: whole_repository', '  processing_scope: whole_repository\n  shared_path_keys: []'],
-      ['    task_prefix: CRMBX-3MOB', '    task_prefix: CRMBX-3MOB\n    dashboard_port: 6422'],
-      ['      mutation_scope: repository_source', '      mutation_scope: repository_source\n      ponytail: full'],
-      [
-        'observability:\n',
-        'observability:\n  schema: AgentTracePolicy/v1\n  capture_payloads: false\n  trace_fields: []\n',
-      ],
+    for (const [needle, inserted] of [
+      ['  checkpoint_name: resume.json', '  derived_root: .planning/agent-flow'],
+      [/^  processing_scope: .+$/m, '  shared_path_keys: []'],
+      [/^    task_prefix: .+$/m, '    dashboard_port: 6422'],
+      ['      mutation_scope: repository_source', '      ponytail: full'],
+      ['observability:\n', '  schema: AgentTracePolicy/v1\n  capture_payloads: false\n  trace_fields: []'],
     ] as const) {
-      await expectYamlFailure((yaml) => yaml.replace(needle, replacement), /additional properties|validation failed/i);
+      await expectYamlFailure((yaml) => {
+        expect(yaml).not.toContain(inserted);
+        const transformed = yaml.replace(needle, (matched) => matched.trimEnd() + '\n' + inserted + '\n');
+        expect(transformed).toContain(inserted);
+        return transformed;
+      }, /additional properties|validation failed/i);
     }
     await expectYamlFailure((yaml) => {
       const config: unknown = malformedJson(parseRuntimeConfigYaml(yaml));
@@ -592,7 +611,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
         team: 'default-development',
         kind,
         intent,
-        project: '3mob',
+        project: fixtureProject(config),
         risk_flags: [],
         labels: [],
       });
@@ -612,7 +631,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
         team: 'default-development',
         kind: 'bug',
         intent: 'bug_fix',
-        project: '3mob',
+        project: fixtureProject(config),
         risk_flags: [],
         labels: [],
       }),
@@ -634,7 +653,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       work_item_id: 'unread-work',
       team_id: 'default-development',
       workflow_id: 'bug_fix',
-      work_item: { kind: 'bug', intent: 'bug_fix', project: '3mob', risk_flags: [], labels: [] },
+      work_item: { kind: 'bug', intent: 'bug_fix', project: fixtureProject(config), risk_flags: [], labels: [] },
       attempt: 1,
       risk_flags: [],
       objective: 'unread objective',
@@ -698,7 +717,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       team: 'default-development',
       kind: 'bug',
       intent: 'bug_fix',
-      project: '3mob',
+      project: fixtureProject(config),
       risk_flags: [],
       labels: [],
     };
@@ -724,7 +743,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     ['team', 'shadow-development'],
     ['work_item_kinds', ['feature']],
     ['intents', ['implementation_change']],
-    ['projects', ['refactoring']],
+    ['projects', undefined],
     ['risks', ['security']],
     ['labels', ['urgent']],
   ] as const)('workflow selection skips a higher-priority binding with mismatched %s', async (field, value) => {
@@ -740,7 +759,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     );
     shadowBinding.id = 'shadow-bug';
     shadowBinding.priority = 5;
-    applyBindingMismatch(shadowBinding, field, value);
+    applyBindingMismatch(shadowBinding, field, value, document);
     document.workflow_bindings.push(shadowBinding);
     const current = loadRuntimeConfigSource(await fixtureRoot(stringifyYaml(document, { lineWidth: 0 })));
     expect(
@@ -748,7 +767,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
         team: 'default-development',
         kind: 'bug',
         intent: 'bug_fix',
-        project: '3mob',
+        project: fixtureProject(config),
         risk_flags: [],
         labels: [],
       }).binding_id,
@@ -773,7 +792,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
         team: 'default-development',
         kind: 'bug',
         intent: 'bug_fix',
-        project: '3mob',
+        project: fixtureProject(config),
         risk_flags: [],
         labels: [],
       }).binding_id,
@@ -784,7 +803,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       team: 'default-development',
       kind: 'bug',
       intent: 'bug_fix',
-      project: '3mob',
+      project: fixtureProject(config),
       risk_flags: [],
       labels: [],
     };
@@ -820,7 +839,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       team: 'default-development',
       kind: 'bug',
       intent: 'bug_fix',
-      project: '3mob',
+      project: fixtureProject(config),
       risk_flags: [],
       labels: [],
     };
@@ -996,7 +1015,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       work_item: {
         kind: 'bug',
         intent: 'bug_fix',
-        project: '3mob',
+        project: fixtureProject(config),
         risk_flags: [],
         labels: [],
       },
@@ -1016,7 +1035,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       work_item: {
         kind: 'research',
         intent: 'information_research',
-        project: '3mob',
+        project: fixtureProject(config),
         risk_flags: [],
         labels: [],
       },
@@ -1065,7 +1084,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       work_item: {
         kind: 'bug',
         intent: 'bug_fix',
-        project: '3mob',
+        project: fixtureProject(config),
         risk_flags: [],
         labels: [],
       },
@@ -1098,7 +1117,7 @@ describe('final v1 artifact contracts', () => {
     const workItem = {
       kind: required(workflowKinds[workflowId], `work item kind for ${workflowId}`),
       intent: required(workflowIntents[workflowId], `workflow intent for ${workflowId}`),
-      project: '3mob',
+      project: fixtureProject(config),
       risk_flags: [...riskFlags],
       labels: [],
     };
@@ -1171,7 +1190,13 @@ describe('final v1 artifact contracts', () => {
       buildDevelopmentTaskPacket(
         config,
         packetInput({
-          work_item: { kind: 'feature', intent: 'implementation_new', project: '3mob', risk_flags: [], labels: [] },
+          work_item: {
+            kind: 'feature',
+            intent: 'implementation_new',
+            project: fixtureProject(config),
+            risk_flags: [],
+            labels: [],
+          },
         }),
       ),
     ).toThrow(/not bound/);
@@ -1179,7 +1204,13 @@ describe('final v1 artifact contracts', () => {
       buildDevelopmentTaskPacket(
         config,
         packetInput({
-          work_item: { kind: 'bug', intent: 'bug_fix', project: '3mob', risk_flags: ['security'], labels: [] },
+          work_item: {
+            kind: 'bug',
+            intent: 'bug_fix',
+            project: fixtureProject(config),
+            risk_flags: ['security'],
+            labels: [],
+          },
         }),
       ),
     ).toThrow(/risk flags are not bound/);

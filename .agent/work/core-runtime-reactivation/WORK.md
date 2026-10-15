@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `c744678` at origin/main.
+- Published predecessor: `7c9d139` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -24,7 +24,74 @@ operations or a claim of complete quality/Runtime acceptance.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
-## Current native two-role correction
+## Current YAML fixture correction
+
+The retained serial diagnostic's21YAML failure headers were traced by two
+independent fixture investigations and a product counterexample review to stale
+test assumptions, not a demonstrated product guard defect. Current configured
+authority admits agent/plugin rather than portable-template3mob/refactoring.
+One fixtureProject owner now resolves a declared, allowed project for all14
+analogous requests; the shadow-binding mismatch resolves a different registered
+allowed project. Unregistered-project, forged-config, unavailable-team, workflow
+and risk-binding denials remain. The CWD/environment poison case compares the
+exact selected authority ID. Negative YAML transformations assert changed bytes;
+the five unknown-field insertions also prove the exact marker absent before and
+present after, with real loader rejection retained. No product Source change,
+new Source AST pass or frozen-budget modification was needed.
+
+Static:471checked/472captured,0diagnostics. Complete YAML file:configured-root
+66PASS/0FAIL/444assertions/5741.230ms and portable-template
+66PASS/0FAIL/444assertions/4413.264ms. The later marker-only correction passed
+the exact changed case in both modes,1PASS/65filtered/0FAIL/42assertions each,
+2358.655ms and2184.278ms commands. These are focused fixture checks, not a
+complete coverage report. Independent actual diff review accepted the final
+correction in `quality-yaml-marker-review-y7c9-20261015.md`. Exact logs/receipts:
+`quality-yaml-fixture-focused-y7c9-20261015.*`,
+`quality-yaml-marker-focused-y7c9-20261015.*` and
+`quality-yaml-mutation-marker-static-y7c9-20261015.log` in attachments.
+TESTING owns the fixture contract; the Bun skill links its working technique.
+Strict publication is pending for this packet. Current numeric gates remain
+unqualified and the19represented static deficits/764current/213original mapping
+gaps remain unchanged. Long-recovery diagnoses identify repeated package
+snapshots as a hypothesis only; measure actual stages before caching or changing
+fresh authority. Keep real crash phases independently owned.
+
+## Current serial coverage diagnostic
+
+Packet7c9d139 passed the ordinary strict retry:format465, TypeScript471/0 and
+configured lint/Knip. Nonforce push confirmed main; logs
+`quality-native-two-role-{strict-retry,push}-c744-20261015.log`.
+
+Fresh physical Source/Git/dependency/runtime checkout at exactly7c9d139 has
+47541copied dependency files/1396retargeted internal links and no old DB/tmp
+restoration. Current CI SDK artifact11948361393, run38681213136 attempt1, was
+accepted by the unchanged readiness owner in2503.575ms. Inert native PID1/no-
+capability/private-loopback control passed. The independently reviewed native
+launch uses Source RW for legitimate CAS/fixture writes, deps/dist/Git RO and
+private retained host tmpfs; original Root and old UNKNOWN paths are absent.
+It invokes the unchanged current coverage alias once, serially, with the raw
+300000ms deadline and the owner's30000ms reserve applied once. No shards.
+
+That operation terminated in270137.860ms with native namespace exit1/nullsignal
+and unchanged boot ID. Run5b1203f9-3fe9-4854-87ef-29800c3c9270 is UNKNOWN:
+its direct producer PID59 was observed SIGKILL/timeout and accounted, but
+resource_safe_to_advance=false, execution_complete=false, report_complete=false,
+report_validated=null, quality_complete=false. Typecheck PID33 exited0.
+Do not release/replay this root or treat native namespace exit as a logical
+test-effect resolution. No validated current coverage, dynamic CRAP or mutation
+score is available, and the CRAP stage was not reached.
+
+Exact Source/tests/tools fingerprints and terminal observations remain in
+`/tmp/quality-fresh-coverage-7c9-J8FcpD/checkout/packages/agent/coverage/bun-unified/operation-outcomes/5b1203f9-3fe9-4854-87ef-29800c3c9270.json`.
+Retain the entire `/tmp/quality-fresh-coverage-7c9-J8FcpD` checkout/fixtures and
+`quality-current-coverage-native-7c9-20261015.json` envelope in attachments.
+The native stderr records workflow/YAML failures and long nested Initial Source
+recovery cases, including33.48s and85.30s parent cases. Partial/nested PASS rows
+are not suite totals or timing statistics. Diagnose those exact failures and
+their same-pattern contours before another current numeric operation; no timeout
+increase or old operation successor is authorized by this diagnostic.
+
+## Published native two-role correction
 
 The exact prospective plan below was committed and pushed atc744678 before this
 native implementation. Delete native repair's unbudgeted duplicate isRecord

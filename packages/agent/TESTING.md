@@ -66,6 +66,13 @@ Combine focused unit tests with integration checks at supported CLI, SDK,
 database and subprocess boundaries. Use isolated fixtures and controlled external
 dependencies. Preserve real persistence, restart, CAS, failure-before-effect and
 UNKNOWN boundaries; synthetic approvals do not prove runtime authorization.
+Configured-root tests derive positive project requests from declared projects and
+the selected team's allowlist. Keep unregistered-project negative controls and
+use a different registered, allowed project for binding-mismatch controls. Test
+both configured-root and portable-template modes when changing shared fixtures.
+Before loading a negative YAML fixture, prove its transformation changed the
+input and inserted the intended malformed field; unchanged valid YAML is a
+fixture defect, not a schema rejection test.
 Use deterministic property tests and independent models where they protect the
 contract. New test layers must add distinct regression confidence.
 

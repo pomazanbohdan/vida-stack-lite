@@ -8,10 +8,11 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `00d1ff6`; current correction details are in WORK.
+- Published predecessor: `7c9d139`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
-- SDK input formation runs automatically for main. Exact current artifact retrieval and qualification remain pending; WORK retains earlier receipts without treating them as current inputs.
-- Full run `.tmp/p0p1-resume-f553252/current-b9a4108-full-paused.log` ended `UNKNOWN`. The number 1459 is a throw line in `run-bun-coverage.ts`, not an outcome identifier. There is no admitted numeric report. Preserve it and do not replay it.
+- SDK input formation runs automatically for main. Exact7c9d139 CI SDK inputs were accepted for the current serial diagnostic; changed Source needs its matching inputs. WORK owns run/artifact receipts.
+- Current serial run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Keep its fresh physical checkout and all older UNKNOWN evidence retained; no replay or resource successor. WORK owns exact custody and fingerprints.
+- That run's21YAML failures have one test-only fixture correction: valid configured projects, distinct allowed project mismatch and applied YAML mutations. Both complete fixture modes passed66/0; the final marker assertion passed its changed case in both modes. Full numeric acceptance remains open. Measure the long completed-Source fixture stages before optimizing them.
 - Genuine complexity baseline `b549951` was measured once in run `fe54f83c`; report SHA `ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb`. Reuse that evidence; no recapture is needed.
 - Full frozen correspondence and the full CRAP plan are absent. The reviewed partial budget does not satisfy either prerequisite.
 - `.vida` loader/native activation and one-database disk cutover remain open. No whole-runtime result is established.
@@ -69,7 +70,7 @@ favor of the existing generic owner. Both affected files44PASS/0FAIL/10.30s;
 past missing budget proof is not backdated. One scoped capture reuses148bindings.
 The full affected launcher file passed51/0 in2.26s. These are static/focused
 checks, not dynamic CRAP or complete current coverage.
-Disputed41native extracted-helper additions
+Disputed39remaining native extracted-helper additions
 remain unbound pending classification; no original allowance is transferred.
 Fixture imports now defer configuration loading; historical setup resolves only
 the Source path before loading its private copied configuration. The complete
