@@ -70,6 +70,17 @@ Reuse existing producer inputs, registry and derived progress document. This wor
 schedule does not activate pending parallel coverage, filtered mutation or a new
 runner. A prospective-cap or correspondence GAP stays open; it cannot inherit
 another function's original allowance or become a closure from a partial score.
+
+Use a rolling worker queue: a terminal preparation/review handoff immediately
+releases that worker for the next independent scope or a concrete correction in
+the ready queue. A prepared packet is not a closed contour. During a numerical
+freeze, workers may prepare copied candidates and reviews only under assigned
+attachment paths; they never edit captured checkout inputs or run Git, compilers,
+tests, formatters, inventory/hash scans or index refreshes. Root reviews/applies
+those candidates only after the producer's terminal custody outcome. Prefer
+reviewing/correcting queued packets over accumulating unreviewed changes. Keep
+five useful contour workers, one independent advisor/reviewer and Root as final
+owner; no additional orchestration store is introduced.
 Next qualify native Bun per-test selection before rerunning the oversized kernel
 contour. Capture-only per-test maps do not authorize filtering or numeric admission.
 The bounded native timing pilot now joins an independent registration invocation,

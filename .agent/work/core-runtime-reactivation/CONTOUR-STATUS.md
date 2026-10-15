@@ -29,7 +29,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-host-state | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
 | bun-session-handoff | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
 | bun-runtime-facade | 24/24 · 89/89 · 104/104 · 104/104 | 10 / 10 | 318/318 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 10 / 10 | local triple recorded |
-| bun-lifecycle-state | 28/29 · 185/187 · 193/196 · 126/132 | 21 / 21 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-lifecycle-state | 29/29 · 187/187 · 196/196 · 132/132 | 21 / 21 | 521/877 (fail; raw runner Killed; unqualified) | BLOCKED | open / unknown | 21 / 21 | open / unknown |
 | bun-final-assurance | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
 | bun-runtime-initialization | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
 | bun-development-controller | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
@@ -258,6 +258,10 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | d3e37775-7d84-46bf-af59-b65348b62f2e | not-captured | 2026-10-15T20:18:09.451Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/d3e37775-7d84-46bf-af59-b65348b62f2e.json |
 | coverage | 97878206-3eef-4946-9e35-7401fe2eaa71 | faf9e56f53012c924a008e3aabac65ea41a8bad5 | 2026-10-15T20:24:57.007Z | focused-diagnostic; owner accepted locally; selection bound | 28/29 · 185/187 · 193/196 · 126/132 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/97878206-3eef-4946-9e35-7401fe2eaa71.focused-coverage.json |
 | coverage-outcome | 97878206-3eef-4946-9e35-7401fe2eaa71 | not-captured | 2026-10-15T20:24:57.015Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/97878206-3eef-4946-9e35-7401fe2eaa71.json |
+| coverage | 81600825-4ab9-40fe-9636-0fcc015ed890 | 22331dc5b6fa3080740dd4a86aef6bb6d8182e4a | 2026-10-15T20:35:39.660Z | focused-diagnostic; owner accepted locally; selection bound | 29/29 · 187/187 · 196/196 · 132/132 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/81600825-4ab9-40fe-9636-0fcc015ed890.focused-coverage.json |
+| coverage-outcome | 81600825-4ab9-40fe-9636-0fcc015ed890 | not-captured | 2026-10-15T20:35:39.668Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/81600825-4ab9-40fe-9636-0fcc015ed890.json |
+| mutation | 8c4fb24c-e999-45ac-8d6f-d20e01618eb7 | 22331dc5b6fa3080740dd4a86aef6bb6d8182e4a | 2026-10-15T20:46:53.943Z | fail; unqualified; selection bound | 521/877 (fail; raw runner Killed; unqualified) | /workspace/attachments/quality-mutation-bun-lifecycle-state-3ACnMU/stdout.log |
+| frozen-crap | 81600825-4ab9-40fe-9636-0fcc015ed890 | 22331dc5b6fa3080740dd4a86aef6bb6d8182e4a | 2026-10-15T20:47:33.757Z | scoped-proof-pass; owner accepted locally; selection bound | 21 / 21 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/81600825-4ab9-40fe-9636-0fcc015ed890.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

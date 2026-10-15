@@ -4894,6 +4894,48 @@ controls failed before the pin and pass after it. Complete CLI controls:
 removals were admitted by this bounded review-key change. Fresh lifecycle and
 contract numerical proofs remain pending at this checkpoint.
 
+## Lifecycle full mutation outcome and rolling continuation
+
+At22331dc, lifecycle coverage81600825-4ab9-40fe-9636-0fcc015ed890
+passes exact F29/29,L187/187,S196/196,B132/132 with4PASS/105assertions,
+3968.106936ms owned outer. Same-run scoped frozen proof passes29retained
+roles with maxCC21/maxCRAP21 against the published e9629b3 review.
+Root: /workspace/attachments/quality-declared-bun-lifecycle-state-vtDJD7.
+Reports use the81600825-4ab9-40fe-9636-0fcc015ed890 prefix under
+packages/agent/coverage/bun-unified/diagnostics/.
+
+Complete mutation8c4fb24c-e999-45ac-8d6f-d20e01618eb7 records521/877
+assertion-confirmed Killed (0.5940706955530216),356Survived and zeroUNKNOWN,
+provenance/report/Source errors. Owned outer660643.821313ms ended exit1
+without timeout/signal; output complete, process-group termination observed,
+same boot. Root: /workspace/attachments/quality-mutation-bun-lifecycle-state-3ACnMU.
+This is a complete FAIL, not an infrastructure failure or closure. The automatic
+projection retains87observations, still4/44complete local triples.
+
+During the freeze the rolling native Luna pool prepared isolated test candidates
+for lifecycle survivors, service custody, upgrade admission, CLI run, documentation
+CLEAR, completed-readonly capture, runtime-code rebind, policy transition,
+fs-safe attestation and development controller. Runtime-config rebind's bounded
+review found no distinct gap and correctly proposed no edits. Independent
+reviews caught candidate precondition/shape issues and failed-fixture cleanup;
+those candidates were corrected without touching the checkout. Root must review,
+apply and check them; preparation is not numeric evidence. Artifacts remain under
+/workspace/attachments/quality-rolling-<scope>-20261015/ and named review memos.
+The Source checkout remained unchanged throughout the complete mutation run.
+
+The next correction batch prioritizes the unexecuted CLEAR baseline-identity
+regressions in both the closeout producer and policy-transition planner. Two
+independent Source reviews find repository/project/policy identity fields are
+not bound by checkpoint self-digests or sibling context/config/policy digests.
+Reproduce before changing Source, then preserve the existing stale-baseline
+errors, policy-map exception and no-effect boundaries. Reuse canonical binding
+comparison where it reduces repeated pure checks; frozen ceilings remain fixed.
+Review: /workspace/attachments/quality-doc-clear-baseline-binding-review-20261015.md.
+The scoped-admission helper candidate is separate and unwired; new-role/removal
+support needs exact validated partitions and a truthful v2 consumer before use.
+Runtime initialization has12retained and6new roles (eight retained binder-file
+rows plus four workspace rows); optional missing row.file was not a real gap.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
