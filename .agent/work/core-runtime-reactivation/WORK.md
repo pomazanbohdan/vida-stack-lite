@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `b4a31c6` at origin/main.
+- Published predecessor: `7a6f6ab702f9b779a624da8c527f1096330f343b` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -5571,6 +5571,18 @@ then repeat exact affected contour metrics. The separate config-construction
 freshness and kernel lease proposals remain copied/reviewed preparation. Do not
 force an unreachable kernel branch with a fake Host snapshot or remove its guard
 merely to improve coverage. Worker slots continue to take the next useful scope.
+
+The test/tool packet was published as7a6f6ab after strict precommit passed:
+489maintained TypeScript roots, formatter, Knip and zero lint diagnostics.
+The final two-file correction check passed39tests/2997assertions. Root then
+qualified the proposed config-construction test against unchanged product Source.
+It failed for the wrong reason at /workspace/attachments/quality-rolling-cli-check-m3JpK7:
+an existing stale-snapshot guard already rejects the first matching lstat mutation.
+This is not evidence of a missing final fence. Root removed only its unaccepted
+test edit; no config product change was adopted. The copied author must target a
+genuine final observation or retract the candidate. The reproduced canonical
+serialization defect remains the next active correction; its independent review
+and exact frozen-binding refresh remain required before numeric remeasurement.
 
 ## Historical provenance
 
