@@ -4810,6 +4810,27 @@ Audit analogous expected-completion/negative-oracle and cleanup boundaries befor
 launching mutations, using observed gaps rather than weakening classifier rules.
 Review memo: /workspace/attachments/quality-lifecycle-state-lineage-review-20261015.md.
 
+Initial lifecycle coverage d3e37775-7d84-46bf-af59-b65348b62f2e at90fb58f
+completed with3PASS/21assertions,4540.003404ms owned outer, complete output
+and observed process-group termination. It records F27/29,L181/187,S189/196,
+B122/132; it does not qualify a complete contour. The projection now retains
+81observations and still4/44complete local triples. Retained root:
+/workspace/attachments/quality-declared-bun-lifecycle-state-yjABMu.
+
+A blind test writer and independent read-only guard review mapped six missing
+guard groups to the existing public boundaries. The bounded test correction
+asserts normal Source completion and returned object shape before access,
+validates an exact typed correction through progress/preservation, covers
+supported predecessor history and unsupported stale kinds, rejects a null
+review principal, and checks the exact lifecycle error instance/code/message.
+Root corrected the unsupported-history negative case so the valid older scope
+has its exact history entry and cannot fail before reaching the target guard.
+Owned CLEAR fixtures retain and log failed/expired roots instead of deleting
+evidence. Source, admission rules, mutation classification and frozen caps
+are unchanged. Fresh numeric qualification remains pending.
+Review memos: /workspace/attachments/quality-lifecycle-test-gap-writer-20261015.md
+and /workspace/attachments/quality-lifecycle-guard-contract-review-20261015.md.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

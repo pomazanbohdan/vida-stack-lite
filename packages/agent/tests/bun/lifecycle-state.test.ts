@@ -14,6 +14,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { expectReturned } from '../helpers/expect-rejection.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 type Mutable<T> = T extends readonly (infer Item)[]
@@ -174,7 +175,7 @@ function samePhase(
   next.revision++;
   next.lifecycle.revision++;
   mutate(next);
-  validateLifecycleProgress(work, next, context);
+  expectReturned(() => validateLifecycleProgress(work, next, context));
   return next;
 }
 function add(work: MutableWork, ...references: MutableReference[]): MutableWork {
@@ -184,17 +185,23 @@ function add(work: MutableWork, ...references: MutableReference[]): MutableWork 
 describe('current WorkState/v1 lifecycle aggregate', () => {
   test('executes the full lifecycle through current typed evidence bindings', async () => {
     const fixture = clearFixture();
+    const cleanupDeadline = performance.now() + 5_000;
+    let completed = false;
     try {
       let work = initialWork();
-      validateLifecycleAggregate(work);
-      work = transitionLifecycleState(work, 'TRACE', 'Freeze the current plan.');
+      expectReturned(() => validateLifecycleAggregate(work));
+      work = expectReturned(() => transitionLifecycleState(work, 'TRACE', 'Freeze the current plan.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       work = add(
         work,
         reference(work, 'source_plan', 'source-plan'),
         reference(work, 'acceptance_manifest', 'acceptance'),
         reference(work, 'implementation_scope', 'scope'),
       );
-      work = transitionLifecycleState(work, 'PLAN', 'Bind execution authority.');
+      work = expectReturned(() => transitionLifecycleState(work, 'PLAN', 'Bind execution authority.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       work = add(
         work,
         reference(work, 'execution_approval', 'approval', { decision: 'approved' }),
@@ -203,7 +210,9 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         reference(work, 'change_impact_pre', 'impact-pre'),
         reference(work, 'documentation_validation', 'docs-pre', { decision: 'pass' }),
       );
-      work = transitionLifecycleState(work, 'EXECUTE', 'Implement the accepted scope.');
+      work = expectReturned(() => transitionLifecycleState(work, 'EXECUTE', 'Implement the accepted scope.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       const fingerprint = hash('e');
       const clearInput: ClearInput = {
         repository_root: fixture.root,
@@ -231,7 +240,9 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
           reference(next, 'implementation_result', 'implementation', { implementation_fingerprint: fingerprint }),
         );
       });
-      work = transitionLifecycleState(work, 'VERIFY', 'Collect independent assurance.');
+      work = expectReturned(() => transitionLifecycleState(work, 'VERIFY', 'Collect independent assurance.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       work = samePhase(work, (next) => {
         next.lifecycle.assurance.review_generation = 1;
         next.lifecycle.assurance.delivery_cycle_id = 'delivery-1';
@@ -274,6 +285,15 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
           );
         }
       });
+      const missingReviewPrincipal = clone(work);
+      const reviewWithoutPrincipal = missingReviewPrincipal.lifecycle.references.find(
+        (item) => item.kind === 'review_receipt' && item.disposition === 'current',
+      );
+      expect(reviewWithoutPrincipal).toBeDefined();
+      reviewWithoutPrincipal!.principal = null;
+      expect(() => validateLifecycleAggregate(missingReviewPrincipal)).toThrow(
+        'review_receipt is not bound to the current review generation and seal',
+      );
       expect(() => transitionLifecycleState(work, 'DELIVERY', 'Wait for current-version testing.')).toThrow(
         'context required',
       );
@@ -282,7 +302,11 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         transitionLifecycleState(work, 'DELIVERY', 'Wait for current-version testing.', clearContext),
       ).toThrow();
       fixture.write('docs/agent-instructions/current.md', 'current\n');
-      work = transitionLifecycleState(work, 'DELIVERY', 'Wait for current-version testing.', clearContext);
+      work = expectReturned(() =>
+        transitionLifecycleState(work, 'DELIVERY', 'Wait for current-version testing.', clearContext),
+      );
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       work = samePhase(
         work,
         (next) =>
@@ -308,17 +332,48 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       fixture.write('docs/agent-instructions/current.md', 'changed\n');
       expect(() => transitionLifecycleState(work, 'COMPLETE', 'Complete.', clearContext)).toThrow();
       fixture.write('docs/agent-instructions/current.md', 'current\n');
-      work = transitionLifecycleState(work, 'COMPLETE', 'Complete.', clearContext);
+      work = expectReturned(() => transitionLifecycleState(work, 'COMPLETE', 'Complete.', clearContext));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       expect(work.lifecycle.phase).toBe('COMPLETE');
       expect(() => transitionLifecycleState(work, 'EXECUTE', 'No.')).toThrow(LifecycleStateError);
+      completed = true;
+    } catch (error) {
+      console.error(`[lifecycle-state] retained failed fixture: ${fixture.root}`);
+      throw error;
     } finally {
-      rmSync(fixture.root, { recursive: true, force: true });
+      if (completed && performance.now() < cleanupDeadline) rmSync(fixture.root, { recursive: true, force: true });
+      else if (completed) console.error(`[lifecycle-state] retained expired fixture: ${fixture.root}`);
     }
   });
 
   test('rejects skipped phases, stale bindings and duplicate reviewer identity', () => {
     const work = initialWork();
-    expect(() => transitionLifecycleState(work, 'PLAN', 'Skip trace.')).toThrow('illegal lifecycle transition');
+    const predecessor = clone(work);
+    const historicalScope = reference(predecessor, 'implementation_scope', 'historical-scope');
+    predecessor.lifecycle.references.push(historicalScope);
+    const continued = clone(predecessor);
+    continued.binding.work_source_revision = 'source-2';
+    continued.lifecycle.source_revision = 'source-2';
+    expectReturned(() => validateLifecycleAggregate(continued, [historicalScope]));
+    const unsupportedHistorical = {
+      ...reference(continued, 'decision', 'unsupported-history'),
+      source_revision: 'source-1',
+    };
+    const forgedContinuation = clone(continued);
+    forgedContinuation.lifecycle.references.push(unsupportedHistorical);
+    expect(() => validateLifecycleAggregate(forgedContinuation, [historicalScope, unsupportedHistorical])).toThrow(
+      'lifecycle artifact authority binding differs from current work',
+    );
+    let transitionFailure: unknown;
+    try {
+      transitionLifecycleState(work, 'PLAN', 'Skip trace.');
+    } catch (error) {
+      transitionFailure = error;
+    }
+    expect(transitionFailure).toBeInstanceOf(LifecycleStateError);
+    expect((transitionFailure as LifecycleStateError).code).toBe('GAP-LIFECYCLE-STATE-001');
+    expect((transitionFailure as LifecycleStateError).message).toBe('illegal lifecycle transition');
     const stale = clone(work);
     stale.lifecycle.config_binding.config_digest = hash('f');
     expect(() => validateLifecycleAggregate(stale)).toThrow('configuration binding');
@@ -335,16 +390,22 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
 
   test('correction retires stale assurance and delivery evidence in one typed transition', async () => {
     const fixture = clearFixture();
+    const cleanupDeadline = performance.now() + 30_000;
+    let completed = false;
     try {
       let work = initialWork();
-      work = transitionLifecycleState(work, 'TRACE', 'Plan.');
+      work = expectReturned(() => transitionLifecycleState(work, 'TRACE', 'Plan.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       work = add(
         work,
         reference(work, 'source_plan', 'source-plan'),
         reference(work, 'acceptance_manifest', 'acceptance'),
         reference(work, 'implementation_scope', 'scope'),
       );
-      work = transitionLifecycleState(work, 'PLAN', 'Authorize.');
+      work = expectReturned(() => transitionLifecycleState(work, 'PLAN', 'Authorize.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       work = add(
         work,
         reference(work, 'execution_approval', 'approval', { decision: 'approved' }),
@@ -353,7 +414,9 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         reference(work, 'change_impact_pre', 'impact-pre'),
         reference(work, 'documentation_validation', 'docs-pre', { decision: 'pass' }),
       );
-      work = transitionLifecycleState(work, 'EXECUTE', 'Implement.');
+      work = expectReturned(() => transitionLifecycleState(work, 'EXECUTE', 'Implement.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       const fingerprint = hash('e');
       work = samePhase(work, (next) => {
         next.lifecycle.seal = {
@@ -365,7 +428,9 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
           reference(next, 'implementation_result', 'implementation', { implementation_fingerprint: fingerprint }),
         );
       });
-      work = transitionLifecycleState(work, 'VERIFY', 'Review.');
+      work = expectReturned(() => transitionLifecycleState(work, 'VERIFY', 'Review.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
       const clearInput: ClearInput = {
         repository_root: fixture.root,
         repository_id: 'creatio-sample-repository',
@@ -400,7 +465,12 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         reference(work, 'correction_authorization', 'correction', { decision: 'approved' }),
         reference(work, 'feedback_consumption', 'consumption'),
       );
-      const corrected = transitionLifecycleState(work, 'EXECUTE', 'Apply the authorized correction.');
+      const corrected = expectReturned(() =>
+        transitionLifecycleState(work, 'EXECUTE', 'Apply the authorized correction.'),
+      );
+      expect(corrected).not.toBeNull();
+      expect(typeof corrected).toBe('object');
+      expectReturned(() => validateLifecycleProgress(work, corrected));
       expect(corrected.lifecycle.seal).toBeNull();
       expect(corrected.lifecycle.assurance.correction_count).toBe(1);
       expect(corrected.lifecycle.references.find((item) => item.kind === 'implementation_result')?.disposition).toBe(
@@ -428,7 +498,11 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
           }),
         );
       });
-      verifiedAgain = transitionLifecycleState(verifiedAgain, 'VERIFY', 'Review the corrected implementation.');
+      verifiedAgain = expectReturned(() =>
+        transitionLifecycleState(verifiedAgain, 'VERIFY', 'Review the corrected implementation.'),
+      );
+      expect(verifiedAgain).not.toBeNull();
+      expect(typeof verifiedAgain).toBe('object');
       await executeDocumentationClearOperation(clearInput, 'baseline');
       const secondClear = await executeDocumentationClearOperation(clearInput, 'closeout');
       expect(secondClear.path).toContain('documentation-closeout-0002.v1.json');
@@ -486,15 +560,23 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(() =>
         transitionLifecycleState(staleCurrent, 'DELIVERY', 'Reject the previous CLEAR cycle.', clearContext),
       ).toThrow();
-      expect(
-        transitionLifecycleState(verifiedAgain, 'DELIVERY', 'Deliver corrected work.', clearContext).lifecycle.phase,
-      ).toBe('DELIVERY');
+      const correctedDelivery = expectReturned(() =>
+        transitionLifecycleState(verifiedAgain, 'DELIVERY', 'Deliver corrected work.', clearContext),
+      );
+      expect(correctedDelivery).not.toBeNull();
+      expect(typeof correctedDelivery).toBe('object');
+      expect(correctedDelivery.lifecycle.phase).toBe('DELIVERY');
       expect(() => transitionLifecycleState(verifiedAgain, 'EXECUTE', 'Reuse stale correction authority.')).toThrow(
         'current correction_authorization reference required',
       );
       expect(() => validateLifecycleProgress(work, { ...corrected, revision: corrected.revision + 1 })).toThrow();
+      completed = true;
+    } catch (error) {
+      console.error(`[lifecycle-state] retained failed fixture: ${fixture.root}`);
+      throw error;
     } finally {
-      rmSync(fixture.root, { recursive: true, force: true });
+      if (completed && performance.now() < cleanupDeadline) rmSync(fixture.root, { recursive: true, force: true });
+      else if (completed) console.error(`[lifecycle-state] retained expired fixture: ${fixture.root}`);
     }
   }, 30_000);
 });
