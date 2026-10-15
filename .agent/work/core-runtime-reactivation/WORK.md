@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `e637c17` at origin/main.
+- Published predecessor: `7eb4099` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1182,9 +1182,11 @@ One Source AST+SHA capture reuses the other148paths. Factory19->4<=own10 and
 finish38->29<=genuine original32 close two represented static deficits; all
 original ceilings remain unchanged. New import/declaration/closure owners have
 CC9/9/7 against their own10/10. The observer remains29>own10. Six new roles and
-two moved existing new-role identities produce current partial6312=4766retained/
-1546new,78removed,147bindings. Inventory7727 leaves1415current/857original missing,
-with18represented static overages. This remains non-executable/non-exhaustive,
+two moved existing new-role identities were declared as partial6312=4766retained/
+1546new,78removed,147bindings. The next join detected six missing array rows despite
+those counters; actual published arrays held6306roles. The correction is below.
+Inventory7727 and18represented static overages remain that packet's captured scope.
+This remained non-executable/non-exhaustive,
 not dynamic CRAP or coverage. Receipt:
 `/workspace/attachments/quality-native-boundary-join-e637-20261015.json`.
 Vex bounded query refreshed7changed/0deleted/9802symbols outside numeric checks:
@@ -1205,11 +1207,69 @@ Historical resourceSafeToAdvance:false stays unchanged. Cloud later reported
 revision2401 running/connected/current with no failure after a transient starting
 notification; no restart cause or process quiescence is established.
 
+## Observer correction and reviewed lineage continuation
+
+Model the Domain and Laziness Protocol select node-local declaration/import and
+callable/catch collectors instead of a heterogeneous visitor registry or per-node
+arrays. The existing BindingRecorder still expands each pattern once and records
+every protected occurrence. Its returned boolean replaces the whole-count Map
+copy and comparison for destructuring. Assignment/update member-root normalization,
+identifier reference multiplicity, observation order and fail-closed ambiguity
+remain unchanged. Design records are `quality-observer-table-design-7eb-20261015.md`
+and `quality-observer-collectors-design-7eb-20261015.md` in attachments.
+
+New scanner-boundary controls passed before refactoring8PASS/10assertions, including
+protected object/array assignments, nested members, updates, function/catch/class
+shadowing and harmless mutations. Final complete affected file80PASS/0FAIL/
+229assertions in2.83s; static470checked/471capturedTS/0diagnostics. Records:
+`/workspace/attachments/quality-observer-contract-before-7eb-20261015.log`,
+`quality-observer-final-file-tests-7eb-20261015.log`, `quality-observer-types-7eb-20261015.log`.
+Independent actual Source review accepted:
+`/workspace/attachments/quality-observer-actual-review-7eb-20261015.md`.
+Observer29->6 closes its own10 ceiling. New collectors9/9 and mutation recognizer7
+have independent10/10 ceilings; original finish29<=32 is unchanged.
+
+The join independently accepts45safe/43rebind/40run/11native retained roles, with
+seven rejected ordinal/responsibility pairs left unmapped. The three current-only
+native helper extractions do not inherit original allowances; they remain pending
+new-role dispositions. All original complexity/CRAP ceilings are copied exactly
+from genuine measured rows, never max(current,original). New represented rebind
+isCurrentOrLaterStableVersion6>original5 remains open, so18represented overages
+remain despite closing the observer deficit.
+
+Root's first continuation assertion found the prior join's array-copy assignment
+bug: six reviewed new rows were counted but omitted from new_functions. It failed
+before any canonical write. Retain `quality-observer-lineage-join-7eb-20261015.ts`
+and `.log`. Corrected join restores precisely those six previously reviewed rows,
+retains original caps, removes only the obsolete current-new Map-difference
+callback, assigns both complete arrays back and checks counts/uniqueness before
+atomic publication. This fixes metadata, not coverage. Current partial6453=
+4905retained/1548new,78removed,147bindings; inventory7729 leaves1276current and
+718original dispositions missing. It remains non-executable/not-exhaustive.
+Receipt `/workspace/attachments/quality-observer-lineage-join-7eb-20261015.json`;
+successful script/log `quality-observer-lineage-join-7eb-corrected-20261015`.
+Final packet review accepts Source and on-disk array/count structure:
+`/workspace/attachments/quality-observer-packet-final-review-7eb-20261015.md`.
+Its historical-file absence/custody statements are superseded by a fresh exact-
+path check:4905retained rows match all five original budget/baseline fields with
+zero mismatches;78removed rows exist and remain disjoint, all counters match.
+`/workspace/attachments/quality-original-caps-actual-7eb-20261015.md`.
+The genuine baseline report/manifest/runtime records exist; their admitted
+measurement does not make the recorded failed baseline suite/quality a PASS.
+
+The vanished earlier native readonly lane had no available result or artifact;
+a fresh blind Luna scope produced the qualified named-role review above. The run
+review worker disclosed an unauthorized `/tmp/quality-run-scoped-7eb-generate.ts`
+scratch write. Root inspected its bytes: it only read the assigned packet and
+wrote its two assigned output artifacts. It is preserved, not executed or cleaned.
+This prompt-only worker contract does not enforce filesystem isolation. Fresh
+independent review used actual Source and did not import that script.
+
 ## Next bounded work
 
 1. Complete correspondence/original-budget corrections: pure
-   native observer29>own10,
-   and retained callback/context deficits recorded above. Installer27<=31,
+   retained callback/context deficits and rebind stable-version6>original5
+   recorded above. Installer27<=31,
    native loaders4<=4, controller target2<=2 and Host callback3<=3
    has scoped Source proof above, alongside planner39<=40 and current-read
    evidence5<=5; full dynamic CRAP acceptance remains pending.

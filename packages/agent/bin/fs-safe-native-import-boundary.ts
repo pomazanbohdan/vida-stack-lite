@@ -1,10 +1,12 @@
 import type {
+  AssignmentExpression,
   CallExpression,
   FunctionDeclaration,
   Identifier,
   ImportDeclaration,
   Node,
   Program,
+  UpdateExpression,
   VariableDeclaration,
 } from '@babel/types';
 import { runtimeBindingNames } from './runtime-import-bindings.ts';
@@ -135,6 +137,42 @@ interface BoundaryDeclarations {
 }
 
 const finiteCallees = new Set(['resolveFsSafeNativePackageRoot', 'fsSafePackageTreeHash']);
+type BindingRecorder = (node: Node) => boolean;
+
+function recordDeclarationBindings(node: Node, bind: BindingRecorder): void {
+  if (
+    (node.type === 'ClassDeclaration' || node.type === 'ClassExpression' || node.type === 'TSEnumDeclaration') &&
+    node.id
+  )
+    bind(node.id);
+  if (node.type === 'VariableDeclarator') bind(node.id);
+  if (
+    node.type === 'ImportSpecifier' ||
+    node.type === 'ImportDefaultSpecifier' ||
+    node.type === 'ImportNamespaceSpecifier'
+  )
+    bind(node.local);
+}
+
+function recordCallableBindings(node: Node, bind: BindingRecorder): void {
+  if (
+    node.type === 'FunctionDeclaration' ||
+    node.type === 'FunctionExpression' ||
+    node.type === 'ArrowFunctionExpression'
+  ) {
+    if (node.type !== 'ArrowFunctionExpression' && node.id) bind(node.id);
+    for (const parameter of node.params) bind(parameter);
+  }
+  if (node.type === 'CatchClause' && node.param) bind(node.param);
+}
+
+function mutatesProtectedBinding(node: AssignmentExpression | UpdateExpression, bind: BindingRecorder): boolean {
+  let assigned: Node = node.type === 'AssignmentExpression' ? node.left : node.argument;
+  while (assigned.type === 'MemberExpression' || assigned.type === 'OptionalMemberExpression')
+    assigned = assigned.object;
+  if (assigned.type === 'Identifier') return protectedNames.has(assigned.name);
+  return (assigned.type === 'ObjectPattern' || assigned.type === 'ArrayPattern') && bind(assigned);
+}
 
 function collectBoundaryImports(statement: ImportDeclaration, imported: Map<string, string>): void {
   if (statement.importKind === 'type') return;
@@ -203,44 +241,21 @@ export function createFsSafeNativeImportBoundary(
   const counts = new Map<string, number>();
   let ambiguous = false;
   const callReferences: Identifier[] = [];
-  const bind = (node: Node): void => {
+  const bind: BindingRecorder = (node) => {
+    let protectedBinding = false;
     for (const name of runtimeBindingNames(node))
-      if (protectedNames.has(name)) counts.set(name, (counts.get(name) ?? 0) + 1);
+      if (protectedNames.has(name)) {
+        counts.set(name, (counts.get(name) ?? 0) + 1);
+        protectedBinding = true;
+      }
+    return protectedBinding;
   };
   const observe = (node: Node): void => {
     if (node.type === 'Identifier' && finiteCallees.has(node.name)) callReferences.push(node);
-    if (
-      (node.type === 'ClassDeclaration' || node.type === 'ClassExpression' || node.type === 'TSEnumDeclaration') &&
-      node.id
-    )
-      bind(node.id);
-    if (node.type === 'VariableDeclarator') bind(node.id);
-    if (
-      node.type === 'ImportSpecifier' ||
-      node.type === 'ImportDefaultSpecifier' ||
-      node.type === 'ImportNamespaceSpecifier'
-    )
-      bind(node.local);
-    if (
-      node.type === 'FunctionDeclaration' ||
-      node.type === 'FunctionExpression' ||
-      node.type === 'ArrowFunctionExpression'
-    ) {
-      if (node.type !== 'ArrowFunctionExpression' && node.id) bind(node.id);
-      for (const parameter of node.params) bind(parameter);
-    }
-    if (node.type === 'CatchClause' && node.param) bind(node.param);
-    if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression') {
-      let assigned: Node = node.type === 'AssignmentExpression' ? node.left : node.argument;
-      while (assigned.type === 'MemberExpression' || assigned.type === 'OptionalMemberExpression')
-        assigned = assigned.object;
-      if (assigned.type === 'Identifier' && protectedNames.has(assigned.name)) ambiguous = true;
-      if (assigned.type === 'ObjectPattern' || assigned.type === 'ArrayPattern') {
-        const previous = new Map(counts);
-        bind(assigned);
-        if ([...counts].some(([name, count]) => count !== previous.get(name))) ambiguous = true;
-      }
-    }
+    recordDeclarationBindings(node, bind);
+    recordCallableBindings(node, bind);
+    if (node.type === 'AssignmentExpression' || node.type === 'UpdateExpression')
+      if (mutatesProtectedBinding(node, bind)) ambiguous = true;
   };
   const property = (name: string, value: Pattern): Pattern => ({
     type: 'ObjectProperty',

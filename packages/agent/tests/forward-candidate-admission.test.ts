@@ -597,3 +597,28 @@ test('an alias cannot introduce an extra native resolver caller', () => {
     nativeSource + '\nconst resolveOther = resolveFsSafeNativePackageRoot; resolveOther(foreignRoot, foreignTarget);';
   expect(() => scanAdmittedRuntimeImports(source, parser, nativeFile)).toThrow('computed require is unsealed');
 });
+
+for (const [label, suffix] of [
+  ['object assignment', '({ loader: moduleRequire } = foreignBindings);'],
+  ['array assignment', '[moduleRequire] = foreignBindings;'],
+  ['nested member assignment', 'moduleRequire.loader.value = foreignBinding;'],
+  ['member update', 'moduleRequire.loader.value++;'],
+  ['function parameter', 'function unrelated(moduleRequire) {}'],
+  ['catch pattern', 'try {} catch ({ loader: moduleRequire }) {}'],
+  ['named class expression', 'const unrelated = class moduleRequire {};'],
+] as const)
+  test('native boundary rejects protected ' + label, () => {
+    expect(() => scanAdmittedRuntimeImports(nativeSource + '\n' + suffix, parser, nativeFile)).toThrow(
+      'computed require is unsealed',
+    );
+  });
+
+test('unprotected assignment patterns and member mutations preserve native imports', () => {
+  const expected = scanAdmittedRuntimeImports(nativeSource, parser, nativeFile);
+  for (const suffix of [
+    '({ value: unrelated } = foreignBindings);',
+    '[unrelated] = foreignBindings;',
+    'unrelated.loader.value = foreignBinding; unrelated.loader.value++;',
+  ])
+    expect(scanAdmittedRuntimeImports(nativeSource + '\n' + suffix, parser, nativeFile)).toEqual(expected);
+});
