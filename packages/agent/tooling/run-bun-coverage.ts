@@ -1610,7 +1610,12 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
                 const absolute = path.resolve(root, entry.path);
                 const fileCoverage = mergedCoverage[absolute];
                 if (!fileCoverage) throw new Error('Focused diagnostic source counters are missing: ' + entry.path);
-                validateCoverageLocations(entry.path, inputBytes[entry.path]!.toString('utf8'), fileCoverage);
+                validateCoverageLocations(
+                  entry.path,
+                  inputBytes[entry.path]!.toString('utf8'),
+                  fileCoverage,
+                  manifest.source_maps[absolute]!.branchMap,
+                );
                 return {
                   file: entry.path,
                   coverage: coverageApi

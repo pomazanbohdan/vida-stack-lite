@@ -14,7 +14,8 @@ import { spawnSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { prepareCoverageRunnerInputs } from './helpers/coverage-fixture.ts';
+import { prepareCoverageRunnerInputs, restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
+import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const maintainedSources = [
@@ -109,6 +110,62 @@ function launchRunner(
     },
   );
 }
+
+test('focused runner retains both canonical implicit-else branch arms', () => {
+  const root = createRunnerCandidate();
+  let passed = false;
+  try {
+    write(
+      root,
+      'src/runtime-kernel.ts',
+      'export function compute(flag: boolean): number { if (flag) return 1; return 2; }\n',
+    );
+    write(
+      root,
+      'tests/fixture.test.mjs',
+      `import { expect, test } from 'bun:test';
+import { compute } from '../src/runtime-kernel.ts';
+test('both implicit-else arms execute', () => {
+  expect(compute(true)).toBe(1);
+  expect(compute(false)).toBe(2);
+});\n`,
+    );
+    const entrypoint = 'tooling/focused-implicit-else-probe.ts';
+    const completion = 'focused implicit-else report completed';
+    write(
+      root,
+      entrypoint,
+      `import { runBunCoverage } from './run-bun-coverage.ts';
+await runBunCoverage({ focusedDiagnostic: {
+  mode: 'focused-diagnostic', contour: 'implicit-else-regression',
+  sources: ['src/runtime-kernel.ts'], tests: ['tests/fixture.test.mjs'],
+} });
+console.log(${JSON.stringify(completion)});\n`,
+    );
+    const result = launchRunner(root, undefined, {}, [], { entrypoint, timeoutMs: 4_000 });
+    requireSynchronousChildSuccess(result, completion);
+    const outputRoot = path.join(root, 'coverage/bun-unified');
+    const diagnostics = path.join(outputRoot, 'diagnostics');
+    const reports = readdirSync(diagnostics).filter((file) => file.endsWith('.focused-coverage.json'));
+    expect(reports).toHaveLength(1);
+    const report: unknown = JSON.parse(readFileSync(path.join(diagnostics, reports[0]!), 'utf8'));
+    expect(report).toMatchObject({
+      schema: 'VidaBunFocusedCoverageDiagnostic/v1',
+      qualification_scope: 'focused-diagnostic',
+      full_qualification: false,
+      frozen_budget_qualification: 'pending',
+      metrics: [{ file: 'src/runtime-kernel.ts', coverage: { branches: { total: 2, covered: 2, pct: 100 } } }],
+    });
+    expect(existsSync(path.join(outputRoot, 'coverage-final.json'))).toBe(false);
+    expect(existsSync(path.join(outputRoot, 'coverage-run.lock'))).toBe(false);
+    passed = true;
+  } finally {
+    if (passed) {
+      restoreOwnedCoverageDirectoryWrites(root);
+      rmSync(root, { recursive: true, force: true });
+    } else console.error(`Retained failed focused implicit-else fixture: ${root}`);
+  }
+});
 
 test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy: %s', (mode) => {
   const root = createRunnerCandidate();

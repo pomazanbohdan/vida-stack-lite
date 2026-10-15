@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `e2d0331` at origin/main.
+- Published predecessor: `45efca1` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -554,6 +554,34 @@ quality-global-{product-async,test-async,test-timeout,pending}-candidates-202610
 | Existing database merge | Acquisition is now protected from the first handle; a tagged outcome preserves thrown undefined and primary plus close errors | Implemented and independently accepted; full affected file17PASS. Publish current packet; native disk qualification remains separate |
 | Coverage and test fixtures | Full300000ms operation remains incomplete; real30s quarantine cases and repeated CLI startup are distinct costs; one caller-pilot failure path retains its deadline timer | Preserve real quarantine acceptance; share deterministic policy cases, retain bounded real controls; qualify resource/shard eligibility before parallel activation |
 | Workflow, authorization, CLI and SDK | Fixed digest-invalid twins overwriting validated evidence and repeated preparations concealing omitted current artifacts; clean controller environments and SDK freshness guards remain | Preflight and producer22PASS; reviewer-attribution negative case rejects before attempt reservation. No end-to-end exploit or Runtime acceptance inferred |
+
+### Kernel focused reporter canonical-map correction
+
+Published45efca1 passed ordinary strict hooks and push. Its actual complete
+main-runtime-core selection executed202PASS/1479assertions across all four
+declared files in37288.893ms. SDK preparation used the current CI artifact
+through the maintained callback. The outer process exited1 after tests: focused
+report validation rejected Istanbul's implicit-else empty location. Preserve
+quality-runtime-kernel-focused-cycle1-45efca1-20261015.log, outer root
+quality-focused-kernel-45efca1-bpQEtm and diagnostic run
+d0e8f046-6db5-4698-baf0-b1effe278708. No coverage percentage was admitted.
+
+The strict location validator already supports this sentinel only when the
+entire branch map equals canonical exact Source instrumentation. The focused
+reporter omitted that existing argument; the CRAP caller already passes it.
+Pass manifest.source_maps[absolute].branchMap from the same captured transform;
+no extra AST/read/hash pass, excluded branch or denominator change. A real
+focused-runner fixture failed before at that exact report boundary, after its
+two-arm test passed. With the correction it emits a diagnostic with2/2branches
+and100%, keeps full/frozen qualification pending and releases the owned lock.
+The first successful-report check exposed fixture cleanup's read-only snapshot;
+reuse the existing owned-directory helper. Preserve both failed fixture roots.
+Final affected completion20PASS/122assertions/11.81s across runner and math:
+quality-focused-implicit-else-{before,after,final}-45e-20261015.log. Each case
+keeps the default5000ms; the new child is bounded4000ms. Existing validator
+regressions still reject forged maps and invalid non-sentinel locations.
+Independent review ACCEPT: quality-focused-implicit-else-review-45e-20261015.md.
+Static, publication and fresh kernel metrics follow.
 
 ### Current product correction packet
 
