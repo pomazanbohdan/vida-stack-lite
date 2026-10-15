@@ -4742,7 +4742,8 @@ selection fixes in readClock, safeStringProperty/read and invokeTimed preserve
 roles; they neither grant higher caps nor establish numerical acceptance.
 The existing partial now records that review without changing frozen rows.
 Review memo: /workspace/attachments/quality-timing-frozen-lineage-review-20261015.md.
-Next bind its exact published review key, then run the owner's exhaustive
+The existing gate now binds its exact published6e4655b1 review key without
+expanding either prior review's Source scope. Next run the owner's exhaustive
 original/current join with fresh exact coverage, scoped CRAP and full mutation.
 Historical coverage+151/151mutation remains historical. Missing global artifacts
 and the partial's non-executable/non-exhaustive status remain unchanged.

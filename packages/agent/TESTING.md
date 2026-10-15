@@ -1021,7 +1021,9 @@ This is a separate conservative local proof, never global admission of a partial
 plan or a historical measurement. The pinned published review must cover every
 declared Source. Main-host uses the separately published independent review
 `--budget-ref 6f687506464048a0360f3fb8932eb7b77c7fc005`; it does not inherit
-v1033's review of other contours. The gate accepts only these pinned review/key
+v1033's review of other contours. Main-runtime-timing uses its own independently
+reviewed `--budget-ref 6e4655b1db2a32d08ae722940ff50b10d9e56ca6`.
+The gate accepts only these pinned review/key
 pairs and each review's actual Source scope. Caller-supplied correspondence
 versions are rejected. The shared
 focused validator rechecks the pinned runtime, current inputs, immutable snapshot,

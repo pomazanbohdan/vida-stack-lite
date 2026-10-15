@@ -47,6 +47,7 @@ const baselineRef = 'b549951';
 const scopedBudgetReviews = new Map([
   ['ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56', 'scope_review_v1033'],
   ['6f687506464048a0360f3fb8932eb7b77c7fc005', 'scope_review_main_host_20261015'],
+  ['6e4655b1db2a32d08ae722940ff50b10d9e56ca6', 'scope_review_main_runtime_timing_20261015'],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
