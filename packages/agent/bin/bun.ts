@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   closeSync,
   existsSync,
@@ -466,11 +466,7 @@ export function pinnedEnvironment(
       '.tmp',
       'vida-bun-cache',
       canonical.split(path.sep).includes('node_modules')
-        ? canonical
-            .split(path.sep)
-            .filter(Boolean)
-            .map((part) => part.replaceAll(':', ''))
-            .join('-')
+        ? createHash('sha256').update(canonical).digest('hex')
         : path.basename(canonical),
       pin,
     );

@@ -102,6 +102,10 @@ Assert every close attempt and preserve all work/cleanup causes, including a
 thrown undefined value and a sole cleanup error by identity. A fault injected
 after a real native close proves cause aggregation, not SQLite I/O failure.
 Retain an expected-UNKNOWN fixture independently of successful assertions.
+When several cases share a fixture root, track retained reservations by their
+operation paths. Cleanup of a later applied operation must not clear retention
+for an earlier UNKNOWN operation. Do not assert file-store terminal records for
+a composition fixture whose declared reservation owner is an in-memory store.
 
 For filesystem repair faults, prove that interception reaches preloaded named
 imports. Use the qualified namespace-snapshot/module-replacement pattern from

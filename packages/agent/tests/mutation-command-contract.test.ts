@@ -9,9 +9,11 @@ import { buildMutationTestCommand } from '../tooling/mutation-evidence.js';
 import {
   runStrykerPartitions,
   selectMutationPartitions,
+  mutationJUnitCaseCensusMatches,
   type MutationPartition,
   type MutationRunnerResult,
 } from '../tooling/mutation-gate.ts';
+import { junitOutcome, type MutationJUnitCase } from '../tooling/mutation-evidence.js';
 import {
   mutationPartitionSourceBinding,
   mutationPartitionSourceBindingMatches,
@@ -20,6 +22,54 @@ import { maintainedSourceInventory } from '../tooling/maintained-source-inventor
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+test('Survived census preserves baseline skips and rejects newly changed skip outcomes', () => {
+  const file = 'tests/one.test.ts';
+  const rows = (second: string) =>
+    `<testsuites name="bun test" tests="2" assertions="1" failures="0" skipped="${second === 'skipped' ? 1 : 0}"><testsuite file="${file}" tests="2" assertions="1" failures="0" skipped="${second === 'skipped' ? 1 : 0}"><testcase name="first" file="${file}" assertions="1"/><testcase name="second" file="${file}" assertions="0">${second === 'skipped' ? '<skipped/>' : ''}</testcase></testsuite></testsuites>`;
+  const observe = (xml: string) => {
+    const cases: MutationJUnitCase[] = [];
+    const outcome = junitOutcome(xml, [file], [], [], (row) => cases.push(row));
+    return { cases, outcome };
+  };
+  const baselineWithIntentionalSkip = observe(rows('skipped'));
+  const unchanged = observe(rows('skipped'));
+  const allPassingBaseline = observe(rows('passed'));
+  const newlySkippedMutant = observe(rows('skipped'));
+
+  expect(baselineWithIntentionalSkip.outcome.outcome).toBe('passed');
+  expect(unchanged.outcome.outcome).toBe('passed');
+  expect(allPassingBaseline.outcome.outcome).toBe('passed');
+  expect(newlySkippedMutant.outcome.outcome).toBe('passed');
+  expect(baselineWithIntentionalSkip.cases).toHaveLength(2);
+  expect(mutationJUnitCaseCensusMatches(baselineWithIntentionalSkip.cases, unchanged.cases)).toBe(true);
+  expect(mutationJUnitCaseCensusMatches(allPassingBaseline.cases, newlySkippedMutant.cases)).toBe(false);
+  expect(
+    mutationJUnitCaseCensusMatches(baselineWithIntentionalSkip.cases, [...baselineWithIntentionalSkip.cases].reverse()),
+  ).toBe(true);
+  expect(mutationJUnitCaseCensusMatches(allPassingBaseline.cases, baselineWithIntentionalSkip.cases)).toBe(false);
+  expect(mutationJUnitCaseCensusMatches(allPassingBaseline.cases, allPassingBaseline.cases.slice(1))).toBe(false);
+
+  const first = allPassingBaseline.cases[0]!;
+  expect(mutationJUnitCaseCensusMatches([first, first], [first])).toBe(false);
+  const composed = { ...first, name: String.fromCodePoint(0xe9) };
+  const decomposed = { ...first, name: 'e' + String.fromCodePoint(0x0301) };
+  expect(mutationJUnitCaseCensusMatches([composed, decomposed], [decomposed, composed])).toBe(true);
+  expect(mutationJUnitCaseCensusMatches([composed], [decomposed])).toBe(false);
+  const sameHumanTitle = { ...first, name: '[mutation-body:81] [mutation-file:abc] [mutation-body:human] case' };
+  const renumberedHumanTitle = {
+    ...first,
+    name: '[mutation-body:7] [mutation-file:abc] [mutation-body:human] case',
+  };
+  expect(mutationJUnitCaseCensusMatches([sameHumanTitle], [sameHumanTitle])).toBe(true);
+  expect(mutationJUnitCaseCensusMatches([sameHumanTitle], [renumberedHumanTitle])).toBe(false);
+  expect(
+    mutationJUnitCaseCensusMatches(
+      [sameHumanTitle],
+      [{ ...renumberedHumanTitle, name: '[mutation-body:7] [mutation-file:abc] changed case' }],
+    ),
+  ).toBe(false);
+});
 
 test('mutation timeout envelopes preserve per-test limits and leave room for command evidence', () => {
   const command = buildMutationTestCommand(process.execPath, ['tests/one.test.ts'], '/tmp/mutation.xml');

@@ -5171,6 +5171,61 @@ check is retained in quality-rfc3339-year-zero-green-20261015.log. These are
 development checks, not refreshed numerical contour closure. Mutation remains
 UNKNOWN and the historical compatible triple count remains4/44.
 
+## Cache isolation, initialization and mutation-census packet
+
+Root reproduced a private installed-package cache collision for the valid scoped
+roots node_modules/@a/b-c and node_modules/@a-b/c. Both flattened to the same
+home-cache namespace; RED0PASS/1FAIL is retained at
+/workspace/attachments/quality-rolling-cli-check-NWjDix. Hashing the full canonical
+root fixes that namespace without changing explicit/disabled cache selection or
+derived-cache rebinding. The complete cache routing file passed6cases in3.19s at
+/workspace/attachments/quality-rolling-cli-check-PQ9FK2. Maintained inventory
+confirms original26/current39 roles after removing the component-map callback.
+That saved retained role moves to an explicit removal disposition, with its full
+old row retained as correction evidence. New review metadata has24retained,
+15new and2removed; existing caps remain unchanged. A new immutable scoped review
+pin is still required before CLI numerical qualification.
+
+Initialization now covers the v1 authority reader and portable identity denials,
+and the v2 reader after a real completed fresh-project upgrade. Immutable fixture
+inputs are reused; each case still derives its own loaded config, workspace ID,
+receipt and timestamp. The complete file passed15cases/90assertions in23.74s at
+/workspace/attachments/quality-rolling-cli-check-RoATDc. V2 upgrade/readback took
+6.144s and has the documented10s composite-case exception. Fixture database-close
+failures use a presence tag so thrown undefined retains its failure meaning.
+The proposed foreign/stale v2 receipt rejection was not adopted: the reader does
+not own fresh execution authorization, and the private binder owns that check.
+
+Mutation receipt confirmation now retains the existing parser's actual validated
+baseline case rows. Only a Survived candidate must match their exact raw
+file/name/outcome multiset, including intentional baseline skips and duplicate
+multiplicity. No extra parser, suite, AST or hash pass was added. Raw per-file
+adapter IDs remain part of the census; the proposed normalization was rejected
+after proving each test file has its own adapter counter. Unicode comparison is
+code-unit exact. The parser/comparator and existing scheduler/receipt controls
+passed43cases/375assertions in773ms at
+/workspace/attachments/quality-rolling-cli-check-U5qa2Z. These synthetic controls
+do not independently establish an actual Stryker run or gate-level receipt pilot.
+
+The real governed-write case now proves a CAS writer throwing undefined rejects
+by identity and leaves its durable commit_unknown record. Expected UNKNOWN roots
+remain retained through the end of the file. Root replaced a shared boolean latch
+with per-operation retained paths so later cleanup cannot clear an earlier fence.
+The first full file passed42cases and failed1 new assertion: the composition
+fixture uses an in-memory reservation owner, so no file-store .final exists.
+Root removed that incorrect assertion and the obsolete no-effect file cleanup.
+The corrected complete file passed43cases/216assertions in6.93s at
+/workspace/attachments/quality-rolling-cli-check-bzDMsC. The failed root
+/workspace/attachments/quality-rolling-cli-check-JVcn7g remains retained.
+
+Independent lanes selected the smaller throughput design: existing full command,
+input/process/output/JUnit/body receipts can prove an early causal assertion kill.
+Per-module/start-body markers add no necessary Killed evidence. Next is the owned
+Bun serial/bail probe and real Stryker pilot; no fail-fast mode is activated or
+qualified by these reviews. Baseline and Survived still require full selection;
+timeout, runtime/hook errors and incomplete custody remain UNKNOWN. Local triple
+count remains4/44 until fresh complete numerical evidence is admitted.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

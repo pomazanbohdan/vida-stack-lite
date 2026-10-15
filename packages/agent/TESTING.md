@@ -1253,6 +1253,13 @@ Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
 
+The initialization-authority v2 integration case has an explicit10s exception.
+It creates a fresh project, plans and completes the real bundle-owned upgrade,
+then reads the selected v2 receipt and exact binding. This dependent setup and
+readback phase measured6.144s within the15-case initialization selection; a
+fabricated activation or receipt would remove the proof being tested. The
+exception changes neither the5s default nor the5min aggregate coverage limit.
+
 Keep independent CLI denial scenarios in separate tests, each with its own
 case budget. Dependent calls within one scenario share its parent budget;
 do not restart that budget for each child. Splitting independent cases preserves

@@ -30,6 +30,7 @@ import {
   confirmedRunnerOutcome,
   executeMutationCommand,
   junitOutcome,
+  type MutationJUnitCase,
   mutationReceiptMatches,
   mutationToolInputs,
   parseMutationBodyEvents,
@@ -80,6 +81,15 @@ export function selectMutationPartitions(args: readonly string[], partitions: Mu
   return { scope: 'partition-pilot', inventory: false, partitions: [partition] };
 }
 
+export function mutationJUnitCaseCensusMatches(
+  baseline: readonly MutationJUnitCase[],
+  mutant: readonly MutationJUnitCase[],
+): boolean {
+  const canonical = (cases: readonly MutationJUnitCase[]) =>
+    cases.map((row) => JSON.stringify([row.test_file, row.name, row.outcome])).sort();
+  return JSON.stringify(canonical(baseline)) === JSON.stringify(canonical(mutant));
+}
+
 type MutationRecord = Pick<schema.MutantResult, 'id' | 'status'>;
 type MutationFileReport = Pick<schema.FileResult, 'source' | 'mutants'>;
 type MutationReport = { files: Record<string, MutationFileReport> };
@@ -96,7 +106,10 @@ export type MutationRunnerResult = {
   stdout_capture: Record<string, unknown>;
   stderr_capture: Record<string, unknown>;
 };
-type ReceiptOutcome = { status: 'passed' | 'killed' } | { status: 'unknown'; reason: string };
+type ReceiptOutcome =
+  | { status: 'passed'; cases: MutationJUnitCase[] }
+  | { status: 'killed' }
+  | { status: 'unknown'; reason: string };
 type PartitionIssue = { partition: string; error: string };
 type SourceIssue = { partition: string; source: string };
 type UnknownMutant = { partition: string; mutant_id: string | null; reason: string };
@@ -367,6 +380,7 @@ async function confirmRunnerReceipt(
   partitionSources: string[],
   partitionSourceFingerprint: string,
   context: ReceiptValidationContext,
+  expectedCases?: readonly MutationJUnitCase[],
 ): Promise<ReceiptOutcome> {
   try {
     const junitFile = junitName(partition, mutantId);
@@ -414,14 +428,21 @@ async function confirmRunnerReceipt(
       throw new Error('Mutation body events differ from the runner receipt.');
     const bodyEvents = parseMutationBodyEvents(bodyBytes, tests);
     const hookGaps = context.hookFiles;
+    const cases: MutationJUnitCase[] = [];
     const outcome = junitOutcome(
       new TextDecoder('utf-8', { fatal: true }).decode(junitBytes),
       tests,
       hookGaps,
       bodyEvents,
+      (row) => cases.push(row),
     );
     const result = confirmedRunnerOutcome(receipt.exit_code, outcome.outcome);
-    if (result === 'passed' || result === 'killed') return { status: result };
+    if (result === 'passed') {
+      if (expectedCases && !mutationJUnitCaseCensusMatches(expectedCases, cases))
+        throw new Error('Survived mutant JUnit case outcomes differ from the validated baseline census.');
+      return { status: result, cases };
+    }
+    if (result === 'killed') return { status: result };
     throw new Error('Runner exit status and JUnit outcome disagree or include infrastructure errors.');
   } catch (error) {
     return { status: 'unknown', reason: String(error) };
@@ -865,6 +886,7 @@ async function runMutationGate(): Promise<void> {
                       sourceBinding.sources,
                       sourceBinding.fingerprint,
                       context,
+                      mutant.status === 'Survived' ? baseline.cases : undefined,
                     )
                   : { status: 'unknown', reason: 'Partition source binding is incomplete.' }
                 : (baseline ?? { status: 'unknown', reason: 'Partition baseline is missing.' });

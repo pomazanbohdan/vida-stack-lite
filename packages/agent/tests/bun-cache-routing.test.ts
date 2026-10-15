@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { test } from 'bun:test';
 
@@ -109,6 +110,31 @@ test('copied bundles have distinct stable cache namespaces and preserve warm con
   const warm = pinnedEnvironment(process.execPath, firstEnv, first);
   assert.equal(warm.BUN_RUNTIME_TRANSPILER_CACHE_PATH, firstEnv.BUN_RUNTIME_TRANSPILER_CACHE_PATH);
   assert.equal(readFileSync(sentinel, 'utf8'), 'retained warm fixture bytes');
+});
+
+test('private installed-package cache namespaces do not collide when path components flatten alike', () => {
+  const parent = mkdtempSync(path.join(scratch, 'private-cache-collision-'));
+  const first = path.join(parent, 'node_modules', '@a', 'b-c');
+  const second = path.join(parent, 'node_modules', '@a-b', 'c');
+  for (const root of [first, second]) {
+    mkdirSync(root, { recursive: true });
+    writeFileSync(path.join(root, '.bun-version'), pin + '\n');
+    writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({ packageManager: `bun@${pin}`, engines: { bun: pin } }),
+    );
+  }
+  const firstCache = pinnedEnvironment(process.execPath, {}, first).BUN_RUNTIME_TRANSPILER_CACHE_PATH;
+  const secondCache = pinnedEnvironment(process.execPath, {}, second).BUN_RUNTIME_TRANSPILER_CACHE_PATH;
+  assert.ok(firstCache && secondCache);
+  assert.equal(pinnedEnvironment(process.execPath, {}, first).BUN_RUNTIME_TRANSPILER_CACHE_PATH, firstCache);
+  assert.equal(pinnedEnvironment(process.execPath, {}, second).BUN_RUNTIME_TRANSPILER_CACHE_PATH, secondCache);
+  assert.notEqual(firstCache, secondCache);
+  const privateRoot = path.join(homedir(), '.tmp', 'vida-bun-cache');
+  for (const cache of [firstCache, secondCache]) {
+    const relative = path.relative(privateRoot, cache);
+    assert.ok(relative !== '' && relative !== '..' && !relative.startsWith('..' + path.sep));
+  }
 });
 
 test('inherited derived cache follows the actual copy while custom and disabled caches remain explicit', () => {

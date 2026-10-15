@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5435,
+    "retained": 5434,
     "new": 1557,
-    "removed": 88,
-    "current_roles": 6992,
+    "removed": 89,
+    "current_roles": 6991,
     "source_files": 149
   },
   "source_bindings": [
@@ -435,7 +435,7 @@
     },
     {
       "file": "bin/bun.ts",
-      "sha256": "d4c883507c4676c39d0f2383d9e929e9dad9de28603406272964540e58cd20fb"
+      "sha256": "797d2b8de8288ac0097255da9b54e35b1aea896b9baa81a77f584fa5d01488ee"
     },
     {
       "file": "bin/recover-completed-source-report.ts",
@@ -47549,38 +47549,6 @@
       "max_complexity": 13,
       "baseline_crap": 182,
       "max_crap": 182,
-      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
-    },
-    {
-      "identity": "bin/bun.mjs#fn:pinnedEnvironment#0/closure:CallExpression:arguments[0]#0",
-      "current_identity": "bin/bun.ts#fn:pinnedEnvironment#0/closure:CallExpression:arguments[0]#0",
-      "file": "bin/bun.ts",
-      "source_address": {
-        "line": 344,
-        "column": 17,
-        "start": 13910,
-        "end": 13944,
-        "bodyLine": 344,
-        "bodyColumn": 27,
-        "bodyEndLine": 344,
-        "bodyEndColumn": 51
-      },
-      "current_source_address": {
-        "line": 472,
-        "column": 17,
-        "start": 18714,
-        "end": 18748,
-        "bodyLine": 472,
-        "bodyColumn": 27,
-        "bodyEndLine": 472,
-        "bodyEndColumn": 51
-      },
-      "name": "closure:CallExpression:arguments[0]",
-      "baseline_complexity": 1,
-      "baseline_coverage": 0,
-      "max_complexity": 1,
-      "baseline_crap": 2,
-      "max_crap": 2,
       "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
     },
     {
@@ -203880,6 +203848,10 @@
     {
       "identity": "src/governance/edictum-boundary.ts#fn:cleanupGovernedWrite#0/closure:CallExpression:arguments[2]#0",
       "rationale": "Successful governed-write preparation always creates and returns its UUID ingress token, and the sole cleanup caller always passes that token. Direct optional map deletion preserves cleanup while removing the redundant deferPick callback. No frozen allowance transfer."
+    },
+    {
+      "identity": "bin/bun.mjs#fn:pinnedEnvironment#0/closure:CallExpression:arguments[0]#0",
+      "rationale": "The installed-root component-flattening map callback is removed after reproducing a valid scoped-package cache namespace collision. The parent now hashes canonical path bytes directly. No current callable or saved ceiling inherits this removed role."
     }
   ],
   "review": {
@@ -221023,5 +220995,79 @@
       "/workspace/attachments/quality-rfc-schema-integration-audit-20261015.md"
     ],
     "limits": "Targeted development proof only. Fresh exact coverage/frozen CRAP/full confirmed mutation still required; no runtime installation or activation claim."
+  },
+  "scope_review_bun_cli_toolchain_cache_20261015": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-cli-toolchain",
+    "files": [
+      "bin/bun.mjs"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "bin/bun.mjs",
+        "current_path": "bin/bun.ts",
+        "rationale": "This is the exact reviewed legacy entrypoint rename from bin/bun.mjs to bin/bun.ts. The original bin/bun.mjs terminal/unknown classifier responsibility maps to the current positive type predicate by polarity inversion; the retained terminal consumer uses that predicate, while the public inverse relay is a separately budgeted new role. Other extracted CLI responsibilities remain separate new roles, with no cap transferred from the renamed original identities."
+      }
+    ],
+    "reviewed_source_context": "57625d0 plus the reviewed cache namespace correction; exact current bytes are bound below",
+    "independent_review": "/workspace/attachments/quality-cli-cache-function-disposition-review-20261015.md",
+    "current_cli_review": "/workspace/attachments/quality-v2-metadata-current-review-20261015.md",
+    "selected_rows": {
+      "retained": 24,
+      "new": 15,
+      "removed": 2,
+      "selection_basis": "Exact original/current launcher mapping; preserve PATHEXT callback removal and explicitly retire the original installed-root component map callback. Reused maintained inventory confirms original26/current39."
+    },
+    "frozen_cap_action": "All remaining retained ceilings and all fifteen new-role caps unchanged. Removed callback has no current owner or transferred ceiling.",
+    "limitations": "Independent Source correspondence review only; existing saved caps unchanged. No original runtime measurement admitted. Exact inventory partitions, full current coverage and scoped proof remain executable gates. No numerical, global or runtime qualification from metadata."
+  },
+  "cli_cache_namespace_correction_20261015": {
+    "status": "SOURCE_CORRECTION_PENDING_NUMERICAL_QUALIFICATION",
+    "prior_source_ref": "57625d0",
+    "bindings": [
+      {
+        "file": "bin/bun.ts",
+        "previous_sha256": "d4c883507c4676c39d0f2383d9e929e9dad9de28603406272964540e58cd20fb",
+        "sha256": "797d2b8de8288ac0097255da9b54e35b1aea896b9baa81a77f584fa5d01488ee"
+      }
+    ],
+    "retired_retained_row": {
+      "identity": "bin/bun.mjs#fn:pinnedEnvironment#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/bun.ts#fn:pinnedEnvironment#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/bun.ts",
+      "source_address": {
+        "line": 344,
+        "column": 17,
+        "start": 13910,
+        "end": 13944,
+        "bodyLine": 344,
+        "bodyColumn": 27,
+        "bodyEndLine": 344,
+        "bodyEndColumn": 51
+      },
+      "current_source_address": {
+        "line": 472,
+        "column": 17,
+        "start": 18714,
+        "end": 18748,
+        "bodyLine": 472,
+        "bodyColumn": 27,
+        "bodyEndLine": 472,
+        "bodyEndColumn": 51
+      },
+      "name": "closure:CallExpression:arguments[0]",
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "max_complexity": 1,
+      "baseline_crap": 2,
+      "max_crap": 2,
+      "rationale": "Equivalent Bun pin or launch role retained from published launcher; paired by responsibility."
+    },
+    "reason": "Valid installed scoped package roots @a/b-c and @a-b/c collided under component flattening. Hash the full canonical root for the existing private home cache namespace; preserve explicit/disabled paths and existing derived-cache rebinding.",
+    "independent_reviews": [
+      "/workspace/attachments/quality-cli-cache-collision-review-20261015.md",
+      "/workspace/attachments/quality-cli-cache-function-disposition-review-20261015.md"
+    ],
+    "limits": "Fresh numerical proof and new immutable review pin required. Existing published review metadata stays historical; no raised or transferred caps."
   }
 }

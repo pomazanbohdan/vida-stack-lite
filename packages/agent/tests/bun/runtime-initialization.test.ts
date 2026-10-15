@@ -5,7 +5,6 @@ import { createHash, randomUUID } from 'node:crypto';
 import { execFile, type ChildProcess } from 'node:child_process';
 import type { Writable } from 'node:stream';
 import {
-  copyFileSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -21,7 +20,11 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { __setFsSafeTestHooksForTest } from '@openclaw/fs-safe/test-hooks';
 import { configuredTestContext } from '../configured-context.ts';
-import { bindRuntimeInitialization, RuntimeInitializationBindingError } from '../../src/runtime-initialization.ts';
+import {
+  bindRuntimeInitialization,
+  readRuntimeInitializationAuthority,
+  RuntimeInitializationBindingError,
+} from '../../src/runtime-initialization.ts';
 import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
@@ -30,6 +33,7 @@ import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { SafeRepositoryLockContentionError } from '../../src/config/safe-repository-access.ts';
 import type { RuntimeInitializationReceipt } from '../../src/config/initialization-record.ts';
 import { fixtureInitializationTemplates } from '../helpers/runtime-initialization-fixture.ts';
+import { makeFreshRepository } from '../helpers/project-upgrade-fixture.js';
 import { expectReturned } from '../helpers/expect-rejection.ts';
 
 type Racer = {
@@ -46,6 +50,19 @@ let database: Database | undefined;
 let store: HostStateStore;
 let racers: Racer[] = [];
 let caseCompleted = false;
+let projectAuthorityFixtureRoot: string | undefined;
+const { repositoryRoot, config: configFixture } = configuredTestContext();
+const bundleRoot = path.join(repositoryRoot, configFixture.runtime.bundle);
+const fixtureFiles = ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'].map(
+  (file) => [file, readFileSync(path.join(repositoryRoot, file))] as const,
+);
+const documentationPolicy = readFileSync(
+  path.join(repositoryRoot, 'docs/agent-instructions/documentation-policy.v1.json'),
+);
+const initializationSchemaSha256 = createHash('sha256')
+  .update(readFileSync(path.join(bundleRoot, 'schemas/runtime-initialization.v1.schema.json')))
+  .digest('hex');
+const initializationTemplates = fixtureInitializationTemplates(repositoryRoot, bundleRoot);
 
 async function expectInitializationResult<T>(action: () => Promise<T>): Promise<T> {
   let result!: T;
@@ -61,18 +78,12 @@ beforeEach(() => {
   database = undefined;
   racers = [];
   root = mkdtempSync(path.join(tmpdir(), 'vida-init-binding-'));
-  const { repositoryRoot } = configuredTestContext();
-  for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'])
-    copyFileSync(path.join(repositoryRoot, file), path.join(root, file));
+  for (const [file, bytes] of fixtureFiles) writeFileSync(path.join(root, file), bytes);
   mkdirSync(path.join(root, 'docs', 'agent-instructions'), { recursive: true });
-  copyFileSync(
-    path.join(repositoryRoot, 'docs/agent-instructions/documentation-policy.v1.json'),
-    path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'),
-  );
+  writeFileSync(path.join(root, 'docs/agent-instructions/documentation-policy.v1.json'), documentationPolicy);
   mkdirSync(path.join(root, '.agent'));
   const config = loadRuntimeConfig(root);
   const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
-  const bundleRoot = path.join(repositoryRoot, config.runtime.bundle);
   receiptPath = path.join(root, '.agent', 'runtime-initialization.v1.json');
   receipt = {
     schema: 'RuntimeInitialization/v1',
@@ -84,10 +95,8 @@ beforeEach(() => {
     workspace_binding_status: 'pending',
     bundle: config.runtime.bundle,
     config_digest: runtimeConfigDigest(config),
-    schema_sha256: createHash('sha256')
-      .update(readFileSync(path.join(bundleRoot, 'schemas/runtime-initialization.v1.schema.json')))
-      .digest('hex'),
-    templates: fixtureInitializationTemplates(root, bundleRoot),
+    schema_sha256: initializationSchemaSha256,
+    templates: structuredClone(initializationTemplates),
     created_at: new Date().toISOString(),
   };
   writeFileSync(receiptPath, JSON.stringify(receipt) + '\n');
@@ -111,23 +120,31 @@ afterEach(async () => {
     });
   }
   racers = [];
-  let closeError: unknown;
+  if (projectAuthorityFixtureRoot !== undefined) {
+    if (!caseCompleted) {
+      console.error('INIT_V2_AUTHORITY_FIXTURE_RETAINED', { root: projectAuthorityFixtureRoot, caseCompleted });
+    } else {
+      rmSync(projectAuthorityFixtureRoot, { recursive: true, force: true });
+    }
+    projectAuthorityFixtureRoot = undefined;
+  }
+  let closeFailure: { readonly error: unknown } | undefined;
   if (database) {
     try {
       closeWorkspaceDatabaseWithAdmission(database);
     } catch (error) {
-      closeError = error;
+      closeFailure = { error };
     }
-    if (closeError === undefined) database = undefined;
+    if (closeFailure === undefined) database = undefined;
   }
   if (root.length === 0) {
-    console.error('INIT_FIXTURE_ROOT_NOT_CREATED', { caseCompleted, closeError });
-    if (closeError !== undefined) throw closeError;
+    console.error('INIT_FIXTURE_ROOT_NOT_CREATED', { caseCompleted, closeFailure });
+    if (closeFailure !== undefined) throw closeFailure.error;
     return;
   }
-  if (!caseCompleted || closeError !== undefined) {
-    console.error('INIT_FIXTURE_ROOT_RETAINED', { root, caseCompleted, closeError });
-    if (closeError !== undefined) throw closeError;
+  if (!caseCompleted || closeFailure !== undefined) {
+    console.error('INIT_FIXTURE_ROOT_RETAINED', { root, caseCompleted, closeFailure });
+    if (closeFailure !== undefined) throw closeFailure.error;
     return;
   }
   console.error('INIT_FIXTURE_ROOT_REMOVE_START', { root });
@@ -150,8 +167,64 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
   } finally {
     rmSync(other, { recursive: true, force: true });
   }
+  expect(() => deriveWorkspaceId('Invalid Repository ID', root)).toThrow('repository identity is invalid');
+  expect(() => deriveWorkspaceId(receipt.repository_id, receiptPath)).toThrow(
+    'repository root must be a non-link directory',
+  );
+  const authority = readRuntimeInitializationAuthority(root, loadRuntimeConfig(root));
+  expect(authority).toEqual({
+    format: 'RuntimeInitialization/v1',
+    receipt,
+    binding: {
+      repository_id: receipt.repository_id,
+      project_ids: receipt.project_ids,
+      workspace_id: receipt.workspace_id,
+      config_digest: receipt.config_digest,
+      integrations_digest: receipt.integrations_digest,
+    },
+  });
   caseCompleted = true;
 });
+
+test('reads v2 initialization authority from a completed real project upgrade', async () => {
+  const projectRoot = await makeFreshRepository('vida-init-authority-v2-');
+  projectAuthorityFixtureRoot = projectRoot;
+  const upgrade = await import('../../src/config/project-upgrade.ts');
+  const operationId = 'runtime-init-authority-v2-001';
+  const planned = await expectInitializationResult(() =>
+    upgrade.planProjectUpgradeRepair(projectRoot, {
+      operation_id: operationId,
+      actor: 'test-owner: runtime initialization authority',
+      instruction_ref: 'tests/bun/runtime-initialization.test.ts',
+    }),
+  );
+  expect(planned.plan.operation_id).toBe(operationId);
+  expect(planned.plan.database_mode).toBe('fresh');
+  const completed = await expectInitializationResult(() => upgrade.resumeProjectUpgrade(projectRoot, operationId));
+  expect(completed.phase).toBe('completed');
+
+  const projectConfig = loadRuntimeConfig(projectRoot);
+  const authority = expectReturned(() => readRuntimeInitializationAuthority(projectRoot, projectConfig));
+  expect(authority.format).toBe('RuntimeInitialization/v2');
+  expect(authority.binding).toEqual({
+    repository_id: projectConfig.repository.repository_id,
+    project_ids: projectConfig.projects.map(({ project_id }) => project_id).sort(),
+    workspace_id: deriveWorkspaceId(projectConfig.repository.repository_id, projectRoot),
+    config_digest: runtimeConfigDigest(projectConfig),
+  });
+  expect(authority.receipt).toMatchObject({
+    schema: 'RuntimeInitialization/v2',
+    version: 2,
+    provenance: 'project-upgrade',
+    workspace_binding_status: 'pending',
+    operation_id: operationId,
+    repository_id: authority.binding.repository_id,
+    project_ids: authority.binding.project_ids,
+    workspace_id: authority.binding.workspace_id,
+    current_config_digest: authority.binding.config_digest,
+  });
+  caseCompleted = true;
+}, 10_000);
 
 test('same workspace binding is idempotent under concurrent callers', async () => {
   const results = await Promise.all([

@@ -106,7 +106,12 @@ const hostProject = loadProjectSetContext(
   config.repository.repository_id,
   config.projects.map((entry) => entry.project_id).sort(),
 );
+const retainedReservations = new Set<string>();
 afterAll(async () => {
+  if (retainedReservations.size > 0) {
+    console.error('Retained runtime-kernel fixture after an unobserved governed-write outcome: ' + repositoryRoot);
+    return;
+  }
   await rm(repositoryRoot, { recursive: true, force: true });
 });
 
@@ -1116,6 +1121,8 @@ describe('runtime kernel boundary', () => {
       let identityCalls = 0;
       let approvalCalls = 0;
       let writeCalls = 0;
+      let activeFixture = fixture;
+      let throwUndefinedFromWriter = false;
       const kernel = await createRuntimeKernel(
         repositoryRoot,
         host({
@@ -1125,10 +1132,11 @@ describe('runtime kernel boundary', () => {
           },
           verifyApproval: () => {
             approvalCalls += 1;
-            return fixture.verifiedApproval;
+            return activeFixture.verifiedApproval;
           },
           casWriter: (request) => {
             writeCalls += 1;
+            if (throwUndefinedFromWriter) throw undefined;
             return { applied: true, path: request.payload.path };
           },
           clock,
@@ -1140,6 +1148,14 @@ describe('runtime kernel boundary', () => {
         }),
       );
 
+      const reservationPath = path.join(
+        repositoryRoot,
+        config.control.work_root,
+        'runtime-reservations',
+        createHash('sha256').update(fixture.approval.operation_hash).digest('hex') + '.json',
+      );
+      const terminalPath = reservationPath + '.final';
+      retainedReservations.add(reservationPath);
       await Promise.resolve(
         expect(kernel.runGovernedWrite(fixture.input)).resolves.toEqual({
           applied: true,
@@ -1149,23 +1165,46 @@ describe('runtime kernel boundary', () => {
       expect(identityCalls).toBe(1);
       expect(approvalCalls).toBe(1);
       expect(writeCalls).toBe(1);
-      const reservationPath = path.join(
+      const reservation: unknown = JSON.parse(await readFile(terminalPath, 'utf8'));
+      expect(reservation).toMatchObject({ status: 'applied' });
+      await Promise.all([
+        rm(reservationPath, { force: true }),
+        rm(reservationPath + '.terminal', { force: true }),
+        rm(terminalPath, { force: true }),
+      ]);
+      retainedReservations.delete(reservationPath);
+
+      const uncertainFixture = evidence();
+      expect(uncertainFixture.approval.operation_hash).not.toBe(fixture.approval.operation_hash);
+      activeFixture = uncertainFixture;
+      throwUndefinedFromWriter = true;
+      const uncertainReservationPath = path.join(
         repositoryRoot,
         config.control.work_root,
         'runtime-reservations',
-        createHash('sha256').update(fixture.approval.operation_hash).digest('hex') + '.json',
+        createHash('sha256').update(uncertainFixture.approval.operation_hash).digest('hex') + '.json',
       );
-      const terminalPath = reservationPath + '.final';
+      const uncertainTerminalPath = uncertainReservationPath + '.terminal';
+      retainedReservations.add(uncertainReservationPath);
+      let rejected = false;
+      let observedFailure: unknown;
       try {
-        const reservation: unknown = JSON.parse(await readFile(terminalPath, 'utf8'));
-        expect(reservation).toMatchObject({ status: 'applied' });
-      } finally {
-        await Promise.all([
-          rm(reservationPath, { force: true }),
-          rm(reservationPath + '.terminal', { force: true }),
-          rm(terminalPath, { force: true }),
-        ]);
+        await kernel.runGovernedWrite(uncertainFixture.input);
+      } catch (error) {
+        rejected = true;
+        observedFailure = error;
       }
+      expect(rejected).toBe(true);
+      expect(observedFailure).toBeUndefined();
+      expect(identityCalls).toBe(2);
+      expect(approvalCalls).toBe(2);
+      expect(writeCalls).toBe(2);
+      const unknownReservation: unknown = JSON.parse(await readFile(uncertainTerminalPath, 'utf8'));
+      expect(unknownReservation).toMatchObject({
+        operation_key: uncertainFixture.approval.operation_hash,
+        status: 'commit_unknown',
+      });
+
       expect(events.some((event) => event.operation === 'createRuntimeKernel')).toBe(true);
       await Promise.resolve(expect(kernel.readConfig()).resolves.toMatchObject({ schema: 'AgentRuntimeConfig/v1' }));
       await Promise.resolve(
@@ -1304,58 +1343,44 @@ describe('runtime kernel boundary', () => {
         },
       },
     };
-    const reservationPath = path.join(
-      repositoryRoot,
-      config.control.work_root,
-      'runtime-reservations',
-      createHash('sha256').update(fixture.approval.operation_hash).digest('hex') + '.json',
-    );
-    try {
-      if (!nativeNoFollowAvailable) {
-        const composition = await composeTrustedHost(input);
-        expect(composition.schema).toBe('TrustedHostComposition/v1');
-        return;
-      }
-      const composition = await composeTrustedHost(input, true);
-      await Promise.resolve(
-        expect(composition.runtimeKernel.runGovernedWrite(fixture.input)).resolves.toEqual({
-          applied: true,
-          path: fixture.input.intent.payload.path,
-        }),
-      );
-      expect(identityCalls).toBe(1);
-      expect(approvalCalls).toBe(1);
-      expect(writeCalls).toBe(1);
-      const denied = await composeTrustedHost({
-        ...input,
-        services: {
-          ...input.services,
-          resolveIdentity: () => {
-            identityCalls += 1;
-            return null;
-          },
-        },
-      });
-      await assert.rejects(
-        () => denied.runtimeKernel.runGovernedWrite(fixture.input),
-        (error: unknown) => {
-          assert.ok(error instanceof Error);
-          expect(error.message).toBe('governed write identity or project authorization was rejected');
-          assert.ok(error.cause instanceof Error);
-          expect(error.cause.message).toBe('trusted authenticated identity context is unavailable');
-          return true;
-        },
-      );
-      expect(identityCalls).toBe(2);
-      expect(approvalCalls).toBe(1);
-      expect(writeCalls).toBe(1);
-    } finally {
-      await Promise.all([
-        rm(reservationPath, { force: true }),
-        rm(reservationPath + '.terminal', { force: true }),
-        rm(reservationPath + '.final', { force: true }),
-      ]);
+    if (!nativeNoFollowAvailable) {
+      const composition = await composeTrustedHost(input);
+      expect(composition.schema).toBe('TrustedHostComposition/v1');
+      return;
     }
+    const composition = await composeTrustedHost(input, true);
+    await Promise.resolve(
+      expect(composition.runtimeKernel.runGovernedWrite(fixture.input)).resolves.toEqual({
+        applied: true,
+        path: fixture.input.intent.payload.path,
+      }),
+    );
+    expect(identityCalls).toBe(1);
+    expect(approvalCalls).toBe(1);
+    expect(writeCalls).toBe(1);
+    const denied = await composeTrustedHost({
+      ...input,
+      services: {
+        ...input.services,
+        resolveIdentity: () => {
+          identityCalls += 1;
+          return null;
+        },
+      },
+    });
+    await assert.rejects(
+      () => denied.runtimeKernel.runGovernedWrite(fixture.input),
+      (error: unknown) => {
+        assert.ok(error instanceof Error);
+        expect(error.message).toBe('governed write identity or project authorization was rejected');
+        assert.ok(error.cause instanceof Error);
+        expect(error.cause.message).toBe('trusted authenticated identity context is unavailable');
+        return true;
+      },
+    );
+    expect(identityCalls).toBe(2);
+    expect(approvalCalls).toBe(1);
+    expect(writeCalls).toBe(1);
   });
   test.skipIf(!nativeNoFollowAvailable)(
     'failed kernel initialization preserves the launcher for a healthy retry',
