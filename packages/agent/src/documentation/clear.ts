@@ -4,7 +4,7 @@ import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import { validateDocumentationClearCheckpointSchema as validCheckpoint } from './clear-checkpoint-validator.js';
 import eventSchema from '../../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
-import { canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../config/runtime-config.js';
 import { loadProjectContext, projectBindingFor } from '../config/project-context.js';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
@@ -182,7 +182,12 @@ export function produceDocumentationClearCheckpoint(input: DocumentationClearInp
         currentPolicyBytes,
       );
       if (
-        input.baseline.work_id !== input.work_id ||
+        canonicalJson([
+          input.baseline.repository_id,
+          input.baseline.project_id,
+          input.baseline.policy_id,
+          input.baseline.work_id,
+        ]) !== canonicalJson([input.repository_id, input.project_id, policy.policy_id, input.work_id]) ||
         input.baseline.source_revision !== input.source_revision ||
         input.baseline.project_context_digest !== context.project_context_digest ||
         (input.baseline.policy_digest !== policyDigest && transitionMaps.length === 0) ||

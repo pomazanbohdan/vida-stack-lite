@@ -4936,6 +4936,43 @@ support needs exact validated partitions and a truthful v2 consumer before use.
 Runtime initialization has12retained and6new roles (eight retained binder-file
 rows plus four workspace rows); optional missing row.file was not a real gap.
 
+## Reproduced P0: documentation baseline identity binding
+
+Root reproduced both public defects before changing Source. The three-case
+focused RED batch records1PASS/2FAIL: closeout returned status0 for a re-digested
+foreign-identity baseline, and public policy planning resolved instead of rejecting.
+Failed fixtures were retained. Log:
+/workspace/attachments/quality-doc-baseline-regression-red-20261015.log.
+
+The producer now compares the exact canonical repository/project/policy/work
+identity tuple in place of its former work-only comparison. The planner compares
+repository/project/work at its existing baseline gate and policy-ID/path at its
+existing old-policy gate. Canonical serialization avoids adding crypto work.
+No function/callback or boolean connector was added, no saved cap was changed,
+and the policy-map digest exception, timestamp and no-effect boundaries remain.
+The existing two Source bindings were refreshed once; current address/numeric
+admission still belongs to the captured inventory owners. Independent static
+review PASS: /workspace/attachments/quality-doc-baseline-source-fix-review-20261015.md.
+
+All three complete documentation test files passed21cases in the subsequent
+four-file correction batch. That batch records27PASS/1lifecycleFAIL in24.03s;
+its lifecycle failure was a newly added test fixture missing impact-post setup,
+not a CLEAR regression. The retained log is
+/workspace/attachments/quality-doc-lifecycle-correction-batch-20261015.log.
+The exact stale-document assertion was corrected to the actual earlier
+inventory_digest guard; no product error was changed to satisfy a test.
+Source101 and tests450 TypeScript PASS. These are targeted P0 development proofs,
+not global coverage, CRAP, mutation, native delivery or Runtime acceptance.
+
+The lifecycle candidate's unsupported validation_receipt singleton expectation
+was removed; its real impact-post evidence is admitted in the same sealing
+revision before VERIFY. The complete lifecycle file then passed7cases/194assertions
+in1.341s. Log:
+/workspace/attachments/quality-lifecycle-survivor-candidate-acceptance-v2-20261015.log.
+Five blind lanes now account for all356survivors by Source responsibility and
+propose additional public scenarios or separately proven redundant guards;
+their snippets remain unexecuted proposals until Root reviews and integrates them.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

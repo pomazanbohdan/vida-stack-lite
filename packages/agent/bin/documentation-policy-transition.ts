@@ -12,7 +12,7 @@ import scopeSchema from '../schemas/implementation-scope.v1.schema.json' with { 
 import policySchema from '../schemas/documentation-policy.v1.schema.json' with { type: 'json' };
 import baselineSchema from '../schemas/documentation-clear-checkpoint.v1.schema.json' with { type: 'json' };
 import eventSchema from '../schemas/documentation-change-event.v1.schema.json' with { type: 'json' };
-import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { loadProjectContext, projectBindingFor } from '../src/config/project-context.ts';
@@ -112,6 +112,9 @@ type ScopeEvidence = {
   readonly source_revision: string;
 };
 type BaselineEvidence = {
+  readonly repository_id: string;
+  readonly project_id: string;
+  readonly policy_id: string;
   readonly digest: string;
   readonly phase: string;
   readonly status: string;
@@ -126,6 +129,7 @@ type BaselineEvidence = {
   readonly created_at: string;
 };
 type PolicyEvidence = {
+  readonly policy_id: string;
   readonly source_path: string;
   readonly changelog_required: boolean;
   readonly changelog_path: string;
@@ -473,7 +477,8 @@ function planning(
       digest === canonicalJsonDigest(baselineBody) &&
       baseline.phase === 'baseline' &&
       baseline.status === 'pass' &&
-      baseline.work_id === workId &&
+      canonicalJson([baseline.repository_id, baseline.project_id, baseline.work_id]) ===
+        canonicalJson([values['--repository'], values['--project'], workId]) &&
       baseline.source_revision === scope.source_revision &&
       baseline.scope_digest === scopeDigest &&
       baseline.config_digest === runtimeConfigDigest(config) &&
@@ -489,7 +494,7 @@ function planning(
   const oldPolicy = readPolicyEvidence(oldBytes),
     target = readPolicyEvidence(targetBytes);
   requireTransition(
-    baseline.policy_path === policyPath &&
+    canonicalJson([baseline.policy_id, baseline.policy_path]) === canonicalJson([oldPolicy.policy_id, policyPath]) &&
       sha(oldBytes) === baseline.policy_digest &&
       scope.allowed_paths.includes(policyPath) &&
       oldPolicy.source_path === policyPath &&

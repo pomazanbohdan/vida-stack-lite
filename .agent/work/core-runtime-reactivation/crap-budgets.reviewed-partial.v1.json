@@ -379,7 +379,7 @@
     },
     {
       "file": "src/documentation/clear.ts",
-      "sha256": "220e265f8108fb9a61bd56d503c8a6c364c27b7c6dc3ecfa3b972c1bef96d630"
+      "sha256": "8c82c87e100b966e68a6f2c611ff41a98f352a8b8a83c8cbc16ade60952d8f13"
     },
     {
       "file": "src/orchestration/initial-source-frontier-code-rebind.ts",
@@ -527,7 +527,7 @@
     },
     {
       "file": "bin/documentation-policy-transition.ts",
-      "sha256": "ad8524a07d568b1c2bd029074bb3974e761fad96b5e30a50d1b1aec10dea9da0"
+      "sha256": "5f920816e3dc8bd5831aeebe50c10f09f37aca67f5274ec65e966387f6062cb7"
     },
     {
       "file": "bin/init-core.ts",
@@ -220830,7 +220830,10 @@
     "source_commit": "faf9e56f53012c924a008e3aabac65ea41a8bad5",
     "baseline_ref": "b549951",
     "frozen_rows_ref": "faf9e56f53012c924a008e3aabac65ea41a8bad5",
-    "files": ["src/contracts/public-ingress.ts", "src/contracts/envelopes.ts"],
+    "files": [
+      "src/contracts/public-ingress.ts",
+      "src/contracts/envelopes.ts"
+    ],
     "retained": 102,
     "new_functions": 0,
     "removed_functions": 0,
@@ -220840,5 +220843,29 @@
     "api_surface_disposition": "optionalCanonicalJsonDigest is a re-export of the canonical-json-core implementation; that function stays with its own implementation inventory and is not counted as a second body here. Removed LocalToolEnvelope type alias and private CoordinationLedgerValidationIssue are type-surface changes, not callable removals or frozen-cap changes. Source lineage does not qualify SDK compatibility or authorize additional type/API removals.",
     "frozen_ceilings": "All saved original measurements, identity pairs, CC/CRAP maxima and rationale remain unchanged. The existing gate must independently verify each exact original CC and saved ceiling against captured current Source before accepting its conservative local proof.",
     "limits": "Review only, no numeric admission, original historical measurement admission, full executable partial plan or global qualification. Exact complete declared coverage, all original/current role pairs and full assertion-confirmed mutation remain required."
+  },
+  "documentation_baseline_identity_correction_20261015": {
+    "status": "SOURCE_CORRECTION_PENDING_NUMERICAL_QUALIFICATION",
+    "prior_source_ref": "79fd3ce",
+    "files": [
+      "src/documentation/clear.ts",
+      "bin/documentation-policy-transition.ts"
+    ],
+    "bindings": [
+      {
+        "file": "src/documentation/clear.ts",
+        "previous_sha256": "220e265f8108fb9a61bd56d503c8a6c364c27b7c6dc3ecfa3b972c1bef96d630",
+        "sha256": "8c82c87e100b966e68a6f2c611ff41a98f352a8b8a83c8cbc16ade60952d8f13"
+      },
+      {
+        "file": "bin/documentation-policy-transition.ts",
+        "previous_sha256": "ad8524a07d568b1c2bd029074bb3974e761fad96b5e30a50d1b1aec10dea9da0",
+        "sha256": "5f920816e3dc8bd5831aeebe50c10f09f37aca67f5274ec65e966387f6062cb7"
+      }
+    ],
+    "reason": "Reproduced closeout and policy planner acceptance of self-consistent foreign baseline repository/project/policy identity. Existing scalar binding comparisons now compare exact canonical identity tuples at the same guard positions; old transition exception and errors retained.",
+    "independent_review": "/workspace/attachments/quality-doc-baseline-source-fix-review-20261015.md",
+    "source_roles": "No functions or callbacks added/removed; existing owner responsibilities and every saved original/new cap remain unchanged. Current addresses and numerical qualification must be refreshed by existing captured inventory owners before admission.",
+    "limits": "Source and targeted regression proof only; no dynamic CRAP, mutation, SDK, native runtime or global qualification claim."
   }
 }

@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.ts';
+import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 type Mode = 'baseline' | 'closeout' | 'verify';
 
@@ -57,6 +59,22 @@ const run = (root: string, mode: Mode): RunResult => {
     );
   }
   return { status: result.status, stdout: result.stdout, stderr: result.stderr };
+};
+const successful = (operation: () => RunResult): Record<string, unknown> => {
+  const result = expectReturned(operation);
+  expect(result.status, result.stderr).toBe(0);
+  expect(typeof result.stdout).toBe('string');
+  if (typeof result.stdout !== 'string') throw new Error('Expected documentation CLEAR success JSON.');
+  const value: unknown = JSON.parse(result.stdout);
+  expect(value !== null && typeof value === 'object' && !Array.isArray(value)).toBe(true);
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('Documentation CLEAR success result must be an object.');
+  const record = value as Record<string, unknown>;
+  expect(typeof record.status).toBe('string');
+  expect(typeof record.path).toBe('string');
+  expect(typeof record.sha256).toBe('string');
+  expect(typeof record.checkpoint_digest).toBe('string');
+  return record;
 };
 const sha = (value: string): string => createHash('sha256').update(value).digest('hex');
 const initializeFixture = (root: string, { localSchemas = true }: { localSchemas?: boolean } = {}): void => {
@@ -220,6 +238,7 @@ test('authorized new document passes baseline but closeout requires existence an
 
 test('public documentation CLEAR command binds baseline and closeout to current project files', () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-public-'));
+  let passed = false;
   try {
     initializeFixture(root);
     write(root, 'docs/creatio/map.md', 'map\n');
@@ -258,13 +277,48 @@ test('public documentation CLEAR command binds baseline and closeout to current 
     write(root, policy.source_path, JSON.stringify({ ...policy, project_id: 'foreign-project' }) + '\n');
     expect(run(root, 'baseline').status).toBe(1);
     write(root, policy.source_path, JSON.stringify(policy) + '\n');
-    const baseline = run(root, 'baseline');
-    expect(baseline.status, baseline.stderr).toBe(0);
-    const closeout = run(root, 'closeout');
-    expect(closeout.status, closeout.stderr).toBe(0);
-    const verified = run(root, 'verify');
-    expect(verified.status, verified.stderr).toBe(0);
-    expect((JSON.parse(verified.stdout ?? '') as { status: string }).status).toBe('verified');
+    const baseline = successful(() => run(root, 'baseline'));
+    expect(baseline.path).toBe('.agent/work/doc-clear-test/documentation-baseline-0001.v1.json');
+    const baselinePath = path.join(root, baseline.path as string);
+    const baselineBytes = readFileSync(baselinePath);
+    expect(baseline.sha256).toBe(sha(baselineBytes.toString('utf8')));
+    const baselineValue: unknown = JSON.parse(baselineBytes.toString('utf8'));
+    expect(baselineValue !== null && typeof baselineValue === 'object' && !Array.isArray(baselineValue)).toBe(true);
+    if (!baselineValue || typeof baselineValue !== 'object' || Array.isArray(baselineValue))
+      throw new Error('Expected persisted documentation baseline object.');
+    const baselineRecord = baselineValue as Record<string, unknown>;
+    expect(baselineRecord.digest).toBe(baseline.checkpoint_digest);
+    const closeoutPath = '.agent/work/doc-clear-test/documentation-closeout-0001.v1.json';
+    for (const [key, foreign] of [
+      ['repository_id', 'foreign-repository'],
+      ['project_id', 'foreign-project'],
+      ['policy_id', 'foreign-policy'],
+    ] as const) {
+      const { digest: _digest, ...baselineBody } = baselineRecord;
+      const forgedBody = { ...baselineBody, [key]: foreign };
+      writeFileSync(
+        baselinePath,
+        JSON.stringify({ ...forgedBody, digest: canonicalJsonDigest(forgedBody) }, null, 2) + '\n',
+      );
+      const rejectedForeignBaseline = run(root, 'closeout');
+      expect(rejectedForeignBaseline.status).toBe(1);
+      expect(rejectedForeignBaseline.stderr).toContain('GAP-DOCUMENTATION-BASELINE-STALE-001');
+      expect(existsSync(path.join(root, closeoutPath))).toBe(false);
+      writeFileSync(baselinePath, baselineBytes);
+    }
+    const closeout = successful(() => run(root, 'closeout'));
+    expect(closeout.path).toBe(closeoutPath);
+    const closeoutBytes = readFileSync(path.join(root, closeoutPath));
+    expect(closeout.sha256).toBe(sha(closeoutBytes.toString('utf8')));
+    const closeoutValue: unknown = JSON.parse(closeoutBytes.toString('utf8'));
+    expect(closeoutValue !== null && typeof closeoutValue === 'object' && !Array.isArray(closeoutValue)).toBe(true);
+    if (!closeoutValue || typeof closeoutValue !== 'object' || Array.isArray(closeoutValue))
+      throw new Error('Expected persisted documentation closeout object.');
+    expect((closeoutValue as Record<string, unknown>).digest).toBe(closeout.checkpoint_digest);
+    const verified = successful(() => run(root, 'verify'));
+    expect(verified.status).toBe('verified');
+    expect(verified.path).toBe(closeout.path);
+    expect(verified.sha256).toBe(closeout.sha256);
     const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
     const originalConfig = readFileSync(configPath, 'utf8');
     writeFileSync(
@@ -277,15 +331,22 @@ test('public documentation CLEAR command binds baseline and closeout to current 
     expect(run(root, 'verify').status).toBe(1);
     writeFileSync(configPath, originalConfig);
     write(root, 'docs/agent-instructions/current.md', 'changed\n');
-    expect(run(root, 'verify').status).toBe(1);
+    const staleVerify = run(root, 'verify');
+    expect(staleVerify.status).toBe(1);
+    expect(staleVerify.stderr.trim()).toBe('documentation CLEAR inventory_digest is stale');
+    expect(readFileSync(path.join(root, closeoutPath))).toEqual(closeoutBytes);
     write(root, 'docs/agent-instructions/current.md', 'current\n');
-    const closeoutPath = path.join(root, (JSON.parse(closeout.stdout ?? '') as { path: string }).path);
-    const tampered = JSON.parse(readFileSync(closeoutPath, 'utf8')) as { status: string };
+    const persistedCloseoutPath = path.join(root, closeout.path as string);
+    const tampered = JSON.parse(readFileSync(persistedCloseoutPath, 'utf8')) as { status: string };
     tampered.status = 'blocked';
-    writeFileSync(closeoutPath, JSON.stringify(tampered) + '\n');
-    expect(run(root, 'verify').status).toBe(1);
+    writeFileSync(persistedCloseoutPath, JSON.stringify(tampered) + '\n');
+    const invalidDigestVerify = run(root, 'verify');
+    expect(invalidDigestVerify.status).toBe(1);
+    expect(invalidDigestVerify.stderr.trim()).toBe('documentation CLEAR checkpoint digest invalid');
+    passed = true;
   } finally {
-    disposeFixture(root);
+    if (passed) disposeFixture(root);
+    else console.error(`Retained failed documentation CLEAR fixture: ${root}`);
   }
 }, 60_000);
 

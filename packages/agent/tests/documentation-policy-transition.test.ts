@@ -1,11 +1,12 @@
 import { expect, test } from 'bun:test';
 import path from 'node:path';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { policy, preparedFixture } from './helpers/documentation-policy-fixture.ts';
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import { executeDocumentationClearFromWork } from '../src/documentation/clear.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import {
+  documentationPolicyTransitionPath,
   validatePolicyMapAddition,
   parseDocumentationPolicyTransition,
 } from '../src/documentation/policy-transition.ts';
@@ -170,5 +171,30 @@ test('public policy planning denies an extra or substituted map outside exact sc
     await Promise.resolve(
       expect(runReconcileArtifacts(args('plan'))).rejects.toThrow('exact accepted documentation scope'),
     );
+  }
+}, 30000);
+
+test('public policy planning rejects foreign baseline identity fields before writing its operation', async () => {
+  const { f, baseline, args } = await preparedFixture();
+  const baselineBytes = readFileSync(path.join(f.root, baseline.path));
+  const baselineRecord = recordValue(JSON.parse(baselineBytes.toString('utf8')));
+  const operationPath = path.join(f.root, documentationPolicyTransitionPath(f.work));
+  for (const [key, foreign] of [
+    ['repository_id', 'foreign-repository'],
+    ['project_id', 'foreign-project'],
+    ['policy_id', 'foreign-policy'],
+  ] as const) {
+    const { digest: _digest, ...body } = baselineRecord;
+    const forgedBody = { ...body, [key]: foreign };
+    f.put(baseline.path, f.json({ ...forgedBody, digest: canonicalJsonDigest(forgedBody) }));
+    await Promise.resolve(
+      expect(runReconcileArtifacts(args('plan'))).rejects.toThrow(
+        key === 'policy_id'
+          ? 'documentation policy transition: policy schema/path/baseline differs'
+          : 'documentation policy transition: baseline is not current actual authorized scope',
+      ),
+    );
+    expect(existsSync(operationPath)).toBe(false);
+    f.put(baseline.path, baselineBytes);
   }
 }, 30000);

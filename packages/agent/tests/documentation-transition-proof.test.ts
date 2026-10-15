@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,6 +11,7 @@ import policyTemplate from '../templates/documentation-policy.template.v1.json' 
 import * as runtime from '../src/index.ts';
 import type { DocumentationClearInput } from '../src/documentation/clear.ts';
 import { parseForwardClearCheckpoint, parseForwardPolicyIdentity } from '../src/documentation/transition-proof.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 const schemaIds = {
   scope: 'https://vida-agent.invalid/schemas/implementation-scope.v1.schema.json',
@@ -99,15 +101,26 @@ function schemaId(schema: unknown): string | undefined {
   return typeof id === 'string' && Object.values(schemaIds).some((expected) => expected === id) ? id : undefined;
 }
 
+async function expectAsyncReturned<T>(operation: () => Promise<T>): Promise<T> {
+  let result: { value: T } | undefined;
+  await assert.doesNotReject(async () => {
+    result = { value: await operation() };
+  });
+  if (!result) throw new Error('Expected documentation proof operation to fulfill.');
+  return result.value;
+}
+
 test('forward CLEAR checkpoint parser accepts producer bytes and rejects digest and status tampering', () => {
   const fixture = forwardCheckpointFixture();
   let passed = false;
   try {
-    const checkpoint = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+    const checkpoint = expectReturned(() =>
+      runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' }),
+    );
     expect(checkpoint.status).toBe('pass');
 
     const producerBytes = Buffer.from(JSON.stringify(checkpoint));
-    expect(parseForwardClearCheckpoint(producerBytes)).toEqual(checkpoint);
+    expect(expectReturned(() => parseForwardClearCheckpoint(producerBytes))).toEqual(checkpoint);
 
     const digestTampered = { ...checkpoint, policy_id: 'changed-with-stale-digest' };
     expect(() => parseForwardClearCheckpoint(Buffer.from(JSON.stringify(digestTampered)))).toThrow(
@@ -133,9 +146,9 @@ test('forward CLEAR checkpoint parser accepts producer bytes and rejects digest 
 test('documentation consumers do not compile duplicate CLEAR checkpoint validators during import', async () => {
   const compilation = observeAjvCompiles((schema) => schemaId(schema) === schemaIds.checkpoint);
   try {
-    await import(`../src/documentation/clear.ts?cold=${randomUUID()}`);
-    await import(`../src/documentation/policy-transition.ts?cold=${randomUUID()}`);
-    await import(`../src/documentation/transition-proof.ts?cold=${randomUUID()}`);
+    await expectAsyncReturned(() => import(`../src/documentation/clear.ts?cold=${randomUUID()}`));
+    await expectAsyncReturned(() => import(`../src/documentation/policy-transition.ts?cold=${randomUUID()}`));
+    await expectAsyncReturned(() => import(`../src/documentation/transition-proof.ts?cold=${randomUUID()}`));
     expect(compilation.schemas).toHaveLength(0);
   } finally {
     compilation.restore();
@@ -145,7 +158,7 @@ test('documentation consumers do not compile duplicate CLEAR checkpoint validato
 test('forward proof import captures scope schema without compiling its Ajv validator', async () => {
   const compilation = observeAjvCompiles((schema) => schemaId(schema) === schemaIds.scope);
   try {
-    await import(`../src/documentation/transition-proof.ts?cold-scope=${randomUUID()}`);
+    await expectAsyncReturned(() => import(`../src/documentation/transition-proof.ts?cold-scope=${randomUUID()}`));
     expect(compilation.schemas).toHaveLength(0);
   } finally {
     compilation.restore();
@@ -159,7 +172,9 @@ test('forward proof parsers compile private Ajv validators on first use', async 
   let passed = false;
 
   try {
-    const checkpoint = runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' });
+    const checkpoint = expectReturned(() =>
+      runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' }),
+    );
     expect(checkpoint.status).toBe('pass');
     const producerBytes = Buffer.from(JSON.stringify(checkpoint));
     // An earlier ordinary case may already have warmed the one shared owner.
@@ -170,8 +185,8 @@ test('forward proof parsers compile private Ajv validators on first use', async 
 
     // Bun's qualified fresh-query loader gives this module instance a new identity.
     // Keep the ordinary static import above for the real valid-policy contract.
-    const fresh = (await import(
-      `../src/documentation/transition-proof.ts?lazy=${randomUUID()}`
+    const fresh = (await expectAsyncReturned(
+      () => import(`../src/documentation/transition-proof.ts?lazy=${randomUUID()}`),
     )) as typeof import('../src/documentation/transition-proof.ts');
     // Import captures the scope schema but defers Ajv compilation until the
     // selected-forward proof validates accepted scope bytes.
@@ -204,7 +219,7 @@ test('forward proof parsers compile private Ajv validators on first use', async 
 
     // The normal transition-proof import shares the checkpoint owner warmed by
     // the real producer. Values are still checked on each parser call.
-    expect(fresh.parseForwardClearCheckpoint(producerBytes)).toEqual(checkpoint);
+    expect(expectReturned(() => fresh.parseForwardClearCheckpoint(producerBytes))).toEqual(checkpoint);
     expect(() => fresh.parseForwardClearCheckpoint(Buffer.from('{}'))).toThrow(
       'forward documentation proof: CLEAR checkpoint schema invalid',
     );
@@ -212,8 +227,8 @@ test('forward proof parsers compile private Ajv validators on first use', async 
 
     // A fresh-query owner has a private module cache. It compiles on its first
     // valid use, then validates each later value with that compiled function.
-    const privateOwner = (await import(
-      `../src/documentation/clear-checkpoint-validator.ts?private=${randomUUID()}`
+    const privateOwner = (await expectAsyncReturned(
+      () => import(`../src/documentation/clear-checkpoint-validator.ts?private=${randomUUID()}`),
     )) as {
       validateDocumentationClearCheckpointSchema(value: unknown): value is Record<string, unknown>;
     };
@@ -230,7 +245,9 @@ test('forward proof parsers compile private Ajv validators on first use', async 
     expect(privateOwner.validateDocumentationClearCheckpointSchema(checkpoint)).toBe(true);
     expect(observedSchemaIds().filter((id) => id === schemaIds.checkpoint)).toHaveLength(checkpointCompiles + 1);
 
-    const validPolicy = parseForwardPolicyIdentity(Buffer.from(JSON.stringify(policy)), policy.source_path);
+    const validPolicy = expectReturned(() =>
+      parseForwardPolicyIdentity(Buffer.from(JSON.stringify(policy)), policy.source_path),
+    );
     expect(validPolicy).toEqual(policy);
     expect(() => parseForwardPolicyIdentity(Buffer.from(JSON.stringify(policy)), 'docs/other-policy.json')).toThrow(
       'canonical policy identity differs',
