@@ -22,7 +22,7 @@ async function runAdapterChild(
   root: string,
   body: string,
   suffix: string,
-  options: { capture?: boolean; exitCode?: 0 | 1; pattern?: string } = {},
+  options: { capture?: boolean; exitCode?: 0 | 1; pattern?: string; bail?: boolean } = {},
 ) {
   const sourceFile = path.join(root, 'tests', `child-${suffix}.test.ts`);
   const receiptFile = path.join(root, `body-${suffix}.jsonl`);
@@ -41,6 +41,7 @@ async function runAdapterChild(
       sourceFile,
       '--timeout=10000',
       '--reporter=junit',
+      ...(options.bail ? ['--bail=1'] : []),
       `--reporter-outfile=${junitFile}`,
       ...(options.pattern ? ['--test-name-pattern', options.pattern] : []),
     ],
@@ -262,6 +263,42 @@ test.each([0,1,2])('row %i',value=>{
   } finally {
     if (passed) await rm(root, { recursive: true, force: true });
     else console.error('Retained filtered assertion fixture: ' + root);
+  }
+});
+
+test('diagnostic: Bun bail omits unexecuted cases while classifying the first causal assertion', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-bail-diagnostic-'));
+  let passed = false;
+  try {
+    const selected = 'tests/child-bail-diagnostic.test.ts';
+    const laterBody = path.join(root, 'later-body-ran');
+    const registered = path.join(root, 'all-cases-registered');
+    const child = await runAdapterChild(
+      root,
+      `import { expect, test } from 'bun:test';
+import { writeFileSync } from 'node:fs';
+test('first causal failure', () => expect(1).toBe(2));
+test('later registered case', () => writeFileSync(${JSON.stringify(laterBody)}, 'ran'));
+writeFileSync(${JSON.stringify(registered)}, 'registered');
+`,
+      'bail-diagnostic',
+      { bail: true },
+    );
+    const cases: MutationJUnitCase[] = [];
+    const outcome = junitOutcome(child.junit, [selected], [], child.events, (row) => cases.push(row));
+    expect(outcome).toMatchObject({ tests: 1, failures: 1, skipped: 0, outcome: 'killed' });
+    expect(cases).toHaveLength(1);
+    expect(cases.filter((row) => row.outcome === 'skipped')).toHaveLength(0);
+    expect(child.events).toMatchObject([
+      { kind: 'body', body_id: 1, assertion_cause: true, assertion_source: 'bun-expect' },
+    ]);
+    expect(confirmedRunnerOutcome(child.exitCode, outcome.outcome)).toBe('killed');
+    expect(existsSync(laterBody)).toBe(false);
+    expect(existsSync(registered)).toBe(true);
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained expected-Bun-bail diagnostic fixture: ' + root);
   }
 });
 

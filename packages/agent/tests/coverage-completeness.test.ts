@@ -126,17 +126,19 @@ function governedEvidence(): {
 } {
   const payload = { path: 'agent-runtime-new/example.txt', value: 'updated' };
   const operation = 'repository.write';
-  const operationHash = computeWriteOperationHash({
-    operation,
-    payload,
-    principal: 'principal-1',
-    role: 'developer-orchestrator',
-    tenant: project.repository_id,
-    project: projectBinding.project_id,
-    resourceTenant: project.repository_id,
-    resourceProject: projectBinding.project_id,
-    registryHash: project.registry_hash,
-  });
+  const operationHash = expectReturned(() =>
+    computeWriteOperationHash({
+      operation,
+      payload,
+      principal: 'principal-1',
+      role: 'developer-orchestrator',
+      tenant: project.repository_id,
+      project: projectBinding.project_id,
+      resourceTenant: project.repository_id,
+      resourceProject: projectBinding.project_id,
+      registryHash: project.registry_hash,
+    }),
+  );
   const approvedAt = new Date(Date.now() - 1_000).toISOString();
   const expiresAt = new Date(Date.now() + 60_000).toISOString();
   const intent: GovernedWriteIntent = {
@@ -154,7 +156,9 @@ function governedEvidence(): {
       expires_at: expiresAt,
     },
   };
-  const receipt = toAuthorizationReceipt(authorizationRequest(operationHash), 'decision-1', approvedAt);
+  const receipt = expectReturned(() =>
+    toAuthorizationReceipt(authorizationRequest(operationHash), 'decision-1', approvedAt),
+  );
   if (!receipt) throw new Error('Expected write authorization to produce a receipt.');
   const approval: VerifiedApprovalEvidence = {
     ...intent.approval,
@@ -395,11 +399,11 @@ describe('direct maintained-source completeness', () => {
   test('governed write builders bind and validate all evidence', () => {
     const { approval, intent, operationHash, receipt } = governedEvidence();
     expect(receipt.operation_hash).toBe(operationHash);
-    const request = buildGovernedWriteRequest(intent, receipt, approval);
+    const request = expectReturned(() => buildGovernedWriteRequest(intent, receipt, approval));
     const unchangedAuthorization: Partial<typeof request.authorization> = {};
     const unchangedApproval: Partial<typeof request.approval> = {};
-    expect(validateGovernedWriteRequest(request)).toBe(request);
-    expect(computeGovernedWriteRequestDigest(request)).toMatch(/^[a-f0-9]{64}$/);
+    expect(expectReturned(() => validateGovernedWriteRequest(request))).toBe(request);
+    expect(expectReturned(() => computeGovernedWriteRequestDigest(request))).toMatch(/^[a-f0-9]{64}$/);
     expect(() => validateGovernedWriteRequest({})).toThrow(
       "governed write request rejected:  must have required property 'operation';  must have required property 'payload';  must have required property 'authorization';  must have required property 'approval'",
     );
@@ -407,10 +411,8 @@ describe('direct maintained-source completeness', () => {
       "authorization request rejected:  must have required property 'principal';  must have required property 'role';  must have required property 'action';  must have required property 'tenant';  must have required property 'project';  must have required property 'resourceTenant';  must have required property 'resourceProject';  must have required property 'registryHash'",
     );
     expect(() => validateGovernedWriteRequest({ ...request, payload: 1n })).toThrow(/non-canonical/);
-    const directReceipt = toAuthorizationReceipt(
-      authorizationRequest(operationHash),
-      'decision-1',
-      approval.approved_at,
+    const directReceipt = expectReturned(() =>
+      toAuthorizationReceipt(authorizationRequest(operationHash), 'decision-1', approval.approved_at),
     );
     expect(directReceipt).toMatchObject({
       schema: 'AuthorizationReceipt/v1',
@@ -469,17 +471,19 @@ describe('direct maintained-source completeness', () => {
       approvalChanges: Partial<typeof request.approval>,
     ) => {
       const authorization = { ...request.authorization, ...authorizationChanges };
-      const nextHash = computeWriteOperationHash({
-        operation: request.operation,
-        payload: request.payload,
-        principal: authorization.principal,
-        role: authorization.role,
-        tenant: authorization.tenant,
-        project: authorization.project,
-        resourceTenant: authorization.resourceTenant,
-        resourceProject: authorization.resourceProject,
-        registryHash: authorization.registry_hash,
-      });
+      const nextHash = expectReturned(() =>
+        computeWriteOperationHash({
+          operation: request.operation,
+          payload: request.payload,
+          principal: authorization.principal,
+          role: authorization.role,
+          tenant: authorization.tenant,
+          project: authorization.project,
+          resourceTenant: authorization.resourceTenant,
+          resourceProject: authorization.resourceProject,
+          registryHash: authorization.registry_hash,
+        }),
+      );
       return {
         ...request,
         authorization: { ...authorization, operation_hash: nextHash },
@@ -1020,11 +1024,13 @@ describe('direct maintained-source completeness', () => {
         tenant: 'other-tenant',
         resourceTenant: 'other-tenant',
       };
-      const crossOperationHash = computeWriteOperationHash({
-        operation: fixture.intent.operation,
-        payload: fixture.intent.payload,
-        ...crossAuthorization,
-      });
+      const crossOperationHash = expectReturned(() =>
+        computeWriteOperationHash({
+          operation: fixture.intent.operation,
+          payload: fixture.intent.payload,
+          ...crossAuthorization,
+        }),
+      );
       const crossIntent = {
         ...fixture.intent,
         authorization: crossAuthorization,

@@ -397,6 +397,12 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(() => coordinationLedgerDigest(invalid)).toThrow(/coordination ledger rejected/);
     expect(() => coordinationComponentJson({ missing: undefined })).toThrow();
     expect(() => coordinationComponentJson('component', 65)).toThrow('canonical JSON root depth invalid');
+    const { MAX_CANONICAL_BYTES } = await import('../src/contracts/public-ingress.js');
+    const atByteLimit = '\n'.repeat(MAX_CANONICAL_BYTES / 2 - 1);
+    const encodedAtByteLimit = expectReturned(() => coordinationComponentJson(atByteLimit));
+    expect(encodedAtByteLimit).toBe(JSON.stringify(atByteLimit));
+    expect(Buffer.byteLength(encodedAtByteLimit)).toBe(MAX_CANONICAL_BYTES);
+    expect(() => coordinationComponentJson(atByteLimit + '\n')).toThrow('coordination ledger byte budget exceeded');
     expect(ledger).toEqual(before);
 
     const executionResource = 'execution:work-owner';

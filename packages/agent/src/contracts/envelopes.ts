@@ -97,7 +97,7 @@ export function coordinationComponentJson(value: unknown, depth = 0): string {
   // Each encoded JSON node consumes at least one byte. The encoded component cap
   // therefore bounds traversal independently of the schema's collection limits.
   const payload = canonicalJsonWithNodeLimit(value, depth, MAX_CANONICAL_BYTES);
-  reject([Buffer.byteLength(payload, 'utf8') > MAX_CANONICAL_BYTES], 'coordination ledger byte budget exceeded');
+  reject([Buffer.byteLength(payload) > MAX_CANONICAL_BYTES], 'coordination ledger byte budget exceeded');
   return payload;
 }
 

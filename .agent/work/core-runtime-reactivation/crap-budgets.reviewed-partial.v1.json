@@ -419,7 +419,7 @@
     },
     {
       "file": "src/contracts/envelopes.ts",
-      "sha256": "38b9e06f55df46b199213a4dd9109b08f1b7b01bbf0e4b34f2dd38f418493f70"
+      "sha256": "a0902ceb98a1076c1d9a0011a009b2bcbade790f982d00ecab178f7e9d3109f2"
     },
     {
       "file": "src/orchestration/delivered-work-continuation-repair.ts",
@@ -220984,5 +220984,20 @@
     "independent_review": "/workspace/attachments/quality-doc-blocked-baseline-final-source-review-20261015.md",
     "source_roles": "No callable addition/removal or responsibility transfer. Measured static owner CC44 remains under saved original ceiling47; all saved retained/new rows and caps unchanged.",
     "limits": "Targeted Source regression only; no fresh numerical or global qualification from this correction."
+  },
+  "contracts_component_encoding_correction_20261015": {
+    "status": "SOURCE_CORRECTION_PENDING_NUMERICAL_QUALIFICATION",
+    "prior_source_ref": "472860a013f67ec9c8e36466b76949110fac991e",
+    "prior_published_source_sha256": "93325188b16a3f7329123e8433bae7aa12ba72d20739a1d3da830670ef75e464",
+    "bindings": [
+      {
+        "file": "src/contracts/envelopes.ts",
+        "previous_sha256": "38b9e06f55df46b199213a4dd9109b08f1b7b01bbf0e4b34f2dd38f418493f70",
+        "sha256": "a0902ceb98a1076c1d9a0011a009b2bcbade790f982d00ecab178f7e9d3109f2"
+      }
+    ],
+    "reason": "Use Buffer.byteLength default UTF-8 encoding without redundant mutable literal. Preserve exact serialized byte-budget guard; added accepted maximum and rejected maximum-plus-two escaped-byte assertions.",
+    "source_roles": "No callable addition/removal or responsibility transfer; saved correspondence rows and caps unchanged.",
+    "limits": "Focused development checks only; prior Source numeric evidence is historical after this correction."
   }
 }

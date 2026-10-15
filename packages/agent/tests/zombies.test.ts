@@ -11,6 +11,13 @@ import { expectReturned } from './helpers/expect-rejection.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const { repositoryRoot, config, context } = configuredTestContext();
+const clearFixtureSourceText: Readonly<
+  Record<'AGENTS.md' | 'AGENT.sidecar.md' | 'agent-runtime.config.v1.yaml', string>
+> = Object.freeze({
+  'AGENTS.md': readFileSync(path.join(repositoryRoot, 'AGENTS.md'), 'utf8'),
+  'AGENT.sidecar.md': readFileSync(path.join(repositoryRoot, 'AGENT.sidecar.md'), 'utf8'),
+  'agent-runtime.config.v1.yaml': readFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'), 'utf8'),
+});
 type ZombiesCategory = 'Zero' | 'One' | 'Many' | 'Boundary' | 'Interface' | 'Exception' | 'Simple';
 // Candidate references never establish reviewed applicability or execution.
 // The function audit owns those bindings and their Source/test/config hashes.
@@ -290,8 +297,8 @@ function documentationClearFixture(): DocumentationClearFixture {
     writeFileSync(file, content);
   };
   mkdirSync(path.join(root, '.git'));
-  for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'])
-    write(file, readFileSync(path.join(repositoryRoot, file), 'utf8'));
+  for (const file of ['AGENTS.md', 'AGENT.sidecar.md', 'agent-runtime.config.v1.yaml'] as const)
+    write(file, clearFixtureSourceText[file]);
   const schemaPath = `${config.runtime.bundle}/schemas/documentation-policy.v1.schema.json`;
   mkdirSync(path.dirname(path.join(root, schemaPath)), { recursive: true });
   cpSync(path.join(packageRoot, 'schemas/documentation-policy.v1.schema.json'), path.join(root, schemaPath));

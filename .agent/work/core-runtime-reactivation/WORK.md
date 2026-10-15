@@ -5088,6 +5088,48 @@ baseline bytes and no closeout file. Claims about future closeout timestamps or
 diagnostic gaps were not accepted as authorization bugs without a contract-backed
 effect. Fresh contour numerical proof remains pending.
 
+## Main-contracts terminal result and next corrections
+
+At published472860a013f67ec9c8e36466b76949110fac991e, main-contracts coverage
+and scoped frozen CRAP passed: F102/102,L296/296,S325/325,B152/152, maximum
+CC/CRAP15. Run94fce134-3e2c-4890-ab67-ab1618a9a957 retains the focused-coverage
+and scoped-crap reports under packages/agent/coverage/bun-unified/diagnostics.
+The selected four files passed45cases/16386assertions in3.96s.
+
+The subsequent complete mutation attempt1f5fab58-252a-4093-8e99-3702a9db954f
+ended UNKNOWN at its900000ms inner limit. No final main-contracts.json exists;
+1193 generated mutants and provisional event rows do not establish a score or
+confirmed kills. Owned root /workspace/attachments/quality-mutation-main-contracts-YYVIlG
+records901288.014ms, exit1, complete output, observed process-group termination
+and unchanged boot. The retained physical evidence root is
+/tmp/quality-mutation-main-contracts-uu1SAn. The automatic projection now has91
+observations and still4/44 historical compatible local triples, with40 open.
+Do not repeat this unchanged workload within the same budget without an admitted
+throughput correction. Coverage success does not close the mutation gap.
+
+After termination, reviewed test changes narrow expected-success assertions,
+reuse immutable fixture text while preserving fresh per-root config resolution,
+strengthen lifecycle phase/reference/seal checks and test the exact serialized
+component byte limit. The UTF-8 byte-length call drops only its default argument;
+all function roles and frozen caps remain unchanged. Its current Source binding
+is refreshed with pending numerical status.
+
+The six-file development batch passed104cases and failed3 new fixture assertions.
+Root repaired the future seal revision, separate current singleton snapshots,
+and Bun bail census expectation without weakening Source. The four contract files
+had already passed; the complete lifecycle and assertion-adapter repeat passed
+62cases/607assertions in4.37s. Owned root
+/workspace/attachments/quality-rolling-cli-check-rigLOm records exit0, complete
+capture, process-group termination and unchanged boot. Tests450 TypeScript and
+changed-file formatting passed. The new bail case is diagnostic only: Bun emits
+one failing JUnit case and omits the unexecuted case; no actual Stryker mutant or
+qualified fail-fast runner is established by this check.
+
+Completed native Luna slots immediately receive the next bounded disjoint task.
+The next reviewed repair is valid offset leap-second handling across the parser
+and its actual schema consumers. Copied candidates and static reviews remain
+separate from integrated Source and numerical qualification.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
