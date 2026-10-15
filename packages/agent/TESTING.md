@@ -939,6 +939,60 @@ complete correspondence; the global plan remains required for final admission.
 The final report stays outside the sealed runs/<run-id> directory. Do not relax
 its read-only manifest/snapshot permissions to publish a diagnostic.
 
+### Automatic contour progress document
+
+`bun run quality:contours` projects existing terminal reports into
+`coverage/bun-unified/contours/CONTOUR-STATUS.md` and its JSON snapshot. It runs
+no suite, AST inventory, Source hashing, compiler or quality gate. The registry
+is shared with the mutation gate in `tooling/mutation-partitions.ts`; do not
+maintain a second list. The document is a derived view, not acceptance evidence
+or a new planning ledger. WORK remains the decision owner.
+
+Focused coverage and mutation producers automatically write independent,
+per-run observations under that ignored directory. Coverage records its final
+parent outcome separately, including FAIL/UNKNOWN. A killed parent that cannot
+write a terminal receipt remains an artifact gap; never infer PASS from an older
+report. One final-check owner runs `quality:contours` after every terminal batch.
+Parallel workers never merge a shared snapshot. Build/install and Git hooks do
+not run this command. Projection failure reports an output gap and cannot change
+the producer's gate result.
+
+Keep the last observation, historical complete closure and current freshness
+separate. Four covered/total counters and max CC/function-entry CRAP are measured
+values, not exact/frozen qualification. The projection currently leaves those
+gate statuses pending; it does not adapt a frozen CRAP budget report. Generated
+scenarios and absent scenario/function/test links gain no approval from it.
+
+A historical local completion requires full declared Source and executed-test
+selection, compatible captured Source/test/config/dependency digests, and the
+mutation owner's assertion-confirmed result with complete process custody.
+Different fingerprint universes are compared by captured per-file bytes, not
+aggregate fingerprint equality. An unselected Source can be a focused tool input
+and a mutation Source input. Match its digest through the normalized closure.
+Failed/partial/UNKNOWN runs retain the prior achieved numbers and exact closure;
+never combine individual maxima from different inputs. Missing evidence is
+unknown, never zero. No currentness is claimed without the existing owner proof.
+
+Use repeated `--report <JSON>` to import existing producer reports. For an older
+mutation summary that omitted executed tests, supply its actual retained
+`--selection <partition.inputs.json>` v3 descriptor. It must match the summary's
+input/source/test/tool bindings; today's registry alone cannot establish what
+an old run executed. `--commit <SHA>` binds explicit imports without a Git scan;
+`--at <ISO-time>` records import time, not execution time. Producers leave commit
+`not-captured` until an attributable import supplies it. Conflicting results or
+known commits for one run are rejected.
+
+Preserve history across hosts with the tracked
+[derived contour snapshot](../../.agent/work/core-runtime-reactivation/CONTOUR-STATUS.md).
+After a fresh checkout, use its sibling JSON as `--snapshot <path>`. After all
+Source freezes/checks finish, export the merged snapshot with `--output <directory>`
+to that same work directory and commit/push both generated files. Do not edit
+measurements manually. Output defaults to ignored coverage storage. File and
+directory sync precede successful publication; JSON is the recoverable snapshot
+and Markdown can be regenerated after an interrupted write. This filesystem
+publication is qualified on the current Linux host; unsupported sync is an output
+gap, never a weaker silent durability claim.
+
 These targets and frozen budgets govern development and truthful completion of
 its checks. They add no numeric barrier to the minimum native formation and
 installation profile or supported developer unblocking. Follow the lifecycle

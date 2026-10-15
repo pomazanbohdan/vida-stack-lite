@@ -487,6 +487,7 @@ const evidenceSha256 = (value: string | Uint8Array) => createHash('sha256').upda
 export const mutationToolInputs = [
   'stryker.config.ts',
   'tooling/mutation-gate.ts',
+  'tooling/mutation-partitions.ts',
   'tooling/mutation-map.ts',
   'tooling/mutation-map-reporter.ts',
   'tooling/mutation-command-runner.ts',

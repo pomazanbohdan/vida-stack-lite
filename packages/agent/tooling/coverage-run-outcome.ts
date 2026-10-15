@@ -32,7 +32,7 @@ type CoverageRunErrorDiagnostic = {
 
 export type CoverageRunOutcomeInput = {
   run_id: string;
-  selection: { mode: string; fingerprint: string | null };
+  selection: { mode: string; fingerprint: string | null; contour?: string };
   input_fingerprints: Readonly<Record<string, string | null>>;
   input_proofs?: Partial<CoverageRunInputProofs>;
   phase: CoverageRunPhase;

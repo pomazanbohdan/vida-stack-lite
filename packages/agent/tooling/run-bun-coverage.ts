@@ -1,3 +1,4 @@
+import { recordContourReport } from './contour-progress-cli.ts';
 import { Buffer } from 'node:buffer';
 import {
   chmodSync,
@@ -1185,7 +1186,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
   const runId = randomUUID();
   const operationOutcome: CoverageRunOutcomeInput = {
     run_id: runId,
-    selection: { mode: selectionMode, fingerprint: null },
+    selection: { mode: selectionMode, fingerprint: null, ...(focused ? { contour: focused.contour } : {}) },
     input_fingerprints: { source: null, tests: null, tools: null },
     phase: 'preflight',
     expected_producer_count: 1,
@@ -1665,6 +1666,13 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       commandBudget.remaining();
     }
     writeAtomic(finalPath, finalReport);
+    if (focused) {
+      try {
+        recordContourReport(root, finalReport, finalPath);
+      } catch (error) {
+        process.stderr.write('Contour projection output gap: ' + String(error) + '\n');
+      }
+    }
     if (focused)
       process.stdout.write(
         JSON.stringify({ schema: 'VidaBunFocusedCoverageDiagnosticLocation/v1', report: finalPath }) + '\n',
@@ -1795,6 +1803,17 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
           'Coverage lock cleanup and operation recording failed.',
         );
       }
+    }
+  }
+  if (focused) {
+    try {
+      recordContourReport(
+        root,
+        buildCoverageRunOutcome(operationOutcome),
+        path.join(runOutputRoot, 'operation-outcomes', runId + '.json'),
+      );
+    } catch (error) {
+      process.stderr.write('Contour operation projection output gap: ' + String(error) + '\n');
     }
   }
   if (executionFailed && cleanupFailed)

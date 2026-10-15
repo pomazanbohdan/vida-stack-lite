@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `d320564` at origin/main.
+- Published predecessor: `bc68cd7` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -23,6 +23,66 @@ operations or a claim of complete quality/Runtime acceptance.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
+- Contour measurements: [automatic derived document](CONTOUR-STATUS.md), with
+  its sibling JSON snapshot. Regenerate from producer results; do not maintain
+  another manual percentage table. Historical completion, latest attempt,
+  currentness and frozen qualification are separate.
+
+## Automatic contour progress projection
+
+The human requested durable per-contour metrics and one automatic consolidated
+document. `tooling/contour-progress.ts` adapts existing owner-issued JSON;
+`contour-progress-cli.ts` merges immutable observations and renders the document.
+The mutation registry moved without selection changes into its shared owner
+`mutation-partitions.ts`. No new AST/inventory/hash pipeline, suite or gate is
+introduced. The derived document does not replace this decision record.
+
+Coverage and mutation producers record independent per-run files in ignored
+coverage output. The single final-check owner publishes after the terminal
+batch; workers never race over one snapshot. Coverage's terminal parent outcome
+is a separate non-metric observation. Failed/partial/UNKNOWN results retain the
+prior achieved numbers. Exact/frozen qualification and current freshness remain
+explicitly pending/unverified. A process killed before any terminal receipt
+remains an evidence gap, not an implicit PASS.
+
+The first materialized snapshot imports actual fresh host, timing and kernel
+reports. It records two complete local closures, forty-two executable contours
+without a complete imported closure, and one static contour. The earlier timing
+completion at `e2d0331` was real and is retained below; previous fresh-only counts
+must not erase historical achievement. Historical prose is not parsed into a
+fabricated machine receipt. Attestation's seven-mutant pilot remains a scoped
+historical proof, not a complete four-metric contour result.
+
+Timing was independently remeasured at `bc68cd7`: run
+`28688866-7cf8-4d11-b200-d8fc32481eca`,151/151 assertion-confirmed Killed,
+zero non-Killed/UNKNOWN/provenance/source/baseline/report errors; outer
+34064.387577ms, complete output, same boot and observed group termination.
+Canonical map SHA35cd373384ac7403af33194853f4ce93344d1fda03ff87ddc4f1f9cfcc2f181b,
+globally_qualified:false. Focused coverage run
+`3b329dc8-aa22-4644-9357-b325e7a19146`:36/36functions,72/72lines,81/81statements,
+1/1branch; max CC/function-entry CRAP1. Full/frozen and Runtime remain open.
+Raw owner: `/workspace/attachments/quality-retirement-mutation-timing-TPXAPc`;
+physical mutation evidence:
+`/tmp/quality-retirement-mutation-timing-functional-wtyaTq/package-tmp/mutation-evidence-28688866-7cf8-4d11-b200-d8fc32481eca-NwIAeH`.
+
+Blind Luna reviewed joins, publication and retention. Its concrete selected-test
+gap was corrected: captured dependency membership is not executed-test proof.
+Legacy summaries use their byte-bound v3 descriptors; new summaries carry the
+selected paths. Compare normalized captured closures because focused Source/tool
+classification differs from campaign classification. Numeric historical
+closures remain intact after lower/failed observations. Snapshot publication
+syncs file/directory, then publishes disposable Markdown; an interrupted second
+write can be repaired from the JSON without rerunning tests.
+
+Verification: focused projection, mutation-command and coverage-custody controls
+passed74/0,584assertions in1425ms. Tooling typecheck passed183files and test
+typecheck passed445files. The real pinned `quality:contours --snapshot ...` alias
+regenerated five actual observations without suites. Logs:
+`/workspace/attachments/quality-contour-projection-final-controls-resume-20261015.log`.
+The initial red assertion wording and unpublished draft snapshot stay separate;
+neither was promoted to quality evidence. Strict pre-commit and publication
+remain required for this Source packet. No active schema/loader switch, old
+state replay, Runtime acceptance or unblock notice.
 
 ## Current bounded mutation execution plan
 

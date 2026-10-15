@@ -8,10 +8,10 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `8df1b5d`; current correction details are in WORK.
+- Published predecessor: `bc68cd7`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
-- SDK input formation runs automatically for main. Exact7c9d139 CI SDK inputs were accepted for the current serial diagnostic; changed Source needs its matching inputs. WORK owns run/artifact receipts.
-- Current serial run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Keep its fresh physical checkout and all older UNKNOWN evidence retained; no replay or resource successor. WORK owns exact custody and fingerprints.
+- SDK input formation runs automatically for main. The fresh host/timing pilots used accepted d320564 CI inputs. Changed inputs need matching CI formation; WORK owns run/artifact receipts.
+- Historical run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Preserve its custody and all older UNKNOWN evidence; do not replay it. Current attempts and source bindings are in WORK and the derived contour document.
 - That run's21YAML failures have one test-only fixture correction: valid configured projects, distinct allowed project mismatch and applied YAML mutations. Both complete fixture modes passed66/0; the final marker assertion passed its changed case in both modes. Full numeric acceptance remains open. Measure the long completed-Source fixture stages before optimizing them.
 - Genuine complexity baseline `b549951` was measured once in run `fe54f83c`; report SHA `ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb`. Reuse that evidence; no recapture is needed.
 - Full frozen correspondence and the full CRAP plan are absent. The reviewed partial budget does not satisfy either prerequisite.
@@ -40,7 +40,12 @@ partition registry. Public Stryker plan/events and parent assertion confirmation
 retain separate authority. Missing, omitted and platform-pending assignments stay
 explicitly unqualified; full acceptance requires the exact Source/partition matrix.
 Use the shared map owner and captured inputs, not a second AST/hash pipeline.
-The real main-host contour has complete local proof; WORK owns counts and receipts.
+The real main-host and timing contours have complete local proof. The
+[automatic contour document](CONTOUR-STATUS.md) derives their recorded metrics
+and the remaining matrix from producer results; WORK owns decisions and receipts.
+After each terminal batch, one final owner refreshes it through TESTING's
+`quality:contours` command. Preserve/export its JSON snapshot after freezes before
+commit/push; never maintain manual duplicate percentage tables.
 Next qualify native Bun per-test selection before rerunning the oversized kernel
 contour. Capture-only per-test maps do not authorize filtering or numeric admission.
 

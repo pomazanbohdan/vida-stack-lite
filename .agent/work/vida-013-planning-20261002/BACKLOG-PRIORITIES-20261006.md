@@ -55,6 +55,13 @@ with native timeout-retention controls. Frozen correspondence and scoped budget
 repairs continue; the full exact gates remain open. WORK owns current counts,
 checks, published commits and unresolved resource/SDK prerequisites.
 
+Per-contour numeric progress is now the
+[automatic derived document](../core-runtime-reactivation/CONTOUR-STATUS.md),
+regenerated from existing coverage/mutation producers and its durable JSON
+snapshot. It separates historical achievement, latest attempt, currentness and
+frozen qualification. Keep TEST013 IDs and their acceptance unchanged; no second
+manual progress ledger is required.
+
 Global canonical mutant maps, complete partition-matrix validation and retained
 plan/event evidence are implemented under the existing test-quality tasks.
 Local main-host qualification does not close full mutation acceptance. Qualify
