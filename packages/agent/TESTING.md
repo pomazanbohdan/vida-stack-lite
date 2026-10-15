@@ -162,6 +162,12 @@ matchers, so a missing target value fails the intended assertion. A raw runtime
 exception or a matcher argument error remains unproven. Do not pad assertion
 counts or relax the classifier to admit it.
 
+Timing invalid-input cases must observe absence of side effects, not only the
+fallback error code. Give non-string message/code values a counted slice getter,
+and invalid clock/threshold values a counted coercion hook. Require zero reads
+and coercions, preserved original failure/result, and no action on an invalid
+threshold. The same validated primitive must reach the numeric/string operation.
+
 Mutation budgets have one data-only owner in
 [mutation-limits.ts](tooling/mutation-limits.ts). They do not replace the Bun
 per-test default or the full coverage deadline. A test command has a180000ms

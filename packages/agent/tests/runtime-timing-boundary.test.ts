@@ -81,6 +81,80 @@ function eventAt(events: readonly RuntimeTimingEvent[]): RuntimeTimingEvent {
 }
 
 describe('direct maintained-source completeness', () => {
+  test.each(['message', 'code'] as const)(
+    'ignores non-string own %s without reading its slice method',
+    async (property) => {
+      let reads = 0;
+      const value = {
+        get slice(): never {
+          reads += 1;
+          throw new Error('invalid metadata must not be inspected');
+        },
+      };
+      const failure = Object.create(null) as object;
+      Object.defineProperty(failure, property, { value });
+      const events: RuntimeTimingEvent[] = [];
+      expect(
+        await rejectionReason(
+          invokeTimed(
+            'runGovernedWrite',
+            () => {
+              throw failure;
+            },
+            {
+              clock: clock(0n, 1n),
+              sink: {
+                record: (event) => {
+                  events.push(event);
+                },
+              },
+            },
+          ),
+        ),
+      ).toBe(failure);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(reads).toBe(0);
+      expect(eventAt(events).error_code).toBe('UNEXPECTED_ERROR');
+    },
+  );
+
+  test('rejects a non-bigint clock result without coercing it', async () => {
+    let coercions = 0;
+    const value = {
+      [Symbol.toPrimitive]: () => {
+        coercions += 1;
+        return 0n;
+      },
+    };
+    const observed = await timedWithUntrustedClock([value, 1n]);
+    expect(observed.result).toBe('untrusted-clock');
+    expect(eventAt(observed.events).clock_error).toBe('CLOCK_READ_FAILED');
+    expect(coercions).toBe(0);
+  });
+
+  test('rejects a non-number threshold without coercing it or running the action', async () => {
+    let coercions = 0;
+    let calls = 0;
+    const threshold = {
+      [Symbol.toPrimitive]: () => {
+        coercions += 1;
+        return 1;
+      },
+    };
+    const operation: unknown = Reflect.apply(invokeTimed, undefined, [
+      'readConfig',
+      () => {
+        calls += 1;
+      },
+      { thresholdMs: threshold },
+    ]);
+    const failure = await rejectionReason(operation);
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as Error).message).toBe('runtime timing threshold must be positive');
+    expect(coercions).toBe(0);
+    expect(calls).toBe(0);
+  });
+
   test('uses default options and emits one valid successful timing event', async () => {
     const messages: unknown[] = [];
     const output = spyOn(console, 'error').mockImplementation((message: unknown) => {

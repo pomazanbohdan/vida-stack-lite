@@ -67,7 +67,9 @@ async function readClock(clock: RuntimeClock): Promise<{ value: bigint; error?: 
   return Promise.resolve()
     .then(() => clock.monotonicNs())
     .then((value) => {
-      const valid = [typeof value === 'bigint', value >= 0n].every(Boolean);
+      const bigint = typeof value === 'bigint';
+      const safeValue = [0n, value][Number(bigint)]!;
+      const valid = [bigint, safeValue >= 0n].every(Boolean);
       return [{ value: 0n, error: 'CLOCK_READ_FAILED' as const }, { value }][Number(valid)]!;
     })
     .catch(() => ({ value: 0n, error: 'CLOCK_READ_FAILED' as const }));
@@ -82,7 +84,8 @@ async function safeStringProperty(error: unknown, property: 'message' | 'code'):
       Object.hasOwn(descriptorObject, 'value'),
       typeof (descriptorObject as { value?: unknown }).value === 'string',
     ].every(Boolean);
-    return [emptyText(), (descriptorObject as { value: string }).value.slice(0, 256).toLowerCase()][Number(valid)]!;
+    const text = [emptyText(), (descriptorObject as { value: string }).value][Number(valid)]!;
+    return text.slice(0, 256).toLowerCase();
   };
   return Promise.resolve().then([emptyText, read][Number(objectLike)]!).catch(emptyText);
 }
@@ -174,7 +177,9 @@ export async function invokeTimed<T>(
   const clock = defined([options.clock, systemClock]);
   const sink = defined([options.sink, defaultSink()]);
   const thresholdMs = defined([options.thresholdMs, RUNTIME_TIMING_THRESHOLD_MS]);
-  reject([!Number.isFinite(thresholdMs), thresholdMs <= 0], 'runtime timing threshold must be positive');
+  const finiteThreshold = Number.isFinite(thresholdMs);
+  const safeThreshold = [0, thresholdMs][Number(finiteThreshold)]!;
+  reject([!finiteThreshold, safeThreshold <= 0], 'runtime timing threshold must be positive');
   const optimizationReason = defined([options.optimizationReason, `runtime call exceeded ${thresholdMs}ms`]);
   const callId = nextCallId();
   const started = await readClock(clock);

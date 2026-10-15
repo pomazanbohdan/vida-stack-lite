@@ -89,6 +89,13 @@ it does not authorize a new attempt or replay.
 The current dependency comparison is recorded in the
 [framework reference registry](research/agent-framework-reference-registry.md#mastra-and-edictum).
 
+Runtime timing is observational. Classify error metadata from own string data
+properties; ignore accessors and non-string values without invoking their
+methods. Validate clock results as bigint and thresholds as finite positive
+numbers before comparisons can coerce a rejected value. Invalid clocks report
+the clock error; invalid thresholds reject before the action. Preserve the
+action's result or original rejection and the existing timing event contract.
+
 ## Dynamic engine requirements
 
 The engine core of `EPIC-CONFIGURABLE-AGENT-SYSTEM-001` is P2 development.

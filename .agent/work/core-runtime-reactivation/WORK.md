@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `571dcb6` at origin/main.
+- Published predecessor: `0245d77` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -378,6 +378,45 @@ Focused timing/output regression3PASS/215assertions/75ms:
 quality-timing-causal-focused-571-resume-20261015.log. Independent actual review
 ACCEPT: quality-timing-causal-actual-review-571-resume-20261015.md. Strict
 publication and fresh coverage/mutation follow before contour closeout.
+
+Published0245d77 passed the strict474-file hook and ordinary push. The hook first
+rejected Reflect.apply's implicit any return; the helper now awaits into unknown
+inside the same asserted invocation. No check was bypassed. Focused report
+11e0279f-7673-4d52-a52f-894a9ec55816 completed exit0 in6653ms: all four metrics100%,
+36functions and max CC/entry-CRAP1. A prior outer launch used an incorrect full
+commit label and is unadmitted, retained at quality-focused-supervised-0245d77-
+UpwCEy. The admitted invocation takes HEAD directly from Git; original receipts
+are unchanged. Summary: quality-runtime-timing-causal-focused-summary-0245d77-
+20261015.json.
+Current SDK CI38707677823/attempt1/artifact11958868678 passed its existing owner
+in1668ms through selected connector transport. The second mutation pilot finished
+in96305ms with exit0, full capture and observed owned-group termination:
+149/149assertion-confirmedKilled100%, zeroTimeout/UNKNOWN/survivors. Preserve
+quality-mutation-supervised-0245d77-7Qkhwa and package evidence
+.tmp/mutation-evidence-2cdb60c0-5ab3-4a35-a0df-2512b3b5d544-BYAukt. Summary:
+quality-runtime-timing-causal-mutation-summary-0245d77-20261015.json. This is a
+local partition result, not joint/global frozen qualification. Earlier17timeouts
+did not recur; their exact historical bottleneck is unresolved, not repaired by
+a claimed limit change. Root observed wrapper bwrap107418 defunct under hostPID1
+in group107417 after the admitted owned group107416 was absent; no live effect
+is inferred from that zombie, and no full-host descendant-reaping claim is made.
+
+### Timing invalid-value observation repair
+
+Before leaving timing, independent review found eager array evaluation invoked
+a non-string message/code value's slice getter before choosing the empty
+fallback. The same pattern coerced invalid clock and threshold objects in numeric
+comparisons. Four real regressions all failed with exactly one unwanted access
+or coercion: quality-timing-untrusted-before-0245d77-20261015.log. Product repair
+selects the validated primitive first and then applies the existing operation.
+No new functions, API, dependency, coercion hook or frozen cap is introduced.
+Existing original-failure identity, clock classification and pre-action threshold
+denial remain asserted. Bounded independent analysis:
+quality-timing-untrusted-property-read-024-20261015.md. Full focused timing/output
+checks passed7/0with237assertions in98ms after correction:
+quality-timing-untrusted-after-0245d77-20261015.log. Independent blind actual review
+ACCEPT: quality-timing-input-guard-actual-review-024-20261015.md. Strict publication
+and fresh numeric measurements follow. Prior149-mutant evidence stays at0245d77.
 
 Blind planning at quality-runtime-core-next-minimal-6a7-20261015.md confirms the
 existing runtime-core partition still requires configured-workflow/smoke and
