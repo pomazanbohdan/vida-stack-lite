@@ -4,6 +4,152 @@ import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { runBoundedSubprocess } from './helpers/bounded-subprocess.ts';
+import { captureSourceBeforeimages } from './helpers/source-beforeimage-fixture.ts';
+
+test('source beforeimage fixture reuses one stable read with canonical ordering and receiver', () => {
+  const calls: string[] = [];
+  const reader: Parameters<typeof captureSourceBeforeimages>[0] = {
+    fileExists: () => {
+      throw Error('stable capture must not use the fallback existence probe');
+    },
+    readBytes: () => {
+      throw Error('stable capture must not reread bytes');
+    },
+    readStableBytes(target, label) {
+      expect(this).toBe(reader);
+      calls.push(`${target}:${label}`);
+      return Buffer.from(target);
+    },
+  };
+  const capture = captureSourceBeforeimages(reader, ['b.ts', 'a.ts']);
+  expect(calls).toEqual(['a.ts:scoped source stable read', 'b.ts:scoped source stable read']);
+  expect(capture.beforeimages).toEqual(
+    ['a.ts', 'b.ts'].map((path) => ({ path, bytes_base64: Buffer.from(path).toString('base64') })),
+  );
+  expect(capture.source.entries.map((entry) => entry.path)).toEqual(['a.ts', 'b.ts']);
+});
+
+test('source beforeimage fixture preserves both fallback reads without a serialization reread', () => {
+  let reads = 0;
+  let probes = 0;
+  const reader: Parameters<typeof captureSourceBeforeimages>[0] = {
+    fileExists() {
+      expect(this).toBe(reader);
+      probes++;
+      return true;
+    },
+    readBytes() {
+      expect(this).toBe(reader);
+      reads++;
+      return Buffer.from('same');
+    },
+  };
+  const capture = captureSourceBeforeimages(reader, ['a.ts']);
+  expect(reads).toBe(2);
+  expect(probes).toBe(2);
+  expect(capture.beforeimages).toEqual([{ path: 'a.ts', bytes_base64: Buffer.from('same').toString('base64') }]);
+  expect(capture.source.entries[0]?.bytes).toBe(4);
+});
+
+test('source beforeimage fixture rejects changed fallback bytes before publication', () => {
+  let reads = 0;
+  let published = false;
+  expect(() => {
+    captureSourceBeforeimages(
+      { fileExists: () => true, readBytes: () => Buffer.from(++reads === 1 ? 'first' : 'second') },
+      ['a.ts'],
+    );
+    published = true;
+  }).toThrow('scoped source changed during snapshot');
+  expect(reads).toBe(2);
+  expect(published).toBe(false);
+});
+
+test('source beforeimage fixture rejects absent stable and fallback entries', () => {
+  let probes = 0;
+  const readBytes = () => {
+    throw Error('absent source must not be read');
+  };
+  expect(() =>
+    captureSourceBeforeimages({ fileExists: () => false, readBytes, readStableBytes: () => null }, ['a.ts']),
+  ).toThrow('Source beforeimage capture requires every file.');
+  expect(() =>
+    captureSourceBeforeimages(
+      {
+        fileExists: () => {
+          probes++;
+          return false;
+        },
+        readBytes,
+      },
+      ['a.ts'],
+    ),
+  ).toThrow('Source beforeimage capture requires every file.');
+  expect(probes).toBe(2);
+});
+
+test('source beforeimage fixture makes independent captures of changed bytes and membership', () => {
+  const files = new Map([['a.ts', Buffer.from('before')]]);
+  let reads = 0;
+  const reader = {
+    fileExists: () => true,
+    readBytes: () => {
+      throw Error('unexpected fallback');
+    },
+    readStableBytes: (target: string) => {
+      reads++;
+      return files.get(target) ?? null;
+    },
+  };
+  const first = captureSourceBeforeimages(reader, [...files.keys()]);
+  files.set('a.ts', Buffer.from('after'));
+  files.set('b.ts', Buffer.from('added'));
+  const second = captureSourceBeforeimages(reader, [...files.keys()]);
+  expect(reads).toBe(3);
+  expect(first.beforeimages).toEqual([{ path: 'a.ts', bytes_base64: Buffer.from('before').toString('base64') }]);
+  expect(second.beforeimages).toEqual([
+    { path: 'a.ts', bytes_base64: Buffer.from('after').toString('base64') },
+    { path: 'b.ts', bytes_base64: Buffer.from('added').toString('base64') },
+  ]);
+  expect(second.source.digest).not.toBe(first.source.digest);
+  expect(first.source.entries.map((entry) => entry.path)).toEqual(['a.ts']);
+  expect(second.source.entries.map((entry) => entry.path)).toEqual(['a.ts', 'b.ts']);
+});
+
+test('source beforeimage fixture preserves each file when the reader reuses its buffer', () => {
+  const shared = Buffer.alloc(6);
+  const capture = captureSourceBeforeimages(
+    {
+      fileExists: () => true,
+      readBytes: () => {
+        throw Error('unexpected fallback');
+      },
+      readStableBytes(target) {
+        shared.write(target === 'a.ts' ? 'first!' : 'second');
+        return shared;
+      },
+    },
+    ['a.ts', 'b.ts'],
+  );
+  expect(capture.source.entries[0]?.sha256).toBe(new Bun.CryptoHasher('sha256').update('first!').digest('hex'));
+  expect(capture.beforeimages).toEqual([
+    { path: 'a.ts', bytes_base64: Buffer.from('first!').toString('base64') },
+    { path: 'b.ts', bytes_base64: Buffer.from('second').toString('base64') },
+  ]);
+});
+
+test('source beforeimage fixture preserves canonical path denial before reads', () => {
+  const reader = {
+    fileExists: () => {
+      throw Error('invalid path reached a reader');
+    },
+    readBytes: () => {
+      throw Error('invalid path reached a reader');
+    },
+  };
+  expect(() => captureSourceBeforeimages(reader, ['../a.ts'])).toThrow('scoped source path is not canonical');
+  expect(() => captureSourceBeforeimages(reader, ['a.ts', 'a.ts'])).toThrow('scoped source paths contain duplicates');
+});
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

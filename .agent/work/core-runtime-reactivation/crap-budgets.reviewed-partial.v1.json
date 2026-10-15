@@ -171,7 +171,7 @@
     },
     {
       "file": "src/orchestration/configured-context.ts",
-      "sha256": "120236214e4f1b55899a56d567815d61e23b9f647e2fbabd73107f6c055196fd"
+      "sha256": "bc1721f95eb0af009a621202224da29e68d3850b13686b7daa183e9a9303ec90"
     },
     {
       "file": "src/orchestration/observed-research-result.ts",
@@ -467,7 +467,7 @@
     },
     {
       "file": "src/orchestration/scoped-source-snapshot.ts",
-      "sha256": "682c1904aed123e1b86f60c792e99d9c64ddcf87b5b761639ffad6c209848171"
+      "sha256": "b5e1d0a3277daa8d0f5e33964fb5280faf380de780fda0fabb1c882435ec1083"
     },
     {
       "file": "src/orchestration/local-work-admission.ts",
@@ -26804,10 +26804,10 @@
         "line": 89,
         "column": 0,
         "start": 3074,
-        "end": 4803,
+        "end": 4854,
         "bodyLine": 96,
         "bodyColumn": 89,
-        "bodyEndLine": 135,
+        "bodyEndLine": 136,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -26831,13 +26831,13 @@
       "max_crap": 72,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 138,
+        "line": 139,
         "column": 7,
-        "start": 4903,
-        "end": 7794,
-        "bodyLine": 142,
+        "start": 4954,
+        "end": 7845,
+        "bodyLine": 143,
         "bodyColumn": 21,
-        "bodyEndLine": 211,
+        "bodyEndLine": 212,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -26861,13 +26861,13 @@
       "max_crap": 2,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 157,
+        "line": 158,
         "column": 52,
-        "start": 5891,
-        "end": 5919,
-        "bodyLine": 157,
+        "start": 5942,
+        "end": 5970,
+        "bodyLine": 158,
         "bodyColumn": 64,
-        "bodyEndLine": 157,
+        "bodyEndLine": 158,
         "bodyEndColumn": 80
       },
       "source_address": {
@@ -26891,13 +26891,13 @@
       "max_crap": 30,
       "rationale": "Existing canonical context validation/filter/sort roles retained. Stage routing and its stage-reference callback are separate additions; added requireBridge guard is not permission to raise existing caps.",
       "current_source_address": {
-        "line": 208,
+        "line": 209,
         "column": 15,
-        "start": 7517,
-        "end": 7612,
-        "bodyLine": 208,
+        "start": 7568,
+        "end": 7663,
+        "bodyLine": 209,
         "bodyColumn": 26,
-        "bodyEndLine": 208,
+        "bodyEndLine": 209,
         "bodyEndColumn": 109
       },
       "source_address": {
@@ -52534,13 +52534,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 213,
+        "line": 214,
         "column": 7,
-        "start": 7803,
-        "end": 8517,
-        "bodyLine": 219,
+        "start": 7854,
+        "end": 8568,
+        "bodyLine": 220,
         "bodyColumn": 28,
-        "bodyEndLine": 232,
+        "bodyEndLine": 233,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -52566,13 +52566,13 @@
         "bodyEndColumn": 89
       },
       "current_source_address": {
-        "line": 220,
+        "line": 221,
         "column": 58,
-        "start": 8058,
-        "end": 8089,
-        "bodyLine": 220,
+        "start": 8109,
+        "end": 8140,
+        "bodyLine": 221,
         "bodyColumn": 69,
-        "bodyEndLine": 220,
+        "bodyEndLine": 221,
         "bodyEndColumn": 89
       },
       "baseline_complexity": 1,
@@ -54774,13 +54774,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 454,
+        "line": 456,
         "column": 7,
-        "start": 18858,
-        "end": 19744,
-        "bodyLine": 454,
+        "start": 18923,
+        "end": 19809,
+        "bodyLine": 456,
         "bodyColumn": 116,
-        "bodyEndLine": 475,
+        "bodyEndLine": 477,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -54806,13 +54806,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 477,
+        "line": 479,
         "column": 7,
-        "start": 19753,
-        "end": 20923,
-        "bodyLine": 480,
+        "start": 19818,
+        "end": 20988,
+        "bodyLine": 482,
         "bodyColumn": 33,
-        "bodyEndLine": 504,
+        "bodyEndLine": 506,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -54838,13 +54838,13 @@
         "bodyEndColumn": 86
       },
       "current_source_address": {
-        "line": 487,
+        "line": 489,
         "column": 27,
-        "start": 20290,
-        "end": 20349,
-        "bodyLine": 487,
+        "start": 20355,
+        "end": 20414,
+        "bodyLine": 489,
         "bodyColumn": 45,
-        "bodyEndLine": 487,
+        "bodyEndLine": 489,
         "bodyEndColumn": 86
       },
       "baseline_complexity": 1,
@@ -54870,13 +54870,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 491,
+        "line": 493,
         "column": 27,
-        "start": 20478,
-        "end": 20914,
-        "bodyLine": 491,
+        "start": 20543,
+        "end": 20979,
+        "bodyLine": 493,
         "bodyColumn": 45,
-        "bodyEndLine": 502,
+        "bodyEndLine": 504,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 6,
@@ -180032,10 +180032,10 @@
         "line": 423,
         "column": 0,
         "start": 17481,
-        "end": 18753,
+        "end": 18818,
         "bodyLine": 423,
         "bodyColumn": 114,
-        "bodyEndLine": 451,
+        "bodyEndLine": 453,
         "bodyEndColumn": 1
       },
       "rationale": "Reads source bytes through a stable reader when available, otherwise checks existence and reads twice; enforces per-file and remaining-byte limits. No published role in the retained source performs this responsibility at this callsite; prospective new-role allowance remains 10/10."
@@ -198086,9 +198086,9 @@
     "limits": "Only three complete selected families. Other repair/new lock callback correspondence remains pending; no executable/numeric qualification."
   },
   "quality_continuation_current_bindings": {
-    "schema": "ReviewedLineageJoin/v1",
+    "schema": "ReviewedSourceBindings/v1",
     "status": "SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
-    "predecessor_commit": "0558135",
+    "predecessor_commit": "18879ba",
     "counts": {
       "retained": 5266,
       "new": 1554,
@@ -198096,554 +198096,28 @@
       "current_roles": 6820,
       "source_files": 149
     },
-    "retained_added": 98,
-    "independent_review_refs": [
-      "/workspace/attachments/quality-lineage25-independent-055-20261015.json",
-      "/workspace/attachments/quality-host56-independent-055-20261015.json",
-      "/workspace/attachments/quality-shifted18-independent-055-20261015.json"
-    ],
-    "rejected_correspondences": [
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:fsSafeOpen#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:fsSafeOpen#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[1]#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[1]#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:readableClonedFile#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:readableClonedFile#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsOpenParent#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsOpenParent#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:releaseReclaimGuard#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:releaseReclaimGuard#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:openExclusiveLockAt#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:openExclusiveLockAt#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:releaseExclusiveLock#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:releaseExclusiveLock#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:removeStaleLock#0/closure:CallExpression:arguments[1]#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:removeStaleLock#0/closure:CallExpression:arguments[1]#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:reclaimStaleReclaimGuard#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:reclaimStaleReclaimGuard#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxRemoveFile#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxRemoveFile#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:removeStaleLock#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:removeStaleLock#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:releaseReclaimGuard#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:releaseReclaimGuard#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:acquireReclaimGuard#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:acquireReclaimGuard#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:readReclaimGuardOwner#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:readReclaimGuardOwner#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:reclaimStaleReclaimGuard#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:reclaimStaleReclaimGuard#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:moveAndRemovePinnedLock#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:moveAndRemovePinnedLock#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0/closure:CallExpression:arguments[2]#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0/closure:CallExpression:arguments[2]#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0/closure:CallExpression:arguments[2]#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0/closure:CallExpression:arguments[2]#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0/closure:CallExpression:callee[0]#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0/closure:CallExpression:callee[0]#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxAccess#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:linuxAccess#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:windowsAccess#0",
-        "current_identity": "src/config/safe-repository-access.ts#fn:windowsAccess#0",
-        "rationale": "The body changed. Matching name and ordinal do not establish equivalent responsibility; no direct-caller-preserving lineage proof supports carrying the published ceiling forward.",
-        "primary_ref": "/workspace/attachments/quality-safe40-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:advanceLockedCutoff#0",
-        "current_identity": "bin/run.ts#fn:advanceLockedCutoff#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:captureRetiredSource#0/binding:originalToolRecords/closure:CallExpression:arguments[0]#1",
-        "current_identity": "bin/run.ts#fn:captureRetiredSource#0/binding:originalToolRecords/closure:CallExpression:arguments[0]#1",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:captureRetiredSource#0/binding:verifyCurrent/binding:verifyCurrent#0",
-        "current_identity": "bin/run.ts#fn:captureRetiredSource#0/binding:verifyCurrent/binding:verifyCurrent#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:forwardUpdateAuthority#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:forwardUpdateAuthority#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:forwardUpdateAuthority#0/closure:CallExpression:arguments[0]#1",
-        "current_identity": "bin/run.ts#fn:forwardUpdateAuthority#0/closure:CallExpression:arguments[0]#1",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:installedBundleInventory#0/fn:walk#0",
-        "current_identity": "bin/run.ts#fn:installedBundleInventory#0/fn:walk#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:main#0",
-        "current_identity": "bin/run.ts#fn:main#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:parseArgs#0/closure:CallExpression:arguments[0]#1",
-        "current_identity": "bin/run.ts#fn:parseArgs#0/closure:CallExpression:arguments[0]#1",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:readBoundedReport#0",
-        "current_identity": "bin/run.ts#fn:readBoundedReport#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:readLocalSessionIntake#0",
-        "current_identity": "bin/run.ts#fn:readLocalSessionIntake#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:readRetiredSourceNativeTurn#0/binding:matches/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:readRetiredSourceNativeTurn#0/binding:matches/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:releaseCompletedReadonly#0/binding:expectedFrontier/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:releaseCompletedReadonly#0/binding:expectedFrontier/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:releaseCompletedReadonly#0/binding:expectedRequests/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:releaseCompletedReadonly#0/binding:expectedRequests/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:releaseCompletedReadonly#0/binding:inertRequests/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:releaseCompletedReadonly#0/binding:inertRequests/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:releaseCompletedReadonly#0/binding:parseRunState/binding:parseRunState#0",
-        "current_identity": "bin/run.ts#fn:releaseCompletedReadonly#0/binding:parseRunState/binding:parseRunState#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:releaseCompletedReadonly#0/closure:CallExpression:arguments[0]#2",
-        "current_identity": "bin/run.ts#fn:releaseCompletedReadonly#0/closure:CallExpression:arguments[0]#2",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:releaseHistoricalOwner#0/binding:relative/binding:relative#0",
-        "current_identity": "bin/run.ts#fn:releaseHistoricalOwner#0/binding:relative/binding:relative#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:releaseHistoricalOwner#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:releaseHistoricalOwner#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:retiredSourceEffects#0",
-        "current_identity": "bin/run.ts#fn:retiredSourceEffects#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:retiredSourceEffects#0/binding:add/binding:add#0",
-        "current_identity": "bin/run.ts#fn:retiredSourceEffects#0/binding:add/binding:add#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:action/binding:action#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:action/binding:action#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:completedValidationReceipts/binding:completedValidationReceipts#0/binding:expected/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:completedValidationReceipts/binding:completedValidationReceipts#0/binding:expected/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:completedValidationReceipts/binding:completedValidationReceipts#0/binding:receipts/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:completedValidationReceipts/binding:completedValidationReceipts#0/binding:receipts/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:describe/binding:describe#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:describe/binding:describe#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:normalizeObservedResearch/binding:normalizeObservedResearch#0/binding:researchItems/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:normalizeObservedResearch/binding:normalizeObservedResearch#0/binding:researchItems/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:pendingInitialSourceWriteReport/closure:CallExpression:callee[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:pendingInitialSourceWriteReport/closure:CallExpression:callee[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:preparedDelivery/binding:preparedDelivery#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:preparedDelivery/binding:preparedDelivery#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:requireConfiguredContext/binding:requireConfiguredContext#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:requireConfiguredContext/binding:requireConfiguredContext#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:researchItems/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:researchItems/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected despite identical callback text: the immediate filter producer changed from the selected workflow stages to config.workflows[item.request.workflow_id].stages. Because the collection may contain items from multiple workflows, the enclosing role semantics changed; the old callback allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:result/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:result/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:result/closure:CallExpression:arguments[0]#1",
-        "current_identity": "bin/run.ts#fn:run#0/binding:result/closure:CallExpression:arguments[0]#1",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:synthesisCatalog/closure:CallExpression:callee[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:synthesisCatalog/closure:CallExpression:callee[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:unresolvedHostEffect/binding:unresolvedHostEffect#0/binding:writers/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:unresolvedHostEffect/binding:unresolvedHostEffect#0/binding:writers/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/binding:unresolvedHostEffect/binding:unresolvedHostEffect#0/binding:writers/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/run.ts#fn:run#0/binding:unresolvedHostEffect/binding:unresolvedHostEffect#0/binding:writers/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#10",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#10",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#11",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#11",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#19",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#19",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#2",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#2",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#20",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#20",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#21",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#21",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#22",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#22",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#24",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#24",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#3",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#3",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#5",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#5",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#8",
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#8",
-        "rationale": "Rejected ordinal candidate: callback/body differs from the predecessor, so the shared closure ordinal does not establish lineage. Its current operation uses different fields or transformation semantics; predecessor complexity/CRAP allowance is not transferred.",
-        "primary_ref": "/workspace/attachments/quality-run60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:rebindRuntimeCode#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:rebindRuntimeCode#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "Reject despite matching path and ordinal. In the original rebindRuntimeCode, this callback is part of every(...) over actionId, issueId, nativeSessionHandle, and forwardOperationId, enforcing type, nonempty/length, trim, and control-character constraints. In current code, the callback is assignment_attempts.some and detects started or uncertain attempts to block rebind while execution is in flight. Responsibility shifted from authorization-field validation to attempt-state exclusion, so the original ceiling is not retained.",
-        "primary_ref": "/workspace/attachments/quality-host60-lineage-055-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:readWorkSessionJournal#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:readWorkSessionJournal#0",
-        "rationale": "The predecessor method itself owned the transaction, work lookup, latest journal-row production, binding validation, journal identity/digest checks, and snapshot construction. The current same-named method is only an accessor returning readWorkSessionSnapshot(identity).journal; those responsibilities now belong to #readWorkSessionJournal inside the shared Host/Journal snapshot producer. Its caller-facing result remains similar, but the original method-level invariant is shifted to a different owner, so the original CRAP ceiling is not lineage-retained.",
-        "primary_ref": "/workspace/attachments/quality-host57-remaining-055-20261015.json"
-      },
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#readDeliveredWorkContinuationReceipt#0",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#readDeliveredWorkContinuationReceipt#0",
-        "current_source_address": {
-          "file": "src/host-state.ts",
-          "line": 13747,
-          "column": 2,
-          "start": 625844,
-          "end": 626072,
-          "bodyLine": 13750,
-          "bodyColumn": 45,
-          "bodyEndLine": 13752,
-          "bodyEndColumn": 3
-        },
-        "historical": {
-          "frozenCC": 13,
-          "coverage": 1,
-          "crap": 13
-        },
-        "evidence": {
-          "original_owner": {
-            "file_line": "published-worktree/packages/agent/src/host-state.ts:12551",
-            "source": "#readDeliveredWorkContinuationReceipt("
-          },
-          "original_producer": {
-            "file_line": "published-worktree/packages/agent/src/host-state.ts:12551",
-            "source": "#readDeliveredWorkContinuationReceipt("
-          },
-          "original_consumer": {
-            "file_line": "published-worktree/packages/agent/src/host-state.ts:12556",
-            "source": "const current = this.#read(identity);"
-          },
-          "current_owner": {
-            "file_line": "packages/agent/src/host-state.ts:13747",
-            "source": "#readDeliveredWorkContinuationReceipt("
-          },
-          "current_producer": {
-            "file_line": "packages/agent/src/host-state.ts:13747",
-            "source": "#readDeliveredWorkContinuationReceipt("
-          },
-          "current_consumer": {
-            "file_line": "packages/agent/src/host-state.ts:13751",
-            "source": "return this.#readDeliveredWorkContinuationBundle(identity, attempt)?.receipt ?? null;"
-          }
-        },
-        "reason": "Rejected: original method owned receipt-table lookup, row cardinality and digest checks, current-work binding validation, and frozen receipt construction (original host-state.ts:12551-12596). Current method at packages/agent/src/host-state.ts:13747-13752 delegates receipt selection to #readDeliveredWorkContinuationBundle; validation/production now belongs to that helper. Same returned receipt shape does not preserve owner responsibility.",
-        "independent_review_ref": "/workspace/attachments/quality-host56-independent-055-20261015.json"
-      }
-    ],
-    "inventory_ref": "/workspace/attachments/quality-current-inventory-launch-055-20261015.json",
+    "inventory_ref": "/workspace/attachments/quality-current-inventory-capture-fallback-188-20261015.json",
     "scoped_byte_capture_files": [
-      "bin/bun.ts"
+      "src/orchestration/scoped-source-snapshot.ts",
+      "src/orchestration/configured-context.ts"
     ],
-    "sha256": "1b61d2b9eb44c1773f1fb51f1b7ff17f7de58e6bbba9d972cfd8c37d89d7eccb",
-    "launch": [
+    "guarded": [
       {
-        "identity": "bin/bun.ts#fn:boundedSpawnSync#0",
-        "complexity": 21,
-        "max_complexity": 21,
-        "max_crap": 462
+        "identity": "src/orchestration/scoped-source-snapshot.ts#fn:readScopedSourceBytes#0",
+        "expected_complexity": 6,
+        "max_complexity": 10,
+        "max_crap": 10
       },
       {
-        "identity": "bin/bun.ts#fn:runPinnedBun#0",
-        "complexity": 17,
-        "max_complexity": 16,
-        "max_crap": 272
+        "identity": "src/orchestration/configured-context.ts#fn:readLocal#0",
+        "expected_complexity": 2,
+        "max_complexity": 2,
+        "max_crap": 6
       }
+    ],
+    "independent_review_refs": [
+      "/workspace/attachments/quality-capture-fallback-final-review-188-20261015.md",
+      "/workspace/attachments/quality-context-buffer-actual-review-188-20261015.md"
     ],
     "scoped_complexity_exceptions": [
       {
@@ -198754,15 +198228,15 @@
     ],
     "missing_current_dispositions": 910,
     "missing_original_dispositions": 357,
-    "limits": "One changed Source AST+SHA;148 source bindings reused. All original frozen fields preserved. Full plan, coverage, dynamicCRAP, mutation and Runtime remain open.",
-    "source_capture_ref": "/workspace/attachments/quality-lineage-launch-join-055-20261015.json"
+    "limits": "Only2 changed Source AST+SHA captures;147bindings reused. No added/removed Source functions or changed frozen allowances. Focused native controls are not full coverage, dynamicCRAP, mutation or Runtime.",
+    "source_capture_ref": "/workspace/attachments/quality-capture-fallback-bindings-188-20261015.json"
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
-    "source_commit": "0558135",
+    "source_commit": "18879ba",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-lineage-launch-join-055-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-capture-fallback-bindings-188-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",

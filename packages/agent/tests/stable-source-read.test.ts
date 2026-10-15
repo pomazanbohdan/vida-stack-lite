@@ -485,3 +485,21 @@ test('source snapshot fallback preserves appearance disappearance and byte drift
   ).toThrow('changed during snapshot');
   expect(reads).toBe(2);
 });
+
+test('source snapshot fallback rejects drift when its reader reuses the first buffer', () => {
+  const shared = Buffer.from('before');
+  let reads = 0;
+  expect(() =>
+    snapshotDeclaredSources(
+      {
+        fileExists: () => true,
+        readBytes() {
+          if (++reads === 2) shared.write('after!');
+          return shared;
+        },
+      },
+      ['source.ts'],
+    ),
+  ).toThrow('changed during snapshot');
+  expect(reads).toBe(2);
+});

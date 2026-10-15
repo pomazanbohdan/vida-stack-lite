@@ -89,7 +89,7 @@ Requested model/service settings are distinct from observed host capabilities.
 
 ## Current evidence and limits
 
-Published predecessor before this packet: 0558135. Maintained Source TS migration is
+Published predecessor before this packet: 18879ba. Maintained Source TS migration is
 complete; old1271 CLI diagnostics and old JS counts are historical.
 The7f4c265 SDK archive passed its OWN extracted verifier, with external
 node_modules outside payload custody. This is not native qualification.
@@ -127,6 +127,13 @@ integer-status returns, review clocks and timeout/UNKNOWN behavior. Fresh
 physical0558135 checkout accepted exact CI SDK inputs online, then through
 the unchanged owner offline under native PID1/network isolation. This is SDK
 boundary qualification only; full resource/coverage/CRAP/mutation remain open.
+Current snapshot/context readers now pin a private first bounded byte image
+before the second borrowed read; same-buffer drift regressions failed before
+each fix and full affected files passed16/0 and7/0. Both frozen ceilings remain
+unchanged. Fixture beforeimages share capture A's private bytes without the
+later package-wide reread; production capture B stays independent. Fixture and
+launcher controls83/0. The real public repair point still exceeded30s at69.058s
+case/70.895s command; keep its failed root and continue the speed correction.
 Approval schema/key/identity compatibility is repaired with17focused cases;
 full current numeric evidence remains pending.
 Unbound Source inventory freshness

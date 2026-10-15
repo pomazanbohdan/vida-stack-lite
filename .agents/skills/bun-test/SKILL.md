@@ -52,6 +52,14 @@ and UNKNOWN behavior real. Use deterministic property checks and independent
 models where they protect the contract. A new test layer should cover a distinct
 regression risk.
 
+For Source-beforeimage fixtures, reuse `tests/helpers/source-beforeimage-fixture.ts`
+to serialize bytes from the existing successful capture. Keep capture A distinct
+from each later current Source capture B and its inventory. A capture is not a
+post-apply CAS observation. Preserve returned buffers privately when a reader
+may reuse mutable storage; test same-buffer changes as well as distinct buffers.
+Check actual parameterized reporter titles on the selected runtime. Named labels
+must distinguish values whose serialization collides, including null/NaN/infinity.
+
 For asynchronous failures, await the owned promise before asserting. Keep the
 original work error and cleanup error, including `throw undefined`. Restore
 spies and injected faults before retrying through the registered cleanup owner.

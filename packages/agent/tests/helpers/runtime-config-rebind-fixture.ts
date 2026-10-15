@@ -7,6 +7,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, cpSync
 import path from 'node:path';
 import { tmpdir } from 'node:os';
 import { isUnknownSynchronousChild } from './synchronous-child-outcome.ts';
+import { captureSourceBeforeimages } from './source-beforeimage-fixture.ts';
 import { runReconcileArtifacts as reconcileEntrypoint } from '../../bin/reconcile-artifacts.ts';
 import { run as runEntrypoint } from '../../bin/run.ts';
 import { readPin } from '../../bin/bun.ts';
@@ -1928,7 +1929,7 @@ export async function prepareSourceCorrectionRepair(
     packageRoot = path.join(f.root, 'packages/agent'),
     inventory = runtimeExecutableInventory(packageRoot, 'source', requireSafeRepositoryAccess(packageRoot)),
     access = requireSafeRepositoryAccess(f.root),
-    sourceSnapshot = snapshotDeclaredSources(
+    capturedSource = captureSourceBeforeimages(
       access,
       inventory.map((file) => `packages/agent/${file}`),
     ),
@@ -1957,11 +1958,8 @@ export async function prepareSourceCorrectionRepair(
       operation_id: 'fixture-rebind',
       operation_ref: operationPath,
       operation_bytes_base64: operationBytes.toString('base64'),
-      source: sourceSnapshot,
-      beforeimages: sourceSnapshot.entries.map((entry) => ({
-        path: entry.path,
-        bytes_base64: access.readBytes(entry.path, 'test beforeimage').toString('base64'),
-      })),
+      source: capturedSource.source,
+      beforeimages: capturedSource.beforeimages,
       recorded_at: '2026-10-07T00:00:00.000Z',
       effects_issued: false,
     };

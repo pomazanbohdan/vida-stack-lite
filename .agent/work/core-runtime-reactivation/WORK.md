@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `0558135` at origin/main.
+- Published predecessor: `18879ba` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -25,6 +25,12 @@ operations or a claim of complete quality/Runtime acceptance.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
 ## Current bounded-launch correction
+
+Packet18879ba is published. Its ordinary strict hook passed format464files,
+TypeScript470files/0diagnostics and the configured lint/Knip checks; nonforce
+push confirmed origin/main. Exact logs in attachments:
+`quality-lineage-launch-strict-commit-055-20261015.log` and
+`quality-lineage-launch-push-055-20261015.log`.
 
 Keep the original boundedSpawnSync21/462 and runPinnedBun16/272 allowances.
 Consolidate finite timeout option/environment preparation in the existing
@@ -51,7 +57,7 @@ One changed-file AST+SHA reuses148bindings. Current6820/7730roles leave
 `/workspace/attachments/quality-lineage-launch-join-055-20261015.json`,
 `quality-bounded-launch-tests-055-20261015.log` and
 `quality-launch-options-actual-review-055-20261015.md` in that directory.
-Strict publication checks remain pending for this packet.
+The independent metadata review accepted exact counters and unchanged ceilings.
 
 Fresh physical checkout0558135 and CI SDK artifact11945335431 passed the real
 existing readiness owner online, then the unchanged owner offline under native
@@ -72,6 +78,59 @@ output. Root preserved the failure, normalized those exact same-ordinal
 rejections and completed the discovery. Review, not equality, owns admission.
 
 ## Published correction evidence
+
+## Current Source-beforeimage correction
+
+Reuse capture A's bytes in a test-only helper at the two fixture serialization
+sites, keeping delivery apply/serialization order and every independent current
+Source capture B and inventory. No new product API or cross-capture cache.
+The initial reference-retaining helper failed its new cross-file shared-buffer
+control before publication; it now retains private copies after each read.
+
+That review also exposed an existing supported fallback-reader defect:
+readScopedSourceBytes compares two aliases when a reader reuses/mutates one
+Buffer, so it misses byte drift. The actual regression failed with exit1 before
+the Source fix. Keep its already frozen prospective10/10 ceiling (currentCC6)
+and pin a private first-read image before the second read. Do not add reads,
+hash passes or weaken absence/limit/CAS guards. The actual Source/helper review
+accepted the corrected private images. Full fixture/launcher controls83PASS,
+273assertions/37.88s; the7helper cases passed again after the Source fallback
+correction. Stable-reader file16PASS/122assertions/0.601s. These scopes are not
+a combined complete suite or numerical qualification.
+
+The analogous borrowed-reader comparison in configured-context.readLocal also
+accepted changed aliased bytes; its real configured-context regression failed
+with exit1 before correction. Keep its original2/6 ceiling and pin the first
+bounded image for comparison, content and digest. Scoped pattern search found
+only these two borrowed-reader sites and Linux's native fresh-buffer reader;
+do not add unnecessary copies to that native path. Independent actual review
+found no issues; the full configured-context file7PASS/43assertions/0.926s.
+Only2changed Source files were parsed/hashed;147bindings reused. Exact original
+frozen fields/counters remain unchanged, including readLocal2<=2 and the fallback
+owner6<=own10. Correspondence remains6820/7730 with910current/357original gaps
+and21static deficits. The first binding script stopped before mutation because
+it expected an 'accept' word while the review said 'No findings'; Root checked
+the actual conclusion and corrected that attachment-only assumption.
+Current binding receipt is `quality-capture-fallback-bindings-188-20261015.json`.
+
+The new numeric-status matrix used %s, which the selected Bun left literal;
+its named object rows now use observed working %j and render eight unique
+titles, including distinct labels for null/NaN/infinity. A bounded audit found
+other candidate title patterns, not confirmed failures; no blanket rewrite.
+Official format documentation and native reproduction are retained in
+`bun-writing-tests-20261015.md` and `quality-bun-each-title-188-20261015.log`.
+
+The isolated real public Source-repair point still failed its unchanged30s
+case bound:69.058s case/70.895s command,12settled CLI calls/43assertions.
+The failed fixture is retained at
+`/home/agent/.cache/vida-cloud-tooling/tmp/quality-source-repair-profile-IOUiBH/tmp/fixture-ucuknC`.
+Both native namespace terminal and unchanged boot ID were observed. Receipt:
+`quality-source-repair-capture-cpu-188-20261015.json`. The Bun CPU-profile flags
+produced no profile artifact, so no CPU attribution is claimed. This point ran
+before the analogous configured-context correction; final Source is bound by
+its own scoped checks. The prior77.22s point and this result do not isolate a
+causal speedup. Continue optimizing the still-long repeat current-state reads
+without deleting independent freshness captures or raising the bound.
 
 
 Pstack/Cloud/shared-helper/documentation packets, exact decisions and receipts

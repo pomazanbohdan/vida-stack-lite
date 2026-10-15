@@ -1,4 +1,5 @@
 import { test, expect, spyOn } from 'bun:test';
+import { captureSourceBeforeimages } from './helpers/source-beforeimage-fixture.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { randomUUID } from 'node:crypto';
@@ -296,7 +297,7 @@ test(
         packageRoot = path.join(f.root, 'packages/agent'),
         inventory = runtimeExecutableInventory(packageRoot, 'source', requireSafeRepositoryAccess(packageRoot)),
         access = requireSafeRepositoryAccess(f.root),
-        source = snapshotDeclaredSources(
+        capturedSource = captureSourceBeforeimages(
           access,
           inventory.map((file) => `packages/agent/${file}`),
         ),
@@ -325,11 +326,8 @@ test(
           operation_id: 'fixture-rebind',
           operation_ref: operationPath,
           operation_bytes_base64: operationBytes.toString('base64'),
-          source,
-          beforeimages: source.entries.map((entry) => ({
-            path: entry.path,
-            bytes_base64: access.readBytes(entry.path, 'test beforeimage').toString('base64'),
-          })),
+          source: capturedSource.source,
+          beforeimages: capturedSource.beforeimages,
           recorded_at: '2026-10-07T00:00:00.000Z',
           effects_issued: false,
         };

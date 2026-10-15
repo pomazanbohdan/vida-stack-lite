@@ -70,7 +70,12 @@ the native300ms timeout control confirms retention before body settlement.
 The isolated public
 repair still exceeds its30s case limit; measured12CLI calls cost77.22s total.
 Keep both independent Source captures and optimize measured work without raising
-timeouts. Numeric gates remain open.
+timeouts. Test-only beforeimage serialization now reuses capture A's privately
+retained bytes. Borrowed-reader same-buffer drift was reproduced and repaired
+in snapshot fallback and configured-context reads, with unchanged6/10 and2/2
+complexities. A later public repair point still failed30s at69.058s case;
+its12CLI calls/43assertions and retained root remain diagnostic evidence.
+Numeric gates remain open.
 WORK owns their exact ceilings and receipts; mapping counts are not coverage.
 Retrieve current CI-formed SDK outputs with their selected formation receipt before the
 complete selection. Maintained aliases now prepare the distinct CI SDK test-input

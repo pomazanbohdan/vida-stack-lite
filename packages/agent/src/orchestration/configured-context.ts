@@ -106,6 +106,7 @@ function readLocal(
   requireContext(first.length <= MAX_FILE_BYTES, `${relative} exceeds the per-file limit`);
   usedBytes.value += first.length;
   requireContext(usedBytes.value <= MAX_TOTAL_BYTES, 'local content exceeds the total limit');
+  const captured = Buffer.from(first);
   const second = readConfiguredBytes(
     access,
     target,
@@ -114,16 +115,16 @@ function readLocal(
     contextualMissing,
     packageResourceAccess,
   );
-  requireContext(first.equals(second), `${relative} changed during read`);
-  const content = new TextDecoder('utf-8', { fatal: true }).decode(first);
+  requireContext(captured.equals(second), `${relative} changed during read`);
+  const content = new TextDecoder('utf-8', { fatal: true }).decode(captured);
   const omission = '\n[middle omitted; read source for complete content]\n';
   const visibleChars = MAX_EXCERPT_CHARS - omission.length;
   const headChars = Math.ceil(visibleChars / 2);
   const tailChars = Math.floor(visibleChars / 2);
   return {
     status: 'local_excerpt',
-    sha256: createHash('sha256').update(first).digest('hex'),
-    bytes: first.length,
+    sha256: createHash('sha256').update(captured).digest('hex'),
+    bytes: captured.length,
     content:
       content.length <= MAX_EXCERPT_CHARS
         ? content

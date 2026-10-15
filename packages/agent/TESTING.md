@@ -859,6 +859,25 @@ Its copied package Source/test/tooling/dist trees were unused by the executing
 Source CLI and are removed. This sparse fixture is not native delivery or a
 Source-unavailable Runtime qualification.
 
+Source-correction fixtures share the test-only `captureSourceBeforeimages` owner.
+It delegates one unchanged snapshot capture and retains private returned-byte
+images for serialization, removing the later package-wide reread. Those bytes
+describe capture A, not a later CAS observation. Preserve the order A, delivery
+apply, beforeimage serialization and Source correction, plus every independent
+production capture B and its fresh executable inventory. Reject missing entries
+or capture failure before publication. Check stable one-read, fallback two-read,
+drift, absence, canonical membership and independent later captures.
+Borrowed readers can reuse a mutable Buffer. Snapshot fallback and configured
+context pin the first bounded image before asking for the second, then compare
+and hash that image. Test same-buffer mutation between reads and across paths.
+Native readers already returning private buffers need no additional copy.
+
+Parameterized cases need distinguishable actual reporter titles. Check the
+selected Bun output, not format documentation alone. The numeric terminal-status
+matrix uses named object rows with observed working `%j`; labels distinguish
+null, NaN and infinity despite JSON encoding them as null. This observation does
+not establish that every other placeholder or existing case is defective.
+
 Public CLI test helpers prepare the existing pinnedEnvironment before launching
 the child. This avoids loading operation modules again through cache-routing
 self-reexecution. Preserve caller environment overrides and the existing child

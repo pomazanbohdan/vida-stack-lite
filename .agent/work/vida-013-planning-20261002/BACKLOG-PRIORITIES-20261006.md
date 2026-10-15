@@ -6,6 +6,9 @@ The execution order lives in [CLEAN-START-STRATEGY-20261009.md](../core-runtime-
 Latest quality preparation adds98reviewed retained roles and closes one static
 launch-budget deficit. Full affected launcher51PASS/0FAIL. SDK cache passed
 offline in a fresh native namespace; complete numeric acceptance remains open.
+The latest packet repairs reproduced same-buffer drift in two borrowed-reader
+boundaries and shares fixture beforeimage capture. Focused controls pass; the
+public Source-repair case still exceeds30s, so its speed acceptance stays open.
 
 ## Priority rules
 

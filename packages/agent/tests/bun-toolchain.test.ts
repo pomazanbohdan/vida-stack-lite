@@ -274,26 +274,32 @@ test('default Bun host qualifies its actual executable before PATH and rejects a
   assertVersionProbe(calls[0], root, { PATH: '' });
 });
 
-test.each([0, 17, -1, 2 ** 54, null, 1.5, NaN, Infinity])(
-  'pinned command preserves integer statuses and rejects malformed terminal status %s',
-  (status) => {
-    const { root, pin } = fixture();
-    let calls = 0;
-    const invoke = () =>
-      runPinnedBun([], {
-        root,
-        executable: process.execPath,
-        env: {},
-        spawn() {
-          calls++;
-          return calls === 1 ? success(pin) : { status };
-        },
-      });
-    if (Number.isInteger(status)) assert.equal(invoke(), status);
-    else assert.throws(invoke, /Pinned Bun command failed/);
-    assert.equal(calls, 2);
-  },
-);
+test.each([
+  { label: 'zero', status: 0 },
+  { label: 'positive', status: 17 },
+  { label: 'negative', status: -1 },
+  { label: 'unsafe integer', status: 2 ** 54 },
+  { label: 'missing', status: null },
+  { label: 'fractional', status: 1.5 },
+  { label: 'NaN', status: NaN },
+  { label: 'infinite', status: Infinity },
+])('pinned command preserves integer statuses and rejects malformed terminal status %j', ({ status }) => {
+  const { root, pin } = fixture();
+  let calls = 0;
+  const invoke = () =>
+    runPinnedBun([], {
+      root,
+      executable: process.execPath,
+      env: {},
+      spawn() {
+        calls++;
+        return calls === 1 ? success(pin) : { status };
+      },
+    });
+  if (Number.isInteger(status)) assert.equal(invoke(), status);
+  else assert.throws(invoke, /Pinned Bun command failed/);
+  assert.equal(calls, 2);
+});
 
 test('wrong-version PATH Bun falls back to npm exact pin and npm mismatch remains fatal', () => {
   const { root, pin } = fixture();

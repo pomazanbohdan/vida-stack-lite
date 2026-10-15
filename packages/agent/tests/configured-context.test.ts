@@ -74,6 +74,32 @@ const base: ConfiguredContextRequest = {
 };
 
 describe('configured local context', () => {
+  test('rejects content drift when its reader reuses a mutable buffer', () => {
+    const shared = Buffer.from('before');
+    let reads = 0;
+    const originalRequire = safeRepositoryAccess.requireSafeRepositoryAccess;
+    const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((requestedRoot) => {
+      const access = originalRequire(requestedRoot);
+      if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+      return {
+        ...access,
+        readBytes(target: string, label: string): Buffer {
+          if (path.resolve(root, target) !== path.join(root, 'docs/context.md')) return access.readBytes(target, label);
+          if (++reads === 2) shared.write('after!');
+          return shared;
+        },
+      };
+    });
+    try {
+      expect(() =>
+        buildConfiguredContext(root, config, { ...base, source_ids: ['candidate-testing'], skill_refs: [] }),
+      ).toThrow('changed during read');
+      expect(reads).toBe(2);
+    } finally {
+      accessSpy.mockRestore();
+    }
+  });
+
   test('is stable, sorted and explicit about unfetched official references', () => {
     const first = buildConfiguredContext(root, config, base);
     const second = buildConfiguredContext(root, config, {

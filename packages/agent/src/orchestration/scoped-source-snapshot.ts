@@ -440,12 +440,14 @@ function readScopedSourceBytes(reader: SourceReader, relativePath: string, remai
   );
   requireSnapshot(first.length <= remainingBytes, 'scoped source exceeds total byte limit');
   if (stableRead === undefined) {
+    const captured = Buffer.from(first);
     requireSnapshot(
       reader.fileExists(relativePath, 'scoped source second existence'),
       'scoped source disappeared during snapshot',
     );
     const second = reader.readBytes(relativePath, 'scoped source second read');
-    requireSnapshot(first.equals(second), 'scoped source changed during snapshot');
+    requireSnapshot(captured.equals(second), 'scoped source changed during snapshot');
+    return captured;
   }
   return first;
 }
