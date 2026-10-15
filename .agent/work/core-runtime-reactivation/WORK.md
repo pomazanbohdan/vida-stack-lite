@@ -4680,101 +4680,47 @@ owner's scope. No duplicate consumer writers or notices.
 
 ## Sequential complete closure: main-cedar
 
-The current pinned contour is main-cedar. Complete closure requires exact
-F/L/S/B, function correspondence, frozen complexity/dynamic CRAP and100%
-assertion-confirmed Killed together; coverage alone does not advance the contour.
-At published ca39641, coverage reportbc61d644-e031-4da0-b914-3688b90616cf
-records33PASS/0FAIL/12273assertions,4.29s Bun/6969.831651ms owned outer;
-F25/25,L56/56,S60/60,B21/21,maxCC/entryCRAP6/6. The earlier immutable
-baseline failure and genuine native fixture correction remain at
-ca39641:.agent/work/core-runtime-reactivation/WORK.md and retained root
-/workspace/attachments/quality-mutation-main-cedar-HQdmh1.
+Cedar now has a complete compatible local triple at Source/test/tool commit
+6eef194dcd469b7702fb66a5cead17afe052584a. Coverage run
+f89d0035-7092-4ce5-bddb-f216f67fe270 records37PASS/0FAIL/14309assertions,
+3.65s Bun/6583.987559ms owned outer, exact F25/25,L56/56,S60/60,B17/17.
+Its same-run scoped frozen proof passes all25retained functions with maxCC4
+and maxCRAP4 against immutable b549951 Source and published reviewed ebf7461
+ceilings. It admits no missing historical measurement or executable global plan.
 
-Complete mutation run34b8d99d-7a57-44d6-b54f-83893b35ac65 passed its baseline
-and executed195mutants in351868.431169ms owned outer. Raw Stryker180Killed/
-15Survived/0timeout/errors is NOT confirmed quality. The strict owner accepts
-only19/195, with161UNKNOWN and15survivors; statusUNKNOWN. Retained terminal
-receipt/output: /workspace/attachments/quality-mutation-main-cedar-vPiDAp.
-Physical inner evidence is under /tmp/quality-mutation-main-cedar-c3AP74/package-tmp/
-mutation-evidence-34b8d99d-7a57-44d6-b54f-83893b35ac65-41tef8.
-The automatic projection now retains47observations without combining different
-Source/test/tool closures; previous compatible coverage+mutation maxima remain2/44.
+Complete mutation0b5a6cc7-a9cf-45a6-b608-a3391d229ebd executes189mutants in
+305222.814009ms owned outer. The strict owner reports pilot-pass,
+189/189assertion-confirmed Killed, effective score1, zero UNKNOWN/survivors,
+provenance/report errors or Source mismatches. Complete output and process-group
+termination are observed on the same boot. Retained terminal roots:
+/workspace/attachments/quality-declared-main-cedar-yEtGuL and
+/workspace/attachments/quality-mutation-main-cedar-aBHcHo.
+The exact coverage and scoped CRAP reports are under packages/agent/coverage/
+bun-unified/diagnostics/f89d0035-7092-4ce5-bddb-f216f67fe270.{focused-coverage,scoped-crap}.json.
+The derived snapshot retains57observations,3/44historical coverage+mutation
+pairs and1/44complete same-coverage-run local triples;43triples remain open.
+Global gate acceptance, current freshness after later tool changes and formed
+Runtime qualification remain separate pending obligations.
 
-Corrections from this campaign: strict-parse imported JSON as data in lifecycle
-analysis, preserving malformed data and JS/TS hook/parse denials; move valid
-authorizer construction into asserted test bodies; preserve return-shape and
-async fulfillment assertions before field access. A restored synchronous Bun
-spy replaces the Cedar mock child, preserving genuine assertion attribution and
-removing its subprocess overhead. Official reference: https://bun.com/docs/test/mocks.
-Other isolated mock cases retain their existing ownership and execution path.
+Earlier failed/UNKNOWN campaigns, duplicate-guard removal, lifecycle JSON fix,
+Bun matcher issue24551, configured-fixture custody, native spy restoration,
+assertion corrections and canonical focused-namespace repair remain at
+6eef194:.agent/work/core-runtime-reactivation/WORK.md with their exact retained
+locators. No historical failure was relabeled PASS.
 
-Blind Luna and Root review prove genuine validated project_ids/integration
-bindings have identical membership. Removing only the two duplicate project_ids
-checks preserves both integration membership, tenant/hash and issuer guards.
-Authentic multi-project positive and independently negative principal/resource
-cases, real semantic-error and unrelated-warning cases, an authentic invalid
-loaded policy and a boundary validation-failure envelope strengthen the tests.
-One changed-Source capture retains25identities, unchanged original frozen fields
-and maxCC4: /workspace/attachments/quality-cedar-membership-lineage-receipt-20261015.json.
-The prior row rationale describes its historical bytes; the correction metadata
-supersedes that description without changing correspondence or allowances.
+## Next complete contour: main-host
 
-The complete executable global CRAP plan and historical report/runtime artifacts
-remain absent; the partial remains non-executable. TESTING now owns a conservative
-local proof in the existing CRAP gate. It pins the published reviewed ebf7461
-rows, independently derives original b549951 CC, revalidates exact focused
-coverage custody, and requires currentCC/currentCRAP<=originalCC as well as all
-saved ceilings. Independent Luna review confirms this lower-bound argument;
-it admits no missing historical metric and cannot imply global quality or
-mutation acceptance. Its receipt alone cannot close or advance the contour.
-Fresh coverage, scoped proof and complete confirmed mutation remain pending
-after this code/test/tool correction packet.
-
-597c2a6 publishes that correction with strict pre-commit PASS and26focused
-controls passing. Follow-up integration binds the declared contour registry into
-coverage tool inputs and limits its CRAP import to scoped execution, preserving
-the existing global mocked-validator contracts (18CLI/correspondence PASS).
-The automatic owner now records a separate frozen-crap lane and same-coverage-run
-triple, matching the function denominator and exact captured closure. Historical
-pairs stay separately visible. It performs no new AST/hash/test pass.
-
-Native Bun1.4.3 also reproduces upstream24551: asymmetric matchers inside
-toMatchObject replace actual fields. Explicit shape/type/array assertions now
-preserve Cedar fixture values and strengthen failure attribution; seven focused
-Cedar/fuzz/kernel cases pass. The Bun Test skill records this verified pattern,
-strict JSON handling and synchronous spy restoration, including a real native
-post-restore authorization control. Final numerical runs still follow the last
-published Source/test/tool packet; no old measurements are relabeled current.
-
-1273ca3 coverage42a4963a-b600-456e-b067-9c78ba230ede completed37PASS/0FAIL/
-14307assertions,3.79s Bun/7128.198562ms owned outer. Its scoped CRAP consumer
-correctly stopped on a canonical-path mismatch: focused runs use diagnostics/runs,
-whereas the shared consumer still required global runs. Retained launch is
-/workspace/attachments/quality-declared-main-cedar-OwhHrH and consumer rejection
-quality-cedar-scoped-proof-1273ca3-20261015.log. No scoped PASS was issued.
-One shared schema-bound run-path helper now covers manifests, snapshots and
-process receipts without weakening global paths. The existing synthetic fixture
-owner supplies a disjoint focused namespace and real callable denominators;
-eight positive/negative contract controls pass, explicitly untrusted synthetic
-data rather than genuine execution evidence. Fresh real coverage/proof/mutation
-must bind this final validator packet.
-
-Fresh d925ef7 coveragebf78cb28-ba39-472f-b795-923c39ae799b completes37PASS/
-0FAIL/14307assertions in4.26s Bun/7335.779565ms owned outer. Validated exact
-F25/25,L56/56,S60/60,B17/17 and scoped frozen proof both pass, maxCC/CRAP4.
-The scoped receipt uses that exact coverage run and admits no missing historical
-measurement. Complete mutation9b733cfc-788f-4e12-bba6-210ca2f12607 executes189
-mutants in307662.640024ms owned outer; strict result187confirmed Killed,
-2UNKNOWN,0survivors,98.9418%, with no provenance/report/source mismatch.
-Raw Stryker189Killed does not close the contour. Mutants24/26 cause an
-unasserted TypeError during an expected-success policy parse call. Both valid
-and invalid parse calls now use the existing expectReturned assertion owner;
-no producer classifier, Source guard, exclusion or threshold changes.
-Retained terminal receipts: /workspace/attachments/quality-mutation-main-cedar-4cf9uL;
-coverage launch: /workspace/attachments/quality-declared-main-cedar-cuSJm6.
-The automatic projection retains53observations, and complete triples remain0/44.
-Fresh compatible coverage/proof/mutation after this assertion correction remain
-required before Cedar can advance.
+Proceed with the seven retained functions in src/config/host-capability.ts.
+Historical7/7coverage and69/69confirmed mutation remain d320564evidence,
+not fresh completion. Independent Luna review compares literal b549951 Source,
+the current seven bodies and existing frozen rows. Bodies and callable roles
+match; caps stay unchanged. The package version type changed from literal0.5.6
+to typeof fsSafeVersion (current0.26.2), an intentional dependency type-surface
+update with a type-only import, not an executable body change.
+The existing partial records this bounded review separately from v1033;
+it stays non-executable/non-exhaustive and grants no numeric acceptance.
+Next bind that published host review in the existing scoped gate, then capture
+fresh exact coverage, scoped CRAP and complete assertion-confirmed mutation.
 
 ## Historical provenance
 

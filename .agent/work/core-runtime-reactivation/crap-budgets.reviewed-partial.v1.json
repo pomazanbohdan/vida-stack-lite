@@ -220640,5 +220640,31 @@
     "identities_unchanged": true,
     "frozen_fields_unchanged": true,
     "qualification": "One changed-Source inventory/hash capture; other Sources reused without freshness qualification. Partial is not an executable global plan. Current numeric and mutation results remain pending."
+  },
+  "scope_review_main_host_20261015": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "source_commit": "6eef194dcd469b7702fb66a5cead17afe052584a",
+    "baseline_ref": "b549951",
+    "frozen_rows_ref": "ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56",
+    "files": [
+      "src/config/host-capability.ts"
+    ],
+    "retained": 7,
+    "new_functions": 0,
+    "removed_functions": 0,
+    "independent_review_lane": "luna_next_host_frozen_route",
+    "correspondence": "All seven original callable bodies and roles are unchanged. Root verified the selected identity pairs and saved caps; no candidate measurement establishes or resets a frozen cap.",
+    "identities": [
+      "src/config/host-capability.ts#fn:reject#0",
+      "src/config/host-capability.ts#fn:reject#0/closure:CallExpression:arguments[0]#0",
+      "src/config/host-capability.ts#fn:canonicalRepositoryRoot#0",
+      "src/config/host-capability.ts#fn:windowsCapability#0",
+      "src/config/host-capability.ts#fn:detectNativeNoFollowCapability#0",
+      "src/config/host-capability.ts#fn:detectNativeNoFollowCapability#0/closure:CallExpression:arguments[0]#0",
+      "src/config/host-capability.ts#fn:requireNativeNoFollowCapability#0"
+    ],
+    "type_surface_disposition": "The exported package.version type follows typeof fsSafeVersion (currently 0.26.2) instead of original literal 0.5.6. The added import is type-only; none of the seven callable bodies changes. This accepts the dependency-version type update, not native Windows runtime qualification.",
+    "frozen_ceilings": "Preserved original identity/current_identity, baseline CC/coverage/CRAP, max CC/CRAP and rationale without changes.",
+    "limits": "Independent Source-lineage review only. Current coverage, scoped lower-bound CRAP and assertion-confirmed mutation receipts remain required. Historical coverage/runtime artifacts are not admitted; the partial remains non-executable and non-exhaustive."
   }
 }

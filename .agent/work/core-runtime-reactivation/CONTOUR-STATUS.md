@@ -4,10 +4,10 @@
 
 Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.
 
-Historical complete coverage + assertion-confirmed mutation pair closures: **2/44**; static contours: **1**.
-Separate same-coverage-run local triples with scoped frozen CRAP: **0/44**.
-Executable contours without a recorded coverage + mutation pair: **42**.
-Executable contours without a recorded complete local triple: **44**.
+Historical complete coverage + assertion-confirmed mutation pair closures: **3/44**; static contours: **1**.
+Separate same-coverage-run local triples with scoped frozen CRAP: **1/44**.
+Executable contours without a recorded coverage + mutation pair: **41**.
+Executable contours without a recorded complete local triple: **43**.
 
 Current freshness is unverified. Parent operation statuses are owner-reported without re-admitting their receipts. The scoped frozen CRAP lane records its owner-issued local measurements; exact coverage qualification and global frozen-gate acceptance remain pending. A local triple is not global acceptance.
 
@@ -20,7 +20,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-config | 338/350 · 924/966 · 977/1024 · 223/266 | 16 / 42 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded | unknown | open / unknown |
 | main-contracts | 102/102 · 296/296 · 325/325 · 152/152 | 15 / 15 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
-| main-cedar | 25/25 · 56/56 · 60/60 · 17/17 | 4 / 4 | 189/189 (unknown; unqualified) | BLOCKED | open / unknown | 4 / 4 | open / unknown |
+| main-cedar | 25/25 · 56/56 · 60/60 · 17/17 | 4 / 4 | 189/189 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 4 / 4 | local triple recorded |
 | main-governance | 200/202 · 682/691 · 702/716 · 82/90 | 6 / 6 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | main-mastra | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
 | main-exports | unknown | unknown | unknown | not imported | N/A: static exports | unknown | open / unknown |
@@ -157,10 +157,10 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 ### main-cedar
 
-Historical complete local closure: not recorded.
-Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
-Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Historical complete local closure: `f89d0035-7092-4ce5-bddb-f216f67fe270` + `0b5a6cc7-a9cf-45a6-b608-a3391d229ebd`.
+Achieved in that closure: F/L/S/B 25/25 · 56/56 · 60/60 · 17/17; CC / entry CRAP 4 / 4; mutation 189/189 (pilot-pass; assertion-confirmed).
+Historical complete local coverage + mutation + frozen CRAP closure: `f89d0035-7092-4ce5-bddb-f216f67fe270` + `0b5a6cc7-a9cf-45a6-b608-a3391d229ebd` + `f89d0035-7092-4ce5-bddb-f216f67fe270`.
+Frozen CRAP measurement in that closure: 4 / 4; scoped receipt coverage run: `f89d0035-7092-4ce5-bddb-f216f67fe270`.
 Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
@@ -181,6 +181,10 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | bf78cb28-ba39-472f-b795-923c39ae799b | not-captured | 2026-10-15T19:21:20.350Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/bf78cb28-ba39-472f-b795-923c39ae799b.json |
 | mutation | 9b733cfc-788f-4e12-bba6-210ca2f12607 | d925ef795843f536345a09d04e2a5bec13e6cecf | 2026-10-15T19:27:04.296Z | unknown; unqualified; selection bound | 189/189 (unknown; unqualified) | /workspace/attachments/quality-mutation-main-cedar-4cf9uL/stdout.log |
 | frozen-crap | bf78cb28-ba39-472f-b795-923c39ae799b | d925ef795843f536345a09d04e2a5bec13e6cecf | 2026-10-15T19:27:34.038Z | scoped-proof-pass; owner accepted locally; selection bound | 4 / 4 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/bf78cb28-ba39-472f-b795-923c39ae799b.scoped-crap.json |
+| coverage | f89d0035-7092-4ce5-bddb-f216f67fe270 | 6eef194dcd469b7702fb66a5cead17afe052584a | 2026-10-15T19:28:29.271Z | focused-diagnostic; owner accepted locally; selection bound | 25/25 · 56/56 · 60/60 · 17/17 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/f89d0035-7092-4ce5-bddb-f216f67fe270.focused-coverage.json |
+| coverage-outcome | f89d0035-7092-4ce5-bddb-f216f67fe270 | not-captured | 2026-10-15T19:28:29.278Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/f89d0035-7092-4ce5-bddb-f216f67fe270.json |
+| mutation | 0b5a6cc7-a9cf-45a6-b608-a3391d229ebd | 6eef194dcd469b7702fb66a5cead17afe052584a | 2026-10-15T19:33:49.403Z | pilot-pass; owner accepted locally; selection bound | 189/189 (pilot-pass; assertion-confirmed) | /workspace/attachments/quality-mutation-main-cedar-aBHcHo/stdout.log |
+| frozen-crap | f89d0035-7092-4ce5-bddb-f216f67fe270 | 6eef194dcd469b7702fb66a5cead17afe052584a | 2026-10-15T19:33:54.424Z | scoped-proof-pass; owner accepted locally; selection bound | 4 / 4 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/f89d0035-7092-4ce5-bddb-f216f67fe270.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
