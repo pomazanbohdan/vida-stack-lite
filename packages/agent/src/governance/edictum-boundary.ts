@@ -467,8 +467,8 @@ export function createConfiguredEdictumWorkflow(
     );
     return result;
   };
-  const envelope = (tool: string, args: Record<string, unknown> = {}): ToolCall =>
-    Object.freeze({ toolName: tool, args });
+  const envelope = (tool: string, args: Record<string, unknown>): ToolCall =>
+    Object.freeze({ toolName: tool, args: JSON.parse(canonicalJson(args)) as Record<string, unknown> });
   return Object.freeze({
     config_digest: runtimeConfigDigest(runtimeConfig),
     approval_authority: 'workflow-gate-only',
@@ -478,7 +478,7 @@ export function createConfiguredEdictumWorkflow(
     evaluate: (tool: string, args: Record<string, unknown> = {}) => {
       assertRuntimeConfigCurrent();
       bindOperation(tool, args);
-      const call = Object.freeze({ toolName: tool, args: JSON.parse(canonicalJson(args)) as Record<string, unknown> });
+      const call = envelope(tool, args);
       return serializeWorkflowOperation(() => runtime.evaluate(session, call)).then((result) => {
         assertRuntimeConfigCurrent();
         return result;
@@ -542,7 +542,7 @@ export function createConfiguredEdictumWorkflow(
       const stage = configuredStages.get(stageId);
       requireCondition(Boolean(stage), 'Edictum result stage is not configured');
       requireCondition(stage!.tools.includes(tool), 'Edictum result tool is not configured for the stage');
-      const call = envelope(tool, JSON.parse(canonicalJson(args)) as Record<string, unknown>);
+      const call = envelope(tool, args);
       const resultSnapshot =
         normalized == null ? undefined : (JSON.parse(canonicalJson(normalized)) as Record<string, unknown>);
       return serializeWorkflowOperation(() => runtime.recordResult(session, stageId, call, resultSnapshot)).then(

@@ -269,6 +269,74 @@ describe('configured Edictum workflow completeness', () => {
     await bound.evaluate('runtime.write', operation);
     expect(() => bound.evaluate('runtime.write', { ...operation, project: 'other' })).toThrow(/binding changed/);
   });
+  test.skipIf(!nativeNoFollowAvailable)(
+    'test workflow host issuer omits configuration binding on an unconfigured real root',
+    async () => {
+      const caseDeadline = performance.now() + 5_000;
+      let fixtureRoot: string | undefined;
+      let bodyFailed = false;
+      let bodyError: unknown;
+      let bodyPassed = false;
+      try {
+        fixtureRoot = mkdtempSync(path.join(tmpdir(), 'edictum-workflow-configless-'));
+        expect(readdirSync(fixtureRoot)).toEqual([]);
+        const host = createTestWorkflowHostCapability(fixtureRoot);
+        expect(host).toMatchObject({
+          authenticatedPrincipal: 'human:workflow-reviewer',
+          repositoryRoot: fixtureRoot,
+          storeId: 'test-workflow',
+        });
+        expect(Object.hasOwn(host, 'configDigest')).toBe(false);
+
+        const binding: WorkflowApprovalBinding = {
+          stage_id: 'governed-write-approval',
+          approval_id: 'configless-' + randomUUID(),
+          operation_hash: 'a'.repeat(64),
+          tenant: 'test-tenant',
+          project: 'test-project',
+        };
+        let callbackCalls = 0;
+        await host.consumeApproval(binding, async () => {
+          callbackCalls += 1;
+        });
+        expect(callbackCalls).toBe(1);
+        await Promise.resolve(
+          expect(
+            host.consumeApproval(binding, async () => {
+              callbackCalls += 1;
+            }),
+          ).rejects.toThrow(/replay/),
+        );
+        expect(callbackCalls).toBe(1);
+        bodyPassed = true;
+      } catch (error: unknown) {
+        bodyFailed = true;
+        bodyError = error;
+      }
+
+      try {
+        completeOwnedCleanup(
+          [
+            () => {
+              if (!bodyPassed || fixtureRoot === undefined || performance.now() >= caseDeadline) {
+                if (fixtureRoot !== undefined)
+                  console.error('Retained failed or expired configless workflow fixture root: ' + fixtureRoot);
+                return undefined;
+              }
+              rmSync(fixtureRoot, { recursive: true, force: true });
+              return undefined;
+            },
+          ],
+          bodyFailed ? { error: bodyError } : undefined,
+        );
+      } catch (cleanupError: unknown) {
+        if (fixtureRoot !== undefined)
+          console.error('Retained configless workflow fixture after cleanup failure: ' + fixtureRoot);
+        throw cleanupError;
+      }
+      if (bodyFailed) throw bodyError;
+    },
+  );
   test('workflow rejects configuration drift after composition', async () => {
     const root = await createInitializedFixture();
     try {
@@ -641,6 +709,8 @@ describe('configured Edictum workflow completeness', () => {
         expect(host.authenticatedPrincipal).toBe('human:workflow-reviewer');
         expect(host.storeId).toMatch(/^test-file-workflow-/);
         expect(host.repositoryRoot).toBe(fixtureRoot);
+        const candidate = createConfiguredEdictumWorkflow(fixtureRoot, undefined, host);
+        expect((await candidate.evaluate('runtime.read')).action).toBe('allow');
         const binding: WorkflowApprovalBinding = {
           stage_id: 'governed-write-approval',
           approval_id: 'default-issuer-' + randomUUID(),
@@ -679,6 +749,149 @@ describe('configured Edictum workflow completeness', () => {
         throw cleanupError;
       }
       if (bodyFailed) throw bodyError;
+    },
+  );
+  test.skipIf(!nativeNoFollowAvailable)(
+    'file workflow reads the exclusive commit-unknown fallback and fences replay',
+    async () => {
+      let fixtureRoot: string | undefined;
+      const storeId = 'commit-unknown-fallback-' + randomUUID();
+      let beforeCommitCalls = 0;
+      let reservationPath: string | undefined;
+      let alteredReservationBytes: string | undefined;
+      try {
+        fixtureRoot = await createInitializedFixture((created) => {
+          fixtureRoot = created;
+        });
+        const storeRoot = path.join(fixtureRoot, '.agent', 'work', 'runtime-workflow-approvals', storeId);
+        const operationBinding = operationFor(fixtureRoot);
+        sessionSequence += 1;
+        const approvalId = 'fallback-replay-' + sessionSequence;
+        const binding: WorkflowApprovalBinding = {
+          stage_id: 'governed-write-approval',
+          approval_id: approvalId,
+          ...operationBinding,
+        };
+        const host = await createTestFileWorkflowHostCapability(fixtureRoot, 'human:workflow-reviewer', storeId, () => {
+          beforeCommitCalls += 1;
+          const emitted = emittedWorkflowMarker(storeRoot, binding);
+          reservationPath = emitted.path;
+          alteredReservationBytes = readFileSync(emitted.path, 'utf8') + '\n';
+          writeFileSync(emitted.path, alteredReservationBytes, 'utf8');
+        });
+        const candidate = createConfiguredEdictumWorkflow(
+          fixtureRoot,
+          'commit-unknown-fallback-' + sessionSequence,
+          host,
+        );
+        const approval = receipt('governed-write-approval', { approval_id: approvalId }, fixtureRoot);
+        expect((await candidate.evaluate('runtime.write', operationBinding)).action).toBe('pending_approval');
+        const failure: unknown = await candidate.approve(approval).then(
+          () => undefined,
+          (error: unknown) => error,
+        );
+        expect(failure).toBeInstanceOf(Error);
+        expect(failure).toMatchObject({ code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001' });
+        if (!(failure instanceof Error)) throw new Error('commit-unknown fallback did not return an Error');
+        expect(failure.message).toMatch(/recovery marker recorded/);
+        expect(beforeCommitCalls).toBe(1);
+        expect(reservationPath).toBeDefined();
+        if (reservationPath === undefined || alteredReservationBytes === undefined)
+          throw new Error('commit-unknown fallback did not retain the reserved marker');
+        expect(readFileSync(reservationPath, 'utf8')).toBe(alteredReservationBytes);
+        const alteredRecord: unknown = JSON.parse(alteredReservationBytes);
+        expect(alteredRecord).toMatchObject({ status: 'reserved' });
+
+        const unknownPath = reservationPath + '.commit-unknown';
+        const unknownBytes = readFileSync(unknownPath, 'utf8');
+        const unknown: unknown = JSON.parse(unknownBytes);
+        expect(isRecord(unknown)).toBe(true);
+        if (!isRecord(unknown)) throw new Error('commit-unknown fallback sidecar is not a record');
+        expect(unknown).toMatchObject({ status: 'commit_unknown', binding });
+        let replayApplyCalls = 0;
+        const replayFailure: unknown = await host
+          .consumeApproval(binding, async () => {
+            replayApplyCalls += 1;
+          })
+          .then(
+            () => undefined,
+            (error: unknown) => error,
+          );
+        expect(replayFailure).toMatchObject({ code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001' });
+        expect(replayApplyCalls).toBe(0);
+        expect(readFileSync(unknownPath, 'utf8')).toBe(unknownBytes);
+      } finally {
+        if (fixtureRoot !== undefined)
+          process.stderr.write(`Retained commit-unknown fallback workflow fixture root: ${fixtureRoot}\n`);
+      }
+    },
+  );
+  test.skipIf(!nativeNoFollowAvailable)(
+    'file workflow reports when both commit-unknown recovery writes fail',
+    async () => {
+      let fixtureRoot: string | undefined;
+      const storeId = 'commit-unknown-unrecorded-' + randomUUID();
+      let beforeCommitCalls = 0;
+      let applicationCalls = 0;
+      let reservationPath: string | undefined;
+      let alteredReservationBytes: string | undefined;
+      let sidecarPath: string | undefined;
+      try {
+        fixtureRoot = await createInitializedFixture((created) => {
+          fixtureRoot = created;
+        });
+        const storeRoot = path.join(fixtureRoot, '.agent', 'work', 'runtime-workflow-approvals', storeId);
+        const operationBinding = operationFor(fixtureRoot);
+        sessionSequence += 1;
+        const approvalId = 'unrecorded-' + sessionSequence;
+        const binding: WorkflowApprovalBinding = {
+          stage_id: 'governed-write-approval',
+          approval_id: approvalId,
+          ...operationBinding,
+        };
+        const host = await createTestFileWorkflowHostCapability(fixtureRoot, 'human:workflow-reviewer', storeId, () => {
+          beforeCommitCalls += 1;
+          const emitted = emittedWorkflowMarker(storeRoot, binding);
+          reservationPath = emitted.path;
+          alteredReservationBytes = readFileSync(emitted.path, 'utf8') + '\n';
+          writeFileSync(emitted.path, alteredReservationBytes, 'utf8');
+          sidecarPath = emitted.path + '.commit-unknown';
+          mkdirSync(sidecarPath);
+        });
+        const candidate = createConfiguredEdictumWorkflow(
+          fixtureRoot,
+          'commit-unknown-unrecorded-' + sessionSequence,
+          host,
+        );
+        const originalRecordApproval = candidate.runtime.recordApproval.bind(candidate.runtime);
+        candidate.runtime.recordApproval = async (...args) => {
+          applicationCalls += 1;
+          return originalRecordApproval(...args);
+        };
+        const approval = receipt('governed-write-approval', { approval_id: approvalId }, fixtureRoot);
+        expect((await candidate.evaluate('runtime.write', operationBinding)).action).toBe('pending_approval');
+        const failure: unknown = await candidate.approve(approval).then(
+          () => undefined,
+          (error: unknown) => error,
+        );
+        expect(failure).toBeInstanceOf(Error);
+        expect(failure).toMatchObject({ code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001' });
+        if (!(failure instanceof Error)) throw new Error('unrecorded commit-unknown did not return an Error');
+        expect(failure.message).toMatch(/durable recovery marker unavailable/);
+        expect(beforeCommitCalls).toBe(1);
+        expect(applicationCalls).toBe(1);
+        expect(reservationPath).toBeDefined();
+        if (reservationPath === undefined || alteredReservationBytes === undefined)
+          throw new Error('unrecorded commit-unknown did not retain the reserved marker');
+        expect(readFileSync(reservationPath, 'utf8')).toBe(alteredReservationBytes);
+        const alteredRecord: unknown = JSON.parse(alteredReservationBytes);
+        expect(alteredRecord).toMatchObject({ status: 'reserved' });
+        expect(sidecarPath).toBeDefined();
+        expect(readdirSync(path.dirname(sidecarPath!))).toContain(path.basename(sidecarPath!));
+      } finally {
+        if (fixtureRoot !== undefined)
+          process.stderr.write(`Retained unrecorded commit-unknown workflow fixture root: ${fixtureRoot}\n`);
+      }
     },
   );
   test.skipIf(!nativeNoFollowAvailable)(

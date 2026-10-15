@@ -2,7 +2,7 @@ import { afterAll, describe, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import path from 'node:path';
 import os from 'node:os';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { initializeProject } from '../bin/init.ts';
 import {
@@ -274,33 +274,151 @@ describe('governed write completeness', () => {
     expect(writeCalls).toBe(0);
     expect(await store.inspect(fixture.operationHash)).toMatchObject({ status: 'commit_unknown' });
   });
-  test.skipIf(!nativeNoFollowAvailable)('preserves the governed error when reservation cleanup fails', async () => {
-    const fixture = evidence();
-    let commitMarked = false;
-    const store = createTestOperationReservationStore(
-      repositoryRoot,
-      'quality-store-' + sequence,
-      () => {
-        commitMarked = true;
-      },
-      () => {
-        throw new Error('reservation cleanup failed');
-      },
-    );
-    const guard = createTestGovernanceGuard(
-      bindings(fixture, {
-        reservationStore: store,
-        assertRuntimeConfigCurrent: () => {
-          if (commitMarked) throw new Error('runtime configuration changed after composition');
+  test.skipIf(!nativeNoFollowAvailable)(
+    'retains commit-unknown without abort after post-start configuration drift',
+    async () => {
+      const fixture = evidence();
+      let commitMarked = false;
+      let abortCalls = 0;
+      let writeCalls = 0;
+      const store = createTestOperationReservationStore(
+        repositoryRoot,
+        'quality-store-' + sequence,
+        () => {
+          commitMarked = true;
         },
-      }),
-    );
-    await Promise.resolve(
-      expect(runGovernedWrite(guard, wrapped(fixture))).rejects.toThrow(
-        'runtime configuration changed after composition',
-      ),
-    );
-  });
+        () => {
+          abortCalls += 1;
+          throw new Error('reservation cleanup failed');
+        },
+      );
+      const guard = createTestGovernanceGuard(
+        bindings(fixture, {
+          reservationStore: store,
+          assertRuntimeConfigCurrent: () => {
+            if (commitMarked) throw new Error('runtime configuration changed after composition');
+          },
+          casWriter: () => {
+            writeCalls += 1;
+            return { applied: true };
+          },
+        }),
+      );
+      await Promise.resolve(
+        expect(runGovernedWrite(guard, wrapped(fixture))).rejects.toThrow(
+          'runtime configuration changed after composition',
+        ),
+      );
+      expect(abortCalls).toBe(0);
+      expect(writeCalls).toBe(0);
+      expect(await store.inspect(fixture.operationHash)).toMatchObject({ status: 'commit_unknown' });
+    },
+  );
+  test.skipIf(!nativeNoFollowAvailable)(
+    'reports post-reservation preparation cleanup failure with both causes and retains the reservation',
+    async () => {
+      const fixture = evidence();
+      const originalError = new Error('runtime configuration changed after reservation');
+      const cleanupError = new Error('reservation abort cleanup failed');
+      let configAssertions = 0;
+      let abortCalls = 0;
+      let writeCalls = 0;
+      const store = createTestOperationReservationStore(
+        repositoryRoot,
+        'quality-store-' + sequence,
+        () => undefined,
+        () => {
+          abortCalls += 1;
+          throw cleanupError;
+        },
+      );
+      const guard = createTestGovernanceGuard(
+        bindings(fixture, {
+          reservationStore: store,
+          assertRuntimeConfigCurrent: () => {
+            configAssertions += 1;
+            if (configAssertions === 6) throw originalError;
+          },
+          casWriter: () => {
+            writeCalls += 1;
+            return { applied: true };
+          },
+        }),
+      );
+
+      const error: unknown = await runGovernedWrite(guard, wrapped(fixture)).then(
+        () => null,
+        (candidate: unknown) => candidate,
+      );
+      expect(isGovernanceDenied(error)).toBe(true);
+      if (!isGovernanceDenied(error)) throw new Error('preparation cleanup failure was not a governance denial');
+      expect(error.reason).toBe('governed write reservation cleanup failed; retain the current operation');
+      expect(error.decisionSource).toBe('preparation');
+      expect(error.decisionName).toBe('cleanup');
+      expect(error.cause).toBeInstanceOf(AggregateError);
+      if (!(error.cause instanceof AggregateError)) throw new Error('preparation cleanup causes were not retained');
+      expect(error.cause.errors).toEqual([originalError, cleanupError]);
+      expect(error.cause.errors[0]).toBe(originalError);
+      expect(error.cause.errors[1]).toBe(cleanupError);
+      expect(configAssertions).toBe(6);
+      expect(abortCalls).toBe(1);
+      expect(writeCalls).toBe(0);
+      expect(await store.inspect(fixture.operationHash)).toMatchObject({ status: 'reserved' });
+    },
+  );
+  test.skipIf(!nativeNoFollowAvailable)(
+    'reports execution revision cleanup failure with both causes and retains the reservation',
+    async () => {
+      const fixture = evidence();
+      const originalError = new Error('runtime revision unavailable before commit');
+      const cleanupError = new Error('reservation abort cleanup failed');
+      let revisionCalls = 0;
+      let abortCalls = 0;
+      let writeCalls = 0;
+      const store = createTestOperationReservationStore(
+        repositoryRoot,
+        'quality-store-' + sequence,
+        () => undefined,
+        () => {
+          abortCalls += 1;
+          throw cleanupError;
+        },
+      );
+      const guard = createTestGovernanceGuard(
+        bindings(fixture, {
+          reservationStore: store,
+          runtimeRevision: () => {
+            revisionCalls += 1;
+            if (revisionCalls === 2) throw originalError;
+            return { sourceRevision: 'quality-source', currentRevision: 1 };
+          },
+          casWriter: () => {
+            writeCalls += 1;
+            return { applied: true };
+          },
+        }),
+      );
+
+      const error: unknown = await runGovernedWrite(guard, wrapped(fixture)).then(
+        () => null,
+        (candidate: unknown) => candidate,
+      );
+      expect(isGovernanceDenied(error)).toBe(true);
+      if (!isGovernanceDenied(error)) throw new Error('execution cleanup failure was not a governance denial');
+      expect(error.reason).toBe('governed write reservation cleanup failed; retain the current operation');
+      expect(error.decisionSource).toBe('preparation');
+      expect(error.decisionName).toBe('cleanup');
+      expect(error.cause).toBeInstanceOf(AggregateError);
+      if (!(error.cause instanceof AggregateError)) throw new Error('execution cleanup causes were not retained');
+      expect(error.cause.errors).toEqual([originalError, cleanupError]);
+      expect(error.cause.errors[0]).toBe(originalError);
+      expect(error.cause.errors[1]).toBe(cleanupError);
+      expect(revisionCalls).toBe(2);
+      expect(abortCalls).toBe(1);
+      expect(writeCalls).toBe(0);
+      expect(await store.inspect(fixture.operationHash)).toMatchObject({ status: 'reserved' });
+    },
+  );
   test.skipIf(!nativeNoFollowAvailable)(
     'leaves commit-unknown when the final fence detects post-CAS drift',
     async () => {
@@ -607,13 +725,52 @@ describe('governed write completeness', () => {
   });
 
   test.skipIf(!nativeNoFollowAvailable)(
+    'durable reservation store rejects an obstructed terminal path and retains its reservation bytes',
+    async () => {
+      const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-reservation-obstruction-'));
+      try {
+        const store = await createFileOperationReservationStore(temporaryRoot, 'quality-obstruction');
+        const fixture = evidence();
+        const reservation = await store.reserve(fixture.operationHash, fixture.request);
+        if (reservation === null) throw new Error('obstruction reservation was not created');
+        const records = readdirSync(temporaryRoot).filter((name) => name.endsWith('.json'));
+        expect(records).toHaveLength(1);
+        const reservationPath = path.join(temporaryRoot, records[0]!);
+        const originalBytes = readFileSync(reservationPath, 'utf8');
+        const originalRecord: unknown = JSON.parse(originalBytes);
+        expect(originalRecord).toMatchObject({
+          operation_key: fixture.operationHash,
+          fencing_token: reservation.fencing_token,
+          status: 'reserved',
+        });
+        // Obstruct the exact terminal path of an actually emitted reservation.
+        // This is invalid filesystem input, never a fabricated trusted terminal record.
+        const terminalPath = reservationPath + '.terminal';
+        mkdirSync(terminalPath);
+        await Promise.resolve(
+          expect(store.markCommitStarted(reservation)).rejects.toThrow(
+            'safe repository access unavailable: durable reservation record must be a regular single-link file',
+          ),
+        );
+        expect(readFileSync(reservationPath, 'utf8')).toBe(originalBytes);
+        expect(lstatSync(terminalPath).isDirectory()).toBe(true);
+        expect(readdirSync(terminalPath)).toEqual([]);
+      } finally {
+        // The terminal state is unreadable; a passing denial does not resolve it.
+        process.stderr.write(`Retained obstructed reservation fixture root: ${temporaryRoot}\n`);
+      }
+    },
+  );
+  test.skipIf(!nativeNoFollowAvailable)(
     'durable reservation store persists every legal transition and rejects replay',
     async () => {
+      const caseDeadline = performance.now() + 5_000;
       const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-reservations-'));
       let safeToCleanup = false;
       try {
         const reservationRoot = path.join(temporaryRoot, 'reservations');
         const store = await createFileOperationReservationStore(reservationRoot, 'quality-durable');
+        const peerStore = await createFileOperationReservationStore(reservationRoot, 'quality-durable');
         const defaultStore = await createFileOperationReservationStore(
           path.join(temporaryRoot, 'default-reservations'),
         );
@@ -677,14 +834,108 @@ describe('governed write completeness', () => {
         const concurrentFixture = evidence();
         const concurrent = await store.reserve(concurrentFixture.operationHash, concurrentFixture.request);
         if (concurrent === null) throw new Error('concurrent durable reservation was not created');
-        await Promise.all([store.markCommitStarted(concurrent), store.markCommitStarted(concurrent)]);
-        expect(await store.inspect(concurrentFixture.operationHash)).toMatchObject({ status: 'commit_unknown' });
+        await Promise.all([store.markCommitStarted(concurrent), peerStore.markCommitStarted(concurrent)]);
+        const concurrentUnknown = await peerStore.inspect(concurrentFixture.operationHash);
+        if (concurrentUnknown === null) throw new Error('concurrent commit-unknown terminal is missing');
+        expect(concurrentUnknown).toMatchObject({
+          operation_key: concurrentFixture.operationHash,
+          store_id: 'quality-durable',
+          revision: concurrent.revision,
+          fencing_token: concurrent.fencing_token,
+          created_at: concurrent.created_at,
+          request_digest: concurrent.request_digest,
+          status: 'commit_unknown',
+          terminal_revision: concurrent.revision + 1,
+        });
         // This direct store fixture has no external effect; settle its synthetic outcome explicitly.
         await store.complete(concurrent, 'c'.repeat(64));
-        expect(await store.inspect(concurrentFixture.operationHash)).toMatchObject({
+        expect(await peerStore.inspect(concurrentFixture.operationHash)).toMatchObject({
           status: 'applied',
           result_digest: 'c'.repeat(64),
         });
+
+        const competingTerminalFixture = evidence();
+        const competingTerminal = await store.reserve(
+          competingTerminalFixture.operationHash,
+          competingTerminalFixture.request,
+        );
+        if (competingTerminal === null) throw new Error('competing terminal reservation was not created');
+        const competingTerminalResults = await Promise.allSettled([
+          store.abort(competingTerminal),
+          peerStore.markCommitStarted(competingTerminal),
+        ]);
+        expect(competingTerminalResults).toHaveLength(2);
+        const competingWinner = await peerStore.inspect(competingTerminalFixture.operationHash);
+        if (competingWinner === null) throw new Error('competing terminal winner is missing');
+        expect(competingWinner).toMatchObject({
+          schema: 'OperationReservation/v1',
+          operation_key: competingTerminalFixture.operationHash,
+          store_id: 'quality-durable',
+          revision: competingTerminal.revision,
+          fencing_token: competingTerminal.fencing_token,
+          created_at: competingTerminal.created_at,
+          request_digest: competingTerminal.request_digest,
+          terminal_revision: competingTerminal.revision + 1,
+        });
+        const abortResult = competingTerminalResults[0];
+        const commitStartResult = competingTerminalResults[1];
+        if (competingWinner.status === 'aborted') {
+          expect(abortResult.status).toBe('fulfilled');
+          expect(commitStartResult.status).toBe('rejected');
+          if (commitStartResult.status !== 'rejected')
+            throw new Error('persisted aborted winner did not reject commit start');
+          expect(String(commitStartResult.reason)).toMatch(
+            /durable reservation (terminal state conflict|commit-start transition conflict)/,
+          );
+        } else if (competingWinner.status === 'commit_unknown') {
+          expect(abortResult.status).toBe('rejected');
+          expect(commitStartResult.status).toBe('fulfilled');
+          if (abortResult.status !== 'rejected')
+            throw new Error('persisted commit-unknown winner did not reject abort');
+          expect(String(abortResult.reason)).toMatch(
+            /durable reservation (terminal state conflict|can abort only before commit starts)/,
+          );
+          // This isolated store fixture has no external effect; settle its known outcome explicitly.
+          await store.complete(competingTerminal, 'e'.repeat(64));
+        } else {
+          throw new Error(`unexpected persisted competing terminal state: ${competingWinner.status}`);
+        }
+
+        const competingDigestFixture = evidence();
+        const competingDigest = await store.reserve(
+          competingDigestFixture.operationHash,
+          competingDigestFixture.request,
+        );
+        if (competingDigest === null) throw new Error('competing digest reservation was not created');
+        await store.markCommitStarted(competingDigest);
+        const digestResults = await Promise.allSettled([
+          store.complete(competingDigest, 'f'.repeat(64)),
+          peerStore.complete(competingDigest, '0'.repeat(64)),
+        ]);
+        expect(digestResults.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+        const digestLoser = digestResults.find((result) => result.status === 'rejected');
+        if (digestLoser?.status !== 'rejected')
+          throw new Error('competing result digest did not observe a persisted conflict');
+        const loserReason: unknown = digestLoser.reason;
+        expect(loserReason).toBeInstanceOf(Error);
+        if (!(loserReason instanceof Error)) throw new Error('competing digest rejection is not an Error');
+        expect(loserReason.message).toBe('durable reservation result digest conflict');
+        const appliedWinner = await peerStore.inspect(competingDigestFixture.operationHash);
+        if (appliedWinner === null) throw new Error('competing digest winner is missing');
+        expect(appliedWinner).toMatchObject({
+          schema: 'OperationReservation/v1',
+          operation_key: competingDigestFixture.operationHash,
+          store_id: 'quality-durable',
+          revision: competingDigest.revision,
+          fencing_token: competingDigest.fencing_token,
+          created_at: competingDigest.created_at,
+          request_digest: competingDigest.request_digest,
+          status: 'applied',
+          terminal_revision: competingDigest.revision + 2,
+        });
+        const appliedDigest = appliedWinner.result_digest;
+        if (appliedDigest === undefined) throw new Error('competing applied winner has no result digest');
+        expect(['f'.repeat(64), '0'.repeat(64)]).toContain(appliedDigest);
         expect(store.inspect('bad-key')).toBeNull();
         await Promise.resolve(
           expect(createFileOperationReservationStore(reservationRoot, '')).rejects.toThrow(/store id/),
@@ -718,12 +969,13 @@ describe('governed write completeness', () => {
         );
         safeToCleanup = true;
       } finally {
-        if (safeToCleanup) {
-          console.error(`reservation fixture cleanup starting: ${temporaryRoot}`);
+        if (safeToCleanup && performance.now() < caseDeadline) {
           rmSync(temporaryRoot, { recursive: true, force: true });
           console.error(`reservation fixture cleanup completed: ${temporaryRoot}`);
         } else {
-          console.error(`reservation fixture retained after failed or unresolved outcome: ${temporaryRoot}`);
+          console.error(
+            `reservation fixture retained after failure, unresolved outcome, or deadline: ${temporaryRoot}`,
+          );
         }
       }
     },

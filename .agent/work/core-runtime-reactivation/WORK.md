@@ -894,6 +894,66 @@ concurrent terminal create/read, not another malformed-JSON duplicate. Three
 functions and14branch counters remain open. Two disjoint Luna test owners
 continue; root retains Source, checks, correspondence, Git and numerical freeze.
 
+Second packet's native fallback, unavailable-recovery, configless test issuer
+and workflow-default controls pass; the first competing terminal oracle fails
+because the loser can legitimately observe the persisted winner before exclusive
+create, returning commit-start transition conflict rather than the narrower
+EEXIST-path message. Preserve quality-governance-recovery-race-controls-8b7-
+20261015.log and its failed durable fixture. This is a test-oracle issue, not a
+product failure or mapper-callback coverage proof. The writer is correcting the
+oracle against the actual persisted winner and both settled outcomes.
+
+Readonly cleanup review also finds the old cleanup-failure-named case never
+calls beforeAbort: it fails after commit start and correctly retains UNKNOWN.
+Keep that no-abort control, name it accurately and add distinct pre-commit body
+plus abort-error controls using the existing test store hooks, exact ordered
+AggregateError causes, writer0 and retained reserved state. Reachability memo:
+quality-governance-cleanup-reachability-8b7-20261015.md. Defensive private cleanup
+and unexpected-rejection safeguards are not removed to raise coverage.
+
+Root stopped a configless-test worker after it wrote outside its assigned file;
+combined diff inspection retains both other workflow additions and the new
+configless block. All final file ownership returns to root. The independent
+review also disclosed an unauthorized read-only Node metadata command; it made
+no edits and establishes no check/numeric evidence. Both incidents are recorded
+in quality-governance-recovery-race-review-8b7-20261015.md. The proposed direct
+reserved-to-applied control is omitted: the private file adapter differs from
+native HostState, but no maintained runtime defect/authorization bypass is
+established, and normal applied controls retain mark-before-CAS semantics.
+
+Second packet's corrected controls8PASS/0FAIL/99assertions in2.20s; tests448 and
+Source101 typechecks pass. Evidence quality-governance-recovery-race-controls-
+corrected-4e3-20261015.log and quality-governance-recovery-race-tests-ts-corrected-
+4e3-20261015.log. The prior three TS errors were optional fixture-byte/digest
+values passed to strongly typed matchers; explicit value guards fix the proofs.
+Keep quality-governance-recovery-race-tests-ts-4e3-20261015.log.
+
+Root adds a genuine invalid-filesystem terminal control: reserve through the
+actual durable adapter, locate its emitted base JSON, obstruct that exact future
+terminal path with a directory, then call markCommitStarted. The native exclusive
+failure/re-read rejects the non-regular terminal file, leaving original base
+bytes and the empty obstruction unchanged. The root is always retained; no fake
+valid terminal/provider state is introduced. First expected-message mismatch is
+retained in quality-governance-recovery-race-controls-final-4e3-20261015.log;
+the corrected assertion names the actual safe-boundary denial. This is distinct
+from nondeterministic same-process races and does not claim an applied effect.
+
+Root also consolidates evaluate/recordResult's identical ToolCall snapshot into
+the existing envelope helper. Both public argument defaults and canonical clone
+order remain; the unreachable private helper default is removed. Scoped one-file
+inventory+hash retains exactly202function IDs, refreshes163addresses and preserves
+all frozen fields/caps: quality-governance-envelope-lineage-receipt-4e3-20261015.json.
+Other Source freshness/global/frozen admission remains pending. Independent
+actual review of both shared helper callers, real abort-error controls and the
+obstruction case finds no actionable issue:
+quality-governance-envelope-actual-review-4e3-20261015.md. Both files now have root
+as sole writer. Final strict gate/publication and one frozen governance capture
+follow; prior numerical metrics remain authoritative until that capture finishes.
+The first staged hook rejects one unsafe any-valued asymmetric matcher property
+in the new digest-race assertion. Root narrows the rejection to unknown/Error and
+checks its exact message; no weaker matcher or gate exemption. Retain
+quality-governance-recovery-race-commit-4e3-20261015.log.
+
 ## Automatic contour progress projection
 
 The human requested durable per-contour metrics and one automatic consolidated
