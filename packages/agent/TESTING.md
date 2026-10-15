@@ -862,7 +862,13 @@ owner; Bun test does not invoke process exit listeners.
 
 File/body tokens preserve the existing assertion marker. Bun includes filtered
 registrations as skipped JUnit cases, so executed-body count and JUnit case count
-are different. Before a real filtered runner uses the capture, its parent must
+are different. Opt-in capture rejects callback-less test registrations, including
+todo and skip, instead of silently omitting a planned case. Ordinary execution
+without capture retains Bun's behavior. Callback-backed skipped cases remain
+registered and uninvoked; boolean conditional-modifier setup is not a registration.
+A collection failure may produce no JUnit or only partial diagnostic artifacts;
+it remains UNKNOWN, never an assertion-confirmed kill or complete body set.
+Before a real filtered runner uses the capture, its parent must
 bind the full original selection, canonical current mutant universe, exact
 planned body set, registered/finished bodies, required scoped lifecycle and
 JUnit outcomes. Missing/pending/foreign/malformed evidence remains UNKNOWN;

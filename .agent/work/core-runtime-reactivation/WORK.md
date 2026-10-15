@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `764b6d6` at origin/main.
+- Published predecessor: `c1ce480` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -114,12 +114,59 @@ Exact/frozen and full dynamic CRAP qualification remain pending. The nine open
 counters include native Windows comparison, test-issuer gates, required-field
 fallbacks and real no-effect reconciliation. Do not fabricate native evidence.
 
-Next extend the existing per-test adapter child controls for selected failure
-attribution, observed-empty coverage and skipped/todo registration accounting.
-Required scoped lifecycle and canonical-map joins remain prerequisites; the
-capture is diagnostic-only. Do not repeat the oversized mutation campaign until
+The next per-test adapter control packet is implemented below. Required scoped
+lifecycle and canonical-map joins remain prerequisites; the capture is
+diagnostic-only. Do not repeat the oversized mutation campaign until
 the existing native per-test admission prerequisite is qualified. Full exact/
 frozen gates, installation and Runtime acceptance remain open.
+
+## Per-test capture registration and causal controls
+
+The existing child fixture now proves one selected failing expanded row against
+the full three-row registration/JUnit set, its exact body invocation, coverage
+key and causal assertion event. Wrong body ID, foreign file, missing assertion
+cause or absent event cannot confirm the failure. The real receipt parser also
+rejects a foreign-file event. Separate controls preserve coverage_observed=false
+versus an explicitly observed empty map. These are producer/classifier contracts,
+not a Stryker campaign or a new mutation score.
+
+Five public callback-less forms exposed a real tooling defect: todo, it.todo,
+skip, skipIf(true) and each.skip were accepted by Bun but silently omitted from
+capture registrations with child exit0. All five controls first failed against
+that behavior. The existing registration boundary now refuses a callback-less
+string-title registration only when capture is active; boolean modifier setup
+and ordinary non-capture behavior remain unchanged. Positive callback-backed
+skip, conditional skip/active, each.skip and failingIf controls account for all
+seven registrations, three invocations and four skipped JUnit cases.
+
+The explicit refusal is a collection error on Bun1.4.3, with no JUnit. The child
+fixture helper asserts that absence only for these negative controls; its default
+still requires JUnit. Retain each expected failed child root even when parent
+assertions pass. A partial capture alone never authorizes admission. The first
+green attempt retained its unexpected missing-JUnit helper failures; the narrow
+helper correction does not change mutation classification or time budgets.
+
+Full affected file38PASS/0FAIL/231assertions/2.25s, then2.47s after the matcher
+typing correction; tests445strict TypeScript and full scoped Oxlint PASS.
+Evidence under `/workspace/attachments`:
+`quality-capture-callbackless-red-c1c-20261015.log`,
+`quality-capture-callbackless-green-c1c-20261015.log`,
+`quality-capture-callbackless-green-corrected-c1c-20261015.log`,
+`quality-capture-final-file-c1c-20261015.log` and
+`quality-capture-test-types-c1c-20261015.log`.
+Final corrected controls and lint:
+`quality-capture-final-file-typed-c1c-20261015.log` and
+`quality-capture-lint-c1c-20261015.log`.
+Two blind Luna readers accepted the actual Source without a blocker:
+`quality-capture-registration-actual-review-c1c-20261015.md` and
+`quality-capture-causal-actual-review-c1c-20261015.md`.
+TESTING and the project Bun Test skill carry the supported/unsupported boundary.
+The first strict hook rejected Bun's any-typed asymmetric duration matchers in
+three expected-object fields. One shared unknown-typed matcher preserves their
+runtime checks and removes unsafe assignments without casting report data.
+Retain `quality-capture-strict-commit-c1c-20261015.log`; no hook was bypassed.
+Scoped hook ancestry and parent reconciliation against the canonical mutant map
+remain open; no selector, native runner or filtered admission is activated.
 
 ## Automatic contour progress projection
 

@@ -9,12 +9,13 @@ import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outc
 import { expectRejection } from './helpers/expect-rejection.ts';
 
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
+const elapsedMatcher: unknown = expect.any(Number);
 
 async function runAdapterChild(
   root: string,
   body: string,
   suffix: string,
-  options: { capture?: boolean; exitCode?: 0 | 1; pattern?: string } = {},
+  options: { capture?: boolean; exitCode?: 0 | 1; pattern?: string; junitAbsent?: boolean } = {},
 ) {
   const sourceFile = path.join(root, 'tests', `child-${suffix}.test.ts`);
   const receiptFile = path.join(root, `body-${suffix}.jsonl`);
@@ -55,12 +56,16 @@ async function runAdapterChild(
     new Response(child.stderr).text(),
   ]);
   expect({ stdout, stderr, exitCode }).toMatchObject({ exitCode: options.exitCode ?? 1 });
+  let junit = '';
+  if (options.junitAbsent) expect(existsSync(junitFile)).toBe(false);
+  else
+    junit = await readFile(junitFile, 'utf8').catch((error: unknown) => {
+      throw new Error(`Adapter child did not produce JUnit: ${stderr}`, { cause: error });
+    });
   return {
     exitCode,
     stderr,
-    junit: await readFile(junitFile, 'utf8').catch((error: unknown) => {
-      throw new Error(`Adapter child did not produce JUnit: ${stderr}`, { cause: error });
-    }),
+    junit,
     events: parseMutationBodyEvents(await readFile(receiptFile), [path.relative(root, sourceFile)]),
     selectedTest: path.relative(root, sourceFile),
   };
@@ -68,6 +73,7 @@ async function runAdapterChild(
 
 type PerTestCapture = {
   schema: string;
+  coverage_observed: boolean;
   registrations: { test_file: string; body_id: number; expected_failure: boolean }[];
   invocations: {
     test_file: string;
@@ -109,6 +115,7 @@ test('per-test diagnostic capture isolates concurrent bodies, expanded rows and 
       await readFile(path.join(root, 'adapters-coverage', 'per-test-coverage.json'), 'utf8'),
     ) as PerTestCapture;
     expect(capture.schema).toBe('MutationPerTestCapture/v1');
+    expect(capture.coverage_observed).toBe(true);
     expect(capture.registrations).toEqual(
       [1, 2, 3, 4, 5].map((id) => ({
         test_file: child.selectedTest,
@@ -172,6 +179,176 @@ test('per-test file token can select one expanded row while preserving registrat
   } finally {
     if (passed) await rm(root, { recursive: true, force: true });
     else console.error('Retained per-test filter fixture: ' + root);
+  }
+});
+
+test('per-test filtered failure binds the exact expanded body to coverage, assertion and complete JUnit', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-filter-cause-'));
+  let passed = false;
+  try {
+    const selected = 'tests/child-selected-failure.test.ts';
+    const token = Buffer.from(selected).toString('base64url');
+    const child = await runAdapterChild(
+      root,
+      `import { test, expect } from 'bun:test';
+test.each([0,1,2])('row %i',value=>{
+  const ns=globalThis.__stryker__;
+  const coverage=ns.mutantCoverage??={static:{},perTest:{}};
+  coverage.perTest[ns.currentTestId]={target:1};
+  expect(value).toBe(0);
+});`,
+      'selected-failure',
+      { capture: true, pattern: `\\[mutation-body:2\\] \\[mutation-file:${token}\\] ` },
+    );
+    const capture: unknown = JSON.parse(
+      await readFile(path.join(root, 'adapters-selected-failure', 'per-test-coverage.json'), 'utf8'),
+    );
+    expect(capture).toEqual({
+      schema: 'MutationPerTestCapture/v1',
+      registrations: [1, 2, 3].map((body_id) => ({ test_file: selected, body_id, expected_failure: false })),
+      invocations: [{ test_file: selected, kind: 'body', id: 2, outcome: 'threw', elapsed_ms: elapsedMatcher }],
+      coverage_observed: true,
+      mutant_coverage: { static: {}, perTest: { [`${selected}#body:2`]: { target: 1 } } },
+    });
+    expect(child.events).toEqual([
+      {
+        schema: 'MutationBodyEvent/v1',
+        test_file: selected,
+        kind: 'body',
+        body_id: 2,
+        assertion_cause: true,
+        assertion_source: 'bun-expect',
+      },
+    ]);
+    const outcome = junitOutcome(child.junit, [selected], [], child.events);
+    expect(outcome).toMatchObject({ tests: 3, skipped: 2, failures: 1, errors: 0, outcome: 'killed' });
+    expect(confirmedRunnerOutcome(child.exitCode, outcome.outcome)).toBe('killed');
+    for (const change of [{ body_id: 1 }, { test_file: 'tests/foreign.test.ts' }, { assertion_cause: false }]) {
+      const mismatched = child.events.map((event) => ({ ...event, ...change }));
+      const unproven = junitOutcome(child.junit, [selected], [], mismatched);
+      expect(unproven.outcome).toBe('unproven');
+      expect(confirmedRunnerOutcome(child.exitCode, unproven.outcome)).toBe('unknown');
+    }
+    expect(() =>
+      parseMutationBodyEvents(Buffer.from(JSON.stringify({ ...child.events[0], test_file: 'tests/foreign.test.ts' })), [
+        selected,
+      ]),
+    ).toThrow('invalid test binding');
+    expect(junitOutcome(child.junit, [selected], [], []).outcome).toBe('unproven');
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained filtered assertion fixture: ' + root);
+  }
+});
+
+test.each([
+  { label: 'absent', observed: false },
+  { label: 'observed-empty', observed: true },
+])('per-test capture preserves $label coverage', async ({ observed }) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-empty-'));
+  let passed = false;
+  try {
+    const child = await runAdapterChild(
+      root,
+      `import { test, expect } from 'bun:test';
+${observed ? 'globalThis.__stryker__.mutantCoverage={static:{},perTest:{}};' : ''}
+test('empty',()=>expect(true).toBe(true));`,
+      'empty',
+      { capture: true, exitCode: 0 },
+    );
+    const capture: unknown = JSON.parse(
+      await readFile(path.join(root, 'adapters-empty', 'per-test-coverage.json'), 'utf8'),
+    );
+    expect(capture).toEqual({
+      schema: 'MutationPerTestCapture/v1',
+      registrations: [{ test_file: child.selectedTest, body_id: 1, expected_failure: false }],
+      invocations: [
+        { test_file: child.selectedTest, kind: 'body', id: 1, outcome: 'returned', elapsed_ms: elapsedMatcher },
+      ],
+      coverage_observed: observed,
+      mutant_coverage: { static: {}, perTest: {} },
+    });
+    expect(junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome).toBe('passed');
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained empty coverage fixture: ' + root);
+  }
+});
+
+test.each([
+  { label: 'todo', registration: "test.todo('planned');" },
+  { label: 'it-todo', registration: "it.todo('planned');" },
+  { label: 'skip', registration: "test.skip('planned');" },
+  { label: 'skip-if', registration: "test.skipIf(true)('planned');" },
+  { label: 'each-skip', registration: "test.each([1,2]).skip('planned %i');" },
+])('per-test capture refuses callback-less $label without changing ordinary execution', async ({ registration }) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-unsupported-'));
+  // A successful parent control does not dispose the child's expected UNKNOWN evidence.
+  console.error('Retained unsupported per-test fixture: ' + root);
+  const body = `import { test, it, expect } from 'bun:test';
+test('ordinary',()=>expect(true).toBe(true));
+${registration}`;
+  const ordinary = await runAdapterChild(root, body, 'ordinary', { exitCode: 0 });
+  expect(junitOutcome(ordinary.junit, [ordinary.selectedTest], [], ordinary.events)).toMatchObject({
+    outcome: 'passed',
+  });
+  const unsupported = await runAdapterChild(root, body, 'unsupported', { capture: true, junitAbsent: true });
+  expect(unsupported.stderr).toContain('Mutation per-test capture requires a callback for every test registration.');
+  expect(unsupported.events).toEqual([]);
+  expect(() => junitOutcome(unsupported.junit, [unsupported.selectedTest], [], unsupported.events)).toThrow();
+  expect(confirmedRunnerOutcome(unsupported.exitCode, 'unproven')).toBe('unknown');
+});
+
+test('per-test capture accounts for skipped callbacks without rejecting conditional modifier setup', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-skipped-'));
+  let passed = false;
+  try {
+    const child = await runAdapterChild(
+      root,
+      `import { test, expect } from 'bun:test';
+test('ordinary',()=>expect(true).toBe(true));
+test.skip('skipped',()=>{throw new Error('skipped body ran');});
+test.skipIf(true)('conditional skipped',()=>{throw new Error('conditional skipped body ran');});
+test.each([1,2]).skip('each skipped %i',()=>{throw new Error('skipped row ran');});
+test.skipIf(false)('conditional active',()=>expect(true).toBe(true));
+test.failingIf(true)('expected assertion',()=>expect(true).toBe(false));`,
+      'skipped',
+      { capture: true, exitCode: 0 },
+    );
+    const capture: unknown = JSON.parse(
+      await readFile(path.join(root, 'adapters-skipped', 'per-test-coverage.json'), 'utf8'),
+    );
+    expect(capture).toEqual({
+      schema: 'MutationPerTestCapture/v1',
+      registrations: [1, 2, 3, 4, 5, 6, 7].map((body_id) => ({
+        test_file: child.selectedTest,
+        body_id,
+        expected_failure: body_id === 7,
+      })),
+      invocations: [1, 6, 7].map((id) => ({
+        test_file: child.selectedTest,
+        kind: 'body',
+        id,
+        outcome: id === 7 ? 'threw' : 'returned',
+        elapsed_ms: elapsedMatcher,
+      })),
+      coverage_observed: false,
+      mutant_coverage: { static: {}, perTest: {} },
+    });
+    expect(child.events).toEqual([]);
+    expect(junitOutcome(child.junit, [child.selectedTest], [], child.events)).toMatchObject({
+      tests: 7,
+      skipped: 4,
+      failures: 0,
+      errors: 0,
+      outcome: 'passed',
+    });
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained skipped per-test fixture: ' + root);
   }
 });
 

@@ -137,6 +137,14 @@ For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and
 check the descriptor's rejection stage before investigating assertions. A
 known survivor is a mutation failure; an input/process failure is UNKNOWN.
+For opt-in per-test capture controls, join the exact body/file token, runtime
+coverage key, causal assertion event and full JUnit skipped counts. Absent and
+observed-empty coverage maps are distinct. Callback-less todo/skip registrations
+are unsupported under capture; retain their failed child evidence, including
+missing JUnit. Ordinary non-capture execution stays supported. Callback-backed
+skip and conditional modifier setup need positive controls. These diagnostic
+checks do not qualify a filtered runner or mutation score; scoped lifecycle and
+canonical-map admission remain with TESTING.
 Use TESTING's per-invocation configured-context fixture for mutation workers;
 keep repository tooling and consumer context roots separate and never reuse
 an archived or another worker's context. Shared package sandboxes alone do not

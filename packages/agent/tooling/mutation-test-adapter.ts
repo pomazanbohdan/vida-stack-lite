@@ -237,7 +237,12 @@ function registerArgs(
   const next = [...args];
   if (!bodies) return next;
   const callbackIndex = next.findLastIndex((value) => typeof value === 'function');
-  if (callbackIndex < 0) return next;
+  if (callbackIndex < 0) {
+    // Boolean modifier setup returns a registrar; a title is the registration itself.
+    if (mutationCoverage && typeof next[0] === 'string')
+      throw new Error('Mutation per-test capture requires a callback for every test registration.');
+    return next;
+  }
   const callback = next[callbackIndex] as Callable;
   if (eachArgumentCount === null ? callback.length > 0 : callback.length > eachArgumentCount)
     throw new Error('Mutation body adapter does not support Bun done-callback test forms.');
