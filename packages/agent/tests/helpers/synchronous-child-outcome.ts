@@ -8,10 +8,10 @@ export function isUnknownSynchronousChild(
 }
 
 export function requireSynchronousChildSuccess(
-  result: Pick<SpawnSyncReturns<string>, 'error' | 'signal' | 'status' | 'stdout' | 'stderr'>,
+  result: Partial<Pick<SpawnSyncReturns<string | Buffer | null>, 'error' | 'signal' | 'status' | 'stdout' | 'stderr'>>,
   completionMarker: string,
 ): void {
-  const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  const output = `${String(result.stdout ?? '')}\n${String(result.stderr ?? '')}`;
   if (result.error !== undefined || result.signal !== null || result.status !== 0 || !output.includes(completionMarker))
     throw new Error(
       `Child test did not complete successfully: ${completionMarker}; status=${String(result.status)}; ` +

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { boundedSpawnSync, executionBudget, requireTerminalCommand } from '../bin/bun.ts';
+import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -1241,7 +1242,7 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       'distributed SDK authentication denial',
     );
     requireTerminalCommand(result, 'distributed SDK authentication denial');
-    expect(result.status).toBe(0);
+    requireSynchronousChildSuccess(result, 'distributed authentication denial verified');
     if (typeof result.stdout !== 'string' || typeof result.stderr !== 'string')
       throw new Error('SDK child UTF-8 output is unavailable.');
     expect(result.stderr).toBe('');

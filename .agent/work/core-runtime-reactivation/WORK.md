@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `a83f21a` at origin/main.
+- Published predecessor: `6a708cb` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -203,251 +203,114 @@ quality-mutation-timeouts-review-regression-3256fee-20261015.log. Retain the
 original ISSUES verdict in quality-mutation-timeouts-review-3256fee-20261015.md;
 the root applied its exact requested correction without relabeling that review.
 
-### First joint contour cycle
+### First contour: main-host
 
-Publisheda83f21a passed the strict473-file typecheck, format/lint/Knip hook and
-ordinary push. Its fresh focused reportd9082e45-5d55-4216-96ae-2bc695ffb1f7
-measured functions7/7,lines21/21,statements22/22,branches11/11, all100%;
-binary function-entry CC/CRAP1,1,1,3,1,1,2. Outer exit0 in3696.962ms, complete
-capture/group termination: quality-focused-supervised-a83f21a-nlVxMd.
-Summary: quality-main-host-parent-focused-summary-a83f21a-20261015.json.
-Frozen qualification remains pending, and later edits invalidate test evidence.
+Published6a708cb passed the strict473-file TypeScript, format/lint/Knip hook and
+ordinary push. Product host-capability Source is unchanged:
+611992482ae35defabc4ffe21b77614c5d2d4041f84e961de05365c9971fce12.
+Current selection is src/config/host-capability.ts and
+tests/host-capability-boundary.test.ts. Other mutation partitions and the full
+suite retain coverage-completeness; seven native assertions were moved, not lost.
 
-Its separate mutation pilot completed in46613ms without timeout, full output and
-owned-group termination: quality-mutation-supervised-a83f21a-zY7TlX. Retain
-packages/agent/.tmp/mutation-evidence-0f0c55d1-58ee-4cea-8e2e-236da16c2c73-AfBgQz.
-Baseline passed; raw68Killed/1Survived, confirmed0Killed/68UNKNOWN. Survivor54
-changes attested AND supported-filesystem to OR. Added independent false/true
-and true/false scenarios; both fail under that exact injected change and pass
-with restored original Source: quality-host-attestation-negative-a83-20261015.log
-and quality-host-attestation-matrix-baseline-a83-20261015.log.
+Fresh local evidence at that commit:
+- Coverage run584ca194-1a1a-487d-b5a7-7b83f3e9466f: functions7/7,
+  lines21/21,statements22/22,branches11/11, all100%.
+  Thirteen tests/42assertions; outer exit0 in5116.261ms, no timeout,
+  complete capture and owned-group termination. Outer root:
+  /workspace/attachments/quality-focused-supervised-6a708cb-S6DDvD.
+  Report: packages/agent/coverage/bun-unified/diagnostics/
+  584ca194-1a1a-487d-b5a7-7b83f3e9466f.focused-coverage.json.
+  Summary: quality-main-host-causal-focused-summary-6a708cb-20261015.json.
+- CC/binary function-entry CRAP1,1,1,3,1,1,2; all7 exact IDs/source bindings
+  compare within original known caps. Diagnostic comparison only:
+  quality-main-host-local-cap-comparison-6a7-20261015.json. The partial lineage
+  artifact remains explicitly non-executable; frozen qualification is pending.
+- Mutation run e2084864-b42f-420b-a171-566f88e4fd83: pilot-pass,
+  69/69 assertion-confirmed Killed100%, zero UNKNOWN/non-killed, admitted
+  baseline, no provenance errors. Outer exit0 in77143.925ms, no timeout,
+  complete capture and owned-group termination:
+  /workspace/attachments/quality-mutation-supervised-6a708cb-3YVPIV.
+  Package receipts: packages/agent/.tmp/mutation-evidence-
+  e2084864-b42f-420b-a171-566f88e4fd83-UsVapd.
+  Summary: quality-main-host-causal-mutation-summary-6a7-20261015.json.
 
-Root traced50unproven outcomes to a false hook gap: mutation parsing enabled JSX
-for plain TS, then failed on a genuine generic arrow in safe-repository-access.
-Both remaining unconditional TS/JSX parsers now reuse the existing filename-based
-babel-syntax owner. Two regressions failed before correction and passed after;
-the real child adapter proves causal assertions with generic/angle syntax, while
-malformed syntax and uninstrumented hooks remain denied. Official parser source:
-https://babeljs.io/docs/babel-parser. Logs: quality-mutation-ts-syntax-{before,
-after}-a83-20261015.log. No parser retry, second AST owner or error suppression.
+These remain separate local results. Coverage captures focused selection;
+mutation captures full-current inputs while executing the declared partition.
+Matching selected Source does not make their captures identical. The existing
+qualityInputProjections is a shared post-run review capture, not producer
+transport. No new transport/branding framework is added. Design:
+quality-focused-shared-capture-minimal-fe5444d-20261015.md.
+Global exact coverage, exhaustive frozen correspondence and full mutation
+qualification remain open; the first local measurements do not admit them.
 
-Blind Luna classified the remaining18runtime-error cases in
-quality-host-unknown-causal-analysis-a83-20261015.md. Test success calls now assert
-that only the target call does not throw, then retain exact result assertions.
-The manual Linux fixture Error is removed; imports/mocks/cleanup remain outside
-assertion wrapping. These are test/tool corrections, not established product
-defects. Five affected files passed65tests/271assertions in2.31s:
-quality-host-causal-final-package-batch-a83-20261015.log.
-Independent blind review ACCEPT with no correctness findings:
-quality-host-causal-actual-review-a83-20261015.md. Root retains all infrastructure
-and cleanup UNKNOWN rules. Strict commit/push and fresh measurements follow.
+Repairs that made this evidence attributable:
+- Six child host launches became parent Bun mocks with fresh query imports and
+  complete namespace snapshots/restoration. Both restores are attempted; all
+  cleanup errors survive. These cases remain serial/exclusive until shard
+  qualification. The restoration prototype passed2tests/8assertions; removing
+  restoration failed. NTFS/ReFS descriptors are simulations, not native Windows.
+- Mutation hook analysis and preload now reuse babel-syntax filename policy.
+  Unconditional JSX had rejected a real plain-TS generic arrow, falsely marking
+  successful assertion failures as hook-ambiguous. Two real regressions failed
+  before correction and passed after; malformed syntax/hooks still deny.
+  Official source: https://babeljs.io/docs/babel-parser.
+- Successful target calls alone use not.toThrow plus exact result assertions.
+  Imports/mocks/cleanup remain outside assertion wrapping. The manual fixture
+  Error was removed; blind causal analysis accounted for all18 runtime-error IDs.
+- Independent false/true and true/false Windows attestation/filesystem cases
+  reject the actual surviving AND-to-OR mutant. Both failed with that injection
+  and passed after restoring original Source. No product defect is inferred.
+  Final affected batch65PASS/271assertions/2.31s.
 
-One mistaken development command from the repository root selected retained
-snapshot copies through Bun filename filtering. Root stopped that batch with
-exit143; it is not admitted as current evidence. Keep
-quality-host-causal-final-batch-a83-20261015.log. Parent93882 is absent; child95262
-was observed defunct under hostPID1, so that outer operation remains UNKNOWN.
-The corrected package-root ./tests selection produced the65-test result above.
-Future focused commands use that explicit route; no old evidence is relabeled.
+Independent blind reviews accepted the mock lifecycle and final causal packet:
+quality-host-parent-mocks-actual-review-20261015.md and
+quality-host-causal-actual-review-a83-20261015.md. Root remains sole checker/Git
+owner. Build/install run no suites. No caps or function roles were rebased.
 
-The follow-up design corrects the earlier shared-capture assumption:
-qualityInputProjections currently serves a shared post-run review, not producer
-input transport. Separate focused and pilot reports are the smallest safe
-interim; no new transport/branding framework is added. Artifact:
-quality-focused-shared-capture-minimal-fe5444d-20261015.md. Joint/global acceptance
-stays open.
+Preserve failed/UNKNOWN evidence. Earlier cycle details and exact locators remain
+in Git at6a708cb:.agent/work/core-runtime-reactivation/WORK.md, including the
+failed sealed-directory report write and the misleading raw68/69 Killed results.
+The mistakenly root-launched development batch remains unadmitted:
+quality-host-causal-final-batch-a83-20261015.log. Parent93882 is absent, child95262
+was observed defunct under hostPID1; its outer result remains UNKNOWN. Subsequent
+focused commands use package working directory and explicit ./tests paths.
+No retained evidence trees were deleted, repaired in place or replayed.
 
-Current packet replaces all six nested host-test launches with parent-process
-provider cases. Plain full export snapshots restore fs and safe-access namespaces
-after every case; both restoration attempts run and all cleanup errors survive.
-Fresh query imports preserve per-case module initialization. Existing assertions
-remain, with missing O_NOFOLLOW and exact NTFS/ReFS descriptor scenarios added.
-These are metadata simulations, not native Windows observations. A live prototype
-passed2tests/8assertions; its no-restoration negative control failed as expected:
-quality-host-mock-restoration-prototype-20261015.* and
-quality-host-mock-restoration-negative-20261015.*. The actual host and adjacent
-completeness files passed21tests/376assertions in3.54s:
-quality-host-parent-mocks-focused-fe5444d-20261015.log. No measured speedup claim.
-Independent blind Luna accepted the actual lifecycle/assertion diff:
-quality-host-parent-mocks-actual-review-20261015.md. Its pre-existing misleading
-platform-gating title was narrowed to the actual nonzero-flag contract; Source
-checks provider availability and flag, not process.platform. No new platform
-requirement was invented. Strict commit/push and fresh numeric runs follow.
-The strict hook rejected widened string literals in the shared Windows expected
-object. Its explicit public NativeNoFollowCapability type fixes fixture typing
-without a cast or runtime change; retain the first hook log
-quality-host-parent-mocks-commit-fe5444d-20261015.log.
+Next: inspect the existing main-runtime-core test/SDK prerequisites and use its
+supported producer/partition; prepare independent bounded review before changes.
 
-The last pre-change focused run atfe5444d completed exit0 in4777.512ms with
-complete capture and owned-group termination:
-/workspace/attachments/quality-focused-supervised-fe5444d-gNdPmu.
-Report6ab87090-8f89-4435-bc22-807f3996db34.focused-coverage.json retains
-functions7/7,lines21/21,statements22/22,branches9/11 and binary function-entry
-CRAP1,1,1,3,1,1,2. Those measurements do not qualify the modified tests.
-Shared-capture design review identifies existing qualityInputProjections as
-the single capture seam; focused coverage and mutation currently capture
-independently. Preserve that explicit custody gap until implemented rather
-than equating matching hashes with one capture. Design artifact:
-quality-focused-shared-capture-design-fe5444d-20261015.md.
+### Next core preparation
 
-Human now requires each contour to measure coverage, frozen complexity/CRAP and
-assertion-confirmed mutation together before moving on. First core scope is the
-existing main-host partition, src/config/host-capability.ts, with its current
-host-capability-boundary test selection. Prepare a clearly
-local diagnostic report using the existing Babel inventory and coverage owner;
-do not label selected tests full-current-test-set or admit it as a global gate.
-Use the same captured source/tests/config/tool fingerprints across the three
-metrics. Dynamic CRAP is pending until attributable function coverage exists.
-Generated scenarios remain unreviewed; frozen caps and function correspondence
-must not be rebased to current values.
+Blind planning at quality-runtime-core-next-minimal-6a7-20261015.md confirms the
+existing runtime-core partition still requires configured-workflow/smoke and
+fresh CI-formed SDK inputs. No established replacement justifies dropping them.
+The plan's suggested timing-output partition addition is deferred: this child
+has no qualified causal assertion transport, while the current completeness
+selection already directly tests timing. No partition or gate is changed.
 
-The former host boundary children lacked explicit coverage preload and causal
-assertion receipts. The current packet replaces those six child launches with
-parent-process mocks and complete namespace restoration. Numeric results below
-remain tied to their exact older inputs until measured again. No joint frozen
-coverage/CRAP/mutation qualification is admitted. Earlier attestation7/7 is a different,
-constants-only scope and does not qualify this function contour.
-
-At4c6b0d8, the read-only repository mount first blocked legitimate CAS reader
-sidecars; that wrapper error is retained in quality-mutation-supervised-
-4c6b0d8-CORD3g. The corrected repository-writable wrapper completed in116808ms
-without timeout, with complete captures and observed owned-group termination:
-/workspace/attachments/quality-mutation-supervised-4c6b0d8-EgxThQ.
-Its original tests passed16/0 with381assertions in3.96s, but the mutation gate
-rejected baseline attribution. Retain package evidence at
-packages/agent/.tmp/mutation-evidence-5a6d9e55-b55d-4c2b-87d9-fbad8dbf4e79-7ANEAC;
-Stryker Killed rows remain UNKNOWN because that baseline was not admitted.
-
-Root reproduced a tooling defect: conservative uninstrumented-hook file flags
-were counted as hook failures even for successful cases. The correction only
-counts that ambiguity on failed cases; observed hook errors still deny and
-failed cases with uninstrumented hooks remain unproven. Regression before fix:
-quality-host-baseline-hooks-before-4c6-20261015.log (1FAIL/1PASS).
-Focused attribution/async/mixed-error checks after fix passed46/0 with192assertions
-in1.96s: quality-host-baseline-hooks-focused-4c6-20261015.log.
-An added control also denies a hook-error event despite a passing JUnit report.
-That control passed: quality-host-baseline-hook-event-4c6-20261015.log.
-Independent blind Luna accepted the actual causal diff in
-quality-main-host-baseline-cause-4c6-20261015.md. Fresh numeric measurement and
-local coverage/CRAP implementation remain pending.
-
-Published23ae277 corrects baseline hook classification; strict formatting,
-473-file typecheck, lint and Knip completed in the commit hook, and ordinary
-non-force push succeeded. WORK is tracked despite the ignored parent directory;
-the initial add warning did not exclude its tracked changes. The first hook
-attempt rejected formatting, then the exact test file was formatted and the
-strict hook passed. No hook bypass was used.
-
-The same first-contour review found parent child-health assertions in host and
-envelope boundary tests. They could label a child infrastructure failure as a
-parent assertion kill. Both now share requireSynchronousChildSuccess in the
-existing synchronous-child-outcome helper, which throws ordinary errors for
-abnormal/nonzero exits and missing completion markers. Child assertion/counter
-receipt integration remains pending; this correction prevents false evidence.
-The initial new-export probe failed at module load and is not causal proof.
-The subsequent exact legacy expect-check negative control reproduced false
-assertion_cause:true; quality-child-health-legacy-negative-23ae277-20261015.log.
-The corrected three affected files passed34/0 with1026assertions in7.78s:
-quality-child-health-focused-23ae277-20261015.log. Root restored the ordinary-error
-implementation after the negative control; targeted control passed1/0 with8
-assertions. Independent Luna review found that the existing unknown predicate's
-truthiness was weaker than the old callers' strict error/signal comparisons.
-Three malformed-success controls reproduced the gap (7expected failure events,
-4actual): quality-child-health-review-negative-23ae277-20261015.log.
-The success guard now preserves the original exact comparisons while the
-separate unknown classifier keeps its existing callers unchanged. Final three
-affected files passed34/0 with1029assertions:
-quality-child-health-final-files-23ae277-20261015.log. Retain the original ISSUES
-review quality-child-health-review-23ae-20261015.md; do not relabel it ACCEPT.
-No product bug, numeric score or speedup is inferred.
-
-Publishedabba348 preserves strict child-health checks and ordinary errors;
-strict pre-commit and push succeeded. Fresh second main-host cycle completed
-in135590ms without timeout, with complete output and observed owned-group
-termination: /workspace/attachments/quality-mutation-supervised-abba348-OYshlg.
-Evidence: packages/agent/.tmp/mutation-evidence-
-1b4b1648-50c2-423a-973e-bb286f211336-15PKyo. Baseline is now admitted
-(16PASS/357assertions/5.24s); all69Stryker Killed remain unconfirmed. The gate
-correctly reports UNKNOWN, killed0/effective_score0. Source import/setup errors
-and ordinary child-health failures are not body assertion kills. No product
-bug is established by failures caused only by injected mutations.
-
-Root implemented the first focused diagnostic route through the existing
-capture/producer, not a second collection pipeline. Blind Luna proposed the
-bounded capture patch; Root corrected its projection-mode normalization,
-encoded focused selection as a discriminated type, avoided reading unselected
-Source upfront, and retained transitive tests/* helpers in test_inputs. The
-helper-membership regression failed before correction; this also preserves
-configured consumer binding. Unselected imported Source remains captured module
-input without receiving selected coverage. Configured-workflow SDK selection
-is explicitly unsupported in this initial route; full SDK freshness is unchanged.
-
-An optional original-AST observer feeds existing functionInventory before
-Istanbul counter insertion. Its private-method/nested-closure identity regression
-failed before support and passed after. No repeated parse or second inventory
-owner was introduced. A distinct diagnostic schema/path prevents global report
-replacement; existing global admission rejects the diagnostic control. Reports
-contain four local coverage metrics, IDs/CC and existing binary function-entry
-CRAP, with frozen-budget qualification pending. Child counters stay unqualified.
-Final affected capture/instrumentation/gate/preload contracts passed51/0 with546
-assertions in12.89s: quality-focused-producer-final-contracts-abba348-20261015.log.
-Initial static check found the newly used Istanbul API outside maintained type
-declarations; Root changed it to the existing public createCoverageMap summary
-API. Final strict typecheck checked473files with0diagnostics:
-quality-focused-producer-types-final-abba348-20261015.log. Independent blind
-Luna accepted the actual diff in quality-focused-producer-review-abba348-
-20261015.md. Documentation links/headings passed. Strict commit/push and the
-real diagnostic run remain the next steps; no dynamic coverage is claimed yet.
-
-Published7954f51 adds the focused producer route. Strict commit/push passed.
-The first real focused run1885330c-fcd2-4c2a-a627-beda1d89828a completed16PASS/
-357assertions in4.35s, but report writing failed EACCES: the selected target was
-inside the intentionally0500sealed run directory. Retain its UNKNOWN operation
-and counter receipts under coverage/bun-unified/diagnostics/runs/1885330c-
-fcd2-4c2a-a627-beda1d89828a and outer
-/workspace/attachments/quality-focused-supervised-7954f51-P1jt0p. Outer exit1,
-8.534s, no timeout, complete capture and owned-group termination observed.
-This is a new tooling output-path defect, not a product defect or numeric PASS.
-The correction moves only the diagnostic final output to its writable parent
-directory; sealed manifest/snapshot permissions remain unchanged. A new run
-after publication will supply the real before/after check; the failed run is
-not repaired or replayed in place.
-
-Published2c632b3 corrects the final report path without relaxing sealed custody.
-Fresh focused run8d8b3220-aa70-4acc-a1d8-6ec100245a83 completed with outer exit0,
-9.616s, no timeout and owned-group termination observed:
-/workspace/attachments/quality-focused-supervised-2c632b3-yIz0O8.
-The report is coverage/bun-unified/diagnostics/8d8b3220-aa70-4acc-a1d8-
-6ec100245a83.focused-coverage.json. Its selected tests passed16/0 with357assertions
-in4.63s. Actual host metrics: functions7/7, lines21/21, statements22/22,
-branches9/11(81.81%). Existing binary function-entry CRAP is1,1,1,3,1,1,2.
-Validated bounded projection: quality-main-host-focused-summary-2c632b3-
-20261015.json. These are local diagnostics at that Source/test/tool binding;
-frozen-budget qualification and child counters remain pending. The earlier
-abba348 mutation run has different tool/test identities and is not a joint
-three-metric qualification for these inputs.
-
-The next causal correction moves the seven native host assertions from the
-combined Cedar completeness case into two directly executed native cases in
-the existing host-boundary file. Only main-host mutation's narrow test selection
-changes; the full test selection and all other partitions retain completeness.
-No product Source or frozen roles/caps change. Six mocked/provider cases keep
-their child processes. A first3file check passed29/30; a leftover kernel-case
-nativeNoFollowAvailable import caused the single failure and was restored.
-The first anchored retry matched zero tests (retained as selection error), then
-the actual kernel case passed1/0 with34assertions in2.73s:
-quality-host-scope-extraction-kernel-regression-retry-2c632b3-20261015.log.
-All other29cases retain their passing proof from
-quality-host-scope-extraction-focused-2c632b3-20261015.log. Independent blind Luna
-accepted the complete assertion-preserving diff:
-quality-host-native-scope-review-2c632b3-20261015.md. New focused and mutation
-measurements must use this same revised selection after publication.
-The strict hook found a nullable expected-value type mismatch in the moved
-cross-surface equality assertion. Swapping its equivalent actual/expected sides
-keeps both positive assertions and avoids a cast or runtime guard. Both native
-cases passed2/0 with7assertions in199ms:
-quality-host-native-scope-type-regression-2c632b3-20261015.log. The hook failure
-remains retained; retry uses the normal strict hook.
+Root found the same health-assertion pattern in timing-output and the distributed
+SDK authentication check. Both now use the existing ordinary-error success guard,
+retaining exact payload assertions and terminal-command checks. Timing output
+uses the existing boundedSpawnSync with4000ms/250ms reserve inside its5000ms case.
+The shared guard's type accepts partial bounded string/Buffer results; its strict
+runtime comparisons are unchanged, including missing signal/status rejection.
+Initial helper/timing batch23PASS/139assertions/2.52s:
+quality-runtime-child-health-focused-6a7-20261015.log. SDK-dependent execution is
+pending exact current CI artifact preparation after publication. Do not use stale
+dist or infer install/unblock. Product Source remains unchanged.
+Final terminal/UTF8 timing check passed1test/5assertions in44ms:
+quality-runtime-child-terminal-final-6a7-20261015.log. Independent actual review
+ACCEPT: quality-core-child-health-actual-review-6a7-20261015.md.
+The first strict hook rejected nullable bounded stdout/stderr in the helper
+type. Their native null representation is now explicit; runtime comparisons
+are unchanged. Retain quality-runtime-child-health-commit-6a7-20261015.log.
+The next strict lint rejected implicit Buffer interpolation. Explicit String
+conversion keeps the native output text contract; the final health/timing
+regression passed2tests/16assertions/149ms. Retain
+quality-runtime-child-health-commit-retry-6a7-20261015.log and
+quality-runtime-child-health-buffer-final-6a7-20261015.log.
+Historical host-cycle narration was condensed into the current measured outcome;
+all earlier exact locators remain at6a708cb's WORK and retained native artifacts.
 
 ## Root-owned rapid test and product audit
 
