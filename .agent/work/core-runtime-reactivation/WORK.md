@@ -1249,8 +1249,9 @@ Retain the old dependency tree at /workspace/retained-host-dependencies-20261015
 a clean frozen install with scripts disabled restores matching dependencies.
 Build/install ran no suites. Pstack1.17.1 is installed and its focused leaves
 were loaded manually; automatic hook trust remains a separate native UI GAP.
-Source Git hooks were tracked100644 and inactive after restoration. Track their
-executable modes and enable the existing .githooks owner; do not bypass checks.
+Source Git hooks were tracked100644 and inactive after restoration. Track the
+pre-commit executable mode and enable the existing .githooks owner; do not bypass
+checks. Pre-push remains inactive under the current lifecycle authorization.
 
 Fresh Tini0.19.0 matches official SHA256
 93dcc18adc78c65a028a84799ecf8ad40c936fdfc5f2a57b1acda5a8117fa82c.
@@ -1305,6 +1306,14 @@ quality-protected-and-isolated-static-resume-20261015.log. The rejected commit
 created no checkpoint; no hook bypass was used. Independent blind Luna review
 found no blocker: quality-isolated-lint-helper-review-resume-20261015.md.
 Expanded kernel numeric proof is still pending.
+
+Checkpoint2ecbf4c passed the normal strict staged hook. Root mistakenly enabled
+pre-push as well; its automatic full coverage launch rejected push before test
+execution because no current-commit SDK workflow input exists. Retain
+quality-protected-and-isolated-push-resume-20261015.log. Restore pre-push's
+previous non-executable mode to match the lifecycle policy; strict precommit
+stays active. This correction does not waive any explicit numeric gate or claim
+the rejected full launch passed. No test ran in that rejected launch.
 
 ### Current product correction packet
 
