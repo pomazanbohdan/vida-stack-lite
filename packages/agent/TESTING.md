@@ -846,8 +846,9 @@ from a reduction in repeated operations; only a real contour run proves timing.
 
 The shared mutation preload accepts diagnostic `AGENT_MUTATION_PER_TEST_CAPTURE=1`
 and writes `per-test-coverage.json` exclusively inside its invocation-owned
-adapter directory. `MutationPerTestCapture/v1` records file/body registrations,
-body and hook invocations (including pending work and durations), and the public
+adapter directory. `MutationPerTestCapture/v2` records file/body registrations,
+describe ancestry, stable hook registrations, body and hook invocations
+(including pending work and durations), and the public
 Stryker `static`/`perTest` counters. `coverage_observed=false` distinguishes an
 absent runtime map from an observed empty map. This producer has no Killed or
 filtered-run admission authority; the ordinary command runner clears inherited
@@ -859,6 +860,17 @@ all lifecycle hooks are attributed statically. Static coverage may require the
 full test set; never discard it to improve timing. The preload's global
 `afterAll` finalizes after file-local hooks, following the existing Bun coverage
 owner; Bun test does not invoke process exit listeners.
+
+Plain synchronous describe callbacks record copied parent-ID paths for bodies
+and hooks. Hook registration IDs are separate from invocation IDs, so repeated
+beforeEach/afterEach invocations resolve to their declaring scope. Filtered
+siblings remain registered without implying their hooks ran. Static coverage
+stays aggregate; scope metadata does not attribute mutant hits to individual
+hooks. Async describe, describe.each and describe modifiers are unsupported in
+opt-in capture; ordinary non-capture execution remains unchanged. Unsupported
+registration latches invalidity and prevents final artifact publication even
+when caller code catches the error. Historical v1 artifacts lack scoped evidence
+and must not be promoted to v2 or filtered-run qualification.
 
 File/body tokens preserve the existing assertion marker. Bun includes filtered
 registrations as skipped JUnit cases, so executed-body count and JUnit case count

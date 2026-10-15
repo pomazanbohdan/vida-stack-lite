@@ -145,6 +145,13 @@ missing JUnit. Ordinary non-capture execution stays supported. Callback-backed
 skip and conditional modifier setup need positive controls. These diagnostic
 checks do not qualify a filtered runner or mutation score; scoped lifecycle and
 canonical-map admission remain with TESTING.
+The v2 diagnostic records plain describe ancestry and stable hook registration
+IDs separately from repeated invocation IDs. Test a selected nested body against
+all declarations and only its actually invoked outer/inner hooks; sibling
+registrations do not imply execution. Hook coverage stays aggregate static.
+Capture rejects async/each/modified describe forms until separately qualified;
+ordinary execution keeps supporting them. A caught unsupported-registration
+error must still prevent capture publication. Historical v1 has no scoped proof.
 Use TESTING's per-invocation configured-context fixture for mutation workers;
 keep repository tooling and consumer context roots separate and never reuse
 an archived or another worker's context. Shared package sandboxes alone do not

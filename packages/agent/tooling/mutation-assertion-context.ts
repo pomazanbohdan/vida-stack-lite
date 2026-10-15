@@ -13,12 +13,15 @@ export interface MutationBodyState {
 /** One child-run context shared by registered tests and their loader-owned helpers. */
 export const bodyContext = new AsyncLocalStorage<MutationBodyState>();
 
-type BodyRegistration = { test_file: string; body_id: number; expected_failure: boolean };
+type BodyRegistration = { test_file: string; body_id: number; expected_failure: boolean; describe_ids: number[] };
+type DescribeRegistration = { test_file: string; describe_id: number; parent_ids: number[]; title: string };
+type HookRegistration = { test_file: string; hook_id: number; hook: string; describe_ids: number[] };
 type Invocation = {
   test_file: string;
   kind: 'body' | 'hook';
   id: number;
   hook?: string;
+  hook_id?: number;
   outcome: 'pending' | 'returned' | 'threw';
   elapsed_ms: number;
 };
@@ -36,10 +39,13 @@ function coverageCounters(value: unknown): value is Record<string, number> {
 class MutationCoverageCapture {
   readonly #namespace: InstrumenterContext;
   readonly #registrations = new Map<string, BodyRegistration>();
+  readonly #describes = new Map<string, DescribeRegistration>();
+  readonly #hooks = new Map<string, HookRegistration>();
   readonly #invocations: Invocation[] = [];
   readonly #started = new Set<string>();
   #finished = false;
   #hookId = 0;
+  #unsupported: string | undefined;
 
   constructor(readonly output: string) {
     const globals = globalThis as typeof globalThis & { __stryker__?: InstrumenterContext };
@@ -56,11 +62,57 @@ class MutationCoverageCapture {
     this.#namespace = namespace;
   }
 
-  register(testFile: string, id: number, expectedFailure: boolean): void {
+  unsupported(message: string): never {
+    this.#unsupported ??= message;
+    throw new Error(message);
+  }
+
+  #scope(testFile: string, ids: readonly number[]): number[] {
+    for (const [index, id] of ids.entries()) {
+      const scope = this.#describes.get(`${testFile}#describe:${id}`);
+      if (
+        !scope ||
+        scope.parent_ids.length !== index ||
+        scope.parent_ids.some((parent, offset) => parent !== ids[offset])
+      )
+        throw new Error('Mutation coverage describe ancestry is invalid.');
+    }
+    return [...ids];
+  }
+
+  describe(testFile: string, id: number, parentIds: readonly number[], title: string): void {
+    const key = `${testFile}#describe:${id}`;
+    if (this.#describes.has(key) || this.#describes.size >= 50_000)
+      throw new Error('Mutation coverage describe registration is duplicate or exceeds its bound.');
+    this.#describes.set(key, {
+      test_file: testFile,
+      describe_id: id,
+      parent_ids: this.#scope(testFile, parentIds),
+      title,
+    });
+  }
+
+  registerHook(testFile: string, id: number, hook: string, describeIds: readonly number[]): void {
+    const key = `${testFile}#hook:${id}`;
+    if (
+      this.#hooks.has(key) ||
+      this.#hooks.size >= 50_000 ||
+      !['beforeAll', 'beforeEach', 'afterEach', 'afterAll'].includes(hook)
+    )
+      throw new Error('Mutation coverage hook registration is invalid or exceeds its bound.');
+    this.#hooks.set(key, { test_file: testFile, hook_id: id, hook, describe_ids: this.#scope(testFile, describeIds) });
+  }
+
+  register(testFile: string, id: number, expectedFailure: boolean, describeIds: readonly number[]): void {
     const key = `${testFile}#body:${id}`;
     if (this.#registrations.has(key) || this.#registrations.size >= 50_000)
       throw new Error('Mutation coverage registration is duplicate or exceeds its bound.');
-    this.#registrations.set(key, { test_file: testFile, body_id: id, expected_failure: expectedFailure });
+    this.#registrations.set(key, {
+      test_file: testFile,
+      body_id: id,
+      expected_failure: expectedFailure,
+      describe_ids: this.#scope(testFile, describeIds),
+    });
   }
 
   body(state: MutationBodyState, run: () => unknown): unknown {
@@ -73,12 +125,19 @@ class MutationCoverageCapture {
     });
   }
 
-  hook(testFile: string, hook: string, run: () => unknown): unknown {
-    return bodyContext.exit(() => this.#observe({ test_file: testFile, kind: 'hook', id: ++this.#hookId, hook }, run));
+  hook(testFile: string, hookId: number, run: () => unknown): unknown {
+    const registration = this.#hooks.get(`${testFile}#hook:${hookId}`);
+    if (!registration) throw new Error('Mutation coverage hook has no registration.');
+    return bodyContext.exit(() =>
+      this.#observe(
+        { test_file: testFile, kind: 'hook', id: ++this.#hookId, hook: registration.hook, hook_id: hookId },
+        run,
+      ),
+    );
   }
 
   #observe(
-    identity: Pick<Invocation, 'test_file' | 'kind' | 'id' | 'hook'>,
+    identity: Pick<Invocation, 'test_file' | 'kind' | 'id' | 'hook' | 'hook_id'>,
     run: () => unknown,
     settle: () => void = () => undefined,
   ): unknown {
@@ -117,6 +176,7 @@ class MutationCoverageCapture {
   finish(): void {
     if (this.#finished) throw new Error('Mutation coverage capture was already finalized.');
     this.#finished = true;
+    if (this.#unsupported) throw new Error(this.#unsupported);
     const coverage: MutantCoverage =
       this.#namespace.mutantCoverage === undefined ? { static: {}, perTest: {} } : this.#namespace.mutantCoverage;
     if (
@@ -133,7 +193,9 @@ class MutationCoverageCapture {
       if (!this.#started.has(id) || !('value' in descriptor) || !coverageCounters(descriptor.value))
         throw new Error('Mutation coverage map has an unknown test or invalid counters.');
     const bytes = JSON.stringify({
-      schema: 'MutationPerTestCapture/v1',
+      schema: 'MutationPerTestCapture/v2',
+      describes: [...this.#describes.values()],
+      hooks: [...this.#hooks.values()],
       registrations: [...this.#registrations.values()],
       invocations: this.#invocations,
       coverage_observed: this.#namespace.mutantCoverage !== undefined,

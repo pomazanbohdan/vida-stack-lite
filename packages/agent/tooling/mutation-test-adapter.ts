@@ -25,6 +25,9 @@ type BoundEachInput =
 type EachFactory = { method: Callable; receiver: unknown; args: unknown[] };
 const receiptFile = process.env.AGENT_MUTATION_BODY_RECEIPTS;
 let bodyId = 0;
+let describeId = 0;
+let hookId = 0;
+let describeIds: number[] = [];
 const file = new URL(import.meta.url).searchParams.get('file');
 let receiptBytes = 0;
 
@@ -206,7 +209,7 @@ function withBody(
   };
 }
 
-function withHook(callback: TestCallback, hook: string): TestCallback {
+function withHook(callback: TestCallback, hook: string, hookId: number): TestCallback {
   return function mutationHook(this: unknown, ...args: unknown[]) {
     const recordFailure = (error: unknown): never => {
       append({ kind: 'hook', hook, error_observed: true });
@@ -223,7 +226,7 @@ function withHook(callback: TestCallback, hook: string): TestCallback {
       }
     };
     if (!file) throw new Error('Mutation hook file is not configured.');
-    return mutationCoverage ? mutationCoverage.hook(file, hook, invoke) : invoke();
+    return mutationCoverage ? mutationCoverage.hook(file, hookId, invoke) : invoke();
   };
 }
 
@@ -235,12 +238,12 @@ function registerArgs(
   eachInput?: BoundEachInput,
 ): unknown[] {
   const next = [...args];
-  if (!bodies) return next;
+  if (!bodies) return describeArgs(next);
   const callbackIndex = next.findLastIndex((value) => typeof value === 'function');
   if (callbackIndex < 0) {
     // Boolean modifier setup returns a registrar; a title is the registration itself.
     if (mutationCoverage && typeof next[0] === 'string')
-      throw new Error('Mutation per-test capture requires a callback for every test registration.');
+      mutationCoverage.unsupported('Mutation per-test capture requires a callback for every test registration.');
     return next;
   }
   const callback = next[callbackIndex] as Callable;
@@ -254,7 +257,7 @@ function registerArgs(
   if (mutationCoverage) {
     if (!file) throw new Error('Mutation registration file is not configured.');
     const ids = eachInput ? [...eachInput.ids] : [id];
-    for (const bodyId of ids) mutationCoverage.register(file, bodyId, expectedFailure);
+    for (const bodyId of ids) mutationCoverage.register(file, bodyId, expectedFailure, describeIds);
     next[0] = (next[0] as string).replace(
       /^(\[mutation-body:[^\]]+\] )/u,
       `$1[mutation-file:${Buffer.from(file).toString('base64url')}] `,
@@ -262,6 +265,31 @@ function registerArgs(
   }
   next[callbackIndex] = withBody(next[callbackIndex] as TestCallback, id, expectedFailure, eachInput);
   return next;
+}
+
+function describeArgs(args: unknown[]): unknown[] {
+  const capture = mutationCoverage;
+  if (!capture) return args;
+  const callbackIndex = args.findLastIndex((value) => typeof value === 'function');
+  if (!file || typeof args[0] !== 'string' || callbackIndex < 0)
+    return capture.unsupported('Mutation per-test capture requires a plain synchronous describe.');
+  const callback = args[callbackIndex] as Callable;
+  const parentIds = [...describeIds];
+  const id = ++describeId;
+  capture.describe(file, id, parentIds, args[0]);
+  args[callbackIndex] = function mutationDescribe(this: unknown, ...values: unknown[]) {
+    const previous = describeIds;
+    describeIds = [...parentIds, id];
+    try {
+      const result = callback.apply(this, values);
+      if (result !== null && (typeof result === 'object' || typeof result === 'function') && 'then' in result)
+        return capture.unsupported('Mutation per-test capture does not support async describe.');
+      return result;
+    } finally {
+      describeIds = previous;
+    }
+  };
+  return args;
 }
 
 function bindEachInput(input: EachInput): BoundEachInput {
@@ -351,6 +379,8 @@ function registrationProxy(
       const member: unknown = Reflect.get(fn, key, fn);
       if (key === 'each' && typeof member === 'function') {
         const each = (...args: unknown[]) => {
+          if (!bodies && mutationCoverage)
+            return mutationCoverage.unsupported('Mutation per-test capture does not support describe.each.');
           if (!bodies) return registrationProxy(Reflect.apply(member as Callable, fn, args), bodies);
           return registrationProxy(
             Reflect.apply(member as Callable, fn, args),
@@ -364,6 +394,8 @@ function registrationProxy(
       }
       if (typeof member === 'function') {
         const callModifier = (...args: unknown[]) => {
+          if (!bodies && mutationCoverage)
+            return mutationCoverage.unsupported('Mutation per-test capture does not support describe modifiers.');
           const failingMethod = key === 'failing' || (key === 'failingIf' && args[0] === true);
           const registration = eachFactory ? makeEachRegistration(eachFactory) : { target: fn, input: undefined };
           const registrationMember: unknown = eachFactory
@@ -406,7 +438,14 @@ function lifecycle(register: unknown, name: string): unknown {
   const registerLifecycle = (...args: unknown[]) => {
     const next = [...args];
     const callbackIndex = next.findLastIndex((value) => typeof value === 'function');
-    if (callbackIndex >= 0) next[callbackIndex] = withHook(next[callbackIndex] as TestCallback, name);
+    if (callbackIndex >= 0) {
+      const id = ++hookId;
+      if (mutationCoverage) {
+        if (!file) throw new Error('Mutation hook registration file is not configured.');
+        mutationCoverage.registerHook(file, id, name, describeIds);
+      }
+      next[callbackIndex] = withHook(next[callbackIndex] as TestCallback, name, id);
+    }
     return Reflect.apply(register as Callable, undefined, next);
   };
   return registerLifecycle;

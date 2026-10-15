@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { confirmedRunnerOutcome, junitOutcome, parseMutationBodyEvents } from '../tooling/mutation-evidence.js';
 import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
+import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
 const elapsedMatcher: unknown = expect.any(Number);
@@ -15,7 +16,7 @@ async function runAdapterChild(
   root: string,
   body: string,
   suffix: string,
-  options: { capture?: boolean; exitCode?: 0 | 1; pattern?: string; junitAbsent?: boolean } = {},
+  options: { capture?: boolean; exitCode?: 0 | 1; pattern?: string } = {},
 ) {
   const sourceFile = path.join(root, 'tests', `child-${suffix}.test.ts`);
   const receiptFile = path.join(root, `body-${suffix}.jsonl`);
@@ -56,12 +57,9 @@ async function runAdapterChild(
     new Response(child.stderr).text(),
   ]);
   expect({ stdout, stderr, exitCode }).toMatchObject({ exitCode: options.exitCode ?? 1 });
-  let junit = '';
-  if (options.junitAbsent) expect(existsSync(junitFile)).toBe(false);
-  else
-    junit = await readFile(junitFile, 'utf8').catch((error: unknown) => {
-      throw new Error(`Adapter child did not produce JUnit: ${stderr}`, { cause: error });
-    });
+  const junit = await readFile(junitFile, 'utf8').catch((error: unknown) => {
+    throw new Error(`Adapter child did not produce JUnit: ${stderr}`, { cause: error });
+  });
   return {
     exitCode,
     stderr,
@@ -74,7 +72,7 @@ async function runAdapterChild(
 type PerTestCapture = {
   schema: string;
   coverage_observed: boolean;
-  registrations: { test_file: string; body_id: number; expected_failure: boolean }[];
+  registrations: { test_file: string; body_id: number; expected_failure: boolean; describe_ids: number[] }[];
   invocations: {
     test_file: string;
     kind: 'body' | 'hook';
@@ -114,13 +112,14 @@ test('per-test diagnostic capture isolates concurrent bodies, expanded rows and 
     const capture = JSON.parse(
       await readFile(path.join(root, 'adapters-coverage', 'per-test-coverage.json'), 'utf8'),
     ) as PerTestCapture;
-    expect(capture.schema).toBe('MutationPerTestCapture/v1');
+    expect(capture.schema).toBe('MutationPerTestCapture/v2');
     expect(capture.coverage_observed).toBe(true);
     expect(capture.registrations).toEqual(
       [1, 2, 3, 4, 5].map((id) => ({
         test_file: child.selectedTest,
         body_id: id,
         expected_failure: id === 5,
+        describe_ids: [],
       })),
     );
     expect(
@@ -204,8 +203,15 @@ test.each([0,1,2])('row %i',value=>{
       await readFile(path.join(root, 'adapters-selected-failure', 'per-test-coverage.json'), 'utf8'),
     );
     expect(capture).toEqual({
-      schema: 'MutationPerTestCapture/v1',
-      registrations: [1, 2, 3].map((body_id) => ({ test_file: selected, body_id, expected_failure: false })),
+      schema: 'MutationPerTestCapture/v2',
+      describes: [],
+      hooks: [],
+      registrations: [1, 2, 3].map((body_id) => ({
+        test_file: selected,
+        body_id,
+        expected_failure: false,
+        describe_ids: [],
+      })),
       invocations: [{ test_file: selected, kind: 'body', id: 2, outcome: 'threw', elapsed_ms: elapsedMatcher }],
       coverage_observed: true,
       mutant_coverage: { static: {}, perTest: { [`${selected}#body:2`]: { target: 1 } } },
@@ -261,8 +267,10 @@ test('empty',()=>expect(true).toBe(true));`,
       await readFile(path.join(root, 'adapters-empty', 'per-test-coverage.json'), 'utf8'),
     );
     expect(capture).toEqual({
-      schema: 'MutationPerTestCapture/v1',
-      registrations: [{ test_file: child.selectedTest, body_id: 1, expected_failure: false }],
+      schema: 'MutationPerTestCapture/v2',
+      describes: [],
+      hooks: [],
+      registrations: [{ test_file: child.selectedTest, body_id: 1, expected_failure: false, describe_ids: [] }],
       invocations: [
         { test_file: child.selectedTest, kind: 'body', id: 1, outcome: 'returned', elapsed_ms: elapsedMatcher },
       ],
@@ -294,9 +302,10 @@ ${registration}`;
   expect(junitOutcome(ordinary.junit, [ordinary.selectedTest], [], ordinary.events)).toMatchObject({
     outcome: 'passed',
   });
-  const unsupported = await runAdapterChild(root, body, 'unsupported', { capture: true, junitAbsent: true });
+  const unsupported = await runAdapterChild(root, body, 'unsupported', { capture: true });
   expect(unsupported.stderr).toContain('Mutation per-test capture requires a callback for every test registration.');
   expect(unsupported.events).toEqual([]);
+  expect(existsSync(path.join(root, 'adapters-unsupported', 'per-test-coverage.json'))).toBe(false);
   expect(() => junitOutcome(unsupported.junit, [unsupported.selectedTest], [], unsupported.events)).toThrow();
   expect(confirmedRunnerOutcome(unsupported.exitCode, 'unproven')).toBe('unknown');
 });
@@ -321,11 +330,14 @@ test.failingIf(true)('expected assertion',()=>expect(true).toBe(false));`,
       await readFile(path.join(root, 'adapters-skipped', 'per-test-coverage.json'), 'utf8'),
     );
     expect(capture).toEqual({
-      schema: 'MutationPerTestCapture/v1',
+      schema: 'MutationPerTestCapture/v2',
+      describes: [],
+      hooks: [],
       registrations: [1, 2, 3, 4, 5, 6, 7].map((body_id) => ({
         test_file: child.selectedTest,
         body_id,
         expected_failure: body_id === 7,
+        describe_ids: [],
       })),
       invocations: [1, 6, 7].map((id) => ({
         test_file: child.selectedTest,
@@ -349,6 +361,195 @@ test.failingIf(true)('expected assertion',()=>expect(true).toBe(false));`,
   } finally {
     if (passed) await rm(root, { recursive: true, force: true });
     else console.error('Retained skipped per-test fixture: ' + root);
+  }
+});
+
+test('per-test capture binds nested hook registrations to the selected describe ancestry', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-scopes-'));
+  let passed = false;
+  try {
+    const selected = 'tests/child-scopes.test.ts';
+    const token = Buffer.from(selected).toString('base64url');
+    const child = await runAdapterChild(
+      root,
+      `import { test, expect, describe, beforeAll, beforeEach, afterEach, afterAll } from 'bun:test';
+const ns=globalThis.__stryker__;
+function hit(id) { const c=ns.mutantCoverage??={static:{},perTest:{}}; const m=ns.currentTestId?c.perTest[ns.currentTestId]??={}:c.static; m[id]=(m[id]??0)+1; }
+function hooks(scope) {
+  beforeAll(()=>hit(scope+':beforeAll'));beforeEach(()=>hit(scope+':beforeEach'));
+  afterEach(()=>hit(scope+':afterEach'));afterAll(()=>hit(scope+':afterAll'));
+}
+describe('outer',()=>{
+  hooks('outer');
+  test('outer body',()=>{throw new Error('outer body ran');});
+  describe('inner',()=>{hooks('inner');test('selected',()=>{hit('body');expect(true).toBe(true);});});
+  describe('sibling',()=>{hooks('sibling');test('sibling body',()=>{throw new Error('sibling body ran');});});
+  test('outer after scopes',()=>{throw new Error('outer after scopes ran');});
+});
+test('root body',()=>{throw new Error('root body ran');});`,
+      'scopes',
+      { capture: true, exitCode: 0, pattern: `\\[mutation-body:4\\] \\[mutation-file:${token}\\] ` },
+    );
+    const capture: unknown = JSON.parse(
+      await readFile(path.join(root, 'adapters-scopes', 'per-test-coverage.json'), 'utf8'),
+    );
+    if (!isRecord(capture) || !Array.isArray(capture.invocations))
+      throw new Error('Missing scoped capture invocations');
+    expect(capture.schema).toBe('MutationPerTestCapture/v2');
+    expect(capture.describes).toEqual([
+      { test_file: selected, describe_id: 1, parent_ids: [], title: 'outer' },
+      { test_file: selected, describe_id: 2, parent_ids: [1], title: 'inner' },
+      { test_file: selected, describe_id: 3, parent_ids: [1], title: 'sibling' },
+    ]);
+    expect(capture.registrations).toEqual(
+      [[], [1], [1], [1, 2], [1, 3]].map((describe_ids, index) => ({
+        test_file: selected,
+        body_id: index + 1,
+        expected_failure: false,
+        describe_ids,
+      })),
+    );
+    const hookNames = ['beforeAll', 'beforeEach', 'afterEach', 'afterAll'];
+    expect(capture.hooks).toEqual(
+      [[1], [1, 2], [1, 3]].flatMap((describe_ids, index) =>
+        hookNames.map((hook, offset) => ({ test_file: selected, hook_id: index * 4 + offset + 1, hook, describe_ids })),
+      ),
+    );
+    const invocations = capture.invocations.map((entry: unknown) => {
+      if (
+        !isRecord(entry) ||
+        typeof entry.elapsed_ms !== 'number' ||
+        !Number.isFinite(entry.elapsed_ms) ||
+        entry.elapsed_ms < 0
+      )
+        throw new Error('Invalid scoped invocation');
+      const { elapsed_ms: _elapsed_ms, ...identity } = entry;
+      return identity;
+    });
+    expect(invocations.filter((entry) => entry.kind === 'body')).toEqual([
+      { test_file: selected, kind: 'body', id: 4, outcome: 'returned' },
+    ]);
+    const hookInvocations = invocations.filter((entry) => entry.kind === 'hook');
+    expect(new Set(hookInvocations.map((entry) => entry.id)).size).toBe(8);
+    expect(
+      hookInvocations.map(({ id: _id, ...entry }) => entry).sort((a, b) => Number(a.hook_id) - Number(b.hook_id)),
+    ).toEqual(
+      [1, 2, 3, 4, 5, 6, 7, 8].map((hook_id) => ({
+        test_file: selected,
+        kind: 'hook',
+        hook_id,
+        hook: hookNames[(hook_id - 1) % 4],
+        outcome: 'returned',
+      })),
+    );
+    expect(capture.mutant_coverage).toEqual({
+      static: Object.fromEntries(
+        ['outer', 'inner'].flatMap((scope) => hookNames.map((hook) => [scope + ':' + hook, 1])),
+      ),
+      perTest: { [`${selected}#body:4`]: { body: 1 } },
+    });
+    expect(junitOutcome(child.junit, [selected], [], child.events)).toMatchObject({
+      tests: 5,
+      skipped: 4,
+      outcome: 'passed',
+    });
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained scoped capture fixture: ' + root);
+  }
+});
+
+test.each([
+  { label: 'each', registration: "describe.each([1,2])('suite %i',()=>test('body',()=>expect(true).toBe(true)));" },
+  { label: 'skip', registration: "describe.skip('suite',()=>test('body',()=>expect(true).toBe(true)));" },
+  { label: 'skip-if', registration: "describe.skipIf(true)('suite',()=>test('body',()=>expect(true).toBe(true)));" },
+  { label: 'only', registration: "describe.only('suite',()=>test('body',()=>expect(true).toBe(true)));" },
+  {
+    label: 'async',
+    registration: "describe('suite',async()=>{await Promise.resolve();test('body',()=>expect(true).toBe(true));});",
+  },
+])('per-test scope capture refuses unsupported describe $label', async ({ registration }) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-unsupported-describe-'));
+  console.error('Retained unsupported describe fixture: ' + root);
+  const body = `import { describe, test, expect } from 'bun:test';
+test('ordinary',()=>expect(true).toBe(true));
+${registration}`;
+  const ordinary = await runAdapterChild(root, body, 'ordinary', { exitCode: 0 });
+  expect(junitOutcome(ordinary.junit, [ordinary.selectedTest], [], ordinary.events).outcome).toBe('passed');
+  const unsupported = await runAdapterChild(root, body, 'unsupported-describe', { capture: true });
+  expect(unsupported.stderr).toContain('Mutation per-test capture does not support');
+  expect(existsSync(path.join(root, 'adapters-unsupported-describe', 'per-test-coverage.json'))).toBe(false);
+  expect(() => junitOutcome(unsupported.junit, [unsupported.selectedTest], [], unsupported.events)).toThrow();
+  expect(confirmedRunnerOutcome(unsupported.exitCode, 'unproven')).toBe('unknown');
+});
+
+test('per-test scope capture stays invalid after an unsupported registration error is caught', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-caught-scope-'));
+  console.error('Retained caught unsupported describe fixture: ' + root);
+  const child = await runAdapterChild(
+    root,
+    `import { describe, test, expect } from 'bun:test';
+try { describe.each([1])('unsupported',()=>{}); } catch {}
+test('survives catch',()=>expect(true).toBe(true));`,
+    'caught-scope',
+    { capture: true },
+  );
+  expect(child.stderr).toMatch(/\(pass\).*survives catch/u);
+  expect(child.stderr).toContain('Mutation per-test capture does not support describe.each.');
+  expect(existsSync(path.join(root, 'adapters-caught-scope', 'per-test-coverage.json'))).toBe(false);
+  expect(() => junitOutcome(child.junit, [child.selectedTest], [], child.events)).toThrow();
+  expect(confirmedRunnerOutcome(child.exitCode, 'unproven')).toBe('unknown');
+});
+
+test('per-test capture keeps duplicate hook registrations distinct across concurrent bodies', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-duplicate-hooks-'));
+  let passed = false;
+  try {
+    const child = await runAdapterChild(
+      root,
+      `import { describe, test, expect, beforeEach } from 'bun:test';
+describe('concurrent',()=>{
+  beforeEach(()=>{});beforeEach(()=>{});
+  let releaseFirst,releaseSecond;
+  const first=new Promise(resolve=>{releaseFirst=resolve;});const second=new Promise(resolve=>{releaseSecond=resolve;});
+  test.concurrent('first',async()=>{releaseFirst();await second;expect(true).toBe(true);});
+  test.concurrent('second',async()=>{releaseSecond();await first;expect(true).toBe(true);});
+});`,
+      'duplicate-hooks',
+      { capture: true, exitCode: 0 },
+    );
+    const capture: unknown = JSON.parse(
+      await readFile(path.join(root, 'adapters-duplicate-hooks', 'per-test-coverage.json'), 'utf8'),
+    );
+    if (!isRecord(capture) || !Array.isArray(capture.invocations)) throw new Error('Missing duplicate hook capture');
+    expect(capture.hooks).toEqual(
+      [1, 2].map((hook_id) => ({ test_file: child.selectedTest, hook_id, hook: 'beforeEach', describe_ids: [1] })),
+    );
+    const hooks = capture.invocations.filter(
+      (entry: unknown): entry is Record<string, unknown> => isRecord(entry) && entry.kind === 'hook',
+    );
+    expect(hooks.map((entry) => entry.hook_id).sort((a, b) => Number(a) - Number(b))).toEqual([1, 1, 2, 2]);
+    expect(new Set(hooks.map((entry) => entry.id)).size).toBe(4);
+    expect(hooks.every((entry) => entry.outcome === 'returned')).toBe(true);
+    expect(capture.invocations.filter((entry: unknown) => isRecord(entry) && entry.kind === 'body')).toEqual(
+      [1, 2].map((id) => ({
+        test_file: child.selectedTest,
+        kind: 'body',
+        id,
+        outcome: 'returned',
+        elapsed_ms: elapsedMatcher,
+      })),
+    );
+    expect(junitOutcome(child.junit, [child.selectedTest], [], child.events)).toMatchObject({
+      tests: 2,
+      skipped: 0,
+      outcome: 'passed',
+    });
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained duplicate hook fixture: ' + root);
   }
 });
 
@@ -400,10 +601,18 @@ test('pending',()=>new Promise(()=>undefined),20);`,
     'pending',
     { capture: true },
   );
-  const capture = JSON.parse(
+  const capture: unknown = JSON.parse(
     await readFile(path.join(root, 'adapters-pending', 'per-test-coverage.json'), 'utf8'),
-  ) as PerTestCapture;
-  expect(capture.invocations).toMatchObject([{ kind: 'body', id: 1, outcome: 'pending' }]);
+  );
+  expect(capture).toEqual({
+    schema: 'MutationPerTestCapture/v2',
+    describes: [],
+    hooks: [],
+    registrations: [{ test_file: child.selectedTest, body_id: 1, expected_failure: false, describe_ids: [] }],
+    invocations: [{ test_file: child.selectedTest, kind: 'body', id: 1, outcome: 'pending', elapsed_ms: 0 }],
+    coverage_observed: false,
+    mutant_coverage: { static: {}, perTest: {} },
+  });
   expect(confirmedRunnerOutcome(child.exitCode, 'unproven')).toBe('unknown');
 });
 

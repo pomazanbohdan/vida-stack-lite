@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `c1ce480` at origin/main.
+- Published predecessor: `89b9489` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -139,12 +139,12 @@ and ordinary non-capture behavior remain unchanged. Positive callback-backed
 skip, conditional skip/active, each.skip and failingIf controls account for all
 seven registrations, three invocations and four skipped JUnit cases.
 
-The explicit refusal is a collection error on Bun1.4.3, with no JUnit. The child
-fixture helper asserts that absence only for these negative controls; its default
-still requires JUnit. Retain each expected failed child root even when parent
-assertions pass. A partial capture alone never authorizes admission. The first
-green attempt retained its unexpected missing-JUnit helper failures; the narrow
-helper correction does not change mutation classification or time budgets.
+At checkpoint89b9489 the explicit refusal was a collection error on Bun1.4.3,
+without JUnit. Its original helper absence control and first green helper failure
+remain in that commit and the retained logs. The v2 latch below now also fails
+finalization, yielding a non-assertion JUnit error and no capture artifact; the
+helper again unconditionally requires JUnit. Retain each expected failed child
+root even when parent assertions pass. No partial capture authorizes admission.
 
 Full affected file38PASS/0FAIL/231assertions/2.25s, then2.47s after the matcher
 typing correction; tests445strict TypeScript and full scoped Oxlint PASS.
@@ -165,8 +165,72 @@ The first strict hook rejected Bun's any-typed asymmetric duration matchers in
 three expected-object fields. One shared unknown-typed matcher preserves their
 runtime checks and removes unsafe assignments without casting report data.
 Retain `quality-capture-strict-commit-c1c-20261015.log`; no hook was bypassed.
-Scoped hook ancestry and parent reconciliation against the canonical mutant map
-remain open; no selector, native runner or filtered admission is activated.
+Scoped hook ancestry is implemented in the next packet below. Parent
+reconciliation against the canonical mutant map remains open; no selector,
+native runner or filtered admission is activated. Strict hook and push of89b9489
+passed. The first push lost the Git credential-helper route while the same boot
+and gh-authenticated account remained available; an invocation-scoped gh helper
+published the exact commit. Logs `quality-capture-push-c1c-20261015.log` and
+`quality-capture-push-qualified-helper-c1c-20261015.log` preserve both outcomes.
+
+## Per-test v2 scoped lifecycle diagnostic
+
+The native per-test capture now records describe declarations with copied parent
+paths, scoped body/hook registrations and separate hook registration/invocation
+IDs. Plain synchronous describe callbacks preserve this/arguments and restore
+registration scope in finally. Hook mutant hits remain aggregate static; body
+ALS and settled-background behavior are unchanged. No mutant-to-hook attribution
+is inferred from invocation metadata. Historical v1 has no scoped proof.
+
+One actual filtered nested child retains five bodies and all twelve hook
+registrations, invokes only inner body4 and eight applicable outer/inner hooks,
+and leaves sibling hooks uninvoked. The root and subsequent outer registrations
+prove normal ancestry restoration. Duplicate beforeEach registrations retain
+distinct registration IDs across two concurrent bodies and four hook invocations.
+The exact body invocation set and complete2/0 executed/skipped JUnit counters
+are checked. The pending-body control now checks the complete v2 shape as unknown
+JSON rather than asserting a report type.
+
+Capture refuses async describe, each and modifiers until separately qualified;
+ordinary execution preserves their current Bun behavior. Unsupported operations
+latch invalidity before throwing, so even a caught error followed by a passing
+test cannot publish a capture. Five describe variants and the caught-error case
+prove no artifact plus non-assertion JUnit rejection/UNKNOWN. All expected failed
+roots remain retained. No error or timeout is treated as Killed.
+
+The first nested control failed on the absent v2 schema. Subsequent corrections
+retain two fixture evidence lessons: Bun defers describe callbacks, so root-level
+registration occurs before nested bodies, and its concurrent passing child here
+reports0JUnit assertions despite two matchers. Do not synthesize assertion counts
+or loosen causal mutation classification. Lifecycle proof uses exact observed
+body/hook identities and JUnit executed/skipped counters; it is not Killed proof.
+
+Full affected file46PASS/0FAIL/288assertions/3.45s and tests445strict TypeScript
+PASS before two review-requested assertion refinements. Focused final refinements
+verify exact concurrent body IDs/JUnit counts and full pending v2 shape. Evidence
+under `/workspace/attachments`: `quality-capture-scope-red-v89b-20261015.log`,
+`quality-capture-scope-controls-v89b-20261015.log`,
+`quality-capture-scope-controls-corrected-v89b-20261015.log`,
+`quality-capture-scope-negative-concurrent-v89b-20261015.log`,
+`quality-capture-scope-full-file-v89b-20261015.log`,
+`quality-capture-scope-test-types-v89b-20261015.log`, and
+`quality-capture-scope-review-controls{,-corrected}-v89b-20261015.log`.
+Two independent actual Source reviews found no blocker:
+`quality-capture-scope-actual-review-v89b-20261015.md` and
+`quality-capture-scope-evidence-review-v89b-20261015.md`.
+Both small evidence suggestions are implemented: exact concurrent body set/JUnit
+case totals and the full pending schema. Corrected controls2PASS/0FAIL,10assertions
+in150ms. Initial lint retained unused destructuring/sort diagnostics; named
+ignored fields and a numeric comparator correct them without changing target
+behavior. Full scoped Oxlint then passes:
+`quality-capture-scope-lint{,-corrected}-v89b-20261015.log`.
+
+Next bind the validated capture, planned original body set, complete selected
+JUnit/body evidence and current canonical dry-run mutant universe in the existing
+parent owner, with independent missing/foreign/pending/drift controls. Do not add
+another AST/inventory/hash pass or activate filtered selection before that join
+and runner/custody pilots qualify. Exact/frozen quality and native Runtime remain
+open. The two historical compatible contour closures remain2/44.
 
 ## Automatic contour progress projection
 
