@@ -679,6 +679,45 @@ receipt custody path; the ordinary runner remains unchanged with full-selection
 fallback. No per-test runner/filter or new global/local mutation closure is
 activated by this consistency unit.
 
+The independent registration-unit review has no remaining findings after the
+assertion-bearing skipped-case control. Strict tooling184files and tests448files
+pass; strict staged hook483roots passes. Packet committed/pushed as8194edd.
+
+## Cedar selection and measured failure-boundary continuation
+
+The next root-owned capture reuses the declared main-cedar registry without a
+new Source inventory or copied test list. Initial8194edd capturee8ce05a3 gives
+30PASS/0FAIL/12262assertions in4.57s Bun/7455.919848ms owned outer time:
+F23/25,L54/56,S58/60,B20/21,maxCC/entryCRAP6. Root:
+`/workspace/attachments/quality-declared-main-cedar-SLjhgC`. Retain the first
+wrapper's before-launch main-vs-bun environment guard failure and second
+unsupported-wrapper-argv child failure separately; neither was a test failure
+or mutation result. The corrected wrapper passes only its own contour selector
+through its private child environment and no unsupported coverage arguments.
+Logs: quality-main-cedar-coverage-819{,-corrected,-final}-20261015.log;
+exact validated counter extraction quality-main-cedar-open-counters-819-20261015.jsonl.
+
+Found a selection omission, not missing semantic tests or a production Cedar
+bug: tests/cedar-validation.test.ts already proves real semantic-error and
+warning-only failure, but main-cedar omitted it while test:pinned included it.
+Add that existing file to the single partition owner. Add only the distinct
+malformed policy/schema direct rejection and valid recovery control to that file.
+
+The one missing branch is Source errorMessage's non-Error String arm atline70.
+Its existing envelopes test ran solely in a child with a replaced validator,
+so it established behavior but no measured parent Source execution. Replace
+that case with a real unknown-input Proxy whose ownKeys traversal throws the
+same string. Assert the actual traversal occurred and the ordinary authorizer
+returns the exact deny diagnostic. No module mock, child, provider/identity
+forgery or Source authorization predicate is added or weakened.
+
+Focused4PASS/0FAIL/11assertions in417ms; complete four-file Cedar selection
+33PASS/0FAIL/12273assertions in4.02s; strict tests448files pass. Evidence:
+quality-main-cedar-{controls,selection,tests-ts}-819-20261015.log. Independent
+Luna reviews Source/test reachability; root owns all writes and final evidence.
+New metrics await publication and actual post-change capture. No mutation,
+frozen acceptance or runtime-unblock result follows from these checks.
+
 ## Automatic contour progress projection
 
 The human requested durable per-contour metrics and one automatic consolidated

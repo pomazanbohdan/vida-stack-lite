@@ -134,6 +134,15 @@ invalid calls. The private synchronous ledger validator enables allErrors and
 messages explicitly. Its failure branch can rely on the generated errors and
 messages; a future validator/configuration change must requalify this contract.
 
+Cedar contour selection includes its existing native validation tests. Keep
+real parser, semantic-error and applicability-warning controls at the exported
+policy validator; prove a warning-only case has zero semantic errors before
+checking rejection. For non-Error authorization failures, use an unknown input
+whose descriptor traversal throws, observe that traversal, and assert the
+exact deny diagnostic in the measured process. Reuse this boundary case instead
+of a child-only validator replacement; a child assertion cannot cover the
+parent's error-normalization branch.
+
 Property tests generate supported and unsupported values separately and require
 acceptance or refusal for every sample. Do not condition the acceptance oracle
 on the production validator accepting a value. A general JSON arbitrary may

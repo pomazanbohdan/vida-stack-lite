@@ -52,7 +52,12 @@ export function mutationPartitions(): MutationPartition[] {
     {
       name: 'main-cedar',
       sources: ['src/authorization/cedar-boundary.ts'],
-      tests: [...commonTests, 'tests/envelopes-boundary.test.ts', 'tests/fuzz.test.ts'],
+      tests: [
+        ...commonTests,
+        'tests/cedar-validation.test.ts',
+        'tests/envelopes-boundary.test.ts',
+        'tests/fuzz.test.ts',
+      ],
     },
     {
       name: 'main-governance',

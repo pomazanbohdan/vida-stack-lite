@@ -26,3 +26,10 @@ test('configured validation keeps valid policy and rejects successful responses 
     assertConfiguredCedarPolicy('permit(principal, action == Action::"missing", resource);', schema),
   ).toThrow(/semantic validation failed/);
 });
+
+test('configured validation rejects malformed policy and schema at their parse boundaries', () => {
+  const policy = 'permit(principal is User, action == Action::"read", resource);';
+  expect(() => assertConfiguredCedarPolicy('not cedar', schema)).toThrow('configured Cedar policy is invalid');
+  expect(() => assertConfiguredCedarPolicy(policy, 'not a schema')).toThrow('configured Cedar schema is invalid');
+  expect(() => assertConfiguredCedarPolicy(policy, schema)).not.toThrow();
+});

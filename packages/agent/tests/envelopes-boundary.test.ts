@@ -821,22 +821,23 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('normalizes a non-Error authorization failure before denying', async () => {
-    const name = 'normalizes a non-Error authorization failure before denying';
-    if (process.env.ENVELOPES_BOUNDARY_ISOLATED_CASE !== name) return runIsolatedMockCase(name);
-    await mock.module('../src/contracts/public-ingress.js', () => ({
-      canonicalJsonDigest: () => 'a'.repeat(64),
-      toAuthorizationReceipt: () => undefined,
-      validateAuthorizationRequest: () => {
-        throw 'string authorization failure';
+    let descriptorReads = 0;
+    const input = new Proxy(
+      {},
+      {
+        ownKeys() {
+          descriptorReads++;
+          throw 'string authorization failure';
+        },
       },
-    }));
+    );
     const cedar = await import('../src/authorization/cedar-boundary.js');
 
-    expect(cedar.authorizeProject({}, undefined, undefined, 'ignored-root', '', '')).toEqual({
+    expect(cedar.authorizeProject(input, undefined, undefined, 'ignored-root', '', '')).toEqual({
       decision: 'deny',
       diagnostics: ['string authorization failure'],
     });
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
+    expect(descriptorReads).toBeGreaterThan(0);
   });
 
   test('rejects unauthenticated configured Cedar runtime snapshots', async () => {
