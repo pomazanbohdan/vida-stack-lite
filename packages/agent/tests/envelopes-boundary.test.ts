@@ -327,6 +327,20 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(() => coordinationLedgerDigest(invalid)).toThrow(/coordination ledger rejected/);
     expect(() => coordinationComponentJson({ missing: undefined })).toThrow();
     expect(ledger).toEqual(before);
+
+    const executionResource = 'execution:work-owner';
+    const executionLedger = {
+      ...ledger,
+      tickets: ledger.tickets.map((ticket) => ({
+        ...ticket,
+        exclusive_resources: [executionResource],
+        active_resources: [executionResource],
+      })),
+      claims: ledger.claims.map((claim) => ({ ...claim, resources: [executionResource] })),
+    };
+    expect(validateCoordinationLedgerV1(executionLedger).ok).toBe(true);
+    const executionWire: unknown = JSON.parse(coordinationLedgerJson(executionLedger));
+    expect(executionWire).toEqual(executionLedger);
   });
 
   test('coordination ledger semantics bind claim authority, projections, FIFO, and notice history', async () => {
@@ -387,6 +401,9 @@ describe('runtime envelope canonicalization boundary', () => {
       next_sequence: 3,
     };
     expect(validateCoordinationLedgerV1(historicalLedger).ok).toBe(true);
+    expect(
+      validateCoordinationLedgerV1({ ...historicalLedger, notices: [{ ...notice, status: 'acknowledged' }] }).ok,
+    ).toBe(true);
 
     const cases: ReadonlyArray<{
       readonly value: unknown;
@@ -427,6 +444,7 @@ describe('runtime envelope canonicalization boundary', () => {
       expect(row.value).toEqual(before);
     }
     const readyLedger = { ...ledger, tickets: [{ ...owner, status: 'ready_for_handoff' as const }] };
+    expect(validateCoordinationLedgerV1(readyLedger).ok).toBe(true);
     expect(
       validateCoordinationLedgerV1(readyLedger, { currentTimeMs: Date.parse('2098-09-18T00:00:00.000Z') }).ok,
     ).toBe(true);
@@ -617,6 +635,35 @@ describe('runtime envelope canonicalization boundary', () => {
     const acceptedBatch = accepted.batches[0]!;
     for (const ledger of [ready, accepted, feedback, rejected])
       expect(validateCoordinationLedgerV1(ledger).ok).toBe(true);
+    const { claimed_resources: _claimedResources, ...historicalRebind } = rebind;
+    expect(validateCoordinationLedgerV1({ ...ready, rebinds: [historicalRebind] }).ok).toBe(true);
+    expect(
+      validateCoordinationLedgerV1({
+        ...accepted,
+        tickets: accepted.tickets.map((ticket) =>
+          ticket.ticket_id === owner.ticket_id ? { ...ticket, claim_ids: [] } : ticket,
+        ),
+        claims: [oldClaim],
+      }).ok,
+    ).toBe(true);
+    const recoveredClaim = { ...oldClaim, status: 'recovered' };
+    const recoveryDisposition = {
+      schema: 'ConflictDisposition/v1',
+      disposition_id: 'recovery-1',
+      subject_kind: 'claim',
+      subject_id: oldClaim.claim_id,
+      kind: 'recover_expired',
+      decided_by: 'operator-1',
+      decision_pointer: 'decision:recovery',
+      created_at: '2026-09-18T00:00:03.000Z',
+    };
+    expect(
+      validateCoordinationLedgerV1({
+        ...ready,
+        claims: [ownerClaim, recoveredClaim],
+        dispositions: [recoveryDisposition],
+      }).ok,
+    ).toBe(true);
 
     const clockFailure = new Error('injected current-time observation failure');
     let observedFailure: unknown;
@@ -632,6 +679,11 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(observedFailure).toBe(clockFailure);
 
     const cases: ReadonlyArray<{ readonly value: unknown; readonly code: string; readonly path: string }> = [
+      {
+        value: { ...ready, dispositions: [{ ...recoveryDisposition, subject_id: 'missing-claim' }] },
+        code: 'DISPOSITION_SUBJECT_MISSING',
+        path: '$.dispositions.0',
+      },
       {
         value: {
           ...ready,

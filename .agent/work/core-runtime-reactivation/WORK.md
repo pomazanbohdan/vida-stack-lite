@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `4790f00` at origin/main.
+- Published predecessor: `32a0dc4` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -543,6 +543,25 @@ affected envelope file10PASS/0FAIL,968assertions in2.85s; testprogram448TS PASS.
 Logs: `quality-contracts-nonempty-{controls,fullfile,types}-479-20261015.log` under
 attachments. This packet still needs publication and the corresponding numeric
 capture; do not infer102/102functions merely from executing those cases.
+
+The strict hook passed and the nonempty-collection packet was committed/pushed
+as32a0dc4. Its new main-contracts capture2f2b04d0-4057-4290-a79a-d7f70f9e4ea5
+completes41PASS/0FAIL,14141assertions in5.27s Bun /9035.090411ms owned outer time:
+`/workspace/attachments/quality-contour-coverage-contracts-Vuqc8V`.
+Actual metrics are F102/102,L296/296,S324/325,B146/158,maxCC/entryCRAP16.
+The exact remaining counter list reuses that report at
+`quality-main-contracts-open-counters-32a-20261015.jsonl` under attachments.
+No mutation score or frozen/full quality acceptance is inferred. The automatic
+snapshot retains17observations and the two existing compatible local closures.
+
+The next bounded follow-up adds legitimate execution resources, a ready ticket
+without an optional clock observation, an acknowledged notice, omitted optional
+historical claimed-resources, an accepted contour without an owner claim row,
+and an exact recovered-claim disposition plus missing-subject denial. Full
+envelope file10PASS/0FAIL,978assertions in2.74s. These are schema/semantics unit
+projections, not real claim retirement or state replay. Log:
+`quality-contracts-resource-history-file-32a-20261015.log`. Publish and capture
+again before promoting the observed statement/branch metrics.
 
 ## Automatic contour progress projection
 
