@@ -750,10 +750,10 @@ through the same input, process and assertion-evidence owners. No arguments
 still select the complete campaign; `--inventory` remains campaign-free and
 cannot be combined with a pilot selector. Malformed, duplicate, unknown, static
 or pending selections fail before creating campaign evidence.
-The diagnostic emits CandidateMutationPilotReport/v1, selected/omitted
+The diagnostic emits CandidateMutationPilotReport/v2, selected/omitted
 partitions, assessed sources and full_qualification:false. A pilot-pass and
 its selected-scope effective_score never establish full mutation qualification;
-final quality accepts only the complete CandidateMutationReport/v3 contract.
+final quality accepts only the complete CandidateMutationReport/v4 contract.
 Zero mutants, survivors, unconfirmed Killed and UNKNOWN cannot pass the pilot.
 
 MutationInputDescriptor/v3 keeps the complete captured test_selection separate
@@ -800,6 +800,34 @@ fixes in-process SDK disposal. Retain earlier uncertain cleanup roots.
 ## Evidence and quality gates
 
 ### Per-test mutant coverage capture
+
+`bun run mutation:map` captures the current global Source/partition index without
+running tests or generating mutants. Its `MutationMapInventory/v1` output binds
+the exclusive `global-mutant-map.json` artifact and all current input hashes.
+An inventory has zero generated universes, not zero mutants: pending, omitted
+and unobserved assignments keep `mutant_count:null`. The index includes every
+maintained mutation Source and all platform assignments.
+
+Every runnable contour uses the public `vida-mutant-map` Stryker reporter. The
+reporter writes a bounded exclusive `*.map-plan.json` synchronously from
+`onMutationTestingPlanReady`, before mutant execution, then an append-only engine
+event journal and terminal digest record. A timeout retains the whole generated
+plan and its partial journal; neither supplies assertion-confirmed results.
+Plan API positions start at0; engine event/report schema positions start at1.
+One canonical owner normalizes both to one-based start-inclusive/end-exclusive
+ranges. Identity binds captured Source digest/path, range, mutator and replacement;
+local Stryker IDs may renumber and are never global identities. Canonical metadata
+uses the existing sorted JSON contract; input fingerprint serialization is unchanged.
+
+The parent reconciles unique plan identities, the already-parsed engine report,
+journal IDs/statuses, terminal artifact digests and original dry-run binding.
+Reporter callbacks can fail without failing Stryker, so absent/invalid map evidence
+makes parent qualification UNKNOWN. Engine Killed remains unconfirmed until the
+existing JUnit/body assertion and process-custody owner confirms it. Linux and
+Windows results stay separate. The final quality owner requires the bound current
+global map and its exact Source domain; a local pilot cannot qualify it globally.
+Function/scenario associations without a current shared inventory stay explicit
+gaps; no extra Source parse, scan or hash pass is added for this projection.
 
 The shared mutation preload accepts diagnostic `AGENT_MUTATION_PER_TEST_CAPTURE=1`
 and writes `per-test-coverage.json` exclusively inside its invocation-owned

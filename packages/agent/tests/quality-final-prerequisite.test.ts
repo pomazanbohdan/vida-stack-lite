@@ -26,7 +26,16 @@ test('final quality rejects a perfect selected mutation pilot even with matching
     input_bytes: {},
   };
   const summary = {
-    schema: 'CandidateMutationReport/v3',
+    schema: 'CandidateMutationReport/v4',
+    qualification_scope: 'full',
+    full_qualification: true,
+    mutant_map: {
+      schema: 'CandidateMutantMap/v1',
+      file: 'global-mutant-map.json',
+      sha256: 'd'.repeat(64),
+      bytes: 1,
+      globally_qualified: true,
+    },
     status: 'pass',
     input_fingerprint: qualityFingerprint(inputs),
     source_fingerprint: inputs.source_fingerprint,
@@ -40,10 +49,18 @@ test('final quality rejects a perfect selected mutation pilot even with matching
     unknown_mutants: [],
   };
   expect(() => assertMutationSummary(summary, inputs)).not.toThrow();
+  for (const mutant_map of [
+    undefined,
+    null,
+    { ...summary.mutant_map, globally_qualified: false },
+    { ...summary.mutant_map, sha256: 'stale' },
+    { ...summary.mutant_map, file: '../global-mutant-map.json' },
+  ])
+    expect(() => assertMutationSummary({ ...summary, mutant_map }, inputs)).toThrow('global mutant map binding');
   for (const status of ['pass', 'pilot-pass'])
     expect(() =>
       assertMutationSummary(
-        { ...summary, schema: 'CandidateMutationPilotReport/v1', status, full_qualification: false },
+        { ...summary, schema: 'CandidateMutationPilotReport/v2', status, full_qualification: false },
         inputs,
       ),
     ).toThrow(/100% confirmed assertion-caused Killed/);

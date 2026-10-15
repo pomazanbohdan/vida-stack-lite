@@ -8,6 +8,8 @@ import { mutationToolInputs, executeMutationCommand } from './mutation-evidence.
 import { qualityInputProjections, qualityFingerprint, readBunPin, sha256 } from './bun-coverage-evidence.ts';
 import { validateCurrentCoverageReportWithInputs } from './bun-coverage-report-validator.js';
 import { assertCrapPlanPrerequisites } from './crap-gate.ts';
+import { assertGlobalMutationMap } from './mutation-map.ts';
+import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryRoot = path.resolve(packageRoot, '../..');
@@ -196,7 +198,8 @@ export function assertMutationSummary(summary: Record<string, unknown>, inputs: 
   ].every(Boolean);
   if (!identityValid) throw new Error('Mutation gate summary does not bind current input identities.');
   const scoreValid = [
-    summary.schema === 'CandidateMutationReport/v3',
+    summary.schema === 'CandidateMutationReport/v4',
+    summary.qualification_scope === 'full' && summary.full_qualification === true,
     summary.status === 'pass',
     summary.required_effective_score === 1,
     summary.effective_score === 1,
@@ -207,12 +210,26 @@ export function assertMutationSummary(summary: Record<string, unknown>, inputs: 
   ].every(Boolean);
   if (!scoreValid)
     throw new Error('Mutation gate summary does not bind a current 100% confirmed assertion-caused Killed run.');
+  const map = summary.mutant_map;
+  if (
+    !isRecord(map) ||
+    map.schema !== 'CandidateMutantMap/v1' ||
+    map.globally_qualified !== true ||
+    map.file !== 'global-mutant-map.json' ||
+    typeof map.sha256 !== 'string' ||
+    !/^[a-f0-9]{64}$/u.test(map.sha256) ||
+    typeof map.bytes !== 'number' ||
+    !Number.isSafeInteger(map.bytes) ||
+    map.bytes < 1
+  )
+    throw new Error('Mutation gate summary has no current global mutant map binding.');
 }
 
 async function readMutationSummary(
   runDirectory: string,
   inputs: Inputs['mutation'],
   result: ChildResult,
+  inventory: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   const bytes = await readBoundedRegularFile(
     path.join(runDirectory, 'mutation.stdout.log'),
@@ -229,6 +246,29 @@ async function readMutationSummary(
     throw new Error('Mutation summary bytes differ from the complete child output receipt.');
   const summary = parseRecord(bytes, 'Mutation gate summary');
   assertMutationSummary(summary, inputs);
+  const map = summary.mutant_map as { file: string; bytes: number; sha256: string };
+  const directory = summary.evidence_directory;
+  if (
+    typeof directory !== 'string' ||
+    path.dirname(directory) !== path.join(packageRoot, '.tmp') ||
+    !path.basename(directory).startsWith(`mutation-evidence-${String(summary.run_id)}-`)
+  )
+    throw new Error('Global mutant map is outside its owned mutation evidence directory.');
+  const mapBytes = await readBoundedRegularFile(path.join(directory, map.file), 'Global mutant map', 32 * 1024 * 1024);
+  if (mapBytes.length !== map.bytes || sha256(mapBytes) !== map.sha256)
+    throw new Error('Global mutant map bytes changed.');
+  assertGlobalMutationMap(
+    parseRecord(mapBytes, 'Global mutant map'),
+    {
+      run_id: String(summary.run_id),
+      input_fingerprint: qualityFingerprint(inputs),
+      source_fingerprint: inputs.source_fingerprint,
+      test_fingerprint: inputs.test_fingerprint,
+      tool_fingerprint: inputs.tool_fingerprint,
+    },
+    inputs.sources,
+    inventory.partitions,
+  );
   return summary;
 }
 
@@ -402,6 +442,7 @@ async function runMutationGate(
   inputs: Inputs,
   budget: Budget,
   deadlineAt: number,
+  inventory: Record<string, unknown>,
 ): Promise<Record<string, unknown>> {
   const result = await runCommand(
     runDirectory,
@@ -411,7 +452,7 @@ async function runMutationGate(
     maximumOutputBytes,
   );
   requireCommandPass(result, 'Manual mutation qualification');
-  const summary = await readMutationSummary(runDirectory, inputs.mutation, result);
+  const summary = await readMutationSummary(runDirectory, inputs.mutation, result, inventory);
   return summary;
 }
 
@@ -481,12 +522,12 @@ async function main(): Promise<void> {
   const deadlineAt = orchestrationDeadline(startedAt, orchestrationDurationMs);
   const run = await prepareRun();
   currentStage = 'mutation-inventory';
-  await readMutationInventory(run.runDirectory, deadlineAt);
+  const inventory = await readMutationInventory(run.runDirectory, deadlineAt);
   requireTimeRemaining(deadlineAt, 'after mutation inventory');
   currentStage = 'coverage';
   const coverage = await runCoverageGate(run.runDirectory, run.budget, deadlineAt);
   currentStage = 'mutation';
-  const mutation = await runMutationGate(run.runDirectory, coverage.inputs, run.budget, deadlineAt);
+  const mutation = await runMutationGate(run.runDirectory, coverage.inputs, run.budget, deadlineAt, inventory);
   if (typeof coverage.coverage.run_id !== 'string' || !coverage.coverage.run_id)
     throw new Error('Fresh coverage report has no run identity.');
   const coverageRunId = coverage.coverage.run_id;

@@ -6,6 +6,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parse } from '@babel/parser';
 import type { schema } from '@stryker-mutator/api/core';
+import {
+  globalMutationMap,
+  assertGlobalMutationMap,
+  confirmPartitionMutationMap,
+  writeMutationMapArtifact,
+} from './mutation-map.ts';
 import { checkManifest, pinnedEnvironment, readPin } from '../bin/bun.ts';
 import { maintainedSourceInventory } from './maintained-source-inventory.ts';
 import {
@@ -50,14 +56,16 @@ export type MutationPartition = {
   requiredReportedSource?: string;
 };
 type MutationSelection =
-  | { scope: 'full'; inventory: boolean; partitions: MutationPartition[] }
+  | { scope: 'full'; inventory: boolean; partitions: MutationPartition[]; mapOnly?: true }
   | { scope: 'partition-pilot'; inventory: false; partitions: [MutationPartition] };
 
 export function selectMutationPartitions(args: readonly string[], partitions: MutationPartition[]): MutationSelection {
+  if (args.length === 1 && args[0] === '--map-inventory')
+    return { scope: 'full', inventory: false, mapOnly: true, partitions };
   if (args.length === 0 || (args.length === 1 && args[0] === '--inventory'))
     return { scope: 'full', inventory: args.length === 1, partitions };
   if (args.length !== 2 || args[0] !== '--pilot-partition')
-    throw new Error('Expected no arguments, --inventory, or --pilot-partition <exact-name>.');
+    throw new Error('Expected no arguments, --inventory, --map-inventory, or --pilot-partition <exact-name>.');
   const matches = partitions.filter((partition) => partition.name === args[1]);
   const partition = matches[0];
   if (
@@ -1105,7 +1113,7 @@ async function runMutationGate(): Promise<void> {
       `Mutation partition inventory is invalid: ${JSON.stringify({ unassignedSources, unknownPartitionSources, invalidOverlaps, missingPackageSources, invalidZeroMutantSources })}`,
     );
   const pendingPartitions = selectedPartitions.filter((partition) => partition.environment === 'pending');
-  if (pendingPartitions.length)
+  if (pendingPartitions.length && !('mapOnly' in selection && selection.mapOnly))
     throw new Error(
       `Mutation qualification is pending focused behavior tests: ${JSON.stringify(pendingPartitions.map(({ name, sources, intendedTests }) => ({ name, sources, intendedTests })))}`,
     );
@@ -1132,6 +1140,41 @@ async function runMutationGate(): Promise<void> {
     ),
   );
   const fingerprint = qualityFingerprint(inputs);
+  const mapBinding = {
+    run_id: runId,
+    input_fingerprint: fingerprint,
+    source_fingerprint: inputs.source_fingerprint,
+    test_fingerprint: inputs.test_fingerprint,
+    tool_fingerprint: inputs.tool_fingerprint,
+  };
+  const expectedSourceSet = new Set(expectedSources);
+  const mapSources = inputs.sources.filter((source) => expectedSourceSet.has(source.path));
+  if (mapSources.length !== expectedSourceSet.size)
+    throw new Error('Global mutation map Source capture is incomplete.');
+  const initialMap = globalMutationMap(
+    mapBinding,
+    mapSources,
+    partitions,
+    selectedPartitions.map(({ name }) => name),
+    zeroMutantSources,
+  );
+  if ('mapOnly' in selection && selection.mapOnly) {
+    const artifact = writeMutationMapArtifact(reportDirectory, 'global-mutant-map.json', initialMap);
+    process.stdout.write(
+      JSON.stringify({
+        schema: 'MutationMapInventory/v1',
+        ...mapBinding,
+        evidence_directory: reportDirectory,
+        artifact,
+        sources: mapSources.length,
+        partitions: partitions.length,
+        generated_universes: 0,
+        globally_qualified: false,
+      }) + '\n',
+    );
+    return;
+  }
+  writeMutationMapArtifact(reportDirectory, 'global-mutant-map.initial.json', initialMap);
   async function assertCurrentInputs(boundary: string): Promise<void> {
     if (qualityFingerprint(await qualityInputs(root, mutationTools)) !== fingerprint)
       throw new Error(`Mutation inputs changed at ${boundary}; qualification is UNKNOWN.`);
@@ -1379,6 +1422,47 @@ async function runMutationGate(): Promise<void> {
       values[mutant.status] = (values[mutant.status] ?? 0) + 1;
       return values;
     }, {});
+    const mapObservations = new Map<
+      string,
+      {
+        status: string;
+        source_counts?: Record<string, number>;
+        map?: { file: string; sha256: string; bytes: number; mutants: number };
+      }
+    >();
+    for (const run of runs) {
+      const binding = sourceBindings.get(run.name);
+      if (!binding) continue;
+      const report = reports.find((entry) => entry.name === run.name);
+      const reported = report
+        ? Object.entries(report.reportData.files).flatMap(([file, data]) =>
+            data.mutants.map((mutant) => ({ file: normalizedSourcePath(file), mutant })),
+          )
+        : undefined;
+      try {
+        const observed = await confirmPartitionMutationMap(
+          root,
+          { ...mapBinding, partition: run.name, partition_sources: binding.sourceInputs },
+          (file, allowEmpty = false) => readBoundedEvidence(reportDirectory, file, reportByteLimit, allowEmpty),
+          reported,
+        );
+        const local = mutants.filter((mutant) => mutant.partition === run.name);
+        mapObservations.set(run.name, {
+          ...observed,
+          status:
+            observed.terminal &&
+            !strykerRunUnknown(run.result) &&
+            baselineChecks.get(run.name)?.status === 'passed' &&
+            local.length > 0 &&
+            local.every((mutant) => mutant.confirmed_status === 'Killed')
+              ? 'assertion-confirmed-killed'
+              : 'unqualified-engine-observation',
+        });
+      } catch (error) {
+        provenanceErrors.push({ partition: run.name, error: `Mutation map: ${String(error)}` });
+        mapObservations.set(run.name, { status: 'unknown-map-evidence' });
+      }
+    }
     const nonKilled = mutants.filter((mutant) => mutant.confirmed_status !== 'Killed');
     const reportedSources = [...new Set(reports.flatMap(({ reportData }) => Object.keys(reportData.files ?? {})))]
       .map(normalizedSourcePath)
@@ -1399,6 +1483,7 @@ async function runMutationGate(): Promise<void> {
     const killed = mutants.filter((mutant) => mutant.confirmed_status === 'Killed').length;
     const effectiveScore = mutants.length === 0 ? 0 : killed / mutants.length;
     const pass =
+      !runnerUnknown &&
       provenanceErrors.length === 0 &&
       sourceMismatches.length === 0 &&
       baselineErrors.length === 0 &&
@@ -1414,8 +1499,22 @@ async function runMutationGate(): Promise<void> {
       nonKilled.length === 0 &&
       missingSources.length === 0 &&
       extraSources.length === 0;
+    const finalMap = {
+      ...globalMutationMap(
+        mapBinding,
+        mapSources,
+        partitions,
+        selectedPartitions.map(({ name }) => name),
+        zeroMutantSources,
+        mapObservations,
+      ),
+      globally_qualified: selection.scope === 'full' && pass,
+    };
+    if (finalMap.globally_qualified)
+      assertGlobalMutationMap(finalMap, mapBinding, mapSources, partitions.map(inventoryPartition));
+    const mutantMap = writeMutationMapArtifact(reportDirectory, 'global-mutant-map.json', finalMap);
     const summary = {
-      schema: selection.scope === 'full' ? 'CandidateMutationReport/v3' : 'CandidateMutationPilotReport/v1',
+      schema: selection.scope === 'full' ? 'CandidateMutationReport/v4' : 'CandidateMutationPilotReport/v2',
       qualification_scope: selection.scope,
       full_qualification: selection.scope === 'full' && pass,
       selected_partitions: selectedPartitions.map(({ name }) => name),
@@ -1426,6 +1525,7 @@ async function runMutationGate(): Promise<void> {
       input_fingerprint: fingerprint,
       run_id: runId,
       evidence_directory: reportDirectory,
+      mutant_map: { schema: finalMap.schema, ...mutantMap, globally_qualified: finalMap.globally_qualified },
       source_fingerprint: inputs.source_fingerprint,
       test_fingerprint: inputs.test_fingerprint,
       tool_fingerprint: inputs.tool_fingerprint,

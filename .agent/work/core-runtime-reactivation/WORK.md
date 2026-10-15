@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `2ebdf49` at origin/main.
+- Published predecessor: `e191740` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1051,6 +1051,64 @@ callback-free registrations are not yet modeled, and parent counter/universe/
 selection validation is required. These diagnostic artifacts cannot drive
 filtered execution or numeric admission. The new global map must preserve them
 as unqualified evidence until those barriers close.
+
+Packet e191740 passed strict hook and nonforce push. The global map is now wired
+through all declared runnable partitions via the public Stryker reporter API,
+not a kernel-specific second instrumentation pass. One shared mutation-map owner
+builds stable Source-digest/path/range/mutator/replacement identities, global
+Source/partition index, bounded exclusive artifacts and parent reconciliation.
+The existing bounded input reader is exported/reused for the reporter's one
+metadata descriptor read. Source/test/config/tool capture and input fingerprint
+serialization remain unchanged. No new dependencies, Source AST/scan/hash pass,
+build/install test suite, or active `.vida`/Runtime change.
+
+`mutation:map`/`--map-inventory` actually captured149Source files/45partitions in
+the first index,41481bytes, no tests or generated universes. Missing universes
+stay null, not0mutants. Retain map root
+packages/agent/.tmp/mutation-evidence-e95796e3-c68f-4cb4-9c56-d5cb66f47f60-6RKXbt
+and quality-global-mutant-map-inventory-e19-20261015.log. This earlier packet
+fingerprint is immutable, not current admission after later corrections.
+
+Reporter writes the complete public plan synchronously before execution and
+appends bounded engine events; terminal metadata binds exact plan/event bytes.
+API plan coordinates are zero-based, callbacks/report rows one-based; normalize
+exactly once. Parent joins local/canonical/report IDs, engine statuses and hashes
+without promoting them to assertion proof. Killed still needs the existing
+baseline/process/JUnit/body-cause owner. Global map covers omitted, pending,
+static and both platform assignments separately. Function spans/scenario
+relations remain unresolved/unreviewed when no byte-bound shared inventory is
+supplied. The capture-only per-test producer still cannot drive filtering.
+
+Real public Stryker/Bun plugin probe generated2mutants and passed complete map
+terminal/identity/digest reconciliation, full output and process-group absence:
+quality-global-mutant-map-native-probe-qualified-20261015.log, retained fixture
+/tmp/quality-global-mutant-map-native-o47Duu. This is API/producer evidence, not
+VIDA assertion-confirmed Killed. Earlier probe XGtJZH failed metadata equality:
+the coverage fingerprint owner's canonicalJson intentionally preserves insertion
+order. New maps now reuse the existing sorted canonical-json-core owner; never
+change historical input fingerprint serialization. Reordered-JSON-key regression
+failed before correction; retained quality-global-mutant-map-key-order-before-
+e19-20261015.log.
+
+Full/pilot summaries become CandidateMutationReport/v4 and
+CandidateMutationPilotReport/v2. Final quality requires actual current global
+map bytes and exact Source domain plus the authoritative partition/environment
+matrix already captured by its inventory step. Missing-Windows-assignment
+regression failed before adding that matrix check; retained
+quality-global-mutant-map-platform-before-e19-20261015.log. A map cannot hide a
+required platform behind another lane's Killed. Also make runnerUnknown an
+explicit failure predicate: status UNKNOWN must not leave full_qualification
+true or exit0. Existing unknown-scheduling controls remain in the focused run.
+
+Final focused106PASS/633assertions/6files/3.14s and strict static478captured/
+477checkedTS plus101Sourcechecked/0diagnostics:
+quality-global-mutant-map-final-e19-20261015.log and
+quality-global-mutant-map-static-final-e19-20261015.log. Earlier static rejected
+an optional report replacement and a cleanup callback void return; both were
+corrected without weakening identity or cleanup semantics. Independent review:
+quality-global-mutant-map-actual-review-e19-20261015.md. Next publish this coherent
+packet, then qualify one real existing small partition with required map
+artifacts before returning to kernel per-test runner and remaining12functions.
 
 Range-only mutation slicing is not generally complete for ancestor-spanning
 mutants. Installed Stryker supports mutator-name exclusion buckets as a candidate

@@ -28,7 +28,8 @@ const config = {
   ignorePatterns: ['.tmp/**', 'coverage/**'],
   tsconfigFile: '.stryker-no-tsconfig.json',
   coverageAnalysis: 'off',
-  reporters: ['clear-text', 'json'],
+  plugins: [new URL('./tooling/mutation-map-reporter.ts', import.meta.url).href],
+  reporters: ['clear-text', 'json', 'vida-mutant-map'],
   jsonReporter: {
     fileName: reportPath(
       mutationReport ??

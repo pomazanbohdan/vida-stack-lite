@@ -650,7 +650,12 @@ async function walkFiles(root: string, directory: string, depth = 0): Promise<st
   return (await Promise.all(nested)).flat().sort();
 }
 
-function readBoundedInput(absolute: string, boundaryRoot: string, label: string, allowMissing: boolean): Buffer | null {
+export function readBoundedInput(
+  absolute: string,
+  boundaryRoot: string,
+  label: string,
+  allowMissing: boolean,
+): Buffer | null {
   const opened = openRootFileSync({
     absolutePath: absolute,
     rootPath: boundaryRoot,

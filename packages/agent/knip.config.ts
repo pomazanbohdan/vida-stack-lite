@@ -37,6 +37,8 @@ const config = {
         'tooling/bun-coverage-preload.ts',
         'tooling/mutation-command-runner.ts',
         'tooling/mutation-test-preload.ts',
+        // Loaded by Stryker's public reporter plugin API from the config URL.
+        'tooling/mutation-map-reporter.ts',
         // Fault injection is loaded by test children through explicit --preload paths.
         'tests/helpers/clean-stat-fault-preload.ts',
         'tests/helpers/project-upgrade-stop-preload.ts',
