@@ -4708,22 +4708,39 @@ assertion corrections and canonical focused-namespace repair remain at
 6eef194:.agent/work/core-runtime-reactivation/WORK.md with their exact retained
 locators. No historical failure was relabeled PASS.
 
-## Next complete contour: main-host
+## Complete local contour: main-host
 
-Proceed with the seven retained functions in src/config/host-capability.ts.
-Historical7/7coverage and69/69confirmed mutation remain d320564evidence,
-not fresh completion. Independent Luna review compares literal b549951 Source,
-the current seven bodies and existing frozen rows. Bodies and callable roles
-match; caps stay unchanged. The package version type changed from literal0.5.6
-to typeof fsSafeVersion (current0.26.2), an intentional dependency type-surface
-update with a type-only import, not an executable body change.
-The existing partial records this bounded review separately from v1033;
-it stays non-executable/non-exhaustive and grants no numeric acceptance.
-The existing scoped gate now binds the published host review at6f687506 to its
-own review key, preserving the separate ebf7461/v1033 binding. Eleven focused
-CLI/prerequisite controls pass, including rejection of cross-review scopes and
-missing numerical evidence; tooling TypeScript passes. Fresh exact coverage,
-scoped CRAP and complete assertion-confirmed mutation remain required.
+The seven retained functions have a complete compatible local triple at
+76a0f283398ba2abe3f9d12517781a2087f756c4. Coverage run
+ce638b1f-e17f-4f6d-9faa-37ba1973a917 records13PASS/0FAIL/42assertions,
+439ms Bun/2851.004761ms owned outer, exact F7/7,L21/21,S22/22,B11/11.
+The same-run scoped frozen proof passes all seven identities, maxCC3/maxCRAP3,
+against immutable b549951 Source and independently reviewed6f687506 rows.
+Complete mutation records69/69assertion-confirmed Killed, effective score1,
+zero UNKNOWN/survivors/provenance/report/Source errors,21252.28575ms owned
+outer with complete output and observed process-group termination on the same
+boot. Retained roots: /workspace/attachments/quality-declared-main-host-sxSiuz
+and /workspace/attachments/quality-mutation-main-host-KmrrUI.
+Exact coverage/proof reports use the ce638b1f-e17f-4f6d-9faa-37ba1973a917 prefix
+under packages/agent/coverage/bun-unified/diagnostics/.
+The automatic projection now retains61observations,3/44historical pairs and
+2/44complete local triples;42triples remain open. No global freshness or formed
+Runtime claim follows from these local closures.
+
+The host Source-lineage review, intentional dependency version type delta,
+separate immutable review-key admission and11CLI/prerequisite controls remain
+at76a0f28:.agent/work/core-runtime-reactivation/WORK.md. Independent admission
+review: /workspace/attachments/quality-host-scoped-admission-review-20261015.md.
+No product Source change or budget relaxation was needed for host completion.
+
+## Next contour candidate: main-runtime-timing
+
+An independent blind Luna lane reviews the36retained timing roles against
+literal b549951 Source and the existing partial, without suites/AST/hash passes
+or Source edits. Historical coverage+151/151mutation remains historical.
+Review authority and fresh compatible coverage/proof/mutation are required
+before this candidate can close or advance. Existing missing global historical
+artifacts and non-executable partial status remain unchanged.
 
 ## Historical provenance
 
