@@ -71,9 +71,12 @@ test('native CRAP inventory denies duplicate or foreign sources and unsupported 
 
 test('scoped CRAP refuses unreviewed correspondence versions and contours before numerical admission', () => {
   const reviewed = 'ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56';
+  const hostReview = '6f687506464048a0360f3fb8932eb7b77c7fc005';
   for (const [contour, reference, message] of [
     ['main-cedar', '0'.repeat(40), 'pinned published reviewed budget commit'],
     ['main-config', reviewed, 'outside the pinned independent source-lineage review'],
+    ['main-host', reviewed, 'outside the pinned independent source-lineage review'],
+    ['main-cedar', hostReview, 'outside the pinned independent source-lineage review'],
     ['unknown', reviewed, 'complete declared executable contour'],
   ]) {
     const result = spawnSync(process.execPath, [script, '--contour', contour!, '--budget-ref', reference!], {
@@ -89,4 +92,28 @@ test('scoped CRAP refuses unreviewed correspondence versions and contours before
     expect(result.stdout).toBe('');
     expect(result.stderr).toContain(message!);
   }
+});
+
+test('published host lineage review still requires genuine focused numerical evidence', () => {
+  const result = spawnSync(
+    process.execPath,
+    [script, '--contour', 'main-host', '--budget-ref', '6f687506464048a0360f3fb8932eb7b77c7fc005'],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 5000,
+      maxBuffer: 1024 * 1024,
+      env: {
+        ...process.env,
+        BUN_OPTIONS: '',
+        VIDA_BUN_COVERAGE_REPORT: path.join(root, 'coverage', 'missing-host-review-control.json'),
+      },
+    },
+  );
+  expect(result.error).toBeUndefined();
+  expect(result.signal).toBeNull();
+  expect(result.status).toBe(1);
+  expect(result.stdout).toBe('');
+  expect(result.stderr).toContain('ENOENT');
+  expect(result.stderr).not.toContain('outside the pinned independent source-lineage review');
 });

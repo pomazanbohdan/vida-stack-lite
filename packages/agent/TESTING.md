@@ -1019,7 +1019,11 @@ For sequential whole-contour development, the existing CRAP owner also supports
 <declared-contour> --budget-ref ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56`.
 This is a separate conservative local proof, never global admission of a partial
 plan or a historical measurement. The pinned published review must cover every
-declared Source. Caller-supplied correspondence versions are rejected. The shared
+declared Source. Main-host uses the separately published independent review
+`--budget-ref 6f687506464048a0360f3fb8932eb7b77c7fc005`; it does not inherit
+v1033's review of other contours. The gate accepts only these pinned review/key
+pairs and each review's actual Source scope. Caller-supplied correspondence
+versions are rejected. The shared
 focused validator rechecks the pinned runtime, current inputs, immutable snapshot,
 manifest, process receipts, canonical instrumentation and exact per-file F/L/S/B.
 The CRAP owner then derives exhaustive original IDs/CC from immutable b549951

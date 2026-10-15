@@ -44,7 +44,10 @@ const root = path.resolve(
 const { createCoverageMap } = coverageApi;
 const baselineRef = 'b549951';
 // Published task review, fixed before the scoped candidate measurements; never caller-supplied correspondence.
-const scopedBudgetReviewCommit = 'ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56';
+const scopedBudgetReviews = new Map([
+  ['ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56', 'scope_review_v1033'],
+  ['6f687506464048a0360f3fb8932eb7b77c7fc005', 'scope_review_main_host_20261015'],
+]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -686,7 +689,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     )
       throw new Error('Scoped CRAP proof requires a complete declared executable contour.');
     const budgetCommit = scopedArguments[3]!;
-    if (budgetCommit !== scopedBudgetReviewCommit)
+    const reviewKey = scopedBudgetReviews.get(budgetCommit);
+    if (reviewKey === undefined)
       throw new Error('Scoped CRAP proof requires the pinned published reviewed budget commit.');
     if (gitText(['rev-parse', '--verify', `${budgetCommit}^{commit}`]).trim() !== budgetCommit)
       throw new Error('Scoped CRAP budget reference is not an immutable commit.');
@@ -700,7 +704,7 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       !Array.isArray(budget.baseline_functions)
     )
       throw new Error('Scoped CRAP proof has no immutable reviewed function lineage.');
-    const review = budget.scope_review_v1033;
+    const review = budget[reviewKey];
     const reviewedFiles = isRecord(review) && Array.isArray(review.files) ? new Set(review.files) : new Set();
     if (partition.sources.some((file) => !reviewedFiles.has(file)))
       throw new Error('Scoped CRAP contour is outside the pinned independent source-lineage review.');

@@ -4719,8 +4719,11 @@ to typeof fsSafeVersion (current0.26.2), an intentional dependency type-surface
 update with a type-only import, not an executable body change.
 The existing partial records this bounded review separately from v1033;
 it stays non-executable/non-exhaustive and grants no numeric acceptance.
-Next bind that published host review in the existing scoped gate, then capture
-fresh exact coverage, scoped CRAP and complete assertion-confirmed mutation.
+The existing scoped gate now binds the published host review at6f687506 to its
+own review key, preserving the separate ebf7461/v1033 binding. Eleven focused
+CLI/prerequisite controls pass, including rejection of cross-review scopes and
+missing numerical evidence; tooling TypeScript passes. Fresh exact coverage,
+scoped CRAP and complete assertion-confirmed mutation remain required.
 
 ## Historical provenance
 
