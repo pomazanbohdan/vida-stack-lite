@@ -328,6 +328,42 @@ directory; sealed manifest/snapshot permissions remain unchanged. A new run
 after publication will supply the real before/after check; the failed run is
 not repaired or replayed in place.
 
+Published2c632b3 corrects the final report path without relaxing sealed custody.
+Fresh focused run8d8b3220-aa70-4acc-a1d8-6ec100245a83 completed with outer exit0,
+9.616s, no timeout and owned-group termination observed:
+/workspace/attachments/quality-focused-supervised-2c632b3-yIz0O8.
+The report is coverage/bun-unified/diagnostics/8d8b3220-aa70-4acc-a1d8-
+6ec100245a83.focused-coverage.json. Its selected tests passed16/0 with357assertions
+in4.63s. Actual host metrics: functions7/7, lines21/21, statements22/22,
+branches9/11(81.81%). Existing binary function-entry CRAP is1,1,1,3,1,1,2.
+Validated bounded projection: quality-main-host-focused-summary-2c632b3-
+20261015.json. These are local diagnostics at that Source/test/tool binding;
+frozen-budget qualification and child counters remain pending. The earlier
+abba348 mutation run has different tool/test identities and is not a joint
+three-metric qualification for these inputs.
+
+The next causal correction moves the seven native host assertions from the
+combined Cedar completeness case into two directly executed native cases in
+the existing host-boundary file. Only main-host mutation's narrow test selection
+changes; the full test selection and all other partitions retain completeness.
+No product Source or frozen roles/caps change. Six mocked/provider cases keep
+their child processes. A first3file check passed29/30; a leftover kernel-case
+nativeNoFollowAvailable import caused the single failure and was restored.
+The first anchored retry matched zero tests (retained as selection error), then
+the actual kernel case passed1/0 with34assertions in2.73s:
+quality-host-scope-extraction-kernel-regression-retry-2c632b3-20261015.log.
+All other29cases retain their passing proof from
+quality-host-scope-extraction-focused-2c632b3-20261015.log. Independent blind Luna
+accepted the complete assertion-preserving diff:
+quality-host-native-scope-review-2c632b3-20261015.md. New focused and mutation
+measurements must use this same revised selection after publication.
+The strict hook found a nullable expected-value type mismatch in the moved
+cross-surface equality assertion. Swapping its equivalent actual/expected sides
+keeps both positive assertions and avoids a cast or runtime guard. Both native
+cases passed2/0 with7assertions in199ms:
+quality-host-native-scope-type-regression-2c632b3-20261015.log. The hook failure
+remains retained; retry uses the normal strict hook.
+
 ## Root-owned rapid test and product audit
 
 This is a breadth-first Source review with targeted call-chain inspection, not

@@ -128,6 +128,14 @@ acceptance. Preserve exact coverage and frozen complexity/CRAP requirements.
 Retained .tmp and coverage report/snapshot trees are evidence, not fresh Stryker
 sandbox inputs; keep them excluded from sandbox copying without deleting them.
 
+The main-host contour selects `tests/host-capability-boundary.test.ts`. Its two
+native cases own the seven host assertions extracted from the combined Cedar
+completeness case; six provider/mock cases retain child isolation. Import the
+native subject inside each native body so child mocks precede its initialization.
+The full test selection and other mutation partitions retain the completeness
+file. Avoid eager configured-context/index setup in this narrow contour: a
+mutant's import/setup error cannot substitute for the target assertion.
+
 Mutation budgets have one data-only owner in
 [mutation-limits.ts](tooling/mutation-limits.ts). They do not replace the Bun
 per-test default or the full coverage deadline. A test command has a180000ms

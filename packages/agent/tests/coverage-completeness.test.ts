@@ -56,11 +56,7 @@ import {
 } from '../src/runtime-timing.ts';
 import { createRuntimeKernel, createRuntimeKernelHost } from '../src/runtime-kernel.ts';
 import type { RuntimeKernelHostBindings } from '../src/runtime-kernel.ts';
-import {
-  detectNativeNoFollowCapability,
-  nativeNoFollowAvailable,
-  requireNativeNoFollowCapability,
-} from '../src/config/host-capability.ts';
+import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
 
 import { createConfiguredMastra, sanitizeDiagnostic } from '../src/orchestration/mastra-boundary.ts';
 import { requireAbsoluteRepositoryRoot } from '../src/config/project-context.ts';
@@ -1096,7 +1092,7 @@ describe('direct maintained-source completeness', () => {
     expect(() => validateProjectContext({ ...project }, repositoryRoot)).toThrow(/issued/);
   });
 
-  test('Cedar and host capabilities fail closed on malformed boundaries', () => {
+  test('Cedar capabilities fail closed on malformed boundaries', () => {
     expect(validateCedarPolicySet('permit(principal, action, resource);')).toEqual({ valid: true, diagnostics: [] });
     expect(() => invokeUntrusted(requireAbsoluteRepositoryRoot, [null])).toThrow(/absolute/);
     expect(() => validateResolvedPathProfile(null, repositoryRoot)).toThrow(/issued/);
@@ -1303,13 +1299,6 @@ describe('direct maintained-source completeness', () => {
       decision: 'deny',
       diagnostics: ['authorization claims do not satisfy the configured project boundary'],
     });
-    // This candidate targets TESTING.md's native Linux provider. Windows native evidence remains a GAP.
-    expect(nativeNoFollowAvailable).toBe(true);
-    expect(() => invokeUntrusted(detectNativeNoFollowCapability, [null])).toThrow(/absolute/);
-    expect(() => detectNativeNoFollowCapability('relative')).toThrow(/absolute/);
-    expect(() => detectNativeNoFollowCapability(repositoryRoot + path.sep + '.')).toThrow(/canonical/);
-    const capability = detectNativeNoFollowCapability(repositoryRoot);
-    if (!capability) throw new Error('Expected Linux native no-follow capability.');
     expect(() =>
       createConfiguredProjectAuthorizer(repositoryRoot, {
         ...config,
@@ -1319,21 +1308,6 @@ describe('direct maintained-source completeness', () => {
     expect(() => createConfiguredProjectAuthorizer(path.resolve(repositoryRoot, 'agent-runtime-new'), config)).toThrow(
       'runtime config is not bound to the repository root',
     );
-    expect(capability).toStrictEqual({
-      schema: 'NativeNoFollowCapability/v1',
-      platform: 'linux',
-      node_version: process.versions.node,
-      primitive: 'O_NOFOLLOW',
-      provider: 'linux-proc-fd',
-      ancestor_binding: 'directory-handle',
-      atomic_replace: 'fsync-temp-rename',
-      containment: 'kernel-atomic',
-      assurance_profile: 'linux-kernel-atomic-v1',
-      filesystem: 'linux-native',
-      attested: true,
-    });
-    expect(capability?.attested).toBe(true);
-    expect(requireNativeNoFollowCapability(repositoryRoot)).toStrictEqual(capability);
   });
 
   test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {

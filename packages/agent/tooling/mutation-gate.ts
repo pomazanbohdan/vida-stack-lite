@@ -485,7 +485,7 @@ async function runMutationGate(): Promise<void> {
     {
       name: 'main-host',
       sources: ['src/config/host-capability.ts'],
-      tests: [...commonTests, 'tests/host-capability-boundary.test.ts'],
+      tests: ['tests/host-capability-boundary.test.ts'],
     },
     {
       name: 'main-contracts',

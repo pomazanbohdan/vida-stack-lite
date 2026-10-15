@@ -1,6 +1,7 @@
 import { describe, expect, mock, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import { constants as realFsConstants } from 'node:fs';
+import path from 'node:path';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 
@@ -23,6 +24,38 @@ function runIsolatedMockCase(name: string): void {
 
 const providerAccess = (provider: SafeRepositoryAccess['provider']) =>
   ({ provider }) satisfies Pick<SafeRepositoryAccess, 'provider'>;
+
+describe('host capability native boundary', () => {
+  test('rejects non-string, relative and noncanonical repository roots', async () => {
+    const host = await import('../src/config/host-capability.ts');
+    expect(() => {
+      Reflect.apply(host.detectNativeNoFollowCapability, undefined, [null]);
+    }).toThrow(/absolute/);
+    expect(() => host.detectNativeNoFollowCapability('relative')).toThrow(/absolute/);
+    expect(() => host.detectNativeNoFollowCapability(process.cwd() + path.sep + '.')).toThrow(/canonical/);
+  });
+
+  test('reports and requires the qualified native Linux descriptor capability', async () => {
+    const host = await import('../src/config/host-capability.ts');
+    expect(host.nativeNoFollowAvailable).toBe(true);
+    const capability = host.detectNativeNoFollowCapability(process.cwd());
+    expect(capability).toStrictEqual({
+      schema: 'NativeNoFollowCapability/v1',
+      platform: 'linux',
+      node_version: process.versions.node,
+      primitive: 'O_NOFOLLOW',
+      provider: 'linux-proc-fd',
+      ancestor_binding: 'directory-handle',
+      atomic_replace: 'fsync-temp-rename',
+      containment: 'kernel-atomic',
+      assurance_profile: 'linux-kernel-atomic-v1',
+      filesystem: 'linux-native',
+      attested: true,
+    });
+    expect(capability?.attested).toBe(true);
+    expect(capability).toStrictEqual(host.requireNativeNoFollowCapability(process.cwd()));
+  });
+});
 
 describe('host capability provider boundary', () => {
   test('returns null and rejects when the provider identity is not recognized', async () => {
