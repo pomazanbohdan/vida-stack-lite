@@ -4,12 +4,17 @@ import {
   transitionLifecycleState,
   validateLifecycleAggregate,
   validateLifecycleProgress,
+  validateLifecycleReferencePreservation,
   type DocumentationVerificationContext,
   type LifecycleArtifactKind,
   type LifecycleArtifactReference,
   type LifecycleWorkState,
 } from '../../src/lifecycle/lifecycle-state.ts';
-import { executeDocumentationClearOperation, type DocumentationClearInput } from '../../src/documentation/clear.ts';
+import {
+  executeDocumentationClearOperation,
+  verifyDocumentationClearReference,
+  type DocumentationClearInput,
+} from '../../src/documentation/clear.ts';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -349,6 +354,13 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
 
   test('rejects skipped phases, stale bindings and duplicate reviewer identity', () => {
     const work = initialWork();
+    const documented = clone(work);
+    documented.lifecycle.scope.allowed_paths.push('docs/task.md');
+    documented.lifecycle.scope.documentation_paths.push('docs/task.md');
+    documented.binding.allowed_resources.push('file:docs/task.md');
+    expectReturned(() => validateLifecycleAggregate(documented));
+    documented.lifecycle.scope.documentation_paths.push('docs/outside.md');
+    expect(() => validateLifecycleAggregate(documented)).toThrow('lifecycle scoped path is outside allowed paths');
     const predecessor = clone(work);
     const historicalScope = reference(predecessor, 'implementation_scope', 'historical-scope');
     predecessor.lifecycle.references.push(historicalScope);
@@ -387,6 +399,33 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       samePhase(work, (next) => next.lifecycle.references.push(reference(next, 'decision', 'early-decision'))),
     ).toThrow('cannot be admitted during INTAKE');
   }, 30_000);
+
+  test('preserves reference identity and permits only exact current feedback consumption', () => {
+    const feedback = reference(initialWork(), 'feedback_consumption', 'feedback');
+    const consumed = { ...feedback, disposition: 'consumed' as const };
+    expectReturned(() => validateLifecycleReferencePreservation([feedback], [consumed]));
+    expect(feedback.disposition).toBe('current');
+    expectReturned(() => validateLifecycleReferencePreservation([feedback], [clone(feedback)]));
+    expect(() => validateLifecycleReferencePreservation([feedback], [])).toThrow(
+      'lifecycle references are append-only',
+    );
+    expect(() => validateLifecycleReferencePreservation([], [feedback, clone(feedback)])).toThrow(
+      'duplicate lifecycle reference identity',
+    );
+    const invalidPairs: readonly (readonly [LifecycleArtifactReference, LifecycleArtifactReference])[] = [
+      [
+        { ...feedback, kind: 'decision' },
+        { ...consumed, kind: 'decision' },
+      ],
+      [{ ...feedback, disposition: 'retired' }, consumed],
+      [feedback, { ...feedback, disposition: 'retired' }],
+      [feedback, { ...consumed, sha256: hash('e') }],
+    ];
+    for (const [before, after] of invalidPairs)
+      expect(() => validateLifecycleReferencePreservation([before], [after])).toThrow(
+        'lifecycle reference replacement or invalidation requires a typed operation',
+      );
+  });
 
   test('correction retires stale assurance and delivery evidence in one typed transition', async () => {
     const fixture = clearFixture();
@@ -428,6 +467,7 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
           reference(next, 'implementation_result', 'implementation', { implementation_fingerprint: fingerprint }),
         );
       });
+
       work = expectReturned(() => transitionLifecycleState(work, 'VERIFY', 'Review.'));
       expect(work).not.toBeNull();
       expect(typeof work).toBe('object');
@@ -559,7 +599,18 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       staleReference.record_id = firstRecordId;
       expect(() =>
         transitionLifecycleState(staleCurrent, 'DELIVERY', 'Reject the previous CLEAR cycle.', clearContext),
-      ).toThrow();
+      ).toThrow('lifecycle reference identity');
+      expect(() =>
+        verifyDocumentationClearReference({
+          ...clearContext,
+          source_revision: verifiedAgain.binding.work_source_revision,
+          scope_paths: verifiedAgain.lifecycle.scope.allowed_paths,
+          reference_path: firstClear.path,
+          reference_sha256: firstClear.sha256,
+          reference_id: firstRecordId,
+          expected_cycle: 2,
+        }),
+      ).toThrow('documentation CLEAR reference generation invalid');
       const correctedDelivery = expectReturned(() =>
         transitionLifecycleState(verifiedAgain, 'DELIVERY', 'Deliver corrected work.', clearContext),
       );
@@ -569,6 +620,22 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(() => transitionLifecycleState(verifiedAgain, 'EXECUTE', 'Reuse stale correction authority.')).toThrow(
         'current correction_authorization reference required',
       );
+      const secondAuthorized = add(
+        verifiedAgain,
+        reference(verifiedAgain, 'correction_authorization', 'correction-2', { decision: 'approved' }),
+        reference(verifiedAgain, 'feedback_consumption', 'consumption-2'),
+      );
+      const secondCorrected = expectReturned(() =>
+        transitionLifecycleState(secondAuthorized, 'EXECUTE', 'Apply the next authorized correction.'),
+      );
+      expect(secondCorrected).not.toBeNull();
+      expect(typeof secondCorrected).toBe('object');
+      expect(secondCorrected.lifecycle.assurance.correction_count).toBe(2);
+      const retained = verifiedAgain.lifecycle.references.filter((item) => item.disposition !== 'current');
+      expect(retained.length).toBeGreaterThan(0);
+      for (const item of retained)
+        expect(secondCorrected.lifecycle.references.find((next) => next.record_id === item.record_id)).toEqual(item);
+      expectReturned(() => validateLifecycleProgress(secondAuthorized, secondCorrected));
       expect(() => validateLifecycleProgress(work, { ...corrected, revision: corrected.revision + 1 })).toThrow();
       completed = true;
     } catch (error) {

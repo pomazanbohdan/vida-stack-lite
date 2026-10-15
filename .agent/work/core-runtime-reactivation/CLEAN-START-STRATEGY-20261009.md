@@ -46,6 +46,30 @@ and the remaining matrix from producer results; WORK owns decisions and receipts
 After each terminal batch, one final owner refreshes it through TESTING's
 `quality:contours` command. Preserve/export its JSON snapshot after freezes before
 commit/push; never maintain manual duplicate percentage tables.
+
+The current development wave prepares five contours concurrently: Root owns
+`bun-lifecycle-state`; blind native Luna writers own `main-contracts`
+(`tests/envelopes-boundary.test.ts`), `bun-runtime-initialization`
+(`tests/bun/runtime-initialization.test.ts`), `bun-cli-toolchain`
+(`tests/bun-toolchain.test.ts`, `tests/bun-cache-routing.test.ts`) and
+`bun-final-assurance` (`tests/final-assurance.test.ts`,
+`tests/final-assurance-public.test.ts`). An independent read-only lane reviews
+the four scopes' original/current correspondence and prospective caps. Root owns
+Source, shared helpers, registry, frozen-plan metadata, documentation and Git.
+Workers return concrete contract regressions and terminal handoffs; they do not
+run competing checks, numerical producers, builds or installs.
+
+Prepare edits in parallel, then drain writers and review their actual diffs
+before one shared static/focused acceptance batch and publication. Freeze every
+captured input before numerical production. Root qualifies each complete declared
+selection serially: exact F/L/S/B, same-run scoped frozen proof, then complete
+assertion-confirmed mutation. Read-only review may overlap that freeze only with
+no refresh, probe or mutation. A failed stage returns its contour to correction;
+other ready scopes remain queued, and earlier failed/UNKNOWN evidence is retained.
+Reuse existing producer inputs, registry and derived progress document. This work
+schedule does not activate pending parallel coverage, filtered mutation or a new
+runner. A prospective-cap or correspondence GAP stays open; it cannot inherit
+another function's original allowance or become a closure from a partial score.
 Next qualify native Bun per-test selection before rerunning the oversized kernel
 contour. Capture-only per-test maps do not authorize filtering or numeric admission.
 The bounded native timing pilot now joins an independent registration invocation,

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { execFile, type ChildProcess } from 'node:child_process';
@@ -29,6 +30,7 @@ import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { SafeRepositoryLockContentionError } from '../../src/config/safe-repository-access.ts';
 import type { RuntimeInitializationReceipt } from '../../src/config/initialization-record.ts';
 import { fixtureInitializationTemplates } from '../helpers/runtime-initialization-fixture.ts';
+import { expectReturned } from '../helpers/expect-rejection.ts';
 
 type Racer = {
   child: ChildProcess;
@@ -44,6 +46,14 @@ let database: Database | undefined;
 let store: HostStateStore;
 let racers: Racer[] = [];
 let caseCompleted = false;
+
+async function expectInitializationResult<T>(action: () => Promise<T>): Promise<T> {
+  let result!: T;
+  await assert.doesNotReject(async () => {
+    result = await action();
+  });
+  return result;
+}
 
 beforeEach(() => {
   caseCompleted = false;
@@ -131,10 +141,12 @@ afterEach(async () => {
 });
 
 test('derives one stable workspace ID for normalized spelling and different IDs for another checkout', () => {
-  expect(deriveWorkspaceId(receipt.repository_id, path.join(root, '.'))).toBe(receipt.workspace_id);
+  expect(expectReturned(() => deriveWorkspaceId(receipt.repository_id, path.join(root, '.')))).toBe(
+    receipt.workspace_id,
+  );
   const other = mkdtempSync(path.join(tmpdir(), 'vida-other-workspace-'));
   try {
-    expect(deriveWorkspaceId(receipt.repository_id, other)).not.toBe(receipt.workspace_id);
+    expect(expectReturned(() => deriveWorkspaceId(receipt.repository_id, other))).not.toBe(receipt.workspace_id);
   } finally {
     rmSync(other, { recursive: true, force: true });
   }
@@ -142,11 +154,14 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
 });
 
 test('same workspace binding is idempotent under concurrent callers', async () => {
-  const results = await Promise.all([bindRuntimeInitialization(root, store), bindRuntimeInitialization(root, store)]);
+  const results = await Promise.all([
+    expectInitializationResult(() => bindRuntimeInitialization(root, store)),
+    expectInitializationResult(() => bindRuntimeInitialization(root, store)),
+  ]);
   expect(results[0]).toEqual({ ...receipt, workspace_binding_status: 'bound' });
   expect(results[1]).toEqual(results[0]);
   const boundBytes = readFileSync(receiptPath);
-  expect(await bindRuntimeInitialization(root, store)).toEqual(results[0]);
+  expect(await expectInitializationResult(() => bindRuntimeInitialization(root, store))).toEqual(results[0]);
   expect(readFileSync(receiptPath)).toEqual(boundBytes);
   caseCompleted = true;
 });
@@ -181,7 +196,7 @@ test('workspace binding retries a read-only activation preflight while its owned
     const currentGuard = lstatSync(guardPath);
     if (currentGuard.dev === guardIdentity.dev && currentGuard.ino === guardIdentity.ino) rmdirSync(guardPath);
   }
-  expect(await binding).toEqual({ ...receipt, workspace_binding_status: 'bound' });
+  expect(await expectInitializationResult(() => binding)).toEqual({ ...receipt, workspace_binding_status: 'bound' });
   caseCompleted = true;
 });
 
@@ -394,11 +409,11 @@ test('workspace binding waits for an owned activation lock quarantine to clear b
   expect(retainedQuarantine.ino).toBe(quarantineIdentity.ino);
   if (retainedQuarantine.dev === quarantineIdentity.dev && retainedQuarantine.ino === quarantineIdentity.ino)
     unlinkSync(quarantinePath);
-  const bound = await binding;
+  const bound = await expectInitializationResult(() => binding);
   expect(bound).toEqual({ ...receipt, workspace_binding_status: 'bound' });
   const boundBytes = readFileSync(receiptPath);
   expect(boundBytes).not.toEqual(receiptBytes);
-  expect(await bindRuntimeInitialization(root, store)).toEqual(bound);
+  expect(await expectInitializationResult(() => bindRuntimeInitialization(root, store))).toEqual(bound);
   expect(readFileSync(receiptPath)).toEqual(boundBytes);
   expect(readFileSync(databasePath)).toEqual(hostSnapshot);
   caseCompleted = true;
@@ -470,11 +485,11 @@ test('workspace binding retries a disappeared Windows lock before the receipt tr
       });
     },
   });
-  const bound = await bindRuntimeInitialization(root, store);
+  const bound = await expectInitializationResult(() => bindRuntimeInitialization(root, store));
   expect(injected).toBe(true);
   expect(bound).toEqual({ ...receipt, workspace_binding_status: 'bound' });
   const boundBytes = readFileSync(receiptPath);
-  expect(await bindRuntimeInitialization(root, store)).toEqual(bound);
+  expect(await expectInitializationResult(() => bindRuntimeInitialization(root, store))).toEqual(bound);
   expect(readFileSync(receiptPath)).toEqual(boundBytes);
   caseCompleted = true;
 });
@@ -491,7 +506,16 @@ test('foreign or stale receipt is rejected without replacing the pending bytes',
   ] as const) {
     const bytes = JSON.stringify({ ...receipt, [field]: value }) + '\n';
     writeFileSync(receiptPath, bytes);
-    await Promise.resolve(expect(bindRuntimeInitialization(root, store)).rejects.toThrow());
+    const expectedError = {
+      workspace_id: 'initialization workspace identity differs',
+      repository_id: 'initialization repository identity differs',
+      project_ids: 'initialization project set differs',
+      integrations_digest: 'initialization integrations are stale',
+      config_digest: 'initialization config digest is stale',
+      schema_sha256: 'Initialization receipt schema digest is stale.',
+      workspace_binding_status: 'Initialization receipt does not satisfy current v1 schema.',
+    }[field];
+    await Promise.resolve(expect(bindRuntimeInitialization(root, store)).rejects.toThrow(expectedError));
     expect(readFileSync(receiptPath, 'utf8')).toBe(bytes);
   }
   caseCompleted = true;
@@ -525,15 +549,19 @@ test('fails closed when the host store or persisted receipt does not match deter
   );
   expect(readFileSync(receiptPath)).toEqual(bytes);
   rmSync(receiptPath);
-  await Promise.resolve(expect(bindRuntimeInitialization(root, store)).rejects.toThrow('unavailable'));
+  await Promise.resolve(
+    expect(bindRuntimeInitialization(root, store)).rejects.toThrow('runtime initialization receipt is unavailable'),
+  );
   caseCompleted = true;
 });
 
 test('competing workspace is denied after the first bind', async () => {
-  await bindRuntimeInitialization(root, store);
+  await expectInitializationResult(() => bindRuntimeInitialization(root, store));
   const bytes = readFileSync(receiptPath);
   await Promise.resolve(
-    expect(bindRuntimeInitialization(root, new HostStateStore(database!, 'f'.repeat(64)))).rejects.toThrow(),
+    expect(bindRuntimeInitialization(root, new HostStateStore(database!, 'f'.repeat(64)))).rejects.toThrow(
+      'trusted host workspace differs from repository identity',
+    ),
   );
   expect(readFileSync(receiptPath)).toEqual(bytes);
   caseCompleted = true;

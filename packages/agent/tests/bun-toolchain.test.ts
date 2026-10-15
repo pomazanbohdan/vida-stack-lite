@@ -125,9 +125,12 @@ test('explicit synchronization preserves other settings and is idempotent', () =
 });
 
 test('invalid pins fail before package resolution', () => {
-  const { root } = fixture();
+  const { root, pin } = fixture();
+  assert.equal(readPin(root), pin);
+  assert.doesNotThrow(() => checkManifest(root, pin), 'negative pin cases start from a valid mirrored package');
   for (const pin of ['latest', '^1.0.0', '1.0.0; echo unsafe', '1.0.0\n2.0.0']) {
     writeFileSync(path.join(root, '.bun-version'), pin);
+    assert.equal(readFileSync(path.join(root, '.bun-version'), 'utf8'), pin, 'malformed pin mutation must take effect');
     assert.throws(() => runPinnedBun([], { root, spawn: () => assert.fail('must not spawn') }), /exact stable/);
   }
 });
@@ -1150,10 +1153,13 @@ test('actual uncertain child output is rejected before parsing while completed f
   );
   assert.equal(commandOutcomeUnknown(completed), false);
   const completedTerminal = requireTerminalCommand(completed, 'actual completed denial');
-  assert.ok(completedTerminal);
+  assert.ok(completedTerminal, 'completed child must have a terminal observation before its output is read');
+  assert.equal(completedTerminal.error, undefined);
+  assert.equal(completedTerminal.signal, null);
   assert.equal(completedTerminal.status, 1);
-  assert.ok(typeof completed.stderr === 'string');
-  assert.deepEqual(JSON.parse(completed.stderr), { status: 'expected_denial' });
+  assert.equal(completedTerminal.stdout, '');
+  assert.equal(completedTerminal.stderr, JSON.stringify({ status: 'expected_denial' }));
+  assert.deepEqual(JSON.parse(completedTerminal.stderr), { status: 'expected_denial' });
   assert.equal(commandOutcomeUnknown({ status: null }), true);
 }, 10_000);
 

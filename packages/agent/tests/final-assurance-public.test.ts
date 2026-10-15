@@ -1,4 +1,5 @@
 import { test, expect } from 'bun:test';
+import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -30,6 +31,7 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import type { TrustedWorkflowAssignment, WorkflowAssignmentRequest } from '../src/runtime-kernel.ts';
 import type { WorkExecutionContext } from '../src/orchestration/workflow-session-reservation-contract.ts';
 import { workflowWorkItemSchema } from '../src/orchestration/workflow-session-reservation-contract.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import type {
   SessionBridgeObservation,
   SessionBridgeRequest,
@@ -95,6 +97,14 @@ function listed<T>(values: readonly T[] | undefined, index: number): T {
   const value = values?.[index];
   if (value === undefined) throw new Error('Expected the indexed public fixture result.');
   return value;
+}
+async function expectAsyncReturned<T>(operation: () => Promise<T>): Promise<T> {
+  let result: { value: T } | undefined;
+  await assert.doesNotReject(async () => {
+    result = { value: await operation() };
+  });
+  if (!result) throw new Error('Expected async public fixture operation to fulfill.');
+  return result.value;
 }
 function fixture(sourceWriter: boolean = false, publicStore: boolean = false) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-absorption-'));
@@ -239,11 +249,12 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       { cwd: bundle, encoding: 'utf8', windowsHide: true, timeout: 30000 },
     );
   const publicRun = (args: string[]) => {
-    const result = invoke(args);
+    const result = expectReturned(() => invoke(args));
     expect(result.error).toBeUndefined();
     expect(result.signal).toBeNull();
-    if (result.status !== 0) throw new Error(result.stderr ?? 'Public run failed without stderr.');
-    if (result.stdout === undefined) throw new Error('Public run succeeded without stdout.');
+    expect(result.status).toBe(0);
+    expect(typeof result.stdout).toBe('string');
+    if (typeof result.stdout !== 'string') throw new Error('Public run succeeded without string stdout.');
     const output: unknown = JSON.parse(result.stdout);
     return publicRunResultSchema.parse(output);
   };
@@ -285,7 +296,10 @@ test('public final assurance commits three synthetic review reverse pairs at a r
         bundle_digest: '5'.repeat(64),
       });
     expect(maintenanceReceipt.fence.generation).toBe(1);
-    expect((await maintenanceStore.releaseMaintenanceFence(maintenanceReceipt)).status).toBe('released');
+    const maintenanceRelease = await expectAsyncReturned(() =>
+      maintenanceStore.releaseMaintenanceFence(maintenanceReceipt),
+    );
+    expect(maintenanceRelease.status).toBe('released');
 
     const id = 'assurance-public',
       input = f.prepare(id, 'user:current-correction');
@@ -634,8 +648,10 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       source_revision: work.binding.work_source_revision,
       scope_paths: ['AGENT.sidecar.md'],
     };
-    await executeDocumentationClearOperation(doc, 'baseline');
-    const clear = await executeDocumentationClearOperation(doc, 'closeout');
+    const baselineClear = await expectAsyncReturned(() => executeDocumentationClearOperation(doc, 'baseline'));
+    expect(typeof baselineClear.path).toBe('string');
+    const clear = await expectAsyncReturned(() => executeDocumentationClearOperation(doc, 'closeout'));
+    expect(typeof clear.path).toBe('string');
     const mechanics: Record<string, string[]> = {
       source_plan: ['scope_acceptance_trace', 'verification_rollback'],
       platform_knowledge: ['platform_contracts', 'official_reference_lookup'],
@@ -711,7 +727,11 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     const sourceFile = path.join(f.root, 'AGENT.sidecar.md'),
       originalSource = readFileSync(sourceFile);
     writeFileSync(sourceFile, 'Synthetic source drift');
+    const beforeDriftDenial = f.store.readHostStateSnapshot(identity);
     denied(withVersion(originalVersion, '--prepare-assurance', preparation));
+    const afterDriftDenial = f.store.readHostStateSnapshot(identity);
+    expect(afterDriftDenial.work).toEqual(beforeDriftDenial.work);
+    expect(afterDriftDenial.ledger).toEqual(beforeDriftDenial.ledger);
     writeFileSync(sourceFile, originalSource);
 
     const retainedReferences = currentWork(f.store.readHostStateSnapshot(identity)).lifecycle.references;

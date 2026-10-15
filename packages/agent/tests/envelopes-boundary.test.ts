@@ -12,6 +12,7 @@ import type {
 import { configuredTestContext } from './configured-context.js';
 import fc from 'fast-check';
 import { assertProperty } from './helpers/assert-property.js';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 
 function runIsolatedMockCase(name: string): void {
@@ -176,12 +177,15 @@ describe('runtime envelope canonicalization boundary', () => {
       payload: { checks: ['static'] },
     };
 
-    expect(
+    const consumed = expectReturned(() =>
       consumeRuntimeEnvelope(envelope, {
         sourceRevision: 'source-1',
         currentRevision: 3,
       }),
-    ).toBe(envelope);
+    );
+    expect(consumed).not.toBeNull();
+    expect(typeof consumed).toBe('object');
+    expect(consumed).toBe(envelope);
     const staleSource: RuntimeEnvelopeRevisionBinding = { sourceRevision: 'source-2', currentRevision: 3 };
     const staleRevision: RuntimeEnvelopeRevisionBinding = { sourceRevision: 'source-1', currentRevision: 4 };
     const missingSource: RuntimeEnvelopeRevisionBinding = { sourceRevision: '', currentRevision: 3 };
@@ -259,7 +263,11 @@ describe('runtime envelope canonicalization boundary', () => {
       operations: [],
       retirements: [],
     } satisfies Record<string, unknown>;
-    expect(validateCoordinationLedgerV1(ledger).ok).toBe(true);
+    const validLedger = expectReturned(() => validateCoordinationLedgerV1(ledger));
+    expect(validLedger).not.toBeNull();
+    expect(typeof validLedger).toBe('object');
+    expect(Array.isArray(validLedger.issues)).toBe(true);
+    expect(validLedger.ok).toBe(true);
     const foreign = {
       ...ticket,
       ticket_id: 'ticket-foreign',
@@ -272,7 +280,13 @@ describe('runtime envelope canonicalization boundary', () => {
       claim_ids: ['claim-owner'],
       expires_at: null,
     };
-    expect(validateCoordinationLedgerV1({ ...ledger, tickets: [ticket, foreign] })).toMatchObject({
+    const foreignClaimResult = expectReturned(() =>
+      validateCoordinationLedgerV1({ ...ledger, tickets: [ticket, foreign] }),
+    );
+    expect(foreignClaimResult).not.toBeNull();
+    expect(typeof foreignClaimResult).toBe('object');
+    expect(Array.isArray(foreignClaimResult.issues)).toBe(true);
+    expect(foreignClaimResult).toMatchObject({
       ok: false,
       issues: [{ code: 'TICKET_CLAIM_BINDING_INVALID', path: '$.tickets.1.claim_ids' }],
     });
@@ -290,13 +304,21 @@ describe('runtime envelope canonicalization boundary', () => {
       tickets: [ticket, { ...foreign, claim_ids: [ownClaim.claim_id] }],
       claims: [claim, ownClaim],
     };
-    expect(validateCoordinationLedgerV1(bothClaims).ok).toBe(true);
-    expect(
+    const bothClaimsResult = expectReturned(() => validateCoordinationLedgerV1(bothClaims));
+    expect(bothClaimsResult).not.toBeNull();
+    expect(typeof bothClaimsResult).toBe('object');
+    expect(Array.isArray(bothClaimsResult.issues)).toBe(true);
+    expect(bothClaimsResult.ok).toBe(true);
+    const duplicateClaimResult = expectReturned(() =>
       validateCoordinationLedgerV1({
         ...bothClaims,
         tickets: [ticket, { ...foreign, claim_ids: [ownClaim.claim_id, claim.claim_id] }],
       }),
-    ).toMatchObject({
+    );
+    expect(duplicateClaimResult).not.toBeNull();
+    expect(typeof duplicateClaimResult).toBe('object');
+    expect(Array.isArray(duplicateClaimResult.issues)).toBe(true);
+    expect(duplicateClaimResult).toMatchObject({
       ok: false,
       issues: [{ code: 'TICKET_CLAIM_BINDING_INVALID', path: '$.tickets.1.claim_ids' }],
     });
@@ -307,7 +329,10 @@ describe('runtime envelope canonicalization boundary', () => {
     const ledger = coordinationLedgerFixture();
     const invalid = { ...ledger, revision: 0, workspace_id: 'not-a-workspace-digest' };
     const before = structuredClone(invalid);
-    const result = validateCoordinationLedgerV1(invalid);
+    const result = expectReturned(() => validateCoordinationLedgerV1(invalid));
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('object');
+    expect(Array.isArray(result.issues)).toBe(true);
     expect(result.ok).toBe(false);
     expect(result.ledger).toBeNull();
     expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([
@@ -319,8 +344,16 @@ describe('runtime envelope canonicalization boundary', () => {
       expect(issue.message).not.toMatch(/undefined|invalid value/);
     }
     expect(invalid).toEqual(before);
-    expect(validateCoordinationLedgerV1(ledger)).toEqual({ ok: true, ledger, issues: [] });
-    expect(validateCoordinationLedgerV1(invalid)).toEqual(result);
+    const validResult = expectReturned(() => validateCoordinationLedgerV1(ledger));
+    expect(validResult).not.toBeNull();
+    expect(typeof validResult).toBe('object');
+    expect(Array.isArray(validResult.issues)).toBe(true);
+    expect(validResult).toEqual({ ok: true, ledger, issues: [] });
+    const repeated = expectReturned(() => validateCoordinationLedgerV1(invalid));
+    expect(repeated).not.toBeNull();
+    expect(typeof repeated).toBe('object');
+    expect(Array.isArray(repeated.issues)).toBe(true);
+    expect(repeated).toEqual(result);
   });
 
   test('coordination ledger codec preserves typed ticket and claim records without mutation', async () => {
@@ -333,20 +366,37 @@ describe('runtime envelope canonicalization boundary', () => {
     const ledger = coordinationLedgerFixture();
     const before = structuredClone(ledger);
 
-    expect(validateCoordinationLedgerV1(ledger)).toMatchObject({ ok: true, ledger });
-    const encoded = coordinationLedgerJson(ledger);
+    const validation = expectReturned(() => validateCoordinationLedgerV1(ledger));
+    expect(validation).not.toBeNull();
+    expect(typeof validation).toBe('object');
+    expect(Array.isArray(validation.issues)).toBe(true);
+    expect(validation).toMatchObject({ ok: true, ledger });
+    const encoded = expectReturned(() => coordinationLedgerJson(ledger));
+    expect(typeof encoded).toBe('string');
     expect(JSON.parse(encoded)).toEqual(ledger);
-    const ticketBytes = coordinationComponentJson({ ticket: ledger.tickets[0], claims: ledger.claims });
+    const ticketBytes = expectReturned(() =>
+      coordinationComponentJson({ ticket: ledger.tickets[0], claims: ledger.claims }),
+    );
+    expect(typeof ticketBytes).toBe('string');
     expect(JSON.parse(ticketBytes)).toEqual({ ticket: ledger.tickets[0], claims: ledger.claims });
 
-    const digest = coordinationLedgerDigest(ledger);
+    const digest = expectReturned(() => coordinationLedgerDigest(ledger));
+    expect(typeof digest).toBe('string');
+    expect(digest).toMatch(/^[a-f0-9]{64}$/);
     expect(digest).toBe(createHash('sha256').update(encoded).digest('hex'));
-    expect(coordinationLedgerDigest(Object.fromEntries(Object.entries(ledger).reverse()))).toBe(digest);
-    expect(coordinationLedgerDigest({ ...ledger, revision: 2 })).not.toBe(digest);
+    const reorderedDigest = expectReturned(() =>
+      coordinationLedgerDigest(Object.fromEntries(Object.entries(ledger).reverse())),
+    );
+    expect(typeof reorderedDigest).toBe('string');
+    expect(reorderedDigest).toBe(digest);
+    const changedDigest = expectReturned(() => coordinationLedgerDigest({ ...ledger, revision: 2 }));
+    expect(typeof changedDigest).toBe('string');
+    expect(changedDigest).not.toBe(digest);
     const invalid = { ...ledger, workspace_id: 'not-a-workspace-digest' };
     expect(() => coordinationLedgerJson(invalid)).toThrow(/coordination ledger rejected/);
     expect(() => coordinationLedgerDigest(invalid)).toThrow(/coordination ledger rejected/);
     expect(() => coordinationComponentJson({ missing: undefined })).toThrow();
+    expect(() => coordinationComponentJson('component', 65)).toThrow('canonical JSON root depth invalid');
     expect(ledger).toEqual(before);
 
     const executionResource = 'execution:work-owner';
@@ -359,8 +409,14 @@ describe('runtime envelope canonicalization boundary', () => {
       })),
       claims: ledger.claims.map((claim) => ({ ...claim, resources: [executionResource] })),
     };
-    expect(validateCoordinationLedgerV1(executionLedger).ok).toBe(true);
-    const executionWire: unknown = JSON.parse(coordinationLedgerJson(executionLedger));
+    const executionValidation = expectReturned(() => validateCoordinationLedgerV1(executionLedger));
+    expect(executionValidation).not.toBeNull();
+    expect(typeof executionValidation).toBe('object');
+    expect(Array.isArray(executionValidation.issues)).toBe(true);
+    expect(executionValidation.ok).toBe(true);
+    const executionEncoded = expectReturned(() => coordinationLedgerJson(executionLedger));
+    expect(typeof executionEncoded).toBe('string');
+    const executionWire: unknown = JSON.parse(executionEncoded);
     expect(executionWire).toEqual(executionLedger);
   });
 
@@ -421,10 +477,18 @@ describe('runtime envelope canonicalization boundary', () => {
       dispositions: [disposition],
       next_sequence: 3,
     };
-    expect(validateCoordinationLedgerV1(historicalLedger).ok).toBe(true);
-    expect(
-      validateCoordinationLedgerV1({ ...historicalLedger, notices: [{ ...notice, status: 'acknowledged' }] }).ok,
-    ).toBe(true);
+    const historicalResult = expectReturned(() => validateCoordinationLedgerV1(historicalLedger));
+    expect(historicalResult).not.toBeNull();
+    expect(typeof historicalResult).toBe('object');
+    expect(Array.isArray(historicalResult.issues)).toBe(true);
+    expect(historicalResult.ok).toBe(true);
+    const acknowledgedResult = expectReturned(() =>
+      validateCoordinationLedgerV1({ ...historicalLedger, notices: [{ ...notice, status: 'acknowledged' }] }),
+    );
+    expect(acknowledgedResult).not.toBeNull();
+    expect(typeof acknowledgedResult).toBe('object');
+    expect(Array.isArray(acknowledgedResult.issues)).toBe(true);
+    expect(acknowledgedResult.ok).toBe(true);
 
     const cases: ReadonlyArray<{
       readonly value: unknown;
@@ -459,19 +523,35 @@ describe('runtime envelope canonicalization boundary', () => {
     ];
     for (const row of cases) {
       const before = structuredClone(row.value);
-      const result = validateCoordinationLedgerV1(row.value);
+      const result = expectReturned(() => validateCoordinationLedgerV1(row.value));
+      expect(result).not.toBeNull();
+      expect(typeof result).toBe('object');
+      expect(Array.isArray(result.issues)).toBe(true);
       expect(result.ok).toBe(false);
       expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([{ code: row.code, path: row.path }]);
       expect(row.value).toEqual(before);
     }
     const readyLedger = { ...ledger, tickets: [{ ...owner, status: 'ready_for_handoff' as const }] };
-    expect(validateCoordinationLedgerV1(readyLedger).ok).toBe(true);
-    expect(
-      validateCoordinationLedgerV1(readyLedger, { currentTimeMs: Date.parse('2098-09-18T00:00:00.000Z') }).ok,
-    ).toBe(true);
-    const expired = validateCoordinationLedgerV1(readyLedger, {
-      currentTimeMs: Date.parse('2100-09-18T00:00:00.000Z'),
-    });
+    const readyResult = expectReturned(() => validateCoordinationLedgerV1(readyLedger));
+    expect(readyResult).not.toBeNull();
+    expect(typeof readyResult).toBe('object');
+    expect(Array.isArray(readyResult.issues)).toBe(true);
+    expect(readyResult.ok).toBe(true);
+    const currentReadyResult = expectReturned(() =>
+      validateCoordinationLedgerV1(readyLedger, { currentTimeMs: Date.parse('2098-09-18T00:00:00.000Z') }),
+    );
+    expect(currentReadyResult).not.toBeNull();
+    expect(typeof currentReadyResult).toBe('object');
+    expect(Array.isArray(currentReadyResult.issues)).toBe(true);
+    expect(currentReadyResult.ok).toBe(true);
+    const expired = expectReturned(() =>
+      validateCoordinationLedgerV1(readyLedger, {
+        currentTimeMs: Date.parse('2100-09-18T00:00:00.000Z'),
+      }),
+    );
+    expect(expired).not.toBeNull();
+    expect(typeof expired).toBe('object');
+    expect(Array.isArray(expired.issues)).toBe(true);
     expect(expired.issues.map(({ code, path }) => ({ code, path }))).toEqual([
       { code: 'READY_LEASE_EXPIRED', path: '$.tickets.0' },
     ]);
@@ -654,19 +734,34 @@ describe('runtime envelope canonicalization boundary', () => {
     const rejected = makeLedger('rejected');
     const readyBatch = ready.batches[0]!;
     const acceptedBatch = accepted.batches[0]!;
-    for (const ledger of [ready, accepted, feedback, rejected])
-      expect(validateCoordinationLedgerV1(ledger).ok).toBe(true);
+    for (const ledger of [ready, accepted, feedback, rejected]) {
+      const result = expectReturned(() => validateCoordinationLedgerV1(ledger));
+      expect(result).not.toBeNull();
+      expect(typeof result).toBe('object');
+      expect(Array.isArray(result.issues)).toBe(true);
+      expect(result.ok).toBe(true);
+    }
     const { claimed_resources: _claimedResources, ...historicalRebind } = rebind;
-    expect(validateCoordinationLedgerV1({ ...ready, rebinds: [historicalRebind] }).ok).toBe(true);
-    expect(
+    const historicalRebindResult = expectReturned(() =>
+      validateCoordinationLedgerV1({ ...ready, rebinds: [historicalRebind] }),
+    );
+    expect(historicalRebindResult).not.toBeNull();
+    expect(typeof historicalRebindResult).toBe('object');
+    expect(Array.isArray(historicalRebindResult.issues)).toBe(true);
+    expect(historicalRebindResult.ok).toBe(true);
+    const releasedResult = expectReturned(() =>
       validateCoordinationLedgerV1({
         ...accepted,
         tickets: accepted.tickets.map((ticket) =>
           ticket.ticket_id === owner.ticket_id ? { ...ticket, claim_ids: [] } : ticket,
         ),
         claims: [oldClaim],
-      }).ok,
-    ).toBe(true);
+      }),
+    );
+    expect(releasedResult).not.toBeNull();
+    expect(typeof releasedResult).toBe('object');
+    expect(Array.isArray(releasedResult.issues)).toBe(true);
+    expect(releasedResult.ok).toBe(true);
     const recoveredClaim = { ...oldClaim, status: 'recovered' };
     const recoveryDisposition = {
       schema: 'ConflictDisposition/v1',
@@ -678,13 +773,17 @@ describe('runtime envelope canonicalization boundary', () => {
       decision_pointer: 'decision:recovery',
       created_at: '2026-09-18T00:00:03.000Z',
     };
-    expect(
+    const recoveredResult = expectReturned(() =>
       validateCoordinationLedgerV1({
         ...ready,
         claims: [ownerClaim, recoveredClaim],
         dispositions: [recoveryDisposition],
-      }).ok,
-    ).toBe(true);
+      }),
+    );
+    expect(recoveredResult).not.toBeNull();
+    expect(typeof recoveredResult).toBe('object');
+    expect(Array.isArray(recoveredResult.issues)).toBe(true);
+    expect(recoveredResult.ok).toBe(true);
 
     const clockFailure = new Error('injected current-time observation failure');
     let observedFailure: unknown;
@@ -790,7 +889,10 @@ describe('runtime envelope canonicalization boundary', () => {
     ];
     for (const row of cases) {
       const before = structuredClone(row.value);
-      const result = validateCoordinationLedgerV1(row.value);
+      const result = expectReturned(() => validateCoordinationLedgerV1(row.value));
+      expect(result).not.toBeNull();
+      expect(typeof result).toBe('object');
+      expect(Array.isArray(result.issues)).toBe(true);
       expect(result.ok).toBe(false);
       expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([{ code: row.code, path: row.path }]);
       expect(row.value).toEqual(before);

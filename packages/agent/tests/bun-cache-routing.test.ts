@@ -227,8 +227,10 @@ test('actual direct Bun entrypoint terminates with strict public JSON when requi
   assert.equal(result.error, undefined);
   assert.equal(result.signal, null);
   assert.equal(result.status, 1);
-  assert.equal(result.stdout.trim(), '');
-  const failure: unknown = JSON.parse(result.stderr.trim());
+  assert.equal(result.stdout, '');
+  assert.ok(typeof result.stderr === 'string');
+  assert.ok(result.stderr.endsWith('\n'), 'completed CLI failure must include its full newline-terminated output');
+  const failure: unknown = JSON.parse(result.stderr.slice(0, -1));
   if (!isRunFailureProjection(failure))
     throw new TypeError('direct Bun failure output must contain the asserted JSON fields');
   assert.equal(failure.schema, 'VidaAgentRunResult/v1');
@@ -256,8 +258,11 @@ console.log(JSON.stringify({status:'pass',run_export:typeof run==='function',cac
     timeout: 30000,
   });
   assert.equal(result.error, undefined);
+  assert.equal(result.signal, null);
   assert.equal(result.status, 0);
-  assert.equal(result.stderr.trim(), '');
-  const payload: unknown = JSON.parse(result.stdout.trim());
+  assert.equal(result.stderr, '');
+  assert.ok(typeof result.stdout === 'string');
+  assert.ok(result.stdout.endsWith('\n'), 'successful child must complete its single JSON output line');
+  const payload: unknown = JSON.parse(result.stdout.slice(0, -1));
   assert.deepEqual(payload, { status: 'pass', run_export: true, cache_unchanged: true });
 }, 45000);

@@ -14,6 +14,7 @@ import {
 import type { AgentRuntimeConfig } from '../src/config/runtime-config.ts';
 import { configuredTestContext } from './configured-context.ts';
 import type { SessionBridgeRequest } from '../src/orchestration/mastra-session-bridge-contract.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 test('settled validator inspection permits test.read without granting unknown or executable capabilities', () => {
   const request = {
@@ -192,6 +193,30 @@ function reverse(state: FinalAssuranceState, index: number) {
     review_issue_id: prior.issue_id,
   };
 }
+test('progress admits only a complete issued wave and one report per commit', () => {
+  const initial = expectReturned(() => createFinalAssuranceState(packet));
+  expect(finalAssuranceStatus(initial)).toBe('ready');
+  expectReturned(() => validateFinalAssuranceProgress(null, initial));
+
+  const issued = expectReturned(() => issueFinalAssuranceWave(initial));
+  expect(issued.actions.filter((action) => action.issue_id !== null)).toHaveLength(3);
+  expect(issued.actions.filter((action) => action.kind === 'reverse' && action.issue_id !== null)).toHaveLength(0);
+  expectReturned(() => validateFinalAssuranceProgress(initial, issued));
+
+  const partialIssue = structuredClone(initial);
+  partialIssue.actions[0]!.issue_id = issued.actions[0]!.issue_id;
+  expect(() => validateFinalAssuranceProgress(initial, partialIssue)).toThrow(
+    'GAP-FINAL-ASSURANCE-001: issue must bind the complete ready wave',
+  );
+
+  const oneReported = expectReturned(() => reportFinalAssurance(issued, review(issued, 0)));
+  expectReturned(() => validateFinalAssuranceProgress(issued, oneReported));
+  const twoReported = expectReturned(() => reportFinalAssurance(oneReported, review(oneReported, 1)));
+  expect(() => validateFinalAssuranceProgress(issued, twoReported)).toThrow(
+    'GAP-FINAL-ASSURANCE-001: one report is committed at a time',
+  );
+  expect(issued.actions.every((action) => action.observation === null)).toBe(true);
+});
 test('two reviewers cannot advance; three pairs satisfy only the reviewed gate', () => {
   let state = issueFinalAssuranceWave(createFinalAssuranceState(packet));
   for (let index = 0; index < 2; index += 1) state = reportFinalAssurance(state, review(state, index));

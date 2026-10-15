@@ -220824,5 +220824,21 @@
     ],
     "frozen_ceilings": "All saved original measurements, identity pairs, CC/CRAP maxima and rationale remain unchanged. Each maxCC equals original baseline CC; each saved maxCRAP is at least original CC. No candidate measurement resets a cap.",
     "limits": "Source correspondence only, not numeric admission or permission to advance the current facade contour. Existing owner must independently inventory original/current Source and prove one-to-one exact coverage, currentCC/currentCRAP<=originalCC and saved ceilings; full assertion-confirmed mutation remains separately required. Partial stays non-executable/non-exhaustive; no missing historical artifacts admitted."
+  },
+  "scope_review_main_contracts_20261015": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "source_commit": "faf9e56f53012c924a008e3aabac65ea41a8bad5",
+    "baseline_ref": "b549951",
+    "frozen_rows_ref": "faf9e56f53012c924a008e3aabac65ea41a8bad5",
+    "files": ["src/contracts/public-ingress.ts", "src/contracts/envelopes.ts"],
+    "retained": 102,
+    "new_functions": 0,
+    "removed_functions": 0,
+    "independent_review_lane": "luna_lineage_five_wave",
+    "review_artifact": "/workspace/attachments/quality-five-lineage-review-20261015.md",
+    "correspondence": "Independent actual b549951/current Source comparison accepts 20 public-ingress and 82 envelope retained roles and their call context. Formatting, synchronous Ajv errors/messages, matched-month indexing and consolidated path predicates preserve those roles; no callable additions/removals or cap transfer in the selected two modules.",
+    "api_surface_disposition": "optionalCanonicalJsonDigest is a re-export of the canonical-json-core implementation; that function stays with its own implementation inventory and is not counted as a second body here. Removed LocalToolEnvelope type alias and private CoordinationLedgerValidationIssue are type-surface changes, not callable removals or frozen-cap changes. Source lineage does not qualify SDK compatibility or authorize additional type/API removals.",
+    "frozen_ceilings": "All saved original measurements, identity pairs, CC/CRAP maxima and rationale remain unchanged. The existing gate must independently verify each exact original CC and saved ceiling against captured current Source before accepting its conservative local proof.",
+    "limits": "Review only, no numeric admission, original historical measurement admission, full executable partial plan or global qualification. Exact complete declared coverage, all original/current role pairs and full assertion-confirmed mutation remain required."
   }
 }

@@ -4831,6 +4831,60 @@ are unchanged. Fresh numeric qualification remains pending.
 Review memos: /workspace/attachments/quality-lifecycle-test-gap-writer-20261015.md
 and /workspace/attachments/quality-lifecycle-guard-contract-review-20261015.md.
 
+The next complete lifecycle capture97878206-3eef-4946-9e35-7401fe2eaa71
+atfaf9e56 records3PASS/81assertions,4064.856881ms owned outer, complete output,
+observed process-group termination and the same boot. It improves to F28/29,
+L185/187,S193/196,B126/132. Root:
+/workspace/attachments/quality-declared-bun-lifecycle-state-ebTM2e.
+The automatic projection retains83observations, still4/44complete local triples.
+Remaining paths are the nonempty documentation scope callback, already-retired
+reference mapping during a second correction, and public reference-preservation
+consumption. Phase-changing progress returns before the preservation helper;
+its PASS alone cannot prove that separate boundary. Added direct public positive
+and negative preservation cases, valid documentation authority and a real second
+typed correction. The first placement edit accidentally nested a test declaration;
+the focused failure was retained at /tmp/vida-clear-lifecycle-RQH0CB, corrected,
+and the complete lifecycle file then passed4cases/104assertions. This is focused
+development proof; fresh exact coverage, frozen CRAP and mutations are pending.
+
+## Five-contour development wave
+
+The current CLEAR plan now assigns independent test writers for contracts,
+runtime initialization, CLI toolchain and final assurance while Root owns the
+pinned lifecycle correction. A fifth blind Luna lane reviews the four scopes'
+frozen correspondence and additions; a separate read-only reviewer checks the
+lifecycle public scenarios. Each writer has exclusive test paths and no Source,
+shared-helper, Git or check authority. Root integrates and checks only after
+terminal handoffs, then freezes captured inputs for serial numerical producers.
+Parallel development does not activate pending parallel coverage or relax
+baseline/addition admission. All five scopes retain the same full closure gates.
+
+All writer/reviewer lanes returned terminal handoffs. The seven-file development
+batch recorded91PASS/3FAIL/1error in24.48s. Acceptance exposed an unsupported
+`bun:test` assert import, the missing pinned counterpart of quality:contours,
+and the stale CLEAR fixture's earlier duplicate-identity rejection. Root fixed
+the import through node:assert/strict on Bun, routed the public script through
+the existing pinned-task convention, and separately asserted duplicate identity
+and the real old-cycle public verifier denial. No Source guard was weakened.
+The changed three-file correction batch passed56cases/209assertions in40.72s;
+tests450 TypeScript passed. The other four files' passing cases are retained in
+the original development log, not reported as a new complete numerical run.
+Logs: /workspace/attachments/quality-five-wave-development-20261015.log and
+/workspace/attachments/quality-five-wave-corrections-20261015.log.
+
+Independent review accepts102retained contract roles with no selected callable
+additions/removals; its new partial metadata grants no numerical permission.
+The current retained-only scoped route still needs that published review pin.
+Runtime initialization, toolchain and final assurance require explicit own-cap
+addition/removal/changed-role admission before scoped proof. The review's first
+toolchain inverse-mapping objection was withdrawn after actual responsibility
+and callsite reinspection; no saved mapping or cap was changed. Review:
+/workspace/attachments/quality-five-lineage-review-20261015.md.
+The independent lifecycle reviewer also predicted a later stale-generation
+failure; actual execution disproved that prediction by observing the earlier
+duplicate identity guard. The final tests distinguish both real public contracts.
+Its memo remains /workspace/attachments/quality-lifecycle-five-wave-review-20261015.md.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
