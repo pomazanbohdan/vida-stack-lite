@@ -136,7 +136,7 @@ export interface GovernedWriteRequest {
   readonly approval: VerifiedApprovalEvidence;
   readonly ingress_token?: string;
 }
-const UTC_LEAP_SECOND_DATES = new Set([
+export const UTC_LEAP_SECOND_DATES: readonly string[] = Object.freeze([
   '1972-06-30',
   '1972-12-31',
   '1973-12-31',
@@ -165,6 +165,7 @@ const UTC_LEAP_SECOND_DATES = new Set([
   '2015-06-30',
   '2016-12-31',
 ]);
+const utcLeapSecondDates = new Set(UTC_LEAP_SECOND_DATES);
 const RFC3339_TIMESTAMP =
   /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T((?:[01]\d|2[0-3])):([0-5]\d):([0-5]\d|60)(?:\.\d{1,9})?(Z|[+-](?:0\d|1\d|2[0-3]):[0-5]\d)$/;
 export function rfc3339TimestampMilliseconds(value: unknown): number | null {
@@ -174,23 +175,25 @@ export function rfc3339TimestampMilliseconds(value: unknown): number | null {
   const year = Number(match[1]);
   const month = Number(match[2]);
   const day = Number(match[3]);
-  const hour = Number(match[4]);
-  const minute = Number(match[5]);
   const second = Number(match[6]);
-  const zone = match[7];
   const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
   // The matched month is 01..12, so this index always selects a calendar month.
   const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]!;
   if (day > daysInMonth) return null;
   const leapSecond = second === 60;
-  if (
-    leapSecond &&
-    (!UTC_LEAP_SECOND_DATES.has(value.slice(0, 10)) || hour !== 23 || minute !== 59 || !['Z', '+00:00'].includes(zone!))
-  )
-    return null;
   const normalized = leapSecond ? value.replace(':60', ':59') : value;
   const parsed = Date.parse(normalized);
-  return Number.isFinite(parsed) ? parsed + (leapSecond ? 1_000 : 0) : null;
+  if (!Number.isFinite(parsed)) return null;
+  if (leapSecond) {
+    const utc = new Date(parsed);
+    if (
+      !utcLeapSecondDates.has(utc.toISOString().slice(0, 10)) ||
+      utc.getUTCHours() !== 23 ||
+      utc.getUTCMinutes() !== 59
+    )
+      return null;
+  }
+  return parsed + (leapSecond ? 1_000 : 0);
 }
 export function isStrictRfc3339Timestamp(value: unknown): value is string {
   return rfc3339TimestampMilliseconds(value) !== null;

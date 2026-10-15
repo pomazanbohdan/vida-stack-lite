@@ -21,6 +21,7 @@ import {
   validateRuntimeConfig,
 } from '../src/index.ts';
 import { configuredTestContext } from './configured-context.ts';
+import { rfc3339LeapSecondAlternation, updateLeapSecondSchemaPatterns } from '../tooling/rfc3339-schema-patterns.ts';
 import {
   canonicalJson,
   canonicalJsonDigest,
@@ -81,13 +82,6 @@ function authorizationRequest(operationHash?: string): ProjectAuthorizationReque
     registryHash: project.registry_hash,
     ...(operationHash ? { operationHash } : {}),
   };
-}
-
-function recordProperty(value: unknown, key: string): Record<string, unknown> {
-  if (!isPlainRecord(value)) throw new Error(`Expected a schema object at ${key}.`);
-  const property = value[key];
-  if (!isPlainRecord(property)) throw new Error(`Expected a schema object at ${key}.`);
-  return property;
 }
 
 function invokeUntrusted(
@@ -300,30 +294,176 @@ describe('direct maintained-source completeness', () => {
     expect(rfc3339TimestampMilliseconds(timestamp)).toBe(expected);
   });
 
-  test('governed write schemas match the maintained RFC3339 timestamp parser', () => {
-    const schema: unknown = JSON.parse(
-      readFileSync(path.join(packageRoot, 'schemas/governed-write.v1.schema.json'), 'utf8'),
+  const RFC3339_KNOWN_LEAP_DATES_FOR_TEST = [
+    '1972-06-30',
+    '1972-12-31',
+    '1973-12-31',
+    '1974-12-31',
+    '1975-12-31',
+    '1976-12-31',
+    '1977-12-31',
+    '1978-12-31',
+    '1979-12-31',
+    '1981-06-30',
+    '1982-06-30',
+    '1983-06-30',
+    '1985-06-30',
+    '1987-12-31',
+    '1989-12-31',
+    '1990-12-31',
+    '1992-06-30',
+    '1993-06-30',
+    '1994-06-30',
+    '1995-12-31',
+    '1997-06-30',
+    '1998-12-31',
+    '2005-12-31',
+    '2008-12-31',
+    '2012-06-30',
+    '2015-06-30',
+    '2016-12-31',
+  ] as const;
+
+  test('strict RFC3339 parser accepts the independent UTC leap-date list and offset spellings', () => {
+    expect(RFC3339_KNOWN_LEAP_DATES_FOR_TEST).toHaveLength(27);
+
+    for (const date of RFC3339_KNOWN_LEAP_DATES_FOR_TEST) {
+      const utc = `${date}T23:59:60Z`;
+      expect(isStrictRfc3339Timestamp(utc), utc).toBe(true);
+      expect(rfc3339TimestampMilliseconds(utc), utc).not.toBeNull();
+    }
+
+    const equivalentInstants = [
+      ['1990-12-31T15:59:60-08:00', '1990-12-31T23:59:60Z'],
+      ['2017-01-01T00:59:60+01:00', '2016-12-31T23:59:60Z'],
+      ['2016-12-31T18:59:60-05:00', '2016-12-31T23:59:60Z'],
+      ['2016-12-31T23:59:60+00:00', '2016-12-31T23:59:60Z'],
+      ['2016-12-31T23:59:60-00:00', '2016-12-31T23:59:60Z'],
+      ['1990-12-31T15:59:60.123456789-08:00', '1990-12-31T23:59:60.123456789Z'],
+      ['2017-01-01T00:59:60.5+01:00', '2016-12-31T23:59:60.5Z'],
+    ] as const;
+    for (const [local, utc] of equivalentInstants) {
+      expect(isStrictRfc3339Timestamp(local), local).toBe(true);
+      expect(rfc3339TimestampMilliseconds(local), local).toBe(rfc3339TimestampMilliseconds(utc));
+    }
+
+    // -00:00 has zero numeric offset for instant computation, but its unknown
+    // local-offset provenance remains in the original evidence string.
+    expect(rfc3339TimestampMilliseconds(equivalentInstants[3]![0])).toBe(
+      rfc3339TimestampMilliseconds(equivalentInstants[3]![1]),
     );
-    const timestampSchemas = [
-      recordProperty(recordProperty(recordProperty(schema, 'properties'), 'authorization'), 'properties').issued_at,
-      recordProperty(recordProperty(recordProperty(schema, 'properties'), 'approval'), 'properties').approved_at,
-      recordProperty(recordProperty(recordProperty(schema, 'properties'), 'approval'), 'properties').expires_at,
-      recordProperty(recordProperty(recordProperty(schema, 'properties'), 'approval'), 'properties').verified_at,
+
+    const rejected = [
+      '2016-12-31T23:58:60Z', // wrong UTC minute
+      '2016-12-31T22:59:60Z', // wrong UTC hour
+      '2016-12-30T23:59:60Z', // not a UTC leap date
+      '2017-01-01T00:58:60+01:00', // positive-offset minute relation is wrong
+      '2017-01-02T00:59:60+01:00', // positive-offset local date is wrong
+      '2016-12-31T18:58:60-05:00', // negative-offset minute relation is wrong
+      '2017-01-01T18:59:60-05:00', // negative-offset local date is wrong
+      '2016-12-31T23:59:60+00:01', // zero-hour positive offset maps to next date
+      '2016-12-31T23:59:60+24:00', // malformed offset
+      '2016-12-31T23:59:60Z\n',
+      '2016-12-31T23:59:60Z\r',
+      '2016-12-31T23:59:60Z\r\n',
+      '2016-12-31T23:59:60Z\u2028',
+      '2016-12-31T23:59:60Z\u2029',
     ];
-    const values = [
-      '2000-02-29T00:00:00Z',
-      '1900-02-29T00:00:00Z',
-      '2016-12-31T23:59:60Z',
-      '2016-12-31T23:59:60+01:00',
-    ];
-    for (const timestampSchema of timestampSchemas) {
-      if (!isPlainRecord(timestampSchema) || typeof timestampSchema.pattern !== 'string')
-        throw new Error('Governed write timestamp schema pattern is missing.');
-      const pattern = new RegExp(timestampSchema.pattern);
-      for (const value of values) {
-        expect(pattern.test(value)).toBe(isStrictRfc3339Timestamp(value));
+    for (const value of rejected) {
+      expect(rfc3339TimestampMilliseconds(value), value).toBeNull();
+      expect(isStrictRfc3339Timestamp(value), value).toBe(false);
+    }
+  });
+
+  test('all sixteen published timestamp patterns agree with independent offset arithmetic', () => {
+    const schemaSpecs = [
+      ['research-synthesis.v1.schema.json', ['created_at', 'updated_at']],
+      ['research-result.v1.schema.json', ['retrieved_at', 'created_at', 'updated_at']],
+      ['instruction-registry.v1.schema.json', ['updated_at']],
+      ['instruction-activation-use.v1.schema.json', ['timestamp']],
+      ['governed-write.v1.schema.json', ['issued_at', 'approved_at', 'expires_at', 'verified_at']],
+      ['governed-write-intent.v1.schema.json', ['approved_at', 'expires_at']],
+      ['decision-record.v1.schema.json', ['created_at', 'updated_at']],
+      ['agent-runtime-config.v1.schema.json', ['updated_at']],
+    ] as const;
+    const leaves: Array<{ readonly file: string; readonly key: string; readonly pattern: string }> = [];
+    const collect = (value: unknown, file: string, path: readonly string[]): void => {
+      if (Array.isArray(value)) {
+        value.forEach((entry, index) => collect(entry, file, [...path, String(index)]));
+        return;
+      }
+      if (!isPlainRecord(value)) return;
+      if (typeof value.pattern === 'string' && value.pattern.includes('T') && value.pattern.includes(':60')) {
+        leaves.push({ file, key: path.at(-1) ?? '', pattern: value.pattern });
+      }
+      for (const [key, child] of Object.entries(value)) collect(child, file, [...path, key]);
+    };
+    for (const [file, expectedKeys] of schemaSpecs) {
+      collect(JSON.parse(readFileSync(path.join(packageRoot, 'schemas', file), 'utf8')), file, []);
+      expect(
+        leaves
+          .filter((leaf) => leaf.file === file)
+          .map((leaf) => leaf.key)
+          .sort(),
+      ).toEqual([...expectedKeys].sort());
+    }
+    expect(leaves).toHaveLength(16);
+    const generated = expectReturned(() => rfc3339LeapSecondAlternation(RFC3339_KNOWN_LEAP_DATES_FOR_TEST));
+    for (const leaf of leaves) expect(leaf.pattern.includes(generated), `${leaf.file}:${leaf.key}`).toBe(true);
+    const patterns = [...new Set(leaves.map((leaf) => leaf.pattern))].map((pattern) => new RegExp(pattern));
+    const check = (value: string, expected: number | null): void => {
+      expect(
+        expectReturned(() => rfc3339TimestampMilliseconds(value)),
+        value,
+      ).toBe(expected);
+      for (const pattern of patterns) expect(pattern.test(value), value).toBe(expected !== null);
+    };
+    for (const date of RFC3339_KNOWN_LEAP_DATES_FOR_TEST) {
+      const [year, month, day] = date.split('-').map(Number);
+      const expected = Date.UTC(year!, month! - 1, day!, 23, 59, 59) + 1_123;
+      for (const zone of ['Z', '+00:00', '-00:00']) check(`${date}T23:59:60.123456789${zone}`, expected);
+    }
+    const utcMinute = Date.UTC(2016, 11, 31, 23, 59);
+    for (let offset = -1439; offset <= 1439; offset++) {
+      const absolute = Math.abs(offset);
+      const zone = `${offset < 0 ? '-' : '+'}${String(Math.floor(absolute / 60)).padStart(2, '0')}:${String(absolute % 60).padStart(2, '0')}`;
+      // Independent instant arithmetic produces local wall time without Date.parse.
+      const localMinute = new Date(utcMinute + offset * 60_000).toISOString().slice(0, 16);
+      check(`${localMinute}:60.123456789${zone}`, Date.UTC(2017, 0, 1) + 123);
+      if ([-1439, -330, -1, 1, 90, 1439].includes(offset)) {
+        for (const drift of [60_000, 3_600_000, 86_400_000]) {
+          const wrongMinute = new Date(utcMinute + offset * 60_000 + drift).toISOString().slice(0, 16);
+          check(`${wrongMinute}:60.123456789${zone}`, null);
+        }
       }
     }
+    for (const value of [
+      '2016-12-31T23:59:60+24:00',
+      '2016-12-31T23:59:60.1234567890Z',
+      '1900-02-29T00:00:00Z',
+      ...['\n', '\r', '\r\n', '\u2028', '\u2029'].map((suffix) => '2016-12-31T23:59:60Z' + suffix),
+    ])
+      check(value, null);
+    check('2000-02-29T00:00:00Z', Date.UTC(2000, 1, 29));
+    check('0000-02-29T00:00:00Z', -62_162_121_600_000);
+  });
+
+  test('timestamp pattern regeneration preserves ordinary branches and is idempotent', () => {
+    const dates = `(?:${RFC3339_KNOWN_LEAP_DATES_FOR_TEST.join('|')})`;
+    const time = String.raw`T23:59:60(?:\.\d{1,9})?(?:Z|\+00:00)`;
+    const fixture = {
+      plain: { pattern: `^(?:ordinary|${dates}${time})$` },
+      nested: [{ pattern: `^(?:ordinary|(?:${dates})${time})$` }, null, 'text'],
+      untouched: { pattern: '^[a-z]+$', maximum: 10 },
+    };
+    const replacements = expectReturned(() => updateLeapSecondSchemaPatterns(fixture));
+    expect(replacements).toHaveLength(2);
+    const expected = `^(?:ordinary|${rfc3339LeapSecondAlternation(RFC3339_KNOWN_LEAP_DATES_FOR_TEST)})$`;
+    expect(fixture.plain.pattern).toBe(expected);
+    expect(fixture.nested[0]).toEqual({ pattern: expected });
+    expect(fixture.nested.slice(1)).toEqual([null, 'text']);
+    expect(fixture.untouched).toEqual({ pattern: '^[a-z]+$', maximum: 10 });
+    expect(expectReturned(() => updateLeapSecondSchemaPatterns(fixture))).toEqual([]);
   });
 
   test('canonical JSON rejects inherited serialization hooks without invoking accessors', () => {

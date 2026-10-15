@@ -76,6 +76,15 @@ fixture defect, not a schema rejection test.
 Use deterministic property tests and independent models where they protect the
 contract. New test layers must add distinct regression confidence.
 
+For timestamp contract changes, check every affected published schema leaf
+against an independent instant-arithmetic oracle, including numeric offsets,
+fractions, leap seconds and Gregorian century boundaries. The internal developer
+command `bun tooling/rfc3339-schema-patterns.ts` updates the legacy leap-second
+alternations without reformatting schemas and refreshes the runtime config schema
+pin when that schema changes. It runs no tests and grants no numerical evidence.
+Keep regex fragments in raw literals; verify regeneration and idempotence in the
+existing completeness tests before publishing changed schema bytes.
+
 Compare the maintained source AST inventory with fresh function, line, statement
 and branch coverage. Require exact 100% coverage for the selected new/modified
 production-file scope, with no missing function mappings. Executing a function

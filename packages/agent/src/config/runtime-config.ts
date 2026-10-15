@@ -90,7 +90,7 @@ export function activeRuntimeConfigurationSource(access: SafeRepositoryAccess): 
   return selectedRuntimeConfigurationSource(access);
 }
 const CONFIG_SCHEMA_ID = 'https://agent-runtime.invalid/schemas/agent-runtime-config.v1.schema.json';
-const CONFIG_SCHEMA_SHA256 = '06d39c1510f57f56a53b2a5411f4f5c29e41f0e5326aa4c8af22e93cabba784e';
+const CONFIG_SCHEMA_SHA256 = '7f3fdca11792bbd4729545c2bc3eb74185d355f6cc63e5678cd97913150dcc1d';
 const CONFIG_SCHEMA_FILE = fileURLToPath(new URL('../../schemas/agent-runtime-config.v1.schema.json', import.meta.url));
 const resourceRoot = path.dirname(path.dirname(CONFIG_SCHEMA_FILE));
 const RUNTIME_PACKAGE_ROOT = existsSync(path.join(resourceRoot, 'package.json'))

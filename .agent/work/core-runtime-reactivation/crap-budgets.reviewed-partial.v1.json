@@ -279,7 +279,7 @@
     },
     {
       "file": "src/contracts/public-ingress.ts",
-      "sha256": "a3a76fd8d0b95f62093ab69697172e33f05adff23f6f9537e865db845858eb46"
+      "sha256": "637b5b1d3f665821486021478c7aced8303051c04178355cfcc34118cf566981"
     },
     {
       "file": "src/orchestration/admitted-session-execution.ts",
@@ -579,7 +579,7 @@
     },
     {
       "file": "src/config/runtime-config.ts",
-      "sha256": "dc77d94a4538012d5dca9fb43bcf44b6f5c6c82e6c87a93b68e21d35522ca15b"
+      "sha256": "207c0e127cece71d0d7d7d14ec16b0e1985ca31a813213e7b2328e8746102abb"
     },
     {
       "file": "src/orchestration/persistent-session-handoff.ts",
@@ -220999,5 +220999,29 @@
     "reason": "Use Buffer.byteLength default UTF-8 encoding without redundant mutable literal. Preserve exact serialized byte-budget guard; added accepted maximum and rejected maximum-plus-two escaped-byte assertions.",
     "source_roles": "No callable addition/removal or responsibility transfer; saved correspondence rows and caps unchanged.",
     "limits": "Focused development checks only; prior Source numeric evidence is historical after this correction."
+  },
+  "rfc3339_offset_correction_20261015": {
+    "status": "SOURCE_CORRECTION_PENDING_NUMERICAL_QUALIFICATION",
+    "prior_source_ref": "e4061f4",
+    "bindings": [
+      {
+        "file": "src/contracts/public-ingress.ts",
+        "previous_sha256": "a3a76fd8d0b95f62093ab69697172e33f05adff23f6f9537e865db845858eb46",
+        "sha256": "637b5b1d3f665821486021478c7aced8303051c04178355cfcc34118cf566981"
+      },
+      {
+        "file": "src/config/runtime-config.ts",
+        "previous_sha256": "dc77d94a4538012d5dca9fb43bcf44b6f5c6c82e6c87a93b68e21d35522ca15b",
+        "sha256": "207c0e127cece71d0d7d7d14ec16b0e1985ca31a813213e7b2328e8746102abb"
+      }
+    ],
+    "reason": "Reproduced rejection of valid offset and unknown-local-offset leap-second timestamps. Validate normalized UTC leap instant; synchronize all sixteen published schema leaves, retain ordinary pattern bytes except separately reproduced intent-schema year-zero leap-day defect. Refresh exact runtime config schema digest pin without changing loader/layout selection.",
+    "source_roles": "Retained parser owner/signature; frozen date data and private Set add no callable roles. Runtime-config change is its schema pin literal only. All saved correspondence rows and frozen caps unchanged.",
+    "independent_reviews": [
+      "/workspace/attachments/quality-public-ingress-offset-parser-review-20261015.md",
+      "/workspace/attachments/quality-rfc3339-schema-oracle-review-20261015.md",
+      "/workspace/attachments/quality-rfc-schema-integration-audit-20261015.md"
+    ],
+    "limits": "Targeted development proof only. Fresh exact coverage/frozen CRAP/full confirmed mutation still required; no runtime installation or activation claim."
   }
 }

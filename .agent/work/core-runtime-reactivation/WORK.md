@@ -5130,6 +5130,47 @@ The next reviewed repair is valid offset leap-second handling across the parser
 and its actual schema consumers. Copied candidates and static reviews remain
 separate from integrated Source and numerical qualification.
 
+## Reproduced RFC3339 parser and schema defects
+
+Root reproduced valid offset leap-second rejection: RFC's
+1990-12-31T15:59:60-08:00 failed the accepted-calendar timestamp boundary. RED
+was1PASS/1FAIL at /workspace/attachments/quality-rolling-cli-check-7m1eei.
+The parser now validates the normalized UTC instant against its unchanged
+known-date data before adding the leap-second millisecond. Offset provenance
+remains in the original string; valid -00:00 is accepted. A frozen internal date
+array feeds the private Set and developer generator, without an SDK-index export
+or a new callable role in the production modules.
+
+All16 timestamp leaves in8 published schemas now use the portable offset-aware
+leap alternation. The generator uses the existing package Source date owner and
+preserves unrelated schema bytes. Its first generated candidate failed the new
+all-offset oracle at +00:10 because an ordinary TS literal cooked a digit escape
+to a letter. Independent review found the same error; the corrected raw fragment
+passes. Retained failed root: /workspace/attachments/quality-rolling-cli-check-jbn8EL.
+Root regenerated all16 from the exact e4061f4 schema beforeimages, preserving
+formatting and verifying semantic output plus idempotence. The canonical config
+schema pin now matches7f3fdca11792bbd4729545c2bc3eb74185d355f6cc63e5678cd97913150dcc1d;
+the loader's strict identity check remains active. No layout or active loader
+selection changed. Source bindings are refreshed; saved roles and caps remain.
+
+The independent oracle checks every numeric offset minute from-1439 through1439,
+all27 known dates, fractions, Z/+00/-00, neighbor minute/hour/day denials and
+terminators across every named schema leaf. Root separately reproduced another
+existing parity defect: the two intent schema century alternatives rejected
+0000-02-29 while Source and the other14 leaves accepted it. The retained RED root
+is /workspace/attachments/quality-rolling-cli-check-YYx5cZ. Correcting those two
+Gregorian century alternatives passed the same exact check; no other ordinary
+calendar branch changed.
+
+Corrected full main-contracts development selection passed46cases/28443assertions
+in4.56s at /workspace/attachments/quality-rolling-cli-check-t7aNYi. After adding
+direct generator/idempotence controls, the config/completeness boundary selection
+passed108cases/13096assertions in6.96s at
+/workspace/attachments/quality-rolling-cli-check-P80QEh. The subsequent year-zero
+check is retained in quality-rfc3339-year-zero-green-20261015.log. These are
+development checks, not refreshed numerical contour closure. Mutation remains
+UNKNOWN and the historical compatible triple count remains4/44.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
