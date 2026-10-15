@@ -1498,6 +1498,18 @@ function validateAttemptReceipt(
   return freezeJsonValue(receipt) as WorkflowAttemptReceipt;
 }
 
+function requireMatchingTerminalAttempt(
+  receipt: WorkflowAttemptReceipt,
+  original: WorkflowAttemptReceipt,
+  status: 'completed' | 'uncertain',
+  message: string,
+): void {
+  requireCondition(
+    receipt.attempt.status === status && receipt.attempt.attempt_id === original.attempt.attempt_id,
+    message,
+  );
+}
+
 function issueWorkflowExecutionCapability(
   authentication: TrustedHostAuthentication,
   services: TrustedHostServices,
@@ -1535,6 +1547,19 @@ function issueWorkflowExecutionCapability(
       () => undefined,
     );
     return pending;
+  };
+  const markUncertain = async (
+    receipt: WorkflowAttemptReceipt,
+    invocation: TrustedWorkflowAssignment,
+    requestDigest: string,
+  ): Promise<void> => {
+    const uncertain = validateAttemptReceipt(
+      await serializeState(async () => attempts.markWorkflowAttemptUncertain(receipt)),
+      invocation,
+      requestDigest,
+      attempts.reconciliationPrincipal,
+    );
+    requireMatchingTerminalAttempt(uncertain, receipt, 'uncertain', 'workflow uncertainty receipt invalid');
   };
   if (attempts?.retireInterruptedSourceOwner)
     workflowSessionRetirers.set(capability, (request) =>
@@ -1863,7 +1888,7 @@ function issueWorkflowExecutionCapability(
       'workflow native observation status is invalid',
     );
     if (result.status === 'reported_failed') {
-      await serializeState(async () => attempts.markWorkflowAttemptUncertain(reservation.receipt));
+      await markUncertain(reservation.receipt, reservation.invocation, reservation.requestDigest);
       return;
     }
     const invocation = freezeJsonValue({ ...reservation.invocation, attempt: reservation.receipt.attempt });
@@ -1882,8 +1907,14 @@ function issueWorkflowExecutionCapability(
       reservation.requestDigest,
       attempts.reconciliationPrincipal,
     );
+    requireMatchingTerminalAttempt(
+      checked,
+      reservation.receipt,
+      'completed',
+      'workflow native completion receipt invalid',
+    );
     requireCondition(
-      checked.attempt.status === 'completed' && checked.attempt.result_digest === canonicalJsonDigest(observed),
+      checked.attempt.result_digest === canonicalJsonDigest(observed),
       'workflow native completion receipt invalid',
     );
   });
@@ -1937,18 +1968,7 @@ function issueWorkflowExecutionCapability(
           } catch {
             // The entry marker may have committed before acknowledgement; retain uncertainty.
           }
-        if (!aborted) {
-          const uncertain = validateAttemptReceipt(
-            await serializeState(async () => attempts.markWorkflowAttemptUncertain(receipt)),
-            invocation,
-            requestDigest,
-            attempts.reconciliationPrincipal,
-          );
-          requireCondition(
-            uncertain.attempt.status === 'uncertain' && uncertain.attempt.attempt_id === receipt.attempt.attempt_id,
-            'workflow uncertainty receipt invalid',
-          );
-        }
+        if (!aborted) await markUncertain(receipt, invocation, requestDigest);
         throw error;
       }
       const current = await serializeState(async () => resolve(request, request.stageId, request.assignmentIndex));
@@ -1959,10 +1979,9 @@ function issueWorkflowExecutionCapability(
             current.workContext.permit.checkpoint_digest === completed.workVersion.digest),
         'workflow completion work version is not current',
       );
+      requireMatchingTerminalAttempt(completed, receipt, 'completed', 'workflow completion receipt invalid');
       requireCondition(
-        completed.attempt.status === 'completed' &&
-          completed.attempt.attempt_id === receipt.attempt.attempt_id &&
-          completed.attempt.result_digest === canonicalJsonDigest(snapshot),
+        completed.attempt.result_digest === canonicalJsonDigest(snapshot),
         'workflow completion receipt invalid',
       );
     }

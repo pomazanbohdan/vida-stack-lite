@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, mock, test } from 'bun:test';
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
+import assert from 'node:assert/strict';
 import { boundedSpawnSync, executionBudget, requireTerminalCommand } from '../bin/bun.ts';
 import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { tmpdir } from 'node:os';
@@ -397,9 +398,11 @@ const {
   createRuntimeKernelHostWithProof,
   createTestTrustedHostLauncherCapability,
   createTrustedHostComposition,
+  completeWorkflowAssignmentForSession,
   dispatchWorkflowAssignment,
   isRuntimeKernelHost,
   prepareWorkflowExecution,
+  reserveWorkflowAssignmentForSession,
 } = await import('../src/runtime-kernel.ts');
 
 const bundle = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
@@ -855,6 +858,22 @@ function fixtureAttempts(): AttemptFixture {
   };
 }
 
+function foreignAttemptReceipt(receipt: WorkflowAttemptReceipt): WorkflowAttemptReceipt {
+  const attempt = { ...receipt.attempt, assignment_id: 'a'.repeat(64) };
+  return {
+    ...receipt,
+    attempt: {
+      ...attempt,
+      attempt_id: canonicalJsonDigest({
+        assignment_id: attempt.assignment_id,
+        request_digest: attempt.request_digest,
+        lease: attempt.lease,
+        previous_attempt_id: attempt.previous_attempt_id,
+      }),
+    },
+  };
+}
+
 function withoutWorkflowApproval(attempts: AttemptFixture): NonNullable<TrustedHostServices['workflowAttempts']> {
   const {
     claimWorkflowAssignmentWithApproval: _claimWithApproval,
@@ -922,7 +941,9 @@ async function compose(
   return createTrustedHostComposition(launcher);
 }
 
-function request(overrides: Partial<FixtureRequest> = {}): FixtureRequest {
+function request(
+  overrides: Partial<FixtureRequest> = {},
+): FixtureRequest & Pick<WorkflowAssignmentRequest, 'workContextDigest'> {
   const value = {
     repositoryRoot: root,
     configDigest: runtimeConfigDigest(config),
@@ -1300,6 +1321,115 @@ describe('semantic current-v1 work context and live permits (unit authority adap
     await expectRejection(dispatchFixture(host.workflowExecutionCapability, request()), /work version is not current/);
     expect(attempts.attemptCount()).toBe(0);
   });
+
+  test.each(['started', 'completed', 'foreign-attempt', 'foreign-work', 'malformed'] as const)(
+    'native failed session rejects an invalid uncertainty receipt: %s',
+    async (mode) => {
+      const attempts = fixtureAttempts();
+      const markUncertain = attempts.markWorkflowAttemptUncertain;
+      let marks = 0;
+      attempts.markWorkflowAttemptUncertain = async (receipt) => {
+        marks++;
+        const uncertain = await markUncertain(receipt);
+        if (mode === 'started') return receipt;
+        if (mode === 'completed')
+          return {
+            ...uncertain,
+            attempt: {
+              ...uncertain.attempt,
+              status: 'completed',
+              result: null,
+              result_digest: canonicalJsonDigest(null),
+            },
+          };
+        if (mode === 'foreign-attempt') return foreignAttemptReceipt(uncertain);
+        if (mode === 'foreign-work')
+          return { ...uncertain, identity: { ...uncertain.identity, work_id: 'foreign-work' } };
+        setFixtureField(uncertain, 'identity', null);
+        return uncertain;
+      };
+      const host = await compose(['workflow', 'runtime.write'], undefined, undefined, undefined, attempts);
+      const capability = requireWorkflowCapability(host);
+      const reservation = await reserveWorkflowAssignmentForSession(capability, request());
+      await expectRejection(
+        completeWorkflowAssignmentForSession(capability, reservation, { status: 'reported_failed' }),
+        mode === 'foreign-work'
+          ? /work binding invalid/
+          : mode === 'malformed'
+            ? /identity/
+            : /uncertainty receipt invalid/,
+      );
+      expect(marks).toBe(1);
+      expect(calls).toEqual([]);
+      await expectRejection(dispatchFixture(capability, request()), /reconciliation/);
+      expect(attempts.attemptCount()).toBe(1);
+    },
+  );
+
+  test('native failed session records uncertainty and blocks redispatch without provider execution', async () => {
+    const attempts = fixtureAttempts();
+    const markUncertain = attempts.markWorkflowAttemptUncertain;
+    const recorded: WorkflowAttemptReceipt[] = [];
+    attempts.markWorkflowAttemptUncertain = async (receipt) => {
+      const uncertain = await markUncertain(receipt);
+      recorded.push(uncertain);
+      return uncertain;
+    };
+    const host = await compose(['workflow', 'runtime.write'], undefined, undefined, undefined, attempts);
+    const capability = requireWorkflowCapability(host);
+    const reservation = await reserveWorkflowAssignmentForSession(capability, request());
+    await assert.doesNotReject(() =>
+      completeWorkflowAssignmentForSession(capability, reservation, { status: 'reported_failed' }),
+    );
+    expect(recorded).toHaveLength(1);
+    expect(recorded[0]).toMatchObject({
+      identity: reservation.receipt.identity,
+      attempt: {
+        attempt_id: reservation.receipt.attempt.attempt_id,
+        status: 'uncertain',
+        result: null,
+        result_digest: null,
+      },
+    });
+    expect(calls).toEqual([]);
+    await expectRejection(dispatchFixture(capability, request()), /reconciliation/);
+    expect(attempts.attemptCount()).toBe(1);
+  });
+
+  test.each(['valid', 'foreign-attempt'] as const)(
+    'native completed session binds its exact attempt: %s',
+    async (mode) => {
+      const attempts = fixtureAttempts();
+      const complete = attempts.completeWorkflowAttempt;
+      let completions = 0;
+      attempts.completeWorkflowAttempt = async (receipt, result) => {
+        completions++;
+        const completed = await complete(receipt, result);
+        if (mode === 'valid') return completed;
+        return foreignAttemptReceipt(completed);
+      };
+      const host = await compose(['workflow', 'runtime.write'], undefined, undefined, undefined, attempts);
+      const capability = requireWorkflowCapability(host);
+      const reservation = await reserveWorkflowAssignmentForSession(capability, request());
+      const observed = { status: 'reported_complete', native_result: 'finished' };
+      if (mode === 'foreign-attempt')
+        await expectRejection(
+          completeWorkflowAssignmentForSession(capability, reservation, observed),
+          /workflow native completion receipt invalid/,
+        );
+      else {
+        await assert.doesNotReject(() => completeWorkflowAssignmentForSession(capability, reservation, observed));
+        let replayed: unknown;
+        await assert.doesNotReject(async () => {
+          replayed = await dispatchFixture(capability, request());
+        });
+        expect(replayed).toEqual(observed);
+      }
+      expect(completions).toBe(1);
+      expect(calls).toEqual([]);
+      expect(attempts.attemptCount()).toBe(1);
+    },
+  );
 
   test('unknown provider failure leaves an uncertain attempt and blocks redispatch', async () => {
     let dispatched = 0;

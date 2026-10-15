@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `45efca1` at origin/main.
+- Published predecessor: `0dbc0f2` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -582,6 +582,88 @@ keeps the default5000ms; the new child is bounded4000ms. Existing validator
 regressions still reject forged maps and invalid non-sentinel locations.
 Independent review ACCEPT: quality-focused-implicit-else-review-45e-20261015.md.
 Static, publication and fresh kernel metrics follow.
+
+### Kernel measured gaps and uncertainty-receipt repair
+
+Published0dbc0f2 passed ordinary strict hooks and push. Exact CI SDK formation
+run38712997778/attempt1 succeeded; artifact11961263181 ZIP digest
+545558af944d41493bd5e85ab995b0cd678031c4da698f1d53f0c5877855b67e.
+The maintained readiness callback admitted it inside the focused command.
+Fresh complete kernel selection:202PASS/1479assertions, exit0 in36508.678ms,
+complete captured output, same boot, owned process-group termination observed.
+Report: coverage/bun-unified/diagnostics/e2084349-4245-44e0-b250-
+6d8983f55f19.focused-coverage.json. Source digest
+1964f16f3d8d043193206290ecb4ff1660ba7fdc4ff26f4ac201a754572d1ad9;
+functions124/156(79.48%), lines482/582(82.81%), statements506/613(82.54%),
+branches326/407(80.09%). Max CC31, max function-entry CRAP182. This is a focused
+diagnostic; frozen/global qualification remains pending. Retain outer
+quality-focused-kernel-0dbc0f2-9G8uYz and failed prior cycle unchanged. Summary:
+quality-kernel-focused-summary-0db-20261015.json. Retained host tmpfs scratch
+proves functional behavior, not power-loss durability.
+
+The uncovered native session completion boundary contains a real unchecked
+uncertainty receipt. Its reported_failed path fulfills without validating the
+returned receipt, unlike provider failure. This is a kernel validation gap,
+not observed HostState write failure or permission to replay a started attempt;
+the existing HostState still fences it. Contract review:
+quality-kernel-reported-failed-contract-45e-20261015.md.
+
+Before implementation, select one local markUncertain owner shared by native
+completion and provider failure. It reuses serialized state and the existing
+validateAttemptReceipt, requiring uncertain status and the original attempt ID.
+New helper's prospective CC/CRAP ceilings are2/2: one conjunction and no extra
+branch. The serialized port callback retains its existing provider-path1/1
+ceiling and role, moved under the shared owner; no original allowance moves to
+the new helper. Existing native completer CC13 must not increase; provider
+executor removes the duplicated condition. This is a scoped correspondence
+obligation, not an executable replacement of the incomplete global baseline.
+Six new public-boundary scenarios use the maintained attempt fixture: five
+invalid receipts plus valid uncertainty, exact marking/provider-call counts,
+and redispatch fenced by the same stored attempt. Before/after results follow.
+
+Same-contour review found the analogous completed-session gap: its returned
+receipt is self-consistent but not compared with the reserved attempt ID.
+Two native completion controls confirm valid PASS and foreign self-consistent
+attempt FAIL-before (unexpected acceptance). Before this second correction,
+freeze a shared terminal status/attempt assertion at prospective CC/CRAP2/2.
+Use it for native completion, uncertainty and provider completion, preserving
+all three existing error messages and result-digest checks. The helper contains
+one conjunction; no dynamic cap increase or generic receipt framework.
+
+Both corrections are implemented. Uncertainty before:1validPASS/5invalidFAIL;
+completed-session before:1validPASS/1foreign-attemptFAIL. These failures are
+unexpected acceptance at the public boundary, not failed HostState persistence.
+Nine focused cases afterward:9PASS/56assertions in10.29s, every individual test
+within its default5000ms. The duplicate foreign-receipt construction now uses
+one typed fixture helper with a self-consistent independently changed attempt.
+Logs: quality-kernel-{uncertain-receipt-before,completion-attempt-before,
+terminal-receipt-after}-0db-20261015.log. Independent final actual review ACCEPT:
+quality-kernel-terminal-receipt-actual-review-0db-20261015.md; initial helper
+review stays at quality-kernel-uncertain-helper-plan-review-0db-20261015.md.
+
+One changed-file AST/SHA capture (not a repository rescan) records the new
+terminal assertion CC2<=prospective2, markUncertain CC1<=prospective2 and its
+moved callback CC1. Native completer13→12; provider executor16→13. The former
+native duplicate callback is removed; the provider's uncertainty callback moves
+to markUncertain. Current Source digest
+2814149966489e6c254876b0299bd876324566581ab8d04aade90d3034b512f4;
+quality-kernel-terminal-receipt-static-inventory-0db-20261015.json retains all
+157current rows, changed roles and two absent old callback addresses. This
+scoped preimage comparison is not original b549951 frozen-budget qualification.
+Final affected completion, including protected approval/provider and reconciled
+receipt cases:24PASS/128assertions/13.32s, no per-case timeout exception:
+quality-kernel-terminal-receipt-final-0db-20261015.log. The first static check and
+strict commit correctly rejected three fixture-type errors: request() declared
+an optional workContextDigest despite supplying it. Preserve the original static
+and commit logs; no hook bypass. Narrow its return annotation to the completed
+request shape without changing runtime bytes. Final static check is475capturedTS/
+474checked/0diagnostics, handwrittenJS0:
+quality-kernel-terminal-receipt-static-final-0db-20261015.log. The earlier draft
+PASS statement was premature and is corrected here. A second strict attempt
+correctly rejected Bun matcher thenable typing; the completed-result control now
+uses the already qualified narrow doesNotReject observer and separate value
+assertion. No lint or hook bypass. Strict publication and fresh numerical
+evidence follow.
 
 ### Current product correction packet
 
