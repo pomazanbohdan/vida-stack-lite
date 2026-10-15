@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `34d3646`; current correction details are in WORK.
+- Published predecessor: `b1d883d`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK artifact formed at `7f4c265`; its extracted archive verifier passed. This does not establish native installation or runtime acceptance.
 - Full run `.tmp/p0p1-resume-f553252/current-b9a4108-full-paused.log` ended `UNKNOWN`. The number 1459 is a throw line in `run-bun-coverage.ts`, not an outcome identifier. There is no admitted numeric report. Preserve it and do not replay it.
@@ -38,7 +38,7 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6620roles across147files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds6721roles across149files; installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
 The original planner is39<=40 and current-read evidence5<=5; keep
@@ -47,13 +47,18 @@ observed retained Bun deficits open. The persisted dispatch-plan reader is3<=11,
 and its new shared runtime ingress10<=10. Native recognizer29<=original32 and
 factory4<=own10 and observer6<=own10 have scoped proof after cohesive node-local
 contracts. Rebind stable-version is now5<=original5 with no widened allowance.
-The current join adds167independently reviewed retained roles and enforces array
+The preceding join added167independently reviewed retained roles; the current
+join adds96retained and5new roles. Both enforce array
 and counter equality, exact original ceilings and one-to-one correspondence.
-Current7729-role inventory leaves1109current and551original dispositions missing,
-with22represented static overages after exposing five additional deficits.
+Current7729-role inventory leaves1008current and455original dispositions missing,
+with24represented static overages. Disputed41native extracted-helper additions
+remain unbound pending classification; no original allowance is transferred.
 Fixture imports now defer configuration loading; historical setup resolves only
 the Source path before loading its private copied configuration. The complete
-fixture-lifecycle file passed23cases/223assertions in38.34s. The isolated public
+fixture-lifecycle file now passed25cases/244assertions in36.45s. Case custody
+retains pending or elapsed bodies and checks the deadline after owned DB close;
+the native300ms timeout control confirms retention before body settlement.
+The isolated public
 repair still exceeds its30s case limit; measured12CLI calls cost77.22s total.
 Keep both independent Source captures and optimize measured work without raising
 timeouts. Numeric gates remain open.

@@ -104,6 +104,15 @@ and cleanup errors. Register each test file's own cleanup hook. If a case times
 out or a child remains unobserved, retain its fixture root and report UNKNOWN;
 do not retry or delete it without the owning recovery rule.
 
+For asynchronous case custody, enroll each root before the body can suspend.
+Teardown must observe a pending body directly; a `finally` that marks failure
+only after settlement is too late. Check the monotonic deadline again after
+owned connection cleanup and before deletion. Use the runtime-config fixture's
+case owner for its composite repair cases. Keep the same bound in that owner
+and the Bun case. Qualify pending teardown with a real expected-timeout child,
+preserving its failing child result and retained root separately from the
+passing parent control.
+
 For child programs, use Bun's `process.execPath`. For `-e`, pass named
 environment values or serialize inert literals with `JSON.stringify`; do not
 assume Node's positional argv layout. Observe stdout/stderr and native terminal

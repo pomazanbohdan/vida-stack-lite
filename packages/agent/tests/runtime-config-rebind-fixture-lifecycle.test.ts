@@ -112,6 +112,170 @@ test('continuation helper import defers repository configuration loading until i
   }
 });
 
+test('fixture case custody retains elapsed and failed bodies while allowing timely cleanup', async () => {
+  const controlRoot = mkdtempSync(path.join(tmpdir(), 'vida-runtime-case-custody-'));
+  const resultPath = path.join(controlRoot, 'result.json');
+  const helperUrl = pathToFileURL(path.resolve(import.meta.dirname, 'helpers/runtime-config-rebind-fixture.ts')).href;
+  const storeUrl = pathToFileURL(path.resolve(import.meta.dirname, '../src/host-state.ts')).href;
+  writeFileSync(
+    path.join(controlRoot, 'custody.test.ts'),
+    `
+    import { afterAll, expect, spyOn, test } from 'bun:test';
+    import { Database } from 'bun:sqlite';
+    import { existsSync, writeFileSync } from 'node:fs';
+    import { fixture, withDatabase, cleanupRuntimeConfigFixtureRoots, withRuntimeConfigFixtureCase } from ${JSON.stringify(helperUrl)};
+    import { HostStateStore } from ${JSON.stringify(storeUrl)};
+    const captures = [];
+    afterAll(() => writeFileSync(${JSON.stringify(resultPath)}, JSON.stringify(captures)));
+    test.each(['timely', 'deadline', 'failure', 'cleanup-expiry'])('owned %s body', async (mode) => {
+      const clock = spyOn(performance, 'now').mockReturnValue(1000);
+      const originalClose = Database.prototype.close;
+      let cleanupPhase = false;
+      const close = spyOn(Database.prototype, 'close').mockImplementation(function (force) {
+        const result = originalClose.call(this, force);
+        if (cleanupPhase && mode === 'cleanup-expiry') clock.mockReturnValue(1005);
+        return result;
+      });
+      let f;
+      let threw = false;
+      let result;
+      try {
+        try {
+          result = await withRuntimeConfigFixtureCase(async () => {
+            f = fixture();
+            withDatabase(f, (db) => {
+              new HostStateStore(db, f.workspace);
+              expect(db.query("SELECT COUNT(*) AS count FROM agent_host_governance WHERE kind='operation'").get().count).toBe(0);
+            });
+            clock.mockReturnValue(mode === 'deadline' ? 1005 : 1004);
+            if (mode === 'failure') throw undefined;
+            return mode;
+          }, 5);
+        } catch (error) {
+          expect(mode).toBe('failure');
+          expect(error).toBeUndefined();
+          threw = true;
+        }
+      cleanupPhase = true;
+      cleanupRuntimeConfigFixtureRoots();
+      expect(existsSync(f.root)).toBe(mode !== 'timely');
+      expect(threw).toBe(mode === 'failure');
+      if (!threw) expect(result).toBe(mode);
+      captures.push({ mode, root: f.root, retained: existsSync(f.root) });
+      } finally {
+        close.mockRestore();
+        clock.mockRestore();
+      }
+    });
+    test('pending body custody precedes fixture-call and governance checks', async () => {
+      let release;
+      const paused = new Promise((resolve) => { release = resolve; });
+      let f;
+      const running = withRuntimeConfigFixtureCase(async () => {
+        f = fixture();
+        withDatabase(f, (db) => { new HostStateStore(db, f.workspace); });
+        await paused;
+        return 'settled';
+      });
+      await expect(withRuntimeConfigFixtureCase(() => undefined)).rejects.toThrow('overlap');
+      cleanupRuntimeConfigFixtureRoots();
+      expect(existsSync(f.root)).toBe(true);
+      release();
+      expect(await running).toBe('settled');
+      cleanupRuntimeConfigFixtureRoots();
+      expect(existsSync(f.root)).toBe(true);
+      captures.push({ mode: 'pending', root: f.root, retained: true });
+    });
+    test('invalid case allowance never invokes the body', async () => {
+      let called = false;
+      await expect(withRuntimeConfigFixtureCase(() => { called = true; }, 0)).rejects.toThrow('timeout must be positive');
+      expect(called).toBe(false);
+    });
+  `,
+  );
+  let retain = true;
+  try {
+    const child = await runBoundedSubprocess(process.execPath, ['test', '--timeout', '5000', './custody.test.ts'], {
+      cwd: controlRoot,
+      timeoutMs: 4000,
+      stdoutLimitBytes: 16 * 1024,
+      stderrLimitBytes: 16 * 1024,
+    });
+    expect(child.closeObserved).toBe(true);
+    expect(child.timedOut).toBe(false);
+    expect(child.childError).toBeNull();
+    expect(child.exitCode, child.stderr.toString()).toBe(0);
+    expect(child.signal).toBeNull();
+    expect(child.stderr.toString()).toContain('6 pass');
+    const capture: unknown = JSON.parse(readFileSync(resultPath, 'utf8'));
+    if (!Array.isArray(capture) || capture.length !== 5) throw Error('Fixture custody control is incomplete');
+    for (const row of capture) {
+      if (!isRecord(row) || typeof row.root !== 'string') throw Error('Fixture custody control row is invalid');
+      expect(row.retained).toBe(row.mode !== 'timely');
+      if (row.retained) console.warn(`Retained deadline/failure custody control: ${row.root}`);
+    }
+    retain = false;
+  } finally {
+    if (!retain) rmSync(controlRoot, { recursive: true, force: true });
+  }
+});
+
+test('native timed-out fixture body retains its root before asynchronous settlement', async () => {
+  const controlRoot = mkdtempSync(path.join(tmpdir(), 'vida-runtime-case-native-timeout-'));
+  const resultPath = path.join(controlRoot, 'result.json');
+  const helperUrl = pathToFileURL(path.resolve(import.meta.dirname, 'helpers/runtime-config-rebind-fixture.ts')).href;
+  const storeUrl = pathToFileURL(path.resolve(import.meta.dirname, '../src/host-state.ts')).href;
+  writeFileSync(
+    path.join(controlRoot, 'timeout.test.ts'),
+    `
+    import { afterAll, expect, test } from 'bun:test';
+    import { existsSync, writeFileSync } from 'node:fs';
+    import { fixture, withDatabase, registerRuntimeConfigFixtureCleanup, withRuntimeConfigFixtureCase } from ${JSON.stringify(helperUrl)};
+    import { HostStateStore } from ${JSON.stringify(storeUrl)};
+    registerRuntimeConfigFixtureCleanup();
+    let root;
+    let bodySettled = false;
+    afterAll(() => writeFileSync(${JSON.stringify(resultPath)}, JSON.stringify({ root, rootExists: existsSync(root), bodySettled })));
+    test('expected native timeout with pending case custody', () => withRuntimeConfigFixtureCase(async () => {
+      const f = fixture();
+      root = f.root;
+      withDatabase(f, (db) => {
+        new HostStateStore(db, f.workspace);
+        expect(db.query("SELECT COUNT(*) AS count FROM agent_host_governance WHERE kind='operation'").get().count).toBe(0);
+      });
+      await Bun.sleep(1500);
+      bodySettled = true;
+    }, 300), 300);
+  `,
+  );
+  let retain = true;
+  try {
+    const child = await runBoundedSubprocess(process.execPath, ['test', '--timeout', '5000', './timeout.test.ts'], {
+      cwd: controlRoot,
+      timeoutMs: 4000,
+      stdoutLimitBytes: 16 * 1024,
+      stderrLimitBytes: 16 * 1024,
+    });
+    expect(child.closeObserved).toBe(true);
+    expect(child.timedOut).toBe(false);
+    expect(child.childError).toBeNull();
+    expect(child.exitCode, child.stderr.toString()).toBe(1);
+    expect(child.signal).toBeNull();
+    expect(child.stderr.toString()).toContain('timed out after 300ms');
+    expect(child.stderr.toString()).toContain('1 fail');
+    const capture: unknown = JSON.parse(readFileSync(resultPath, 'utf8'));
+    if (!isRecord(capture) || typeof capture.root !== 'string')
+      throw Error('Native timeout custody control is incomplete');
+    expect(capture.rootExists).toBe(true);
+    expect(capture.bodySettled).toBe(false);
+    expect(child.stderr.toString()).toContain(`Retained fixture with an unresolved operation: ${capture.root}`);
+    console.warn(`Retained native timed-out case control: ${capture.root}`);
+    retain = false;
+  } finally {
+    if (!retain) rmSync(controlRoot, { recursive: true, force: true });
+  }
+});
+
 test('a shared cached fixture registers cleanup for each no-isolate test file', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-runtime-config-rebind-hooks-'));
   const testDir = path.join(root, 'tests');

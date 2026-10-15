@@ -1294,6 +1294,16 @@ owned closes, and preserve both body and cleanup errors. Native Linux missing
 file errors may expose a proc-fd leaf path; distinguish provider details from
 required configured-context diagnostics and keep exact denial/no-effect proofs.
 
+Composite runtime-config Source-repair cases use `withRuntimeConfigFixtureCase`
+with the same bound passed to Bun. The helper enrolls each fixture root at
+creation, so teardown can retain a still-pending body even when its individual
+CLI calls have settled. Guarded cases are serialized; another guarded case
+cannot begin while one remains active. Cleanup checks the case deadline again
+after closing its governance-inspection database and before removing the root.
+An expected-timeout child control must prove the child failed, its body was
+unsettled and its root survived teardown. That control is not a passing timed-out
+case, a coverage result or permission to remove the retained fixture.
+
 [Bun lifecycle documentation](https://bun.com/docs/test/lifecycle.md) places
 `onTestFinished` after all `afterEach` hooks and excludes concurrent tests.
 Its documented callback supplies no test-success status. Neither this callback

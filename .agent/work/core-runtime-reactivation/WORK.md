@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `34d3646` at origin/main.
+- Published predecessor: `b1d883d` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1369,10 +1369,79 @@ The same host boot is recorded before/after and native namespace init terminal1.
 This is a bounded development diagnostic, not full resource/SDK qualification.
 No product source snapshot sharing was introduced. Historical UNKNOWN stays fenced.
 
-The two actual missing Source byte bindings are
-bin/repair-release-retarget.ts and src/orchestration/final-assurance.ts; they are
-not assumed functionless barrels. Reuse the cached inventory and capture only
-those missing owners when advancing their exact bytes.
+The two missing Source byte bindings are now captured. Only
+bin/repair-release-retarget.ts and src/orchestration/final-assurance.ts were
+re-inventoried/hashed; their93/94rows exactly match the cached inventory. All149
+Source byte bindings now exist; other147were reused. One-shot capture/read-back:
+`quality-two-missing-source-bindings-b1-20261015.json` and `.log`.
+
+## Current native/Host and timeout-custody correction
+
+Publishedb1d883d passed ordinary strict format/types/lint/Knip and push:
+`quality-fixture-lineage-strict-commit-34d-20261015.log` and
+`quality-fixture-lineage-push-34d-20261015.log`.
+
+Root joins59Host and37native retained roles plus5new persisted-state/byte-image
+roles after fresh independent reviews. Host1rejected callback is excluded.
+Independent native review rejected41extracted-helper new-role classifications;
+they remain unbound pending contract review, not assigned another original cap.
+Current partial6721=5168retained+1553new/78removed/149bindings. Inventory7729
+leaves1008current/455original dispositions;24static deficits include two newly
+represented native projections at2>original1. All five frozen fields remain
+exact original values. One-shot join/read-back receipt/log:
+`quality-native-host-join-b1-20261015.json` and `.log`; scoped reviews are
+`quality-host60-independent-join34d-20261015.json` and
+`quality-native83-independent-join34d-20261015.json`. No numeric acceptance.
+Independent final metadata review:
+`quality-native-host-final-metadata-review-b1-20261015.md`. Its reviewer
+inadvertently rehashed149Source files despite the no-rehash assignment; those
+unwanted hashes grant no new capture/admission authority, and no files changed.
+The review identified269older retained rows missing original address metadata;
+114more used the published_source_address alias. Root completes269addresses
+from the existing genuine historical inventory and normalizes114aliases to
+source_address, asserting every existing address and all five frozen fields
+exact. All5168retained rows now have one canonical original address. Counts and
+role/cap arrays are unchanged. The stale transition rationale is corrected to
+the independently reviewed repair-transition role. Receipt/read-back log:
+`quality-original-address-completion-b1-20261015.json` and
+`quality-original-address-completion-b1-corrected-20261015.log`. The initial
+one-shot script failed syntax parsing before any mutation; preserve its failed
+log and never rerun the successful corrected script.
+
+The prior isolated30s Source-repair failure completed43assertions but its fixture
+`fixture-HhLIAG` was absent under its retained private root when inspected.
+Its settled calls/governance state had permitted teardown before Bun reported
+the timeout. New serialized withRuntimeConfigFixtureCase registers root custody
+at creation, retains incomplete/failed/elapsed bodies and checks deadline again
+after the governance-inspection DB closes. Cleanup still attempts all owned
+roots, preserves existing failure causes and never automatically retries retained
+roots. All four composite Source-repair cases use the same unchanged30/30/60/60s
+bound for Bun and custody. Scoped test AST migration changed only those three
+additional callbacks, not scenarios/assertions or product Source:
+`quality-source-case-custody-migration-b1-20261015.json`.
+
+The first settlement-only guard passed its narrow fake-clock check but was
+correctly rejected by review for pending-body and post-close races:
+`quality-runtime-case-custody-actual-review-b1-20261015.md`. Its real long-case
+diagnostic retained the root but still failed the original30s limit after67.52s
+case/69.22s command/43assertions; this is not a passing case or speedup proof:
+`quality-source-repair-native-custody-proof-b1-20261015.json`.
+Keep `/home/agent/.cache/vida-cloud-tooling/tmp/quality-source-repair-profile-4AersX/tmp/fixture-go20bE`.
+
+Corrected controls cover timely cleanup, exact deadline, throwundefined, expiry
+during native close, pending-body cleanup and overlap denial. A real Bun300ms
+timeout separately proves child FAIL/bodySettledfalse/root retained before async
+settlement; parent control1PASS/10assertions/1.75s:
+`quality-runtime-case-native-timeout-b1-20261015.log`. Its retained root is
+`/home/agent/.cache/vida-cloud-tooling/tmp/fixture-L0iQAT`.
+Final complete lifecycle file25PASS/0FAIL/244assertions/36.45s:
+`quality-runtime-case-custody-full-lifecycle-b1-20261015.log`.
+Final actual review found no blocker:
+`quality-runtime-case-custody-final-review-b1-20261015.md`.
+Current static gate470checked/471capturedTS/0diagnostics:
+`quality-source-case-custody-types-b1-20261015.log`.
+Failed and expected-timeout roots remain retained. Final coverage/CRAP/mutation,
+SDK/resource qualification and formed native Runtime remain open.
 
 ## Next bounded work
 

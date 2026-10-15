@@ -76,7 +76,7 @@ import {
 
 export function registerRuntimeConfigFixtureCleanup(): void {
   beforeEach(() => {
-    if (pendingFixtureCalls.size !== 0)
+    if (pendingFixtureCalls.size !== 0 || activeFixtureCase !== undefined)
       throw Error('Cannot begin a runtime config fixture case while a prior fixture call is unresolved');
     resetSourceCorrectionNativeRuntime();
   });
@@ -94,9 +94,10 @@ export function cleanupRuntimeConfigFixtureRoots(removeRoot: typeof rmSync = rmS
     }
   };
   for (const root of [...fixtureRoots]) {
+    const custody = fixtureCaseCustody.get(root);
     let terminalDisposition = false;
     try {
-      if (pendingFixtureCalls.has(root)) {
+      if (pendingFixtureCalls.has(root) || custody?.completed === false) {
         failedFixtureRoots.add(root);
         warnRetained(`Retained fixture with an unresolved operation: ${root}`);
         terminalDisposition = true;
@@ -107,9 +108,14 @@ export function cleanupRuntimeConfigFixtureRoots(removeRoot: typeof rmSync = rmS
         failedFixtureRoots.add(root);
         warnRetained(`Retained fixture with unresolved governance: ${root}`);
         terminalDisposition = true;
+      } else if (custody && (!Number.isFinite(custody.deadlineAt) || performance.now() >= custody.deadlineAt)) {
+        failedFixtureRoots.add(root);
+        warnRetained(`Retained fixture after elapsed case deadline: ${root}`);
+        terminalDisposition = true;
       } else {
         removeRoot(root, { recursive: true, force: true });
         fixtureDatabasePaths.delete(root);
+        fixtureCaseCustody.delete(root);
         failedFixtureRoots.delete(root);
         terminalDisposition = true;
       }
@@ -125,7 +131,7 @@ export function cleanupRuntimeConfigFixtureRoots(removeRoot: typeof rmSync = rmS
       if (index >= 0) fixtureRoots.splice(index, 1);
     }
   }
-  if (!hasPendingCalls) {
+  if (!hasPendingCalls && activeFixtureCase === undefined) {
     try {
       resetSourceCorrectionNativeRuntime();
     } catch (error) {
@@ -409,6 +415,13 @@ const fixtureRoots: string[] = [];
 const fixtureDatabasePaths = new Map<string, string>();
 // Retained roots leave the active queue only after this custody set updates; exact database paths stay mapped.
 const failedFixtureRoots = new Set<string>();
+type RuntimeFixtureCaseCustody = {
+  readonly deadlineAt: number;
+  readonly roots: Set<string>;
+  completed: boolean;
+};
+const fixtureCaseCustody = new Map<string, RuntimeFixtureCaseCustody>();
+let activeFixtureCase: RuntimeFixtureCaseCustody | undefined;
 
 const pendingFixtureCalls = new Map<string | undefined, number>();
 
@@ -455,6 +468,29 @@ export function withHistoricalInspectionFixtureCustody<TResult>(body: () => TRes
   } catch (error: unknown) {
     for (const root of fixtureRoots.slice(firstOwnedRoot)) failedFixtureRoots.add(root);
     throw error;
+  }
+}
+
+export async function withRuntimeConfigFixtureCase<TResult>(
+  body: () => TResult | Promise<TResult>,
+  timeoutMs = 5000,
+): Promise<TResult> {
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) throw Error('Fixture case timeout must be positive');
+  if (activeFixtureCase !== undefined) throw Error('Cannot overlap runtime config fixture cases');
+  const custody: RuntimeFixtureCaseCustody = {
+    deadlineAt: performance.now() + timeoutMs,
+    roots: new Set(),
+    completed: false,
+  };
+  activeFixtureCase = custody;
+  try {
+    const result = await body();
+    custody.completed = true;
+    return result;
+  } finally {
+    if (!custody.completed || !Number.isFinite(custody.deadlineAt) || performance.now() >= custody.deadlineAt)
+      for (const root of custody.roots) failedFixtureRoots.add(root);
+    activeFixtureCase = undefined;
   }
 }
 
@@ -1326,6 +1362,10 @@ export function fixture({
   const fixtureRoot = process.env.VIDA_CONFIG_REBIND_FIXTURE_ROOT ?? tmpdir();
   const root = mkdtempSync(path.join(fixtureRoot, 'fixture-'));
   fixtureRoots.push(root);
+  if (activeFixtureCase) {
+    activeFixtureCase.roots.add(root);
+    fixtureCaseCustody.set(root, activeFixtureCase);
+  }
   const put = (relative: string, bytes: string | Uint8Array): void => {
     const file = path.join(root, relative);
     mkdirSync(path.dirname(file), { recursive: true });
