@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `e2bfc67` at origin/main.
+- Published predecessor: `1fda065` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -962,6 +962,58 @@ metrics must use its updated tests/input fingerprint. Real admitted dispatch
 forwarders remain uncovered; never replay an already-issued retirement request
 to fill them. The bounded shared-fixture proposal is
 quality-kernel-local-forwarder-design-9dc-20261015.md.
+
+Packet1fda065 passed the ordinary strict hook/push. Fresh kernel cycle6 passed
+223tests/1602assertions in29.08s; supervised full capture33696.867ms, same boot,
+owned group observed gone. Report5dd191bb-5488-4a9e-86a2-eae97ca971dc.focused-
+coverage.json binds the unchanged eb92da5 Source with updated tests:
+functions145/16289.50%, lines571/60294.85%, statements597/63394.31%,
+branches377/41491.06%, maxCC31/maxentryCRAP31,17unexecuted. Keep outer
+quality-focused-kernel-1fda065-liqX3T, tmpfs /tmp/quality-kernel-functional-pSHSZ6
+and quality-kernel-focused-summary-1fd-20261015.json. Full/frozen gates stay open.
+
+Next real ordinary local dispatch uses fresh admitted work and current SQLite
+snapshot/lease facts. First control correctly rejected the test service's dummy
+runtime revision; replace it with the current persisted runtime-code binding,
+not a production guard bypass. Preserve its failed root vida-absorption-S0WdLf.
+Functional controls then pass but exceed the default5000ms deadline, so their
+roots remain retained and they do not establish within-budget acceptance.
+Measured phase costs: admission1362ms, composition1516ms, preparation855ms and
+dispatch/completion3925ms, total7667ms; earlier total8389ms. The real persisted
+admit/prepare/dispatch/complete contract is one indivisible integration case.
+Give only that case and its custody owner10000ms; all other defaults stay5000ms.
+Do not raise any product2000ms or mutation/coverage campaign limit. The3.9s
+immediate-provider dispatch is an open P1 bottleneck, not a claimed optimization.
+Preserve vida-absorption-8sYsne and vida-absorption-oNrSKI. Logs:
+quality-kernel-local-dispatch-{first,binding,phases}-1fd-20261015.log.
+
+The final explicit10000ms control passed1test/8Bun assertions in8905ms without
+late-body retention. Call-through spies measured the store claim at36.34ms with
+one public snapshot call; that boundary does not explain the full5.13s dispatch
+phase. Defer the speculative HostState transaction refactor pending attribution.
+The complete boundary file passed29tests/140assertions before the final scoped
+timing spies; the final changed case and strict static checks passed afterward.
+Current static475captured/474checkedTS and Source101checked,0diagnostics:
+quality-kernel-local-dispatch-final-static-1fd-20261015.log. Independent review
+ACCEPT: quality-local-dispatch-actual-review-1fd-20261015.md. This is admitted-store
+composition/dispatch evidence with an injected work-item resolver, not full
+public session opening or independently recomputed Source freshness.
+
+Before another full mutant campaign, qualify the public Stryker TestRunner API
+with Bun per-test mutant coverage. Reuse the existing body/assertion adapter,
+captured inputs, private worker context and process custody. Preserve complete
+original selection and bind any executed subset to its qualified dry-run map;
+missing selected bodies/lifecycle or uncertain causes stay UNKNOWN. Two bounded
+blind Luna reviews inspect public API and existing receipt integration. This is
+a candidate optimization, not a qualified runner or mutation score.
+
+Range-only mutation slicing is not generally complete for ancestor-spanning
+mutants. Installed Stryker supports mutator-name exclusion buckets as a candidate
+alongside ranges, but filter-dependent candidate sets must equal the one current
+canonical universe exactly. Raw child IDs renumber. Inspect current counts before
+declaring a supported fit or capability GAP; no private-plan/node_modules patch.
+Reviews: quality-kernel-mutant-slice-feasibility-1fd-20261015.md and
+quality-kernel-mutator-bucket-feasibility-addendum-20261015.md.
 
 ### Current product correction packet
 

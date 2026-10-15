@@ -1509,6 +1509,16 @@ fixture when preparing admitted work, so setup does not take a second close path
 An unresolved body keeps database cleanup unproven even when its process exits;
 retain its root and native failed outcome, never relabel it PASS or Killed.
 
+The boundary case that completes a fresh ordinary assignment through a real
+admitted local store uses10000ms for both Bun and its fixture-case owner. Measured
+disk-backed phases were1362ms admission,1516ms composition,855ms preparation and
+3925ms dispatch/completion (7667ms total; another run8389ms). Its real live lease,
+config/authority checks and persisted claim/completion remain coupled; splitting
+them across tests would share issued state. This is a single integration-case
+exception, not a product performance acceptance or a new default. The immediate-
+provider dispatch cost remains an optimization target. Other tests retain5000ms;
+coverage/mutation campaign and product operation budgets are unchanged.
+
 [Bun lifecycle documentation](https://bun.com/docs/test/lifecycle.md) places
 `onTestFinished` after all `afterEach` hooks and excludes concurrent tests.
 Its documented callback supplies no test-success status. Neither this callback

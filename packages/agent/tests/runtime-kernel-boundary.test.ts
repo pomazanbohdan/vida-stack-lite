@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { writeFileSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { afterAll, afterEach, describe, expect, test } from 'bun:test';
+import { afterAll, afterEach, describe, expect, spyOn, test } from 'bun:test';
 import path from 'node:path';
 import type {
   ProjectAuthorizationRequest,
@@ -18,6 +18,7 @@ import type {
   TrustedHostCompositionInput,
   TrustedHostOperation,
   TrustedHostServices,
+  WorkExecutionContextRequest,
 } from '../src/runtime-kernel.js';
 import { issueHostGovernanceCapability, type OperationReservation } from '../src/governance/edictum-boundary.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
@@ -32,7 +33,8 @@ import {
 } from './helpers/automatic-work-admission-fixture.js';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import type { CoordinationLedger } from '../src/host-state.ts';
+import type { CoordinationLedger, HostStateStore, WorkIdentity } from '../src/host-state.ts';
+import type { WorkExecutionContext } from '../src/orchestration/workflow-session-reservation-contract.ts';
 import { validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
 type TrustedAuthentication = TrustedHostCompositionInput['authentication'];
 import {
@@ -60,6 +62,7 @@ function invokeUntrusted(
   return result;
 }
 const fixtureProjectName = 'kernel';
+const localDispatchCaseMs = 10000;
 afterEach(retainPendingAutomaticWorkAdmissionCase);
 const repositoryRoot = await createRuntimeRepositoryRoot();
 const config = loadRuntimeConfig(repositoryRoot);
@@ -135,6 +138,7 @@ async function prepareAdmittedSessionFixture(
         work_id: work.binding.lifecycle_work_id,
       },
       nativeSessionHandle: input.nativeSessionHandle,
+      workItem: input.workItem,
     };
   } catch (error) {
     if (caseFixture === undefined)
@@ -347,7 +351,164 @@ function localSessionServices(
   };
 }
 
+function admittedFixtureWorkContext(
+  store: HostStateStore,
+  identity: WorkIdentity,
+  request: WorkExecutionContextRequest,
+): WorkExecutionContext {
+  const current = store.readHostStateSnapshot(identity);
+  const work = current.work;
+  assert.ok(work?.lease && current.workVersion && current.ledgerVersion && current.ledger);
+  const lease = work.lease;
+  const ticket = current.ledger.tickets.find((entry) => entry.ticket_id === lease.ticket_id);
+  assert.ok(ticket?.expires_at);
+  return {
+    schema: 'WorkExecutionContext/v1',
+    binding: work.binding,
+    permit: {
+      context_digest: canonicalJsonDigest(work.binding),
+      checkpoint_revision: current.workVersion.revision,
+      checkpoint_digest: current.workVersion.digest,
+      runtime_current_revision: 1,
+      stage_id: request.stageId,
+      assignment_index: request.assignmentIndex,
+      dispatch_authorized: true,
+      lease: {
+        thread_id: lease.thread_id,
+        ticket_id: lease.ticket_id,
+        generation: lease.generation,
+        ledger_revision: current.ledgerVersion.revision,
+        expires_at: ticket.expires_at,
+        active_resources: [...ticket.active_resources],
+        blocked_resources: [...ticket.blocked_resources],
+      },
+    },
+  };
+}
+
 describe('runtime kernel boundary', () => {
+  test(
+    'local session completes a fresh ordinary assignment through its admitted store',
+    () =>
+      withAutomaticWorkAdmissionCase(async ({ createFixture, onCleanup }) => {
+        let phaseStarted = performance.now();
+        const phase = (name: string): void => {
+          const now = performance.now();
+          console.log(
+            JSON.stringify({ schema: 'LocalWorkflowFixtureTiming/v1', phase: name, elapsed_ms: now - phaseStarted }),
+          );
+          phaseStarted = now;
+        };
+        const { fixture, identity, nativeSessionHandle, workItem } = await prepareAdmittedSessionFixture(
+          'local-dispatch-' + randomUUID(),
+          createFixture(false, true),
+        );
+        phase('admit');
+        const originalClaim = fixture.store.claimWorkflowAssignment.bind(fixture.store);
+        const snapshotReads = spyOn(fixture.store, 'readHostStateSnapshot');
+        const claimObserver = spyOn(fixture.store, 'claimWorkflowAssignment').mockImplementation((...args) => {
+          const beforeReads = snapshotReads.mock.calls.length;
+          const started = performance.now();
+          try {
+            return originalClaim(...args);
+          } finally {
+            console.log(
+              JSON.stringify({
+                schema: 'LocalWorkflowFixtureTiming/v1',
+                phase: 'store-claim',
+                elapsed_ms: performance.now() - started,
+                public_snapshot_calls: snapshotReads.mock.calls.length - beforeReads,
+              }),
+            );
+          }
+        });
+        onCleanup(() => {
+          claimObserver.mockRestore();
+          snapshotReads.mockRestore();
+        });
+        const observed: string[] = [];
+        const composition = await observeLocalSessionComposition({
+          repositoryRoot: fixture.root,
+          repositoryId: identity.repository_id,
+          projectIds: identity.project_ids,
+          nativeSessionHandle,
+          admittedWork: { workId: identity.work_id, store: fixture.store },
+          services: {
+            ...localSessionServices(fixture.store.governanceCapability),
+            runtimeRevision: () => ({
+              sourceRevision: fixture.store.readHostStateSnapshot(identity).work!.binding.runtime_code_digest,
+              currentRevision: 1,
+            }),
+            resolveWorkflowWorkItem: () => workItem,
+            resolveWorkExecutionContext: (request) => admittedFixtureWorkContext(fixture.store, identity, request),
+            dispatchWorkflowAssignment: (invocation) => {
+              observed.push('dispatch');
+              const persistedWork = fixture.store.readHostStateSnapshot(identity).work;
+              assert.ok(persistedWork);
+              expect(invocation.workContext.binding).toEqual(persistedWork.binding);
+              expect(invocation.workContext.permit.lease.thread_id).toBe(nativeSessionHandle);
+              return { observed: invocation.assignment.role };
+            },
+            validateWorkflowAssignmentResult: (invocation, result) => {
+              observed.push('validate');
+              expect(result).toEqual({ observed: invocation.assignment.role });
+            },
+          },
+        });
+        phase('compose');
+        const capability = composition.workflowExecutionCapability;
+        assert.ok(capability);
+        let prepared: Awaited<ReturnType<typeof prepareWorkflowExecution>> | undefined;
+        await assert.doesNotReject(async () => {
+          prepared = await prepareWorkflowExecution(capability, {
+            repositoryRoot: fixture.root,
+            configDigest: runtimeConfigDigest(fixture.config),
+            teamId: 'default-development',
+            workItemId: identity.work_id,
+          });
+        });
+        phase('prepare');
+        assert.ok(prepared);
+        const workflow = fixture.config.workflows[prepared.workflowId];
+        assert.ok(workflow);
+        const stage = workflow.stages.find((entry) => entry.id === workflow.entry_stage);
+        assert.ok(stage?.assignments[0]);
+        const request = {
+          repositoryRoot: fixture.root,
+          configDigest: runtimeConfigDigest(fixture.config),
+          teamId: 'default-development',
+          workflowId: prepared.workflowId,
+          stageId: stage.id,
+          assignmentIndex: 0,
+          workItemId: identity.work_id,
+          workItemDigest: prepared.workItemDigest,
+          workContextDigest: prepared.workContextDigest,
+          input: { work_item_id: identity.work_id },
+        };
+        let result: unknown;
+        await assert.doesNotReject(async () => {
+          result = await dispatchWorkflowAssignment(capability, request);
+        });
+        phase('dispatch-complete');
+        expect(result).toEqual({ observed: stage.assignments[0].role });
+        expect(observed).toEqual(['dispatch', 'validate']);
+        const state = fixture.store.readHostStateSnapshot(identity);
+        expect(state.work?.execution.assignment_attempts).toHaveLength(1);
+        const attempt = state.work?.execution.assignment_attempts[0];
+        expect(attempt).toMatchObject({
+          status: 'completed',
+          stage_id: stage.id,
+          assignment_index: 0,
+          result_digest: canonicalJsonDigest(result),
+        });
+        expect(attempt?.lease).toMatchObject({
+          thread_id: nativeSessionHandle,
+          ticket_id: state.work?.lease?.ticket_id,
+          generation: state.work?.lease?.generation,
+        });
+      }, localDispatchCaseMs),
+    localDispatchCaseMs,
+  );
   test('local session without admitted work remains read and workflow only', () =>
     withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
       const fixture = createFixture(false, true);
