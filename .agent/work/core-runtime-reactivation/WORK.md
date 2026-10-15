@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `d345586` at origin/main.
+- Published predecessor: `dbf65f8` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -132,6 +132,34 @@ exhaustion. Clearing only Bun's disposable download cache recovered353MiB;
 Independent blind Luna strategy review ACCEPT:
 quality-core-mutation-strategy-review-d345586-20261015.md. It confirms the
 accounting and scoped exclusion, not the still-pending fresh dry run or scores.
+
+Packet dbf65f8 passed strict hook and nonforce push:
+quality-core-mutation-strategy-{commit,push}-d345586-20261015.log.
+The fresh prerequisite pilot now executed its entire7mutant universe in
+11345.859ms, complete output and inner/outer process custody. It is a known
+FAIL, not UNKNOWN:4assertion-confirmed Killed,3Survived, local57.142857%.
+Its Stryker enumeration is634files and original dry run passed. Preserve
+quality-mutation-supervised-dbf65f8-RawBxj and package
+.tmp/mutation-evidence-d35ec12d-38b1-4606-9ab8-83f9be4cfd87-k0AEsq.
+The3survivors erase non-x64-Linux tree-digest strings. Current regression checks
+all attested entries for SHA256 grammar and lock-version/dependency membership;
+it does not claim native tree qualification on unexecuted platforms. Complete
+file5PASS/36assertions in66ms:
+quality-fs-safe-target-contract-corrected-dbf65f8-20261015.log.
+The first test draft wrongly equated all library optional dependencies with the
+supported attestation registry; retain its4PASS/1FAIL log as a fixture-model
+correction, not a product bug. No product code changed for these survivors.
+
+The first core pilot generated2121mutants for kernel/timing but the original
+four-file dry run reached the existing45000ms command bound before completion.
+Observed direct exit143/timed_out:true, complete captured partial output and
+inner/outer Stryker group termination; no core score or Killed result exists.
+Preserve quality-mutation-supervised-dbf65f8-RcJh5J and package
+.tmp/mutation-evidence-d22d45d8-5756-4888-b397-78609a1c2e4d-5ut5jo.
+Blind Luna now investigates repeated configured-workflow setup from the actual
+timing log. The next core step is a passing bounded original baseline and
+complete nonoverlapping scopes, not repeated2121mutant attempts or a timeout
+increase. Product expectations and integration controls stay intact.
 
 ## Root-owned rapid test and product audit
 

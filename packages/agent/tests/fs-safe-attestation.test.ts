@@ -117,6 +117,17 @@ test('fs-safe manifest exactly names installed runtime files and package metadat
   expect(attestedFiles).toEqual(installedFiles);
 });
 
+test('every attested native target has a SHA256 tree digest and a dependency at the locked version', () => {
+  const rootEntry = lockEntry(bunLock, '@openclaw/fs-safe');
+  const dependencies = recordField(rootEntry[2], 'optionalDependencies', 'fs-safe optional dependencies');
+  const prefix = '@openclaw/fs-safe-';
+  for (const [target, digest] of Object.entries(fsSafePackageTreeSha256ByNativeTarget)) {
+    expect(digest).toMatch(/^[a-f0-9]{64}$/u);
+    expect(dependencies[prefix + target]).toBe(fsSafeVersion);
+    expect(lockEntry(bunLock, prefix + target)[0]).toBe(`${prefix}${target}@${fsSafeVersion}`);
+  }
+});
+
 test
   .skipIf(process.platform !== 'linux' || process.arch !== 'x64')
   .each([['linux-x64-gnu'], ['linux-x64-musl']] as const)(
