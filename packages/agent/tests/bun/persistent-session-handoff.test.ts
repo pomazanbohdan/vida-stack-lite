@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, test } from 'bun:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +11,7 @@ import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.ts';
+import { expectReturned } from '../helpers/expect-rejection.ts';
 import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
 import type {
   MastraLedgerItem,
@@ -103,8 +104,12 @@ function store(): PersistentSessionHandoffStore {
   return instance;
 }
 
-function selection(kind: WorkItemSelection['kind'], intent: WorkItemSelection['intent']): WorkItemSelection {
-  const team = config.teams['default-development'];
+function selection(
+  kind: WorkItemSelection['kind'],
+  intent: WorkItemSelection['intent'],
+  selectedConfig = config,
+): WorkItemSelection {
+  const team = selectedConfig.teams['default-development'];
   if (!team) throw new Error('default development team is not configured');
   const project = team.allowed_projects[0];
   if (project === undefined) throw new Error('default development team has no allowed project');
@@ -600,6 +605,27 @@ describe('persistent advisory session handoff', () => {
     expect(() => first.prepareOrResume(selection('task', 'task_execution'), context)).toThrow(
       /differs from persisted binding/,
     );
+  });
+
+  test('configured store denies issue after root configuration changes without changing the persisted row', async () => {
+    scratch = await makeFreshRepository('session-config-drift-');
+    retainScratch = true;
+    const active = openConfiguredSessionHandoffStore(scratch);
+    stores.push(active);
+    const prepared = expectReturned(() =>
+      active.prepare(selection('research', 'information_research', loadRuntimeConfig(scratchPath())), context),
+    );
+    const configPath = path.join(scratch, 'agent-runtime.config.v1.yaml');
+    const originalConfig = await readFile(configPath, 'utf8');
+    const changedConfig = originalConfig.replace(/^  work_root: \.agent\/work$/mu, '  work_root: .agent/work-drift');
+    if (changedConfig === originalConfig) throw new Error('legacy fixture did not expose its declared work root');
+    await writeFile(configPath, changedConfig);
+    expect(() => active.issueWave(context.work_id, context.attempt, prepared.version)).toThrow(
+      'session root configuration changed during attempt',
+    );
+    await writeFile(configPath, originalConfig);
+    expect(expectReturned(() => active.resume(context.work_id, context.attempt))).toEqual(prepared);
+    retainScratch = false;
   });
 
   test('only current v1 session rows are readable', async () => {

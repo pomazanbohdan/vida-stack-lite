@@ -604,6 +604,13 @@ test('per-test capture reader preserves unobserved registration planning without
   expect(readMutationPerTestCapture(value).coverage_observed).toBe(false);
   expect(() => validateMutationPerTestJoin(input)).toThrow('not observed');
   expect(() => readMutationPerTestCapture({ ...input.capture, schema: 'MutationPerTestCapture/v1' })).toThrow();
+  for (const malformed of [
+    { ...input.capture, registrations: [{ body_id: 1 }] },
+    { ...input.capture, invocations: [{ ...input.capture.invocations[0], outcome: 'foreign' }] },
+    { ...input.capture, mutant_coverage: { static: { '0': -1 }, perTest: {} } },
+    { ...input.capture, extra: true },
+  ])
+    expect(() => readMutationPerTestCapture(malformed)).toThrow('Per-test capture is malformed or unsupported.');
 });
 
 test('per-test parent keeps equal body IDs in different original files distinct', () => {

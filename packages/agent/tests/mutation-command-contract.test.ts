@@ -17,6 +17,7 @@ import { junitOutcome, type MutationJUnitCase } from '../tooling/mutation-eviden
 import {
   mutationPartitionSourceBinding,
   mutationPartitionSourceBindingMatches,
+  mutationTestEnvironment,
 } from '../tooling/mutation-command-runner.ts';
 import { maintainedSourceInventory } from '../tooling/maintained-source-inventory.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
@@ -69,6 +70,58 @@ test('Survived census preserves baseline skips and rejects newly changed skip ou
       [{ ...renumberedHumanTitle, name: '[mutation-body:7] [mutation-file:abc] changed case' }],
     ),
   ).toBe(false);
+});
+
+test('ambient per-test capture flags leave the complete selected test argv unchanged', () => {
+  const rawBefore = process.env.AGENT_MUTATION_PER_TEST_CAPTURE;
+  const parentBefore = process.env.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE;
+  try {
+    process.env.AGENT_MUTATION_PER_TEST_CAPTURE = '1';
+    process.env.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE = 'diagnostic-v2';
+    const partition: MutationPartition = {
+      name: 'one',
+      environment: 'bun',
+      sources: ['src/one.ts'],
+      tests: ['tests/a.test.ts', 'tests/b.test.ts'],
+      report: 'one.json',
+    };
+    const selection = selectMutationPartitions([], [partition]);
+    expect(selection.scope).toBe('full');
+    expect(selection.partitions).toEqual([partition]);
+    const logs = {
+      stdout: '/reports/run.stdout.log',
+      stderr: '/reports/run.stderr.log',
+      bodyEvents: '/reports/run.body.jsonl',
+      adapterDirectory: '/reports/run.adapters',
+      testContext: null,
+    };
+    const ordinaryEnvironment = mutationTestEnvironment(logs);
+    expect(Object.hasOwn(ordinaryEnvironment, 'AGENT_MUTATION_PER_TEST_CAPTURE')).toBe(false);
+    expect(Object.hasOwn(ordinaryEnvironment, 'AGENT_MUTATION_PARENT_PER_TEST_CAPTURE')).toBe(false);
+    const captureEnvironment = mutationTestEnvironment(logs, 'diagnostic-v2');
+    expect(captureEnvironment.AGENT_MUTATION_PER_TEST_CAPTURE).toBe('1');
+    expect(Object.hasOwn(captureEnvironment, 'AGENT_MUTATION_PARENT_PER_TEST_CAPTURE')).toBe(false);
+    expect(captureEnvironment.AGENT_MUTATION_ADAPTER_DIRECTORY).toBe(logs.adapterDirectory);
+    expect(captureEnvironment.AGENT_MUTATION_BODY_RECEIPTS).toBe(logs.bodyEvents);
+    expect(buildMutationTestCommand('/pinned/bun', selection.partitions[0]?.tests ?? [], '/reports/run.xml')).toEqual([
+      '/pinned/bun',
+      'test',
+      'tests/a.test.ts',
+      'tests/b.test.ts',
+      '--max-concurrency=1',
+      '--bail=1',
+      '--timeout',
+      '5000',
+      '--preload=./tooling/mutation-test-preload.ts',
+      '--reporter=junit',
+      '--reporter-outfile=/reports/run.xml',
+    ]);
+  } finally {
+    if (rawBefore === undefined) delete process.env.AGENT_MUTATION_PER_TEST_CAPTURE;
+    else process.env.AGENT_MUTATION_PER_TEST_CAPTURE = rawBefore;
+    if (parentBefore === undefined) delete process.env.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE;
+    else process.env.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE = parentBefore;
+  }
 });
 
 test('mutation timeout envelopes preserve per-test limits and leave room for command evidence', () => {

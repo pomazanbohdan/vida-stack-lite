@@ -1461,12 +1461,17 @@ export function capturedModuleInputs(
     .sort((left, right) => left.path.localeCompare(right.path));
 }
 
-export function qualityFingerprint(inputs: CoverageInputs): string {
-  const fingerprintJson = canonicalJson({
+export function qualityFingerprint(
+  inputs: Pick<CoverageInputs, 'source_fingerprint' | 'test_fingerprint' | 'tool_fingerprint'>,
+  perTestCapture?: 'diagnostic-v2',
+): string {
+  const fingerprintPayload = {
     sources: inputs.source_fingerprint,
     tests: inputs.test_fingerprint,
     tooling: inputs.tool_fingerprint,
-  });
+    ...(perTestCapture === undefined ? {} : { per_test_capture: perTestCapture }),
+  };
+  const fingerprintJson = canonicalJson(fingerprintPayload);
   if (fingerprintJson === undefined) throw new Error('Quality fingerprint is not serializable.');
   return sha256(fingerprintJson);
 }

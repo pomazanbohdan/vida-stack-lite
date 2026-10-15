@@ -72,7 +72,7 @@ afterEach(() => {
 function fixture(): { root: string; pin: string } {
   const root = mkdtempSync(path.join(os.tmpdir(), 'runtime-bun-pin-'));
   temporaryRoots.add(root);
-  const pin = readPin();
+  const pin = expectReturned(() => readPin());
   writeFileSync(path.join(root, '.bun-version'), `${pin}\n`);
   writeFileSync(
     path.join(root, 'package.json'),
@@ -102,7 +102,7 @@ function assertVersionProbe(call: LauncherCall | undefined, root: string, env: N
 }
 
 test('one pin owns the checked package metadata', () => {
-  const pin = readPin();
+  const pin = expectReturned(() => readPin());
   assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
   assert.equal(Bun.version, pin, 'toolchain tests must run under the selected pinned Bun');
   assert.doesNotThrow(() => checkManifest(path.resolve(import.meta.dirname, '..'), pin));
@@ -112,7 +112,8 @@ test('explicit synchronization preserves other settings and is idempotent', () =
   const { root } = fixture();
   const file = path.join(root, 'package.json');
   writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
-  assert.throws(() => checkManifest(root, readPin(root)), /--sync-pin/);
+  const changedPin = expectReturned(() => readPin(root));
+  assert.throws(() => checkManifest(root, changedPin), /--sync-pin/);
   assert.equal(syncPin(root), true);
   const bytes = readFileSync(file, 'utf8');
   assert.deepEqual(JSON.parse(bytes), {
@@ -127,7 +128,10 @@ test('explicit synchronization preserves other settings and is idempotent', () =
 
 test('invalid pins fail before package resolution', () => {
   const { root, pin } = fixture();
-  assert.equal(readPin(root), pin);
+  assert.equal(
+    expectReturned(() => readPin(root)),
+    pin,
+  );
   assert.doesNotThrow(() => checkManifest(root, pin), 'negative pin cases start from a valid mirrored package');
   for (const pin of ['latest', '^1.0.0', '1.0.0; echo unsafe', '1.0.0\n2.0.0']) {
     writeFileSync(path.join(root, '.bun-version'), pin);
@@ -556,7 +560,10 @@ writeFileSync(${JSON.stringify(output)},JSON.stringify({argv,
 
 test('malformed caller timeout is rejected before resolution even with a supplied budget', () => {
   const { root, pin } = fixture();
-  assert.equal(readPin(root), pin);
+  assert.equal(
+    expectReturned(() => readPin(root)),
+    pin,
+  );
   assert.doesNotThrow(() => checkManifest(root, pin), 'negative timeout case starts from a valid pinned package');
   let calls = 0;
   assert.throws(
@@ -1064,7 +1071,11 @@ test('non-regular pin fails before package resolution, including Windows junctio
   rmSync(file, { recursive: true });
   const target = path.join(root, 'pin-target');
   if (process.platform === 'win32') mkdirSync(target);
-  else writeFileSync(target, readPin());
+  else
+    writeFileSync(
+      target,
+      expectReturned(() => readPin()),
+    );
   symlinkSync(target, file, process.platform === 'win32' ? 'junction' : 'file');
   assert.throws(() => runPinnedBun([], { root, spawn: () => assert.fail('must not spawn') }), /regular non-link/);
   assert.throws(() => syncPin(root), /regular non-link/);

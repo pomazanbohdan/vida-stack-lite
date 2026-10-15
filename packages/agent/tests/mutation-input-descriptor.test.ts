@@ -2,7 +2,8 @@ import { afterEach, expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { sha256, testSelectionFingerprint } from '../tooling/bun-coverage-evidence.ts';
+import { qualityFingerprint, sha256, testSelectionFingerprint } from '../tooling/bun-coverage-evidence.ts';
+import { selectMutationPartitions } from '../tooling/mutation-gate.ts';
 import {
   mutationPartitionSourceBinding,
   verifyInputDescriptor,
@@ -120,6 +121,84 @@ test('mutation runner accepts a partition subset bound to the full captured test
   // The original source digest remains valid while Stryker changes the active subject.
   input.write('src/a.ts', 'mutated source');
   expect((await input.verify()).rejection).toBeNull();
+});
+
+test('quality fingerprint preserves the ordinary preimage and separately binds explicit capture mode', () => {
+  const inputs = { source_fingerprint: 'source', test_fingerprint: 'tests', tool_fingerprint: 'tools' };
+  const ordinary = sha256('{"sources":"source","tests":"tests","tooling":"tools"}');
+  const capture = sha256('{"sources":"source","tests":"tests","tooling":"tools","per_test_capture":"diagnostic-v2"}');
+  expect(qualityFingerprint(inputs)).toBe(ordinary);
+  expect(qualityFingerprint(inputs, 'diagnostic-v2')).toBe(capture);
+  expect(capture).not.toBe(ordinary);
+});
+
+test('per-test capture pilot is explicit and retains the complete declared partition selection', () => {
+  const partitions = [
+    {
+      name: 'main-runtime-core',
+      environment: 'bun',
+      sources: ['src/runtime-kernel.ts'],
+      tests: ['tests/a.test.ts', 'tests/b.test.ts'],
+      report: 'main-runtime-core.json',
+    },
+    {
+      name: 'main-config',
+      environment: 'bun',
+      sources: ['src/config/runtime-config.ts'],
+      tests: ['tests/config.test.ts'],
+      report: 'main-config.json',
+    },
+  ];
+  const ordinary = selectMutationPartitions([], partitions);
+  expect(ordinary).toEqual({ scope: 'full', inventory: false, partitions });
+  const capture = selectMutationPartitions(['--pilot-per-test-capture', 'main-runtime-core'], partitions);
+  expect(capture).toEqual({
+    scope: 'partition-pilot',
+    inventory: false,
+    partitions: [partitions[0]!],
+    perTestCapture: 'diagnostic-v2',
+  });
+  expect(() => selectMutationPartitions(['--pilot-per-test-capture'], partitions)).toThrow(/Expected no arguments/);
+  expect(() => selectMutationPartitions(['--pilot-per-test-capture', 'main-config', 'extra'], partitions)).toThrow(
+    /Expected no arguments/,
+  );
+  expect(() => selectMutationPartitions(['--pilot-per-test-capture', 'unknown'], partitions)).toThrow(
+    /exactly one declared runnable partition/,
+  );
+});
+
+test('per-test capture descriptor requires the explicit parent mode and mode-bound fingerprint', async () => {
+  const input = fixture();
+  input.bindTools();
+  const descriptor = {
+    ...input.descriptor,
+    per_test_capture: 'diagnostic-v2',
+    input_fingerprint: qualityFingerprint(
+      {
+        source_fingerprint: input.descriptor.source_fingerprint,
+        test_fingerprint: input.descriptor.test_fingerprint,
+        tool_fingerprint: input.descriptor.tool_fingerprint,
+      },
+      'diagnostic-v2',
+    ),
+  };
+  const parentMode = 'AGENT_MUTATION_PARENT_PER_TEST_CAPTURE';
+  savedEnvironment.set(parentMode, process.env[parentMode]);
+  process.env[parentMode] = 'diagnostic-v2';
+  process.env.AGENT_RUNTIME_INPUT_FINGERPRINT = descriptor.input_fingerprint;
+  const accepted = await input.verify(descriptor);
+  expect(accepted.rejection).toBeNull();
+  expect(accepted.descriptor?.per_test_capture).toBe('diagnostic-v2');
+
+  const mismatchedFingerprint = { ...descriptor, input_fingerprint: input.descriptor.input_fingerprint };
+  expect(await input.verify(mismatchedFingerprint)).toEqual({ descriptor: null, rejection: 'parent-binding' });
+  delete process.env[parentMode];
+  expect(await input.verify(descriptor)).toEqual({ descriptor: null, rejection: 'parent-binding' });
+  process.env[parentMode] = 'diagnostic-v2';
+  expect(await input.verify({ ...descriptor, per_test_capture: 'other' })).toEqual({
+    descriptor: null,
+    rejection: 'descriptor-shape',
+  });
 });
 
 test('mutation tool identity resolves repository inputs at the parent-bound repository without sandbox fallback', async () => {

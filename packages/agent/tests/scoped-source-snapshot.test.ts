@@ -15,6 +15,7 @@ import {
 } from '../src/orchestration/scoped-source-snapshot.ts';
 import * as snapshots from '../src/orchestration/scoped-source-snapshot.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { expectAsyncReturned } from './helpers/expect-rejection.ts';
 
 type SnapshotReader = Parameters<typeof snapshotDeclaredSources>[0];
 type SnapshotEntry = ReturnType<typeof snapshotDeclaredSources>['entries'][number];
@@ -270,8 +271,10 @@ describe('cooperative scoped source evidence', () => {
         '--path',
         'products/plugin/docs/spec.md',
       ];
-      const expected = await inspectScope(['--project-root', root, ...options]);
-      expect(await inspectScope(['--project-root', root.split(path.sep).join('/'), ...options])).toEqual(expected);
+      const expected = await expectAsyncReturned(() => inspectScope(['--project-root', root, ...options]));
+      expect(
+        await expectAsyncReturned(() => inspectScope(['--project-root', root.split(path.sep).join('/'), ...options])),
+      ).toEqual(expected);
       await Promise.resolve(expect(inspectScope(['--project-root', '.', ...options])).rejects.toThrow('absolute'));
       symlinkSync(root, alias, 'junction');
       await Promise.resolve(expect(inspectScope(['--project-root', alias, ...options])).rejects.toThrow());

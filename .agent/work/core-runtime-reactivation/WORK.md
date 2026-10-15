@@ -5379,6 +5379,46 @@ The current copied implementation/review batch binds diagnostic per-test capture
 through explicit parent mode, fingerprint, descriptor, fixed artifact and receipt;
 it does not authorize filtering or claim actual public dry-run joins.
 
+### Baseline-only per-test custody integration
+
+Root integrated the copied producer, receipt and parent candidates after
+independent reviews. The explicit diagnostic pilot binds its mode through the
+existing fingerprint/descriptor; ordinary fingerprint serialization stays
+unchanged and both ambient capture flags are scrubbed. One bounded fixed-leaf
+read supplies strict Ajv decoding and receipt byte/hash comparison. The first
+candidate's shallow envelope validator was rejected and replaced with the
+existing decoder. Its decoder is explicitly listed once in mutation tool inputs.
+
+Capture is baseline-only: afterAll finalization can be skipped after a mutant's
+fail-fast assertion. Requiring that artifact for mutants would incorrectly make
+their otherwise causal Killed outcomes UNKNOWN. The null-mutant baseline must
+provide the capture; mutants retain their existing assertion/receipt path and
+reject unexpected capture metadata. No filtering or new mutation attribution is
+activated. The installed generic Stryker command runner emits only All tests,
+without per-body file/name rows; its real public join remains a GAP.
+
+Tooling185 and test452 TypeScript checks passed. Focused development check
+/workspace/attachments/quality-rolling-cli-check-CaTKsR passed205tests with
+1089assertions in5275.954012ms across6files. A second check at
+/workspace/attachments/quality-rolling-cli-check-xVOVLd passed334tests with
+2197assertions in75226.201345ms across4files, including the Host approval
+rejected-undefined durable commit_unknown/replay denial and CLI pin causality.
+Both had complete captures, observed closed groups and same boot.
+
+The next2-file check at quality-rolling-cli-check-hthoFI passed33 and failed1:
+the new configured session freshness case incorrectly selected a project from
+the Source config instead of its fresh template config. Root corrected the
+existing selection helper to accept the actually loaded fixture configuration.
+The exact corrected case then passed at quality-rolling-cli-check-z8sYKr;
+its filtered run is only a development correction, not full-selection proof.
+The failed fixture remains retained. A first correction name filter matched
+zero cases and failed at quality-rolling-cli-check-aYK6Xj; it supplies no test
+proof. The2-file run's other passing cases include CLI inspectScope causality.
+
+These are development results; the real parent custody pilot and new numeric
+contour measurements remain pending. Worker slots continue with disjoint copied
+preparation and independent review; no worker runs the final numeric lane.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

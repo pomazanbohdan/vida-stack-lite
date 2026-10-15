@@ -25,6 +25,7 @@ import {
 } from './mutation-evidence.ts';
 
 const junitLimit = 4 * 1024 * 1024;
+const perTestCaptureFile = 'per-test-coverage.json';
 const activeMutant = process.env.__STRYKER_ACTIVE_MUTANT__;
 
 type MutationInputDigest = { path: string; sha256: string };
@@ -39,6 +40,7 @@ type MutationInputDescriptor = {
   test_selection: { mode: 'full-current-test-set'; tests: string[] };
   test_inputs: MutationInputDigest[];
   tool_inputs: MutationInputDigest[];
+  per_test_capture?: 'diagnostic-v2';
   input_fingerprint: string;
   test_fingerprint: string;
   tool_fingerprint: string;
@@ -294,7 +296,11 @@ function descriptorHasExactKeys(value: Record<string, unknown>): boolean {
     'tool_inputs',
   ].sort();
   const keys = Object.keys(value).sort();
-  return keys.length === expected.length && keys.every((key, index) => key === expected[index]);
+  const optionalCapture = [...expected, 'per_test_capture'].sort();
+  return (
+    (keys.length === expected.length && keys.every((key, index) => key === expected[index])) ||
+    (keys.length === optionalCapture.length && keys.every((key, index) => key === optionalCapture[index]))
+  );
 }
 
 function descriptorHasValidSelection(value: Record<string, unknown> & { test_inputs: MutationInputDigest[] }): boolean {
@@ -358,6 +364,7 @@ function descriptorHasValidDigests(
 function mutationInputDescriptor(value: unknown): value is MutationInputDescriptor {
   return (
     record(value) &&
+    (value.per_test_capture === undefined || value.per_test_capture === 'diagnostic-v2') &&
     descriptorHasExactKeys(value) &&
     descriptorHasValidDigests(value) &&
     descriptorHasValidSelection(value)
@@ -372,7 +379,13 @@ function descriptorMatchesParent(
   partitionSourceFingerprint: string,
   sourceFingerprint: string,
 ): boolean {
+  const parentCapture = process.env.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE;
+  const captureMatches =
+    parentCapture === undefined
+      ? descriptor.per_test_capture === undefined
+      : parentCapture === 'diagnostic-v2' && descriptor.per_test_capture === parentCapture;
   return (
+    captureMatches &&
     descriptor.partition === partition &&
     JSON.stringify(descriptor.tests) === JSON.stringify(tests) &&
     JSON.stringify(descriptor.partition_sources) === JSON.stringify(sources) &&
@@ -516,7 +529,7 @@ export async function verifyInputDescriptor(
   }
 }
 
-function mutationTestEnvironment(logs: RunnerLogs): Record<string, string> {
+export function mutationTestEnvironment(logs: RunnerLogs, perTestCapture?: 'diagnostic-v2'): Record<string, string> {
   const environment: Record<string, string> = {};
   for (const [name, value] of Object.entries(process.env)) if (typeof value === 'string') environment[name] = value;
   for (const name of [
@@ -532,8 +545,10 @@ function mutationTestEnvironment(logs: RunnerLogs): Record<string, string> {
     delete environment[name];
   environment.AGENT_MUTATION_BODY_RECEIPTS = logs.bodyEvents;
   environment.AGENT_MUTATION_ADAPTER_DIRECTORY = logs.adapterDirectory;
-  // Per-test capture is not yet an admitted execution mode for this runner.
+  // Ambient capture settings are never authoritative; the validated descriptor is.
   delete environment.AGENT_MUTATION_PER_TEST_CAPTURE;
+  delete environment.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE;
+  if (perTestCapture === 'diagnostic-v2') environment.AGENT_MUTATION_PER_TEST_CAPTURE = '1';
   delete environment.AGENT_RUNTIME_TEST_CONTEXT_ROOT;
   if (logs.testContext !== null) environment.AGENT_RUNTIME_TEST_CONTEXT_ROOT = logs.testContext.root;
   return environment;
@@ -544,6 +559,7 @@ async function executeChild(
   inputsMatch: boolean,
   logs: RunnerLogs,
   contextInputs: ReadonlyMap<string, Buffer>,
+  perTestCapture?: 'diagnostic-v2',
 ): Promise<MutationProcessResult> {
   if (!inputsMatch)
     return { exitCode: null, signal: null, spawnError: 'input-drift', timedOut: false, processCustody: null };
@@ -552,7 +568,7 @@ async function executeChild(
     return await executeMutationCommand(command, process.cwd(), mutationLimits.commandMs, {
       stdoutFile: logs.stdout,
       stderrFile: logs.stderr,
-      env: mutationTestEnvironment(logs),
+      env: mutationTestEnvironment(logs, perTestCapture),
     });
   } catch (error) {
     return { exitCode: null, signal: null, spawnError: errorCode(error), timedOut: false, processCustody: null };
@@ -666,6 +682,7 @@ function runnerReceipt(
   afterIdentity: RunnerIdentity,
   processResult: MutationProcessResult,
   started: number,
+  perTestCapture?: { mode: 'diagnostic-v2'; file: 'per-test-coverage.json'; bytes: number; sha256: string },
 ): Record<string, unknown> {
   return {
     schema: 'MutationRunnerReceipt/v3',
@@ -679,6 +696,7 @@ function runnerReceipt(
     partition_source_fingerprint: config.partitionSourceFingerprint,
     test_fingerprint: descriptor?.test_fingerprint ?? '',
     tool_fingerprint: descriptor?.tool_fingerprint ?? '',
+    ...(perTestCapture === undefined ? {} : { per_test_capture: perTestCapture }),
     command: recordedMutationCommand(command),
     execution_identity: identity,
     execution_identity_digest: executionIdentityDigest(identity),
@@ -722,7 +740,16 @@ async function run(): Promise<void> {
   await mkdir(paths.adapterDirectory, { mode: 0o700 });
   const identity = await runnerIdentity(config.root, config.tests, command, descriptor);
   const started = performance.now();
-  let processResult = await executeChild(command, descriptor !== null, logs, contextInputs ?? new Map());
+  // Only the unmutated baseline can supply a complete diagnostic capture.
+  // Mutants retain fail-fast execution and their existing assertion evidence.
+  const perTestCapture = activeMutant === undefined ? descriptor?.per_test_capture : undefined;
+  let processResult = await executeChild(
+    command,
+    descriptor !== null,
+    logs,
+    contextInputs ?? new Map(),
+    perTestCapture,
+  );
   let afterIdentity: RunnerIdentity;
   try {
     afterIdentity = await runnerIdentity(config.root, config.tests, command, descriptor);
@@ -732,6 +759,10 @@ async function run(): Promise<void> {
     processResult = { ...processResult, spawnError: 'bun-executable-after-check-failed' };
     afterIdentity = identity;
   }
+  const captureDigest =
+    perTestCapture === 'diagnostic-v2'
+      ? await junitDigest(path.join(paths.adapterDirectory, perTestCaptureFile))
+      : null;
   const receipt = runnerReceipt(
     config,
     config.tests,
@@ -741,6 +772,14 @@ async function run(): Promise<void> {
     afterIdentity,
     processResult,
     started,
+    captureDigest === null
+      ? undefined
+      : {
+          mode: 'diagnostic-v2',
+          file: perTestCaptureFile,
+          bytes: captureDigest.bytes,
+          sha256: captureDigest.sha256,
+        },
   );
   await persistReceipt(paths.receipt, paths.junit, logs, { ...receipt, input_rejection: rejection });
   setRunnerExitCode(processResult);

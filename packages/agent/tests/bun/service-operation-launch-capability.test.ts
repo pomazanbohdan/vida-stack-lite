@@ -852,54 +852,59 @@ test('legacy reserve and direct claim reject before launch and preserve the oper
   }
 });
 
-test('receipt rejection after gate replacement cannot write UNKNOWN through an expired exclusive capability', async () => {
-  const fixture = openCustodyFixture();
-  try {
-    reserveServiceOperationLaunch(
-      fixture.database,
-      fixture.workspaceId,
-      'release-pack-worker',
-      operationId,
-      requestDigest,
-      'c'.repeat(64),
-    );
-    const before = readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId);
-    const gate = path.join(fixture.root, '.vida/storage-admission.v1.sqlite');
-    const failure: unknown = await reconcileServiceOperationCustody(
-      fixture.database,
-      fixture.root,
-      fixture.relative,
-      fixture.workspaceId,
-      'release-pack-worker',
-      operationId,
-      requestDigest,
-      async () => {
-        await Promise.resolve();
-        renameSync(gate, gate + '.retained');
-        copyFileSync(gate + '.retained', gate);
-        throw new Error('receipt observation failed after gate replacement');
-      },
-    ).then(
-      () => undefined,
-      (error: unknown) => error,
-    );
-    expect(failure).toBeInstanceOf(AggregateError);
-    if (!(failure instanceof AggregateError)) throw new Error('Both receipt and custody errors must be retained.');
-    expect(failure.message).toBe('reconciliation receipt failed and UNKNOWN custody cleanup is unresolved');
-    expect(failure.errors).toHaveLength(2);
-    const causes: readonly unknown[] = failure.errors;
-    expect(causes.map((error) => (error instanceof Error ? error.message : null))).toEqual([
-      'receipt observation failed after gate replacement',
-      'Project storage admission: gate file or parent was replaced',
-    ]);
-    const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+test('receipt failure presence is preserved when gate replacement blocks UNKNOWN custody cleanup', async () => {
+  for (const receiptFailure of [new Error('receipt observation failed after gate replacement'), undefined]) {
+    const fixture = openCustodyFixture();
     try {
-      expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toEqual(before);
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      );
+      const before = readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId);
+      const gate = path.join(fixture.root, '.vida/storage-admission.v1.sqlite');
+      const failure: unknown = await reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        async () => {
+          await Promise.resolve();
+          renameSync(gate, gate + '.retained');
+          copyFileSync(gate + '.retained', gate);
+          throw receiptFailure;
+        },
+      ).then(
+        () => undefined,
+        (error: unknown) => error,
+      );
+      expect(failure).toBeInstanceOf(AggregateError);
+      if (!(failure instanceof AggregateError)) throw new Error('Both receipt and custody errors must be retained.');
+      expect(failure.message).toBe('reconciliation receipt failed and UNKNOWN custody cleanup is unresolved');
+      expect(failure.errors).toHaveLength(2);
+      const causes: readonly unknown[] = failure.errors;
+      expect(causes[0]).toBe(receiptFailure);
+      const cleanupFailure = causes[1];
+      expect(cleanupFailure).toBeInstanceOf(Error);
+      if (!(cleanupFailure instanceof Error)) throw new Error('Cleanup error must be retained.');
+      if (receiptFailure instanceof Error)
+        expect(receiptFailure.message).toBe('receipt observation failed after gate replacement');
+      expect(cleanupFailure.message).toBe('Project storage admission: gate file or parent was replaced');
+      const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      try {
+        expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toEqual(before);
+      } finally {
+        closeServiceOperationDatabase(reopened);
+      }
     } finally {
-      closeServiceOperationDatabase(reopened);
+      retainExpectedUnknownFixture(fixture.root, 'UNKNOWN cleanup remained unresolved after gate replacement');
     }
-  } finally {
-    retainExpectedUnknownFixture(fixture.root, 'UNKNOWN cleanup remained unresolved after gate replacement');
   }
 });
 

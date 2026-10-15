@@ -180,6 +180,11 @@ missing JUnit. Ordinary non-capture execution stays supported. Callback-backed
 skip and conditional modifier setup need positive controls. These diagnostic
 checks do not qualify a filtered runner or mutation score; scoped lifecycle and
 canonical-map admission remain with TESTING.
+Request parent-owned diagnostic capture only through TESTING's explicit pilot.
+Use the existing strict capture decoder on the same bounded buffer used for
+receipt hashing; a shallow envelope check does not validate nested evidence.
+Keep ambient flag denial and unchanged ordinary fingerprint controls separate
+from actual parent custody qualification. Capture alone never authorizes filters.
 The v2 diagnostic records plain describe ancestry and stable hook registration
 IDs separately from repeated invocation IDs. Test a selected nested body against
 all declarations and only its actually invoked outer/inner hooks; sibling

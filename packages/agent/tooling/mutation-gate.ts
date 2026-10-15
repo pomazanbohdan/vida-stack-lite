@@ -22,6 +22,7 @@ import {
   assertMutationTestContext,
 } from './mutation-command-runner.ts';
 import { qualityInputs, qualityFingerprint, repositoryRootForPackage, sha256 } from './bun-coverage-evidence.ts';
+import { readMutationPerTestCapture } from './mutation-per-test-evidence.ts';
 import {
   buildMutationTestCommand,
   collectExecutionIdentity,
@@ -57,15 +58,18 @@ type ReceiptValidationContext = {
 export type { MutationPartition } from './mutation-partitions.ts';
 type MutationSelection =
   | { scope: 'full'; inventory: boolean; partitions: MutationPartition[]; mapOnly?: true }
-  | { scope: 'partition-pilot'; inventory: false; partitions: [MutationPartition] };
+  | { scope: 'partition-pilot'; inventory: false; partitions: [MutationPartition]; perTestCapture?: 'diagnostic-v2' };
 
 export function selectMutationPartitions(args: readonly string[], partitions: MutationPartition[]): MutationSelection {
   if (args.length === 1 && args[0] === '--map-inventory')
     return { scope: 'full', inventory: false, mapOnly: true, partitions };
   if (args.length === 0 || (args.length === 1 && args[0] === '--inventory'))
     return { scope: 'full', inventory: args.length === 1, partitions };
-  if (args.length !== 2 || args[0] !== '--pilot-partition')
-    throw new Error('Expected no arguments, --inventory, --map-inventory, or --pilot-partition <exact-name>.');
+  const capture = args.length === 2 && args[0] === '--pilot-per-test-capture';
+  if (args.length !== 2 || (args[0] !== '--pilot-partition' && !capture))
+    throw new Error(
+      'Expected no arguments, --inventory, --map-inventory, --pilot-partition <exact-name>, or --pilot-per-test-capture <exact-name>.',
+    );
   const matches = partitions.filter((partition) => partition.name === args[1]);
   const partition = matches[0];
   if (
@@ -78,7 +82,12 @@ export function selectMutationPartitions(args: readonly string[], partitions: Mu
     !partitionSources(partition).length
   )
     throw new Error('Mutation pilot requires exactly one declared runnable partition.');
-  return { scope: 'partition-pilot', inventory: false, partitions: [partition] };
+  return {
+    scope: 'partition-pilot',
+    inventory: false,
+    partitions: [partition],
+    ...(capture ? { perTestCapture: 'diagnostic-v2' as const } : {}),
+  };
 }
 
 export function mutationJUnitCaseCensusMatches(
@@ -381,6 +390,7 @@ async function confirmRunnerReceipt(
   partitionSourceFingerprint: string,
   context: ReceiptValidationContext,
   expectedCases?: readonly MutationJUnitCase[],
+  perTestCapture?: 'diagnostic-v2',
 ): Promise<ReceiptOutcome> {
   try {
     const junitFile = junitName(partition, mutantId);
@@ -393,6 +403,32 @@ async function confirmRunnerReceipt(
     const stdoutFile = junitFile.replace(/\.xml$/u, '.stdout.log');
     const stderrFile = junitFile.replace(/\.xml$/u, '.stderr.log');
     const bodyEventsFile = junitFile.replace(/\.xml$/u, '.body.jsonl');
+    let captureReceipt:
+      | { mode: 'diagnostic-v2'; file: 'per-test-coverage.json'; bytes: number; sha256: string }
+      | undefined;
+    if (perTestCapture === 'diagnostic-v2') {
+      const adapterDirectory = path.join(reportDirectory, `${junitFile.replace(/\.xml$/u, '')}.adapters`);
+      const directoryBefore = await lstat(adapterDirectory);
+      if (!directoryBefore.isDirectory() || directoryBefore.isSymbolicLink())
+        throw new Error('Per-test coverage adapter directory is missing or linked.');
+      const captureBytes = await readBoundedEvidence(adapterDirectory, 'per-test-coverage.json');
+      const capture: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(captureBytes));
+      readMutationPerTestCapture(capture);
+      const directoryAfter = await lstat(adapterDirectory);
+      if (
+        !directoryAfter.isDirectory() ||
+        directoryAfter.isSymbolicLink() ||
+        directoryAfter.dev !== directoryBefore.dev ||
+        directoryAfter.ino !== directoryBefore.ino
+      )
+        throw new Error('Per-test coverage adapter directory changed while reading.');
+      captureReceipt = {
+        mode: 'diagnostic-v2',
+        file: 'per-test-coverage.json',
+        bytes: captureBytes.length,
+        sha256: sha256(captureBytes),
+      };
+    }
     if (
       !mutationReceiptMatches(receipt, {
         runId,
@@ -409,6 +445,7 @@ async function confirmRunnerReceipt(
         bodyEventsFile,
         executionIdentity: expectedIdentity,
         testContext,
+        ...(captureReceipt === undefined ? {} : { perTestCapture: captureReceipt }),
       })
     )
       throw new Error('Runner receipt does not bind the active mutant to the current parent snapshot.');
@@ -586,6 +623,7 @@ async function runMutationGate(): Promise<void> {
   const reportDirectory = await mkdtemp(path.join(evidenceRoot, `mutation-evidence-${runId}-`));
   const mutationTools = mutationToolInputs;
   const inputs = await qualityInputs(root, mutationTools);
+  const perTestCapture = selection.scope === 'partition-pilot' ? selection.perTestCapture : undefined;
   const sourceBindings = new Map(
     selectedPartitions.map(
       (partition) =>
@@ -595,7 +633,7 @@ async function runMutationGate(): Promise<void> {
         ] as const,
     ),
   );
-  const fingerprint = qualityFingerprint(inputs);
+  const fingerprint = qualityFingerprint(inputs, perTestCapture);
   const mapBinding = {
     run_id: runId,
     input_fingerprint: fingerprint,
@@ -632,7 +670,7 @@ async function runMutationGate(): Promise<void> {
   }
   writeMutationMapArtifact(reportDirectory, 'global-mutant-map.initial.json', initialMap);
   async function assertCurrentInputs(boundary: string): Promise<void> {
-    if (qualityFingerprint(await qualityInputs(root, mutationTools)) !== fingerprint)
+    if (qualityFingerprint(await qualityInputs(root, mutationTools), perTestCapture) !== fingerprint)
       throw new Error(`Mutation inputs changed at ${boundary}; qualification is UNKNOWN.`);
   }
 
@@ -668,6 +706,7 @@ async function runMutationGate(): Promise<void> {
             input_fingerprint: fingerprint,
             test_fingerprint: inputs.test_fingerprint,
             tool_fingerprint: inputs.tool_fingerprint,
+            ...(perTestCapture === undefined ? {} : { per_test_capture: perTestCapture }),
           };
           const descriptorHandle = await open(path.join(reportDirectory, `${partition.name}.inputs.json`), 'wx', 0o600);
           try {
@@ -696,6 +735,9 @@ async function runMutationGate(): Promise<void> {
           AGENT_RUNTIME_TOOL_FINGERPRINT: inputs.tool_fingerprint,
           AGENT_RUNTIME_MUTATION_TESTS: testFiles.join(','),
         };
+        delete environment.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE;
+        delete environment.AGENT_MUTATION_PER_TEST_CAPTURE;
+        if (perTestCapture !== undefined) environment.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE = perTestCapture;
         delete environment.__STRYKER_ACTIVE_MUTANT__;
         if (partition.environment === 'main' || partition.environment === 'bun') {
           if (partition.environment === 'main') delete environment.AGENT_RUNTIME_MUTATION_PART;
@@ -813,6 +855,8 @@ async function runMutationGate(): Promise<void> {
                 sourceBinding.sources,
                 sourceBinding.fingerprint,
                 context,
+                undefined,
+                perTestCapture,
               )
             : { status: 'unknown', reason: 'Partition source or byte-bound validation context is incomplete.' }
           : { status: 'unknown', reason: 'Stryker partition did not exit cleanly inside its trusted deadline.' };

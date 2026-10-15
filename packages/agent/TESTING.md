@@ -951,6 +951,22 @@ body/hook invocations. That flag must never turn an empty baseline or mutant
 selection into success. Runtime planning is distinct from the static inventory
 and cannot by itself authenticate immutable origin or qualify filtering.
 
+The explicit `--pilot-per-test-capture <exact-partition>` route requests v2
+baseline capture for one complete declared mutation partition. It binds diagnostic-v2
+into the existing input fingerprint, descriptor and parent environment. Ordinary
+commands omit the mode and scrub both inherited capture variables. The child
+enables capture only for the null-mutant baseline after descriptor admission;
+selected test argv stays full. Mutants keep fail-fast execution without capture,
+and unexpected mutant capture metadata denies. The parent derives the fixed
+baseline artifact below the expected JUnit adapter directory,
+reads it once with the existing bounded evidence reader, strictly decodes those
+same bytes, and matches their byte count and digest against the runner receipt.
+Missing, malformed, linked, changed, oversized or mismatched artifacts remain
+UNKNOWN. Directory identity checks assume trusted selected tests; they do not
+authenticate against a hostile same-user process. This route establishes only
+diagnostic artifact custody. Independent registration and actual public dry-run,
+JUnit, body and canonical-map joins remain necessary before any filtering.
+
 `validateMutationPerTestRegistration` performs this registration-only consistency
 check with the shared capture decoder, scope validation and JUnit/body-token
 traversal. Require exit0, zero body events, zero assertions and no per-body

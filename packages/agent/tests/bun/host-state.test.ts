@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
-import { expectReturned } from '../helpers/expect-rejection.ts';
+import { expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
 import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-reconciliation-authorization-fixture.ts';
 import { validateWorkState } from '../../src/contracts/work-state-schema.ts';
 import type {
@@ -4367,6 +4367,47 @@ describe('host SQLite governance persistence', () => {
     reopenStore();
     await Promise.resolve(expect(store.consumeApproval('approvals', second, apply)).rejects.toThrow(/replay/));
     expect(calls).toBe(2);
+  });
+  test('undefined approval callback rejection leaves durable UNKNOWN and cannot be retried', async () => {
+    const binding = { ...approvalBinding(), approval_id: 'approval-undefined' };
+    let calls = 0;
+    const rejection = await rejectionReason(
+      store.consumeApproval('approvals', binding, async () => {
+        calls++;
+        throw undefined;
+      }),
+    );
+    expect(rejection).toBeUndefined();
+    expect(calls).toBe(1);
+
+    const approvalRecord = () =>
+      requiredValue(
+        governanceRows()
+          .map((row) => parseJsonRecord(row.payload))
+          .find((row) => recordAt(row, 'binding').approval_id === binding.approval_id),
+        'undefined outcome approval receipt',
+      );
+    expect(approvalRecord().status).toBe('commit_unknown');
+    reopenStore();
+    expect(approvalRecord().status).toBe('commit_unknown');
+    const retainedRows = governanceRows();
+    const retainedStores = database
+      .query<GovernanceStoreSqlRow, []>('SELECT * FROM agent_host_governance_stores')
+      .all();
+    const retryFailure = await rejectionReason(
+      store.consumeApproval('approvals', binding, async () => {
+        calls++;
+      }),
+    );
+    expect(retryFailure).toBeInstanceOf(Error);
+    if (!(retryFailure instanceof Error)) throw new Error('UNKNOWN approval replay must return a typed denial.');
+    expect(retryFailure.message).toBe('workflow approval receipt replay or commit unknown');
+    expect(calls).toBe(1);
+    expect(governanceRows()).toEqual(retainedRows);
+    expect(database.query<GovernanceStoreSqlRow, []>('SELECT * FROM agent_host_governance_stores').all()).toEqual(
+      retainedStores,
+    );
+    expect(approvalRecord().status).toBe('commit_unknown');
   });
   test('failed final approval commit leaves an inspectable unknown outcome after reopen', async () => {
     database.exec(

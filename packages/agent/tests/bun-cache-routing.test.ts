@@ -45,7 +45,7 @@ const importedBunCacheApi: unknown = await import(pathToFileURL(path.join(source
 if (!isBunCacheApi(importedBunCacheApi))
   throw new TypeError('selected Bun module does not expose the pinned cache API');
 const { pinnedEnvironment, readPin, runPinnedBun } = importedBunCacheApi;
-const pin = readPin(baseline);
+const pin = readFileSync(path.join(baseline, '.bun-version'), 'utf8').trim();
 assert.equal(Bun.version, pin, 'test must use the exact selected Bun');
 
 type PinnedInvocationOptions = Parameters<NonNullable<NonNullable<Parameters<typeof runPinnedBun>[1]>['spawn']>>[2];
@@ -98,6 +98,10 @@ function expectedCache(root: string): string {
 }
 
 test('copied bundles have distinct stable cache namespaces and preserve warm contents', () => {
+  assert.equal(
+    expectReturned(() => readPin(baseline)),
+    pin,
+  );
   const first = pinFixture('first'),
     second = pinFixture('second');
   const firstEnv = expectReturned(() => pinnedEnvironment(process.execPath, { PATH: 'fixture-path' }, first));

@@ -563,6 +563,42 @@ describe('mutation execution receipts', () => {
     expect(mutationReceiptMatches(receipt(), expected)).toBe(true);
   });
 
+  test('per-test capture receipt is parent-opt-in, fixed-name and byte-digest bound', () => {
+    const capture = {
+      mode: 'diagnostic-v2' as const,
+      file: 'per-test-coverage.json' as const,
+      bytes: 123,
+      sha256: '9'.repeat(64),
+    };
+    const captureReceipt = { ...receipt(), per_test_capture: capture };
+    expect(mutationReceiptMatches(captureReceipt, expected)).toBe(false);
+    expect(mutationReceiptMatches(receipt(), { ...expected, perTestCapture: capture })).toBe(false);
+    expect(mutationReceiptMatches(captureReceipt, { ...expected, perTestCapture: capture })).toBe(true);
+
+    for (const malformed of [
+      undefined,
+      null,
+      { ...capture, mode: 'other' },
+      { ...capture, file: 'foreign.json' },
+      { ...capture, bytes: 0 },
+      { ...capture, bytes: 4 * 1024 * 1024 + 1 },
+      { ...capture, bytes: 1.5 },
+      { ...capture, sha256: 'A'.repeat(64) },
+      { ...capture, sha256: 'f'.repeat(63) },
+      { ...capture, extra: true },
+    ])
+      expect(
+        mutationReceiptMatches({ ...receipt(), per_test_capture: malformed }, { ...expected, perTestCapture: capture }),
+      ).toBe(false);
+
+    expect(
+      mutationReceiptMatches(
+        { ...receipt(), per_test_capture: { ...capture, sha256: '8'.repeat(64) } },
+        { ...expected, perTestCapture: capture },
+      ),
+    ).toBe(false);
+  });
+
   test('rejects a changed after-execution identity digest with the original identity otherwise intact', () => {
     expect(mutationReceiptMatches({ ...receipt(), execution_identity_after_digest: '0'.repeat(64) }, expected)).toBe(
       false,

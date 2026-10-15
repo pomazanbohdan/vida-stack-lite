@@ -17,6 +17,12 @@ export type MutationBodyEvent =
     }
   | { schema: 'MutationBodyEvent/v1'; test_file: string; kind: 'hook'; hook: string; error_observed: true };
 export type MutationJUnitCase = { test_file: string; name: string; outcome: 'passed' | 'skipped' | 'failed' | 'error' };
+export type MutationPerTestCaptureReceipt = {
+  mode: 'diagnostic-v2';
+  file: 'per-test-coverage.json';
+  bytes: number;
+  sha256: string;
+};
 type CaseObserver = (testcase: MutationJUnitCase) => void;
 export type MutationEvidenceReceipt = Record<string, unknown> & {
   junit_file: string;
@@ -25,6 +31,7 @@ export type MutationEvidenceReceipt = Record<string, unknown> & {
   exit_code: number;
   stdout_capture: CapturedOutput;
   stderr_capture: CapturedOutput;
+  per_test_capture?: MutationPerTestCaptureReceipt;
 };
 export type ObservedExit = { observed: true; exitCode: number } | { observed: false };
 export type TimedOutChild = Pick<Bun.Subprocess, 'pid' | 'exited' | 'signalCode' | 'kill' | 'unref'>;
@@ -536,6 +543,7 @@ export const mutationToolInputs = [
   'tooling/mutation-map-reporter.ts',
   'tooling/mutation-command-runner.ts',
   'tooling/mutation-evidence.ts',
+  'tooling/mutation-per-test-evidence.ts',
   'tooling/mutation-assertion-context.ts',
   'tooling/mutation-test-adapter.ts',
   'tooling/mutation-test-preload.ts',
@@ -578,9 +586,24 @@ export function mutationReceiptMatches(
     sandboxRoot: string;
     executionIdentity: Record<string, unknown>;
     testContext?: { root: string; inputs: { path: string; sha256: string }[] } | null;
+    perTestCapture?: MutationPerTestCaptureReceipt;
   },
 ): value is MutationEvidenceReceipt {
   if (!evidenceRecord(value) || !evidenceRecord(value.execution_identity)) return false;
+  const actualCapture = value.per_test_capture;
+  const captureMatches =
+    expected.perTestCapture === undefined
+      ? !Object.hasOwn(value, 'per_test_capture')
+      : evidenceRecord(actualCapture) &&
+        Object.keys(actualCapture).length === 4 &&
+        actualCapture.mode === 'diagnostic-v2' &&
+        actualCapture.file === 'per-test-coverage.json' &&
+        Number.isSafeInteger(actualCapture.bytes) &&
+        Number(actualCapture.bytes) > 0 &&
+        Number(actualCapture.bytes) <= 4 * 1024 * 1024 &&
+        typeof actualCapture.sha256 === 'string' &&
+        /^[0-9a-f]{64}$/u.test(actualCapture.sha256) &&
+        canonicalEvidenceJson(actualCapture) === canonicalEvidenceJson(expected.perTestCapture);
   return [
     value.schema === 'MutationRunnerReceipt/v3',
     value.run_id === expected.runId,
@@ -606,6 +629,7 @@ export function mutationReceiptMatches(
     value.stderr_file === expected.stderrFile,
     validCapturedOutput(value.stdout_capture),
     validCapturedOutput(value.stderr_capture),
+    captureMatches,
     canonicalEvidenceJson(value.command) === canonicalEvidenceJson(recordedMutationCommand(expected.command)),
     value.spawn_error === null,
     value.timed_out === false,
