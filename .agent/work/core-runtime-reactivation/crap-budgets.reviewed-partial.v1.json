@@ -59,7 +59,7 @@
     },
     {
       "file": "src/orchestration/observed-receipt-evidence.ts",
-      "sha256": "d3ab6643fe8645a935830a6778fce1784d6170015d14ee377d5bfc75e2b39291"
+      "sha256": "a74572dafb6bc1b3e1bfd47a4039df8ce4baf1618c7334b6270660ab608b0fc2"
     },
     {
       "file": "src/orchestration/observed-research-activation.ts",
@@ -463,7 +463,7 @@
     },
     {
       "file": "src/orchestration/source-preflight.ts",
-      "sha256": "5b85accf5844de1df135fc85f9ec0576a9e1ae4c80561f4982638687565c8003"
+      "sha256": "60cb68c1c8462df962b16a3e07c94fac371be7a462653950d153ac077363714b"
     },
     {
       "file": "src/orchestration/scoped-source-snapshot.ts",
@@ -479,7 +479,7 @@
     },
     {
       "file": "src/config/project-upgrade-existing-storage.ts",
-      "sha256": "3b5e0dd4c3b69f80cc676450dbb874e0ef69af6fc4a0de2d614c803f30bf5167"
+      "sha256": "8c017d4faec5415c643feea5ca0a20dde56bb9ee0b282f78caf38eba3f914be2"
     },
     {
       "file": "src/config/service-operation-custody.ts",
@@ -21317,13 +21317,13 @@
       "max_crap": 156,
       "rationale": "Retained pure preparation journal-to-reference map API. The former current journal index now delegates linear indexing and additionally admits only packet-authenticated original planning state for corrective runs; callers still consume the same map and current authorization checks remain.",
       "current_source_address": {
-        "line": 144,
+        "line": 148,
         "column": 7,
-        "start": 6009,
-        "end": 6479,
-        "bodyLine": 148,
+        "start": 6162,
+        "end": 6632,
+        "bodyLine": 152,
         "bodyColumn": 41,
-        "bodyEndLine": 154,
+        "bodyEndLine": 158,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -21347,13 +21347,13 @@
       "max_crap": 2,
       "rationale": "Transferred completed-wave items projection callback from the consolidated second index into the shared append helper. Same wave.items projection before current pending items; allJournalItems and its callback remain separate retained functions.",
       "current_source_address": {
-        "line": 123,
+        "line": 126,
         "column": 44,
-        "start": 5212,
-        "end": 5232,
-        "bodyLine": 123,
+        "start": 5327,
+        "end": 5347,
+        "bodyLine": 126,
         "bodyColumn": 54,
-        "bodyEndLine": 123,
+        "bodyEndLine": 126,
         "bodyEndColumn": 64
       },
       "source_address": {
@@ -53561,7 +53561,7 @@
         "line": 365,
         "column": 7,
         "start": 16266,
-        "end": 29637,
+        "end": 29618,
         "bodyLine": 365,
         "bodyColumn": 118,
         "bodyEndLine": 642,
@@ -176161,11 +176161,11 @@
       "current_source_address": {
         "line": 54,
         "column": 0,
-        "start": 2711,
-        "end": 3605,
+        "start": 2751,
+        "end": 3720,
         "bodyLine": 54,
         "bodyColumn": 115,
-        "bodyEndLine": 76,
+        "bodyEndLine": 79,
         "bodyEndColumn": 1
       },
       "current_complexity": 9
@@ -176176,13 +176176,13 @@
       "max_crap": 10,
       "rationale": "New extracted predicate owns reported-complete candidate eligibility and exact action/issue/run/workflow/config/Source linkage independently from broad uniqueness. Prospective authorized ceiling10, never current-derived.",
       "current_source_address": {
-        "line": 78,
+        "line": 81,
         "column": 0,
-        "start": 3607,
-        "end": 4226,
-        "bodyLine": 82,
+        "start": 3722,
+        "end": 4341,
+        "bodyLine": 85,
         "bodyColumn": 11,
-        "bodyEndLine": 94,
+        "bodyEndLine": 97,
         "bodyEndColumn": 1
       },
       "current_complexity": 8
@@ -176193,13 +176193,13 @@
       "max_crap": 10,
       "rationale": "New correction-only applicability guard for already packet-authenticated original planning. It rejects foreign schema/work/attempt/workspace/run and nested correction state without reading recovery data or granting rights. Prospective authorized ceiling10, never current-derived.",
       "current_source_address": {
-        "line": 96,
+        "line": 99,
         "column": 0,
-        "start": 4228,
-        "end": 4944,
-        "bodyLine": 100,
+        "start": 4343,
+        "end": 5059,
+        "bodyLine": 103,
         "bodyColumn": 8,
-        "bodyEndLine": 115,
+        "bodyEndLine": 118,
         "bodyEndColumn": 1
       },
       "current_complexity": 10
@@ -176210,16 +176210,16 @@
       "max_crap": 10,
       "rationale": "New internal append API adds one validated state into the caller-owned evidence map, delegates eligibility and broad tuple counts, then checks safe run/action/digest before publication of each reference. Its nested projection callback retains the original separate closure budget. Prospective authorized ceiling10, never current-derived.",
       "current_source_address": {
-        "line": 117,
+        "line": 120,
         "column": 0,
-        "start": 4946,
-        "end": 5891,
-        "bodyLine": 121,
+        "start": 5061,
+        "end": 6044,
+        "bodyLine": 124,
         "bodyColumn": 8,
-        "bodyEndLine": 141,
+        "bodyEndLine": 145,
         "bodyEndColumn": 1
       },
-      "current_complexity": 8
+      "current_complexity": 9
     },
     {
       "identity": "src/contracts/implementation-scope.ts#fn:compileImplementationScopeValidator#0",
@@ -186662,10 +186662,10 @@
         "line": 383,
         "column": 7,
         "start": 15173,
-        "end": 18264,
+        "end": 18365,
         "bodyLine": 387,
         "bodyColumn": 33,
-        "bodyEndLine": 454,
+        "bodyEndLine": 456,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 383. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -186676,13 +186676,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 402,
+        "line": 404,
         "column": 6,
-        "start": 16239,
-        "end": 16309,
-        "bodyLine": 402,
+        "start": 16324,
+        "end": 16394,
+        "bodyLine": 404,
         "bodyColumn": 16,
-        "bodyEndLine": 402,
+        "bodyEndLine": 404,
         "bodyEndColumn": 76
       },
       "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:expectedCloneSchema. The immediate parent and surrounding current Source lines 401-403 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
@@ -186693,13 +186693,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 408,
+        "line": 410,
         "column": 47,
-        "start": 16522,
-        "end": 16600,
-        "bodyLine": 409,
+        "start": 16607,
+        "end": 16685,
+        "bodyLine": 411,
         "bodyColumn": 6,
-        "bodyEndLine": 409,
+        "bodyEndLine": 411,
         "bodyEndColumn": 66
       },
       "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra. The immediate parent and surrounding current Source lines 407-409 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
@@ -186710,13 +186710,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 409,
+        "line": 411,
         "column": 28,
-        "start": 16562,
-        "end": 16599,
-        "bodyLine": 409,
+        "start": 16647,
+        "end": 16684,
+        "bodyLine": 411,
         "bodyColumn": 39,
-        "bodyEndLine": 409,
+        "bodyEndLine": 411,
         "bodyEndColumn": 65
       },
       "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:targetMastra/closure:CallExpression:arguments[0]#0. The immediate parent and surrounding current Source lines 408-410 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
@@ -186727,13 +186727,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 456,
+        "line": 458,
         "column": 0,
-        "start": 18266,
-        "end": 18432,
-        "bodyLine": 456,
+        "start": 18367,
+        "end": 18533,
+        "bodyLine": 458,
         "bodyColumn": 80,
-        "bodyEndLine": 462,
+        "bodyEndLine": 464,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 456. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -186744,13 +186744,13 @@
       "max_crap": 10,
       "current_complexity": 7,
       "current_source_address": {
-        "line": 464,
+        "line": 466,
         "column": 0,
-        "start": 18434,
-        "end": 19827,
-        "bodyLine": 464,
+        "start": 18535,
+        "end": 19928,
+        "bodyLine": 466,
         "bodyColumn": 76,
-        "bodyEndLine": 500,
+        "bodyEndLine": 502,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 464. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -186761,13 +186761,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 502,
+        "line": 504,
         "column": 0,
-        "start": 19829,
-        "end": 20287,
-        "bodyLine": 502,
+        "start": 19930,
+        "end": 20388,
+        "bodyLine": 504,
         "bodyColumn": 63,
-        "bodyEndLine": 509,
+        "bodyEndLine": 511,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 502. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -186778,13 +186778,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 511,
+        "line": 513,
         "column": 0,
-        "start": 20289,
-        "end": 20458,
-        "bodyLine": 511,
+        "start": 20390,
+        "end": 20559,
+        "bodyLine": 513,
         "bodyColumn": 50,
-        "bodyEndLine": 513,
+        "bodyEndLine": 515,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 511. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -204125,7 +204125,20 @@
   "quality_continuation_current_bindings": {
     "schema": "ScopedSourceAndReviewedLineageJoin/v1",
     "status": "SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_EXHAUSTIVE_NOT_NUMERIC",
-    "predecessor_commit": "245e568",
+    "predecessor_commit": "4513b7d",
+    "inventory_ref": "/workspace/attachments/quality-current-inventory-product-preflight-451-20261015.json",
+    "review_refs": [
+      "/workspace/attachments/quality-astra-blind-product-audit-451-20261015.md",
+      "/workspace/attachments/quality-preflight-review-transcript-451-20261015.md"
+    ],
+    "scoped_byte_capture_files": [
+      "src/config/project-upgrade-existing-storage.ts",
+      "src/orchestration/observed-receipt-evidence.ts",
+      "src/orchestration/source-preflight.ts"
+    ],
+    "reused_source_bindings": 146,
+    "reused_merge_capture": true,
+    "updated_addresses": 104,
     "counts": {
       "retained": 5438,
       "new": 1557,
@@ -204133,148 +204146,26 @@
       "current_roles": 6995,
       "source_files": 149
     },
-    "inventory_ref": "/workspace/attachments/quality-current-inventory-forward-linear-245-20261015.json",
-    "scoped_byte_capture_files": [
-      "bin/forward-candidate-admission.ts"
-    ],
-    "reused_source_bindings": 148,
-    "source_capture_ref": "/workspace/attachments/quality-forward-linear-source-capture-245-20261015.json",
-    "newly_bound": [
+    "current_functions": 7731,
+    "complexity_deltas": [
       {
-        "identity": "bin/forward-candidate-admission.ts#fn:closeRuntimeLoaderAliases#0",
-        "ceiling": 4,
-        "rationale": "Prospectively planned reverse-adjacency/live-Set closure owner replaces repeated all-declarations fixed-point scanning. Required iterations/default give4/4; no parent cap transfer or predicate wrapper."
-      },
-      {
-        "identity": "bin/forward-candidate-admission.ts#fn:closeRuntimeLoaderAliases#0/closure:CallExpression:arguments[0]#0",
-        "ceiling": 8,
-        "rationale": "Prospectively planned single per-declaration classifier for Identifier edges and exact ordinary createRequire seeds; required shape/initializer/constructor/list checks give8/8, independent of parent original allowance."
+        "identity": "src/orchestration/observed-receipt-evidence.ts#fn:appendPreparationJournalEvidence#0",
+        "before": 8,
+        "after": 9,
+        "frozen_cap": 10
       }
     ],
-    "retained_added": 5,
-    "removed_added": 1,
-    "independent_review_refs": [
-      "/workspace/attachments/quality-forward-linear-actual-review-245-20261015.md",
-      "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
-    ],
-    "prospective_plan": {
-      "commit": "245e568",
-      "ref": "/workspace/attachments/quality-forward-linear-prospective-plan-245-20261015.md",
-      "sha256": "f25019268d0a7efec20a9dca5cbf334886ae5d495c0b2ceb32e19c6cdaa87b10",
-      "independent_review": "/workspace/attachments/quality-forward-prospective-plan-review-cbd-20261015.md"
-    },
-    "parent": {
-      "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0",
-      "complexity": 3,
-      "original_ceiling": 9
-    },
-    "scoped_complexity_exceptions": [
-      {
-        "identity": "bin/recover-completed-source-report.ts#fn:isPassedNativeBuildCheck#0",
-        "complexity": 3,
-        "ceiling": 2
-      },
-      {
-        "identity": "src/orchestration/scoped-source-snapshot.ts#fn:snapshotRuntimePackageSources#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:loader/binding:loader#0",
-        "complexity": 13,
-        "ceiling": 10
-      },
-      {
-        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:visit/binding:visit#0",
-        "complexity": 33,
-        "ceiling": 26
-      },
-      {
-        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:visit/binding:visit#0/binding:runtimeSpecifier/closure:CallExpression:arguments[0]#1",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/init-core.ts#fn:initializationContext#0",
-        "complexity": 5,
-        "ceiling": 4
-      },
-      {
-        "identity": "bin/historical-terminal-synthesis-capture.ts#fn:configuredContextFromAction#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/historical-terminal-synthesis-capture.ts#fn:isRetainedConfiguredContext#0",
-        "complexity": 4,
-        "ceiling": 1
-      },
-      {
-        "identity": "src/orchestration/session-engine-snapshot.ts#fn:readInitialSourceContinuationSessionEngineSnapshot#0/binding:currentObservations/closure:CallExpression:arguments[0]#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/reconcile-synthesis-qualification.ts#fn:journalForArtifact#0",
-        "complexity": 6,
-        "ceiling": 2
-      },
-      {
-        "identity": "src/orchestration/persistent-session-handoff.ts#fn:sourceWritePreflightResolver#0/closure:ReturnStatement:argument[0]#0/binding:assertCurrent/binding:assertCurrent#0",
-        "complexity": 12,
-        "ceiling": 11
-      },
-      {
-        "identity": "src/orchestration/persistent-session-handoff.ts#fn:taskSourceMutationPolicyResolver#0/closure:ReturnStatement:argument[0]#0/binding:assertCurrent/binding:assertCurrent#0",
-        "complexity": 11,
-        "ceiling": 10
-      },
-      {
-        "identity": "src/orchestration/persistent-session-handoff.ts#class:MastraSessionLedger/method:activateReadOnlyReplacement#0/closure:CallExpression:arguments[0]#0",
-        "complexity": 20,
-        "ceiling": 19
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:withExclusiveLock#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:withExclusiveLockAsync#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:linuxFileExists#0",
-        "complexity": 4,
-        "ceiling": 3
-      },
-      {
-        "identity": "bin/runtime-config-rebind.ts#fn:readExternalBytes#0",
-        "complexity": 35,
-        "ceiling": 30
-      },
-      {
-        "identity": "bin/runtime-config-rebind.ts#fn:streamedNativeAssetDigest#0",
-        "complexity": 16,
-        "ceiling": 9
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
-        "complexity": 6,
-        "ceiling": 1
-      }
-    ],
+    "all_frozen_caps_unchanged": true,
     "missing_current_dispositions": 736,
     "missing_original_dispositions": 178,
-    "limits": "One changed Source AST/SHA capture reused. Originalfivefrozenfields exact, caller3<=original9, newlineargraphrole4/callback8 bounded by published preimplementation plan. No parent allowance transfer, generic predicate wrappers, fullplan/coverage/dynamicCRAP/mutation/Runtime claim. Five retained native-turn/release projections and one removed collect have independent actualSource review; remaining gaps stay open."
+    "static_deficits": 19
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
-    "source_commit": "245e568",
+    "source_commit": "4513b7d",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-forward-linear-bindings-245-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-product-preflight-bindings-451-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",

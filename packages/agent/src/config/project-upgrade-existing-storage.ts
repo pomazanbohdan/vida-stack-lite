@@ -388,13 +388,15 @@ export async function prepareUnifiedExistingStorageImage(
   requireMerge(binding.schema === 'VidaExistingStorageMerge/v1', 'unsupported binding');
   requireMerge(binding.source_host_digest === hostImage.sha256, 'Host source binding differs');
   requireMerge(binding.source_mastra_digest === mastraImage.sha256, 'Mastra source binding differs');
-  const host = openImage(hostImage, 'Host');
-  const mastra = openImage(mastraImage, 'Mastra');
+  let host: Database | undefined;
+  let mastra: Database | undefined;
   let target: Database | undefined;
-  let primaryFailure: unknown;
+  let primaryFailure: { error: unknown } | undefined;
   let output: UnifiedDatabaseImage | undefined;
   const closeErrors: unknown[] = [];
   try {
+    host = openImage(hostImage, 'Host');
+    mastra = openImage(mastraImage, 'Mastra');
     const inventory = await inspectExistingMergeInputs(host, mastra);
     const withPinnedSchema = await addPinnedSchemaToHostClone(host);
     target = Database.deserialize(Buffer.from(withPinnedSchema), { strict: true, safeIntegers: true });
@@ -437,7 +439,7 @@ export async function prepareUnifiedExistingStorageImage(
       mastra_rows_digest: inventory.mastraRowsDigest,
     });
   } catch (error) {
-    primaryFailure = error;
+    primaryFailure = { error };
   } finally {
     closeDatabase(target, closeErrors);
     closeDatabase(host, closeErrors);
@@ -445,8 +447,8 @@ export async function prepareUnifiedExistingStorageImage(
   }
   if (primaryFailure !== undefined) {
     if (closeErrors.length > 0)
-      throw new AggregateError([primaryFailure, ...closeErrors], 'existing merge and database close failed');
-    throw primaryFailure;
+      throw new AggregateError([primaryFailure.error, ...closeErrors], 'existing merge and database close failed');
+    throw primaryFailure.error;
   }
   if (closeErrors.length > 0) throw new AggregateError(closeErrors, 'existing merge database close failed');
   requireMerge(output !== undefined, 'unified image was not produced');

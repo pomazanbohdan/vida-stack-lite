@@ -1,8 +1,8 @@
-import { expectRejection } from './helpers/expect-rejection.ts';
+import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import { LibSQLStore } from '@mastra/libsql';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -162,6 +162,74 @@ function binding(host: ClosedDatabaseImage, mastra: ClosedDatabaseImage): Existi
 function openUnified(bytesBase64: string): Database {
   return Database.deserialize(Buffer.from(bytesBase64, 'base64'), { strict: true, safeIntegers: true });
 }
+
+test.each([false, true])(
+  'existing merge closes the first image on second-open failure, cleanup failure=%s',
+  async (cleanupFails) => {
+    const image = makeHost();
+    const primary = new Error('second image open failed');
+    const cleanup = new Error('first image close acknowledgement failed');
+    const deserialize = Database.deserialize.bind(Database);
+    const close = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+    let opened: Database | undefined;
+    let closed = false;
+    let opens = 0;
+    const opening = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+      if (++opens === 2) throw primary;
+      opened = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+      return opened;
+    });
+    const closing = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, ...args) {
+      close.apply(this, args);
+      if (this === opened) {
+        closed = true;
+        if (cleanupFails) throw cleanup;
+      }
+    });
+    try {
+      const failure = await rejectionReason(prepareUnifiedExistingStorageImage(image, image, binding(image, image)));
+      expect(opens).toBe(2);
+      expect(closed).toBe(true);
+      if (cleanupFails) {
+        expect(failure).toBeInstanceOf(AggregateError);
+        if (!(failure instanceof AggregateError)) throw new Error('Expected both retained causes.');
+        expect(failure.errors).toEqual([primary, cleanup]);
+      } else expect(failure).toBe(primary);
+    } finally {
+      opening.mockRestore();
+      closing.mockRestore();
+      if (opened && !closed) opened.close(true);
+    }
+  },
+);
+
+test('existing merge preserves a thrown undefined inspection cause while closing both images', async () => {
+  const image = makeHost();
+  const deserialize = Database.deserialize.bind(Database);
+  const opened: Database[] = [];
+  const opening = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+    const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+    opened.push(database);
+    return database;
+  });
+  let inspected = false;
+  const querying = spyOn(Database.prototype, 'query').mockImplementation(() => {
+    inspected = true;
+    throw undefined;
+  });
+  try {
+    const failure = await rejectionReason(prepareUnifiedExistingStorageImage(image, image, binding(image, image)));
+    expect(inspected).toBe(true);
+    expect(opened).toHaveLength(2);
+    expect(failure).toBeUndefined();
+    querying.mockRestore();
+    for (const database of opened) expect(() => database.query('SELECT 1').get()).toThrow();
+  } finally {
+    querying.mockRestore();
+    opening.mockRestore();
+    for (const database of opened) database.close(true);
+  }
+});
 
 function preserveMergeFixture(merged: Database): void {
   const rows = merged

@@ -623,10 +623,10 @@ export function validateSourceWritePreflight(input: SourceWritePreflightInput): 
       if (evidenceRef.startsWith('artifact://session-observation/') && !journalEvidence.has(evidenceRef))
         fail('preparation cites a journal observation that is not current');
     }
+    if (records.has(record.kind)) fail('lifecycle preparation set has duplicate kinds');
     records.set(record.kind, record);
     references.push(reference);
   }
-  if (new Set(records.keys()).size !== records.size) fail('lifecycle preparation set has duplicate kinds');
   if (!records.has('source_plan')) fail('Source write requires a current source plan');
 
   if (requiresSourcePrewriterSecurityReview(work.lifecycle.risk, taskPacket.risk_flags))

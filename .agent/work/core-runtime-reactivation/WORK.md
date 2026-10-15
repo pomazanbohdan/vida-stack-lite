@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `50aad81` at origin/main.
+- Published predecessor: `4513b7d` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -81,9 +81,43 @@ quality-global-{product-async,test-async,test-timeout,pending}-candidates-202610
 | Child environment and output lifetime | executeMutationCommand restores variables omitted by its caller; its completed output leaves a500ms timer active | Current explicit-env and timer-disposal fixes, focused regressions |
 | Static inventory and retained evidence | Static gate enters package/.tmp Stryker sandbox and rejects its dependency symlink | Exclude only declared package-root scratch boundaries; nested Source .tmp and boundary symlinks remain checked |
 | Host transactions and research callers | withWorkingMutation and withHistoricalNormalizationMutation replace action and rollback causes with a generic HostStateError; async ROLLBACK can replace them again | Product defect confirmed by control flow; add dual-failure/retained-state regressions, reuse existing cleanup outcome owner without moving CAS/fence order |
-| Existing database merge | prepareUnifiedExistingStorageImage opens Host before the second image and outside its cleanup try; rejection of the second image leaves the first handle unclosed. Its undefined sentinel also loses a thrown undefined primary cause | Product defects confirmed by control flow; protect acquisition from the first handle, use a tagged work outcome, verify close attempts and both failure identities |
+| Existing database merge | Acquisition is now protected from the first handle; a tagged outcome preserves thrown undefined and primary plus close errors | Implemented and independently accepted; full affected file17PASS. Publish current packet; native disk qualification remains separate |
 | Coverage and test fixtures | Full300000ms operation remains incomplete; real30s quarantine cases and repeated CLI startup are distinct costs; one caller-pilot failure path retains its deadline timer | Preserve real quarantine acceptance; share deterministic policy cases, retain bounded real controls; qualify resource/shard eligibility before parallel activation |
-| Workflow, authorization, CLI and SDK | Inspected preflight denies stale/foreign bindings; clean controller environments are passed directly; SDK currentSidecar checks HEAD, receipt and every output hash | No equivalent environment reinsertion or stale-dist acceptance confirmed in inspected callers; retain existing guards |
+| Workflow, authorization, CLI and SDK | Fixed digest-invalid twins overwriting validated evidence and repeated preparations concealing omitted current artifacts; clean controller environments and SDK freshness guards remain | Preflight and producer22PASS; reviewer-attribution negative case rejects before attempt reservation. No end-to-end exploit or Runtime acceptance inferred |
+
+### Current product correction packet
+
+Human ended the high-token audit mode and resumed ordinary bounded fixes.
+Both Astra lanes are stopped; their completed findings remain in
+quality-astra-blind-{product-audit-451,error-patterns}-20261015.md.
+The product reviewer accepted the merge correction and the actual preflight
+patch. The latter verdict arrived as a final agent message, recorded explicitly
+as a root transcript in quality-preflight-review-transcript-451-20261015.md.
+
+Merge regressions reproduced3FAIL before correction, then the complete affected
+file passed17tests/108assertions in2.04s:
+quality-merge-acquisition-{before,focused}-451-20261015.log.
+Preflight controls reproduced duplicate preparation acceptance, invalid-twin
+selection and invalid reviewer attribution before the correction. Both insertion
+orders, malformed/ambiguous existing controls and producer contracts now pass:
+22PASS/0FAIL across2files in6.78s,
+quality-preflight-evidence-focused-451-20261015.log.
+Static473captured/472checkedTS/0diagnostics:
+quality-preflight-evidence-static-451-20261015.log.
+
+One scoped capture of each newly changed preflight file reuses the already
+captured merge file and146unchanged Source bindings. The reviewed partial now
+binds104updated addresses;7731current functions and6995represented roles remain.
+Append-evidence CC9<=prospective10; other touched complexities are unchanged.
+All frozen ceilings,736current/178original gaps and19static deficits remain.
+quality-product-preflight-bindings-451-20261015.json is Source lineage only,
+not executable CRAP, coverage or mutation admission. Retained UNKNOWN evidence
+and unrelated BASE/root bun.lock are preserved.
+
+Next bounded corrections from the completed error audit: thrown-undefined
+recovery-finalization custody, unowned temporary cleanup, original/close cause
+loss and SDK rollback cause loss. These remain open until actual fixes and
+regressions; they are not closed by the audit.
 
 The child environment defect was reproduced independently before correction:
 quality-mutation-owner-boundary-before-20261015.json records a child exit12
@@ -100,7 +134,9 @@ ACCEPT:quality-mutation-architecture-actual-review-20261015.md.
 Static retries are retained: initial check encountered the retained sandbox
 boundary, the next found8new TypeScript diagnostics, all corrected in
 quality-mutation-architecture-static-final-50a-20261015.log. Numeric gates,
-publication remain pending for this batch.
+qualification remains pending. Architecture packet4513b7d passed the strict
+hook and was pushed nonforce; quality-mutation-architecture-strict-commit-retry-
+20261015.log and quality-mutation-architecture-push-20261015.log.
 
 The first strict commit hook rejected one unsafe any assignment in the timer
 test's Reflect.apply result. Replaced it with the typed direct timer call;

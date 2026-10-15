@@ -48,7 +48,7 @@ export function observedReceiptEvidenceReference(
   return `artifact://session-observation/${journal.state.run_id}/${actionId}/${observationDigest}`;
 }
 
-type ObservationMultiplicity = { count: number; malformed: boolean };
+type ObservationMultiplicity = { count: number; malformed: boolean; validatedItem: MastraLedgerItem | null };
 
 /** Count the same broad population as observedReceiptEvidenceReference, including failed/foreign duplicates. */
 function observationMultiplicity(items: readonly MastraLedgerItem[]): ReadonlyMap<string, ObservationMultiplicity> {
@@ -63,10 +63,13 @@ function observationMultiplicity(items: readonly MastraLedgerItem[]): ReadonlyMa
     )
       continue;
     const key = JSON.stringify([item.request.action_id, observation.output_digest]);
-    const entry = counts.get(key) ?? { count: 0, malformed: false };
+    const entry = counts.get(key) ?? { count: 0, malformed: false, validatedItem: null };
     counts.set(key, entry);
     try {
-      if (observation.output_digest === canonicalJsonDigest(observation.summary)) entry.count++;
+      if (observation.output_digest === canonicalJsonDigest(observation.summary)) {
+        entry.count++;
+        entry.validatedItem = item;
+      }
     } catch {
       // The one-shot reference helper also rejects this tuple if any matching summary throws.
       entry.malformed = true;
@@ -129,6 +132,7 @@ function appendPreparationJournalEvidence(
     if (
       entry?.count !== 1 ||
       entry.malformed ||
+      entry.validatedItem !== item ||
       !/^[a-f0-9]{64}$/.test(item.request.action_id) ||
       !/^[a-f0-9]{64}$/.test(observation.output_digest)
     )

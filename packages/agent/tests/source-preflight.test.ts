@@ -641,6 +641,16 @@ test('fully bound current preflight passes before Host attempt reservation', () 
   assertNoAttemptMarker(value);
 });
 
+test('repeated preparation inputs cannot replace omitted current artifacts', () => {
+  const value = fixture();
+  assert.equal(validateSourceWritePreflight(value.input).length, 5);
+  const plan = value.input.preparations.find((item) => item.reference.kind === 'source_plan');
+  assert.ok(plan);
+  value.input.preparations = value.input.preparations.map(() => plan);
+  assert.throws(() => validateSourceWritePreflight(value.input), /duplicate kinds/);
+  assertNoAttemptMarker(value);
+});
+
 test('corrective preflight binds the engine run to its unchanged Host base run before reservation', () => {
   const value = fixture({ corrective: true });
   assert.notEqual(value.input.journal.state.run_id, workOf(value).execution.run_id);
@@ -711,6 +721,26 @@ test('planning observation evidence independently binds identity, status, source
     assertNoAttemptMarker(value);
   }
 });
+
+test.each(['before', 'after'] as const)(
+  'evidence selects the validated item with a digest-invalid twin %s it',
+  (order) => {
+    const value = correctivePlanningFixture();
+    const planning = value.input.planningJournal;
+    assert.ok(planning);
+    const base = planning.completed[0]!.items[0]!;
+    assert.ok(base.observation);
+    const invalid = clone(base);
+    setProperty(invalid.observation!, 'summary', 'unbound changed summary');
+    assert.notEqual(canonicalJsonDigest(invalid.observation!.summary), base.observation.output_digest);
+    setProperty(planning.completed[0]!, 'items', order === 'before' ? [invalid, base] : [base, invalid]);
+    const evidence = sourcePreparationJournalEvidence(value.input.journal, workOf(value), planning);
+    const reference = `artifact://session-observation/${planning.run_id}/${base.request.action_id}/${base.observation.output_digest}`;
+    assert.equal(evidence.get(reference), base);
+    assert.equal(validateSourceWritePreflight(value.input).length, 5);
+    assertNoAttemptMarker(value);
+  },
+);
 
 test('evidence uniqueness is per run and ignores structurally mismatched duplicates', () => {
   const value = correctivePlanningFixture();
@@ -831,6 +861,22 @@ test('stale runtime configuration and session journal versions fail before Host 
   setProperty(staleJournal.input.journal.state, 'step_id', 'changed-after-read');
   assert.throws(() => validateSourceWritePreflight(staleJournal.input), /same-thread journal is stale/);
   assertNoAttemptMarker(staleJournal);
+});
+
+test('a digest-invalid twin cannot supply configured reviewer attribution', () => {
+  const value = fixture({ highRisk: true });
+  const reviewer = value.input.journal.state.completed
+    .flatMap((wave) => wave.items)
+    .find((item) => item.request.role === 'security-prewriter');
+  assert.ok(reviewer);
+  const invalid = clone(reviewer);
+  setProperty(reviewer.request, 'role', 'source-planner');
+  setProperty(invalid.observation!, 'summary', 'unbound reviewer attribution');
+  assert.notEqual(canonicalJsonDigest(invalid.observation!.summary), invalid.observation!.output_digest);
+  setProperty(value.input.journal.state, 'items', [invalid]);
+  setProperty(value.input.journal.version, 'digest', canonicalJsonDigest(value.input.journal.state));
+  assert.throws(() => validateSourceWritePreflight(value.input), /configured reviewer observation/);
+  assertNoAttemptMarker(value);
 });
 
 test('high-risk preflight accepts only the configured prewriter reviewer observation in the current journal', () => {
