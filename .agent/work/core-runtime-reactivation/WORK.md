@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `d42137b` at origin/main.
+- Published predecessor: `d320564` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1487,6 +1487,70 @@ both root logs: quality-kernel-initialization-custody-focused-resume-20261015.lo
 The reviewer confirms the gap is resolved:
 quality-kernel-initialization-cases-review-resume-20261015.md. Final numeric
 capture remains pending after this case update.
+
+Checkpointd320564 passed the normal strict hook and is published. The new
+cleanup rejection propagates through the awaited promise's error handler;
+strict lint rejects an explicit throw directly inside finally. Formatter and
+the final477-file strict check/type-aware lint then pass. Rejected hook attempts
+remain in quality-kernel-initialization-{commit,qualified-commit}-resume-
+20261015.log; final hook: quality-kernel-initialization-final-commit-resume-
+20261015.log. No hook bypass or ceiling change is used.
+
+The final five-file kernel capture passes240/0/1825Bunassertions in101.18s
+(104.700s owned outer): quality-kernel-initialization-coverage-resume-
+20261015.log, retained owner quality-retirement-coverage-ZwSSyo, report
+packages/agent/coverage/bun-unified/diagnostics/
+3d83dfcb-e3af-4f5e-91c7-55153680a74b.focused-coverage.json. Current kernel
+metrics:162/162functions,602/602lines,632/632statements, all100%; branches
+393/408(96.32%). MaxCC/function-entryCRAP remain31. No functions or statements
+remain unhit. The15residual branch counters remain open; exact global coverage,
+genuine frozen budgets and the oversized kernel mutation campaign are not
+closed. Projection: quality-kernel-initialization-metrics-resume-20261015.json.
+
+### Fresh main-host coverage and assertion-confirmed mutation
+
+The previous host's lost PASS artifacts cannot establish current qualification.
+A fresh main-host focused capture passes13/0/42assertions in408ms (2.712s
+owned outer). src/config/host-capability.ts has7/7functions,21/21lines,
+22/22statements,11/11branches, all100%; maxCC/function-entryCRAP3. Report:
+packages/agent/coverage/bun-unified/diagnostics/
+4a7029fa-1af2-4d0d-b34f-e4fa761bd2f5.focused-coverage.json; retained owner
+quality-retirement-coverage-host-KzR097 and quality-host-capability-metrics-
+resume-20261015.json. Frozen qualification remains pending.
+
+The mutation preflight initially rejected missing dist/sdk-formation.json before
+any mutant launch. Preserve quality-host-capability-mutation-resume-20261015.log
+and owner quality-retirement-mutation-host-0rs5vf. The maintained SDK readiness
+owner found successful current-commit CI run38749468389/attempt1/artifact
+11979469695, but direct ZIP transport failed. Use its documented GitHub connector
+bridge, then the unchanged current-CI/archive-digest/output validator. Archive:
+/workspace/attachments/1c9c30e9-4448-4ed0-968b-340c8c627d28/
+vida-sdk-test-inputs-d320564-run38749468389.zip (626548bytes). Both transport
+outcomes are retained in quality-sdk-inputs-{before-host-mutation,
+host-mutation-bridge}-resume-20261015.log. No local build or Source-as-dist
+fallback is used; installed Runtime or SDK delivery acceptance is not implied.
+
+The subsequent declared main-host pilot completes with status pilot-pass,
+effective_score1/required1:69/69assertion-confirmed Killed, zero non-Killed,
+UNKNOWN, provenance/source/baseline/report errors. Owned outer20.134s;
+complete output/same boot/group gone. Evidence:
+quality-host-capability-mutation-qualified-resume-20261015.log and owner
+quality-retirement-mutation-host-mzJTgJ; input fingerprint
+3ead8e1ce08f5a3052477c78a16fca95ce65341947a199d69d7341f66f66a32d.
+Run49d41595-921b-4fd9-9cf6-4b9da0b163b8 evidence_directory under the private
+package .tmp mount maps to /tmp/quality-retirement-mutation-host-functional-
+p6Geof/package-tmp/mutation-evidence-49d41595-921b-4fd9-9cf6-4b9da0b163b8-hd1ojs.
+Retain it with its original parent stdout and69receipt bodies. Canonical map
+SHA256ab82c822dbdc9fa4ea8c9c986b59204a94e872adde622db388e3c50360fb9275;
+it remains globally_qualified:false. Parent validation reuses one lifecycle
+analysis and two executable observations (650ms total). No repeat full suite,
+kernel1962mutant campaign or implicit per-test runner qualification is added.
+The numeric summary's score is a0..1fraction; the local projection checks1,
+which denotes100%, not100as the raw schema value. Final projection:
+quality-host-capability-mutation-confirmed-summary-final-resume-20261015.json.
+These results qualify only main-host's current pilot; full_qualification:false,
+other contours and frozen-baseline joins remain open. Continue kernel residual
+branches and the already identified per-test capture controls next.
 
 ### Current product correction packet
 
