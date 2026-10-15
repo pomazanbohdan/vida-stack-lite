@@ -4678,6 +4678,32 @@ Windows13Babel files/67directories/0reparsepoints are coordinator-attributed fac
 effects, protected configs/instructions and installed0.1.3 readiness remain its
 owner's scope. No duplicate consumer writers or notices.
 
+## Sequential complete closure: main-cedar
+
+The current pinned contour is main-cedar. Complete closure requires exact
+F/L/S/B, function correspondence, frozen complexity/dynamic CRAP and100%
+assertion-confirmed Killed together; coverage alone does not advance the contour.
+Fresh ebf7461 coverage reportceab5638-ce16-42ff-9f01-15c03a90c7f9 records
+33PASS/0FAIL/12273assertions,4.39s Bun/7335.197776ms owned outer operation.
+
+The complete declared mutation partition generated195mutants but its immutable
+baseline failed32PASS/1FAIL before mutation execution. Run35762d67-2bac-48fb-a2e1-4c8de3b0e56b
+is UNKNOWN, with no Killed claim. Retained launch/output is at
+/workspace/attachments/quality-mutation-main-cedar-HQdmh1. The kernel composition
+test attempted fallback file reservations beneath its immutable configuration
+fixture. It now supplies a genuine test-owned native HostState governance
+capability instead. It preserves all behavioral assertions and the immutable
+configuration contract; it closes its SQLite handle once, retains failures/late
+completion with an exact locator, and deletes only successful timely fixtures.
+The corrected focused case passes1/0 with34assertions; tests TypeScript passes.
+The full declared mutation baseline and all195mutants still need a fresh run.
+
+The complete executable CRAP plan and referenced historical coverage/runtime
+artifacts are absent. The reviewed partial remains non-executable. A strictly
+local proof using immutable original Source complexity and the stronger bound
+currentCC/currentCRAP<=originalCC is under review; it cannot admit missing
+historical coverage or claim global gate acceptance.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
