@@ -4885,6 +4885,15 @@ failure; actual execution disproved that prediction by observing the earlier
 duplicate identity guard. The final tests distinguish both real public contracts.
 Its memo remains /workspace/attachments/quality-lifecycle-five-wave-review-20261015.md.
 
+Published386bf6c contains the five-lane test correction packet, pinned public
+contour script fix and independently reviewed contract scope metadata. The
+existing scoped gate now admits only that immutable contract review key for
+its two declared Source files; cross-scope denial and missing-real-report
+controls failed before the pin and pass after it. Complete CLI controls:
+19PASS/110assertions; tooling184 TypeScript PASS. No own-cap additions or
+removals were admitted by this bounded review-key change. Fresh lifecycle and
+contract numerical proofs remain pending at this checkpoint.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
