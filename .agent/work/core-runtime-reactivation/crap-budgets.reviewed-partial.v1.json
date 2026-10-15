@@ -220722,5 +220722,48 @@
     "semantic_delta_disposition": "Existing readClock callback, safeStringProperty/read closure and invokeTimed threshold roles select a type-validated value before comparisons or string access, preventing unsafe eager operations. These corrections preserve callable responsibilities and do not authorize higher CC or CRAP. Other callable bodies remain unchanged.",
     "frozen_ceilings": "All original baseline CC and max CC remain 1. Saved max CRAP remains 1 for 26 roles and 2 for 10 roles. All original baseline measurements, identities, maxima and rationale are preserved without reset from candidate data.",
     "limits": "Independent Source-lineage review only. Current exact coverage, scoped original-source lower-bound CRAP and full assertion-confirmed mutation receipts remain mandatory. Historical measurements/runtime artifacts are not admitted. The partial remains non-executable and non-exhaustive."
+  },
+  "scope_review_runtime_facade_20261015": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "source_commit": "db93d0cfe6e02794a113538efca9e2a59c8bcb00",
+    "baseline_ref": "b549951",
+    "frozen_rows_ref": "6e4655b1db2a32d08ae722940ff50b10d9e56ca6",
+    "files": [
+      "src/lifecycle/runtime-facade.ts"
+    ],
+    "retained": 24,
+    "new_functions": 0,
+    "removed_functions": 0,
+    "independent_review_lane": "luna_runtime_facade_lineage_review",
+    "review_artifact": "/workspace/attachments/quality-runtime-facade-lineage-review-20261015.md",
+    "correspondence": "Independent comparison finds original/current Source unchanged, including imports, exported types, 20 named functions and four nested callbacks. All 24 original/current identity pairs are unchanged; no added/removed roles are claimed.",
+    "identities": [
+      "src/lifecycle/runtime-facade.ts#fn:fail#0",
+      "src/lifecycle/runtime-facade.ts#fn:stable#0",
+      "src/lifecycle/runtime-facade.ts#fn:stable#0/closure:CallExpression:arguments[0]#0",
+      "src/lifecycle/runtime-facade.ts#fn:digest#0",
+      "src/lifecycle/runtime-facade.ts#fn:text#0",
+      "src/lifecycle/runtime-facade.ts#fn:optionalText#0",
+      "src/lifecycle/runtime-facade.ts#fn:integerOrNull#0",
+      "src/lifecycle/runtime-facade.ts#fn:digestOrNull#0",
+      "src/lifecycle/runtime-facade.ts#fn:objectOrEmpty#0",
+      "src/lifecycle/runtime-facade.ts#fn:pick#0",
+      "src/lifecycle/runtime-facade.ts#fn:identity#0",
+      "src/lifecycle/runtime-facade.ts#fn:validateDocumentationStatus#0",
+      "src/lifecycle/runtime-facade.ts#fn:buildRuntimeAssuranceContext#0",
+      "src/lifecycle/runtime-facade.ts#fn:validateRuntimeAssuranceContext#0",
+      "src/lifecycle/runtime-facade.ts#fn:compactRuntimeAssuranceContext#0",
+      "src/lifecycle/runtime-facade.ts#fn:statusDelta#0",
+      "src/lifecycle/runtime-facade.ts#fn:statusDelta#0/binding:changed/closure:CallExpression:arguments[0]#0",
+      "src/lifecycle/runtime-facade.ts#fn:statusDelta#0/binding:changed/closure:CallExpression:arguments[0]#1",
+      "src/lifecycle/runtime-facade.ts#fn:exactFields#0",
+      "src/lifecycle/runtime-facade.ts#fn:exactFields#0/closure:CallExpression:arguments[0]#0",
+      "src/lifecycle/runtime-facade.ts#fn:validateDeltaIdentity#0",
+      "src/lifecycle/runtime-facade.ts#fn:validateDeltaChanges#0",
+      "src/lifecycle/runtime-facade.ts#fn:validateDeltaWatermark#0",
+      "src/lifecycle/runtime-facade.ts#fn:validateStatusDelta#0"
+    ],
+    "frozen_ceilings": "All saved original baseline measurements, identity pairs, CC/CRAP caps and rationale are unchanged. Each saved maxCC equals original baseline CC; each saved maxCRAP is at least original CC. Candidate measurements cannot establish or reset these caps.",
+    "limits": "Manual Source correspondence only, not numeric admission. The existing owner must prove exhaustive original/current inventory, exact current coverage, currentCC/currentCRAP<=originalCC and saved caps; complete assertion-confirmed mutation remains independently mandatory. The partial remains non-executable and non-exhaustive and no absent historical measurement is admitted."
   }
 }

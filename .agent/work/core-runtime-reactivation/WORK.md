@@ -4762,10 +4762,14 @@ frozen caps remain at db93d0c:.agent/work/core-runtime-reactivation/WORK.md and
 
 Use the existing registry Source src/lifecycle/runtime-facade.ts and full declared
 tests/smoke.test.ts. The existing partial contains24retained roles and no added
-or removed functions for this Source. An independent blind Luna lane reviews
-original/current correspondence and saved caps, with no duplicate numerical
-passes. Publish the actual bounded review before admitting a scoped proof;
-then capture exact coverage, frozen CC/CRAP and full confirmed mutation.
+or removed functions for this Source. Independent blind Luna review passes
+manual correspondence: original/current Source, imports, types and all24roles
+are unchanged. The existing partial records that bounded review without changing
+any frozen row. Review memo:
+/workspace/attachments/quality-runtime-facade-lineage-review-20261015.md.
+Bind its published review in the existing gate, then capture exact coverage,
+frozen CC/CRAP and full confirmed mutation. No numerical admission is inferred
+from unchanged Source or manual review.
 The partial stays non-executable/non-exhaustive and missing global historical
 artifacts are not admitted by these local receipts.
 
