@@ -4758,47 +4758,39 @@ The independent timing lineage review, semantic dispositions and unchanged
 frozen caps remain at db93d0c:.agent/work/core-runtime-reactivation/WORK.md and
 /workspace/attachments/quality-timing-frozen-lineage-review-20261015.md.
 
-## Pinned open contour: bun-runtime-facade
+## Complete local contour: bun-runtime-facade
 
-Fresh e69b2f079768b61cd4c27e6f25222ad7a4ba159f coverage
-c7e51a49-e488-4c6e-ae64-72c431c0beb7 records16PASS/0FAIL/412assertions,
-1.75s Bun/4549.241626ms owned outer, exact F24/24,L89/89,S104/104,B104/104.
-The same-run conservative frozen proof passes all24retained identities with
-maxCC10/maxCRAP10, using original b549951 Source and the published64f18b31
-review. Retained coverage root:
-/workspace/attachments/quality-declared-bun-runtime-facade-IqgaKl.
-Complete mutation85f685a5-8955-4e3d-baa7-9bdb6ea8a5e5 executes318mutants in
-284087.871435ms owned outer, with complete output/process-group termination.
-Strict result is148/318assertion-confirmed Killed,170UNKNOWN,0survivors,
-effective score0.465408805; raw Stryker318Killed is not confirmed quality.
-All UNKNOWN report unproven Bun assertion failure; no provenance/report/Source
-mismatch or runner timeout is reported. Retained terminal root:
-/workspace/attachments/quality-mutation-bun-runtime-facade-7rLXT2.
-The projection retains71observations and3/44complete local triples; facade
-stays pinned and41triples remain open.
+The24retained roles have a complete compatible local triple at
+e9629b3c45cde992ef688af33b2538c7e3a67391. Coverage run
+0a54ac33-6eb2-4eca-b8e3-3778c2cc419f records16PASS/0FAIL/677assertions,
+1.76s Bun/4789.343358ms owned outer, exact F24/24,L89/89,S104/104,B104/104.
+Its same-run conservative frozen proof passes all24identities, maxCC10/CRAP10,
+against original b549951 Source and immutable64f18b31 reviewed ceilings.
+Complete mutation6c1920bb-9a27-4c51-95ce-9c7350d1c0d8 records318/318
+assertion-confirmed Killed, effective score1, zero UNKNOWN/survivors/provenance/
+report/Source errors,280380.25342ms owned outer. Output and process-group
+termination are complete and observed on the same boot. Retained roots:
+/workspace/attachments/quality-declared-bun-runtime-facade-EdxOIg and
+/workspace/attachments/quality-mutation-bun-runtime-facade-QUK9N3.
+Exact coverage/proof reports use the0a54ac33-6eb2-4eca-b8e3-3778c2cc419f prefix
+under packages/agent/coverage/bun-unified/diagnostics/.
 
-A blind Luna analysis traces sampled failures to expected-success public calls
-throwing before semantic assertions, and the local blocked helper's raw error on
-unexpected acceptance. It distinguishes real negative assertions from raw
-errors. A single smoke.test.ts writer now repairs those oracles using the
-existing expectReturned, one actual invocation and object shape checks before
-field access. Negative public calls and precise diagnostics remain assertions;
-imports/hooks/setup and unrelated APIs are not wrapped. No classifier, mutation
-exclusion, product authorization guard or threshold changes.
-Analysis: /workspace/attachments/quality-facade-assertion-oracle-analysis-20261015.md.
-Root review preserves every original identity/value assertion, adds a string
-result oracle before hashing and keeps completion checks to one invocation.
-Nine affected assurance/delta cases pass with643assertions; tests448 TypeScript
-and documentation links/headings pass. Fresh compatible numerical runs remain
-pending after the published correction.
+The derived snapshot retains75observations,4/44historical coverage+mutation
+pairs and4/44complete local triples;40triples remain open. Global qualification,
+current freshness after later changes and formed Runtime remain separate.
+The earlier incomplete103/105branch result, unreachable private default removal,
+independent reviews,148/318confirmed plus170UNKNOWN campaign, one-invocation
+expected-completion/object/string oracles and negative-rejection correction are
+retained at e9629b3:.agent/work/core-runtime-reactivation/WORK.md with exact
+failed/UNKNOWN evidence locators. No failure was relabeled PASS.
 
-The first103/105branch result, real public zero-input rejection test, proven
-unreachable private minimum0 default removal, independent review, unchanged
-frozen rows and exact earlier evidence locators remain at
-e69b2f0:.agent/work/core-runtime-reactivation/WORK.md. The published review's
-byte-identical description applies before that separately reviewed correction.
-The partial stays non-executable/non-exhaustive; missing global historical
-measurements/runtime artifacts remain unadmitted.
+P1 follow-up: split the nine pure facade cases from the seven unrelated package
+integration cases using the existing registry. Preserve every behavioral
+assertion and all five root re-export identity contracts; no test-name filter,
+new runner or numerical waiver. Independent bounded architecture review accepts
+this route: /workspace/attachments/quality-facade-test-boundary-efficiency-20261015.md.
+A full fresh coverage/proof/318-mutant rerun must qualify the changed selection;
+no speedup is claimed from the existing unlike timing observations.
 
 ## Prepared next review: bun-lifecycle-state
 
