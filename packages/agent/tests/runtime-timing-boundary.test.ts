@@ -66,6 +66,32 @@ function eventAt(events: readonly RuntimeTimingEvent[]): RuntimeTimingEvent {
 }
 
 describe('direct maintained-source completeness', () => {
+  test('uses default options and emits one valid successful timing event', async () => {
+    const messages: unknown[] = [];
+    const output = spyOn(console, 'error').mockImplementation((message: unknown) => {
+      messages.push(message);
+    });
+    try {
+      await Promise.resolve(expect(invokeTimed('readConfig', () => 7)).resolves.toBe(7));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(messages).toHaveLength(1);
+      expect(messages[0]).toMatch(/^runtime call: /);
+      let event: unknown;
+      expect(() => {
+        event = JSON.parse(String(messages[0]).slice('runtime call: '.length));
+      }).not.toThrow();
+      expect(event).toMatchObject({
+        schema: 'RuntimeTiming/v1',
+        operation: 'readConfig',
+        threshold_ms: 2_000,
+        outcome: 'success',
+      });
+      expect(event).not.toHaveProperty('error_code');
+    } finally {
+      output.mockRestore();
+    }
+  });
+
   test('timing handles success, threshold, clock failure, regression, sink rejection, and classified errors', async () => {
     expect(defaultRuntimeClock().monotonicNs()).toBeTypeOf('bigint');
     expect(defaultRuntimeTimingSink().record).toBeTypeOf('function');

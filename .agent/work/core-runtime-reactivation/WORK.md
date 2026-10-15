@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `6a95ae4` at origin/main.
+- Published predecessor: `82f53d1` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -319,6 +319,25 @@ Retain quality-timing-extraction-commit-6a95-20261015.log.
 Focused SDK support remains an explicit later capture task, using separate
 formation and coverage Source sets within the existing owner; design:
 quality-focused-sdk-minimal-design-6a95-20261015.md. It is not enabled here.
+
+Published82f53d1 passed the strict474-file hook and ordinary push. Its first
+timing-focused report68dc54b8-336e-48dd-81f6-37b778270f5a completed exit0 in5680ms,
+without timeout and with complete owned-group receipts. It measured functions
+36/36,lines67/67,statements76/76, but branches0/1. All current CC/entry-CRAP are1;
+frozen qualification remains pending. Summary:
+quality-runtime-timing-focused-summary-82f53d1-20261015.json.
+The missing branch is invokeTimed's default options initializer. Added a real
+default-options call with exact result, one valid JSON telemetry event and the
+contract's2000ms threshold, retaining spy cleanup. Two native cases passed with
+154assertions in118ms. Changing the actual default threshold to2001 makes the
+new case fail; original Source bytes were restored. Logs:
+quality-runtime-timing-default-options-82f53d1-20261015.log and
+quality-timing-default-negative-82f-20261015.log. Fresh numeric runs follow
+publication; the earlier branch gap is not relabeled.
+Strict lint found Bun's resolves matcher declared non-thenable. Promise.resolve
+adopts its actual runtime result before awaiting; no cast, detached assertion or
+body-error reclassification is used. Retain
+quality-timing-default-commit-82f-20261015.log; normal strict retry follows.
 
 Blind planning at quality-runtime-core-next-minimal-6a7-20261015.md confirms the
 existing runtime-core partition still requires configured-workflow/smoke and
