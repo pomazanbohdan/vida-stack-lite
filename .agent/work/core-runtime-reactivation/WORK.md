@@ -246,6 +246,36 @@ Independent blind Luna accepted the actual causal diff in
 quality-main-host-baseline-cause-4c6-20261015.md. Fresh numeric measurement and
 local coverage/CRAP implementation remain pending.
 
+Published23ae277 corrects baseline hook classification; strict formatting,
+473-file typecheck, lint and Knip completed in the commit hook, and ordinary
+non-force push succeeded. WORK is tracked despite the ignored parent directory;
+the initial add warning did not exclude its tracked changes. The first hook
+attempt rejected formatting, then the exact test file was formatted and the
+strict hook passed. No hook bypass was used.
+
+The same first-contour review found parent child-health assertions in host and
+envelope boundary tests. They could label a child infrastructure failure as a
+parent assertion kill. Both now share requireSynchronousChildSuccess in the
+existing synchronous-child-outcome helper, which throws ordinary errors for
+abnormal/nonzero exits and missing completion markers. Child assertion/counter
+receipt integration remains pending; this correction prevents false evidence.
+The initial new-export probe failed at module load and is not causal proof.
+The subsequent exact legacy expect-check negative control reproduced false
+assertion_cause:true; quality-child-health-legacy-negative-23ae277-20261015.log.
+The corrected three affected files passed34/0 with1026assertions in7.78s:
+quality-child-health-focused-23ae277-20261015.log. Root restored the ordinary-error
+implementation after the negative control; targeted control passed1/0 with8
+assertions. Independent Luna review found that the existing unknown predicate's
+truthiness was weaker than the old callers' strict error/signal comparisons.
+Three malformed-success controls reproduced the gap (7expected failure events,
+4actual): quality-child-health-review-negative-23ae277-20261015.log.
+The success guard now preserves the original exact comparisons while the
+separate unknown classifier keeps its existing callers unchanged. Final three
+affected files passed34/0 with1029assertions:
+quality-child-health-final-files-23ae277-20261015.log. Retain the original ISSUES
+review quality-child-health-review-23ae-20261015.md; do not relabel it ACCEPT.
+No product bug, numeric score or speedup is inferred.
+
 ## Root-owned rapid test and product audit
 
 This is a breadth-first Source review with targeted call-chain inspection, not

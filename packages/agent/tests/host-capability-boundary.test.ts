@@ -2,6 +2,7 @@ import { describe, expect, mock, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
 import { constants as realFsConstants } from 'node:fs';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 
 const isolatedCaseEnvironment = 'HOST_CAPABILITY_BOUNDARY_ISOLATED_CASE';
 
@@ -16,19 +17,8 @@ function runIsolatedMockCase(name: string): void {
       timeout: 4_500,
     },
   );
-  const output = `${child.stdout ?? ''}\n${child.stderr ?? ''}`;
   const completionMarker = `BUN_TEST_CASE_COMPLETE:${name}`;
-  if (child.error !== undefined || child.signal !== null || child.status !== 0 || !output.includes(completionMarker)) {
-    const diagnostic = output.slice(-8_000);
-    process.stderr.write(
-      `Isolated case failed: ${name}; status=${String(child.status)}; signal=${String(child.signal)}; ` +
-        `error=${child.error === undefined ? 'none' : String(child.error)}\n${diagnostic}\n`,
-    );
-  }
-  expect(child.error).toBeUndefined();
-  expect(child.signal).toBe(null);
-  expect(child.status).toBe(0);
-  expect(output).toContain(completionMarker);
+  requireSynchronousChildSuccess(child, completionMarker);
 }
 
 const providerAccess = (provider: SafeRepositoryAccess['provider']) =>

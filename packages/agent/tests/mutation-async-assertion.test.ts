@@ -4,6 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { confirmedRunnerOutcome, junitOutcome, parseMutationBodyEvents } from '../tooling/mutation-evidence.js';
+import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
@@ -422,6 +423,42 @@ test('real adapter confirms failure when the shared rejection helper receives fu
     ]);
     const outcome = junitOutcome(child.junit, [child.selectedTest], [], child.events);
     expect(confirmedRunnerOutcome(child.exitCode, outcome.outcome)).toBe('killed');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test('child health failures never become assertion-confirmed mutation kills', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-child-health-'));
+  try {
+    const helperPath = path.join(root, 'tests', 'helpers', 'synchronous-child-outcome.ts');
+    await mkdir(path.dirname(helperPath), { recursive: true });
+    await writeFile(
+      helperPath,
+      await readFile(fileURLToPath(new URL('./helpers/synchronous-child-outcome.ts', import.meta.url))),
+    );
+    const cases = [
+      { status: 1, signal: null, stdout: 'COMPLETE', stderr: '' },
+      { status: null, signal: 'SIGKILL', stdout: 'COMPLETE', stderr: '' },
+      { status: null, signal: null, error: { code: 'ETIMEDOUT' }, stdout: '', stderr: '' },
+      { status: 0, signal: null, stdout: '', stderr: '' },
+      { status: 0, signal: null, error: null, stdout: 'COMPLETE', stderr: '' },
+      { status: 0, stdout: 'COMPLETE', stderr: '' },
+      { status: 0, signal: '', stdout: 'COMPLETE', stderr: '' },
+    ];
+    const child = await runAdapterChild(
+      root,
+      `import { test } from 'bun:test';\nimport { requireSynchronousChildSuccess } from ${JSON.stringify(helperPath)};\n${cases.map((result, index) => `test('child health ${index}', () => requireSynchronousChildSuccess(${JSON.stringify(result)}, 'COMPLETE'));`).join('\n')}\n`,
+      'child-health',
+    );
+    expect(child.exitCode).toBe(1);
+    expect(child.events).toHaveLength(cases.length);
+    for (const event of child.events)
+      expect(event).toMatchObject({ kind: 'body', assertion_cause: false, assertion_source: null });
+    expect(() => junitOutcome(child.junit, [child.selectedTest], [], child.events)).toThrow(
+      'JUnit failure is not proven to be a Bun assertion failure.',
+    );
+    requireSynchronousChildSuccess({ status: 0, signal: null, stdout: 'COMPLETE', stderr: '' }, 'COMPLETE');
   } finally {
     await rm(root, { recursive: true, force: true });
   }

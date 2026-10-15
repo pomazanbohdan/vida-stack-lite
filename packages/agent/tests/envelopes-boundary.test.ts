@@ -5,6 +5,7 @@ import type { RuntimeEnvelope, RuntimeEnvelopeRevisionBinding } from '../src/con
 import { configuredTestContext } from './configured-context.js';
 import fc from 'fast-check';
 import { assertProperty } from './helpers/assert-property.js';
+import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 
 function runIsolatedMockCase(name: string): void {
   const child = spawnSync(process.execPath, ['test', '--test-name-pattern', name, 'tests/envelopes-boundary.test.ts'], {
@@ -13,19 +14,8 @@ function runIsolatedMockCase(name: string): void {
     encoding: 'utf8',
     timeout: 120_000,
   });
-  const output = `${child.stdout ?? ''}\n${child.stderr ?? ''}`;
   const completionMarker = `BUN_TEST_CASE_COMPLETE:${name}`;
-  if (child.error !== undefined || child.signal !== null || child.status !== 0 || !output.includes(completionMarker)) {
-    const diagnostic = output.slice(-8_000);
-    process.stderr.write(
-      `Isolated case failed: ${name}; status=${String(child.status)}; signal=${String(child.signal)}; ` +
-        `error=${child.error === undefined ? 'none' : String(child.error)}\n${diagnostic}\n`,
-    );
-  }
-  expect(child.error).toBeUndefined();
-  expect(child.signal).toBe(null);
-  expect(child.status).toBe(0);
-  expect(output).toContain(completionMarker);
+  requireSynchronousChildSuccess(child, completionMarker);
 }
 
 function hasValidateRequest(value: unknown): value is { readonly validateRequest: true } {

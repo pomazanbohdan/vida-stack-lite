@@ -154,6 +154,12 @@ child or descendant stopped. Arm a real timer before a readiness handshake when
 the test depends on observing a deadline. Keep child, cleanup and parent limits
 inside the owning case bound.
 
+Use `tests/helpers/synchronous-child-outcome.ts`'s
+`requireSynchronousChildSuccess` for isolated test-process health and completion
+markers. Ordinary errors preserve the distinction between child infrastructure
+failure and body assertion failure. A successful parent guard does not provide
+the child's assertion causality or coverage counters.
+
 Prepare public CLI child environments through the existing pinnedEnvironment
 owner before launch, preserving explicit caller overrides. A raw environment
 can make the entrypoint reload operation modules after cache-routing self-

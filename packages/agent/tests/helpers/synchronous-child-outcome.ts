@@ -6,3 +6,15 @@ export function isUnknownSynchronousChild(
 ): boolean {
   return Boolean(result.error) || Boolean(result.signal) || !Number.isInteger(result.status);
 }
+
+export function requireSynchronousChildSuccess(
+  result: Pick<SpawnSyncReturns<string>, 'error' | 'signal' | 'status' | 'stdout' | 'stderr'>,
+  completionMarker: string,
+): void {
+  const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  if (result.error !== undefined || result.signal !== null || result.status !== 0 || !output.includes(completionMarker))
+    throw new Error(
+      `Child test did not complete successfully: ${completionMarker}; status=${String(result.status)}; ` +
+        `signal=${String(result.signal)}; error=${String(result.error)}\n${output.slice(-8_000)}`,
+    );
+}

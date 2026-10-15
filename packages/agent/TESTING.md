@@ -204,6 +204,11 @@ A parent assertion about child exit status, timeout or reporter integrity cannot
 prove that the child's own failure was caused by an assertion. Bind and classify
 child test/body evidence before qualifying nested failures as Killed; until then
 keep that mutation scope pending. Preserve ordinary test failures and UNKNOWN.
+For synchronous isolated-test health and completion checks, reuse
+`tests/helpers/synchronous-child-outcome.ts`'s `requireSynchronousChildSuccess`.
+It throws an ordinary error on abnormal/nonzero exit or a missing completion
+marker. Host and envelope boundary tests use this shared owner. Their successful
+parent checks do not supply child assertion or coverage evidence.
 
 The four upgrade denial scenarios share one sequential worker to amortize
 module loading. Each inner Bun test keeps its5000ms deadline and fresh repository.
