@@ -1370,7 +1370,7 @@ export function fixture({
       '$1gpt-6-sol$2high',
     ),
   );
-  cpSync(path.join(source, 'schemas'), path.join(root, bundle, 'schemas'), { recursive: true });
+  if (!sourceMode) cpSync(path.join(source, 'schemas'), path.join(root, bundle, 'schemas'), { recursive: true });
   if (extraProject) {
     const values = parseRuntimeConfigYaml(readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8')),
       originalProject = values.projects[0],

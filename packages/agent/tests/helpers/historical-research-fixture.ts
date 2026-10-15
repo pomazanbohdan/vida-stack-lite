@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { configuredTestContext } from '../configured-context.ts';
+import { configuredTestRepositoryRoot } from '../configured-context.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import { canonicalJson, canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { buildObservedResearchResult } from '../../src/orchestration/observed-research-result.ts';
@@ -78,7 +78,7 @@ function createHistoricalResearchFixtureInternal(
   overrides: HistoricalResearchFixtureOptions,
   activationMode: HistoricalResearchActivationMode,
 ): HistoricalResearchFixtureFoundation | HistoricalResearchReportFixture {
-  const { repositoryRoot } = configuredTestContext();
+  const repositoryRoot = configuredTestRepositoryRoot();
   const root = mkdtempSync(path.join(os.tmpdir(), 'vida-historical-research-'));
   writeFileSync(
     path.join(root, 'agent-runtime.config.v1.yaml'),

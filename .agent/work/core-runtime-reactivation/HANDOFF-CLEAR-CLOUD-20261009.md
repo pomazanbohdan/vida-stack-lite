@@ -89,7 +89,7 @@ Requested model/service settings are distinct from observed host capabilities.
 
 ## Current evidence and limits
 
-Published predecessor before this packet: 7eb4099. Maintained Source TS migration is
+Published predecessor before this packet: 34d3646. Maintained Source TS migration is
 complete; old1271 CLI diagnostics and old JS counts are historical.
 The7f4c265 SDK archive passed its OWN extracted verifier, with external
 node_modules outside payload custody. This is not native qualification.
@@ -104,16 +104,16 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents6453roles across147bound files. One scoped
-AST+SHA capture advances the native observer correction, reusing other
-qualified bindings and inventories. Frozen allowances stay original.
+The current partial represents6620roles across147bound files. The current join
+adds167independently reviewed retained roles using cached inventories and the
+single changed rebind Source capture. Frozen allowances stay original.
 Installer27<=31, native loaders4<=4, controller target2<=2 and Bun resolver34<=37 have scoped proof;
 Native recognizer29<=original32 and factory4<=own10 now have scoped proof;
-observer6<=own10 now has scoped proof. Retained callback/context deficits and
-rebind stable-version6>original5 remain open. Eighteen represented static overages and
-1276current/718original dispositions remain; this is not coverage progress.
-The current join corrects six missing reviewed new-role rows in the predecessor's
-non-executable partial array and validates counter/array equality before saving.
+observer6<=own10 now has scoped proof. Rebind stable-version is5<=original5.
+Retained callback/context deficits remain open. Twenty-two represented static
+overages and1109current/551original dispositions remain; this is not coverage
+progress. The current join validates original caps, one-to-one roles and actual
+counter/array equality before saving and after reading back the saved partial.
 Approval schema/key/identity compatibility is repaired with17focused cases;
 full current numeric evidence remains pending.
 Unbound Source inventory freshness
@@ -136,6 +136,16 @@ Native-import boundary affected file80PASS/0FAIL with unchanged finite-reference
 and binding guards. An inert private namespace launch returned0; current complete
 resource review, GitHub SDK-read egress and descendant terminal controls are still
 unqualified. Historical UNKNOWN resources remain fenced. Exact receipts are in WORK.
+Current fixture correction removes eager import configuration loads and resolves
+the historical fixture Source path without loading a discarded Source context.
+Both corrections have independent actual-source review. The complete affected
+fixture-lifecycle file passed23cases/223assertions in38.34s. The isolated public
+Source repair now reaches43assertions but still exceeds30s, at75.51s case/77.22s
+command. Its12CLI calls include roughly6-8s repair calls; this is measured
+diagnostic evidence, not a passing case or speedup qualification. Retain both
+independent Source captures/freshness guard and failed private roots. An inert
+PID1/readonly/descendant namespace control passed; that does not qualify full
+coverage or resource reuse. WORK owns exact outcomes and custody.
 Current Source interruption/activation cases have focused proof in retained WORK
 history; they do not qualify active .vida cutover or native Runtime.
 

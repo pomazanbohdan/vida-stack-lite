@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `7eb4099` at origin/main.
+- Published predecessor: `34d3646` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1265,11 +1265,121 @@ wrote its two assigned output artifacts. It is preserved, not executed or cleane
 This prompt-only worker contract does not enforce filesystem isolation. Fresh
 independent review used actual Source and did not import that script.
 
+## Current unfinished version and timeout correction
+
+Published34d3646 passed strict format/type/lint/Knip and ordinary push. Its80-case
+native-import proof and exact original-cap review remain scoped evidence above.
+Current unpublished scalar refactor restores the validated fixed-index stable
+version loop6->5<=original5 and removes a duplicate candidate version parse in
+the manifest predicate4->3. No function or policy is added. Current capture:
+`/workspace/attachments/quality-stable-version-capture-34d-20261015.json`.
+Source inventory remains7729. Static current gate470checked/471capturedTS/
+0diagnostics: `quality-stable-version-types-34d-20261015.log`.
+Independent actual-diff review is `quality-stable-version-review-20261015.md`;
+its claim that b549951 lacks the predecessor is incorrect for the genuine `.mjs`
+path. Root read the actual published `.mjs` comparator at lines110-116; renamed
+`.ts` path absence is not absence of the original implementation.
+
+The affected public Source repair point FAILED its existing30s case limit after
+90104.93ms/43assertions,92.70s command time. It is not green, not a speedup or numeric
+evidence: `quality-stable-version-public-repair-34d-20261015.log`. No retained-root
+warning or custody receipt proves its fixture survived or descendants quiesced.
+Do not infer either from direct exit or missing PIDs. The fixture now skips the
+second schemas copy in Source mode because executable inventory already includes
+every schema JSON; full frozen inventory/beforeimage proof remains. The schemas
+directory contains only JSON paths. Static current gate still passes after that
+fixture correction: `quality-source-fixture-types-34d-20261015.log`. Timing remains
+unqualified. Fixture analysis: `quality-source-repair-fixture-cost-34d-20261015.md`.
+
+Do not remove the two independent Source inventories/snapshots merely to reduce
+cost. Their digest comparison detects a byte/domain change between observations;
+one shared snapshot would make this freshness guard tautological. Keep every
+per-invocation/lock-local recheck. Root did not implement that proposal. Current
+review: `/workspace/attachments/quality-source-capture-freshness-design-34d-20261015.md`.
+That worker wrote the preceding product-cost artifact path despite its assigned
+new filename, replacing its earlier proposal; Root preserved the resulting bytes
+at the assigned freshness path. The earlier proposal is retained in the tool
+transcript, not claimed as an intact on-disk original. No product Source was changed
+by that worker.
+
+Prospective inert namespace/descendant control passed with explicit user namespace,
+disabled nested user namespaces, dropped capabilities and Bun as PID1. Actual
+status binds host child43707 to pid namespace4026532212 and terminal0; child
+readiness, foreign readonly write denial and unchanged post-terminal tick are
+observed. Kernel PID1 semantics are the containment rationale, not a missing PID
+or the tick check alone. No suite/resource/numeric qualification follows:
+`quality-namespace-control-34d-explicit-userns-20261015.json` and `.log`.
+The preceding control failed argv validation before its command; preserve
+`quality-namespace-control-34d-20261015.json` and its retained directory.
+
+The isolated readonly-Source focused diagnostic did not reach its selected case.
+At helper import, delivered-work-continuation-fixture.ts eagerly called
+loadRuntimeConfig(runtimeRoot); upgrade-output probing attempted a Source CAS
+sidecar and correctly failed EROFS. Result0PASS/1FAIL/1error,1.70s, not a faster
+test or a repeated timeout. Source/dependencies were readonly and all writable
+temp/home/cache/output roots private; the namespace init's terminal1 is recorded.
+Retain `/home/agent/.cache/vida-cloud-tooling/tmp/quality-source-repair-profile-BarYUA`.
+Records: `quality-source-repair-namespace-profile-34d-20261015.json` and `.log`.
+Fix this helper import effect before a further diagnostic; do not remount old
+Source state writable to work around it. Full coverage SDK GitHub egress and full
+resource review remain separate open prerequisites. Historical UNKNOWN stays fenced.
+
+Root merged167independently accepted retained roles:59safe/60rebind/48run.
+Thirteen rejected pairings remain excluded. All5072retained rows preserve the
+five exact original complexity/coverage/CRAP fields. Partial is now6620=
+5072retained+1548new,78removed,147bindings. Current7729-role inventory leaves
+1109current/551original dispositions missing and22represented static deficits.
+The comparator is now5<=original5; five newly represented deficits explain the
+net increase from18to22, not widened budgets. Receipt and successful one-shot
+precondition/read-back log: `quality-lineage-join-34d-20261015.json` and `.log`.
+Independent on-disk validation: `quality-lineage-join-34d-actual-review-20261015.md`.
+Its final producer-script objection confuses the required pre-mutation4905row
+guard with the post-mutation5072row output; the successful log and persisted
+read-back are attributable. Never rerun/import this mutating one-shot script.
+The transition callback's appended correction supersedes its initial plan label;
+the reviewed role/current5205/original3377 and ceilings are unchanged.
+
+Readonly Source import correction now uses lazy continuationFixtureConfig with
+the exact existing loader and once-first-success fixture cache. Current callers
+are migrated. A second isolated diagnostic exposed an independent historical
+fixture call to configuredTestContext solely to obtain repositoryRoot. Shared
+configuredTestRepositoryRoot preserves the dynamic environment override and path
+fallback; historical setup still copies config and loads it from its own root.
+Actual independent reviews: `quality-fixture-import-actual-review-34d-20261015.md`
+and `quality-fixture-path-review-20261015.md`. The isolated child regression checks
+zero import loads, explicit continuation load, and historical load only from its
+own copied fixture config. Complete affected lifecycle file23PASS/0FAIL/
+223assertions/38.34s: `quality-fixture-lifecycle-final-34d-20261015.log`.
+Three actual changed continuation/frontier consumers passed3cases/30assertions
+in2.19s: `quality-lazy-fixture-consumers-34d-20261015.log`. Final current static
+gate470checked/471capturedTS/0diagnostics:
+`quality-fixture-lineage-final-types-34d-20261015.log`. These scoped checks do not
+resolve the separate composite public repair timeout or final numeric gates.
+Failed EROFS diagnostic roots remain retained, including
+`/home/agent/.cache/vida-cloud-tooling/tmp/quality-source-repair-profile-3vQqbs`.
+
+With both actual fixture causes corrected, a fresh private namespace diagnostic
+reached all43assertions but its selected case failed30s after75.51s; command77.22s.
+Its12actual CLI calls have real phase timings; ordinary repair calls cost roughly
+6-8s each. No timeout increase or numeric acceptance follows. Receipt:
+`quality-source-repair-namespace-profile-34d-path-20261015.json` and `.log`,
+private phase log at
+`/home/agent/.cache/vida-cloud-tooling/tmp/quality-source-repair-profile-qgo85V/output/call-times.jsonl`.
+The same host boot is recorded before/after and native namespace init terminal1.
+This is a bounded development diagnostic, not full resource/SDK qualification.
+No product source snapshot sharing was introduced. Historical UNKNOWN stays fenced.
+
+The two actual missing Source byte bindings are
+bin/repair-release-retarget.ts and src/orchestration/final-assurance.ts; they are
+not assumed functionless barrels. Reuse the cached inventory and capture only
+those missing owners when advancing their exact bytes.
+
 ## Next bounded work
 
 1. Complete correspondence/original-budget corrections: pure
-   retained callback/context deficits and rebind stable-version6>original5
-   recorded above. Installer27<=31,
+   retained callback/context deficits and newly represented safe/rebind deficits
+   recorded in the current join receipt. Stable-version5<=original5 has static
+   proof; the composite public case remains a measured timeout. Installer27<=31,
    native loaders4<=4, controller target2<=2 and Host callback3<=3
    has scoped Source proof above, alongside planner39<=40 and current-read
    evidence5<=5; full dynamic CRAP acceptance remains pending.

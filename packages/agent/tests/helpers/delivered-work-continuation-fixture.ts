@@ -188,7 +188,10 @@ export function requestFixture({
 
 export const fixtureWorkspace = '9'.repeat(64);
 export const runtimeRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
-export const runtimeConfig = loadRuntimeConfig(runtimeRoot);
+let fixtureSeedConfig: AgentRuntimeConfig | undefined;
+export function continuationFixtureConfig(): AgentRuntimeConfig {
+  return (fixtureSeedConfig ??= loadRuntimeConfig(runtimeRoot));
+}
 const fixtureIdentity: WorkIdentity = {
   repository_id: 'vida-agent',
   project_ids: ['agent'],
@@ -271,7 +274,7 @@ export async function continuationFixture(options: ContinuationFixtureOptions = 
     intakeArtifacts = [],
   } = options;
   const root = suppliedRoot ?? mkdtempSync(path.join(tmpdir(), 'delivered-work-continuation-')),
-    config = suppliedConfig ?? runtimeConfig,
+    config = suppliedConfig ?? continuationFixtureConfig(),
     identity = suppliedIdentity ?? fixtureIdentity,
     workspaceId = suppliedWorkspaceId ?? fixtureWorkspace;
   const threadId = options.nativeSessionHandle ?? 'fixture-thread',

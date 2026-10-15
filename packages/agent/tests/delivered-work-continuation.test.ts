@@ -1417,7 +1417,7 @@ import {
   continuationRequestFor,
   fixtureWorkspace,
   requestFixture,
-  runtimeConfig,
+  continuationFixtureConfig,
   runtimeRoot,
   sourceScope,
   trackContinuationFixtureRoot,
@@ -1971,7 +1971,7 @@ test('current prewriter projection preserves the unissued developer and offers e
         request.run_id === engine.run_id &&
         request.wave_index === waveIndex &&
         request.stage_id === 'review_source_prewrite' &&
-        request.config_digest === runtimeConfigDigest(runtimeConfig),
+        request.config_digest === runtimeConfigDigest(continuationFixtureConfig()),
     ),
   ).toBe(true);
   expect(new Set(requests.map((request) => request.action_id)).size).toBe(2);
@@ -1994,7 +1994,7 @@ test('current prewriter projection preserves the unissued developer and offers e
     projectConfiguredFrontierContinuationAction({
       engine,
       journal,
-      targetConfigDigest: runtimeConfigDigest(runtimeConfig),
+      targetConfigDigest: runtimeConfigDigest(continuationFixtureConfig()),
       currentSourceScope: changedScope,
     }),
   ).toMatchObject({ source_scope_digest: changedScope.digest, request: oldRequest });
@@ -2413,7 +2413,7 @@ test('the current read-only review issue and report are recoverable without reis
       plan,
       rebuildPlan: async () => plan,
     });
-    const ledger = new MastraSessionLedger(f.db, fixtureWorkspace, runtimeConfig, runtimeRoot, f.store),
+    const ledger = new MastraSessionLedger(f.db, fixtureWorkspace, continuationFixtureConfig(), runtimeRoot, f.store),
       beforeIssue = requireFixtureValue(ledger.resume(f.identity.work_id, 1), 'continuation journal before issue'),
       issued = ledger.issueWave(f.identity.work_id, 1, beforeIssue.version),
       issuedItem = requireFixtureValue(issued.state.items[0], 'issued continuation item'),

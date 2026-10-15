@@ -43,6 +43,75 @@ function actualFixturePrelude(resultPath: string): string {
   `;
 }
 
+test('continuation helper import defers repository configuration loading until its seed is requested', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-continuation-import-'));
+  const helperUrl = pathToFileURL(
+    path.resolve(import.meta.dirname, 'helpers/delivered-work-continuation-fixture.ts'),
+  ).href;
+  const configUrl = pathToFileURL(path.resolve(import.meta.dirname, '../src/config/runtime-config.ts')).href;
+  const historicalUrl = pathToFileURL(path.resolve(import.meta.dirname, 'helpers/historical-research-fixture.ts')).href;
+  const contextUrl = pathToFileURL(path.resolve(import.meta.dirname, 'configured-context.ts')).href;
+  writeFileSync(
+    path.join(root, 'import.test.ts'),
+    `
+      import { expect, spyOn, test } from 'bun:test';
+      import { existsSync, readFileSync, rmSync } from 'node:fs';
+      import path from 'node:path';
+      const config = await import(${JSON.stringify(configUrl)});
+      const sentinel = Error('repository configuration must be explicitly requested');
+      let loads = 0;
+      let lastRoot;
+      const loader = spyOn(config, 'loadRuntimeConfig').mockImplementation((root) => {
+        loads++;
+        lastRoot = root;
+        throw sentinel;
+      });
+      const helper = await import(${JSON.stringify(helperUrl)});
+      const historical = await import(${JSON.stringify(historicalUrl)});
+      const context = await import(${JSON.stringify(contextUrl)});
+      test('import has no repository configuration effect', () => {
+        let fixtureRoot;
+        try {
+          expect(loads).toBe(0);
+          expect(() => helper.continuationFixtureConfig()).toThrow(sentinel);
+          expect(loads).toBe(1);
+          const sourceRoot = context.configuredTestRepositoryRoot();
+          expect(loads).toBe(1);
+          expect(() => historical.createHistoricalResearchFixture()).toThrow(sentinel);
+          expect(loads).toBe(2);
+          expect(lastRoot).not.toBe(sourceRoot);
+          expect(existsSync(path.join(lastRoot, 'AGENTS.md'))).toBe(true);
+          expect(readFileSync(path.join(lastRoot, 'agent-runtime.config.v1.yaml'))).toEqual(
+            readFileSync(path.join(sourceRoot, 'agent-runtime.config.v1.yaml')),
+          );
+          fixtureRoot = lastRoot;
+        } finally {
+          loader.mockRestore();
+          if (fixtureRoot) rmSync(fixtureRoot, { recursive: true });
+        }
+      });
+    `,
+  );
+  let retain = true;
+  try {
+    const child = await runBoundedSubprocess(process.execPath, ['test', '--timeout', '5000', './import.test.ts'], {
+      cwd: root,
+      timeoutMs: 4000,
+      stdoutLimitBytes: 16 * 1024,
+      stderrLimitBytes: 16 * 1024,
+    });
+    expect(child.closeObserved).toBe(true);
+    expect(child.timedOut).toBe(false);
+    expect(child.childError).toBeNull();
+    expect(child.exitCode).toBe(0);
+    expect(child.signal).toBeNull();
+    expect(child.stderr.toString()).toContain('1 pass');
+    retain = false;
+  } finally {
+    if (!retain) rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('a shared cached fixture registers cleanup for each no-isolate test file', async () => {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-runtime-config-rebind-hooks-'));
   const testDir = path.join(root, 'tests');

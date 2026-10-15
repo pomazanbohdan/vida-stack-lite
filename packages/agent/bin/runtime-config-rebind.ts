@@ -860,9 +860,7 @@ function isCurrentOrLaterStableVersion(candidate: unknown, baseline: unknown) {
   const left = stableVersionParts(candidate),
     right = stableVersionParts(baseline);
   if (!left || !right) return false;
-  if (left[0] !== right[0]) return left[0] > right[0];
-  if (left[1] !== right[1]) return left[1] > right[1];
-  if (left[2] !== right[2]) return left[2] > right[2];
+  for (const index of [0, 1, 2] as const) if (left[index] !== right[index]) return left[index] > right[index];
   return true;
 }
 
@@ -4314,7 +4312,6 @@ function isCurrentSourcePackageManifest(
   return (
     isPackageManifest(value) &&
     value.name === 'vida-agent' &&
-    stableVersionParts(value.version) !== null &&
     isCurrentOrLaterStableVersion(value.version, priorVersion)
   );
 }
