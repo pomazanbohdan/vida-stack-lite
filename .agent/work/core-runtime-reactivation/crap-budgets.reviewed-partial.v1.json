@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5266,
+    "retained": 5333,
     "new": 1554,
     "removed": 78,
-    "current_roles": 6820,
+    "current_roles": 6887,
     "source_files": 149
   },
   "source_bindings": [
@@ -435,7 +435,7 @@
     },
     {
       "file": "bin/bun.ts",
-      "sha256": "1b61d2b9eb44c1773f1fb51f1b7ff17f7de58e6bbba9d972cfd8c37d89d7eccb"
+      "sha256": "d4c883507c4676c39d0f2383d9e929e9dad9de28603406272964540e58cd20fb"
     },
     {
       "file": "bin/recover-completed-source-report.ts",
@@ -47704,7 +47704,7 @@
         "line": 669,
         "column": 7,
         "start": 26507,
-        "end": 28579,
+        "end": 28556,
         "bodyLine": 669,
         "bodyColumn": 88,
         "bodyEndLine": 714,
@@ -170217,6 +170217,2284 @@
       "rationale": "The original and current callback occupy the same fn:run#0 responsibility. In both versions, its producer is resumed.requests; it performs resumed.requests.map(request => ({request,action,development_packet,configured_context})). Builds next_actions for resumed requests, finding the matching action and attaching the same development packet and configured stage context. The adjacent refactor changes surrounding typing/helpers/report construction but preserves this callback's direct input, invariant, and consumer role.",
       "independent_review_ref": "/workspace/attachments/quality-shifted18-independent-055-20261015.json",
       "primary_ref": "/workspace/attachments/quality-shifted18-primary-055-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:admissions/binding:admissions#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:admissions/binding:admissions#0",
+      "file": "src/host-state.ts",
+      "name": "binding:admissions",
+      "source_address": {
+        "line": 4486,
+        "column": 23,
+        "start": 201886,
+        "end": 202134,
+        "bodyLine": 4487,
+        "bodyColumn": 6,
+        "bodyEndLine": 4491,
+        "bodyEndColumn": 31
+      },
+      "current_source_address": {
+        "line": 5560,
+        "column": 23,
+        "start": 245726,
+        "end": 245974,
+        "bodyLine": 5561,
+        "bodyColumn": 6,
+        "bodyEndLine": 5565,
+        "bodyEndColumn": 31
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "reads ordered admission-attempt rows from the workspace admission table; the admissions projection remains the same producer consumed by the migration-state snapshot builder.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#4/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#4/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 15532,
+        "column": 16,
+        "start": 713825,
+        "end": 714233,
+        "bodyLine": 15533,
+        "bodyColumn": 18,
+        "bodyEndLine": 15539,
+        "bodyEndColumn": 22
+      },
+      "current_source_address": {
+        "line": 16692,
+        "column": 16,
+        "start": 763007,
+        "end": 763272,
+        "bodyLine": 16693,
+        "bodyColumn": 18,
+        "bodyEndLine": 16695,
+        "bodyEndColumn": 98
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 1,
+      "baseline_crap": 4,
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "tests each completed journal item for a non-null issue and reported_complete status, applying completedSourceJournalObservationMatches when reserved; the completed-wave consumer retains the same item predicate.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:assertCorrectiveExecution#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:assertCorrectiveExecution#0",
+      "file": "src/host-state.ts",
+      "name": "method:assertCorrectiveExecution",
+      "source_address": {
+        "line": 13290,
+        "column": 2,
+        "start": 609623,
+        "end": 610829,
+        "bodyLine": 13290,
+        "bodyColumn": 103,
+        "bodyEndLine": 13319,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 14484,
+        "column": 2,
+        "start": 660113,
+        "end": 660394,
+        "bodyLine": 14484,
+        "bodyColumn": 103,
+        "bodyEndLine": 14488,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "public corrective-execution check still reads the work snapshot and validates the supplied attempt/value; the delegated private validator is now the implementation owner, preserving this facade contract.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:checkSettled/binding:checkSettled#0/binding:items/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:checkSettled/binding:checkSettled#0/binding:items/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 4507,
+        "column": 31,
+        "start": 202908,
+        "end": 203194,
+        "bodyLine": 4507,
+        "bodyColumn": 42,
+        "bodyEndLine": 4513,
+        "bodyEndColumn": 11
+      },
+      "current_source_address": {
+        "line": 5581,
+        "column": 31,
+        "start": 246812,
+        "end": 247098,
+        "bodyLine": 5581,
+        "bodyColumn": 42,
+        "bodyEndLine": 5587,
+        "bodyEndColumn": 11
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "the checkSettled projection still rejects malformed journal values without an items array before downstream migration comparisons consume those items.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:retireInterruptedSourceOwner#0/closure:CallExpression:arguments[0]#0/binding:nextLedger/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:retireInterruptedSourceOwner#0/closure:CallExpression:arguments[0]#0/binding:nextLedger/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 15939,
+        "column": 38,
+        "start": 732731,
+        "end": 733040,
+        "bodyLine": 15940,
+        "bodyColumn": 12,
+        "bodyEndLine": 15948,
+        "bodyEndColumn": 21
+      },
+      "current_source_address": {
+        "line": 17088,
+        "column": 38,
+        "start": 781329,
+        "end": 781638,
+        "bodyLine": 17089,
+        "bodyColumn": 12,
+        "bodyEndLine": 17097,
+        "bodyEndColumn": 21
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "maps the targeted ticket to released with resource arrays cleared and expiry null; the resulting nextLedger is passed to the retirement transition writer.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:checkedStoredWork#0/binding:reportRecovery/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/binding:reportRecovery/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2805,
+        "column": 10,
+        "start": 121849,
+        "end": 122173,
+        "bodyLine": 2806,
+        "bodyColumn": 12,
+        "bodyEndLine": 2808,
+        "bodyEndColumn": 68
+      },
+      "current_source_address": {
+        "line": 3643,
+        "column": 10,
+        "start": 154712,
+        "end": 155036,
+        "bodyLine": 3644,
+        "bodyColumn": 12,
+        "bodyEndLine": 3646,
+        "bodyEndColumn": 68
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "filters recovery records by the completed-source-report-recovery tag and exact work/attempt keys; the filtered records feed checked stored-work recovery validation.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:readQualifiedRuntimeCodeContinuations#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:readQualifiedRuntimeCodeContinuations#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 6936,
+        "column": 19,
+        "start": 310751,
+        "end": 311125,
+        "bodyLine": 6937,
+        "bodyColumn": 8,
+        "bodyEndLine": 6945,
+        "bodyEndColumn": 14
+      },
+      "current_source_address": {
+        "line": 8193,
+        "column": 19,
+        "start": 361555,
+        "end": 361905,
+        "bodyLine": 8193,
+        "bodyColumn": 25,
+        "bodyEndLine": 8202,
+        "bodyEndColumn": 7
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "re-reads the current host snapshot and returns frozen history for the requested attempt only when work remains; the public inspection caller receives the same receipt array.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:#load#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:#load#0",
+      "file": "src/host-state.ts",
+      "name": "method:#load",
+      "source_address": {
+        "line": 6867,
+        "column": 2,
+        "start": 307669,
+        "end": 308681,
+        "bodyLine": 6871,
+        "bodyColumn": 43,
+        "bodyEndLine": 6886,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 8084,
+        "column": 2,
+        "start": 356750,
+        "end": 357104,
+        "bodyLine": 8088,
+        "bodyColumn": 43,
+        "bodyEndLine": 8091,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 1,
+      "baseline_crap": 6,
+      "max_complexity": 6,
+      "max_crap": 6,
+      "rationale": "delegates the work/ledger SQL row read and decode while preserving null-on-missing and the continuation repair overlay; #read and maintenance callers consume this shared state loader.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:sameRows/binding:sameRows#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:sameRows/binding:sameRows#0",
+      "file": "src/host-state.ts",
+      "name": "binding:sameRows",
+      "source_address": {
+        "line": 4467,
+        "column": 21,
+        "start": 201029,
+        "end": 201385,
+        "bodyLine": 4468,
+        "bodyColumn": 6,
+        "bodyEndLine": 4473,
+        "bodyEndColumn": 7
+      },
+      "current_source_address": {
+        "line": 5521,
+        "column": 21,
+        "start": 243752,
+        "end": 244108,
+        "bodyLine": 5522,
+        "bodyColumn": 6,
+        "bodyEndLine": 5527,
+        "bodyEndColumn": 7
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 1,
+      "baseline_crap": 4,
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "compares table keys and then record arrays through sameRecords; the result remains the migration verifier’s equality decision.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#4",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#4",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 15528,
+        "column": 12,
+        "start": 713685,
+        "end": 714250,
+        "bodyLine": 15529,
+        "bodyColumn": 14,
+        "bodyEndLine": 15540,
+        "bodyEndColumn": 15
+      },
+      "current_source_address": {
+        "line": 16689,
+        "column": 12,
+        "start": 762910,
+        "end": 763289,
+        "bodyLine": 16690,
+        "bodyColumn": 14,
+        "bodyEndLine": 16696,
+        "bodyEndColumn": 15
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 1,
+      "baseline_crap": 3,
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "the completed-wave predicate requires nonempty waves and every item to satisfy the completion/reservation condition; that boolean gates expired-lease recovery.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:validateTaskSourceActionPair#0/binding:checkedReport/binding:checkedReport#0",
+      "current_identity": "src/host-state.ts#fn:validateTaskSourceActionPair#0/binding:checkedReport/binding:checkedReport#0",
+      "file": "src/host-state.ts",
+      "name": "binding:checkedReport",
+      "source_address": {
+        "line": 1758,
+        "column": 24,
+        "start": 72575,
+        "end": 72965,
+        "bodyLine": 1758,
+        "bodyColumn": 65,
+        "bodyEndLine": 1766,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 2442,
+        "column": 24,
+        "start": 98726,
+        "end": 99116,
+        "bodyLine": 2442,
+        "bodyColumn": 65,
+        "bodyEndLine": 2450,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "accepts null only with a null digest and otherwise validates the exchange and canonical digest; callers use the returned checked report as the action-pair value.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:retrieveCorrectiveAuthorization#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:retrieveCorrectiveAuthorization#0",
+      "file": "src/host-state.ts",
+      "name": "method:retrieveCorrectiveAuthorization",
+      "source_address": {
+        "line": 12953,
+        "column": 2,
+        "start": 595055,
+        "end": 596695,
+        "bodyLine": 12959,
+        "bodyColumn": 33,
+        "bodyEndLine": 12991,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 14149,
+        "column": 2,
+        "start": 645370,
+        "end": 645763,
+        "bodyLine": 14155,
+        "bodyColumn": 33,
+        "bodyEndLine": 14158,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "retains the same input contract and transaction boundary for reading corrective authorization; the extracted snapshot reader is the delegated producer of the same execution-or-null result.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:#admissionHistory#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:#admissionHistory#0",
+      "file": "src/host-state.ts",
+      "name": "method:#admissionHistory",
+      "source_address": {
+        "line": 6829,
+        "column": 2,
+        "start": 306512,
+        "end": 306814,
+        "bodyLine": 6829,
+        "bodyColumn": 67,
+        "bodyEndLine": 6835,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 8007,
+        "column": 2,
+        "start": 354106,
+        "end": 354512,
+        "bodyLine": 8007,
+        "bodyColumn": 67,
+        "bodyEndLine": 8022,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "extracts continuation admission history through checkedStoredWork and returns the populated references/artifacts; continuation planning consumes this history.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#3/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#3/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2642,
+        "column": 14,
+        "start": 113249,
+        "end": 113664,
+        "bodyLine": 2643,
+        "bodyColumn": 16,
+        "bodyEndLine": 2648,
+        "bodyEndColumn": 96
+      },
+      "current_source_address": {
+        "line": 3480,
+        "column": 14,
+        "start": 146112,
+        "end": 146527,
+        "bodyLine": 3481,
+        "bodyColumn": 16,
+        "bodyEndLine": 3486,
+        "bodyEndColumn": 96
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "matches a completed initial-frontier journal item to the original request and validates issue, observation, action, and output digest; this predicate controls accepted completed evidence.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:withHostStateExclusiveTransaction#0",
+      "current_identity": "src/host-state.ts#fn:withHostStateExclusiveTransaction#0",
+      "file": "src/host-state.ts",
+      "name": "fn:withHostStateExclusiveTransaction",
+      "source_address": {
+        "line": 3986,
+        "column": 7,
+        "start": 176810,
+        "end": 177068,
+        "bodyLine": 3986,
+        "bodyColumn": 98,
+        "bodyEndLine": 3993,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 4993,
+        "column": 7,
+        "start": 216969,
+        "end": 217405,
+        "bodyLine": 4996,
+        "bodyColumn": 5,
+        "bodyEndLine": 5003,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "opens the requested workspace database, runs the callback in an immediate transaction, and closes admission in finally; callers retain exclusive transaction semantics.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:result/binding:result#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:result/binding:result#0",
+      "file": "src/host-state.ts",
+      "name": "binding:result",
+      "source_address": {
+        "line": 8181,
+        "column": 19,
+        "start": 368444,
+        "end": 368824,
+        "bodyLine": 8182,
+        "bodyColumn": 6,
+        "bodyEndLine": 8190,
+        "bodyEndColumn": 8
+      },
+      "current_source_address": {
+        "line": 9488,
+        "column": 19,
+        "start": 422744,
+        "end": 423219,
+        "bodyLine": 9493,
+        "bodyColumn": 6,
+        "bodyEndLine": 9501,
+        "bodyEndColumn": 8
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "builds the stable TaskSourceBindingActionResult schema with request/operation IDs, persisted action/version, and argv; operation handlers return this projection.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#3",
+      "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#3",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2640,
+        "column": 50,
+        "start": 113196,
+        "end": 113679,
+        "bodyLine": 2641,
+        "bodyColumn": 12,
+        "bodyEndLine": 2649,
+        "bodyEndColumn": 13
+      },
+      "current_source_address": {
+        "line": 3478,
+        "column": 50,
+        "start": 146059,
+        "end": 146542,
+        "bodyLine": 3479,
+        "bodyColumn": 12,
+        "bodyEndLine": 3487,
+        "bodyEndColumn": 13
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "asks whether any completed wave contains the matching request and internally consistent completion observation; the parent predicate uses this to recognize prior completion.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:readWorkspaceSnapshot#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:readWorkspaceSnapshot#0",
+      "file": "src/host-state.ts",
+      "name": "method:readWorkspaceSnapshot",
+      "source_address": {
+        "line": 7136,
+        "column": 2,
+        "start": 319240,
+        "end": 320733,
+        "bodyLine": 7142,
+        "bodyColumn": 4,
+        "bodyEndLine": 7169,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 8386,
+        "column": 2,
+        "start": 369760,
+        "end": 370261,
+        "bodyLine": 8392,
+        "bodyColumn": 4,
+        "bodyEndLine": 8395,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "still forbids nested inspection and wraps the same workspace snapshot query in a deferred transaction; workspace inspection callers receive the snapshot contract.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:matchesExpected#0",
+      "current_identity": "src/host-state.ts#fn:matchesExpected#0",
+      "file": "src/host-state.ts",
+      "name": "fn:matchesExpected",
+      "source_address": {
+        "line": 3736,
+        "column": 0,
+        "start": 166898,
+        "end": 167417,
+        "bodyLine": 3736,
+        "bodyColumn": 91,
+        "bodyEndLine": 3750,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 4652,
+        "column": 0,
+        "start": 202914,
+        "end": 203445,
+        "bodyLine": 4652,
+        "bodyColumn": 103,
+        "bodyEndLine": 4666,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 7,
+      "baseline_coverage": 1,
+      "baseline_crap": 7,
+      "max_complexity": 7,
+      "max_crap": 7,
+      "rationale": "validates expected version shape and then compares revision/digest for compare-and-swap; write paths use it to reject stale state.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#0/binding:revision/binding:revision#0",
+      "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#0/binding:revision/binding:revision#0",
+      "file": "src/host-state.ts",
+      "name": "binding:revision",
+      "source_address": {
+        "line": 2398,
+        "column": 21,
+        "start": 100683,
+        "end": 101226,
+        "bodyLine": 2399,
+        "bodyColumn": 6,
+        "bodyEndLine": 2407,
+        "bodyEndColumn": 58
+      },
+      "current_source_address": {
+        "line": 3241,
+        "column": 21,
+        "start": 133624,
+        "end": 134167,
+        "bodyLine": 3242,
+        "bodyColumn": 6,
+        "bodyEndLine": 3250,
+        "bodyEndColumn": 58
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "selects the expected work revision from each persisted receipt kind; the sorted continuation-history validation uses this revision ordering.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:existing/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:existing/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 8192,
+        "column": 19,
+        "start": 368881,
+        "end": 369806,
+        "bodyLine": 8192,
+        "bodyColumn": 25,
+        "bodyEndLine": 8210,
+        "bodyEndColumn": 7
+      },
+      "current_source_address": {
+        "line": 9503,
+        "column": 19,
+        "start": 423276,
+        "end": 423835,
+        "bodyLine": 9503,
+        "bodyColumn": 25,
+        "bodyEndLine": 9516,
+        "bodyEndColumn": 7
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "looks up an existing operation and validates retry request identity/digest before reuse; retry handling consumes the existing action or proceeds to preparation.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:#checkedWork#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:#checkedWork#0",
+      "file": "src/host-state.ts",
+      "name": "method:#checkedWork",
+      "source_address": {
+        "line": 6822,
+        "column": 2,
+        "start": 306151,
+        "end": 306509,
+        "bodyLine": 6826,
+        "bodyColumn": 15,
+        "bodyEndLine": 6828,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 7990,
+        "column": 2,
+        "start": 353500,
+        "end": 354103,
+        "bodyLine": 7995,
+        "bodyColumn": 15,
+        "bodyEndLine": 8006,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "keeps the store boundary that validates unknown persisted work with pending receipt/repair context and validated continuation history; state decoding callers use the resulting WorkState.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2397,
+        "column": 15,
+        "start": 100650,
+        "end": 101269,
+        "bodyLine": 2397,
+        "bodyColumn": 25,
+        "bodyEndLine": 2409,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 3240,
+        "column": 15,
+        "start": 133591,
+        "end": 134210,
+        "bodyLine": 3240,
+        "bodyColumn": 25,
+        "bodyEndLine": 3252,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "orders receipt records by the same kind-specific prior/expected work revision, supplying deterministic chronological validation.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0/binding:governance/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0/binding:governance/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 3890,
+        "column": 15,
+        "start": 173357,
+        "end": 174390,
+        "bodyLine": 3890,
+        "bodyColumn": 26,
+        "bodyEndLine": 3918,
+        "bodyEndColumn": 11
+      },
+      "current_source_address": {
+        "line": 4869,
+        "column": 14,
+        "start": 211931,
+        "end": 212571,
+        "bodyLine": 4869,
+        "bodyColumn": 25,
+        "bodyEndLine": 4884,
+        "bodyEndColumn": 9
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 1,
+      "baseline_crap": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "rationale": "decodes each governance row, validates allowed governance kind and object shape, and returns its keyed/versioned projection; the inspection result aggregates these rows.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:readDeliveredWorkContinuation#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:readDeliveredWorkContinuation#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 12680,
+        "column": 10,
+        "start": 582500,
+        "end": 583146,
+        "bodyLine": 12681,
+        "bodyColumn": 12,
+        "bodyEndLine": 12688,
+        "bodyEndColumn": 74
+      },
+      "current_source_address": {
+        "line": 13884,
+        "column": 10,
+        "start": 632948,
+        "end": 633594,
+        "bodyLine": 13885,
+        "bodyColumn": 12,
+        "bodyEndLine": 13892,
+        "bodyEndColumn": 74
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "checks other ledger tickets for resource conflicts according to configured-frontier versus execution rules; this predicate determines whether continuation delivery is blocked.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:storedQualifiedRuntimeCodeContinuations#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/host-state.ts#fn:storedQualifiedRuntimeCodeContinuations#0/closure:CallExpression:arguments[0]#1",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2166,
+        "column": 9,
+        "start": 90448,
+        "end": 91095,
+        "bodyLine": 2166,
+        "bodyColumn": 18,
+        "bodyEndLine": 2179,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 2865,
+        "column": 9,
+        "start": 117850,
+        "end": 118497,
+        "bodyLine": 2865,
+        "bodyColumn": 18,
+        "bodyEndLine": 2878,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "verifies payload digest, receipt schema, request key, revision, work ID, and attempt for each SQL history row; validated receipts are returned to store readers.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0/binding:journals/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0/binding:journals/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 3863,
+        "column": 41,
+        "start": 172185,
+        "end": 173092,
+        "bodyLine": 3863,
+        "bodyColumn": 50,
+        "bodyEndLine": 3884,
+        "bodyEndColumn": 9
+      },
+      "current_source_address": {
+        "line": 4844,
+        "column": 41,
+        "start": 210880,
+        "end": 211593,
+        "bodyLine": 4844,
+        "bodyColumn": 50,
+        "bodyEndLine": 4862,
+        "bodyEndColumn": 9
+      },
+      "baseline_complexity": 9,
+      "baseline_coverage": 0,
+      "baseline_crap": 90,
+      "max_complexity": 9,
+      "max_crap": 90,
+      "rationale": "parses each journal row and ties workspace/work/attempt/run/schema to its owning work row; the inspected workspace snapshot returns only journal rows with matching owners.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:readQualifiedRuntimeCodeContinuations#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:readQualifiedRuntimeCodeContinuations#0",
+      "file": "src/host-state.ts",
+      "name": "method:readQualifiedRuntimeCodeContinuations",
+      "source_address": {
+        "line": 6927,
+        "column": 2,
+        "start": 310399,
+        "end": 311157,
+        "bodyLine": 6930,
+        "bodyColumn": 56,
+        "bodyEndLine": 6948,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 8184,
+        "column": 2,
+        "start": 361203,
+        "end": 361929,
+        "bodyLine": 8187,
+        "bodyColumn": 56,
+        "bodyEndLine": 8204,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "retains the public read contract, validates input and transaction scope, snapshots current state, and returns frozen qualified history for the requested attempt.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:#assertMaintenanceQuiescent#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:#assertMaintenanceQuiescent#0",
+      "file": "src/host-state.ts",
+      "name": "method:#assertMaintenanceQuiescent",
+      "source_address": {
+        "line": 6114,
+        "column": 2,
+        "start": 274519,
+        "end": 275283,
+        "bodyLine": 6114,
+        "bodyColumn": 38,
+        "bodyEndLine": 6129,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 7184,
+        "column": 2,
+        "start": 317418,
+        "end": 318222,
+        "bodyLine": 7184,
+        "bodyColumn": 59,
+        "bodyEndLine": 7200,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 1,
+      "baseline_crap": 3,
+      "max_complexity": 3,
+      "max_crap": 3,
+      "rationale": "requires governance quiescence, no work lease, and no active or queued coordination ownership before returning the ledger for maintenance.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:applyDeliveredWorkContinuationRepair#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:applyDeliveredWorkContinuationRepair#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 11937,
+        "column": 19,
+        "start": 545965,
+        "end": 546821,
+        "bodyLine": 11937,
+        "bodyColumn": 25,
+        "bodyEndLine": 11955,
+        "bodyEndColumn": 7
+      },
+      "current_source_address": {
+        "line": 13126,
+        "column": 19,
+        "start": 595335,
+        "end": 596191,
+        "bodyLine": 13126,
+        "bodyColumn": 25,
+        "bodyEndLine": 13144,
+        "bodyEndColumn": 7
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "rechecks that no session producer is pending and that the reserved operation digest/status is valid before advancing repair reservation state; the apply path consumes this guard.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#fn:runConsumerMigrationState#0/binding:verifier/method:verify#0",
+      "current_identity": "src/host-state.ts#fn:runConsumerMigrationState#0/binding:verifier/method:verify#0",
+      "file": "src/host-state.ts",
+      "name": "method:verify",
+      "source_address": {
+        "line": 4071,
+        "column": 4,
+        "start": 180593,
+        "end": 181453,
+        "bodyLine": 4071,
+        "bodyColumn": 18,
+        "bodyEndLine": 4090,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 5085,
+        "column": 6,
+        "start": 221234,
+        "end": 222132,
+        "bodyLine": 5085,
+        "bodyColumn": 20,
+        "bodyEndLine": 5104,
+        "bodyEndColumn": 7
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "reads the persisted migration row and verifies its digest, binding, and baseline/restored status before issuing maintenance release authorization to the migration workflow.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0/binding:readJournal/binding:readJournal#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0/binding:readJournal/binding:readJournal#0",
+      "file": "src/host-state.ts",
+      "name": "binding:readJournal",
+      "source_address": {
+        "line": 7306,
+        "column": 24,
+        "start": 326892,
+        "end": 328147,
+        "bodyLine": 7312,
+        "bodyColumn": 9,
+        "bodyEndLine": 7335,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 8642,
+        "column": 24,
+        "start": 382178,
+        "end": 383094,
+        "bodyLine": 8648,
+        "bodyColumn": 9,
+        "bodyEndLine": 8662,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "loads and validates the latest journal against the work binding, workspace, attempt, and digest; preparation uses the returned version/state as its journal basis.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:commitReadOnlyFrontierRuntimeCode#0/binding:readState/binding:readState#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:commitReadOnlyFrontierRuntimeCode#0/binding:readState/binding:readState#0",
+      "file": "src/host-state.ts",
+      "name": "binding:readState",
+      "source_address": {
+        "line": 12108,
+        "column": 22,
+        "start": 554424,
+        "end": 555609,
+        "bodyLine": 12108,
+        "bodyColumn": 66,
+        "bodyEndLine": 12136,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 13289,
+        "column": 22,
+        "start": 603539,
+        "end": 604459,
+        "bodyLine": 13289,
+        "bodyColumn": 66,
+        "bodyEndLine": 13309,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "reads current host and journal state, verifies row integrity and original source receipt, then packages the validated rebind state consumed by the commit verifier.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0/binding:verifyState/binding:verifyState#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0/binding:verifyState/binding:verifyState#0",
+      "file": "src/host-state.ts",
+      "name": "binding:verifyState",
+      "source_address": {
+        "line": 7021,
+        "column": 24,
+        "start": 314221,
+        "end": 315143,
+        "bodyLine": 7021,
+        "bodyColumn": 65,
+        "bodyEndLine": 7039,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 8271,
+        "column": 24,
+        "start": 364741,
+        "end": 365663,
+        "bodyLine": 8271,
+        "bodyColumn": 65,
+        "bodyEndLine": 8289,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "revalidates continuation state, runtime configuration, and declared source scope before accepting current endpoints; the commit path consumes verified endpoints.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:#readMaintenanceFence#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:#readMaintenanceFence#0",
+      "file": "src/host-state.ts",
+      "name": "method:#readMaintenanceFence",
+      "source_address": {
+        "line": 6085,
+        "column": 2,
+        "start": 273291,
+        "end": 273940,
+        "bodyLine": 6085,
+        "bodyColumn": 51,
+        "bodyEndLine": 6099,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 7144,
+        "column": 2,
+        "start": 315899,
+        "end": 316839,
+        "bodyLine": 7144,
+        "bodyColumn": 51,
+        "bodyEndLine": 7169,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 1,
+      "baseline_crap": 4,
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "reads the workspace fence row, decodes and validates schema/revision/workspace/digest, and returns the checked fence to maintenance guards.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:#readReconciliationGate#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:#readReconciliationGate#0",
+      "file": "src/host-state.ts",
+      "name": "method:#readReconciliationGate",
+      "source_address": {
+        "line": 6516,
+        "column": 2,
+        "start": 292281,
+        "end": 293020,
+        "bodyLine": 6516,
+        "bodyColumn": 55,
+        "bodyEndLine": 6532,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 7673,
+        "column": 2,
+        "start": 339333,
+        "end": 340369,
+        "bodyLine": 7673,
+        "bodyColumn": 55,
+        "bodyEndLine": 7700,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 1,
+      "baseline_crap": 5,
+      "max_complexity": 5,
+      "max_crap": 5,
+      "rationale": "reads and decodes the reconciliation row, then validates canonical value, revision, digest, and schema before reconciliation callers consume the gate.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:withQualifiedRuntimeCodePlanRefresh#0/property:action#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:withQualifiedRuntimeCodePlanRefresh#0/property:action#0",
+      "file": "src/host-state.ts",
+      "name": "property:action",
+      "source_address": {
+        "line": 6360,
+        "column": 14,
+        "start": 285704,
+        "end": 287063,
+        "bodyLine": 6360,
+        "bodyColumn": 26,
+        "bodyEndLine": 6393,
+        "bodyEndColumn": 7
+      },
+      "current_source_address": {
+        "line": 7499,
+        "column": 14,
+        "start": 332069,
+        "end": 333194,
+        "bodyLine": 7499,
+        "bodyColumn": 26,
+        "bodyEndLine": 7529,
+        "bodyEndColumn": 7
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "re-reads host/journal state and validates the original plan, then refuses an adopted successor before invoking the supplied action; refresh callers therefore preserve the same stale-plan guard.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:#read#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:#read#0",
+      "file": "src/host-state.ts",
+      "name": "method:#read",
+      "source_address": {
+        "line": 6887,
+        "column": 2,
+        "start": 308684,
+        "end": 310036,
+        "bodyLine": 6891,
+        "bodyColumn": 23,
+        "bodyEndLine": 6921,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 8128,
+        "column": 2,
+        "start": 358618,
+        "end": 359776,
+        "bodyLine": 8132,
+        "bodyColumn": 23,
+        "bodyEndLine": 8158,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 1,
+      "baseline_crap": 6,
+      "max_complexity": 6,
+      "max_crap": 6,
+      "rationale": "combines checked work, ledger, versions, maintenance generation, and continuation receipts into a validated host snapshot; store APIs and mutation guards consume this snapshot.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:captureRetiredSourceObservation#0/closure:CallExpression:arguments[0]#3/binding:witnessed/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:captureRetiredSourceObservation#0/closure:CallExpression:arguments[0]#3/binding:witnessed/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 14690,
+        "column": 42,
+        "start": 676550,
+        "end": 677721,
+        "bodyLine": 14690,
+        "bodyColumn": 53,
+        "bodyEndLine": 14706,
+        "bodyEndColumn": 11
+      },
+      "current_source_address": {
+        "line": 15881,
+        "column": 42,
+        "start": 726932,
+        "end": 728106,
+        "bodyLine": 15881,
+        "bodyColumn": 53,
+        "bodyEndLine": 15897,
+        "bodyEndColumn": 11
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "parses and digest-checks each journal before matching the grant’s action/issue/attempt/ticket/actor/change paths/evidence reference; matched entries witness the retired-source grant.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "src/host-state.ts#class:HostStateStore/method:reconcileCompletedSourceOwnership#0",
+      "current_identity": "src/host-state.ts#class:HostStateStore/method:reconcileCompletedSourceOwnership#0",
+      "file": "src/host-state.ts",
+      "name": "method:reconcileCompletedSourceOwnership",
+      "source_address": {
+        "line": 16023,
+        "column": 2,
+        "start": 735876,
+        "end": 737223,
+        "bodyLine": 16027,
+        "bodyColumn": 24,
+        "bodyEndLine": 16053,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 17176,
+        "column": 2,
+        "start": 784536,
+        "end": 785844,
+        "bodyLine": 17180,
+        "bodyColumn": 24,
+        "bodyEndLine": 17206,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 1,
+      "baseline_crap": 4,
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "requires the native session to own the leased work and a file resource, finds the corresponding completed journal report, then commits it with the journal version and verify callback; this preserves terminal ownership reconciliation.",
+      "primary_ref": "/workspace/attachments/quality-host40-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:advanceCutoff#0",
+      "current_identity": "bin/run.ts#fn:advanceCutoff#0",
+      "file": "bin/run.ts",
+      "name": "fn:advanceCutoff",
+      "source_address": {
+        "line": 1182,
+        "column": 7,
+        "start": 51577,
+        "end": 53087,
+        "bodyLine": 1182,
+        "bodyColumn": 54,
+        "bodyEndLine": 1209,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2065,
+        "column": 7,
+        "start": 86531,
+        "end": 88522,
+        "bodyLine": 2074,
+        "bodyColumn": 17,
+        "bodyEndLine": 2107,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:assertNoActiveCutoverMaintenance#0",
+      "current_identity": "bin/run.ts#fn:assertNoActiveCutoverMaintenance#0",
+      "file": "bin/run.ts",
+      "name": "fn:assertNoActiveCutoverMaintenance",
+      "source_address": {
+        "line": 1108,
+        "column": 7,
+        "start": 48557,
+        "end": 50855,
+        "bodyLine": 1108,
+        "bodyColumn": 59,
+        "bodyEndLine": 1156,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1987,
+        "column": 7,
+        "start": 83346,
+        "end": 85352,
+        "bodyLine": 1987,
+        "bodyColumn": 105,
+        "bodyEndLine": 2030,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 24,
+      "baseline_coverage": 0,
+      "baseline_crap": 600,
+      "max_complexity": 24,
+      "max_crap": 600,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:recoveryReview#0",
+      "current_identity": "bin/run.ts#fn:recoveryReview#0",
+      "file": "bin/run.ts",
+      "name": "fn:recoveryReview",
+      "source_address": {
+        "line": 3142,
+        "column": 0,
+        "start": 139792,
+        "end": 142155,
+        "bodyLine": 3142,
+        "bodyColumn": 36,
+        "bodyEndLine": 3191,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 5927,
+        "column": 0,
+        "start": 256151,
+        "end": 258480,
+        "bodyLine": 5927,
+        "bodyColumn": 46,
+        "bodyEndLine": 5977,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 24,
+      "baseline_coverage": 0,
+      "baseline_crap": 600,
+      "max_complexity": 24,
+      "max_crap": 600,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:captureStoppedSource#0/fn:verifyCurrent#0",
+      "current_identity": "bin/run.ts#fn:captureStoppedSource#0/fn:verifyCurrent#0",
+      "file": "bin/run.ts",
+      "name": "fn:verifyCurrent",
+      "source_address": {
+        "line": 1631,
+        "column": 2,
+        "start": 71373,
+        "end": 73572,
+        "bodyLine": 1631,
+        "bodyColumn": 27,
+        "bodyEndLine": 1673,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 3752,
+        "column": 2,
+        "start": 157597,
+        "end": 159957,
+        "bodyLine": 3752,
+        "bodyColumn": 27,
+        "bodyEndLine": 3797,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 27,
+      "baseline_coverage": 0,
+      "baseline_crap": 756,
+      "max_complexity": 27,
+      "max_crap": 756,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/binding:unresolvedHostEffect/binding:unresolvedHostEffect#0",
+      "current_identity": "bin/run.ts#fn:run#0/binding:unresolvedHostEffect/binding:unresolvedHostEffect#0",
+      "file": "bin/run.ts",
+      "name": "binding:unresolvedHostEffect",
+      "source_address": {
+        "line": 5123,
+        "column": 33,
+        "start": 237174,
+        "end": 239317,
+        "bodyLine": 5123,
+        "bodyColumn": 59,
+        "bodyEndLine": 5170,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 8136,
+        "column": 33,
+        "start": 366995,
+        "end": 369402,
+        "bodyLine": 8138,
+        "bodyColumn": 9,
+        "bodyEndLine": 8187,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/binding:completedValidationReceipts/binding:completedValidationReceipts#0",
+      "current_identity": "bin/run.ts#fn:run#0/binding:completedValidationReceipts/binding:completedValidationReceipts#0",
+      "file": "bin/run.ts",
+      "name": "binding:completedValidationReceipts",
+      "source_address": {
+        "line": 4882,
+        "column": 40,
+        "start": 226421,
+        "end": 228367,
+        "bodyLine": 4882,
+        "bodyColumn": 76,
+        "bodyEndLine": 4927,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 7875,
+        "column": 40,
+        "start": 354442,
+        "end": 357001,
+        "bodyLine": 7878,
+        "bodyColumn": 9,
+        "bodyEndLine": 7929,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:publicFailure#0",
+      "current_identity": "bin/run.ts#fn:publicFailure#0",
+      "file": "bin/run.ts",
+      "name": "fn:publicFailure",
+      "source_address": {
+        "line": 1469,
+        "column": 0,
+        "start": 63909,
+        "end": 66886,
+        "bodyLine": 1469,
+        "bodyColumn": 30,
+        "bodyEndLine": 1530,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 3356,
+        "column": 0,
+        "start": 140682,
+        "end": 143745,
+        "bodyLine": 3356,
+        "bodyColumn": 39,
+        "bodyEndLine": 3419,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 5,
+      "baseline_coverage": 0,
+      "baseline_crap": 30,
+      "max_complexity": 5,
+      "max_crap": 30,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/binding:admittedEvidence/binding:admittedEvidence#0",
+      "current_identity": "bin/run.ts#fn:run#0/binding:admittedEvidence/binding:admittedEvidence#0",
+      "file": "bin/run.ts",
+      "name": "binding:admittedEvidence",
+      "source_address": {
+        "line": 4818,
+        "column": 29,
+        "start": 223656,
+        "end": 226379,
+        "bodyLine": 4818,
+        "bodyColumn": 110,
+        "bodyEndLine": 4881,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 7797,
+        "column": 29,
+        "start": 350952,
+        "end": 354194,
+        "bodyLine": 7801,
+        "bodyColumn": 9,
+        "bodyEndLine": 7870,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:captureStoppedSource#0/fn:verifyAuthorization#0",
+      "current_identity": "bin/run.ts#fn:captureStoppedSource#0/fn:verifyAuthorization#0",
+      "file": "bin/run.ts",
+      "name": "fn:verifyAuthorization",
+      "source_address": {
+        "line": 1682,
+        "column": 2,
+        "start": 74047,
+        "end": 77230,
+        "bodyLine": 1682,
+        "bodyColumn": 39,
+        "bodyEndLine": 1747,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 3806,
+        "column": 2,
+        "start": 160455,
+        "end": 164009,
+        "bodyLine": 3806,
+        "bodyColumn": 39,
+        "bodyEndLine": 3877,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 31,
+      "baseline_coverage": 0,
+      "baseline_crap": 992,
+      "max_complexity": 31,
+      "max_crap": 992,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:recoverUnpreparedWork#0",
+      "current_identity": "bin/run.ts#fn:recoverUnpreparedWork#0",
+      "file": "bin/run.ts",
+      "name": "fn:recoverUnpreparedWork",
+      "source_address": {
+        "line": 1791,
+        "column": 0,
+        "start": 78890,
+        "end": 83685,
+        "bodyLine": 1791,
+        "bodyColumn": 43,
+        "bodyEndLine": 1911,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 3927,
+        "column": 0,
+        "start": 165859,
+        "end": 170479,
+        "bodyLine": 3927,
+        "bodyColumn": 53,
+        "bodyEndLine": 4041,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 28,
+      "baseline_coverage": 0,
+      "baseline_crap": 812,
+      "max_complexity": 28,
+      "max_crap": 812,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:forwardPolicyAuthority#0",
+      "current_identity": "bin/run.ts#fn:forwardPolicyAuthority#0",
+      "file": "bin/run.ts",
+      "name": "fn:forwardPolicyAuthority",
+      "source_address": {
+        "line": 521,
+        "column": 0,
+        "start": 21978,
+        "end": 28706,
+        "bodyLine": 530,
+        "bodyColumn": 2,
+        "bodyEndLine": 663,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1341,
+        "column": 0,
+        "start": 55234,
+        "end": 59949,
+        "bodyLine": 1350,
+        "bodyColumn": 8,
+        "bodyEndLine": 1451,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 27,
+      "baseline_coverage": 0,
+      "baseline_crap": 756,
+      "max_complexity": 27,
+      "max_crap": 756,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:readRetiredSourceNativeTurn#0",
+      "current_identity": "bin/run.ts#fn:readRetiredSourceNativeTurn#0",
+      "file": "bin/run.ts",
+      "name": "fn:readRetiredSourceNativeTurn",
+      "source_address": {
+        "line": 2009,
+        "column": 0,
+        "start": 88171,
+        "end": 95825,
+        "bodyLine": 2009,
+        "bodyColumn": 64,
+        "bodyEndLine": 2201,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 4795,
+        "column": 0,
+        "start": 202307,
+        "end": 207323,
+        "bodyLine": 4806,
+        "bodyColumn": 2,
+        "bodyEndLine": 4917,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 47,
+      "baseline_coverage": 0,
+      "baseline_crap": 2256,
+      "max_complexity": 47,
+      "max_crap": 2256,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:captureRetiredSource#0",
+      "current_identity": "bin/run.ts#fn:captureRetiredSource#0",
+      "file": "bin/run.ts",
+      "name": "fn:captureRetiredSource",
+      "source_address": {
+        "line": 2203,
+        "column": 0,
+        "start": 95827,
+        "end": 102104,
+        "bodyLine": 2203,
+        "bodyColumn": 42,
+        "bodyEndLine": 2331,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 4920,
+        "column": 0,
+        "start": 207355,
+        "end": 214342,
+        "bodyLine": 4920,
+        "bodyColumn": 52,
+        "bodyEndLine": 5054,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 13,
+      "baseline_coverage": 0,
+      "baseline_crap": 182,
+      "max_complexity": 13,
+      "max_crap": 182,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/binding:normalizeObservedResearch/binding:normalizeObservedResearch#0",
+      "current_identity": "bin/run.ts#fn:run#0/binding:normalizeObservedResearch/binding:normalizeObservedResearch#0",
+      "file": "bin/run.ts",
+      "name": "binding:normalizeObservedResearch",
+      "source_address": {
+        "line": 4962,
+        "column": 38,
+        "start": 229844,
+        "end": 237139,
+        "bodyLine": 4962,
+        "bodyColumn": 64,
+        "bodyEndLine": 5122,
+        "bodyEndColumn": 5
+      },
+      "current_source_address": {
+        "line": 7977,
+        "column": 38,
+        "start": 359403,
+        "end": 366836,
+        "bodyLine": 7979,
+        "bodyColumn": 9,
+        "bodyEndLine": 8134,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 17,
+      "baseline_coverage": 0,
+      "baseline_crap": 306,
+      "max_complexity": 17,
+      "max_crap": 306,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:activeSelector#0",
+      "current_identity": "bin/run.ts#fn:activeSelector#0",
+      "file": "bin/run.ts",
+      "name": "fn:activeSelector",
+      "source_address": {
+        "line": 936,
+        "column": 0,
+        "start": 40793,
+        "end": 48360,
+        "bodyLine": 936,
+        "bodyColumn": 37,
+        "bodyEndLine": 1104,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1808,
+        "column": 0,
+        "start": 74864,
+        "end": 82386,
+        "bodyLine": 1808,
+        "bodyColumn": 73,
+        "bodyEndLine": 1969,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 64,
+      "baseline_coverage": 0,
+      "baseline_crap": 4160,
+      "max_complexity": 64,
+      "max_crap": 4160,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/property:verifyCurrent#1",
+      "current_identity": "bin/run.ts#fn:run#0/property:verifyCurrent#1",
+      "file": "bin/run.ts",
+      "name": "property:verifyCurrent",
+      "source_address": {
+        "line": 3848,
+        "column": 23,
+        "start": 176382,
+        "end": 183398,
+        "bodyLine": 3848,
+        "bodyColumn": 52,
+        "bodyEndLine": 3965,
+        "bodyEndColumn": 9
+      },
+      "current_source_address": {
+        "line": 6656,
+        "column": 23,
+        "start": 294742,
+        "end": 302339,
+        "bodyLine": 6656,
+        "bodyColumn": 52,
+        "bodyEndLine": 6784,
+        "bodyEndColumn": 9
+      },
+      "baseline_complexity": 50,
+      "baseline_coverage": 0,
+      "baseline_crap": 2550,
+      "max_complexity": 50,
+      "max_crap": 2550,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:parseArgs#0",
+      "current_identity": "bin/run.ts#fn:parseArgs#0",
+      "file": "bin/run.ts",
+      "name": "fn:parseArgs",
+      "source_address": {
+        "line": 1240,
+        "column": 0,
+        "start": 54259,
+        "end": 62810,
+        "bodyLine": 1240,
+        "bodyColumn": 25,
+        "bodyEndLine": 1452,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 3151,
+        "column": 0,
+        "start": 130613,
+        "end": 138938,
+        "bodyLine": 3151,
+        "bodyColumn": 53,
+        "bodyEndLine": 3323,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 120,
+      "baseline_coverage": 0,
+      "baseline_crap": 14520,
+      "max_complexity": 120,
+      "max_crap": 14520,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:retireInterruptedSourceOwner#0",
+      "current_identity": "bin/run.ts#fn:retireInterruptedSourceOwner#0",
+      "file": "bin/run.ts",
+      "name": "fn:retireInterruptedSourceOwner",
+      "source_address": {
+        "line": 2333,
+        "column": 0,
+        "start": 102106,
+        "end": 110443,
+        "bodyLine": 2333,
+        "bodyColumn": 50,
+        "bodyEndLine": 2520,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 5073,
+        "column": 0,
+        "start": 215160,
+        "end": 223620,
+        "bodyLine": 5073,
+        "bodyColumn": 60,
+        "bodyEndLine": 5252,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 67,
+      "baseline_coverage": 0,
+      "baseline_crap": 4556,
+      "max_complexity": 67,
+      "max_crap": 4556,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:captureStoppedSource#0",
+      "current_identity": "bin/run.ts#fn:captureStoppedSource#0",
+      "file": "bin/run.ts",
+      "name": "fn:captureStoppedSource",
+      "source_address": {
+        "line": 1602,
+        "column": 0,
+        "start": 69392,
+        "end": 78888,
+        "bodyLine": 1602,
+        "bodyColumn": 42,
+        "bodyEndLine": 1789,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 3721,
+        "column": 0,
+        "start": 155513,
+        "end": 165827,
+        "bodyLine": 3721,
+        "bodyColumn": 52,
+        "bodyEndLine": 3924,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 22,
+      "baseline_coverage": 0,
+      "baseline_crap": 506,
+      "max_complexity": 22,
+      "max_crap": 506,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/property:verifyCurrent#0",
+      "current_identity": "bin/run.ts#fn:run#0/property:verifyCurrent#0",
+      "file": "bin/run.ts",
+      "name": "property:verifyCurrent",
+      "source_address": {
+        "line": 3588,
+        "column": 23,
+        "start": 162429,
+        "end": 173317,
+        "bodyLine": 3588,
+        "bodyColumn": 52,
+        "bodyEndLine": 3789,
+        "bodyEndColumn": 9
+      },
+      "current_source_address": {
+        "line": 6378,
+        "column": 23,
+        "start": 279983,
+        "end": 290970,
+        "bodyLine": 6378,
+        "bodyColumn": 52,
+        "bodyEndLine": 6577,
+        "bodyEndColumn": 9
+      },
+      "baseline_complexity": 74,
+      "baseline_coverage": 0,
+      "baseline_crap": 5550,
+      "max_complexity": 74,
+      "max_crap": 5550,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:releaseHistoricalOwner#0",
+      "current_identity": "bin/run.ts#fn:releaseHistoricalOwner#0",
+      "file": "bin/run.ts",
+      "name": "fn:releaseHistoricalOwner",
+      "source_address": {
+        "line": 2882,
+        "column": 0,
+        "start": 127661,
+        "end": 139791,
+        "bodyLine": 2887,
+        "bodyColumn": 2,
+        "bodyEndLine": 3141,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 5670,
+        "column": 0,
+        "start": 243867,
+        "end": 256120,
+        "bodyLine": 5675,
+        "bodyColumn": 2,
+        "bodyEndLine": 5925,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 59,
+      "baseline_coverage": 0,
+      "baseline_crap": 3540,
+      "max_complexity": 59,
+      "max_crap": 3540,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:forwardUpdateAuthority#0",
+      "current_identity": "bin/run.ts#fn:forwardUpdateAuthority#0",
+      "file": "bin/run.ts",
+      "name": "fn:forwardUpdateAuthority",
+      "source_address": {
+        "line": 665,
+        "column": 7,
+        "start": 28715,
+        "end": 40791,
+        "bodyLine": 672,
+        "bodyColumn": 2,
+        "bodyEndLine": 934,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1461,
+        "column": 7,
+        "start": 60184,
+        "end": 73315,
+        "bodyLine": 1468,
+        "bodyColumn": 34,
+        "bodyEndLine": 1756,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 115,
+      "baseline_coverage": 0,
+      "baseline_crap": 13340,
+      "max_complexity": 115,
+      "max_crap": 13340,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:repairAuthority#0",
+      "current_identity": "bin/run.ts#fn:repairAuthority#0",
+      "file": "bin/run.ts",
+      "name": "fn:repairAuthority",
+      "source_address": {
+        "line": 156,
+        "column": 7,
+        "start": 5656,
+        "end": 21251,
+        "bodyLine": 156,
+        "bodyColumn": 113,
+        "bodyEndLine": 500,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 697,
+        "column": 7,
+        "start": 27513,
+        "end": 45485,
+        "bodyLine": 703,
+        "bodyColumn": 8,
+        "bodyEndLine": 1138,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 150,
+      "baseline_coverage": 0,
+      "baseline_crap": 22650,
+      "max_complexity": 150,
+      "max_crap": 22650,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:releaseCompletedReadonly#0",
+      "current_identity": "bin/run.ts#fn:releaseCompletedReadonly#0",
+      "file": "bin/run.ts",
+      "name": "fn:releaseCompletedReadonly",
+      "source_address": {
+        "line": 2522,
+        "column": 0,
+        "start": 110445,
+        "end": 127659,
+        "bodyLine": 2522,
+        "bodyColumn": 46,
+        "bodyEndLine": 2880,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 5274,
+        "column": 0,
+        "start": 224915,
+        "end": 243835,
+        "bodyLine": 5274,
+        "bodyColumn": 56,
+        "bodyEndLine": 5667,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 119,
+      "baseline_coverage": 0,
+      "baseline_crap": 14280,
+      "max_complexity": 119,
+      "max_crap": 14280,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0",
+      "current_identity": "bin/run.ts#fn:run#0",
+      "file": "bin/run.ts",
+      "name": "fn:run",
+      "source_address": {
+        "line": 3193,
+        "column": 7,
+        "start": 142164,
+        "end": 303057,
+        "bodyLine": 3193,
+        "bodyColumn": 56,
+        "bodyEndLine": 6463,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 6000,
+        "column": 7,
+        "start": 259600,
+        "end": 435964,
+        "bodyLine": 6000,
+        "bodyColumn": 66,
+        "bodyEndLine": 9501,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 501,
+      "baseline_coverage": 0,
+      "baseline_crap": 251502,
+      "max_complexity": 501,
+      "max_crap": 251502,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:runSourceCorrectionRepair#0",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:runSourceCorrectionRepair#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "name": "fn:runSourceCorrectionRepair",
+      "source_address": {
+        "line": 3293,
+        "column": 0,
+        "start": 144310,
+        "end": 156255,
+        "bodyLine": 3293,
+        "bodyColumn": 65,
+        "bodyEndLine": 3556,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 5115,
+        "column": 0,
+        "start": 207050,
+        "end": 220256,
+        "bodyLine": 5115,
+        "bodyColumn": 102,
+        "bodyEndLine": 5440,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:readonlyKnownTerminal#0",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:readonlyKnownTerminal#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "name": "fn:readonlyKnownTerminal",
+      "source_address": {
+        "line": 1285,
+        "column": 0,
+        "start": 55795,
+        "end": 69073,
+        "bodyLine": 1285,
+        "bodyColumn": 93,
+        "bodyEndLine": 1592,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2555,
+        "column": 0,
+        "start": 101903,
+        "end": 115812,
+        "bodyLine": 2564,
+        "bodyColumn": 2,
+        "bodyEndLine": 2872,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 118,
+      "baseline_coverage": 0,
+      "baseline_crap": 14042,
+      "max_complexity": 118,
+      "max_crap": 14042,
+      "rationale": "Reviewed retained producer/consumer role; see independent review evidence.",
+      "primary_ref": "/workspace/attachments/quality-run-rebind27-primary-371-20261015.json",
+      "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
     }
   ],
   "new_functions": [
@@ -198086,49 +200364,374 @@
     "limits": "Only three complete selected families. Other repair/new lock callback correspondence remains pending; no executable/numeric qualification."
   },
   "quality_continuation_current_bindings": {
-    "schema": "ReviewedSourceBindings/v1",
+    "schema": "ReviewedLineageJoin/v1",
     "status": "SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
-    "predecessor_commit": "18879ba",
+    "predecessor_commit": "3711eed",
     "counts": {
-      "retained": 5266,
+      "retained": 5333,
       "new": 1554,
       "removed": 78,
-      "current_roles": 6820,
+      "current_roles": 6887,
       "source_files": 149
     },
-    "inventory_ref": "/workspace/attachments/quality-current-inventory-capture-fallback-188-20261015.json",
-    "scoped_byte_capture_files": [
-      "src/orchestration/scoped-source-snapshot.ts",
-      "src/orchestration/configured-context.ts"
-    ],
-    "guarded": [
+    "retained_added": 67,
+    "admitted": [
       {
-        "identity": "src/orchestration/scoped-source-snapshot.ts#fn:readScopedSourceBytes#0",
-        "expected_complexity": 6,
-        "max_complexity": 10,
-        "max_crap": 10
+        "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:admissions/binding:admissions#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:admissions/binding:admissions#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
       },
       {
-        "identity": "src/orchestration/configured-context.ts#fn:readLocal#0",
-        "expected_complexity": 2,
-        "max_complexity": 2,
-        "max_crap": 6
+        "identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#4/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#4/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:assertCorrectiveExecution#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:assertCorrectiveExecution#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:checkSettled/binding:checkSettled#0/binding:items/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:checkSettled/binding:checkSettled#0/binding:items/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:retireInterruptedSourceOwner#0/closure:CallExpression:arguments[0]#0/binding:nextLedger/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:retireInterruptedSourceOwner#0/closure:CallExpression:arguments[0]#0/binding:nextLedger/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:checkedStoredWork#0/binding:reportRecovery/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/binding:reportRecovery/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:readQualifiedRuntimeCodeContinuations#0/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:readQualifiedRuntimeCodeContinuations#0/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:#load#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:#load#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:sameRows/binding:sameRows#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:consumerMigrationState#0/binding:sameRows/binding:sameRows#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#4",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:recoverExpiredLocalLease#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#4",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:validateTaskSourceActionPair#0/binding:checkedReport/binding:checkedReport#0",
+        "current_identity": "src/host-state.ts#fn:validateTaskSourceActionPair#0/binding:checkedReport/binding:checkedReport#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:retrieveCorrectiveAuthorization#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:retrieveCorrectiveAuthorization#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:#admissionHistory#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:#admissionHistory#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#3/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#3/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:withHostStateExclusiveTransaction#0",
+        "current_identity": "src/host-state.ts#fn:withHostStateExclusiveTransaction#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:result/binding:result#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:result/binding:result#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#3",
+        "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#3",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:readWorkspaceSnapshot#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:readWorkspaceSnapshot#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:matchesExpected#0",
+        "current_identity": "src/host-state.ts#fn:matchesExpected#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#0/binding:revision/binding:revision#0",
+        "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#0/binding:revision/binding:revision#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:existing/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:issueTaskSourceBindingOperation#0/binding:existing/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:#checkedWork#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:#checkedWork#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#fn:checkedStoredWork#0/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0/binding:governance/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0/binding:governance/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:readDeliveredWorkContinuation#0/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:readDeliveredWorkContinuation#0/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:storedQualifiedRuntimeCodeContinuations#0/closure:CallExpression:arguments[0]#1",
+        "current_identity": "src/host-state.ts#fn:storedQualifiedRuntimeCodeContinuations#0/closure:CallExpression:arguments[0]#1",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0/binding:journals/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#fn:inspectHostWorkspaceDatabase#0/closure:CallExpression:arguments[0]#0/binding:journals/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:readQualifiedRuntimeCodeContinuations#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:readQualifiedRuntimeCodeContinuations#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:#assertMaintenanceQuiescent#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:#assertMaintenanceQuiescent#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:applyDeliveredWorkContinuationRepair#0/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:applyDeliveredWorkContinuationRepair#0/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#fn:runConsumerMigrationState#0/binding:verifier/method:verify#0",
+        "current_identity": "src/host-state.ts#fn:runConsumerMigrationState#0/binding:verifier/method:verify#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0/binding:readJournal/binding:readJournal#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:prepareTaskSourceBindingOperation#0/binding:readJournal/binding:readJournal#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:commitReadOnlyFrontierRuntimeCode#0/binding:readState/binding:readState#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitReadOnlyFrontierRuntimeCode#0/binding:readState/binding:readState#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0/binding:verifyState/binding:verifyState#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:commitQualifiedRuntimeCodeContinuation#0/binding:verifyState/binding:verifyState#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:#readMaintenanceFence#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:#readMaintenanceFence#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:#readReconciliationGate#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:#readReconciliationGate#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:withQualifiedRuntimeCodePlanRefresh#0/property:action#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:withQualifiedRuntimeCodePlanRefresh#0/property:action#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:#read#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:#read#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:captureRetiredSourceObservation#0/closure:CallExpression:arguments[0]#3/binding:witnessed/closure:CallExpression:arguments[0]#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:captureRetiredSourceObservation#0/closure:CallExpression:arguments[0]#3/binding:witnessed/closure:CallExpression:arguments[0]#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "src/host-state.ts#class:HostStateStore/method:reconcileCompletedSourceOwnership#0",
+        "current_identity": "src/host-state.ts#class:HostStateStore/method:reconcileCompletedSourceOwnership#0",
+        "independent_review_ref": "/workspace/attachments/quality-host40-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:advanceCutoff#0",
+        "current_identity": "bin/run.ts#fn:advanceCutoff#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:assertNoActiveCutoverMaintenance#0",
+        "current_identity": "bin/run.ts#fn:assertNoActiveCutoverMaintenance#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:recoveryReview#0",
+        "current_identity": "bin/run.ts#fn:recoveryReview#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:captureStoppedSource#0/fn:verifyCurrent#0",
+        "current_identity": "bin/run.ts#fn:captureStoppedSource#0/fn:verifyCurrent#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:run#0/binding:unresolvedHostEffect/binding:unresolvedHostEffect#0",
+        "current_identity": "bin/run.ts#fn:run#0/binding:unresolvedHostEffect/binding:unresolvedHostEffect#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:run#0/binding:completedValidationReceipts/binding:completedValidationReceipts#0",
+        "current_identity": "bin/run.ts#fn:run#0/binding:completedValidationReceipts/binding:completedValidationReceipts#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:publicFailure#0",
+        "current_identity": "bin/run.ts#fn:publicFailure#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:run#0/binding:admittedEvidence/binding:admittedEvidence#0",
+        "current_identity": "bin/run.ts#fn:run#0/binding:admittedEvidence/binding:admittedEvidence#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:captureStoppedSource#0/fn:verifyAuthorization#0",
+        "current_identity": "bin/run.ts#fn:captureStoppedSource#0/fn:verifyAuthorization#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:recoverUnpreparedWork#0",
+        "current_identity": "bin/run.ts#fn:recoverUnpreparedWork#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:forwardPolicyAuthority#0",
+        "current_identity": "bin/run.ts#fn:forwardPolicyAuthority#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:readRetiredSourceNativeTurn#0",
+        "current_identity": "bin/run.ts#fn:readRetiredSourceNativeTurn#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:captureRetiredSource#0",
+        "current_identity": "bin/run.ts#fn:captureRetiredSource#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:run#0/binding:normalizeObservedResearch/binding:normalizeObservedResearch#0",
+        "current_identity": "bin/run.ts#fn:run#0/binding:normalizeObservedResearch/binding:normalizeObservedResearch#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:activeSelector#0",
+        "current_identity": "bin/run.ts#fn:activeSelector#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:run#0/property:verifyCurrent#1",
+        "current_identity": "bin/run.ts#fn:run#0/property:verifyCurrent#1",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:parseArgs#0",
+        "current_identity": "bin/run.ts#fn:parseArgs#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:retireInterruptedSourceOwner#0",
+        "current_identity": "bin/run.ts#fn:retireInterruptedSourceOwner#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:captureStoppedSource#0",
+        "current_identity": "bin/run.ts#fn:captureStoppedSource#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:run#0/property:verifyCurrent#0",
+        "current_identity": "bin/run.ts#fn:run#0/property:verifyCurrent#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:releaseHistoricalOwner#0",
+        "current_identity": "bin/run.ts#fn:releaseHistoricalOwner#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:forwardUpdateAuthority#0",
+        "current_identity": "bin/run.ts#fn:forwardUpdateAuthority#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:repairAuthority#0",
+        "current_identity": "bin/run.ts#fn:repairAuthority#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:releaseCompletedReadonly#0",
+        "current_identity": "bin/run.ts#fn:releaseCompletedReadonly#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/run.mjs#fn:run#0",
+        "current_identity": "bin/run.ts#fn:run#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/runtime-config-rebind.mjs#fn:runSourceCorrectionRepair#0",
+        "current_identity": "bin/runtime-config-rebind.ts#fn:runSourceCorrectionRepair#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
+      },
+      {
+        "identity": "bin/runtime-config-rebind.mjs#fn:readonlyKnownTerminal#0",
+        "current_identity": "bin/runtime-config-rebind.ts#fn:readonlyKnownTerminal#0",
+        "independent_review_ref": "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
       }
     ],
     "independent_review_refs": [
-      "/workspace/attachments/quality-capture-fallback-final-review-188-20261015.md",
-      "/workspace/attachments/quality-context-buffer-actual-review-188-20261015.md"
+      "/workspace/attachments/quality-host40-actual-review-371-20261015.json",
+      "/workspace/attachments/quality-run-rebind27-actual-review-371-20261015.json"
     ],
+    "rejected_correspondences": [],
+    "inventory_ref": "/workspace/attachments/quality-current-inventory-env-lineage-371-20261015.json",
+    "scoped_byte_capture_files": [
+      "bin/bun.ts"
+    ],
+    "sha256": "d4c883507c4676c39d0f2383d9e929e9dad9de28603406272964540e58cd20fb",
+    "runPinnedBun": {
+      "complexity": 16,
+      "max_complexity": 16,
+      "max_crap": 272
+    },
     "scoped_complexity_exceptions": [
       {
         "identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0",
         "complexity": 9,
         "ceiling": 8
-      },
-      {
-        "identity": "bin/bun.ts#fn:runPinnedBun#0",
-        "complexity": 17,
-        "ceiling": 16
       },
       {
         "identity": "bin/recover-completed-source-report.ts#fn:isPassedNativeBuildCheck#0",
@@ -198226,17 +200829,17 @@
         "ceiling": 9
       }
     ],
-    "missing_current_dispositions": 910,
-    "missing_original_dispositions": 357,
-    "limits": "Only2 changed Source AST+SHA captures;147bindings reused. No added/removed Source functions or changed frozen allowances. Focused native controls are not full coverage, dynamicCRAP, mutation or Runtime.",
-    "source_capture_ref": "/workspace/attachments/quality-capture-fallback-bindings-188-20261015.json"
+    "missing_current_dispositions": 843,
+    "missing_original_dispositions": 290,
+    "limits": "One changed Source AST+SHA;148 Source bindings reused. All original frozen fields preserved; no function/new budget added. Full plan, coverage, dynamic CRAP, mutation and Runtime remain open.",
+    "source_capture_ref": "/workspace/attachments/quality-launch-env-lineage-join-371-20261015.json"
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
-    "source_commit": "18879ba",
+    "source_commit": "3711eed",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-capture-fallback-bindings-188-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-launch-env-lineage-join-371-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",

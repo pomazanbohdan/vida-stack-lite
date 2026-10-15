@@ -159,6 +159,11 @@ startup, collection, setup and child outcomes separately. Partial reporter rows
 are not complete per-file timing weights. Do not infer speedup from operation
 counts or instrumented wall time.
 
+Check the actual mount backing a private fixture, including bind mounts. Use
+TESTING's retained-host-tmpfs rule for disposable functional/process-recovery
+cases; preserve all fsync calls and failed roots. This is not power-loss
+durability evidence or parallel-coverage qualification.
+
 Classify real reader effects. An immutable `readFileSync` dependency and a
 SafeAccess reader that creates compare-and-swap sidecars have different resource
 behavior even when they share a path. A common parent directory alone does not

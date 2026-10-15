@@ -38,7 +38,7 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6820roles across149files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds6887roles across149files; installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
 The original planner is39<=40 and current-read evidence5<=5; keep
@@ -53,11 +53,12 @@ and counter equality, exact original ceilings and one-to-one correspondence.
 The latest join adds98independently reviewed retained roles, including18
 shifted identities confirmed by actual owner/dataflow review. A changed-owner
 HostState receipt reader remains unbound. Current7730-role inventory leaves
-910current and357original dispositions missing,
-with21represented static overages after sharing the native lane/path string
+843current and290original dispositions missing,
+with20represented static overages after sharing the native lane/path string
 boundary. Both projections are1<=original1 and the new parser2<=own3.
 Finite child option/environment preparation now shares one condition;
-boundedSpawnSync21<=original21, runPinnedBun17>original16 remains open.
+boundedSpawnSync21<=original21. Reusing one environment selection also closes
+runPinnedBun16<=original16, with67more independently reviewed retained roles.
 The full affected launcher file passed51/0 in2.26s. These are static/focused
 checks, not dynamic CRAP or complete current coverage.
 Disputed41native extracted-helper additions
@@ -67,15 +68,18 @@ the Source path before loading its private copied configuration. The complete
 fixture-lifecycle file now passed25cases/244assertions in36.45s. Case custody
 retains pending or elapsed bodies and checks the deadline after owned DB close;
 the native300ms timeout control confirms retention before body settlement.
-The isolated public
-repair still exceeds its30s case limit; measured12CLI calls cost77.22s total.
+The earlier disk-backed isolated public
+repair exceeded its30s case limit; measured12CLI calls cost77.22s total.
 Keep both independent Source captures and optimize measured work without raising
 timeouts. Test-only beforeimage serialization now reuses capture A's privately
 retained bytes. Borrowed-reader same-buffer drift was reproduced and repaired
 in snapshot fallback and configured-context reads, with unchanged6/10 and2/2
 complexities. A later public repair point still failed30s at69.058s case;
 its12CLI calls/43assertions and retained root remain diagnostic evidence.
-Numeric gates remain open.
+Fresh retained host-tmpfs fixtures keep every real fsync and native namespace
+boundary. The affected four repair cases passed148assertions in46.470s command
+with unchanged case bounds. This corrects diagnostic backing, not product locks
+or power-loss qualification. Full resource/shard and numeric gates remain open.
 WORK owns their exact ceilings and receipts; mapping counts are not coverage.
 Retrieve current CI-formed SDK outputs with their selected formation receipt before the
 complete selection. Maintained aliases now prepare the distinct CI SDK test-input

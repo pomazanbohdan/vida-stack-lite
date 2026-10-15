@@ -128,6 +128,15 @@ isolation, assertions, security and evidence. Do not increase a timeout merely
 to improve the reported result. Keep the focused-batch/one-completion-run policy
 below; no separate benchmark or ROI lane is required.
 
+Record the actual filesystem and mount backing each fixture. A private bind
+mount inherits its backing filesystem; a path named `/tmp` does not prove tmpfs.
+For disposable functional/process-recovery cases, an explicit owned host tmpfs
+root can preserve real filesystem calls and every fsync without disk flush
+latency. Retain failed or UNKNOWN roots after the child namespace exits; do not
+use an ephemeral namespace-only tmpfs that loses them on exit. This does not
+qualify power-loss durability or activate parallel coverage. Recheck the same
+selected cases without filesystem timing spies before attributing an improvement.
+
 Parallel writers use disjoint files. The lead schedules runtime measurements
 sequentially and holds edits to observed package inputs during each run. Save
 the command, terminal exit, raw log and exec session ID before yielding. Compare

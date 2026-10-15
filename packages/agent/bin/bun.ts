@@ -670,12 +670,12 @@ export function runPinnedBun(args: readonly string[], options: BunOptions = {}):
   // Coverage owns a single wall deadline beginning before package checks and
   // pinned-runtime resolution. Ordinary launches retain their existing order.
   const coverageProfile = coverageIterationBudget(args, options);
-  const embedded = standaloneRuntime(options.env ?? process.env);
+  const env = options.env ?? process.env;
+  const embedded = standaloneRuntime(env);
   const root = options.root ?? embedded?.root ?? bundleRoot;
   const pin = readPin(root);
   checkManifest(root, pin);
   const spawn = options.spawn ?? spawnSync;
-  const env = options.env ?? process.env;
   const cleanup = options.cleanup ?? defaultTimeoutCleanup;
   const maximum = coverageProfile.maximum;
   // Validate before resolution can launch a version probe. A caller budget

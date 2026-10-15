@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `18879ba` at origin/main.
+- Published predecessor: `3711eed` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,13 +18,68 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Current quality preparation:6820of7730roles,149Source byte bindings,
-  910current/357original dispositions missing and21represented static deficits.
+- Current quality preparation:6887of7730roles,149Source byte bindings,
+  843current/290original dispositions missing and20represented static deficits.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
-## Current bounded-launch correction
+## Current environment and correspondence correction
+
+Reuse one environment selection in runPinnedBun, after coverageProfile and
+before standalone-runtime resolution. The existing pin/manifest/launch order,
+timeout/CAS/UNKNOWN guards and original16/272 ceiling remain unchanged. Current
+CC16 equals the original16. Full launcher51PASS/0FAIL/2.26s; actual Source review
+accepted the focused change. Receipts in `/workspace/attachments`:
+`quality-launch-env-tests-371-20261015.log` and
+`quality-launch-env-actual-review-371-20261015.md`.
+
+Join67retained roles after blind primary and independent actual-role review:
+40HostState and27run/rebind. Root rejected the Host primary's fixture path and
+zero-existing-binding claim; the independent reviewer checked the actual
+canonical partial's886Host rows and exact candidate non-overlap. The run
+primary corrected textual/type occurrences before final role review; actual
+recovery/renewal consumers were checked independently. All five original frozen
+fields, source addresses and one-to-one identities remain exact. One changed
+Source AST+SHA reuses148bindings; current6887roles=5333retained+1554new,
+78removed,149bindings. Gaps843current/290original;20static deficits. Join/cache:
+`quality-launch-env-lineage-join-371-20261015.json` and
+`quality-current-inventory-env-lineage-371-20261015.json`. No new budget or
+numeric coverage/dynamic CRAP/mutation result is inferred.
+
+The native filesystem timing point completed with exit1/nullsignal and retained
+its failed root. It observed many fsync calls in CAS/reclaim readers, but spies
+added overhead and the private diagnostic mount was disk-backed. Native host
+`/tmp` and `/dev/shm` are tmpfs; the pathname inside bwrap did not establish its
+actual backing. Receipt `quality-source-repair-native-fs-profile-371-20261015.json`.
+Its failed fixture remains under
+`/home/agent/.cache/vida-cloud-tooling/tmp/quality-source-repair-profile-ghmPeY/tmp/fixture-uqJzmw`.
+
+No product lock/fsync change was needed. A fresh private host-tmpfs namespace
+point on unchanged3711eed passed43assertions in11.465s case/13.078s command.
+The affected four-case completion batch after the environment correction passed
+4/0 and148assertions in46.470s command, with individual8.729/4.774/9.390/21.873s
+and unchanged30/30/60/60s bounds. The longest case was the closed-transition
+case. Twelve call timings are observation, not CPU attribution; no fs timing
+spies or disabled fsync calls were used. Both native terminal exits and unchanged
+boot ID were observed. Receipts `quality-source-repair-tmpfs-{point,batch}-371-20261015.json`
+and matching logs preserve argv and retained physical roots. This is functional
+process-recovery evidence, not power-loss durability, whole-suite coverage or
+resource/shard qualification. TESTING and the Bun skill now record that boundary.
+
+Independent final packet review accepted the exact counters, frozen fields,
+source scopes and focused evidence without a correctness finding:
+`quality-env-lineage-metadata-review-371-20261015.md`. Original identity text
+can be reused by a distinct new wrapper; current identity/address and the
+reviewed correspondence, not cross-category label equality, own the role key.
+Changed-document check selected5documents/36local links with0failures;
+`quality-env-lineage-docs-371-20261015.log`. Ordinary strict commit/push pending.
+The first ordinary hook passed format465 and TypeScript471/0 but denied
+publication because the active Git index identity changed during checks.
+Root had queried git status during that hook; stop competing index reads and
+retain `quality-env-lineage-strict-commit-371-20261015.log`. No hook bypass.
+
+## Published bounded-launch correction
 
 Packet18879ba is published. Its ordinary strict hook passed format464files,
 TypeScript470files/0diagnostics and the configured lint/Knip checks; nonforce
@@ -81,6 +136,10 @@ rejections and completed the discovery. Review, not equality, owns admission.
 
 ## Current Source-beforeimage correction
 
+Packet3711eed is published after the ordinary strict hook passed format465files,
+TypeScript471files/0diagnostics and configured lint/Knip checks. Nonforce push
+confirmed main; logs `quality-capture-fallback-{strict-commit,push}-188-20261015.log`.
+
 Reuse capture A's bytes in a test-only helper at the two fixture serialization
 sites, keeping delivery apply/serialization order and every independent current
 Source capture B and inventory. No new product API or cross-capture cache.
@@ -131,6 +190,33 @@ before the analogous configured-context correction; final Source is bound by
 its own scoped checks. The prior77.22s point and this result do not isolate a
 causal speedup. Continue optimizing the still-long repeat current-state reads
 without deleting independent freshness captures or raising the bound.
+
+## Rejected Source-package read experiment
+
+The system specification already permits the verified one-file runtime-package
+Source observation. Reuse that existing snapshotRuntimePackageSources owner
+only for rebind's Source package byte snapshots, with a fresh safe access rooted
+at the selected repository package for each observation. Do not use the
+executing runtimePackageAccess root. Preserve both independent inventories and
+captures, their equality, required-file presence and all workspace config,
+operation/receipt CAS, state, fence, authorization and UNKNOWN guards. Ordinary
+declared TaskSource snapshots keep cooperative stable reads. No new API, mode,
+cache or prospective function budget is introduced; existing ceilings remain.
+Independent design/counterexample and actual Source reviews supported this narrow
+substitution. Existing owner controls passed27cases/239assertions in3.50s,
+including active-CAS denial. The native public point confirmed17selected-root
+captures, independent same-call Source digests,12settled CLI calls and43assertions.
+It nevertheless regressed to120.730s case/122.797s command and failed the same30s
+bound. Root rejected and restored the unpublished Source candidate; the existing
+cooperative reader remains active. No current Source binding was refreshed or
+allowance changed for the rejected candidate. Retained patch:
+`quality-source-verified-read-rejected-371-20261015.patch`. Native receipts:
+`quality-source-repair-verified-read-371-20261015.json` and
+`quality-source-repair-selected-root-proof-371-20261015.json`. Its failed fixture
+remains at
+`/home/agent/.cache/vida-cloud-tooling/tmp/quality-source-repair-profile-P5biv5/tmp/fixture-2RlrIm`.
+Next diagnose time spent in actual filesystem calls; metadata-based capture is
+not assumed faster, and the failed candidate is not a released correction.
 
 
 Pstack/Cloud/shared-helper/documentation packets, exact decisions and receipts

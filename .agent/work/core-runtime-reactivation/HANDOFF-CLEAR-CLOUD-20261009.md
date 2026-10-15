@@ -104,7 +104,7 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents6820roles across149bound files. The previous join
+The current partial represents6887roles across149bound files. The previous join
 added96independently reviewed retained roles and5new roles using cached inventories.
 The latest native shared-field parser adds one prospectively bounded3/3 function;
 both retained projections are now1<=original1. Full affected file40PASS/0FAIL.
@@ -116,12 +116,14 @@ observer6<=own10 now has scoped proof. Rebind stable-version is5<=original5.
 The latest join adds98independently reviewed retained roles, including18
 shifted callbacks whose actual producers/consumers match. A moved HostState
 receipt-reader responsibility remains unbound after independent rejection.
-Retained callback/context deficits remain open. Twenty-one represented static
-overages and910current/357original dispositions remain; this is not coverage
+Retained callback/context deficits remain open. Twenty represented static
+overages and843current/290original dispositions remain; this is not coverage
 progress. The current join validates original caps, one-to-one roles and actual
 counter/array equality before saving and after reading back the saved partial.
 Finite child timeout/environment preparation shares one condition, keeping
-boundedSpawnSync21<=original21. runPinnedBun17>original16 remains open.
+boundedSpawnSync21<=original21. Reusing one environment selection closes
+runPinnedBun16<=original16. Another67retained roles have independent actual-role
+review; all frozen fields and one-to-one identities remain exact.
 Affected launcher51PASS/0FAIL/2.26s preserves malformed-status denial,
 integer-status returns, review clocks and timeout/UNKNOWN behavior. Fresh
 physical0558135 checkout accepted exact CI SDK inputs online, then through
@@ -133,7 +135,11 @@ each fix and full affected files passed16/0 and7/0. Both frozen ceilings remain
 unchanged. Fixture beforeimages share capture A's private bytes without the
 later package-wide reread; production capture B stays independent. Fixture and
 launcher controls83/0. The real public repair point still exceeded30s at69.058s
-case/70.895s command; keep its failed root and continue the speed correction.
+case/70.895s command; keep its failed root. That diagnostic used a disk-backed
+private mount. A fresh retained host-tmpfs point passed43assertions within30s,
+and the four-case completion batch passed148assertions in46.470s command with
+unchanged bounds and real fsync calls. This is functional process-recovery
+evidence only; full resource/shard and numeric qualification remain open.
 Approval schema/key/identity compatibility is repaired with17focused cases;
 full current numeric evidence remains pending.
 Unbound Source inventory freshness
