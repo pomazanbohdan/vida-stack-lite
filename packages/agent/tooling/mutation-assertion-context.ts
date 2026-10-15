@@ -25,6 +25,15 @@ type Invocation = {
   outcome: 'pending' | 'returned' | 'threw';
   elapsed_ms: number;
 };
+export type MutationPerTestCapture = {
+  schema: 'MutationPerTestCapture/v2';
+  describes: DescribeRegistration[];
+  hooks: HookRegistration[];
+  registrations: BodyRegistration[];
+  invocations: Invocation[];
+  coverage_observed: boolean;
+  mutant_coverage: MutantCoverage;
+};
 
 /** Filled only by the loader from its invocation-owned adapter directory. */
 const captureFile: string | undefined = undefined;
@@ -192,7 +201,7 @@ class MutationCoverageCapture {
     for (const [id, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(coverage.perTest)))
       if (!this.#started.has(id) || !('value' in descriptor) || !coverageCounters(descriptor.value))
         throw new Error('Mutation coverage map has an unknown test or invalid counters.');
-    const bytes = JSON.stringify({
+    const capture: MutationPerTestCapture = {
       schema: 'MutationPerTestCapture/v2',
       describes: [...this.#describes.values()],
       hooks: [...this.#hooks.values()],
@@ -200,7 +209,8 @@ class MutationCoverageCapture {
       invocations: this.#invocations,
       coverage_observed: this.#namespace.mutantCoverage !== undefined,
       mutant_coverage: coverage,
-    });
+    };
+    const bytes = JSON.stringify(capture);
     if (Buffer.byteLength(bytes) > 4 * 1024 * 1024)
       throw new Error('Mutation per-test capture exceeds its size bound.');
     writeFileSync(this.output, bytes + '\n', { encoding: 'utf8', flag: 'wx', mode: 0o600 });

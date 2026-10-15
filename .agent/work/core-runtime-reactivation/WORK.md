@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `89b9489` at origin/main.
+- Published predecessor: `d67b72f` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -225,12 +225,79 @@ ignored fields and a numeric comparator correct them without changing target
 behavior. Full scoped Oxlint then passes:
 `quality-capture-scope-lint{,-corrected}-v89b-20261015.log`.
 
-Next bind the validated capture, planned original body set, complete selected
-JUnit/body evidence and current canonical dry-run mutant universe in the existing
-parent owner, with independent missing/foreign/pending/drift controls. Do not add
-another AST/inventory/hash pass or activate filtered selection before that join
-and runner/custody pilots qualify. Exact/frozen quality and native Runtime remain
-open. The two historical compatible contour closures remain2/44.
+That capture checkpoint passed the strict hook and was pushed as d67b72f. The
+next parent diagnostic packet is below; runner/custody pilots remain unqualified.
+Exact/frozen quality and native Runtime remain open. The two historical compatible
+contour closures remain2/44.
+
+## Per-test parent consistency and complete dry-run results
+
+Continue core-first without rerunning the1962-mutant kernel campaign. Two blind
+Luna readers independently reviewed parent contracts and mismatch scenarios.
+Root owns Source, checks and Git. Vex remains absent on this host; bounded current
+Source reads are the fallback. Existing WORK/TESTING retain authority; no parallel
+ledger or Source AST/inventory/hash producer is introduced.
+
+The existing parent map verifier accepted complete dry-run status without checking
+its public test results. A regression demonstrated that missing/empty results or
+a Failed baseline passed that boundary. The shared validateMutationDryRun now
+requires nonempty Success/Skipped results, finite nonnegative durations and at
+least one Success. The current parent calls it after its existing single artifact
+read. Public API TestStatus values are the installed numeric enum0/1/2; no string
+status assumption is introduced. A review-requested control also exposed an
+overstrict draft uniqueness check on opaque public runner IDs. The final check
+uses exact per-body file/name tokens for the per-test join instead; ordinary
+runner IDs remain opaque. Both red attempts remain retained.
+
+The new diagnostic owner validates scoped v2 capture through Ajv and joins the
+independent original declaration plan, selected file set, settled body/hook
+invocations, complete JUnit body/file cases, bound dry-run coverage and the
+validated canonical local-ID universe. JUnit's optional fifth observer shares
+its existing recursive validation pass; ordinary callers allocate no case array.
+No second XML parser is added. Hook applicability counts accumulate by executed
+ancestry, avoiding a hook-by-body Cartesian scan. Static coverage stays aggregate,
+uncovered IDs remain gaps, and expected failing tests stay distinct from Killed.
+
+The result explicitly withholds origin and filtered-run qualification. The caller
+must supply receipt/custody-validated current metadata, independently captured
+declarations and the canonical map under the same binding; this pure diagnostic
+cannot authenticate them. Full global test fingerprint and partition execution
+selection remain distinct. The current command runner still lacks actual public
+per-body file/name mapping, so it cannot yet supply this join; no selection or
+native runner is activated. A real Bun capture/JUnit control uses explicitly
+synthetic public dry-run/map inputs and proves consistency only, not a Stryker
+campaign, native custody or mutation score.
+
+Evidence under `/workspace/attachments`:
+`quality-pertest-dryrun-{red,green}-d67-20261015.log`,
+`quality-pertest-junit-projection-{red,green}-d67-20261015.log`,
+`quality-pertest-parent-{red,first-green,review-controls,complete-matrix}-d67-20261015.log`,
+`quality-pertest-public-ids-red-d67-20261015.log` and
+`quality-pertest-parent-real-bun-d67-20261015.log`.
+Independent actual reviews:
+`quality-pertest-parent-actual-contract-review-d67-20261015.md` and
+`quality-pertest-parent-actual-evidence-review-d67-20261015.md`.
+The first test typecheck retained three nullable fixture Map.get expectations;
+explicit fixture preconditions and typed planned records correct them without
+asserting report types. Final affected checks105PASS/0FAIL/661assertions in3.30s
+across map, async assertion and command-contract owners. Tests447and tooling184
+strict TypeScript PASS; full scoped Oxlint PASS; documentation3selected/39links,
+0failures. Final logs: `quality-pertest-parent-final-controls-d67-20261015.log`,
+`quality-pertest-parent-test-types-corrected-d67-20261015.log`,
+`quality-pertest-parent-tool-types-d67-20261015.log`,
+`quality-pertest-parent-lint-d67-20261015.log` and
+`quality-pertest-parent-docs-d67-20261015.log`. The matrix includes two original
+files with identical local body IDs, expected-thrown baseline, observed-empty,
+once-per-suite hooks, skipped sibling scope and independent malformed/drift
+controls. A retained genuine timing dry-run28688866 has the documented all-tests
+shape (Success0, idall,541ms), consistent with the tightened ordinary validator;
+reading it does not replay the operation or renew its numerical qualification.
+Strict hook and publication remain required for this Source packet.
+
+Next implement a bounded native provider pilot that supplies genuine original
+registration planning, public body/file results and byte-bound capture/receipt
+custody, then qualify protocol and fallback before narrowing kernel mutations.
+Do not relabel synthetic metadata or historical UNKNOWN as native evidence.
 
 ## Automatic contour progress projection
 

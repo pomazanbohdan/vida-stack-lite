@@ -152,6 +152,13 @@ registrations do not imply execution. Hook coverage stays aggregate static.
 Capture rejects async/each/modified describe forms until separately qualified;
 ordinary execution keeps supporting them. A caught unsupported-registration
 error must still prevent capture publication. Historical v1 has no scoped proof.
+For the parent baseline join, supply the independent original declaration plan
+and validated canonical map; do not construct expected authority from the
+capture being checked. Reuse its JUnit case observer and dry-run validator.
+Complete dry-run status is insufficient without passing public test results;
+runner-local IDs are opaque while exact file/body markers provide this join.
+An observed-empty map retains uncovered IDs. Diagnostic consistency does not
+authenticate caller metadata, qualify a runner or establish mutation Killed.
 Use TESTING's per-invocation configured-context fixture for mutation workers;
 keep repository tooling and consumer context roots separate and never reuse
 an archived or another worker's context. Shared package sandboxes alone do not

@@ -887,6 +887,33 @@ JUnit outcomes. Missing/pending/foreign/malformed evidence remains UNKNOWN;
 assertion attribution remains with the existing body-event classifier. A capture
 file or a successful producer control does not establish a mutation score.
 
+`mutation-per-test-evidence.ts` provides a passing-baseline consistency join.
+It validates v2 with Ajv, compares the independently supplied declaration plan,
+uses the existing JUnit traversal's optional case observer, and reconciles exact
+body/file tokens, skipped cases, settled invocations and scoped hook counts.
+Scope counts are accumulated once per executed ancestry, without a hook/body
+Cartesian scan. Static and per-body counters must match the bound public dry-run
+map and resolve through the already-validated canonical local-ID universe;
+uncovered canonical IDs remain explicit gaps, never Killed. Observed-empty maps
+are permitted; absent coverage is not.
+
+The caller owns immutable artifact/receipt custody, the independent declaration
+plan and the complete canonical map for the same current binding. Pass the
+partition's original selected execution files, never the observed subset; retain
+the separate full captured test-selection fingerprint. These trusted parent
+inputs cannot be derived from the capture being checked. The join returns
+diagnostic-only with origin_qualified=false and filtered_runner_qualified=false.
+It does not authenticate those caller inputs or activate a runner. The current
+all-tests command runner lacks the required public per-body file/name mapping;
+that path remains unsupported by this diagnostic, with full-selection fallback.
+
+The ordinary parent map validator also checks the public dry-run test results:
+complete termination alone is insufficient. Require a nonempty Success/Skipped
+array, finite nonnegative durations, nonempty IDs/names and at least one Success;
+Failed, error, timeout or an all-skipped baseline remains UNKNOWN. Public runner
+IDs are opaque and are not equated with body IDs or assumed globally unique.
+The per-test join separately requires exact file/name tokens and body uniqueness.
+
 The global mutant map must cover all maintained Source/partition assignments,
 with explicit pending/omitted/platform gaps. Its stable identities bind Source
 digest, normalized path, position, mutator and replacement; Stryker IDs are local

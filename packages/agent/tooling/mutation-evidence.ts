@@ -16,6 +16,8 @@ export type MutationBodyEvent =
       assertion_source: 'bun-expect' | 'node-assert' | null;
     }
   | { schema: 'MutationBodyEvent/v1'; test_file: string; kind: 'hook'; hook: string; error_observed: true };
+export type MutationJUnitCase = { test_file: string; name: string; outcome: 'passed' | 'skipped' | 'failed' | 'error' };
+type CaseObserver = (testcase: MutationJUnitCase) => void;
 export type MutationEvidenceReceipt = Record<string, unknown> & {
   junit_file: string;
   junit_sha256: string;
@@ -116,6 +118,7 @@ function countTestcase(
   suiteFile: string,
   hookFiles: Set<string>,
   bodyEvents: MutationBodyEvent[],
+  observe?: CaseObserver,
 ) {
   assertTestcaseBinding(testcase, suiteFile);
   const assertionText = testcase['@_assertions'];
@@ -137,6 +140,11 @@ function countTestcase(
   const hookFailed =
     (failures.length > 0 && hookFiles.has(suiteFile)) ||
     bodyEvents.some((event) => event.kind === 'hook' && event.test_file === suiteFile);
+  observe?.({
+    test_file: suiteFile,
+    name: String(testcase['@_name']),
+    outcome: skipped.length ? 'skipped' : errors.length ? 'error' : failures.length ? 'failed' : 'passed',
+  });
   return {
     tests: 1,
     assertions: Number(assertionText),
@@ -169,11 +177,17 @@ function addTotals(
   totals.hookFailures += extra.hookFailures;
 }
 
-function countTestcases(cases: unknown, suiteFile: string, hookFiles: Set<string>, bodyEvents: MutationBodyEvent[]) {
+function countTestcases(
+  cases: unknown,
+  suiteFile: string,
+  hookFiles: Set<string>,
+  bodyEvents: MutationBodyEvent[],
+  observe?: CaseObserver,
+) {
   const totals = emptyTotals();
   for (const testcase of entries(cases)) {
     if (!evidenceRecord(testcase)) throw new Error('JUnit testcase is not an object.');
-    addTotals(totals, countTestcase(testcase, suiteFile, hookFiles, bodyEvents));
+    addTotals(totals, countTestcase(testcase, suiteFile, hookFiles, bodyEvents, observe));
   }
   return totals;
 }
@@ -183,11 +197,12 @@ function countNestedSuites(
   suiteFile: string,
   hookFiles: Set<string>,
   bodyEvents: MutationBodyEvent[],
+  observe?: CaseObserver,
 ) {
   const totals = emptyTotals();
   for (const nested of entries(suites)) {
     if (!evidenceRecord(nested)) throw new Error('Nested JUnit suite is malformed.');
-    addTotals(totals, countSuite(nested, suiteFile, hookFiles, bodyEvents));
+    addTotals(totals, countSuite(nested, suiteFile, hookFiles, bodyEvents, observe));
   }
   return totals;
 }
@@ -197,6 +212,7 @@ function countSuite(
   suiteFile: string,
   hookFiles: Set<string>,
   bodyEvents: MutationBodyEvent[],
+  observe?: CaseObserver,
 ): {
   tests: number;
   assertions: number;
@@ -207,8 +223,8 @@ function countSuite(
   hookFailures: number;
 } {
   if (suite['@_file'] !== suiteFile) throw new Error('JUnit nested suite is not bound to its selected source file.');
-  const totals = countTestcases(suite.testcase, suiteFile, hookFiles, bodyEvents);
-  addTotals(totals, countNestedSuites(suite.testsuite, suiteFile, hookFiles, bodyEvents));
+  const totals = countTestcases(suite.testcase, suiteFile, hookFiles, bodyEvents, observe);
+  addTotals(totals, countNestedSuites(suite.testsuite, suiteFile, hookFiles, bodyEvents, observe));
   assertCounters(suite, totals);
   return totals;
 }
@@ -269,11 +285,12 @@ function countTopLevelSuites(
   suites: Record<string, unknown>[],
   hookFiles: Set<string>,
   bodyEvents: MutationBodyEvent[],
+  observe?: CaseObserver,
 ) {
   const totals = emptyTotals();
   for (const suite of suites) {
     const suiteFile = (suite['@_file'] as string).replaceAll('\\', '/');
-    addTotals(totals, countSuite(suite, suiteFile, hookFiles, bodyEvents));
+    addTotals(totals, countSuite(suite, suiteFile, hookFiles, bodyEvents, observe));
   }
   return totals;
 }
@@ -309,10 +326,11 @@ function junitOutcomeFromDocument(
   expectedTests: string[],
   unattributedHookFiles: string[] = [],
   bodyEvents: MutationBodyEvent[] = [],
+  observe?: CaseObserver,
 ): { tests: number; assertions: number; failures: number; errors: number; skipped: number; outcome: string } {
   const { root, suites } = suiteRoots(document);
   assertSelectedTestFiles(suites, expectedTests);
-  const totals = countTopLevelSuites(suites, new Set(unattributedHookFiles), bodyEvents);
+  const totals = countTopLevelSuites(suites, new Set(unattributedHookFiles), bodyEvents, observe);
   if (root !== suites[0] || root['@_name'] === 'bun test') assertCounters(root, totals);
   return { ...totals, outcome: outcomeFromJUnitTotals(totals, bodyEvents) };
 }
@@ -382,11 +400,12 @@ export function junitOutcome(
   expectedTests: string[],
   unattributedHookFiles: string[] = [],
   bodyEvents: MutationBodyEvent[] = [],
+  observe?: CaseObserver,
 ) {
   if (XMLValidator.validate(xml) !== true) throw new Error('JUnit XML is malformed.');
   const document = parser.parse(xml) as unknown;
   if (!evidenceRecord(document)) throw new Error('JUnit root is malformed.');
-  return junitOutcomeFromDocument(document, expectedTests, unattributedHookFiles, bodyEvents);
+  return junitOutcomeFromDocument(document, expectedTests, unattributedHookFiles, bodyEvents, observe);
 }
 
 function declarationModuleSpecifier(current: unknown): string | null {

@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { closeSync, fsyncSync, openSync, writeFileSync } from 'node:fs';
 import type { Mutant, MutantResult, MutantTestPlan, schema } from '@stryker-mutator/api/core';
+import { TestStatus } from '@stryker-mutator/api/test-runner';
 import { sha256, type InputDigest } from './bun-coverage-evidence.ts';
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
@@ -250,6 +251,45 @@ function parseMapRecord(bytes: Buffer): Record<string, unknown> {
   return value;
 }
 
+/** Complete describes termination; individual public test results must also prove a passing baseline. */
+export function validateMutationDryRun(value: unknown, binding: MutationMapBinding) {
+  if (
+    !isRecord(value) ||
+    value.schema !== 'MutationMapDryRun/v1' ||
+    canonicalJson(value.binding) !== canonicalJson(binding) ||
+    value.confirmed_status !== 'unconfirmed' ||
+    !isRecord(value.result) ||
+    value.result.status !== 'complete' ||
+    !Array.isArray(value.result.tests) ||
+    !value.result.tests.length
+  )
+    throw new Error('Mutation map dry run has no complete parent binding or test results.');
+  const tests = value.result.tests.map((test: unknown) => {
+    if (
+      !isRecord(test) ||
+      typeof test.id !== 'string' ||
+      !test.id ||
+      typeof test.name !== 'string' ||
+      !test.name ||
+      typeof test.timeSpentMs !== 'number' ||
+      !Number.isFinite(test.timeSpentMs) ||
+      test.timeSpentMs < 0 ||
+      (test.status !== TestStatus.Success && test.status !== TestStatus.Skipped) ||
+      (test.fileName !== undefined && (typeof test.fileName !== 'string' || !test.fileName))
+    )
+      throw new Error('Mutation map dry run test result is invalid or failed.');
+    return {
+      id: test.id,
+      name: test.name,
+      status: test.status,
+      file: typeof test.fileName === 'string' ? test.fileName : null,
+    };
+  });
+  if (!tests.some((test) => test.status === TestStatus.Success))
+    throw new Error('Mutation map dry run executed no passing tests.');
+  return { tests, mutant_coverage: value.result.mutantCoverage };
+}
+
 export async function confirmPartitionMutationMap(
   root: string,
   binding: MutationMapBinding,
@@ -294,14 +334,7 @@ export async function confirmPartitionMutationMap(
     new Map(reported.map(({ mutant }) => [mutant.id, mutant.status])),
   );
   const dryRun = parseMapRecord(await read(name('dry-run.json')));
-  if (
-    dryRun.schema !== 'MutationMapDryRun/v1' ||
-    canonicalJson(dryRun.binding) !== canonicalJson(binding) ||
-    !isRecord(dryRun.result) ||
-    dryRun.result.status !== 'complete' ||
-    dryRun.confirmed_status !== 'unconfirmed'
-  )
-    throw new Error('Mutation map dry run has no complete parent binding.');
+  validateMutationDryRun(dryRun, binding);
   return { map, source_counts: validated.sourceCounts, terminal: true };
 }
 

@@ -4,10 +4,16 @@ import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { confirmedRunnerOutcome, junitOutcome, parseMutationBodyEvents } from '../tooling/mutation-evidence.js';
+import {
+  confirmedRunnerOutcome,
+  junitOutcome,
+  parseMutationBodyEvents,
+  type MutationJUnitCase,
+} from '../tooling/mutation-evidence.js';
 import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
+import { validateMutationPerTestJoin } from '../tooling/mutation-per-test-evidence.ts';
 
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
 const elapsedMatcher: unknown = expect.any(Number);
@@ -60,11 +66,13 @@ async function runAdapterChild(
   const junit = await readFile(junitFile, 'utf8').catch((error: unknown) => {
     throw new Error(`Adapter child did not produce JUnit: ${stderr}`, { cause: error });
   });
+  const bodyEventBytes = await readFile(receiptFile);
   return {
     exitCode,
     stderr,
     junit,
-    events: parseMutationBodyEvents(await readFile(receiptFile), [path.relative(root, sourceFile)]),
+    events: parseMutationBodyEvents(bodyEventBytes, [path.relative(root, sourceFile)]),
+    bodyEventBytes,
     selectedTest: path.relative(root, sourceFile),
   };
 }
@@ -173,7 +181,16 @@ test('per-test file token can select one expanded row while preserving registrat
     expect(capture.mutant_coverage.static).toEqual({ module: 1, 'before-each': 1, 'after-all': 1 });
     // Bun retains filtered registrations in JUnit as skipped; one invocation is
     // not a one-case report. Future subset admission must reconcile both sets.
-    expect(junitOutcome(child.junit, [selected], [], child.events)).toMatchObject({ tests: 5, skipped: 4 });
+    const cases: MutationJUnitCase[] = [];
+    expect(junitOutcome(child.junit, [selected], [], child.events, (row) => cases.push(row))).toMatchObject({
+      tests: 5,
+      skipped: 4,
+    });
+    expect(cases).toHaveLength(5);
+    expect(cases.filter((row) => row.outcome === 'passed')).toEqual([
+      { test_file: selected, name: `[mutation-body:4] [mutation-file:${token}] row 2`, outcome: 'passed' },
+    ]);
+    expect(cases.filter((row) => row.outcome === 'skipped')).toHaveLength(4);
     passed = true;
   } finally {
     if (passed) await rm(root, { recursive: true, force: true });
@@ -550,6 +567,86 @@ describe('concurrent',()=>{
   } finally {
     if (passed) await rm(root, { recursive: true, force: true });
     else console.error('Retained duplicate hook fixture: ' + root);
+  }
+});
+
+test('real Bun capture and JUnit reconcile against synthetic public dry-run inputs without granting runner admission', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-parent-'));
+  let passed = false;
+  try {
+    const file = 'tests/child-parent.test.ts';
+    const token = Buffer.from(file).toString('base64url');
+    const child = await runAdapterChild(
+      root,
+      `import { test, expect } from 'bun:test';
+const ns=globalThis.__stryker__;ns.mutantCoverage={static:{'0':1},perTest:{}};
+test.each([1,2])('row %i',value=>{ns.mutantCoverage.perTest[ns.currentTestId]={'0':1};expect(value).toBeGreaterThan(0);});`,
+      'parent',
+      { capture: true, exitCode: 0, pattern: `\\[mutation-body:1\\] \\[mutation-file:${token}\\] ` },
+    );
+    const capture: unknown = JSON.parse(
+      await readFile(path.join(root, 'adapters-parent', 'per-test-coverage.json'), 'utf8'),
+    );
+    const binding = {
+      run_id: '00000000-0000-4000-8000-000000000001',
+      partition: 'fixture-only',
+      input_fingerprint: 'a'.repeat(64),
+      source_fingerprint: 'b'.repeat(64),
+      test_fingerprint: 'c'.repeat(64),
+      tool_fingerprint: 'd'.repeat(64),
+      partition_sources: [{ path: 'src/fixture.ts', sha256: 'e'.repeat(64) }],
+    };
+    const planned = {
+      describes: [],
+      hooks: [],
+      registrations: [1, 2].map((body_id) => ({ test_file: file, body_id, expected_failure: false, describe_ids: [] })),
+    };
+    // Public-map metadata is a fixture, not an observed Stryker run or native custody proof.
+    const dryRun = {
+      schema: 'MutationMapDryRun/v1',
+      binding,
+      confirmed_status: 'unconfirmed',
+      result: {
+        status: 'complete',
+        tests: [1, 2].map((id) => ({
+          id: 'engine-' + id,
+          name: `[mutation-body:${id}] [mutation-file:${token}] row ${id}`,
+          status: id === 1 ? 0 : 2,
+          timeSpentMs: 1,
+          fileName: file,
+        })),
+        mutantCoverage: { static: { '0': 1 }, perTest: { [`${file}#body:1`]: { '0': 1 } } },
+      },
+    };
+    const result = validateMutationPerTestJoin({
+      capture,
+      dryRun,
+      junit: child.junit,
+      bodyEvents: child.bodyEventBytes,
+      exitCode: child.exitCode,
+      expected: {
+        root,
+        binding,
+        tests: [file],
+        planned,
+        localIds: new Map([
+          ['0', 'e'.repeat(64)],
+          ['1', 'f'.repeat(64)],
+        ]),
+      },
+    });
+    expect(result).toMatchObject({
+      qualification: 'diagnostic-only',
+      origin_qualified: false,
+      filtered_runner_qualified: false,
+      body_mutants: [{ body: `${file}#body:1`, mutants: ['e'.repeat(64)] }],
+      static_mutants: ['e'.repeat(64)],
+      uncovered_mutants: ['f'.repeat(64)],
+    });
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained per-test parent fixture: ' + root);
   }
 });
 
