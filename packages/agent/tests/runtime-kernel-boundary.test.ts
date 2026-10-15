@@ -50,9 +50,26 @@ import {
   createTrustedHostComposition,
   dispatchWorkflowAssignment,
   prepareWorkflowExecution,
+  reserveWorkflowAssignmentForSession,
+  completeWorkflowAssignmentForSession,
+  retireInterruptedSourceOwnerForSession,
   requireLiveLocalSessionAdmission,
   readStableRuntimeConfig,
 } from '../src/runtime-kernel.ts';
+
+test('workflow capability APIs reject non-object capabilities before reading request data', async () => {
+  const targets = [
+    prepareWorkflowExecution,
+    dispatchWorkflowAssignment,
+    reserveWorkflowAssignmentForSession,
+    completeWorkflowAssignmentForSession,
+    retireInterruptedSourceOwnerForSession,
+  ];
+  for (const capability of [null, undefined, false, 0, 'forged', Symbol('forged'), () => undefined])
+    for (const target of targets)
+      await assert.rejects(async () => invokeUntrusted(target, [capability, null, null]), /opaque host capability/);
+});
+
 function invokeUntrusted(
   target: (...args: never[]) => unknown,
   ...invocation: [readonly unknown[]] | [unknown, readonly unknown[]]

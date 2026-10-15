@@ -1333,6 +1333,55 @@ cleanup callbacks at runtime-kernel.ts:1880. Preserve the exact residual map in
 quality-kernel-expanded-uncovered{-compact}-resume-20261015.json and target that
 real boundary next, without a broad oversized mutation rerun.
 
+### Protected entry abort and replay-fencing follow-up
+
+Reuse the retirement fixture's genuine public prewriter preparation through
+prepareFixture({issueWriter:false}); its existing fixture wrapper still requires
+an issued reservation. A workspace/work-scoped prototype fault reaches the
+public CLI's separate HostStateStore instance and throws before effect entry.
+The test checks the original error identity, the real cleanup call, exact Work
+revision/removal of its started attempt, unchanged Ledger and unissued journal,
+and schema/digest-valid aborted approval. Restore both spies before retrying.
+The spent approval is replay-fenced; no new authority is fabricated.
+Shared readPersistedApproval now owns the SQL projection/digest checks for both
+completion and abort cases. Preparation failures close owned connections while
+retaining the failed root and combining primary/cleanup errors.
+
+The first draft correctly observed abort but wrongly expected same-receipt
+retry success. The actual replay guard rejected it, so correct the test contract
+instead of weakening that guard. Preserve quality-protected-entry-abort-focused-
+resume-20261015.log, quality-retirement-entry-abort-6EOaiJ and private
+/tmp/quality-retirement-entry-abort-functional-i07LxU (the exact temporary path
+is recorded in that launch receipt). The revised focused case passes1/0/
+19assertions/9.849s body,10.865s owned outer; static checks pass478captured/
+477checkedTS plus101Source/0diagnostics. Evidence:
+quality-protected-entry-abort-focused-v2-resume-20261015.log and
+quality-protected-entry-abort-static-resume-20261015.log. Full-snapshot replay
+strengthening also passes1/0/19assertions (10.451s owned outer):
+quality-protected-entry-abort-final-focused-resume-20261015.log. Blind actual
+review found no blocker: quality-kernel-entry-abort-actual-review-resume-
+20261015.md. The extra DB connection uses the existing body/cleanup cause join.
+
+The first omit-abort preload double-wrapped Bun spyOn and recursed; preserve
+its runtime-error result as an invalid control, not target-causality proof:
+quality-protected-entry-omit-abort-control-resume-20261015.log and owner
+quality-retirement-entry-abort-d93WlG. A direct diagnostic method replacement
+corrects only that control and now reaches the intended exact durable Work
+assertion: the started attempt remains and revision does not advance. Retain
+quality-protected-entry-omit-abort-control-v2-resume-20261015.log, owner
+quality-retirement-entry-abort-rqranu, private
+/tmp/quality-retirement-entry-abort-functional-cPg3nB. It exits1 with complete
+output/same boot/owned group gone; this is not Stryker Killed evidence.
+The same kernel residual map also identifies five public capability APIs whose
+non-object paths were untested. One shared table checks seven non-object values
+at all five boundaries with null request data, proving early capability denial.
+That focused table passes1/0 in1.308s command/1.28ms body, with35awaited Node
+assert.rejects checks: quality-kernel-nonobject-capabilities-focused-resume-
+20261015.log.
+Final static checks remain478captured/477checkedTS plus101Source/0diagnostics:
+quality-protected-entry-abort-final-static-resume-20261015.log. Refreshed numeric
+proof remains pending.
+
 ### Current product correction packet
 
 Human ended the high-token audit mode and resumed ordinary bounded fixes.

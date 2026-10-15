@@ -1606,6 +1606,13 @@ denial through the real store. Its separately owned Mastra journal remains
 unchanged by the kernel acknowledgement. This bounded integration exception
 does not change the5000ms default or the300000ms coverage campaign budget.
 
+The protected public-issue entry-abort case also uses30000ms. It shares the
+genuine prewriter setup, injects failure before the real effect begins, proves
+durable abort, and rejects replay of the spent approval. The measured body is
+9.849s (10.865s owned command). Prepare this case before issue through the same
+fixture owner; restore workspace-scoped prototype spies before replay and owned
+cleanup. The ordinary issued-fixture wrapper retains its required reservation.
+
 [Bun lifecycle documentation](https://bun.com/docs/test/lifecycle.md) places
 `onTestFinished` after all `afterEach` hooks and excludes concurrent tests.
 Its documented callback supplies no test-success status. Neither this callback

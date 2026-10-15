@@ -1,8 +1,8 @@
 import { bindControlledRuntimeInitialization } from './helpers/controlled-runtime-initialization-fixture.ts';
 import { runTaskSynthesisPublicActions, runSourcePrewriterPublicActions } from './helpers/public-prewriter-fixture.ts';
 import { run } from '../bin/run.ts';
-import { expectRejection } from './helpers/expect-rejection.ts';
-import { test, expect } from 'bun:test';
+import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
+import { test, expect, spyOn } from 'bun:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -13,7 +13,7 @@ import { canonicalJson, canonicalJsonDigest, isPlainRecord } from '../src/contra
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
-import { openHostStateDatabase } from '../src/host-state.ts';
+import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { sessionHandoffDatabaseRelativePath } from '../src/config/project-paths.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
@@ -37,6 +37,8 @@ import type {
   InterruptedSourceRetirementRequest,
   StateVersion,
   WorkIdentity,
+  WorkflowAttemptApprovalAuthorization,
+  HostStateSnapshot,
 } from '../src/host-state.ts';
 import { runWorkStateRepair } from '../bin/repair-work-state.ts';
 import type { Database } from 'bun:sqlite';
@@ -187,6 +189,33 @@ type GovernanceApprovalRow = {
   readonly digest: string;
 };
 
+function readPersistedApproval(
+  database: Database,
+  workspace: string,
+  approval: ReturnType<typeof parseWorkflowApprovalConsumptionRecord>,
+) {
+  const row = requireValue(
+    database
+      .query<GovernanceApprovalRow, [string, string, string]>(
+        "SELECT store_id,record_key,revision,payload,digest FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind='approval' AND record_key=?",
+      )
+      .get(workspace, approval.store_id, canonicalJsonDigest(approval.binding)),
+    'persisted protected approval',
+  );
+  const record = parseWorkflowApprovalConsumptionRecord(JSON.parse(row.payload));
+  expect(row.digest).toBe(
+    canonicalJsonDigest({
+      workspace_id: workspace,
+      store_id: row.store_id,
+      kind: 'approval',
+      record_key: row.record_key,
+      revision: row.revision,
+      payload: record,
+    }),
+  );
+  return { row, record };
+}
+
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const writeJson = (root: string, file: string, value: unknown): void => {
   mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
@@ -195,8 +224,7 @@ const writeJson = (root: string, file: string, value: unknown): void => {
   writeFileSync(path.join(root, file), serialized);
 };
 
-async function fixture() {
-  const writer = true;
+async function prepareFixture({ issueWriter = true } = {}) {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-stopped-source-'));
   writeFileSync(
     path.join(root, 'agent-runtime.config.v1.yaml'),
@@ -401,28 +429,6 @@ async function fixture() {
     'Completed readonly observation',
   );
   let reservation: WorkflowSessionReservation | undefined, executionCapability: WorkflowExecutionCapability | undefined;
-  if (writer) {
-    journal = await runSourcePrewriterPublicActions(originalPublicFixture);
-    await run([
-      ...originalPublicFixture.args,
-      '--issue-wave',
-      'true',
-      '--expected-revision',
-      String(journal.version.revision),
-      '--expected-digest',
-      journal.version.digest,
-    ]);
-    journal = sync();
-    const item = requireValue(journal.state.items[0], 'Public writer action');
-    if (item.request.stage_id !== 'develop_task' || item.issue_id === null)
-      throw new Error('Public fixture did not issue its configured writer');
-    reservation = requireValue(item.host_reservation, 'Kernel-produced writer reservation');
-    const execution = await openAdmittedSessionExecution(root, store, 'sample', 'stopped');
-    executionCapability = requireValue(
-      execution.composition.workflowExecutionCapability,
-      'Actual execution capability',
-    );
-  }
   let connectionsClosed = false,
     primaryBridgeClosed = false,
     ledgerClosed = false;
@@ -536,6 +542,39 @@ async function fixture() {
     });
     return { ...next, journal: nextJournal };
   }
+  const issue = () =>
+    run([
+      ...originalPublicFixture.args,
+      '--issue-wave',
+      'true',
+      '--expected-revision',
+      String(journal.version.revision),
+      '--expected-digest',
+      journal.version.digest,
+    ]);
+  try {
+    journal = await runSourcePrewriterPublicActions(originalPublicFixture);
+    if (issueWriter) {
+      await issue();
+      journal = sync();
+      const item = requireValue(journal.state.items[0], 'Public writer action');
+      if (item.request.stage_id !== 'develop_task' || item.issue_id === null)
+        throw new Error('Public fixture did not issue its configured writer');
+      reservation = requireValue(item.host_reservation, 'Kernel-produced writer reservation');
+      const execution = await openAdmittedSessionExecution(root, store, 'sample', 'stopped');
+      executionCapability = requireValue(
+        execution.composition.workflowExecutionCapability,
+        'Actual execution capability',
+      );
+    }
+  } catch (error) {
+    try {
+      await close();
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Source fixture issue and cleanup failed');
+    }
+    throw error;
+  }
   return {
     root,
     config,
@@ -547,13 +586,19 @@ async function fixture() {
     readJournal,
     input,
     source,
-    reservation: requireValue(reservation, 'workflow reservation'),
+    reservation,
+    issue,
     readonlyObservation,
     close,
     closeConnections,
     admission,
     laterWriter,
   };
+}
+
+async function fixture() {
+  const prepared = await prepareFixture();
+  return { ...prepared, reservation: requireValue(prepared.reservation, 'workflow reservation') };
 }
 
 type RetirementFixtureCaseOutcome = {
@@ -564,7 +609,7 @@ type RetirementFixtureCaseOutcome = {
 };
 
 async function closeTestFixture(
-  f: Awaited<ReturnType<typeof fixture>>,
+  f: Pick<Awaited<ReturnType<typeof prepareFixture>>, 'close'>,
   outcome: RetirementFixtureCaseOutcome,
   closeOther?: () => void,
 ): Promise<boolean> {
@@ -608,6 +653,98 @@ async function closeRecoveryFixture(
   }
 }
 
+test('protected public issue aborts an unentered attempt and fences approval replay', async () => {
+  const deadline = performance.now() + 30000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
+  const failure = new Error('controlled protected entry failure before effect');
+  const f = await prepareFixture({ issueWriter: false });
+  let database: Database | undefined;
+  try {
+    const { issue, root, config, store, identity } = f;
+    const readJournal = () => f.readJournal('stopped', 1);
+    const journal = readJournal();
+    const begin = Reflect.get(
+      HostStateStore.prototype,
+      'beginWorkflowAttemptEffect',
+    ) as HostStateStore['beginWorkflowAttemptEffect'];
+    const abort = Reflect.get(
+      HostStateStore.prototype,
+      'abortUnstartedWorkflowAttempt',
+    ) as HostStateStore['abortUnstartedWorkflowAttempt'];
+    let entered: WorkflowAttemptApprovalAuthorization | undefined;
+    let before: HostStateSnapshot | undefined;
+    let aborts = 0;
+    const entrySpy = spyOn(HostStateStore.prototype, 'beginWorkflowAttemptEffect').mockImplementation(function (
+      this: HostStateStore,
+      authorization,
+    ) {
+      if (this.workspaceId !== store.workspaceId || authorization.receipt.identity.work_id !== identity.work_id)
+        return begin.call(this, authorization);
+      entered = authorization;
+      before = store.readHostStateSnapshot(identity);
+      throw failure;
+    });
+    const abortSpy = spyOn(HostStateStore.prototype, 'abortUnstartedWorkflowAttempt').mockImplementation(function (
+      this: HostStateStore,
+      authorization,
+    ) {
+      if (
+        this.workspaceId === store.workspaceId &&
+        'receipt' in authorization &&
+        authorization.receipt.identity.work_id === identity.work_id
+      ) {
+        expect(authorization).toEqual(requireValue(entered, 'matching observed protected entry'));
+        aborts += 1;
+      }
+      return abort.call(this, authorization);
+    });
+    try {
+      expect(await rejectionReason(issue())).toBe(failure);
+    } finally {
+      entrySpy.mockRestore();
+      abortSpy.mockRestore();
+    }
+    const authorization = requireValue(entered, 'observed protected effect entry');
+    const initial = requireValue(before, 'entry Host snapshot');
+    const work = requireValue(initial.work, 'entry Work');
+    const approval = requireValue(authorization.approval, 'reserved entry approval');
+    expect(aborts).toBe(1);
+    expect(approval.status).toBe('reserved');
+    expect(work.execution.assignment_attempts).toEqual([authorization.receipt.attempt]);
+    const after = store.readHostStateSnapshot(identity);
+    expect(after.work).toEqual({
+      ...work,
+      revision: work.revision + 1,
+      lifecycle: { ...work.lifecycle, revision: work.revision + 1 },
+      execution: { ...work.execution, assignment_attempts: [] },
+    });
+    expect(after.ledger).toEqual(initial.ledger);
+    expect(after.ledgerVersion).toEqual(initial.ledgerVersion);
+    expect(readJournal()).toEqual(journal);
+    database = openHostStateDatabase(root, sessionHandoffDatabaseRelativePath(config), store.workspaceId);
+    const persisted = readPersistedApproval(database, store.workspaceId, approval);
+    expect(persisted.row.revision).toBe(2);
+    const terminalAt = requireValue(persisted.record.terminal_at, 'aborted approval timestamp');
+    expect(persisted.record).toEqual({ ...approval, status: 'aborted', terminal_at: terminalAt });
+    expect(typeof persisted.record.terminal_at).toBe('string');
+    await expectRejection(issue(), /workflow approval receipt replay/);
+    expect(readPersistedApproval(database, store.workspaceId, approval)).toEqual(persisted);
+    expect(store.readHostStateSnapshot(identity)).toEqual(after);
+    expect(readJournal()).toEqual(journal);
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
+  } finally {
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError }, () => {
+      if (database !== undefined) closeWorkspaceDatabaseWithAdmission(database);
+    });
+  }
+}, 30000);
+
 test('admitted protected session commits an observed result and its approval exactly once', async () => {
   const deadline = performance.now() + 30000;
   let completed = false,
@@ -627,29 +764,7 @@ test('admitted protected session commits an observed result and its approval exa
     expect(item.host_reservation).toEqual(f.reservation);
     expect(f.reservation.approvalAction).toBe('source.write');
     expect(approval.status).toBe('commit_unknown');
-    const key = canonicalJsonDigest(approval.binding);
-    const readApproval = () => {
-      const row = requireValue(
-        db
-          .query<GovernanceApprovalRow, [string, string, string]>(
-            "SELECT store_id,record_key,revision,payload,digest FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind='approval' AND record_key=?",
-          )
-          .get(f.workspace, approval.store_id, key),
-        'persisted protected approval',
-      );
-      const record = parseWorkflowApprovalConsumptionRecord(JSON.parse(row.payload));
-      expect(row.digest).toBe(
-        canonicalJsonDigest({
-          workspace_id: f.workspace,
-          store_id: row.store_id,
-          kind: 'approval',
-          record_key: row.record_key,
-          revision: row.revision,
-          payload: record,
-        }),
-      );
-      return { row, record };
-    };
+    const readApproval = () => readPersistedApproval(db, f.workspace, approval);
     const before = f.store.readHostStateSnapshot(f.identity);
     const approvalBefore = readApproval();
     expect(approvalBefore.record).toEqual(approval);
