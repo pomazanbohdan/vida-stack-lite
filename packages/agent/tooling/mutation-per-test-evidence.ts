@@ -63,6 +63,12 @@ const bodyKey = (file: string, id: number) => `${file}#body:${id}`;
 const hookKey = (file: string, id: number) => `${file}#hook:${id}`;
 const describeKey = (file: string, id: number) => `${file}#describe:${id}`;
 
+/** Decode producer bytes before reading planning or runtime fields; observation is a separate predicate. */
+export function readMutationPerTestCapture(value: unknown): MutationPerTestCapture {
+  if (!validateCapture(value)) throw new Error('Per-test capture is malformed or unsupported.');
+  return value;
+}
+
 function bodyFromCase(row: Pick<MutationJUnitCase, 'test_file' | 'name'>): string {
   const match = /^\[mutation-body:([1-9]\d*)\] \[mutation-file:([A-Za-z0-9_-]+)\] /u.exec(row.name);
   if (
@@ -119,9 +125,9 @@ function captureRegistrations(capture: MutationPerTestCapture, tests: string[]) 
 
 /** Consistency only: callers still own immutable artifact/receipt custody and runner qualification. */
 export function validateMutationPerTestJoin(input: JoinInput) {
-  const { capture, expected } = input;
-  if (!validateCapture(capture) || !capture.coverage_observed)
-    throw new Error('Per-test capture is malformed, unsupported or coverage was not observed.');
+  const { expected } = input;
+  const capture = readMutationPerTestCapture(input.capture);
+  if (!capture.coverage_observed) throw new Error('Per-test coverage was not observed.');
   const declared = { describes: capture.describes, hooks: capture.hooks, registrations: capture.registrations };
   if (canonicalJson(declared) !== canonicalJson(expected.planned))
     throw new Error('Per-test planned declaration set differs.');

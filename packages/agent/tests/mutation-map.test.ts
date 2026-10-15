@@ -16,7 +16,7 @@ import {
 } from '../tooling/mutation-map.ts';
 import { sha256 } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
-import { validateMutationPerTestJoin } from '../tooling/mutation-per-test-evidence.ts';
+import { validateMutationPerTestJoin, readMutationPerTestCapture } from '../tooling/mutation-per-test-evidence.ts';
 import type { MutationPerTestCapture } from '../tooling/mutation-assertion-context.ts';
 
 const root = path.resolve('/mutation-map-fixture');
@@ -353,6 +353,15 @@ test('per-test parent uses explicit body/file tokens when public runner IDs repe
   const input = perTestEvidence();
   input.dryRun.result.tests[1]!.id = input.dryRun.result.tests[0]!.id;
   expect(() => validateMutationPerTestJoin(input)).not.toThrow();
+});
+
+test('per-test capture reader preserves unobserved registration planning without admitting it as baseline coverage', () => {
+  const input = perTestEvidence();
+  input.capture.coverage_observed = false;
+  const value: unknown = JSON.parse(JSON.stringify(input.capture));
+  expect(readMutationPerTestCapture(value).coverage_observed).toBe(false);
+  expect(() => validateMutationPerTestJoin(input)).toThrow('not observed');
+  expect(() => readMutationPerTestCapture({ ...input.capture, schema: 'MutationPerTestCapture/v1' })).toThrow();
 });
 
 test('per-test parent keeps equal body IDs in different original files distinct', () => {

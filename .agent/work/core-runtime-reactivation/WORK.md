@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `d67b72f` at origin/main.
+- Published predecessor: `6851211` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -292,12 +292,155 @@ once-per-suite hooks, skipped sibling scope and independent malformed/drift
 controls. A retained genuine timing dry-run28688866 has the documented all-tests
 shape (Success0, idall,541ms), consistent with the tightened ordinary validator;
 reading it does not replay the operation or renew its numerical qualification.
-Strict hook and publication remain required for this Source packet.
+The strict hook passed and the Source packet was published as6851211.
 
 Next implement a bounded native provider pilot that supplies genuine original
 registration planning, public body/file results and byte-bound capture/receipt
 custody, then qualify protocol and fallback before narrowing kernel mutations.
 Do not relabel synthetic metadata or historical UNKNOWN as native evidence.
+
+## Native per-test instrumenter pilot and registration decoding
+
+The installed public Stryker Instrumenter10 API instruments the current timing
+Source once into151mutants. A fresh private copied seven-file closure runs the
+actual six-case timing test through Bun1.4.3 and the maintained preload. The
+canonical map comes from those generated mutants; a separate registration-only
+invocation supplies the original declaration plan. The baseline's public result
+projection uses its actual validated JUnit names/files/statuses and capture
+durations. It is explicitly a bounded Bun projection, not Stryker reporter output.
+
+The shared Ajv v2 decoder is now exported as readMutationPerTestCapture so the
+parent can validate registration bytes before reading them. It preserves
+unobserved coverage, while the passing-baseline join continues rejecting it.
+The reader regression first failed on the absent export, then passed; the full
+map file47PASS/0FAIL/101assertions in323ms. Logs under attachments:
+`quality-pertest-capture-reader-{red,green,full}-685-20261015.log`.
+
+The first native pilot failed because Bun returns1 for an impossible name filter.
+Its six cases were all skipped, zero invocations, complete output and observed
+group termination. Retain that actual failure at
+`/workspace/attachments/quality-native-pertest-4YqilD`; do not promote it to PASS.
+Only the independent planning invocation now uses Bun's public
+--pass-with-no-tests flag with explicit nonempty complete registration/JUnit,
+all-skipped and zero-invocation checks. Baseline/mutant execution never gets it.
+
+The corrected bounded pilot completed in757.781569ms at
+`/workspace/attachments/quality-native-pertest-XVlW7A`: six successful original
+bodies,151generated mutants and3/3actually activated mutants whose five selected
+covering bodies match actual invocations and whose failures satisfy the existing
+JUnit/body assertion classifier. Original declaration sets stay equal and each
+child has complete output, no timeout/signal/spawn error, same boot and observed
+owned process-group termination. Selected copied inputs are read-only and their
+hashes are checked before/after each child. This is a three-mutant diagnostic,
+not151/151or a new contour closure. The active runner is unchanged.
+
+Origin/filtered-run qualification deliberately remain false. Dependencies are
+symlinked outside the sealed closure; environment/config/instrumenter and durable
+artifact custody still need the existing parent protocol. The timing selection
+has no static hits or hooks, so static fallback and scoped filtered lifecycle
+are not qualified by this pilot. No full executable inventory, Source AST/hash
+producer or full suite is duplicated. Global exact/frozen acceptance remains open.
+Pilot script and both terminal logs:
+`quality-native-pertest-pilot-685-20261015.ts`,
+`quality-native-pertest-pilot-{first,second}-685-20261015.log` under attachments.
+
+Blind Luna review accepted the bounded causal result and decoder, but correctly
+noted all first three mutants targeted one predicate and failed the same body.
+The follow-up script takes the first/middle/last covered non-static mutants and
+requires three distinct Source lines. Its same-selector inactive control passes
+with zero assertion events; each active row now joins exact failed body/file,
+JUnit case, assertion event, local/canonical mutant and location. The existing
+writeMutationMapArtifact owner produces a final digest manifest for exact plan,
+registration, capture, JUnit/body, process and join artifacts, plus output digests.
+No recursive inventory or duplicate test/Source scan is added.
+
+That second bounded diagnostic completes in844.274404ms with3/3assertion-confirmed
+kills at `/workspace/attachments/quality-native-pertest-wMeb9e`. It still has only
+three activated mutants, no static/hook scenario, no native admission and no new
+full contour closure. It does not replace the retained first diagnostic. Artifacts:
+`quality-native-pertest-pilot-breadth-685-20261015.{ts,log}` and
+`quality-native-pertest-pilot-review-685-20261015.md` under attachments. Remaining
+parent-origin/whole-selection custody and runner/fallback qualification stay open.
+
+## Shared reconciliation verifier fixture and kernel no-effect follow-up
+
+The first bounded kernel writer found no configured-workflow HostState bridge and
+made no changes. The existing runtime-kernel-boundary owner already has the
+automatic admission/WorkExecutionContext bridge, so the follow-up uses that owner
+instead of copying another persistence fixture. Native session retirement stays
+UNKNOWN without its actual proof; no state is replayed or reclassified.
+
+The file-local HostState unit authorization builder is extracted without changing
+its contract into tests/helpers/workflow-reconciliation-authorization-fixture.ts.
+Both principal and actual request/snapshot are required operands. The existing
+HostState callback delegates to it; there is no authorization default or runtime
+provider authority. Existing physical no-effect/reopen-replay controls pass2/2,
+20assertions in1.51s, including persisted predecessor/retry fence and exact replay
+bindings. Log: `quality-shared-reconciliation-controls-685-20261015.log` under
+attachments. The new public kernel reservation scenario remains in development.
+
+The real no-effect boundary control and five issuer-marker combinations now pass
+with the existing production refusal:7PASS/0FAIL, unchanged boot, complete output
+and observed outer group termination in2268.831802ms. Evidence root:
+`/workspace/attachments/quality-contour-kernel-controls-7udVhq`.
+The first two attempts are retained as fixture errors: omitted result-validator
+callback made the workflow capability null, then missing runtime.write denied
+reservation before the target. These are not product defects or branch evidence.
+Their roots remain `quality-contour-kernel-controls-O2MBF2` and
+`quality-contour-kernel-controls-YNchdk` under attachments, with original results.
+
+A new schema-valid missing WorkItem-contract case first passed the unchanged
+guard. It removes all configured references before load, proves absence after
+successful config validation, then requires the exact composition denial before
+callbacks. WorkItem contract records require required_fields under the config
+schema, so the kernel's optional/nullish fallback for that field is redundant.
+The guard now explicitly requires the contract then compares its required fields;
+no missing-field bypass or new error surface is added. Missing/extra-field and
+missing-contract controls pass3/3,21assertions in1.84s. Logs:
+`quality-kernel-missing-workitem-before-685-20261015.log` and
+`quality-kernel-workitem-guard-after-685-20261015.log` under attachments.
+This is behavior-preserving simplification, not a raised frozen ceiling.
+
+An independent readonly review found that the native local-session adapter drops
+the admitted HostStateStore's immutable reconciliationPrincipal. A completed
+reconciliation replay under a generic admitted verifier therefore cannot match
+the kernel's strict principal check. The canonical local-session verifier only
+authorizes no_effect, so this is not reported as a failure of that narrower
+recovery path. A real persisted completed-replay regression is in development;
+the fix must forward the same owner's exact principal, never weaken validation.
+Review: `quality-local-session-reconciliation-principal-review-685-20261015.md`.
+
+The persisted completed-replay regression now proves that defect: the exact
+native composition call fails with workflow reconciliation binding invalid at
+`/workspace/attachments/quality-contour-kernel-controls-EAkk8W`. Forwarding only
+admitted.store.reconciliationPrincipal fixes it; the same8controls pass at
+`quality-contour-kernel-controls-EYyR0H` under attachments. This is one confirmed
+product adapter defect. Principal equality, verifier authorization, ownership,
+CAS and UNKNOWN rules are unchanged. A scoped analogous-wrapper search finds
+the common trusted wrapper already forwards this field; no second Source site
+needs the correction. Independent actual review accepted the final change.
+
+The new tests share the existing prepare/request helper through an optional
+composition callback. No-effect uses the explicitly named unit trusted-port
+adapter and a real persisted receipt; completed uses actual local composition
+and ordinary HostState replay. Its expected-success dispatch has an assertion
+observer plus exact result, zero provider calls and unchanged persisted snapshot.
+Five issuer combinations restore exact absence/value of NODE_ENV/VITEST/BUN_TEST.
+Final focused three-file batch13PASS/0FAIL,61assertions in3520.52888ms owned outer time,
+complete output, unchanged boot and observed group termination:
+`/workspace/attachments/quality-contour-kernel-final-gHMxlK`.
+Source101, tooling184and tests448strict TypeScript PASS; scoped Oxlint7filesPASS.
+One test typecheck first rejected a nullable expected ledger; an explicit complete
+snapshot precondition fixes it without casting. Evidence logs under attachments:
+`quality-kernel-native-{test-types,test-types-corrected,lint,format}-685-20261015.log`,
+`quality-kernel-guard-source-types-685-20261015.log`,
+`quality-pertest-reader-tool-types-685-20261015.log` and
+`quality-kernel-native-final-controls-685-20261015.log`.
+Strict staged checks, publication and the next numeric measurement remain pending.
+Documentation5selected/46linksPASS. The first strict hook rejected formatting
+after the final test precondition change; only that file is formatted before the
+next hook attempt. Retain `quality-kernel-native-strict-commit-685-20261015.log`;
+no hook bypass or scope reduction is used.
 
 ## Automatic contour progress projection
 

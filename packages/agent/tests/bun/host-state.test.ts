@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
+import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-reconciliation-authorization-fixture.ts';
 import { validateWorkState } from '../../src/contracts/work-state-schema.ts';
 import type {
   CoordinationClaim,
@@ -1801,25 +1802,7 @@ function reconciliationAuthorization(
   request: Parameters<HostStateStore['reconcileWorkflowAttempt']>[0],
   state: HostSnapshot,
 ): WorkflowAttemptReconciliationAuthorization {
-  const present = presentSnapshot(state);
-  const attempt = requiredValue(
-    present.work.execution.assignment_attempts.find((entry) => entry.attempt_id === request.attemptId),
-    'reconciliation Host attempt',
-  );
-  return {
-    schema: 'WorkflowAttemptReconciliationAuthorization/v1',
-    principal: 'runtime:test-verifier',
-    work_binding_digest: canonicalJsonDigest(present.work.binding),
-    work_version: request.expectedWork,
-    ledger_version: request.expectedLedger,
-    attempt_id: request.attemptId,
-    request_digest: attempt.request_digest,
-    outcome: request.outcome,
-    result_digest: request.outcome === 'completed' ? canonicalJsonDigest(request.result) : null,
-    provider_evidence: request.providerEvidence,
-    decision: request.decision,
-    retry_lease: request.retryLease,
-  };
+  return createWorkflowReconciliationAuthorization('runtime:test-verifier', request, state);
 }
 beforeEach(async () => {
   preserveHostFixtureRoot = false;

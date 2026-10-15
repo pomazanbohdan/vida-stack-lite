@@ -159,6 +159,11 @@ Complete dry-run status is insufficient without passing public test results;
 runner-local IDs are opaque while exact file/body markers provide this join.
 An observed-empty map retains uncovered IDs. Diagnostic consistency does not
 authenticate caller metadata, qualify a runner or establish mutation Killed.
+Decode a separate registration-only capture with readMutationPerTestCapture
+before reading its fields. If an impossible Bun name pattern uses
+--pass-with-no-tests, confine that flag to planning and require a nonempty full
+JUnit/registration set, all cases skipped and zero invocations. Keep this
+runtime plan distinct from the static inventory and from the passing baseline.
 Use TESTING's per-invocation configured-context fixture for mutation workers;
 keep repository tooling and consumer context roots separate and never reuse
 an archived or another worker's context. Shared package sandboxes alone do not

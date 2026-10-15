@@ -1123,6 +1123,32 @@ describe('semantic current-v1 work context and live permits (unit authority adap
     expect(validated).toBe(foreign ? 0 : 1);
   });
 
+  test('rejects a schema-valid configuration without the executable WorkItem contract before workflow effects', async () => {
+    const modified = mutableFixtureConfig();
+    expect(Reflect.deleteProperty(modified.artifact_contracts, 'WorkItem/v1')).toBe(true);
+    for (const workflow of Object.values(modified.workflows))
+      for (const stage of workflow.stages) {
+        setFixtureField(
+          stage,
+          'consumes',
+          stage.consumes.filter((schema) => schema !== 'WorkItem/v1'),
+        );
+        setFixtureField(
+          stage,
+          'produces',
+          stage.produces.filter((schema) => schema !== 'WorkItem/v1'),
+        );
+      }
+    const changed = stringify(modified);
+    expect(changed).not.toBe(yaml);
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), changed);
+    config = loadRuntimeConfig(root);
+    expect(Object.hasOwn(config.artifact_contracts, 'WorkItem/v1')).toBe(false);
+    await expectRejection(compose(), /configured work item artifact contract does not match the executable schema/);
+    expect(resolverCalls).toBe(0);
+    expect(calls).toEqual([]);
+  });
+
   test.each(['missing', 'extra'] as const)(
     'rejects a schema-valid WorkItem contract with %s fields before workflow effects',
     async (mode) => {

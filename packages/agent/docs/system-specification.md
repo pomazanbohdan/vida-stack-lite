@@ -1955,6 +1955,12 @@ An unresolved or malformed Source binding denies renewal without state changes.
 Generic CAS cannot release or transfer file ownership while any retained
 assignment is started or uncertain. Existing terminal completion or trusted
 no-effect reconciliation settles that fence without granting new rights.
+Local-session composition binds workflow attempts, governance capability and
+the reconciliation verifier principal to the same admitted HostStateStore.
+A completed reconciliation receipt returned by that store must retain its
+principal through the adapter before strict receipt validation and result
+replay. The standard local-session verifier still authorizes only no-effect
+reconciliation; generic explicit verifiers do not change that default policy.
 Synchronous proof callbacks must finish before transaction writes. Returned
 thenables are rejected and their rejection is observed; a void proof must return
 undefined. This rule also applies to exact retries and the final Source recheck.

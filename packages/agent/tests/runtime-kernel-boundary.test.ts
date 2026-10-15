@@ -33,9 +33,15 @@ import {
 } from './helpers/automatic-work-admission-fixture.js';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import type { CoordinationLedger, HostStateStore, WorkIdentity } from '../src/host-state.ts';
+import {
+  HostStateStore,
+  type CoordinationLedger,
+  type WorkIdentity,
+  type WorkflowAttemptReceipt,
+} from '../src/host-state.ts';
 import type { WorkExecutionContext } from '../src/orchestration/workflow-session-reservation-contract.ts';
 import { validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
+import { createWorkflowReconciliationAuthorization } from './helpers/workflow-reconciliation-authorization-fixture.ts';
 type TrustedAuthentication = TrustedHostCompositionInput['authentication'];
 import {
   assertRuntimeConfigUnchanged,
@@ -411,9 +417,12 @@ function admittedFixtureWorkContext(
 async function prepareAdmittedWorkflowAssignment(
   admitted: Awaited<ReturnType<typeof prepareAdmittedSessionFixture>>,
   services: TrustedHostServices,
+  compose: (
+    input: Parameters<typeof createTrustedLocalSessionComposition>[0],
+  ) => Promise<Awaited<ReturnType<typeof createTrustedLocalSessionComposition>>> = observeLocalSessionComposition,
 ) {
   const { fixture, identity, nativeSessionHandle } = admitted;
-  const composition = await observeLocalSessionComposition({
+  const composition = await compose({
     repositoryRoot: fixture.root,
     repositoryId: identity.repository_id,
     projectIds: identity.project_ids,
@@ -602,6 +611,238 @@ describe('runtime kernel boundary', () => {
       }, localDispatchCaseMs),
     localDispatchCaseMs,
   );
+  test.each(['no_effect', 'completed'] as const)(
+    'persisted %s receipt is handled at the public workflow boundary',
+    (outcome) =>
+      withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+        const admitted = await prepareAdmittedSessionFixture(outcome + '-' + randomUUID(), createFixture(false, true));
+        const { fixture, identity, nativeSessionHandle, workItem } = admitted;
+        const evidenceDirectory = path.join(fixture.root, '.agent', 'work', identity.work_id, 'reconciliation');
+        await mkdir(evidenceDirectory, { recursive: true });
+        const decisionBytes = Buffer.from(JSON.stringify({ schema: 'DecisionRecord/v1', outcome: 'retry_no_effect' }));
+        const providerBytes = Buffer.from(JSON.stringify({ schema: 'ProviderObservation/v1', outcome: 'quiescent' }));
+        const decision = {
+          schema: 'DecisionRecord/v1',
+          path: `.agent/work/${identity.work_id}/reconciliation/decision.json`,
+          sha256: createHash('sha256').update(decisionBytes).digest('hex'),
+        } as const;
+        const providerEvidence = {
+          schema: 'ProviderObservation/v1',
+          path: `.agent/work/${identity.work_id}/reconciliation/provider-observation.json`,
+          sha256: createHash('sha256').update(providerBytes).digest('hex'),
+        } as const;
+        await Promise.all([
+          writeFile(path.join(fixture.root, decision.path), decisionBytes),
+          writeFile(path.join(fixture.root, providerEvidence.path), providerBytes),
+        ]);
+        if (outcome === 'no_effect') {
+          const beforeDecision = fixture.store.readHostStateSnapshot(identity);
+          assert.ok(
+            beforeDecision.work && beforeDecision.ledger && beforeDecision.workVersion && beforeDecision.ledgerVersion,
+          );
+          const nextWork = structuredClone(beforeDecision.work);
+          Reflect.set(nextWork, 'revision', nextWork.revision + 1);
+          Reflect.set(nextWork.lifecycle, 'revision', nextWork.revision);
+          Reflect.set(nextWork.contracts, 'decisions', [...nextWork.contracts.decisions, decision]);
+          const nextLedger = structuredClone(beforeDecision.ledger);
+          Reflect.set(nextLedger, 'revision', nextLedger.revision + 1);
+          fixture.store.compareAndSwapHostState({
+            expectedWork: beforeDecision.workVersion,
+            expectedLedger: beforeDecision.ledgerVersion,
+            nextWork,
+            nextLedger,
+          });
+        }
+
+        const principal = 'runtime:kernel-boundary-test-verifier';
+        const reconciliationStore = new HostStateStore(
+          fixture.database,
+          fixture.store.workspaceId,
+          {
+            principal,
+            verify: (request, state) => createWorkflowReconciliationAuthorization(principal, request, state),
+          },
+          undefined,
+          undefined,
+          undefined,
+          fixture.root,
+        );
+        let providerCalls = 0;
+        if (outcome === 'completed') {
+          const persistedResult = { recovered: true };
+          const services: TrustedHostServices = {
+            ...localSessionServices(reconciliationStore.governanceCapability),
+            runtimeRevision: () => ({
+              sourceRevision: fixture.store.readHostStateSnapshot(identity).work!.binding.runtime_code_digest,
+              currentRevision: 1,
+            }),
+            resolveWorkflowWorkItem: () => workItem,
+            resolveWorkExecutionContext: (contextRequest) =>
+              admittedFixtureWorkContext(fixture.store, identity, contextRequest),
+            validateWorkflowAssignmentResult: (_invocation, result) => expect(result).toEqual(persistedResult),
+            dispatchWorkflowAssignment: () => {
+              providerCalls++;
+              throw new Error('a reconciled completed attempt must replay its persisted result');
+            },
+          };
+          const nativeComposition = (input: Parameters<typeof createTrustedLocalSessionComposition>[0]) =>
+            observeLocalSessionComposition({
+              ...input,
+              admittedWork: { workId: identity.work_id, store: reconciliationStore },
+            });
+          const { capability, request } = await prepareAdmittedWorkflowAssignment(
+            admitted,
+            services,
+            nativeComposition,
+          );
+          const startedReservation = await reserveWorkflowAssignmentForSession(capability, request);
+          expect(startedReservation.receipt.attempt.status).toBe('started');
+          const afterStart = reconciliationStore.readHostStateSnapshot(identity);
+          assert.ok(afterStart.ledgerVersion);
+          const reconciledReceipt = await reconciliationStore.reconcileWorkflowAttempt({
+            identity,
+            expectedWork: startedReservation.receipt.workVersion,
+            expectedLedger: afterStart.ledgerVersion,
+            attemptId: startedReservation.receipt.attempt.attempt_id,
+            outcome: 'completed',
+            result: persistedResult,
+            providerEvidence,
+            decision: null,
+            retryLease: null,
+          });
+          const afterReconciliation = reconciliationStore.readHostStateSnapshot(identity);
+          const persistedAttempt = afterReconciliation.work?.execution.assignment_attempts.find(
+            (entry) => entry.attempt_id === startedReservation.receipt.attempt.attempt_id,
+          );
+          assert.ok(persistedAttempt && afterReconciliation.ledger);
+          expect(persistedAttempt).toEqual(reconciledReceipt.attempt);
+          expect(persistedAttempt).toMatchObject({
+            status: 'completed',
+            result: persistedResult,
+            result_digest: canonicalJsonDigest(persistedResult),
+            reconciliation: {
+              principal,
+              outcome: 'completed',
+              result_digest: canonicalJsonDigest(persistedResult),
+              provider_evidence: providerEvidence,
+              decision: null,
+              retry_lease: null,
+            },
+          });
+          const replayBefore = reconciliationStore.readHostStateSnapshot(identity);
+          let result: unknown;
+          await assert.doesNotReject(async () => {
+            result = await dispatchWorkflowAssignment(capability, request);
+          });
+          expect(result).toEqual(persistedResult);
+          expect(providerCalls).toBe(0);
+          expect(reconciliationStore.readHostStateSnapshot(identity)).toEqual(replayBefore);
+          return;
+        }
+        let reconciledReceipt: WorkflowAttemptReceipt | undefined;
+        let replayReconciledReceipt = false;
+        const workflowAttempts: NonNullable<TrustedHostServices['workflowAttempts']> = {
+          governanceCapability: fixture.store.governanceCapability,
+          reconciliationPrincipal: principal,
+          claimWorkflowAssignment: (invocation, requestDigest) => {
+            if (replayReconciledReceipt) {
+              if (!reconciledReceipt) throw new Error('persisted no-effect receipt was not prepared');
+              return reconciledReceipt;
+            }
+            return fixture.store.claimWorkflowAssignment(invocation, requestDigest);
+          },
+          completeWorkflowAttempt: (receipt, result) => fixture.store.completeWorkflowAttempt(receipt, result),
+          markWorkflowAttemptUncertain: (receipt) => fixture.store.markWorkflowAttemptUncertain(receipt),
+          abortUnstartedWorkflowAttempt: (authorization) => fixture.store.abortUnstartedWorkflowAttempt(authorization),
+        };
+        const services: TrustedHostServices = {
+          ...localSessionServices(fixture.store.governanceCapability),
+          workflowAttempts,
+          runtimeRevision: () => ({
+            sourceRevision: fixture.store.readHostStateSnapshot(identity).work!.binding.runtime_code_digest,
+            currentRevision: 1,
+          }),
+          resolveWorkflowWorkItem: () => workItem,
+          resolveWorkExecutionContext: (contextRequest) =>
+            admittedFixtureWorkContext(fixture.store, identity, contextRequest),
+          validateWorkflowAssignmentResult: () => {
+            throw new Error('a denied reservation must not validate a provider result');
+          },
+          dispatchWorkflowAssignment: () => {
+            providerCalls++;
+            throw new Error('a reconciled no-effect attempt must not dispatch');
+          },
+        };
+        const launcher = createTestTrustedHostLauncherCapability({
+          authentication: {
+            schema: 'TrustedHostAuthentication/v1',
+            repositoryRoot: fixture.root,
+            repositoryId: identity.repository_id,
+            projectIds: [...identity.project_ids].sort(),
+            integrationsDigest: identity.integrations_digest,
+            principal: 'fixture:no-effect-boundary',
+            configRevision: fixture.config.config_revision,
+            permittedOperations: ['runtime.read', 'runtime.write', 'workflow'],
+          },
+          services,
+        });
+        const { capability, request } = await prepareAdmittedWorkflowAssignment(admitted, services, () =>
+          createTrustedHostComposition(launcher),
+        );
+
+        const startedReservation = await reserveWorkflowAssignmentForSession(capability, request);
+        expect(startedReservation.receipt.attempt.status).toBe('started');
+        expect(providerCalls).toBe(0);
+        const afterStart = fixture.store.readHostStateSnapshot(identity);
+        assert.ok(afterStart.ledger && afterStart.ledgerVersion);
+        const retryLease = {
+          ...startedReservation.receipt.attempt.lease,
+          thread_id: nativeSessionHandle + '-retry',
+          generation: startedReservation.receipt.attempt.lease.generation + 1,
+        };
+        reconciledReceipt = await reconciliationStore.reconcileWorkflowAttempt({
+          identity,
+          expectedWork: startedReservation.receipt.workVersion,
+          expectedLedger: afterStart.ledgerVersion,
+          attemptId: startedReservation.receipt.attempt.attempt_id,
+          outcome: 'no_effect',
+          result: null,
+          providerEvidence,
+          decision,
+          retryLease,
+        });
+        replayReconciledReceipt = true;
+        const afterReconciliation = reconciliationStore.readHostStateSnapshot(identity);
+        const persistedAttempt = afterReconciliation.work?.execution.assignment_attempts.find(
+          (entry) => entry.attempt_id === startedReservation.receipt.attempt.attempt_id,
+        );
+        assert.ok(persistedAttempt && afterReconciliation.ledger);
+        expect(persistedAttempt).toEqual(reconciledReceipt.attempt);
+        expect(persistedAttempt).toMatchObject({
+          status: 'no_effect',
+          result: null,
+          result_digest: null,
+          lease: startedReservation.receipt.attempt.lease,
+          reconciliation: {
+            principal,
+            outcome: 'no_effect',
+            result_digest: null,
+            provider_evidence: providerEvidence,
+            decision,
+            retry_lease: retryLease,
+          },
+        });
+        expect(afterReconciliation.ledger).toEqual(afterStart.ledger);
+        const deniedBefore = afterReconciliation;
+        await assert.rejects(
+          reserveWorkflowAssignmentForSession(capability, request),
+          /workflow session action was already completed or requires reconciliation/,
+        );
+        expect(providerCalls).toBe(0);
+        expect(reconciliationStore.readHostStateSnapshot(identity)).toEqual(deniedBefore);
+      }),
+  );
+
   test('local session without admitted work remains read and workflow only', () =>
     withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
       const fixture = createFixture(false, true);
@@ -1739,6 +1980,35 @@ describe('runtime kernel boundary', () => {
     } finally {
       if (previousNodeEnvironment === undefined) delete process.env.NODE_ENV;
       else process.env.NODE_ENV = previousNodeEnvironment;
+    }
+  });
+  test.each([
+    ['NODE_ENV test', 'test', undefined, undefined, true],
+    ['no process marker', undefined, undefined, undefined, false],
+    ['VITEST alone', undefined, 'true', undefined, true],
+    ['BUN_TEST alone', undefined, undefined, '1', true],
+    ['production with test markers', 'production', 'true', '1', false],
+  ] as const)('test-only composition proof issuer gate: %s', (_label, nodeEnv, vitest, bunTest, accepted) => {
+    const previous = {
+      NODE_ENV: process.env.NODE_ENV,
+      VITEST: process.env.VITEST,
+      BUN_TEST: process.env.BUN_TEST,
+    };
+    try {
+      for (const [key, value] of Object.entries({ NODE_ENV: nodeEnv, VITEST: vitest, BUN_TEST: bunTest })) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
+      if (accepted) expect(() => createRuntimeKernelHostProofForCompositionRoot(hostBindings())).not.toThrow();
+      else
+        expect(() => createRuntimeKernelHostProofForCompositionRoot(hostBindings())).toThrow(
+          /test-only trusted host issuer is unavailable outside a test process/,
+        );
+    } finally {
+      for (const [key, value] of Object.entries(previous)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+      }
     }
   });
   test('rejects forged workflow capabilities before inspecting requests', async () => {

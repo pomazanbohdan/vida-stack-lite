@@ -48,6 +48,11 @@ After each terminal batch, one final owner refreshes it through TESTING's
 commit/push; never maintain manual duplicate percentage tables.
 Next qualify native Bun per-test selection before rerunning the oversized kernel
 contour. Capture-only per-test maps do not authorize filtering or numeric admission.
+The bounded native timing pilot now joins an independent registration invocation,
+actual instrumenter output and assertion-confirmed executions at three Source
+sites, plus a passing inactive control. It remains diagnostic: parent origin,
+full-selection custody, static fallback and scoped filtered lifecycle stay open
+as recorded in WORK. Reuse its existing joins instead of another scan or runner.
 
 Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that

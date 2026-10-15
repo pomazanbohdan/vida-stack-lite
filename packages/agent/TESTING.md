@@ -345,7 +345,11 @@ alone does not establish descendant quiescence or resource advancement.
 Typed HostState, Journal and Lease fixtures receive explicit identity, context,
 source, revisions and ticket operands. Validate their actual codecs/schemas;
 do not manufacture authorization defaults or normalize intentionally stale
-predecessor state. Cleanup attempts each registered resource independently.
+predecessor state. Unit reconciliation verifiers share
+`tests/helpers/workflow-reconciliation-authorization-fixture.ts`, with an
+explicit principal and the exact request/persisted snapshot. This builder is
+not a provider attestation or permission to reconcile real UNKNOWN effects.
+Cleanup attempts each registered resource independently.
 Only successful close removes a native handle; failed/UNKNOWN file roots keep
 their retained disposition and metadata. A transient deletion failure does not
 authorize automatic deletion of retained evidence on a later cleanup call.
@@ -906,6 +910,16 @@ diagnostic-only with origin_qualified=false and filtered_runner_qualified=false.
 It does not authenticate those caller inputs or activate a runner. The current
 all-tests command runner lacks the required public per-body file/name mapping;
 that path remains unsupported by this diagnostic, with full-selection fallback.
+
+`readMutationPerTestCapture` decodes producer bytes with that same v2 schema
+before a parent reads registration or runtime fields. It preserves
+coverage_observed=false for registration planning; the passing-baseline join
+still refuses it. A separate Bun registration-only probe can use an impossible
+name pattern and `--pass-with-no-tests`, only in that planning invocation.
+Require a nonempty complete registration/JUnit set, all cases skipped and zero
+body/hook invocations. That flag must never turn an empty baseline or mutant
+selection into success. Runtime planning is distinct from the static inventory
+and cannot by itself authenticate immutable origin or qualify filtering.
 
 The ordinary parent map validator also checks the public dry-run test results:
 complete termination alone is insufficient. Require a nonempty Success/Skipped

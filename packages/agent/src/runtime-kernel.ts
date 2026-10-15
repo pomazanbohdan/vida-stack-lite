@@ -1075,6 +1075,7 @@ export async function createTrustedLocalSessionComposition(input: {
           ...input.services,
           workflowAttempts: {
             governanceCapability: admitted.store.governanceCapability,
+            reconciliationPrincipal: admitted.store.reconciliationPrincipal,
             claimWorkflowAssignment: (invocation, requestDigest) => {
               requireLiveAdmission(invocation.workItem.id);
               return admitted.store.claimWorkflowAssignment(invocation, requestDigest);
@@ -1547,9 +1548,11 @@ function issueWorkflowExecutionCapability(
     !attempts
   )
     return null;
+  const workItemContract = config.artifact_contracts['WorkItem/v1'];
   requireCondition(
-    JSON.stringify([...(config.artifact_contracts['WorkItem/v1']?.required_fields ?? [])].sort()) ===
-      JSON.stringify(Object.keys(workflowWorkItemSchema.shape).sort()),
+    workItemContract !== undefined &&
+      JSON.stringify([...workItemContract.required_fields].sort()) ===
+        JSON.stringify(Object.keys(workflowWorkItemSchema.shape).sort()),
     'configured work item artifact contract does not match the executable schema',
   );
   const configDigest = runtimeConfigDigest(config);
