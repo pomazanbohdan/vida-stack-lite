@@ -38,7 +38,7 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6722roles across149files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds6820roles across149files; installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
 The original planner is39<=40 and current-read evidence5<=5; keep
@@ -50,9 +50,16 @@ contracts. Rebind stable-version is now5<=original5 with no widened allowance.
 The preceding join added167independently reviewed retained roles; the current
 join adds96retained and5new roles. Both enforce array
 and counter equality, exact original ceilings and one-to-one correspondence.
-Current7730-role inventory leaves1008current and455original dispositions missing,
-with22represented static overages after sharing the native lane/path string
+The latest join adds98independently reviewed retained roles, including18
+shifted identities confirmed by actual owner/dataflow review. A changed-owner
+HostState receipt reader remains unbound. Current7730-role inventory leaves
+910current and357original dispositions missing,
+with21represented static overages after sharing the native lane/path string
 boundary. Both projections are1<=original1 and the new parser2<=own3.
+Finite child option/environment preparation now shares one condition;
+boundedSpawnSync21<=original21, runPinnedBun17>original16 remains open.
+The full affected launcher file passed51/0 in2.26s. These are static/focused
+checks, not dynamic CRAP or complete current coverage.
 Disputed41native extracted-helper additions
 remain unbound pending classification; no original allowance is transferred.
 Fixture imports now defer configuration loading; historical setup resolves only
@@ -81,6 +88,10 @@ retain independent Source snapshot freshness comparisons. Prospective inert
 namespace PID1/readonly/descendant controls passed, but the selected diagnostic
 stopped on a helper's Source CAS attempt before its case. Resolve that boundary
 and review complete resource/SDK egress before numeric launch; WORK owns receipts.
+Fresh physical0558135 checkout and exact CI SDK artifact11945335431 passed
+the unchanged readiness owner online, then offline inside native PID1/network
+isolation. Reuse that existing cache boundary; no trusted-token API is needed.
+The SDK-only pilot does not qualify a full suite or resource closure.
 The former Stryker successor/custody defect is corrected;
 qualify the complete campaign separately. Rebind only actual reviewed shard
 resources to the final captured inputs; a retained stale artifact grants no

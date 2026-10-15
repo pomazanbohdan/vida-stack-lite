@@ -89,7 +89,7 @@ Requested model/service settings are distinct from observed host capabilities.
 
 ## Current evidence and limits
 
-Published predecessor before this packet: 00d1ff6. Maintained Source TS migration is
+Published predecessor before this packet: 0558135. Maintained Source TS migration is
 complete; old1271 CLI diagnostics and old JS counts are historical.
 The7f4c265 SDK archive passed its OWN extracted verifier, with external
 node_modules outside payload custody. This is not native qualification.
@@ -104,7 +104,7 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents6722roles across149bound files. The previous join
+The current partial represents6820roles across149bound files. The previous join
 added96independently reviewed retained roles and5new roles using cached inventories.
 The latest native shared-field parser adds one prospectively bounded3/3 function;
 both retained projections are now1<=original1. Full affected file40PASS/0FAIL.
@@ -113,10 +113,20 @@ exactly match the cache. Frozen allowances stay original.
 Installer27<=31, native loaders4<=4, controller target2<=2 and Bun resolver34<=37 have scoped proof;
 Native recognizer29<=original32 and factory4<=own10 now have scoped proof;
 observer6<=own10 now has scoped proof. Rebind stable-version is5<=original5.
-Retained callback/context deficits remain open. Twenty-two represented static
-overages and1008current/455original dispositions remain; this is not coverage
+The latest join adds98independently reviewed retained roles, including18
+shifted callbacks whose actual producers/consumers match. A moved HostState
+receipt-reader responsibility remains unbound after independent rejection.
+Retained callback/context deficits remain open. Twenty-one represented static
+overages and910current/357original dispositions remain; this is not coverage
 progress. The current join validates original caps, one-to-one roles and actual
 counter/array equality before saving and after reading back the saved partial.
+Finite child timeout/environment preparation shares one condition, keeping
+boundedSpawnSync21<=original21. runPinnedBun17>original16 remains open.
+Affected launcher51PASS/0FAIL/2.26s preserves malformed-status denial,
+integer-status returns, review clocks and timeout/UNKNOWN behavior. Fresh
+physical0558135 checkout accepted exact CI SDK inputs online, then through
+the unchanged owner offline under native PID1/network isolation. This is SDK
+boundary qualification only; full resource/coverage/CRAP/mutation remain open.
 Approval schema/key/identity compatibility is repaired with17focused cases;
 full current numeric evidence remains pending.
 Unbound Source inventory freshness

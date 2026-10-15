@@ -353,32 +353,26 @@ export function boundedSpawnSync(
   const issuedAt = Date.now();
   const childDeadline = Math.min(ceiling.expiry, inherited.expiry, issuedAt + timeoutMs);
   const started = performance.now();
-  const result: TrackedCommandResult = spawn(command, args, {
+  const childEnvironment: NodeJS.ProcessEnv = { ...environment, VIDA_COVERAGE_REVIEW_CLOCK_POLICY: undefined };
+  const childOptions: PinnedSpawnOptions = {
     ...spawnOptions,
-    env: {
-      ...environment,
-      VIDA_COVERAGE_REVIEW_CLOCK_POLICY: undefined,
-      ...(Number.isFinite(timeoutMs)
-        ? {
-            VIDA_PINNED_COMMAND_BUDGET_MS: String(timeoutMs),
-            VIDA_PINNED_COMMAND_DEADLINE_MS: String(childDeadline),
-            ...(coverageReviewPolicy
-              ? {
-                  VIDA_COVERAGE_REVIEW_CLOCK_POLICY: JSON.stringify({
-                    ...coverageReviewPolicy,
-                    budget_ms: String(timeoutMs),
-                    deadline_ms: String(childDeadline),
-                    issued_at_ms: issuedAt,
-                  }),
-                }
-              : {}),
-          }
-        : {}),
-    },
-    ...(Number.isFinite(timeoutMs) ? { timeout: timeoutMs } : {}),
+    env: childEnvironment,
     killSignal: 'SIGKILL',
     detached: process.platform !== 'win32',
-  });
+  };
+  if (Number.isFinite(timeoutMs)) {
+    childOptions.timeout = timeoutMs;
+    childEnvironment.VIDA_PINNED_COMMAND_BUDGET_MS = String(timeoutMs);
+    childEnvironment.VIDA_PINNED_COMMAND_DEADLINE_MS = String(childDeadline);
+    if (coverageReviewPolicy)
+      childEnvironment.VIDA_COVERAGE_REVIEW_CLOCK_POLICY = JSON.stringify({
+        ...coverageReviewPolicy,
+        budget_ms: String(timeoutMs),
+        deadline_ms: String(childDeadline),
+        issued_at_ms: issuedAt,
+      });
+  }
+  const result: TrackedCommandResult = spawn(command, args, childOptions);
   result.childElapsedMs = performance.now() - started;
   if (result?.error?.code === 'ETIMEDOUT') {
     result.timedOut = true;
@@ -715,8 +709,7 @@ export function runPinnedBun(args: readonly string[], options: BunOptions = {}):
     succeeded(result, 'Pinned Bun command');
   }
   // The existing terminal boundary above rejects a non-integer status.
-  if (typeof result.status !== 'number' || !Number.isInteger(result.status))
-    throw new Error('Pinned Bun returned no terminal status.');
+  if (typeof result.status !== 'number') throw new Error('Pinned Bun returned no terminal status.');
   return result.status;
 }
 

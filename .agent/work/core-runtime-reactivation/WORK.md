@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `00d1ff6` at origin/main.
+- Published predecessor: `0558135` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,13 +18,61 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Current quality preparation:6722of7730roles,149Source byte bindings,
-  1008current/455original dispositions missing and22represented static deficits.
+- Current quality preparation:6820of7730roles,149Source byte bindings,
+  910current/357original dispositions missing and21represented static deficits.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
+## Current bounded-launch correction
+
+Keep the original boundedSpawnSync21/462 and runPinnedBun16/272 allowances.
+Consolidate finite timeout option/environment preparation in the existing
+launch owner and remove only the repeated post-boundary integer test. No new
+helper or transferred allowance, timeout increase or changed cleanup contract.
+Check finite/unlimited propagation, review-clock clearing/issuance, malformed
+terminal statuses and existing timeout/UNKNOWN controls. The full affected
+launcher file passed51tests/0FAIL in2.26s, including8terminal-status boundaries.
+Independent actual Source review accepted the focused change; native timeout
+option key ordering changes without changing values or precedence. The reviewer
+summary incorrectly described all nonzero statuses as rejected; its detailed
+analysis and actual controls preserve returned integer nonzero/negative values.
+boundedSpawnSync is now21<=original21; runPinnedBun17>original16 stays open.
+No process-tree quiescence or numeric gate is claimed from these checks.
+
+Joined98retained correspondences after independent actual-role review:
+25initial,55additional HostState and18shifted-identity pairs. The HostState
+receipt-reader wrapper proposal was rejected because its former validation
+owner moved to the bundle reader. It remains unbound; no replacement budget
+was invented. All original CC/coverage/CRAP/maxima and source addresses remain
+exact, with one-to-one arrays/counters checked before save and after readback.
+One changed-file AST+SHA reuses148bindings. Current6820/7730roles leave
+910current/357original dispositions missing and21static deficits. Receipts:
+`/workspace/attachments/quality-lineage-launch-join-055-20261015.json`,
+`quality-bounded-launch-tests-055-20261015.log` and
+`quality-launch-options-actual-review-055-20261015.md` in that directory.
+Strict publication checks remain pending for this packet.
+
+Fresh physical checkout0558135 and CI SDK artifact11945335431 passed the real
+existing readiness owner online, then the unchanged owner offline under native
+PID1/user/network/mount isolation in3071.88ms. Exact receipt:
+`/workspace/attachments/quality-sdk-offline-cache-pilot-055-connector-20261015.json`.
+Direct ZIP transport failed before publication; connector transport supplied
+the same CI archive to the existing owner. No new trust-token API or owner
+bypass was needed. This qualifies that SDK boundary only, not full resource
+custody, suite coverage, CRAP, mutation or Runtime acceptance.
+
+Shifted-body discovery now uses the cached inventory's genuine unbound roles,
+exact current/published Source roots, bound and pending identity exclusions,
+and unique same-owner raw bodies. It found18unreviewed candidates without
+AST/hash recapture. The first worker draft used incorrect roots and omitted
+bound identity exclusion; Root corrected it before execution. One validation
+attempt failed on a legacy rejection row missing original identity, before
+output. Root preserved the failure, normalized those exact same-ordinal
+rejections and completed the discovery. Review, not equality, owns admission.
+
 ## Published correction evidence
+
 
 Pstack/Cloud/shared-helper/documentation packets, exact decisions and receipts
 remain at `f871b65:.agent/work/core-runtime-reactivation/WORK.md`. Template equality,
