@@ -374,6 +374,14 @@ describe('governed write completeness', () => {
     async () => {
       const fixture = evidence();
       const store = createTestOperationReservationStore(repositoryRoot, `quality-store-${sequence}`);
+      const defaultStore = createTestOperationReservationStore(repositoryRoot);
+      expect(defaultStore.store_id).toBe('test-governed-writes');
+      const defaultFixture = evidence();
+      const defaultReservation = await defaultStore.reserve(defaultFixture.operationHash, defaultFixture.request);
+      if (defaultReservation === null) throw new Error('default test reservation was not created');
+      expect(defaultReservation).toMatchObject({ store_id: 'test-governed-writes', status: 'reserved' });
+      await defaultStore.abort(defaultReservation);
+      expect(await defaultStore.inspect(defaultFixture.operationHash)).toMatchObject({ status: 'aborted' });
       expect(await store.inspect('missing')).toBeNull();
       const first = await store.reserve(fixture.operationHash, fixture.request);
       expect(first).toMatchObject({ status: 'reserved' });
@@ -412,10 +420,36 @@ describe('governed write completeness', () => {
       const host = new HostStateStore(database, workspaceId);
       const storeId = 'native-reservation-test';
       const store = createHostOperationReservationStore(host.governanceCapability, storeId);
+      const defaultStore = createHostOperationReservationStore(host.governanceCapability);
       const otherStore = createHostOperationReservationStore(host.governanceCapability, 'other-reservation-test');
       const firstFixture = evidence();
 
       expect(store.scope).toBe('host-sqlite');
+      expect(defaultStore.store_id).toBe('candidate-governed-writes');
+
+      // This uses real HostState SQLite reservation transitions at the public guard boundary.
+      // The Cedar and approval callbacks remain test controls; this does not prove external authority
+      // or a database write performed by the callback.
+      const guardedFixture = evidence();
+      let guardedWriteCalls = 0;
+      const guard = createTestGovernanceGuard(
+        bindings(guardedFixture, {
+          reservationStore: defaultStore,
+          casWriter: (_request, context) => {
+            guardedWriteCalls += 1;
+            return { applied: true, fencing_token: context.fencing_token };
+          },
+        }),
+      );
+      await Promise.resolve(
+        expect(runGovernedWrite(guard, wrapped(guardedFixture))).resolves.toMatchObject({ applied: true }),
+      );
+      expect(guardedWriteCalls).toBe(1);
+      const guardedReservation = await defaultStore.inspect(guardedFixture.operationHash);
+      if (guardedReservation === null) throw new Error('guarded HostState reservation is missing');
+      expect(validateHostOperationReservation(guardedReservation)).toEqual(guardedReservation);
+      expect(guardedReservation).toMatchObject({ status: 'applied', store_id: 'candidate-governed-writes' });
+
       expect(await store.inspect(firstFixture.operationHash)).toBeNull();
       const first = await store.reserve(firstFixture.operationHash, firstFixture.request);
       if (first === null) throw new Error('native reservation was not created');
@@ -580,6 +614,19 @@ describe('governed write completeness', () => {
       try {
         const reservationRoot = path.join(temporaryRoot, 'reservations');
         const store = await createFileOperationReservationStore(reservationRoot, 'quality-durable');
+        const defaultStore = await createFileOperationReservationStore(
+          path.join(temporaryRoot, 'default-reservations'),
+        );
+        expect(defaultStore.store_id).toBe('candidate-governed-writes');
+        const defaultFixture = evidence();
+        const defaultReservation = await defaultStore.reserve(defaultFixture.operationHash, defaultFixture.request);
+        if (defaultReservation === null) throw new Error('default durable reservation was not created');
+        expect(defaultReservation).toMatchObject({ store_id: 'candidate-governed-writes', status: 'reserved' });
+        await defaultStore.abort(defaultReservation);
+        const defaultAborted = await defaultStore.inspect(defaultFixture.operationHash);
+        if (defaultAborted === null) throw new Error('default durable aborted reservation is missing');
+        expect(defaultAborted).toMatchObject({ status: 'aborted', store_id: 'candidate-governed-writes' });
+
         const firstFixture = evidence();
         expect(store.scope).toBe('file-durable');
         expect(await store.inspect(firstFixture.operationHash)).toBeNull();
@@ -589,6 +636,8 @@ describe('governed write completeness', () => {
         if (first === null) throw new Error('first durable reservation was not created');
         await store.markCommitStarted(first);
         await store.markCommitStarted(first);
+        expect(await store.inspect(firstFixture.operationHash)).toMatchObject({ status: 'commit_unknown' });
+        await Promise.resolve(expect(store.complete(first, 'invalid-digest')).rejects.toThrow(/digest/));
         expect(await store.inspect(firstFixture.operationHash)).toMatchObject({ status: 'commit_unknown' });
         await store.complete(first, 'a'.repeat(64));
         await store.complete(first, 'a'.repeat(64));
@@ -607,7 +656,22 @@ describe('governed write completeness', () => {
         if (second === null) throw new Error('second durable reservation was not created');
         await store.abort(second);
         await store.abort(second);
-        expect(await store.inspect(secondFixture.operationHash)).toMatchObject({ status: 'aborted' });
+        const aborted = await store.inspect(secondFixture.operationHash);
+        if (aborted === null) throw new Error('durable aborted reservation is missing');
+        expect(aborted).toMatchObject({ status: 'aborted', terminal_revision: second.revision + 1 });
+        expect(Object.keys(aborted).sort()).toEqual(
+          [
+            'schema',
+            'operation_key',
+            'store_id',
+            'revision',
+            'fencing_token',
+            'status',
+            'created_at',
+            'request_digest',
+            'terminal_revision',
+          ].sort(),
+        );
         await Promise.resolve(expect(store.markCommitStarted(second)).rejects.toThrow(/transition/));
 
         const concurrentFixture = evidence();

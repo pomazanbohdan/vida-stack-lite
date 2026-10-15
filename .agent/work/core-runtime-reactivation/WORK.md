@@ -838,6 +838,42 @@ separate from successful functional captures. Final report merge evidence:
 quality-contours-update-governance-79d3-20261015.log. No runtime cutover/install
 or unblock/owner notice occurred.
 
+The next bounded packet uses that same gap list. Blind Luna writers extended the
+two existing test owners with real file approval abort/retry, malformed emitted
+marker retention, direct UNKNOWN replay denial, meaningful public defaults and
+the actual HostState SQLite reservation branch at runGovernedWrite. Root's
+focused control5PASS/0FAIL/48assertions in2.37s and Source/tests typechecks pass:
+quality-governance-private-{controls,source-ts,tests-ts}-6d05-20261015.log.
+These are focused behavior controls, not a new numerical closure.
+
+Independent private-call-graph review confirms successful preparation always
+provides operationKey, sourceRevision, expectedRevision and its UUID ingress
+token. Root made those private types required, preserved the unconditional
+post-CAS config/revision fence and removed only redundant optional fallback
+logic. The inner file approval consumer always receives the composer's resolved
+callback; public/composition defaults remain. Authorization, identity, marker
+locking, reservation abort, CAS and UNKNOWN paths remain in their existing owners.
+Review: quality-governance-private-invariants-6d05-20261015.md.
+
+The removed inner callback default and both redundant ingress-cleanup callbacks
+are three published baseline roles, now explicitly dispositioned in the existing
+partial lineage. One changed-file Babel inventory+hash capture finds202current
+functions, refreshes111affected addresses and preserves every retained original
+frozen field/cap; no allowance transfer. Receipt and mechanical read-back:
+quality-governance-private-lineage-receipt-6d05-20261015.json and
+quality-governance-private-lineage-6d05-20261015.log. Reused other Source records
+are not attested fresh. This partial remains non-executable/non-exhaustive; the
+missing complete executable budget is still a GAP. Independent packet review
+finds no actionable Source or oracle defect; malformed marker retention is
+intentional negative evidence: quality-governance-private-packet-review-6d05-
+20261015.md. The additional durable-transition control1PASS/0FAIL/26assertions
+in1.50s is quality-governance-private-durable-controls-6d05-20261015.log.
+Strict staged check/publication and one complete governance capture are next.
+The first staged strict hook rejected one await-thenable in the new native
+reservation assertion. Root reused the file's existing Promise.resolve matcher
+pattern; the retained failure is quality-governance-private-commit-6d05-20261015.log.
+No product defect or successful publication is inferred from that failed hook.
+
 ## Automatic contour progress projection
 
 The human requested durable per-contour metrics and one automatic consolidated

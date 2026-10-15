@@ -1045,7 +1045,7 @@ async function consumeFileWorkflowApproval(
   generation: string,
   binding: WorkflowApprovalBinding,
   apply: () => Promise<void>,
-  beforeCommit: () => void = () => undefined,
+  beforeCommit: () => void,
 ): Promise<void> {
   const lock = `${marker}.lock`;
   const assertIdentity = (): void =>
@@ -2050,9 +2050,9 @@ interface GovernedWritePreparation {
   readonly args: Record<string, unknown>;
   readonly ingressToken: string;
   readonly reservation: OperationReservation;
-  readonly operationKey?: string;
-  readonly sourceRevision?: string;
-  readonly expectedRevision?: number;
+  readonly operationKey: string;
+  readonly sourceRevision: string;
+  readonly expectedRevision: number;
 }
 function requireMatchingRuntimeRevision(
   expected: RuntimeEnvelopeRevisionBinding,
@@ -2251,7 +2251,7 @@ async function finalizeGovernedWrite(
   bindings: GovernanceBindings | undefined,
   reservation: OperationReservation | null,
   result: unknown,
-  expectedRevision?: RuntimeEnvelopeRevisionBinding,
+  expectedRevision: RuntimeEnvelopeRevisionBinding,
 ): Promise<unknown> {
   requireCondition(result !== undefined, 'governed CAS writer must return a canonical JSON result');
   const resultDigest = canonicalJsonDigest(result);
@@ -2259,11 +2259,9 @@ async function finalizeGovernedWrite(
     all(Boolean(reservation), Boolean(bindings)),
     'governed CAS completion requires its reservation context',
   );
-  if (expectedRevision !== undefined) {
-    bindings!.assertRuntimeConfigCurrent();
-    requireMatchingRuntimeRevision(expectedRevision, await bindings!.runtimeRevision());
-    bindings!.assertRuntimeConfigCurrent();
-  }
+  bindings!.assertRuntimeConfigCurrent();
+  requireMatchingRuntimeRevision(expectedRevision, await bindings!.runtimeRevision());
+  bindings!.assertRuntimeConfigCurrent();
   await bindings!.reservationStore.complete(reservation!, resultDigest);
   return result;
 }
@@ -2272,7 +2270,7 @@ async function abortGovernedWrite(
   guard: OperationPolicyGuard,
   bindings: GovernanceBindings | undefined,
   reservation: OperationReservation | null,
-  operationKey: string | undefined,
+  operationKey: string,
   commitStarted: boolean,
   error: unknown,
 ): Promise<never> {
@@ -2281,7 +2279,7 @@ async function abortGovernedWrite(
       all(Boolean(reservation), Boolean(bindings), !commitStarted),
       async () => {
         await bindings!.reservationStore.abort(reservation!);
-        if (operationKey !== undefined) consumedOperationKeys.get(guard)?.delete(operationKey);
+        consumedOperationKeys.get(guard)?.delete(operationKey);
       },
       () => Promise.resolve(),
     );
@@ -2296,12 +2294,8 @@ async function abortGovernedWrite(
   throw error;
 }
 
-function cleanupGovernedWrite(guard: OperationPolicyGuard, ingressToken: string | undefined): void {
-  deferPick(
-    Boolean(ingressToken),
-    () => guardIngressCapabilities.get(guard)?.delete(ingressToken!),
-    () => undefined,
-  );
+function cleanupGovernedWrite(guard: OperationPolicyGuard, ingressToken: string): void {
+  guardIngressCapabilities.get(guard)?.delete(ingressToken);
 }
 export async function runGovernedWrite(guard: OperationPolicyGuard, input: unknown): Promise<unknown> {
   const bindings = guardBindings.get(guard);
@@ -2318,14 +2312,10 @@ export async function runGovernedWrite(guard: OperationPolicyGuard, input: unkno
       executeGovernedWrite(bindings, preparation.args, guard, commitStarted),
     )
     .then((result) =>
-      finalizeGovernedWrite(
-        bindings,
-        preparation.reservation,
-        result,
-        preparation.sourceRevision !== undefined && preparation.expectedRevision !== undefined
-          ? { sourceRevision: preparation.sourceRevision, currentRevision: preparation.expectedRevision }
-          : undefined,
-      ),
+      finalizeGovernedWrite(bindings, preparation.reservation, result, {
+        sourceRevision: preparation.sourceRevision,
+        currentRevision: preparation.expectedRevision,
+      }),
     )
     .catch((error) =>
       abortGovernedWrite(

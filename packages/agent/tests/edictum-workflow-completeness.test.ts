@@ -51,6 +51,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
+function emittedWorkflowMarker(
+  storeRoot: string,
+  binding: WorkflowApprovalBinding,
+): Readonly<{ path: string; record: Record<string, unknown> }> {
+  for (const name of readdirSync(storeRoot).filter((candidate) => candidate.endsWith('.json'))) {
+    const markerPath = path.join(storeRoot, name);
+    const value: unknown = JSON.parse(readFileSync(markerPath, 'utf8'));
+    if (isRecord(value) && JSON.stringify(value.binding) === JSON.stringify(binding))
+      return { path: markerPath, record: value };
+  }
+  throw new Error('expected workflow approval marker emitted for the requested binding');
+}
+
 function isApprovalInput(value: Record<string, unknown>): value is EdictumWorkflowApprovalReceiptInput {
   return (
     value.schema === 'EdictumWorkflowApproval/v1' &&
@@ -480,13 +493,205 @@ describe('configured Edictum workflow completeness', () => {
     },
   );
   test.skipIf(!nativeNoFollowAvailable)(
+    'file workflow aborts a failed application, retries the same binding, then denies replay',
+    async () => {
+      const caseDeadline = performance.now() + 5_000;
+      let fixtureRoot: string | undefined;
+      let bodyFailed = false;
+      let bodyError: unknown;
+      let bodyPassed = false;
+      try {
+        fixtureRoot = await createInitializedFixture((created) => {
+          fixtureRoot = created;
+        });
+        const storeId = 'abort-retry-' + randomUUID();
+        const storeRoot = path.join(fixtureRoot, '.agent', 'work', 'runtime-workflow-approvals', storeId);
+        const host = await createTestFileWorkflowHostCapability(fixtureRoot, 'human:workflow-reviewer', storeId);
+        sessionSequence += 1;
+        const candidate = createConfiguredEdictumWorkflow(fixtureRoot, 'abort-retry-' + sessionSequence, host);
+        const operationBinding = operationFor(fixtureRoot);
+        const approval = receipt(
+          'governed-write-approval',
+          { approval_id: 'abort-retry-' + sessionSequence },
+          fixtureRoot,
+        );
+        const binding: WorkflowApprovalBinding = {
+          stage_id: approval.stage_id,
+          approval_id: approval.approval_id,
+          ...operationBinding,
+        };
+        expect((await candidate.evaluate('runtime.write', operationBinding)).action).toBe('pending_approval');
+
+        const originalRecordApproval = candidate.runtime.recordApproval.bind(candidate.runtime);
+        const applicationError = new Error('injected workflow approval application failure');
+        let applicationCalls = 0;
+        candidate.runtime.recordApproval = async (...args) => {
+          applicationCalls += 1;
+          if (applicationCalls === 1) throw applicationError;
+          return originalRecordApproval(...args);
+        };
+        try {
+          await Promise.resolve(expect(candidate.approve(approval)).rejects.toBe(applicationError));
+        } finally {
+          candidate.runtime.recordApproval = originalRecordApproval;
+        }
+        const aborted = emittedWorkflowMarker(storeRoot, binding);
+        expect(aborted.record.status).toBe('aborted');
+        expect(applicationCalls).toBe(1);
+
+        await candidate.approve(approval);
+        const applied = emittedWorkflowMarker(storeRoot, binding);
+        expect(applied.record.status).toBe('applied');
+        let replayApplyCalls = 0;
+        await Promise.resolve(
+          expect(
+            host.consumeApproval(binding, async () => {
+              replayApplyCalls += 1;
+            }),
+          ).rejects.toThrow(/replay/),
+        );
+        expect(replayApplyCalls).toBe(0);
+        bodyPassed = true;
+      } catch (error: unknown) {
+        bodyFailed = true;
+        bodyError = error;
+      }
+
+      try {
+        completeOwnedCleanup(
+          [
+            () => {
+              if (!bodyPassed || fixtureRoot === undefined || performance.now() >= caseDeadline) {
+                if (fixtureRoot !== undefined)
+                  console.error('Retained failed or expired workflow fixture root: ' + fixtureRoot);
+                return undefined;
+              }
+              rmSync(fixtureRoot, { recursive: true, force: true });
+              return undefined;
+            },
+          ],
+          bodyFailed ? { error: bodyError } : undefined,
+        );
+      } catch (cleanupError: unknown) {
+        if (fixtureRoot !== undefined) console.error('Retained workflow fixture after cleanup failure: ' + fixtureRoot);
+        throw cleanupError;
+      }
+      if (bodyFailed) throw bodyError;
+    },
+  );
+  test.skipIf(!nativeNoFollowAvailable)(
+    'file workflow denies malformed persisted marker reads without changing their bytes',
+    async () => {
+      let fixtureRoot: string | undefined;
+      let bodyFailed = false;
+      let bodyError: unknown;
+      try {
+        fixtureRoot = await createInitializedFixture((created) => {
+          fixtureRoot = created;
+        });
+        const storeId = 'malformed-marker-' + randomUUID();
+        const storeRoot = path.join(fixtureRoot, '.agent', 'work', 'runtime-workflow-approvals', storeId);
+        const host = await createTestFileWorkflowHostCapability(fixtureRoot, 'human:workflow-reviewer', storeId);
+        const binding: WorkflowApprovalBinding = {
+          stage_id: 'governed-write-approval',
+          approval_id: 'malformed-marker-' + randomUUID(),
+          ...operationFor(fixtureRoot),
+        };
+        let callbackCalls = 0;
+        await host.consumeApproval(binding, async () => {
+          callbackCalls += 1;
+        });
+        expect(callbackCalls).toBe(1);
+        const emitted = emittedWorkflowMarker(storeRoot, binding);
+        const malformedBytes = '{"schema":"EdictumWorkflowApprovalConsumption/v1",';
+        writeFileSync(emitted.path, malformedBytes, 'utf8');
+        await Promise.resolve(
+          expect(
+            host.consumeApproval(binding, async () => {
+              callbackCalls += 1;
+            }),
+          ).rejects.toThrow(/JSON|parse|Unexpected end/i),
+        );
+        expect(callbackCalls).toBe(1);
+        expect(readFileSync(emitted.path, 'utf8')).toBe(malformedBytes);
+      } catch (error: unknown) {
+        bodyFailed = true;
+        bodyError = error;
+      }
+      // Keep the intentionally corrupted marker as negative-test evidence, including on success.
+      // This root has no deferred remover and must not be reused as a valid approval store.
+      if (fixtureRoot !== undefined)
+        process.stderr.write(`Retained malformed-marker workflow fixture root: ${fixtureRoot}\n`);
+      if (bodyFailed) throw bodyError;
+    },
+  );
+  test.skipIf(!nativeNoFollowAvailable)(
+    'test file workflow issuer defaults authorize one valid consumption',
+    async () => {
+      const caseDeadline = performance.now() + 5_000;
+      let fixtureRoot: string | undefined;
+      let bodyFailed = false;
+      let bodyError: unknown;
+      let bodyPassed = false;
+      try {
+        fixtureRoot = await createInitializedFixture((created) => {
+          fixtureRoot = created;
+        });
+        const host = await createTestFileWorkflowHostCapability(fixtureRoot);
+        expect(host.authenticatedPrincipal).toBe('human:workflow-reviewer');
+        expect(host.storeId).toMatch(/^test-file-workflow-/);
+        expect(host.repositoryRoot).toBe(fixtureRoot);
+        const binding: WorkflowApprovalBinding = {
+          stage_id: 'governed-write-approval',
+          approval_id: 'default-issuer-' + randomUUID(),
+          ...operationFor(fixtureRoot),
+        };
+        let callbackCalls = 0;
+        await host.consumeApproval(binding, async () => {
+          callbackCalls += 1;
+        });
+        expect(callbackCalls).toBe(1);
+        const storeRoot = path.join(fixtureRoot, '.agent', 'work', 'runtime-workflow-approvals', host.storeId);
+        expect(emittedWorkflowMarker(storeRoot, binding).record.status).toBe('applied');
+        bodyPassed = true;
+      } catch (error: unknown) {
+        bodyFailed = true;
+        bodyError = error;
+      }
+      try {
+        completeOwnedCleanup(
+          [
+            () => {
+              if (!bodyPassed || fixtureRoot === undefined || performance.now() >= caseDeadline) {
+                if (fixtureRoot !== undefined)
+                  console.error('Retained failed or expired default workflow fixture root: ' + fixtureRoot);
+                return undefined;
+              }
+              rmSync(fixtureRoot, { recursive: true, force: true });
+              return undefined;
+            },
+          ],
+          bodyFailed ? { error: bodyError } : undefined,
+        );
+      } catch (cleanupError: unknown) {
+        if (fixtureRoot !== undefined)
+          console.error('Retained default workflow fixture after cleanup failure: ' + fixtureRoot);
+        throw cleanupError;
+      }
+      if (bodyFailed) throw bodyError;
+    },
+  );
+  test.skipIf(!nativeNoFollowAvailable)(
     'durable workflow consumption records commit-unknown and fences replay',
     async () => {
-      const fixtureRoot = await createInitializedFixture();
+      let fixtureRoot: string | undefined;
       const storeId = 'commit-unknown-' + randomUUID();
-      const storeRoot = path.join(fixtureRoot, '.agent', 'work', 'runtime-workflow-approvals', storeId);
       let beforeCommitCalls = 0;
       try {
+        fixtureRoot = await createInitializedFixture((created) => {
+          fixtureRoot = created;
+        });
+        const storeRoot = path.join(fixtureRoot, '.agent', 'work', 'runtime-workflow-approvals', storeId);
         const host = await createTestFileWorkflowHostCapability(fixtureRoot, 'human:workflow-reviewer', storeId, () => {
           beforeCommitCalls += 1;
           if (beforeCommitCalls === 1) throw new Error('injected final commit failure');
@@ -510,10 +715,24 @@ describe('configured Edictum workflow completeness', () => {
           .map((name): unknown => JSON.parse(readFileSync(path.join(storeRoot, name), 'utf8')))
           .filter(isRecord);
         expect(markerRecords.some((record) => record.status === 'commit_unknown')).toBe(true);
+        let replayApplyCalls = 0;
+        const binding: WorkflowApprovalBinding = {
+          stage_id: approval.stage_id,
+          approval_id: approval.approval_id,
+          ...operationFor(fixtureRoot),
+        };
+        await Promise.resolve(
+          expect(
+            host.consumeApproval(binding, async () => {
+              replayApplyCalls += 1;
+            }),
+          ).rejects.toMatchObject({ code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001' }),
+        );
+        expect(replayApplyCalls).toBe(0);
         await Promise.resolve(expect(candidate.approve(approval)).rejects.toThrow(/stage is not pending/));
         expect(beforeCommitCalls).toBe(1);
       } finally {
-        process.stderr.write(`Retained UNKNOWN workflow fixture root: ${fixtureRoot}\n`);
+        if (fixtureRoot !== undefined) process.stderr.write(`Retained UNKNOWN workflow fixture root: ${fixtureRoot}\n`);
       }
     },
   );
