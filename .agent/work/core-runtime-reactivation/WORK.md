@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `c63fb5a` at origin/main.
+- Published predecessor: `4790f00` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -518,6 +518,31 @@ testprogram448TS filesPASS and lint commandPASS. Documentation3selected/7links,
 under attachments retain each actual result. These focused checks do not close
 coverage/CRAP/mutation. Publish this test packet before fresh captures; refresh
 the same automatic contour document only from the subsequent terminal reports.
+
+That test packet passed the strict staged hook483TS roots/477formatted files
+and was committed/pushed as4790f00. New main-contracts capture
+08b9c650-c92d-49b4-89fe-c4d5ec71a3de completes41PASS/0FAIL,14128assertions in5.49s
+Bun /8935.330567ms owned outer time at
+`/workspace/attachments/quality-contour-coverage-contracts-jecrJV`.
+It measures F100/102,L292/296,S319/325,B144/158,maxCC16,maxentryCRAP16(previous56).
+The unchanged162-function kernel then completes255PASS/0FAIL,1900assertions in
+103.28s Bun /106501.706225ms owned outer time at
+`/workspace/attachments/quality-contour-coverage-kernel-sKHJTM`.
+Report163f2fb4-7058-4e07-8ec9-32f03f9f4132 measures F162/162,L602/602,S632/632,
+B398/400(99.5%),maxCC/entryCRAP31. The new absent-Work case closes its actual
+fallback counter; native Windows and validated non-null expiry remain explicit
+gaps. No frozen allowance changes. Both outer runs have complete output, same
+boot and observed group termination. Parent BLOCKED/resource/quality flags
+remain separately recorded. The automatic document now retains15observations.
+
+The next tiny envelope packet fills legitimate contour-key and post-deployment
+check lists and checks duplicate operation order, unsafe source/excluded paths,
+duplicate post-check IDs, and exact propagation of a failing current-time
+observation. The history fixture stays schema-valid before each negative. Full
+affected envelope file10PASS/0FAIL,968assertions in2.85s; testprogram448TS PASS.
+Logs: `quality-contracts-nonempty-{controls,fullfile,types}-479-20261015.log` under
+attachments. This packet still needs publication and the corresponding numeric
+capture; do not infer102/102functions merely from executing those cases.
 
 ## Automatic contour progress projection
 

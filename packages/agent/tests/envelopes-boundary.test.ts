@@ -43,7 +43,7 @@ function coordinationLedgerFixture(): CoordinationLedger {
     source_revision: 'source-1',
     generation: 1,
     sequence: 1,
-    contour_keys: [],
+    contour_keys: ['project:repository/project'],
     exclusive_resources: [resource],
     status: 'active',
     claim_ids: ['claim-owner'],
@@ -582,8 +582,15 @@ describe('runtime envelope canonicalization boundary', () => {
         operations: [
           { order: 1, source: 'packages/agent/src/index.ts', destination: 'release/agent', operation: 'copy' },
         ],
-        do_not_deploy: [],
-        post_deployment_checks: [],
+        do_not_deploy: ['private/credentials.json'],
+        post_deployment_checks: [
+          {
+            id: 'check-1',
+            step: 'Inspect the delivered agent version',
+            expected: 'selected version',
+            ac_refs: ['AC-1'],
+          },
+        ],
         status,
         ...(status === 'ready_for_user_testing' ? {} : { decision_pointer: `decision:${status}` }),
         created_at: '2026-09-18T00:00:04.000Z',
@@ -611,7 +618,59 @@ describe('runtime envelope canonicalization boundary', () => {
     for (const ledger of [ready, accepted, feedback, rejected])
       expect(validateCoordinationLedgerV1(ledger).ok).toBe(true);
 
+    const clockFailure = new Error('injected current-time observation failure');
+    let observedFailure: unknown;
+    try {
+      validateCoordinationLedgerV1(ready, {
+        get currentTimeMs(): number {
+          throw clockFailure;
+        },
+      });
+    } catch (error) {
+      observedFailure = error;
+    }
+    expect(observedFailure).toBe(clockFailure);
+
     const cases: ReadonlyArray<{ readonly value: unknown; readonly code: string; readonly path: string }> = [
+      {
+        value: {
+          ...ready,
+          batches: [
+            {
+              ...readyBatch,
+              operations: [...readyBatch.operations, { ...readyBatch.operations[0]!, destination: 'release/other' }],
+            },
+          ],
+        },
+        code: 'BATCH_OPERATION_ORDER_DUPLICATE',
+        path: '$.batches.0.operations',
+      },
+      {
+        value: {
+          ...ready,
+          batches: [{ ...readyBatch, operations: [{ ...readyBatch.operations[0]!, source: '../private.ts' }] }],
+        },
+        code: 'BATCH_SOURCE_PATH_UNSAFE',
+        path: '$.batches.0.operations.0.source',
+      },
+      {
+        value: { ...ready, batches: [{ ...readyBatch, do_not_deploy: ['../private.json'] }] },
+        code: 'BATCH_EXCLUDED_PATH_UNSAFE',
+        path: '$.batches.0.do_not_deploy.0',
+      },
+      {
+        value: {
+          ...ready,
+          batches: [
+            {
+              ...readyBatch,
+              post_deployment_checks: [...readyBatch.post_deployment_checks, readyBatch.post_deployment_checks[0]!],
+            },
+          ],
+        },
+        code: 'POST_DEPLOYMENT_CHECK_DUPLICATE',
+        path: '$.batches.0.post_deployment_checks',
+      },
       {
         value: { ...ready, contours: [{ ...contour, contour_digest: 'c'.repeat(64) }] },
         code: 'CONTOUR_DIGEST_INVALID',
