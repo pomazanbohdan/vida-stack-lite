@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `a4539ab` at origin/main.
+- Published predecessor: `e637c17` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1142,7 +1142,7 @@ and the matrix also applies the restored valid plan. No total-suite speedup clai
 Official references read: https://bun.com/docs/test/runtime-behavior and
 https://ajv.js.org/guide/typescript.html.
 
-One scoped maintained Source capture reuses other148paths. Current7721inventory;
+At published `e637c17`, one scoped Source capture reuses other148paths. Inventory7721;
 partial6306=4766retained/1540new,78removed,147bindings. Additional122retained
 roles preserve original ceilings; the parser has its own prospective10/10.
 Prepared reader3<=original11 closes one represented deficit;20remain. Current
@@ -1153,7 +1153,7 @@ accepted. Historical59rows minus10already bound leave49, not a callable-only
 denominator. Do not reuse the rejected templated proposal. Receipt:
 `/workspace/attachments/quality-dispatch-plan-join-receipt-20261015.json`.
 
-Host feasibility remains GAP for fresh full numeric execution. Readonly inspection
+Before the prospective probe below, host feasibility remained GAP. Readonly inspection
 found no delegated cgroup scope; installed isolation binaries are not qualification.
 `quality-clean-coverage-isolation-feasibility-20261015.md` records facts and a
 bounded clean-environment option; no launcher or historical resource successor
@@ -1161,10 +1161,54 @@ was exercised. Cloud reported running/connected revision2390 after a later exec
 disconnect, with no reported failure. No restart/cause is proven. Complete current
 coverage, dynamic CRAP, assertion-confirmed mutation and native Runtime remain open.
 
+## Native import boundary static correction
+
+The current packet models top-level declaration/import facts separately from the
+finite resolver/hash reference closure. It reuses the caller's existing parsed
+AST and observation walk. Import kind/name/source checks, protected binding
+multiplicity, reassignment ambiguity, original AST-node identity and exactly
+seven references remain required before returning the native load allowlist.
+Foreign-file construction is inert and returns a fresh empty set per finish;
+the production caller already gates that filename. No production speedup is
+established by moving this check.
+
+Independent actual-diff review accepted the cohesive contracts:
+`/workspace/attachments/quality-native-boundary-actual-review-e637-20261015.md`.
+Affected file72PASS/0FAIL/219assertions in1.94s:
+`/workspace/attachments/quality-native-boundary-tests-e637-20261015.log`.
+Static current gate470checked/471capturedTS/0diagnostics:
+`/workspace/attachments/quality-native-boundary-types-e637-20261015.log`.
+One Source AST+SHA capture reuses the other148paths. Factory19->4<=own10 and
+finish38->29<=genuine original32 close two represented static deficits; all
+original ceilings remain unchanged. New import/declaration/closure owners have
+CC9/9/7 against their own10/10. The observer remains29>own10. Six new roles and
+two moved existing new-role identities produce current partial6312=4766retained/
+1546new,78removed,147bindings. Inventory7727 leaves1415current/857original missing,
+with18represented static overages. This remains non-executable/non-exhaustive,
+not dynamic CRAP or coverage. Receipt:
+`/workspace/attachments/quality-native-boundary-join-e637-20261015.json`.
+Vex bounded query refreshed7changed/0deleted/9802symbols outside numeric checks:
+`/workspace/attachments/quality-native-boundary-vex-e637-20261015.txt`.
+
+Root's sanitized inert `bwrap --unshare-all` launch returned0. It qualifies only
+that launch capability, not a suite, writable mount closure, descendant terminal
+barrier or old-resource reuse:
+`/workspace/attachments/quality-inert-isolation-probe-e637-20261015.log`.
+The prospective design records private physical checkout/temp/home/cache and
+mount/PID/network scope controls. Current SDK readiness still requires GitHub
+API reads even with an explicit archive; disconnected network scope is not ready:
+`/workspace/attachments/quality-namespace-coverage-design-e637-20261015.md`.
+Official Linux PID namespace semantics and upstream bubblewrap reference were
+read, not treated as host qualification: https://man7.org/linux/man-pages/man7/pid_namespaces.7.html
+and https://github.com/containers/bubblewrap/blob/main/bwrap.xml.
+Historical resourceSafeToAdvance:false stays unchanged. Cloud later reported
+revision2401 running/connected/current with no failure after a transient starting
+notification; no restart cause or process quiescence is established.
+
 ## Next bounded work
 
 1. Complete correspondence/original-budget corrections: pure
-   native recognizer38>32, new recipe owners19/29>10,
+   native observer29>own10,
    and retained callback/context deficits recorded above. Installer27<=31,
    native loaders4<=4, controller target2<=2 and Host callback3<=3
    has scoped Source proof above, alongside planner39<=40 and current-read

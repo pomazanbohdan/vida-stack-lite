@@ -1,4 +1,12 @@
-import type { CallExpression, FunctionDeclaration, Identifier, Node, VariableDeclaration } from '@babel/types';
+import type {
+  CallExpression,
+  FunctionDeclaration,
+  Identifier,
+  ImportDeclaration,
+  Node,
+  Program,
+  VariableDeclaration,
+} from '@babel/types';
 import { runtimeBindingNames } from './runtime-import-bindings.ts';
 
 type Pattern = string | number | boolean | null | readonly Pattern[] | { readonly [key: string]: Pattern };
@@ -120,6 +128,68 @@ const metadata = (root: Pattern): Pattern =>
 const reject = (condition: Pattern, message: string): Pattern =>
   expression(call(id('reject'), condition, text(message)));
 
+interface BoundaryDeclarations {
+  readonly functions: Map<string, FunctionDeclaration>;
+  readonly constants: Map<string, VariableDeclaration>;
+  readonly imported: Map<string, string>;
+}
+
+const finiteCallees = new Set(['resolveFsSafeNativePackageRoot', 'fsSafePackageTreeHash']);
+
+function collectBoundaryImports(statement: ImportDeclaration, imported: Map<string, string>): void {
+  if (statement.importKind === 'type') return;
+  for (const specifier of statement.specifiers) {
+    if (specifier.type === 'ImportDefaultSpecifier' && specifier.local.name === 'path')
+      imported.set('path', statement.source.value);
+    if (
+      specifier.type === 'ImportSpecifier' &&
+      specifier.importKind !== 'type' &&
+      specifier.imported.type === 'Identifier' &&
+      specifier.imported.name === specifier.local.name
+    )
+      imported.set(specifier.local.name, statement.source.value);
+  }
+}
+
+function collectBoundaryDeclarations(program: Program | null): BoundaryDeclarations {
+  const functions = new Map<string, FunctionDeclaration>();
+  const constants = new Map<string, VariableDeclaration>();
+  const imported = new Map<string, string>();
+  for (const statement of program?.body ?? []) {
+    if (statement.type === 'FunctionDeclaration' && statement.id) functions.set(statement.id.name, statement);
+    if (statement.type === 'VariableDeclaration')
+      for (const declaration of statement.declarations)
+        if (declaration.id.type === 'Identifier') constants.set(declaration.id.name, statement);
+    if (statement.type === 'ImportDeclaration') collectBoundaryImports(statement, imported);
+  }
+  return { functions, constants, imported };
+}
+
+function hasClosedBoundaryReferences(
+  functions: ReadonlyMap<string, FunctionDeclaration>,
+  constants: ReadonlyMap<string, VariableDeclaration>,
+  callReferences: readonly Identifier[],
+): boolean {
+  const expectedReferences = new Set<Node>([...finiteCallees].flatMap((name) => functions.get(name)?.id ?? []));
+  const register = (value: Node | null | undefined): void => {
+    if (value?.type === 'CallExpression' && value.callee.type === 'Identifier' && finiteCallees.has(value.callee.name))
+      expectedReferences.add(value.callee);
+  };
+  register(initializer(functions.get('fsSafePackageTreeHash'), 0));
+  register(initializer(functions.get('matchesAttestedNativeBinding'), 1));
+  const attested = constants.get('fsSafePackageAttested')?.declarations[0]?.init;
+  if (attested?.type === 'BinaryExpression') register(attested.left);
+  for (const name of ['loadLinuxNativeBinding', 'loadWindowsNativeBinding']) {
+    const still = initializer(functions.get(name), 4);
+    if (still?.type === 'LogicalExpression' && still.right.type === 'BinaryExpression') register(still.right.left);
+  }
+  return (
+    expectedReferences.size === 7 &&
+    callReferences.length === expectedReferences.size &&
+    !callReferences.some((node) => !expectedReferences.has(node))
+  );
+}
+
 export function createFsSafeNativeImportBoundary(
   tree: Node,
   file: string,
@@ -127,32 +197,12 @@ export function createFsSafeNativeImportBoundary(
   readonly observe: (node: Node) => void;
   readonly finish: () => ReadonlySet<CallExpression>;
 } {
+  if (file !== 'vida-agent/src/config/safe-repository-access.ts') return { observe: () => {}, finish: () => new Set() };
   const program = tree.type === 'File' ? tree.program : tree.type === 'Program' ? tree : null;
-  const functions = new Map<string, FunctionDeclaration>();
-  const constants = new Map<string, VariableDeclaration>();
-  const imported = new Map<string, string>();
+  const { functions, constants, imported } = collectBoundaryDeclarations(program);
   const counts = new Map<string, number>();
   let ambiguous = false;
   const callReferences: Identifier[] = [];
-  const finiteCallees = new Set(['resolveFsSafeNativePackageRoot', 'fsSafePackageTreeHash']);
-  for (const statement of program?.body ?? []) {
-    if (statement.type === 'FunctionDeclaration' && statement.id) functions.set(statement.id.name, statement);
-    if (statement.type === 'VariableDeclaration')
-      for (const declaration of statement.declarations)
-        if (declaration.id.type === 'Identifier') constants.set(declaration.id.name, statement);
-    if (statement.type === 'ImportDeclaration' && statement.importKind !== 'type')
-      for (const specifier of statement.specifiers) {
-        if (specifier.type === 'ImportDefaultSpecifier' && specifier.local.name === 'path')
-          imported.set('path', statement.source.value);
-        if (
-          specifier.type === 'ImportSpecifier' &&
-          specifier.importKind !== 'type' &&
-          specifier.imported.type === 'Identifier' &&
-          specifier.imported.name === specifier.local.name
-        )
-          imported.set(specifier.local.name, statement.source.value);
-      }
-  }
   const bind = (node: Node): void => {
     for (const name of runtimeBindingNames(node))
       if (protectedNames.has(name)) counts.set(name, (counts.get(name) ?? 0) + 1);
@@ -335,7 +385,6 @@ export function createFsSafeNativeImportBoundary(
   const finish = (): ReadonlySet<CallExpression> => {
     const allowed = new Set<CallExpression>();
     if (
-      file !== 'vida-agent/src/config/safe-repository-access.ts' ||
       ambiguous ||
       [...globals, ...helpers, ...imports.keys()].some((name) => counts.get(name) !== 1) ||
       ['Number', 'Boolean', 'JSON', 'process'].some((name) => counts.has(name)) ||
@@ -630,35 +679,7 @@ export function createFsSafeNativeImportBoundary(
       identity.argument.right.type === 'CallExpression'
     )
       allowed.add(identity.argument.right);
-    // The recognized resolver/hash functions cannot be reused through an
-    // extra caller or alias to introduce an unsealed root or native suffix.
-    const expectedReferences = new Set<Node>();
-    for (const name of finiteCallees) {
-      const declaration = functions.get(name);
-      if (declaration?.id) expectedReferences.add(declaration.id);
-    }
-    const register = (value: Node | null | undefined): void => {
-      if (
-        value?.type === 'CallExpression' &&
-        value.callee.type === 'Identifier' &&
-        finiteCallees.has(value.callee.name)
-      )
-        expectedReferences.add(value.callee);
-    };
-    register(initializer(functions.get('fsSafePackageTreeHash'), 0));
-    register(initializer(functions.get('matchesAttestedNativeBinding'), 1));
-    const attested = constants.get('fsSafePackageAttested')?.declarations[0]?.init;
-    if (attested?.type === 'BinaryExpression') register(attested.left);
-    for (const name of ['loadLinuxNativeBinding', 'loadWindowsNativeBinding']) {
-      const still = initializer(functions.get(name), 4);
-      if (still?.type === 'LogicalExpression' && still.right.type === 'BinaryExpression') register(still.right.left);
-    }
-    if (
-      expectedReferences.size !== 7 ||
-      callReferences.length !== expectedReferences.size ||
-      callReferences.some((node) => !expectedReferences.has(node))
-    )
-      return new Set();
+    if (!hasClosedBoundaryReferences(functions, constants, callReferences)) return new Set();
     return allowed;
   };
   return { observe, finish };

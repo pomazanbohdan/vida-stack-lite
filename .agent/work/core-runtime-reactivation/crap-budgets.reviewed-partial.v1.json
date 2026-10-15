@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 4766,
-    "new": 1540,
+    "new": 1546,
     "removed": 78,
-    "current_roles": 6306,
+    "current_roles": 6312,
     "source_files": 147
   },
   "source_bindings": [
@@ -499,7 +499,7 @@
     },
     {
       "file": "bin/fs-safe-native-import-boundary.ts",
-      "sha256": "e34d8cbf594fa243c90c34d082089d0e5ac6d55e06e42b4f15f52fc590b4ffcd"
+      "sha256": "53d089bd3a04bd171c748a04c71fe7de16eab18c1a8b0c067b49dfca7dbc4190"
     },
     {
       "file": "bin/forward-candidate-admission.ts",
@@ -57601,13 +57601,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 335,
+        "line": 385,
         "column": 17,
-        "start": 13256,
-        "end": 25817,
-        "bodyLine": 335,
+        "start": 15218,
+        "end": 26405,
+        "bodyLine": 385,
         "bodyColumn": 52,
-        "bodyEndLine": 663,
+        "bodyEndLine": 684,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 32,
@@ -163844,13 +163844,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 5,
+        "line": 13,
         "column": 11,
-        "start": 300,
-        "end": 357,
-        "bodyLine": 5,
+        "start": 343,
+        "end": 400,
+        "bodyLine": 13,
         "bodyColumn": 39,
-        "bodyEndLine": 5,
+        "bodyEndLine": 13,
         "bodyEndColumn": 67
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163861,13 +163861,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 6,
+        "line": 14,
         "column": 13,
-        "start": 372,
-        "end": 434,
-        "bodyLine": 6,
+        "start": 415,
+        "end": 477,
+        "bodyLine": 14,
         "bodyColumn": 42,
-        "bodyEndLine": 6,
+        "bodyEndLine": 14,
         "bodyEndColumn": 74
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163878,13 +163878,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 7,
+        "line": 15,
         "column": 15,
-        "start": 451,
-        "end": 598,
-        "bodyLine": 7,
+        "start": 494,
+        "end": 641,
+        "bodyLine": 15,
         "bodyColumn": 82,
-        "bodyEndLine": 12,
+        "bodyEndLine": 20,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163895,13 +163895,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 13,
+        "line": 21,
         "column": 13,
-        "start": 613,
-        "end": 716,
-        "bodyLine": 13,
+        "start": 656,
+        "end": 759,
+        "bodyLine": 21,
         "bodyColumn": 64,
-        "bodyEndLine": 13,
+        "bodyEndLine": 21,
         "bodyEndColumn": 115
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163912,13 +163912,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 14,
+        "line": 22,
         "column": 15,
-        "start": 733,
-        "end": 857,
-        "bodyLine": 14,
+        "start": 776,
+        "end": 900,
+        "bodyLine": 22,
         "bodyColumn": 78,
-        "bodyEndLine": 19,
+        "bodyEndLine": 27,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163929,13 +163929,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 20,
+        "line": 28,
         "column": 14,
-        "start": 873,
-        "end": 995,
-        "bodyLine": 20,
+        "start": 916,
+        "end": 1038,
+        "bodyLine": 28,
         "bodyColumn": 65,
-        "bodyEndLine": 25,
+        "bodyEndLine": 33,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163946,13 +163946,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 26,
+        "line": 34,
         "column": 16,
-        "start": 1013,
-        "end": 1138,
-        "bodyLine": 26,
+        "start": 1056,
+        "end": 1181,
+        "bodyLine": 34,
         "bodyColumn": 79,
-        "bodyEndLine": 31,
+        "bodyEndLine": 39,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163963,13 +163963,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 32,
+        "line": 40,
         "column": 17,
-        "start": 1157,
-        "end": 1322,
-        "bodyLine": 32,
+        "start": 1200,
+        "end": 1365,
+        "bodyLine": 40,
         "bodyColumn": 60,
-        "bodyEndLine": 36,
+        "bodyEndLine": 44,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163980,13 +163980,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 37,
+        "line": 45,
         "column": 17,
-        "start": 1341,
-        "end": 1412,
-        "bodyLine": 37,
+        "start": 1384,
+        "end": 1455,
+        "bodyLine": 45,
         "bodyColumn": 50,
-        "bodyEndLine": 37,
+        "bodyEndLine": 45,
         "bodyEndColumn": 87
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -163997,13 +163997,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 38,
+        "line": 46,
         "column": 19,
-        "start": 1433,
-        "end": 1512,
-        "bodyLine": 38,
+        "start": 1476,
+        "end": 1555,
+        "bodyLine": 46,
         "bodyColumn": 54,
-        "bodyEndLine": 38,
+        "bodyEndLine": 46,
         "bodyEndColumn": 97
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164014,13 +164014,13 @@
       "max_crap": 10,
       "current_complexity": 3,
       "current_source_address": {
-        "line": 40,
+        "line": 48,
         "column": 0,
-        "start": 1515,
-        "end": 1663,
-        "bodyLine": 40,
+        "start": 1558,
+        "end": 1706,
+        "bodyLine": 48,
         "bodyColumn": 66,
-        "bodyEndLine": 42,
+        "bodyEndLine": 50,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164031,13 +164031,13 @@
       "max_crap": 10,
       "current_complexity": 3,
       "current_source_address": {
-        "line": 43,
+        "line": 51,
         "column": 0,
-        "start": 1664,
-        "end": 1910,
-        "bodyLine": 43,
+        "start": 1707,
+        "end": 1953,
+        "bodyLine": 51,
         "bodyColumn": 41,
-        "bodyEndLine": 50,
+        "bodyEndLine": 58,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164048,13 +164048,13 @@
       "max_crap": 10,
       "current_complexity": 6,
       "current_source_address": {
-        "line": 54,
+        "line": 62,
         "column": 0,
-        "start": 2156,
-        "end": 2611,
-        "bodyLine": 54,
+        "start": 2199,
+        "end": 2654,
+        "bodyLine": 62,
         "bodyColumn": 60,
-        "bodyEndLine": 65,
+        "bodyEndLine": 73,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164065,13 +164065,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 60,
+        "line": 68,
         "column": 35,
-        "start": 2392,
-        "end": 2436,
-        "bodyLine": 60,
+        "start": 2435,
+        "end": 2479,
+        "bodyLine": 68,
         "bodyColumn": 52,
-        "bodyEndLine": 60,
+        "bodyEndLine": 68,
         "bodyEndColumn": 79
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164082,13 +164082,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 63,
+        "line": 71,
         "column": 58,
-        "start": 2526,
-        "end": 2579,
-        "bodyLine": 63,
+        "start": 2569,
+        "end": 2622,
+        "bodyLine": 71,
         "bodyColumn": 75,
-        "bodyEndLine": 63,
+        "bodyEndLine": 71,
         "bodyEndColumn": 111
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164099,13 +164099,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 66,
+        "line": 74,
         "column": 0,
-        "start": 2612,
-        "end": 2894,
-        "bodyLine": 66,
+        "start": 2655,
+        "end": 2937,
+        "bodyLine": 74,
         "bodyColumn": 86,
-        "bodyEndLine": 70,
+        "bodyEndLine": 78,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164116,13 +164116,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 71,
+        "line": 79,
         "column": 0,
-        "start": 2895,
-        "end": 3178,
-        "bodyLine": 71,
+        "start": 2938,
+        "end": 3221,
+        "bodyLine": 79,
         "bodyColumn": 106,
-        "bodyEndLine": 79,
+        "bodyEndLine": 87,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164133,13 +164133,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 115,
+        "line": 123,
         "column": 17,
-        "start": 4417,
-        "end": 4596,
-        "bodyLine": 116,
+        "start": 4460,
+        "end": 4639,
+        "bodyLine": 124,
         "bodyColumn": 2,
-        "bodyEndLine": 119,
+        "bodyEndLine": 127,
         "bodyEndColumn": 3
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164150,13 +164150,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 120,
+        "line": 128,
         "column": 15,
-        "start": 4613,
-        "end": 4721,
-        "bodyLine": 121,
+        "start": 4656,
+        "end": 4764,
+        "bodyLine": 129,
         "bodyColumn": 2,
-        "bodyEndLine": 121,
+        "bodyEndLine": 129,
         "bodyEndColumn": 58
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164165,15 +164165,15 @@
       "identity": "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "current_complexity": 19,
+      "current_complexity": 4,
       "current_source_address": {
-        "line": 123,
+        "line": 193,
         "column": 7,
-        "start": 4731,
-        "end": 25850,
-        "bodyLine": 129,
+        "start": 7710,
+        "end": 26438,
+        "bodyLine": 199,
         "bodyColumn": 2,
-        "bodyEndLine": 665,
+        "bodyEndLine": 686,
         "bodyEndColumn": 1
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164184,13 +164184,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 156,
+        "line": 206,
         "column": 15,
-        "start": 6352,
-        "end": 6512,
-        "bodyLine": 156,
+        "start": 8314,
+        "end": 8474,
+        "bodyLine": 206,
         "bodyColumn": 37,
-        "bodyEndLine": 159,
+        "bodyEndLine": 209,
         "bodyEndColumn": 3
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164201,13 +164201,13 @@
       "max_crap": 10,
       "current_complexity": 29,
       "current_source_address": {
-        "line": 160,
+        "line": 210,
         "column": 18,
-        "start": 6532,
-        "end": 8087,
-        "bodyLine": 160,
+        "start": 8494,
+        "end": 10049,
+        "bodyLine": 210,
         "bodyColumn": 40,
-        "bodyEndLine": 194,
+        "bodyEndLine": 244,
         "bodyEndColumn": 3
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164218,13 +164218,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 191,
+        "line": 241,
         "column": 29,
-        "start": 8002,
-        "end": 8049,
-        "bodyLine": 191,
+        "start": 9964,
+        "end": 10011,
+        "bodyLine": 241,
         "bodyColumn": 48,
-        "bodyEndLine": 191,
+        "bodyEndLine": 241,
         "bodyEndColumn": 76
       },
       "rationale": "Nested runtimeBindingNames callback under observe; folds names from a visited binding node."
@@ -164235,13 +164235,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 195,
+        "line": 245,
         "column": 19,
-        "start": 8108,
-        "end": 8237,
-        "bodyLine": 195,
+        "start": 10070,
+        "end": 10199,
+        "bodyLine": 245,
         "bodyColumn": 63,
-        "bodyEndLine": 200,
+        "bodyEndLine": 250,
         "bodyEndColumn": 3
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164252,13 +164252,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 201,
+        "line": 251,
         "column": 16,
-        "start": 8255,
-        "end": 8401,
-        "bodyLine": 201,
+        "start": 10217,
+        "end": 10363,
+        "bodyLine": 251,
         "bodyColumn": 63,
-        "bodyEndLine": 206,
+        "bodyEndLine": 256,
         "bodyEndColumn": 3
       },
       "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
@@ -164269,13 +164269,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 215,
+        "line": 265,
         "column": 11,
-        "start": 8672,
-        "end": 8713,
-        "bodyLine": 215,
+        "start": 10634,
+        "end": 10675,
+        "bodyLine": 265,
         "bodyColumn": 28,
-        "bodyEndLine": 215,
+        "bodyEndLine": 265,
         "bodyEndColumn": 52
       },
       "rationale": "Nested frame construction callback under createFsSafeNativeImportBoundary; combines logical path, byte length, and file digest."
@@ -164286,13 +164286,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 340,
+        "line": 389,
         "column": 55,
-        "start": 13491,
-        "end": 13523,
-        "bodyLine": 340,
+        "start": 15385,
+        "end": 15417,
+        "bodyLine": 389,
         "bodyColumn": 65,
-        "bodyEndLine": 340,
+        "bodyEndLine": 389,
         "bodyEndColumn": 87
       },
       "rationale": "Nested map callback in the manifest file recipe inside finish."
@@ -164303,13 +164303,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 341,
+        "line": 390,
         "column": 52,
-        "start": 13580,
-        "end": 13606,
-        "bodyLine": 341,
+        "start": 15474,
+        "end": 15500,
+        "bodyLine": 390,
         "bodyColumn": 62,
-        "bodyEndLine": 341,
+        "bodyEndLine": 390,
         "bodyEndColumn": 78
       },
       "rationale": "Nested map callback for package.json and native binding files inside finish."
@@ -164320,13 +164320,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 342,
+        "line": 391,
         "column": 24,
-        "start": 13635,
-        "end": 13684,
-        "bodyLine": 342,
+        "start": 15529,
+        "end": 15578,
+        "bodyLine": 391,
         "bodyColumn": 44,
-        "bodyEndLine": 342,
+        "bodyEndLine": 391,
         "bodyEndColumn": 73
       },
       "rationale": "Nested sort callback for deterministic native package file ordering inside finish."
@@ -164337,50 +164337,50 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 593,
+        "line": 642,
         "column": 31,
-        "start": 22784,
-        "end": 23190,
-        "bodyLine": 594,
+        "start": 24678,
+        "end": 25084,
+        "bodyLine": 643,
         "bodyColumn": 18,
-        "bodyEndLine": 604,
+        "bodyEndLine": 653,
         "bodyEndColumn": 19
       },
       "rationale": "Nested files.forEach callback inside finish; reads bounded files, enforces total size, and updates the tree digest."
     },
     {
-      "identity": "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0/binding:finish/binding:finish#0/binding:register/binding:register#0",
+      "identity": "bin/fs-safe-native-import-boundary.ts#fn:hasClosedBoundaryReferences#0/binding:register/binding:register#0",
       "max_complexity": 10,
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 640,
-        "column": 21,
-        "start": 24774,
-        "end": 25023,
-        "bodyLine": 640,
-        "bodyColumn": 63,
-        "bodyEndLine": 647,
-        "bodyEndColumn": 5
+        "line": 174,
+        "column": 19,
+        "start": 6762,
+        "end": 6973,
+        "bodyLine": 174,
+        "bodyColumn": 61,
+        "bodyEndLine": 177,
+        "bodyEndColumn": 3
       },
-      "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity."
+      "rationale": "Nested callback in the enclosing native-import boundary AST recipe; responsibility is identified by the complete parent and callsite identity. Current role moved with unchanged finite-reference registration/membership responsibility into hasClosedBoundaryReferences. Its own prospective ceiling remains unchanged; no original allowance transfers."
     },
     {
-      "identity": "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0/binding:finish/binding:finish#0/closure:CallExpression:arguments[0]#4",
+      "identity": "bin/fs-safe-native-import-boundary.ts#fn:hasClosedBoundaryReferences#0/closure:CallExpression:arguments[0]#0",
       "max_complexity": 10,
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 659,
-        "column": 26,
-        "start": 25723,
-        "end": 25762,
-        "bodyLine": 659,
-        "bodyColumn": 36,
-        "bodyEndLine": 659,
-        "bodyEndColumn": 65
+        "line": 189,
+        "column": 25,
+        "start": 7654,
+        "end": 7693,
+        "bodyLine": 189,
+        "bodyColumn": 35,
+        "bodyEndLine": 189,
+        "bodyEndColumn": 64
       },
-      "rationale": "Nested some callback inside finish; rejects extra aliases or callsites for finite resolver and hash helpers."
+      "rationale": "Nested some callback inside finish; rejects extra aliases or callsites for finite resolver and hash helpers. Current role moved with unchanged finite-reference registration/membership responsibility into hasClosedBoundaryReferences. Its own prospective ceiling remains unchanged; no original allowance transfers."
     },
     {
       "identity": "bin/forward-candidate-admission.ts#fn:isCanonicalRecord#0",
@@ -178524,119 +178524,18 @@
   "quality_continuation_current_bindings": {
     "schema": "ReviewedLineageJoin/v1",
     "status": "SCOPED_SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
-    "predecessor_commit": "a4539ab",
+    "predecessor_commit": "e637c17",
     "counts": {
       "retained": 4766,
-      "new": 1540,
+      "new": 1546,
       "removed": 78,
-      "current_roles": 6306,
+      "current_roles": 6312,
       "source_files": 147
     },
-    "candidate_counts": [
-      {
-        "family": "safe",
-        "retained": 45,
-        "rejected": 0
-      },
-      {
-        "family": "rebind",
-        "retained": 43,
-        "rejected": 2
-      },
-      {
-        "family": "run",
-        "retained": 34,
-        "rejected": 11
-      }
-    ],
-    "rejected_correspondences": [
-      {
-        "current_identity": "bin/runtime-config-rebind.ts#fn:readonlyKnownTerminal#0/closure:CallExpression:arguments[0]#1",
-        "reason": "The historical callback verifies claims are released for the expected work, native session, and generation. The current callback only validates that release resource entries are strings. These are distinct invariants in release validation, so the proposed pair crosses semantic roles.",
-        "review_ref": "/workspace/attachments/quality-further-rebind-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/runtime-config-rebind.ts#fn:currentState#0/closure:CallExpression:arguments[0]#3",
-        "reason": "The historical callback validates that completed waves have an items array. The current callback rejects governance rows in reserved or commit_unknown states. These apply to unrelated collections and have different caller responsibilities.",
-        "review_ref": "/workspace/attachments/quality-further-rebind-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#11",
-        "reason": "Current callback projects source_id from entries selected/processed by its current caller; the original filtered entries with no issue_id and a matching nextKind. Projection and selection are different responsibilities, so the original CC/CRAP ceiling does not transfer.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#3",
-        "reason": "Current callback filters items with issue_id === null. The original callback constructed request/action/development-packet/configured-context records for dispatch. Filtering is not dispatch-record construction; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:parseArgs#0/closure:CallExpression:arguments[0]#1",
-        "reason": "Current callback checks truthiness of required argument values. The original callback rejected non-absolute or non-normalized paths. These validate different input properties; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:forwardUpdateAuthority#0/closure:CallExpression:arguments[0]#1",
-        "reason": "Current callback tests whether a path starts with vida-agent/. The original callback compared two strings to sort them. Path classification and ordering are different responsibilities; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#8",
-        "reason": "Current callback selects an unissued entry matching nextKind. The original callback flattened wave.items to observations. Selection and flattening have different outputs and caller responsibilities; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#10",
-        "reason": "Current callback checks whether a parsed-output key is absent. The original callback selected actions with an issue_id and no observation. Required-key validation and pending-action selection differ; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#19",
-        "reason": "Current callback finds the stage matching an issued request stage_id. The original callback selected stages consuming ImplementationResult/v1. Stage identity lookup and capability selection differ; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#20",
-        "reason": "Current callback finds the stage matching an issued request stage_id. The original callback selected test stages consuming ValidationReceipt/v1. Stage identity lookup and validation-stage selection differ; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#21",
-        "reason": "Current callback finds the stage matching an issued request stage_id. The original callback admitted items with no issue, an observation, or a host reservation. Stage lookup and item-state admission differ; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:run#0/closure:CallExpression:arguments[0]#22",
-        "reason": "Current callback finds the stage matching an issued request stage_id. The original callback matched entries to research items by action_id. Stage lookup and research-item correspondence differ; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      },
-      {
-        "current_identity": "bin/run.ts#fn:forwardUpdateAuthority#0/closure:CallExpression:arguments[0]#0",
-        "reason": "Current callback compares path strings through compareStrings. The original callback projected each item.kind. Sorting and kind projection are different responsibilities; reject the correspondence.",
-        "review_ref": "/workspace/attachments/quality-further-run-independent-20261015.json"
-      }
-    ],
-    "rejected_native_candidate_counts": {
-      "retained": 33,
-      "new": 61,
-      "current_total": 94,
-      "qualified_current": 0,
-      "removed_original": 1
-    },
-    "independent_review_refs": [
-      "/workspace/attachments/quality-further-safe-independent-20261015.json",
-      "/workspace/attachments/quality-further-rebind-independent-20261015.json",
-      "/workspace/attachments/quality-further-run-independent-20261015.json",
-      "/workspace/attachments/quality-native-remaining-independent-20261015.json",
-      "/workspace/attachments/quality-dispatch-plan-actual-source-review-20261015.md"
-    ],
-    "inventory_ref": "/workspace/attachments/quality-current-inventory-dispatch-plan-20261015.json",
+    "inventory_ref": "/workspace/attachments/quality-current-inventory-native-boundary-e637-20261015.json",
     "scoped_byte_capture_files": [
-      "src/orchestration/persistent-session-handoff.ts"
+      "bin/fs-safe-native-import-boundary.ts"
     ],
-    "source_ownership_notes": "Root captures one changed Source with maintained Babel and SHA once, reuses other148qualified paths. Method lookup retains genuine11/132 cap after delegating shared validation; new parser carries own10/10. No library installed or schema/loader activation.",
-    "missing_current_dispositions": 1415,
-    "missing_original_dispositions": 857,
     "scoped_complexity_exceptions": [
       {
         "identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0",
@@ -178684,11 +178583,6 @@
         "ceiling": 1
       },
       {
-        "identity": "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0/binding:finish/binding:finish#0",
-        "complexity": 38,
-        "ceiling": 32
-      },
-      {
         "identity": "bin/init-core.ts#fn:initializationContext#0",
         "complexity": 5,
         "ceiling": 4
@@ -178729,25 +178623,41 @@
         "ceiling": 19
       },
       {
-        "identity": "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0",
-        "complexity": 19,
-        "ceiling": 10
-      },
-      {
         "identity": "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0/binding:observe/binding:observe#0",
         "complexity": 29,
         "ceiling": 10
       }
     ],
-    "limits": "Reviewed partial remains non-executable/incomplete. Static bindings, point tests and reviews are not complete coverage/dynamic CRAP/assertion-confirmed mutation or Runtime acceptance. Historical UNKNOWN/effect custody remains unchanged."
+    "role_moves": [
+      {
+        "prior_identity": "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0/binding:finish/binding:finish#0/binding:register/binding:register#0",
+        "current_identity": "bin/fs-safe-native-import-boundary.ts#fn:hasClosedBoundaryReferences#0/binding:register/binding:register#0"
+      },
+      {
+        "prior_identity": "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0/binding:finish/binding:finish#0/closure:CallExpression:arguments[0]#4",
+        "current_identity": "bin/fs-safe-native-import-boundary.ts#fn:hasClosedBoundaryReferences#0/closure:CallExpression:arguments[0]#0"
+      }
+    ],
+    "new_current_roles": [
+      "bin/fs-safe-native-import-boundary.ts#fn:collectBoundaryImports#0",
+      "bin/fs-safe-native-import-boundary.ts#fn:collectBoundaryDeclarations#0",
+      "bin/fs-safe-native-import-boundary.ts#fn:hasClosedBoundaryReferences#0",
+      "bin/fs-safe-native-import-boundary.ts#fn:hasClosedBoundaryReferences#0/binding:expectedReferences/closure:CallExpression:arguments[0]#0",
+      "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0/property:observe#0",
+      "bin/fs-safe-native-import-boundary.ts#fn:createFsSafeNativeImportBoundary#0/property:finish#0"
+    ],
+    "missing_current_dispositions": 1415,
+    "missing_original_dispositions": 857,
+    "independent_review_ref": "/workspace/attachments/quality-native-boundary-actual-review-e637-20261015.md",
+    "limits": "No complete coverage, dynamic CRAP or mutation score. All original per-function ceilings unchanged. observe29>new10 remains open; factory4<=own10 and finish29<=original32. Wrong-file early return is not a measured production speedup. Prior UNKNOWN custody unchanged."
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
     "kind": "current-worktree-bytes",
-    "predecessor_commit": "a4539ab",
+    "predecessor_commit": "e637c17",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-dispatch-plan-join-receipt-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-native-boundary-join-e637-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",

@@ -89,7 +89,7 @@ Requested model/service settings are distinct from observed host capabilities.
 
 ## Current evidence and limits
 
-Published predecessor before this packet: a4539ab. Maintained Source TS migration is
+Published predecessor before this packet: e637c17. Maintained Source TS migration is
 complete; old1271 CLI diagnostics and old JS counts are historical.
 The7f4c265 SDK archive passed its OWN extracted verifier, with external
 node_modules outside payload custody. This is not native qualification.
@@ -104,12 +104,12 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents6306roles across147bound files. One scoped
-AST+SHA capture advances the persisted dispatch-plan correction, reusing other
+The current partial represents6312roles across147bound files. One scoped
+AST+SHA capture advances the native import boundary correction, reusing other
 qualified bindings and inventories. Frozen allowances stay original.
 Installer27<=31, native loaders4<=4, controller target2<=2 and Bun resolver34<=37 have scoped proof;
-native recognizer38>32 and retained
-callback/context deficits remain open. Twenty represented static overages and
+Native recognizer29<=original32 and factory4<=own10 now have scoped proof;
+observer29>own10 and retained callback/context deficits remain open. Eighteen represented static overages and
 1415current/857original dispositions remain; this is not coverage progress.
 Approval schema/key/identity compatibility is repaired with17focused cases;
 full current numeric evidence remains pending.
@@ -129,6 +129,10 @@ plans, physical row identity and both digests before effects. The actual corrupt
 regression failed before the fix; final affected file4PASS/0FAIL. The prepared
 reader is CC3<=original11 and new shared parser10<=10. Current numeric coverage,
 dynamic CRAP, assertion-confirmed mutation and Runtime remain unqualified.
+Native-import boundary affected file72PASS/0FAIL with unchanged finite-reference
+and binding guards. An inert private namespace launch returned0; current complete
+resource review, GitHub SDK-read egress and descendant terminal controls are still
+unqualified. Historical UNKNOWN resources remain fenced. Exact receipts are in WORK.
 Current Source interruption/activation cases have focused proof in retained WORK
 history; they do not qualify active .vida cutover or native Runtime.
 
