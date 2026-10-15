@@ -256,6 +256,7 @@ function readCoverageReport(reportPath: string, reportBytes?: Uint8Array, allowF
   const bytes = reportBytes ?? readFileSync(reportPath);
   const report = record(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)), 'coverage report');
   const focused = report.schema === 'VidaBunFocusedCoverageDiagnostic/v1';
+  if (allowFocused && !focused) throw new Error('Expected the focused diagnostic schema.');
   if (
     (report.schema !== 'VidaBunCoverageReport/v1' &&
       report.schema !== 'VidaBunCoverageReport/v2' &&
@@ -280,8 +281,13 @@ function readCoverageReport(reportPath: string, reportBytes?: Uint8Array, allowF
   return { report: report as DecodedReport, coverage, reportSha256: sha256(bytes) };
 }
 
+function coverageRunPath(report: Pick<DecodedReport, 'schema' | 'run_id'>, ...parts: string[]): string {
+  const output = report.schema === 'VidaBunFocusedCoverageDiagnostic/v1' ? 'diagnostics/runs' : 'runs';
+  return path.posix.join('coverage/bun-unified', output, report.run_id, ...parts);
+}
+
 function readCoverageManifest(root: string, report: DecodedReport) {
-  const expectedManifestPath = path.posix.join('coverage/bun-unified/runs', report.run_id, 'manifest.json');
+  const expectedManifestPath = coverageRunPath(report, 'manifest.json');
   if (report.manifest_path !== expectedManifestPath) throw new Error('Coverage manifest path is not canonical.');
   const manifestPath = path.join(root, ...expectedManifestPath.split('/'));
   const manifestBytes = readFileSync(manifestPath);
@@ -422,7 +428,7 @@ async function historicalSnapshotInputs(
     throw new Error('Historical coverage input fingerprints are invalid.');
   const expectedModules = capturedModuleInputs({ sources, test_inputs: testInputs, tool_inputs: toolInputs });
 
-  const snapshotRelative = path.posix.join('coverage/bun-unified/runs', report.run_id, 'snapshot');
+  const snapshotRelative = coverageRunPath(report, 'snapshot');
   if (manifest.snapshot_directory !== snapshotRelative) throw new Error('Coverage snapshot path is not canonical.');
   const snapshotDigests = new Map<string, string>();
   for (const entry of [...sources, ...testInputs, ...toolInputs]) {
@@ -525,7 +531,7 @@ function verifyInputBindings(report: DecodedReport, manifest: DecodedManifest, c
 }
 
 function verifySnapshotFiles(root: string, report: DecodedReport, manifest: DecodedManifest, current: CoverageInputs) {
-  const snapshotRelative = path.posix.join('coverage/bun-unified/runs', report.run_id, 'snapshot');
+  const snapshotRelative = coverageRunPath(report, 'snapshot');
   if (manifest.snapshot_directory !== snapshotRelative) throw new Error('Coverage snapshot path is not canonical.');
   const snapshotDirectory = path.join(root, ...snapshotRelative.split('/'));
   assertCoverageSnapshotBytes(snapshotDirectory, current.input_bytes);
@@ -813,7 +819,7 @@ function readProcessReceipt(
   const receipt: ProcessReceipt = raw;
   receiptNames.add(receipt.file);
   receiptPids.add(receipt.pid);
-  const processPath = path.join(root, 'coverage', 'bun-unified', 'runs', report.run_id, 'processes', receipt.file);
+  const processPath = path.join(root, coverageRunPath(report, 'processes', receipt.file));
   const processBytes = readFileSync(processPath);
   if (sha256(processBytes) !== receipt.sha256) throw new Error('Coverage process receipt fingerprint mismatch.');
   const child = record(JSON.parse(processBytes.toString('utf8')), `${receipt.file} report`);

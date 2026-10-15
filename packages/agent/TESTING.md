@@ -1008,6 +1008,11 @@ gates and cannot establish scope or full-quality PASS. Preserve frozen caps and
 complete correspondence; the global plan remains required for final admission.
 The final report stays outside the sealed runs/<run-id> directory. Do not relax
 its read-only manifest/snapshot permissions to publish a diagnostic.
+Focused manifests, snapshots and process receipts use the separate canonical
+`coverage/bun-unified/diagnostics/runs/<run-id>/` namespace. The shared validator
+selects that path from the focused schema only; global runs retain `runs/` and
+the global reader still rejects focused reports. Never copy or relabel a run
+to satisfy the other namespace.
 
 For sequential whole-contour development, the existing CRAP owner also supports
 `VIDA_BUN_COVERAGE_REPORT=<focused-report> bun tooling/crap-gate.ts --contour

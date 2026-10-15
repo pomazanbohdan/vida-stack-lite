@@ -60,7 +60,7 @@ function clone<T>(value: T): T {
 }
 
 export async function createSyntheticCoverageFixture(
-  options: { legacyManifest?: boolean; versionedShards?: boolean } = {},
+  options: { legacyManifest?: boolean; versionedShards?: boolean; focused?: boolean } = {},
 ): Promise<SyntheticFixture> {
   const root = mkdtempSync(path.join(os.tmpdir(), 'untrusted-coverage-validator-'));
   let succeeded = false;
@@ -70,8 +70,11 @@ export async function createSyntheticCoverageFixture(
     const pinBytes = readFileSync(path.join(packageRoot, '.bun-version'));
     write(root, '.bun-version', pinBytes);
     write(root, 'package.json', JSON.stringify({ files: ['src/**', 'bin/**'], scripts: {} }));
-    for (const source of sourcePaths) write(root, source, 'export const fixture = true;\n');
-    write(root, 'bin/cli-metadata.ts', 'export const fixture = true;\n');
+    const fixtureSource = options.focused
+      ? 'export function fixture(): boolean { return true; }\n'
+      : 'export const fixture = true;\n';
+    for (const source of sourcePaths) write(root, source, fixtureSource);
+    write(root, 'bin/cli-metadata.ts', fixtureSource);
     write(root, syntheticFixtureTestPath, "import { test } from 'bun:test'; test('inert fixture', () => {});\n");
     if (options.versionedShards)
       write(
@@ -88,10 +91,20 @@ export async function createSyntheticCoverageFixture(
     write(root, 'instructions/fixture.md', 'fixture\n');
 
     // Exactly one capture supplies all fingerprints, bytes, and child bindings.
-    const inputs = await coverageInputs(root);
+    const inputs = await coverageInputs(
+      root,
+      options.focused
+        ? {
+            mode: 'focused-diagnostic',
+            contour: 'synthetic-validator-contour',
+            sources: [...sourcePaths, 'bin/cli-metadata.ts'].sort(),
+            tests: [syntheticFixtureTestPath],
+          }
+        : 'current',
+    );
     const runId = randomUUID();
     const pid = process.pid;
-    const runRelative = path.posix.join('coverage/bun-unified/runs', runId);
+    const runRelative = path.posix.join('coverage/bun-unified', options.focused ? 'diagnostics/runs' : 'runs', runId);
     const snapshotRelative = path.posix.join(runRelative, 'snapshot');
     const snapshotDirectory = path.join(root, ...snapshotRelative.split('/'));
     for (const [file, bytes] of Object.entries(inputs.input_bytes)) write(snapshotDirectory, file, bytes);
@@ -285,7 +298,20 @@ export async function createSyntheticCoverageFixture(
     const processPath = processPaths[0]!.processPath;
     const reportPath = path.join(root, 'untrusted-report.json');
     const report: JsonRecord = {
-      schema: options.versionedShards ? 'VidaBunCoverageReport/v2' : 'VidaBunCoverageReport/v1',
+      schema: options.focused
+        ? 'VidaBunFocusedCoverageDiagnostic/v1'
+        : options.versionedShards
+          ? 'VidaBunCoverageReport/v2'
+          : 'VidaBunCoverageReport/v1',
+      ...(options.focused
+        ? {
+            qualification_scope: 'focused-diagnostic',
+            full_qualification: false,
+            frozen_budget_qualification: 'pending',
+            function_coverage_kind: 'function-entry-binary',
+            metrics: [],
+          }
+        : {}),
       run_id: runId,
       manifest_path: manifestPath,
       manifest_sha256: sha256(manifestBytes),

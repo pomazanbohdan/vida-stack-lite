@@ -4746,6 +4746,19 @@ strict JSON handling and synchronous spy restoration, including a real native
 post-restore authorization control. Final numerical runs still follow the last
 published Source/test/tool packet; no old measurements are relabeled current.
 
+1273ca3 coverage42a4963a-b600-456e-b067-9c78ba230ede completed37PASS/0FAIL/
+14307assertions,3.79s Bun/7128.198562ms owned outer. Its scoped CRAP consumer
+correctly stopped on a canonical-path mismatch: focused runs use diagnostics/runs,
+whereas the shared consumer still required global runs. Retained launch is
+/workspace/attachments/quality-declared-main-cedar-OwhHrH and consumer rejection
+quality-cedar-scoped-proof-1273ca3-20261015.log. No scoped PASS was issued.
+One shared schema-bound run-path helper now covers manifests, snapshots and
+process receipts without weakening global paths. The existing synthetic fixture
+owner supplies a disjoint focused namespace and real callable denominators;
+eight positive/negative contract controls pass, explicitly untrusted synthetic
+data rather than genuine execution evidence. Fresh real coverage/proof/mutation
+must bind this final validator packet.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
