@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `8df1b5d` at origin/main.
+- Published predecessor: `2e1221d` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1180,6 +1180,51 @@ canonical universe exactly. Raw child IDs renumber. Inspect current counts befor
 declaring a supported fit or capability GAP; no private-plan/node_modules patch.
 Reviews: quality-kernel-mutant-slice-feasibility-1fd-20261015.md and
 quality-kernel-mutator-bucket-feasibility-addendum-20261015.md.
+
+### Kernel local-attempt boundary coverage packet
+
+Root is adding real admitted-store cases for reservation failure before provider
+entry, provider failure after claim, and complete file-claim admission. A shared
+test-only preparation owner is reused by the existing ordinary success case and
+the new failure cases; real claim, lease, context, CAS and terminal writes remain.
+The two new failure cases use the default5000ms, not the existing ordinary
+success case's10000ms exception. No product Source or active runtime change.
+Static478captured/477checkedTS plus101Sourcechecked/0diagnostics:
+quality-kernel-local-boundaries-pair-fixed-static-2e1-20261015.log.
+The first diagnostic selector matched0tests; its log/root stay retained. An
+initial file-claim negative used a resource outside the admitted Work scope and
+correctly failed at the earlier HostState guard. The corrected fixture uses only
+the already permitted file/execution resources and validates ledger semantics
+before persisting each image. A second negative demonstrated that HostState's
+existing pair validator rejects an incomplete file lease before the local
+predicate. The test now asserts that earlier guard and checks raw persisted
+Work/ledger bytes, without bypassing it. Valid full grants execute the local
+resource predicate. This is boundary fixture construction, not proof that a
+live orchestrator issued a source-stage lease.
+Focused4PASS/32Bunassertions/4.37s includes the existing ordinary success after
+shared preparation extraction; all new cases remain under default5000ms.
+quality-kernel-local-boundaries-pair-fixed-focused-2e1-20261015.log retains the
+complete owned result and same-boot/process-group checks. Two isolated process
+counterfactuals omit the real store's abort/uncertainty transition. Both selected
+tests fail assertions as intended: the first retains a started attempt instead
+of absence; the second rejects a lost primary-cause identity after invalid
+uncertainty acknowledgement. These diagnostic controls are NOT Stryker mutants
+or score evidence. Logs quality-kernel-omit-abort-control-2e1-20261015.log and
+quality-kernel-omit-uncertainty-control-2e1-20261015.log. Preserve physical roots
+/tmp/quality-kernel-local-failures-functional-Fl0YZR and
+/tmp/quality-kernel-local-failures-functional-hswJLQ with their failed fixtures.
+Independent actual review has no remaining blocker:
+quality-kernel-local-boundaries-actual-review-2e1-20261015.md. It explicitly
+corrects its initial phase attribution for the incomplete file-grant negative.
+Publish after strict checks, then run one fresh focused kernel coverage/CRAP
+capture over the unchanged complete four-file contour. No new mutation
+percentage or full coverage/frozen-budget acceptance is claimed.
+Bounded independent findings are retained in
+quality-kernel-remaining-scenarios-review-2e-20261015.md and
+quality-kernel-local-approval-scenario-review-2-e1-20261015.md. Retirement after an
+expired owner lease is intentional recovery; preserve that existing real-store
+proof. Protected local approval still needs a genuinely issued source-stage
+request, not hand-advancing Mastra or bypassing the stage-order contract.
 
 ### Current product correction packet
 

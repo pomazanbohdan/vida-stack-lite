@@ -386,7 +386,113 @@ function admittedFixtureWorkContext(
   };
 }
 
+async function prepareAdmittedWorkflowAssignment(
+  admitted: Awaited<ReturnType<typeof prepareAdmittedSessionFixture>>,
+  services: TrustedHostServices,
+) {
+  const { fixture, identity, nativeSessionHandle } = admitted;
+  const composition = await observeLocalSessionComposition({
+    repositoryRoot: fixture.root,
+    repositoryId: identity.repository_id,
+    projectIds: identity.project_ids,
+    nativeSessionHandle,
+    admittedWork: { workId: identity.work_id, store: fixture.store },
+    services,
+  });
+  const capability = composition.workflowExecutionCapability;
+  assert.ok(capability);
+  let prepared: Awaited<ReturnType<typeof prepareWorkflowExecution>> | undefined;
+  await assert.doesNotReject(async () => {
+    prepared = await prepareWorkflowExecution(capability, {
+      repositoryRoot: fixture.root,
+      configDigest: runtimeConfigDigest(fixture.config),
+      teamId: 'default-development',
+      workItemId: identity.work_id,
+    });
+  });
+  assert.ok(prepared);
+  const workflow = fixture.config.workflows[prepared.workflowId];
+  assert.ok(workflow);
+  const stage = workflow.stages.find((entry) => entry.id === workflow.entry_stage);
+  const assignment = stage?.assignments[0];
+  assert.ok(stage && assignment);
+  return {
+    capability,
+    stage,
+    assignment,
+    request: {
+      repositoryRoot: fixture.root,
+      configDigest: runtimeConfigDigest(fixture.config),
+      teamId: 'default-development',
+      workflowId: prepared.workflowId,
+      stageId: stage.id,
+      assignmentIndex: 0,
+      workItemId: identity.work_id,
+      workItemDigest: prepared.workItemDigest,
+      workContextDigest: prepared.workContextDigest,
+      input: { work_item_id: identity.work_id },
+    },
+  };
+}
+
 describe('runtime kernel boundary', () => {
+  test.each(['reservation', 'provider'] as const)(
+    'local session preserves a %s failure and its durable attempt outcome',
+    (failurePhase) =>
+      withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+        const admitted = await prepareAdmittedSessionFixture(
+          'local-failure-' + randomUUID(),
+          createFixture(false, true),
+        );
+        const { fixture, identity, workItem } = admitted;
+        const failure = new Error('injected local ' + failurePhase + ' failure');
+        let providerCalls = 0;
+        let validationCalls = 0;
+        let claimedBeforeFailure = false;
+        const { capability, request } = await prepareAdmittedWorkflowAssignment(admitted, {
+          ...localSessionServices(fixture.store.governanceCapability),
+          runtimeRevision: () => ({
+            sourceRevision: fixture.store.readHostStateSnapshot(identity).work!.binding.runtime_code_digest,
+            currentRevision: 1,
+          }),
+          resolveWorkflowWorkItem: () => workItem,
+          resolveWorkExecutionContext: (contextRequest) => {
+            const state = fixture.store.readHostStateSnapshot(identity);
+            if (failurePhase === 'reservation' && state.work?.execution.assignment_attempts.length) {
+              claimedBeforeFailure = true;
+              throw failure;
+            }
+            return admittedFixtureWorkContext(fixture.store, identity, contextRequest);
+          },
+          dispatchWorkflowAssignment: () => {
+            providerCalls++;
+            const state = fixture.store.readHostStateSnapshot(identity);
+            claimedBeforeFailure = state.work?.execution.assignment_attempts[0]?.status === 'started';
+            throw failure;
+          },
+          validateWorkflowAssignmentResult: () => {
+            validationCalls++;
+          },
+        });
+        await assert.rejects(dispatchWorkflowAssignment(capability, request), (error: unknown) => error === failure);
+        expect(claimedBeforeFailure).toBe(true);
+        expect(providerCalls).toBe(failurePhase === 'provider' ? 1 : 0);
+        expect(validationCalls).toBe(0);
+        const attempts = fixture.store.readHostStateSnapshot(identity).work?.execution.assignment_attempts;
+        if (failurePhase === 'reservation') {
+          expect(attempts).toEqual([]);
+        } else {
+          expect(attempts).toHaveLength(1);
+          expect(attempts?.[0]).toMatchObject({
+            status: 'uncertain',
+            stage_id: request.stageId,
+            assignment_index: request.assignmentIndex,
+            result: null,
+            result_digest: null,
+          });
+        }
+      }),
+  );
   test(
     'local session completes a fresh ordinary assignment through its admitted store',
     () =>
@@ -399,10 +505,11 @@ describe('runtime kernel boundary', () => {
           );
           phaseStarted = now;
         };
-        const { fixture, identity, nativeSessionHandle, workItem } = await prepareAdmittedSessionFixture(
+        const admitted = await prepareAdmittedSessionFixture(
           'local-dispatch-' + randomUUID(),
           createFixture(false, true),
         );
+        const { fixture, identity, nativeSessionHandle, workItem } = admitted;
         phase('admit');
         const originalClaim = fixture.store.claimWorkflowAssignment.bind(fixture.store);
         const snapshotReads = spyOn(fixture.store, 'readHostStateSnapshot');
@@ -427,70 +534,34 @@ describe('runtime kernel boundary', () => {
           snapshotReads.mockRestore();
         });
         const observed: string[] = [];
-        const composition = await observeLocalSessionComposition({
-          repositoryRoot: fixture.root,
-          repositoryId: identity.repository_id,
-          projectIds: identity.project_ids,
-          nativeSessionHandle,
-          admittedWork: { workId: identity.work_id, store: fixture.store },
-          services: {
-            ...localSessionServices(fixture.store.governanceCapability),
-            runtimeRevision: () => ({
-              sourceRevision: fixture.store.readHostStateSnapshot(identity).work!.binding.runtime_code_digest,
-              currentRevision: 1,
-            }),
-            resolveWorkflowWorkItem: () => workItem,
-            resolveWorkExecutionContext: (request) => admittedFixtureWorkContext(fixture.store, identity, request),
-            dispatchWorkflowAssignment: (invocation) => {
-              observed.push('dispatch');
-              const persistedWork = fixture.store.readHostStateSnapshot(identity).work;
-              assert.ok(persistedWork);
-              expect(invocation.workContext.binding).toEqual(persistedWork.binding);
-              expect(invocation.workContext.permit.lease.thread_id).toBe(nativeSessionHandle);
-              return { observed: invocation.assignment.role };
-            },
-            validateWorkflowAssignmentResult: (invocation, result) => {
-              observed.push('validate');
-              expect(result).toEqual({ observed: invocation.assignment.role });
-            },
+        const { capability, request, stage, assignment } = await prepareAdmittedWorkflowAssignment(admitted, {
+          ...localSessionServices(fixture.store.governanceCapability),
+          runtimeRevision: () => ({
+            sourceRevision: fixture.store.readHostStateSnapshot(identity).work!.binding.runtime_code_digest,
+            currentRevision: 1,
+          }),
+          resolveWorkflowWorkItem: () => workItem,
+          resolveWorkExecutionContext: (request) => admittedFixtureWorkContext(fixture.store, identity, request),
+          dispatchWorkflowAssignment: (invocation) => {
+            observed.push('dispatch');
+            const persistedWork = fixture.store.readHostStateSnapshot(identity).work;
+            assert.ok(persistedWork);
+            expect(invocation.workContext.binding).toEqual(persistedWork.binding);
+            expect(invocation.workContext.permit.lease.thread_id).toBe(nativeSessionHandle);
+            return { observed: invocation.assignment.role };
+          },
+          validateWorkflowAssignmentResult: (invocation, result) => {
+            observed.push('validate');
+            expect(result).toEqual({ observed: invocation.assignment.role });
           },
         });
-        phase('compose');
-        const capability = composition.workflowExecutionCapability;
-        assert.ok(capability);
-        let prepared: Awaited<ReturnType<typeof prepareWorkflowExecution>> | undefined;
-        await assert.doesNotReject(async () => {
-          prepared = await prepareWorkflowExecution(capability, {
-            repositoryRoot: fixture.root,
-            configDigest: runtimeConfigDigest(fixture.config),
-            teamId: 'default-development',
-            workItemId: identity.work_id,
-          });
-        });
-        phase('prepare');
-        assert.ok(prepared);
-        const workflow = fixture.config.workflows[prepared.workflowId];
-        assert.ok(workflow);
-        const stage = workflow.stages.find((entry) => entry.id === workflow.entry_stage);
-        assert.ok(stage?.assignments[0]);
-        const request = {
-          repositoryRoot: fixture.root,
-          configDigest: runtimeConfigDigest(fixture.config),
-          teamId: 'default-development',
-          workflowId: prepared.workflowId,
-          stageId: stage.id,
-          assignmentIndex: 0,
-          workItemId: identity.work_id,
-          workItemDigest: prepared.workItemDigest,
-          workContextDigest: prepared.workContextDigest,
-          input: { work_item_id: identity.work_id },
-        };
+        phase('compose-prepare');
         let result: unknown;
         await assert.doesNotReject(async () => {
           result = await dispatchWorkflowAssignment(capability, request);
         });
         phase('dispatch-complete');
-        expect(result).toEqual({ observed: stage.assignments[0].role });
+        expect(result).toEqual({ observed: assignment.role });
         expect(observed).toEqual(['dispatch', 'validate']);
         const state = fixture.store.readHostStateSnapshot(identity);
         expect(state.work?.execution.assignment_attempts).toHaveLength(1);
@@ -1257,6 +1328,65 @@ describe('runtime kernel boundary', () => {
       'runtime configuration changed after composition',
     );
   });
+  test('local admission requires every implementation path in its persisted file claim', () =>
+    withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+      const { fixture, identity, nativeSessionHandle } = await prepareAdmittedSessionFixture(
+        'local-file-claim-' + randomUUID(),
+        createFixture(false, true),
+      );
+      const before = fixture.store.readHostStateSnapshot(identity);
+      assert.ok(before.work?.lease && before.ledger);
+      const workRow = fixture.database.query<{ payload: string; digest: string }, []>(
+        "SELECT payload,digest FROM agent_host_state WHERE kind='work'",
+      );
+      const workBefore = workRow.get();
+      assert.ok(workBefore);
+      const ticketId = before.work.lease.ticket_id;
+      expect(before.work.binding.implementation_paths).toEqual(['AGENT.sidecar.md']);
+      const request = { repositoryRoot: fixture.root, identity, store: fixture.store, nativeSessionHandle };
+      for (const resources of [
+        ['file:AGENT.sidecar.md'],
+        ['execution:' + identity.work_id],
+        ['file:AGENT.sidecar.md', 'execution:' + identity.work_id],
+      ]) {
+        const ledger: CoordinationLedger = {
+          ...before.ledger,
+          tickets: before.ledger.tickets.map((entry) =>
+            entry.ticket_id === ticketId
+              ? {
+                  ...entry,
+                  contour_keys: ['file:AGENT.sidecar.md', 'execution:' + identity.work_id],
+                  exclusive_resources: ['file:AGENT.sidecar.md', 'execution:' + identity.work_id],
+                  active_resources: resources,
+                }
+              : entry,
+          ),
+          claims: before.ledger.claims.map((entry) => (entry.ticket_id === ticketId ? { ...entry, resources } : entry)),
+        };
+        const encoded = canonicalJson(ledger);
+        expect(parseCoordinationLedgerJson(encoded)).toEqual(ledger);
+        fixture.database
+          .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='ledger'")
+          .run(encoded, canonicalJsonDigest(ledger));
+        if (resources.includes('file:AGENT.sidecar.md')) {
+          let admitted: ReturnType<typeof requireLiveLocalSessionAdmission> | undefined;
+          assert.doesNotThrow(() => {
+            admitted = requireLiveLocalSessionAdmission(request);
+          });
+          expect(admitted?.workVersion).toEqual(before.workVersion);
+          expect(admitted?.ledger).toEqual(ledger);
+        } else {
+          expect(() => requireLiveLocalSessionAdmission(request)).toThrow('work lease is blocked or incomplete');
+        }
+        expect(workRow.get()).toEqual(workBefore);
+        const ledgerRow = fixture.database
+          .query<{ payload: string; digest: string }, []>(
+            "SELECT payload,digest FROM agent_host_state WHERE kind='ledger'",
+          )
+          .get();
+        expect(ledgerRow).toEqual({ payload: encoded, digest: canonicalJsonDigest(ledger) });
+      }
+    }));
   test('denies an expired lease before reading malformed current configuration', async () => {
     const { fixture, identity, nativeSessionHandle } = await prepareAdmittedSessionFixture('preflight-expired-lease');
     try {
