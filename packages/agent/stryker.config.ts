@@ -34,11 +34,11 @@ const config = {
   },
   thresholds:
     linuxMutation || windowsMutation
-      ? { high: 0, low: 0, break: 0 }
+      ? { high: 0, low: 0, break: null }
       : {
           high: 100,
           low: 100,
-          break: 100,
+          break: null,
         },
   // Slice runs bound mutant execution and recycle only between bounded source slices.
   timeoutMS: 60_000,

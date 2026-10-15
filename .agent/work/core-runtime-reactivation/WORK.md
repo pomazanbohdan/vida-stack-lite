@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `df93bd7` at origin/main.
+- Published predecessor: `50aad81` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -26,19 +26,97 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current bounded mutation execution plan
 
+Human resumed work and requested a root-owned rapid contour-by-contour audit
+of tests and product Source. Blind Luna design reviews completed; root remains
+the sole Source/check/Git writer. Packet50aad81 passed
+the strict hook and was pushed nonforce; logs
+quality-mutation-pilot-{strict-commit,push}-df9-20261015.log.
+
+Real selected bun-fs-safe-attestation pilot completed in8838.507ms with native
+exit1/nullsignal, same boot. Stryker instrumented7mutants but its dry-run runner
+rejected inputs before launching Bun tests; test/tool fingerprints in the
+retained receipt are empty, spawn_error=input-drift and process_custody=null.
+No mutant execution or confirmed Killed score was established. The outer
+Stryker receipt observed direct exit1 but group termination was unobserved;
+the diagnostic remains UNKNOWN and retains its entire evidence directory:
+packages/agent/.tmp/mutation-evidence-5f464f3a-634b-430c-8b93-d1b594972bb1-jt39oi.
+Native envelope quality-mutation-pilot-native-50a-20261015.{json,log,stdout.log,stderr.log}.
+Do not reuse/replay this run/root or reinterpret it as a failing assertion.
+
+Confirmed input-contract defect: the parent fingerprints
+{selection:capture.testSelection,files:capture.testInputs}, while the runner's
+descriptorFingerprintsMatch fingerprints {selection:partitionTests,files:test_inputs}.
+The descriptor currently omits the captured full test-selection object. This
+is a Source-confirmed mismatch; the old runner suppressed the exact verification
+stage, so an additional earlier mismatch in that old run remains unexcluded.
+The current batch introduces one shared fingerprint owner, a v3 descriptor
+carrying full test_selection separately from partition tests, exact subset and
+input-byte checks, and bounded rejection-stage diagnostics before child launch.
+Historical coverage identity bytes remain unchanged.
+
+Readonly process inspection found an orphan zombie67047 in group67033 under
+host PID1(tail), which is not a new group-termination receipt. bwrap's installed
+help confirms --as-pid-1 disables its PID1 reaper. Consider a fresh qualified
+native reaper topology without that flag; do not weaken the existing group
+absence guard or replay archived UNKNOWN. Fresh reaper qualification remains
+pending. Read-only findings are retained in attachments:
+quality-mutation-process-reaper-50a-20261015.md,
+quality-input-shared-architecture-50a-20261015.md and
+quality-mutation-admission-global-20261015.md.
+
+## Root-owned rapid test and product audit
+
+This is a breadth-first Source review with targeted call-chain inspection, not
+complete behavioral qualification of every function. Current static check:
+473capturedTS/472checked/0diagnostics; no JavaScript violations. Product source
+bindings remain unchanged. packages/plugin currently contains a manifest only.
+Candidate text scans cover src/bin/tests/tooling; strings containing fixture
+code, intentional negative controls and documented quarantine are not defects
+merely because they match a pattern. Raw candidates remain in attachments
+quality-global-{product-async,test-async,test-timeout,pending}-candidates-20261015.txt.
+
+| Contour | Confirmed finding or present boundary | Next action |
+| --- | --- | --- |
+| Input capture and mutation admission | Full-selection/partition mismatch rejects dry run; Stryker break100 also turns a valid survivor report into a process failure before VIDA classifies receipts | Current shared v3 identity batch; disable only Stryker score-based exit, retain VIDA100% gate |
+| Child environment and output lifetime | executeMutationCommand restores variables omitted by its caller; its completed output leaves a500ms timer active | Current explicit-env and timer-disposal fixes, focused regressions |
+| Static inventory and retained evidence | Static gate enters package/.tmp Stryker sandbox and rejects its dependency symlink | Exclude only declared package-root scratch boundaries; nested Source .tmp and boundary symlinks remain checked |
+| Host transactions and research callers | withWorkingMutation and withHistoricalNormalizationMutation replace action and rollback causes with a generic HostStateError; async ROLLBACK can replace them again | Product defect confirmed by control flow; add dual-failure/retained-state regressions, reuse existing cleanup outcome owner without moving CAS/fence order |
+| Existing database merge | prepareUnifiedExistingStorageImage opens Host before the second image and outside its cleanup try; rejection of the second image leaves the first handle unclosed. Its undefined sentinel also loses a thrown undefined primary cause | Product defects confirmed by control flow; protect acquisition from the first handle, use a tagged work outcome, verify close attempts and both failure identities |
+| Coverage and test fixtures | Full300000ms operation remains incomplete; real30s quarantine cases and repeated CLI startup are distinct costs; one caller-pilot failure path retains its deadline timer | Preserve real quarantine acceptance; share deterministic policy cases, retain bounded real controls; qualify resource/shard eligibility before parallel activation |
+| Workflow, authorization, CLI and SDK | Inspected preflight denies stale/foreign bindings; clean controller environments are passed directly; SDK currentSidecar checks HEAD, receipt and every output hash | No equivalent environment reinsertion or stale-dist acceptance confirmed in inspected callers; retain existing guards |
+
+The child environment defect was reproduced independently before correction:
+quality-mutation-owner-boundary-before-20261015.json records a child exit12
+despite explicit env:{}, with the excluded parent marker visible. The inert
+operation returned in13.539ms while its enclosing process took740.805ms;
+this observation is not a suite speedup claim. A pending output timer is visible
+in Source; after-change timing and focused checks remain pending.
+After correction the same probe records child exit0 and111.626ms enclosing
+elapsed time; quality-mutation-owner-boundary-after-20261015.json. This confirms
+the explicit environment behavior; it is a single control, not a suite benchmark.
+Focused regression batch:107PASS/0FAIL/730assertions across9files in4.79s,
+quality-mutation-architecture-focused-50a-20261015.log. Independent blind review
+ACCEPT:quality-mutation-architecture-actual-review-20261015.md.
+Static retries are retained: initial check encountered the retained sandbox
+boundary, the next found8new TypeScript diagnostics, all corrected in
+quality-mutation-architecture-static-final-50a-20261015.log. Numeric gates,
+publication remain pending for this batch.
+
+The first strict commit hook rejected one unsafe any assignment in the timer
+test's Reflect.apply result. Replaced it with the typed direct timer call;
+the focused timer regression passed again. Retain
+quality-mutation-architecture-strict-commit-20261015.log and
+quality-mutation-architecture-timer-final-20261015.log. No hook bypass.
+
 Packet df93bd7 passed the ordinary strict hook and was pushed nonforce to main.
 The alias closure and mutation-root corrections below are published; numeric
 qualification remains pending. Three blind read-only Luna contours investigate
 recovery timing, existing shard activation and bounded mutation execution.
 
-The current mutation owner offers only inventory or a full campaign. Direct
-Stryker would bypass its assertion/custody classifier, so do not use that route.
-Compare two bounded designs before implementation: exact existing-partition
-selection through this owner, or an explicit selected-partition execution API
-called by a separate adapter. Prefer the smallest design that preserves the
-same partition object, exact declared sources/tests, captured input closure,
-before/after checks, process ownership and assertion-confirmed Killed policy.
-Do not duplicate scanners, hashes, configs or the campaign implementation.
+The published selector now supports inventory, full campaigns and one exact
+declared partition. Its implementation/design evidence is retained below.
+Direct Stryker would bypass the VIDA assertion/custody classifier; it is not a
+replacement qualification route. Keep one captured input closure and owner.
 
 A selected diagnostic must have a different report schema from
 CandidateMutationReport/v3, include its exact selected/omitted partition and
@@ -71,7 +149,8 @@ proof is claimed. Strict TS471checked/472captured/0diagnostics after correcting
 test-only exactOptionalPropertyTypes fixtures to omit absent optional fields.
 Checks quality-mutation-pilot-{focused,static-retry}-df9-20261015.*. TESTING and
 the Bun skill document the bounded command and full-admission separation.
-Strict publication and the first real selected-partition observation are next.
+Strict publication completed at50aad81; the first actual pilot's terminal
+UNKNOWN is recorded above. The current batch repairs its confirmed causes.
 
 ## Current forward closure and mutation-root correction
 

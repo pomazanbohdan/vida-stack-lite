@@ -327,6 +327,49 @@ describe('mutation execution receipts', () => {
     expect(timeout).toMatchObject({ spawnError: null, timedOut: true });
   });
 
+  test('uses an explicit child environment without restoring omitted parent variables', async () => {
+    const name = 'VIDA_MUTATION_ENV_BOUNDARY_TEST';
+    const prior = process.env[name];
+    process.env[name] = 'parent-only';
+    const command = [process.execPath, '--no-env-file', '-e', `process.exit(process.env.${name} ? 12 : 0)`];
+    try {
+      expect((await executeMutationCommand(command, process.cwd(), 1000, { env: {} })).exitCode).toBe(0);
+      expect((await executeMutationCommand(command, process.cwd(), 1000)).exitCode).toBe(12);
+    } finally {
+      if (prior === undefined) delete process.env[name];
+      else process.env[name] = prior;
+    }
+  });
+
+  test('releases observation timers when child output completes before its deadline', async () => {
+    const timers = new Set<unknown>();
+    const originalSet = globalThis.setTimeout;
+    const originalClear = globalThis.clearTimeout;
+    const set = spyOn(globalThis, 'setTimeout').mockImplementation(
+      Object.assign(
+        (...args: Parameters<typeof setTimeout>) => {
+          const timer = originalSet(...args);
+          timers.add(timer);
+          return timer;
+        },
+        { __promisify__: originalSet.__promisify__ },
+      ),
+    );
+    const clear = spyOn(globalThis, 'clearTimeout').mockImplementation((timer) => {
+      timers.delete(timer);
+      Reflect.apply(originalClear, globalThis, [timer]);
+    });
+    try {
+      const result = await executeMutationCommand([process.execPath, '-e', 'process.exit(0)'], process.cwd(), 1000);
+      expect(result).toMatchObject({ exitCode: 0, output_capture: { complete: true } });
+      expect(timers.size).toBe(0);
+    } finally {
+      set.mockRestore();
+      clear.mockRestore();
+      for (const timer of timers) Reflect.apply(originalClear, globalThis, [timer]);
+    }
+  });
+
   test.skipIf(process.platform === 'win32')(
     'keeps normal direct exit UNKNOWN when its owned process-group probe fails',
     async () => {

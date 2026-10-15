@@ -5,7 +5,7 @@ import { lstat, mkdir, open, readFile } from 'node:fs/promises';
 import type { FileHandle } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { canonicalJson, sha256 } from './bun-coverage-evidence.ts';
+import { canonicalJson, sha256, testSelectionFingerprint } from './bun-coverage-evidence.ts';
 import {
   buildMutationTestCommand,
   collectExecutionIdentity,
@@ -19,13 +19,14 @@ const activeMutant = process.env.__STRYKER_ACTIVE_MUTANT__;
 
 type MutationInputDigest = { path: string; sha256: string };
 type MutationInputDescriptor = {
-  schema: 'MutationInputDescriptor/v2';
+  schema: 'MutationInputDescriptor/v3';
   partition: string;
   partition_sources: string[];
   partition_source_inputs: MutationInputDigest[];
   partition_source_fingerprint: string;
   source_fingerprint: string;
   tests: string[];
+  test_selection: { mode: 'full-current-test-set'; tests: string[] };
   test_inputs: MutationInputDigest[];
   tool_inputs: MutationInputDigest[];
   input_fingerprint: string;
@@ -83,7 +84,7 @@ export function mutationPartitionSourceBindingMatches(
   value: unknown,
   expected: { partition: string; sources: string[]; sourceInputs: MutationInputDigest[]; fingerprint: string },
 ): boolean {
-  if (!record(value) || value.schema !== 'MutationInputDescriptor/v2') return false;
+  if (!record(value) || value.schema !== 'MutationInputDescriptor/v3') return false;
   if (
     !Array.isArray(value.partition_sources) ||
     !value.partition_sources.every((source) => typeof source === 'string') ||
@@ -271,6 +272,7 @@ function descriptorHasExactKeys(value: Record<string, unknown>): boolean {
     'source_fingerprint',
     'test_fingerprint',
     'test_inputs',
+    'test_selection',
     'tests',
     'tool_fingerprint',
     'tool_inputs',
@@ -279,18 +281,44 @@ function descriptorHasExactKeys(value: Record<string, unknown>): boolean {
   return keys.length === expected.length && keys.every((key, index) => key === expected[index]);
 }
 
-function descriptorHasValidSelection(value: Record<string, unknown>): boolean {
+function descriptorHasValidSelection(value: Record<string, unknown> & { test_inputs: MutationInputDigest[] }): boolean {
   const tests = value.tests;
+  const selection = value.test_selection;
+  if (
+    !record(selection) ||
+    Object.keys(selection).sort().join(',') !== 'mode,tests' ||
+    selection.mode !== 'full-current-test-set' ||
+    !Array.isArray(selection.tests) ||
+    !selection.tests.length
+  )
+    return false;
+  const boundPaths = new Set(value.test_inputs.map((entry) => entry.path));
+  let previous = '';
+  for (const test of selection.tests) {
+    if (
+      typeof test !== 'string' ||
+      !safeInputPath(test) ||
+      !/^tests\/[a-zA-Z0-9_./-]+$/u.test(test) ||
+      test <= previous ||
+      !boundPaths.has(test)
+    )
+      return false;
+    previous = test;
+  }
+  const selected = new Set(selection.tests);
   return (
-    value.schema === 'MutationInputDescriptor/v2' &&
+    value.schema === 'MutationInputDescriptor/v3' &&
     typeof value.partition === 'string' &&
     Array.isArray(tests) &&
     tests.length > 0 &&
-    tests.every((test) => typeof test === 'string')
+    new Set(tests).size === tests.length &&
+    tests.every((test) => selected.has(test))
   );
 }
 
-function descriptorHasValidDigests(value: Record<string, unknown>): boolean {
+function descriptorHasValidDigests(
+  value: Record<string, unknown>,
+): value is Record<string, unknown> & { test_inputs: MutationInputDigest[] } {
   return (
     inputDigests(value.test_inputs) &&
     inputDigests(value.tool_inputs) &&
@@ -315,8 +343,8 @@ function mutationInputDescriptor(value: unknown): value is MutationInputDescript
   return (
     record(value) &&
     descriptorHasExactKeys(value) &&
-    descriptorHasValidSelection(value) &&
-    descriptorHasValidDigests(value)
+    descriptorHasValidDigests(value) &&
+    descriptorHasValidSelection(value)
   );
 }
 
@@ -351,15 +379,25 @@ async function verifyDescriptorFiles(root: string, entries: MutationInputDigest[
   }
 }
 
-function descriptorFingerprintsMatch(descriptor: MutationInputDescriptor, tests: string[]): boolean {
-  const testJson = canonicalJson({ selection: tests, files: descriptor.test_inputs });
+function descriptorFingerprintsMatch(descriptor: MutationInputDescriptor): boolean {
   const toolJson = canonicalJson(descriptor.tool_inputs);
-  if (testJson === undefined || toolJson === undefined)
-    throw new Error('Mutation input fingerprints are not serializable.');
-  return sha256(testJson) === descriptor.test_fingerprint && sha256(toolJson) === descriptor.tool_fingerprint;
+  if (toolJson === undefined) throw new Error('Mutation input fingerprints are not serializable.');
+  return (
+    testSelectionFingerprint(descriptor.test_selection, descriptor.test_inputs) === descriptor.test_fingerprint &&
+    sha256(toolJson) === descriptor.tool_fingerprint
+  );
 }
 
-async function verifyInputDescriptor(
+type InputRejection =
+  | 'descriptor-read'
+  | 'descriptor-shape'
+  | 'parent-binding'
+  | 'source-binding'
+  | 'test-inputs'
+  | 'tool-inputs'
+  | 'fingerprint';
+
+export async function verifyInputDescriptor(
   root: string,
   reportDirectory: string,
   partition: string,
@@ -367,31 +405,40 @@ async function verifyInputDescriptor(
   sources: string[],
   partitionSourceFingerprint: string,
   sourceFingerprint: string,
-): Promise<MutationInputDescriptor> {
-  const value = await readInputDescriptor(reportDirectory, partition);
-  if (
-    !mutationInputDescriptor(value) ||
-    !descriptorMatchesParent(value, partition, tests, sources, partitionSourceFingerprint, sourceFingerprint)
-  )
-    throw new Error('Mutation input descriptor does not match its parent partition.');
-  const expectedBinding = mutationPartitionSourceBinding(partition, sources, value.partition_source_inputs);
-  if (
-    !expectedBinding ||
-    !mutationPartitionSourceBindingMatches(value, {
-      partition,
-      sources: expectedBinding.sources,
-      sourceInputs: expectedBinding.sourceInputs,
-      fingerprint: partitionSourceFingerprint,
-    })
-  )
-    throw new Error('Mutation input descriptor source binding is invalid.');
-  // Stryker rewrites the active source in its sandbox. This binding attests the
-  // original parent capture, so compare its metadata with the parent digest and
-  // verify test/tool files here without rereading the mutated subject.
-  await verifyDescriptorFiles(root, value.test_inputs);
-  await verifyDescriptorFiles(root, value.tool_inputs);
-  if (!descriptorFingerprintsMatch(value, tests)) throw new Error('Mutation input descriptor fingerprint is invalid.');
-  return value;
+): Promise<{ descriptor: MutationInputDescriptor | null; rejection: InputRejection | null }> {
+  let stage: InputRejection = 'descriptor-read';
+  try {
+    const value = await readInputDescriptor(reportDirectory, partition);
+    stage = 'descriptor-shape';
+    if (!mutationInputDescriptor(value)) throw new Error('Mutation input descriptor shape is invalid.');
+    stage = 'parent-binding';
+    if (!descriptorMatchesParent(value, partition, tests, sources, partitionSourceFingerprint, sourceFingerprint))
+      throw new Error('Mutation input descriptor does not match its parent partition.');
+    stage = 'source-binding';
+    const expectedBinding = mutationPartitionSourceBinding(partition, sources, value.partition_source_inputs);
+    if (
+      !expectedBinding ||
+      !mutationPartitionSourceBindingMatches(value, {
+        partition,
+        sources: expectedBinding.sources,
+        sourceInputs: expectedBinding.sourceInputs,
+        fingerprint: partitionSourceFingerprint,
+      })
+    )
+      throw new Error('Mutation input descriptor source binding is invalid.');
+    // Stryker rewrites the active source in its sandbox. This binding attests the
+    // original parent capture, so compare its metadata with the parent digest and
+    // verify test/tool files here without rereading the mutated subject.
+    stage = 'test-inputs';
+    await verifyDescriptorFiles(root, value.test_inputs);
+    stage = 'tool-inputs';
+    await verifyDescriptorFiles(root, value.tool_inputs);
+    stage = 'fingerprint';
+    if (!descriptorFingerprintsMatch(value)) throw new Error('Mutation input descriptor fingerprint is invalid.');
+    return { descriptor: value, rejection: null };
+  } catch {
+    return { descriptor: null, rejection: stage };
+  }
 }
 
 function mutationTestEnvironment(logs: RunnerLogs): Record<string, string> {
@@ -565,20 +612,15 @@ async function run(): Promise<void> {
   const config = runnerConfig();
   const paths = evidencePaths(config.reportDirectory, config.partition, activeMutant);
   const command = buildMutationTestCommand(process.execPath, config.tests, paths.junit);
-  let descriptor: MutationInputDescriptor | null = null;
-  try {
-    descriptor = await verifyInputDescriptor(
-      config.root,
-      config.reportDirectory,
-      config.partition,
-      config.tests,
-      config.sources,
-      config.partitionSourceFingerprint,
-      config.sourceFingerprint,
-    );
-  } catch {
-    descriptor = null;
-  }
+  const { descriptor, rejection } = await verifyInputDescriptor(
+    config.root,
+    config.reportDirectory,
+    config.partition,
+    config.tests,
+    config.sources,
+    config.partitionSourceFingerprint,
+    config.sourceFingerprint,
+  );
   const logs: RunnerLogs = {
     stdout: paths.stdout,
     stderr: paths.stderr,
@@ -609,7 +651,7 @@ async function run(): Promise<void> {
     processResult,
     started,
   );
-  await persistReceipt(paths.receipt, paths.junit, logs, receipt);
+  await persistReceipt(paths.receipt, paths.junit, logs, { ...receipt, input_rejection: rejection });
   setRunnerExitCode(processResult);
   const custody = processResult.processCustody;
   if (custody?.terminationObserved === false && !custody.unrefCalled) process.exit(1);

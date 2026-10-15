@@ -104,6 +104,13 @@ Keep its source/test selection unchanged and its diagnostic schema distinct
 from full qualification. A matching input fingerprint and a perfect partial
 score cannot make the pilot a complete campaign. Inventory remains campaign-free.
 
+For mutation inputs, keep the full captured test-selection identity separate
+from the partition's executed tests. Reuse the coverage fingerprint owner and
+check the descriptor's rejection stage before investigating assertions. A
+known survivor is a mutation failure; an input/process failure is UNKNOWN.
+For child runners, test explicit environment deletion as well as inheritance,
+and verify observation timers are disposed when output completes early.
+
 Qualify an optional profiler on an inert pass and an intentional assertion
 failure before using it on an owned product case. A runtime export, accepted
 flag or successful test does not prove a usable profile was emitted. Record

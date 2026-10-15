@@ -856,7 +856,7 @@ function spawnMutationChild(
   return Bun.spawn({
     cmd: command,
     cwd,
-    env: { ...process.env, ...limits.env },
+    env: limits.env ?? process.env,
     stdout: 'pipe',
     stderr: 'pipe',
     detached: limits.ownedProcessGroup ?? false,
@@ -908,14 +908,14 @@ async function observeMutationProcess(
     );
   }
 
-  const outputDeadline: Promise<{ complete: false }> = new Promise((resolve) =>
-    setTimeout(() => resolve({ complete: false }), 500),
-  );
-  const outputSettled = Promise.race([
+  let outputTimer: ReturnType<typeof setTimeout> | undefined;
+  const outputDeadline: Promise<{ complete: false }> = new Promise((resolve) => {
+    outputTimer = setTimeout(() => resolve({ complete: false }), 500);
+  });
+  const settled = await Promise.race([
     outputResults.then(([out, err]) => ({ complete: true, stdout: out, stderr: err })),
     outputDeadline,
-  ]);
-  const settled = await outputSettled;
+  ]).finally(() => clearTimeout(outputTimer));
   if (!settled.complete) {
     stdout.cancel().catch(() => {});
     stderr.cancel().catch(() => {});

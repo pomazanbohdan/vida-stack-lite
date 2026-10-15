@@ -1143,13 +1143,14 @@ async function runMutationGate(): Promise<void> {
         try {
           await assertCurrentInputs(`${partition.name}:before`);
           const descriptor = {
-            schema: 'MutationInputDescriptor/v2',
+            schema: 'MutationInputDescriptor/v3',
             partition: partition.name,
             partition_sources: sourceBinding.sources,
             partition_source_inputs: sourceBinding.sourceInputs,
             partition_source_fingerprint: sourceBinding.fingerprint,
             source_fingerprint: inputs.source_fingerprint,
             tests: testFiles,
+            test_selection: inputs.test_selection,
             test_inputs: inputs.test_inputs,
             tool_inputs: inputs.tool_inputs,
             input_fingerprint: fingerprint,

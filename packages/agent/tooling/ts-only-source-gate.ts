@@ -13,10 +13,12 @@ export const MAINTAINED_SOURCE_ROOTS = [
 ] as const;
 
 const GENERATED_BOUNDARIES = new Set([
+  'packages/agent/.tmp',
   'packages/agent/dist',
   'packages/agent/node_modules',
   'packages/agent/coverage',
   'packages/plugin/dist',
+  'packages/plugin/.tmp',
   'packages/plugin/node_modules',
   'packages/plugin/coverage',
 ]);

@@ -36,6 +36,7 @@ import {
   readBunPin,
   readQualityInputs,
   sha256,
+  testSelectionFingerprint,
   type FinalQualityProjectionInputs,
 } from './bun-coverage-evidence.ts';
 import {
@@ -388,18 +389,18 @@ async function historicalSnapshotInputs(
       : readDigests(selection.published_contract_inputs, 'published contract inputs');
   const parsedSelection = {
     ...selection,
+    mode: 'published-baseline-bun-native' as const,
+    tests: selection.tests,
     ...(parsedFixture ? { published_fixture: parsedFixture } : {}),
     ...(parsedContractInputs ? { published_contract_inputs: parsedContractInputs } : {}),
   };
   const sourceJson = canonicalJson(sources);
-  const testJson = canonicalJson({ selection: parsedSelection, files: testInputs });
   const toolJson = canonicalJson(toolInputs);
   if (
     sourceJson === undefined ||
-    testJson === undefined ||
     toolJson === undefined ||
     manifest.source_fingerprint !== sha256(sourceJson) ||
-    manifest.test_fingerprint !== sha256(testJson) ||
+    manifest.test_fingerprint !== testSelectionFingerprint(parsedSelection, testInputs) ||
     manifest.tool_fingerprint !== sha256(toolJson)
   )
     throw new Error('Historical coverage input fingerprints are invalid.');

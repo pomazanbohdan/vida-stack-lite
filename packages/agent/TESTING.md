@@ -675,6 +675,19 @@ its selected-scope effective_score never establish full mutation qualification;
 final quality accepts only the complete CandidateMutationReport/v3 contract.
 Zero mutants, survivors, unconfirmed Killed and UNKNOWN cannot pass the pilot.
 
+MutationInputDescriptor/v3 keeps the complete captured test_selection separate
+from partition tests. Both producer and runner use the coverage owner's test
+fingerprint formula; selected tests must belong to that captured selection.
+Invalid descriptors retain an input_rejection stage and launch no test child.
+Stryker's score-based process exit is disabled; VIDA alone enforces100%
+assertion-confirmed Killed after admitting complete process and receipt evidence.
+A surviving mutant remains a gate failure, not an infrastructure UNKNOWN.
+An explicit child environment replaces inheritance; removed parent variables
+must not reappear. Completed output capture must dispose of its deadline timer.
+Static Source inventory excludes only declared package-root .tmp evidence
+directories, alongside generated outputs. It still checks handwritten nested
+.tmp paths and rejects symlinks at those declared boundaries.
+
 Run the selected coverage files with Bun Test under the pinned Bun host. A test
 with a Vitest import fails closed until it is migrated. Do not treat that
 failure as coverage evidence. Keep any remaining Vitest tests under the pinned

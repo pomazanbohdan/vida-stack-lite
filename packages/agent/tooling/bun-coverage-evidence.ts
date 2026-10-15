@@ -133,6 +133,14 @@ export const coverageToolInputs: string[] = [
 
 export const sha256 = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 export const canonicalJson = (value: unknown): string | undefined => JSON.stringify(value);
+export function testSelectionFingerprint(
+  selection: Pick<TestSelection, 'mode' | 'tests'>,
+  files: readonly InputDigest[],
+): string {
+  const json = canonicalJson({ selection, files });
+  if (json === undefined) throw new Error('Coverage test identity is not serializable.');
+  return sha256(json);
+}
 /** Match Bun test's documented NODE_ENV default while binding every other string environment value exactly. */
 export function coverageEnvironmentSha256(environment: NodeJS.ProcessEnv): string {
   const values = Object.fromEntries(
@@ -1176,9 +1184,7 @@ async function projectQualityInputCapture(
   const sourceJson = canonicalJson(capture.sources);
   if (sourceJson === undefined) throw new Error('Coverage source identity is not serializable.');
   const sourceFingerprint = sha256(sourceJson);
-  const testJson = canonicalJson({ selection: capture.testSelection, files: capture.testInputs });
-  if (testJson === undefined) throw new Error('Coverage test identity is not serializable.');
-  const testFingerprint = sha256(testJson);
+  const testFingerprint = testSelectionFingerprint(capture.testSelection, capture.testInputs);
   const toolInputs = qualityInputDigests(tools, capture.inputBytes, capture.inputDigests);
   const toolJson = canonicalJson(toolInputs);
   if (toolJson === undefined) throw new Error('Coverage tool identity is not serializable.');

@@ -86,6 +86,21 @@ describe('TS-only maintained source gate', () => {
     expect(result.violations.map(({ path: file }) => file)).toEqual(['packages/agent/tests/ignored.js']);
   });
 
+  test('retains mutation evidence outside maintained Source without traversing its sandbox dependencies', () => {
+    const root = fixture();
+    put(root, 'packages/agent/.tmp/mutation-evidence/sandbox/subject.js');
+    symlinkSync(
+      path.join(root, 'packages/plugin'),
+      path.join(root, 'packages/agent/.tmp/mutation-evidence/sandbox/node_modules'),
+      'dir',
+    );
+    put(root, 'packages/plugin/.tmp/diagnostic.js');
+    put(root, 'packages/agent/src/.tmp/handwritten.js');
+    const result = scanMaintainedSources(root);
+    expect(result.generatedExcludedPaths).toEqual(['packages/agent/.tmp', 'packages/plugin/.tmp']);
+    expect(result.violations.map((entry) => entry.path)).toEqual(['packages/agent/src/.tmp/handwritten.js']);
+  });
+
   test('enumerates nested maintained paths and reports stable sorted output', () => {
     const root = fixture();
     put(root, 'tooling/agent/z-parent/deep/z-helper.cjs');

@@ -329,7 +329,7 @@ test('mutation partition descriptor binds the owned source list to its captured 
   expect(binding).not.toBeNull();
   if (!binding) throw new Error('Expected a complete partition source binding.');
   const descriptor = {
-    schema: 'MutationInputDescriptor/v2',
+    schema: 'MutationInputDescriptor/v3',
     partition: 'owned-partition',
     partition_sources: binding.sources,
     partition_source_inputs: binding.sourceInputs,
