@@ -9,6 +9,8 @@ import { expectRejection } from './helpers/expect-rejection.ts';
 import { expectedJavascriptFiles } from '../tooling/maintained-source-inventory.ts';
 import {
   coverageInputs,
+  canonicalCapturedModulePath,
+  capturedModuleAbsolutePath,
   capturedModuleInputs,
   coverageToolInputs,
   type CoverageReviewGitChange,
@@ -22,9 +24,10 @@ import {
 
 const temporaryRoots: string[] = [];
 
-function fixtureRoot(): string {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'quality-input-projections-'));
-  temporaryRoots.push(root);
+function fixtureRoot(repositoryLayout = false): string {
+  const base = mkdtempSync(path.join(os.tmpdir(), 'quality-input-projections-'));
+  temporaryRoots.push(base);
+  const root = repositoryLayout ? path.join(base, 'packages/agent') : base;
   const write = (relative: string, contents = 'fixture\n'): void => {
     const file = path.join(root, relative);
     mkdirSync(path.dirname(file), { recursive: true });
@@ -73,6 +76,83 @@ describe('final quality deadlines', () => {
 });
 
 describe('final quality input projections', () => {
+  const contextFiles = [
+    'agent-runtime.config.v1.yaml',
+    'AGENTS.md',
+    'AGENT.sidecar.md',
+    'docs/agent-instructions/documentation-policy.v1.json',
+  ];
+
+  test('admits only the four repository context inputs through canonical captured paths', () => {
+    const root = path.resolve('/synthetic/repository/packages/agent');
+    for (const file of contextFiles) {
+      const actual = path.resolve(root, '../..', file);
+      const logical = `_repository/test-context/${file}`;
+      expect(canonicalCapturedModulePath(root, actual)).toBe(logical);
+      expect(capturedModuleAbsolutePath(root, logical)).toBe(actual);
+    }
+    for (const file of ['.vida/config.json', '.agent/work/history.json', 'package.json', '../AGENTS.md'])
+      expect(() => capturedModuleAbsolutePath(root, `_repository/test-context/${file}`)).toThrow();
+    expect(canonicalCapturedModulePath(root, path.resolve(root, '../../.agent/work/history.json'))).toBeNull();
+    expect(() =>
+      capturedModuleAbsolutePath('/synthetic/other-package', '_repository/test-context/AGENTS.md'),
+    ).toThrow();
+  });
+
+  test('binds configured context bytes into the existing tool projection and rejects missing inputs', async () => {
+    const root = fixtureRoot(true);
+    const repositoryRoot = path.resolve(root, '../..');
+    writeFileSync(path.join(root, 'tests/configured-context.ts'), 'export const context = true;\n');
+    writeFileSync(path.join(root, 'tests/fixture.test.mjs'), "import './configured-context.ts';\n");
+    for (const file of contextFiles) {
+      const absolute = path.join(repositoryRoot, file);
+      mkdirSync(path.dirname(absolute), { recursive: true });
+      writeFileSync(absolute, `captured ${file}\n`);
+    }
+    const selection = { coverage: [], mutation: [], guard: [] };
+    const before = await qualityInputProjections(root, selection);
+    for (const owner of [before.coverage, before.mutation, before.guard]) {
+      for (const file of contextFiles) {
+        const logical = `_repository/test-context/${file}`;
+        expect(owner.tool_inputs).toContainEqual({
+          path: logical,
+          sha256: createHash('sha256').update(`captured ${file}\n`).digest('hex'),
+        });
+        expect(owner.input_bytes[logical]?.toString()).toBe(`captured ${file}\n`);
+      }
+      expect(owner.test_selection.tests).toEqual(['tests/fixture.test.mjs']);
+    }
+    writeFileSync(path.join(repositoryRoot, 'AGENTS.md'), 'changed context\n');
+    const after = await qualityInputProjections(root, selection);
+    expect(after.mutation.tool_fingerprint).not.toBe(before.mutation.tool_fingerprint);
+    expect(after.mutation.source_fingerprint).toBe(before.mutation.source_fingerprint);
+    expect(after.mutation.test_fingerprint).toBe(before.mutation.test_fingerprint);
+    expect(before.mutation.input_bytes['_repository/test-context/AGENTS.md']?.toString()).toBe('captured AGENTS.md\n');
+    rmSync(path.join(repositoryRoot, 'AGENT.sidecar.md'));
+    await expectRejected(() => qualityInputProjections(root, selection), /missing|rejected/u);
+  });
+
+  test('reads logical repository inputs from their retained snapshot without live checkout resolution', async () => {
+    const root = fixtureRoot(true);
+    const snapshot = path.join(root, 'coverage/bun-unified/runs/fixture/snapshot');
+    const files = ['_repository/test-context/AGENTS.md', '_repository/tooling/agent/fixture.ts'];
+    for (const file of files) {
+      const absolute = path.join(snapshot, file);
+      mkdirSync(path.dirname(absolute), { recursive: true });
+      writeFileSync(absolute, `retained ${file}\n`);
+    }
+    const captured = await readQualityInputs(snapshot, files, 'snapshot');
+    expect([...captured.keys()].sort()).toEqual([...files].sort());
+    for (const file of files) expect(captured.get(file)?.toString()).toBe(`retained ${file}\n`);
+    await expectRejected(() => readQualityInputs(snapshot, files), /outside admitted roots/u);
+    for (const file of ['../escape', '_repository/test-context/.vida/config.json'])
+      await expectRejected(() => readQualityInputs(snapshot, [file], 'snapshot'), /malformed|outside admitted roots/u);
+    const linked = path.join(snapshot, files[0]!);
+    rmSync(linked);
+    symlinkSync(path.join(snapshot, files[1]!), linked);
+    await expectRejected(() => readQualityInputs(snapshot, files, 'snapshot'), /rejected/u);
+  });
+
   test('review input delta discovers helpers and owned SDK inputs without selecting helper files as tests', () => {
     const anchor = {
       sources: [{ path: 'src/current.ts', sha256: 'a'.repeat(64) }],

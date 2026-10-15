@@ -234,6 +234,20 @@ export function coverageReviewEnvironmentSha256(environment: NodeJS.ProcessEnv, 
   });
 }
 export const repositoryToolingInputPrefix = '_repository/tooling/agent';
+const repositoryTestContextInputPrefix = '_repository/test-context';
+const repositoryTestContextFiles: readonly string[] = Object.freeze([
+  'agent-runtime.config.v1.yaml',
+  'AGENTS.md',
+  'AGENT.sidecar.md',
+  'docs/agent-instructions/documentation-policy.v1.json',
+]);
+const repositoryTestContextPaths = new Map(
+  repositoryTestContextFiles.map((file) => [`${repositoryTestContextInputPrefix}/${file}`, file]),
+);
+
+function repositoryTestContextRelativePath(logicalPath: string): string | null {
+  return repositoryTestContextPaths.get(logicalPath) ?? null;
+}
 
 export function repositoryRootForPackage(packageRoot: string): string | null {
   const packageBase = path.resolve(packageRoot);
@@ -256,13 +270,15 @@ export function canonicalCapturedModulePath(packageRoot: string, absolutePath: s
   const repositoryBase = repositoryRootForPackage(packageBase);
   if (!repositoryBase) return null;
   const repositoryRelative = path.relative(repositoryBase, target);
+  const contextPath = repositoryRelative.split(path.sep).join('/');
+  if (repositoryTestContextFiles.includes(contextPath)) return `${repositoryTestContextInputPrefix}/${contextPath}`;
   const repositoryToolingPrefix = `tooling${path.sep}agent${path.sep}`;
   if (repositoryRelative.startsWith(repositoryToolingPrefix) && !path.isAbsolute(repositoryRelative))
     return `${repositoryToolingInputPrefix}/${repositoryRelative.slice(repositoryToolingPrefix.length).split(path.sep).join('/')}`;
   return null;
 }
 
-export function capturedModuleAbsolutePath(packageRoot: string, logicalPath: string): string {
+function requireCapturedInputPath(logicalPath: string): void {
   if (
     typeof logicalPath !== 'string' ||
     logicalPath.length === 0 ||
@@ -275,16 +291,26 @@ export function capturedModuleAbsolutePath(packageRoot: string, logicalPath: str
     throw new Error(`Captured module path is malformed: ${String(logicalPath)}`);
   if (
     logicalPath === '_repository' ||
-    (logicalPath.startsWith('_repository/') && !logicalPath.startsWith(`${repositoryToolingInputPrefix}/`))
+    (logicalPath.startsWith('_repository/') &&
+      !logicalPath.startsWith(`${repositoryToolingInputPrefix}/`) &&
+      repositoryTestContextRelativePath(logicalPath) === null)
   )
     throw new Error(`Captured module path is outside admitted roots: ${logicalPath}`);
+}
+
+export function capturedModuleAbsolutePath(packageRoot: string, logicalPath: string): string {
+  requireCapturedInputPath(logicalPath);
   const packageBase = path.resolve(packageRoot);
   const repositoryPrefix = `${repositoryToolingInputPrefix}/`;
-  if (logicalPath.startsWith(repositoryPrefix) && !repositoryRootForPackage(packageBase))
+  const contextPath = repositoryTestContextRelativePath(logicalPath);
+  if (logicalPath.startsWith('_repository/') && !repositoryRootForPackage(packageBase))
     throw new Error(`Captured module path is outside admitted roots: ${logicalPath}`);
-  const absolute = logicalPath.startsWith(repositoryPrefix)
-    ? path.resolve(packageBase, '../..', 'tooling/agent', logicalPath.slice(repositoryPrefix.length))
-    : path.resolve(packageBase, ...logicalPath.split('/'));
+  const absolute =
+    contextPath !== null
+      ? path.resolve(packageBase, '../..', contextPath)
+      : logicalPath.startsWith(repositoryPrefix)
+        ? path.resolve(packageBase, '../..', 'tooling/agent', logicalPath.slice(repositoryPrefix.length))
+        : path.resolve(packageBase, ...logicalPath.split('/'));
   if (canonicalCapturedModulePath(packageBase, absolute) !== logicalPath)
     throw new Error(`Captured module path is outside admitted roots: ${logicalPath}`);
   return absolute;
@@ -851,7 +877,11 @@ function verifyPublishedBaselineInputs(
   }
 }
 
-export async function readQualityInputs(root: string, files: readonly string[]): Promise<Map<string, Buffer>> {
+export async function readQualityInputs(
+  root: string,
+  files: readonly string[],
+  location: 'live' | 'snapshot' = 'live',
+): Promise<Map<string, Buffer>> {
   if (!Array.isArray(files) || files.length > maxInputPaths) throw new Error('Coverage input path limit exceeded.');
   // Validate the complete finite selection before opening any path. Sorting and
   // deduplication make a repeated selection share one retained byte capture.
@@ -859,10 +889,12 @@ export async function readQualityInputs(root: string, files: readonly string[]):
   const selected = [...new Set(declared)]
     .map((file) => {
       if (typeof file !== 'string') throw new Error('Captured module path must be a string.');
+      requireCapturedInputPath(file);
       return {
         file,
-        absolute: capturedModuleAbsolutePath(root, file),
-        boundary: capturedModuleBoundaryRoot(root, file),
+        absolute:
+          location === 'snapshot' ? path.resolve(root, ...file.split('/')) : capturedModuleAbsolutePath(root, file),
+        boundary: location === 'snapshot' ? root : capturedModuleBoundaryRoot(root, file),
       };
     })
     .sort((left, right) => left.file.localeCompare(right.file));
@@ -879,7 +911,7 @@ export async function readQualityInputs(root: string, files: readonly string[]):
 }
 
 function capturedModuleBoundaryRoot(packageRoot: string, logicalPath: string): string {
-  return logicalPath.startsWith(`${repositoryToolingInputPrefix}/`) ? path.resolve(packageRoot, '../..') : packageRoot;
+  return logicalPath.startsWith('_repository/') ? path.resolve(packageRoot, '../..') : packageRoot;
 }
 
 const runtimeSourceExtension = /\.(?:[cm]?js|jsx|[cm]?ts|tsx)$/u;
@@ -1043,7 +1075,25 @@ export async function captureRuntimeInputClosure(
       if (importScanSource(resolved)) queued.push(resolved);
     }
   }
-  return [...runtimeTools].sort();
+  return [...new Set([...runtimeTools, ...captureConfiguredTestContextInputs(root, visited, inputBytes)])].sort();
+}
+
+function captureConfiguredTestContextInputs(
+  root: string,
+  visited: ReadonlySet<string>,
+  inputBytes: Map<string, Buffer>,
+): string[] {
+  if (!visited.has('tests/configured-context.ts')) return [];
+  const paths = repositoryTestContextFiles.map((file) => `${repositoryTestContextInputPrefix}/${file}`);
+  for (const file of paths) {
+    if (inputBytes.has(file)) continue;
+    const bytes = readDiscoveredRuntimeInput(root, file);
+    if (!bytes) throw new Error(`Configured test context input is missing: ${file}`);
+    inputBytes.set(file, bytes);
+  }
+  // The shared final projection enforces the combined path/byte ceilings before
+  // any captured image is returned; each added file also uses the bounded reader.
+  return paths;
 }
 
 function reachableSdkBuilderToolPaths(

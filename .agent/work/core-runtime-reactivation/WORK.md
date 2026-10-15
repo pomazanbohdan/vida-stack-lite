@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `9c8ca93` at origin/main.
+- Published predecessor: `99431d5` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -819,12 +819,46 @@ found three optional/union typing defects; corrected with the existing record
 type and explicit non-null fixture admission, without changing behavior.
 Final static475captured/474checkedTS/0diagnostics:
 quality-kernel-approval-static-qualified-9c8-20261015.log. Complete-file log:
-quality-kernel-approval-causal-full-file-9c8-20261015.log. New validator CC9,
+quality-kernel-approval-causal-full-file-9c8-20261015.log. New validator CC9;
 Final post-typing controls10PASS/54assertions/6.91s:
 quality-kernel-approval-final-controls-9c8-20261015.log.
 renamed failure-cleanup CC3; no original ceilings move. Numeric kernel results
 at9c8describe its prior Source bytes, not this modified Source. Fresh focused
 coverage/CRAP and complete mutation qualification remain pending.
+
+Packet99431d5 passed the ordinary strict hook and push. Current context isolation
+prerequisite uses the existing single quality capture and tool fingerprint, with
+only four explicit _repository/test-context paths admitted. A new fixed-path
+classifier has prospective CC/CRAP2/2; the bounded context-input capture helper
+has prospective6/6. No original product allowance changes. Blind design review
+accepts retaining context buffers from the runner's existing verified read/hash
+pass, then materializing those exact buffers in its per-invocation custody root;
+no separate snapshot owner, descriptor version or second hash pass is needed.
+The existing descriptor already binds their paths and SHA256 in tool_inputs.
+Artifact: quality-context-capture-design-42a-addendum-20261015.md. First controls
+reproduce absent path admission and absent context fingerprint binding:
+quality-context-capture-before-994-20261015.log. This packet captures inputs only;
+private worker materialization/receipt binding and parallel qualification follow.
+
+The same-context snapshot control reproduced an existing historical-reader
+defect: live module resolution cannot read _repository entries stored below a
+retained snapshot root. Added an explicit snapshot location to the same bounded
+input reader and used it only at historical snapshot admission. Shared strict
+logical-path validation, rooted reads, no-symlink/hardlink and digest checks stay
+in force. Live default behavior is unchanged. Regression also covers malformed
+paths, non-allowlisted context entries and a symlink replacement. Before1FAIL:
+quality-context-snapshot-before-994-20261015.log. Final two-file control62PASS/
+480assertions/30.80s: quality-context-capture-final-994-20261015.log; static
+475captured/474checkedTS/0diagnostics: quality-context-capture-static-final-994-
+20261015.log. Combined projection limits still apply before capture is returned;
+each of the four new inputs passes the existing bounded rooted reader. This is
+capture/validator evidence, not worker isolation or a numerical acceptance claim.
+Independent actual review found no blocker: quality-context-capture-actual-
+review-994-20261015.md. The new snapshot control exercises the shared reader;
+it does not claim complete historical report admission for these external paths.
+The initial strict hook correctly rejected three premature exports as unused;
+they remain private until the worker integration actually consumes them. Keep
+Knip strict; no exclusions or hook bypass were added.
 
 ### Current product correction packet
 

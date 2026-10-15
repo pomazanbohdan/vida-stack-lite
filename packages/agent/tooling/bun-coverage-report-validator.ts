@@ -428,7 +428,7 @@ async function historicalSnapshotInputs(
       throw new Error(`Historical published contract input is not bound by the tool closure: ${entry.path}`);
   }
   const snapshotRoot = path.join(root, ...snapshotRelative.split('/'));
-  const snapshotBytes = await readQualityInputs(snapshotRoot, [...snapshotDigests.keys()]);
+  const snapshotBytes = await readQualityInputs(snapshotRoot, [...snapshotDigests.keys()], 'snapshot');
   const inputBytes: Record<string, Buffer> = {};
   for (const [file, digest] of snapshotDigests) {
     const bytes = snapshotBytes.get(file);
