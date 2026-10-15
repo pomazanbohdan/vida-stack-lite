@@ -89,6 +89,17 @@ function success(stdout = ''): CommandResult {
   return { status: 0, signal: null, stdout };
 }
 
+function assertVersionProbe(call: LauncherCall | undefined, root: string, env: NodeJS.ProcessEnv): void {
+  assert.ok(call);
+  assert.deepEqual(call.argv, ['--version']);
+  assert.equal(call.options.cwd, root);
+  assert.equal(call.options.encoding, 'utf8');
+  assert.equal(call.options.windowsHide, true);
+  const timeout = call.options.timeout;
+  assert.ok(Number.isSafeInteger(timeout) && timeout! > 0 && timeout! <= 30_000);
+  for (const [key, value] of Object.entries(env)) assert.equal(call.options.env?.[key], value);
+}
+
 test('one pin owns the checked package metadata', () => {
   const pin = readPin();
   assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
@@ -149,6 +160,7 @@ test('verified absolute Bun replaces a conflicting global PATH and preserves arg
   assert.equal(calls[0]!.command, '/node');
   assert.ok(calls[0]!.argv.includes(`bun@${pin}`));
   assert.equal(calls[1]!.command, executable);
+  assertVersionProbe(calls[1], root, env);
   assert.equal(calls[2]!.command, executable);
   assert.deepEqual(calls[2]!.argv, args);
   assert.equal(calls[2]!.options.env?.[pathKey], `${path.dirname(executable)}${path.delimiter}${env[pathKey]}`);
@@ -225,7 +237,7 @@ test('matching PATH Bun avoids npm resolution and preserves arguments and status
   );
   assert.equal(calls.length, 2);
   assert.equal(calls[0]!.command, executable);
-  assert.deepEqual(calls[0]!.argv, ['--version']);
+  assertVersionProbe(calls[0], root, { PATH: directory, PATHEXT: '.exe' });
   assert.equal(calls[1]!.command, executable);
   assert.deepEqual(calls[1]!.argv, args);
   assert.ok(calls.every((call) => !call.options.shell));
@@ -259,6 +271,7 @@ test('default Bun host qualifies its actual executable before PATH and rejects a
     calls.map(({ command, argv }) => [command, argv]),
     [[process.execPath, ['--version']]],
   );
+  assertVersionProbe(calls[0], root, { PATH: '' });
 });
 
 test('wrong-version PATH Bun falls back to npm exact pin and npm mismatch remains fatal', () => {

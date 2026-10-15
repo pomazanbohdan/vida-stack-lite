@@ -504,6 +504,65 @@ function environmentVariableKey(env: NodeJS.ProcessEnv, preferred: string, foldC
   return keys.includes(preferred) ? preferred : (keys[0] ?? preferred);
 }
 
+interface BunResolutionContext {
+  root: string;
+  env: NodeJS.ProcessEnv;
+  spawn: PinnedSpawn;
+  cleanup: TimeoutCleanup;
+}
+
+function probeBunVersion(
+  executable: string,
+  label: string,
+  context: BunResolutionContext,
+  budget: ExecutionBudget | undefined,
+): string {
+  return succeeded(
+    boundedSpawnSync(
+      context.spawn,
+      executable,
+      ['--version'],
+      { cwd: context.root, env: context.env, encoding: 'utf8', timeout: 30_000, windowsHide: true, budget },
+      label,
+      context.cleanup,
+    ),
+    label,
+  );
+}
+
+function resolveSelectedBunExecutable(options: BunOptions, context: BunResolutionContext, pin: string): string {
+  const { root, env, spawn, cleanup } = context;
+  const executable = options.executable
+    ? String(options.executable).trim()
+    : succeeded(
+        boundedSpawnSync(
+          spawn,
+          options.node!,
+          [
+            options.npmCli ?? findNpmCli(options.node!),
+            'exec',
+            '--yes',
+            '--package',
+            `bun@${pin}`,
+            '--',
+            'bun',
+            '-e',
+            'process.stdout.write(process.execPath)',
+          ],
+          { cwd: root, env, encoding: 'utf8', timeout: 180_000, windowsHide: true, budget: options.budget },
+          'Exact Bun package resolution (npm)',
+          cleanup,
+        ),
+        'Exact Bun package resolution (npm)',
+      );
+  if (!path.isAbsolute(executable) || /[\r\n\0]/.test(executable)) {
+    throw new Error('Bun resolution did not return one absolute executable path.');
+  }
+  const version = probeBunVersion(executable, 'Resolved Bun version check', context, options.budget);
+  if (version !== pin) throw new Error(`Resolved Bun is ${version}; .bun-version requires ${pin}.`);
+  return executable;
+}
+
 export function resolvePinnedBun(options: BunOptions = {}): string {
   const embedded = standaloneRuntime(options.env ?? process.env);
   if (embedded) {
@@ -519,18 +578,9 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
   const spawn = options.spawn ?? spawnSync;
   const env = options.env ?? process.env;
   const cleanup = options.cleanup ?? defaultTimeoutCleanup;
+  const resolution = { root, env, spawn, cleanup };
   if (!options.executable && options.node === undefined && typeof process.versions.bun === 'string') {
-    const version = succeeded(
-      boundedSpawnSync(
-        spawn,
-        process.execPath,
-        ['--version'],
-        { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true, budget: options.budget },
-        'Bun host version check',
-        cleanup,
-      ),
-      'Bun host version check',
-    );
+    const version = probeBunVersion(process.execPath, 'Bun host version check', resolution, options.budget);
     if (version !== pin) throw new Error(`Bun host is ${version}; .bun-version requires ${pin}.`);
     return process.execPath;
   }
@@ -564,17 +614,7 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
     }
     if (discovered && path.isAbsolute(discovered) && !/[\r\n\0]/.test(discovered)) {
       try {
-        const version = succeeded(
-          boundedSpawnSync(
-            spawn,
-            discovered,
-            ['--version'],
-            { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true, budget: options.budget },
-            'PATH Bun version check',
-            cleanup,
-          ),
-          'PATH Bun version check',
-        );
+        const version = probeBunVersion(discovered, 'PATH Bun version check', resolution, options.budget);
         if (version === pin) return discovered;
       } catch (error: unknown) {
         if (errorProperty(error, 'timedOut')) throw error;
@@ -585,45 +625,7 @@ export function resolvePinnedBun(options: BunOptions = {}): string {
   if (options.node === undefined && !options.executable) {
     throw new Error('No Bun runtime matching .bun-version was found; run this launcher with the pinned Bun runtime.');
   }
-  const executable = options.executable
-    ? String(options.executable).trim()
-    : succeeded(
-        boundedSpawnSync(
-          spawn,
-          options.node!,
-          [
-            options.npmCli ?? findNpmCli(options.node!),
-            'exec',
-            '--yes',
-            '--package',
-            `bun@${pin}`,
-            '--',
-            'bun',
-            '-e',
-            'process.stdout.write(process.execPath)',
-          ],
-          { cwd: root, env, encoding: 'utf8', timeout: 180_000, windowsHide: true, budget: options.budget },
-          'Exact Bun package resolution (npm)',
-          cleanup,
-        ),
-        'Exact Bun package resolution (npm)',
-      );
-  if (!path.isAbsolute(executable) || /[\r\n\0]/.test(executable)) {
-    throw new Error('Bun resolution did not return one absolute executable path.');
-  }
-  const version = succeeded(
-    boundedSpawnSync(
-      spawn,
-      executable,
-      ['--version'],
-      { cwd: root, env, encoding: 'utf8', timeout: 30_000, windowsHide: true, budget: options.budget },
-      'Resolved Bun version check',
-      cleanup,
-    ),
-    'Resolved Bun version check',
-  );
-  if (version !== pin) throw new Error(`Resolved Bun is ${version}; .bun-version requires ${pin}.`);
-  return executable;
+  return resolveSelectedBunExecutable(options, resolution, pin);
 }
 
 const coverageEntryPaths = new Set<string | undefined>([

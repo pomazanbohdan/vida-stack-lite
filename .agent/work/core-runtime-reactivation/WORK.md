@@ -1,11 +1,11 @@
 # Core runtime reactivation work
 
-Status date: 2026-10-14. Current execution record, not permission to replay old
+Status date: 2026-10-15. Current execution record, not permission to replay old
 operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `cebd8fb` at origin/main.
+- Published predecessor: `eac0f8f` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -906,7 +906,7 @@ Host candidates lack sufficient surrounding-context proof and remain unjoined.
 All75preflight CRAP fields were wrongly null in the proposal; each is restored
 from its exact genuine measurement. The obsolete forwarding wrapper is absorbed
 without a second cap; journalEvidence's prior removal is not duplicated.
-Current partial4099roles=3030retained/1069new,22removed,132bound files. Reused
+At published eac0f8f, partial4099roles=3030retained/1069new,22removed,132bound files. Reused
 inventory7716 leaves3617current and2649original dispositions missing; partial
 mapping progress53.1% is not coverage. Three changed Source files are refreshed
 once, all others reuse the qualified bound capture. Eighteen complexity
@@ -916,6 +916,46 @@ confirmed mutation stay open. Receipt:
 Independent integration review accepts this scoped join, unchanged frozen caps,
 source addresses and exclusion of the 23 unqualified Host candidates:
 `/workspace/attachments/quality-native-controller-join-review-20261014.md`.
+
+## Shared Bun probes and eight-family correspondence
+
+Root consolidates the three pinned Bun version probes into one private protocol.
+The final explicit executable/npm adapter owns absolute-path and version
+qualification; live option reads, diagnostics, timeout/fallback order and cleanup
+remain unchanged. The resolver is34 against its original37 ceiling; new shared
+probe1 and selected-executable owner6 stay under prospective10/10. Existing host,
+PATH and resolved-executable cases now assert the actual probe options. The whole
+affected file passes43tests/0fail in2.30s. Evidence:
+`/workspace/attachments/quality-bun-probe-tests-20261014.log` and
+`/workspace/attachments/quality-bun-probe-source-final-review-20261014.md`.
+
+Eight independently reviewed families and two Bun helpers add1123 current roles.
+The1122 candidate rows include one already-budgeted current callback reclassified
+from new to retained, hence1121net family additions plus2helpers. Root rejects
+duplicate old/current callback pairings before joining; corrects the moved
+develop-stage predicate from prospective10/10 to its exact original1/2;
+and retains extracted synthesis responsibilities at their genuine original caps.
+The partial now represents5222roles=3750retained/1472new,76removed,140bound files.
+One nine-file byte/AST capture reuses all other qualified inventory rows. Current
+inventory7718 leaves2496current and1875original dispositions missing;67.7% mapping
+preparation is not coverage. Nineteen represented static overages remain, including
+the now-correctly-retained synthesis journal selector6>2. No budget is raised to
+hide an overage. Full executable CRAP plan and all numeric gates remain open.
+Receipt: `/workspace/attachments/quality-eight-families-bun-join-receipt-20261015.json`.
+Final independent join review accepts the exact unique IDs, addresses, frozen
+caps and explicit reclassification deduction:
+`/workspace/attachments/quality-eight-families-join-final-review-20261015.md`.
+
+The larger native recipe draft was not applied: its prospective census owners
+still exceed10 and it adds per-node indirection. Its prototype-only evidence is
+`/workspace/attachments/quality-two-drafts-static-only-20261014.json`.
+Separate review found a governance schema acceptance gap for reserved records
+with terminal_at explicitly undefined. Its correction remains pending:
+`/workspace/attachments/quality-approval-schema-correction-plan-20261015.md`.
+Historical UNKNOWN runs remain fenced. A genuinely separate clean numeric checkout
+is a conditional option, requiring complete actual resource separation, not a
+fresh ID or copied fixture claim:
+`/workspace/attachments/quality-fresh-coverage-root-design-20261015.md`.
 
 Genuine b549951 was measured once: runfe54f83c-6a70-4223-9872-f43f1ac784e9,
 SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.
