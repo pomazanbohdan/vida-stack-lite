@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `7c9d139` at origin/main.
+- Published predecessor: `5151227` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,13 +18,72 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Current quality preparation:6965of7729roles,149Source byte bindings,
-  764current/213original dispositions missing and19represented static deficits.
+- Current quality preparation:6988of7729roles,149Source byte bindings,
+  741current/190original dispositions missing and20represented static deficits.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
-## Current YAML fixture correction
+## Current reviewed lineage continuation and bounded diagnostics
+
+The published YAML correction5151227 passed the ordinary strict hook:
+format465, TypeScript471/0, configured lint/Knip; nonforce push confirmed main.
+Logs: `quality-yaml-fixture-{strict-commit,push}-y7c9-20261015.log`.
+
+The next cached anti-join produced the exact764unbound current roles in five
+files. Independent research plus actual owner reviews accepted23additional
+retained correspondences:17safe-access and6run roles. Root excluded20Host
+candidates already bound and3generic original roles already disposed; apparent
+same-body generic functions cannot reuse another original's identity. Current
+5433retained+1555new=6988roles,78removed,149unchanged Source bindings;
+741current/190original gaps. No additional Source AST/hash pass or product edit.
+All five frozen fields and original/current addresses were independently
+verified against the genuine inventory. ReadBoundedBuffer's newly represented
+6>original1 deficit stays open, so represented static overages rise19to20
+through additional visibility, not Source regression or a new allowance.
+WithLinuxCasLocks remains original9/CRAP9; a secondary review's prose1 was
+corrected from the authoritative inventory, never adopted as a cap.
+Attachments: `quality-reviewed23-lineage-join-515-20261015.json` and
+`quality-reviewed23-metadata-review-515-20261015.md`; inventory remains
+`quality-current-inventory-native-lint-comment-c744-20261015.json`.
+The partial stays non-executable and non-exhaustive. Strict publication of this
+metadata continuation is pending.
+
+A fresh direct readonly-recovery case passed230assertions/0FAIL in81336.306ms
+command, with the existing60s inner case/180s child bounds. Bun accepted CPU
+profile flags but emitted no requested profile; that attempt does not establish
+CPU attribution or comparable speedup. Root retained its outer fixture at
+`/tmp/vida-initial-source-owned-prof515-eXLx3o`; native terminal receipt and raw
+logs are `quality-readonly-recovery-profile-515-20261015.*` in attachments.
+
+Temporary stage instrumentation is confined to disposable test copies; main
+Source has no telemetry change. First native point failed before recovery on
+missing SDK exports at5.523s/47assertions; retain
+`/tmp/quality-fresh-stage-515-w8IRYW`. Its input preparation completed before
+an exclusive old-receipt write was rejected; old receipt stayed unchanged and
+the completed private preparation receipt was published without repeating it.
+The next independently prepared physical checkout accepted exact5151227 CI
+SDK artifact11949350560/run38683353847/attempt1 in2457.530ms, then ran identical
+static-checked diagnostic test bytes. It failed at79.930s/212assertions because
+the temporary recorder exhausted its128event cap, not a demonstrated product
+failure. Retain `/tmp/quality-fresh-stage-ready-515-D8UeUM` and original terminal
+logs/receipts `quality-stage-ready-native-launch-515-20261015.*`. No retry/replay
+or fixture cleanup is implied. The partial stage capture shows initial package
+snapshot73.810ms and three verifier snapshots82.565–104.614ms; it rejects the
+hypothesis that those measured snapshots explain the whole85s case. A CLI
+interval21675.145ms needs phase attribution; nested read timers cannot be summed
+as independent work. Replace the temporary per-event recorder with bounded
+aggregate counters before any further fresh diagnostic. No full run is justified
+by this partial capture alone.
+
+Independent ingress review found no demonstrated reachable acceptance defect
+in run's shallow WorkIdentity/Source predicates: their bounded public callers
+reconstruct canonical requests and check current Host/CAS authority later.
+Do not restore another historical owner's validation merely for correspondence.
+See `quality-run-ingress-contract-515-20261015.md`. Numeric coverage, dynamic
+CRAP, mutation and active Runtime/oneDB qualification remain open.
+
+## Published YAML fixture correction
 
 The retained serial diagnostic's21YAML failure headers were traced by two
 independent fixture investigations and a product counterexample review to stale
@@ -50,7 +109,7 @@ correction in `quality-yaml-marker-review-y7c9-20261015.md`. Exact logs/receipts
 `quality-yaml-marker-focused-y7c9-20261015.*` and
 `quality-yaml-mutation-marker-static-y7c9-20261015.log` in attachments.
 TESTING owns the fixture contract; the Bun skill links its working technique.
-Strict publication is pending for this packet. Current numeric gates remain
+The strict publication result is recorded above. Current numeric gates remain
 unqualified and the19represented static deficits/764current/213original mapping
 gaps remain unchanged. Long-recovery diagnoses identify repeated package
 snapshots as a hypothesis only; measure actual stages before caching or changing

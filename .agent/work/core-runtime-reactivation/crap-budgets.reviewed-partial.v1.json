@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5410,
+    "retained": 5433,
     "new": 1555,
     "removed": 78,
-    "current_roles": 6965,
+    "current_roles": 6988,
     "source_files": 149
   },
   "source_bindings": [
@@ -175113,6 +175113,788 @@
       "rationale": "Original and current source both keep this role under src/host-state.ts#class:HostStateStore/method:#repairWorkAuthority#0: it performs its declared HostStateStore state transition; the enclosing method still owns the same persisted receipt/state result and caller-visible outcome. This correspondence uses the old/current declarations and source spans, not identity text or body equality.",
       "primary_ref": "/workspace/attachments/quality-host45b-primary-b9c-20261015.json",
       "independent_review_ref": "/workspace/attachments/quality-host45b-actual-review-b9c-20261015.json"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:readBoundedBuffer",
+      "source_address": {
+        "line": 841,
+        "column": 0,
+        "start": 31381,
+        "end": 31496,
+        "bodyLine": 841,
+        "bodyColumn": 62,
+        "bodyEndLine": 843,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 996,
+        "column": 0,
+        "start": 39509,
+        "end": 40556,
+        "bodyLine": 1002,
+        "bodyColumn": 10,
+        "bodyEndLine": 1024,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:readBoundedBuffer#0` → `src/config/safe-repository-access.ts#fn:readBoundedBuffer#0` | published `safe-repository-access.ts:841` → current `packages/agent/src/config/safe-repository-access.ts:996` | Both own bounded reads from an already-owned descriptor and reject a one-byte-over-limit result. The implementation changed from recursive fixed-cap reads to an iterative chunk reader; current optional limit, positional mode, and allocation hint parameterize this same read operation. Retain the original static allowance of **1**. Current complexity is **6**, so static overage remains and must be reported; complexity growth alone does not sever this owner. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:withLinuxCasLocks",
+      "source_address": {
+        "line": 1056,
+        "column": 0,
+        "start": 39097,
+        "end": 40319,
+        "bodyLine": 1060,
+        "bodyColumn": 5,
+        "bodyEndLine": 1093,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1358,
+        "column": 0,
+        "start": 53096,
+        "end": 54353,
+        "bodyLine": 1362,
+        "bodyColumn": 5,
+        "bodyEndLine": 1395,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 9,
+      "baseline_coverage": 1,
+      "baseline_crap": 9,
+      "max_complexity": 9,
+      "max_crap": 9,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0` → `src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0` | published `safe-repository-access.ts:1056` → current `packages/agent/src/config/safe-repository-access.ts:1358` | Both normalize and sort target keys, deduplicate, acquire before invoking the operation, release in reverse order, and preserve operation/cleanup failures. Current acquisition also admits lock reclaim/orphan-backup guards, and the callback receives acquired locks for descriptor-relative callers. Those are added capabilities inside the same lock lifetime owner, not evidence for assigning its old allowance to a separate guard. Preserve the original allowance **1**; independently assess/report any current numeric overage if present under the controlling metric. Do not use this pair to pair or fund reclaim-guard helpers. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:copyFileExclusiveAt",
+      "source_address": {
+        "line": 1260,
+        "column": 0,
+        "start": 46329,
+        "end": 47269,
+        "bodyLine": 1260,
+        "bodyColumn": 102,
+        "bodyEndLine": 1290,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1601,
+        "column": 0,
+        "start": 62137,
+        "end": 63076,
+        "bodyLine": 1601,
+        "bodyColumn": 102,
+        "bodyEndLine": 1631,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0` → `src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0` | published `safe-repository-access.ts:1260` → current `packages/agent/src/config/safe-repository-access.ts:1601` | Both exclusively create a no-follow copy target, validate/bound the source, copy and sync bytes, and identity-pin failed-target cleanup. BigInt stat handling changes representation, not the owner’s copy/failure-cleanup responsibility. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:readableClonedFile#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:readableClonedFile#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:readableClonedFile",
+      "source_address": {
+        "line": 1291,
+        "column": 0,
+        "start": 47270,
+        "end": 47918,
+        "bodyLine": 1291,
+        "bodyColumn": 95,
+        "bodyEndLine": 1308,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1632,
+        "column": 0,
+        "start": 63077,
+        "end": 63761,
+        "bodyLine": 1632,
+        "bodyColumn": 95,
+        "bodyEndLine": 1649,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:readableClonedFile#0` → `src/config/safe-repository-access.ts#fn:readableClonedFile#0` | published `safe-repository-access.ts:1291` → current `packages/agent/src/config/safe-repository-access.ts:1632` | Both sync the clone, reopen it read-only without following links, verify regular-file identity, close the supplied descriptor, and close a failed reopen. The bigint-stat conversion preserves that contract. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:verifyLinuxTargetPath",
+      "source_address": {
+        "line": 1327,
+        "column": 0,
+        "start": 48607,
+        "end": 49435,
+        "bodyLine": 1333,
+        "bodyColumn": 8,
+        "bodyEndLine": 1352,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1668,
+        "column": 0,
+        "start": 64450,
+        "end": 65320,
+        "bodyLine": 1674,
+        "bodyColumn": 8,
+        "bodyEndLine": 1693,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0` → `src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0` | published `safe-repository-access.ts:1327` → current `packages/agent/src/config/safe-repository-access.ts:1668` | Both verify the opened target is regular, matches the pathname and optional expected identity, and has an explicitly allowed content hash before backup retirement. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:replaceAtomicLinux",
+      "source_address": {
+        "line": 1353,
+        "column": 0,
+        "start": 49436,
+        "end": 55500,
+        "bodyLine": 1353,
+        "bodyColumn": 119,
+        "bodyEndLine": 1506,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1694,
+        "column": 0,
+        "start": 65321,
+        "end": 71486,
+        "bodyLine": 1694,
+        "bodyColumn": 119,
+        "bodyEndLine": 1849,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 24,
+      "baseline_coverage": 0,
+      "baseline_crap": 600,
+      "max_complexity": 24,
+      "max_crap": 600,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0` → `src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0` | published `safe-repository-access.ts:1353` → current `packages/agent/src/config/safe-repository-access.ts:1694` | Both own the descriptor-relative Linux atomic-replacement transaction: expected-content check, private backup and staged replacement, rename publication, sync, post-publication verification, and recovery/error custody. New guard/recovery details remain inside this owner; this acceptance does not establish separate lineage for every helper it calls. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:recoverLinuxOrphanBackup",
+      "source_address": {
+        "line": 1507,
+        "column": 0,
+        "start": 55501,
+        "end": 59688,
+        "bodyLine": 1514,
+        "bodyColumn": 8,
+        "bodyEndLine": 1623,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1850,
+        "column": 0,
+        "start": 71487,
+        "end": 75764,
+        "bodyLine": 1857,
+        "bodyColumn": 8,
+        "bodyEndLine": 1963,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0` → `src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0` | published `safe-repository-access.ts:1507` → current `packages/agent/src/config/safe-repository-access.ts:1850` | Both adjudicate an orphan private backup against expected original/desired hashes and target state, restore only when safe, then verify and retire the pinned backup. Keep stale-owner/reclaim-guard adjudication itself outside this pair. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:fsSafeOpen#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:fsSafeOpen#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:fsSafeOpen",
+      "source_address": {
+        "line": 1630,
+        "column": 0,
+        "start": 59976,
+        "end": 60598,
+        "bodyLine": 1630,
+        "bodyColumn": 94,
+        "bodyEndLine": 1644,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 1970,
+        "column": 0,
+        "start": 76052,
+        "end": 76700,
+        "bodyLine": 1975,
+        "bodyColumn": 31,
+        "bodyEndLine": 1989,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:fsSafeOpen#0` → `src/config/safe-repository-access.ts#fn:fsSafeOpen#0` | published `safe-repository-access.ts:1630` → current `packages/agent/src/config/safe-repository-access.ts:1970` | Both provide the package-rooted safe open boundary with symlink/hardlink and regular-file/size checks, returning the opened descriptor and observed file metadata or a boundary error. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:windowsOpenParent#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:windowsOpenParent#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:windowsOpenParent",
+      "source_address": {
+        "line": 1691,
+        "column": 0,
+        "start": 62242,
+        "end": 63130,
+        "bodyLine": 1695,
+        "bodyColumn": 118,
+        "bodyEndLine": 1714,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2036,
+        "column": 0,
+        "start": 78390,
+        "end": 79287,
+        "bodyLine": 2045,
+        "bodyColumn": 2,
+        "bodyEndLine": 2064,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:windowsOpenParent#0` → `src/config/safe-repository-access.ts#fn:windowsOpenParent#0` | published `safe-repository-access.ts:1691` → current `packages/agent/src/config/safe-repository-access.ts:2036` | Both traverse and validate the rooted Windows parent path and return the parent/basename boundary used by handle-relative operations. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:windowsWriteExclusive",
+      "source_address": {
+        "line": 1743,
+        "column": 0,
+        "start": 64275,
+        "end": 65101,
+        "bodyLine": 1743,
+        "bodyColumn": 100,
+        "bodyEndLine": 1762,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2093,
+        "column": 0,
+        "start": 80432,
+        "end": 81271,
+        "bodyLine": 2093,
+        "bodyColumn": 113,
+        "bodyEndLine": 2112,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 3,
+      "baseline_coverage": 0,
+      "baseline_crap": 12,
+      "max_complexity": 3,
+      "max_crap": 12,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0` → `src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0` | published `safe-repository-access.ts:1743` → current `packages/agent/src/config/safe-repository-access.ts:2093` | Both guard exclusive Windows creation with the live pinned provider and validated target boundary, then recheck provider/root capability around the effect. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:windowsWithExclusiveLockAsync",
+      "source_address": {
+        "line": 1916,
+        "column": 0,
+        "start": 70733,
+        "end": 72259,
+        "bodyLine": 1922,
+        "bodyColumn": 14,
+        "bodyEndLine": 1959,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2266,
+        "column": 0,
+        "start": 86903,
+        "end": 88501,
+        "bodyLine": 2272,
+        "bodyColumn": 14,
+        "bodyEndLine": 2319,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 6,
+      "baseline_coverage": 0,
+      "baseline_crap": 42,
+      "max_complexity": 6,
+      "max_crap": 42,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0` → `src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0` | published `safe-repository-access.ts:1916` → current `packages/agent/src/config/safe-repository-access.ts:2266` | Both own the async Windows exclusive-lock interval, fail closed on stale recovery, use bounded acquisition, and distinguish errors before callback entry from callback errors. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:windowsMoveNoReplaceAsync",
+      "source_address": {
+        "line": 1960,
+        "column": 0,
+        "start": 72260,
+        "end": 76635,
+        "bodyLine": 1966,
+        "bodyColumn": 38,
+        "bodyEndLine": 2066,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2320,
+        "column": 0,
+        "start": 88502,
+        "end": 93192,
+        "bodyLine": 2326,
+        "bodyColumn": 38,
+        "bodyEndLine": 2432,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0` → `src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0` | published `safe-repository-access.ts:1960` → current `packages/agent/src/config/safe-repository-access.ts:2320` | Both validate source/target and expected digest, use native no-replace rename, and classify/reconcile post-error state as moved, not applied, or unknown. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:linuxFileExistsUnlocked",
+      "source_address": {
+        "line": 2101,
+        "column": 0,
+        "start": 77851,
+        "end": 78753,
+        "bodyLine": 2101,
+        "bodyColumn": 87,
+        "bodyEndLine": 2125,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2479,
+        "column": 0,
+        "start": 94787,
+        "end": 95420,
+        "bodyLine": 2479,
+        "bodyColumn": 87,
+        "bodyEndLine": 2494,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 1,
+      "baseline_crap": 8,
+      "max_complexity": 8,
+      "max_crap": 8,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0` → `src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0` | published `safe-repository-access.ts:2101` → current `packages/agent/src/config/safe-repository-access.ts:2479` | Both implement Linux existence observation below the lock-owning public path, return false for missing parent/target, and propagate other unsafe/error states. Current extraction to `linuxFileExistsAtParent` is subordinate implementation factoring; do not assign that helper an additional allowance. The current complexity reduction does not change lineage. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:linuxRemoveFile#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:linuxRemoveFile#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:linuxRemoveFile",
+      "source_address": {
+        "line": 2146,
+        "column": 0,
+        "start": 79567,
+        "end": 81094,
+        "bodyLine": 2146,
+        "bodyColumn": 76,
+        "bodyEndLine": 2190,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2521,
+        "column": 0,
+        "start": 96546,
+        "end": 98067,
+        "bodyLine": 2521,
+        "bodyColumn": 76,
+        "bodyEndLine": 2564,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:linuxRemoveFile#0` → `src/config/safe-repository-access.ts#fn:linuxRemoveFile#0` | published `safe-repository-access.ts:2146` → current `packages/agent/src/config/safe-repository-access.ts:2521` | Both lock and validate the Linux target namespace, reject unsafe/non-regular or multiply linked entries, remove only the checked target, and preserve idempotent missing-target handling. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:linuxMoveNoReplaceAsync",
+      "source_address": {
+        "line": 2191,
+        "column": 0,
+        "start": 81095,
+        "end": 85674,
+        "bodyLine": 2197,
+        "bodyColumn": 38,
+        "bodyEndLine": 2295,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2565,
+        "column": 0,
+        "start": 98068,
+        "end": 102977,
+        "bodyLine": 2571,
+        "bodyColumn": 38,
+        "bodyEndLine": 2675,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0` → `src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0` | published `safe-repository-access.ts:2191` → current `packages/agent/src/config/safe-repository-access.ts:2565` | Both own the Linux no-replace move contract: serialize both names, verify expected source content, rename relative to pinned directory handles, verify moved identity/content, sync directory state, and preserve not-applied/unknown classification. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:windowsAccess#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:windowsAccess#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:windowsAccess",
+      "source_address": {
+        "line": 2297,
+        "column": 0,
+        "start": 85676,
+        "end": 91120,
+        "bodyLine": 2297,
+        "bodyColumn": 59,
+        "bodyEndLine": 2409,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2677,
+        "column": 0,
+        "start": 102979,
+        "end": 109330,
+        "bodyLine": 2677,
+        "bodyColumn": 59,
+        "bodyEndLine": 2809,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:windowsAccess#0` → `src/config/safe-repository-access.ts#fn:windowsAccess#0` | published `safe-repository-access.ts:2297` → current `packages/agent/src/config/safe-repository-access.ts:2677` | Both are the Windows implementation of the `SafeRepositoryAccess` owner and expose the same rooted read, write, replacement, lock, and digest-bound move boundary, with its declared containment/directory-sync limits. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:linuxAccess#0",
+      "current_identity": "src/config/safe-repository-access.ts#fn:linuxAccess#0",
+      "file": "src/config/safe-repository-access.ts",
+      "name": "fn:linuxAccess",
+      "source_address": {
+        "line": 2438,
+        "column": 0,
+        "start": 91980,
+        "end": 95256,
+        "bodyLine": 2438,
+        "bodyColumn": 57,
+        "bodyEndLine": 2487,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2845,
+        "column": 0,
+        "start": 110436,
+        "end": 115421,
+        "bodyLine": 2845,
+        "bodyColumn": 57,
+        "bodyEndLine": 2924,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "| `src/config/safe-repository-access.ts#fn:linuxAccess#0` → `src/config/safe-repository-access.ts#fn:linuxAccess#0` | published `safe-repository-access.ts:2438` → current `packages/agent/src/config/safe-repository-access.ts:2845` | Both are the Linux `SafeRepositoryAccess` owner: descriptor-relative containment and CAS-serialized target operations, with cooperative-writer and durability limits stated at the boundary. |",
+      "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:advanceLockedCutoff#0",
+      "current_identity": "bin/run.ts#fn:advanceLockedCutoff#0",
+      "file": "bin/run.ts",
+      "name": "fn:advanceLockedCutoff",
+      "source_address": {
+        "line": 1211,
+        "column": 0,
+        "start": 53089,
+        "end": 54110,
+        "bodyLine": 1211,
+        "bodyColumn": 53,
+        "bodyEndLine": 1231,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 2115,
+        "column": 0,
+        "start": 88764,
+        "end": 89980,
+        "bodyLine": 2124,
+        "bodyColumn": 8,
+        "bodyEndLine": 2144,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 7,
+      "baseline_coverage": 0,
+      "baseline_crap": 56,
+      "max_complexity": 7,
+      "max_crap": 56,
+      "rationale": "| `bin/run.mjs#fn:advanceLockedCutoff#0` (1211–1231) | `bin/run.ts#fn:advanceLockedCutoff#0` (2115–2144) | Accept as the same cutoff-witness responsibility. Both require an existing `VidaNewWorkCutoffWitness/v1`, bind generation and selector digest, preserve a valid prior first-admitted identity, reject malformed/mismatched witness state with `GAP-VIDA-RUN-CUTOFF-001`, and durably record the repository/work/attempt/scope tuple only when the witness is empty. The caller-supplied tuple remains optional at the type level in current Source; interpolation and runtime behavior are unchanged. The caller and its preceding admission checks remain the owners of input validity. Type annotations do not change this responsibility. |",
+      "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:readLocalSessionIntake#0",
+      "current_identity": "bin/run.ts#fn:readLocalSessionIntake#0",
+      "file": "bin/run.ts",
+      "name": "fn:readLocalSessionIntake",
+      "source_address": {
+        "line": 1532,
+        "column": 0,
+        "start": 66888,
+        "end": 68200,
+        "bodyLine": 1532,
+        "bodyColumn": 44,
+        "bodyEndLine": 1567,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 3447,
+        "column": 0,
+        "start": 144490,
+        "end": 145839,
+        "bodyLine": 3447,
+        "bodyColumn": 81,
+        "bodyEndLine": 3482,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "| `bin/run.mjs#fn:readLocalSessionIntake#0` (1532–1567) | `bin/run.ts#fn:readLocalSessionIntake#0` (3447–3482) | Accept. Both dynamically load Zod, enforce the same strict `VidaLocalSessionIntake/v1` and nested `WorkItem/v1` fields, bounds and enums, obtain input from `readBoundedReport`, and collapse parse/read failures at this boundary to `GAP-VIDA-RUN-CONTEXT-001`. Current Source adds a return type; schema and error ownership are retained. |",
+      "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:readBoundedReport#0",
+      "current_identity": "bin/run.ts#fn:readBoundedReport#0",
+      "file": "bin/run.ts",
+      "name": "fn:readBoundedReport",
+      "source_address": {
+        "line": 1569,
+        "column": 0,
+        "start": 68202,
+        "end": 69390,
+        "bodyLine": 1569,
+        "bodyColumn": 33,
+        "bodyEndLine": 1600,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 3485,
+        "column": 0,
+        "start": 145888,
+        "end": 147093,
+        "bodyLine": 3485,
+        "bodyColumn": 50,
+        "bodyEndLine": 3516,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 19,
+      "baseline_coverage": 0,
+      "baseline_crap": 380,
+      "max_complexity": 19,
+      "max_crap": 380,
+      "rationale": "| `bin/run.mjs#fn:readBoundedReport#0` (1569–1600) | `bin/run.ts#fn:readBoundedReport#0` (3485–3516) | Accept. Both reject non-regular, linked, empty, oversized, or replaced files; open with `O_NOFOLLOW` when available; compare opened descriptor device/inode and metadata to the initial `lstat`; read through a 32,769-byte overflow probe; parse UTF-8 JSON; map read/parse/guard errors to `GAP-VIDA-RUN-REPORT-001`; and close the descriptor in `finally`. Return typing (`unknown`) does not alter the caller contract. The caller then validates intake separately. |",
+      "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:retiredSourceEffects#0",
+      "current_identity": "bin/run.ts#fn:retiredSourceEffects#0",
+      "file": "bin/run.ts",
+      "name": "fn:retiredSourceEffects",
+      "source_address": {
+        "line": 1913,
+        "column": 0,
+        "start": 83687,
+        "end": 88169,
+        "bodyLine": 1913,
+        "bodyColumn": 56,
+        "bodyEndLine": 2007,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 4411,
+        "column": 0,
+        "start": 184422,
+        "end": 186235,
+        "bodyLine": 4415,
+        "bodyColumn": 84,
+        "bodyEndLine": 4453,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 35,
+      "baseline_coverage": 0,
+      "baseline_crap": 1260,
+      "max_complexity": 35,
+      "max_crap": 1260,
+      "rationale": "| `bin/run.mjs#fn:retiredSourceEffects#0` (1913–2007) | `bin/run.ts#fn:retiredSourceEffects#0` (4411–4453) | Accept as continuity of the parent aggregation/effect-accounting responsibility, with an explicit changed decomposition and stronger ingress validation. Both produce scoped effects and retained patch references from file-change and command events, exclude `.tmp/` and `.agent/`, normalize absolute paths, reject out-of-scope source effects, and bind effect evidence to event, path, kind and body. Current Source delegates file-change validation, patch handling and command parsing to `addRetiredSourceFileEffects`, `addRetiredSourcePatchEffects` and `addRetiredSourceCommandEffects`; it also rejects malformed command/exit-code values at the parent ingress. These helpers own their extracted functions and do not inherit the parent identity or allowance. The parent's original cap remains unchanged; this pair does not transfer it or establish any replacement numeric cap. |",
+      "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:installedBundleInventory#0/fn:walk#0",
+      "current_identity": "bin/run.ts#fn:installedBundleInventory#0/fn:walk#0",
+      "file": "bin/run.ts",
+      "name": "fn:walk",
+      "source_address": {
+        "line": 139,
+        "column": 2,
+        "start": 4820,
+        "end": 5435,
+        "bodyLine": 139,
+        "bodyColumn": 35,
+        "bodyEndLine": 150,
+        "bodyEndColumn": 3
+      },
+      "current_source_address": {
+        "line": 672,
+        "column": 2,
+        "start": 26441,
+        "end": 27078,
+        "bodyLine": 672,
+        "bodyColumn": 57,
+        "bodyEndLine": 683,
+        "bodyEndColumn": 3
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "| `bin/run.mjs#fn:installedBundleInventory#0/fn:walk#0` (139–150) | `bin/run.ts#fn:installedBundleInventory#0/fn:walk#0` (672–683) | Accept. The enclosing inventory caller still supplies the installed `vida-agent` root and expected manifest set. Both walks recursively enumerate that tree, skip root `node_modules`, reject symlinks and unsupported nodes, recurse through directories, and add regular-file paths to the observed set; the enclosing function compares observed and expected inventories. Parameter and return annotations do not alter traversal, guards, error ownership or dataflow. |",
+      "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:main#0",
+      "current_identity": "bin/run.ts#fn:main#0",
+      "file": "bin/run.ts",
+      "name": "fn:main",
+      "source_address": {
+        "line": 6465,
+        "column": 7,
+        "start": 303066,
+        "end": 304329,
+        "bodyLine": 6471,
+        "bodyColumn": 8,
+        "bodyEndLine": 6496,
+        "bodyEndColumn": 1
+      },
+      "current_source_address": {
+        "line": 9511,
+        "column": 7,
+        "start": 436497,
+        "end": 437930,
+        "bodyLine": 9523,
+        "bodyColumn": 23,
+        "bodyEndLine": 9547,
+        "bodyEndColumn": 1
+      },
+      "baseline_complexity": 8,
+      "baseline_coverage": 0,
+      "baseline_crap": 72,
+      "max_complexity": 8,
+      "max_crap": 72,
+      "rationale": "| `bin/run.mjs#fn:main#0` (6465–6496) | `bin/run.ts#fn:main#0` (9511–9547) | Accept as the entrypoint/caller-facing error-routing responsibility, with the cache subresponsibility explicitly retained. Both return when not the main module; on the actual Bun entry path they establish the pinned cache environment before the operation and return after dispatch if a relaunch is needed; otherwise they execute the injected operation, assign integer exit results or log JSON, and route thrown errors through `publicFailure` to stderr with status 1. The current `applyIntegerExitResult` helper preserves `Number.isInteger` semantics and is separately owned; it does not inherit `main`'s identity or allowance. The `.mjs` to `.ts` import suffix is consistent with the source transition. The cache setup is already present in both actual parents, so it is part of this matched responsibility, not evidence of a new responsibility inferred from TypeScript. |",
+      "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
     }
   ],
   "new_functions": [
@@ -203003,28 +203785,161 @@
     "limits": "Only three complete selected families. Other repair/new lock callback correspondence remains pending; no executable/numeric qualification."
   },
   "quality_continuation_current_bindings": {
-    "schema": "ScopedSourceBindingUpdate/v1",
+    "schema": "ReviewedLineageJoin/v1",
     "status": "SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
-    "predecessor_commit": "c744678",
+    "predecessor_commit": "515122729bb4a2c52ef05c4e4225719c0f7a359f",
     "counts": {
-      "retained": 5410,
+      "retained": 5433,
       "new": 1555,
       "removed": 78,
-      "current_roles": 6965,
+      "current_roles": 6988,
       "source_files": 149
     },
-    "inventory_ref": "/workspace/attachments/quality-current-inventory-native-lint-comment-c744-20261015.json",
-    "scoped_byte_capture_files": [
-      "bin/repair-native-delivery-evidence.ts"
+    "retained_added": 23,
+    "admitted": [
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:copyFileExclusiveAt#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:readableClonedFile#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:readableClonedFile#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:verifyLinuxTargetPath#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:replaceAtomicLinux#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:recoverLinuxOrphanBackup#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:fsSafeOpen#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:fsSafeOpen#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:windowsOpenParent#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:windowsOpenParent#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:windowsWriteExclusive#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:windowsWithExclusiveLockAsync#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:windowsMoveNoReplaceAsync#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:linuxFileExistsUnlocked#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:linuxRemoveFile#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:linuxRemoveFile#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:linuxMoveNoReplaceAsync#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:windowsAccess#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:windowsAccess#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:linuxAccess#0",
+        "current_identity": "src/config/safe-repository-access.ts#fn:linuxAccess#0",
+        "primary_ref": "/workspace/attachments/quality-safe-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-safe-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "bin/run.mjs#fn:advanceLockedCutoff#0",
+        "current_identity": "bin/run.ts#fn:advanceLockedCutoff#0",
+        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "bin/run.mjs#fn:readLocalSessionIntake#0",
+        "current_identity": "bin/run.ts#fn:readLocalSessionIntake#0",
+        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "bin/run.mjs#fn:readBoundedReport#0",
+        "current_identity": "bin/run.ts#fn:readBoundedReport#0",
+        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "bin/run.mjs#fn:retiredSourceEffects#0",
+        "current_identity": "bin/run.ts#fn:retiredSourceEffects#0",
+        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "bin/run.mjs#fn:installedBundleInventory#0/fn:walk#0",
+        "current_identity": "bin/run.ts#fn:installedBundleInventory#0/fn:walk#0",
+        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+      },
+      {
+        "identity": "bin/run.mjs#fn:main#0",
+        "current_identity": "bin/run.ts#fn:main#0",
+        "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
+        "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+      }
     ],
-    "reused_source_bindings": 148,
-    "sha256": "e9d161e90bb12645f95dc12fc8ce3327e6d5b2c2590ca736157e0f8f7ca628a9",
-    "original_fields_unchanged": true,
-    "predicate": {
-      "complexity": 1,
-      "max_complexity": 1,
-      "max_crap": 1
-    },
+    "inventory_ref": "/workspace/attachments/quality-current-inventory-native-lint-comment-c744-20261015.json",
+    "scoped_byte_capture_files": [],
+    "reused_source_bindings": 149,
+    "source_capture_ref": "/workspace/attachments/quality-native-lint-comment-bindings-c744-20261015.json",
     "scoped_complexity_exceptions": [
       {
         "identity": "bin/recover-completed-source-report.ts#fn:isPassedNativeBuildCheck#0",
@@ -203120,20 +204035,32 @@
         "identity": "bin/runtime-config-rebind.ts#fn:streamedNativeAssetDigest#0",
         "complexity": 16,
         "ceiling": 9
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
+        "complexity": 6,
+        "ceiling": 1
       }
     ],
-    "missing_current_dispositions": 764,
-    "missing_original_dispositions": 213,
-    "independent_review_ref": "/workspace/attachments/quality-native-two-role-actual-review-c744-20261015.md",
-    "limits": "One changed Source AST+SHA. Same7729identities; scoped intentional lint directive comment only; prior full role/plan receipt quality-native-two-role-bindings-c744-20261015.json and all original frozen fields. No new function/budget. Full plan, coverage, dynamic CRAP, mutation and Runtime remain open.",
-    "source_capture_ref": "/workspace/attachments/quality-native-lint-comment-bindings-c744-20261015.json"
+    "missing_current_dispositions": 741,
+    "missing_original_dispositions": 190,
+    "filtered_duplicate_candidates": 23,
+    "original_fields_unchanged": true,
+    "review_metadata_correction": {
+      "identity": "src/config/safe-repository-access.ts#fn:withLinuxCasLocks#0",
+      "original_complexity": 9,
+      "original_crap": 9,
+      "source": "Authoritative genuine original inventory. Secondary prose mistakenly said allowance1; no numeric value is read from reviewer prose. Actual original/current full owner read confirms9/9.",
+      "not_new_allowance": true
+    },
+    "limits": "No new AST/hash or product Source change.23 retained pairs accepted from actual original/current owners with independent review.20 host alreadybound and3 generic alreadydisposed candidates were excluded. readBoundedBuffer newlyrepresented overage6>original1 remains open: static deficits19→20 is additional visibility, not code regression or widened cap. Full correspondence, CRAP plan, coverage, mutation and Runtime remain unqualified."
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
-    "source_commit": "c744678",
+    "source_commit": "515122729bb4a2c52ef05c4e4225719c0f7a359f",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-native-lint-comment-bindings-c744-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-reviewed23-lineage-join-515-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",
