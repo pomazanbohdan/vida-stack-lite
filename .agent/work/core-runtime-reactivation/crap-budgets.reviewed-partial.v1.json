@@ -220765,5 +220765,16 @@
     ],
     "frozen_ceilings": "All saved original baseline measurements, identity pairs, CC/CRAP caps and rationale are unchanged. Each saved maxCC equals original baseline CC; each saved maxCRAP is at least original CC. Candidate measurements cannot establish or reset these caps.",
     "limits": "Manual Source correspondence only, not numeric admission. The existing owner must prove exhaustive original/current inventory, exact current coverage, currentCC/currentCRAP<=originalCC and saved caps; complete assertion-confirmed mutation remains independently mandatory. The partial remains non-executable and non-exhaustive and no absent historical measurement is admitted."
+  },
+  "runtime_facade_default_correction_20261015": {
+    "scope": [
+      "src/lifecycle/runtime-facade.ts"
+    ],
+    "prior_source_commit": "c1931a9175ffc77dc598dccfbbb5982bdd8a87bb",
+    "independent_review_lane": "luna_facade_default_correction_review",
+    "review_artifact": "/workspace/attachments/quality-facade-default-correction-review-20261015.md",
+    "change": "Private integerOrNull minimum default0 becomes a required number. All eight lexical callers supply1, six in identity and two in validateDeltaIdentity. No public export or supported call can observe the former fallback.",
+    "correspondence": "All 24 callable roles/identity pairs and every saved original measurement, cap and rationale remain unchanged. The prior byte-identical Source description refers to pre-correction Source; this independently reviewed removal supersedes that current-description only.",
+    "numeric_status": "Fresh exact coverage, scoped frozen proof and assertion-confirmed mutation remain required; no exclusion or historical-measurement admission."
   }
 }

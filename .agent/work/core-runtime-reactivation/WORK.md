@@ -4774,6 +4774,24 @@ from unchanged Source or manual review.
 Twenty-one focused admission/prerequisite controls pass. Review-refusal rows now
 use native test.each so each case has its own default5s deadline and named
 failure, instead of accumulating subprocess cases under one test deadline.
+
+First fresh facade coverage5e2a6791-e704-4966-a583-edc5eb2ee149 atc1931a9
+records16PASS/0FAIL/411assertions,1.57s Bun/4256.616388ms owned outer,
+F24/24,L89/89,S104/104,B103/105. The scoped proof correctly rejects the two
+uncovered default-argument branches; mutation was not launched on that incomplete
+scope. Retained root: /workspace/attachments/quality-declared-bun-runtime-facade-5zfOxZ;
+consumer rejection: /workspace/attachments/quality-facade-scoped-proof-c1931a9-20261015.log.
+The automatic projection retains67observations and three complete local triples.
+One missing public scenario now asserts the zero-argument builder's exact
+work-id rejection. The private integerOrNull helper has eight callers, all with
+an explicit minimum1; its unreachable default0 becomes a required typed
+parameter without changing callers or supported behavior. Independent Luna
+review passes and Source101/tests448 TypeScript checks plus the focused public
+boundary test pass. The existing partial records the correction separately;
+all saved rows/caps/roles remain unchanged. Review memo:
+/workspace/attachments/quality-facade-default-correction-review-20261015.md.
+Fresh compatible numerical evidence remains pending; no exclusion or saved
+function identity/budget change removes the dead branch.
 The partial stays non-executable/non-exhaustive and missing global historical
 artifacts are not admitted by these local receipts.
 

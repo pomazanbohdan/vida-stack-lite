@@ -63,7 +63,7 @@ function optionalText(value: unknown, name: string): string | null {
   return text(value, name);
 }
 
-function integerOrNull(value: unknown, name: string, minimum = 0): number | null {
+function integerOrNull(value: unknown, name: string, minimum: number): number | null {
   if (value === null || value === undefined) return null;
   if (!Number.isInteger(value) || (value as number) < minimum) fail(`${name} invalid`);
   return value as number;

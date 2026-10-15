@@ -120,6 +120,7 @@ describe('clean v1 package surface', () => {
   });
 
   test('rejects malformed assurance identities before they become status evidence', () => {
+    expect(() => runtime.buildRuntimeAssuranceContext()).toThrow('assurance context work id missing');
     for (const input of [null, [], 'not an object'])
       expect(() => callWithUntrustedArguments(runtime.buildRuntimeAssuranceContext, [input])).toThrow();
     for (const input of [null, 'not an object'])
