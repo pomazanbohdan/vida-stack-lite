@@ -1,6 +1,6 @@
 import { test, expect } from 'bun:test';
 import { Database } from 'bun:sqlite';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -41,6 +41,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function field(value: unknown, key: string): unknown {
   if (!isRecord(value)) throw new Error(`reconcile result is missing ${key}`);
   return value[key];
+}
+
+function dispatchStorageSnapshot(database: Database): readonly unknown[] {
+  return [
+    'agent_host_state',
+    'agent_host_mastra_session_ledger',
+    'agent_host_readonly_dispatch_repair',
+    'agent_host_readonly_dispatch_outcome',
+  ].map((table) => {
+    const exists: unknown = database
+      .query("SELECT 1 AS present FROM sqlite_master WHERE type='table' AND name=?")
+      .get(table);
+    const rows: unknown = exists ? database.query(`SELECT * FROM ${table}`).all() : null;
+    return { table, rows };
+  });
 }
 
 function completedObservation(actionId: string, issueId: string): SessionBridgeObservation {
@@ -87,17 +102,21 @@ function fixture(): Fixture {
       'AGENTS.md',
       'AGENT.sidecar.md',
       'agent-runtime.config.v1.yaml',
-      'docs/products.map.md',
       'docs/agent-instructions/documentation-policy.v1.json',
     ])
       put(relative, readFileSync(path.join(source, relative)));
-    cpSync(bundle, path.join(root, 'packages/agent'), {
-      recursive: true,
-      filter: (entry) =>
-        !['node_modules', '.tmp', '.agent', 'coverage', '.pack-inspect'].includes(path.basename(entry)),
-    });
-    cpSync(path.join(source, 'packages/plugin'), path.join(root, 'packages/plugin'), { recursive: true });
     const config = loadRuntimeConfig(root);
+    const fixturePaths = loadProjectSetContext(
+      root,
+      config,
+      config.repository.repository_id,
+      config.projects.map((project) => project.project_id),
+    );
+    for (const profile of fixturePaths.path_bindings) {
+      for (const target of profile.paths) {
+        if (target.expected_type === 'directory') mkdirSync(target.resolved, { recursive: true });
+      }
+    }
     const workspaceId = deriveWorkspaceId(config.repository.repository_id, root);
     const projectIds = ['agent'];
     const project = loadProjectSetContext(root, config, config.repository.repository_id, projectIds);
@@ -405,46 +424,6 @@ test('sole public reconcile CLI plans and applies one paused read-only dispatch 
     expect(planDigest).toMatch(/^[a-f0-9]{64}$/);
     expect(canonicalJsonDigest(planBody)).toBe(planDigest);
 
-    const originalPlanBytes = readFileSync(planPath);
-    const dispatchState = (): unknown => {
-      const stateDb = new Database(value.databasePath, { readonly: true });
-      try {
-        return [
-          'agent_host_state',
-          'agent_host_mastra_session_ledger',
-          'agent_host_readonly_dispatch_repair',
-          'agent_host_readonly_dispatch_outcome',
-        ].map((table) => {
-          const exists = stateDb
-            .query("SELECT 1 AS present FROM sqlite_master WHERE type='table' AND name=?")
-            .get(table);
-          return [table, exists ? stateDb.query(`SELECT * FROM ${table}`).all() : null];
-        });
-      } finally {
-        stateDb.close();
-      }
-    };
-    const beforeRejectedApplies = dispatchState();
-    for (const invalidGeneration of [-1, 0.5, '0', null, Number.MAX_SAFE_INTEGER + 1]) {
-      const invalidPlan: Record<string, unknown> = { ...planValue, maintenance_generation: invalidGeneration };
-      // Shape denial precedes digest admission, including numbers which the
-      // canonical digest helper would reject before reaching the public CLI.
-      writeFileSync(planPath, `${JSON.stringify(invalidPlan, null, 2)}\n`);
-      let rejection: unknown;
-      try {
-        await runReconcileArtifacts(value.args('apply'));
-      } catch (error) {
-        rejection = error;
-      }
-      expect(rejection).toBeInstanceOf(Error);
-      expect(rejection).toHaveProperty(
-        'message',
-        'vida repair artifacts: read-only dispatch plan is not exact canonical JSON',
-      );
-      expect(dispatchState()).toEqual(beforeRejectedApplies);
-    }
-    writeFileSync(planPath, originalPlanBytes);
-
     const applied: unknown = await runReconcileArtifacts(value.args('apply'));
     expect(field(applied, 'status')).toBe('prepared');
     expect(field(applied, 'old_issue_outcome')).toBe('unknown');
@@ -466,6 +445,49 @@ test('sole public reconcile CLI plans and applies one paused read-only dispatch 
     } finally {
       db.close();
     }
+    succeeded = true;
+  } finally {
+    finishFixture(value, succeeded);
+  }
+});
+
+test('public read-only dispatch CLI rejects malformed generations without changing persisted state', async () => {
+  const value = fixture();
+  let succeeded = false;
+  try {
+    await runReconcileArtifacts(value.args('plan'));
+    const planPath = path.join(value.root, '.agent/work/fixture-dispatch/read-only-dispatch-plan.v1.json');
+    const originalPlanBytes = readFileSync(planPath);
+    const planValue: unknown = JSON.parse(originalPlanBytes.toString('utf8'));
+    if (!isRecord(planValue)) throw new Error('prepared read-only dispatch plan is malformed');
+    const dispatchState = (): readonly unknown[] => {
+      const database = new Database(value.databasePath, { readonly: true });
+      try {
+        return dispatchStorageSnapshot(database);
+      } finally {
+        database.close();
+      }
+    };
+    const beforeRejectedApplies = dispatchState();
+    for (const invalidGeneration of [-1, 0.5, '0', null, Number.MAX_SAFE_INTEGER + 1]) {
+      const invalidPlan = { ...planValue, maintenance_generation: invalidGeneration };
+      writeFileSync(planPath, `${JSON.stringify(invalidPlan, null, 2)}\n`);
+      let rejection: unknown;
+      try {
+        await runReconcileArtifacts(value.args('apply'));
+      } catch (error) {
+        rejection = error;
+      }
+      expect(rejection).toBeInstanceOf(Error);
+      expect(rejection).toHaveProperty(
+        'message',
+        'vida repair artifacts: read-only dispatch plan is not exact canonical JSON',
+      );
+      expect(dispatchState()).toEqual(beforeRejectedApplies);
+    }
+    writeFileSync(planPath, originalPlanBytes);
+    const applied: unknown = await runReconcileArtifacts(value.args('apply'));
+    expect(field(applied, 'status')).toBe('prepared');
     succeeded = true;
   } finally {
     finishFixture(value, succeeded);
@@ -523,6 +545,75 @@ test('successor consumer atomically switches issue generation and rejects a late
         output_digest: canonicalJsonDigest(summary),
         evidence_refs: ['.agent/work/replacement-research.md'],
       } satisfies Parameters<typeof ledger.reportReadOnlyReplacement>[3];
+      ledger.close();
+      const original = new Database(value.databasePath);
+      let planPayload: string;
+      let planDigest: string;
+      let planValue: Record<string, unknown>;
+      try {
+        const row: unknown = original
+          .query(
+            'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=1',
+          )
+          .get(value.workspaceId, value.workId, value.attempt, value.actionId);
+        if (!isRecord(row) || typeof row.payload !== 'string' || typeof row.digest !== 'string')
+          throw new Error('persisted replacement plan row is malformed');
+        planPayload = row.payload;
+        planDigest = row.digest;
+        const parsed: unknown = JSON.parse(planPayload);
+        if (!isRecord(parsed)) throw new Error('persisted replacement plan is malformed');
+        planValue = parsed;
+      } finally {
+        original.close();
+      }
+      for (const corruption of [
+        { payload: canonicalJson({ ...planValue, status: 'corrupt' }), digest: planDigest },
+        { payload: canonicalJson({ ...planValue, repair_id: 'tampered-plan' }), digest: planDigest },
+        { payload: planPayload, digest: 'f'.repeat(64) },
+      ]) {
+        const tamper = new Database(value.databasePath);
+        let beforeStorage: readonly unknown[];
+        try {
+          const changedRow = tamper
+            .query(
+              'UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=1',
+            )
+            .run(corruption.payload, corruption.digest, value.workspaceId, value.workId, value.attempt, value.actionId);
+          expect(changedRow.changes).toBe(1);
+          beforeStorage = dispatchStorageSnapshot(tamper);
+        } finally {
+          tamper.close();
+        }
+        ledger = openConfiguredMastraSessionLedger(value.root);
+        expect(() =>
+          ledger.reportReadOnlyReplacement(
+            value.workId,
+            value.attempt,
+            changed.snapshot.version,
+            report,
+            replacementScope,
+          ),
+        ).toThrow('read-only dispatch repair plan is invalid');
+        expect(ledger.resume(value.workId, value.attempt)?.version).toEqual(changed.snapshot.version);
+        ledger.close();
+        const after = new Database(value.databasePath, { readonly: true });
+        try {
+          expect(dispatchStorageSnapshot(after)).toEqual(beforeStorage);
+        } finally {
+          after.close();
+        }
+      }
+      const restore = new Database(value.databasePath);
+      try {
+        restore
+          .query(
+            'UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=? WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=1',
+          )
+          .run(planPayload, planDigest, value.workspaceId, value.workId, value.attempt, value.actionId);
+      } finally {
+        restore.close();
+      }
+      ledger = openConfiguredMastraSessionLedger(value.root);
       const observed = ledger.reportReadOnlyReplacement(
         value.workId,
         value.attempt,
@@ -564,7 +655,7 @@ test('successor consumer atomically switches issue generation and rejects a late
   } finally {
     finishFixture(value, succeeded);
   }
-}, 30_000);
+}, 8_000);
 
 test('persisted v1 read-only dispatch plans remain readable', async () => {
   const value = fixture();
@@ -613,4 +704,4 @@ test('persisted v1 read-only dispatch plans remain readable', async () => {
   } finally {
     finishFixture(value, succeeded);
   }
-}, 30_000);
+});

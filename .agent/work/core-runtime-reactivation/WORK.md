@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `8954b59` at origin/main.
+- Published predecessor: `a4539ab` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1067,7 +1067,7 @@ Fresh maintained inventory measures planner39<=original40 and current-read
 evidence5<=original5; new shared predicates/digest owners3/2<=10. The earlier
 source-only review's43 was the cached pre-edit planner, not a new measurement.
 Eight scoped Source AST/SHA captures reuse all other qualified rows. Partial
-6183roles=4644retained/1539new,77removed,147bound files. Inventory7720 leaves
+At publisheda4539ab, partial6183roles=4644retained/1539new,77removed,147bound files. Inventory7720 leaves
 1537current/980original dispositions and21represented CC overages open. The
 127retained additions and2new owners keep unchanged original caps and exact
 single-use identities. Three callback correspondences were rejected on actual
@@ -1087,6 +1087,79 @@ One worker stopped on an exec transport disconnect before any read/write. Root
 then observed a successful native read and connected Cloud revision2389 with no
 reported failure. This establishes neither a restart nor its cause. Vex's owned
 bounded lookup refreshed6changed files; it remains navigation, not numeric proof.
+
+## Persisted dispatch-plan integrity and fixture correction
+
+Actual regression reproduced a product P0: replacement reporting accepted a
+persisted plan changed to status corrupt while its old digest/activation remained,
+published the observation and advanced the journal to revision11. Original FAIL:
+`/workspace/attachments/quality-dispatch-plan-corruption-red-20261015.log`.
+Retained failing fixture: `/home/agent/.cache/vida-cloud-tooling/tmp/vida-readonly-dispatch-evwnGu`.
+
+The prepared reader and replacement-report reader now share one SQL projection/
+unknown JSON ingress. The existing Ajv instance compiles its runtime shape once.
+V1 retains opaque optional maintenance data and extra fields; v2 requires a safe
+nonnegative generation. The original object, including extras, is digest-bound
+without stripping/coercion. Row key, caller identity, SQL digest and canonical
+body digest must match. Each reader keeps one query/parse per row; authorization,
+maintenance, CAS, activation/source/issue and output guards remain before writes.
+The parser grants no authority. Prior activation stays opaque data compared to
+the actual current activation. No library install, loader or schema cutover.
+
+Corrupt status, body and SQL-digest cases now deny with exact unchanged Host,
+journal, corrupt plan and outcome storage, plus unchanged public version. Only
+after all controls pass does the fixture restore its valid plan and exercise the
+real report and stale-CAS denial. The v1 compatibility reader also passes.
+Final affected file4PASS/0FAIL/62assertions in15.29s:
+`/workspace/attachments/quality-dispatch-plan-final-file-tests-20261015.log`.
+Source101files/0diagnostics: `quality-dispatch-plan-source-types-20261015.log`.
+Independent Source review: `quality-dispatch-plan-actual-source-review-20261015.md`.
+Final integration accepted Source, fixture and correspondence boundaries:
+`/workspace/attachments/quality-dispatch-plan-final-integration-review-20261015.md`.
+The independent immediate-reader same-pattern review found no additional confirmed
+P0. Its activation-shape consistency hypothesis remains below confirmed P0 and
+does not establish an accepted effect or digest bypass:
+`/workspace/attachments/quality-persisted-report-same-pattern-20261015.md`.
+
+The preceding full affected file was2PASS/1timeout at the sole-CLI case5487ms;
+retain `quality-dispatch-plan-contract-green-20261015.log` despite its legacy name.
+Its log shows cleanup preceded Bun's terminal timeout; this is not retention or
+numeric qualification. Whole-package/test/tooling/dist and plugin copies were
+unused by this in-process Source CLI; its fixture now creates real config-derived
+path directories and keeps real policy/config/SQLite/Source scope. A sparse
+point still reached5138ms; it did not establish a5s bound. The opt-in diagnostic
+wrapped actual commands without changing Source: nine calls, inspect791ms,
+plan621ms, rejected applies197..210ms, valid apply794ms, resume795ms. This is one
+instrumented diagnosis, not a speedup benchmark or complete numeric evidence.
+Records: `quality-reconcile-timing-preload-20261015.ts`,
+`quality-reconcile-call-times-20261015.jsonl`, `quality-reconcile-call-profile-20261015.log`.
+The CPU-profile attempt produced no requested profile; its test PASS is not CPU
+evidence. Positive CLI lifecycle and the independent invalid-generation matrix
+are now separate5s cases, measured3.20s/2.95s. Legacy v1 uses5s, measured2.62s.
+The existing replacement composite exception decreases30s to8s, measured5.29s;
+TESTING owns its dependent persisted-state reason. No assertion/flow is removed,
+and the matrix also applies the restored valid plan. No total-suite speedup claim.
+Official references read: https://bun.com/docs/test/runtime-behavior and
+https://ajv.js.org/guide/typescript.html.
+
+One scoped maintained Source capture reuses other148paths. Current7721inventory;
+partial6306=4766retained/1540new,78removed,147bindings. Additional122retained
+roles preserve original ceilings; the parser has its own prospective10/10.
+Prepared reader3<=original11 closes one represented deficit;20remain. Current
+1415/original857 dispositions remain missing. Native94candidate current rows
+were rejected on insufficient role-specific proof and9old/new callback conflicts;
+none are merged. Only its concretely consolidated old read helper removal is
+accepted. Historical59rows minus10already bound leave49, not a callable-only
+denominator. Do not reuse the rejected templated proposal. Receipt:
+`/workspace/attachments/quality-dispatch-plan-join-receipt-20261015.json`.
+
+Host feasibility remains GAP for fresh full numeric execution. Readonly inspection
+found no delegated cgroup scope; installed isolation binaries are not qualification.
+`quality-clean-coverage-isolation-feasibility-20261015.md` records facts and a
+bounded clean-environment option; no launcher or historical resource successor
+was exercised. Cloud reported running/connected revision2390 after a later exec
+disconnect, with no reported failure. No restart/cause is proven. Complete current
+coverage, dynamic CRAP, assertion-confirmed mutation and native Runtime remain open.
 
 ## Next bounded work
 

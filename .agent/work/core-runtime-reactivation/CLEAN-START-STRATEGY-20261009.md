@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Source baseline: `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e`.
+- Published predecessor: `a4539ab`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK artifact formed at `7f4c265`; its extracted archive verifier passed. This does not establish native installation or runtime acceptance.
 - Full run `.tmp/p0p1-resume-f553252/current-b9a4108-full-paused.log` ended `UNKNOWN`. The number 1459 is a throw line in `run-bun-coverage.ts`, not an outcome identifier. There is no admitted numeric report. Preserve it and do not replay it.
@@ -38,21 +38,23 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6183roles across147files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds6306roles across147files; installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
 The original planner is39<=40 and current-read evidence5<=5; keep
 native recognizer38>32, new recipe owners19/29>10,
 retained callback/context deficits, runtime adapter2>1 and newly
-observed retained Bun deficits open. Current7720-role inventory leaves1537current
-and980original dispositions missing, with21represented static overages.
+observed retained Bun deficits open. The persisted dispatch-plan reader is3<=11,
+and its new shared runtime ingress10<=10. Current7721-role inventory leaves1415current
+and857original dispositions missing, with20represented static overages.
 WORK owns their exact ceilings and receipts; mapping counts are not coverage.
 Retrieve current CI-formed SDK outputs with their selected formation receipt before the
 complete selection. Maintained aliases now prepare the distinct CI SDK test-input
 artifact through the repository adapter; exact Source/output freshness remains
 with the existing capture owner. Test compilation is not a product release or
-version-baseline confirmation. Current CI formation, connector transport and SDK
-capture join passed; see WORK for exact commits/artifacts. The subsequent serial
+version-baseline confirmation. Prior CI formation, connector transport and SDK
+capture passed for their captured inputs; changed Source needs a current exact
+artifact. See WORK for exact commits/artifacts. The subsequent serial
 campaign exceeded the five-minute allowance and remains UNKNOWN. Optimize its
 completed slow fixture flows and qualify resource custody before a new full run;
 do not replay that incomplete operation or claim a numeric report.

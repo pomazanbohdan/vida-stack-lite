@@ -845,6 +845,20 @@ The observed inspect phase exceeded2s in that isolated run; its product latency
 target remains an open optimization, not a relaxed gate. Independent recovery
 denials and all ordinary CLI children keep the5s default.
 
+The read-only replacement report integration case has an8s exception, reduced
+from30s. It activates one real persisted replacement, rejects three corrupt-plan
+variants without changing Host/journal/plan/outcome bytes, then publishes the
+valid report and denies the stale CAS retry. The measured complete case was5.29s.
+Keep the activation and each fresh persisted read in the same scenario. The
+independent public inspect/plan/apply/resume and malformed-generation matrix
+now use separate fixtures with the5s default; the legacy v1 case also uses5s.
+These changes establish per-case bounds, not faster total suite execution.
+This in-process Source CLI fixture creates directories through the real configured
+path bindings and retains real policy, configuration, source scope and SQLite.
+Its copied package Source/test/tooling/dist trees were unused by the executing
+Source CLI and are removed. This sparse fixture is not native delivery or a
+Source-unavailable Runtime qualification.
+
 Public CLI test helpers prepare the existing pinnedEnvironment before launching
 the child. This avoids loading operation modules again through cache-routing
 self-reexecution. Preserve caller environment overrides and the existing child

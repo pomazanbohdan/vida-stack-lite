@@ -110,10 +110,11 @@ interface Issuance {
 const Ajv2020Constructor = Ajv2020 as unknown as new (options: { strict: boolean; allErrors: boolean }) => {
   compile<T>(schema: object): ValidateFunction<T>;
 };
-const validSessionState = new Ajv2020Constructor({
+const sessionValidators = new Ajv2020Constructor({
   strict: true,
   allErrors: true,
-}).compile<PersistentSessionHandoffState>(stateSchema);
+});
+const validSessionState = sessionValidators.compile<PersistentSessionHandoffState>(stateSchema);
 const sameJson = (left: unknown, right: unknown): boolean => canonicalJson(left) === canonicalJson(right);
 
 function requestRoleMatchesConfiguredAssignment(config: AgentRuntimeConfig, request: SessionBridgeRequest): boolean {
@@ -1078,9 +1079,7 @@ export interface SynthesisObservationCorrectionPlan {
   readonly digest: string;
 }
 
-interface ReadOnlyDispatchPlan {
-  readonly schema: 'VidaReadOnlyDispatchRepairPlan/v1' | 'VidaReadOnlyDispatchRepairPlan/v2';
-  readonly maintenance_generation?: number;
+interface ReadOnlyDispatchPlanFields {
   readonly digest: string;
   readonly repair_id: string;
   readonly workspace_id: string;
@@ -1089,7 +1088,7 @@ interface ReadOnlyDispatchPlan {
   readonly logical_action_id: string;
   readonly prior_issue_id: string;
   readonly prior_native_handle: string;
-  readonly prior_activation: MastraLedgerItem['research_activation'] | null;
+  readonly prior_activation: unknown;
   readonly dispatch_action_id: string;
   readonly replacement_issue_id: string;
   readonly request_digest: string;
@@ -1101,6 +1100,92 @@ interface ReadOnlyDispatchPlan {
   readonly mastra_version: StateVersion;
   readonly replacement_generation: 1;
   readonly status: 'prepared';
+}
+
+type ReadOnlyDispatchPlan = ReadOnlyDispatchPlanFields &
+  (
+    | { readonly schema: 'VidaReadOnlyDispatchRepairPlan/v1'; readonly maintenance_generation?: unknown }
+    | { readonly schema: 'VidaReadOnlyDispatchRepairPlan/v2'; readonly maintenance_generation: number }
+  );
+
+const dispatchPlanFields = {
+  schema: { enum: ['VidaReadOnlyDispatchRepairPlan/v1', 'VidaReadOnlyDispatchRepairPlan/v2'] },
+  digest: { type: 'string' },
+  repair_id: { type: 'string' },
+  workspace_id: { type: 'string' },
+  work_id: { type: 'string' },
+  attempt: { type: 'number' },
+  logical_action_id: { type: 'string' },
+  prior_issue_id: { type: 'string' },
+  prior_native_handle: { type: 'string' },
+  prior_activation: {},
+  dispatch_action_id: { type: 'string' },
+  replacement_issue_id: { type: 'string' },
+  request_digest: { type: 'string' },
+  scope_digest: { type: 'string' },
+  config_digest: { type: 'string' },
+  source_digest: { type: 'string' },
+  work_version: { $ref: '#/$defs/stateVersion' },
+  ledger_version: { $ref: '#/$defs/stateVersion' },
+  mastra_version: { $ref: '#/$defs/stateVersion' },
+  replacement_generation: { const: 1 },
+  status: { const: 'prepared' },
+};
+const validDispatchPlan = sessionValidators.compile<ReadOnlyDispatchPlan>({
+  type: 'object',
+  required: Object.keys(dispatchPlanFields),
+  properties: { ...dispatchPlanFields, maintenance_generation: {} },
+  additionalProperties: true,
+  $defs: {
+    stateVersion: {
+      type: 'object',
+      required: ['revision', 'digest'],
+      properties: { revision: { type: 'number' }, digest: { type: 'string' } },
+      additionalProperties: true,
+    },
+  },
+  allOf: [
+    {
+      if: { properties: { schema: { const: 'VidaReadOnlyDispatchRepairPlan/v2' } } },
+      then: {
+        required: ['maintenance_generation'],
+        properties: { maintenance_generation: { type: 'integer', minimum: 0, maximum: Number.MAX_SAFE_INTEGER } },
+      },
+    },
+  ],
+});
+
+function parseReadOnlyDispatchPlanRow(
+  input: unknown,
+  workspaceId: string,
+  workId: string,
+  attempt: number,
+  expectedActionId?: string,
+): ReadOnlyDispatchPlan {
+  const invalid = 'read-only dispatch repair plan is invalid';
+  const row = snapshotWorkspaceSqlProjection(
+    input,
+    ['logical_action_id', 'payload', 'digest'],
+    'read-only dispatch repair plan',
+  );
+  requireState(
+    typeof row.payload === 'string' && typeof row.digest === 'string' && typeof row.logical_action_id === 'string',
+    invalid,
+  );
+  const plan: unknown = JSON.parse(row.payload);
+  requireState(validDispatchPlan(plan), invalid);
+  const { digest, ...body } = plan;
+  requireState(
+    plan.workspace_id === workspaceId &&
+      plan.work_id === workId &&
+      plan.attempt === attempt &&
+      plan.logical_action_id === row.logical_action_id &&
+      (expectedActionId === undefined || plan.logical_action_id === expectedActionId) &&
+      row.digest === digest &&
+      canonicalJsonDigest(body) === digest,
+    invalid,
+  );
+  return plan;
 }
 
 interface ReadOnlyDispatchActivation {
@@ -1500,28 +1585,11 @@ export class MastraSessionLedger {
     if (!table) return null;
     const row = this.#database
       .query(
-        'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=1',
+        'SELECT logical_action_id,payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND logical_action_id=? AND generation=1',
       )
-      .get(this.#workspaceId, workId, attempt, actionId) as { payload: string; digest: string } | null;
+      .get(this.#workspaceId, workId, attempt, actionId);
     if (!row) return null;
-    const plan = JSON.parse(row.payload) as ReadOnlyDispatchPlan;
-    const { digest, ...body } = plan;
-    requireState(
-      (plan.schema === 'VidaReadOnlyDispatchRepairPlan/v1' ||
-        (plan.schema === 'VidaReadOnlyDispatchRepairPlan/v2' &&
-          Number.isSafeInteger(plan.maintenance_generation) &&
-          plan.maintenance_generation! >= 0)) &&
-        plan.workspace_id === this.#workspaceId &&
-        plan.work_id === workId &&
-        plan.attempt === attempt &&
-        plan.logical_action_id === actionId &&
-        plan.replacement_generation === 1 &&
-        plan.status === 'prepared' &&
-        row.digest === digest &&
-        canonicalJsonDigest(body) === digest,
-      'read-only dispatch repair plan is invalid',
-    );
-    return plan;
+    return parseReadOnlyDispatchPlanRow(row, this.#workspaceId, workId, attempt, actionId);
   }
 
   #readDispatchActivation(workId: string, attempt: number, actionId: string): ReadOnlyDispatchActivation | null {
@@ -1870,11 +1938,11 @@ export class MastraSessionLedger {
         );
         const plans = this.#database
           .query(
-            'SELECT payload FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND generation=1',
+            'SELECT logical_action_id,payload,digest FROM agent_host_readonly_dispatch_repair WHERE workspace_id=? AND work_id=? AND attempt=? AND generation=1',
           )
-          .all(this.#workspaceId, workId, attempt) as { payload: string }[];
+          .all(this.#workspaceId, workId, attempt);
         const plan = plans
-          .map((row) => JSON.parse(row.payload) as ReadOnlyDispatchPlan)
+          .map((row: unknown) => parseReadOnlyDispatchPlanRow(row, this.#workspaceId, workId, attempt))
           .find((entry) => entry.dispatch_action_id === observation.action_id);
         requireState(
           plan && plan.replacement_issue_id === observation.issue_id && observation.host_attempt_id === undefined,
