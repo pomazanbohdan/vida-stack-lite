@@ -5360,6 +5360,25 @@ and binders already own the current identity gates. Legacy storage overlap false
 remains an intentional P0 GAP pending lifetime exclusion and disk recovery proof,
 not permission to activate, replay old state or introduce another active DB.
 
+### Fresh main-contracts proof at 7fd85e7
+
+The corrected Unicode guard passed the complete declared main-contracts coverage
+capture at published7fd85e7788d2bdaada9031266049eb3bbcb41836:102/102functions,
+296/296lines,326/326statements and152/152branches. The same coverage run's scoped
+frozen CC/CRAP proof passed with measured maxima14/14; original ceilings remain
+unchanged. Runbc47ba0f-ed32-485f-b706-96051bc093a5 took6466.280085ms, with complete
+capture, closed groups and same boot. Evidence root:
+/workspace/attachments/quality-declared-main-contracts-q3jd2y. The maintained
+projection imported both reports and the operation outcome:102observations.
+Mutation was not repeated; its prior missing-final-report UNKNOWN remains open.
+Historical compatible triples stay4/44,40open; this is not global acceptance.
+
+Completed worker slots immediately receive the next disjoint preparation or
+independent review task. Root retains integration and the single numeric lane.
+The current copied implementation/review batch binds diagnostic per-test capture
+through explicit parent mode, fingerprint, descriptor, fixed artifact and receipt;
+it does not authorize filtering or claim actual public dry-run joins.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
