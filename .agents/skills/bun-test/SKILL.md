@@ -71,6 +71,14 @@ spies and injected faults before retrying through the registered cleanup owner.
 A test that reaches an early denial has not exercised a later target boundary.
 Use a phase marker or direct observation to prove the intended operation began.
 
+For expected-success async target calls, reuse the contour's narrow result
+observer where present. Assert doesNotReject around the invocation and retain
+separate exact result/event checks. Keep setup and cleanup outside it. The timing
+contour qualifies this through actual injected mutants and the real assertion
+adapter; a passing original test alone does not prove mutation causality.
+Check value shape/type before a property access or regex matcher can throw its
+own argument error. Preserve unproven results without padding assertion counts.
+
 For an existing awaited try-body with synchronous owned cleanup, the package
 finisher can join a tagged outcome in finally without moving returns or callback
 identities. Use the async owner when cleanup itself requires awaiting. Preserve

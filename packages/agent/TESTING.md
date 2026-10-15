@@ -152,6 +152,16 @@ configured-workflow and smoke; SDK freshness remains required there. The full
 selection retains the timing public-output subprocess check separately. Do not
 substitute its child-health result for attributable target assertions.
 
+For an asynchronous target expected to succeed, the timing test's local
+expectTimingResult asserts doesNotReject around that target invocation and then
+returns its result for separate exact payload assertions. Keep fixture setup,
+imports, hooks and cleanup outside the assertion boundary. The real adapter
+binds the node:assert AssertionError to its body; no Node process is needed.
+Assert returned objects and call-ID types before property access or regex
+matchers, so a missing target value fails the intended assertion. A raw runtime
+exception or a matcher argument error remains unproven. Do not pad assertion
+counts or relax the classifier to admit it.
+
 Mutation budgets have one data-only owner in
 [mutation-limits.ts](tooling/mutation-limits.ts). They do not replace the Bun
 per-test default or the full coverage deadline. A test command has a180000ms

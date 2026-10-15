@@ -1,4 +1,5 @@
 import { rejectionReason } from './helpers/expect-rejection.ts';
+import assert from 'node:assert/strict';
 import { describe, expect, spyOn, test } from 'bun:test';
 import {
   defaultRuntimeClock,
@@ -20,19 +21,29 @@ function clock(...values: (bigint | Error)[]): RuntimeClock {
   };
 }
 
+async function expectTimingResult<T>(action: () => Promise<T>): Promise<T> {
+  let result!: T;
+  await assert.doesNotReject(async () => {
+    result = await action();
+  });
+  return result;
+}
+
 async function timed<T>(
   action: (options: RuntimeTimingOptions) => Promise<T>,
   options: RuntimeTimingOptions,
 ): Promise<{ events: RuntimeTimingEvent[]; result: T }> {
   const events: RuntimeTimingEvent[] = [];
-  const result = await action({
-    ...options,
-    sink: {
-      record: (event) => {
-        events.push(event);
+  const result = await expectTimingResult(() =>
+    action({
+      ...options,
+      sink: {
+        record: (event) => {
+          events.push(event);
+        },
       },
-    },
-  });
+    }),
+  );
   await new Promise((resolve) => setTimeout(resolve, 0));
   return { events, result };
 }
@@ -44,24 +55,28 @@ async function timedWithUntrustedClock(values: readonly unknown[]): Promise<{
   let index = 0;
   const events: RuntimeTimingEvent[] = [];
   const clockBinding = { monotonicNs: (): unknown => values[index++] };
-  const result: unknown = await Reflect.apply(invokeTimed, undefined, [
-    'readConfig',
-    () => 'untrusted-clock',
-    {
-      clock: clockBinding,
-      sink: {
-        record: (event: RuntimeTimingEvent) => {
-          events.push(event);
+  const result = await expectTimingResult(async () => {
+    const value: unknown = await Reflect.apply(invokeTimed, undefined, [
+      'readConfig',
+      () => 'untrusted-clock',
+      {
+        clock: clockBinding,
+        sink: {
+          record: (event: RuntimeTimingEvent) => {
+            events.push(event);
+          },
         },
       },
-    },
-  ]);
+    ]);
+    return value;
+  });
   await new Promise((resolve) => setTimeout(resolve, 0));
   return { events, result };
 }
 
 function eventAt(events: readonly RuntimeTimingEvent[]): RuntimeTimingEvent {
   expect(events).toHaveLength(1);
+  expect(events[0]).toBeDefined();
   return events[0]!;
 }
 
@@ -72,7 +87,7 @@ describe('direct maintained-source completeness', () => {
       messages.push(message);
     });
     try {
-      await Promise.resolve(expect(invokeTimed('readConfig', () => 7)).resolves.toBe(7));
+      expect(await expectTimingResult(() => invokeTimed('readConfig', () => 7))).toBe(7);
       await new Promise((resolve) => setTimeout(resolve, 0));
       expect(messages).toHaveLength(1);
       expect(messages[0]).toMatch(/^runtime call: /);
@@ -93,8 +108,13 @@ describe('direct maintained-source completeness', () => {
   });
 
   test('timing handles success, threshold, clock failure, regression, sink rejection, and classified errors', async () => {
-    expect(defaultRuntimeClock().monotonicNs()).toBeTypeOf('bigint');
-    expect(defaultRuntimeTimingSink().record).toBeTypeOf('function');
+    const nativeClock = defaultRuntimeClock();
+    expect(nativeClock).toBeDefined();
+    expect(nativeClock.monotonicNs).toBeTypeOf('function');
+    expect(nativeClock.monotonicNs()).toBeTypeOf('bigint');
+    const nativeSink = defaultRuntimeTimingSink();
+    expect(nativeSink).toBeDefined();
+    expect(nativeSink.record).toBeTypeOf('function');
     const threshold = await timed((options) => invokeTimed('readConfig', () => 'ok', options), {
       clock: clock(0n, 3_000_000n),
       thresholdMs: 2,
@@ -114,6 +134,7 @@ describe('direct maintained-source completeness', () => {
       within_budget: false,
       outcome: 'success',
     });
+    expect(thresholdCallId).toBeTypeOf('string');
     expect(thresholdCallId).toMatch(/^runtime-call-[0-9]+$/);
     const exactThreshold = await timed((options) => invokeTimed('readConfig', () => 'exact', options), {
       clock: clock(0n, 2_000_000n),
@@ -401,7 +422,9 @@ describe('direct maintained-source completeness', () => {
       }).toThrow(/positive/);
     }
     expect(
-      await invokeTimed('readConfig', () => true, { sink: { record: () => Promise.reject(new Error('sink')) } }),
+      await expectTimingResult(() =>
+        invokeTimed('readConfig', () => true, { sink: { record: () => Promise.reject(new Error('sink')) } }),
+      ),
     ).toBe(true);
     const huge = await timed((options) => invokeTimed('readConfig', () => 'huge', options), {
       clock: clock(0n, 10n ** 400n),
@@ -482,9 +505,13 @@ describe('direct maintained-source completeness', () => {
       messages.push(message);
     });
     try {
-      defaultRuntimeTimingSink().record(eventAt(threshold.events));
-      defaultRuntimeTimingSink().record(eventAt(exactThreshold.events));
-      defaultRuntimeTimingSink().record({ ...eventAt(exactThreshold.events), optimization_required: false });
+      const thresholdEvent = eventAt(threshold.events);
+      const exactThresholdEvent = eventAt(exactThreshold.events);
+      expect(() => defaultRuntimeTimingSink().record(thresholdEvent)).not.toThrow();
+      expect(() => defaultRuntimeTimingSink().record(exactThresholdEvent)).not.toThrow();
+      expect(() =>
+        defaultRuntimeTimingSink().record({ ...exactThresholdEvent, optimization_required: false }),
+      ).not.toThrow();
       expect(messages).toHaveLength(3);
       expect(messages[0]).toMatch(/^runtime call requires optimization: /);
       expect(messages[1]).toMatch(/^runtime call requires optimization: /);

@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `82f53d1` at origin/main.
+- Published predecessor: `571dcb6` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -338,6 +338,46 @@ Strict lint found Bun's resolves matcher declared non-thenable. Promise.resolve
 adopts its actual runtime result before awaiting; no cast, detached assertion or
 body-error reclassification is used. Retain
 quality-timing-default-commit-82f-20261015.log; normal strict retry follows.
+
+### Timing causal correction at571dcb6
+
+Published571dcb6 passed the strict474-file hook and ordinary push. Focused
+report1e7def2a-bd5d-44b9-8c37-c2323a479941 measured all four metrics100%:
+functions36/36,lines67/67,statements76/76,branches1/1; all CC/entry-CRAP1.
+The blind frozen-binding metadata review found36unique retained budgets, no
+missing/ambiguous rows or local deficits. This is local correspondence only;
+exhaustive executable frozen qualification remains pending. Evidence:
+quality-runtime-timing-focused-summary-571dcb6-20261015.json and
+quality-timing-frozen-binding-read-571-20261015.md.
+
+CI38705578315/attempt1/artifact11957928151 was admitted through the existing SDK
+readiness owner and selected connector transport in1863ms. The first timing
+mutation pilot completed in223898ms, outer exit1, complete capture and observed
+group termination, without outer timeout. It confirmed102/149Killed(68.456%):
+30rawKilled lacked an attributable assertion;17Timeout lacked runner receipts.
+Preserve .tmp/mutation-evidence-4c47c710-1d22-4586-80bb-f72b4d042a4f-4nzzqG and
+quality-mutation-supervised-571dcb6-di7DlL. No result is relabeled.
+
+Two blind Luna investigations separated target exceptions/type-access errors
+from missing terminal/postflight evidence. IDs50/51 reported real assertion
+mismatches within1.87s/0.754s but no runner receipt; ID62 lacked completed XML.
+No Bun per-test timeout or particular runner bottleneck is proven; limits stay
+unchanged. Readonly reports are quality-timing-{assertion,timeout}-causes-571-
+resume-20261015.md. Product Source is unchanged.
+
+Current correction shares one local typed expected-success observer across the
+timing calls, retaining separate exact result/event assertions. Shape/type
+assertions precede unsafe accesses; direct sink calls assert no throw. Setup,
+imports and cleanup remain outside the asserted target boundary. Real Source
+mutants4/10/132/50/62 each now fail with matching assertion/body evidence and
+complete terminal/group observation in97-138ms; original Source restored:
+quality-timing-causal-controls-columns-batch2-571-resume-20261015.log. These
+controls are not a campaign score. Retain the earlier malformed column fixture
+and the unproven zero-counter async-matcher control; no classifier was weakened.
+Focused timing/output regression3PASS/215assertions/75ms:
+quality-timing-causal-focused-571-resume-20261015.log. Independent actual review
+ACCEPT: quality-timing-causal-actual-review-571-resume-20261015.md. Strict
+publication and fresh coverage/mutation follow before contour closeout.
 
 Blind planning at quality-runtime-core-next-minimal-6a7-20261015.md confirms the
 existing runtime-core partition still requires configured-workflow/smoke and
