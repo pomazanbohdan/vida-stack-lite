@@ -109,6 +109,25 @@ reviewed disposition and remains a GAP under the current executable gate.
 Ordinary task authorization does not automatically launch mutation. Pending
 manual mutation proof is reported as pending, never as achieved qualification.
 
+For an explicitly authorized core-first campaign, improve one existing partition
+at a time. Establish a passing original dry run, then classify every generated
+mutant through the existing assertion/custody evidence owner. A survivor needs
+a contract-backed regression or a product correction; never change correct
+behavior merely to raise the score. Missing coverage needs a real scenario.
+Runner errors, timeouts and incomplete receipts block the affected scope and
+stay outside confirmed Killed. Generated scenarios remain unreviewed until
+reviewed, and N/A needs a contract reason.
+
+Reuse the captured input closure, function inventory and scenario/test IDs.
+Invalidate evidence only for changed source/tests/tooling/config and their
+affected callers. Independent agents may analyze disjoint mutants or prepare
+disjoint fixes; one lead owns shared files, measurements and final admission.
+Do not run duplicate full suites, scans or hash passes per agent. A complete
+selected partition at100% is local proof, not global coverage/CRAP/mutation
+acceptance. Preserve exact coverage and frozen complexity/CRAP requirements.
+Retained .tmp and coverage report/snapshot trees are evidence, not fresh Stryker
+sandbox inputs; keep them excluded from sandbox copying without deleting them.
+
 Stryker partitions reuse one scratch root. Record each process receipt and
 post-run input check before deciding whether another partition may start.
 UNKNOWN, incomplete output, signal, spawn error or missing owned-group termination

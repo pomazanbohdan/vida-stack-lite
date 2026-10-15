@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `e0fdf60` at origin/main.
+- Published predecessor: `d345586` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -81,6 +81,57 @@ CI metadata for e0fdf60 SDK formation reports success at run38691935579;
 quality-sdk-ci-status-e0f-20261015.json. No artifact retrieval/admission or full
 coverage/CRAP qualification has occurred. After this correction is published,
 run one fresh selected pilot, then current SDK/resource/shard prerequisites.
+
+### Core-first mutation correction strategy
+
+Human now prioritizes narrow100% assertion-confirmed Killed contours as the
+driver for test and product fixes. Apply Pstack Hillclimb, Test Behavior Not
+Implementation, Explain the Number, Fix Root Causes and Sequence Verifiable
+Units. Adapt the metric loop to exact deterministic evidence, not repeated
+performance benchmarks or an arbitrary minimum attempt count. Keep this WORK
+as the single decision trail and the backlog as the task owner.
+
+| Order | Existing scope | Exit criterion |
+| --- | --- | --- |
+| Prerequisite | Runner capture, sandbox inputs and process custody | Original dry run actually executes; complete attributable reports, no unresolved process tree |
+| 1 | main-runtime-core, main-host, main-contracts | Each declared scope has complete mutant accounting and100% assertion-confirmed Killed |
+| 2 | main-config, main-cedar, main-governance; bun-host-state and workspace/storage owners | Same local gate, plus existing CAS, authorization, persistence and UNKNOWN controls |
+| 3 | Session/lifecycle, source-preflight/task binding, observation/recovery owners | Same local gate and reviewed scenarios/retained custody |
+| 4 | Public CLI, upgrade/apply/resume, documentation, delivery and platform scopes | Same local gate on the real required platform; unavailable platform stays GAP |
+
+Within each scope: reuse its current partition and cached inventory; prove the
+original tests pass; generate/execute mutants; classify survivor, uncovered,
+assertion-confirmed Killed and infrastructure failure separately. Fix the
+smallest contract defect with a failing regression first. Search analogous
+affected callers inside that contour, review, run the focused regression and
+strict hook, commit/push, then measure fresh current inputs. End the contour
+only at complete100%; a pilot's percent never substitutes for full acceptance.
+Suspected equivalent mutants remain reviewed GAPs under the current gate.
+If an actual contour exceeds the measurement budget, design complete,
+nonoverlapping bounded slices before further execution; never omit hard mutants
+or call a selected survivor-free sample100% of its parent scope.
+
+Use two bounded blind Luna lanes: one root-cause/scenario analysis and one
+independent proposed-fix review. Root writes shared Source and runs checks.
+Parallelism is for disjoint analysis/fixes, not competing full measurements.
+Astra remain stopped. Current cleanup plan is retained for the affected CLI
+contour; it does not interrupt the mutation-priority order absent an active P0.
+
+Packet d345586 passed strict hook and nonforce push, with focused28PASS:
+quality-mutation-repository-{commit,push}-e0f-20261015.log. Its fresh pilot
+finished in6881.619ms with exit1 and confirmed inner/outer group termination.
+It stopped before the dry run while copying archived coverage snapshots with
+ENOSPC; retain quality-mutation-supervised-d345586-xWcMga and package
+.tmp/mutation-evidence-f04e8abb-6810-4e2a-90a6-5a41f171b676-nyKe77.
+Stryker enumeration decreased from38699to19344after excluding .tmp; these are
+enumeration counts from separate runs, not a matched speed benchmark.
+Current correction also excludes coverage/** while retaining dist and every
+maintained Source/test/tool input. Disk inspection found overlay full, not inode
+exhaustion. Clearing only Bun's disposable download cache recovered353MiB;
+/tmp/quality-bun-cache-reclaim-20261015.log. No failed/UNKNOWN root was deleted.
+Independent blind Luna strategy review ACCEPT:
+quality-core-mutation-strategy-review-d345586-20261015.md. It confirms the
+accounting and scoped exclusion, not the still-pending fresh dry run or scores.
 
 ## Root-owned rapid test and product audit
 
