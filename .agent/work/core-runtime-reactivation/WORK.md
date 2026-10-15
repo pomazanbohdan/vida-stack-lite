@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `20b2e04` at origin/main.
+- Published predecessor: `835070e` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1380,7 +1380,39 @@ assert.rejects checks: quality-kernel-nonobject-capabilities-focused-resume-
 20261015.log.
 Final static checks remain478captured/477checkedTS plus101Source/0diagnostics:
 quality-protected-entry-abort-final-static-resume-20261015.log. Refreshed numeric
-proof remains pending.
+proof was pending before the capture below.
+
+Checkpoint835070e passed the normal strict staged hook and is published. The
+hook first rejected two unbound prototype-method reads and an any-typed matcher;
+use the maintained Reflect.get/typed-method pattern and explicit terminal
+timestamp assertion instead. Its next check caught exact-optional typing of
+that timestamp; require its schema-validated value explicitly. All rejected
+attempts created no commit and remain in quality-kernel-entry-abort-{commit,
+final-commit}-resume-20261015.log. The final hook passes477checkedTS/formatter/
+Knip/type-aware lint/focused guard: quality-kernel-entry-abort-qualified-commit-
+resume-20261015.log. No gate is bypassed.
+
+The next complete five-file capture passes237/0/1794Bunassertions in95.28s
+(98.259s owned outer), with full output/same boot/owned group gone:
+quality-kernel-entry-abort-coverage-resume-20261015.log, owner
+quality-retirement-coverage-PDpWwm, report packages/agent/coverage/bun-unified/
+diagnostics/5cc23eb3-c2bb-4e16-9d29-9300f7c5af05.focused-coverage.json.
+The unchanged kernel now has162/162functions(100%),600/602lines(99.66%),
+628/633statements(99.21%),391/414branches(94.44%). MaxCC and function-entry
+CRAP stay31. Compared with the preceding same five-file capture, this gains
+2functions/1line/2statements/6branch counters. All237reported test-body durations
+give min0.03ms/mean395.49ms/p95477.05ms/max10921.79ms for this run; this is
+one-run body timing, not repeated-run latency qualification. Long public
+integration cases retain their declared exceptions.
+Evidence projection: quality-kernel-entry-abort-metrics-resume-20261015.json.
+The remaining5statements/23branch counters stay uncovered; focused coverage
+still has full_qualification:false and frozen_budget_qualification:pending.
+No new mutation score or full quality closure is claimed. Next bounded work:
+classify the remaining supported/host-specific/unreachable branches and qualify
+the existing capture-only per-test mutation evidence before filtered selection.
+The blind capture review identifies missing selected-failure joins, scoped hook
+ancestry, todo accounting, observed-empty distinction and canonical dry-run
+reconciliation: quality-pertest-capture-next-controls-resume-20261015.md.
 
 ### Current product correction packet
 
