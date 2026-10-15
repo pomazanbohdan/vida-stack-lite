@@ -27,6 +27,7 @@ import {
 import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
 import {
   completeWorkflowAssignmentForSession,
+  reserveWorkflowAssignmentForSession,
   retireInterruptedSourceOwnerForSession,
   type WorkflowExecutionCapability,
   type WorkflowSessionReservation,
@@ -826,6 +827,12 @@ test('admitted protected session commits an observed result and its approval exa
       fencing_token: approval.fencing_token,
       binding: approval.binding,
     });
+    await expectRejection(
+      reserveWorkflowAssignmentForSession(capability, f.reservation.request),
+      /workflow session action was already completed or requires reconciliation/,
+    );
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+    expect(readApproval()).toEqual(applied);
     await expectRejection(
       completeWorkflowAssignmentForSession(capability, f.reservation, observed),
       /workflow approval attempt binding invalid/,

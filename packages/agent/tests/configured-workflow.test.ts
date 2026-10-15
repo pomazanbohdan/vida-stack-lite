@@ -1038,72 +1038,110 @@ describe('semantic current-v1 work context and live permits (unit authority adap
       setFixtureField(context.permit.lease, 'active_resources', ['file:' + unsafePath]);
     },
   ]);
-  test.each(['valid', 'attempt', 'principal', 'future-ledger', 'work-digest'])(
-    'reconciled completion is revalidated without dispatch; proof=%s',
-    async (proof) => {
-      const foreign = proof !== 'valid';
-      const attempts = fixtureAttempts();
-      attempts.reconciliationPrincipal = 'runtime:test-verifier';
-      const claim = attempts.claimWorkflowAssignment;
-      attempts.claimWorkflowAssignment = async (invocation, digest) => {
-        const started = await claim(invocation, digest);
-        const completed = await attempts.completeWorkflowAttempt(started, { recovered: true });
-        return {
-          ...completed,
-          workVersion: { revision: started.workVersion.revision + 1, digest: 'd'.repeat(64) },
-          attempt: {
-            ...completed.attempt,
-            reconciliation: {
-              schema: 'WorkflowAttemptReconciliationAuthorization/v1',
-              principal: proof === 'principal' ? 'other-machine' : 'runtime:test-verifier',
-              work_binding_digest: canonicalJsonDigest(invocation.workContext.binding),
-              work_version:
-                proof === 'work-digest' ? { ...started.workVersion, digest: '9'.repeat(64) } : started.workVersion,
-              ledger_version: {
-                revision: invocation.workContext.permit.lease.ledger_revision + Number(proof === 'future-ledger'),
-                digest: 'a'.repeat(64),
-              },
-              attempt_id: proof === 'attempt' ? '9'.repeat(64) : completed.attempt.attempt_id,
-              request_digest: digest,
-              outcome: 'completed',
-              result_digest: completed.attempt.result_digest,
-              provider_evidence: {
-                schema: 'ProviderObservation/v1',
-                path: '.agent/provider.json',
-                sha256: 'b'.repeat(64),
-              },
-              decision: null,
-              retry_lease: null,
+  test.each([
+    'valid',
+    'decision',
+    'unsafe-provider',
+    'unsafe-decision',
+    'completed-retry',
+    'attempt',
+    'principal',
+    'future-ledger',
+    'work-digest',
+  ])('reconciled completion is revalidated without dispatch; proof=%s', async (proof) => {
+    const foreign = !['valid', 'decision'].includes(proof);
+    const attempts = fixtureAttempts();
+    attempts.reconciliationPrincipal = 'runtime:test-verifier';
+    const claim = attempts.claimWorkflowAssignment;
+    attempts.claimWorkflowAssignment = async (invocation, digest) => {
+      const started = await claim(invocation, digest);
+      const completed = await attempts.completeWorkflowAttempt(started, { recovered: true });
+      return {
+        ...completed,
+        workVersion: { revision: started.workVersion.revision + 1, digest: 'd'.repeat(64) },
+        attempt: {
+          ...completed.attempt,
+          reconciliation: {
+            schema: 'WorkflowAttemptReconciliationAuthorization/v1',
+            principal: proof === 'principal' ? 'other-machine' : 'runtime:test-verifier',
+            work_binding_digest: canonicalJsonDigest(invocation.workContext.binding),
+            work_version:
+              proof === 'work-digest' ? { ...started.workVersion, digest: '9'.repeat(64) } : started.workVersion,
+            ledger_version: {
+              revision: invocation.workContext.permit.lease.ledger_revision + Number(proof === 'future-ledger'),
+              digest: 'a'.repeat(64),
             },
+            attempt_id: proof === 'attempt' ? '9'.repeat(64) : completed.attempt.attempt_id,
+            request_digest: digest,
+            outcome: 'completed',
+            result_digest: completed.attempt.result_digest,
+            provider_evidence: {
+              schema: 'ProviderObservation/v1',
+              path: proof === 'unsafe-provider' ? '../provider.json' : '.agent/provider.json',
+              sha256: 'b'.repeat(64),
+            },
+            decision: ['decision', 'unsafe-decision'].includes(proof)
+              ? {
+                  schema: 'DecisionRecord/v1',
+                  path: proof === 'unsafe-decision' ? '../decision.json' : '.agent/decision.json',
+                  sha256: '3'.repeat(64),
+                }
+              : null,
+            retry_lease:
+              proof === 'completed-retry'
+                ? { ...started.attempt.lease, generation: started.attempt.lease.generation + 1 }
+                : null,
           },
-        };
+        },
       };
-      let dispatched = 0,
-        validated = 0;
-      const host = await compose(
-        ['workflow', 'runtime.write'],
-        () => {
-          dispatched++;
-          return {};
-        },
-        (_invocation, result) => {
-          validated++;
-          expect(result).toEqual({ recovered: true });
-        },
-        fixtureWorkContext,
-        attempts,
-      );
-      if (foreign)
-        await expectRejection(dispatchFixture(host.workflowExecutionCapability, request()), /reconciliation binding/);
-      else {
-        let recovered: unknown;
-        await assert.doesNotReject(async () => {
-          recovered = await dispatchFixture(host.workflowExecutionCapability, request());
-        });
-        expect(recovered).toEqual({ recovered: true });
-      }
-      expect(dispatched).toBe(0);
-      expect(validated).toBe(foreign ? 0 : 1);
+    };
+    let dispatched = 0,
+      validated = 0;
+    const host = await compose(
+      ['workflow', 'runtime.write'],
+      () => {
+        dispatched++;
+        return {};
+      },
+      (_invocation, result) => {
+        validated++;
+        expect(result).toEqual({ recovered: true });
+      },
+      fixtureWorkContext,
+      attempts,
+    );
+    if (foreign)
+      await expectRejection(dispatchFixture(host.workflowExecutionCapability, request()), /reconciliation binding/);
+    else {
+      let recovered: unknown;
+      await assert.doesNotReject(async () => {
+        recovered = await dispatchFixture(host.workflowExecutionCapability, request());
+      });
+      expect(recovered).toEqual({ recovered: true });
+    }
+    expect(dispatched).toBe(0);
+    expect(validated).toBe(foreign ? 0 : 1);
+  });
+
+  test.each(['missing', 'extra'] as const)(
+    'rejects a schema-valid WorkItem contract with %s fields before workflow effects',
+    async (mode) => {
+      const modified = mutableFixtureConfig();
+      const contract = requireFixtureValue(modified.artifact_contracts['WorkItem/v1']);
+      expect(contract.required_fields).toContain('id');
+      const expected =
+        mode === 'missing'
+          ? contract.required_fields.filter((field) => field !== 'id')
+          : [...contract.required_fields, 'unexpected_field'];
+      setFixtureField(contract, 'required_fields', expected);
+      const changed = stringify(modified);
+      expect(changed).not.toBe(yaml);
+      await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), changed);
+      config = loadRuntimeConfig(root);
+      expect(config.artifact_contracts['WorkItem/v1']?.required_fields).toEqual(expected);
+      await expectRejection(compose(), /configured work item artifact contract does not match the executable schema/);
+      expect(resolverCalls).toBe(0);
+      expect(calls).toEqual([]);
     },
   );
 
@@ -1394,12 +1432,32 @@ describe('semantic current-v1 work context and live permits (unit authority adap
   });
 
   test('keeps provider and lifecycle work identities distinct and freezes the host context', async () => {
+    const modified = mutableFixtureConfig();
+    const first = requireFixtureValue(modified.projects[0]);
+    setFixtureField(modified, 'projects', [
+      first,
+      { ...structuredClone(first), project_id: 'a-project', title: 'Additional configured project' },
+    ]);
+    const integration = requireFixtureValue(modified.integrations.providers[0]);
+    setFixtureField(modified.integrations, 'providers', [
+      integration,
+      { ...structuredClone(integration), id: 'a-integration', project_id: 'a-project', namespace: 'a-project' },
+    ]);
+    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(modified));
+    config = loadRuntimeConfig(root);
+    expect(config.projects.map((entry) => entry.project_id)).toEqual(['example-project', 'a-project']);
+    fixtureProjectIntegrationsDigest = loadProjectSetContext(root, config, config.repository.repository_id, [
+      'a-project',
+      'example-project',
+    ]).integrations_digest;
     const host = await compose();
     await assert.doesNotReject(() => dispatchFixture(host.workflowExecutionCapability, request()));
     const context = requireFixtureValue(calls[0]).workContext;
     expect(context.schema).toBe('WorkExecutionContext/v1');
     expect(context.binding.provider_work_item_id).toBe(workItem.id);
     expect(context.binding.lifecycle_work_id).toBe('lifecycle-task-fixture');
+    expect(context.binding.repository_id).toBe(config.repository.repository_id);
+    expect(context.binding.project_ids).toEqual(['a-project', 'example-project']);
     expect(context.binding.work_source_revision).not.toBe(context.binding.runtime_source_revision);
     expect(Object.isFrozen(context.binding)).toBe(true);
     expect(Object.isFrozen(context.permit.lease)).toBe(true);
@@ -2131,9 +2189,11 @@ describe('configured workflow host dispatch (isolated persistence adapters)', ()
           return apply();
         },
       );
-      expect(
-        await dispatchFixture(host.workflowExecutionCapability, request({ workflowId: 'implementation_new', stageId })),
-      ).toEqual({ accepted: true });
+      const input = request({ workflowId: 'implementation_new', stageId });
+      expect(await dispatchFixture(host.workflowExecutionCapability, input)).toEqual({ accepted: true });
+      expect(order).toEqual(['approval', 'provider']);
+      // A completed protected assignment returns the recorded result without another effect or approval consumption.
+      expect(await dispatchFixture(host.workflowExecutionCapability, input)).toEqual({ accepted: true });
       expect(order).toEqual(['approval', 'provider']);
     },
   );

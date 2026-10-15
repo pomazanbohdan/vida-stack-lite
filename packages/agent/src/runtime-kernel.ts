@@ -297,7 +297,7 @@ export interface RuntimeKernel {
   readonly runGovernedWrite: (input: unknown) => Promise<unknown>;
 }
 
-function requireCondition(condition: boolean, message: string): void {
+function requireCondition(condition: boolean, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
 /** Preserve the failed operation and its owned recovery transition. */
@@ -767,7 +767,7 @@ function requireTrustedHostAuthentication(value: TrustedHostAuthentication): Rea
     Array.isArray(value.projectIds) &&
       value.projectIds.length > 0 &&
       value.projectIds.every(
-        (id, index) => typeof id === 'string' && (index === 0 || value.projectIds[index - 1]! < id),
+        (id, index): id is string => typeof id === 'string' && (index === 0 || value.projectIds[index - 1]! < id),
       ),
     'trusted host project ids are invalid',
   );
@@ -1159,9 +1159,10 @@ function wrapTrustedHostServices(
   authentication: TrustedHostAuthentication,
   services: TrustedHostServices,
   project: ProjectContext,
+  governanceCapability: NonNullable<TrustedHostServices['governanceCapability']>,
 ): TrustedHostServices {
   return Object.freeze({
-    ...(services.governanceCapability === undefined ? {} : { governanceCapability: services.governanceCapability }),
+    governanceCapability,
     resolveIdentity: async (intent: GovernedWriteIntent, context: ProjectContext) => {
       requireTrustedHostOperation(authentication, 'runtime.write');
       requireCondition(
@@ -1341,18 +1342,11 @@ function validateWorkExecutionContext(
   sourceWriter: boolean,
 ): void {
   const { binding, permit } = context;
-  if (binding.repository_id !== undefined || binding.project_ids !== undefined) {
-    requireCondition(
-      binding.repository_id === authentication.repositoryId &&
-        Array.isArray(binding.project_ids) &&
-        canonicalJsonDigest(binding.project_ids) === canonicalJsonDigest(authentication.projectIds) &&
-        binding.project_ids.every((id, index) => index === 0 || binding.project_ids![index - 1]! < id),
-      'workflow current-v1 project binding is invalid',
-    );
-  }
   requireCondition(
     binding.repository_id === authentication.repositoryId &&
+      Array.isArray(binding.project_ids) &&
       canonicalJsonDigest(binding.project_ids) === canonicalJsonDigest(authentication.projectIds) &&
+      binding.project_ids.every((id, index) => index === 0 || binding.project_ids![index - 1]! < id) &&
       binding.team_id === request.teamId &&
       binding.workflow_id === workflowId &&
       binding.provider_work_item_id === workItem.id &&
@@ -2057,8 +2051,9 @@ export async function createTrustedHostComposition(
   try {
     const authentication = input.authentication;
     const services = input.services;
+    const governanceCapability = services.governanceCapability;
     requireCondition(
-      services.governanceCapability !== undefined,
+      governanceCapability !== undefined,
       'trusted host governance capability is required for composition',
     );
     const root = requireAbsoluteRepositoryRoot(authentication.repositoryRoot);
@@ -2073,7 +2068,7 @@ export async function createTrustedHostComposition(
       'trusted host integrations digest does not match the current project context',
     );
     const migrationRebindVerifier = bindMigrationRebindVerifier(authentication, services);
-    const bindings = wrapTrustedHostServices(authentication, services, project);
+    const bindings = wrapTrustedHostServices(authentication, services, project, governanceCapability);
     const runtimeProof = issueRuntimeKernelHostProof({
       repositoryRoot: root,
       repositoryId: authentication.repositoryId,

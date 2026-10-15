@@ -923,6 +923,11 @@ describe('runtime kernel boundary', () => {
         /launcher capability is required/,
       ),
     );
+    await assert.rejects(
+      () => createTrustedHostComposition(createTestTrustedHostLauncherCapability(input)),
+      /trusted host governance capability is required for composition/,
+    );
+    expect(serviceCalls).toBe(0);
     if (!nativeNoFollowAvailable) {
       const composition = await composeTrustedHost(input);
       expect(composition.schema).toBe('TrustedHostComposition/v1');
@@ -941,6 +946,12 @@ describe('runtime kernel boundary', () => {
     });
     expect(composition.authentication.permittedOperations).toEqual(['runtime.read']);
     expect(composition.runtimeKernel).toBeDefined();
+    let observed: Awaited<ReturnType<typeof composition.runtimeKernel.readConfig>> | undefined;
+    await assert.doesNotReject(async () => {
+      observed = await composition.runtimeKernel.readConfig();
+    });
+    assert.ok(observed);
+    expect(runtimeConfigDigest(observed)).toBe(runtimeConfigDigest(config));
     expect(composition.workflowHostCapability).toBeNull();
     await Promise.resolve(
       expect(

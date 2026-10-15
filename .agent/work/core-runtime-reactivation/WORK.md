@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `bc68cd7` at origin/main.
+- Published predecessor: `41441b0` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -27,6 +27,69 @@ operations or a claim of complete quality/Runtime acceptance.
   its sibling JSON snapshot. Regenerate from producer results; do not maintain
   another manual percentage table. Historical completion, latest attempt,
   currentness and frozen qualification are separate.
+
+## Kernel residual behavior and guard consolidation
+
+Continue the core-first contour at the previously measured393/408branch
+counters. Two fresh blind Luna readers reviewed actual kernel guards and
+receipt/reconciliation scenarios. They wrote only assigned artifacts; Root
+owns Source, checks and publication. Vex is absent on this host, so current
+scoped Source reads remain the qualified fallback. Pstack Test Behavior and
+Sequence Verifiable Units keep adapter, physical state and numeric evidence
+separate; Fix Root Causes keeps strict ingress rules unchanged.
+
+The current packet covers completed protected provider replay without another
+approval/provider effect, safe non-null and unsafe reconciliation references,
+forbidden retry authority on completed receipts, and schema-valid missing/extra
+WorkItem contract fields before callbacks. A real admitted protected native
+session also refuses another reservation after completion, preserving exact
+HostSnapshot and persisted applied-approval row/version before the existing
+stale-completion denial. Unit authority adapters do not establish physical
+HostState evidence; the real admitted case remains separate.
+
+The two-project context case uses unsorted configuration order, full matching
+integration bindings and an exact sorted authenticated context. After that
+normalization, the optional repository/project conditional repeated the following
+full identity check. It is consolidated into that check with sorted-order,
+request identity, revision, permit, lease, scope and Source ownership predicates
+retained. The private service wrapper receives the exact capability already
+required at trusted composition, avoiding an unreachable omission branch.
+`requireCondition` now accurately declares `asserts condition`; its throwing body
+is unchanged. This narrows the captured capability without a new branch in the
+composition function, whose genuine original frozen ceiling remains3. No ceiling
+or correspondence plan is changed by this cleanup.
+
+Strict pre-commit initially exposed one type-aware unsafe spread after the
+assertion refinement: Array.isArray alone narrows the authentication's readonly
+project list to any[]. The existing sorted/string predicate now explicitly
+declares `id is string`, preserving its exact runtime expression and restoring
+the proven element type without a cast, new validation pass or extra branch.
+Source typecheck and full scoped Oxlint pass after that correction; retain
+`quality-kernel-residual-commit-v414-20261015.log` and
+`quality-kernel-residual-lint-v414-20261015.log` under attachments.
+
+Source101and test445strict TypeScript files pass. Sixteen focused controls across
+three files pass,119assertions,12620ms Bun wall time /12643.977923ms owned outer
+time, complete output, same boot and observed group termination. Default per-test
+5000ms and existing explicit native-case exceptions are unchanged. Evidence:
+`/workspace/attachments/quality-retirement-kernel-residual-controls-8be1nX` and
+`/workspace/attachments/quality-kernel-residual-controls-after-v414-20261015.log`.
+Independent actual reviews:
+`quality-kernel-guard-scope-review-v414-20261015.md` and
+`quality-kernel-reconciliation-scenarios-v414-20261015.md` under attachments.
+
+Earlier failures are retained as fixture construction errors: an extra
+ledger_revision field in a retry lease, YAML anchors from a shallow shared
+project copy, and an omitted second-project integration binding. Corrected
+fixtures reach the intended kernel boundary; these are not reported product
+bugs. No-effect caller qualification, native Windows semantics and the per-test
+runner remain open. Do not fabricate these paths or replay old UNKNOWN effects.
+
+After checked Source publication, collect one fresh unchanged five-file kernel
+coverage/CC/entry-CRAP diagnostic, compare its function inventory/ceilings and
+refresh the automatic contour document. Do not repeat the oversized mutation
+campaign until the existing native per-test admission prerequisite is qualified.
+Full exact/frozen gates, installation and Runtime acceptance remain open.
 
 ## Automatic contour progress projection
 
