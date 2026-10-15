@@ -750,17 +750,17 @@ frozen-budget, current-freshness, mutation or formed-Runtime acceptance.
 | Contour | PASS/FAIL/assertions | F / L / S / B | maxCC / entryCRAP | Bun / outer |
 | --- | --- | --- | --- | --- |
 | main-governance | 82/0/1003 | 200/202 · 682/691 · 702/716 · 82/90 | 6 / 6 | 5.57s / 8544.623484ms |
-| main-config | 108/0/11956 | 331/350 · 910/966 · 961/1024 · 205/266 | 16 / 42 | 7.24s / 10278.205719ms |
+| main-config | 113/0/12004 | 338/350 · 924/966 · 977/1024 · 223/266 | 16 / 42 | 8.23s / 11588.436996ms |
 
 Governance report46d8707b-f42f-4155-a57a-93e068438db0 and config report
-dd4ba944-6447-461f-91d9-c7a2609eac75 are under
+bc347276-ee59-4907-ad68-ca51d1a009b6 are under
 packages/agent/coverage/bun-unified/diagnostics/*.focused-coverage.json.
 Retained roots: quality-declared-main-governance-kb6WyN and
-quality-declared-main-config-kJe7HP under /workspace/attachments.
+quality-declared-main-config-k2befV under /workspace/attachments.
 Their exact validated gaps reuse report maps and maintained validators, with no
 new AST/hash scan: quality-main-governance-open-counters-ac4-20261015.jsonl and
-quality-main-config-open-counters-ee1-20261015.jsonl.
-Automatic CONTOUR-STATUS preserves39observations,2/44historical compatible local
+quality-main-config-open-counters-a4b-20261015.jsonl.
+Automatic CONTOUR-STATUS preserves41observations,2/44historical compatible local
 coverage+assertion-confirmed mutation closures,42open and1separate static contour.
 No different Source/test closures are combined into a synthetic maximum.
 
@@ -815,8 +815,8 @@ Original retained artifacts keep their bytes. First failed race expectations
 were corrected against the persisted winner; lint/type errors were repaired,
 with no hook bypass or relaxed gate. Current capture logs:
 quality-governance-recovery-race-coverage-ac4-20261015.log and
-quality-main-config-coverage-ee1-20261015.log. Config selection is published as
-ee199254d28c136466a843ba76dc9b796edc4351; runtime Source is unchanged by it.
+quality-main-config-coverage-a4b-20261015.log. Config tests are published as
+a4b9d8bb90daf628ee0e438a41fe8f4d4879d2ab; runtime Source is unchanged by them.
 
 Next bounded work: reuse already-maintained config tests omitted from selection
 before adding duplicates; qualify genuine governance cross-process contention
@@ -864,6 +864,16 @@ single-project resolver's existing cases. Focused control is
 quality-config-selected-membership-controls-ee1-20261015.log. No Source changes,
 new fixture framework or additional file selection is required. Numerical
 metrics remain the previous report until the next published capture.
+
+That packet is published asa4b9d8b after the strict hook passes. The113PASS/
+0FAIL/12004assertion capture above confirms338/350functions and223/266branches;
+the remaining12functions are the real bundle inventory/capability and activated
+reader/input/output closure. Next use existing helpers/project-upgrade-fixture.ts
+for a narrow real reader integration instead of importing the3010-line lifecycle
+suite, whose30s quarantines/60s exceptions are unrelated to each config mutant.
+Any resource/capability test must distinguish actual Source inventory from formed
+bundle/Runtime qualification. Frozen/global/confirmed-mutation acceptance remains
+pending. Current numerical import: quality-contours-update-config-a4b-20261015.log.
 
 ## Automatic contour progress projection
 
