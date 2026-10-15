@@ -629,7 +629,55 @@ fault control with an otherwise valid timestamp, exact argument observations,
 finally restoration and native parsing before/after. This proves defensive
 dependency-failure handling, not a naturally failing valid native timestamp.
 Corrected the regression reference and informed both reviewers of the earlier
-misattribution. Numeric acceptance awaits the next actual capture.
+misattribution. The strict483-root hook passed and the control was published as
+3f70e05 before its next measurement.
+
+Actual capturea9b571f6-4122-4317-a380-1966a7d2a2cc at3f70e05 completes
+44PASS/0FAIL/14177assertions in5.88s Bun/9317.586805ms owned outer time.
+Main-contracts F102/102,L296/296,S325/325,B152/152 are all100%; maxCC and
+function-entryCRAP fall16→15. Counter totals changed only with removal of the
+three justified fallback expressions; there are no excluded branches. The
+102function identity sets match the earlier complete report exactly. Evidence:
+`quality-contracts-parser-coverage-3f70-20261015.log`,
+`quality-contracts-function-correspondence-3f70-20261015.log` and owned root
+`/workspace/attachments/quality-contour-coverage-contracts-BwMJuK`.
+The derived contour owner imports the actual capture and preserves23observations,
+including parent BLOCKED outcomes and2/44historical compatible full local
+closures. No contracts mutation result, frozen-budget qualification, installed
+runtime acceptance or current-freshness attestation is inferred.
+
+## Independent registration-plan consistency continuation
+
+Implemented validateMutationPerTestRegistration in the existing per-test owner.
+It decodes v2, checks the complete original selected files and describe/hook/body
+declarations, and requires nonempty all-skipped JUnit with exact file/body tokens,
+zero invocations, assertions, body events and per-body coverage keys. An
+unobserved map must have no counters. Observed static module hits remain allowed
+but are not test execution. The returned declarations are deeply detached and
+the original file list is copied. Baseline and registration joins share their
+JUnit/body-token traversal; no new parser, AST, inventory, hash scan or suite.
+
+A blind Luna wrote only mutation-map test controls; root owns the implementation
+and checks. The new unit first fails three positive controls against an explicit
+unsupported-operation stub; negative controls pass because the mode is absent.
+After implementation, full map controls67PASS/0FAIL/127assertions. Added an
+internally consistent assertion-bearing skipped-case denial, a genuine body
+assertion event control, and missing original selected-file coverage. Four-file
+map/evidence/classifier regression selection102PASS/0FAIL/240assertions in515ms.
+Corrected strict fixture inference by declaring its real MutationPerTestCapture
+schema/type, without casts or false empty-map shapes. Retain both failed strict
+logs; final checks are recorded below after review.
+
+Reused the genuine earlier native registration bytes/JUnit/body/process result
+from quality-native-pertest-wMeb9e through the new validator: six declarations,
+one describe, zero hooks, registration-only, origin=false, filtered=false. This
+was no new capture-only pilot and grants no immutable origin or mutation score.
+Evidence: quality-registration-plan-{red,green,evidence-regressions,native-reuse,
+tooling-ts,tests-ts,tests-ts-corrected,tests-ts-final}-3f70-20261015.log under
+attachments. Registration artifacts still need the existing parent descriptor/
+receipt custody path; the ordinary runner remains unchanged with full-selection
+fallback. No per-test runner/filter or new global/local mutation closure is
+activated by this consistency unit.
 
 ## Automatic contour progress projection
 

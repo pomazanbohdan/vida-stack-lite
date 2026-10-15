@@ -7,12 +7,15 @@ import { junitOutcome, parseMutationBodyEvents, type MutationJUnitCase } from '.
 import { validateMutationDryRun, type MutationMapBinding } from './mutation-map.ts';
 
 type Planned = Pick<MutationPerTestCapture, 'describes' | 'hooks' | 'registrations'>;
-type JoinInput = {
+type RegistrationInput = {
   capture: unknown;
-  dryRun: unknown;
   junit: string;
   bodyEvents: Uint8Array;
   exitCode: number | null;
+  tests: string[];
+};
+type JoinInput = Omit<RegistrationInput, 'tests'> & {
+  dryRun: unknown;
   expected: {
     root: string;
     binding: MutationMapBinding;
@@ -69,6 +72,39 @@ export function readMutationPerTestCapture(value: unknown): MutationPerTestCaptu
   return value;
 }
 
+/** Planning only: immutable artifact/process origin remains the parent's responsibility. */
+export function validateMutationPerTestRegistration(input: RegistrationInput): {
+  qualification: 'registration-only';
+  origin_qualified: false;
+  filtered_runner_qualified: false;
+  tests: string[];
+  planned: Planned;
+} {
+  const capture = readMutationPerTestCapture(input.capture);
+  const { bodies } = captureRegistrations(capture, input.tests);
+  if (
+    input.exitCode !== 0 ||
+    capture.invocations.length ||
+    Object.keys(capture.mutant_coverage.perTest).length ||
+    (!capture.coverage_observed && Object.keys(capture.mutant_coverage.static).length)
+  )
+    throw new Error('Per-test registration probe executed work or has invalid coverage/exit evidence.');
+  const { events, outcome, cases } = junitBodyEvidence(input, input.tests, bodies);
+  if (events.length || outcome.assertions || outcome.skipped !== outcome.tests || cases.size !== bodies.size)
+    throw new Error('Per-test registration probe must account for every body as skipped without execution.');
+  return {
+    qualification: 'registration-only',
+    origin_qualified: false,
+    filtered_runner_qualified: false,
+    tests: [...input.tests],
+    planned: structuredClone({
+      describes: capture.describes,
+      hooks: capture.hooks,
+      registrations: capture.registrations,
+    }),
+  };
+}
+
 function bodyFromCase(row: Pick<MutationJUnitCase, 'test_file' | 'name'>): string {
   const match = /^\[mutation-body:([1-9]\d*)\] \[mutation-file:([A-Za-z0-9_-]+)\] /u.exec(row.name);
   if (
@@ -123,6 +159,21 @@ function captureRegistrations(capture: MutationPerTestCapture, tests: string[]) 
   return { bodies, hooks };
 }
 
+function junitBodyEvidence(
+  input: Pick<RegistrationInput, 'junit' | 'bodyEvents'>,
+  tests: string[],
+  bodies: ReadonlyMap<string, unknown>,
+) {
+  const cases = new Map<string, MutationJUnitCase>();
+  const events = parseMutationBodyEvents(input.bodyEvents, tests);
+  const outcome = junitOutcome(input.junit, tests, [], events, (row) => {
+    const key = bodyFromCase(row);
+    if (!bodies.has(key) || cases.has(key)) throw new Error('Per-test JUnit has a foreign or duplicate body.');
+    cases.set(key, row);
+  });
+  return { cases, events, outcome };
+}
+
 /** Consistency only: callers still own immutable artifact/receipt custody and runner qualification. */
 export function validateMutationPerTestJoin(input: JoinInput) {
   const { expected } = input;
@@ -135,13 +186,7 @@ export function validateMutationPerTestJoin(input: JoinInput) {
   const dryRun = validateMutationDryRun(input.dryRun, expected.binding);
   if (canonicalJson(dryRun.mutant_coverage) !== canonicalJson(capture.mutant_coverage))
     throw new Error('Per-test capture differs from its dry-run coverage.');
-  const cases = new Map<string, MutationJUnitCase>();
-  const events = parseMutationBodyEvents(input.bodyEvents, expected.tests);
-  const outcome = junitOutcome(input.junit, expected.tests, [], events, (row) => {
-    const key = bodyFromCase(row);
-    if (!bodies.has(key) || cases.has(key)) throw new Error('Per-test JUnit has a foreign or duplicate body.');
-    cases.set(key, row);
-  });
+  const { outcome, cases } = junitBodyEvidence(input, expected.tests, bodies);
   if (input.exitCode !== 0 || outcome.outcome !== 'passed' || cases.size !== bodies.size)
     throw new Error('Per-test baseline JUnit/body evidence is incomplete or failed.');
   const dryBodies = new Set<string>();

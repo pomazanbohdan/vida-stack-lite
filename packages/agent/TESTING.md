@@ -921,6 +921,17 @@ body/hook invocations. That flag must never turn an empty baseline or mutant
 selection into success. Runtime planning is distinct from the static inventory
 and cannot by itself authenticate immutable origin or qualify filtering.
 
+`validateMutationPerTestRegistration` performs this registration-only consistency
+check with the shared capture decoder, scope validation and JUnit/body-token
+traversal. Require exit0, zero body events, zero assertions and no per-body
+coverage keys. Unobserved coverage must contain no counters; observed aggregate
+static module hits may exist but establish no test execution. Return a detached
+declaration plan and copied original execution file list. All-skipped JUnit
+remains unproven for ordinary baseline/Killed classification. The result stays
+registration-only with origin_qualified=false and filtered_runner_qualified=false.
+Its caller must bind the separate planning capture and process/artifacts to the
+existing parent receipt before using that plan as independent baseline authority.
+
 The ordinary parent map validator also checks the public dry-run test results:
 complete termination alone is insufficient. Require a nonempty Success/Skipped
 array, finite nonnegative durations, nonempty IDs/names and at least one Success;

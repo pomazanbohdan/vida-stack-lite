@@ -16,7 +16,11 @@ import {
 } from '../tooling/mutation-map.ts';
 import { sha256 } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
-import { validateMutationPerTestJoin, readMutationPerTestCapture } from '../tooling/mutation-per-test-evidence.ts';
+import {
+  validateMutationPerTestJoin,
+  validateMutationPerTestRegistration,
+  readMutationPerTestCapture,
+} from '../tooling/mutation-per-test-evidence.ts';
 import type { MutationPerTestCapture } from '../tooling/mutation-assertion-context.ts';
 
 const root = path.resolve('/mutation-map-fixture');
@@ -331,6 +335,244 @@ function perTestEvidence(file = 'tests/one.test.ts') {
     expected: { root, binding, tests: [file], planned, localIds },
   };
 }
+
+function registrationOnlyEvidence(file = 'tests/one.test.ts') {
+  const input = perTestEvidence(file);
+  const nested = { test_file: file, describe_id: 2, parent_ids: [1], title: 'nested suite' };
+  const nestedHook = { test_file: file, hook_id: 2, hook: 'afterEach', describe_ids: [1, 2] };
+  input.capture.describes.push(nested);
+  input.capture.hooks.push(nestedHook);
+  input.capture.registrations[0]!.expected_failure = true;
+  input.capture.registrations[0]!.describe_ids = [1, 2];
+  input.capture.registrations[1]!.describe_ids = [1];
+  const capture: MutationPerTestCapture = {
+    ...input.capture,
+    schema: 'MutationPerTestCapture/v2',
+    invocations: [],
+    coverage_observed: false,
+    mutant_coverage: { static: {}, perTest: {} },
+  };
+  input.expected.planned = {
+    describes: structuredClone(input.capture.describes),
+    hooks: structuredClone(input.capture.hooks),
+    registrations: structuredClone(input.capture.registrations),
+  };
+  const token = Buffer.from(file).toString('base64url');
+  const names = [1, 2].map((id) => `[mutation-body:${id}] [mutation-file:${token}] row ${id}`);
+  const caseXml = (name: string, caseFile = file, skipped = true) =>
+    `<testcase name="${name}" file="${caseFile}" assertions="0">${skipped ? '<skipped/>' : ''}</testcase>`;
+  const junit = (cases: string[], caseFiles = cases.map(() => file), skippedCases = cases.length) => {
+    const count = cases.length;
+    const testcases = cases.map((name, index) => caseXml(name, caseFiles[index], index < skippedCases)).join('');
+    return `<testsuites name="bun test" tests="${count}" assertions="0" failures="0" skipped="${skippedCases}"><testsuite file="${file}" tests="${count}" assertions="0" failures="0" skipped="${skippedCases}">${testcases}</testsuite></testsuites>`;
+  };
+  input.junit = junit(names);
+  return { ...input, capture, junitFor: junit, names };
+}
+
+test('registration-only per-test capture returns a detached plan for a complete all-skipped probe', () => {
+  const input = registrationOnlyEvidence();
+  const file = input.expected.tests[0]!;
+  const planned = {
+    describes: structuredClone(input.capture.describes),
+    hooks: structuredClone(input.capture.hooks),
+    registrations: structuredClone(input.capture.registrations),
+  };
+  const capture: unknown = input.capture;
+  const result = validateMutationPerTestRegistration({
+    capture,
+    junit: input.junit,
+    bodyEvents: input.bodyEvents,
+    exitCode: input.exitCode,
+    tests: [file],
+  });
+  expect(result).toEqual({
+    qualification: 'registration-only',
+    origin_qualified: false,
+    filtered_runner_qualified: false,
+    tests: [file],
+    planned,
+  });
+  expect(result.planned).not.toBe(input.capture);
+  expect(result.planned.describes).not.toBe(input.capture.describes);
+  expect(result.planned.hooks).not.toBe(input.capture.hooks);
+  expect(result.planned.registrations).not.toBe(input.capture.registrations);
+  result.planned.registrations[0]!.expected_failure = false;
+  expect(input.capture.registrations[0]!.expected_failure).toBe(true);
+});
+
+test('registration-only qualification permits aggregate static module coverage without treating it as execution proof', () => {
+  const input = registrationOnlyEvidence();
+  input.capture.coverage_observed = true;
+  input.capture.mutant_coverage.static['0'] = 1;
+  expect(
+    validateMutationPerTestRegistration({
+      capture: input.capture,
+      junit: input.junit,
+      bodyEvents: input.bodyEvents,
+      exitCode: input.exitCode,
+      tests: input.expected.tests,
+    }),
+  ).toMatchObject({
+    qualification: 'registration-only',
+    origin_qualified: false,
+    filtered_runner_qualified: false,
+  });
+});
+
+test('registration-only plan can be reused by the passing-baseline consistency join', () => {
+  const registration = registrationOnlyEvidence();
+  const file = registration.expected.tests[0]!;
+  const planned = validateMutationPerTestRegistration({
+    capture: registration.capture,
+    junit: registration.junit,
+    bodyEvents: registration.bodyEvents,
+    exitCode: registration.exitCode,
+    tests: [file],
+  }).planned;
+  const baseline = perTestEvidence(file);
+  baseline.expected.planned = structuredClone(planned);
+  baseline.capture.describes = structuredClone(planned.describes);
+  baseline.capture.hooks = structuredClone(planned.hooks);
+  baseline.capture.registrations = structuredClone(planned.registrations);
+  baseline.capture.invocations[1]!.outcome = 'threw';
+  baseline.capture.invocations.push({
+    test_file: file,
+    kind: 'hook',
+    id: 2,
+    hook: 'afterEach',
+    hook_id: 2,
+    outcome: 'returned',
+    elapsed_ms: 1,
+  });
+  expect(validateMutationPerTestJoin(baseline).qualification).toBe('diagnostic-only');
+  expect(() => validateMutationPerTestJoin(registration)).toThrow();
+});
+
+test('registration-only probe refuses internally consistent skipped cases that claim assertions', () => {
+  const input = registrationOnlyEvidence();
+  // Root, suite and the first skipped case agree on one asserted expression.
+  for (let index = 0; index < 3; index++) input.junit = input.junit.replace('assertions="0"', 'assertions="1"');
+  expect(() =>
+    validateMutationPerTestRegistration({
+      capture: input.capture,
+      junit: input.junit,
+      bodyEvents: input.bodyEvents,
+      exitCode: input.exitCode,
+      tests: input.expected.tests,
+    }),
+  ).toThrow('without execution');
+});
+
+test.each([
+  'nonzero-exit',
+  'null-exit',
+  'body-invocation',
+  'hook-invocation',
+  'body-event',
+  'executed-case',
+  'omitted-case',
+  'foreign-case',
+  'duplicate-case',
+  'missing-selected-file',
+  'empty-selected-files',
+  'duplicate-selected-file',
+  'wrong-token',
+  'wrong-scope',
+  'duplicate-registration',
+  'per-test-coverage-key',
+  'unobserved-static-counter',
+])('registration-only per-test capture refuses %s', (change) => {
+  const input = registrationOnlyEvidence();
+  const file = input.expected.tests[0]!;
+  const cases = [...input.names];
+  switch (change) {
+    case 'nonzero-exit':
+      input.exitCode = 1;
+      break;
+    case 'null-exit':
+      break;
+    case 'body-invocation':
+      input.capture.invocations.push({
+        test_file: file,
+        kind: 'body',
+        id: 1,
+        outcome: 'returned',
+        elapsed_ms: 1,
+      });
+      break;
+    case 'hook-invocation':
+      input.capture.invocations.push({
+        test_file: file,
+        kind: 'hook',
+        id: 1,
+        hook: 'beforeEach',
+        hook_id: 1,
+        outcome: 'returned',
+        elapsed_ms: 1,
+      });
+      break;
+    case 'body-event':
+      input.bodyEvents = Buffer.from(
+        `${JSON.stringify({
+          schema: 'MutationBodyEvent/v1',
+          test_file: file,
+          kind: 'body',
+          body_id: 1,
+          assertion_cause: true,
+          assertion_source: 'bun-expect',
+        })}\n`,
+      );
+      break;
+    case 'executed-case':
+      input.junit = input.junitFor(cases, undefined, 1);
+      break;
+    case 'omitted-case':
+      input.junit = input.junitFor(cases.slice(0, 1));
+      break;
+    case 'foreign-case':
+      input.junit = input.junitFor([cases[0]!, cases[1]!.replace('[mutation-body:2]', '[mutation-body:3]')]);
+      break;
+    case 'duplicate-case':
+      input.junit = input.junitFor([...cases, cases[1]!]);
+      break;
+    case 'missing-selected-file':
+      input.expected.tests.push('tests/missing.test.ts');
+      break;
+    case 'empty-selected-files':
+      input.expected.tests = [];
+      break;
+    case 'duplicate-selected-file':
+      input.expected.tests = [file, file];
+      break;
+    case 'wrong-token':
+      input.junit = input.junitFor(
+        cases.map((name) => name.replace(/\[mutation-file:[^\]]+\]/u, '[mutation-file:Zm9yZWlnbi50ZXN0LnRz]')),
+      );
+      break;
+    case 'wrong-scope':
+      input.capture.registrations[0]!.describe_ids = [404];
+      break;
+    case 'duplicate-registration':
+      input.capture.registrations.push(structuredClone(input.capture.registrations[0]!));
+      break;
+    case 'per-test-coverage-key':
+      input.capture.mutant_coverage.perTest[`${file}#body:1`] = { '0': 1 };
+      break;
+    case 'unobserved-static-counter':
+      input.capture.mutant_coverage.static['0'] = 1;
+      break;
+  }
+  expect(() =>
+    validateMutationPerTestRegistration({
+      capture: input.capture,
+      junit: input.junit,
+      bodyEvents: input.bodyEvents,
+      exitCode: change === 'null-exit' ? null : input.exitCode,
+      tests: input.expected.tests,
+    }),
+  ).toThrow();
+});
 
 test('per-test parent diagnostic joins complete registration, JUnit, scopes and canonical dry-run coverage without granting admission', () => {
   const input = perTestEvidence();
