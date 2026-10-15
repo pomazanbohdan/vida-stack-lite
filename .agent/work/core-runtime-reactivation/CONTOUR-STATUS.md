@@ -219,10 +219,10 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 ### bun-runtime-facade
 
-Historical complete local closure: `0a54ac33-6eb2-4eca-b8e3-3778c2cc419f` + `6c1920bb-9a27-4c51-95ce-9c7350d1c0d8`.
+Historical complete local closure: `d567268f-c838-4530-9807-d756b744dd43` + `a3d7ce91-198e-40e9-9373-31a5ceae74cf`.
 Achieved in that closure: F/L/S/B 24/24 · 89/89 · 104/104 · 104/104; CC / entry CRAP 10 / 10; mutation 318/318 (pilot-pass; assertion-confirmed).
-Historical complete local coverage + mutation + frozen CRAP closure: `0a54ac33-6eb2-4eca-b8e3-3778c2cc419f` + `6c1920bb-9a27-4c51-95ce-9c7350d1c0d8` + `0a54ac33-6eb2-4eca-b8e3-3778c2cc419f`.
-Frozen CRAP measurement in that closure: 10 / 10; scoped receipt coverage run: `0a54ac33-6eb2-4eca-b8e3-3778c2cc419f`.
+Historical complete local coverage + mutation + frozen CRAP closure: `d567268f-c838-4530-9807-d756b744dd43` + `a3d7ce91-198e-40e9-9373-31a5ceae74cf` + `d567268f-c838-4530-9807-d756b744dd43`.
+Frozen CRAP measurement in that closure: 10 / 10; scoped receipt coverage run: `d567268f-c838-4530-9807-d756b744dd43`.
 Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
@@ -237,6 +237,10 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 0a54ac33-6eb2-4eca-b8e3-3778c2cc419f | not-captured | 2026-10-15T20:03:24.134Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/0a54ac33-6eb2-4eca-b8e3-3778c2cc419f.json |
 | mutation | 6c1920bb-9a27-4c51-95ce-9c7350d1c0d8 | e9629b3c45cde992ef688af33b2538c7e3a67391 | 2026-10-15T20:08:20.818Z | pilot-pass; owner accepted locally; selection bound | 318/318 (pilot-pass; assertion-confirmed) | /workspace/attachments/quality-mutation-bun-runtime-facade-QUK9N3/stdout.log |
 | frozen-crap | 0a54ac33-6eb2-4eca-b8e3-3778c2cc419f | e9629b3c45cde992ef688af33b2538c7e3a67391 | 2026-10-15T20:09:28.360Z | scoped-proof-pass; owner accepted locally; selection bound | 10 / 10 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/0a54ac33-6eb2-4eca-b8e3-3778c2cc419f.scoped-crap.json |
+| coverage | d567268f-c838-4530-9807-d756b744dd43 | 56fe1f1688d4221bbc36f1db1a0f15ffb04c78a2 | 2026-10-15T20:14:20.031Z | focused-diagnostic; owner accepted locally; selection bound | 24/24 · 89/89 · 104/104 · 104/104 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/d567268f-c838-4530-9807-d756b744dd43.focused-coverage.json |
+| coverage-outcome | d567268f-c838-4530-9807-d756b744dd43 | not-captured | 2026-10-15T20:14:20.040Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/d567268f-c838-4530-9807-d756b744dd43.json |
+| mutation | a3d7ce91-198e-40e9-9373-31a5ceae74cf | 56fe1f1688d4221bbc36f1db1a0f15ffb04c78a2 | 2026-10-15T20:15:49.459Z | pilot-pass; owner accepted locally; selection bound | 318/318 (pilot-pass; assertion-confirmed) | /workspace/attachments/quality-mutation-bun-runtime-facade-5CZTXG/stdout.log |
+| frozen-crap | d567268f-c838-4530-9807-d756b744dd43 | 56fe1f1688d4221bbc36f1db1a0f15ffb04c78a2 | 2026-10-15T20:16:16.130Z | scoped-proof-pass; owner accepted locally; selection bound | 10 / 10 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/d567268f-c838-4530-9807-d756b744dd43.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

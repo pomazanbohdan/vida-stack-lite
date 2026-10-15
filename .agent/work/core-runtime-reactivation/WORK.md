@@ -4760,53 +4760,54 @@ frozen caps remain at db93d0c:.agent/work/core-runtime-reactivation/WORK.md and
 
 ## Complete local contour: bun-runtime-facade
 
-The24retained roles have a complete compatible local triple at
-e9629b3c45cde992ef688af33b2538c7e3a67391. Coverage run
-0a54ac33-6eb2-4eca-b8e3-3778c2cc419f records16PASS/0FAIL/677assertions,
-1.76s Bun/4789.343358ms owned outer, exact F24/24,L89/89,S104/104,B104/104.
-Its same-run conservative frozen proof passes all24identities, maxCC10/CRAP10,
-against original b549951 Source and immutable64f18b31 reviewed ceilings.
-Complete mutation6c1920bb-9a27-4c51-95ce-9c7350d1c0d8 records318/318
+The optimized declared selection has a compatible local triple at
+56fe1f1688d4221bbc36f1db1a0f15ffb04c78a2. Fresh coverage
+d567268f-c838-4530-9807-d756b744dd43 records9PASS/0FAIL/643assertions,
+306ms Bun/2587.70014ms owned outer, exact F24/24,L89/89,S104/104,B104/104.
+Its same-run conservative frozen proof passes all24retained identities,
+maxCC10/maxCRAP10, against original b549951 Source and published64f18b31 caps.
+Complete mutationa3d7ce91-198e-40e9-9373-31a5ceae74cf records318/318
 assertion-confirmed Killed, effective score1, zero UNKNOWN/survivors/provenance/
-report/Source errors,280380.25342ms owned outer. Output and process-group
-termination are complete and observed on the same boot. Retained roots:
-/workspace/attachments/quality-declared-bun-runtime-facade-EdxOIg and
-/workspace/attachments/quality-mutation-bun-runtime-facade-QUK9N3.
-Exact coverage/proof reports use the0a54ac33-6eb2-4eca-b8e3-3778c2cc419f prefix
+report/Source errors,70250.271205ms owned outer, complete output and observed
+process-group termination on the same boot. Retained roots:
+/workspace/attachments/quality-declared-bun-runtime-facade-QbLUtT and
+/workspace/attachments/quality-mutation-bun-runtime-facade-5CZTXG.
+Exact coverage/proof reports use thed567268f-c838-4530-9807-d756b744dd43 prefix
 under packages/agent/coverage/bun-unified/diagnostics/.
 
-The derived snapshot retains75observations,4/44historical coverage+mutation
-pairs and4/44complete local triples;40triples remain open. Global qualification,
-current freshness after later changes and formed Runtime remain separate.
-The earlier incomplete103/105branch result, unreachable private default removal,
-independent reviews,148/318confirmed plus170UNKNOWN campaign, one-invocation
-expected-completion/object/string oracles and negative-rejection correction are
-retained at e9629b3:.agent/work/core-runtime-reactivation/WORK.md with exact
-failed/UNKNOWN evidence locators. No failure was relabeled PASS.
+All nine public facade cases and semantic assertions remain in their dedicated
+file, directly importing the Source module. Seven unrelated integration cases
+remain in smoke; all five package-root facade export identities are checked.
+Root's combined16PASS/682assertions, tests450/tooling184 TypeScript and45
+projection controls qualify that movement's development contracts. No test-name
+filter, provider stub, extra runner or mutation exclusion is used. The untrusted
+call helper is shared. Fresh full318-mutant and exact coverage/frozen proof
+preserve the contour result after the selection change. These are single
+qualification runs, not a replicated performance benchmark; no statistical
+speedup claim follows from their elapsed times.
+The snapshot retains79observations,4/44historical pairs and4/44complete local
+triples;40triples remain open. Unknown rows explicitly distinguish raw runner
+Killed from assertion-confirmed. Global freshness/qualification and formed
+Runtime remain pending.
 
-P1 split implemented: all nine pure facade cases and their oracles move into
-tests/runtime-facade-boundary.test.ts with direct Source-module imports. All seven
-package integration cases remain in smoke.test.ts, with five explicit facade
-root-export identity checks. The existing registry selects the entire new file;
-there is no substring/per-mutant filter. The untrusted-call helper is shared by
-both files instead of duplicated. Root verifies16PASS/0FAIL/682assertions across
-both files; tests450/tooling184 TypeScript and45projection controls pass.
-Unknown mutation rows now explicitly label their count as raw runner Killed,
-never assertion-confirmed. Regeneration preserves all75historical observations
-and four recorded local triples. Independent bounded architecture review:
-/workspace/attachments/quality-facade-test-boundary-efficiency-20261015.md.
-A full fresh coverage/proof/318-mutant rerun must qualify the changed selection;
-no speedup is claimed from the existing unlike timing observations.
+Earlier280380.25342ms full318/318proof,170UNKNOWN repair, first branch gaps,
+private dead-default removal and exact failure locators remain at
+728407d:.agent/work/core-runtime-reactivation/WORK.md. The test split's accepted
+architecture and development checks remain at56fe1f1 with the same owner path;
+review: /workspace/attachments/quality-facade-test-boundary-efficiency-20261015.md.
+Historical measurements and every saved original cap stay unchanged.
 
-## Prepared next review: bun-lifecycle-state
+## Pinned next contour: bun-lifecycle-state
 
 Independent blind Luna review finds src/lifecycle/lifecycle-state.ts unchanged
 from literal b549951, with29retained roles, exact identity pairs and no selected
-additions/removals. Existing saved ceilings remain unchanged. The current partial
-records this Source-lineage review only; it admits no numerical measurement and
-does not advance the pinned facade contour. After facade completes, bind the
-published review key and run fresh exact coverage, conservative frozen proof and
-full assertion-confirmed mutation on the declared lifecycle tests.
+additions/removals. The existing partial records its bounded review at published
+e9629b3; the existing scoped gate now pins that commit to the lifecycle-only
+review key. It grants no numerical admission or global executable partial plan.
+Next capture fresh exact coverage, conservative frozen proof and full confirmed
+mutation on the complete declared tests/bun/lifecycle-state.test.ts selection.
+Audit analogous expected-completion/negative-oracle and cleanup boundaries before
+launching mutations, using observed gaps rather than weakening classifier rules.
 Review memo: /workspace/attachments/quality-lifecycle-state-lineage-review-20261015.md.
 
 ## Historical provenance

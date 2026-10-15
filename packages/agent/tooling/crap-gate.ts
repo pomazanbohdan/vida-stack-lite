@@ -49,6 +49,7 @@ const scopedBudgetReviews = new Map([
   ['6f687506464048a0360f3fb8932eb7b77c7fc005', 'scope_review_main_host_20261015'],
   ['6e4655b1db2a32d08ae722940ff50b10d9e56ca6', 'scope_review_main_runtime_timing_20261015'],
   ['64f18b3148a80644787a1c2b997ad7a1ff6e5d5d', 'scope_review_runtime_facade_20261015'],
+  ['e9629b3c45cde992ef688af33b2538c7e3a67391', 'scope_review_lifecycle_state_20261015'],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
