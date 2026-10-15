@@ -660,10 +660,13 @@ describe('direct maintained-source completeness', () => {
   });
 
   test('Cedar capabilities fail closed on malformed boundaries', () => {
-    expect(validateCedarPolicySet('permit(principal, action, resource);')).toEqual({ valid: true, diagnostics: [] });
+    expect(expectReturned(() => validateCedarPolicySet('permit(principal, action, resource);'))).toEqual({
+      valid: true,
+      diagnostics: [],
+    });
     expect(() => invokeUntrusted(requireAbsoluteRepositoryRoot, [null])).toThrow(/absolute/);
     expect(() => validateResolvedPathProfile(null, repositoryRoot)).toThrow(/issued/);
-    const invalidCedar = validateCedarPolicySet('not cedar');
+    const invalidCedar = expectReturned(() => validateCedarPolicySet('not cedar'));
     expect(invalidCedar).toMatchObject({ valid: false });
     expect(Array.isArray(invalidCedar.diagnostics)).toBe(true);
     expect(typeof invalidCedar.diagnostics[0]).toBe('string');

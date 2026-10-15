@@ -4759,6 +4759,23 @@ eight positive/negative contract controls pass, explicitly untrusted synthetic
 data rather than genuine execution evidence. Fresh real coverage/proof/mutation
 must bind this final validator packet.
 
+Fresh d925ef7 coveragebf78cb28-ba39-472f-b795-923c39ae799b completes37PASS/
+0FAIL/14307assertions in4.26s Bun/7335.779565ms owned outer. Validated exact
+F25/25,L56/56,S60/60,B17/17 and scoped frozen proof both pass, maxCC/CRAP4.
+The scoped receipt uses that exact coverage run and admits no missing historical
+measurement. Complete mutation9b733cfc-788f-4e12-bba6-210ca2f12607 executes189
+mutants in307662.640024ms owned outer; strict result187confirmed Killed,
+2UNKNOWN,0survivors,98.9418%, with no provenance/report/source mismatch.
+Raw Stryker189Killed does not close the contour. Mutants24/26 cause an
+unasserted TypeError during an expected-success policy parse call. Both valid
+and invalid parse calls now use the existing expectReturned assertion owner;
+no producer classifier, Source guard, exclusion or threshold changes.
+Retained terminal receipts: /workspace/attachments/quality-mutation-main-cedar-4cf9uL;
+coverage launch: /workspace/attachments/quality-declared-main-cedar-cuSJm6.
+The automatic projection retains53observations, and complete triples remain0/44.
+Fresh compatible coverage/proof/mutation after this assertion correction remain
+required before Cedar can advance.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
