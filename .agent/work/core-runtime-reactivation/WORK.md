@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `3711eed` at origin/main.
+- Published predecessor: `b9cfba8` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,13 +18,83 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Current quality preparation:6887of7730roles,149Source byte bindings,
-  843current/290original dispositions missing and20represented static deficits.
+- Current quality preparation:6964of7730roles,149Source byte bindings,
+  766current/213original dispositions missing and19represented static deficits.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
-## Current environment and correspondence correction
+## Current configured-context correction
+
+Use one package-prefix decision and branch-local package access in
+buildConfiguredContext. The factory returns SafeRepositoryAccess or throws;
+the second truthiness selection was redundant. Preserve factory/read ordering,
+consumer/package arguments, missing-file policy and every byte/CAS/drift guard.
+No helper or new budget. Genuine published-reference-v125 historical row is
+CC8/coverage0/CRAP72; its original Source and frozen partial retain8/72.
+The preliminary design reviewer consulted another static inventory and left
+CRAP72 unproven. Root checked the genuine measurement-linked row before editing;
+independent actual Source review confirms that exact original contract.
+Current8<=original8. Source typecheck101files/0diagnostics, full affected file
+7PASS/43assertions/0.999s. Attachments `quality-context-branch-{static,tests}-b9c-20261015.log`,
+`quality-context-branch-actual-review-b9c-20261015.md` and
+`quality-context-branch-bindings-b9c-20261015.json`. One changed Source AST+SHA
+reuses148bindings; same7730function identities,6887mapped roles and843/290gaps,
+19static deficits. Latest cache `quality-current-inventory-context-branch-b9c-20261015.json`.
+Another90Host candidates have independent actual-role disposition:77retained,
+13rejected for moved/changed/unestablished responsibilities. Join77only; do not
+relabel the rejected roles. Current6964=5410retained+1554new,78removed,149bindings,
+766current/213original gaps and19static deficits. All original five frozen fields
+and source addresses remain exact. This join reuses the context-branch capture
+and every Source binding without another AST/hash pass:
+`quality-host77-join-b9c-20261015.json` and matching log.
+Independent final packet review accepted the exact join, frozen fields,
+addresses, focused evidence and explicit remaining gaps:
+`quality-context-host-packet-metadata-review-b9c-20261015.md`.
+Changed-document check4documents/6local links/0failures:
+`quality-context-host-docs-b9c-20261015.log`. Ordinary strict publication pending.
+
+## Prospective native two-role recovery plan
+
+Before implementing this future packet, freeze and independently review these
+two role dispositions in this task plan. Existing native helper budget-provenance
+gaps remain historical gaps; do not backdate their qualification or change any
+published b549951 allowance.
+
+1. Delete native repair's private isRecord and import the existing generic
+   non-array-object guard from src/contracts/forward-controller-values.ts.
+   Both accept non-array object instances, including non-plain objects; the
+   canonical JSON isPlainRecord has a different contract and is not a substitute.
+   No new function or allowance; reuse the existing owner's frozen budget.
+2. Implement hasUnsafeReferenceCharacter as one ASCII-control-or-colon regex
+   predicate. Its contract rejects exactly UTF-16 units0through31 and colon;
+   it allows DEL, C1 controls, Unicode separators and surrogate units as before.
+   The planned architecture is a single primitive membership test with no
+   state or dispatch. Prospectively freeze max complexity1/max CRAP1 for that
+   corrected version, justified by this one-predicate contract, not by the
+   current implementation's measured metrics. Do not claim the earlier version
+   had a preimplementation ceiling. Independent plan review precedes Source edit.
+
+Retain exact validation/error ordering and dependency enqueue behavior, all
+native custody/Source/CAS/UNKNOWN guards and published parent budgets. Use the
+existing native repair regression file and existing generic-record controls.
+Add caller boundary cases for C0 endpoints0/31 and colon, plus an ordinary
+allowed Unicode absent reference. Match the exact denial and no repair-state
+reservation. DEL/C1 and surrogate units remain allowed by this predicate, but
+adjacent path boundaries may reject them; do not force whole-pipeline acceptance
+or multiply costly fixtures for every code unit. The exact primitive regex
+range and endpoint controls establish the planned boundary.
+Verify no new callable beyond the planned predicate, actual role/ceiling binding,
+full affected checks and frozen-field readback. Publish this plan before its
+future implementation; missing review remains GAP. No numeric pass is inferred.
+The first conceptual plan review did not read the ignored canonical WORK and
+was insufficient to freeze its exact text. Fresh independent review read this
+literal section and actual Source/tests, accepted its1/1 prospective ceiling,
+guard reuse and caller controls: `quality-native-plan-exact-review-b9c-20261015.md`.
+This reviewed plan is saved before native Source edits; its implementation,
+new current-version role binding and numeric qualification remain pending.
+
+## Published environment and correspondence correction
 
 Reuse one environment selection in runPinnedBun, after coverageProfile and
 before standalone-runtime resolution. The existing pin/manifest/launch order,
@@ -73,11 +143,14 @@ source scopes and focused evidence without a correctness finding:
 can be reused by a distinct new wrapper; current identity/address and the
 reviewed correspondence, not cross-category label equality, own the role key.
 Changed-document check selected5documents/36local links with0failures;
-`quality-env-lineage-docs-371-20261015.log`. Ordinary strict commit/push pending.
+`quality-env-lineage-docs-371-20261015.log`.
 The first ordinary hook passed format465 and TypeScript471/0 but denied
 publication because the active Git index identity changed during checks.
 Root had queried git status during that hook; stop competing index reads and
 retain `quality-env-lineage-strict-commit-371-20261015.log`. No hook bypass.
+The retry passed ordinary format465, TypeScript471/0 and configured lint/Knip;
+`quality-env-lineage-strict-commit-retry-371-20261015.log`. Commitb9cfba8 and
+nonforce push are confirmed in `quality-env-lineage-push-371-20261015.log`.
 
 ## Published bounded-launch correction
 

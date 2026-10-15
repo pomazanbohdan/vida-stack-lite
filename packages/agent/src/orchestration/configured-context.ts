@@ -177,18 +177,20 @@ export function buildConfiguredContext(
       /^[A-Za-z0-9._-]+(?:\/[A-Za-z0-9._-]+)*$/.test(source.location) && !source.location.split('/').includes('..'),
       `local source path is unsafe: ${id}`,
     );
-    const packageResource = source.location.startsWith(config.runtime.bundle + '/');
-    const packageAccess = packageResource ? runtimePackageAccess() : undefined;
-    const localContext = packageAccess
-      ? readLocal(
-          packageAccess,
-          '',
-          source.location.slice(config.runtime.bundle.length + 1),
-          usedBytes,
-          false,
-          packageAccess,
-        )
-      : readLocal(access, root, source.location, usedBytes);
+    let localContext: ReturnType<typeof readLocal>;
+    if (source.location.startsWith(config.runtime.bundle + '/')) {
+      const packageAccess = runtimePackageAccess();
+      localContext = readLocal(
+        packageAccess,
+        '',
+        source.location.slice(config.runtime.bundle.length + 1),
+        usedBytes,
+        false,
+        packageAccess,
+      );
+    } else {
+      localContext = readLocal(access, root, source.location, usedBytes);
+    }
     entries.push({
       id,
       kind: 'local',

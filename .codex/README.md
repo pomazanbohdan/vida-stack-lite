@@ -35,6 +35,9 @@ Configuration changes require repeating their focused host qualification.
 ## Bootstrap and ownership
 
 Read AGENTS.md -> AGENT.sidecar.md before implementation search or delegation.
+Read declared canonical workflow paths literally, including ignored `.agent/`
+files. Their omission from `rg --files` is not absence. Anchor reads to this
+checkout root; a copied fixture's matching path is not the canonical plan.
 Select one tool by intent, using the already-selected paths and inventory:
 
 The repository owner requires Vex for ordinary symbol, concept, reference and
