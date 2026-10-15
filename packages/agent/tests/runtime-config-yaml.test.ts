@@ -472,13 +472,13 @@ describe('one strict YAML authority', () => {
     );
     await expectYamlFailure(
       (yaml) => yaml.replace('schema: AgentRuntimeConfig/v1', 'schema: *identity'),
-      /alias|Unresolved alias/i,
+      /aliases are forbidden/i,
     );
     await expectYamlFailure(
       (yaml) => yaml.replace('schema: AgentRuntimeConfig/v1', 'schema: !runtime AgentRuntimeConfig/v1'),
       /tags|tag/i,
     );
-    await expectYamlFailure((yaml) => yaml + '\n<<: { forbidden: true }\n', /merge|unknown|additional/i);
+    await expectYamlFailure((yaml) => yaml + '\n<<: { forbidden: true }\n', /merge keys are forbidden/i);
   });
 
   test('rejects unknown fields, malformed scalars, unsafe paths, and literal credentials', async () => {

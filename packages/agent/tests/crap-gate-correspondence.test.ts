@@ -5,6 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { coverageToolInputs, instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
+import { scopedCrapDispositionProof, type ScopedFunctionDisposition } from '../tooling/crap-gate.ts';
 import { functionInventory } from '../tooling/function-inventory.js';
 import type { FileCoverageData } from 'istanbul-lib-instrument';
 
@@ -22,6 +23,221 @@ function unitCounters(file: string, source: string): FileCoverageData {
   for (const id of Object.keys(data.b)) data.b[id] = data.b[id]!.map(() => 1);
   return data;
 }
+
+const v2Original = [{ identity: 'src/a.ts#old', file: 'src/a.ts', complexity: 2 }];
+const v2Current = [
+  { identity: 'src/a.ts#kept', file: 'src/a.ts', complexity: 2, coverage: 1, crap: 2 },
+  { identity: 'src/b.ts#added', file: 'src/b.ts', complexity: 1, coverage: 1, crap: 1 },
+];
+const v2Rows = [
+  {
+    kind: 'retained',
+    identity: 'src/a.ts#old',
+    current_identity: 'src/a.ts#kept',
+    max_complexity: 2,
+    max_crap: 3,
+    rationale: 'Reviewed retained responsibility.',
+  },
+  {
+    kind: 'new',
+    identity: 'src/b.ts#added',
+    max_complexity: 2,
+    max_crap: 2,
+    rationale: 'Separately reviewed new responsibility.',
+  },
+] satisfies ScopedFunctionDisposition[];
+const v2Caps = new Map([['src/a.ts#old', { max_complexity: 2, max_crap: 3 }]]);
+
+test('scoped CRAP v2 admits disjoint retained and new roles with explicit source mapping', () => {
+  const rows = scopedCrapDispositionProof(
+    v2Original,
+    v2Current,
+    v2Rows,
+    [{ original_path: 'src/a.ts', current_path: 'src/a.ts', rationale: 'Reviewed unchanged source ownership.' }],
+    ['src/a.ts'],
+    ['src/a.ts', 'src/b.ts'],
+    [],
+    ['src/b.ts'],
+    v2Caps,
+  );
+  expect(rows.map((row) => row.kind)).toEqual(['retained', 'new']);
+  expect(rows[1]).not.toHaveProperty('original_source_complexity');
+});
+
+test('scoped CRAP v2 rejects raised retained caps and a new role above its own cap', () => {
+  expect(() =>
+    scopedCrapDispositionProof(
+      v2Original,
+      v2Current,
+      [{ ...v2Rows[0]!, max_crap: 4 }, v2Rows[1]!],
+      [{ original_path: 'src/a.ts', current_path: 'src/a.ts', rationale: 'Reviewed unchanged source ownership.' }],
+      ['src/a.ts'],
+      ['src/a.ts', 'src/b.ts'],
+      [],
+      ['src/b.ts'],
+      v2Caps,
+    ),
+  ).toThrow(/frozen caps/);
+  expect(() =>
+    scopedCrapDispositionProof(
+      v2Original,
+      [{ ...v2Current[0]! }, { ...v2Current[1]!, complexity: 3, crap: 3 }],
+      v2Rows,
+      [{ original_path: 'src/a.ts', current_path: 'src/a.ts', rationale: 'Reviewed unchanged source ownership.' }],
+      ['src/a.ts'],
+      ['src/a.ts', 'src/b.ts'],
+      [],
+      ['src/b.ts'],
+      v2Caps,
+    ),
+  ).toThrow(/own published caps/);
+});
+
+test('scoped CRAP v2 rejects missing dispositions, overlaps, and implicit source aliases', () => {
+  const mapping = [
+    { original_path: 'src/a.ts', current_path: 'src/a.ts', rationale: 'Reviewed unchanged source ownership.' },
+  ];
+  expect(() =>
+    scopedCrapDispositionProof(
+      v2Original,
+      v2Current,
+      v2Rows.slice(0, 1),
+      mapping,
+      ['src/a.ts'],
+      ['src/a.ts', 'src/b.ts'],
+      [],
+      ['src/b.ts'],
+      v2Caps,
+    ),
+  ).toThrow(/partition/);
+  expect(() =>
+    scopedCrapDispositionProof(
+      v2Original,
+      v2Current,
+      [
+        v2Rows[0]!,
+        v2Rows[1]!,
+        {
+          kind: 'new',
+          identity: 'src/a.ts#kept',
+          max_complexity: 2,
+          max_crap: 2,
+          rationale: 'Overlapping current role.',
+        },
+      ],
+      mapping,
+      ['src/a.ts'],
+      ['src/a.ts', 'src/b.ts'],
+      [],
+      ['src/b.ts'],
+      v2Caps,
+    ),
+  ).toThrow(/partition|duplicated/);
+  expect(() =>
+    scopedCrapDispositionProof(
+      v2Original,
+      v2Current,
+      v2Rows,
+      [],
+      ['src/a.ts'],
+      ['src/a.ts', 'src/b.ts'],
+      [],
+      ['src/b.ts'],
+      v2Caps,
+    ),
+  ).toThrow(/explicit|partition/);
+  expect(() =>
+    scopedCrapDispositionProof(
+      v2Original,
+      v2Current,
+      v2Rows,
+      [{ ...mapping[0]!, current_path: 'src/b.ts' }],
+      ['src/a.ts'],
+      ['src/a.ts', 'src/b.ts'],
+      [],
+      ['src/b.ts'],
+      v2Caps,
+    ),
+  ).toThrow(/partition|source-mismapped/);
+});
+
+test('scoped CRAP v2 preserves reviewed removal disposition without transferring its ceiling', () => {
+  const rows = scopedCrapDispositionProof(
+    v2Original,
+    [v2Current[1]!],
+    [
+      { kind: 'removed', identity: 'src/a.ts#old', rationale: 'Reviewed deletion of obsolete responsibility.' },
+      v2Rows[1]!,
+    ],
+    [],
+    ['src/a.ts'],
+    ['src/b.ts'],
+    ['src/a.ts'],
+    ['src/b.ts'],
+    new Map(),
+  );
+  expect(rows.map((row) => row.kind)).toEqual(['removed', 'new']);
+  expect(rows[0]).not.toHaveProperty('maximum_crap');
+});
+
+test('scoped CRAP v2 rejects resetting a shared identity through removed plus new', () => {
+  const identity = 'src/a.ts#work';
+  expect(() =>
+    scopedCrapDispositionProof(
+      [{ identity, file: 'src/a.ts', complexity: 2 }],
+      [{ identity, file: 'src/a.ts', complexity: 5, coverage: 1, crap: 5 }],
+      [
+        { kind: 'removed', identity, rationale: 'Reviewed removal disposition.' },
+        { kind: 'new', identity, max_complexity: 10, max_crap: 10, rationale: 'Reviewed new-role budget.' },
+      ],
+      [{ original_path: 'src/a.ts', current_path: 'src/a.ts', rationale: 'Reviewed unchanged source ownership.' }],
+      ['src/a.ts'],
+      ['src/a.ts'],
+      [],
+      [],
+      new Map(),
+    ),
+  ).toThrow(/cannot reset/);
+});
+
+test('scoped CRAP v2 accepts only the exact reviewed legacy .mjs to current .ts path mapping', () => {
+  const old = [{ identity: 'bin/entry.mjs#entry', file: 'bin/entry.mjs', complexity: 3 }];
+  const now = [{ identity: 'bin/entry.ts#entry', file: 'bin/entry.ts', complexity: 2, coverage: 1, crap: 2 }];
+  const row: ScopedFunctionDisposition[] = [
+    {
+      kind: 'retained',
+      identity: 'bin/entry.mjs#entry',
+      current_identity: 'bin/entry.ts#entry',
+      max_complexity: 3,
+      max_crap: 4,
+      rationale: 'Reviewed exact entrypoint responsibility mapping.',
+    },
+  ];
+  const caps = new Map([['bin/entry.mjs#entry', { max_complexity: 3, max_crap: 4 }]]);
+  const exact = [
+    {
+      original_path: 'bin/entry.mjs',
+      current_path: 'bin/entry.ts',
+      rationale: 'Reviewed legacy entrypoint replacement.',
+    },
+  ];
+  expect(
+    scopedCrapDispositionProof(old, now, row, exact, ['bin/entry.mjs'], ['bin/entry.ts'], [], [], caps)[0],
+  ).toMatchObject({ kind: 'retained', identity: 'bin/entry.mjs#entry', current_identity: 'bin/entry.ts#entry' });
+  expect(() =>
+    scopedCrapDispositionProof(
+      old,
+      now,
+      row,
+      [{ ...exact[0]!, current_path: 'bin/entry.mjs' }],
+      ['bin/entry.mjs'],
+      ['bin/entry.ts'],
+      [],
+      [],
+      caps,
+    ),
+  ).toThrow('Scoped CRAP v2 source mapping is invalid, duplicated or outside exact inventories.');
+});
 
 // Controlled post-validation CLI units: Git and the report validator are mocked
 // in an isolated child. These counters are synthetic unit data, never accepted

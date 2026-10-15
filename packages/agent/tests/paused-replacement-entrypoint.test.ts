@@ -804,13 +804,33 @@ test.each([false, true])(
         const repairDigest = requireString(storedRepair.digest, 'Stored repair digest');
         const forgedValue: unknown = JSON.parse(payload);
         const forged = requireRecord(forgedValue, 'Readonly-dispatch repair payload');
+        const originalPriorIssueId = requireString(forged.prior_issue_id, 'Stored repair prior issue ID');
+        expect(originalPriorIssueId).not.toBe('forged-prior-issue');
         forged.prior_issue_id = 'forged-prior-issue';
         const { digest: _priorDigest, ...forgedBody } = forged;
         const forgedDigest = canonicalJsonDigest(forgedBody);
         forged.digest = forgedDigest;
-        db.query(
-          'UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=? WHERE work_id=? AND logical_action_id=?',
-        ).run(record(forged), forgedDigest, workId, at(original, 1, 'original action').request.action_id);
+        const forgedWrite = db
+          .query(
+            'UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=? WHERE work_id=? AND logical_action_id=?',
+          )
+          .run(record(forged), forgedDigest, workId, at(original, 1, 'original action').request.action_id);
+        expect(forgedWrite.changes).toBe(1);
+        const persistedTamperValue: unknown = db
+          .query(
+            'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE work_id=? AND logical_action_id=?',
+          )
+          .get(workId, at(original, 1, 'original action').request.action_id);
+        const persistedTamper = requireRecord(persistedTamperValue, 'Persisted forged readonly-dispatch repair');
+        expect(requireString(persistedTamper.payload, 'Persisted forged repair payload')).toBe(record(forged));
+        expect(requireString(persistedTamper.digest, 'Persisted forged repair digest')).toBe(forgedDigest);
+        const persistedTamperBody = requireRecord(
+          JSON.parse(requireString(persistedTamper.payload, 'Persisted forged repair payload')),
+          'Persisted forged repair body',
+        );
+        expect(requireString(persistedTamperBody.prior_issue_id, 'Persisted forged prior issue ID')).toBe(
+          'forged-prior-issue',
+        );
         await Promise.resolve(
           expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow(
             'current owner, journal or issued replacement differs',
@@ -819,13 +839,37 @@ test.each([false, true])(
         expect(readOwnerSnapshot().workVersion).toEqual(stateBeforeTamper.workVersion);
         expect(readOwnerSnapshot().ledgerVersion).toEqual(stateBeforeTamper.ledgerVersion);
         expect(currentJournalVersion(activeLedger, workId, 'Paused journal version')).toEqual(journalBeforeTamper);
-        db.query(
-          'UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=? WHERE work_id=? AND logical_action_id=?',
-        ).run(payload, repairDigest, workId, at(original, 1, 'original action').request.action_id);
+        const restoreWrite = db
+          .query(
+            'UPDATE agent_host_readonly_dispatch_repair SET payload=?,digest=? WHERE work_id=? AND logical_action_id=?',
+          )
+          .run(payload, repairDigest, workId, at(original, 1, 'original action').request.action_id);
+        expect(restoreWrite.changes).toBe(1);
+        const restoredRepairValue: unknown = db
+          .query(
+            'SELECT payload,digest FROM agent_host_readonly_dispatch_repair WHERE work_id=? AND logical_action_id=?',
+          )
+          .get(workId, at(original, 1, 'original action').request.action_id);
+        const restoredRepair = requireRecord(restoredRepairValue, 'Restored readonly-dispatch repair');
+        expect(requireString(restoredRepair.payload, 'Restored repair payload')).toBe(payload);
+        expect(requireString(restoredRepair.digest, 'Restored repair digest')).toBe(repairDigest);
         db.close();
+        const stateBeforeUnplannedDrift = readOwnerSnapshot();
+        const journalBeforeUnplannedDrift = currentJournalVersion(
+          activeLedger,
+          workId,
+          'Journal version before unplanned runtime drift',
+        );
         writeFileSync(runtimeFile, Buffer.concat([newBytes, Buffer.from('// unplanned drift\n')]));
         await Promise.resolve(
-          expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow(),
+          expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow(
+            'runtime-code digests differ from forward manifests',
+          ),
+        );
+        expect(readOwnerSnapshot().workVersion).toEqual(stateBeforeUnplannedDrift.workVersion);
+        expect(readOwnerSnapshot().ledgerVersion).toEqual(stateBeforeUnplannedDrift.ledgerVersion);
+        expect(currentJournalVersion(activeLedger, workId, 'Journal after denied unplanned runtime drift')).toEqual(
+          journalBeforeUnplannedDrift,
         );
         writeFileSync(runtimeFile, newBytes);
         if (simulateCrashAfterResume) {

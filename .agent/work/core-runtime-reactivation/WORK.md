@@ -4973,6 +4973,76 @@ Five blind lanes now account for all356survivors by Source responsibility and
 propose additional public scenarios or separately proven redundant guards;
 their snippets remain unexecuted proposals until Root reviews and integrates them.
 
+## Rolling worker acceptance and scoped-admission v2
+
+The owner reaffirmed immediate slot backfill after each terminal worker handoff.
+The current CLEAR rolling queue remains the schedule owner: five useful contour
+lanes, one reviewer/advisor and Root for integration, Git and serial numeric
+qualification. Preparation completion never increments closed-contour totals.
+
+Root accepted the first storage/custody/capture/attestation packet with31PASS,
+279assertions in4.30s. Log:
+/workspace/attachments/quality-rolling-storage-custody-acceptance-20261015.log.
+Expanded lifecycle survivors passed12cases/241assertions before the later phase
+cases and Source cleanup. Contracts ingress passed14cases/1924assertions; its
+new validator success/identity and exact malformed-digest denial are development
+proof, not mutation qualification.
+
+The owned three-file CLI/controller batch recorded52PASS/2FAIL, then53PASS/1FAIL
+after repairing the overlap fixture's nonexistent parent. BUN_TMPDIR alone did
+not repair Bun install's EROFS. A fresh controller-only attempt with a private
+seeded BUN_INSTALL_CACHE_DIR passed5cases/52assertions in17.70s. Owned root:
+/workspace/attachments/quality-rolling-cli-check-UAl7OR; terminal exit0, complete
+output and process-group termination, same boot. Earlier failed install fixtures
+and their partial effects remain retained; no retry in place occurred. The
+official Bun cache reference identifies BUN_INSTALL_CACHE_DIR as the cache owner.
+The overlap denial now uses an existing physical Source parent, without creating
+a shared repository .tmp directory.
+
+Independent review established four pure lifecycle redundancies: the private
+missing-CLEAR guard is guaranteed by all three callers; aggregate fingerprint,
+cycle and COMPLETE binding predicates repeat earlier validateReference checks.
+Root removed only those late predicates. Transition preconditions remain before
+recursive freezing; new assertions inspect nested binding/scope/reference objects
+after denials. Existing frozen caps and function responsibilities remain unchanged;
+only the lifecycle Source binding was refreshed, with pending numerical status.
+Review: /workspace/attachments/quality-lifecycle-source-cleanup-final-review-20261015.md.
+
+The v2 scoped gate and projection now distinguish retained/new/removed roles,
+explicitly map original/current paths, preserve original retained ceilings and
+validate additions against their own existing caps. Blind cross-review caught a
+same-identity removed-plus-new cap-reset loophole before activation; producer and
+consumer reject it. Full-coverage CRAP must equal CC, new caps remain bounded at10,
+and removals carry no measurements. V1 and its published controls remain intact.
+No extra AST inventory or full suite was introduced. Original/current disposition
+exhaustiveness belongs to the producer; the same-run projection also matches the
+current-role count to coverage's function denominator.
+
+The first11-file owned acceptance completed286PASS/2FAIL in19.06s, without timeout
+or UNKNOWN. Both failures were new v2 fixture expectations: exact earlier mapping
+error and two current roles after deleting an empty Source file. Root corrected
+the assertions, preserving Source guards. Log:
+/workspace/attachments/quality-rolling-correction-acceptance-20261015.log.
+Repeat acceptance completed136PASS/0FAIL/806assertions across six files in42.06s.
+Owned root /workspace/attachments/quality-rolling-cli-check-cAHwel records exit0,
+complete capture and process-group termination with unchanged boot. It covers
+the repaired v2 controls, public assurance, controller observation, persistent
+handoff and the Mastra smoke cleanup assertion. Tests450 TypeScript PASS.
+Three reviewed v2 metadata
+keys are prepared for runtime initialization12retained+6new, CLI toolchain
+25retained+15new+1removed, and final assurance91retained+3new. No saved row/cap
+changed. Publication and a separate exact immutable pin are required before use.
+
+Further reviewed test repairs remove project-context's swallowed denial assertion,
+bind YAML rejection to its actual alias/merge guard, assert public CLI failure
+statuses and assurance operation statuses, observe LibSQL cleanupDeferred, and
+close reopened custody through the shared completeOwnedCleanup owner while
+retaining failed evidence. The proposed CLEAR custody response-sequence change
+was rejected: its original first terminal failure is intentional; completing the
+body would invalidate that harness. Unaccepted candidate artifacts remain distinct
+from applied changes. Current local triple count remains4/44; no fresh global or
+Runtime qualification is claimed.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

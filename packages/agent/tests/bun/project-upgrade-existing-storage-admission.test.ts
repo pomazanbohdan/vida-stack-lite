@@ -1,7 +1,9 @@
-import { afterEach, describe, expect, test } from 'bun:test';
+import { beforeEach, describe, expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.js';
@@ -18,6 +20,8 @@ import {
 } from '../../src/config/project-upgrade-existing-storage-admission.js';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.js';
 import { prepareExistingProjectUpgradeDatabase } from '../../src/config/project-upgrade.js';
+import { cleanupTrackedFixtureRoots } from '../helpers/tracked-fixture-root-cleanup.ts';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
 
 const workspaceId = 'a'.repeat(64);
 const hostRelative = '.vida/host.sqlite';
@@ -46,24 +50,122 @@ const verifier = {
 };
 
 const roots = new Set<string>();
+const retainedRoots = new Set<string>();
 const openDatabases = new Set<Database>();
+const databaseRoots = new Map<Database, string>();
+const databaseClosers = new Map<Database, () => void>();
+const failedDatabases = new Set<Database>();
+let activeFixtureCase = false;
 
-afterEach(() => {
-  for (const database of [...openDatabases]) {
-    openDatabases.delete(database);
-    try {
-      closeWorkspaceDatabaseWithAdmission(database);
-    } catch {
-      // Keep cleanup scoped to exact fixture-owned connections.
-    }
-  }
-  openDatabases.clear();
-  for (const root of roots) rmSync(root, { recursive: true, force: true });
-  roots.clear();
+beforeEach(() => {
+  if (activeFixtureCase || databaseClosers.size !== 0)
+    throw new Error('Cannot begin an admission fixture case while prior fixture custody is unresolved');
+  activeFixtureCase = true;
 });
 
+async function expectAdmissionResult<T>(action: () => Promise<T>): Promise<T> {
+  let result!: T;
+  await assert.doesNotReject(async () => {
+    result = await action();
+  });
+  return result;
+}
+
+function registerDatabase(
+  database: Database,
+  root: string,
+  close: () => void = () => closeWorkspaceDatabaseWithAdmission(database),
+): void {
+  openDatabases.add(database);
+  databaseRoots.set(database, root);
+  databaseClosers.set(database, close);
+}
+
+function closeOwnedDatabase(database: Database): undefined {
+  const close = databaseClosers.get(database);
+  if (!close) throw new Error('Fixture database has no exact close owner');
+  try {
+    close();
+  } catch (error) {
+    failedDatabases.add(database);
+    const root = databaseRoots.get(database);
+    if (root) retainedRoots.add(root);
+    throw error;
+  }
+  openDatabases.delete(database);
+  databaseRoots.delete(database);
+  databaseClosers.delete(database);
+  failedDatabases.delete(database);
+  return undefined;
+}
+
+function trackedTest(name: string, body: () => Promise<void>): void {
+  test(name, async () => {
+    try {
+      const rootsBefore = new Set(roots);
+      const databasesBefore = new Set(openDatabases);
+      const cleanupDeadline = performance.now() + 5_000;
+      let bodyFailure: { error: unknown } | undefined;
+      let deadlineFailure: { error: unknown } | undefined;
+      try {
+        await body();
+      } catch (error) {
+        bodyFailure = { error };
+      }
+
+      const caseRoots = new Set([...roots].filter((root) => !rootsBefore.has(root)));
+      const caseRootList = [...caseRoots];
+      const retainCaseRoots = (): void => {
+        for (const root of caseRoots) retainedRoots.add(root);
+      };
+      const markLate = (stage: string): void => {
+        retainCaseRoots();
+        deadlineFailure ??= { error: new Error(`Fixture cleanup deadline elapsed ${stage}`) };
+      };
+      if (performance.now() >= cleanupDeadline) markLate('after test body settlement');
+
+      const closeActions = [...openDatabases]
+        .filter((database) => !databasesBefore.has(database) && !failedDatabases.has(database))
+        .map((database) => () => closeOwnedDatabase(database));
+      let cleanupFailure: { error: unknown } | undefined;
+      try {
+        completeOwnedCleanup(closeActions, bodyFailure);
+      } catch (error) {
+        cleanupFailure = { error };
+      }
+      if (performance.now() >= cleanupDeadline) markLate('after native connections closed');
+      if (bodyFailure || cleanupFailure || deadlineFailure) retainCaseRoots();
+      else for (const root of caseRoots) retainedRoots.delete(root);
+
+      let rootCleanupFailure: { error: unknown } | undefined;
+      try {
+        await cleanupTrackedFixtureRoots(caseRoots, retainedRoots, (root, options) => {
+          if (performance.now() >= cleanupDeadline) {
+            markLate('before fixture deletion');
+            throw deadlineFailure!.error;
+          }
+          return rm(root, options);
+        });
+      } catch (error) {
+        rootCleanupFailure = { error };
+      }
+      for (const root of caseRootList) if (!retainedRoots.has(root)) roots.delete(root);
+
+      const failures = [cleanupFailure, rootCleanupFailure, deadlineFailure];
+      if (!cleanupFailure && bodyFailure) failures.push(bodyFailure);
+      const presentFailures = failures
+        .filter((failure): failure is { error: unknown } => failure !== undefined)
+        .map((failure) => failure.error);
+      if (presentFailures.length === 1) throw presentFailures[0];
+      if (presentFailures.length > 1) throw new AggregateError(presentFailures, 'Fixture cleanup failed');
+    } finally {
+      activeFixtureCase = false;
+    }
+  });
+}
+
 describe('native existing-storage admission boundary', () => {
-  test('mints a callback-scoped capability from exact fresh Host receipt and closed source files', async () => {
+  trackedTest('mints a callback-scoped capability from exact fresh Host receipt and closed source files', async () => {
     const fixture = freshFixture();
     const receipt = fixture.receipt;
     let callbacks = 0;
@@ -97,35 +199,37 @@ describe('native existing-storage admission boundary', () => {
     Database.prototype.query = observedQuery;
     HostStateStore.prototype.assertMaintenanceFence = observedFenceVerification;
     try {
-      result = await withExistingStorageMergeCapability({
-        repositoryRoot: fixture.root,
-        workspaceId,
-        operationId: binding.operation_id,
-        planDigest: '9'.repeat(64),
-        expectedFenceBinding: binding,
-        receipt,
-        hostRelative,
-        mastraRelative,
-        closeHostOwner: () => {
-          callbacks++;
-          closeHostOwner(fixture);
-        },
-        operation: async (capability) => {
-          escapedCapability = capability;
-          capability.assertActive();
-          capability.assertSourcesUnchanged();
-          expect(capability.schema).toBe('VidaExistingStorageMergeCapability/v1');
-          expect(capability.binding).toMatchObject({
-            operation_id: binding.operation_id,
-            workspace_id: workspaceId,
-            plan_digest: '9'.repeat(64),
-            held_fence_token_digest: receipt.fence.token_digest,
-          });
-          expect(capability.host.sha256).toBe(sha256(readFileSync(path.join(fixture.root, hostRelative))));
-          expect(capability.mastra.sha256).toBe(sha256(readFileSync(path.join(fixture.root, mastraRelative))));
-          return 'admitted';
-        },
-      });
+      result = await expectAdmissionResult(() =>
+        withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => {
+            callbacks++;
+            closeHostOwner(fixture);
+          },
+          operation: async (capability) => {
+            escapedCapability = capability;
+            capability.assertActive();
+            capability.assertSourcesUnchanged();
+            expect(capability.schema).toBe('VidaExistingStorageMergeCapability/v1');
+            expect(capability.binding).toMatchObject({
+              operation_id: binding.operation_id,
+              workspace_id: workspaceId,
+              plan_digest: '9'.repeat(64),
+              held_fence_token_digest: receipt.fence.token_digest,
+            });
+            expect(capability.host.sha256).toBe(sha256(readFileSync(path.join(fixture.root, hostRelative))));
+            expect(capability.mastra.sha256).toBe(sha256(readFileSync(path.join(fixture.root, mastraRelative))));
+            return 'admitted';
+          },
+        }),
+      );
     } finally {
       HostStateStore.prototype.assertMaintenanceFence = originalAssertMaintenanceFence;
       Database.prototype.query = originalQuery;
@@ -142,14 +246,140 @@ describe('native existing-storage admission boundary', () => {
       expect(fenceVerificationReceivers).toContain(checkpointReceiver);
       await releaseFence(fixture.root, receipt);
     } catch (error) {
-      roots.delete(fixture.root);
+      retainedRoots.add(fixture.root);
       console.error(`Retained failed existing-storage admission fixture: ${fixture.root}`);
       throw error;
     }
   });
 
-  test('denies an incorrect request token before the owner-close or merge callback effects', async () => {
+  trackedTest('rejects a real Mastra source change after snapshot capture', async () => {
     const fixture = freshFixture();
+    const mastraPath = path.join(fixture.root, mastraRelative);
+    const originalBytes = readFileSync(mastraPath);
+    const changedBytes = Buffer.concat([originalBytes, Buffer.from([0])]);
+    let callbackCount = 0;
+    let closeCount = 0;
+    let exactDriftDenial = false;
+    let bodyFailure: { error: unknown } | undefined;
+    try {
+      const failure = await withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt: fixture.receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => {
+          closeCount++;
+          closeHostOwner(fixture);
+        },
+        operation: async (capability) => {
+          callbackCount++;
+          capability.assertActive();
+          writeFileSync(mastraPath, changedBytes);
+          expect(readFileSync(mastraPath)).toEqual(changedBytes);
+          capability.assertSourcesUnchanged();
+          return 'unexpectedly admitted changed source';
+        },
+      }).then(
+        () => null,
+        (cause: unknown) => cause,
+      );
+      expect(failure).toBeInstanceOf(Error);
+      expect(String(failure)).toContain('Mastra source changed after capture');
+      expect(callbackCount).toBe(1);
+      expect(closeCount).toBe(1);
+      expect(readFileSync(mastraPath)).toEqual(changedBytes);
+      exactDriftDenial = true;
+    } catch (error) {
+      bodyFailure = { error };
+    }
+
+    let restoreFailure: { error: unknown } | undefined;
+    if (exactDriftDenial) {
+      try {
+        writeFileSync(mastraPath, originalBytes);
+        expect(readFileSync(mastraPath)).toEqual(originalBytes);
+      } catch (error) {
+        restoreFailure = { error };
+        retainedRoots.add(fixture.root);
+        console.error(`Retained unverified source-drift fixture: ${fixture.root}`);
+      }
+    } else {
+      retainedRoots.add(fixture.root);
+      console.error(`Retained failed source-drift fixture: ${fixture.root}`);
+    }
+    if (bodyFailure && restoreFailure)
+      throw new AggregateError(
+        [bodyFailure.error, restoreFailure.error],
+        'Source drift assertion and restoration failed',
+      );
+    if (bodyFailure) throw bodyFailure.error;
+    if (restoreFailure) throw restoreFailure.error;
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('preserves a merge callback failure after releasing native SQLite admission', async () => {
+    const fixture = freshFixture();
+    const callbackFailure = new Error('merge callback failed');
+    let escapedCapability: ExistingStorageMergeCapability | undefined;
+    let closes = 0;
+    let operations = 0;
+    let caught: unknown;
+    try {
+      await withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt: fixture.receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => {
+          closes++;
+          closeHostOwner(fixture);
+        },
+        operation: async (capability) => {
+          operations++;
+          escapedCapability = capability;
+          capability.assertActive();
+          throw callbackFailure;
+        },
+      });
+    } catch (error) {
+      caught = error;
+    }
+    expect(caught).toBe(callbackFailure);
+    expect(closes).toBe(1);
+    expect(operations).toBe(1);
+    expect(() => escapedCapability?.assertActive()).toThrow(/callback capability expired/u);
+
+    const host = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
+    registerDatabase(host, fixture.root);
+    try {
+      const store = new HostStateStore(host, workspaceId, undefined, undefined, undefined, verifier, fixture.root);
+      expect(store.readMaintenanceFence()).toEqual(fixture.receipt.fence);
+    } finally {
+      closeOwnedDatabase(host);
+    }
+
+    const mastra = new Database(path.join(fixture.root, mastraRelative), { strict: true });
+    registerDatabase(mastra, fixture.root, () => mastra.close());
+    try {
+      expect(mastra.query<{ value: string }, []>('SELECT value FROM fixture_source').get()?.value).toBe('fresh');
+    } finally {
+      closeOwnedDatabase(mastra);
+    }
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('denies an incorrect request token before the owner-close or merge callback effects', async () => {
+    const fixture = freshFixture();
+    const fenceBefore = fixture.hostStore.readMaintenanceFence();
+    const mastraBefore = readFileSync(path.join(fixture.root, mastraRelative));
     let closes = 0;
     let operations = 0;
     const error = await withExistingStorageMergeCapability({
@@ -172,94 +402,101 @@ describe('native existing-storage admission boundary', () => {
       (cause: unknown) => cause,
     );
     expect(error).toBeInstanceOf(Error);
-    expect(String(error)).toMatch(/stale or forged/u);
+    expect(String(error)).toContain('maintenance fence receipt stale or forged');
     expect(closes).toBe(0);
     expect(operations).toBe(0);
-    await releaseFence(fixture.root, fixture.receipt);
-  });
-
-  test('a retained admitted Host reader denies the lower merge capability until that exact reader closes', async () => {
-    const fixture = freshFixture();
-    const contender = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
-    openDatabases.add(contender);
-    const contenderStore = new HostStateStore(
-      contender,
-      workspaceId,
-      undefined,
-      undefined,
-      undefined,
-      verifier,
-      fixture.root,
-    );
-    const beforeFence = contenderStore.readMaintenanceFence();
-    const hostBefore = readFileSync(path.join(fixture.root, hostRelative));
-    const mastraBefore = readFileSync(path.join(fixture.root, mastraRelative));
-    let closes = 0;
-    let operations = 0;
-    const error = await withExistingStorageMergeCapability({
-      repositoryRoot: fixture.root,
-      workspaceId,
-      operationId: binding.operation_id,
-      planDigest: '9'.repeat(64),
-      expectedFenceBinding: binding,
-      receipt: fixture.receipt,
-      hostRelative,
-      mastraRelative,
-      closeHostOwner: () => {
-        closes++;
-        closeHostOwner(fixture);
-      },
-      operation: async () => {
-        operations++;
-      },
-    }).then(
-      () => null,
-      (cause: unknown) => cause,
-    );
-    expect(error).toBeInstanceOf(Error);
-    expect(String(error)).toMatch(/locked|busy/iu);
-    expect(closes).toBe(1);
-    expect(operations).toBe(0);
-    expect(contenderStore.readMaintenanceFence()).toEqual(beforeFence);
-    expect(readFileSync(path.join(fixture.root, hostRelative))).toEqual(hostBefore);
+    expect(fixture.hostStore.readMaintenanceFence()).toEqual(fenceBefore);
     expect(readFileSync(path.join(fixture.root, mastraRelative))).toEqual(mastraBefore);
-    closeWorkspaceDatabaseWithAdmission(contender);
-    openDatabases.delete(contender);
-
-    const retryOwner = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
-    openDatabases.add(retryOwner);
-    let escaped: ExistingStorageMergeCapability | undefined;
-    const result = await withExistingStorageMergeCapability({
-      repositoryRoot: fixture.root,
-      workspaceId,
-      operationId: binding.operation_id,
-      planDigest: '9'.repeat(64),
-      expectedFenceBinding: binding,
-      receipt: fixture.receipt,
-      hostRelative,
-      mastraRelative,
-      closeHostOwner: () => {
-        closeWorkspaceDatabaseWithAdmission(retryOwner);
-        openDatabases.delete(retryOwner);
-      },
-      operation: async (capability) => {
-        operations++;
-        escaped = capability;
-        capability.assertActive();
-        capability.assertSourcesUnchanged();
-        expect(capability.binding.held_fence_token_digest).toBe(fixture.receipt.fence.token_digest);
-        return 'admitted after exact reader close';
-      },
-    });
-    expect(result).toBe('admitted after exact reader close');
-    expect(operations).toBe(1);
-    expect(() => escaped?.assertActive()).toThrow(/callback capability expired/u);
     await releaseFence(fixture.root, fixture.receipt);
   });
 
-  test('denies an old receipt after persisted fence CAS advance and a foreign operation owner', async () => {
+  trackedTest(
+    'a retained admitted Host reader denies the lower merge capability until that exact reader closes',
+    async () => {
+      const fixture = freshFixture();
+      const contender = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
+      registerDatabase(contender, fixture.root);
+      const contenderStore = new HostStateStore(
+        contender,
+        workspaceId,
+        undefined,
+        undefined,
+        undefined,
+        verifier,
+        fixture.root,
+      );
+      const beforeFence = contenderStore.readMaintenanceFence();
+      const hostBefore = readFileSync(path.join(fixture.root, hostRelative));
+      const mastraBefore = readFileSync(path.join(fixture.root, mastraRelative));
+      let closes = 0;
+      let operations = 0;
+      const error = await withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt: fixture.receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => {
+          closes++;
+          closeHostOwner(fixture);
+        },
+        operation: async () => {
+          operations++;
+        },
+      }).then(
+        () => null,
+        (cause: unknown) => cause,
+      );
+      expect(error).toBeInstanceOf(Error);
+      expect(String(error)).toMatch(/locked|busy/iu);
+      expect(closes).toBe(1);
+      expect(operations).toBe(0);
+      expect(contenderStore.readMaintenanceFence()).toEqual(beforeFence);
+      expect(readFileSync(path.join(fixture.root, hostRelative))).toEqual(hostBefore);
+      expect(readFileSync(path.join(fixture.root, mastraRelative))).toEqual(mastraBefore);
+      closeOwnedDatabase(contender);
+
+      const retryOwner = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
+      registerDatabase(retryOwner, fixture.root);
+      let escaped: ExistingStorageMergeCapability | undefined;
+      const result = await expectAdmissionResult(() =>
+        withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => {
+            closeOwnedDatabase(retryOwner);
+          },
+          operation: async (capability) => {
+            operations++;
+            escaped = capability;
+            capability.assertActive();
+            capability.assertSourcesUnchanged();
+            expect(capability.binding.held_fence_token_digest).toBe(fixture.receipt.fence.token_digest);
+            return 'admitted after exact reader close';
+          },
+        }),
+      );
+      expect(result).toBe('admitted after exact reader close');
+      expect(operations).toBe(1);
+      expect(() => escaped?.assertActive()).toThrow(/callback capability expired/u);
+      await releaseFence(fixture.root, fixture.receipt);
+    },
+  );
+
+  trackedTest('denies an old receipt after persisted fence CAS advance and a foreign operation owner', async () => {
     const stale = freshFixture();
     const advancedReceipt = await advanceFence(stale);
+    const advancedFence = stale.hostStore.readMaintenanceFence();
+    const staleMastraBefore = readFileSync(path.join(stale.root, mastraRelative));
     let staleOperations = 0;
     let staleCloses = 0;
     const staleError = await withExistingStorageMergeCapability({
@@ -282,12 +519,15 @@ describe('native existing-storage admission boundary', () => {
       (cause: unknown) => cause,
     );
     expect(staleError).toBeInstanceOf(Error);
-    expect(String(staleError)).toMatch(/stale or forged/u);
+    expect(String(staleError)).toContain('maintenance fence receipt stale or forged');
     expect(staleCloses).toBe(0);
     expect(staleOperations).toBe(0);
+    expect(stale.hostStore.readMaintenanceFence()).toEqual(advancedFence);
+    expect(readFileSync(path.join(stale.root, mastraRelative))).toEqual(staleMastraBefore);
     await stale.hostStore.releaseMaintenanceFence(advancedReceipt);
 
     const foreign = freshFixture();
+    const foreignFenceBefore = foreign.hostStore.readMaintenanceFence();
     let foreignOperations = 0;
     let foreignCloses = 0;
     const foreignOperationId = 'foreign-operation-001';
@@ -311,60 +551,64 @@ describe('native existing-storage admission boundary', () => {
       (cause: unknown) => cause,
     );
     expect(foreignError).toBeInstanceOf(Error);
-    expect(String(foreignError)).toMatch(/operation differs/u);
+    expect(String(foreignError)).toContain('held Host fence operation differs');
     expect(foreignCloses).toBe(0);
     expect(foreignOperations).toBe(0);
+    expect(foreign.hostStore.readMaintenanceFence()).toEqual(foreignFenceBefore);
     await releaseFence(foreign.root, foreign.receipt);
   });
 
-  test('denies a released fence and keeps existing project upgrade blocked by legacy overlap status', async () => {
-    const fixture = freshFixture();
-    await releaseFence(fixture.root, fixture.receipt);
-    let closes = 0;
-    let operations = 0;
-    const revokedError = await withExistingStorageMergeCapability({
-      repositoryRoot: fixture.root,
-      workspaceId,
-      operationId: binding.operation_id,
-      planDigest: '9'.repeat(64),
-      expectedFenceBinding: binding,
-      receipt: fixture.receipt,
-      hostRelative,
-      mastraRelative,
-      closeHostOwner: () => {
-        closes++;
-      },
-      operation: async () => {
-        operations++;
-      },
-    }).then(
-      () => null,
-      (cause: unknown) => cause,
-    );
-    expect(revokedError).toBeInstanceOf(Error);
-    expect(String(revokedError)).toMatch(/stale or forged/u);
-    expect(closes).toBe(0);
-    expect(operations).toBe(0);
+  trackedTest(
+    'denies a released fence and keeps existing project upgrade blocked by legacy overlap status',
+    async () => {
+      const fixture = freshFixture();
+      await releaseFence(fixture.root, fixture.receipt);
+      let closes = 0;
+      let operations = 0;
+      const revokedError = await withExistingStorageMergeCapability({
+        repositoryRoot: fixture.root,
+        workspaceId,
+        operationId: binding.operation_id,
+        planDigest: '9'.repeat(64),
+        expectedFenceBinding: binding,
+        receipt: fixture.receipt,
+        hostRelative,
+        mastraRelative,
+        closeHostOwner: () => {
+          closes++;
+        },
+        operation: async () => {
+          operations++;
+        },
+      }).then(
+        () => null,
+        (cause: unknown) => cause,
+      );
+      expect(revokedError).toBeInstanceOf(Error);
+      expect(String(revokedError)).toContain('maintenance fence receipt stale or forged');
+      expect(closes).toBe(0);
+      expect(operations).toBe(0);
 
-    const releasedFence = fixture.hostStore.readMaintenanceFence();
-    expect(releasedFence?.status).toBe('released');
-    let overlapCloses = 0;
-    const overlapError = await prepareExistingProjectUpgradeDatabase(
-      fixture.root,
-      binding.operation_id,
-      fixture.hostStore,
-      () => {
-        overlapCloses++;
-      },
-    ).then(
-      () => null,
-      (cause: unknown) => cause,
-    );
-    expect(overlapError).toBeInstanceOf(Error);
-    expect(String(overlapError)).toMatch(/legacy ungated storage openers are not excluded/u);
-    expect(overlapCloses).toBe(0);
-    expect(fixture.hostStore.readMaintenanceFence()).toEqual(releasedFence);
-  });
+      const releasedFence = fixture.hostStore.readMaintenanceFence();
+      expect(releasedFence?.status).toBe('released');
+      let overlapCloses = 0;
+      const overlapError = await prepareExistingProjectUpgradeDatabase(
+        fixture.root,
+        binding.operation_id,
+        fixture.hostStore,
+        () => {
+          overlapCloses++;
+        },
+      ).then(
+        () => null,
+        (cause: unknown) => cause,
+      );
+      expect(overlapError).toBeInstanceOf(Error);
+      expect(String(overlapError)).toMatch(/legacy ungated storage openers are not excluded/u);
+      expect(overlapCloses).toBe(0);
+      expect(fixture.hostStore.readMaintenanceFence()).toEqual(releasedFence);
+    },
+  );
 });
 
 interface Fixture {
@@ -377,9 +621,10 @@ interface Fixture {
 function freshFixture(): Fixture {
   const root = mkdtempSync(path.join(tmpdir(), 'upgrade-admission-native-private-'));
   roots.add(root);
+  retainedRoots.add(root);
   mkdirSync(path.join(root, '.vida'));
   const hostOwner = openHostStateDatabase(root, hostRelative, workspaceId);
-  openDatabases.add(hostOwner);
+  registerDatabase(hostOwner, root);
   initializeHostDatabaseSchema(hostOwner);
   const hostStore = new HostStateStore(hostOwner, workspaceId, undefined, undefined, undefined, verifier, root);
   const receipt = hostStore.acquireMaintenanceFence(binding);
@@ -398,8 +643,7 @@ function freshFixture(): Fixture {
 }
 
 function closeHostOwner(fixture: Fixture): void {
-  closeWorkspaceDatabaseWithAdmission(fixture.hostOwner);
-  openDatabases.delete(fixture.hostOwner);
+  closeOwnedDatabase(fixture.hostOwner);
 }
 
 async function advanceFence(fixture: Fixture): Promise<MaintenanceFenceReceipt> {
@@ -418,10 +662,11 @@ function sha256(bytes: Uint8Array): string {
 
 async function releaseFence(root: string, receipt: MaintenanceFenceReceipt): Promise<void> {
   const database = openHostStateDatabase(root, hostRelative, workspaceId);
+  registerDatabase(database, root);
   const store = new HostStateStore(database, workspaceId, undefined, undefined, undefined, verifier, root);
   try {
     await store.releaseMaintenanceFence(receipt);
   } finally {
-    closeWorkspaceDatabaseWithAdmission(database);
+    closeOwnedDatabase(database);
   }
 }

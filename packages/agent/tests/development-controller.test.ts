@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { test, expect } from 'bun:test';
 import {
   mkdtempSync,
@@ -92,7 +93,11 @@ test('qualified development controller preserves Source identity and accepts a s
   let completed = false;
   try {
     const controllerRoot = path.join(scratch, 'controller');
-    const prepared = await prepareDevelopmentController({ target: sourceRoot, controllerRoot });
+    let prepared: Awaited<ReturnType<typeof prepareDevelopmentController>> | undefined;
+    await assert.doesNotReject(async () => {
+      prepared = await prepareDevelopmentController({ target: sourceRoot, controllerRoot });
+    });
+    assert.ok(prepared, 'controller preparation returned a result');
     expect(prepared.status).toBe('prepared');
     expect(readFileSync(path.join(prepared.package_root, 'bun.lock')).equals(readPortableLock(packageRoot))).toBe(true);
     expect(prepared.identity.bundle).toBe('packages/agent');
@@ -101,7 +106,11 @@ test('qualified development controller preserves Source identity and accepts a s
         executeDevelopmentController({ controllerRoot, command: 'run', args: ['--project-root', sourceRoot] }),
       ).rejects.toThrow('qualified'),
     );
-    const ready = await verifyDevelopmentController({ controllerRoot });
+    let ready: Awaited<ReturnType<typeof verifyDevelopmentController>> | undefined;
+    await assert.doesNotReject(async () => {
+      ready = await verifyDevelopmentController({ controllerRoot });
+    });
+    assert.ok(ready, 'controller verification returned a result');
     expect(ready.status).toBe('ready');
     if (ready.qualification === undefined) throw new Error('ready controller is missing its qualification');
     expect(ready.qualification.schema).toBe('DevelopmentControllerQualification/v1');
@@ -119,7 +128,12 @@ test('qualified development controller preserves Source identity and accepts a s
       }),
     );
     const warmStarted = performance.now();
-    expect((await inspectDevelopmentController({ controllerRoot })).qualification).toEqual(ready.qualification);
+    let inspected: Awaited<ReturnType<typeof inspectDevelopmentController>> | undefined;
+    await assert.doesNotReject(async () => {
+      inspected = await inspectDevelopmentController({ controllerRoot });
+    });
+    assert.ok(inspected, 'controller inspection returned a result');
+    expect(inspected.qualification).toEqual(ready.qualification);
     console.log(JSON.stringify({ operation: 'warm-controller-inspect', elapsed_ms: performance.now() - warmStarted }));
     const execStarted = performance.now();
     const invoked = spawnSync(
@@ -220,7 +234,7 @@ test('development controller rejects an active selector and an overlapping or li
       expect(
         prepareDevelopmentController({
           target: sourceRoot,
-          controllerRoot: path.join(sourceRoot, '.tmp/new-controller'),
+          controllerRoot: path.join(sourceRoot, `.controller-overlap-denial-${process.pid}`),
         }),
       ).rejects.toThrow('outside'),
     );

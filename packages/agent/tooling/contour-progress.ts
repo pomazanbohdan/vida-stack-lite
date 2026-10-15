@@ -105,6 +105,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
               'VidaBunFocusedCoverageDiagnostic/v1',
               'VidaBunCoverageOperationOutcome/v1',
               'VidaScopedCrapBudgetReport/v1',
+              'VidaScopedCrapBudgetReport/v2',
               'CandidateMutationPilotReport/v2',
               'CandidateMutationReport/v4',
             ],
@@ -151,6 +152,20 @@ function text(value: unknown): string {
 function number(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error('Invalid contour number.');
   return value;
+}
+function positiveInteger(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isSafeInteger(value) || value <= 0)
+    throw new Error('Scoped CRAP proof rows are malformed.');
+  return value;
+}
+function positiveFinite(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0)
+    throw new Error('Scoped CRAP measurements must be positive finite numbers.');
+  return value;
+}
+function exactKeys(row: Record<string, unknown>, expected: readonly string[]): void {
+  if (Object.keys(row).length !== expected.length || Object.keys(row).some((key) => !expected.includes(key)))
+    throw new Error('Scoped CRAP v2 function row has fields outside its declared kind.');
 }
 function digests(value: unknown): Digest[] {
   const result = rows(value)
@@ -250,7 +265,10 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
     run_id: text(report.run_id),
     tests: digests(report.test_inputs),
     tools: digests(report.tool_inputs),
-    tool_fingerprint: report.schema === 'VidaScopedCrapBudgetReport/v1' ? null : text(report.tool_fingerprint),
+    tool_fingerprint:
+      report.schema === 'VidaScopedCrapBudgetReport/v1' || report.schema === 'VidaScopedCrapBudgetReport/v2'
+        ? null
+        : text(report.tool_fingerprint),
     producer_schema: text(report.schema),
   };
   if (report.schema === 'VidaBunFocusedCoverageDiagnostic/v1') {
@@ -418,6 +436,243 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
       },
     ];
   }
+  if (report.schema === 'VidaScopedCrapBudgetReport/v2') {
+    const allowed = [
+      'schema',
+      'status',
+      'contour',
+      'qualification_scope',
+      'full_qualification',
+      'historical_measurement_admitted',
+      'historical_coverage_runtime_artifacts',
+      'baseline_ref',
+      'baseline_commit',
+      'budget_commit',
+      'budget_file',
+      'budget_sha256',
+      'original_sources',
+      'source_mappings',
+      'run_id',
+      'coverage_run_id',
+      'coverage_report',
+      'coverage_report_sha256',
+      'manifest_sha256',
+      'sources',
+      'test_inputs',
+      'tool_inputs',
+      'module_inputs',
+      'test_selection',
+      'functions',
+      'limits',
+    ];
+    if (allowed.some((key) => !(key in report)))
+      throw new Error('Scoped CRAP v2 report is missing owner-issued proof fields.');
+    if (Object.keys(report).some((key) => !allowed.includes(key)))
+      throw new Error('Scoped CRAP v2 report contains unrecognized claims.');
+    const contour = text(report.contour);
+    const runId = text(report.run_id);
+    if (
+      report.status !== 'scoped-proof-pass' ||
+      report.qualification_scope !== 'declared-contour-reviewed-function-budgets' ||
+      report.full_qualification !== false ||
+      report.historical_measurement_admitted !== false ||
+      report.historical_coverage_runtime_artifacts !== 'not-consumed/not-admitted' ||
+      text(report.coverage_run_id) !== runId
+    )
+      throw new Error('Scoped CRAP v2 report has invalid local-only qualification metadata.');
+
+    const sources = checkedSources(contour, report.sources);
+    const originalSources = digests(report.original_sources);
+    const tests = digests(report.test_inputs);
+    const tools = digests(report.tool_inputs);
+    const moduleInputs = digests(report.module_inputs);
+    text(report.limits);
+    if (!tests.length || !tools.length || !moduleInputs.length)
+      throw new Error('Scoped CRAP v2 proof requires complete captured test, tool and module inputs.');
+    if (
+      [...originalSources, ...sources, ...tests, ...tools, ...moduleInputs].some(
+        (row) => !/^[a-f0-9]{64}$/.test(row.sha256),
+      )
+    )
+      throw new Error('Scoped CRAP v2 input digest is malformed.');
+
+    const mappingRows = rows(report.source_mappings);
+    const originalPaths = new Set(originalSources.map((row) => row.path));
+    const currentPaths = new Set(sources.map((row) => row.path));
+    const sourceMap = new Map<string, string>();
+    const mappedCurrent = new Set<string>();
+    for (const row of mappingRows) {
+      exactKeys(row, ['original_path', 'current_path', 'rationale']);
+      const originalPath = text(row.original_path);
+      const currentPath = text(row.current_path);
+      const rationale = text(row.rationale);
+      if (
+        originalPath.trim() !== originalPath ||
+        currentPath.trim() !== currentPath ||
+        rationale.trim().length < 8 ||
+        !originalPaths.has(originalPath) ||
+        !currentPaths.has(currentPath)
+      )
+        throw new Error('Scoped CRAP v2 source mapping is malformed.');
+      if (sourceMap.has(originalPath) || mappedCurrent.has(currentPath))
+        throw new Error('Scoped CRAP v2 source mappings must be one-to-one.');
+      sourceMap.set(originalPath, currentPath);
+      mappedCurrent.add(currentPath);
+    }
+    const removedSourcePaths = new Set([...originalPaths].filter((file) => !sourceMap.has(file)));
+    const newSourcePaths = new Set([...currentPaths].filter((file) => !mappedCurrent.has(file)));
+    if (
+      [...sourceMap.keys(), ...removedSourcePaths].some((file) => !originalPaths.has(file)) ||
+      [...mappedCurrent, ...newSourcePaths].some((file) => !currentPaths.has(file))
+    )
+      throw new Error('Scoped CRAP v2 source mappings and additions/removals differ from exact Source paths.');
+
+    const selection = object(report.test_selection);
+    if (
+      selection.mode !== 'focused-diagnostic' ||
+      text(selection.contour) !== contour ||
+      !Array.isArray(selection.sources) ||
+      canonicalJson(selection.sources.map(text).sort()) !== canonicalJson(sources.map((row) => row.path))
+    )
+      throw new Error('Scoped CRAP v2 test contour or selected Sources differ.');
+    const selected = selectedTests(contour, selection.tests, tests);
+    if (!selected.selection_complete) throw new Error('Scoped CRAP v2 test selection is incomplete.');
+
+    const functions = rows(report.functions);
+    if (!functions.length) throw new Error('Scoped CRAP v2 report has no function dispositions.');
+    const originalIds = new Set<string>();
+    const currentIds = new Set<string>();
+    const newIds = new Set<string>();
+    const currentRows: { complexity: number; crap: number }[] = [];
+    const sourceOfIdentity = (value: unknown): string => {
+      const identity = text(value);
+      const delimiter = identity.indexOf('#');
+      if (identity.trim() !== identity || delimiter <= 0 || delimiter === identity.length - 1)
+        throw new Error('Scoped CRAP v2 function identity is malformed.');
+      return identity.slice(0, delimiter);
+    };
+    for (const row of functions) {
+      const kind = text(row.kind);
+      if (text(row.rationale).trim().length < 8) throw new Error('Scoped CRAP v2 function rationale is missing.');
+      if (kind === 'retained') {
+        exactKeys(row, [
+          'kind',
+          'identity',
+          'current_identity',
+          'original_source_complexity',
+          'maximum_complexity',
+          'maximum_crap',
+          'complexity',
+          'coverage',
+          'crap',
+          'rationale',
+        ]);
+        const identity = text(row.identity);
+        const currentIdentity = text(row.current_identity);
+        const originalPath = sourceOfIdentity(identity);
+        const currentPath = sourceOfIdentity(currentIdentity);
+        if (sourceMap.get(originalPath) !== currentPath || originalIds.has(identity) || currentIds.has(currentIdentity))
+          throw new Error('Scoped CRAP v2 function lineage is not one-to-one through reviewed source mappings.');
+        originalIds.add(identity);
+        currentIds.add(currentIdentity);
+        const originalComplexity = positiveInteger(row.original_source_complexity);
+        const maximumComplexity = positiveInteger(row.maximum_complexity);
+        const maximumCrap = positiveInteger(row.maximum_crap);
+        const complexity = positiveInteger(row.complexity);
+        const crap = positiveFinite(row.crap);
+        if (
+          maximumComplexity !== originalComplexity ||
+          maximumCrap < originalComplexity ||
+          complexity > maximumComplexity ||
+          crap > maximumCrap ||
+          crap !== complexity
+        )
+          throw new Error('Scoped CRAP v2 measurements exceed their reviewed budgets.');
+        if (row.coverage !== 1) throw new Error('Scoped CRAP v2 current function measurement is incomplete.');
+        currentRows.push({ complexity, crap });
+      } else if (kind === 'new') {
+        exactKeys(row, [
+          'kind',
+          'identity',
+          'current_identity',
+          'maximum_complexity',
+          'maximum_crap',
+          'complexity',
+          'coverage',
+          'crap',
+          'rationale',
+        ]);
+        const identity = text(row.identity);
+        const currentIdentity = text(row.current_identity);
+        const currentPath = sourceOfIdentity(currentIdentity);
+        if (
+          identity !== currentIdentity ||
+          !currentPaths.has(currentPath) ||
+          originalIds.has(identity) ||
+          currentIds.has(currentIdentity)
+        )
+          throw new Error('Scoped CRAP v2 new function identity is not bound to a reviewed current Source.');
+        currentIds.add(currentIdentity);
+        newIds.add(identity);
+        const maximumComplexity = positiveInteger(row.maximum_complexity);
+        const maximumCrap = positiveInteger(row.maximum_crap);
+        const complexity = positiveInteger(row.complexity);
+        const crap = positiveFinite(row.crap);
+        if (
+          maximumComplexity > 10 ||
+          maximumCrap > 10 ||
+          complexity > maximumComplexity ||
+          crap > maximumCrap ||
+          crap !== complexity
+        )
+          throw new Error('Scoped CRAP v2 measurements exceed their reviewed budgets.');
+        if (row.coverage !== 1) throw new Error('Scoped CRAP v2 current function measurement is incomplete.');
+        currentRows.push({ complexity, crap });
+      } else if (kind === 'removed') {
+        exactKeys(row, ['kind', 'identity', 'file', 'rationale']);
+        const identity = text(row.identity);
+        const file = text(row.file);
+        if (
+          file.trim() !== file ||
+          sourceOfIdentity(identity) !== file ||
+          !originalPaths.has(file) ||
+          originalIds.has(identity)
+        )
+          throw new Error('Scoped CRAP v2 removed function is not bound to a reviewed original Source.');
+        originalIds.add(identity);
+      } else {
+        throw new Error('Scoped CRAP v2 function kind is invalid.');
+      }
+    }
+    if ([...newIds].some((identity) => originalIds.has(identity)))
+      throw new Error('Scoped CRAP v2 new function overlaps a reviewed original identity.');
+    if (!currentRows.length) throw new Error('Scoped CRAP v2 report has no current function measurements.');
+    return [
+      {
+        ...receipt,
+        contour,
+        lane: 'frozen-crap',
+        run_id: runId,
+        coverage_run_id: text(report.coverage_run_id),
+        function_count: currentRows.length,
+        sources,
+        tests,
+        tools,
+        closure: inputClosure(moduleInputs, tests, tools, sources),
+        ...selected,
+        producer_schema: text(report.schema),
+        selection_artifact: receipt.artifact,
+        tool_fingerprint: null,
+        status: 'scoped-proof-pass',
+        accepted: true,
+        coverage: null,
+        max_cc: Math.max(...currentRows.map((row) => row.complexity)),
+        max_entry_crap: Math.max(...currentRows.map((row) => row.crap)),
+        killed: null,
+        mutants: null,
+      },
+    ];
+  }
   if (report.schema !== 'CandidateMutationPilotReport/v2' && report.schema !== 'CandidateMutationReport/v4')
     throw new Error('Unsupported contour producer schema.');
   if (!Array.isArray(report.selected_partitions) || !report.selected_partitions.length)
@@ -536,7 +791,8 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
           (attempt.killed === null) !== (attempt.mutants === null))) ||
       (attempt.lane === 'frozen-crap' &&
         (!attempt.accepted ||
-          attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v1' ||
+          (attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v1' &&
+            attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v2') ||
           attempt.coverage_run_id !== attempt.run_id ||
           !Number.isSafeInteger(attempt.function_count) ||
           attempt.coverage !== null ||

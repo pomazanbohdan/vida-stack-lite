@@ -32,6 +32,10 @@ function rejectRecord(value: unknown): void {
     name: 'Error',
     message: 'host workflow approval record is invalid',
   });
+  assert.throws(() => validateHostWorkflowApprovalRecord(value), {
+    name: 'Error',
+    message: 'host workflow approval record is invalid',
+  });
 }
 
 test('reserved approval has its exact shape and parsing remains normalization without authority', () => {

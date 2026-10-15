@@ -158,5 +158,6 @@ describe('clean v1 package surface', () => {
     const result = await runLibSqlSmoke();
     expect(result.reopened).toBe(true);
     expect(result.persisted).toBe(true);
+    expect(result.cleanupDeferred).toBe(false);
   });
 });

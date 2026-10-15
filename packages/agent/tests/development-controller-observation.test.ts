@@ -435,11 +435,14 @@ test('retains UNKNOWN when final compound receipt persistence fails after child 
       `for (const role of ${jsonText(roles)}) { const result = invokeNestedObservedControllerChild({ role, executable: process.execPath, args: [process.env.TEST_NESTED_FILES.split('|')[${jsonText(roles)}.indexOf(role)]], cwd: process.cwd(), timeout: 30000 }); if (result.status !== 0) process.exit(21); }\n` +
       `fs.mkdirSync(path.join(process.env.VIDA_CONTROLLER_OBSERVATION_RUN_ROOT, 'parent-complete.json'));\n`,
   );
-  assert.throws(() =>
-    runChild(controllerRoot, parent, {
-      nestedChildren: roles,
-      env: { TEST_NESTED_FILES: roles.map((role) => nestedFile(nestedFiles, role)).join('|') },
-    }),
+  assert.throws(
+    () =>
+      runChild(controllerRoot, parent, {
+        nestedChildren: roles,
+        env: { TEST_NESTED_FILES: roles.map((role) => nestedFile(nestedFiles, role)).join('|') },
+      }),
+    (error: unknown) =>
+      isJsonRecord(error) && error.path === path.join(latestRun(controllerRoot), 'parent-complete.json'),
   );
   const runRoot = latestRun(controllerRoot);
   assert.equal(receipt(controllerRoot).capture_status, 'complete');

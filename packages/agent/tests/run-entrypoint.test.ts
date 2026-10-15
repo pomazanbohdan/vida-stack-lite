@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { recoverFailedPrewriterOwner } from '../bin/recover-failed-prewriter-owner.ts';
 import { afterAll, describe, expect, test, spyOn } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
@@ -590,6 +591,15 @@ import {
 import { applyDeliveredWorkContinuationPlan } from '../bin/runtime-code-rebind.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+async function runSuccessfully(args: readonly string[]): Promise<unknown> {
+  let result: unknown;
+  await assert.doesNotReject(async () => {
+    result = await run([...args]);
+  });
+  assert.notEqual(result, undefined, 'run target resolved without a result');
+  return result;
+}
 
 type ActiveSelectorState = Parameters<typeof advanceCutoff>[0];
 
@@ -1211,7 +1221,7 @@ describe('unprepared recovery', () => {
         '--request',
         'inspect.json',
       ];
-      const inspectedResult = await run(args);
+      const inspectedResult = await runSuccessfully(args);
       phase('public-inspect-returned');
       const inspected = parseUnpreparedRecoveryResult(inspectedResult);
       const inspectedEnvelope = requireRecord(inspected.request, 'unprepared recovery request envelope');
@@ -1229,7 +1239,7 @@ describe('unprepared recovery', () => {
       const apply = args.map((value, index) =>
         args[index - 1] === '--mode' ? 'apply' : args[index - 1] === '--request' ? 'apply.json' : value,
       );
-      const releasedResult = await run(apply);
+      const releasedResult = await runSuccessfully(apply);
       phase('public-apply-returned');
       const released = parseUnpreparedRecoveryResult(releasedResult);
       if (released.status !== 'unprepared_execution_released' || released.rights_granted !== false)
@@ -1259,7 +1269,7 @@ describe('unprepared recovery', () => {
         expect(claim.renewed_at).toBe(operation.created_at);
       }
       f.reopen();
-      const retriedResult = await run(apply);
+      const retriedResult = await runSuccessfully(apply);
       phase('public-retry-returned');
       const retried = parseUnpreparedRecoveryResult(retriedResult);
       expect(retried.work_version).toEqual(released.work_version);
@@ -2143,10 +2153,12 @@ describe('vida-agent run entrypoint fast checks', () => {
         '--work-path',
         'products/shared/src/probe.ts',
       ]);
+      expect(chosenEqualMember.status).toBe(1);
       expect(requireRecord(parseJsonUnknown(chosenEqualMember.stderr), 'CLI result').code).toBe(
         'GAP-VIDA-RUN-WORKFLOW-001',
       );
       const outsideRoot = invokeRoot([...base, '--project', 'alpha', '--work-path', 'wiki/skills/guide.md']);
+      expect(outsideRoot.status).toBe(1);
       expect(requireRecord(parseJsonUnknown(outsideRoot.stderr), 'CLI result').code).toBe('GAP-VIDA-RUN-WORKFLOW-001');
       const ambiguous = invokeRoot([
         ...base,
@@ -2157,8 +2169,10 @@ describe('vida-agent run entrypoint fast checks', () => {
         '--work-path',
         'products/shared/src/probe.ts',
       ]);
+      expect(ambiguous.status).toBe(1);
       expect(requireRecord(parseJsonUnknown(ambiguous.stderr), 'CLI result').code).toBe('GAP-VIDA-RUN-CONTEXT-001');
       const nestedForeign = invokeRoot([...base, '--project', 'broad', '--work-path', 'products/foreign/src/probe.ts']);
+      expect(nestedForeign.status).toBe(1);
       expect(requireRecord(parseJsonUnknown(nestedForeign.stderr), 'CLI result').code).toBe('GAP-VIDA-RUN-CONTEXT-001');
     } finally {
       if (preserveRoot) process.stderr.write(`Retained uncertain public run fixture: ${root}\n`);
@@ -2763,14 +2777,19 @@ if (mutationMode || v8CoverageMode) {
         if (!initial) throw Error('fixture continuation state is missing');
         expect(initial.action_status).toBe('unissued');
         fixture.closeDatabase();
-        const inspected = parseTestRunPayload(await run([...args, '--inspect', 'true']));
+        const inspected = parseTestRunPayload(await runSuccessfully([...args, '--inspect', 'true']));
         expect(inspected.status).toBe('continuation_review_ready');
         const inspectedActions = requireNextActions(inspected);
         expect(inspectedActions).toHaveLength(1);
         expect(inspectedActions[0]?.historical_review_input?.body_sha256).toBe(fixture.capture.body_sha256);
         expect(inspected.accepted_result).toBe(false);
         const issued = parseTestRunPayload(
-          await run([...args, ...expected(requireStateVersion(inspected.state_version)), '--issue-wave', 'true']),
+          await runSuccessfully([
+            ...args,
+            ...expected(requireStateVersion(inspected.state_version)),
+            '--issue-wave',
+            'true',
+          ]),
         );
         expect(issued.status).toBe('issued');
         const issuedActions = requireIssuedActions(issued);
@@ -2778,7 +2797,7 @@ if (mutationMode || v8CoverageMode) {
         expect(issuedActions[0]?.historical_review_input?.body_sha256).toBe(fixture.capture.body_sha256);
         const issuedStateVersion = requireStateVersion(issued.state_version);
         const issueRetry = parseTestRunPayload(
-          await run([...args, ...expected(issuedStateVersion), '--issue-wave', 'true']),
+          await runSuccessfully([...args, ...expected(issuedStateVersion), '--issue-wave', 'true']),
         );
         expect(issueRetry.status).toBe('wave_retrieved');
         const retryActions = requireIssuedActions(issueRetry);
@@ -2804,13 +2823,18 @@ if (mutationMode || v8CoverageMode) {
           };
         writeFileSync(reportPath, observationBody('Reviewed the retained synthesis without accepting it.'));
         const reported = parseTestRunPayload(
-          await run([...args, ...expected(issuedStateVersion), '--report', reportPath]),
+          await runSuccessfully([...args, ...expected(issuedStateVersion), '--report', reportPath]),
         );
         expect(reported.status).toBe('continuation_review_reported');
         expect(reported.accepted_result).toBe(false);
         expect(reported.runtime_accepted).toBe(false);
         const reportRetry = parseTestRunPayload(
-          await run([...args, ...expected(requireStateVersion(reported.state_version)), '--report', reportPath]),
+          await runSuccessfully([
+            ...args,
+            ...expected(requireStateVersion(reported.state_version)),
+            '--report',
+            reportPath,
+          ]),
         );
         expect(reportRetry.status).toBe('report_retrieved');
         expect(reportRetry.state_version).toEqual(reported.state_version);

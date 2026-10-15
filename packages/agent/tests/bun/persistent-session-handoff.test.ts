@@ -814,7 +814,7 @@ describe('durable Mastra research exposure and invocation identity', () => {
           current.version,
           mastraObservation(right.request, right.issue_id, sharedRef, undefined, 'same-agent'),
         );
-      }).toThrow();
+      }).toThrow(/outside an allowed read-only slot batch/);
     }
 
     const workId = 'batch-mismatch-run';

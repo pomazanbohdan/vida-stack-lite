@@ -35,7 +35,7 @@
     },
     {
       "file": "src/lifecycle/lifecycle-state.ts",
-      "sha256": "73127bf9f6cf42ccd1b19cccb52f37bfb44a409cdb1ff8be4762156434f069de"
+      "sha256": "264525872ea7ba249f007316024eb2597a3049954bd48671357dc7d29a4f1423"
     },
     {
       "file": "src/lifecycle/runtime-facade.ts",
@@ -220867,5 +220867,104 @@
     "independent_review": "/workspace/attachments/quality-doc-baseline-source-fix-review-20261015.md",
     "source_roles": "No functions or callbacks added/removed; existing owner responsibilities and every saved original/new cap remain unchanged. Current addresses and numerical qualification must be refreshed by existing captured inventory owners before admission.",
     "limits": "Source and targeted regression proof only; no dynamic CRAP, mutation, SDK, native runtime or global qualification claim."
+  },
+  "lifecycle_duplicate_guard_correction_20261015": {
+    "status": "SOURCE_CORRECTION_PENDING_NUMERICAL_QUALIFICATION",
+    "prior_source_ref": "41802ab",
+    "files": [
+      "src/lifecycle/lifecycle-state.ts"
+    ],
+    "bindings": [
+      {
+        "file": "src/lifecycle/lifecycle-state.ts",
+        "previous_sha256": "73127bf9f6cf42ccd1b19cccb52f37bfb44a409cdb1ff8be4762156434f069de",
+        "sha256": "264525872ea7ba249f007316024eb2597a3049954bd48671357dc7d29a4f1423"
+      }
+    ],
+    "reason": "Remove caller-proven private missing-CLEAR guard and pure aggregate predicates already established by earlier validateReference. Retain transition prerequisites before recursive input freezing and every reachable diagnostic.",
+    "independent_review": "/workspace/attachments/quality-lifecycle-source-cleanup-final-review-20261015.md",
+    "source_roles": "No function added or removed; no responsibility transfer or frozen cap changes. Existing captured inventory owners must refresh current addresses and numerical evidence.",
+    "limits": "Targeted development proof only; no fresh coverage, scoped CRAP, mutation or global qualification yet."
+  },
+  "scope_review_runtime_initialization_20261015": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-runtime-initialization",
+    "files": [
+      "src/runtime-initialization.ts",
+      "src/workspace-identity.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/runtime-initialization.ts",
+        "current_path": "src/runtime-initialization.ts",
+        "rationale": "The original Host binding, lock, and expected-project responsibilities remain in this exact source path. The existing binder and its nested callback roles retain their saved identity lineage; current read/admission/retry and project-configuration roles remain separate additions with their own existing reviewed rows."
+      },
+      {
+        "original_path": "src/workspace-identity.ts",
+        "current_path": "src/workspace-identity.ts",
+        "rationale": "The original workspace identity validation responsibilities remain in this exact source path and retain their selected identity lineage. This path mapping does not transfer caps to additions elsewhere in the runtime-initialization contour."
+      }
+    ],
+    "reviewed_source_context": "faf9e56f53012c924a008e3aabac65ea41a8bad5",
+    "independent_review": "/workspace/attachments/quality-five-lineage-review-20261015.md",
+    "current_cli_review": null,
+    "selected_rows": {
+      "retained": 12,
+      "new": 6,
+      "removed": 0,
+      "selection_basis": "8 runtime-initialization retained rows plus 4 workspace-identity retained rows; includes the saved binder and nested callback mappings even where file is absent."
+    },
+    "frozen_cap_action": "Keep every saved retained ceiling and each selected new-role cap unchanged; no new or transferred cap is proposed.",
+    "limitations": "Independent Source correspondence review only; existing saved caps unchanged. No original runtime measurement admitted. Exact inventory partitions, full current coverage and scoped proof remain executable gates. No numerical, global or runtime qualification from metadata."
+  },
+  "scope_review_bun_cli_toolchain_20261015": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-cli-toolchain",
+    "files": [
+      "bin/bun.mjs"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "bin/bun.mjs",
+        "current_path": "bin/bun.ts",
+        "rationale": "This is the exact reviewed legacy entrypoint rename from bin/bun.mjs to bin/bun.ts. The original bin/bun.mjs terminal/unknown classifier responsibility maps to the current positive type predicate by polarity inversion; the retained terminal consumer uses that predicate, while the public inverse relay is a separately budgeted new role. Other extracted CLI responsibilities remain separate new roles, with no cap transferred from the renamed original identities."
+      }
+    ],
+    "reviewed_source_context": "faf9e56f53012c924a008e3aabac65ea41a8bad5",
+    "independent_review": "/workspace/attachments/quality-five-lineage-review-20261015.md",
+    "current_cli_review": "/workspace/attachments/quality-v2-metadata-current-review-20261015.md",
+    "selected_rows": {
+      "retained": 25,
+      "new": 15,
+      "removed": 1,
+      "selection_basis": "Original retained identities use the bin/bun.mjs prefix; current identities and new roles use bin/bun.ts; the removed row is the saved PATHEXT-extension selection callback."
+    },
+    "frozen_cap_action": "Keep every saved retained ceiling and all 15 individually published new-role caps unchanged; preserve the existing removal disposition; no new or transferred cap is proposed.",
+    "limitations": "Independent Source correspondence review only; existing saved caps unchanged. No original runtime measurement admitted. Exact inventory partitions, full current coverage and scoped proof remain executable gates. No numerical, global or runtime qualification from metadata."
+  },
+  "scope_review_bun_final_assurance_20261015": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-final-assurance",
+    "files": [
+      "src/orchestration/final-assurance.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/orchestration/final-assurance.ts",
+        "current_path": "src/orchestration/final-assurance.ts",
+        "rationale": "The retained final-assurance responsibilities remain in this exact source path and preserve their saved call context. The original validateWorkSessionBinding compatibility entrypoint still delegates through the extracted corrective-authority path; the three extracted callable owners remain distinct new roles with their own existing prospective rows."
+      }
+    ],
+    "reviewed_source_context": "faf9e56f53012c924a008e3aabac65ea41a8bad5",
+    "independent_review": "/workspace/attachments/quality-five-lineage-review-20261015.md",
+    "current_cli_review": null,
+    "selected_rows": {
+      "retained": 91,
+      "new": 3,
+      "removed": 0,
+      "selection_basis": "Exact original/current path-prefix selection from the reviewed partial; extracted corrective-binding callables are represented only by their own new-function rows."
+    },
+    "frozen_cap_action": "Keep all saved retained ceilings and the three individually published new-role caps unchanged; no cap is copied from the former compatibility entrypoint.",
+    "limitations": "Independent Source correspondence review only; existing saved caps unchanged. No original runtime measurement admitted. Exact inventory partitions, full current coverage and scoped proof remain executable gates. No numerical, global or runtime qualification from metadata."
   }
 }

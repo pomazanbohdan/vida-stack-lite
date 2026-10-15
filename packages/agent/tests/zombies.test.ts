@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import * as runtime from '../src/index.ts';
 import type { DocumentationClearCheckpoint, DocumentationClearInput } from '../src/documentation/clear.ts';
 import type { RuntimeEnvelope } from '../src/contracts/envelopes.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('..', import.meta.url)));
 const { repositoryRoot, config, context } = configuredTestContext();
@@ -605,6 +606,29 @@ describe('machine-checked public export ZOMBIES matrix', () => {
         labels: [],
       }).workflow_id,
     ).toBe('information_research_light');
+
+    const request = {
+      principal: 'principal-1',
+      role: 'developer',
+      action: 'write' as const,
+      tenant: 'tenant-1',
+      project: 'project-1',
+      resourceTenant: 'tenant-1',
+      resourceProject: 'project-1',
+      registryHash: 'a'.repeat(64),
+      operationHash: 'b'.repeat(64),
+    };
+    const returned = expectReturned(() => runtime.validateAuthorizationRequest(request));
+    expect(returned).not.toBeNull();
+    expect(typeof returned).toBe('object');
+    expect(Array.isArray(returned)).toBe(false);
+    expect(returned).toBe(request);
+    expect(returned.action).toBe('write');
+    expect(returned.registryHash).toBe('a'.repeat(64));
+    expect(returned.operationHash).toBe('b'.repeat(64));
+    expect(() => runtime.validateAuthorizationRequest({ ...request, registryHash: 'A'.repeat(64) })).toThrow(
+      'authorization request rejected: /registryHash must match pattern "^[a-f0-9]{64}$"',
+    );
   });
 
   test('Many: repeated public computations remain deterministic and isolated', () => {

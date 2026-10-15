@@ -555,24 +555,24 @@ writeFileSync(${JSON.stringify(output)},JSON.stringify({argv,
 
 test('malformed caller timeout is rejected before resolution even with a supplied budget', () => {
   const { root, pin } = fixture();
+  assert.equal(readPin(root), pin);
+  assert.doesNotThrow(() => checkManifest(root, pin), 'negative timeout case starts from a valid pinned package');
   let calls = 0;
-  let failure: unknown;
-  try {
-    runPinnedBun([], {
-      root,
-      executable: path.join(root, 'resolved-bun'),
-      timeoutMs: Number.NaN,
-      budget: executionBudget(10_000, 0),
-      spawn() {
-        calls += 1;
-        return success(pin);
-      },
-    });
-  } catch (error) {
-    failure = error;
-  }
+  assert.throws(
+    () =>
+      runPinnedBun([], {
+        root,
+        executable: path.join(root, 'resolved-bun'),
+        timeoutMs: Number.NaN,
+        budget: executionBudget(10_000, 0),
+        spawn() {
+          calls += 1;
+          return success(pin);
+        },
+      }),
+    { message: 'Execution budget and reserve must be bounded integer durations.' },
+  );
   assert.equal(calls, 0);
-  assert.match(String(failure), /Execution budget and reserve must be bounded integer durations/u);
 });
 
 test('coverage iteration cannot raise a stricter explicit caller timeout', () => {

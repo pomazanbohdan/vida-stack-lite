@@ -167,6 +167,195 @@ export function scopedCrapFunctionProof(
   });
 }
 
+export type ScopedSourceMapping = {
+  readonly original_path: string;
+  readonly current_path: string;
+  readonly rationale: string;
+};
+export type ScopedFunctionDisposition =
+  | {
+      readonly kind: 'retained';
+      readonly identity: string;
+      readonly current_identity: string;
+      readonly max_complexity: number;
+      readonly max_crap: number;
+      readonly rationale: string;
+    }
+  | {
+      readonly kind: 'new';
+      readonly identity: string;
+      readonly max_complexity: number;
+      readonly max_crap: number;
+      readonly rationale: string;
+    }
+  | { readonly kind: 'removed'; readonly identity: string; readonly rationale: string };
+
+/** Pure v2 disposition check; historical measurements are deliberately absent. */
+export function scopedCrapDispositionProof(
+  original: readonly Pick<FunctionRow, 'identity' | 'file' | 'complexity'>[],
+  current: readonly (Pick<FunctionRow, 'identity' | 'file' | 'complexity'> &
+    Pick<BaselineFunctionEvidence, 'coverage' | 'crap'>)[],
+  dispositions: readonly ScopedFunctionDisposition[],
+  sourceMappings: readonly ScopedSourceMapping[],
+  originalSources: readonly string[],
+  currentSources: readonly string[],
+  removedSources: readonly string[],
+  newSources: readonly string[],
+  retainedCeilings: ReadonlyMap<string, { readonly max_complexity: number; readonly max_crap: number }>,
+) {
+  if (!current.length || !dispositions.length)
+    throw new Error('Scoped CRAP v2 requires current function roles and explicit dispositions.');
+  const originals = new Map(original.map((row) => [row.identity, row]));
+  const candidates = new Map(current.map((row) => [row.identity, row]));
+  if (originals.size !== original.length || candidates.size !== current.length)
+    throw new Error('Scoped CRAP v2 inventories contain duplicate function identities.');
+  const originalPathSet = new Set(originalSources);
+  const currentPathSet = new Set(currentSources);
+  const removedPathSet = new Set(removedSources);
+  const newPathSet = new Set(newSources);
+  if (
+    originalPathSet.size !== originalSources.length ||
+    currentPathSet.size !== currentSources.length ||
+    removedPathSet.size !== removedSources.length ||
+    newPathSet.size !== newSources.length
+  )
+    throw new Error('Scoped CRAP v2 source inventories contain duplicate paths.');
+  const pathMap = new Map<string, string>();
+  const mappedCurrent = new Set<string>();
+  for (const mapping of sourceMappings) {
+    if (
+      !originalPathSet.has(mapping.original_path) ||
+      !currentPathSet.has(mapping.current_path) ||
+      mapping.rationale.trim().length < 8 ||
+      pathMap.has(mapping.original_path) ||
+      mappedCurrent.has(mapping.current_path)
+    )
+      throw new Error('Scoped CRAP v2 source mapping is invalid, duplicated or outside exact inventories.');
+    pathMap.set(mapping.original_path, mapping.current_path);
+    mappedCurrent.add(mapping.current_path);
+  }
+  if (
+    JSON.stringify([...pathMap.keys(), ...removedPathSet].sort()) !== JSON.stringify([...originalPathSet].sort()) ||
+    JSON.stringify([...mappedCurrent, ...newPathSet].sort()) !== JSON.stringify([...currentPathSet].sort())
+  )
+    throw new Error('Scoped CRAP v2 source mappings and additions/removals do not partition exact source inventories.');
+
+  const retainedOriginal = new Set<string>();
+  const retainedCurrent = new Set<string>();
+  const removed = new Set<string>();
+  const added = new Set<string>();
+  const result: Record<string, unknown>[] = [];
+  for (const disposition of dispositions) {
+    if (disposition.rationale.trim().length < 8) throw new Error('Scoped CRAP v2 disposition rationale is missing.');
+    if (disposition.kind === 'retained') {
+      const before = originals.get(disposition.identity);
+      const after = candidates.get(disposition.current_identity);
+      const ceiling = retainedCeilings.get(disposition.identity);
+      if (
+        !before ||
+        !after ||
+        !ceiling ||
+        retainedOriginal.has(disposition.identity) ||
+        retainedCurrent.has(disposition.current_identity) ||
+        pathMap.get(before.file) !== after.file
+      )
+        throw new Error('Scoped CRAP v2 retained correspondence is missing, duplicated or source-mismapped.');
+      if (
+        disposition.max_complexity !== ceiling.max_complexity ||
+        disposition.max_crap !== ceiling.max_crap ||
+        !Number.isSafeInteger(disposition.max_complexity) ||
+        disposition.max_complexity !== before.complexity ||
+        !Number.isSafeInteger(disposition.max_crap) ||
+        disposition.max_crap < before.complexity
+      )
+        throw new Error('Scoped CRAP v2 retained ceilings differ from frozen caps or original Source lower bound.');
+      if (
+        after.coverage !== 1 ||
+        !Number.isSafeInteger(after.complexity) ||
+        after.complexity < 1 ||
+        after.crap !== after.complexity ||
+        after.complexity > disposition.max_complexity ||
+        after.crap > disposition.max_crap
+      )
+        throw new Error('Scoped CRAP v2 retained current function is uncovered or exceeds frozen ceilings.');
+      retainedOriginal.add(disposition.identity);
+      retainedCurrent.add(disposition.current_identity);
+      result.push({
+        kind: 'retained',
+        identity: disposition.identity,
+        current_identity: disposition.current_identity,
+        original_source_complexity: before.complexity,
+        maximum_complexity: disposition.max_complexity,
+        maximum_crap: disposition.max_crap,
+        complexity: after.complexity,
+        coverage: after.coverage,
+        crap: after.crap,
+        rationale: disposition.rationale,
+      });
+    } else if (disposition.kind === 'new') {
+      const after = candidates.get(disposition.identity);
+      if (!after || added.has(disposition.identity) || retainedCurrent.has(disposition.identity))
+        throw new Error('Scoped CRAP v2 new function is missing or duplicated.');
+      if (
+        !Number.isSafeInteger(disposition.max_complexity) ||
+        disposition.max_complexity < 1 ||
+        disposition.max_complexity > 10 ||
+        !Number.isSafeInteger(disposition.max_crap) ||
+        disposition.max_crap < 1 ||
+        disposition.max_crap > 10
+      )
+        throw new Error('Scoped CRAP v2 new function has no independently published positive caps.');
+      if (
+        after.coverage !== 1 ||
+        !Number.isSafeInteger(after.complexity) ||
+        after.complexity < 1 ||
+        after.crap !== after.complexity ||
+        after.complexity > disposition.max_complexity ||
+        after.crap > disposition.max_crap
+      )
+        throw new Error('Scoped CRAP v2 new current function is uncovered or exceeds its own published caps.');
+      added.add(disposition.identity);
+      result.push({
+        kind: 'new',
+        identity: disposition.identity,
+        current_identity: disposition.identity,
+        complexity: after.complexity,
+        coverage: after.coverage,
+        crap: after.crap,
+        maximum_complexity: disposition.max_complexity,
+        maximum_crap: disposition.max_crap,
+        rationale: disposition.rationale,
+      });
+    } else {
+      const before = originals.get(disposition.identity);
+      if (!before || removed.has(disposition.identity) || retainedOriginal.has(disposition.identity))
+        throw new Error('Scoped CRAP v2 removed function is missing or duplicated.');
+      removed.add(disposition.identity);
+      result.push({
+        kind: 'removed',
+        identity: disposition.identity,
+        file: before.file,
+        rationale: disposition.rationale,
+      });
+    }
+  }
+  const originalPartition = [...retainedOriginal, ...removed].sort();
+  const currentPartition = [...retainedCurrent, ...added].sort();
+  if (
+    [...removed].some((identity) => candidates.has(identity)) ||
+    [...added].some((identity) => originals.has(identity))
+  )
+    throw new Error('Scoped CRAP v2 cannot reset a shared original/current identity as removed plus new.');
+  if (
+    JSON.stringify(originalPartition) !== JSON.stringify([...originals.keys()].sort()) ||
+    JSON.stringify(currentPartition) !== JSON.stringify([...candidates.keys()].sort())
+  )
+    throw new Error('Scoped CRAP v2 dispositions do not partition exact original/current function inventories.');
+  if (retainedOriginal.size !== retainedCurrent.size || retainedCeilings.size !== retainedOriginal.size)
+    throw new Error('Scoped CRAP v2 retained ceiling inventory differs from retained function partition.');
+  return result;
+}
+
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   const repoRootResult = spawnSync('git', ['rev-parse', '--show-toplevel'], {
     cwd: root,
@@ -710,7 +899,10 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       throw new Error('Scoped CRAP proof has no immutable reviewed function lineage.');
     const review = budget[reviewKey];
     const reviewedFiles = isRecord(review) && Array.isArray(review.files) ? new Set(review.files) : new Set();
-    if (partition.sources.some((file) => !reviewedFiles.has(file)))
+    const v2Review = isRecord(review) && Object.hasOwn(review, 'source_mappings');
+    if (v2Review && !Array.isArray(review.source_mappings))
+      throw new Error('Reviewed v2 source mappings are malformed; the route cannot fall back to v1.');
+    if (!v2Review && partition.sources.some((file) => !reviewedFiles.has(file)))
       throw new Error('Scoped CRAP contour is outside the pinned independent source-lineage review.');
     const validation = await validateFocusedCoverageReport(coveragePath, root, {
       mode: 'focused-diagnostic',
@@ -718,6 +910,154 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       sources: partition.sources,
       tests: partition.tests,
     });
+    if (v2Review && isRecord(review) && Array.isArray(review.source_mappings)) {
+      const sourceMappings: ScopedSourceMapping[] = review.source_mappings.map((raw: unknown) => {
+        if (
+          !isRecord(raw) ||
+          typeof raw.original_path !== 'string' ||
+          typeof raw.current_path !== 'string' ||
+          typeof raw.rationale !== 'string' ||
+          raw.rationale.trim().length < 8
+        )
+          throw new Error('Reviewed v2 source mapping is malformed or lacks rationale.');
+        return { original_path: raw.original_path, current_path: raw.current_path, rationale: raw.rationale };
+      });
+      if (!Array.isArray(review.files) || !review.files.every((file) => typeof file === 'string'))
+        throw new Error('Reviewed v2 original Source inventory is malformed.');
+      const originalSources = [...review.files].sort((a, b) => a.localeCompare(b));
+      const currentSources = [...partition.sources].sort((a, b) => a.localeCompare(b));
+      if (new Set(review.files).size !== review.files.length)
+        throw new Error('Reviewed v2 original Source paths are duplicated.');
+      const mappedOriginal = new Set(sourceMappings.map((entry) => entry.original_path));
+      const mappedCurrent = new Set(sourceMappings.map((entry) => entry.current_path));
+      const removedSourcePaths = originalSources.filter((file) => !mappedOriginal.has(file));
+      const newSourcePaths = currentSources.filter((file) => !mappedCurrent.has(file));
+      const originalSourceSet = new Set(originalSources);
+      if (originalSourceSet.size !== originalSources.length)
+        throw new Error('Reviewed v2 original source paths are duplicated.');
+      const originalPathRows: FunctionRow[] = [];
+      const originalSourceEvidence: { path: string; sha256: string }[] = [];
+      for (const file of originalSources) {
+        if (!baselineSources().includes(file))
+          throw new Error('Reviewed v2 original Source is absent from immutable published inventory: ' + file);
+        const source = baselineSource(file);
+        if (source === null) throw new Error('Reviewed v2 original Source is missing: ' + file);
+        originalSourceEvidence.push({ path: file, sha256: sha256(Buffer.from(source, 'utf8')) });
+        originalPathRows.push(...functionInventory(source, file));
+      }
+      const currentRows: (Pick<FunctionRow, 'identity' | 'file' | 'complexity'> & BaselineFunctionEvidence)[] = [];
+      for (const file of currentSources) {
+        const bytes = validation.inputs.input_bytes[file];
+        if (!bytes) throw new Error(`Current scoped Source is absent from its validated snapshot: ${file}`);
+        const source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+        const rows = functionInventory(source, file);
+        const measured = baselineFunctionEvidenceForSource(file, rows, validation.coverage[path.resolve(root, file)]);
+        if (measured.length !== rows.length)
+          throw new Error(`Scoped v2 current function evidence is incomplete: ${file}`);
+        for (const [index, row] of rows.entries()) currentRows.push({ ...row, ...measured[index]! });
+      }
+      const identityIn = (identity: unknown, files: readonly string[]) =>
+        typeof identity === 'string' && files.some((file) => identity.startsWith(file + '#'));
+      const originalByIdentity = new Map(originalPathRows.map((row) => [row.identity, row]));
+      const selectedRetained: unknown[] = budget.baseline_functions.filter(
+        (raw: unknown) =>
+          isRecord(raw) &&
+          (identityIn(raw.identity, originalSources) || identityIn(raw.current_identity, currentSources)),
+      );
+      const currentIdentities = new Set(currentRows.map((row) => row.identity));
+      const originalIdentities = new Set(originalPathRows.map((row) => row.identity));
+      const retainedCeilings = new Map<string, { max_complexity: number; max_crap: number }>();
+      const dispositions: ScopedFunctionDisposition[] = selectedRetained.map((raw: unknown) => {
+        if (
+          !isRecord(raw) ||
+          typeof raw.identity !== 'string' ||
+          typeof raw.current_identity !== 'string' ||
+          typeof raw.rationale !== 'string' ||
+          raw.rationale.trim().length < 8
+        )
+          throw new Error('Reviewed v2 retained function mapping is malformed or lacks rationale.');
+        const original = originalByIdentity.get(raw.identity);
+        if (
+          !original ||
+          raw.baseline_complexity !== original.complexity ||
+          !isPositiveSafeInteger(raw.max_complexity) ||
+          raw.max_complexity !== original.complexity ||
+          !isPositiveSafeInteger(raw.max_crap) ||
+          raw.max_crap < original.complexity
+        )
+          throw new Error('Reviewed v2 retained caps do not preserve exact original Source CC ceilings.');
+        retainedCeilings.set(raw.identity, { max_complexity: raw.max_complexity, max_crap: raw.max_crap });
+        return {
+          kind: 'retained',
+          identity: raw.identity,
+          current_identity: raw.current_identity,
+          max_complexity: raw.max_complexity,
+          max_crap: raw.max_crap,
+          rationale: raw.rationale,
+        };
+      });
+      if (!Array.isArray(budget.new_functions) || !Array.isArray(budget.removed_functions))
+        throw new Error('Reviewed v2 function additions/removals are missing.');
+      const reviewedNewFunctions = checkedNewFunctions(
+        budget.new_functions.filter((raw: unknown) => isRecord(raw) && identityIn(raw.identity, currentSources)),
+      );
+      for (const entry of reviewedNewFunctions.values()) dispositions.push({ kind: 'new', ...entry });
+      const reviewedRemovedFunctions = checkedRemovals(
+        budget.removed_functions.filter((raw: unknown) => isRecord(raw) && identityIn(raw.identity, originalSources)),
+      );
+      for (const entry of reviewedRemovedFunctions.values()) dispositions.push({ kind: 'removed', ...entry });
+      const helperRows = scopedCrapDispositionProof(
+        originalPathRows,
+        currentRows,
+        dispositions,
+        sourceMappings,
+        originalSources,
+        currentSources,
+        removedSourcePaths,
+        newSourcePaths,
+        retainedCeilings,
+      );
+      if (
+        [...reviewedRemovedFunctions.keys()].some((identity) => !originalIdentities.has(identity)) ||
+        [...reviewedNewFunctions.keys()].some((identity) => !currentIdentities.has(identity))
+      )
+        throw new Error('Reviewed v2 new/removal rows do not name exact current/original function identities.');
+      const report = validation.report;
+      const result = {
+        schema: 'VidaScopedCrapBudgetReport/v2',
+        status: 'scoped-proof-pass',
+        contour: partition.name,
+        qualification_scope: 'declared-contour-reviewed-function-budgets',
+        full_qualification: false,
+        historical_measurement_admitted: false,
+        historical_coverage_runtime_artifacts: 'not-consumed/not-admitted',
+        baseline_ref: baselineRef,
+        baseline_commit: gitText(['rev-parse', '--verify', `${baselineRef}^{commit}`]).trim(),
+        budget_commit: budgetCommit,
+        budget_file: budgetFile,
+        budget_sha256: sha256(budgetBytes),
+        original_sources: originalSourceEvidence,
+        source_mappings: sourceMappings,
+        run_id: report.run_id,
+        coverage_run_id: report.run_id,
+        coverage_report: coveragePath,
+        coverage_report_sha256: validation.report_sha256,
+        manifest_sha256: report.manifest_sha256,
+        sources: validation.inputs.sources,
+        test_inputs: validation.inputs.test_inputs,
+        tool_inputs: validation.inputs.tool_inputs,
+        module_inputs: validation.inputs.module_inputs,
+        test_selection: validation.inputs.test_selection,
+        functions: helperRows,
+        limits:
+          'Scoped local admission only. Retained roles use original Source CC lower bounds with current exact full coverage; new roles use their own independently published caps; removals carry no cap. Complete quality closure remains separate.',
+      };
+      const scopedPath = path.join(root, 'coverage/bun-unified/diagnostics', `${report.run_id}.scoped-crap.json`);
+      await mkdir(path.dirname(scopedPath), { recursive: true });
+      await writeFile(scopedPath, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
+      process.stdout.write(JSON.stringify({ schema: result.schema, status: result.status, report: scopedPath }) + '\n');
+      process.exit(0);
+    }
     const published: FunctionRow[] = [];
     const measured: BaselineFunctionEvidence[] = [];
     const originalSources: { path: string; sha256: string }[] = [];

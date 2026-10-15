@@ -235,7 +235,7 @@ test('actual direct Bun entrypoint terminates with strict public JSON when requi
     throw new TypeError('direct Bun failure output must contain the asserted JSON fields');
   assert.equal(failure.schema, 'VidaAgentRunResult/v1');
   assert.equal(failure.status, 'blocked');
-  assert.equal(typeof failure.code, 'string');
+  assert.equal(failure.code, 'GAP-VIDA-RUN-CLI-001');
   assert.equal(typeof failure.message, 'string');
   // Terminal output proves the direct route returns; exact child count is not asserted.
 }, 45000);

@@ -442,6 +442,7 @@ describe('project context path boundary', () => {
     writeFileSync(blocked, 'blocked');
     linkSync(file, hardLink);
     expect(() => resolve({ work_root: relative(file) })).toThrow(/directory/);
+    expect(resolve({ work_root: relative(directory) }).paths.work_root).toBe(relative(directory));
     expect(() => resolve({ documentation_policy_path: relative(directory) })).toThrow(/file/);
     expect(() => resolve({ wiki_path: relative(directory) })).toThrow(/file/);
     expect(() => resolve({ documentation_policy_path: relative(hardLink) })).toThrow(
@@ -460,14 +461,10 @@ describe('project context path boundary', () => {
     }
     expect(resolve({ wiki_path: missing }).path_identities.wiki_path).toBeNull();
     expect(resolve({ work_root: missing + '/nested' }).path_identities.work_root).toBeNull();
-    try {
-      symlinkSync(directory, symlink, 'junction');
-      expect(() => resolve({ work_root: relative(symlink) })).toThrow(
-        'path work_root contains a reparse or non-directory ancestor',
-      );
-    } catch (error) {
-      expect(error).toBeInstanceOf(Error);
-    }
+    symlinkSync(directory, symlink, 'junction');
+    expect(() => resolve({ work_root: relative(symlink) })).toThrow(
+      'path work_root contains a reparse or non-directory ancestor',
+    );
   });
 
   test('path profile identities preserve large stat values exactly', () => {

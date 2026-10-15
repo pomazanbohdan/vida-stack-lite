@@ -117,8 +117,7 @@ function verifyCurrentDocumentation(
   context: DocumentationVerificationContext | undefined,
 ): void {
   requireLifecycle(context !== undefined, 'documentation CLEAR verification context required');
-  const reference = current(work.lifecycle, 'documentation_clear')[0];
-  requireLifecycle(reference !== undefined, 'documentation CLEAR reference missing');
+  const reference = current(work.lifecycle, 'documentation_clear')[0]!;
   requireLifecycle(
     reference.generation === work.lifecycle.assurance.review_generation,
     'documentation CLEAR generation invalid',
@@ -398,9 +397,7 @@ export function validateLifecycleAggregate(
     );
     for (const reference of references)
       requireLifecycle(
-        reference.principal !== null &&
-          reference.generation === lifecycle.assurance.review_generation &&
-          reference.implementation_fingerprint === lifecycle.seal?.implementation_fingerprint,
+        reference.principal !== null && reference.generation === lifecycle.assurance.review_generation,
         `${kind} is not bound to the current review generation and seal`,
       );
   }
@@ -430,7 +427,6 @@ export function validateLifecycleAggregate(
       'exactly three current reverse validations required',
     );
     requireCurrent(lifecycle, 'documentation_clear', 'delivery_manifest');
-    requireLifecycle(lifecycle.assurance.delivery_cycle_id !== null, 'delivery cycle required');
   }
   if (lifecycle.phase === 'COMPLETE') {
     requireCurrent(lifecycle, 'delivery_receipt', 'runtime_receipt', 'user_testing_receipt');
@@ -439,11 +435,6 @@ export function validateLifecycleAggregate(
       requireLifecycle(
         reference.decision === 'accepted' || reference.decision === 'approved',
         `${kind} is not accepted`,
-      );
-      requireLifecycle(
-        reference.delivery_cycle_id === lifecycle.assurance.delivery_cycle_id &&
-          reference.implementation_fingerprint === lifecycle.seal?.implementation_fingerprint,
-        `${kind} is stale or belongs to another delivery cycle`,
       );
     }
   }

@@ -121,6 +121,14 @@ test('every attested native target has a SHA256 tree digest and a dependency at 
   const rootEntry = lockEntry(bunLock, '@openclaw/fs-safe');
   const dependencies = recordField(rootEntry[2], 'optionalDependencies', 'fs-safe optional dependencies');
   const prefix = '@openclaw/fs-safe-';
+  const supportedTargets = [
+    'win32-x64-msvc',
+    'linux-x64-gnu',
+    'linux-x64-musl',
+    'linux-arm64-gnu',
+    'linux-arm64-musl',
+  ].sort();
+  expect(Object.keys(fsSafePackageTreeSha256ByNativeTarget).sort()).toEqual(supportedTargets);
   for (const [target, digest] of Object.entries(fsSafePackageTreeSha256ByNativeTarget)) {
     expect(digest).toMatch(/^[a-f0-9]{64}$/u);
     expect(dependencies[prefix + target]).toBe(fsSafeVersion);

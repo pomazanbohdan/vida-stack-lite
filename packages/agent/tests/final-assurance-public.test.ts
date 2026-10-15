@@ -736,6 +736,7 @@ test('public final assurance commits three synthetic review reverse pairs at a r
 
     const retainedReferences = currentWork(f.store.readHostStateSnapshot(identity)).lifecycle.references;
     let response = publicRun(withVersion(originalVersion, '--prepare-assurance', preparation));
+    expect(response.status).toBe('assurance_resumed');
     const preparedReferences = currentWork(f.store.readHostStateSnapshot(identity)).lifecycle.references;
     expect(preparedReferences.length).toBeGreaterThan(retainedReferences.length);
     expect(() => validateLifecycleReferencePreservation(retainedReferences, preparedReferences)).not.toThrow();
@@ -747,6 +748,7 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       ),
     ).toHaveLength(2);
     response = publicRun(withVersion(response.state_version, '--issue-wave', 'true'));
+    expect(response.status).toBe('assurance_wave_issued');
     expect(response.issued_actions).toHaveLength(3);
     const initialAssuranceVersion = response.state_version,
       packet = listed(response.issued_actions, 0).packet,
@@ -786,15 +788,19 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     writeFileSync(reportFile, JSON.stringify({ ...firstReview, attempt: 2 }));
     denied(withVersion(response.state_version, '--report', reportFile));
     response = report(firstReview);
+    expect(response.status).toBe('assurance_reported');
     expect(response.assurance_status).toBe('issued_outcome_uncertain');
     expect(report(firstReview, initialAssuranceVersion).status).toBe('assurance_report_retrieved');
     const secondReview = listed(reviews, 1);
     writeFileSync(reportFile, JSON.stringify(secondReview));
     denied(withVersion(initialAssuranceVersion, '--report', reportFile));
     response = report(secondReview);
+    expect(response.status).toBe('assurance_reported');
     expect(currentWork(f.store.readHostStateSnapshot(identity)).lifecycle.phase).toBe('VERIFY');
     response = report(listed(reviews, 2));
+    expect(response.status).toBe('assurance_reported');
     response = publicRun(withVersion(response.state_version, '--issue-wave', 'true'));
+    expect(response.status).toBe('assurance_wave_issued');
     expect(response.issued_actions).toHaveLength(3);
     const reverseActions = response.issued_actions;
     if (!reverseActions) throw new Error('Public reverse action list is absent.');
@@ -815,6 +821,7 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     });
     for (const reverse of reverses.slice(0, 2)) {
       response = report(reverse);
+      expect(response.status).toBe('assurance_reported');
       expect(currentWork(f.store.readHostStateSnapshot(identity)).lifecycle.phase).toBe('VERIFY');
     }
     // A changed CLEAR artifact cannot publish DELIVERY. The six reports stay durable.
@@ -826,6 +833,7 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     writeFileSync(clearFile, JSON.stringify(badClear));
     const finalReverse = listed(reverses, 2);
     response = report(finalReverse);
+    expect(response.status).toBe('assurance_reported');
     expect(response.assurance_status).toBe('reviewed');
     expect(response.delivery_gap).toBeTruthy();
     expect(currentWork(f.store.readHostStateSnapshot(identity)).lifecycle.phase).toBe('VERIFY');

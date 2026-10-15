@@ -15,8 +15,9 @@ import {
   reconcileServiceOperationCustody,
   claimReservedServiceOperationLaunch,
 } from '../../src/config/service-operation-custody.js';
-import { expectRejection } from '../helpers/expect-rejection.js';
+import { expectRejection, expectReturned } from '../helpers/expect-rejection.js';
 import { openCustodyFixture } from '../helpers/service-custody-fixture.js';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
 import {
   serviceOperationLaunchCapabilityDigest,
   serviceOperationLaunchCapabilityMatches,
@@ -165,9 +166,19 @@ describe('private service launch capability', () => {
         pid,
         reservation.child_capability,
       );
-      const before = readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId);
+      const before = expectReturned(() =>
+        readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+      );
+      expect(before).not.toBeNull();
+      expect(typeof before).toBe('object');
+      expect(before?.workspace_id).toBe(fixture.workspaceId);
+      expect(before?.owner_kind).toBe('release-pack-worker');
+      expect(before?.operation_id).toBe(operationId);
+      expect(before?.request_digest).toBe(requestDigest);
       expect(before?.phase).toBe('launching');
       expect(before?.launch_pid).toBe(pid);
+      expect(before?.evidence_digest).toBe('c'.repeat(64));
+      expect(before?.owner_token).toBe(serviceOperationLaunchCapabilityDigest(reservation.child_capability));
       expect(before?.owner_token).not.toBe(reservation.child_capability);
       for (const [attemptedCapability, expectedFailure] of [
         [undefined, 'Service operation launch capability is invalid.'],
@@ -184,21 +195,37 @@ describe('private service launch capability', () => {
             attemptedCapability as string,
           ),
         ).toThrow(expectedFailure);
-        expect(readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toEqual(
-          before,
+        const afterDenial = expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
         );
+        expect(afterDenial).not.toBeNull();
+        expect(typeof afterDenial).toBe('object');
+        expect(afterDenial).toEqual(before);
       }
-      const handle = claimReservedServiceOperationLaunch(
-        fixture.database,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        reservation.child_capability,
+      const handle = expectReturned(() =>
+        claimReservedServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          reservation.child_capability,
+        ),
       );
-      const consumed = readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId);
+      const consumed = expectReturned(() =>
+        readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+      );
+      expect(consumed).not.toBeNull();
+      expect(typeof consumed).toBe('object');
+      expect(consumed?.workspace_id).toBe(fixture.workspaceId);
+      expect(consumed?.owner_kind).toBe('release-pack-worker');
+      expect(consumed?.operation_id).toBe(operationId);
+      expect(consumed?.request_digest).toBe(requestDigest);
       expect(consumed?.phase).toBe('in_flight');
+      expect(consumed?.revision).toBe(before!.revision + 1);
+      expect(consumed?.launch_pid).toBeNull();
+      expect(consumed?.evidence_digest).toBeNull();
       expect(consumed?.owner_token).not.toBe(before?.owner_token);
       expect(() =>
         claimReservedServiceOperationLaunch(
@@ -211,21 +238,36 @@ describe('private service launch capability', () => {
           reservation.child_capability,
         ),
       ).toThrow('worker does not match the exact one-shot launch reservation');
-      expect(readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toEqual(
-        consumed,
+      const afterReplay = expectReturned(() =>
+        readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
       );
-      closeServiceOperationCustody(handle, 'unknown', null);
+      expect(afterReplay).not.toBeNull();
+      expect(typeof afterReplay).toBe('object');
+      expect(afterReplay).toEqual(consumed);
+      const unknownRevision = closeServiceOperationCustody(handle, 'unknown', null);
+      const unknown = expectReturned(() =>
+        readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+      );
+      expect(unknown?.phase).toBe('unknown');
+      expect(unknown?.revision).toBe(unknownRevision);
+      expect(unknown?.owner_token).toBeNull();
+      expect(unknown?.launch_pid).toBeNull();
+      expect(unknown?.evidence_digest).toBeNull();
       closeServiceOperationCustodyHandle(handle);
       closed = true;
     } finally {
-      if (!closed) closeServiceOperationDatabase(fixture.database);
-      rmSync(fixture.root, { recursive: true, force: true });
+      try {
+        if (!closed) closeServiceOperationDatabase(fixture.database);
+      } finally {
+        retainExpectedUnknownFixture(fixture.root, 'claimed launch left unresolved custody as UNKNOWN');
+      }
     }
   });
 });
 
 test('interrupted launching is revoked only by the exact prepared beforeimage', async () => {
   const fixture = openCustodyFixture();
+  let completed = false;
   try {
     const reservation = reserveServiceOperationLaunch(
       fixture.database,
@@ -259,20 +301,43 @@ test('interrupted launching is revoked only by the exact prepared beforeimage', 
     expect(row.owner_token).toBeNull();
     expect(row.evidence_digest).toBe('c'.repeat(64));
     const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
-    expect(() =>
-      claimReservedServiceOperationLaunch(
-        reopened,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        reservation.child_capability,
-      ),
-    ).toThrow('worker does not match the exact one-shot launch reservation');
-    closeServiceOperationDatabase(reopened);
+    let unexpectedHandle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
+    let assertionFailure: { error: unknown } | undefined;
+    try {
+      expect(
+        () =>
+          (unexpectedHandle = claimReservedServiceOperationLaunch(
+            reopened,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            pid,
+            reservation.child_capability,
+          )),
+      ).toThrow('worker does not match the exact one-shot launch reservation');
+    } catch (error) {
+      assertionFailure = { error };
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            if (unexpectedHandle) closeServiceOperationCustodyHandle(unexpectedHandle);
+            else closeServiceOperationDatabase(reopened);
+          },
+        ],
+        assertionFailure,
+      );
+    }
+    if (assertionFailure) throw assertionFailure.error;
+    completed = true;
   } finally {
-    rmSync(fixture.root, { recursive: true, force: true });
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else
+      console.error('SERVICE_CUSTODY_FIXTURE_RETAINED', {
+        root: fixture.root,
+        reason: 'interrupted-launch denial assertion or connection close did not complete',
+      });
   }
 });
 
@@ -303,25 +368,33 @@ test('ambiguous interrupted launching remains same-operation UNKNOWN with its ca
       'ambiguous effect observation',
     );
     const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
-    const row = readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId);
-    expect(row?.phase).toBe('unknown');
-    expect(row?.operation_id).toBe(operationId);
-    expect(row?.owner_token).toBeNull();
-    expect(row?.launch_pid).toBeNull();
-    expect(() =>
-      claimReservedServiceOperationLaunch(
-        reopened,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        reservation.child_capability,
-      ),
-    ).toThrow('worker does not match the exact one-shot launch reservation');
-    closeServiceOperationDatabase(reopened);
+    try {
+      const row = expectReturned(() =>
+        readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId),
+      );
+      expect(row?.phase).toBe('unknown');
+      expect(row?.operation_id).toBe(operationId);
+      expect(row?.owner_token).toBeNull();
+      expect(row?.launch_pid).toBeNull();
+      expect(() =>
+        claimReservedServiceOperationLaunch(
+          reopened,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          reservation.child_capability,
+        ),
+      ).toThrow('worker does not match the exact one-shot launch reservation');
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+      ).toEqual(row);
+    } finally {
+      closeServiceOperationDatabase(reopened);
+    }
   } finally {
-    rmSync(fixture.root, { recursive: true, force: true });
+    retainExpectedUnknownFixture(fixture.root, 'ambiguous interrupted launch reconciled to UNKNOWN');
   }
 });
 
@@ -465,7 +538,7 @@ test('a mismatched prepared digest preserves the same operation as UNKNOWN and r
       closeServiceOperationDatabase(reopened);
     }
   } finally {
-    rmSync(fixture.root, { recursive: true, force: true });
+    retainExpectedUnknownFixture(fixture.root, 'prepared receipt mismatch preserved as UNKNOWN');
   }
 });
 
@@ -597,6 +670,9 @@ test('launch reservation cannot replace UNKNOWN, terminal, or already launching 
       requestDigest,
       'c'.repeat(64),
     );
+    const launchingBefore = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
     expect(() =>
       reserveServiceOperationLaunch(
         fixture.database,
@@ -607,6 +683,9 @@ test('launch reservation cannot replace UNKNOWN, terminal, or already launching 
         'c'.repeat(64),
       ),
     ).toThrow('operation has no exact prepared image available for one-shot launch');
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(launchingBefore);
     const unknownOperation = 'unknown-operation';
     const unknownLaunch = reserveServiceOperationLaunch(
       fixture.database,
@@ -635,6 +714,10 @@ test('launch reservation cannot replace UNKNOWN, terminal, or already launching 
     let reopenedClosed = false;
     let terminalHandle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
     try {
+      const unknownBefore = expectReturned(() =>
+        readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, unknownOperation),
+      );
+      expect(unknownBefore?.phase).toBe('unknown');
       expect(() =>
         reserveServiceOperationLaunch(
           reopened,
@@ -645,6 +728,9 @@ test('launch reservation cannot replace UNKNOWN, terminal, or already launching 
           'c'.repeat(64),
         ),
       ).toThrow('operation has no exact prepared image available for one-shot launch');
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, unknownOperation)),
+      ).toEqual(unknownBefore);
       const terminalOperation = 'terminal-operation';
       const terminalLaunch = reserveServiceOperationLaunch(
         reopened,
@@ -698,7 +784,7 @@ test('launch reservation cannot replace UNKNOWN, terminal, or already launching 
       }
     }
   } finally {
-    rmSync(fixture.root, { recursive: true, force: true });
+    retainExpectedUnknownFixture(fixture.root, 'UNKNOWN launch reservation remains nonreplaceable');
   }
 });
 
@@ -782,6 +868,14 @@ test('receipt rejection after gate replacement cannot write UNKNOWN through an e
       closeServiceOperationDatabase(reopened);
     }
   } finally {
-    rmSync(fixture.root, { recursive: true, force: true });
+    retainExpectedUnknownFixture(fixture.root, 'UNKNOWN cleanup remained unresolved after gate replacement');
   }
 });
+
+function retainExpectedUnknownFixture(root: string, reason: string): void {
+  console.error('SERVICE_CUSTODY_EXPECTED_UNKNOWN_FIXTURE_RETAINED', {
+    root,
+    reason,
+    externalProcessStarted: false,
+  });
+}

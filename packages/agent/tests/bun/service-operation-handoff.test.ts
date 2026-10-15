@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import { copyFileSync, renameSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import {
@@ -25,24 +26,37 @@ const operationId = 'handoff-operation';
 const launchPid = 7312;
 type HandoffVerifier = Parameters<typeof handoffServiceOperationCustody>[7];
 
+async function expectHandoffResult<T>(action: () => Promise<T>): Promise<T> {
+  let result!: T;
+  await assert.doesNotReject(async () => {
+    result = await action();
+  });
+  return result;
+}
+
 test('terminal pack custody transfers to one prepared release image with exact lineage and no owner token', async () => {
   const fixture = openCustodyFixture('handoff-positive-');
   try {
     const prior = finishOperation(fixture, 'release-pack-worker');
     const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
-    const result = await handoffServiceOperationCustody(
-      source,
-      fixture.root,
-      fixture.relative,
-      fixture.workspaceId,
-      operationId,
-      requestDigest,
-      retargetDigest,
-      async (observed) => {
-        expect(observed).toEqual(prior);
-        return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
-      },
+    let verifierCalls = 0;
+    const result = await expectHandoffResult(() =>
+      handoffServiceOperationCustody(
+        source,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        async (observed) => {
+          verifierCalls++;
+          expect(observed).toEqual(prior);
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+      ),
     );
+    expect(verifierCalls).toBe(1);
     expect(() => source.query('SELECT 1').get()).toThrow();
     expectHandoffLineage(result, prior);
     const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
@@ -174,6 +188,16 @@ function expectHandoffLineage(
   result: Awaited<ReturnType<typeof handoffServiceOperationCustody>>,
   prior: Awaited<ReturnType<typeof handoffServiceOperationCustody>>,
 ): void {
+  expect(result).not.toBeNull();
+  expect(typeof result).toBe('object');
+  expect(prior).not.toBeNull();
+  expect(typeof prior).toBe('object');
+  expect(typeof result.workspace_id).toBe('string');
+  expect(typeof result.owner_kind).toBe('string');
+  expect(typeof result.operation_id).toBe('string');
+  expect(typeof result.request_digest).toBe('string');
+  expect(typeof result.revision).toBe('number');
+  expect(typeof result.phase).toBe('string');
   expect(result.owner_kind).toBe('release-worker');
   expect(result.operation_id).toBe(prior.operation_id);
   expect(result.request_digest).toBe(retargetDigest);
@@ -198,7 +222,14 @@ async function assertRejectedLineage(
   const fixture = openCustodyFixture(prefix);
   try {
     const prior = finishOperation(fixture, kind);
-    expect(await expectHandoffFailure(fixture, prior, preparedReceipt, expected, priorRequest)).toEqual(prior);
+    let verifierCalls = 0;
+    const verifier: HandoffVerifier = async (observed) => {
+      verifierCalls++;
+      expect(observed).toEqual(prior);
+      return preparedReceipt(observed);
+    };
+    expect(await expectHandoffFailure(fixture, prior, verifier, expected, priorRequest)).toEqual(prior);
+    expect(verifierCalls).toBe(0);
   } finally {
     rmSync(fixture.root, { recursive: true, force: true });
   }
@@ -226,9 +257,15 @@ async function assertPreparedPackCannotHandoff(): Promise<void> {
       async () => ({ phase: 'prepared', evidence_digest: evidenceDigest }),
     );
     expect(prepared.phase).toBe('prepared');
-    expect(
-      await expectHandoffFailure(fixture, prepared, preparedReceipt, /only the exact terminal pack owner/u),
-    ).toEqual(prepared);
+    let verifierCalls = 0;
+    const verifier: HandoffVerifier = async () => {
+      verifierCalls++;
+      return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+    };
+    expect(await expectHandoffFailure(fixture, prepared, verifier, /only the exact terminal pack owner/u)).toEqual(
+      prepared,
+    );
+    expect(verifierCalls).toBe(0);
   } finally {
     rmSync(fixture.root, { recursive: true, force: true });
   }

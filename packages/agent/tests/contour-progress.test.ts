@@ -129,6 +129,60 @@ function frozenCrap(c = coverage()) {
     limits: 'Local proof only.',
   };
 }
+function coverageWithTwoFunctions() {
+  const c = coverage();
+  c.metrics[0]!.coverage.functions = { covered: 2, total: 2 };
+  c.metrics[0]!.functions.push({ identity: 'fixture#second', complexity: 2, coverage: 1, crap: 2 });
+  return c;
+}
+function frozenCrapV2(c = coverage()) {
+  const previous = frozenCrap(c);
+  const originalPath = 'src/config/legacy-host-capability.ts';
+  return {
+    ...previous,
+    schema: 'VidaScopedCrapBudgetReport/v2',
+    qualification_scope: 'declared-contour-reviewed-function-budgets',
+    original_sources: [digest(originalPath, 'd')],
+    source_mappings: [
+      {
+        original_path: originalPath,
+        current_path: 'src/config/host-capability.ts',
+        rationale: 'Reviewed source move for this projection fixture.',
+      },
+    ],
+    functions: [
+      {
+        kind: 'retained',
+        identity: `${originalPath}#retained`,
+        current_identity: 'src/config/host-capability.ts#retained',
+        original_source_complexity: 4,
+        maximum_complexity: 4,
+        maximum_crap: 4,
+        complexity: 3,
+        coverage: 1,
+        crap: 3,
+        rationale: 'Retained function within its reviewed budget.',
+      },
+      {
+        kind: 'new',
+        identity: 'src/config/host-capability.ts#new-function',
+        current_identity: 'src/config/host-capability.ts#new-function',
+        maximum_complexity: 2,
+        maximum_crap: 3,
+        complexity: 2,
+        coverage: 1,
+        crap: 2,
+        rationale: 'New function has an explicit reviewed budget.',
+      },
+      {
+        kind: 'removed',
+        identity: `${originalPath}#removed-function`,
+        file: originalPath,
+        rationale: 'Removed function has no current measurement.',
+      },
+    ],
+  };
+}
 function projected(c = coverage(), m = mutation()) {
   return mergeContourProgress(empty, [...contourAttempts(c, receipt), ...contourAttempts(m, receipt)]);
 }
@@ -204,6 +258,118 @@ test('compatible exact coverage, scoped frozen CRAP and assertion-confirmed muta
   );
   expect(report).toContain('Current freshness: unverified');
   expect(report).toContain('qualification: pending');
+});
+
+test('v2 projects retained and new measurements while excluding removed roles from current maxima', () => {
+  const c = coverageWithTwoFunctions();
+  const crap = frozenCrapV2(c);
+  const [attempt] = contourAttempts(crap, receipt);
+  expect(attempt).toBeDefined();
+  if (!attempt) throw new Error('v2 CRAP projection missing');
+  expect(attempt.producer_schema).toBe('VidaScopedCrapBudgetReport/v2');
+  expect(attempt.lane).toBe('frozen-crap');
+  expect(attempt.function_count).toBe(2);
+  expect(attempt.max_cc).toBe(3);
+  expect(attempt.max_entry_crap).toBe(3);
+  expect(attempt.accepted).toBe(true);
+  const snapshot = mergeContourProgress(empty, [
+    ...contourAttempts(c, receipt),
+    ...contourAttempts(mutation(), receipt),
+    ...contourAttempts(crap, receipt),
+  ]);
+  const report = renderContourProgress(snapshot);
+  expect(report).toContain('Separate same-coverage-run local triples with scoped frozen CRAP: **1/44**');
+  expect(report).toContain('Current freshness: unverified');
+  expect(report).toContain('qualification: pending');
+});
+
+test('v2 accepts a pure original Source removal with no function row for that file', () => {
+  const crap = frozenCrapV2();
+  crap.original_sources.push(digest('src/config/retired-empty.ts', 'e'));
+  const [attempt] = contourAttempts(crap, receipt);
+  expect(attempt?.accepted).toBe(true);
+  expect(attempt?.function_count).toBe(2);
+});
+
+test('v2 accepts a pure current Source addition with no original Source mapping', () => {
+  const crap = frozenCrapV2();
+  crap.original_sources = [];
+  crap.source_mappings = [];
+  crap.functions = [
+    {
+      kind: 'new',
+      identity: 'src/config/host-capability.ts#new-function',
+      current_identity: 'src/config/host-capability.ts#new-function',
+      maximum_complexity: 2,
+      maximum_crap: 3,
+      complexity: 2,
+      coverage: 1,
+      crap: 2,
+      rationale: 'New source has a bounded reviewed function.',
+    },
+  ];
+  const [attempt] = contourAttempts(crap, receipt);
+  expect(attempt?.accepted).toBe(true);
+  expect(attempt?.function_count).toBe(1);
+});
+
+test.each([
+  'new-original-field',
+  'removed-current-field',
+  'budget-bound',
+  'non-integer-complexity',
+  'non-integer-original-complexity',
+  'non-integer-budget',
+  'nonpositive-crap-budget',
+  'nonfinite-crap',
+  'crap-budget-bound',
+  'retained-crap-mismatch',
+  'new-crap-mismatch',
+  'new-cap-too-high',
+  'new-crap-cap-too-high',
+  'new-cap-noninteger',
+  'incomplete-coverage',
+  'source-map',
+  'source-overlap',
+  'function-overlap',
+  'shared-identity-reset',
+  'short-rationale',
+] as const)('v2 rejects %s', (kind) => {
+  const crap = frozenCrapV2(coverageWithTwoFunctions());
+  if (kind === 'new-original-field') Object.assign(crap.functions[1]!, { original_source_complexity: 1 });
+  if (kind === 'removed-current-field') Object.assign(crap.functions[2]!, { complexity: 1 });
+  if (kind === 'budget-bound') Object.assign(crap.functions[0]!, { maximum_complexity: 2 });
+  if (kind === 'non-integer-complexity') Object.assign(crap.functions[0]!, { complexity: 2.5 });
+  if (kind === 'non-integer-original-complexity')
+    Object.assign(crap.functions[0]!, { original_source_complexity: 4.5 });
+  if (kind === 'non-integer-budget') Object.assign(crap.functions[0]!, { maximum_complexity: 2.5 });
+  if (kind === 'nonpositive-crap-budget') Object.assign(crap.functions[0]!, { maximum_crap: 0 });
+  if (kind === 'nonfinite-crap') Object.assign(crap.functions[0]!, { crap: Number.POSITIVE_INFINITY });
+  if (kind === 'crap-budget-bound') Object.assign(crap.functions[0]!, { maximum_crap: 2 });
+  if (kind === 'retained-crap-mismatch') Object.assign(crap.functions[0]!, { crap: 2 });
+  if (kind === 'new-crap-mismatch') Object.assign(crap.functions[1]!, { crap: 1 });
+  if (kind === 'new-cap-too-high') Object.assign(crap.functions[1]!, { maximum_complexity: 11 });
+  if (kind === 'new-crap-cap-too-high') Object.assign(crap.functions[1]!, { maximum_crap: 11 });
+  if (kind === 'new-cap-noninteger') Object.assign(crap.functions[1]!, { maximum_crap: 2.5 });
+  if (kind === 'incomplete-coverage') Object.assign(crap.functions[1]!, { coverage: 0.5 });
+  if (kind === 'source-map') crap.source_mappings[0]!.current_path = 'src/other.ts';
+  if (kind === 'source-overlap') crap.source_mappings.push({ ...crap.source_mappings[0]! });
+  if (kind === 'function-overlap') {
+    const retainedCurrent = String((crap.functions[0]! as Record<string, unknown>).current_identity);
+    Object.assign(crap.functions[1]!, { identity: retainedCurrent, current_identity: retainedCurrent });
+  }
+  if (kind === 'shared-identity-reset') {
+    const file = 'src/config/host-capability.ts';
+    crap.original_sources.push(digest(file, 'e'));
+    crap.functions.push({
+      kind: 'removed',
+      identity: `${file}#new-function`,
+      file,
+      rationale: 'A shared identity must not reset its retained ceiling.',
+    });
+  }
+  if (kind === 'short-rationale') Object.assign(crap.functions[1]!, { rationale: 'short' });
+  expect(() => contourAttempts(crap, receipt)).toThrow();
 });
 
 test.each(['malformed', 'global-claim', 'selection-mode'] as const)(

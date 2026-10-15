@@ -243,6 +243,7 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         };
         next.lifecycle.references.push(
           reference(next, 'implementation_result', 'implementation', { implementation_fingerprint: fingerprint }),
+          reference(next, 'change_impact_post', 'impact-post', { implementation_fingerprint: fingerprint }),
         );
       });
       work = expectReturned(() => transitionLifecycleState(work, 'VERIFY', 'Collect independent assurance.'));
@@ -312,6 +313,14 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       );
       expect(work).not.toBeNull();
       expect(typeof work).toBe('object');
+      fixture.write('docs/agent-instructions/current.md', 'changed after CLEAR capture\n');
+      const staleDeliveryProgress = clone(work);
+      staleDeliveryProgress.revision++;
+      staleDeliveryProgress.lifecycle.revision++;
+      expect(() => validateLifecycleProgress(work, staleDeliveryProgress, clearContext)).toThrow(
+        'documentation CLEAR inventory_digest is stale',
+      );
+      fixture.write('docs/agent-instructions/current.md', 'current\n');
       work = samePhase(
         work,
         (next) =>
@@ -334,6 +343,13 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
           ),
         clearContext,
       );
+      const missingDeliveryReceipt = clone(work);
+      missingDeliveryReceipt.lifecycle.references = missingDeliveryReceipt.lifecycle.references.filter(
+        (item) => item.kind !== 'delivery_receipt',
+      );
+      expect(() => transitionLifecycleState(missingDeliveryReceipt, 'COMPLETE', 'Complete.', clearContext)).toThrow(
+        'current delivery_receipt reference required',
+      );
       fixture.write('docs/agent-instructions/current.md', 'changed\n');
       expect(() => transitionLifecycleState(work, 'COMPLETE', 'Complete.', clearContext)).toThrow();
       fixture.write('docs/agent-instructions/current.md', 'current\n');
@@ -341,6 +357,10 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(work).not.toBeNull();
       expect(typeof work).toBe('object');
       expect(work.lifecycle.phase).toBe('COMPLETE');
+      const immutableProgress = clone(work);
+      immutableProgress.revision++;
+      immutableProgress.lifecycle.revision++;
+      expect(() => validateLifecycleProgress(work, immutableProgress)).toThrow('completed lifecycle is immutable');
       expect(() => transitionLifecycleState(work, 'EXECUTE', 'No.')).toThrow(LifecycleStateError);
       completed = true;
     } catch (error) {
@@ -350,6 +370,120 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       if (completed && performance.now() < cleanupDeadline) rmSync(fixture.root, { recursive: true, force: true });
       else if (completed) console.error(`[lifecycle-state] retained expired fixture: ${fixture.root}`);
     }
+  });
+
+  test('phase transitions require current references and a seal for the current execution revision', () => {
+    let work = expectReturned(() => transitionLifecycleState(initialWork(), 'TRACE', 'Trace the accepted scope.'));
+    work = add(
+      work,
+      reference(work, 'source_plan', 'phase-source-plan'),
+      reference(work, 'acceptance_manifest', 'phase-acceptance'),
+      reference(work, 'implementation_scope', 'phase-scope'),
+    );
+
+    const missingScope = clone(work);
+    missingScope.lifecycle.references = missingScope.lifecycle.references.filter(
+      (item) => item.kind !== 'implementation_scope',
+    );
+    expect(() => transitionLifecycleState(missingScope, 'PLAN', 'Authorize the plan.')).toThrow(
+      'current implementation_scope reference required',
+    );
+    expect(Object.isFrozen(missingScope)).toBe(false);
+    expect(Object.isFrozen(missingScope.binding)).toBe(false);
+    expect(Object.isFrozen(missingScope.lifecycle.scope)).toBe(false);
+    expect(Object.isFrozen(missingScope.lifecycle.references[0])).toBe(false);
+    expect(work.lifecycle.references.some((item) => item.kind === 'implementation_scope')).toBe(true);
+
+    work = expectReturned(() => transitionLifecycleState(work, 'PLAN', 'Authorize the plan.'));
+    work = add(
+      work,
+      reference(work, 'execution_approval', 'phase-approval', { decision: 'approved' }),
+      reference(work, 'platform_knowledge', 'phase-knowledge'),
+      reference(work, 'implementation_policy', 'phase-policy'),
+      reference(work, 'change_impact_pre', 'phase-impact-pre'),
+      reference(work, 'documentation_validation', 'phase-docs', { decision: 'pass' }),
+    );
+    const missingDocumentation = clone(work);
+    missingDocumentation.lifecycle.references = missingDocumentation.lifecycle.references.filter(
+      (item) => item.kind !== 'documentation_validation',
+    );
+    expect(() => transitionLifecycleState(missingDocumentation, 'EXECUTE', 'Implement the approved scope.')).toThrow(
+      'current documentation_validation reference required',
+    );
+    expect(Object.isFrozen(missingDocumentation.binding)).toBe(false);
+    expect(Object.isFrozen(missingDocumentation.lifecycle.scope)).toBe(false);
+
+    work = expectReturned(() => transitionLifecycleState(work, 'EXECUTE', 'Implement the approved scope.'));
+    const fingerprint = hash('e');
+    const sealed = samePhase(work, (next) => {
+      next.lifecycle.seal = {
+        sealed_revision: next.revision,
+        sealed_at: '2026-09-18T18:00:00.000Z',
+        implementation_fingerprint: fingerprint,
+      };
+      next.lifecycle.references.push(
+        reference(next, 'implementation_result', 'phase-implementation', {
+          implementation_fingerprint: fingerprint,
+        }),
+        reference(next, 'change_impact_post', 'phase-impact-post', {
+          implementation_fingerprint: fingerprint,
+        }),
+      );
+    });
+    const missingImplementation = clone(sealed);
+    missingImplementation.lifecycle.references = missingImplementation.lifecycle.references.filter(
+      (item) => item.kind !== 'implementation_result',
+    );
+    expect(() => transitionLifecycleState(missingImplementation, 'VERIFY', 'Verify the implementation.')).toThrow(
+      'current implementation_result reference required',
+    );
+    expect(Object.isFrozen(missingImplementation.binding)).toBe(false);
+    expect(Object.isFrozen(missingImplementation.lifecycle.scope)).toBe(false);
+
+    const staleSeal = samePhase(sealed, (next) => {
+      next.lifecycle.references.push(reference(next, 'scope_snapshot', 'phase-snapshot-after-seal'));
+    });
+    expect(staleSeal.lifecycle.seal?.sealed_revision).toBe(staleSeal.revision - 1);
+    expect(() => transitionLifecycleState(staleSeal, 'VERIFY', 'Verify the implementation.')).toThrow(
+      'current seal required',
+    );
+
+    work = expectReturned(() => transitionLifecycleState(sealed, 'VERIFY', 'Verify the implementation.'));
+    work = samePhase(work, (next) => {
+      next.lifecycle.assurance.review_generation = 1;
+      next.lifecycle.assurance.delivery_cycle_id = 'phase-delivery';
+      next.lifecycle.references.push(
+        reference(next, 'review_packet', 'phase-review-packet', {
+          generation: 1,
+          implementation_fingerprint: fingerprint,
+        }),
+        reference(next, 'documentation_clear', 'phase-documentation-clear', {
+          path: '.agent/phase-documentation-clear.json',
+          generation: 1,
+          implementation_fingerprint: fingerprint,
+          delivery_cycle_id: 'phase-delivery',
+          decision: 'pass',
+        }),
+      );
+      for (let index = 1; index <= 3; index++)
+        next.lifecycle.references.push(
+          reference(next, 'review_receipt', `phase-review-${index}`, {
+            generation: 1,
+            implementation_fingerprint: fingerprint,
+            principal: `phase-reviewer-${index}`,
+            decision: 'pass',
+          }),
+          reference(next, 'reverse_validation', `phase-reverse-${index}`, {
+            generation: 1,
+            implementation_fingerprint: fingerprint,
+            principal: `phase-reverse-reviewer-${index}`,
+            decision: 'pass',
+          }),
+        );
+    });
+    expect(() => transitionLifecycleState(work, 'DELIVERY', 'Wait for current-version testing.')).toThrow(
+      'current delivery_manifest reference required',
+    );
   });
 
   test('rejects skipped phases, stale bindings and duplicate reviewer identity', () => {
@@ -400,6 +534,373 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
     ).toThrow('cannot be admitted during INTAKE');
   }, 30_000);
 
+  test('rejects unanchored artifact digest and schema values', () => {
+    const digestCases = [hash('d') + 'x', 'x' + hash('d')];
+    for (const [index, sha256] of digestCases.entries()) {
+      const work = initialWork();
+      work.lifecycle.references.push(reference(work, 'decision', `bad-digest-${index}`, { sha256 }));
+      expect(() => validateLifecycleAggregate(work)).toThrow('lifecycle artifact digest invalid');
+    }
+
+    const schemaCases = ['Evidence/v1x', '!Evidence/v1'];
+    for (const [index, artifact_schema] of schemaCases.entries()) {
+      const work = initialWork();
+      work.lifecycle.references.push(reference(work, 'decision', `bad-schema-${index}`, { artifact_schema }));
+      expect(() => validateLifecycleAggregate(work)).toThrow('lifecycle artifact schema must be current v1');
+    }
+    const validPrefixedSchema = initialWork();
+    validPrefixedSchema.lifecycle.references.push(
+      reference(validPrefixedSchema, 'decision', 'valid-prefixed-schema', { artifact_schema: 'xEvidence/v1' }),
+    );
+    expectReturned(() => validateLifecycleAggregate(validPrefixedSchema));
+  });
+
+  test('rejects malformed reference metadata before phase requirements', () => {
+    const cases: readonly [Partial<MutableReference>, string][] = [
+      [{ record_id: '' }, 'lifecycle record id missing'],
+      [{ record_id: '  ' }, 'lifecycle record id missing'],
+      [{ path: '../outside.json' }, 'lifecycle artifact path unsafe'],
+      [{ ac_ids: [] }, 'lifecycle artifact acceptance binding exceeds current work'],
+      [{ ac_ids: ['AC-1', 'AC-OTHER'] }, 'lifecycle artifact acceptance binding exceeds current work'],
+      [{ generation: 0 }, 'lifecycle artifact generation invalid'],
+      [{ implementation_fingerprint: 'not-a-digest' }, 'lifecycle artifact fingerprint invalid'],
+      [{ principal: '' }, 'lifecycle artifact principal invalid'],
+      [{ principal: ' reviewer ' }, 'lifecycle artifact principal invalid'],
+    ];
+    for (const [fields, message] of cases) {
+      const work = initialWork();
+      work.lifecycle.references.push(reference(work, 'decision', 'metadata', fields));
+      expect(() => validateLifecycleAggregate(work)).toThrow(message);
+    }
+    const wrongSchema = initialWork();
+    wrongSchema.lifecycle.references.push({
+      ...reference(wrongSchema, 'decision', 'schema'),
+      schema: 'LifecycleArtifactReference/v2',
+    } as unknown as MutableReference);
+    expect(() => validateLifecycleAggregate(wrongSchema)).toThrow('lifecycle reference schema invalid');
+
+    const retired = initialWork();
+    for (const kind of [
+      'execution_approval',
+      'correction_authorization',
+      'documentation_validation',
+      'documentation_clear',
+      'validation_receipt',
+      'test_receipt',
+      'review_receipt',
+      'reverse_validation',
+    ] as const)
+      retired.lifecycle.references.push(
+        reference(retired, kind, `retired-${kind}`, {
+          disposition: 'retired',
+          decision: 'rejected',
+        }),
+      );
+    expectReturned(() => validateLifecycleAggregate(retired));
+  });
+
+  test('requires exact preserved admission history and current scope authority', () => {
+    const predecessor = initialWork();
+    const history = [
+      reference(predecessor, 'implementation_scope', 'history-scope'),
+      reference(predecessor, 'acceptance_manifest', 'history-acceptance'),
+      reference(predecessor, 'execution_approval', 'history-approval', { decision: 'approved' }),
+    ];
+    const continued = clone(predecessor);
+    continued.binding.work_source_revision = 'source-2';
+    continued.lifecycle.source_revision = 'source-2';
+    continued.lifecycle.references.push(...history);
+    expectReturned(() => validateLifecycleAggregate(continued, history));
+    const foreign = {
+      ...reference(predecessor, 'implementation_scope', 'foreign-scope'),
+      scope_id: 'foreign-scope',
+    };
+    continued.lifecycle.references.push(foreign);
+    expect(() => validateLifecycleAggregate(continued, [...history, foreign])).toThrow(
+      'lifecycle artifact authority binding differs from current work',
+    );
+  });
+
+  test('rejects malformed aggregate bindings, seal and assurance metadata', () => {
+    const cases: readonly [(work: MutableWork) => void, string][] = [
+      [
+        (work) => {
+          work.lifecycle.schema = 'LifecycleState/v2' as never;
+        },
+        'lifecycle schema invalid',
+      ],
+      [
+        (work) => {
+          work.lifecycle.revision++;
+        },
+        'lifecycle revision differs from work revision',
+      ],
+      [
+        (work) => {
+          work.lifecycle.phase = 'DONE' as never;
+        },
+        'lifecycle phase invalid',
+      ],
+      [
+        (work) => {
+          work.lifecycle.source_revision = 'other';
+        },
+        'lifecycle source binding invalid',
+      ],
+      [
+        (work) => {
+          work.lifecycle.next_action = '  ';
+        },
+        'lifecycle next action missing',
+      ],
+      [
+        (work) => {
+          work.lifecycle.config_binding.config_digest = hash('f');
+        },
+        'lifecycle configuration binding differs from work authority',
+      ],
+      [
+        (work) => {
+          work.lifecycle.config_binding.schema_digest = hash('f');
+        },
+        'lifecycle configuration binding differs from work authority',
+      ],
+      [
+        (work) => {
+          work.lifecycle.config_binding.runtime_code_digest = hash('f');
+        },
+        'lifecycle configuration binding differs from work authority',
+      ],
+      [
+        (work) => {
+          work.lifecycle.scope.scope_id = 'other';
+        },
+        'lifecycle scope binding invalid',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.review_generation = -1;
+        },
+        'review generation invalid',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.correction_count = -1;
+        },
+        'correction count invalid',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.review_failure_count = -1;
+        },
+        'review failure count invalid',
+      ],
+    ];
+    for (const [mutate, message] of cases) {
+      const work = initialWork();
+      mutate(work);
+      expect(() => validateLifecycleAggregate(work)).toThrow(message);
+    }
+    const nonCanonical = initialWork();
+    nonCanonical.lifecycle.next_action = undefined as never;
+    expect(() => validateLifecycleAggregate(nonCanonical)).toThrow(
+      'non-canonical JSON value at $.lifecycle.next_action',
+    );
+    const sealed = initialWork();
+    sealed.lifecycle.seal = {
+      sealed_revision: 1,
+      sealed_at: '2026-09-18T18:00:00.000Z',
+      implementation_fingerprint: hash('e'),
+    };
+    expectReturned(() => validateLifecycleAggregate(sealed));
+    for (const [change, message] of [
+      [
+        (work: MutableWork) => {
+          work.lifecycle.seal!.sealed_revision = 2;
+        },
+        'lifecycle seal revision invalid',
+      ],
+      [
+        (work: MutableWork) => {
+          work.lifecycle.seal!.sealed_at = 'not-a-date';
+        },
+        'lifecycle seal timestamp invalid',
+      ],
+      [
+        (work: MutableWork) => {
+          work.lifecycle.seal!.implementation_fingerprint = 'bad';
+        },
+        'lifecycle seal fingerprint invalid',
+      ],
+    ] as const) {
+      const work = clone(sealed);
+      change(work);
+      expect(() => validateLifecycleAggregate(work)).toThrow(message);
+    }
+  });
+
+  test('normalizes transition actions and rejects blank actions', () => {
+    const next = expectReturned(() => transitionLifecycleState(initialWork(), 'TRACE', '  Trace the scope.  '));
+    expect(next).not.toBeNull();
+    expect(typeof next).toBe('object');
+    expect(next.lifecycle.next_action).toBe('Trace the scope.');
+    for (const action of ['', ' \t\n '])
+      expect(() => transitionLifecycleState(initialWork(), 'TRACE', action)).toThrow('next lifecycle action missing');
+  });
+
+  test('rejects same-phase authority and assurance drift and untyped transition output', () => {
+    const cases: readonly [(work: MutableWork) => void, string][] = [
+      [
+        (work) => {
+          work.lifecycle.route = 'R2';
+        },
+        'lifecycle authority changed; explicit reconcile or rebind required',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.epoch = 'other';
+        },
+        'assurance epoch changes only through explicit reconcile',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.correction_count++;
+        },
+        'correction count changes only through a correction transition',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.review_generation++;
+        },
+        'review generation requires a new review packet during verification',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.review_generation += 2;
+        },
+        'assurance counters cannot regress',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.review_failure_count += 2;
+        },
+        'assurance counters cannot regress',
+      ],
+      [
+        (work) => {
+          work.lifecycle.assurance.delivery_cycle_id = 'premature';
+        },
+        'delivery cycle can only open once during verification',
+      ],
+    ];
+    for (const [mutate, message] of cases) {
+      const before = initialWork();
+      const after = clone(before);
+      after.revision++;
+      after.lifecycle.revision++;
+      mutate(after);
+      expect(() => validateLifecycleProgress(before, after)).toThrow(message);
+    }
+    for (const field of ['review_generation', 'review_failure_count'] as const) {
+      const before = initialWork();
+      before.lifecycle.assurance[field] = 1;
+      const after = clone(before);
+      after.revision++;
+      after.lifecycle.revision++;
+      after.lifecycle.assurance[field] = 0;
+      expect(() => validateLifecycleProgress(before, after)).toThrow('assurance counters cannot regress');
+    }
+    const before = initialWork();
+    const after = clone(expectReturned(() => transitionLifecycleState(before, 'TRACE', 'Trace.')));
+    after.lifecycle.assurance.epoch = 'untyped-epoch';
+    expect(() => validateLifecycleProgress(before, after)).toThrow('lifecycle transition contains an untyped mutation');
+  });
+
+  test('rejects duplicate current singleton evidence by kind', () => {
+    let work = expectReturned(() => transitionLifecycleState(initialWork(), 'TRACE', 'Trace the accepted scope.'));
+    expect(work).not.toBeNull();
+    expect(typeof work).toBe('object');
+    work = add(
+      work,
+      reference(work, 'source_plan', 'singleton-source-plan'),
+      reference(work, 'acceptance_manifest', 'singleton-acceptance'),
+      reference(work, 'implementation_scope', 'singleton-implementation-scope'),
+      reference(work, 'scope_snapshot', 'singleton-scope-snapshot'),
+    );
+    const traceSingletons: readonly LifecycleArtifactKind[] = [
+      'source_plan',
+      'acceptance_manifest',
+      'implementation_scope',
+      'scope_snapshot',
+    ];
+    for (const kind of traceSingletons) {
+      const duplicate = clone(work);
+      duplicate.lifecycle.references.push(reference(duplicate, kind, `duplicate-${kind}`));
+      expect(() => validateLifecycleAggregate(duplicate)).toThrow(`multiple current ${kind} references`);
+    }
+
+    work = expectReturned(() => transitionLifecycleState(work, 'PLAN', 'Authorize the accepted plan.'));
+    expect(work).not.toBeNull();
+    expect(typeof work).toBe('object');
+    work = add(
+      work,
+      reference(work, 'execution_approval', 'singleton-approval', { decision: 'approved' }),
+      reference(work, 'platform_knowledge', 'singleton-knowledge'),
+      reference(work, 'implementation_policy', 'singleton-policy'),
+      reference(work, 'change_impact_pre', 'singleton-impact-pre'),
+      reference(work, 'documentation_validation', 'singleton-docs', { decision: 'pass' }),
+    );
+    const planSingletons: readonly LifecycleArtifactKind[] = [
+      'execution_approval',
+      'platform_knowledge',
+      'implementation_policy',
+      'change_impact_pre',
+      'documentation_validation',
+    ];
+    for (const kind of planSingletons) {
+      const duplicate = clone(work);
+      duplicate.lifecycle.references.push(
+        reference(
+          duplicate,
+          kind,
+          `duplicate-${kind}`,
+          kind === 'execution_approval'
+            ? { decision: 'approved' }
+            : kind === 'documentation_validation'
+              ? { decision: 'pass' }
+              : {},
+        ),
+      );
+      expect(() => validateLifecycleAggregate(duplicate)).toThrow(`multiple current ${kind} references`);
+    }
+
+    work = expectReturned(() => transitionLifecycleState(work, 'EXECUTE', 'Implement the approved scope.'));
+    expect(work).not.toBeNull();
+    expect(typeof work).toBe('object');
+    const fingerprint = hash('e');
+    work = samePhase(work, (next) => {
+      next.lifecycle.seal = {
+        sealed_revision: next.revision,
+        sealed_at: '2026-09-18T18:00:00.000Z',
+        implementation_fingerprint: fingerprint,
+      };
+      next.lifecycle.references.push(
+        reference(next, 'change_impact_post', 'singleton-impact-post', {
+          implementation_fingerprint: fingerprint,
+        }),
+      );
+    });
+    const duplicateImpactPost = clone(work);
+    duplicateImpactPost.lifecycle.references.push(
+      reference(duplicateImpactPost, 'change_impact_post', 'duplicate-impact-post', {
+        implementation_fingerprint: fingerprint,
+      }),
+    );
+    expect(() => validateLifecycleAggregate(duplicateImpactPost)).toThrow(
+      'multiple current change_impact_post references',
+    );
+  });
+
   test('preserves reference identity and permits only exact current feedback consumption', () => {
     const feedback = reference(initialWork(), 'feedback_consumption', 'feedback');
     const consumed = { ...feedback, disposition: 'consumed' as const };
@@ -425,6 +926,71 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(() => validateLifecycleReferencePreservation([before], [after])).toThrow(
         'lifecycle reference replacement or invalidation requires a typed operation',
       );
+  });
+
+  test('admits scope snapshots in every declared lifecycle phase', () => {
+    const tracedWork = (): MutableWork => {
+      let work = expectReturned(() => transitionLifecycleState(initialWork(), 'TRACE', 'Trace the accepted scope.'));
+      expect(work).not.toBeNull();
+      expect(typeof work).toBe('object');
+      return add(
+        work,
+        reference(work, 'source_plan', 'snapshot-source-plan'),
+        reference(work, 'acceptance_manifest', 'snapshot-acceptance'),
+        reference(work, 'implementation_scope', 'snapshot-implementation-scope'),
+      );
+    };
+    const authorizedPlan = (work: MutableWork): MutableWork => {
+      const plan = expectReturned(() => transitionLifecycleState(work, 'PLAN', 'Authorize the accepted scope.'));
+      expect(plan).not.toBeNull();
+      expect(typeof plan).toBe('object');
+      return add(
+        plan,
+        reference(plan, 'execution_approval', 'snapshot-approval', { decision: 'approved' }),
+        reference(plan, 'platform_knowledge', 'snapshot-knowledge'),
+        reference(plan, 'implementation_policy', 'snapshot-policy'),
+        reference(plan, 'change_impact_pre', 'snapshot-impact-pre'),
+        reference(plan, 'documentation_validation', 'snapshot-docs', { decision: 'pass' }),
+      );
+    };
+
+    const plan = expectReturned(() => transitionLifecycleState(tracedWork(), 'PLAN', 'Open the planned scope.'));
+    expect(plan).not.toBeNull();
+    expect(typeof plan).toBe('object');
+    expectReturned(() =>
+      samePhase(plan, (next) => next.lifecycle.references.push(reference(next, 'scope_snapshot', 'snapshot-plan'))),
+    );
+
+    const execute = expectReturned(() =>
+      transitionLifecycleState(authorizedPlan(tracedWork()), 'EXECUTE', 'Execute scope.'),
+    );
+    expect(execute).not.toBeNull();
+    expect(typeof execute).toBe('object');
+    expectReturned(() =>
+      samePhase(execute, (next) =>
+        next.lifecycle.references.push(reference(next, 'scope_snapshot', 'snapshot-execute')),
+      ),
+    );
+
+    const sealed = samePhase(execute, (next) => {
+      const fingerprint = hash('e');
+      next.lifecycle.seal = {
+        sealed_revision: next.revision,
+        sealed_at: '2026-09-18T18:00:00.000Z',
+        implementation_fingerprint: fingerprint,
+      };
+      next.lifecycle.references.push(
+        reference(next, 'implementation_result', 'snapshot-implementation', {
+          implementation_fingerprint: fingerprint,
+        }),
+      );
+    });
+    const verify = expectReturned(() => transitionLifecycleState(sealed, 'VERIFY', 'Verify the sealed scope.'));
+    expect(verify).not.toBeNull();
+    expect(typeof verify).toBe('object');
+    expectReturned(() =>
+      samePhase(verify, (next) => next.lifecycle.references.push(reference(next, 'scope_snapshot', 'snapshot-verify'))),
+    );
   });
 
   test('correction retires stale assurance and delivery evidence in one typed transition', async () => {
@@ -465,6 +1031,7 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         };
         next.lifecycle.references.push(
           reference(next, 'implementation_result', 'implementation', { implementation_fingerprint: fingerprint }),
+          reference(next, 'change_impact_post', 'impact-post', { implementation_fingerprint: fingerprint }),
         );
       });
 
@@ -514,6 +1081,9 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(corrected.lifecycle.seal).toBeNull();
       expect(corrected.lifecycle.assurance.correction_count).toBe(1);
       expect(corrected.lifecycle.references.find((item) => item.kind === 'implementation_result')?.disposition).toBe(
+        'retired',
+      );
+      expect(corrected.lifecycle.references.find((item) => item.record_id === 'impact-post')?.disposition).toBe(
         'retired',
       );
       expect(corrected.lifecycle.references.find((item) => item.kind === 'feedback_consumption')?.disposition).toBe(
@@ -582,21 +1152,67 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
               decision: 'pass',
             }),
           );
+        next.lifecycle.references.push(
+          reference(next, 'validation_receipt', 'validation-2', {
+            implementation_fingerprint: secondFingerprint,
+            decision: 'pass',
+          }),
+          reference(next, 'test_receipt', 'test-2', {
+            implementation_fingerprint: secondFingerprint,
+            decision: 'pass',
+          }),
+          reference(next, 'dispatch_reservation', 'reservation-2'),
+          reference(next, 'dispatch_attestation', 'attestation-2'),
+        );
       });
+      const singletonCases: readonly (readonly [LifecycleArtifactKind, Partial<MutableReference>])[] = [
+        ['implementation_result', { implementation_fingerprint: secondFingerprint }],
+        ['test_receipt', { implementation_fingerprint: secondFingerprint, decision: 'pass' }],
+        ['review_packet', { generation: 2, implementation_fingerprint: secondFingerprint }],
+        [
+          'documentation_clear',
+          {
+            path: '.agent/duplicate-documentation-clear.json',
+            generation: 2,
+            implementation_fingerprint: secondFingerprint,
+            decision: 'pass',
+          },
+        ],
+        ['delivery_manifest', { implementation_fingerprint: secondFingerprint, delivery_cycle_id: 'delivery-2' }],
+      ];
+      for (const [kind, extra] of singletonCases) {
+        const duplicate = clone(verifiedAgain);
+        duplicate.lifecycle.references.push(reference(duplicate, kind, `duplicate-${kind}`, extra));
+        expect(() => validateLifecycleAggregate(duplicate)).toThrow(`multiple current ${kind} references`);
+      }
       const clearContext: DocumentationVerificationContext = {
         repository_root: fixture.root,
         repository_id: clearInput.repository_id,
         project_id: clearInput.project_id,
         work_id: clearInput.work_id,
       };
+      const mismatchedGeneration = clone(verifiedAgain);
+      const currentClear = mismatchedGeneration.lifecycle.references.find(
+        (item) => item.kind === 'documentation_clear' && item.disposition === 'current',
+      );
+      expect(currentClear).toBeDefined();
+      currentClear!.generation = 1;
+      expect(() =>
+        transitionLifecycleState(
+          mismatchedGeneration,
+          'DELIVERY',
+          'Reject mismatched CLEAR reference generation.',
+          clearContext,
+        ),
+      ).toThrow('documentation CLEAR generation invalid');
       const staleCurrent = clone(verifiedAgain);
       const staleReference = staleCurrent.lifecycle.references.find(
         (item) => item.kind === 'documentation_clear' && item.disposition === 'current',
       );
-      if (!staleReference) throw new Error('current documentation CLEAR reference missing');
-      staleReference.path = firstClear.path;
-      staleReference.sha256 = firstClear.sha256;
-      staleReference.record_id = firstRecordId;
+      expect(staleReference).toBeDefined();
+      staleReference!.path = firstClear.path;
+      staleReference!.sha256 = firstClear.sha256;
+      staleReference!.record_id = firstRecordId;
       expect(() =>
         transitionLifecycleState(staleCurrent, 'DELIVERY', 'Reject the previous CLEAR cycle.', clearContext),
       ).toThrow('lifecycle reference identity');
@@ -617,6 +1233,78 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(correctedDelivery).not.toBeNull();
       expect(typeof correctedDelivery).toBe('object');
       expect(correctedDelivery.lifecycle.phase).toBe('DELIVERY');
+      const deliveryAuthorized = samePhase(
+        correctedDelivery,
+        (next) =>
+          next.lifecycle.references.push(
+            reference(next, 'correction_authorization', 'delivery-correction', { decision: 'approved' }),
+            reference(next, 'feedback_consumption', 'delivery-consumption'),
+            reference(next, 'delivery_receipt', 'delivery-receipt', {
+              implementation_fingerprint: secondFingerprint,
+              delivery_cycle_id: 'delivery-2',
+              decision: 'approved',
+            }),
+            reference(next, 'runtime_receipt', 'runtime-receipt', {
+              implementation_fingerprint: secondFingerprint,
+              delivery_cycle_id: 'delivery-2',
+              decision: 'accepted',
+            }),
+            reference(next, 'user_testing_receipt', 'user-testing-receipt', {
+              implementation_fingerprint: secondFingerprint,
+              delivery_cycle_id: 'delivery-2',
+              decision: 'accepted',
+            }),
+            reference(next, 'feedback', 'delivery-feedback', {
+              implementation_fingerprint: secondFingerprint,
+              delivery_cycle_id: 'delivery-2',
+              decision: 'feedback',
+            }),
+          ),
+        clearContext,
+      );
+      const deliverySingletonCases: readonly (readonly [LifecycleArtifactKind, Partial<MutableReference>])[] = [
+        ['delivery_receipt', { implementation_fingerprint: secondFingerprint, delivery_cycle_id: 'delivery-2' }],
+        ['runtime_receipt', { implementation_fingerprint: secondFingerprint, delivery_cycle_id: 'delivery-2' }],
+        ['user_testing_receipt', { implementation_fingerprint: secondFingerprint, delivery_cycle_id: 'delivery-2' }],
+        [
+          'feedback',
+          {
+            implementation_fingerprint: secondFingerprint,
+            delivery_cycle_id: 'delivery-2',
+            decision: 'feedback',
+          },
+        ],
+        ['feedback_consumption', {}],
+        ['correction_authorization', { decision: 'approved' }],
+      ];
+      for (const [kind, extra] of deliverySingletonCases) {
+        const duplicate = clone(deliveryAuthorized);
+        duplicate.lifecycle.references.push(reference(duplicate, kind, `duplicate-${kind}`, extra));
+        expect(() => validateLifecycleAggregate(duplicate)).toThrow(`multiple current ${kind} references`);
+      }
+      const deliveryCorrected = expectReturned(() =>
+        transitionLifecycleState(deliveryAuthorized, 'EXECUTE', 'Apply the authorized delivery correction.'),
+      );
+      expect(deliveryCorrected).not.toBeNull();
+      expect(typeof deliveryCorrected).toBe('object');
+      expect(deliveryCorrected.lifecycle.phase).toBe('EXECUTE');
+      expect(deliveryCorrected.lifecycle.assurance.correction_count).toBe(2);
+      expect(
+        deliveryCorrected.lifecycle.references.find((item) => item.record_id === 'delivery-consumption')?.disposition,
+      ).toBe('consumed');
+      expect(deliveryCorrected.lifecycle.references.find((item) => item.record_id === 'manifest-2')?.disposition).toBe(
+        'retired',
+      );
+      for (const recordId of [
+        'delivery-receipt',
+        'runtime-receipt',
+        'user-testing-receipt',
+        'delivery-feedback',
+        'delivery-correction',
+      ])
+        expect(deliveryCorrected.lifecycle.references.find((item) => item.record_id === recordId)?.disposition).toBe(
+          'retired',
+        );
       expect(() => transitionLifecycleState(verifiedAgain, 'EXECUTE', 'Reuse stale correction authority.')).toThrow(
         'current correction_authorization reference required',
       );
@@ -631,6 +1319,10 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(secondCorrected).not.toBeNull();
       expect(typeof secondCorrected).toBe('object');
       expect(secondCorrected.lifecycle.assurance.correction_count).toBe(2);
+      for (const recordId of ['validation-2', 'test-2', 'reservation-2', 'attestation-2', 'review-packet-2'])
+        expect(secondCorrected.lifecycle.references.find((item) => item.record_id === recordId)?.disposition).toBe(
+          'retired',
+        );
       const retained = verifiedAgain.lifecycle.references.filter((item) => item.disposition !== 'current');
       expect(retained.length).toBeGreaterThan(0);
       for (const item of retained)
