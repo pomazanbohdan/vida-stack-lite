@@ -19,7 +19,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded |
 | main-contracts | 102/102 · 296/296 · 325/325 · 152/152 | 15 / 15 | unknown | BLOCKED | open / unknown |
 | main-cedar | 25/25 · 56/56 · 60/60 · 21/21 | 6 / 6 | unknown | BLOCKED | open / unknown |
-| main-governance | 184/205 · 622/695 · 639/721 · 58/100 | 6 / 20 | unknown | BLOCKED | open / unknown |
+| main-governance | 197/205 · 663/695 · 681/721 · 71/100 | 6 / 6 | unknown | BLOCKED | open / unknown |
 | main-mastra | unknown | unknown | unknown | not imported | open / unknown |
 | main-exports | unknown | unknown | unknown | not imported | N/A: static exports |
 | bun-fs-safe-attestation | unknown | unknown | unknown | not imported | open / unknown |
@@ -151,6 +151,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | --- | --- | --- | --- | --- | --- | --- |
 | coverage | c5dd7d76-cce4-415d-898b-6abbda8af27a | 5fae51e8b69d627d0344f2efd68d70d8d2515e87 | 2026-10-15T17:18:10.096Z | focused-diagnostic; owner accepted locally; selection bound | 184/205 · 622/695 · 639/721 · 58/100 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/c5dd7d76-cce4-415d-898b-6abbda8af27a.focused-coverage.json |
 | coverage-outcome | c5dd7d76-cce4-415d-898b-6abbda8af27a | not-captured | 2026-10-15T17:18:10.105Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/c5dd7d76-cce4-415d-898b-6abbda8af27a.json |
+| coverage | ca5fd5ef-30e7-46c3-a605-830d9e69f040 | 79d3dbb5acfcc67afb7e1a5b423c13f4188fa054 | 2026-10-15T17:31:28.281Z | focused-diagnostic; owner accepted locally; selection bound | 197/205 · 663/695 · 681/721 · 71/100 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/ca5fd5ef-30e7-46c3-a605-830d9e69f040.focused-coverage.json |
+| coverage-outcome | ca5fd5ef-30e7-46c3-a605-830d9e69f040 | not-captured | 2026-10-15T17:31:28.289Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/ca5fd5ef-30e7-46c3-a605-830d9e69f040.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

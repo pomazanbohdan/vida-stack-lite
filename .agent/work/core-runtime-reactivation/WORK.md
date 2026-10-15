@@ -810,6 +810,34 @@ not a newly executed expected-timeout child control. Source/Runtime custody
 qualification is not inferred from this functional test. Actual review:
 quality-governance-native-actual-review-5fae-20261015.md under attachments.
 
+The first strict staged hook rejected one no-unsafe-return in the forged-capability
+test's Reflect.apply expression. Root changed that assertion callback to a void
+block, preserving the untrusted-input check without returning any. Retain
+quality-governance-native-commit-5fae-20261015.log. The corrected strict hook
+passes483TS roots/format/Knip/lint; packet published as79d3dbb before capture.
+
+Captureca5fd5ef-30e7-46c3-a605-830d9e69f040 at79d3dbb completes73PASS/0FAIL/
+897assertions in5.19s Bun/8320.036525ms owned outer time. Actual governance
+metrics improve F184/205→197/205,L622/695→663/695,S639/721→681/721,
+B58/100→71/100; maxCC stays6 and entryCRAP falls20→6. The Source function
+inventory/denominators remain unchanged. Retained root
+`/workspace/attachments/quality-declared-main-governance-4z36jH`; current
+validated gaps quality-main-governance-open-counters-79d3-20261015.jsonl.
+Remaining8function entries and29branch counters are explicit default/failure/
+cleanup paths; they are not waived. The next packet must use this exact gap list,
+real file/transition errors where reachable and reviewed simplification only
+where a private fallback is contractually redundant. No repeated initial scan,
+whole HostState suite or oversized mutation campaign is justified.
+
+Derived contour evidence now preserves31observations and still2/44historical
+compatible local coverage+assertion-confirmed mutation closures,42without full
+closure,1static contour. Four executable contours have recorded four-metric
+coverage maxima (host,timing,contracts,Cedar); governance is still open. Parent
+BLOCKED outcomes, current-freshness/frozen/global/mutation pending states remain
+separate from successful functional captures. Final report merge evidence:
+quality-contours-update-governance-79d3-20261015.log. No runtime cutover/install
+or unblock/owner notice occurred.
+
 ## Automatic contour progress projection
 
 The human requested durable per-contour metrics and one automatic consolidated
