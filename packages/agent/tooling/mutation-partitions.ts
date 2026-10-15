@@ -37,6 +37,7 @@ export function mutationPartitions(): MutationPartition[] {
         'tests/project-context-boundary.test.ts',
         'tests/fuzz.test.ts',
         'tests/runtime-config-repair-boundary.test.ts',
+        'tests/runtime-config-yaml.test.ts',
       ],
     },
     {

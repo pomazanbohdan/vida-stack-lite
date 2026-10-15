@@ -738,266 +738,102 @@ without repeating these complete coverage selections unless affected changes
 or unresolved evidence justify another run. Do not launch the oversized kernel
 mutation campaign until that runner prerequisite is genuinely qualified.
 
-## Main-governance contour: current measured gaps and assigned packet
+## Main-governance and config: current contour evidence
 
-Capturec5dd7d76-cce4-415d-898b-6abbda8af27a at published5fae51e uses the
-unchanged original four-file main-governance selection and completes54PASS/
-0FAIL/867assertions in5.17s Bun/8705.449727ms owned outer time. Actual diagnostic:
-F184/205,L622/695,S639/721,B58/100,maxCC6/entryCRAP20. Parent outcome remains
-separate BLOCKED; no timeout/signal/spawn failure and full outer output/same-boot
-namespace/group termination are retained. Root:
-`/workspace/attachments/quality-declared-main-governance-XEcV6n`.
-Validated gap extraction reuses the current report's maps/counters and the
-maintained contour/Istanbul validators; no new AST or Source hash pass. Evidence:
-quality-main-governance-{coverage,open-counters}-5fae-20261015.{log,jsonl}
-(coverage is .log; open-counters is .jsonl).
+Published Source/test packetac423245feb379df1c7e105b37d6ccf2c4683bd0 is current.
+Strict gate passes477formatted files/483TS roots/Knip/lint. Functional diagnostics
+use the existing declared contour registry and owned Tini/Bubblewrap process
+boundary, complete output, same boot and observed process-group termination.
+Their parent operations remain BLOCKED; diagnostic success is not global,
+frozen-budget, current-freshness, mutation or formed-Runtime acceptance.
 
-One selection omission is confirmed: the existing approval-consumption contract
-test calls validateHostWorkflowApprovalRecord but main-governance omitted it.
-Add that existing file to the registry rather than duplicating its parser tests.
-The other main missing roles are real HostState-backed capability, operation
-reservation and workflow approval adapters, plus failure cleanup closures.
-Do not add the whole large HostState suite merely to cover those facades.
+| Contour | PASS/FAIL/assertions | F / L / S / B | maxCC / entryCRAP | Bun / outer |
+| --- | --- | --- | --- | --- |
+| main-governance | 82/0/1003 | 200/202 · 682/691 · 702/716 · 82/90 | 6 / 6 | 5.57s / 8544.623484ms |
+| main-config | 42/0/11502 | 317/350 · 892/966 · 939/1024 · 203/266 | 16 / 42 | 4.48s / 7433.15574ms |
 
-Assigned two blind native Luna writers to disjoint existing files:
-governance-completeness owns a focused real SQLite/opaque capability reservation
-adapter case; edictum-workflow-completeness owns the native proof-backed workflow
-capability and real approval consume/replay controls. Root owns Source, registry,
-docs, checks/Git and the final numerical freeze. Use actual file-backed
-HostStateStore capabilities and transitions, preserve failed fixture custody,
-default5s cases, real CAS and UNKNOWN boundaries. No :memory: journal bypass,
-fabricated provider authority or callback-only persistence substitutes. The
-current gap counts remain unchanged until actual post-change measurement.
+Governance report46d8707b-f42f-4155-a57a-93e068438db0 and config report
+cbb99aff-ea8e-416e-baea-12fe9e2dab07 are under
+packages/agent/coverage/bun-unified/diagnostics/*.focused-coverage.json.
+Retained roots: quality-declared-main-governance-kb6WyN and
+quality-declared-main-config-0qPGCB under /workspace/attachments.
+Their exact validated gaps reuse report maps and maintained validators, with no
+new AST/hash scan: quality-main-{governance,config}-open-counters-ac4-20261015.jsonl.
+Automatic CONTOUR-STATUS preserves37observations,2/44historical compatible local
+coverage+assertion-confirmed mutation closures,42open and1separate static contour.
+No different Source/test closures are combined into a synthetic maximum.
 
-The two native case implementations are ready. Root targeted reservation
-control1PASS/19assertions (16.43ms case,1.53s process) and native workflow
-control1PASS/11assertions (336.82ms case,2.07s process) use genuine capabilities
-and persisted records. Reservation test retains its dedicated raw file-backed
-SQLite root on body/close/late settlement failure; it is facade integration,
-not another consumer DB or crash-durability proof. Workflow test uses the actual
-configured workspace DB and admitted close owner, checks the default configured
-store identity, zero-effect invalid binding, applied callback once and immutable
-replay denial. No provider or user authorization is inferred from callback counts.
+Governance Source now makes successfully prepared operationKey/revision/token
+values required. Its post-CAS config/revision fence remains unconditional. The
+private approval consumer's second callback default and the ingress cleanup's
+redundant fallback callbacks were removed; public/composition defaults remain.
+Evaluate/recordResult share the existing immutable ToolCall snapshot helper with
+one canonical clone per call. Authorization, guard order, ownership, marker
+locking, reservation abort, CAS and UNKNOWN handling remain with their owners.
 
-Root integration corrected two new fixture custody defects before final capture:
-intentional body-failure retention must not synthesize a cleanup failure, and
-pending/late passing bodies must not become eligible for deletion. The native
-workflow root is enrolled before initializeProject first suspends via the
-existing fixture helper's optional creation callback; it remains retained until
-successful admitted close before its5s monotonic deadline. Reservation removal
-also rechecks that deadline after close. No shared fixture framework or new
-production policy was introduced. The remaining legacy fixture cases are not
-claimed to have acquired this new case's custody qualification.
+Three removed callback identities are published baseline roles, explicitly
+dispositioned in the existing partial lineage without allowance transfer. The
+next scoped capture retains202identical current IDs and every retained original
+frozen field/cap. Receipts: quality-governance-private-lineage-receipt-6d05-
+20261015.json and quality-governance-envelope-lineage-receipt-4e3-20261015.json.
+Other Source records are reused without attesting freshness. The partial is
+non-executable/non-exhaustive; the missing complete executable budget remains GAP.
 
-Complete current five-file governance selection73PASS/0FAIL/897assertions in
-5.87s; strict tests448files and tooling184files pass. Full Source remains
-unchanged by this test/selection packet. Evidence under attachments:
-quality-governance-native-{reservation-controls,workflow-controls,selection,
-tests-ts,tooling-ts}-5fae-20261015.log. Independent review and post-publication
-numerical capture remain the next final-check steps; old observed gaps remain
-visible until that capture actually changes them.
+Existing test owners now cover real native HostState reservation/workflow
+capabilities, public defaults, approval abort/same-binding retry, replay denial,
+malformed marker retention and genuine UNKNOWN sidecar recovery/failure. Two
+pre-commit abort-error controls preserve exact ordered primary/cleanup causes,
+writer0 and reserved state. The formerly misleading cleanup-failure case is
+accurately named and asserts no abort after commit start, retaining UNKNOWN.
+Modified durable cleanup requires completed success before its5s monotonic
+deadline immediately before synchronous deletion. Expected UNKNOWN, malformed,
+obstructed and failed fixtures remain retained even after successful assertions.
 
-Independent native-case review found one further deadline gap: a checked-close
-case made its root eligible for deferred afterEach deletion, which could begin
-after the deadline. Root removed the new deferred cleanup/sets instead of adding
-another scheduler or deadline map. The single case-owned cleanup now closes,
-checks success/deadline, then rmSyncs synchronously in the same callback; pending,
-failed or expired bodies have no external remover. Re-review confirms the finding
-is resolved. Corrected native workflow control1PASS/11assertions in290.25ms
-case/1.81s process; log quality-governance-native-workflow-cleanup-corrected-
-5fae-20261015.log. The pending-timeout retention path is structurally reviewed,
-not a newly executed expected-timeout child control. Source/Runtime custody
-qualification is not inferred from this functional test. Actual review:
-quality-governance-native-actual-review-5fae-20261015.md under attachments.
+The terminal obstruction case proves fail-closed native access and unchanged
+base bytes. It does not cover write-conflict callbacks: reservation inspection
+sees the invalid terminal before writing. Same-process Promise concurrency also
+does not prove filesystem overlap; the native async facade performs its work
+synchronously. Remaining governance2functions/8branch counters stay explicit:
+terminal writer error callbacks, identity creation race, legacy applied-terminal
+reader and rare/defensive preparation cleanup/unexpected-rejection safeguards.
+Do not remove guards, invent provider authority or waive exact coverage.
 
-The first strict staged hook rejected one no-unsafe-return in the forged-capability
-test's Reflect.apply expression. Root changed that assertion callback to a void
-block, preserving the untrusted-input check without returning any. Retain
-quality-governance-native-commit-5fae-20261015.log. The corrected strict hook
-passes483TS roots/format/Knip/lint; packet published as79d3dbb before capture.
+Independent actual reviews: quality-governance-private-packet-review-6d05-
+20261015.md, quality-governance-recovery-race-review-8b7-20261015.md and
+quality-governance-envelope-actual-review-4e3-20261015.md. The second records the
+worker write-scope incident and an unauthorized read-only Node metadata command;
+root stopped the worker, inspected the combined diff and restored sole ownership.
+No Source loss or Node test/numeric proof is inferred. A private file-adapter
+transition difference is an open consistency question, not a proven runtime
+authorization defect; normal applied controls retain mark-before-CAS semantics.
 
-Captureca5fd5ef-30e7-46c3-a605-830d9e69f040 at79d3dbb completes73PASS/0FAIL/
-897assertions in5.19s Bun/8320.036525ms owned outer time. Actual governance
-metrics improve F184/205→197/205,L622/695→663/695,S639/721→681/721,
-B58/100→71/100; maxCC stays6 and entryCRAP falls20→6. The Source function
-inventory/denominators remain unchanged. Retained root
-`/workspace/attachments/quality-declared-main-governance-4z36jH`; current
-validated gaps quality-main-governance-open-counters-79d3-20261015.jsonl.
-Remaining8function entries and29branch counters are explicit default/failure/
-cleanup paths; they are not waived. The next packet must use this exact gap list,
-real file/transition errors where reachable and reviewed simplification only
-where a private fallback is contractually redundant. No repeated initial scan,
-whole HostState suite or oversized mutation campaign is justified.
+Detailed implementation history, failed hook/oracle/typecheck logs, targeted
+controls, earlier measurements and exact disposition decisions remain at
+e1d26c2:.agent/work/core-runtime-reactivation/WORK.md (this same heading).
+Original retained artifacts keep their bytes. First failed race expectations
+were corrected against the persisted winner; lint/type errors were repaired,
+with no hook bypass or relaxed gate. Current capture logs:
+quality-governance-recovery-race-coverage-ac4-20261015.log and
+quality-main-config-coverage-ac4-20261015.log.
 
-Derived contour evidence now preserves31observations and still2/44historical
-compatible local coverage+assertion-confirmed mutation closures,42without full
-closure,1static contour. Four executable contours have recorded four-metric
-coverage maxima (host,timing,contracts,Cedar); governance is still open. Parent
-BLOCKED outcomes, current-freshness/frozen/global/mutation pending states remain
-separate from successful functional captures. Final report merge evidence:
-quality-contours-update-governance-79d3-20261015.log. No runtime cutover/install
-or unblock/owner notice occurred.
+Next bounded work: reuse already-maintained config tests omitted from selection
+before adding duplicates; qualify genuine governance cross-process contention
+through existing child custody; continue native per-test parent admission using
+the existing receipt/descriptor/map owners. Blind Luna research is readonly;
+root owns Source/registry/checks/Git and freezes all writers for numeric runs.
+No runtime cutover, old state replay, installation-as-unblock or owner notice.
 
-The next bounded packet uses that same gap list. Blind Luna writers extended the
-two existing test owners with real file approval abort/retry, malformed emitted
-marker retention, direct UNKNOWN replay denial, meaningful public defaults and
-the actual HostState SQLite reservation branch at runGovernedWrite. Root's
-focused control5PASS/0FAIL/48assertions in2.37s and Source/tests typechecks pass:
-quality-governance-private-{controls,source-ts,tests-ts}-6d05-20261015.log.
-These are focused behavior controls, not a new numerical closure.
+Readonly selection review identifies the already-maintained runtime-config-yaml
+suite as the direct selectWorkflow behavior owner. Add that existing file to
+main-config's shared registry; no duplicate scenarios or new AST/hash path.
+The large project-upgrade lifecycle suite has a positive activated-reader case,
+but adding all unrelated lifecycle cases to each mutation is not justified now.
+Its negative staging/input/output/closure reader proofs remain explicit gaps;
+prefer a focused real public-reader fixture rather than fabricated activations.
+Review: quality-main-config-selection-review-ac4-20261015.md. Tooling184 TS
+typecheck passes; one post-publication capture will measure selection cost and
+coverage, rather than assuming a gain. Current Source budgets are unchanged.
 
-Independent private-call-graph review confirms successful preparation always
-provides operationKey, sourceRevision, expectedRevision and its UUID ingress
-token. Root made those private types required, preserved the unconditional
-post-CAS config/revision fence and removed only redundant optional fallback
-logic. The inner file approval consumer always receives the composer's resolved
-callback; public/composition defaults remain. Authorization, identity, marker
-locking, reservation abort, CAS and UNKNOWN paths remain in their existing owners.
-Review: quality-governance-private-invariants-6d05-20261015.md.
-
-The removed inner callback default and both redundant ingress-cleanup callbacks
-are three published baseline roles, now explicitly dispositioned in the existing
-partial lineage. One changed-file Babel inventory+hash capture finds202current
-functions, refreshes111affected addresses and preserves every retained original
-frozen field/cap; no allowance transfer. Receipt and mechanical read-back:
-quality-governance-private-lineage-receipt-6d05-20261015.json and
-quality-governance-private-lineage-6d05-20261015.log. Reused other Source records
-are not attested fresh. This partial remains non-executable/non-exhaustive; the
-missing complete executable budget is still a GAP. Independent packet review
-finds no actionable Source or oracle defect; malformed marker retention is
-intentional negative evidence: quality-governance-private-packet-review-6d05-
-20261015.md. The additional durable-transition control1PASS/0FAIL/26assertions
-in1.50s is quality-governance-private-durable-controls-6d05-20261015.log.
-Strict staged check/publication and one complete governance capture are next.
-The first staged strict hook rejected one await-thenable in the new native
-reservation assertion. Root reused the file's existing Promise.resolve matcher
-pattern; the retained failure is quality-governance-private-commit-6d05-20261015.log.
-No product defect or successful publication is inferred from that failed hook.
-
-Corrected strict hook passes477formatted files/483TS roots/Knip/lint and packet
-8b7b9db is published. Complete governance capturedd102ded-5943-4eb2-99d6-
-7b5791e589dc at8b7b9dbc36f3935faa15aca77fc499ce63ea98bf completes76PASS/
-0FAIL/929assertions in5.65s Bun/8756.807594ms outer. Current measured metrics:
-F199/202,L673/691,S692/716,B77/91,maxCC6/entryCRAP6. Compared with the prior
-capture, reachable covered functions rise197→199 and the3explicitly removed
-published dead callbacks reduce205→202; no removed branch is waived. Retained
-root quality-declared-main-governance-ZeL0EY has complete output/same boot and
-observed group termination. Parent BLOCKED remains separate; no numeric global,
-frozen or mutation closure is inferred. Exact validated gaps:
-quality-main-governance-open-counters-8b7-20261015.jsonl.
-
-Automatic projection now preserves33observations, still2/44historical compatible
-local coverage+confirmed-mutation closures and42open;1static is separate.
-Evidence quality-contours-update-governance-8b7-20261015.log. The next bounded
-cases target the actual UNKNOWN sidecar reader/recovery fallback and genuine
-concurrent terminal create/read, not another malformed-JSON duplicate. Three
-functions and14branch counters remain open. Two disjoint Luna test owners
-continue; root retains Source, checks, correspondence, Git and numerical freeze.
-
-Second packet's native fallback, unavailable-recovery, configless test issuer
-and workflow-default controls pass; the first competing terminal oracle fails
-because the loser can legitimately observe the persisted winner before exclusive
-create, returning commit-start transition conflict rather than the narrower
-EEXIST-path message. Preserve quality-governance-recovery-race-controls-8b7-
-20261015.log and its failed durable fixture. This is a test-oracle issue, not a
-product failure or mapper-callback coverage proof. The writer is correcting the
-oracle against the actual persisted winner and both settled outcomes.
-
-Readonly cleanup review also finds the old cleanup-failure-named case never
-calls beforeAbort: it fails after commit start and correctly retains UNKNOWN.
-Keep that no-abort control, name it accurately and add distinct pre-commit body
-plus abort-error controls using the existing test store hooks, exact ordered
-AggregateError causes, writer0 and retained reserved state. Reachability memo:
-quality-governance-cleanup-reachability-8b7-20261015.md. Defensive private cleanup
-and unexpected-rejection safeguards are not removed to raise coverage.
-
-Root stopped a configless-test worker after it wrote outside its assigned file;
-combined diff inspection retains both other workflow additions and the new
-configless block. All final file ownership returns to root. The independent
-review also disclosed an unauthorized read-only Node metadata command; it made
-no edits and establishes no check/numeric evidence. Both incidents are recorded
-in quality-governance-recovery-race-review-8b7-20261015.md. The proposed direct
-reserved-to-applied control is omitted: the private file adapter differs from
-native HostState, but no maintained runtime defect/authorization bypass is
-established, and normal applied controls retain mark-before-CAS semantics.
-
-Second packet's corrected controls8PASS/0FAIL/99assertions in2.20s; tests448 and
-Source101 typechecks pass. Evidence quality-governance-recovery-race-controls-
-corrected-4e3-20261015.log and quality-governance-recovery-race-tests-ts-corrected-
-4e3-20261015.log. The prior three TS errors were optional fixture-byte/digest
-values passed to strongly typed matchers; explicit value guards fix the proofs.
-Keep quality-governance-recovery-race-tests-ts-4e3-20261015.log.
-
-Root adds a genuine invalid-filesystem terminal control: reserve through the
-actual durable adapter, locate its emitted base JSON, obstruct that exact future
-terminal path with a directory, then call markCommitStarted. The native exclusive
-failure/re-read rejects the non-regular terminal file, leaving original base
-bytes and the empty obstruction unchanged. The root is always retained; no fake
-valid terminal/provider state is introduced. First expected-message mismatch is
-retained in quality-governance-recovery-race-controls-final-4e3-20261015.log;
-the corrected assertion names the actual safe-boundary denial. This is distinct
-from nondeterministic same-process races and does not claim an applied effect.
-
-Root also consolidates evaluate/recordResult's identical ToolCall snapshot into
-the existing envelope helper. Both public argument defaults and canonical clone
-order remain; the unreachable private helper default is removed. Scoped one-file
-inventory+hash retains exactly202function IDs, refreshes163addresses and preserves
-all frozen fields/caps: quality-governance-envelope-lineage-receipt-4e3-20261015.json.
-Other Source freshness/global/frozen admission remains pending. Independent
-actual review of both shared helper callers, real abort-error controls and the
-obstruction case finds no actionable issue:
-quality-governance-envelope-actual-review-4e3-20261015.md. Both files now have root
-as sole writer. Final strict gate/publication and one governance capture with
-writers stopped
-follow; prior numerical metrics remain authoritative until that capture finishes.
-The first staged hook rejects one unsafe any-valued asymmetric matcher property
-in the new digest-race assertion. Root narrows the rejection to unknown/Error and
-checks its exact message; no weaker matcher or gate exemption. Retain
-quality-governance-recovery-race-commit-4e3-20261015.log.
-
-Corrected strict hook passes477formatted/483TS roots/Knip/lint; packetac42324 is
-published. Capture46d8707b-f42f-4155-a57a-93e068438db0 at
-ac423245feb379df1c7e105b37d6ccf2c4683bd0 completes82PASS/0FAIL/1003assertions
-in5.57s Bun/8544.623484ms outer. Actual metrics F200/202,L682/691,S702/716,
-B82/90,maxCC6/entryCRAP6. Retained root quality-declared-main-governance-kb6WyN
-has complete output, same boot and observed group termination; parent BLOCKED
-and frozen/global/current-freshness/mutation pending statuses remain separate.
-Evidence quality-governance-recovery-race-coverage-ac4-20261015.log; validated
-remaining counters quality-main-governance-open-counters-ac4-20261015.jsonl.
-
-The obstruction control proves native fail-closed behavior but does not cover
-the two terminal writer error callbacks: inspect sees the invalid terminal
-before the exclusive write begins. Same-process Promise concurrency also does
-not establish overlap because this native async facade performs its filesystem
-work synchronously. Next use genuine cross-process creation/terminal competition
-under the existing child custody owner; do not add provider hooks, fabricate a
-valid terminal record or infer closure from Promise.all. Identity-create race,
-legacy applied-terminal reader and three rare/defensive private cleanup/rejection
-arms remain visible among8branch counters. No exclusion, invented mutant kill,
-guard removal or relaxed numeric acceptance is admitted.
-
-Automatic projection preserves35observations and remains2/44historical compatible
-local coverage+confirmed-mutation closures/42open/1static. It imports this exact
-report without combining different Source/test closures into a synthetic maximum:
-quality-contours-update-governance-ac4-20261015.log. The next independent contour
-measurement may use main-config's existing declared selection; its missing report
-is unknown, not zero. No runtime cutover, old consumer replay or owner unblock.
-
-Main-config's first current declared-selection capture is now recorded:
-cbb99aff-ea8e-416e-baea-12fe9e2dab07 at the sameac423245feb379df1c7e105b37d6ccf2c4683bd0.
-It completes42PASS/0FAIL/11502assertions in4.48s Bun/7433.15574ms outer;
-F317/350,L892/966,S939/1024,B203/266,maxCC16/entryCRAP42. Root
-quality-declared-main-config-0qPGCB retains full output/same-boot/group close;
-parent BLOCKED remains separate from this functional result. Exact evidence:
-quality-main-config-coverage-ac4-20261015.log and
-quality-main-config-open-counters-ac4-20261015.jsonl. Automatic projection now
-has37observations; closure counts remain2/44+1static/42open.
-
-Next bounded blind reviews are readonly: map those missing config functions to
-already-maintained tests before writing duplicates, and identify the smallest
-existing Bun child-custody route for genuine governance cross-process races.
-Root owns registry/Source/checks/Git. These research lanes run after numerical
-producers finish; no simultaneous writers or duplicate full suite/AST/hash scan.
 
 ## Automatic contour progress projection
 
