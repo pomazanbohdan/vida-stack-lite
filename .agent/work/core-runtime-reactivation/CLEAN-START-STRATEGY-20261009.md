@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `cbd675f`; current correction details are in WORK.
+- Published predecessor: `245e568`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. Exact7c9d139 CI SDK inputs were accepted for the current serial diagnostic; changed Source needs its matching inputs. WORK owns run/artifact receipts.
 - Current serial run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Keep its fresh physical checkout and all older UNKNOWN evidence retained; no replay or resource successor. WORK owns exact custody and fingerprints.
@@ -39,7 +39,7 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6988roles across149files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds6995roles across149files; installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
 The original planner is39<=40 and current-read evidence5<=5; keep
@@ -53,9 +53,9 @@ join adds96retained and5new roles. Both enforce array
 and counter equality, exact original ceilings and one-to-one correspondence.
 The latest join adds98independently reviewed retained roles, including18
 shifted identities confirmed by actual owner/dataflow review. A changed-owner
-HostState receipt reader remains unbound. Current7729-role inventory leaves
-741current and184original dispositions missing,
-with20represented static overages after sharing the native lane/path string
+HostState receipt reader remains unbound. Current7731-role inventory leaves
+736current and178original dispositions missing,
+with19represented static overages after sharing the native lane/path string
 boundary. Both projections are1<=original1 and the new parser2<=own3.
 Finite child option/environment preparation now shares one condition;
 boundedSpawnSync21<=original21. Reusing one environment selection also closes
@@ -71,7 +71,13 @@ past missing budget proof is not backdated. One scoped capture reuses148bindings
 Another23retained roles now have actual owner and independent metadata review.
 Six original callables have independently reviewed removal dispositions without
 cap transfer; the retained bounded-reader deficit remains open. WORK owns the
-prospective reviewed alias-closure algorithm plan; publish it before coding.
+alias-closure algorithm plan published at245e568 before coding. Its linear
+closure owner/classifier measure4/8 against that plan, with runtimeImports3
+against original9. Both affected files91PASS/260assertions/2.382s; one scoped
+capture reuses148bindings. Five additional run roles and one removed collect
+have independent review. The mutation producer now uses the established
+repository-root owner instead of repo/packages; its contract file9PASS/219
+assertions. No complete numeric or mutation score is established by these checks.
 The newly represented bounded-reader6>original1 deficit stays open; no cap was
 increased and149Source byte bindings were reused without another AST/hash pass.
 The full affected launcher file passed51/0 in2.26s. These are static/focused

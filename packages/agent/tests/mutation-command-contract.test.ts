@@ -11,6 +11,7 @@ import {
   mutationPartitionSourceBindingMatches,
 } from '../tooling/mutation-command-runner.ts';
 import { maintainedSourceInventory } from '../tooling/maintained-source-inventory.ts';
+import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -40,6 +41,7 @@ function runnerResult(overrides: Partial<MutationRunnerResult> = {}): MutationRu
 
 interface MutationInventory {
   schema: string;
+  test_repository_root: string | null;
   expected_sources: string[];
   unassigned_sources: string[];
   unknown_partition_sources: string[];
@@ -49,6 +51,35 @@ interface MutationInventory {
   zero_mutant_sources: string[];
   pending_partition_sources: string[];
   partitions: { name: string; sources: string[]; status: string }[];
+}
+
+function isMutationInventory(value: unknown): value is MutationInventory {
+  if (!isRecord(value) || value.schema !== 'CandidateMutationInventory/v1') return false;
+  if (value.test_repository_root !== null && typeof value.test_repository_root !== 'string') return false;
+  for (const key of [
+    'expected_sources',
+    'unassigned_sources',
+    'unknown_partition_sources',
+    'missing_package_sources',
+    'invalid_zero_mutant_sources',
+    'zero_mutant_sources',
+    'pending_partition_sources',
+  ]) {
+    const items: unknown = value[key];
+    if (!Array.isArray(items) || !items.every((item: unknown) => typeof item === 'string')) return false;
+  }
+  return (
+    Array.isArray(value.invalid_overlaps) &&
+    Array.isArray(value.partitions) &&
+    value.partitions.every(
+      (partition: unknown) =>
+        isRecord(partition) &&
+        typeof partition.name === 'string' &&
+        typeof partition.status === 'string' &&
+        Array.isArray(partition.sources) &&
+        partition.sources.every((source: unknown) => typeof source === 'string'),
+    )
+  );
 }
 
 test('mutation command builder constructs the exact pinned Bun test argv', () => {
@@ -293,9 +324,12 @@ test('mutation inventory assigns maintained sources to runnable partitions', () 
   // Inventory success describes assignment and runner selection, not mutation results.
   expect(result.status).toBe(0);
 
-  const inventory = JSON.parse(result.stdout) as MutationInventory;
+  const inventory: unknown = JSON.parse(result.stdout);
+  if (!isMutationInventory(inventory)) throw new Error('Mutation inventory report shape is invalid.');
   const maintained = maintainedSourceInventory(root);
   expect(inventory.schema).toBe('CandidateMutationInventory/v1');
+  expect(inventory.test_repository_root).toBe(path.resolve(root, '../..'));
+  expect(inventory.test_repository_root).not.toBe(path.resolve(root, '..'));
   expect(inventory.pending_partition_sources).toEqual([]);
   expect(inventory.partitions.filter(({ status }) => status === 'pending')).toEqual([]);
   expect(inventory.expected_sources).toEqual([...maintained.mutationSources]);

@@ -101,6 +101,30 @@ function resources(tree: BabelNode, file: string, facts: ModuleDeclarationFacts)
   visit(tree);
   return found;
 }
+function closeRuntimeLoaderAliases(
+  declarations: readonly BabelVariableDeclarator[],
+  constructors: ReadonlySet<string>,
+  loaders: Set<string>,
+): void {
+  const aliasesBySource = new Map<string, string[]>();
+  declarations.forEach((node) => {
+    if (node.id.type !== 'Identifier' || !node.init) return;
+    const initializer = node.init;
+    if (initializer.type === 'Identifier') {
+      const aliases = aliasesBySource.get(initializer.name) ?? [];
+      aliases.push(node.id.name);
+      aliasesBySource.set(initializer.name, aliases);
+    } else if (
+      initializer.type === 'CallExpression' &&
+      initializer.callee.type === 'Identifier' &&
+      constructors.has(initializer.callee.name)
+    )
+      loaders.add(node.id.name);
+  });
+  // Set iteration visits appended unique names, so cycles and duplicate edges converge.
+  for (const name of loaders) for (const alias of aliasesBySource.get(name) ?? []) loaders.add(alias);
+}
+
 function runtimeImports(tree: BabelNode, file: string, facts: ModuleDeclarationFacts): string[] {
   const imports: string[] = [];
   const constructors = new Set<string>(),
@@ -124,16 +148,7 @@ function runtimeImports(tree: BabelNode, file: string, facts: ModuleDeclarationF
   };
   discover(tree);
   const attestedLoads = boundary?.finish();
-  for (let pass = 0; pass <= declarations.length; pass++)
-    for (const node of declarations)
-      if (
-        node.id.type === 'Identifier' &&
-        ((node.init?.type === 'Identifier' && loaders.has(node.init.name)) ||
-          (node.init?.type === 'CallExpression' &&
-            node.init.callee.type === 'Identifier' &&
-            constructors.has(node.init.callee.name)))
-      )
-        loaders.add(node.id.name);
+  closeRuntimeLoaderAliases(declarations, constructors, loaders);
   const loader = (node: BabelNode | null | undefined): boolean =>
     (node?.type === 'Identifier' && loaders.has(node.name)) ||
     (node?.type === 'CallExpression' && node.callee.type === 'Identifier' && constructors.has(node.callee.name)) ||

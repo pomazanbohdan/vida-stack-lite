@@ -282,6 +282,34 @@ test('sealed admission follows literal require, createRequire aliases and runtim
     ),
   ).toEqual(['node:module', './local.cjs', 'node:fs', 'yaml', './equals.cjs']);
 });
+test.each([0, 1, 32])('loader closure preserves source order across %i reverse-declared aliases', (length) => {
+  const aliases = Array.from({ length }, (_, index) => `const alias${index}=alias${index + 1};`).join('\n');
+  const source = `alias0('./before.cjs');
+${aliases}
+const alias${length}=makeRequire(import.meta.url);
+import {createRequire as makeRequire} from 'node:module';
+alias${length}('./after.cjs');`;
+  expect(scanAdmittedRuntimeImports(source, parser)).toEqual(['./before.cjs', 'node:module', './after.cjs']);
+  expect(() => scanAdmittedRuntimeImports(source + '\nalias0(destination);', parser)).toThrow(
+    'computed require is unsealed',
+  );
+});
+test.each([
+  [
+    "var left=right;var right=left;var right=makeRequire(import.meta.url);left('./left.cjs');right('./right.cjs');",
+    ['node:module', './left.cjs', './right.cjs'],
+  ],
+  ["var left=right;var right=left;left('./unseeded.cjs');", ['node:module']],
+  [
+    "const load=makeRequire(import.meta.url);var alias=load;var alias=load;alias('./once.cjs');",
+    ['node:module', './once.cjs'],
+  ],
+  ["let empty;const {load}=other;empty('./empty.cjs');load('./destructured.cjs');", ['node:module']],
+] as const)('loader closure handles cycles, duplicate edges and non-loader declarations: %s', (body, imports) => {
+  expect(
+    scanAdmittedRuntimeImports("import {createRequire as makeRequire} from 'node:module';" + body, parser),
+  ).toEqual([...imports]);
+});
 test('sealed admission rejects computed require and createRequire-alias module arguments', () => {
   expect(() => scanAdmittedRuntimeImports('const a=require(destination);', parser)).toThrow(
     'computed require is unsealed',

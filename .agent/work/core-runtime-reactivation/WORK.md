@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `cbd675f` at origin/main.
+- Published predecessor: `245e568` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,11 +18,58 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Current quality preparation:6988of7729roles,149Source byte bindings,
-  741current/184original dispositions missing and20represented static deficits.
+- Current quality preparation:6995of7731roles,149Source byte bindings,
+  736current/178original dispositions missing and19represented static deficits.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
+
+## Current forward closure and mutation-root correction
+
+The prospective plan below passed independent review and ordinary strict
+publication at245e568 before Source changed. Native Set closure now replaces
+the repeated all-declarations fixed-point scan with one reverse adjacency map
+and live unique-name iteration:O(D+A) work instead of O(D²), with both AST walks,
+fs-safe observation/finalization, global-require shadowing and import/error
+order unchanged. This is an operation-count improvement, not a measured speedup.
+One changed-file capture measures runtimeImports3<=original9; the new owner4
+and classifier8 exactly match the published4/8 plan. No cap moves or wrappers.
+
+Two affected files passed91tests/0FAIL/260assertions in2381.596ms with5s default.
+The seven added cases cover0/1/32reverse aliases/use-before-declaration, exact
+import order, computed argument denial, seeded/unseeded cycles, duplicate edges,
+missing initializers and destructuring. Independent actual Source review ACCEPT.
+Static471checked/472captured/0diagnostics after adapting the readonly expected
+test tuple to Bun's mutable-array matcher signature. Capture/review/check refs:
+`quality-forward-linear-{source-capture,actual-review,focused,static-retry}-245-20261015.*`.
+
+One scoped AST/SHA reuses148bindings. Five more run projections have independent
+actual role review, including the moved file-change callback traced through its
+new owner; the old collect callable has a removal disposition without cap
+transfer. Current5438retained+1557new=6995roles,85removed,7731functions,
+149Source bindings;736current/178original gaps and19static deficits. The parent
+closure deficit is closed; bounded-reader6>original1 remains. Exact original
+five frozen fields stay unchanged. Inventory/receipt/review:
+`quality-current-inventory-forward-linear-245-20261015.json`,
+`quality-forward-linear-bindings-245-20261015.json` and
+`quality-forward-linear-metadata-review-245-20261015.md`. This remains a partial,
+non-executable correspondence record, not a measured CRAP/coverage/mutation result.
+
+Read-only mutation investigation found its producer exported the package's
+one-parent directory(repo/packages) as the test consumer root; Stryker and the
+command runner inherited it into configured tests without correction. The gate
+now derives that root through the existing repositoryRootForPackage owner,
+reports the same selected root in its inventory, rejects unsupported layouts
+before a campaign and uses the captured root in the worker environment. No new
+root fallback, fingerprint/config-byte claim or runner override. The real
+inventory child regression checks repository root and explicitly rejects the
+one-parent value; its JSON is now decoded as unknown and structurally checked.
+The full affected contract file passed9tests/0FAIL/219assertions in762.468ms;
+static471/0 and independent actual Source review ACCEPT. Attachments:
+`quality-mutation-root-{contract,actual-review,focused,static}-245-20261015.*`.
+This is development tooling, outside the149production Source bindings; those
+were not rescanned. No mutation campaign or assertion-confirmed Killed score
+has been established by these contract tests. Strict publication is pending.
 
 ## Prospective forward alias-closure correction plan
 

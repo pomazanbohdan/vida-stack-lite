@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5433,
-    "new": 1555,
-    "removed": 84,
-    "current_roles": 6988,
+    "retained": 5438,
+    "new": 1557,
+    "removed": 85,
+    "current_roles": 6995,
     "source_files": 149
   },
   "source_bindings": [
@@ -503,7 +503,7 @@
     },
     {
       "file": "bin/forward-candidate-admission.ts",
-      "sha256": "4c2574f88f3c2a5d4d370ce8302756918eb78f5d7b4c58891589463378c817b1"
+      "sha256": "0df5b5fb251032b412de09d400ca8f1b650b3241c2b3cb57693f5e66ba9282be"
     },
     {
       "file": "src/orchestration/qualified-runtime-code-continuation.ts",
@@ -59915,13 +59915,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 104,
+        "line": 128,
         "column": 0,
-        "start": 4633,
-        "end": 9416,
-        "bodyLine": 104,
+        "start": 5579,
+        "end": 10001,
+        "bodyLine": 128,
         "bodyColumn": 96,
-        "bodyEndLine": 207,
+        "bodyEndLine": 222,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 9,
@@ -59947,13 +59947,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 112,
+        "line": 136,
         "column": 19,
-        "start": 5111,
-        "end": 5616,
-        "bodyLine": 112,
+        "start": 6057,
+        "end": 6562,
+        "bodyLine": 136,
         "bodyColumn": 46,
-        "bodyEndLine": 124,
+        "bodyEndLine": 148,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 14,
@@ -59979,13 +59979,13 @@
         "bodyEndColumn": 36
       },
       "current_source_address": {
-        "line": 137,
+        "line": 152,
         "column": 17,
-        "start": 6124,
-        "end": 6636,
-        "bodyLine": 138,
+        "start": 6709,
+        "end": 7221,
+        "bodyLine": 153,
         "bodyColumn": 4,
-        "bodyEndLine": 143,
+        "bodyEndLine": 158,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 10,
@@ -60011,13 +60011,13 @@
         "bodyEndColumn": 83
       },
       "current_source_address": {
-        "line": 144,
+        "line": 159,
         "column": 16,
-        "start": 6654,
-        "end": 6772,
-        "bodyLine": 145,
+        "start": 7239,
+        "end": 7357,
+        "bodyLine": 160,
         "bodyColumn": 4,
-        "bodyEndLine": 145,
+        "bodyEndLine": 160,
         "bodyEndColumn": 54
       },
       "baseline_complexity": 2,
@@ -60043,13 +60043,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 146,
+        "line": 161,
         "column": 16,
-        "start": 6790,
-        "end": 9380,
-        "bodyLine": 146,
+        "start": 7375,
+        "end": 9965,
+        "bodyLine": 161,
         "bodyColumn": 43,
-        "bodyEndLine": 204,
+        "bodyEndLine": 219,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 26,
@@ -60075,13 +60075,13 @@
         "bodyEndColumn": 111
       },
       "current_source_address": {
-        "line": 150,
+        "line": 165,
         "column": 29,
-        "start": 6994,
-        "end": 7080,
-        "bodyLine": 150,
+        "start": 7579,
+        "end": 7665,
+        "bodyLine": 165,
         "bodyColumn": 44,
-        "bodyEndLine": 150,
+        "bodyEndLine": 165,
         "bodyEndColumn": 115
       },
       "baseline_complexity": 2,
@@ -60107,13 +60107,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 156,
+        "line": 171,
         "column": 29,
-        "start": 7345,
-        "end": 7431,
-        "bodyLine": 156,
+        "start": 7930,
+        "end": 8016,
+        "bodyLine": 171,
         "bodyColumn": 44,
-        "bodyEndLine": 156,
+        "bodyEndLine": 171,
         "bodyEndColumn": 115
       },
       "baseline_complexity": 1,
@@ -60139,13 +60139,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 208,
+        "line": 223,
         "column": 7,
-        "start": 9424,
-        "end": 9749,
-        "bodyLine": 208,
+        "start": 10009,
+        "end": 10334,
+        "bodyLine": 223,
         "bodyColumn": 113,
-        "bodyEndLine": 212,
+        "bodyEndLine": 227,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -60171,13 +60171,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 269,
+        "line": 284,
         "column": 7,
-        "start": 11968,
-        "end": 22203,
-        "bodyLine": 276,
+        "start": 12553,
+        "end": 22788,
+        "bodyLine": 291,
         "bodyColumn": 43,
-        "bodyEndLine": 485,
+        "bodyEndLine": 500,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 51,
@@ -60203,13 +60203,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 377,
+        "line": 392,
         "column": 15,
-        "start": 17249,
-        "end": 17700,
-        "bodyLine": 377,
+        "start": 17834,
+        "end": 18285,
+        "bodyLine": 392,
         "bodyColumn": 41,
-        "bodyEndLine": 388,
+        "bodyEndLine": 403,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -60235,13 +60235,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 438,
+        "line": 453,
         "column": 65,
-        "start": 20228,
-        "end": 20261,
-        "bodyLine": 438,
+        "start": 20813,
+        "end": 20846,
+        "bodyLine": 453,
         "bodyColumn": 75,
-        "bodyEndLine": 438,
+        "bodyEndLine": 453,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -60267,13 +60267,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 489,
+        "line": 504,
         "column": 7,
-        "start": 22393,
-        "end": 22909,
-        "bodyLine": 489,
+        "start": 22978,
+        "end": 23494,
+        "bodyLine": 504,
         "bodyColumn": 57,
-        "bodyEndLine": 500,
+        "bodyEndLine": 515,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -175895,6 +175895,176 @@
       "rationale": "| `bin/run.mjs#fn:main#0` (6465–6496) | `bin/run.ts#fn:main#0` (9511–9547) | Accept as the entrypoint/caller-facing error-routing responsibility, with the cache subresponsibility explicitly retained. Both return when not the main module; on the actual Bun entry path they establish the pinned cache environment before the operation and return after dispatch if a relaunch is needed; otherwise they execute the injected operation, assign integer exit results or log JSON, and route thrown errors through `publicFailure` to stderr with status 1. The current `applyIntegerExitResult` helper preserves `Number.isInteger` semantics and is separately owned; it does not inherit `main`'s identity or allowance. The `.mjs` to `.ts` import suffix is consistent with the source transition. The cache setup is already present in both actual parents, so it is part of this matched responsibility, not evidence of a new responsibility inferred from TypeScript. |",
       "primary_ref": "/workspace/attachments/quality-run-lineage-515-20261015.md",
       "independent_review_ref": "/workspace/attachments/quality-run-actual-review-515-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:readRetiredSourceNativeTurn#0/binding:matches/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/run.ts#fn:readRetiredSourceNativeTurn#0/binding:matches/closure:CallExpression:arguments[0]#0",
+      "file": "bin/run.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2127,
+        "column": 6,
+        "start": 93018,
+        "end": 93249,
+        "bodyLine": 2128,
+        "bodyColumn": 8,
+        "bodyEndLine": 2131,
+        "bodyEndColumn": 56
+      },
+      "current_source_address": {
+        "line": 4855,
+        "column": 6,
+        "start": 204809,
+        "end": 205036,
+        "bodyLine": 4856,
+        "bodyColumn": 8,
+        "bodyEndLine": 4859,
+        "bodyEndColumn": 56
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Original anchor: .tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/bin/run.mjs:2127-2132. Current anchor: packages/agent/bin/run.ts:4855-4859. Both filter issued actions on request/action action_id, issue_id, and host_attempt_id; current code first applies isRetiredSourceIssuedAction to validate the record shape. This is the same one-to-one matcher role under the same readRetiredSourceNativeTurn owner.",
+      "primary_ref": "/workspace/attachments/quality-original-run-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:readRetiredSourceNativeTurn#0/binding:fileChanges/closure:CallExpression:arguments[0]#1/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/run.ts#fn:readRetiredSourceFileChange#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/run.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2158,
+        "column": 32,
+        "start": 94392,
+        "end": 94751,
+        "bodyLine": 2158,
+        "bodyColumn": 44,
+        "bodyEndLine": 2166,
+        "bodyEndColumn": 9
+      },
+      "current_source_address": {
+        "line": 4781,
+        "column": 28,
+        "start": 201554,
+        "end": 201807,
+        "bodyLine": 4781,
+        "bodyColumn": 40,
+        "bodyEndLine": 4785,
+        "bodyEndColumn": 5
+      },
+      "baseline_complexity": 4,
+      "baseline_coverage": 0,
+      "baseline_crap": 20,
+      "max_complexity": 4,
+      "max_crap": 20,
+      "rationale": "Original anchor: .tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/bin/run.mjs:2158-2166. Current anchor: packages/agent/bin/run.ts:4781-4785. Both reject incomplete or truncated change evidence and map each change path through path.resolve/path.relative with slash normalization. The current reusable change guard supplies the path and diff-text type checks; the callback remains the one-to-one path projection role.",
+      "primary_ref": "/workspace/attachments/quality-original-run-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:readRetiredSourceNativeTurn#0/closure:CallExpression:arguments[0]#1",
+      "current_identity": "bin/run.ts#fn:readRetiredSourceNativeTurn#0/binding:nativeReadResult/closure:CallExpression:arguments[0]#0",
+      "file": "bin/run.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2192,
+        "column": 33,
+        "start": 95560,
+        "end": 95580,
+        "bodyLine": 2192,
+        "bodyColumn": 44,
+        "bodyEndLine": 2192,
+        "bodyEndColumn": 53
+      },
+      "current_source_address": {
+        "line": 4905,
+        "column": 31,
+        "start": 206982,
+        "end": 207002,
+        "bodyLine": 4905,
+        "bodyColumn": 42,
+        "bodyEndLine": 4905,
+        "bodyEndColumn": 51
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Original anchor: .tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/bin/run.mjs:2192. Current anchor: packages/agent/bin/run.ts:4905. Both project each observed command record to its ref for nativeReadResult.command_refs.",
+      "primary_ref": "/workspace/attachments/quality-original-run-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:readRetiredSourceNativeTurn#0/closure:CallExpression:arguments[0]#2",
+      "current_identity": "bin/run.ts#fn:readRetiredSourceNativeTurn#0/binding:nativeReadResult/closure:CallExpression:arguments[0]#1",
+      "file": "bin/run.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2193,
+        "column": 40,
+        "start": 95623,
+        "end": 95643,
+        "bodyLine": 2193,
+        "bodyColumn": 51,
+        "bodyEndLine": 2193,
+        "bodyEndColumn": 60
+      },
+      "current_source_address": {
+        "line": 4906,
+        "column": 38,
+        "start": 207043,
+        "end": 207063,
+        "bodyLine": 4906,
+        "bodyColumn": 49,
+        "bodyEndLine": 4906,
+        "bodyEndColumn": 58
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Original anchor: .tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/bin/run.mjs:2193. Current anchor: packages/agent/bin/run.ts:4906. Both project each observed file-change record to its ref for nativeReadResult.file_change_refs.",
+      "primary_ref": "/workspace/attachments/quality-original-run-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:releaseCompletedReadonly#0/binding:engineWaves/closure:CallExpression:arguments[0]#0",
+      "current_identity": "bin/run.ts#fn:releaseCompletedReadonly#0/binding:waveCandidates/closure:CallExpression:arguments[0]#0",
+      "file": "bin/run.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2609,
+        "column": 13,
+        "start": 115462,
+        "end": 115558,
+        "bodyLine": 2609,
+        "bodyColumn": 32,
+        "bodyEndLine": 2609,
+        "bodyEndColumn": 108
+      },
+      "current_source_address": {
+        "line": 5365,
+        "column": 6,
+        "start": 230558,
+        "end": 230677,
+        "bodyLine": 5365,
+        "bodyColumn": 25,
+        "bodyEndLine": 5368,
+        "bodyEndColumn": 7
+      },
+      "baseline_complexity": 2,
+      "baseline_coverage": 0,
+      "baseline_crap": 6,
+      "max_complexity": 2,
+      "max_crap": 6,
+      "rationale": "Original anchor: .tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/bin/run.mjs:2609. Current anchor: packages/agent/bin/run.ts:5364-5368. Both map snapshot context entries to a waveIndex derived from the wave-N key and retain the value. The enclosing readonly-release operation remains active; the current snapshot parser establishes context before this projection.",
+      "primary_ref": "/workspace/attachments/quality-original-run-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
     }
   ],
   "new_functions": [
@@ -189413,13 +189583,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 213,
+        "line": 228,
         "column": 0,
-        "start": 9750,
-        "end": 9844,
-        "bodyLine": 213,
+        "start": 10335,
+        "end": 10429,
+        "bodyLine": 228,
         "bodyColumn": 60,
-        "bodyEndLine": 215,
+        "bodyEndLine": 230,
         "bodyEndColumn": 1
       },
       "rationale": "New runtime array guard for unknown manifest values."
@@ -189430,13 +189600,13 @@
       "max_crap": 10,
       "current_complexity": 3,
       "current_source_address": {
-        "line": 216,
+        "line": 231,
         "column": 0,
-        "start": 9845,
-        "end": 9982,
-        "bodyLine": 216,
+        "start": 10430,
+        "end": 10567,
+        "bodyLine": 231,
         "bodyColumn": 55,
-        "bodyEndLine": 218,
+        "bodyEndLine": 233,
         "bodyEndColumn": 1
       },
       "rationale": "New runtime object-record guard for untrusted admission input."
@@ -189447,13 +189617,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 219,
+        "line": 234,
         "column": 0,
-        "start": 9983,
-        "end": 10186,
-        "bodyLine": 219,
+        "start": 10568,
+        "end": 10771,
+        "bodyLine": 234,
         "bodyColumn": 78,
-        "bodyEndLine": 223,
+        "bodyEndLine": 238,
         "bodyEndColumn": 1
       },
       "rationale": "New string-field validator for admission records."
@@ -189464,13 +189634,13 @@
       "max_crap": 10,
       "current_complexity": 7,
       "current_source_address": {
-        "line": 224,
+        "line": 239,
         "column": 0,
-        "start": 10187,
-        "end": 10521,
-        "bodyLine": 224,
+        "start": 10772,
+        "end": 11106,
+        "bodyLine": 239,
         "bodyColumn": 73,
-        "bodyEndLine": 234,
+        "bodyEndLine": 249,
         "bodyEndColumn": 1
       },
       "rationale": "New validator for payload file descriptors and their sealed byte metadata."
@@ -189481,13 +189651,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 235,
+        "line": 250,
         "column": 0,
-        "start": 10522,
-        "end": 10769,
-        "bodyLine": 235,
+        "start": 11107,
+        "end": 11354,
+        "bodyLine": 250,
         "bodyColumn": 101,
-        "bodyEndLine": 239,
+        "bodyEndLine": 254,
         "bodyEndColumn": 1
       },
       "rationale": "New required-file lookup for the sealed payload inventory."
@@ -189498,13 +189668,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 240,
+        "line": 255,
         "column": 0,
-        "start": 10770,
-        "end": 11037,
-        "bodyLine": 245,
+        "start": 11355,
+        "end": 11622,
+        "bodyLine": 260,
         "bodyColumn": 11,
-        "bodyEndLine": 247,
+        "bodyEndLine": 262,
         "bodyEndColumn": 1
       },
       "rationale": "New predicate for consistency of the forward digest fields."
@@ -189515,13 +189685,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 246,
+        "line": 261,
         "column": 75,
-        "start": 10994,
-        "end": 11033,
-        "bodyLine": 246,
+        "start": 11579,
+        "end": 11618,
+        "bodyLine": 261,
         "bodyColumn": 86,
-        "bodyEndLine": 246,
+        "bodyEndLine": 261,
         "bodyEndColumn": 114
       },
       "rationale": "New digest-tuple element predicate nested in the forward digest consistency check."
@@ -189532,13 +189702,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 248,
+        "line": 263,
         "column": 0,
-        "start": 11038,
-        "end": 11157,
-        "bodyLine": 248,
+        "start": 11623,
+        "end": 11742,
+        "bodyLine": 263,
         "bodyColumn": 53,
-        "bodyEndLine": 250,
+        "bodyEndLine": 265,
         "bodyEndColumn": 1
       },
       "rationale": "New predicate for a nonempty optional pointer field."
@@ -189549,13 +189719,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 251,
+        "line": 266,
         "column": 0,
-        "start": 11158,
-        "end": 11455,
-        "bodyLine": 251,
+        "start": 11743,
+        "end": 12040,
+        "bodyLine": 266,
         "bodyColumn": 87,
-        "bodyEndLine": 256,
+        "bodyEndLine": 271,
         "bodyEndColumn": 1
       },
       "rationale": "New validator that recognizes declared external package specifiers."
@@ -189566,13 +189736,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 257,
+        "line": 272,
         "column": 0,
-        "start": 11456,
-        "end": 11617,
-        "bodyLine": 257,
+        "start": 12041,
+        "end": 12202,
+        "bodyLine": 272,
         "bodyColumn": 62,
-        "bodyEndLine": 260,
+        "bodyEndLine": 275,
         "bodyEndColumn": 1
       },
       "rationale": "New target-path admission guard."
@@ -189583,13 +189753,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 261,
+        "line": 276,
         "column": 0,
-        "start": 11618,
-        "end": 11799,
-        "bodyLine": 261,
+        "start": 12203,
+        "end": 12384,
+        "bodyLine": 276,
         "bodyColumn": 54,
-        "bodyEndLine": 265,
+        "bodyEndLine": 280,
         "bodyEndColumn": 1
       },
       "rationale": "New queued-module admission guard."
@@ -189600,13 +189770,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 266,
+        "line": 281,
         "column": 0,
-        "start": 11800,
-        "end": 11960,
-        "bodyLine": 266,
+        "start": 12385,
+        "end": 12545,
+        "bodyLine": 281,
         "bodyColumn": 57,
-        "bodyEndLine": 268,
+        "bodyEndLine": 283,
         "bodyEndColumn": 1
       },
       "rationale": "New classifier for the exact missing-file admission error."
@@ -189617,13 +189787,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 486,
+        "line": 501,
         "column": 0,
-        "start": 22204,
-        "end": 22385,
-        "bodyLine": 486,
+        "start": 22789,
+        "end": 22970,
+        "bodyLine": 501,
         "bodyColumn": 67,
-        "bodyEndLine": 488,
+        "bodyEndLine": 503,
         "bodyEndColumn": 1
       },
       "rationale": "New guard for the parser module interface."
@@ -203055,6 +203225,48 @@
       "prospective_plan_commit": "c744678",
       "prospective_plan_ref": "/workspace/attachments/quality-native-prospective-plan-c744-20261015.md#prospective-native-two-role-recovery-plan",
       "rationale": "Corrected future-version single primitive ASCII C0-or-colon membership predicate. Its1/1 design ceiling was independently reviewed and published in c744678 before this substantive loop-to-regex implementation. Prior absent ceiling provenance remains historical GAP; no original allowance is moved or raised."
+    },
+    {
+      "identity": "bin/forward-candidate-admission.ts#fn:closeRuntimeLoaderAliases#0",
+      "file": "bin/forward-candidate-admission.ts",
+      "current_source_address": {
+        "line": 104,
+        "column": 0,
+        "start": 4633,
+        "end": 5577,
+        "bodyLine": 108,
+        "bodyColumn": 8,
+        "bodyEndLine": 126,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 4,
+      "max_complexity": 4,
+      "max_crap": 4,
+      "review_ref": "/workspace/attachments/quality-forward-linear-actual-review-245-20261015.md",
+      "prospective_plan_commit": "245e568",
+      "prospective_plan_ref": "/workspace/attachments/quality-forward-linear-prospective-plan-245-20261015.md#prospective-forward-alias-closure-correction-plan",
+      "rationale": "Prospectively planned reverse-adjacency/live-Set closure owner replaces repeated all-declarations fixed-point scanning. Required iterations/default give4/4; no parent cap transfer or predicate wrapper."
+    },
+    {
+      "identity": "bin/forward-candidate-admission.ts#fn:closeRuntimeLoaderAliases#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/forward-candidate-admission.ts",
+      "current_source_address": {
+        "line": 110,
+        "column": 23,
+        "start": 4870,
+        "end": 5381,
+        "bodyLine": 110,
+        "bodyColumn": 33,
+        "bodyEndLine": 123,
+        "bodyEndColumn": 3
+      },
+      "current_complexity": 8,
+      "max_complexity": 8,
+      "max_crap": 8,
+      "review_ref": "/workspace/attachments/quality-forward-linear-actual-review-245-20261015.md",
+      "prospective_plan_commit": "245e568",
+      "prospective_plan_ref": "/workspace/attachments/quality-forward-linear-prospective-plan-245-20261015.md#prospective-forward-alias-closure-correction-plan",
+      "rationale": "Prospectively planned single per-declaration classifier for Identifier edges and exact ordinary createRequire seeds; required shape/initializer/constructor/list checks give8/8, independent of parent original allowance."
     }
   ],
   "removed_functions": [
@@ -203510,6 +203722,22 @@
         "bodyEndLine": 44,
         "bodyEndColumn": 30
       }
+    },
+    {
+      "identity": "bin/run.mjs#fn:readRetiredSourceNativeTurn#0/fn:collect#0",
+      "rationale": "Original anchor: .tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/bin/run.mjs:2066-2087, where the local collect callable recursively handled bounded JSON strings, arrays, records, issued_actions, wave_issued records, and nested stdout. Current anchors: packages/agent/bin/run.ts:4845 delegates to collectRetiredSourceThreadOutput; that callable dispatches bounded JSON text and record handling to collectRetiredSourceJsonText and collectRetiredSourceOutputRecord at lines 4669-4700. This is a disposition of the old single callable identity after its behavior was factored across these helpers. The enclosing readRetiredSourceNativeTurn remains active; do not transfer or combine its old allowance among the current helpers.",
+      "source_address": {
+        "line": 2066,
+        "column": 2,
+        "start": 90379,
+        "end": 91221,
+        "bodyLine": 2066,
+        "bodyColumn": 37,
+        "bodyEndLine": 2087,
+        "bodyEndColumn": 3
+      },
+      "primary_ref": "/workspace/attachments/quality-original-run-dispositions-cbd-20261015.md",
+      "independent_review_ref": "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
     }
   ],
   "review": {
@@ -203895,146 +204123,158 @@
     "limits": "Only three complete selected families. Other repair/new lock callback correspondence remains pending; no executable/numeric qualification."
   },
   "quality_continuation_current_bindings": {
-    "schema": "ReviewedOriginalRemovalJoin/v1",
+    "schema": "ScopedSourceAndReviewedLineageJoin/v1",
     "status": "SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_EXHAUSTIVE_NOT_NUMERIC",
-    "predecessor_commit": "cbd675f",
+    "predecessor_commit": "245e568",
     "counts": {
-      "retained": 5433,
-      "new": 1555,
-      "removed": 84,
-      "current_roles": 6988,
+      "retained": 5438,
+      "new": 1557,
+      "removed": 85,
+      "current_roles": 6995,
       "source_files": 149
     },
-    "removed_added": 6,
-    "admitted": [
+    "inventory_ref": "/workspace/attachments/quality-current-inventory-forward-linear-245-20261015.json",
+    "scoped_byte_capture_files": [
+      "bin/forward-candidate-admission.ts"
+    ],
+    "reused_source_bindings": 148,
+    "source_capture_ref": "/workspace/attachments/quality-forward-linear-source-capture-245-20261015.json",
+    "newly_bound": [
       {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0",
-        "rationale": "The published recursive worker is no longer a separate callable. Its repeated read, size-bound check, chunk accumulation, EOF return, and continuation are implemented by the loop inside the existing readBoundedBuffer owner. No one-to-one current callable remains for this worker, and its ceiling is not transferred to that owner.",
-        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:822-840",
-        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:996-1025 (readBoundedBuffer); callers include readBoundedText and existing byte, recovery, and move paths",
-        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
-        "source_address": {
-          "line": 822,
-          "column": 0,
-          "start": 30612,
-          "end": 31380,
-          "bodyLine": 822,
-          "bodyColumn": 108,
-          "bodyEndLine": 840,
-          "bodyEndColumn": 1
-        }
+        "identity": "bin/forward-candidate-admission.ts#fn:closeRuntimeLoaderAliases#0",
+        "ceiling": 4,
+        "rationale": "Prospectively planned reverse-adjacency/live-Set closure owner replaces repeated all-declarations fixed-point scanning. Required iterations/default give4/4; no parent cap transfer or predicate wrapper."
       },
       {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/binding:nextChunks/closure:CallExpression:arguments[1]#0",
-        "rationale": "The old choose branch selecting the complete buffer or its used subarray is folded into the current loop's chunk accumulation and buffer growth. It has no separate current closure; no ceiling transfers.",
-        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:831",
-        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1013-1018 (readBoundedBuffer loop)",
-        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
-        "source_address": {
-          "line": 831,
-          "column": 6,
-          "start": 31152,
-          "end": 31164,
-          "bodyLine": 831,
-          "bodyColumn": 12,
-          "bodyEndLine": 831,
-          "bodyEndColumn": 18
-        }
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/binding:nextChunks/closure:CallExpression:arguments[2]#0",
-        "rationale": "The old choose branch selecting the read buffer or its used subarray is folded into the current loop's chunk accumulation and buffer growth. It has no separate current closure; no ceiling transfers.",
-        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:832",
-        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1013-1018 (readBoundedBuffer loop)",
-        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
-        "source_address": {
-          "line": 832,
-          "column": 6,
-          "start": 31172,
-          "end": 31207,
-          "bodyLine": 832,
-          "bodyColumn": 12,
-          "bodyEndLine": 832,
-          "bodyEndColumn": 41
-        }
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/closure:CallExpression:arguments[1]#0",
-        "rationale": "The old EOF-versus-recursion branch is now the current loop's EOF return versus another iteration. Neither branch remains a separately callable closure; no ceiling transfers.",
-        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:837",
-        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1008-1021 (readBoundedBuffer loop)",
-        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
-        "source_address": {
-          "line": 837,
-          "column": 4,
-          "start": 31263,
-          "end": 31305,
-          "bodyLine": 837,
-          "bodyColumn": 10,
-          "bodyEndLine": 837,
-          "bodyEndColumn": 46
-        }
-      },
-      {
-        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBufferStep#0/closure:CallExpression:arguments[2]#0",
-        "rationale": "The old EOF-versus-recursion branch is now the current loop's EOF return versus another iteration. Neither branch remains a separately callable closure; no ceiling transfers.",
-        "original_anchor": "published packages/agent/src/config/safe-repository-access.ts:838",
-        "current_replacement_anchor": "packages/agent/src/config/safe-repository-access.ts:1008-1021 (readBoundedBuffer loop)",
-        "primary_ref": "/workspace/attachments/quality-original-safe-dispositions-cbd-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
-        "source_address": {
-          "line": 838,
-          "column": 4,
-          "start": 31311,
-          "end": 31372,
-          "bodyLine": 838,
-          "bodyColumn": 10,
-          "bodyEndLine": 838,
-          "bodyEndColumn": 65
-        }
-      },
-      {
-        "identity": "bin/forward-review-proof.mjs#fn:verifyForwardReviewSet#0/closure:CallExpression:arguments[0]#0",
-        "old_anchor": "published-worktree/packages/agent/bin/forward-review-proof.mjs:44",
-        "current_owner": "packages/agent/bin/forward-review-proof.ts:65 reviewKind; called at :184",
-        "rationale": "The old inline item.kind projection is replaced by the existing reviewKind helper in the same required-kind guard. It validates exact item keys and kind type, while subsequent isReviewItem and provenance checks remain. This supports disposition of this callback only.",
-        "classification": "removed_inlined_into_existing_owner",
-        "allowance_effect": "none_proposed",
-        "primary_ref": "/workspace/attachments/quality-original-other-dispositions-cbd-20261015.md",
-        "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
-        "source_address": {
-          "line": 44,
-          "column": 11,
-          "start": 1905,
-          "end": 1924,
-          "bodyLine": 44,
-          "bodyColumn": 21,
-          "bodyEndLine": 44,
-          "bodyEndColumn": 30
-        }
+        "identity": "bin/forward-candidate-admission.ts#fn:closeRuntimeLoaderAliases#0/closure:CallExpression:arguments[0]#0",
+        "ceiling": 8,
+        "rationale": "Prospectively planned single per-declaration classifier for Identifier edges and exact ordinary createRequire seeds; required shape/initializer/constructor/list checks give8/8, independent of parent original allowance."
       }
     ],
-    "inventory_ref": "/workspace/attachments/quality-current-inventory-native-lint-comment-c744-20261015.json",
-    "previous_lineage_receipt": "/workspace/attachments/quality-reviewed23-lineage-join-515-20261015.json",
-    "source_capture_ref": "/workspace/attachments/quality-native-lint-comment-bindings-c744-20261015.json",
-    "scoped_byte_capture_files": [],
-    "reused_source_bindings": 149,
-    "missing_current_dispositions": 741,
-    "missing_original_dispositions": 184,
-    "static_deficits": 20,
-    "independent_review_ref": "/workspace/attachments/quality-original-removal-actual-review-cbd-20261015.md",
-    "limits": "Six original callables replaced/inlined into already represented owners. No existing owner removed, allowance transferred/reset, new current budget or Source change. Current readBoundedBuffer6>original1 stays open. No AST/hash/test/coverage/mutation/Runtime claim."
+    "retained_added": 5,
+    "removed_added": 1,
+    "independent_review_refs": [
+      "/workspace/attachments/quality-forward-linear-actual-review-245-20261015.md",
+      "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
+    ],
+    "prospective_plan": {
+      "commit": "245e568",
+      "ref": "/workspace/attachments/quality-forward-linear-prospective-plan-245-20261015.md",
+      "sha256": "f25019268d0a7efec20a9dca5cbf334886ae5d495c0b2ceb32e19c6cdaa87b10",
+      "independent_review": "/workspace/attachments/quality-forward-prospective-plan-review-cbd-20261015.md"
+    },
+    "parent": {
+      "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0",
+      "complexity": 3,
+      "original_ceiling": 9
+    },
+    "scoped_complexity_exceptions": [
+      {
+        "identity": "bin/recover-completed-source-report.ts#fn:isPassedNativeBuildCheck#0",
+        "complexity": 3,
+        "ceiling": 2
+      },
+      {
+        "identity": "src/orchestration/scoped-source-snapshot.ts#fn:snapshotRuntimePackageSources#0",
+        "complexity": 2,
+        "ceiling": 1
+      },
+      {
+        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:loader/binding:loader#0",
+        "complexity": 13,
+        "ceiling": 10
+      },
+      {
+        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:visit/binding:visit#0",
+        "complexity": 33,
+        "ceiling": 26
+      },
+      {
+        "identity": "bin/forward-candidate-admission.ts#fn:runtimeImports#0/binding:visit/binding:visit#0/binding:runtimeSpecifier/closure:CallExpression:arguments[0]#1",
+        "complexity": 2,
+        "ceiling": 1
+      },
+      {
+        "identity": "bin/init-core.ts#fn:initializationContext#0",
+        "complexity": 5,
+        "ceiling": 4
+      },
+      {
+        "identity": "bin/historical-terminal-synthesis-capture.ts#fn:configuredContextFromAction#0",
+        "complexity": 2,
+        "ceiling": 1
+      },
+      {
+        "identity": "bin/historical-terminal-synthesis-capture.ts#fn:isRetainedConfiguredContext#0",
+        "complexity": 4,
+        "ceiling": 1
+      },
+      {
+        "identity": "src/orchestration/session-engine-snapshot.ts#fn:readInitialSourceContinuationSessionEngineSnapshot#0/binding:currentObservations/closure:CallExpression:arguments[0]#0",
+        "complexity": 2,
+        "ceiling": 1
+      },
+      {
+        "identity": "bin/reconcile-synthesis-qualification.ts#fn:journalForArtifact#0",
+        "complexity": 6,
+        "ceiling": 2
+      },
+      {
+        "identity": "src/orchestration/persistent-session-handoff.ts#fn:sourceWritePreflightResolver#0/closure:ReturnStatement:argument[0]#0/binding:assertCurrent/binding:assertCurrent#0",
+        "complexity": 12,
+        "ceiling": 11
+      },
+      {
+        "identity": "src/orchestration/persistent-session-handoff.ts#fn:taskSourceMutationPolicyResolver#0/closure:ReturnStatement:argument[0]#0/binding:assertCurrent/binding:assertCurrent#0",
+        "complexity": 11,
+        "ceiling": 10
+      },
+      {
+        "identity": "src/orchestration/persistent-session-handoff.ts#class:MastraSessionLedger/method:activateReadOnlyReplacement#0/closure:CallExpression:arguments[0]#0",
+        "complexity": 20,
+        "ceiling": 19
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:withExclusiveLock#0",
+        "complexity": 2,
+        "ceiling": 1
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:withExclusiveLockAsync#0",
+        "complexity": 2,
+        "ceiling": 1
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:linuxFileExists#0",
+        "complexity": 4,
+        "ceiling": 3
+      },
+      {
+        "identity": "bin/runtime-config-rebind.ts#fn:readExternalBytes#0",
+        "complexity": 35,
+        "ceiling": 30
+      },
+      {
+        "identity": "bin/runtime-config-rebind.ts#fn:streamedNativeAssetDigest#0",
+        "complexity": 16,
+        "ceiling": 9
+      },
+      {
+        "identity": "src/config/safe-repository-access.ts#fn:readBoundedBuffer#0",
+        "complexity": 6,
+        "ceiling": 1
+      }
+    ],
+    "missing_current_dispositions": 736,
+    "missing_original_dispositions": 178,
+    "limits": "One changed Source AST/SHA capture reused. Originalfivefrozenfields exact, caller3<=original9, newlineargraphrole4/callback8 bounded by published preimplementation plan. No parent allowance transfer, generic predicate wrappers, fullplan/coverage/dynamicCRAP/mutation/Runtime claim. Five retained native-turn/release projections and one removed collect have independent actualSource review; remaining gaps stay open."
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
-    "source_commit": "cbd675f",
+    "source_commit": "245e568",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-reviewed6-removal-join-cbd-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-forward-linear-bindings-245-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",

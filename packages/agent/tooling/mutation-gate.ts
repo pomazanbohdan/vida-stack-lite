@@ -8,7 +8,7 @@ import type { schema } from '@stryker-mutator/api/core';
 import { checkManifest, pinnedEnvironment, readPin } from '../bin/bun.ts';
 import { maintainedSourceInventory } from './maintained-source-inventory.ts';
 import { mutationPartitionSourceBinding } from './mutation-command-runner.ts';
-import { qualityInputs, qualityFingerprint, sha256 } from './bun-coverage-evidence.ts';
+import { qualityInputs, qualityFingerprint, repositoryRootForPackage, sha256 } from './bun-coverage-evidence.ts';
 import {
   buildMutationTestCommand,
   collectExecutionIdentity,
@@ -405,6 +405,7 @@ async function runMutationGate(): Promise<void> {
   const pin = readPin(root);
   checkManifest(root, pin);
   if (process.versions.bun !== pin) throw new Error('Mutation gate requires the pinned Bun executable.');
+  const testRepositoryRoot = repositoryRootForPackage(root);
   async function installedStrykerCli(): Promise<string> {
     const declaredBin: (typeof import('@stryker-mutator/core/package.json'))['bin']['stryker'] = './bin/stryker.js';
     const packageRoot = path.join(root, 'node_modules/@stryker-mutator/core');
@@ -1027,6 +1028,7 @@ async function runMutationGate(): Promise<void> {
     console.log(
       JSON.stringify({
         schema: 'CandidateMutationInventory/v1',
+        test_repository_root: testRepositoryRoot,
         expected_sources: expectedSources,
         unassigned_sources: unassignedSources,
         unknown_partition_sources: unknownPartitionSources,
@@ -1042,7 +1044,8 @@ async function runMutationGate(): Promise<void> {
       }),
     );
     process.exit(
-      unassignedSources.length ||
+      testRepositoryRoot === null ||
+        unassignedSources.length ||
         unknownPartitionSources.length ||
         invalidOverlaps.length ||
         missingPackageSources.length ||
@@ -1051,6 +1054,7 @@ async function runMutationGate(): Promise<void> {
         : 0,
     );
   }
+  if (testRepositoryRoot === null) throw new Error('Mutation gate requires the repository package layout.');
   if (
     unassignedSources.length ||
     unknownPartitionSources.length ||
@@ -1139,7 +1143,7 @@ async function runMutationGate(): Promise<void> {
         }
         const environment: NodeJS.ProcessEnv = {
           ...process.env,
-          AGENT_RUNTIME_TEST_REPOSITORY_ROOT: path.resolve(root, '..'),
+          AGENT_RUNTIME_TEST_REPOSITORY_ROOT: testRepositoryRoot,
           AGENT_RUNTIME_MUTATION_DIRECTORY: reportDirectory,
           AGENT_RUNTIME_MUTATION_SANDBOX_ROOT: path.join(reportDirectory, 'stryker-tmp'),
           AGENT_RUNTIME_MUTATION_REPORT: reportName,
