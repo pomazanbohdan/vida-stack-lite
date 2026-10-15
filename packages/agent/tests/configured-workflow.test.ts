@@ -7,7 +7,6 @@ import { fileURLToPath } from 'node:url';
 import { stringify } from 'yaml';
 import { randomUUID } from 'node:crypto';
 import { expectRejection } from './helpers/expect-rejection.ts';
-import { createInitializationBundle } from './helpers/init-bundle.ts';
 import { selectCorrectiveEvidence } from '../src/orchestration/final-assurance.ts';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.ts';
 import { sessionActionsForWave } from '../src/orchestration/session-handoff.ts';
@@ -428,7 +427,6 @@ beforeEach(async () => {
     governanceFault.evaluate = null;
     root = await mkdtemp(path.join(tmpdir(), 'configured-workflow-unit-'));
     await mkdir(path.join(root, 'runtime'), { recursive: true });
-    await mkdir(path.join(root, 'docs'), { recursive: true });
     const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
     await mkdir(path.join(root, 'docs/agent-instructions'), { recursive: true });
     await writeFile(
@@ -453,7 +451,6 @@ beforeEach(async () => {
         2,
       )}\n`,
     );
-    createInitializationBundle(bundle, root, ['schemas', 'instructions', 'TESTING.md'], 'runtime');
     yaml = (await readFile(path.join(bundle, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
       .replaceAll('{{BUNDLE}}', 'runtime')
       .replaceAll('{{REPOSITORY}}', 'example-repository')

@@ -1498,6 +1498,17 @@ An expected-timeout child control must prove the child failed, its body was
 unsettled and its root survived teardown. That control is not a passing timed-out
 case, a coverage result or permission to remove the retained fixture.
 
+New automatic-work-admission cases use withAutomaticWorkAdmissionCase and its
+enrolled createFixture factory. Register retainPendingAutomaticWorkAdmissionCase
+in the file's afterEach hook. Guarded cases are serialized; pending teardown
+marks/reports retained roots without closing a database still used by its body.
+After settlement, synchronous deferred cleanups run in reverse ownership order,
+preserving body and cleanup causes through completeOwnedCleanup. Retention is
+checked after native close against the same case deadline. Use an enrolled
+fixture when preparing admitted work, so setup does not take a second close path.
+An unresolved body keeps database cleanup unproven even when its process exits;
+retain its root and native failed outcome, never relabel it PASS or Killed.
+
 [Bun lifecycle documentation](https://bun.com/docs/test/lifecycle.md) places
 `onTestFinished` after all `afterEach` hooks and excludes concurrent tests.
 Its documented callback supplies no test-success status. Neither this callback

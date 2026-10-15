@@ -10,6 +10,7 @@ import { HostStateStore, openHostStateDatabase } from '../../src/host-state.js';
 import { deriveWorkspaceId } from '../../src/workspace-identity.js';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.js';
 import { admitLocalSessionWork, type LocalWorkAdmissionInput } from '../../src/orchestration/local-work-admission.js';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 
 type MutableAdmissionInput = { -readonly [Key in keyof LocalWorkAdmissionInput]: LocalWorkAdmissionInput[Key] };
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -151,10 +152,11 @@ export function createAutomaticWorkAdmissionFixture(sourceWriter = false, public
     source,
     prepare,
     admit,
-    close({ retainRoot = false }: { retainRoot?: boolean } = {}) {
+    close({ retainRoot = false }: { retainRoot?: boolean | (() => boolean) } = {}) {
       try {
         closeWorkspaceDatabaseWithAdmission(database);
-        if (!retainRoot) rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
+        const retained = typeof retainRoot === 'function' ? retainRoot() : retainRoot;
+        if (!retained) rmSync(root, { recursive: true, force: true, maxRetries: 3, retryDelay: 100 });
         else console.warn('Failed or uncertain absorption fixture retained: ' + root);
       } catch (error) {
         console.error('Absorption fixture cleanup failed; root retained or uncertain: ' + root, error);
@@ -162,4 +164,62 @@ export function createAutomaticWorkAdmissionFixture(sourceWriter = false, public
       }
     },
   };
+}
+
+let activeAdmissionCase: { roots: Set<string>; retained: boolean } | undefined;
+
+export function retainPendingAutomaticWorkAdmissionCase(): void {
+  if (activeAdmissionCase === undefined) return;
+  activeAdmissionCase.retained = true;
+  for (const root of activeAdmissionCase.roots) console.warn('Pending admission fixture retained: ' + root);
+}
+
+export async function withAutomaticWorkAdmissionCase<TResult>(
+  body: (scope: {
+    createFixture: typeof createAutomaticWorkAdmissionFixture;
+    onCleanup: (cleanup: () => void) => void;
+  }) => TResult | Promise<TResult>,
+  timeoutMs = 5000,
+): Promise<TResult> {
+  if (!Number.isSafeInteger(timeoutMs) || timeoutMs <= 0) throw Error('Admission case timeout must be positive');
+  if (activeAdmissionCase !== undefined) throw Error('Cannot overlap admission fixture cases');
+  const custody = { roots: new Set<string>(), retained: false };
+  activeAdmissionCase = custody;
+  const deadline = performance.now() + timeoutMs;
+  const cleanups: (() => undefined)[] = [];
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  const onCleanup = (cleanup: () => void): void => {
+    cleanups.push(() => {
+      try {
+        cleanup();
+      } catch (error) {
+        completed = false;
+        throw error;
+      }
+      return undefined;
+    });
+  };
+  const createFixture: typeof createAutomaticWorkAdmissionFixture = (...args) => {
+    const fixture = createAutomaticWorkAdmissionFixture(...args);
+    custody.roots.add(fixture.root);
+    onCleanup(() =>
+      fixture.close({ retainRoot: () => !completed || custody.retained || performance.now() >= deadline }),
+    );
+    return fixture;
+  };
+  try {
+    const result = await body({ createFixture, onCleanup });
+    completed = true;
+    return result;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    try {
+      completeOwnedCleanup(cleanups.reverse(), primaryFailure);
+    } finally {
+      activeAdmissionCase = undefined;
+    }
+  }
 }

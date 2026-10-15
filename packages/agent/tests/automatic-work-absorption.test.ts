@@ -1,5 +1,10 @@
-import { test, expect, spyOn, type Mock } from 'bun:test';
-import { createAutomaticWorkAdmissionFixture as createFixture } from './helpers/automatic-work-admission-fixture.js';
+import { test, expect, spyOn, afterEach, type Mock } from 'bun:test';
+import {
+  createAutomaticWorkAdmissionFixture as createFixture,
+  withAutomaticWorkAdmissionCase,
+  retainPendingAutomaticWorkAdmissionCase,
+} from './helpers/automatic-work-admission-fixture.js';
+import { rejectionReason } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import acceptanceSchema from '../schemas/acceptance-manifest.v1.schema.json' with { type: 'json' };
@@ -43,6 +48,7 @@ import {
 } from '../src/orchestration/local-work-admission.ts';
 import { runWorkStateRepair } from '../bin/repair-work-state.ts';
 import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
+
 import type {
   SessionBridgeObservation,
   SessionBridgeRequest,
@@ -87,6 +93,96 @@ import type {
   WorkExecutionContext,
 } from '../src/runtime-kernel.ts';
 import { workflowWorkItemSchema } from '../src/orchestration/workflow-session-reservation-contract.ts';
+afterEach(retainPendingAutomaticWorkAdmissionCase);
+
+test('admission fixture case teardown retains a pending body and prevents overlap', async () => {
+  let root = '';
+  let settle: (() => void) | undefined;
+  const release = new Promise<void>((resolve) => {
+    settle = resolve;
+  });
+  const running = withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+    root = createFixture().root;
+    await release;
+  });
+  try {
+    const overlap = await rejectionReason(withAutomaticWorkAdmissionCase(() => undefined));
+    expect(overlap).toBeInstanceOf(Error);
+    expect(String(overlap)).toContain('overlap');
+    retainPendingAutomaticWorkAdmissionCase();
+    expect(existsSync(root)).toBe(true);
+  } finally {
+    settle!();
+    await running;
+  }
+  expect(existsSync(root)).toBe(true);
+});
+
+test('admission fixture case removes timely success and runs deferred cleanups in ownership order', async () => {
+  let root = '';
+  const events: string[] = [];
+  const value = await withAutomaticWorkAdmissionCase(({ createFixture, onCleanup }) => {
+    root = createFixture().root;
+    onCleanup(() => {
+      events.push('first');
+    });
+    onCleanup(() => {
+      events.push('second');
+    });
+    return 42;
+  });
+  expect(value).toBe(42);
+  expect(events).toEqual(['second', 'first']);
+  expect(root).not.toBe('');
+  expect(existsSync(root)).toBe(false);
+});
+
+test('admission fixture case retains failed state and both undefined body and cleanup causes', async () => {
+  let fixture: ReturnType<typeof createFixture> | undefined;
+  const cleanupError = new Error('injected admission cleanup failure');
+  const failure = await rejectionReason(
+    withAutomaticWorkAdmissionCase(({ createFixture, onCleanup }) => {
+      fixture = createFixture();
+      onCleanup(() => {
+        throw cleanupError;
+      });
+      throw undefined;
+    }),
+  );
+  expect(failure).toBeInstanceOf(AggregateError);
+  if (!(failure instanceof AggregateError)) throw Error('Expected aggregate cleanup failure');
+  expect(failure.errors).toEqual([undefined, cleanupError]);
+  expect(fixture).toBeDefined();
+  if (!fixture) throw Error('Expected enrolled admission fixture');
+  const { root, database } = fixture;
+  expect(existsSync(root)).toBe(true);
+  expect(() => database.query('SELECT 1').get()).toThrow(/closed/i);
+});
+
+test('admission fixture case retains a late settled body and rejects invalid deadlines before allocation', async () => {
+  let root = '';
+  let settle: (() => void) | undefined;
+  const release = new Promise<void>((resolve) => {
+    settle = resolve;
+  });
+  const running = withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+    root = createFixture().root;
+    await release;
+  }, 1);
+  expect(existsSync(root)).toBe(true);
+  await Bun.sleep(5);
+  settle!();
+  await running;
+  expect(existsSync(root)).toBe(true);
+  let called = false;
+  const invalid = await rejectionReason(
+    withAutomaticWorkAdmissionCase(() => {
+      called = true;
+    }, 0),
+  );
+  expect(invalid).toBeInstanceOf(Error);
+  expect(called).toBe(false);
+});
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const validateWorkState = new Ajv2020({ strict: true }).compile<WorkState>(workStateSchema);
 const validateAcceptanceManifest = new Ajv2020({ strict: true }).compile(acceptanceSchema);

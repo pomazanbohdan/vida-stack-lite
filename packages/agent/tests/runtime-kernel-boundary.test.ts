@@ -1,7 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto';
+import assert from 'node:assert/strict';
+import { writeFileSync } from 'node:fs';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, afterEach, describe, expect, test } from 'bun:test';
 import path from 'node:path';
 import type {
   ProjectAuthorizationRequest,
@@ -15,6 +17,7 @@ import type {
   RuntimeKernelHostBindings,
   TrustedHostCompositionInput,
   TrustedHostOperation,
+  TrustedHostServices,
 } from '../src/runtime-kernel.js';
 import { issueHostGovernanceCapability, type OperationReservation } from '../src/governance/edictum-boundary.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
@@ -22,7 +25,12 @@ import { loadProjectContext, loadProjectSetContext } from '../src/config/project
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { initializeProject } from '../bin/init.ts';
 import type { RuntimeTimingEvent } from '../src/runtime-timing.js';
-import { createAutomaticWorkAdmissionFixture } from './helpers/automatic-work-admission-fixture.js';
+import {
+  createAutomaticWorkAdmissionFixture,
+  withAutomaticWorkAdmissionCase,
+  retainPendingAutomaticWorkAdmissionCase,
+} from './helpers/automatic-work-admission-fixture.js';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import type { CoordinationLedger } from '../src/host-state.ts';
 import { validateCoordinationLedgerV1 } from '../src/contracts/envelopes.ts';
@@ -31,10 +39,12 @@ import {
   assertRuntimeConfigUnchanged,
   compareRuntimeKernelRepositoryRoots,
   createRuntimeKernel,
+  createRuntimeKernelSourcePreflightPolicySession,
   createRuntimeKernelHost,
   createRuntimeKernelHostProofForCompositionRoot,
   createRuntimeKernelHostWithProof,
   createTestTrustedHostLauncherCapability,
+  createTrustedLocalSessionComposition,
   createTrustedHostComposition,
   dispatchWorkflowAssignment,
   prepareWorkflowExecution,
@@ -50,6 +60,7 @@ function invokeUntrusted(
   return result;
 }
 const fixtureProjectName = 'kernel';
+afterEach(retainPendingAutomaticWorkAdmissionCase);
 const repositoryRoot = await createRuntimeRepositoryRoot();
 const config = loadRuntimeConfig(repositoryRoot);
 const project = loadProjectContext(
@@ -89,8 +100,11 @@ function parseCoordinationLedgerJson(text: string): CoordinationLedger {
   return result.ledger;
 }
 
-async function prepareAdmittedSessionFixture(workId: string) {
-  const fixture = createAutomaticWorkAdmissionFixture(false, true);
+async function prepareAdmittedSessionFixture(
+  workId: string,
+  caseFixture?: ReturnType<typeof createAutomaticWorkAdmissionFixture>,
+) {
+  const fixture = caseFixture ?? createAutomaticWorkAdmissionFixture(false, true);
   try {
     const input = fixture.prepare(workId, 'user:' + workId);
     if (!input.nativeSessionHandle) throw new Error('lease fixture has no native session handle');
@@ -123,7 +137,16 @@ async function prepareAdmittedSessionFixture(workId: string) {
       nativeSessionHandle: input.nativeSessionHandle,
     };
   } catch (error) {
-    fixture.close();
+    if (caseFixture === undefined)
+      completeOwnedCleanup(
+        [
+          () => {
+            fixture.close({ retainRoot: true });
+            return undefined;
+          },
+        ],
+        { error },
+      );
     throw error;
   }
 }
@@ -289,7 +312,242 @@ function trustedHostCapability(input: TrustedHostCompositionInput, permitReserva
 function composeTrustedHost(input: TrustedHostCompositionInput, permitReservation = false) {
   return createTrustedHostComposition(trustedHostCapability(input, permitReservation));
 }
+
+async function observeLocalSessionComposition(input: Parameters<typeof createTrustedLocalSessionComposition>[0]) {
+  let result: Awaited<ReturnType<typeof createTrustedLocalSessionComposition>> | undefined;
+  await assert.doesNotReject(async () => {
+    result = await createTrustedLocalSessionComposition(input);
+  });
+  assert.ok(result);
+  return result;
+}
+
+function localSessionServices(
+  governanceCapability: NonNullable<TrustedHostServices['governanceCapability']>,
+  observe = () => {},
+): TrustedHostServices {
+  return {
+    governanceCapability,
+    resolveIdentity: () => {
+      observe();
+      return null;
+    },
+    verifyApproval: () => {
+      observe();
+      return null;
+    },
+    runtimeRevision: () => {
+      observe();
+      return { sourceRevision: 'source-1', currentRevision: 1 };
+    },
+    casWriter: () => {
+      observe();
+      return { applied: true };
+    },
+  };
+}
+
 describe('runtime kernel boundary', () => {
+  test('local session without admitted work remains read and workflow only', () =>
+    withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+      const fixture = createFixture(false, true);
+      let serviceCalls = 0;
+      const composition = await observeLocalSessionComposition({
+        repositoryRoot: fixture.root,
+        repositoryId: fixture.config.repository.repository_id,
+        projectIds: fixture.config.projects.map((entry) => entry.project_id).sort(),
+        nativeSessionHandle: 'read-only-local-session',
+        services: localSessionServices(fixture.store.governanceCapability, () => {
+          serviceCalls++;
+        }),
+      });
+
+      expect(composition.authentication.permittedOperations).toEqual(['runtime.read', 'workflow']);
+      expect(composition.authentication.principal).toBe(
+        'local-session:' + canonicalJsonDigest('read-only-local-session'),
+      );
+      expect(composition.workflowHostCapability).not.toBeNull();
+      let current: Awaited<ReturnType<typeof composition.runtimeKernel.readConfig>> | undefined;
+      await assert.doesNotReject(async () => {
+        current = await composition.runtimeKernel.readConfig();
+      });
+      assert.ok(current);
+      expect(runtimeConfigDigest(current)).toBe(runtimeConfigDigest(fixture.config));
+      await Promise.resolve(
+        expect(
+          Promise.resolve().then(() => composition.runtimeKernel.evaluateGovernance('runtime.write', {})),
+        ).rejects.toThrow('trusted host operation is not permitted: runtime.write'),
+      );
+      expect(serviceCalls).toBe(0);
+    }));
+
+  test('local session binds the live lease and gates foreign work before callbacks', () =>
+    withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+      const { fixture, identity, nativeSessionHandle } = await prepareAdmittedSessionFixture(
+        'local-session-boundary-' + randomUUID(),
+        createFixture(false, true),
+      );
+      const callbackCalls = { workItem: 0, context: 0, dispatch: 0, validate: 0 };
+      const services: TrustedHostServices = {
+        ...localSessionServices(fixture.store.governanceCapability),
+        resolveWorkflowWorkItem: () => {
+          callbackCalls.workItem += 1;
+          throw new Error('foreign work must be rejected before resolution');
+        },
+        resolveWorkExecutionContext: () => {
+          callbackCalls.context += 1;
+          throw new Error('foreign work must be rejected before context resolution');
+        },
+        dispatchWorkflowAssignment: () => {
+          callbackCalls.dispatch += 1;
+          throw new Error('foreign work must be rejected before dispatch');
+        },
+        validateWorkflowAssignmentResult: () => {
+          callbackCalls.validate += 1;
+          throw new Error('foreign work must be rejected before validation');
+        },
+      };
+      const configDigest = runtimeConfigDigest(fixture.config);
+      const input = {
+        repositoryRoot: fixture.root,
+        repositoryId: identity.repository_id,
+        projectIds: identity.project_ids,
+        nativeSessionHandle,
+        admittedWork: { workId: identity.work_id, store: fixture.store },
+        services,
+      };
+      const composition = await observeLocalSessionComposition(input);
+      expect(composition.authentication).toMatchObject({
+        repositoryId: identity.repository_id,
+        projectIds: identity.project_ids,
+        principal: 'local-session:' + canonicalJsonDigest(nativeSessionHandle),
+        permittedOperations: ['runtime.read', 'runtime.write', 'workflow'],
+      });
+      expect(composition.workflowExecutionCapability).not.toBeNull();
+
+      await Promise.resolve(
+        expect(
+          createTrustedLocalSessionComposition({ ...input, nativeSessionHandle: 'wrong-native-session' }),
+        ).rejects.toThrow('local workflow admission or exact-path lease is stale'),
+      );
+      await Promise.resolve(
+        expect(
+          prepareWorkflowExecution(composition.workflowExecutionCapability!, {
+            repositoryRoot: fixture.root,
+            configDigest,
+            teamId: 'default-development',
+            workItemId: identity.work_id + '-foreign',
+          }),
+        ).rejects.toThrow('local workflow work item is not the admitted work'),
+      );
+      expect(callbackCalls).toEqual({ workItem: 0, context: 0, dispatch: 0, validate: 0 });
+    }));
+
+  test('local session pins SourcePreflight policy to current configuration', () =>
+    withAutomaticWorkAdmissionCase(async ({ createFixture, onCleanup }) => {
+      const fixture = createFixture(false, true);
+      const configDigest = runtimeConfigDigest(fixture.config);
+      const configPath = path.join(fixture.root, 'agent-runtime.config.v1.yaml');
+      const originalConfig = await readFile(configPath, 'utf8');
+      onCleanup(() => writeFileSync(configPath, originalConfig, 'utf8'));
+      const composition = await observeLocalSessionComposition({
+        repositoryRoot: fixture.root,
+        repositoryId: fixture.config.repository.repository_id,
+        projectIds: fixture.config.projects.map((entry) => entry.project_id).sort(),
+        nativeSessionHandle: 'local-policy-session',
+        services: localSessionServices(fixture.store.governanceCapability),
+      });
+      const workflowHostCapability = composition.workflowHostCapability;
+      if (workflowHostCapability === null) throw new Error('local composition has no workflow host capability');
+      let policy: ReturnType<typeof createRuntimeKernelSourcePreflightPolicySession> | undefined;
+      assert.doesNotThrow(() => {
+        policy = createRuntimeKernelSourcePreflightPolicySession(
+          fixture.root,
+          configDigest,
+          'source-preflight-local-session',
+          workflowHostCapability,
+        );
+      });
+      assert.ok(policy);
+      const issuedPolicy = policy;
+      expect(Object.isFrozen(issuedPolicy)).toBe(true);
+      expect(issuedPolicy.workflow.config_digest).toBe(configDigest);
+      expect(issuedPolicy.workflow.approval_authority).toBe('workflow-gate-only');
+      expect(() => issuedPolicy.assertCurrent()).not.toThrow();
+      expect(() =>
+        createRuntimeKernelSourcePreflightPolicySession(
+          fixture.root,
+          '0'.repeat(64),
+          'stale-source-preflight-local-session',
+          workflowHostCapability,
+        ),
+      ).toThrow('source preflight configuration differs from the current Host request');
+
+      const changedConfig = originalConfig.replace(
+        /config_revision: (\d+)/,
+        (_match, revision: string) => `config_revision: ${Number(revision) + 1}`,
+      );
+      if (changedConfig === originalConfig) throw new Error('fixture config revision was not changed');
+      await writeFile(configPath, changedConfig, 'utf8');
+      expect(() => issuedPolicy.assertCurrent()).toThrow('runtime configuration changed after composition');
+    }));
+
+  test('local session rejects caller-owned attempts and a foreign governance store', () =>
+    withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+      const { fixture, identity, nativeSessionHandle } = await prepareAdmittedSessionFixture(
+        'local-session-owner-' + randomUUID(),
+        createFixture(false, true),
+      );
+      const foreignOwner = createFixture(false, true);
+      let callbackCalls = 0;
+      const services = localSessionServices(fixture.store.governanceCapability, () => {
+        callbackCalls++;
+      });
+      const input = {
+        repositoryRoot: fixture.root,
+        repositoryId: identity.repository_id,
+        projectIds: identity.project_ids,
+        nativeSessionHandle,
+        admittedWork: { workId: identity.work_id, store: fixture.store },
+      };
+      const callerAttempts: NonNullable<TrustedHostServices['workflowAttempts']> = {
+        governanceCapability: fixture.store.governanceCapability,
+        claimWorkflowAssignment: async () => {
+          callbackCalls += 1;
+          throw new Error('caller attempts must not be used');
+        },
+        completeWorkflowAttempt: async () => {
+          callbackCalls += 1;
+          throw new Error('caller attempts must not be used');
+        },
+        markWorkflowAttemptUncertain: async () => {
+          callbackCalls += 1;
+          throw new Error('caller attempts must not be used');
+        },
+        abortUnstartedWorkflowAttempt: () => {
+          callbackCalls += 1;
+          throw new Error('caller attempts must not be used');
+        },
+      };
+      await Promise.resolve(
+        expect(
+          createTrustedLocalSessionComposition({
+            ...input,
+            services: { ...services, workflowAttempts: callerAttempts },
+          }),
+        ).rejects.toThrow('local workflow attempts must be issued from the admitted host state store'),
+      );
+      await Promise.resolve(
+        expect(
+          createTrustedLocalSessionComposition({
+            ...input,
+            services: { ...services, governanceCapability: foreignOwner.store.governanceCapability },
+          }),
+        ).rejects.toThrow('local workflow attempts must be issued from the admitted host state store'),
+      );
+      expect(callbackCalls).toBe(0);
+    }));
+
   test.skipIf(!nativeNoFollowAvailable)(
     'executes a fully trusted governed write and uses host timing bindings',
     async () => {

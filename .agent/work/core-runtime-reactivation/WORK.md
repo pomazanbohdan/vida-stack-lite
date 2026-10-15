@@ -897,6 +897,72 @@ root/digest controls. TESTING owns the new fixture/retention contract; Bun skill
 points to it. Full current kernel coverage/CC/entry-CRAP and bounded Stryker
 mutation results remain pending, without weakening any exact/frozen gate.
 
+Fresh kernel diagnostic at9dc1179 passed219tests/1582assertions. Report
+b428b315-35f1-4846-a49c-369dab300037.focused-coverage.json binds Source
+eb92da5b3e067e71981872b0574ec8dee8ed4fe8d452f0e06d4e378c763c74a8:
+functions140/16286.41%, lines539/60289.53%, statements564/63389.09%,
+branches360/41486.95%, maxCC31/maxfunction-entryCRAP42,22unexecuted.
+Summary quality-kernel-focused-summary-9dc-20261015.json; outer root
+quality-focused-kernel-9dc1179-Zht85s and tmpfs /tmp/quality-kernel-functional-ybTLdh.
+Full/frozen qualification is pending. New Source invalidates the old1962-mutant
+universe; installed Stryker range children also renumber IDs. Current range
+aggregation must bind canonical source/path/location/mutator/replacement
+identities, not union child-local IDs. Review:
+quality-kernel-bounded-plan-current-20261015.md. No stale universe is reused.
+
+Local-session tests reuse the real admitted HostState fixture. Initial composite
+case exceeded5000ms; split admission/lease from policy/config drift rather than
+raising the limit. Four selected cases then passed, each below5000ms; full two
+files198PASS/938assertions/95.69s before the custody correction. Remove only the
+unused per-case bundle copy and redundant docs mkdir; retain runtime directory,
+direct package template input and live config/context checks. Eager YAML parsing
+was rejected because case-local calls would add work, not save it.
+
+Independent follow-up found a custody blocker in new tests: unconditional close
+deleted failed roots, and setup cleanup could hide the original error. Before
+implementing its correction, assign the new shared fixture-case owner CC/CRAP7/7,
+its deferred-cleanup wrapper2/2, fixture factory1/1 and late retention predicate
+3/3. Reuse completeOwnedCleanup for body/cleanup causes including undefined;
+enroll roots before suspension and evaluate retention after native close. Keep
+the default5000ms case deadline. No product cap, SQLite/CAS or UNKNOWN rule moves.
+Follow-up requires teardown observation of an unsettled body as well as late
+settlement. Assign the pending-case retention observer prospective3/3 and keep
+guarded admission cases serialized. Teardown retains/reports pending roots;
+never close a database while its body can still use it. Cleanup runs only after
+settlement, or remains unproven on process termination. A real expected-timeout
+child must prove retained state and explicit failed outcome before acceptance.
+
+The shared case owner is implemented with serialized pending-case custody and a
+file afterEach retention observer. Failed/late roots survive; the native close
+precedes its retention predicate. Deferred synchronous restoration runs before
+close and every cleanup is attempted. Initial strict typing caught two void-
+returning cleanup adapters; explicit undefined returns satisfy the existing
+accumulator contract, without weakening its types. New fixture controls4PASS/
+20assertions/2.48s: quality-admission-case-custody-final-9dc-20261015.log.
+Retain their expected failed/late/pending roots under cloud-tooling/tmp, including
+vida-absorption-oEzpra and vida-absorption-4kquub; original earlier controls remain.
+
+Real native Bun300ms timeout proves childFAIL/bodySettledfalse/pending teardown,
+retained root and observed child/outer process groups. Native DB close stays
+UNPROVEN while the body remains unsettled; do not close it underneath live work.
+Retain quality-admission-timeout-9dc-g8x84A and
+/tmp/quality-admission-timeout-functional-cUCb9v/vida-absorption-Vr95Pv.
+Evidence: quality-admission-case-native-timeout-9dc-20261015.log and that root's
+qualification.json. Parent control PASS does not promote the timed-out child.
+Before the pending observer addition, the complete boundary file28PASS/
+132assertions/20.49s and focused controls7PASS/35assertions/13.53s; final applicable
+check and strict publication follow. Full/frozen numeric acceptance remains open.
+Final complete boundary file28PASS/132assertions/15.07s after pending-case hooks:
+quality-kernel-local-boundary-final-9dc-20261015.log. Final strict typing
+475captured/474checkedTS/0diagnostics: quality-kernel-local-custody-types-final-
+9dc-20261015.log. Actual follow-up review accepts retention and records pending
+DB-close evidence honestly: quality-kernel-local-custody-final-review-9dc-
+20261015.md. No product Source changes occur in this packet; fresh focused
+metrics must use its updated tests/input fingerprint. Real admitted dispatch
+forwarders remain uncovered; never replay an already-issued retirement request
+to fill them. The bounded shared-fixture proposal is
+quality-kernel-local-forwarder-design-9dc-20261015.md.
+
 ### Current product correction packet
 
 Human ended the high-token audit mode and resumed ordinary bounded fixes.
