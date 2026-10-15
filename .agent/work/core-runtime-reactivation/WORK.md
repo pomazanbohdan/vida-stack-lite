@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `abba348` at origin/main.
+- Published predecessor: `fe5444d` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -32,8 +32,9 @@ Apply Fix Root Causes through a real failing control before correction and
 Sequence Verifiable Units through focused checks and strict commit/push per
 packet. Two fresh blind native Luna lanes own only independent review/planning
 artifacts. Astra stay stopped. No duplicate test owner, broad audit or ledger.
-Cloud Superpowers is available again on this resumed turn. Root loaded its
-systematic-debugging and test-driven-development practices alongside Pstack.
+Root loaded Superpowers systematic-debugging and test-driven-development
+practices earlier in this session alongside Pstack. The current cloud skill
+catalog is unavailable; local Pstack remains available.
 
 Published4513b7d fixes the full-selection/partition fingerprint mismatch with
 one shared owner and v3 descriptor, retains exact byte checks and adds rejection
@@ -204,10 +205,43 @@ the root applied its exact requested correction without relabeling that review.
 
 ### First joint contour cycle
 
+Current packet replaces all six nested host-test launches with parent-process
+provider cases. Plain full export snapshots restore fs and safe-access namespaces
+after every case; both restoration attempts run and all cleanup errors survive.
+Fresh query imports preserve per-case module initialization. Existing assertions
+remain, with missing O_NOFOLLOW and exact NTFS/ReFS descriptor scenarios added.
+These are metadata simulations, not native Windows observations. A live prototype
+passed2tests/8assertions; its no-restoration negative control failed as expected:
+quality-host-mock-restoration-prototype-20261015.* and
+quality-host-mock-restoration-negative-20261015.*. The actual host and adjacent
+completeness files passed21tests/376assertions in3.54s:
+quality-host-parent-mocks-focused-fe5444d-20261015.log. No measured speedup claim.
+Independent blind Luna accepted the actual lifecycle/assertion diff:
+quality-host-parent-mocks-actual-review-20261015.md. Its pre-existing misleading
+platform-gating title was narrowed to the actual nonzero-flag contract; Source
+checks provider availability and flag, not process.platform. No new platform
+requirement was invented. Strict commit/push and fresh numeric runs follow.
+The strict hook rejected widened string literals in the shared Windows expected
+object. Its explicit public NativeNoFollowCapability type fixes fixture typing
+without a cast or runtime change; retain the first hook log
+quality-host-parent-mocks-commit-fe5444d-20261015.log.
+
+The last pre-change focused run atfe5444d completed exit0 in4777.512ms with
+complete capture and owned-group termination:
+/workspace/attachments/quality-focused-supervised-fe5444d-gNdPmu.
+Report6ab87090-8f89-4435-bc22-807f3996db34.focused-coverage.json retains
+functions7/7,lines21/21,statements22/22,branches9/11 and binary function-entry
+CRAP1,1,1,3,1,1,2. Those measurements do not qualify the modified tests.
+Shared-capture design review identifies existing qualityInputProjections as
+the single capture seam; focused coverage and mutation currently capture
+independently. Preserve that explicit custody gap until implemented rather
+than equating matching hashes with one capture. Design artifact:
+quality-focused-shared-capture-design-fe5444d-20261015.md.
+
 Human now requires each contour to measure coverage, frozen complexity/CRAP and
 assertion-confirmed mutation together before moving on. First core scope is the
-existing main-host partition, src/config/host-capability.ts, with its declared
-coverage-completeness and host-capability-boundary tests. Prepare a clearly
+existing main-host partition, src/config/host-capability.ts, with its current
+host-capability-boundary test selection. Prepare a clearly
 local diagnostic report using the existing Babel inventory and coverage owner;
 do not label selected tests full-current-test-set or admit it as a global gate.
 Use the same captured source/tests/config/tool fingerprints across the three
@@ -215,12 +249,11 @@ metrics. Dynamic CRAP is pending until attributable function coverage exists.
 Generated scenarios remain unreviewed; frozen caps and function correspondence
 must not be rebased to current values.
 
-The host boundary tests launch isolated Bun children without an explicit
-coverage preload. Child counter completeness is therefore a dependency to
-verify, not a presumed supported path. Blind Luna has a bounded design assignment
-for reuse of capture/preload/CRAP owners and the smallest safe diagnostic mode.
-The first cycle has completed a mutation diagnostic, but no coverage/CRAP or
-host mutation score is admitted. Earlier attestation7/7 is a different,
+The former host boundary children lacked explicit coverage preload and causal
+assertion receipts. The current packet replaces those six child launches with
+parent-process mocks and complete namespace restoration. Numeric results below
+remain tied to their exact older inputs until measured again. No joint frozen
+coverage/CRAP/mutation qualification is admitted. Earlier attestation7/7 is a different,
 constants-only scope and does not qualify this function contour.
 
 At4c6b0d8, the read-only repository mount first blocked legitimate CAS reader

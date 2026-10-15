@@ -1,29 +1,22 @@
-import { describe, expect, mock, test } from 'bun:test';
-import { spawnSync } from 'node:child_process';
-import { constants as realFsConstants } from 'node:fs';
+import { afterEach, describe, expect, mock, test } from 'bun:test';
+import * as fsNamespace from 'node:fs';
 import path from 'node:path';
+import type { NativeNoFollowCapability } from '../src/config/host-capability.ts';
+import * as realSafeAccessNamespace from '../src/config/safe-repository-access.ts';
 import type { SafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
-import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
+import { fsSafeIntegrity, fsSafeVersion } from '../src/config/fs-safe-attestation.ts';
 
-const isolatedCaseEnvironment = 'HOST_CAPABILITY_BOUNDARY_ISOLATED_CASE';
-
-function runIsolatedMockCase(name: string): void {
-  const child = spawnSync(
-    process.execPath,
-    ['test', '--test-name-pattern', name, 'tests/host-capability-boundary.test.ts'],
-    {
-      cwd: process.cwd(),
-      env: { ...process.env, [isolatedCaseEnvironment]: name },
-      encoding: 'utf8',
-      timeout: 4_500,
-    },
-  );
-  const completionMarker = `BUN_TEST_CASE_COMPLETE:${name}`;
-  requireSynchronousChildSuccess(child, completionMarker);
-}
+const realFsExports = { ...fsNamespace };
+const realSafeAccessExports = { ...realSafeAccessNamespace };
 
 const providerAccess = (provider: SafeRepositoryAccess['provider']) =>
   ({ provider }) satisfies Pick<SafeRepositoryAccess, 'provider'>;
+
+async function importFreshHostCapability(caseName: string): Promise<typeof import('../src/config/host-capability.ts')> {
+  return (await import(
+    `../src/config/host-capability.ts?provider-case=${encodeURIComponent(caseName)}`
+  )) as typeof import('../src/config/host-capability.ts');
+}
 
 describe('host capability native boundary', () => {
   test('rejects non-string, relative and noncanonical repository roots', async () => {
@@ -58,39 +51,59 @@ describe('host capability native boundary', () => {
 });
 
 describe('host capability provider boundary', () => {
+  // Keep these namespace mocks exclusive until parallel coverage is qualified.
+  afterEach(async () => {
+    const cleanupErrors: unknown[] = [];
+    for (const [specifier, exports] of [
+      ['node:fs', realFsExports],
+      ['../src/config/safe-repository-access.ts', realSafeAccessExports],
+    ] as const) {
+      try {
+        await mock.module(specifier, () => exports);
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+    }
+    if (cleanupErrors.length > 0) {
+      throw new AggregateError(cleanupErrors, 'Host capability provider module restoration failed.');
+    }
+  });
+
   test('returns null and rejects when the provider identity is not recognized', async () => {
-    const name = 'returns null and rejects when the provider identity is not recognized';
-    if (process.env[isolatedCaseEnvironment] !== name) return runIsolatedMockCase(name);
     const parsedProvider: unknown = JSON.parse('"unrecognized"');
     if (typeof parsedProvider !== 'string') throw new Error('provider fixture must be a string');
     await mock.module('../src/config/safe-repository-access.ts', () => ({
+      ...realSafeAccessExports,
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => ({ provider: parsedProvider }),
     }));
-    const host = await import('../src/config/host-capability.ts');
+    const host = await importFreshHostCapability(
+      'returns null and rejects when the provider identity is not recognized',
+    );
     const repositoryRoot = process.cwd();
 
     expect(host.detectNativeNoFollowCapability(repositoryRoot)).toBeNull();
     expect(() => host.requireNativeNoFollowCapability(repositoryRoot)).toThrow(
       'native no-follow host capability is unavailable; persistent path operations fail closed',
     );
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
   });
 
   test('reports the Linux descriptor capability when the native flags and provider are present', async () => {
-    const name = 'reports the Linux descriptor capability when the native flags and provider are present';
-    if (process.env[isolatedCaseEnvironment] !== name) return runIsolatedMockCase(name);
     const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
     await mock.module('node:fs', () => ({
-      constants: { ...realFsConstants, O_NOFOLLOW: 1 },
+      ...realFsExports,
+      constants: { ...realFsExports.constants, O_NOFOLLOW: 1 },
     }));
     await mock.module('../src/config/safe-repository-access.ts', () => ({
+      ...realSafeAccessExports,
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => providerAccess('linux-proc-fd'),
     }));
     Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' });
     try {
-      const host = await import('../src/config/host-capability.ts');
+      const host = await importFreshHostCapability(
+        'reports the Linux descriptor capability when the native flags and provider are present',
+      );
       const repositoryRoot = process.cwd();
       const capability = host.detectNativeNoFollowCapability(repositoryRoot);
       if (!capability) throw new Error('Linux capability fixture is unavailable');
@@ -114,16 +127,17 @@ describe('host capability provider boundary', () => {
     } finally {
       if (originalPlatform) Object.defineProperty(process, 'platform', originalPlatform);
     }
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
   });
 
   test('does not attest unknown Windows filesystems for durable operations', async () => {
-    const name = 'does not attest unknown Windows filesystems for durable operations';
-    if (process.env[isolatedCaseEnvironment] !== name) return runIsolatedMockCase(name);
-    await mock.module('node:fs', () => ({ constants: { ...realFsConstants, O_NOFOLLOW: 0 } }));
+    await mock.module('node:fs', () => ({
+      ...realFsExports,
+      constants: { ...realFsExports.constants, O_NOFOLLOW: 0 },
+    }));
     const malformedResidualRisks: unknown = JSON.parse('"not-an-array"');
     if (typeof malformedResidualRisks !== 'string') throw new Error('malformed fixture must remain a string');
     await mock.module('../src/config/safe-repository-access.ts', () => ({
+      ...realSafeAccessExports,
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => ({
         provider: 'fs-safe-windows',
@@ -132,7 +146,7 @@ describe('host capability provider boundary', () => {
         attested: false,
       }),
     }));
-    const host = await import('../src/config/host-capability.ts');
+    const host = await importFreshHostCapability('does not attest unknown Windows filesystems for durable operations');
     const capability = host.detectNativeNoFollowCapability(process.cwd());
 
     expect(capability).toStrictEqual({
@@ -153,53 +167,125 @@ describe('host capability provider boundary', () => {
     expect(() => host.requireNativeNoFollowCapability(process.cwd())).toThrow(
       'native no-follow host capability is unavailable; persistent path operations fail closed',
     );
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
   });
 
   test('reports unavailable when the safe provider is absent', async () => {
-    const name = 'reports unavailable when the safe provider is absent';
-    if (process.env[isolatedCaseEnvironment] !== name) return runIsolatedMockCase(name);
     await mock.module('../src/config/safe-repository-access.ts', () => ({
+      ...realSafeAccessExports,
       safeRepositoryProviderAvailable: false,
       detectSafeRepositoryAccess: () => providerAccess('unavailable'),
     }));
-    const host = await import('../src/config/host-capability.ts');
+    const host = await importFreshHostCapability('reports unavailable when the safe provider is absent');
 
     expect(host.nativeNoFollowAvailable).toBe(false);
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
   });
 
-  test('requires both native flags and the Linux platform for availability', async () => {
-    const name = 'requires both native flags and the Linux platform for availability';
-    if (process.env[isolatedCaseEnvironment] !== name) return runIsolatedMockCase(name);
+  test('requires a nonzero native flag when the Linux provider is available', async () => {
     const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
-    await mock.module('node:fs', () => ({ constants: { ...realFsConstants, O_NOFOLLOW: 0 } }));
+    await mock.module('node:fs', () => ({
+      ...realFsExports,
+      constants: { ...realFsExports.constants, O_NOFOLLOW: 0 },
+    }));
     await mock.module('../src/config/safe-repository-access.ts', () => ({
+      ...realSafeAccessExports,
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => providerAccess('linux-proc-fd'),
     }));
     Object.defineProperty(process, 'platform', { configurable: true, value: 'linux' });
     try {
-      const host = await import('../src/config/host-capability.ts');
+      const host = await importFreshHostCapability(
+        'requires a nonzero native flag when the Linux provider is available',
+      );
       expect(host.noFollowFlag).toBe(0);
       expect(host.nativeNoFollowAvailable).toBe(false);
     } finally {
       if (originalPlatform) Object.defineProperty(process, 'platform', originalPlatform);
     }
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
+  });
+
+  test('defaults a missing O_NOFOLLOW flag to zero', async () => {
+    await mock.module('node:fs', () => ({
+      ...realFsExports,
+      constants: { ...realFsExports.constants, O_NOFOLLOW: undefined },
+    }));
+    await mock.module('../src/config/safe-repository-access.ts', () => ({
+      ...realSafeAccessExports,
+      safeRepositoryProviderAvailable: true,
+      detectSafeRepositoryAccess: () => providerAccess('linux-proc-fd'),
+    }));
+    const host = await importFreshHostCapability('defaults a missing O_NOFOLLOW flag to zero');
+
+    expect(host.noFollowFlag).toBe(0);
+    expect(host.nativeNoFollowAvailable).toBe(false);
   });
 
   test('does not advertise Windows durability without a positive filesystem proof', async () => {
-    const name = 'does not advertise Windows durability without a positive filesystem proof';
-    if (process.env[isolatedCaseEnvironment] !== name) return runIsolatedMockCase(name);
-    await mock.module('node:fs', () => ({ constants: { ...realFsConstants, O_NOFOLLOW: 0 } }));
+    await mock.module('node:fs', () => ({
+      ...realFsExports,
+      constants: { ...realFsExports.constants, O_NOFOLLOW: 0 },
+    }));
     await mock.module('../src/config/safe-repository-access.ts', () => ({
+      ...realSafeAccessExports,
       safeRepositoryProviderAvailable: true,
       detectSafeRepositoryAccess: () => providerAccess('unavailable'),
     }));
-    const host = await import('../src/config/host-capability.ts');
+    const host = await importFreshHostCapability(
+      'does not advertise Windows durability without a positive filesystem proof',
+    );
 
     expect(host.nativeNoFollowAvailable).toBe(false);
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
+  });
+
+  test('attests the exact NTFS descriptor metadata and required capability', async () => {
+    await assertWindowsFilesystemCapability('ntfs');
+  });
+
+  test('attests the exact ReFS descriptor metadata and required capability', async () => {
+    await assertWindowsFilesystemCapability('refs');
   });
 });
+
+async function assertWindowsFilesystemCapability(filesystem: 'ntfs' | 'refs'): Promise<void> {
+  const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
+  await mock.module('node:fs', () => ({
+    ...realFsExports,
+    constants: { ...realFsExports.constants, O_NOFOLLOW: 0 },
+  }));
+  await mock.module('../src/config/safe-repository-access.ts', () => ({
+    ...realSafeAccessExports,
+    safeRepositoryProviderAvailable: true,
+    detectSafeRepositoryAccess: () => ({
+      provider: 'fs-safe-windows',
+      filesystem,
+      package: { name: '@openclaw/fs-safe', version: fsSafeVersion, integrity: fsSafeIntegrity },
+      residual_risks: ['Windows filesystem attestation is simulated by this descriptor fixture'],
+      attested: true,
+    }),
+  }));
+  Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' });
+  try {
+    const host = await importFreshHostCapability(`attested ${filesystem} descriptor metadata`);
+    const repositoryRoot = process.cwd();
+    const capability = host.detectNativeNoFollowCapability(repositoryRoot);
+    const expected: NativeNoFollowCapability = {
+      schema: 'NativeNoFollowCapability/v1',
+      platform: 'win32',
+      node_version: process.versions.node,
+      primitive: 'fs-safe-root-boundary',
+      provider: 'fs-safe-windows',
+      ancestor_binding: 'root-identity',
+      atomic_replace: 'fsync-temp-rename',
+      containment: 'best-effort',
+      assurance_profile: 'windows-best-effort-v1',
+      filesystem,
+      package: { name: '@openclaw/fs-safe', version: fsSafeVersion, integrity: fsSafeIntegrity },
+      residual_risks: ['Windows filesystem attestation is simulated by this descriptor fixture'],
+      attested: true,
+    };
+
+    expect(capability).toStrictEqual(expected);
+    expect(host.requireNativeNoFollowCapability(repositoryRoot)).toStrictEqual(expected);
+  } finally {
+    if (originalPlatform) Object.defineProperty(process, 'platform', originalPlatform);
+  }
+}

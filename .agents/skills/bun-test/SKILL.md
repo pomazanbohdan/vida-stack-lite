@@ -87,6 +87,10 @@ imports. Use the qualified namespace-snapshot/module-replacement pattern from
 TESTING and await both registration and restoration. Keep these cases serial.
 Copy original exports with `{ ...fs }` before the first replacement; a live ESM
 namespace is not a restorable snapshot.
+For host-capability provider scenarios, use the existing parent-process cases
+with fresh query imports and scoped restoration of both complete namespaces.
+This keeps assertions and coverage in the measured process. Module mocks remain
+serial until shard qualification; mock.restore() does not undo mock.module().
 Assert effects and all retained causes, not only the mock calls. Exercise denied
 exclusive creation and a foreign afterimage after successful rename separately;
 neither grants ownership of a file created by another actor.

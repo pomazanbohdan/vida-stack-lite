@@ -130,8 +130,13 @@ sandbox inputs; keep them excluded from sandbox copying without deleting them.
 
 The main-host contour selects `tests/host-capability-boundary.test.ts`. Its two
 native cases own the seven host assertions extracted from the combined Cedar
-completeness case; six provider/mock cases retain child isolation. Import the
-native subject inside each native body so child mocks precede its initialization.
+completeness case. Provider cases run in the parent Bun process with fresh
+query imports, so assertions and instrumentation use the same process. Snapshot
+complete module exports before replacement and await restoration of both
+namespaces after every provider case, retaining every cleanup error. Do not use
+mock.restore() to reset module overrides. Keep these mocks serial and exclusive
+until parallel qualification; modified tests invalidate old shard reviews.
+NTFS/ReFS descriptor simulations are not native Windows qualification.
 The full test selection and other mutation partitions retain the completeness
 file. Avoid eager configured-context/index setup in this narrow contour: a
 mutant's import/setup error cannot substitute for the target assertion.
