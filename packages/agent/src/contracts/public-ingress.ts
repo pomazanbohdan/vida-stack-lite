@@ -179,7 +179,8 @@ export function rfc3339TimestampMilliseconds(value: unknown): number | null {
   const second = Number(match[6]);
   const zone = match[7];
   const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
-  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1] ?? 0;
+  // The matched month is 01..12, so this index always selects a calendar month.
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1]!;
   if (day > daysInMonth) return null;
   const leapSecond = second === 60;
   if (

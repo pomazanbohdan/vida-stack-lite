@@ -121,6 +121,18 @@ Check YAML schema, project identity, integration mapping, storage and safe refer
 
 Check canonical JSON wire equivalence and legal shared references. Deny getters, descriptors, prototypes, `toJSON`, cycles and malformed limits. Preserve finite node, depth and byte bounds. Cache digests only for loader-owned deeply frozen values. Recheck inherited serialization hooks on every read. New YAML or mutable caller data needs fresh validation.
 
+Timestamp controls include trailing LF, CR, CRLF and Unicode line separators.
+A regular expression's `$` can match before a final terminator; the maintained
+parser must still reject the whole invalid timestamp and never admit NaN.
+The month lookup relies on the regex's 01..12 capture, alongside real calendar
+and leap-second controls. Do not fabricate an out-of-range matched month.
+
+Coordination schema rejection preserves all Ajv diagnostics, their paths and
+messages, leaves the input unchanged, and remains usable across invalid-valid-
+invalid calls. The private synchronous ledger validator enables allErrors and
+messages explicitly. Its failure branch can rely on the generated errors and
+messages; a future validator/configuration change must requalify this contract.
+
 Property tests generate supported and unsupported values separately and require
 acceptance or refusal for every sample. Do not condition the acceptance oracle
 on the production validator accepting a value. A general JSON arbitrary may

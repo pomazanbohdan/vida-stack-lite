@@ -302,6 +302,27 @@ describe('runtime envelope canonicalization boundary', () => {
     });
   });
 
+  test('coordination schema rejection retains every diagnostic and leaves a later valid ledger usable', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    const invalid = { ...ledger, revision: 0, workspace_id: 'not-a-workspace-digest' };
+    const before = structuredClone(invalid);
+    const result = validateCoordinationLedgerV1(invalid);
+    expect(result.ok).toBe(false);
+    expect(result.ledger).toBeNull();
+    expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([
+      { code: 'SCHEMA_INVALID', path: '$.workspace_id' },
+      { code: 'SCHEMA_INVALID', path: '$.revision' },
+    ]);
+    for (const issue of result.issues) {
+      expect(issue.message).toMatch(/^ledger record must match current CoordinationLedger\/v1: must /);
+      expect(issue.message).not.toMatch(/undefined|invalid value/);
+    }
+    expect(invalid).toEqual(before);
+    expect(validateCoordinationLedgerV1(ledger)).toEqual({ ok: true, ledger, issues: [] });
+    expect(validateCoordinationLedgerV1(invalid)).toEqual(result);
+  });
+
   test('coordination ledger codec preserves typed ticket and claim records without mutation', async () => {
     const {
       coordinationComponentJson,

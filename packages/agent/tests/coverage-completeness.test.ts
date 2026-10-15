@@ -26,6 +26,7 @@ import {
   freezeJsonValue,
   isPlainRecord,
   isStrictRfc3339Timestamp,
+  rfc3339TimestampMilliseconds,
   toAuthorizationReceipt,
   type AuthorizationReceipt,
   type GovernedWriteIntent,
@@ -264,6 +265,16 @@ describe('direct maintained-source completeness', () => {
     expect(isStrictRfc3339Timestamp('x2026-08-30T10:00:00Z')).toBe(false);
     expect(isStrictRfc3339Timestamp('2026-08-30T10:00:00Zx')).toBe(false);
     expect(isStrictRfc3339Timestamp(null)).toBe(false);
+  });
+
+  test('timestamp parsing rejects trailing line terminators without admitting non-finite times', () => {
+    const timestamp = '2026-10-15T00:00:00Z';
+    expect(rfc3339TimestampMilliseconds(timestamp)).toBe(Date.UTC(2026, 9, 15));
+    for (const suffix of ['\n', '\r', '\r\n', '\u2028', '\u2029']) {
+      const input = timestamp + suffix;
+      expect(rfc3339TimestampMilliseconds(input)).toBeNull();
+      expect(isStrictRfc3339Timestamp(input)).toBe(false);
+    }
   });
 
   test('governed write schemas match the maintained RFC3339 timestamp parser', () => {

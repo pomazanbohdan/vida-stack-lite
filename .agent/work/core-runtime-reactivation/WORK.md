@@ -594,6 +594,32 @@ behavior-preserving simplification, never a coverage waiver. All published fixes
 and test packets are retained in Source/Git; no active loader/schema or consumer
 state was changed and no install=unblock notice was sent.
 
+## Contracts residual branches: current continuation
+
+At published5ebb4f4, inspected the four residual contracts counters using the
+existing report and independent bounded Luna reviews, without another AST or
+inventory scan. A real trailing LF/CR/CRLF/U+2028/U+2029 timestamp is rejected
+by Date.parse even where regex `$` matches before its final terminator. Added
+an exact null/false regression and kept the finite-result guard. This is an
+existing reachable rejection, not a parser injection or a new product defect.
+
+Removed only three invariant-redundant fallbacks: the matched month is01..12,
+and the private synchronous Ajv ledger validator supplies errors on false and
+messages for its built-in schema keywords. Set messages:true explicitly beside
+allErrors:true. No schema, error path, authorization or ledger semantics changed.
+Added a two-error rejection control with exact paths, message content, unchanged
+input, a successful intervening valid call and repeated identical invalid result.
+These existing-behavior controls pass before and after the simplification.
+Future regex/schema/Ajv configuration changes must requalify those assumptions.
+
+Focused two-case checks2PASS/0FAIL/21assertions before and after. Complete
+unchanged four-file contracts selection43PASS/0FAIL/14172assertions in5.08s.
+Source strict101files and tests strict448files pass. Evidence under attachments:
+`quality-contracts-residual-{controls-before,controls-after,selection,source-ts,tests-ts}-5ebb-20261015.log`.
+Numerical coverage/CC/CRAP is pending a post-publication capture; no100% branch
+claim or new mutation closure follows from these development checks. Existing
+parent BLOCKED results and origin/filtered-run qualification gaps remain intact.
+
 ## Automatic contour progress projection
 
 The human requested durable per-contour metrics and one automatic consolidated

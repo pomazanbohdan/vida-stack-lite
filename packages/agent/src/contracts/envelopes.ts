@@ -178,7 +178,7 @@ class CoordinationValidationFailure extends Error {
   }
 }
 
-const ledgerValidator = new Ajv2020Constructor({ allErrors: true }).compile<CoordinationLedger>(
+const ledgerValidator = new Ajv2020Constructor({ allErrors: true, messages: true }).compile<CoordinationLedger>(
   coordinationLedgerSchema,
 );
 
@@ -785,10 +785,11 @@ export function validateCoordinationLedgerV1(
     return {
       ok: false,
       ledger: null,
-      issues: (ledgerValidator.errors ?? []).map((error) => ({
+      // Synchronous Ajv failure supplies errors; messages are enabled above.
+      issues: ledgerValidator.errors!.map((error) => ({
         code: 'SCHEMA_INVALID',
         path: '$' + error.instancePath.replaceAll('/', '.'),
-        message: 'ledger record must match current CoordinationLedger/v1: ' + (error.message ?? 'invalid value'),
+        message: 'ledger record must match current CoordinationLedger/v1: ' + error.message!,
       })),
     };
   try {
