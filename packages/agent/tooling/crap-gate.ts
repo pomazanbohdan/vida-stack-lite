@@ -51,6 +51,12 @@ const scopedBudgetReviews = new Map([
   ['64f18b3148a80644787a1c2b997ad7a1ff6e5d5d', 'scope_review_runtime_facade_20261015'],
   ['e9629b3c45cde992ef688af33b2538c7e3a67391', 'scope_review_lifecycle_state_20261015'],
   ['386bf6c9b576e8e43c903155513358b403468179', 'scope_review_main_contracts_20261015'],
+  [
+    '892523d2a83edc6e21d7a05d6e9cca902aab6f44:bun-runtime-initialization',
+    'scope_review_runtime_initialization_20261015',
+  ],
+  ['892523d2a83edc6e21d7a05d6e9cca902aab6f44:bun-cli-toolchain', 'scope_review_bun_cli_toolchain_20261015'],
+  ['892523d2a83edc6e21d7a05d6e9cca902aab6f44:bun-final-assurance', 'scope_review_bun_final_assurance_20261015'],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -882,7 +888,8 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     )
       throw new Error('Scoped CRAP proof requires a complete declared executable contour.');
     const budgetCommit = scopedArguments[3]!;
-    const reviewKey = scopedBudgetReviews.get(budgetCommit);
+    const reviewKey =
+      scopedBudgetReviews.get(`${budgetCommit}:${partition.name}`) ?? scopedBudgetReviews.get(budgetCommit);
     if (reviewKey === undefined)
       throw new Error('Scoped CRAP proof requires the pinned published reviewed budget commit.');
     if (gitText(['rev-parse', '--verify', `${budgetCommit}^{commit}`]).trim() !== budgetCommit)

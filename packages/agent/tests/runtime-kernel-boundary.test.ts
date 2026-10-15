@@ -938,6 +938,70 @@ describe('runtime kernel boundary', () => {
       expect(callbackCalls).toEqual({ workItem: 0, context: 0, dispatch: 0, validate: 0 });
     }));
 
+  test('ordinary workflow preparation rejects the reconciler-only internal Migration item before downstream callbacks', () =>
+    withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+      const admitted = await prepareAdmittedSessionFixture(
+        'ordinary-migration-ingress-' + randomUUID(),
+        createFixture(false, true),
+      );
+      const { fixture, identity, nativeSessionHandle } = admitted;
+      const project = identity.project_ids[0];
+      assert.ok(project);
+      const calls = { workItem: 0, context: 0, dispatch: 0, validate: 0 };
+      const services: TrustedHostServices = {
+        ...localSessionServices(fixture.store.governanceCapability),
+        resolveWorkflowWorkItem: (workItemId) => {
+          calls.workItem += 1;
+          return {
+            schema: 'WorkItem/v1',
+            id: workItemId,
+            provider: 'internal',
+            provider_type: 'Migration',
+            canonical_kind: 'task',
+            intent: 'task_execution',
+            project_id: project,
+            title: 'Reconciler migration fixture',
+            description: '',
+            labels: [],
+            risk_flags: [],
+          };
+        },
+        resolveWorkExecutionContext: () => {
+          calls.context += 1;
+          throw new Error('reconciler-only item must be rejected before context resolution');
+        },
+        dispatchWorkflowAssignment: () => {
+          calls.dispatch += 1;
+          throw new Error('reconciler-only item must not dispatch');
+        },
+        validateWorkflowAssignmentResult: () => {
+          calls.validate += 1;
+          throw new Error('reconciler-only item must not validate an assignment result');
+        },
+      };
+      const composition = await observeLocalSessionComposition({
+        repositoryRoot: fixture.root,
+        repositoryId: identity.repository_id,
+        projectIds: identity.project_ids,
+        nativeSessionHandle,
+        admittedWork: { workId: identity.work_id, store: fixture.store },
+        services,
+      });
+      const capability = composition.workflowExecutionCapability;
+      assert.ok(capability);
+      await Promise.resolve(
+        expect(
+          prepareWorkflowExecution(capability, {
+            repositoryRoot: fixture.root,
+            configDigest: runtimeConfigDigest(fixture.config),
+            teamId: 'default-development',
+            workItemId: identity.work_id,
+          }),
+        ).rejects.toThrow('internal/Migration work items are reconciler-only and cannot enter the ordinary runtime'),
+      );
+      expect(calls).toEqual({ workItem: 1, context: 0, dispatch: 0, validate: 0 });
+    }));
+
   test('local session pins SourcePreflight policy to current configuration', () =>
     withAutomaticWorkAdmissionCase(async ({ createFixture, onCleanup }) => {
       const fixture = createFixture(false, true);

@@ -5043,6 +5043,24 @@ body would invalidate that harness. Unaccepted candidate artifacts remain distin
 from applied changes. Current local triple count remains4/44; no fresh global or
 Runtime qualification is claimed.
 
+## Published rolling checkpoint and v2 pin controls
+
+Published892523d2a83edc6e21d7a05d6e9cca902aab6f44 contains the checked rolling
+packet and all three independent v2 scope metadata keys. Strict pre-commit passed
+485-file TypeScript, Knip/lint and479-file formatting. The exact-root CLI denial
+case separately passed with the four newly required exit-status assertions.
+
+The next gate pin selects each v2 review by immutable commit plus declared contour;
+legacy commit-only v1 review keys remain unchanged. A shared published commit may
+hold several separately scoped reviews without allowing one contour to borrow
+another review. Controls require genuine coverage artifacts for initialization,
+toolchain and assurance and deny that same commit for unrelated main-host.
+The focused controls plus the independently reviewed public internal/Migration
+denial completed successfully at owned root
+/workspace/attachments/quality-rolling-cli-check-Qtmrct in7091.756207ms, exit0,
+complete capture/process-group termination, unchanged boot. This is development
+proof only. Exact numerical contour qualification remains the next serial action.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
