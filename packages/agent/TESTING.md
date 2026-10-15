@@ -1013,7 +1013,11 @@ Keep accepted legacy deficits and missing manual runs explicit.
 `bun tooling/crap-gate.ts --inventory` reports maintained function identities
 and static complexity for budget planning. Its `MaintainedFunctionInventory/v1`
 output declares `mode: static-inventory-only` and
-`qualification: not-performed`. It does not measure coverage, check a frozen
+`qualification: not-performed`. Its additive `files` entries bind each selected
+path to its byte length and SHA-256 from the same buffer decoded for the existing
+function inventory; no second Source read or AST pass is needed. These bindings
+do not establish exhaustive baseline/current correspondence or freshness after
+capture. It does not measure coverage, check a frozen
 CRAP plan, or establish a numeric quality PASS. The coverage and CRAP gates run
 only when their tool files are invoked directly; importing them does not run a
 gate or coverage collection.

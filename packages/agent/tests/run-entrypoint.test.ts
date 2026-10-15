@@ -977,6 +977,51 @@ function unpreparedRecoveryFixture(deadlineAt: number): {
 }
 
 describe('unprepared recovery', () => {
+  test('current registry descriptor and path metadata are resolved without changing recovery identity', () => {
+    const f = unpreparedRecoveryFixture(performance.now() + 5_000);
+    try {
+      const configPath = path.join(f.root, 'agent-runtime.config.v1.yaml');
+      const currentConfig = readFileSync(configPath, 'utf8');
+      const metadataChanged = currentConfig
+        .replace(
+          "  - project_id: 'project'\n    title: 'project'",
+          "  - project_id: 'project'\n    title: 'Current recovery descriptor'",
+        )
+        .replace('    task_prefix: TASK\n', '    task_prefix: RECOVERY\n')
+        .replace(
+          '    wiki_output_root: .planning/agent-flow/wiki-output\n    internal_root: docs/internal',
+          '    wiki_output_root: .planning/agent-flow/recovery-output\n    internal_root: docs/internal',
+        );
+      if (
+        metadataChanged === currentConfig ||
+        !metadataChanged.includes("title: 'Current recovery descriptor'") ||
+        !metadataChanged.includes('    task_prefix: RECOVERY\n') ||
+        !metadataChanged.includes('    wiki_output_root: .planning/agent-flow/recovery-output\n')
+      )
+        throw Error('current registry metadata fixture did not apply every intended change');
+      writeFileSync(configPath, metadataChanged);
+
+      const before = f.observed();
+      const beforeWork = before.work.find((row) => row.identity.work_id === f.identity.work_id);
+      if (!beforeWork?.state) throw Error('original recovery work state is missing');
+      const request = f.store.inspectUnpreparedWorkRecovery(f.input);
+      expect(f.observed()).toEqual(before);
+      expect(request.identity).toEqual(f.identity);
+      expect(request.originalWork.binding.project_ids).toEqual([...f.identity.project_ids]);
+
+      const released = f.store.releaseUnpreparedWork(f.input, request);
+      expect(released.work?.execution.status).toBe('suspended');
+      expect(released.work?.lease).toBeNull();
+      expect(released.work?.execution.run_id).toBe(beforeWork.state.execution.run_id);
+      f.complete();
+    } catch (error) {
+      f.fail(error);
+      throw error;
+    } finally {
+      f.close();
+    }
+  });
+
   test('uncompleted fixture close retains its root', () => {
     const f = unpreparedRecoveryFixture(performance.now() + 5_000);
     f.close();

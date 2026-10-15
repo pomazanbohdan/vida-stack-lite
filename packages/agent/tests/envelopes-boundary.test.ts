@@ -1,7 +1,6 @@
 import { describe, expect, mock, spyOn, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { spawnSync } from 'node:child_process';
 import type { TrustedProjectIdentity, ProjectAuthorizationRequest } from '../src/contracts/public-ingress.js';
 import type {
   RuntimeEnvelope,
@@ -14,18 +13,6 @@ import { configuredTestContext } from './configured-context.js';
 import fc from 'fast-check';
 import { assertProperty } from './helpers/assert-property.js';
 import { expectReturned } from './helpers/expect-rejection.ts';
-import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outcome.ts';
-
-function runIsolatedMockCase(name: string): void {
-  const child = spawnSync(process.execPath, ['test', '--test-name-pattern', name, 'tests/envelopes-boundary.test.ts'], {
-    cwd: process.cwd(),
-    env: { ...process.env, ENVELOPES_BOUNDARY_ISOLATED_CASE: name },
-    encoding: 'utf8',
-    timeout: 120_000,
-  });
-  const completionMarker = `BUN_TEST_CASE_COMPLETE:${name}`;
-  requireSynchronousChildSuccess(child, completionMarker);
-}
 
 function hasValidateRequest(value: unknown): value is { readonly validateRequest: true } {
   return typeof value === 'object' && value !== null && 'validateRequest' in value && value.validateRequest === true;
@@ -682,6 +669,52 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(ledger).toEqual(ledgerBefore);
   });
 
+  test('rejects overlapping resources across active claims on one ticket', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    const ticket = ledger.tickets[0]!;
+    const claim = ledger.claims[0]!;
+    const overlappingClaim: CoordinationClaim = { ...claim, claim_id: 'claim-overlap' };
+    const overlapping = {
+      ...ledger,
+      tickets: [{ ...ticket, claim_ids: [...ticket.claim_ids, overlappingClaim.claim_id] }],
+      claims: [...ledger.claims, overlappingClaim],
+    } satisfies CoordinationLedger;
+    const before = structuredClone(overlapping);
+    const result = expectReturned(() => validateCoordinationLedgerV1(overlapping));
+    expect(result.ok).toBe(false);
+    expect(result.issues).toMatchObject([
+      { code: 'ACTIVE_CLAIM_RESOURCE_DUPLICATE', path: '$.tickets.0.active_resources' },
+    ]);
+    expect(overlapping).toEqual(before);
+
+    const releasedClaim: CoordinationClaim = { ...overlappingClaim, status: 'released' };
+    const inactiveOverlap = { ...overlapping, claims: [claim, releasedClaim] } satisfies CoordinationLedger;
+    expect(expectReturned(() => validateCoordinationLedgerV1(inactiveOverlap))).toEqual({
+      ok: true,
+      ledger: inactiveOverlap,
+      issues: [],
+    });
+
+    const otherResource = 'file:src/other.ts';
+    const disjoint = {
+      ...overlapping,
+      tickets: [
+        {
+          ...overlapping.tickets[0]!,
+          exclusive_resources: [...ticket.exclusive_resources, otherResource],
+          active_resources: [...ticket.active_resources, otherResource],
+        },
+      ],
+      claims: [claim, { ...overlappingClaim, resources: [otherResource] }],
+    } satisfies CoordinationLedger;
+    expect(expectReturned(() => validateCoordinationLedgerV1(disjoint))).toEqual({
+      ok: true,
+      ledger: disjoint,
+      issues: [],
+    });
+  });
+
   test('coordination release history binds contour assurance, batch state, rebind, and retirement', async () => {
     const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
     const { canonicalJsonDigest } = await import('../src/contracts/public-ingress.js');
@@ -1027,26 +1060,44 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('normalizes a non-Error canonicalizer failure before rejecting', async () => {
-    const name = 'normalizes a non-Error canonicalizer failure before rejecting';
-    if (process.env.ENVELOPES_BOUNDARY_ISOLATED_CASE !== name) return runIsolatedMockCase(name);
-    await mock.module('../src/contracts/public-ingress.js', () => ({
-      assertCanonicalJsonValue: () => {
-        throw 'string canonical failure';
-      },
-    }));
-    const envelopes = await import('../src/contracts/envelopes.js');
-
-    expect(() =>
-      envelopes.validateRuntimeEnvelope({
-        schema: 'RuntimeEnvelope/v1',
-        kind: 'quality-check',
-        operation: 'runtime.read',
-        sourceRevision: 'source-1',
-        expectedRevision: 1,
-        payload: {},
-      }),
-    ).toThrow('runtime envelope rejected: string canonical failure');
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
+    const originalIngress = { ...(await import('../src/contracts/public-ingress.js')) };
+    const envelope: RuntimeEnvelope = {
+      schema: 'RuntimeEnvelope/v1',
+      kind: 'quality-check',
+      operation: 'runtime.read',
+      sourceRevision: 'source-1',
+      expectedRevision: 1,
+      payload: {},
+    };
+    const failures: unknown[] = [];
+    try {
+      await mock.module('../src/contracts/public-ingress.js', () => ({
+        ...originalIngress,
+        assertCanonicalJsonValue: () => {
+          throw 'string canonical failure';
+        },
+      }));
+      const envelopes = (await import(
+        String('../src/contracts/envelopes.js?case=non-error-canonicalizer')
+      )) as typeof import('../src/contracts/envelopes.js');
+      expect(() => envelopes.validateRuntimeEnvelope(envelope)).toThrow(
+        'runtime envelope rejected: string canonical failure',
+      );
+    } catch (error) {
+      failures.push(error);
+    } finally {
+      try {
+        await mock.module('../src/contracts/public-ingress.js', () => originalIngress);
+      } catch (error) {
+        failures.push(error);
+      }
+    }
+    if (failures.length === 1) throw failures[0];
+    if (failures.length > 1) throw new AggregateError(failures, 'Canonicalizer assertion and restoration failed');
+    const restored = (await import(
+      String('../src/contracts/envelopes.js?case=canonicalizer-restored')
+    )) as typeof import('../src/contracts/envelopes.js');
+    expect(expectReturned(() => restored.validateRuntimeEnvelope(envelope))).toBe(envelope);
   });
 
   test('normalizes a non-Error authorization failure before denying', async () => {

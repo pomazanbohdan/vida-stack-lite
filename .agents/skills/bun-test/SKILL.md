@@ -127,6 +127,11 @@ serial until shard qualification; mock.restore() does not undo mock.module().
 Assert effects and all retained causes, not only the mock calls. Exercise denied
 exclusive creation and a foreign afterimage after successful rename separately;
 neither grants ownership of a file created by another actor.
+The canonicalizer failure case also uses a parent-process namespace snapshot,
+fresh typed query import and awaited restoration, followed by a real restored
+target call. Keep its assertion in that process: a nested child's health failure
+cannot establish the target's causal mutation evidence. Preserve both body and
+restoration errors rather than allowing finally to replace the primary failure.
 
 For a bounded release read fault, keep the file regular with one link until the
 read begins. Unlinking after open triggers the earlier identity guard and cannot

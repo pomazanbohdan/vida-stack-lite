@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `7eaebf14d561e08304b48b5348737a4aa5ae7fcb` at origin/main.
+- Published predecessor: `b4a31c6` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -5513,6 +5513,64 @@ without losing the parent contour's complete matrix. The remaining full
 correspondence/budget, public selector/join and global5min acceptance prerequisites
 remain open. Do not alter frozen ceilings or activate parallel/filtered execution
 from development checks.
+
+### Rolling corrections after the contracts timeout
+
+The canonicalizer failure regression now keeps its direct target assertion in
+the parent process. Root removed its only isolated child helper and120s child
+timeout, snapshots the complete original namespace, awaits replacement/restoration,
+uses fresh typed query imports, retains both primary and cleanup errors including
+undefined, and checks a real target call after restoration. Independent review
+accepted the actual change. A direct active-claim overlap regression reaches the
+specific duplicate-resource issue and retains the input; released and disjoint
+claims are accepted controls. The complete file passed13tests/2845assertions at
+/workspace/attachments/quality-rolling-cli-check-xHcSBD in1131.18107ms.
+This is development evidence, not a new mutation score or speedup comparison.
+
+One shared governed-evidence fixture replaces equivalent builders in public
+ingress and kernel composition. Each real hash/receipt call remains inside the
+caller's existing injected expectReturned observer; field and hash assertions
+remain with their owning bodies. The helper has no module-level fixture, hook,
+configuration load or cache. The recovery case now checks current registry
+descriptor/path metadata without changing original Work identity or issuing an
+effect. Its observed Work rows are selected by exact work identity and guarded
+before state access. Root corrected copied helper import depths and the Bun
+readonly-array matcher typing; the454-file test project then passed.
+Those three complete files passed56tests/12707assertions in24163.642588ms at
+/workspace/attachments/quality-rolling-cli-check-y9wXYA.
+
+The existing CRAP static inventory now emits additive per-file byte length and
+SHA-256 using exactly the Source buffer already decoded and parsed. No second
+Source read, hash pass or AST pipeline was added. Single/two-file CLI controls
+compare exact byte bindings; unknown report values stay inside assertions.
+Root simplified the copied95-line proposal to an extension of existing tests.
+The185-file tooling TypeScript project passed; complete CLI controls passed at
+/workspace/attachments/quality-rolling-cli-check-yp8dmZ in7205.518446ms.
+Every root above has complete capture, observed group closure and unchanged boot.
+Byte bindings remain static evidence, not exhaustive correspondence or CRAP PASS.
+
+The strict precommit retained its refusal of two unsafe-finally warnings and one
+unsafe-return from an asymmetric matcher callback. Root moved both failure
+observations into an ordered accumulator and throws only after finally, preserving
+sole-error identity and both causes. The matcher association check uses ordinary
+loop assertions. The two affected complete files passed again at
+/workspace/attachments/quality-rolling-cli-check-SmIACC in8559.426351ms with
+complete capture, closed groups and unchanged boot. No hook was bypassed and no
+quality rule was weakened. Earlier passing captures remain their original bytes.
+
+Root independently reproduced a product canonicalization defect with
+/workspace/attachments/quality-canonical-proxy-reproduction-20261015.ts:
+a descriptor-valid value1 can serialize as an omitted field when a Proxy get
+returns undefined; a descriptor-invisible toJSON hook is also invoked. This is
+an actual current-Source reproduction, not proof of a fix. The descriptor-snapshot
+candidate remains unintegrated: independent reviews found changing-prototype and
+late inherited-hook hazards, and the copied author is correcting the design.
+Next integrate only a reviewed minimal image-consistency correction, qualify its
+actual regression, refresh affected frozen Source bindings without raising caps,
+then repeat exact affected contour metrics. The separate config-construction
+freshness and kernel lease proposals remain copied/reviewed preparation. Do not
+force an unreachable kernel branch with a fake Host snapshot or remove its guard
+merely to improve coverage. Worker slots continue to take the next useful scope.
 
 ## Historical provenance
 

@@ -1,4 +1,5 @@
 import { expectReturned, rejectionReason } from './helpers/expect-rejection.ts';
+import { createGovernedEvidenceFixture } from './helpers/governed-evidence-fixture.ts';
 import { describe, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import assert from 'node:assert/strict';
@@ -8,14 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { computeWriteOperationHash } from '../src/index.ts';
 import { configuredTestContext } from './configured-context.ts';
-import {
-  toAuthorizationReceipt,
-  type AuthorizationReceipt,
-  type GovernedWriteIntent,
-  type ProjectAuthorizationRequest,
-  type TrustedProjectIdentity,
-  type VerifiedApprovalEvidence,
-} from '../src/contracts/public-ingress.ts';
+import type { TrustedProjectIdentity } from '../src/contracts/public-ingress.ts';
 import { defaultRuntimeClock, type RuntimeTimingEvent } from '../src/runtime-timing.ts';
 import { createRuntimeKernel, createRuntimeKernelHost } from '../src/runtime-kernel.ts';
 import type { RuntimeKernelHostBindings } from '../src/runtime-kernel.ts';
@@ -32,20 +26,6 @@ function required<T>(value: T | undefined, label: string): T {
 }
 
 const projectBinding = required(project.project_bindings[0], 'a configured project binding');
-
-function authorizationRequest(operationHash?: string): ProjectAuthorizationRequest {
-  return {
-    principal: 'principal-1',
-    role: 'developer-orchestrator',
-    action: 'write',
-    tenant: project.repository_id,
-    project: projectBinding.project_id,
-    resourceTenant: project.repository_id,
-    resourceProject: projectBinding.project_id,
-    registryHash: project.registry_hash,
-    ...(operationHash ? { operationHash } : {}),
-  };
-}
 
 function invokeUntrusted(
   target: (...args: never[]) => unknown,
@@ -66,63 +46,6 @@ function identity(): TrustedProjectIdentity {
     project: projectBinding.project_id,
     registry_hash: project.registry_hash,
   });
-}
-
-function governedEvidence(): {
-  approval: VerifiedApprovalEvidence;
-  intent: GovernedWriteIntent;
-  operationHash: string;
-  receipt: AuthorizationReceipt;
-} {
-  const payload = { path: 'agent-runtime-new/example.txt', value: 'updated' };
-  const operation = 'repository.write';
-  const operationHash = expectReturned(() =>
-    computeWriteOperationHash({
-      operation,
-      payload,
-      principal: 'principal-1',
-      role: 'developer-orchestrator',
-      tenant: project.repository_id,
-      project: projectBinding.project_id,
-      resourceTenant: project.repository_id,
-      resourceProject: projectBinding.project_id,
-      registryHash: project.registry_hash,
-    }),
-  );
-  expect(operationHash).toMatch(/^[a-f0-9]{64}$/);
-  const approvedAt = new Date(Date.now() - 1_000).toISOString();
-  const expiresAt = new Date(Date.now() + 60_000).toISOString();
-  const intent: GovernedWriteIntent = {
-    operation,
-    payload,
-    authorization: authorizationRequest(),
-    approval: {
-      decision: 'approved',
-      decision_id: 'approval-1',
-      approver: 'operator-1',
-      tenant: project.repository_id,
-      project: projectBinding.project_id,
-      operation_hash: operationHash,
-      approved_at: approvedAt,
-      expires_at: expiresAt,
-    },
-  };
-  const receipt = expectReturned(() =>
-    toAuthorizationReceipt(authorizationRequest(operationHash), 'decision-1', approvedAt),
-  );
-  assert.ok(receipt);
-  expect(receipt).toMatchObject({
-    schema: 'AuthorizationReceipt/v1',
-    operation_hash: operationHash,
-  });
-  const approval: VerifiedApprovalEvidence = {
-    ...intent.approval,
-    verified: true,
-    issuer: 'test-authority',
-    verification_id: 'verification-1',
-    verified_at: approvedAt,
-  };
-  return { approval, intent, operationHash, receipt };
 }
 
 describe('direct maintained-source completeness', () => {
@@ -170,7 +93,13 @@ describe('direct maintained-source completeness', () => {
       await Promise.resolve(
         expect(kernel.evaluateGovernance('runtime.read', {})).resolves.toHaveProperty('decision', 'allow'),
       );
-      const fixture = governedEvidence();
+      const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
+      expect(fixture.operationHash).toMatch(/^[a-f0-9]{64}$/);
+      assert.ok(fixture.receipt);
+      expect(fixture.receipt).toMatchObject({
+        schema: 'AuthorizationReceipt/v1',
+        operation_hash: fixture.operationHash,
+      });
       {
         const failure = await rejectionReason(
           kernel.runGovernedWrite({

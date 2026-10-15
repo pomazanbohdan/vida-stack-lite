@@ -1,10 +1,17 @@
 import { expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const script = path.join(root, 'tooling/crap-gate.ts');
+
+function expectedSourceBinding(file: string): { path: string; byte_length: number; sha256: string } {
+  const bytes = readFileSync(path.join(root, file));
+  return { path: file, byte_length: bytes.byteLength, sha256: createHash('sha256').update(bytes).digest('hex') };
+}
 
 test('native CRAP inventory returns static function identities without numeric qualification', () => {
   const file = 'src/contracts/canonical-json-core.ts';
@@ -25,6 +32,7 @@ test('native CRAP inventory returns static function identities without numeric q
     qualification: 'not-performed',
     sources: [file],
   });
+  expect(output).toHaveProperty('files', [expectedSourceBinding(file)]);
   expect(output).toHaveProperty(
     'functions',
     expect.arrayContaining([
@@ -42,6 +50,25 @@ test('native CRAP inventory returns static function identities without numeric q
       }),
     ]),
   );
+});
+
+test('native CRAP inventory binds each selected source to its own bytes and function rows', () => {
+  const files = ['src/contracts/canonical-json-core.ts', 'src/contracts/envelopes.ts'];
+  const result = spawnSync(process.execPath, [script, '--inventory', ...files], {
+    cwd: root,
+    encoding: 'utf8',
+    timeout: 20_000,
+    maxBuffer: 1024 * 1024,
+    env: { ...process.env, BUN_OPTIONS: '' },
+  });
+  expect(result.error).toBeUndefined();
+  expect(result.signal).toBeNull();
+  expect(result.status).toBe(0);
+  const output: unknown = JSON.parse(result.stdout);
+  expect(output).toHaveProperty('files', files.map(expectedSourceBinding));
+  expect(output).toHaveProperty('sources', files);
+  for (const file of files)
+    expect(output).toHaveProperty('functions', expect.arrayContaining([expect.objectContaining({ file })]));
 });
 
 test('native CRAP inventory denies duplicate or foreign sources and unsupported options', () => {

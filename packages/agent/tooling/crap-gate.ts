@@ -389,23 +389,23 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     if (new Set(requested).size !== requested.length || requested.some((file) => !maintainedSources.includes(file)))
       throw new Error('Function inventory requires unique maintained source paths.');
     const selected = requested.length ? requested : maintainedSources;
-    const functions = (
-      await Promise.all(
-        selected.map(async (file) =>
-          functionInventory(
-            new TextDecoder('utf-8', { fatal: true }).decode(await readFile(path.join(root, file))),
-            file,
-          ),
-        ),
-      )
-    ).flat();
+    const captured = await Promise.all(
+      selected.map(async (file) => {
+        const bytes = await readFile(path.join(root, file));
+        return {
+          binding: { path: file, byte_length: bytes.byteLength, sha256: sha256(bytes) },
+          functions: functionInventory(new TextDecoder('utf-8', { fatal: true }).decode(bytes), file),
+        };
+      }),
+    );
     process.stdout.write(
       JSON.stringify({
         schema: 'MaintainedFunctionInventory/v1',
         mode: 'static-inventory-only',
         qualification: 'not-performed',
         sources: selected,
-        functions,
+        files: captured.map(({ binding }) => binding),
+        functions: captured.flatMap(({ functions }) => functions),
       }) + '\n',
     );
     process.exit(0);

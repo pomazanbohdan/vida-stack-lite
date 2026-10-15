@@ -15,15 +15,12 @@ import {
   isStrictRfc3339Timestamp,
   rfc3339TimestampMilliseconds,
   toAuthorizationReceipt,
-  type AuthorizationReceipt,
-  type GovernedWriteIntent,
-  type ProjectAuthorizationRequest,
-  type VerifiedApprovalEvidence,
   validateAuthorizationRequest,
   validateGovernedWriteRequest,
 } from '../src/contracts/public-ingress.ts';
 import { buildGovernedWriteRequest, computeWriteOperationHash } from '../src/index.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
+import { createGovernedEvidenceFixture } from './helpers/governed-evidence-fixture.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const { context: project } = configuredTestContext();
@@ -32,73 +29,6 @@ function required<T>(value: T | undefined, label: string): T {
   return value;
 }
 const projectBinding = required(project.project_bindings[0], 'a configured project binding');
-function authorizationRequest(operationHash?: string): ProjectAuthorizationRequest {
-  return {
-    principal: 'principal-1',
-    role: 'developer-orchestrator',
-    action: 'write',
-    tenant: project.repository_id,
-    project: projectBinding.project_id,
-    resourceTenant: project.repository_id,
-    resourceProject: projectBinding.project_id,
-    registryHash: project.registry_hash,
-    ...(operationHash ? { operationHash } : {}),
-  };
-}
-function governedEvidence(): {
-  approval: VerifiedApprovalEvidence;
-  intent: GovernedWriteIntent;
-  operationHash: string;
-  receipt: AuthorizationReceipt;
-} {
-  const payload = { path: 'agent-runtime-new/example.txt', value: 'updated' };
-  const operation = 'repository.write';
-  const operationHash = expectReturned(() =>
-    computeWriteOperationHash({
-      operation,
-      payload,
-      principal: 'principal-1',
-      role: 'developer-orchestrator',
-      tenant: project.repository_id,
-      project: projectBinding.project_id,
-      resourceTenant: project.repository_id,
-      resourceProject: projectBinding.project_id,
-      registryHash: project.registry_hash,
-    }),
-  );
-  expect(operationHash).toMatch(/^[a-f0-9]{64}$/);
-  const approvedAt = new Date(Date.now() - 1_000).toISOString();
-  const expiresAt = new Date(Date.now() + 60_000).toISOString();
-  const intent: GovernedWriteIntent = {
-    operation,
-    payload,
-    authorization: authorizationRequest(),
-    approval: {
-      decision: 'approved',
-      decision_id: 'approval-1',
-      approver: 'operator-1',
-      tenant: project.repository_id,
-      project: projectBinding.project_id,
-      operation_hash: operationHash,
-      approved_at: approvedAt,
-      expires_at: expiresAt,
-    },
-  };
-  const receipt = expectReturned(() =>
-    toAuthorizationReceipt(authorizationRequest(operationHash), 'decision-1', approvedAt),
-  );
-  assert.ok(receipt);
-  expect(receipt).toMatchObject({ schema: 'AuthorizationReceipt/v1', operation_hash: operationHash });
-  const approval: VerifiedApprovalEvidence = {
-    ...intent.approval,
-    verified: true,
-    issuer: 'test-authority',
-    verification_id: 'verification-1',
-    verified_at: approvedAt,
-  };
-  return { approval, intent, operationHash, receipt };
-}
-
 describe('direct maintained-source completeness', () => {
   test('canonical JSON rejects hostile descriptors and preserves deterministic data', () => {
     expect(expectReturned(() => isPlainRecord({}))).toBe(true);
@@ -441,7 +371,11 @@ describe('direct maintained-source completeness', () => {
   });
 
   test('governed write builders bind and validate all evidence', () => {
-    const { approval, intent, operationHash, receipt } = governedEvidence();
+    const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
+    expect(fixture.operationHash).toMatch(/^[a-f0-9]{64}$/);
+    assert.ok(fixture.receipt);
+    expect(fixture.receipt).toMatchObject({ schema: 'AuthorizationReceipt/v1', operation_hash: fixture.operationHash });
+    const { approval, intent, operationHash, receipt } = fixture;
     expect(receipt.operation_hash).toBe(operationHash);
     const request = expectReturned(() => buildGovernedWriteRequest(intent, receipt, approval));
     assert.ok(isPlainRecord(request));
@@ -461,7 +395,7 @@ describe('direct maintained-source completeness', () => {
     );
     expect(() => validateGovernedWriteRequest({ ...request, payload: 1n })).toThrow(/non-canonical/);
     const directReceipt = expectReturned(() =>
-      toAuthorizationReceipt(authorizationRequest(operationHash), 'decision-1', approval.approved_at),
+      toAuthorizationReceipt(fixture.authorizationRequest(operationHash), 'decision-1', approval.approved_at),
     );
     expect(directReceipt).toMatchObject({
       schema: 'AuthorizationReceipt/v1',
@@ -480,7 +414,9 @@ describe('direct maintained-source completeness', () => {
       issued_at: approval.approved_at,
     });
     expect(
-      expectReturned(() => toAuthorizationReceipt(authorizationRequest(), 'read-decision', new Date().toISOString())),
+      expectReturned(() =>
+        toAuthorizationReceipt(fixture.authorizationRequest(), 'read-decision', new Date().toISOString()),
+      ),
     ).toBeUndefined();
     for (const field of [
       'principal',
