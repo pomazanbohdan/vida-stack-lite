@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `4513b7d` at origin/main.
+- Published predecessor: `446f061` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -116,8 +116,24 @@ and unrelated BASE/root bun.lock are preserved.
 
 Next bounded corrections from the completed error audit: thrown-undefined
 recovery-finalization custody, unowned temporary cleanup, original/close cause
-loss and SDK rollback cause loss. These remain open until actual fixes and
-regressions; they are not closed by the audit.
+loss. These remain open until actual fixes and regressions; they are not closed
+by the audit.
+
+Packet446f061 passed the ordinary strict hook and was pushed nonforce:
+quality-product-preflight-{commit-retry,push}-451-20261015.log. The first hook
+rejected three unbound-method test references; native deserialize is now bound
+and the close spy preserves its receiver. Three affected regressions passed
+again; quality-product-preflight-mock-binding-451-20261015.log.
+
+The next bounded SDK correction preserves publication plus rollback causes,
+including undefined. It keeps the conditional restore, backup/stage retention
+and foreign destination exclusion unchanged. Five fresh fault controls cover
+successful restoration, both error/undefined combinations and a destination
+appearing before rollback. Before correction3FAIL/2PASS; after correction the
+complete SDK-readiness file17PASS/0FAIL in596ms:
+quality-sdk-rollback-{before,focused}-446-20261015.log. These are controlled
+filesystem fault fixtures, not native I/O or SDK formation qualification.
+No product src/bin changed and no new AST/hash inventory pass was needed.
 
 The child environment defect was reproduced independently before correction:
 quality-mutation-owner-boundary-before-20261015.json records a child exit12

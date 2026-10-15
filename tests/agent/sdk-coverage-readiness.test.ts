@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { afterEach, test } from 'bun:test';
+import { afterEach, spyOn, test } from 'bun:test';
+import * as fs from 'node:fs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -190,7 +191,9 @@ test('rejects physically duplicated ZIP filenames', async () => {
   const originalName = Buffer.from('src/other.js');
   const duplicateName = Buffer.from('src/index.js');
   assert.equal(originalName.length, duplicateName.length);
-  const zip = await archive({ extra: new Map([[originalName.toString(), Buffer.from('duplicate member')]]) });
+  const zip = await archive({
+    extra: new Map([[originalName.toString(), Buffer.from('duplicate member')]]),
+  });
   let renamedHeaders = 0;
   for (
     let offset = zip.indexOf(originalName);
@@ -240,6 +243,70 @@ test('publishes validated files and receipt while retaining the previous dist an
   assert.deepEqual(stages, []);
 });
 
+test.each(['restored', 'rollback-error', 'undefined-primary', 'undefined-rollback', 'foreign-destination'] as const)(
+  'failed SDK publication preserves exact causes and retained paths: %s',
+  (mode) => {
+    const root = publicationRoot();
+    const dist = path.join(root, 'dist');
+    const temporaryRoot = path.join(root, 'coverage/sdk-test-inputs');
+    const { files, sdkReceiptBytes } = publicationFiles();
+    const primary = mode === 'undefined-primary' ? undefined : new Error('publication failed');
+    const rollback = mode === 'undefined-rollback' ? undefined : new Error('restore failed');
+    const rename = fs.renameSync.bind(fs);
+    let publicationAttempts = 0;
+    let restoreAttempts = 0;
+    let caught: { error: unknown } | undefined;
+    const renaming = spyOn(fs, 'renameSync').mockImplementation((from, to) => {
+      if (String(to) === dist && String(from).startsWith(temporaryRoot + path.sep)) {
+        if (path.basename(String(from)) === 'dist') {
+          publicationAttempts++;
+          if (mode === 'foreign-destination') {
+            mkdirSync(dist);
+            writeFileSync(path.join(dist, 'foreign.txt'), 'foreign destination');
+          }
+          throw primary;
+        }
+        restoreAttempts++;
+        if (mode !== 'restored') throw rollback;
+      }
+      rename(from, to);
+    });
+    let warnings: string[];
+    try {
+      warnings = capturedWarnings(() => {
+        try {
+          publishSdkTestInputs(root, files, downloadReceipt(sdkReceiptBytes), () => 10_000);
+        } catch (error) {
+          caught = { error };
+        }
+      });
+    } finally {
+      renaming.mockRestore();
+    }
+    assert.ok(caught, 'publication must reject, including thrown undefined');
+    assert.equal(publicationAttempts, 1);
+    assert.equal(restoreAttempts, mode === 'foreign-destination' ? 0 : 1);
+    const combined = mode !== 'restored' && mode !== 'foreign-destination';
+    if (combined) {
+      assert.ok(caught.error instanceof AggregateError);
+      assert.deepEqual(caught.error.errors, [primary, rollback]);
+    } else assert.equal(caught.error, primary);
+    const entries = readdirSync(temporaryRoot);
+    const backups = entries.filter((name) => name.startsWith('sdk-test-inputs-prior-dist-'));
+    const stages = entries.filter((name) => !name.startsWith('sdk-test-inputs-prior-dist-'));
+    assert.equal(stages.length, 1);
+    assert.deepEqual(readFileSync(path.join(temporaryRoot, stages[0]!, 'dist/sdk-formation.json')), sdkReceiptBytes);
+    assert.equal(backups.length, mode === 'restored' ? 0 : 1);
+    const priorDist = mode === 'restored' ? dist : path.join(temporaryRoot, backups[0]!);
+    assert.equal(readFileSync(path.join(priorDist, 'prior.js'), 'utf8'), 'prior SDK output\n');
+    if (mode === 'foreign-destination')
+      assert.equal(readFileSync(path.join(dist, 'foreign.txt'), 'utf8'), 'foreign destination');
+    else if (mode !== 'restored') assert.equal(existsSync(dist), false);
+    assert.equal(warnings.length, 1);
+    assert.match(warnings[0]!, /Retained failed SDK test-input stage/u);
+  },
+);
+
 test('a spent pre-publication budget preserves the prior dist and retains its failed stage', () => {
   const root = publicationRoot();
   const priorBytes = Buffer.from('prior SDK output\n');
@@ -247,7 +314,8 @@ test('a spent pre-publication budget preserves the prior dist and retains its fa
   let budgetChecks = 0;
   const warnings = capturedWarnings(() => {
     assert.throws(
-      () => publishSdkTestInputs(root, files, downloadReceipt(sdkReceiptBytes), () => (++budgetChecks === 1 ? 10_000 : 0)),
+      () =>
+        publishSdkTestInputs(root, files, downloadReceipt(sdkReceiptBytes), () => (++budgetChecks === 1 ? 10_000 : 0)),
       /budget is spent/u,
     );
   });

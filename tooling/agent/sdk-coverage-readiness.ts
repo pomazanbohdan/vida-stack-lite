@@ -411,7 +411,12 @@ async function fetchCurrentArtifact(
   archive: Buffer;
   receipt: Omit<DownloadReceipt, 'sdk_receipt_sha256' | 'outputs'>;
 }> {
-  const query = new URLSearchParams({ head_sha: head, per_page: '100', direction: 'desc', sort: 'created' });
+  const query = new URLSearchParams({
+    head_sha: head,
+    per_page: '100',
+    direction: 'desc',
+    sort: 'created',
+  });
   const runResponse = await ghJson(
     root,
     `repos/${repository}/actions/workflows/agent-sdk-coverage.yml/runs?${query.toString()}`,
@@ -678,13 +683,14 @@ export function publishSdkTestInputs(
     if (publishedIdentity.dev !== stagedDistIdentity.dev || publishedIdentity.ino !== stagedDistIdentity.ino)
       throw new Error('Published SDK dist differs from its owned stage.');
   } catch (error) {
+    let failure = error;
     try {
       if (movedPrevious && !lstatSync(dist, { throwIfNoEntry: false })) renameSync(backup, dist);
-    } catch {
-      // Keep the retained backup and failed stage for owner inspection.
+    } catch (rollbackError) {
+      failure = new AggregateError([error, rollbackError], 'SDK test-input publication and restoration both failed');
     }
     process.emitWarning(`Retained failed SDK test-input stage: ${stage}`);
-    throw error;
+    throw failure;
   }
   try {
     removeOwnedDirectoryOrThrow(stage, stageIdentity);
