@@ -479,6 +479,7 @@ async function runMutationGate(): Promise<void> {
         'tests/runtime-kernel-boundary.test.ts',
         'tests/configured-workflow.test.ts',
         'tests/smoke.test.ts',
+        'tests/interrupted-source-retirement.test.ts',
       ],
     },
     {

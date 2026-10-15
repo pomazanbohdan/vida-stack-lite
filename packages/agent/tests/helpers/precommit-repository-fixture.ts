@@ -92,10 +92,14 @@ export function createPrecommitFixture(entries: readonly string[] = ['src/index.
   return root;
 }
 
-export async function checkPrecommitFixture(root: string, guard: () => void): Promise<void> {
+export async function checkPrecommitFixture(
+  root: string,
+  guard: () => void,
+  installedNodeModules = path.join(packageRoot, 'node_modules'),
+): Promise<void> {
   // The production snapshot mounts the fixture's installed dependency directory.
   const { symlinkSync } = await import('node:fs');
   rmSync(path.join(root, 'packages/agent/node_modules'), { recursive: true });
-  symlinkSync(path.join(packageRoot, 'node_modules'), path.join(root, 'packages/agent/node_modules'), 'junction');
+  symlinkSync(installedNodeModules, path.join(root, 'packages/agent/node_modules'), 'junction');
   await runPreCommit({ repositoryRoot: root, bunExecutable: process.execPath, rejectFocusedTests: guard });
 }

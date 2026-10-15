@@ -693,6 +693,11 @@ type result for the gate does not prove that product coverage or CRAP passed.
 
 The precommit checks use pinned Bun, Bun-hosted Knip and Oxfmt `--check`, one strict TypeScript program with `--noEmit` for every maintained staged TS root, including Source, CLI/tooling, native tests and helpers, type-aware Oxlint with its locked native tsgolint helper and the shared AST guard for focused tests. Knip runs once with all-code workspace/test entries, zero allowed issues, and configuration/tag hints treated as errors. Do not use production/strict mode to drop tests or dev dependencies, blanket ignores, issue baselines, cache-based freshness, autofix, or `--no-exit-code`. Public SDK entry exports remain supported API roots.
 
+Resolve the native tsgolint optional dependency from its installed wrapper's
+package metadata, supporting both hoisted and Bun isolated dependency layouts.
+Keep the staged lock dependency-edge, version, platform and executable checks;
+a missing flat top-level native package is not itself a dependency failure.
+
 Capture the active Git index once and materialize its raw object bytes in one owned temporary tree. Reuse it for every precommit check; create its exclusive compiler config inside the same identity-checked temporary owner, outside the raw tree; do not read changed worktree bytes, run checkout filters, format files, or invoke `git add`. Valid partial staging is supported. Preserve indexed paths and modes, including assume-unchanged/skip-worktree entries and staged deletions. Reject conflicts, links, unsafe paths, missing tools/config, or any check failure. Compare the live index with its captured bytes and identity after checks, including failures; preserve concurrent index/worktree changes. Cleanup must prove temporary-root ownership and fail closed on uncertain cleanup. The focused-test guard detects Bun `test.only` and aliases while allowing comments and strings. Include root instructions, sidecar, YAML, attributes and package manifests/configuration in the common staged tree.
 
 While fixing lint, capture complete machine-readable diagnostics in the owned ignored output directory. Read counts, rule groups and bounded examples. Do not print the full report. Recheck changed files and their callers; run the complete current profile once after the correction batch is stable. Require zero errors and zero warnings before claiming lint closure. An activated gate must reject outstanding diagnostics.
@@ -1591,6 +1596,15 @@ them across tests would share issued state. This is a single integration-case
 exception, not a product performance acceptance or a new default. The immediate-
 provider dispatch cost remains an optimization target. Other tests retain5000ms;
 coverage/mutation campaign and product operation budgets are unchanged.
+
+The protected-completion case in interrupted-source-retirement.test.ts uses30000ms
+for a genuine public prewrite, issue-wave and native-result acknowledgement.
+The reused issued-source setup measured8.503s and the new case8.715s
+(9.69s for its command including module setup).
+It verifies foreign/stale rejection, durable completed/applied state and replay
+denial through the real store. Its separately owned Mastra journal remains
+unchanged by the kernel acknowledgement. This bounded integration exception
+does not change the5000ms default or the300000ms coverage campaign budget.
 
 [Bun lifecycle documentation](https://bun.com/docs/test/lifecycle.md) places
 `onTestFinished` after all `afterEach` hooks and excludes concurrent tests.

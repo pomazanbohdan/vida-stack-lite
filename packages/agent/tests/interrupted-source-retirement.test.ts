@@ -3,6 +3,7 @@ import { runTaskSynthesisPublicActions, runSourcePrewriterPublicActions } from '
 import { run } from '../bin/run.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { test, expect } from 'bun:test';
+import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { rm } from 'node:fs/promises';
@@ -25,10 +26,12 @@ import {
 } from '../src/orchestration/persistent-session-handoff.ts';
 import { MastraSessionBridge } from '../src/orchestration/mastra-session-bridge.ts';
 import {
+  completeWorkflowAssignmentForSession,
   retireInterruptedSourceOwnerForSession,
   type WorkflowExecutionCapability,
   type WorkflowSessionReservation,
 } from '../src/runtime-kernel.ts';
+import { parseWorkflowApprovalConsumptionRecord } from '../src/governance/workflow-approval-consumption-contract.ts';
 import type {
   AssignmentAttempt,
   InterruptedSourceRetirementRequest,
@@ -604,6 +607,128 @@ async function closeRecoveryFixture(
     throw error;
   }
 }
+
+test('admitted protected session commits an observed result and its approval exactly once', async () => {
+  const deadline = performance.now() + 30000;
+  let completed = false,
+    bodyFailed = false,
+    bodyError: unknown;
+  const f = await fixture();
+  let database: Database | undefined;
+  try {
+    database = openHostStateDatabase(f.root, sessionHandoffDatabaseRelativePath(f.config), f.workspace);
+    const db = database;
+    const journal = f.readJournal('stopped', 1);
+    const item = requireValue(journal.state.items[0], 'issued protected action');
+    const authorization = requireValue(f.reservation.authorization, 'issued authorization');
+    const approval = requireValue(authorization.approval, 'issued approval');
+    const capability = requireValue(f.executionCapability, 'issued execution capability');
+    expect(item.request.stage_id).toBe('develop_task');
+    expect(item.host_reservation).toEqual(f.reservation);
+    expect(f.reservation.approvalAction).toBe('source.write');
+    expect(approval.status).toBe('commit_unknown');
+    const key = canonicalJsonDigest(approval.binding);
+    const readApproval = () => {
+      const row = requireValue(
+        db
+          .query<GovernanceApprovalRow, [string, string, string]>(
+            "SELECT store_id,record_key,revision,payload,digest FROM agent_host_governance WHERE workspace_id=? AND store_id=? AND kind='approval' AND record_key=?",
+          )
+          .get(f.workspace, approval.store_id, key),
+        'persisted protected approval',
+      );
+      const record = parseWorkflowApprovalConsumptionRecord(JSON.parse(row.payload));
+      expect(row.digest).toBe(
+        canonicalJsonDigest({
+          workspace_id: f.workspace,
+          store_id: row.store_id,
+          kind: 'approval',
+          record_key: row.record_key,
+          revision: row.revision,
+          payload: record,
+        }),
+      );
+      return { row, record };
+    };
+    const before = f.store.readHostStateSnapshot(f.identity);
+    const approvalBefore = readApproval();
+    expect(approvalBefore.record).toEqual(approval);
+    expect(approvalBefore.row.revision).toBe(2);
+    const summary = 'Controlled native Source observation completed without file changes';
+    const observed: SessionBridgeObservation = {
+      schema: 'VidaSessionObservation/v1',
+      action_id: item.request.action_id,
+      issue_id: requireValue(item.issue_id, 'protected issue ID'),
+      host_attempt_id: authorization.receipt.attempt.attempt_id,
+      agent_id: 'synthetic-protected-owner',
+      tool_call_ref: 'synthetic:protected-completion',
+      status: 'reported_complete',
+      summary,
+      output_digest: canonicalJsonDigest(summary),
+      changed_paths: [],
+      evidence_refs: [],
+    };
+    const foreignApproval = {
+      ...f.reservation,
+      authorization: {
+        ...authorization,
+        approval: { ...approval, binding: { ...approval.binding, operation_hash: '0'.repeat(64) } },
+      },
+    };
+    await expectRejection(
+      completeWorkflowAssignmentForSession(capability, foreignApproval, observed),
+      /workflow approval fencing conflict/,
+    );
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(readApproval()).toEqual(approvalBefore);
+    await expectRejection(
+      completeWorkflowAssignmentForSession(
+        capability,
+        { ...f.reservation, request: { ...f.reservation.request, workContextDigest: '0'.repeat(64) } },
+        observed,
+      ),
+      /workflow native result context changed/,
+    );
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(before);
+    expect(readApproval()).toEqual(approvalBefore);
+    await assert.doesNotReject(() => completeWorkflowAssignmentForSession(capability, f.reservation, observed));
+    const after = f.store.readHostStateSnapshot(f.identity);
+    const attempts = requireValue(after.work, 'completed protected Work').execution.assignment_attempts;
+    expect(attempts).toHaveLength(1);
+    expect(attempts[0]).toMatchObject({
+      attempt_id: authorization.receipt.attempt.attempt_id,
+      status: 'completed',
+      result: observed,
+      result_digest: canonicalJsonDigest(observed),
+    });
+    const applied = readApproval();
+    expect(applied.row.revision).toBe(3);
+    expect(applied.record).toMatchObject({
+      status: 'applied',
+      attempt_id: authorization.receipt.attempt.attempt_id,
+      store_id: approval.store_id,
+      store_generation: approval.store_generation,
+      fencing_token: approval.fencing_token,
+      binding: approval.binding,
+    });
+    await expectRejection(
+      completeWorkflowAssignmentForSession(capability, f.reservation, observed),
+      /workflow approval attempt binding invalid/,
+    );
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(after);
+    expect(readApproval()).toEqual(applied);
+    expect(f.readJournal('stopped', 1)).toEqual(journal);
+    completed = true;
+  } catch (error) {
+    bodyFailed = true;
+    bodyError = error;
+    throw error;
+  } finally {
+    await closeTestFixture(f, { deadline, completed, bodyFailed, bodyError }, () => {
+      if (database !== undefined) closeWorkspaceDatabaseWithAdmission(database);
+    });
+  }
+}, 30000);
 
 test('interrupted Source retirement keeps the provider outcome unknown and fences stale completion', async () => {
   const deadline = performance.now() + 60000;

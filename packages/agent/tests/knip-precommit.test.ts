@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { rejects } from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
@@ -9,6 +10,48 @@ import {
   checkPrecommitFixture as check,
   formatPrecommitFixture,
 } from './helpers/precommit-repository-fixture.js';
+
+test('accepts the locked native lint helper nested under its wrapper without a flat native package', async () => {
+  const root = fixture();
+  const dependencies = mkdtempSync(path.join(tmpdir(), 'vida-isolated-lint-dependencies-'));
+  let passed = false;
+  try {
+    const installed = path.resolve(import.meta.dirname, '../node_modules');
+    for (const entry of readdirSync(installed)) {
+      if (entry === 'oxlint-tsgolint' || entry === '@oxlint-tsgolint') continue;
+      symlinkSync(path.join(installed, entry), path.join(dependencies, entry), 'junction');
+    }
+    const requireFromPackage = createRequire(path.resolve(import.meta.dirname, '../package.json'));
+    const wrapperMetadata = requireFromPackage.resolve('oxlint-tsgolint/package.json');
+    const requireFromWrapper = createRequire(wrapperMetadata);
+    const target = `${process.platform}-${process.arch}`;
+    const nativeMetadata = requireFromWrapper.resolve(`@oxlint-tsgolint/${target}/package.json`);
+    const wrapper = path.join(dependencies, 'oxlint-tsgolint');
+    const scope = path.join(wrapper, 'node_modules/@oxlint-tsgolint');
+    mkdirSync(scope, { recursive: true });
+    writeFileSync(path.join(wrapper, 'package.json'), readFileSync(wrapperMetadata));
+    symlinkSync(path.dirname(nativeMetadata), path.join(scope, target), 'junction');
+    const index = readFileSync(path.join(root, '.git/index'));
+    let guarded = false;
+    await check(
+      root,
+      () => {
+        guarded = true;
+      },
+      dependencies,
+    );
+    expect(guarded).toBe(true);
+    expect(readFileSync(path.join(root, '.git/index'))).toEqual(index);
+    passed = true;
+  } finally {
+    if (passed) {
+      rmSync(root, { recursive: true, force: true });
+      rmSync(dependencies, { recursive: true, force: true });
+    } else {
+      console.warn(`Retained isolated dependency regression roots: ${root}; ${dependencies}`);
+    }
+  }
+});
 
 test('accepts a clean staged fixture while preserving a broken unstaged version', async () => {
   const root = fixture();

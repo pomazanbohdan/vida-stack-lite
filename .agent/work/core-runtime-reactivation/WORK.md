@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `2e1221d` at origin/main.
+- Published predecessor: `f73d0bc` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1225,6 +1225,86 @@ quality-kernel-local-approval-scenario-review-2-e1-20261015.md. Retirement after
 expired owner lease is intentional recovery; preserve that existing real-store
 proof. Protected local approval still needs a genuinely issued source-stage
 request, not hand-advancing Mastra or bypassing the stage-order contract.
+
+### Fresh-host recovery and protected completion contour
+
+The previous host was replaced after its exec-server registry/protocol failure.
+Observed boot changed from6a06e1e4-a264-4626-8be2-96ec346c752c to
+fb995791-a9a7-4f96-8957-afae18b9ef79. The new clean checkout initially held4ff4714;
+fetch and ff-only restored the already publishedf73d0bc. No committed Source
+was lost. Old untracked BASE/root bun.lock, attachments, retained tmpfs fixtures
+and focused diagnostic reportc4abded1-dfff-450a-9fa9-3b4ec9d77157 are absent.
+Their old locators above are historical custody GAPs on this host, not retrievable
+current proof. Transcript observed the completed227PASS/1634assertion capture
+before replacement:153/162functions,587/602lines,613/633statements,382/414branches,
+maxCC/entryCRAP31. Do not reconstruct its JSON, replay old DB/effects or claim
+that historical result is current full/frozen qualification.
+
+Bun1.4.3 was restored from the official release asset with matching SHA256
+3e730528d89775f03f87f05c06787c4df4099d0a37f3f252e7b829cb23816e18.
+The new image's prepopulated dependency files were stale: fs-safe package.json
+reported0.5.6 despite the0.26.2lock; frozen and forced installs left those bytes.
+The official0.26.2tarball matches the locked SHA512 and actual package identity.
+Retain the old dependency tree at /workspace/retained-host-dependencies-20261015;
+a clean frozen install with scripts disabled restores matching dependencies.
+Build/install ran no suites. Pstack1.17.1 is installed and its focused leaves
+were loaded manually; automatic hook trust remains a separate native UI GAP.
+Source Git hooks were tracked100644 and inactive after restoration. Track their
+executable modes and enable the existing .githooks owner; do not bypass checks.
+
+Fresh Tini0.19.0 matches official SHA256
+93dcc18adc78c65a028a84799ecf8ad40c936fdfc5f2a57b1acda5a8117fa82c.
+Clean, orphan and live-descendant controls passed with full capture, same boot
+and owned process-group absence: quality-retirement-reaper-controls-qualified-
+resume-20261015.log. New retained tmpfs scratch is functional-only evidence.
+The existing genuine Source-prewriter/public-issue retirement case passes
+1test/11assertions/8.503s: quality-retirement-issued-baseline-clean-resume-
+20261015.log. This is a fresh qualified contour, not replay of a historical
+operation; all consumer state is newly created by the test fixture.
+
+One new protected-completion case reuses that real issued action. It rejects
+foreign approval and stale context without durable change, records the observed
+result plus applied approval, and rejects stale completion replay. SQL approval
+rows are schema/digest checked. The kernel acknowledgement deliberately leaves
+the separately owned Mastra journal unchanged; this is no Runtime acceptance.
+The new case uses30000ms for its coupled public-prewrite/issue/complete sequence;
+the baseline setup alone measures8.503s. Default5000ms and existing case bounds
+are unchanged. Target1PASS/28Bunassertions/9.69s and static478captured/477checkedTS
+plus101Sourcechecked/0diagnostics: quality-protected-completion-focused-resume-
+20261015.log and quality-protected-completion-static-resume-20261015.log.
+An isolated counterfactual commits through the real store but returns its stale
+pre-completion acknowledgement. The expected-success assertion rejects that
+lost acknowledgement; preserve quality-retirement-completion-5vvqAc and
+/tmp/quality-retirement-completion-functional-6ggYdi. This diagnostic failure is
+not Stryker Killed evidence. Independent actual review found no blocker:
+quality-protected-completion-actual-review-resume-20261015.md. The observation
+is constructed test data; the case does not attest native origin, action/issue
+metadata, changed paths or journal report acceptance. The existing contour
+contract file passes12tests/269assertions/566ms:
+quality-protected-completion-contour-contract-resume-20261015.log. Expanded
+kernel numeric capture remains pending; no new mutation score or global
+coverage is claimed.
+The existing interrupted-source-retirement file is now part of main-runtime-core's
+declared tests, so issued-source approval/retirement evidence is available to the
+same Source contour. No test-name filter or omitted body is numeric admission.
+This complete file selection adds eight cases; its60s/30s case ceilings are not
+a measured aggregate duration. One expanded five-file focused capture retains
+the unchanged300s budget and must report any timeout as UNKNOWN. Do not repeat
+the oversized1962mutant kernel campaign until per-test runner qualification.
+
+The restored strict commit hook exposed a native lint resolver defect: Bun's
+isolated workspace places the optional platform package under its wrapper,
+while the hook assumed a flat agent/node_modules path. The new explicit nested
+fixture reproduced ENOENT before the fix; resolve from the verified wrapper
+metadata instead, preserving all staged lock/version/platform/executable checks.
+The complete precommit regression file then passes8/0/18assertions in3.86s,
+including staged/unstaged and exact index preservation checks:
+quality-isolated-lint-helper-{before,after}-resume-20261015.log. Final current
+static checks pass478captured/477checkedTS plus101Source/0diagnostics:
+quality-protected-and-isolated-static-resume-20261015.log. The rejected commit
+created no checkpoint; no hook bypass was used. Independent blind Luna review
+found no blocker: quality-isolated-lint-helper-review-resume-20261015.md.
+Expanded kernel numeric proof is still pending.
 
 ### Current product correction packet
 

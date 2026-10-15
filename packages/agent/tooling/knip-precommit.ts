@@ -127,9 +127,10 @@ function installedTool(
 function installedTsgolintNative(root: string, manifest: PackageManifest, lock: Lockfile): string {
   const expected = lockedToolVersion('oxlint-tsgolint', manifest, lock);
   const requireFromPackage = createRequire(path.join(root, 'packages/agent/package.json'));
-  const wrapper = JSON.parse(
-    readFileSync(requireFromPackage.resolve('oxlint-tsgolint/package.json'), 'utf8'),
-  ) as Partial<Pick<typeof import('oxlint-tsgolint/package.json'), 'name' | 'version'>>;
+  const wrapperPackageJson = requireFromPackage.resolve('oxlint-tsgolint/package.json');
+  const wrapper = JSON.parse(readFileSync(wrapperPackageJson, 'utf8')) as Partial<
+    Pick<typeof import('oxlint-tsgolint/package.json'), 'name' | 'version'>
+  >;
   if (wrapper.name !== 'oxlint-tsgolint' || wrapper.version !== expected)
     throw new Error('Installed oxlint-tsgolint wrapper differs from its locked owner.');
   const target = `${process.platform}-${process.arch}`;
@@ -147,7 +148,7 @@ function installedTsgolintNative(root: string, manifest: PackageManifest, lock: 
     throw new Error(`Staged Bun lock does not bind oxlint-tsgolint to ${name}@${expected}.`);
   if (lock.packages?.[name]?.[0] !== `${name}@${expected}`)
     throw new Error(`Staged Bun lock does not pin the ${name} native helper to ${expected}.`);
-  const packageRoot = path.join(root, 'packages/agent/node_modules/@oxlint-tsgolint', target);
+  const packageRoot = path.dirname(createRequire(wrapperPackageJson).resolve(`${name}/package.json`));
   const installed = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8')) as {
     readonly version?: string;
     readonly os?: readonly string[];
