@@ -940,10 +940,17 @@ waitForRelease();
       }
       const remaining = Math.max(0, Math.min(600, Math.floor(deadlineAt - performance.now())));
       if (remaining > 0) {
-        await Promise.race([
-          Promise.all(states.map((state) => state.terminal)),
-          new Promise((resolve) => setTimeout(resolve, remaining)),
-        ]);
+        let timer: ReturnType<typeof setTimeout> | undefined;
+        try {
+          await Promise.race([
+            Promise.all(states.map((state) => state.terminal)),
+            new Promise((resolve) => {
+              timer = setTimeout(resolve, remaining);
+            }),
+          ]);
+        } finally {
+          clearTimeout(timer);
+        }
       }
       for (const state of states) {
         const caller = callers.find((entry) => entry.id === state.id);

@@ -132,7 +132,7 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
         const root = mkdtempSync(path.join(tmpdir(), 'vida-run-session-'));
         let recoveryFailure: unknown;
         let recoveryFailed = false;
-        let finalizationFailure: unknown;
+        let finalizationFailure: { error: unknown } | undefined;
         try {
           const bundle = recoveryBundle();
           mkdirSync(path.join(root, 'tools', 'agents'), { recursive: true });
@@ -514,10 +514,10 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
               const started = performance.now();
               const observedBinding = copiedPackageBinding(sharedRecoveryBundle);
               if (sharedRecoveryBinding === undefined) {
-                finalizationFailure = Error('shared recovery package binding is missing');
+                finalizationFailure = { error: Error('shared recovery package binding is missing') };
               } else if (observedBinding !== sharedRecoveryBinding) {
                 recoveryOutcomeUnknown = true;
-                finalizationFailure = Error('recovery package binding changed during the test');
+                finalizationFailure = { error: Error('recovery package binding changed during the test') };
               } else {
                 process.stderr.write(
                   JSON.stringify({
@@ -528,7 +528,7 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
               }
             }
           } catch (error) {
-            finalizationFailure = error;
+            finalizationFailure = { error };
           }
           if (finalizationFailure !== undefined) recoveryFixtureFailed = true;
           if (recoveryFailed || finalizationFailure !== undefined || recoveryOutcomeUnknown) {
@@ -537,7 +537,7 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
             try {
               rmSync(root, { recursive: true, force: true });
             } catch (error) {
-              finalizationFailure = error;
+              finalizationFailure = { error };
               recoveryFixtureFailed = true;
               process.stderr.write(`Retained failed recovery fixture after cleanup error: ${root}\n`);
             }
@@ -546,12 +546,12 @@ ordinaryDescribe('vida-agent run entrypoint', () => {
         if (recoveryFailed) {
           if (finalizationFailure !== undefined)
             throw new AggregateError(
-              [recoveryFailure, finalizationFailure],
+              [recoveryFailure, finalizationFailure.error],
               'recovery test and finalization both failed',
             );
           throw recoveryFailure;
         }
-        if (finalizationFailure !== undefined) throw finalizationFailure;
+        if (finalizationFailure !== undefined) throw finalizationFailure.error;
       },
       180_000,
     );

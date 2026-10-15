@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `446f061` at origin/main.
+- Published predecessor: `5e55147` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -134,6 +134,17 @@ complete SDK-readiness file17PASS/0FAIL in596ms:
 quality-sdk-rollback-{before,focused}-446-20261015.log. These are controlled
 filesystem fault fixtures, not native I/O or SDK formation qualification.
 No product src/bin changed and no new AST/hash inventory pass was needed.
+SDK correction5e55147 passed the ordinary strict hook and nonforce push:
+quality-sdk-rollback-{commit,push}-446-20261015.log.
+
+Next test-harness correction tags recovery finalization failures so an undefined
+throw cannot be mistaken for success, discard the fixture or omit a secondary
+cause. Existing body failure and UNKNOWN retention predicates are unchanged.
+The resource pilot's failure cleanup now disposes its losing deadline timer in
+finally. No timeout or deadline allowance changes. Both are direct corrections
+to test error paths; full copied-bundle/recovery and resource qualification have
+not been rerun for this packet and remain pending. Static hook is the immediate
+verification; do not report this as new coverage or a measured speedup.
 
 The child environment defect was reproduced independently before correction:
 quality-mutation-owner-boundary-before-20261015.json records a child exit12
