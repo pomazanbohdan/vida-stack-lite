@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `6851211` at origin/main.
+- Published predecessor: `c63fb5a` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -436,11 +436,88 @@ snapshot precondition fixes it without casting. Evidence logs under attachments:
 `quality-kernel-guard-source-types-685-20261015.log`,
 `quality-pertest-reader-tool-types-685-20261015.log` and
 `quality-kernel-native-final-controls-685-20261015.log`.
-Strict staged checks, publication and the next numeric measurement remain pending.
+The corrected strict hook passed483TS roots and formatting477files; the packet
+was committed and pushed as c63fb5a. Source is published before the next capture.
 Documentation5selected/46linksPASS. The first strict hook rejected formatting
 after the final test precondition change; only that file is formatted before the
 next hook attempt. Retain `quality-kernel-native-strict-commit-685-20261015.log`;
 no hook bypass or scope reduction is used.
+
+## Fresh kernel and contracts contour diagnostics at c63fb5a
+
+Kernel330d9aa0-44ce-4460-8c12-5de57ebe839e completes254PASS/0FAIL,
+1895assertions in113.60s Bun /116986.798651ms owned outer time. Four local
+metrics are F162/162,L602/602,S632/632,B397/400(99.25%,previous391/400=97.75%).
+The same162function IDs and all their CC/entry-CRAP values are unchanged;
+maximum31. Open branch counters decrease9to3. Comparison reuses the two existing
+captured reports without another AST/inventory/hash producer:
+`quality-kernel-numeric-delta-c63-20261015.{ts,jsonl}` under attachments.
+Output is complete, boot unchanged, outer group termination observed at
+`/workspace/attachments/quality-contour-coverage-kernel-ZN7SvF`.
+
+The parent operation separately remains BLOCKED,execution_complete=true,
+report_complete=false,quality_complete=false,resource_safe_to_advance=false,
+no timeout/SIGKILL/unknown/error. Outer namespace/group closure is separate
+functional custody evidence and does not rewrite that operation. Exact/frozen
+and full dynamic CRAP qualification remain open. Remaining counters are native
+Windows comparison, absent-Work resources fallback and null ticket-expiry
+fallback. Validated ledger projection plus a matching active claim implies
+non-null expiry; no fabricated null-expiry snapshot is used for coverage.
+
+The next unchanged four-file main-contracts selection completes36PASS/0FAIL,
+12313assertions in4.99s Bun /8044.64105ms owned outer time at
+`/workspace/attachments/quality-contour-coverage-contracts-0C1qKr`.
+Report969d8837-0300-4449-a2fd-e6c71c752d2b measures F64/102,L205/296,S227/325,
+B82/158,maxCC16,maxentryCRAP56. Missing functions are ledger serialization and
+nonempty ledger/history semantics. The numeric gap list reuses that report:
+`quality-main-contracts-uncovered-c63-20261015.jsonl` under attachments.
+No partial result is a complete contour closure or assertion-confirmed mutation
+score. Existing historical compatible closures remain2/44,static1.
+
+The single publisher refreshes CONTOUR-STATUS from these owner-issued reports
+and independent operation observations. No manual percentage table or extra scan
+is added. Both reports retain original Source/test/tool bindings and do not
+qualify newly changed test bytes. Full kernel mutation still awaits native
+per-test origin, full-selection custody, static fallback and lifecycle admission.
+
+Follow-up tests now prove a real missing Work identity rejects without changing
+the shared ledger, and canonical JSON's accepted value/legally shared DAG matches
+native JSON wire values. Three focused cases pass1255assertions in1.75s; retained
+log `quality-kernel-missing-work-canonical-dag-c63-20261015.log`. The property
+keeps its existing seed/run count and compares parsed native JSON, avoiding a
+copy of production sorting/traversal. A blind single writer extends the existing
+envelope test file with ledger behavior cases; root retains numeric/Git ownership.
+
+The envelope follow-up now adds a schema-valid typed ticket/claim fixture and
+codec/digest checks, exact authority/resource/expiry/FIFO/notice denials, then
+one coherent contour/assurance/release/batch/rebind/retirement history chain.
+All four batch states have valid positive controls; eight targeted history
+mutations require their exact issue code/path and unchanged input. The first
+two ledger controls pass; the history control separately passes28assertions
+in443ms. These are pure public validator/codec cases, not DB persistence or
+native delivery evidence. No new test file, registry narrowing or whole suite
+is introduced; existing main-contracts selection remains the same four files.
+
+Independent review caught a weakness in the first canonical-wire property: its
+conditional acceptance oracle could be vacuous for unsupported random inputs.
+The final property requires acceptance and native wire equivalence for each
+bounded independently constructed known-good sample, and a separate property
+requires unsupported nested scalars to refuse. The first stronger draft used
+fc.jsonValue, which generated an integer outside the canonical safe-number
+contract and correctly failed validation; this is a fixture-domain error,
+not a product defect. The bounded scalar/array/plain-dictionary model and
+explicit unsafe integer/negative-zero refusal keep that contract unchanged.
+Final3canonical controls pass3004assertions in1.342s:
+`quality-canonical-wire-bounded-controls-c63-20261015.log`. Retain the failed
+draft at `quality-canonical-wire-explicit-controls-c63-20261015.log` and earlier
+read-only review at `quality-contracts-boundary-actual-review-c63-20261015.md`.
+
+Final focused follow-up7PASS/0FAIL,3066assertions across3files in4.04s;
+testprogram448TS filesPASS and lint commandPASS. Documentation3selected/7links,
+0failures. Logs `quality-contour-followup-{final-controls,test-types,lint,docs}-c63-20261015.log`
+under attachments retain each actual result. These focused checks do not close
+coverage/CRAP/mutation. Publish this test packet before fresh captures; refresh
+the same automatic contour document only from the subsequent terminal reports.
 
 ## Automatic contour progress projection
 

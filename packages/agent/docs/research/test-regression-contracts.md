@@ -121,6 +121,15 @@ Check YAML schema, project identity, integration mapping, storage and safe refer
 
 Check canonical JSON wire equivalence and legal shared references. Deny getters, descriptors, prototypes, `toJSON`, cycles and malformed limits. Preserve finite node, depth and byte bounds. Cache digests only for loader-owned deeply frozen values. Recheck inherited serialization hooks on every read. New YAML or mutable caller data needs fresh validation.
 
+Property tests generate supported and unsupported values separately and require
+acceptance or refusal for every sample. Do not condition the acceptance oracle
+on the production validator accepting a value. A general JSON arbitrary may
+generate numbers outside the canonical contract: exclude unsafe integers and
+negative zero from the known-good model, and test them in the rejection model.
+Bound generated depth, collection size and strings independently of production
+validation; compare wire values with native JSON rather than copying canonical
+sorting or traversal. Keep legal shared-reference fixtures explicit.
+
 Historical recovery preserves original request, engine, work, journal and initialization identity. Without retained body custody, validate through current configured context and deny mismatches. For recovery review, check the bounded caller-history `originalContexts` path with populated local-source and repository-skill bodies, exact action/wave/stage/work/attempt binding, selected-source/skill and file bindings, body digest, UTF-8/byte/excerpt/reference limits, duplicates, foreign/extra/missing entries and tampering. Confirm bodies stay out of the returned request and persisted Host state, current declared Source is snapshotted separately and rechecked at begin/complete, retries resupply the same body, and lost custody after begin preserves UNKNOWN without reissue. Keep topology and extra-profile drift denial, source/skill drift and absence without bodies, and public owner inspection controls. No body grants native dispatch, Source rights or Runtime acceptance.
 
 Classify each denial at its real boundary. A bootstrap refusal does not alone prove a configured-context reader check. Recovery preparation may reserve review. It grants no reviewer success, Source rights, execution rights or native dispatch.

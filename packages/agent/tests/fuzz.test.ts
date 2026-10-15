@@ -6,6 +6,7 @@ import { assertProperty } from './helpers/assert-property.js';
 import type { RuntimeEnvelopeRevisionBinding } from '../src/contracts/envelopes.js';
 import {
   assertCanonicalJsonValue,
+  canonicalJson,
   consumeRuntimeEnvelope,
   resolveConfigPath,
   validateAuthorizationRequest,
@@ -54,17 +55,58 @@ function outcome<T>(action: () => T): { returned: true; value: T } | { returned:
 }
 
 describe('deterministic shrinking fuzz boundaries', () => {
-  test('canonical JSON accepts only stable JSON data', () => {
+  test('canonical JSON accepts bounded JSON values with equivalent native wire data', () => {
+    // The wire contract excludes unsafe integers and -0, which jsonValue can generate.
+    const scalar = fc.oneof(
+      fc.constant(null),
+      fc.boolean(),
+      fc.integer(),
+      fc.string({ maxLength: 32 }),
+      fc.constantFrom(0.5, -1.25),
+    );
+    const key = fc.string({ maxLength: 16 });
+    const shallow = fc.oneof(
+      scalar,
+      fc.array(scalar, { maxLength: 8 }),
+      fc.dictionary(key, scalar, { maxKeys: 8, noNullPrototype: true }),
+    );
+    const valid = fc.oneof(
+      shallow,
+      fc.array(shallow, { maxLength: 8 }),
+      fc.dictionary(key, shallow, { maxKeys: 8, noNullPrototype: true }),
+    );
     assertProperty(
-      fc.property(unknownValue, (value) => {
-        const result = outcome(() => assertCanonicalJsonValue(value));
-        if (result.returned) {
-          expect(() => JSON.stringify(value)).not.toThrow();
-          expect(value).not.toBeUndefined();
-        }
+      fc.property(valid, (value) => {
+        expect(() => assertCanonicalJsonValue(value)).not.toThrow();
+        const expected: unknown = JSON.parse(JSON.stringify(value));
+        const actual: unknown = JSON.parse(canonicalJson(value));
+        expect(actual).toEqual(expected);
       }),
       parameters,
     );
+  });
+
+  test('canonical JSON rejects unsupported nested wire values', () => {
+    assertProperty(
+      fc.property(
+        fc.oneof(fc.bigInt(), fc.constantFrom(undefined, NaN, Infinity, -Infinity, -0, Number.MAX_SAFE_INTEGER + 1)),
+        (value) => {
+          expect(() => assertCanonicalJsonValue({ unsupported: value })).toThrow();
+        },
+      ),
+      parameters,
+    );
+  });
+
+  test('canonical JSON preserves the wire value of legal shared references', () => {
+    const shared = { nested: [null, 'ї', 7, false] };
+    const value = { right: shared, left: shared };
+    expect(value.left).toBe(value.right);
+    expect(() => assertCanonicalJsonValue(value)).not.toThrow();
+    const expected: unknown = JSON.parse(JSON.stringify(value));
+    const actual: unknown = JSON.parse(canonicalJson(value));
+    expect(actual).toEqual(expected);
+    expect(value.left).toBe(value.right);
   });
 
   test('all root unknown-value validators return their input or fail closed', () => {

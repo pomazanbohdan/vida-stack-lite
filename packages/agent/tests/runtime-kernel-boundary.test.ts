@@ -1707,6 +1707,27 @@ describe('runtime kernel boundary', () => {
       'runtime configuration changed after composition',
     );
   });
+  test('local admission refuses a missing Work identity without changing the shared ledger', () =>
+    withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+      const admitted = await prepareAdmittedSessionFixture('admitted-' + randomUUID(), createFixture(false, true));
+      const { fixture, identity, nativeSessionHandle } = admitted;
+      const absentIdentity = { ...identity, work_id: 'absent-' + randomUUID() };
+      const before = fixture.store.readHostStateSnapshot(absentIdentity);
+      expect(before.work).toBeNull();
+      expect(before.workVersion).toBeNull();
+      assert.ok(before.ledger);
+      expect(before.ledger.tickets.some((ticket) => ticket.work_id === identity.work_id)).toBe(true);
+      expect(() =>
+        requireLiveLocalSessionAdmission({
+          repositoryRoot: fixture.root,
+          identity: absentIdentity,
+          store: fixture.store,
+          nativeSessionHandle,
+        }),
+      ).toThrow('local workflow admission or exact-path lease is stale');
+      expect(fixture.store.readHostStateSnapshot(absentIdentity)).toEqual(before);
+    }));
+
   test('local admission requires every implementation path in its persisted file claim', () =>
     withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
       const { fixture, identity, nativeSessionHandle } = await prepareAdmittedSessionFixture(
