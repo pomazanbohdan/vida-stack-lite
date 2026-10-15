@@ -104,13 +104,15 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents5222roles across140bound files. One nine-file
-AST+SHA capture advances the eight-family/Bun packet, reusing other qualified
-bindings after the earlier132-file refresh. Frozen allowances stay original.
+The current partial represents6054roles across143bound files. Four scoped
+AST+SHA captures advance the approval/remaining-family packet, reusing qualified
+bindings from the earlier eight-family/Bun and132-file refreshes. Frozen allowances stay original.
 Installer27<=31, native loaders4<=4, controller target2<=2 and Bun resolver34<=37 have scoped proof;
 native recognizer38>32 and retained
-callback/context deficits remain open. Nineteen represented static overages and
-2496current/1875original dispositions remain; this is not coverage progress.
+callback/context deficits remain open. Twenty-three represented static overages and
+1665current/1107original dispositions remain; this is not coverage progress.
+Approval schema/key/identity compatibility is repaired with17focused cases;
+full current numeric evidence remains pending.
 Unbound Source inventory freshness
 and exhaustive mapping remain pending. Current Bun1.4.3 validates the
 retained measurement against byte-identical1.4.2 runtime evidence without

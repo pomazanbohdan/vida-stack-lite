@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `eac0f8f` at origin/main.
+- Published predecessor: `f0e7928` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -935,7 +935,7 @@ from new to retained, hence1121net family additions plus2helpers. Root rejects
 duplicate old/current callback pairings before joining; corrects the moved
 develop-stage predicate from prospective10/10 to its exact original1/2;
 and retains extracted synthesis responsibilities at their genuine original caps.
-The partial now represents5222roles=3750retained/1472new,76removed,140bound files.
+At published f0e7928 the partial represents5222roles=3750retained/1472new,76removed,140bound files.
 One nine-file byte/AST capture reuses all other qualified inventory rows. Current
 inventory7718 leaves2496current and1875original dispositions missing;67.7% mapping
 preparation is not coverage. Nineteen represented static overages remain, including
@@ -956,6 +956,57 @@ Historical UNKNOWN runs remain fenced. A genuinely separate clean numeric checko
 is a conditional option, requiring complete actual resource separation, not a
 fresh ID or copied fixture claim:
 `/workspace/attachments/quality-fresh-coverage-root-design-20261015.md`.
+
+## Approval contract repair and remaining-family join
+
+Root reproduced reserved records accepting an own terminal_at set to undefined,
+then reproduced hidden required fields passing the replacement schema. Strict
+status-specific shapes now prohibit reserved terminal fields and require terminal
+timestamps. Raw plain-record and own-enumerable-key cardinality checks compose
+with strict Zod schemas; counts derive from the declared fields. Shared Edictum
+ASCII identity/store/fencing patterns replace approximations and duplicated
+patterns, including both stored-identity/marker readers. Ordinary parser failures
+restore the host diagnostic; arbitrary getter errors and thrown undefined retain
+their identity. Parsed-copy normalization remains intentional. No storage effects,
+authorization, CAS order or UNKNOWN replay is introduced.
+
+The new pure contract file passes17tests/0fail in1.007s and joins one public test
+phase. Phase membership point check1/0; Source typecheck101files/0diagnostics.
+Evidence under `/workspace/attachments/`:
+`quality-approval-{reserved-key,enumerable-key}-red-20261015.log`,
+`quality-approval-contract-final-tests-20261015.log`,
+`quality-approval-public-phase-tests-20261015.log`,
+`quality-approval-contract-final-source-types-20261015.log`,
+`quality-approval-contract-v2-review-20261015.md`.
+The first strict hook passed formatting464/typecheck470 but rejected one unsafe
+test assignment from Object.setPrototypeOf's library any return. The test keeps
+its typed local instead; no product behavior or gate was changed. Original log:
+`/workspace/attachments/quality-approval-strict-commit-20261015.log`.
+Current official Zod discriminator documentation was read at https://zod.dev/api#discriminated-unions.
+
+Only independently accepted Host164retained/34new rows join;32retained and7new
+candidates are rejected,38other cohort-three rows remain unresolved. Handoff192/4,
+runtime-config206/26 and the205retained Edictum roles also join. The former host
+validator maps only to the shared parser at its genuine15/15 ceiling. Existing
+schema children keep independent prospective budgets; no group allowance exists.
+The replaced status-refinement role retires explicitly even though its syntactic
+locator is reused by a different raw-key check. The failed initial join safeguard
+wrote no evidence or partial; its corrected role disposition is in the receipt.
+
+Current partial6054roles=4517retained/1537new,77removed,143bound files. Four scoped
+Source captures reuse all other qualified inventory rows. Inventory7719 leaves
+1665current and1107original dispositions missing. Mapping78.4% is not coverage.
+Twenty-three represented static complexity overages stay open with unchanged
+original caps, including four persistent-handoff deficits. No dynamic CRAP,
+complete coverage, assertion-confirmed mutation score or Runtime acceptance is
+claimed. Receipt: `/workspace/attachments/quality-approval-three-join-receipt-20261015.json`.
+Final independent integration review accepts the scoped role/cap/address join:
+`/workspace/attachments/quality-approval-join-integration-review-20261015.md`.
+
+One exec-server transport interruption occurred after the point checks. The next
+read succeeded and the changes remained present. Cloud API reported current
+running/connected revision2385, unrestricted networking enforced, no reported
+failure; that observation establishes neither a restart nor its cause.
 
 Genuine b549951 was measured once: runfe54f83c-6a70-4223-9872-f43f1ac784e9,
 SHAab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb.

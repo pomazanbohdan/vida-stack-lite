@@ -1,5 +1,10 @@
 import { Buffer } from 'node:buffer';
-import { parseWorkflowApprovalConsumptionRecord } from './workflow-approval-consumption-contract.js';
+import {
+  parseWorkflowApprovalConsumptionRecord,
+  WORKFLOW_APPROVAL_IDENTITY_PATTERN,
+  WORKFLOW_STORE_ID_PATTERN,
+  RESERVATION_FENCING_TOKEN,
+} from './workflow-approval-consumption-contract.js';
 import { createHash, randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { GovernanceDenied, OperationPolicyGuard, PolicySession, type EvaluationResult } from './operation-policy.js';
@@ -83,8 +88,6 @@ const WORKFLOW_APPROVAL_KEYS = [
   'expires_at',
   'evidence_digest',
 ] as const;
-const WORKFLOW_APPROVAL_IDENTITY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/;
-const WORKFLOW_STORE_ID_PATTERN = /^(?!\.{1,2}$)[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const WORKFLOW_APPROVAL_IDENTITY_MAX_BYTES = 128;
 const WORKFLOW_APPROVAL_COMMIT_UNKNOWN_GAP = 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001';
 function workflowApprovalCommitUnknownError(recoveryRecorded = true): Error {
@@ -730,7 +733,7 @@ function parseWorkflowStoreIdentity(raw: string): WorkflowApprovalStoreIdentity 
       typeof record.store_root_identity === 'string',
       typeof record.generation === 'string',
       path.isAbsolute(repositoryRoot),
-      WORKFLOW_APPROVAL_IDENTITY_PATTERN.test(storeId),
+      WORKFLOW_STORE_ID_PATTERN.test(storeId),
       repositoryIdentity.length > 0,
       storeIdentity.length > 0,
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(generation),
@@ -851,9 +854,9 @@ function readWorkflowApprovalMarker(
         Boolean(record.store_generation),
         ['reserved', 'commit_unknown', 'applied', 'aborted'].includes(record.status),
         hasExactOwnKeys(record as unknown as Record<string, unknown>, expectedKeys),
-        WORKFLOW_APPROVAL_IDENTITY_PATTERN.test(record.store_id),
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(record.store_generation),
-        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(record.fencing_token),
+        WORKFLOW_STORE_ID_PATTERN.test(record.store_id),
+        RESERVATION_FENCING_TOKEN.test(record.store_generation),
+        RESERVATION_FENCING_TOKEN.test(record.fencing_token),
         isStrictRfc3339Timestamp(record.reserved_at),
         record.approval_expires_at === null,
         record.attempt_id === null,
@@ -1588,7 +1591,6 @@ const RESERVATION_BASE_KEYS = [
 ] as const;
 const RESERVATION_TERMINAL_KEYS = [...RESERVATION_BASE_KEYS, 'terminal_revision'] as const;
 const RESERVATION_APPLIED_KEYS = [...RESERVATION_TERMINAL_KEYS, 'result_digest'] as const;
-const RESERVATION_FENCING_TOKEN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function validateReservationBase(value: Record<string, unknown>): void {
   const operationKey = stringValue(value.operation_key);
