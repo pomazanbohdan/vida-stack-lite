@@ -8,9 +8,9 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `b1d883d`; current correction details are in WORK.
+- Published predecessor: `00d1ff6`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
-- SDK artifact formed at `7f4c265`; its extracted archive verifier passed. This does not establish native installation or runtime acceptance.
+- SDK input formation runs automatically for main. Exact current artifact retrieval and qualification remain pending; WORK retains earlier receipts without treating them as current inputs.
 - Full run `.tmp/p0p1-resume-f553252/current-b9a4108-full-paused.log` ended `UNKNOWN`. The number 1459 is a throw line in `run-bun-coverage.ts`, not an outcome identifier. There is no admitted numeric report. Preserve it and do not replay it.
 - Genuine complexity baseline `b549951` was measured once in run `fe54f83c`; report SHA `ab0ef6481d20a0b1dabdb9ac220eb2145818a9f0ade7026986ff9571d5ea1acb`. Reuse that evidence; no recapture is needed.
 - Full frozen correspondence and the full CRAP plan are absent. The reviewed partial budget does not satisfy either prerequisite.
@@ -38,7 +38,7 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6721roles across149files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds6722roles across149files; installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
 The original planner is39<=40 and current-read evidence5<=5; keep
@@ -50,8 +50,10 @@ contracts. Rebind stable-version is now5<=original5 with no widened allowance.
 The preceding join added167independently reviewed retained roles; the current
 join adds96retained and5new roles. Both enforce array
 and counter equality, exact original ceilings and one-to-one correspondence.
-Current7729-role inventory leaves1008current and455original dispositions missing,
-with24represented static overages. Disputed41native extracted-helper additions
+Current7730-role inventory leaves1008current and455original dispositions missing,
+with22represented static overages after sharing the native lane/path string
+boundary. Both projections are1<=original1 and the new parser2<=own3.
+Disputed41native extracted-helper additions
 remain unbound pending classification; no original allowance is transferred.
 Fixture imports now defer configuration loading; historical setup resolves only
 the Source path before loading its private copied configuration. The complete

@@ -680,6 +680,29 @@ test('completed-reset current test input overflow blocks without changing namesp
   assert.deepEqual(readFileSync(path.join(f.root, '.tmp/releases/' + op + '/vida-agent-0.1.2.tgz')), archiveBefore);
 });
 
+test.each([
+  [null, 'current local test lane invalid'],
+  [{ lane: 42 }, 'current local test lane invalid'],
+  [{ lane: '' }, 'current local test lanes differ'],
+] as const)('completed reset denies malformed lane %j before changing repair custody', async (entry, message) => {
+  const f = fixture({ tests: false, assurance: false });
+  await plan(f.root);
+  await applyNativeDeliveryEvidenceRepair(input(f.root));
+  save(f.root, base + '/tests.json', {
+    schema: 'VidaLocalReleaseTests/v1',
+    operation_id: op,
+    version: '0.1.2',
+    tests: [entry, ...f.laneLogs.slice(1)],
+  });
+  const before = treeSnapshot(path.join(f.root, base));
+  const pendingBefore = readFileSync(path.join(f.root, '.agent/work/agent-local-release/pending.json'));
+  const inspected = await inspectRepair(f.root);
+  assert.equal(inspected.status, 'blocked');
+  assert.equal(firstBlocker(inspected), `Local release: ${message}`);
+  assert.deepEqual(treeSnapshot(path.join(f.root, base)), before);
+  assert.deepEqual(readFileSync(path.join(f.root, '.agent/work/agent-local-release/pending.json')), pendingBefore);
+});
+
 test('fixed repair removes only three stale qualification joins and preserves sealed custody and protected bytes', async () => {
   const f = fixture();
   assert.equal((await inspectRepair(f.root)).status, 'stale_qualification_repairable');

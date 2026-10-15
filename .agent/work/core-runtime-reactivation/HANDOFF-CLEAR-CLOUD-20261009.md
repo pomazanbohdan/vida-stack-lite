@@ -89,7 +89,7 @@ Requested model/service settings are distinct from observed host capabilities.
 
 ## Current evidence and limits
 
-Published predecessor before this packet: b1d883d. Maintained Source TS migration is
+Published predecessor before this packet: 00d1ff6. Maintained Source TS migration is
 complete; old1271 CLI diagnostics and old JS counts are historical.
 The7f4c265 SDK archive passed its OWN extracted verifier, with external
 node_modules outside payload custody. This is not native qualification.
@@ -104,14 +104,16 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents6721roles across149bound files. The latest join
-adds96independently reviewed retained roles and5new roles using cached inventories.
+The current partial represents6722roles across149bound files. The previous join
+added96independently reviewed retained roles and5new roles using cached inventories.
+The latest native shared-field parser adds one prospectively bounded3/3 function;
+both retained projections are now1<=original1. Full affected file40PASS/0FAIL.
 Two scoped captures close the missing byte bindings; their93/94function rows
 exactly match the cache. Frozen allowances stay original.
 Installer27<=31, native loaders4<=4, controller target2<=2 and Bun resolver34<=37 have scoped proof;
 Native recognizer29<=original32 and factory4<=own10 now have scoped proof;
 observer6<=own10 now has scoped proof. Rebind stable-version is5<=original5.
-Retained callback/context deficits remain open. Twenty-four represented static
+Retained callback/context deficits remain open. Twenty-two represented static
 overages and1008current/455original dispositions remain; this is not coverage
 progress. The current join validates original caps, one-to-one roles and actual
 counter/array equality before saving and after reading back the saved partial.

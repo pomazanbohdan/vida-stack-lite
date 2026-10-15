@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `b1d883d` at origin/main.
+- Published predecessor: `00d1ff6` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,6 +18,9 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
+- Current quality preparation:6722of7730roles,149Source byte bindings,
+  1008current/455original dispositions missing and22represented static deficits.
+  These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
 
@@ -1444,6 +1447,57 @@ Failed and expected-timeout roots remain retained. Final coverage/CRAP/mutation,
 SDK/resource qualification and formed native Runtime remain open.
 
 ## Next bounded work
+
+Published00d1ff6 passed ordinary strict format/types/lint/Knip and push:
+`quality-case-custody-strict-commit-b1-20261015.log` and
+`quality-case-custody-push-b1-20261015.log`. Exact CI SDK formation at this HEAD
+completed successfully in run38671487821/attempt1; metadata lookup only,
+`quality-sdk-ci-status-00d-20261015.json`. SDK bytes are not yet retrieved/admitted.
+
+The next packet shares the identical unknown-record string-field ingress
+for native testLane and observationPath, preserving their exact error labels,
+empty-string acceptance and per-call property access. Retained projections keep
+their original1/1 ceilings. The cohesive private boundary helper receives a
+prospective3/3 ceiling before implementation; no original allowance is moved.
+Existing similarly named helpers require typed records or reject empty strings,
+so they are not the same contract. Verify malformed lane rows and actual native
+repair callers; one scoped Source capture after the change reuses other148files.
+
+That correction is implemented and independently accepted. Both retained native
+projections are now CC1<=original1; new shared parser CC2<=prospective3. One
+changed-file AST+SHA gives7730current functions and6722represented roles, with
+22static deficits; the1008current/455original gaps are unchanged. All five frozen
+fields remain exact, and all native current addresses use the fresh cache.
+Full Source bytes are stored once in the scoped receipt, not duplicated into
+the canonical partial's inline continuation. Capture/join/read-back:
+`quality-native-string-field-join-00d-20261015.json` and `.log`; cached inventory:
+`quality-current-inventory-native-string-field-00d-20261015.json`.
+Actual Source review and metadata check:
+`quality-native-string-field-actual-review-00d-20261015.md` and
+`quality-native-string-field-metadata-review-00d-20261015.md`.
+Three malformed-lane contracts passed before refactoring, including empty-string
+downstream denial and unchanged namespace/pending custody. The initial expected
+error prefix was incomplete; its3FAILlog records a test expectation issue, not
+a product defect. Corrected pre-change3PASS:
+`quality-native-projection-contract-before-corrected-00d-20261015.log`.
+Final complete native repair file40PASS/0FAIL/11.77s:
+`quality-native-string-field-final-file-tests-00d-20261015.log`.
+Static470checked/471capturedTS/0diagnostics:
+`quality-native-string-field-types-00d-20261015.log`.
+No timing improvement, dynamic CRAP, full coverage or mutation score is inferred.
+
+The native extracted-role contract review output is not admitted: its23accepted
+and41deferred IDs overlap18ways. Preserve
+`quality-native-extraction-contract-overlap-b1-20261015.json`; disputed41remain
+unbound pending a consistent role-level review. No automatic relabeling.
+
+SDK offline execution needs no new prepared-token API: currentSidecar validates
+the exact HEAD, receipt and all outputs locally before ensureSdkCoverageInputs
+can enter its GitHub fetch path. Fresh online preparation followed by the same
+owner's offline cache validation is the candidate minimal route. Current review:
+`quality-sdk-existing-cache-offline-review-00d-20261015.md`. It supersedes the
+earlier new-token design, not SDK freshness/CI checks. Actual cache/namespace/full
+resource qualification remains pending; one shared300000ms/30000ms budget stays.
 
 1. Complete correspondence/original-budget corrections: pure
    retained callback/context deficits and newly represented safe/rebind deficits

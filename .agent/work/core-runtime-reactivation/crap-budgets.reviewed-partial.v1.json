@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 5168,
-    "new": 1553,
+    "new": 1554,
     "removed": 78,
-    "current_roles": 6721,
+    "current_roles": 6722,
     "source_files": 149
   },
   "source_bindings": [
@@ -595,7 +595,7 @@
     },
     {
       "file": "bin/repair-native-delivery-evidence.ts",
-      "sha256": "bf688220d3f8705b9d2144a438a1b8b6ddeeadda2a9345a5c6527529e096af9d"
+      "sha256": "bd6a2b91219c8d28e8b4c9d72c02baebb4714f736306b06983c8c574403d7209"
     },
     {
       "file": "bin/run.ts",
@@ -146376,13 +146376,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 906,
+        "line": 909,
         "column": 0,
-        "start": 34809,
-        "end": 34886,
-        "bodyLine": 906,
+        "start": 34931,
+        "end": 35008,
+        "bodyLine": 909,
         "bodyColumn": 38,
-        "bodyEndLine": 908,
+        "bodyEndLine": 911,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146409,13 +146409,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 910,
+        "line": 913,
         "column": 0,
-        "start": 34888,
-        "end": 34967,
-        "bodyLine": 910,
+        "start": 35010,
+        "end": 35089,
+        "bodyLine": 913,
         "bodyColumn": 39,
-        "bodyEndLine": 912,
+        "bodyEndLine": 915,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146475,13 +146475,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1093,
+        "line": 1096,
         "column": 0,
-        "start": 42113,
-        "end": 42238,
-        "bodyLine": 1093,
+        "start": 42235,
+        "end": 42360,
+        "bodyLine": 1096,
         "bodyColumn": 78,
-        "bodyEndLine": 1095,
+        "bodyEndLine": 1098,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146508,13 +146508,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 775,
+        "line": 778,
         "column": 0,
-        "start": 29700,
-        "end": 29896,
-        "bodyLine": 775,
+        "start": 29822,
+        "end": 30018,
+        "bodyLine": 778,
         "bodyColumn": 100,
-        "bodyEndLine": 778,
+        "bodyEndLine": 781,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146541,13 +146541,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1031,
+        "line": 1034,
         "column": 0,
-        "start": 40117,
-        "end": 40316,
-        "bodyLine": 1031,
+        "start": 40239,
+        "end": 40438,
+        "bodyLine": 1034,
         "bodyColumn": 50,
-        "bodyEndLine": 1035,
+        "bodyEndLine": 1038,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -146574,13 +146574,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1416,
+        "line": 1419,
         "column": 7,
-        "start": 55270,
-        "end": 55520,
-        "bodyLine": 1419,
+        "start": 55392,
+        "end": 55642,
+        "bodyLine": 1422,
         "bodyColumn": 23,
-        "bodyEndLine": 1421,
+        "bodyEndLine": 1424,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -149577,13 +149577,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 780,
+        "line": 783,
         "column": 0,
-        "start": 29898,
-        "end": 30993,
-        "bodyLine": 780,
+        "start": 30020,
+        "end": 31115,
+        "bodyLine": 783,
         "bodyColumn": 118,
-        "bodyEndLine": 803,
+        "bodyEndLine": 806,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 7,
@@ -158091,13 +158091,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 712,
+        "line": 715,
         "column": 0,
-        "start": 27251,
-        "end": 28345,
-        "bodyLine": 718,
+        "start": 27373,
+        "end": 28467,
+        "bodyLine": 721,
         "bodyColumn": 11,
-        "bodyEndLine": 738,
+        "bodyEndLine": 741,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 15,
@@ -158124,13 +158124,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 764,
+        "line": 767,
         "column": 0,
-        "start": 29127,
-        "end": 29698,
-        "bodyLine": 764,
+        "start": 29249,
+        "end": 29820,
+        "bodyLine": 767,
         "bodyColumn": 91,
-        "bodyEndLine": 773,
+        "bodyEndLine": 776,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 5,
@@ -158157,13 +158157,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 805,
+        "line": 808,
         "column": 0,
-        "start": 30995,
-        "end": 31350,
-        "bodyLine": 809,
+        "start": 31117,
+        "end": 31472,
+        "bodyLine": 812,
         "bodyColumn": 51,
-        "bodyEndLine": 814,
+        "bodyEndLine": 817,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -158190,13 +158190,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1011,
+        "line": 1014,
         "column": 0,
-        "start": 39255,
-        "end": 39758,
-        "bodyLine": 1011,
+        "start": 39377,
+        "end": 39880,
+        "bodyLine": 1014,
         "bodyColumn": 86,
-        "bodyEndLine": 1023,
+        "bodyEndLine": 1026,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -166143,13 +166143,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 984,
+        "line": 987,
         "column": 0,
-        "start": 38256,
-        "end": 38766,
-        "bodyLine": 984,
+        "start": 38378,
+        "end": 38888,
+        "bodyLine": 987,
         "bodyColumn": 63,
-        "bodyEndLine": 996,
+        "bodyEndLine": 999,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 16,
@@ -166176,13 +166176,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1025,
+        "line": 1028,
         "column": 0,
-        "start": 39760,
-        "end": 40115,
-        "bodyLine": 1025,
+        "start": 39882,
+        "end": 40237,
+        "bodyLine": 1028,
         "bodyColumn": 83,
-        "bodyEndLine": 1029,
+        "bodyEndLine": 1032,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166209,13 +166209,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1037,
+        "line": 1040,
         "column": 0,
-        "start": 40318,
-        "end": 40689,
-        "bodyLine": 1042,
+        "start": 40440,
+        "end": 40811,
+        "bodyLine": 1045,
         "bodyColumn": 2,
-        "bodyEndLine": 1054,
+        "bodyEndLine": 1057,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166242,13 +166242,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1056,
+        "line": 1059,
         "column": 0,
-        "start": 40691,
-        "end": 41248,
-        "bodyLine": 1056,
+        "start": 40813,
+        "end": 41370,
+        "bodyLine": 1059,
         "bodyColumn": 84,
-        "bodyEndLine": 1071,
+        "bodyEndLine": 1074,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -166275,13 +166275,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1097,
+        "line": 1100,
         "column": 0,
-        "start": 42240,
-        "end": 44469,
-        "bodyLine": 1104,
+        "start": 42362,
+        "end": 44591,
+        "bodyLine": 1107,
         "bodyColumn": 2,
-        "bodyEndLine": 1155,
+        "bodyEndLine": 1158,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 12,
@@ -166308,13 +166308,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1157,
+        "line": 1160,
         "column": 0,
-        "start": 44471,
-        "end": 45859,
-        "bodyLine": 1163,
+        "start": 44593,
+        "end": 45981,
+        "bodyLine": 1166,
         "bodyColumn": 2,
-        "bodyEndLine": 1188,
+        "bodyEndLine": 1191,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -166341,13 +166341,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1190,
+        "line": 1193,
         "column": 0,
-        "start": 45861,
-        "end": 46310,
-        "bodyLine": 1194,
+        "start": 45983,
+        "end": 46432,
+        "bodyLine": 1197,
         "bodyColumn": 69,
-        "bodyEndLine": 1201,
+        "bodyEndLine": 1204,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166374,13 +166374,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1220,
+        "line": 1223,
         "column": 7,
-        "start": 47075,
-        "end": 47884,
-        "bodyLine": 1226,
+        "start": 47197,
+        "end": 48006,
+        "bodyLine": 1229,
         "bodyColumn": 24,
-        "bodyEndLine": 1247,
+        "bodyEndLine": 1250,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 5,
@@ -166407,13 +166407,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1249,
+        "line": 1252,
         "column": 0,
-        "start": 47886,
-        "end": 49603,
-        "bodyLine": 1254,
+        "start": 48008,
+        "end": 49725,
+        "bodyLine": 1257,
         "bodyColumn": 23,
-        "bodyEndLine": 1290,
+        "bodyEndLine": 1293,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166440,13 +166440,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1258,
+        "line": 1261,
         "column": 49,
-        "start": 48232,
-        "end": 49599,
-        "bodyLine": 1258,
+        "start": 48354,
+        "end": 49721,
+        "bodyLine": 1261,
         "bodyColumn": 61,
-        "bodyEndLine": 1289,
+        "bodyEndLine": 1292,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -166473,13 +166473,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1292,
+        "line": 1295,
         "column": 7,
-        "start": 49612,
-        "end": 52013,
-        "bodyLine": 1295,
+        "start": 49734,
+        "end": 52135,
+        "bodyLine": 1298,
         "bodyColumn": 23,
-        "bodyEndLine": 1342,
+        "bodyEndLine": 1345,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -166506,13 +166506,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1309,
+        "line": 1312,
         "column": 42,
-        "start": 50657,
-        "end": 50851,
-        "bodyLine": 1309,
+        "start": 50779,
+        "end": 50973,
+        "bodyLine": 1312,
         "bodyColumn": 59,
-        "bodyEndLine": 1312,
+        "bodyEndLine": 1315,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 2,
@@ -166539,13 +166539,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1344,
+        "line": 1347,
         "column": 0,
-        "start": 52015,
-        "end": 55261,
-        "bodyLine": 1348,
+        "start": 52137,
+        "end": 55383,
+        "bodyLine": 1351,
         "bodyColumn": 23,
-        "bodyEndLine": 1414,
+        "bodyEndLine": 1417,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166572,13 +166572,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1354,
+        "line": 1357,
         "column": 49,
-        "start": 52431,
-        "end": 55257,
-        "bodyLine": 1354,
+        "start": 52553,
+        "end": 55379,
+        "bodyLine": 1357,
         "bodyColumn": 61,
-        "bodyEndLine": 1413,
+        "bodyEndLine": 1416,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 13,
@@ -166605,13 +166605,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1423,
+        "line": 1426,
         "column": 7,
-        "start": 55529,
-        "end": 56113,
-        "bodyLine": 1423,
+        "start": 55651,
+        "end": 56235,
+        "bodyLine": 1426,
         "bodyColumn": 91,
-        "bodyEndLine": 1432,
+        "bodyEndLine": 1435,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -166638,13 +166638,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1477,
+        "line": 1480,
         "column": 7,
-        "start": 57734,
-        "end": 58386,
-        "bodyLine": 1480,
+        "start": 57856,
+        "end": 58508,
+        "bodyLine": 1483,
         "bodyColumn": 23,
-        "bodyEndLine": 1490,
+        "bodyEndLine": 1493,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 11,
@@ -166803,13 +166803,13 @@
         "bodyEndColumn": 34
       },
       "current_source_address": {
-        "line": 655,
+        "line": 660,
         "column": 0,
-        "start": 25146,
-        "end": 25309,
-        "bodyLine": 655,
+        "start": 25332,
+        "end": 25463,
+        "bodyLine": 660,
         "bodyColumn": 42,
-        "bodyEndLine": 658,
+        "bodyEndLine": 662,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -166836,13 +166836,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 708,
+        "line": 711,
         "column": 13,
-        "start": 27057,
-        "end": 27129,
-        "bodyLine": 708,
+        "start": 27179,
+        "end": 27251,
+        "bodyLine": 711,
         "bodyColumn": 27,
-        "bodyEndLine": 708,
+        "bodyEndLine": 711,
         "bodyEndColumn": 85
       },
       "baseline_complexity": 1,
@@ -166869,13 +166869,13 @@
         "bodyEndColumn": 45
       },
       "current_source_address": {
-        "line": 660,
+        "line": 664,
         "column": 0,
-        "start": 25311,
-        "end": 25490,
-        "bodyLine": 660,
+        "start": 25465,
+        "end": 25612,
+        "bodyLine": 664,
         "bodyColumn": 49,
-        "bodyEndLine": 663,
+        "bodyEndLine": 666,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -193934,13 +193934,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:parseDirectoryObservation#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 871,
+        "line": 874,
         "column": 0,
-        "start": 33306,
-        "end": 34065,
-        "bodyLine": 871,
+        "start": 33428,
+        "end": 34187,
+        "bodyLine": 874,
         "bodyColumn": 73,
-        "bodyEndLine": 889,
+        "bodyEndLine": 892,
         "bodyEndColumn": 1
       },
       "current_complexity": 3,
@@ -193953,13 +193953,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:parseDirectoryObservation#0/binding:members/closure:CallExpression:arguments[0]#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 876,
+        "line": 879,
         "column": 36,
-        "start": 33636,
-        "end": 33796,
-        "bodyLine": 876,
+        "start": 33758,
+        "end": 33918,
+        "bodyLine": 879,
         "bodyColumn": 48,
-        "bodyEndLine": 880,
+        "bodyEndLine": 883,
         "bodyEndColumn": 3
       },
       "current_complexity": 1,
@@ -193972,13 +193972,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:parseDependencyClosure#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 891,
+        "line": 894,
         "column": 0,
-        "start": 34067,
-        "end": 34807,
-        "bodyLine": 891,
+        "start": 34189,
+        "end": 34929,
+        "bodyLine": 894,
         "bodyColumn": 67,
-        "bodyEndLine": 904,
+        "bodyEndLine": 907,
         "bodyEndColumn": 1
       },
       "current_complexity": 4,
@@ -193991,13 +193991,13 @@
       "identity": "bin/repair-native-delivery-evidence.ts#fn:assertReleaseBeforeimage#0",
       "file": "bin/repair-native-delivery-evidence.ts",
       "current_source_address": {
-        "line": 969,
+        "line": 972,
         "column": 0,
-        "start": 37379,
-        "end": 38254,
-        "bodyLine": 969,
+        "start": 37501,
+        "end": 38376,
+        "bodyLine": 972,
         "bodyColumn": 62,
-        "bodyEndLine": 982,
+        "bodyEndLine": 985,
         "bodyEndColumn": 1
       },
       "current_complexity": 9,
@@ -194005,6 +194005,25 @@
       "max_crap": 10,
       "rationale": "New responsibility: assertReleaseBeforeimage at this declaration: function assertReleaseBeforeimage(value: unknown): JsonRecord {   require(isRecord(value) && isRecord(value.pending), 'native evidence repair release beforeimage invalid');   require(Object.keys(value).sort().join() ===. In-file call/reference evidence: 988: const releaseBefore = assertReleaseBeforeimage(plan.release_before);. I checked all 37 unused original-role declarations in the historical inventory; this role has no corresponding published responsibility among them and receives the prospective 10/10 ceiling.",
       "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:requiredRepairStringField#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "current_source_address": {
+        "line": 655,
+        "column": 0,
+        "start": 25146,
+        "end": 25330,
+        "bodyLine": 655,
+        "bodyColumn": 89,
+        "bodyEndLine": 658,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 3,
+      "max_crap": 3,
+      "review_ref": "/workspace/attachments/quality-native-string-field-actual-review-00d-20261015.md",
+      "rationale": "Private shared unknown-record string-property boundary for the native lane/path projections, preserving caller error labels, empty-string acceptance and the original property access order. Own prospective3/3 declared in WORK before implementation; no original allowance transferred. Retained projections keep original1/1."
     }
   ],
   "removed_functions": [
@@ -194737,282 +194756,36 @@
   "quality_continuation_current_bindings": {
     "schema": "ReviewedLineageJoin/v1",
     "status": "SCOPED_SOURCE_LINEAGE_ONLY_NOT_EXECUTABLE_NOT_NUMERIC_ACCEPTANCE",
-    "predecessor_commit": "b1d883d",
+    "predecessor_commit": "00d1ff6",
     "counts": {
       "retained": 5168,
-      "new": 1553,
+      "new": 1554,
       "removed": 78,
-      "current_roles": 6721,
+      "current_roles": 6722,
       "source_files": 149
     },
-    "inventory_ref": "/workspace/attachments/quality-current-inventory-stable-version-34d-20261015.json",
-    "candidate_counts": [
+    "inventory_ref": "/workspace/attachments/quality-current-inventory-native-string-field-00d-20261015.json",
+    "scoped_byte_capture_files": [
+      "bin/repair-native-delivery-evidence.ts"
+    ],
+    "sha256": "bd6a2b91219c8d28e8b4c9d72c02baebb4714f736306b06983c8c574403d7209",
+    "projections": [
       {
-        "family": "host",
-        "retained": 59,
-        "rejected": 1
+        "identity": "bin/repair-native-delivery-evidence.ts#fn:testLane#0",
+        "complexity": 1,
+        "ceiling": 1
       },
       {
-        "family": "native",
-        "retained": 37,
-        "new": 5,
-        "deferred_new_classifications": 41
+        "identity": "bin/repair-native-delivery-evidence.ts#fn:observationPath#0",
+        "complexity": 1,
+        "ceiling": 1
       }
     ],
-    "rejected_correspondences": [
-      {
-        "identity": "src/host-state.ts#class:HostStateStore/method:#resolveTaskSourceBinding#0/closure:CallExpression:arguments[0]#1",
-        "current_identity": "src/host-state.ts#class:HostStateStore/method:#resolveTaskSourceBinding#0/closure:CallExpression:arguments[0]#1",
-        "rationale": "Rejected: the frozen callback queries the retained action table for this operation ID, while the current callback only tests row.actionInput !== null. Those are different evidence predicates, so the matching identity/name and enclosing method do not preserve this callback's responsibility.",
-        "review_ref": "/workspace/attachments/quality-host60-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:isRecord#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:isRecord#0",
-        "rationale": "Original references() and keys() already classify object/record shapes inline. This current type-predicate centralizes that existing validation rather than establishing a distinct historical responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:hasUnsafeReferenceCharacter#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:hasUnsafeReferenceCharacter#0",
-        "rationale": "Original addRef() already rejects control characters and colon with !/[\\x00-\\x1f:]/.test(value). This helper extracts that exact guard from an available historical role.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:addStandaloneInputs#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:addStandaloneInputs#0",
-        "rationale": "Original references() performs this same structured-reference dispatch inline: standalone inputs, inputs, tarball filenames, entries, path fields and nested records. The current helper extracts that historical responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:addInputReferences#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:addInputReferences#0",
-        "rationale": "Original references() performs this same structured-reference dispatch inline: standalone inputs, inputs, tarball filenames, entries, path fields and nested records. The current helper extracts that historical responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:addFilenameReference#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:addFilenameReference#0",
-        "rationale": "Original references() performs this same structured-reference dispatch inline: standalone inputs, inputs, tarball filenames, entries, path fields and nested records. The current helper extracts that historical responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:addEntryReferences#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:addEntryReferences#0",
-        "rationale": "Original references() performs this same structured-reference dispatch inline: standalone inputs, inputs, tarball filenames, entries, path fields and nested records. The current helper extracts that historical responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:addStructuredReference#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:addStructuredReference#0",
-        "rationale": "Original references() performs this same structured-reference dispatch inline: standalone inputs, inputs, tarball filenames, entries, path fields and nested records. The current helper extracts that historical responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:seedClosureReferences#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:seedClosureReferences#0",
-        "rationale": "Original closure() already seeds release/seal references, records operation-directory members, returns the closure inventory, skips excluded children and applies the JSON expansion guard inline. The current helper splits that historical closure responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:recordOperationDirectory#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:recordOperationDirectory#0",
-        "rationale": "Original closure() already seeds release/seal references, records operation-directory members, returns the closure inventory, skips excluded children and applies the JSON expansion guard inline. The current helper splits that historical closure responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:finishClosure#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:finishClosure#0",
-        "rationale": "Original closure() already seeds release/seal references, records operation-directory members, returns the closure inventory, skips excluded children and applies the JSON expansion guard inline. The current helper splits that historical closure responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:skipClosureChild#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:skipClosureChild#0",
-        "rationale": "Original closure() already seeds release/seal references, records operation-directory members, returns the closure inventory, skips excluded children and applies the JSON expansion guard inline. The current helper splits that historical closure responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:shouldExpandJson#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:shouldExpandJson#0",
-        "rationale": "Original closure() already seeds release/seal references, records operation-directory members, returns the closure inventory, skips excluded children and applies the JSON expansion guard inline. The current helper splits that historical closure responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertEligibleRelease#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertEligibleRelease#0",
-        "rationale": "Original eligible() checks these manifest, operation, version, status and install_started predicates inline before returning state/pending. This helper extracts that historical eligibility responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealEntries#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealEntries#0",
-        "rationale": "Original validateSeal() and currentSeal() already check seal keys, release identity, entries, entry/source digests, sealed fingerprint and selected archive digest inline. This helper extracts one of those historical checks.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealEntries#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealEntries#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "Original validateSeal() already iterates seal entries and checks path/hash shape inline; this exact per-entry callback moved into the current helper.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealDigests#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealDigests#0",
-        "rationale": "Original validateSeal() and currentSeal() already check seal keys, release identity, entries, entry/source digests, sealed fingerprint and selected archive digest inline. This helper extracts one of those historical checks.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealKeys#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealKeys#0",
-        "rationale": "Original validateSeal() and currentSeal() already check seal keys, release identity, entries, entry/source digests, sealed fingerprint and selected archive digest inline. This helper extracts one of those historical checks.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealIdentity#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealIdentity#0",
-        "rationale": "Original validateSeal() and currentSeal() already check seal keys, release identity, entries, entry/source digests, sealed fingerprint and selected archive digest inline. This helper extracts one of those historical checks.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertArchiveDigest#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertArchiveDigest#0",
-        "rationale": "Original validateSeal() and currentSeal() already check seal keys, release identity, entries, entry/source digests, sealed fingerprint and selected archive digest inline. This helper extracts one of those historical checks.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertTestEntry#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertTestEntry#0",
-        "rationale": "Original validateTestsFile() already validates test entries, reads and hashes logs, checks success fields and recomputes current input bindings inline. This is a decomposition of that historical validator.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertTestEntry#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertTestEntry#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "Original validateTestsFile() already checks that every test input is a string inline. The current callback is that historical item-shape predicate.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSuccessfulTestLog#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertSuccessfulTestLog#0",
-        "rationale": "Original validateTestsFile() already validates test entries, reads and hashes logs, checks success fields and recomputes current input bindings inline. This is a decomposition of that historical validator.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertCurrentTestBinding#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertCurrentTestBinding#0",
-        "rationale": "Original validateTestsFile() already validates test entries, reads and hashes logs, checks success fields and recomputes current input bindings inline. This is a decomposition of that historical validator.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertCurrentAssurance#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertCurrentAssurance#0",
-        "rationale": "Original validateAssuranceFile() reads assurance and validates its exact keys, schema, operation, seal fingerprint and reviews inline. The current helper extracts that historical responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:parseFileObservation#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:parseFileObservation#0",
-        "rationale": "Original loadPlan() already validates beforeimage observation keys, file kind/existence, present identity/hash/custody-copy values and absent null values inline. This parser family splits the same historical file-beforeimage validation.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:validateFileObservationKeys#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:validateFileObservationKeys#0",
-        "rationale": "Original loadPlan() already validates beforeimage observation keys, file kind/existence, present identity/hash/custody-copy values and absent null values inline. This parser family splits the same historical file-beforeimage validation.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:parseAbsentFileObservation#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:parseAbsentFileObservation#0",
-        "rationale": "Original loadPlan() already validates beforeimage observation keys, file kind/existence, present identity/hash/custody-copy values and absent null values inline. This parser family splits the same historical file-beforeimage validation.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:parsePresentFileObservation#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:parsePresentFileObservation#0",
-        "rationale": "Original loadPlan() already validates beforeimage observation keys, file kind/existence, present identity/hash/custody-copy values and absent null values inline. This parser family splits the same historical file-beforeimage validation.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPlanHeader#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertPlanHeader#0",
-        "rationale": "Original loadPlan() validates operation identity, operation syntax, actor attribution and beforeimage plan identity inline. This helper extracts its historical header validation.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPresentBeforeimage#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertPresentBeforeimage#0",
-        "rationale": "Original loadPlan() validates present beforeimage identity, digest and custody-copy path inline. The current helper strengthens details but retains that historical validation responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPresentBeforeimage#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertPresentBeforeimage#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "Original loadPlan() requires a present beforeimage identity array and validates its hash/custody path. The added finite-number callback tightens the same historical identity sub-role.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertBeforeimage#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertBeforeimage#0",
-        "rationale": "Original loadPlan() checks each beforeimage kind/existence and present-versus-absent shape inline.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPlanBeforeimages#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertPlanBeforeimages#0",
-        "rationale": "Original loadPlan() validates the three fixed beforeimages and their target order, then checks each entry inline. This helper decomposes that plan-loading role.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPlanBeforeimages#0/closure:CallExpression:arguments[0]#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertPlanBeforeimages#0/closure:CallExpression:arguments[0]#0",
-        "rationale": "Original loadPlan() projects beforeimage paths and verifies fixed target order inline; this callback is that historical path-list check.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPhaseIdentity#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertPhaseIdentity#0",
-        "rationale": "Original phase() checks operation_id, plan_digest and phaseNames membership inline after unsealing.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertCustodyIdentity#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertCustodyIdentity#0",
-        "rationale": "Original custodyRows() checks custody operation, plan digest and exact beforeimage equality inline.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:assertCustodyBeforeimage#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:assertCustodyBeforeimage#0",
-        "rationale": "Original custodyRows() reads each present beforeimage copy and checks its hash inline.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:inspectStoredRepair#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:inspectStoredRepair#0",
-        "rationale": "Original inspectNativeDeliveryEvidenceRepair() loads plan/state, validates completed or in-progress continuity and returns repair status inline; the current helper extracts that branch.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:planNativeDeliveryEvidenceRepair#0/closure:CallExpression:arguments[2]#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:planNativeDeliveryEvidenceRepair#0/closure:CallExpression:arguments[2]#0",
-        "rationale": "Original planNativeDeliveryEvidenceRepair() performs eligibility checks, closure comparison, namespace reservation, plan/state writes and lock cleanup within the plan operation. This callback reorganizes that historical plan responsibility.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:parseRepairArguments#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:parseRepairArguments#0",
-        "rationale": "Original runNativeDeliveryEvidenceRepair() parses option/value pairs, rejects duplicate/unknown switches and forms the values record inline.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:nativeEvidenceCommand#0",
-        "current_identity": "bin/repair-native-delivery-evidence.ts#fn:nativeEvidenceCommand#0",
-        "rationale": "Original runNativeDeliveryEvidenceRepair() validates kind, absolute root, operation ID, mode and actor/mode constraints inline. This helper extracts that historical CLI contract validation.",
-        "review_ref": "/workspace/attachments/quality-native83-independent-join34d-20261015.json"
-      }
-    ],
+    "helper": {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:requiredRepairStringField#0",
+      "complexity": 2,
+      "ceiling": 3
+    },
     "scoped_complexity_exceptions": [
       {
         "identity": "src/orchestration/configured-context.ts#fn:buildConfiguredContext#0",
@@ -195123,30 +194896,21 @@
         "identity": "bin/runtime-config-rebind.ts#fn:streamedNativeAssetDigest#0",
         "complexity": 16,
         "ceiling": 9
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:testLane#0",
-        "complexity": 2,
-        "ceiling": 1
-      },
-      {
-        "identity": "bin/repair-native-delivery-evidence.ts#fn:observationPath#0",
-        "complexity": 2,
-        "ceiling": 1
       }
     ],
     "missing_current_dispositions": 1008,
     "missing_original_dispositions": 455,
-    "source_binding_completion_ref": "/workspace/attachments/quality-two-missing-source-bindings-b1-20261015.json",
-    "limits": "No complete coverage, dynamic CRAP, mutation or Runtime result. Exact original ceilings and removals unchanged. All41 disputed extracted-native new-role classifications remain unbound pending contract review, not assigned an original allowance. Historical UNKNOWN stays fenced."
+    "independent_source_review_ref": "/workspace/attachments/quality-native-string-field-actual-review-00d-20261015.md",
+    "limits": "One changed Source AST+SHA; other148files reused. Exact frozen original allowances unchanged. No complete coverage/dynamicCRAP/mutation/Runtime result.",
+    "source_capture_ref": "/workspace/attachments/quality-native-string-field-join-00d-20261015.json"
   },
   "prior_source_commit": "f8d1925",
   "current_source_binding": {
     "kind": "current-worktree-bytes",
-    "predecessor_commit": "b1d883d",
+    "predecessor_commit": "00d1ff6",
     "commit_binding": "not_attested_by_this_record",
     "source_bindings": "source_bindings",
-    "receipt_ref": "/workspace/attachments/quality-native-host-join-b1-20261015.json"
+    "receipt_ref": "/workspace/attachments/quality-native-string-field-join-00d-20261015.json"
   },
   "bound_source_refresh": {
     "schema": "ReviewedCurrentSourceBindingRefresh/v1",

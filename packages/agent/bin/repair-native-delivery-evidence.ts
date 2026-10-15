@@ -652,14 +652,17 @@ function validateSeal(root: string, operation: string, state: ReleaseRecord, sou
   };
 }
 
+function requiredRepairStringField(entry: unknown, key: string, message: string): string {
+  require(isRecord(entry) && typeof entry[key] === 'string', message);
+  return entry[key];
+}
+
 function testLane(entry: unknown): string {
-  require(isRecord(entry) && typeof entry.lane === 'string', 'current local test lane invalid');
-  return entry.lane;
+  return requiredRepairStringField(entry, 'lane', 'current local test lane invalid');
 }
 
 function observationPath(entry: unknown): string {
-  require(isRecord(entry) && typeof entry.path === 'string', 'native evidence observation path invalid');
-  return entry.path;
+  return requiredRepairStringField(entry, 'path', 'native evidence observation path invalid');
 }
 type TestEntry = { lane: string; path: string; inputs: string[]; input_binding: string; sha256: string };
 

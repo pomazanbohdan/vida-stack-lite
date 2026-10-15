@@ -1,6 +1,6 @@
 # VIDA backlog priorities
 
-Status date: 2026-10-14. This page is the current priority index. The eight P0 and ten P1 rows are work contours, not counts of confirmed defects. Stable task IDs and historical decisions remain recoverable at `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md`.
+Status date: 2026-10-15. This page is the current priority index. The eight P0 and ten P1 rows are work contours, not counts of confirmed defects. Stable task IDs and historical decisions remain recoverable at `bbd6e73ed5bb1f98dd79a64980425cf85dae9a4e:.agent/work/vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md`.
 
 The execution order lives in [CLEAN-START-STRATEGY-20261009.md](../core-runtime-reactivation/CLEAN-START-STRATEGY-20261009.md). Current evidence lives in [WORK.md](../core-runtime-reactivation/WORK.md). Root owns integration and final acceptance.
 
@@ -43,6 +43,11 @@ The execution order lives in [CLEAN-START-STRATEGY-20261009.md](../core-runtime-
 ## Test acceptance boundary
 
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
+
+Fixture import effects and pending/elapsed Source-repair teardown are corrected
+with native timeout-retention controls. Frozen correspondence and scoped budget
+repairs continue; the full exact gates remain open. WORK owns current counts,
+checks, published commits and unresolved resource/SDK prerequisites.
 
 P1 requires 100% functions, lines, statements, and branches, an exhaustive frozen per-function correspondence, a complete reviewed CRAP plan, and 100% assertion-confirmed Killed mutants. Keep the required tests and SDK in the final input set. Survived, uncovered, timed-out, errored, or unreviewed equivalent mutants do not pass. Reuse current captured inputs where the owner supports it. One incomplete or UNKNOWN run is not a numeric result. Do not increase resource limits or remove custody checks to force completion.
 
