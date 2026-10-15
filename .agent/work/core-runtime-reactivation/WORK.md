@@ -947,12 +947,57 @@ Other Source freshness/global/frozen admission remains pending. Independent
 actual review of both shared helper callers, real abort-error controls and the
 obstruction case finds no actionable issue:
 quality-governance-envelope-actual-review-4e3-20261015.md. Both files now have root
-as sole writer. Final strict gate/publication and one frozen governance capture
+as sole writer. Final strict gate/publication and one governance capture with
+writers stopped
 follow; prior numerical metrics remain authoritative until that capture finishes.
 The first staged hook rejects one unsafe any-valued asymmetric matcher property
 in the new digest-race assertion. Root narrows the rejection to unknown/Error and
 checks its exact message; no weaker matcher or gate exemption. Retain
 quality-governance-recovery-race-commit-4e3-20261015.log.
+
+Corrected strict hook passes477formatted/483TS roots/Knip/lint; packetac42324 is
+published. Capture46d8707b-f42f-4155-a57a-93e068438db0 at
+ac423245feb379df1c7e105b37d6ccf2c4683bd0 completes82PASS/0FAIL/1003assertions
+in5.57s Bun/8544.623484ms outer. Actual metrics F200/202,L682/691,S702/716,
+B82/90,maxCC6/entryCRAP6. Retained root quality-declared-main-governance-kb6WyN
+has complete output, same boot and observed group termination; parent BLOCKED
+and frozen/global/current-freshness/mutation pending statuses remain separate.
+Evidence quality-governance-recovery-race-coverage-ac4-20261015.log; validated
+remaining counters quality-main-governance-open-counters-ac4-20261015.jsonl.
+
+The obstruction control proves native fail-closed behavior but does not cover
+the two terminal writer error callbacks: inspect sees the invalid terminal
+before the exclusive write begins. Same-process Promise concurrency also does
+not establish overlap because this native async facade performs its filesystem
+work synchronously. Next use genuine cross-process creation/terminal competition
+under the existing child custody owner; do not add provider hooks, fabricate a
+valid terminal record or infer closure from Promise.all. Identity-create race,
+legacy applied-terminal reader and three rare/defensive private cleanup/rejection
+arms remain visible among8branch counters. No exclusion, invented mutant kill,
+guard removal or relaxed numeric acceptance is admitted.
+
+Automatic projection preserves35observations and remains2/44historical compatible
+local coverage+confirmed-mutation closures/42open/1static. It imports this exact
+report without combining different Source/test closures into a synthetic maximum:
+quality-contours-update-governance-ac4-20261015.log. The next independent contour
+measurement may use main-config's existing declared selection; its missing report
+is unknown, not zero. No runtime cutover, old consumer replay or owner unblock.
+
+Main-config's first current declared-selection capture is now recorded:
+cbb99aff-ea8e-416e-baea-12fe9e2dab07 at the sameac423245feb379df1c7e105b37d6ccf2c4683bd0.
+It completes42PASS/0FAIL/11502assertions in4.48s Bun/7433.15574ms outer;
+F317/350,L892/966,S939/1024,B203/266,maxCC16/entryCRAP42. Root
+quality-declared-main-config-0qPGCB retains full output/same-boot/group close;
+parent BLOCKED remains separate from this functional result. Exact evidence:
+quality-main-config-coverage-ac4-20261015.log and
+quality-main-config-open-counters-ac4-20261015.jsonl. Automatic projection now
+has37observations; closure counts remain2/44+1static/42open.
+
+Next bounded blind reviews are readonly: map those missing config functions to
+already-maintained tests before writing duplicates, and identify the smallest
+existing Bun child-custody route for genuine governance cross-process races.
+Root owns registry/Source/checks/Git. These research lanes run after numerical
+producers finish; no simultaneous writers or duplicate full suite/AST/hash scan.
 
 ## Automatic contour progress projection
 
