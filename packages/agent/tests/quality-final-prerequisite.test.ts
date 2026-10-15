@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertCrapPlanPrerequisites } from '../tooling/crap-gate.ts';
+import { assertCrapPlanPrerequisites, scopedCrapFunctionProof } from '../tooling/crap-gate.ts';
 import { assertMutationSummary, readBudgetPlan } from '../tooling/quality-final.ts';
 import { qualityFingerprint, type CoverageInputs } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
@@ -11,6 +11,37 @@ import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts'
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const originalBudgetPlan = process.env.VIDA_CRAP_BUDGET_PLAN;
 const temporaryRoots: string[] = [];
+
+test('scoped lower-bound proof preserves ceilings without admitting historical measurements', () => {
+  const original = [{ identity: 'original', complexity: 3 }];
+  const current = [{ identity: 'current', complexity: 2, coverage: 1, crap: 2 }];
+  const budget = [
+    {
+      identity: 'original',
+      current_identity: 'current',
+      baseline_complexity: 3,
+      max_complexity: 3,
+      max_crap: 12,
+      rationale: 'Frozen synthetic unit correspondence',
+    },
+  ];
+  const [row] = scopedCrapFunctionProof(original, current, budget);
+  expect(row).toMatchObject({ original_source_complexity: 3, conservative_crap_ceiling: 3, complexity: 2, crap: 2 });
+  expect(row).not.toHaveProperty('baseline_coverage');
+  expect(row).not.toHaveProperty('baseline_crap');
+  for (const change of [{ coverage: 0 }, { crap: 3 }, { complexity: 4, crap: 4 }])
+    expect(() => scopedCrapFunctionProof(original, [{ ...current[0]!, ...change }], budget)).toThrow(
+      /uncovered, malformed or exceeds/,
+    );
+  for (const change of [{ baseline_complexity: 4 }, { max_complexity: 4 }, { max_crap: 2 }])
+    expect(() => scopedCrapFunctionProof(original, current, [{ ...budget[0]!, ...change }])).toThrow(/ceilings/);
+  for (const rows of [[], [...budget, ...budget], [{ ...budget[0]!, current_identity: 'missing' }]])
+    expect(() => scopedCrapFunctionProof(original, current, rows)).toThrow();
+  expect(() => scopedCrapFunctionProof([...original, ...original], current, [...budget, ...budget])).toThrow(
+    /duplicated/,
+  );
+  expect(() => scopedCrapFunctionProof(original, [...current, ...current], budget)).toThrow(/duplicated/);
+});
 
 test('final quality rejects a perfect selected mutation pilot even with matching input identities', () => {
   const inputs: CoverageInputs = {

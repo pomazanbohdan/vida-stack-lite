@@ -450,6 +450,10 @@ function collectModuleSpecifiers(tree: unknown): string[] {
 }
 
 function moduleSpecifiers(source: string, file: string): string[] {
+  if (file.endsWith('.json')) {
+    JSON.parse(source);
+    return [];
+  }
   const tree = parse(source, { sourceType: 'unambiguous', plugins: typescriptSyntaxPlugins(file) }) as unknown;
   return collectModuleSpecifiers(tree);
 }
@@ -475,13 +479,18 @@ export function testFilesWithLifecycleHooks(testFiles: string[], testInputs: Rec
       const bytes = testInputs[file];
       if (!bytes) return true;
       const source = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-      if (!file.startsWith('tests/') && /\b(?:beforeAll|beforeEach|afterAll|afterEach)\b/u.test(source)) return true;
       let specifiers;
       try {
         specifiers = moduleSpecifiers(source, file);
       } catch {
         return true;
       }
+      if (
+        !file.startsWith('tests/') &&
+        !file.endsWith('.json') &&
+        /\b(?:beforeAll|beforeEach|afterAll|afterEach)\b/u.test(source)
+      )
+        return true;
       for (const specifier of specifiers) {
         const imported = resolveTestImport(file, specifier, inputFiles);
         if (imported) pending.push(imported);

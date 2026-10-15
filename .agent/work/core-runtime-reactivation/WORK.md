@@ -4683,26 +4683,52 @@ owner's scope. No duplicate consumer writers or notices.
 The current pinned contour is main-cedar. Complete closure requires exact
 F/L/S/B, function correspondence, frozen complexity/dynamic CRAP and100%
 assertion-confirmed Killed together; coverage alone does not advance the contour.
-Fresh ebf7461 coverage reportceab5638-ce16-42ff-9f01-15c03a90c7f9 records
-33PASS/0FAIL/12273assertions,4.39s Bun/7335.197776ms owned outer operation.
+At published ca39641, coverage reportbc61d644-e031-4da0-b914-3688b90616cf
+records33PASS/0FAIL/12273assertions,4.29s Bun/6969.831651ms owned outer;
+F25/25,L56/56,S60/60,B21/21,maxCC/entryCRAP6/6. The earlier immutable
+baseline failure and genuine native fixture correction remain at
+ca39641:.agent/work/core-runtime-reactivation/WORK.md and retained root
+/workspace/attachments/quality-mutation-main-cedar-HQdmh1.
 
-The complete declared mutation partition generated195mutants but its immutable
-baseline failed32PASS/1FAIL before mutation execution. Run35762d67-2bac-48fb-a2e1-4c8de3b0e56b
-is UNKNOWN, with no Killed claim. Retained launch/output is at
-/workspace/attachments/quality-mutation-main-cedar-HQdmh1. The kernel composition
-test attempted fallback file reservations beneath its immutable configuration
-fixture. It now supplies a genuine test-owned native HostState governance
-capability instead. It preserves all behavioral assertions and the immutable
-configuration contract; it closes its SQLite handle once, retains failures/late
-completion with an exact locator, and deletes only successful timely fixtures.
-The corrected focused case passes1/0 with34assertions; tests TypeScript passes.
-The full declared mutation baseline and all195mutants still need a fresh run.
+Complete mutation run34b8d99d-7a57-44d6-b54f-83893b35ac65 passed its baseline
+and executed195mutants in351868.431169ms owned outer. Raw Stryker180Killed/
+15Survived/0timeout/errors is NOT confirmed quality. The strict owner accepts
+only19/195, with161UNKNOWN and15survivors; statusUNKNOWN. Retained terminal
+receipt/output: /workspace/attachments/quality-mutation-main-cedar-vPiDAp.
+Physical inner evidence is under /tmp/quality-mutation-main-cedar-c3AP74/package-tmp/
+mutation-evidence-34b8d99d-7a57-44d6-b54f-83893b35ac65-41tef8.
+The automatic projection now retains47observations without combining different
+Source/test/tool closures; previous compatible coverage+mutation maxima remain2/44.
 
-The complete executable CRAP plan and referenced historical coverage/runtime
-artifacts are absent. The reviewed partial remains non-executable. A strictly
-local proof using immutable original Source complexity and the stronger bound
-currentCC/currentCRAP<=originalCC is under review; it cannot admit missing
-historical coverage or claim global gate acceptance.
+Corrections from this campaign: strict-parse imported JSON as data in lifecycle
+analysis, preserving malformed data and JS/TS hook/parse denials; move valid
+authorizer construction into asserted test bodies; preserve return-shape and
+async fulfillment assertions before field access. A restored synchronous Bun
+spy replaces the Cedar mock child, preserving genuine assertion attribution and
+removing its subprocess overhead. Official reference: https://bun.com/docs/test/mocks.
+Other isolated mock cases retain their existing ownership and execution path.
+
+Blind Luna and Root review prove genuine validated project_ids/integration
+bindings have identical membership. Removing only the two duplicate project_ids
+checks preserves both integration membership, tenant/hash and issuer guards.
+Authentic multi-project positive and independently negative principal/resource
+cases, real semantic-error and unrelated-warning cases, an authentic invalid
+loaded policy and a boundary validation-failure envelope strengthen the tests.
+One changed-Source capture retains25identities, unchanged original frozen fields
+and maxCC4: /workspace/attachments/quality-cedar-membership-lineage-receipt-20261015.json.
+The prior row rationale describes its historical bytes; the correction metadata
+supersedes that description without changing correspondence or allowances.
+
+The complete executable global CRAP plan and historical report/runtime artifacts
+remain absent; the partial remains non-executable. TESTING now owns a conservative
+local proof in the existing CRAP gate. It pins the published reviewed ebf7461
+rows, independently derives original b549951 CC, revalidates exact focused
+coverage custody, and requires currentCC/currentCRAP<=originalCC as well as all
+saved ceilings. Independent Luna review confirms this lower-bound argument;
+it admits no missing historical metric and cannot imply global quality or
+mutation acceptance. Its receipt alone cannot close or advance the contour.
+Fresh coverage, scoped proof and complete confirmed mutation remain pending
+after this code/test/tool correction packet.
 
 ## Historical provenance
 

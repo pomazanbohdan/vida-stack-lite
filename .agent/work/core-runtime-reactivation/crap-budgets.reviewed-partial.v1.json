@@ -295,7 +295,7 @@
     },
     {
       "file": "src/authorization/cedar-boundary.ts",
-      "sha256": "8047e31df6bf6694b9ee4c13bfd29eab3a48097c55e220eab88b3f9a592aeecd"
+      "sha256": "efba5c1bf1278cbc786a6235436b556d6d8b21b612f8860361d60ef1ac687e3c"
     },
     {
       "file": "src/governance/operation-policy.ts",
@@ -32313,10 +32313,10 @@
         "line": 78,
         "column": 50,
         "start": 2629,
-        "end": 6312,
+        "end": 6203,
         "bodyLine": 78,
         "bodyColumn": 119,
-        "bodyEndLine": 145,
+        "bodyEndLine": 144,
         "bodyEndColumn": 1
       },
       "name": "closure:CallExpression:arguments[0]",
@@ -32364,7 +32364,8 @@
           ]
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 4
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:claimValid/closure:OptionalCallExpression:arguments[0]#0",
@@ -32381,13 +32382,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 95,
+        "line": 94,
         "column": 45,
-        "start": 3739,
-        "end": 3790,
-        "bodyLine": 95,
+        "start": 3630,
+        "end": 3681,
+        "bodyLine": 94,
         "bodyColumn": 58,
-        "bodyEndLine": 95,
+        "bodyEndLine": 94,
         "bodyEndColumn": 96
       },
       "name": "closure:OptionalCallExpression:arguments[0]",
@@ -32435,7 +32436,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:claimValid/closure:OptionalCallExpression:arguments[0]#1",
@@ -32452,13 +32454,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 96,
+        "line": 95,
         "column": 45,
-        "start": 3847,
-        "end": 3906,
-        "bodyLine": 96,
+        "start": 3738,
+        "end": 3797,
+        "bodyLine": 95,
         "bodyColumn": 58,
-        "bodyEndLine": 96,
+        "bodyEndLine": 95,
         "bodyEndColumn": 104
       },
       "name": "closure:OptionalCallExpression:arguments[0]",
@@ -32506,7 +32508,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0",
@@ -32523,13 +32526,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 108,
+        "line": 107,
         "column": 18,
-        "start": 4536,
-        "end": 6155,
-        "bodyLine": 108,
+        "start": 4427,
+        "end": 6046,
+        "bodyLine": 107,
         "bodyColumn": 52,
-        "bodyEndLine": 142,
+        "bodyEndLine": 141,
         "bodyEndColumn": 3
       },
       "name": "binding:execute",
@@ -32563,7 +32566,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 3
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[0]#0",
@@ -32580,13 +32584,13 @@
         "bodyEndColumn": 62
       },
       "current_source_address": {
-        "line": 132,
+        "line": 131,
         "column": 6,
-        "start": 5791,
-        "end": 5847,
-        "bodyLine": 132,
+        "start": 5682,
+        "end": 5738,
+        "bodyLine": 131,
         "bodyColumn": 12,
-        "bodyEndLine": 132,
+        "bodyEndLine": 131,
         "bodyEndColumn": 62
       },
       "name": "closure:ArrayExpression:elements[0]",
@@ -32626,7 +32630,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[0]#0/closure:CallExpression:arguments[0]#0",
@@ -32643,13 +32648,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 132,
+        "line": 131,
         "column": 37,
-        "start": 5822,
-        "end": 5846,
-        "bodyLine": 132,
+        "start": 5713,
+        "end": 5737,
+        "bodyLine": 131,
         "bodyColumn": 48,
-        "bodyEndLine": 132,
+        "bodyEndLine": 131,
         "bodyEndColumn": 61
       },
       "name": "closure:CallExpression:arguments[0]",
@@ -32695,7 +32700,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:execute/binding:execute#0/binding:diagnostics/closure:ArrayExpression:elements[1]#0",
@@ -32712,13 +32718,13 @@
         "bodyEndColumn": 53
       },
       "current_source_address": {
-        "line": 133,
+        "line": 132,
         "column": 6,
-        "start": 5855,
-        "end": 5902,
-        "bodyLine": 133,
+        "start": 5746,
+        "end": 5793,
+        "bodyLine": 132,
         "bodyColumn": 12,
-        "bodyEndLine": 133,
+        "bodyEndLine": 132,
         "bodyEndColumn": 53
       },
       "name": "closure:ArrayExpression:elements[1]",
@@ -32758,7 +32764,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#binding:authorizationAttempt/closure:CallExpression:arguments[0]#0/binding:factories/closure:ArrayExpression:elements[0]#0",
@@ -32775,13 +32782,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 143,
+        "line": 142,
         "column": 21,
-        "start": 6178,
-        "end": 6261,
-        "bodyLine": 143,
+        "start": 6069,
+        "end": 6152,
+        "bodyLine": 142,
         "bodyColumn": 27,
-        "bodyEndLine": 143,
+        "bodyEndLine": 142,
         "bodyEndColumn": 104
       },
       "name": "closure:ArrayExpression:elements[0]",
@@ -32821,7 +32828,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:assertConfiguredCedarPolicy#0",
@@ -32838,13 +32846,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 175,
+        "line": 174,
         "column": 7,
-        "start": 7309,
-        "end": 8139,
-        "bodyLine": 175,
+        "start": 7200,
+        "end": 8030,
+        "bodyLine": 174,
         "bodyColumn": 87,
-        "bodyEndLine": 191,
+        "bodyEndLine": 190,
         "bodyEndColumn": 1
       },
       "name": "fn:assertConfiguredCedarPolicy",
@@ -32878,7 +32886,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 3
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:assertConfiguredCedarPolicy#0/closure:CallExpression:arguments[0]#0",
@@ -32895,13 +32904,13 @@
         "bodyEndColumn": 114
       },
       "current_source_address": {
-        "line": 185,
+        "line": 184,
         "column": 42,
-        "start": 7921,
-        "end": 8048,
-        "bodyLine": 186,
+        "start": 7812,
+        "end": 7939,
+        "bodyLine": 185,
         "bodyColumn": 10,
-        "bodyEndLine": 186,
+        "bodyEndLine": 185,
         "bodyEndColumn": 114
       },
       "name": "closure:CallExpression:arguments[0]",
@@ -32953,7 +32962,8 @@
           ]
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:authorized#0",
@@ -33010,7 +33020,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:authorizeProject#0",
@@ -33027,13 +33038,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 146,
+        "line": 145,
         "column": 7,
-        "start": 6336,
-        "end": 6770,
-        "bodyLine": 153,
+        "start": 6227,
+        "end": 6661,
+        "bodyLine": 152,
         "bodyColumn": 30,
-        "bodyEndLine": 162,
+        "bodyEndLine": 161,
         "bodyEndColumn": 1
       },
       "name": "fn:authorizeProject",
@@ -33067,7 +33078,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:createConfiguredProjectAuthorizer#0",
@@ -33084,13 +33096,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 163,
+        "line": 162,
         "column": 7,
-        "start": 6778,
-        "end": 7301,
-        "bodyLine": 166,
+        "start": 6669,
+        "end": 7192,
+        "bodyLine": 165,
         "bodyColumn": 21,
-        "bodyEndLine": 174,
+        "bodyEndLine": 173,
         "bodyEndColumn": 1
       },
       "name": "fn:createConfiguredProjectAuthorizer",
@@ -33124,7 +33136,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:createConfiguredProjectAuthorizer#0/closure:ReturnStatement:argument[0]#0",
@@ -33141,13 +33154,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 172,
+        "line": 171,
         "column": 9,
-        "start": 7181,
-        "end": 7298,
-        "bodyLine": 173,
+        "start": 7072,
+        "end": 7189,
+        "bodyLine": 172,
         "bodyColumn": 4,
-        "bodyEndLine": 173,
+        "bodyEndLine": 172,
         "bodyEndColumn": 80
       },
       "name": "closure:ReturnStatement:argument[0]",
@@ -33185,7 +33198,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:deniedByError#0",
@@ -33242,7 +33256,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:deny#0",
@@ -33299,7 +33314,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:entity#0",
@@ -33356,7 +33372,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:errorMessage#0",
@@ -33413,7 +33430,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:policySet#0",
@@ -33470,7 +33488,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:reject#0",
@@ -33527,7 +33546,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:reject#0/closure:CallExpression:arguments[0]#0",
@@ -33588,7 +33608,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0",
@@ -33645,7 +33666,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 2
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:failure/binding:failure#0",
@@ -33702,7 +33724,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:failure/binding:failure#0/closure:CallExpression:arguments[0]#0",
@@ -33771,7 +33794,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/authorization/cedar-boundary.ts#fn:validateCedarPolicySet#0/binding:success/binding:success#0",
@@ -33828,7 +33852,8 @@
           "enclosing_context_detail": []
         },
         "detail_disambiguated": false
-      }
+      },
+      "current_complexity": 1
     },
     {
       "identity": "src/governance/operation-policy.ts#class:PolicySession/method:constructor#0",
@@ -220608,5 +220633,12 @@
     "identities_unchanged": true,
     "frozen_fields_unchanged": true,
     "qualification": "One current changed-file AST and hash capture. Other Source records reused without freshness qualification. No executable frozen/global or mutation admission."
+  },
+  "cedar_membership_correction": {
+    "file": "src/authorization/cedar-boundary.ts",
+    "receipt_ref": "/workspace/attachments/quality-cedar-membership-lineage-receipt-20261015.json",
+    "identities_unchanged": true,
+    "frozen_fields_unchanged": true,
+    "qualification": "One changed-Source inventory/hash capture; other Sources reused without freshness qualification. Partial is not an executable global plan. Current numeric and mutation results remain pending."
   }
 }

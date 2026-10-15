@@ -1,4 +1,4 @@
-import { describe, expect, mock, test } from 'bun:test';
+import { describe, expect, mock, spyOn, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import type { TrustedProjectIdentity, ProjectAuthorizationRequest } from '../src/contracts/public-ingress.js';
@@ -852,19 +852,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('preserves Cedar execution failure diagnostics and request validation', async () => {
-    const name = 'preserves Cedar execution failure diagnostics and request validation';
-    if (process.env.ENVELOPES_BOUNDARY_ISOLATED_CASE !== name) return runIsolatedMockCase(name);
     const actualCedar = await import('@cedar-policy/cedar-wasm/nodejs');
-    await mock.module('@cedar-policy/cedar-wasm/nodejs', () => ({
-      ...actualCedar,
-      isAuthorized: (value: unknown) => {
-        if (!hasValidateRequest(value)) throw new Error('validateRequest flag missing');
-        return {
-          type: 'failure',
-          errors: [{ message: 'cedar execution failure' }],
-        };
-      },
-    }));
     const cedar = await import('../src/authorization/cedar-boundary.js');
     const { repositoryRoot: root, config, context: project } = configuredTestContext();
     const projectId = project.project_ids[0];
@@ -890,19 +878,29 @@ describe('runtime envelope canonicalization boundary', () => {
       registry_hash: project.registry_hash,
     };
 
-    expect(
-      cedar.authorizeProject(
-        request,
-        trustedIdentity,
-        project,
-        root,
-        config.authorization.cedar.policy,
-        config.authorization.cedar.schema_text,
-      ),
-    ).toEqual({
-      decision: 'deny',
-      diagnostics: ['cedar execution failure'],
+    // All awaits precede the spy; synchronous invocation and finally restoration cannot leak it to another body.
+    const authorization = spyOn(actualCedar, 'isAuthorized').mockImplementation((value) => {
+      if (!hasValidateRequest(value)) throw new Error('validateRequest flag missing');
+      return {
+        type: 'failure',
+        errors: [{ message: 'cedar execution failure', help: null, code: null, url: null, severity: null }],
+        warnings: [],
+      };
     });
-    process.stdout.write(`BUN_TEST_CASE_COMPLETE:${name}\n`);
+    try {
+      expect(
+        cedar.authorizeProject(
+          request,
+          trustedIdentity,
+          project,
+          root,
+          config.authorization.cedar.policy,
+          config.authorization.cedar.schema_text,
+        ),
+      ).toEqual({ decision: 'deny', diagnostics: ['cedar execution failure'] });
+      expect(authorization).toHaveBeenCalledTimes(1);
+    } finally {
+      authorization.mockRestore();
+    }
   });
 });

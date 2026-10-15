@@ -3,6 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import fc from 'fast-check';
 import path from 'node:path';
 import { assertProperty } from './helpers/assert-property.js';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import type { RuntimeEnvelopeRevisionBinding } from '../src/contracts/envelopes.js';
 import {
   assertCanonicalJsonValue,
@@ -20,7 +21,6 @@ import {
 import { createConfiguredProjectAuthorizer } from '../src/authorization/cedar-boundary.ts';
 
 const { repositoryRoot, config, context } = configuredTestContext();
-const authorizer = createConfiguredProjectAuthorizer(repositoryRoot, config);
 const projectId = context.project_ids[0];
 if (projectId === undefined) throw new Error('Fuzz fixture requires a configured project');
 const seed = Number(process.env.FAST_CHECK_SEED ?? '20260830');
@@ -52,6 +52,12 @@ function outcome<T>(action: () => T): { returned: true; value: T } | { returned:
     expect(error).toBeInstanceOf(Error);
     return { returned: false, value: error };
   }
+}
+
+function configuredAuthorizer() {
+  const authorizer = expectReturned(() => createConfiguredProjectAuthorizer(repositoryRoot, config));
+  expect(typeof authorizer).toBe('function');
+  return authorizer;
 }
 
 describe('deterministic shrinking fuzz boundaries', () => {
@@ -156,10 +162,11 @@ describe('deterministic shrinking fuzz boundaries', () => {
   });
 
   test('configured authorization denies requests without trusted identity', () => {
+    const authorizer = configuredAuthorizer();
     assertProperty(
       fc.property(unknownValue, (value) => {
         const result = authorizer(value, undefined, context);
-        expect(result.decision).toBe('deny');
+        expect(result).toMatchObject({ decision: 'deny' });
         expect(result.diagnostics.length).toBeGreaterThan(0);
       }),
       parameters,
@@ -167,6 +174,7 @@ describe('deterministic shrinking fuzz boundaries', () => {
   });
 
   test('configured authorization rejects malformed requests with matched trusted identity', () => {
+    const authorizer = configuredAuthorizer();
     const request = {
       principal: 'fuzz-principal',
       role: 'developer-orchestrator',
@@ -187,7 +195,7 @@ describe('deterministic shrinking fuzz boundaries', () => {
       project: request.project,
       registry_hash: context.registry_hash,
     };
-    expect(authorizer(request, identity, context).decision).toBe('allow');
+    expect(authorizer(request, identity, context)).toMatchObject({ decision: 'allow' });
     assertProperty(
       fc.property(
         fc.constantFrom('principal', 'role', 'action', 'tenant', 'project', 'registryHash', 'operationHash'),
@@ -196,7 +204,7 @@ describe('deterministic shrinking fuzz boundaries', () => {
           const malformed = { ...request, [field]: value };
           expect(() => validateAuthorizationRequest(malformed)).toThrow();
           const result = authorizer(malformed, identity, context);
-          expect(result.decision).toBe('deny');
+          expect(result).toMatchObject({ decision: 'deny' });
           expect(result.diagnostics.length).toBeGreaterThan(0);
         },
       ),

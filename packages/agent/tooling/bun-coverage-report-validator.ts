@@ -37,6 +37,7 @@ import {
   readQualityInputs,
   sha256,
   testSelectionFingerprint,
+  type FocusedDiagnosticSelection,
   type FinalQualityProjectionInputs,
 } from './bun-coverage-evidence.ts';
 import {
@@ -115,6 +116,16 @@ type CoverageReport =
       schema: 'VidaBunCoverageReport/v2';
       published_reference?: never;
       test_selection: Omit<CoverageReportCommon['test_selection'], 'mode'> & { mode: 'full-current-test-set' };
+    })
+  | (Omit<CoverageReportCommon, 'published_reference'> & {
+      schema: 'VidaBunFocusedCoverageDiagnostic/v1';
+      published_reference?: never;
+      qualification_scope: 'focused-diagnostic';
+      full_qualification: false;
+      frozen_budget_qualification: 'pending';
+      function_coverage_kind: 'function-entry-binary';
+      metrics: unknown[];
+      coverage: Record<string, FileCoverageData>;
     });
 
 type SelectionMode = 'current' | 'published-baseline-bun-native';
@@ -123,7 +134,7 @@ type CoverageInputs = import('./bun-coverage-evidence.ts').CoverageInputs;
 type FinalProjections = FinalQualityProjectionInputs;
 type InputProjections = Awaited<ReturnType<typeof qualityInputProjections>>;
 type DecodedReport = Record<string, unknown> & {
-  schema: 'VidaBunCoverageReport/v1' | 'VidaBunCoverageReport/v2';
+  schema: 'VidaBunCoverageReport/v1' | 'VidaBunCoverageReport/v2' | 'VidaBunFocusedCoverageDiagnostic/v1';
   run_id: string;
   runtime_executable_sha256: string;
   sources: unknown[];
@@ -142,6 +153,7 @@ type DecodedManifest = Record<string, unknown> &
 type CoverageRun = Awaited<ReturnType<typeof readCoverageRun>>;
 type CoverageResult = {
   report: CoverageReport;
+  report_sha256: string;
   manifest: RunManifest;
   inputs: CoverageInputs;
   maintained_sources: Digest[];
@@ -240,11 +252,14 @@ function isRunManifest(value: unknown): value is DecodedManifest {
   );
 }
 
-function readCoverageReport(reportPath: string, reportBytes?: Uint8Array) {
+function readCoverageReport(reportPath: string, reportBytes?: Uint8Array, allowFocused = false) {
   const bytes = reportBytes ?? readFileSync(reportPath);
   const report = record(JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes)), 'coverage report');
+  const focused = report.schema === 'VidaBunFocusedCoverageDiagnostic/v1';
   if (
-    (report.schema !== 'VidaBunCoverageReport/v1' && report.schema !== 'VidaBunCoverageReport/v2') ||
+    (report.schema !== 'VidaBunCoverageReport/v1' &&
+      report.schema !== 'VidaBunCoverageReport/v2' &&
+      (!focused || !allowFocused)) ||
     typeof report.run_id !== 'string' ||
     !/^[0-9a-f-]{36}$/u.test(report.run_id) ||
     typeof report.runtime_executable_sha256 !== 'string'
@@ -253,7 +268,7 @@ function readCoverageReport(reportPath: string, reportBytes?: Uint8Array) {
   for (const key of ['sources', 'tests', 'test_inputs', 'tool_inputs', 'shards', 'processes'])
     if (!Array.isArray(report[key])) throw new Error(`Coverage report ${key} are missing.`);
   let coverage: Record<string, unknown> | undefined;
-  if (report.schema === 'VidaBunCoverageReport/v1') {
+  if (report.schema === 'VidaBunCoverageReport/v1' || focused) {
     coverage = record(report.coverage, 'coverage report counters');
   } else {
     if (Object.hasOwn(report, 'coverage')) throw new Error('Aggregate counters are forbidden in coverage report v2.');
@@ -262,7 +277,7 @@ function readCoverageReport(reportPath: string, reportBytes?: Uint8Array) {
     if (Object.keys(report).sort().join(',') !== v2ReportKeys)
       throw new Error('Coverage report v2 contains unknown or missing fields.');
   }
-  return { report: report as DecodedReport, coverage };
+  return { report: report as DecodedReport, coverage, reportSha256: sha256(bytes) };
 }
 
 function readCoverageManifest(root: string, report: DecodedReport) {
@@ -325,18 +340,19 @@ async function readCoverageRun(
   root: string,
   reportBytes?: Uint8Array,
   historicalRuntimeExecutablePath?: string,
+  allowFocused = false,
 ) {
-  const { report, coverage } = readCoverageReport(reportPath, reportBytes);
+  const { report, coverage, reportSha256 } = readCoverageReport(reportPath, reportBytes, allowFocused);
   const manifest = readCoverageManifest(root, report);
   const runtimeExecutableSha256 = await validateRuntimeBinding(root, report, manifest, historicalRuntimeExecutablePath);
-  return { report, coverage, manifest, runtimeExecutableSha256 };
+  return { report, coverage, reportSha256, manifest, runtimeExecutableSha256 };
 }
 
 async function captureRunInputs(
   root: string,
   report: DecodedReport,
   manifest: DecodedManifest,
-  selectionMode: SelectionMode,
+  selectionMode: SelectionMode | FocusedDiagnosticSelection,
 ) {
   const current = await coverageInputs(root, selectionMode);
   verifyInputBindings(report, manifest, current);
@@ -984,6 +1000,14 @@ function validateCoverageReportInternal(
   reportPath: string,
   root: string,
   options: CoverageOptions,
+  finalProjections: undefined,
+  historicalRuntimeExecutablePath: undefined,
+  focusedSelection: FocusedDiagnosticSelection,
+): Promise<CoverageResult>;
+function validateCoverageReportInternal(
+  reportPath: string,
+  root: string,
+  options: CoverageOptions,
   finalProjections: FinalProjections,
 ): Promise<CoverageResultWithInputs>;
 function validateCoverageReportInternal(
@@ -999,17 +1023,31 @@ async function validateCoverageReportInternal(
   options: CoverageOptions,
   finalProjections?: FinalProjections,
   historicalRuntimeExecutablePath?: string,
+  focusedSelection?: FocusedDiagnosticSelection,
 ) {
   const selectionMode = checkedSelectionMode(options);
+  if (focusedSelection) {
+    if (selectionMode !== 'current' || finalProjections || historicalRuntimeExecutablePath)
+      throw new Error('Focused diagnostic validation cannot use historical or projected input modes.');
+  }
   if (finalProjections && selectionMode !== 'current')
     throw new Error('Final quality input projections require the current test selection.');
-  const run = await readCoverageRun(reportPath, root, options.reportBytes, historicalRuntimeExecutablePath);
+  const run = await readCoverageRun(
+    reportPath,
+    root,
+    options.reportBytes,
+    historicalRuntimeExecutablePath,
+    focusedSelection !== undefined,
+  );
+  if (focusedSelection) validateFocusedReportQualifiers(run.report, focusedSelection);
+  else if (run.report.schema === 'VidaBunFocusedCoverageDiagnostic/v1')
+    throw new Error('Focused diagnostic reports require the focused coverage validator.');
   const inputProjections = finalProjections ? await qualityInputProjections(root, finalProjections) : undefined;
   const current =
     inputProjections?.coverage ??
     (historicalRuntimeExecutablePath
       ? await historicalSnapshotInputs(root, run.report, run.manifest)
-      : await captureRunInputs(root, run.report, run.manifest, selectionMode));
+      : await captureRunInputs(root, run.report, run.manifest, focusedSelection ?? selectionMode));
   if (inputProjections) {
     verifyInputBindings(run.report, run.manifest, current);
     verifySnapshotFiles(root, run.report, run.manifest, current);
@@ -1028,11 +1066,12 @@ async function validateCoverageReportInternal(
     root,
     run,
     current,
-    options.requireFullCoverage ?? true,
+    focusedSelection ? true : (options.requireFullCoverage ?? true),
   );
   const result = {
     // Full provenance, snapshot, map and counter validation precedes these trusted views.
     report: run.report as CoverageReport,
+    report_sha256: run.reportSha256,
     manifest: run.manifest as RunManifest,
     inputs: current,
     maintained_sources: current.sources,
@@ -1048,6 +1087,31 @@ async function validateCoverageReportInternal(
 
 export async function validateCoverageReport(reportPath: string, root: string, options: CoverageOptions = {}) {
   return validateCoverageReportInternal(reportPath, root, options);
+}
+
+function validateFocusedReportQualifiers(report: DecodedReport, selection: FocusedDiagnosticSelection): void {
+  if (report.schema !== 'VidaBunFocusedCoverageDiagnostic/v1')
+    throw new Error('Expected the focused diagnostic schema.');
+  if (
+    report.qualification_scope !== 'focused-diagnostic' ||
+    report.full_qualification !== false ||
+    report.frozen_budget_qualification !== 'pending' ||
+    report.function_coverage_kind !== 'function-entry-binary' ||
+    !Array.isArray(report.metrics)
+  )
+    throw new Error('Focused diagnostic qualification metadata is invalid.');
+  if (Object.hasOwn(report, 'published_reference'))
+    throw new Error('Focused diagnostic cannot admit historical coverage.');
+  if (selection.mode !== 'focused-diagnostic') throw new Error('Focused diagnostic selection mode is invalid.');
+}
+
+/** Validate a focused diagnostic using the full current-input and receipt chain, without global admission. */
+export async function validateFocusedCoverageReport(
+  reportPath: string,
+  root: string,
+  selection: FocusedDiagnosticSelection,
+) {
+  return validateCoverageReportInternal(reportPath, root, {}, undefined, undefined, selection);
 }
 
 /** Consume an already admitted historical measurement while current tools remain the admission authority. */

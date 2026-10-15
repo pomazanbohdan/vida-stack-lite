@@ -272,6 +272,25 @@ describe('mutation JUnit attribution', () => {
     expect(testFilesWithLifecycleHooks(['tests/helpers/plain.mjs'], testInputs)).toEqual([]);
   });
 
+  test('treats valid imported JSON as data and keeps malformed JSON fail-closed', () => {
+    const entry = 'tests/cedar.test.ts';
+    const runtimeConfig = 'src/config/runtime-config.ts';
+    const schema = 'schemas/runtime-config.schema.json';
+    const testInputs = {
+      [entry]: Buffer.from("import '../src/config/runtime-config.ts';"),
+      [runtimeConfig]: Buffer.from("import schema from '../../schemas/runtime-config.schema.json'; export { schema };"),
+      [schema]: Buffer.from('{"description":"The word beforeEach here is data."}'),
+    };
+
+    expect(testFilesWithLifecycleHooks([entry], testInputs)).toEqual([]);
+    expect(
+      testFilesWithLifecycleHooks([entry], {
+        ...testInputs,
+        [schema]: Buffer.from('{"description":"beforeEach"'),
+      }),
+    ).toEqual([entry]);
+  });
+
   test('distinguishes TypeScript generics from JSX while retaining hook and parse denials', () => {
     const entry = 'tests/typescript-owner.test.ts';
     const dependency = 'src/generic-owner.ts';

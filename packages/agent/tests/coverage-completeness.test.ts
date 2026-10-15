@@ -1,4 +1,4 @@
-import { rejectionReason } from './helpers/expect-rejection.ts';
+import { expectReturned, rejectionReason } from './helpers/expect-rejection.ts';
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import os from 'node:os';
@@ -55,7 +55,7 @@ import type { RuntimeKernelHostBindings } from '../src/runtime-kernel.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
 
 import { createConfiguredMastra, sanitizeDiagnostic } from '../src/orchestration/mastra-boundary.ts';
-import { requireAbsoluteRepositoryRoot } from '../src/config/project-context.ts';
+import { loadProjectSetContext, requireAbsoluteRepositoryRoot } from '../src/config/project-context.ts';
 import { validateConfiguredRepositoryAccess } from '../src/config/runtime-config.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
@@ -666,7 +666,8 @@ describe('direct maintained-source completeness', () => {
     const invalidCedar = validateCedarPolicySet('not cedar');
     expect(invalidCedar.valid).toBe(false);
     expect(invalidCedar.diagnostics[0]).toMatch(/parse|token|input/i);
-    const authorize = createConfiguredProjectAuthorizer(repositoryRoot, config);
+    const authorize = expectReturned(() => createConfiguredProjectAuthorizer(repositoryRoot, config));
+    expect(typeof authorize).toBe('function');
     const invalidSchemaResult = authorizeProject(
       authorizationRequest('a'.repeat(64)),
       identity(),
@@ -877,6 +878,37 @@ describe('direct maintained-source completeness', () => {
     );
   });
 
+  test('Cedar membership independently bounds both projects in an authentic multi-project context', () => {
+    const projectIds = config.projects.map((entry) => entry.project_id);
+    expect(projectIds.length).toBeGreaterThan(1);
+    const context = loadProjectSetContext(repositoryRoot, config, project.repository_id, projectIds);
+    const permissivePolicy = 'permit(principal, action, resource);';
+    const request = authorizationRequest('a'.repeat(64));
+    const authorize = (requestChange: Partial<ProjectAuthorizationRequest>) => {
+      const changed = { ...request, ...requestChange };
+      return authorizeProject(
+        changed,
+        { ...identity(), tenant: changed.tenant, project: changed.project },
+        context,
+        repositoryRoot,
+        permissivePolicy,
+        config.authorization.cedar.schema_text,
+      );
+    };
+    // Every selected principal/resource pair is valid; another selected binding must not cause denial.
+    for (const principalProject of projectIds)
+      for (const resourceProject of projectIds) {
+        const result = authorize({ project: principalProject, resourceProject });
+        expect(result).toMatchObject({ decision: 'allow', receipt: { operation_hash: request.operationHash } });
+      }
+    // Matching trusted identity and permissive policy cannot waive either configured membership boundary.
+    for (const change of [{ project: 'outside-selected-projects' }, { resourceProject: 'outside-selected-projects' }])
+      expect(authorize(change)).toEqual({
+        decision: 'deny',
+        diagnostics: ['authorization claims do not satisfy the configured project boundary'],
+      });
+  });
+
   test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
     expect(() => invokeUntrusted(sanitizeDiagnostic, [config, null])).toThrow(/diagnostic|string|non-empty/i);
     expect(Buffer.byteLength(sanitizeDiagnostic(config, 'x'.repeat(10_000)), 'utf8')).toBeLessThanOrEqual(10_000);
@@ -916,14 +948,12 @@ describe('direct maintained-source completeness', () => {
     expect(nativeNoFollowAvailable).toBe(true);
     const caseDeadline = performance.now() + 5_000;
     const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-kernel-host-'));
-    const openDatabases = new Set<Database>();
-    const closeAttempted = new Set<Database>();
+    let database: Database | undefined;
     let bodyFailure: { readonly error: unknown } | undefined;
     let caseSucceeded = false;
 
     try {
-      const database = new Database(path.join(temporaryRoot, 'governance.sqlite'), { create: true, strict: true });
-      openDatabases.add(database);
+      database = new Database(path.join(temporaryRoot, 'governance.sqlite'), { create: true, strict: true });
       database.exec('PRAGMA journal_mode=DELETE');
       database.exec('PRAGMA synchronous=FULL');
       const governanceCapability = new HostStateStore(database, 'a'.repeat(64)).governanceCapability;
@@ -945,10 +975,19 @@ describe('direct maintained-source completeness', () => {
           },
         },
       });
-      const kernel = await createRuntimeKernel(repositoryRoot, host);
-      expect((await kernel.readConfig()).schema).toBe('AgentRuntimeConfig/v1');
-      expect((await kernel.readProjectContext()).project_ids).toContain(projectBinding.project_id);
-      expect((await kernel.evaluateGovernance('runtime.read', {})).decision).toBe('allow');
+      const kernelCreation = createRuntimeKernel(repositoryRoot, host);
+      await Promise.resolve(expect(kernelCreation).resolves.toBeDefined());
+      const kernel = await kernelCreation;
+      await Promise.resolve(expect(kernel.readConfig()).resolves.toHaveProperty('schema', 'AgentRuntimeConfig/v1'));
+      await Promise.resolve(
+        expect(kernel.readProjectContext()).resolves.toHaveProperty(
+          'project_ids',
+          expect.arrayContaining([projectBinding.project_id]),
+        ),
+      );
+      await Promise.resolve(
+        expect(kernel.evaluateGovernance('runtime.read', {})).resolves.toHaveProperty('decision', 'allow'),
+      );
       const fixture = governedEvidence();
       {
         const failure = await rejectionReason(
@@ -1004,7 +1043,9 @@ describe('direct maintained-source completeness', () => {
       expect(kernel.schema).toBe('RuntimeKernel/v1');
       expect(kernel.repositoryRoot).toBe(repositoryRoot);
       expect(Object.isFrozen(kernel)).toBe(true);
-      expect((await kernel.evaluateGovernance('runtime.write', {})).decision).toBe('deny');
+      await Promise.resolve(
+        expect(kernel.evaluateGovernance('runtime.write', {})).resolves.toHaveProperty('decision', 'deny'),
+      );
       const bindingDefaults = {
         repositoryRoot,
         repositoryId: project.repository_id,
@@ -1043,8 +1084,12 @@ describe('direct maintained-source completeness', () => {
         createRuntimeKernelHost({ ...bindingDefaults, repositoryRoot: repositoryRoot + path.sep + '.' }),
       ).toThrow(/canonical/);
       const defaultTimingHost = createRuntimeKernelHost(bindingDefaults);
-      const defaultTimingKernel = await createRuntimeKernel(repositoryRoot, defaultTimingHost);
-      expect((await defaultTimingKernel.readConfig()).schema).toBe('AgentRuntimeConfig/v1');
+      const defaultTimingKernelCreation = createRuntimeKernel(repositoryRoot, defaultTimingHost);
+      await Promise.resolve(expect(defaultTimingKernelCreation).resolves.toBeDefined());
+      const defaultTimingKernel = await defaultTimingKernelCreation;
+      await Promise.resolve(
+        expect(defaultTimingKernel.readConfig()).resolves.toHaveProperty('schema', 'AgentRuntimeConfig/v1'),
+      );
       {
         const failure = await rejectionReason(invokeUntrusted(createRuntimeKernel, [repositoryRoot, {}]));
         expect(() => {
@@ -1096,20 +1141,11 @@ describe('direct maintained-source completeness', () => {
       completeOwnedCleanup(
         [
           () => {
-            const closeErrors: unknown[] = [];
-            for (const database of openDatabases) {
-              if (closeAttempted.has(database)) continue;
-              closeAttempted.add(database);
-              try {
-                database.close(true);
-                openDatabases.delete(database);
-              } catch (error) {
-                closeErrors.push(error);
-              }
-            }
-            if (closeErrors.length > 0) {
+            try {
+              database?.close(true);
+            } catch (error) {
               console.error(`Retained runtime kernel fixture: ${temporaryRoot}`);
-              throw new AggregateError(closeErrors, 'Runtime kernel governance database close failed');
+              throw error;
             }
             if (!caseSucceeded || bodyFailure !== undefined || performance.now() >= caseDeadline) {
               console.error(`Retained runtime kernel fixture: ${temporaryRoot}`);

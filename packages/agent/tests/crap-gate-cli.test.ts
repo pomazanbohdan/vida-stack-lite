@@ -68,3 +68,25 @@ test('native CRAP inventory denies duplicate or foreign sources and unsupported 
     );
   }
 });
+
+test('scoped CRAP refuses unreviewed correspondence versions and contours before numerical admission', () => {
+  const reviewed = 'ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56';
+  for (const [contour, reference, message] of [
+    ['main-cedar', '0'.repeat(40), 'pinned published reviewed budget commit'],
+    ['main-config', reviewed, 'outside the pinned independent source-lineage review'],
+    ['unknown', reviewed, 'complete declared executable contour'],
+  ]) {
+    const result = spawnSync(process.execPath, [script, '--contour', contour!, '--budget-ref', reference!], {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 5000,
+      maxBuffer: 1024 * 1024,
+      env: { ...process.env, BUN_OPTIONS: '' },
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(1);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toContain(message!);
+  }
+});

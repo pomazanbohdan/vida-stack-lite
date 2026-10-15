@@ -1009,6 +1009,31 @@ complete correspondence; the global plan remains required for final admission.
 The final report stays outside the sealed runs/<run-id> directory. Do not relax
 its read-only manifest/snapshot permissions to publish a diagnostic.
 
+For sequential whole-contour development, the existing CRAP owner also supports
+`VIDA_BUN_COVERAGE_REPORT=<focused-report> bun tooling/crap-gate.ts --contour
+<declared-contour> --budget-ref ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56`.
+This is a separate conservative local proof, never global admission of a partial
+plan or a historical measurement. The pinned published review must cover every
+declared Source. Caller-supplied correspondence versions are rejected. The shared
+focused validator rechecks the pinned runtime, current inputs, immutable snapshot,
+manifest, process receipts, canonical instrumentation and exact per-file F/L/S/B.
+The CRAP owner then derives exhaustive original IDs/CC from immutable b549951
+Source and current IDs/function fractions from the validated maps; it requires
+one-to-one reviewed correspondence without increasing any saved cap.
+
+This bounded mode requires saved maxCC=originalCC, maxCRAP>=originalCC and
+currentCC=currentCRAP<=originalCC at exact current coverage1. Since original
+CRAP=originalCC+originalCC²(1-originalCoverage)³>=originalCC for every possible
+originalCoverage in[0,1], this stronger bound proves numeric non-regression
+without reconstructing or admitting the missing historical coverage/CRAP.
+Unmatched/new/removed callable roles or unsupported reviews remain GAP.
+Its run-keyed `VidaScopedCrapBudgetReport/v1` preserves the original diagnostic
+schema and binds its exact parsed bytes, input closure, frozen Git version and
+per-function proof. It never overwrites the global CRAP report. This receipt is
+one kind of evidence: complete contour closure separately requires compatible
+exact coverage and100% assertion-confirmed Killed mutation evidence. UNKNOWN,
+runtime/compile errors, missing suites and timeouts remain non-kills.
+
 ### Automatic contour progress document
 
 `bun run quality:contours` projects existing terminal reports into

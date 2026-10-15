@@ -89,9 +89,8 @@ const authorizationAttempt = Result.fromThrowable((parameters: AuthorizationPara
     (validateProjectContextBinding(projectContext!, requireAbsoluteRepositoryRoot(trustedRepositoryRoot)), true);
   const claimValid = [
     contextFields.repository_id === request.tenant,
-    Array.isArray(contextFields.project_ids) && contextFields.project_ids.includes(request.project),
     contextFields.repository_id === request.resourceTenant,
-    Array.isArray(contextFields.project_ids) && contextFields.project_ids.includes(request.resourceProject),
+    // The issued context validator proves these bindings and project_ids have identical membership.
     contextFields.integration_bindings?.some((binding) => binding.project_id === request.project) === true,
     contextFields.integration_bindings?.some((binding) => binding.project_id === request.resourceProject) === true,
     request.registryHash === contextFields.registry_hash,

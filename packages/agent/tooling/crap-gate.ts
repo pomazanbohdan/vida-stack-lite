@@ -6,8 +6,14 @@ import coverageApi from 'istanbul-lib-coverage';
 import { maintainedSourceInventory, selectMaintainedSourcePaths } from './maintained-source-inventory.js';
 import { canonicalTestSelection, sha256 } from './bun-coverage-evidence.ts';
 import { functionInventory } from './function-inventory.js';
-import { validateCoverageReport, validateHistoricalBaselineCoverageReport } from './bun-coverage-report-validator.js';
+import {
+  validateCoverageReport,
+  validateFocusedCoverageReport,
+  validateHistoricalBaselineCoverageReport,
+} from './bun-coverage-report-validator.js';
+import { mutationPartitions } from './mutation-partitions.ts';
 import { baselineFunctionEvidenceForSource, exactFullCoverage, validateCoverageLocations } from './coverage-math.js';
+import type { BaselineFunctionEvidence } from './coverage-math.js';
 
 type FunctionRow = import('./function-inventory.js').FunctionRow;
 type BaselineFunctionBudget = {
@@ -42,6 +48,8 @@ const root = path.resolve(
 );
 const { createCoverageMap } = coverageApi;
 const baselineRef = 'b549951';
+// Published task review, fixed before the scoped candidate measurements; never caller-supplied correspondence.
+const scopedBudgetReviewCommit = 'ebf74615669c6ecdc0d754fdc3ad6eaf6e954c56';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -95,6 +103,68 @@ export function assertCrapPlanPrerequisites(
   assertCrapPlanEvidence(value, repoRoot);
 }
 
+/** Conservative local proof: original Source CC is a lower bound on original CRAP for every coverage fraction. */
+export function scopedCrapFunctionProof(
+  published: readonly Pick<FunctionRow, 'identity' | 'complexity'>[],
+  current: readonly BaselineFunctionEvidence[],
+  frozen: unknown,
+) {
+  if (!Array.isArray(frozen) || published.length === 0 || frozen.length !== published.length)
+    throw new Error('Scoped CRAP proof requires exhaustive frozen original function rows.');
+  const originals = new Map(published.map((row) => [row.identity, row]));
+  const candidates = new Map(current.map((row) => [row.identity, row]));
+  if (originals.size !== published.length || candidates.size !== current.length || current.length !== frozen.length)
+    throw new Error('Scoped CRAP function inventories are incomplete or duplicated.');
+  const originalIds = new Set<string>();
+  const currentIds = new Set<string>();
+  return frozen.map((raw: unknown) => {
+    if (
+      !isRecord(raw) ||
+      typeof raw.identity !== 'string' ||
+      typeof raw.current_identity !== 'string' ||
+      typeof raw.rationale !== 'string' ||
+      !raw.rationale.trim()
+    )
+      throw new Error('Scoped CRAP frozen correspondence is malformed.');
+    const original = originals.get(raw.identity);
+    const candidate = candidates.get(raw.current_identity);
+    if (!original || !candidate || originalIds.has(raw.identity) || currentIds.has(raw.current_identity))
+      throw new Error('Scoped CRAP original/current correspondence must be exhaustive and one-to-one.');
+    originalIds.add(raw.identity);
+    currentIds.add(raw.current_identity);
+    if (
+      !Number.isSafeInteger(original.complexity) ||
+      original.complexity < 1 ||
+      raw.baseline_complexity !== original.complexity ||
+      raw.max_complexity !== original.complexity ||
+      typeof raw.max_crap !== 'number' ||
+      !Number.isSafeInteger(raw.max_crap) ||
+      raw.max_crap < original.complexity
+    )
+      throw new Error('Scoped CRAP ceilings do not satisfy the immutable original Source lower-bound proof.');
+    if (
+      candidate.coverage !== 1 ||
+      !Number.isSafeInteger(candidate.complexity) ||
+      candidate.complexity < 1 ||
+      candidate.crap !== candidate.complexity ||
+      candidate.complexity > original.complexity
+    )
+      throw new Error('Scoped CRAP current function is uncovered, malformed or exceeds its original Source ceiling.');
+    return {
+      identity: raw.identity,
+      current_identity: raw.current_identity,
+      original_source_complexity: original.complexity,
+      maximum_complexity: raw.max_complexity,
+      maximum_crap: raw.max_crap,
+      conservative_crap_ceiling: original.complexity,
+      complexity: candidate.complexity,
+      coverage: candidate.coverage,
+      crap: candidate.crap,
+      rationale: raw.rationale,
+    };
+  });
+}
+
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
   const repoRootResult = spawnSync('git', ['rev-parse', '--show-toplevel'], {
     cwd: root,
@@ -142,7 +212,16 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     );
     process.exit(0);
   }
-  if (process.argv.length > 2) throw new Error('Unsupported CRAP budget gate arguments.');
+  const scopedArguments = process.argv.slice(2);
+  const scoped = scopedArguments[0] === '--contour';
+  if (
+    scoped
+      ? scopedArguments.length !== 4 ||
+        scopedArguments[2] !== '--budget-ref' ||
+        !/^[a-f0-9]{40}$/u.test(scopedArguments[3] ?? '')
+      : scopedArguments.length > 0
+  )
+    throw new Error('Unsupported CRAP budget gate arguments.');
 
   // One invocation, one immutable published commit; never retain live package state.
   const baselineTextByPath = new Map<string, string | null>();
@@ -599,6 +678,96 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const source = new TextDecoder('utf-8', { fatal: true }).decode(result.stdout);
     baselineTextByPath.set(file, source);
     return source;
+  }
+
+  if (scoped) {
+    const partition = mutationPartitions().find((row) => row.name === scopedArguments[1]);
+    if (
+      !partition?.sources?.length ||
+      !partition.tests?.length ||
+      !['main', 'bun'].includes(partition.environment ?? '')
+    )
+      throw new Error('Scoped CRAP proof requires a complete declared executable contour.');
+    const budgetCommit = scopedArguments[3]!;
+    if (budgetCommit !== scopedBudgetReviewCommit)
+      throw new Error('Scoped CRAP proof requires the pinned published reviewed budget commit.');
+    if (gitText(['rev-parse', '--verify', `${budgetCommit}^{commit}`]).trim() !== budgetCommit)
+      throw new Error('Scoped CRAP budget reference is not an immutable commit.');
+    const budgetFile = '.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json';
+    const budgetBytes = gitText(['show', `${budgetCommit}:${budgetFile}`]);
+    const budget: unknown = JSON.parse(budgetBytes);
+    if (
+      !isRecord(budget) ||
+      budget.schema !== 'VidaReviewedFunctionLineagePartial/v1' ||
+      budget.baseline_ref !== baselineRef ||
+      !Array.isArray(budget.baseline_functions)
+    )
+      throw new Error('Scoped CRAP proof has no immutable reviewed function lineage.');
+    const review = budget.scope_review_v1033;
+    const reviewedFiles = isRecord(review) && Array.isArray(review.files) ? new Set(review.files) : new Set();
+    if (partition.sources.some((file) => !reviewedFiles.has(file)))
+      throw new Error('Scoped CRAP contour is outside the pinned independent source-lineage review.');
+    const validation = await validateFocusedCoverageReport(coveragePath, root, {
+      mode: 'focused-diagnostic',
+      contour: partition.name,
+      sources: partition.sources,
+      tests: partition.tests,
+    });
+    const published: FunctionRow[] = [];
+    const measured: BaselineFunctionEvidence[] = [];
+    const originalSources: { path: string; sha256: string }[] = [];
+    for (const file of partition.sources) {
+      if (!baselineSources().includes(file))
+        throw new Error('Scoped Source is absent from the published inventory: ' + file);
+      const original = baselineSource(file);
+      if (original === null) throw new Error('Scoped original Source is missing: ' + file);
+      originalSources.push({ path: file, sha256: sha256(original) });
+      published.push(...functionInventory(original, file));
+      const source = validation.inputs.input_bytes[file];
+      if (!source) throw new Error('Scoped current Source is absent from its validated snapshot: ' + file);
+      const rows = functionInventory(new TextDecoder('utf-8', { fatal: true }).decode(source), file);
+      measured.push(...baselineFunctionEvidenceForSource(file, rows, validation.coverage[path.resolve(root, file)]));
+    }
+    const selected = new Set(partition.sources);
+    const frozen = budget.baseline_functions.filter(
+      (row: unknown) =>
+        isRecord(row) &&
+        [row.identity, row.current_identity].some((id) => typeof id === 'string' && selected.has(id.split('#')[0]!)),
+    );
+    const functions = scopedCrapFunctionProof(published, measured, frozen);
+    const report = validation.report;
+    const result = {
+      schema: 'VidaScopedCrapBudgetReport/v1',
+      status: 'scoped-proof-pass',
+      contour: partition.name,
+      qualification_scope: 'declared-contour-original-source-lower-bound',
+      full_qualification: false,
+      historical_measurement_admitted: false,
+      historical_coverage_runtime_artifacts: 'not-consumed/not-admitted',
+      baseline_ref: baselineRef,
+      baseline_commit: gitText(['rev-parse', '--verify', `${baselineRef}^{commit}`]).trim(),
+      budget_commit: budgetCommit,
+      budget_file: budgetFile,
+      budget_sha256: sha256(budgetBytes),
+      original_sources: originalSources,
+      coverage_run_id: report.run_id,
+      coverage_report: coveragePath,
+      coverage_report_sha256: validation.report_sha256,
+      manifest_sha256: report.manifest_sha256,
+      sources: validation.inputs.sources,
+      test_inputs: validation.inputs.test_inputs,
+      tool_inputs: validation.inputs.tool_inputs,
+      module_inputs: validation.inputs.module_inputs,
+      test_selection: validation.inputs.test_selection,
+      functions,
+      limits:
+        'Local conservative CRAP proof only; complete closure separately requires exact coverage and assertion-confirmed mutation. The partial lineage is not an executable global plan. Historical coverage/CRAP are not admitted.',
+    };
+    const scopedPath = path.join(root, 'coverage/bun-unified/diagnostics', `${report.run_id}.scoped-crap.json`);
+    await mkdir(path.dirname(scopedPath), { recursive: true });
+    await writeFile(scopedPath, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' });
+    process.stdout.write(JSON.stringify({ schema: result.schema, status: result.status, report: scopedPath }) + '\n');
+    process.exit(0);
   }
 
   const baselineCheck = spawnSync('git', ['rev-parse', '--verify', `${baselineRef}^{commit}`], {

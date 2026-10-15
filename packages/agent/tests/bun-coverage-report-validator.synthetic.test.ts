@@ -8,14 +8,20 @@ import { expect, test } from 'bun:test';
 import { mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { sha256 } from '../tooling/bun-coverage-evidence.ts';
 import path from 'node:path';
-import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
+import { validateCoverageReport, validateFocusedCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
 import {
   capturedModuleAbsolutePath,
   canonicalCapturedModulePath,
+  coverageInputs,
   repositoryRootForPackage,
   repositoryToolingInputPrefix,
+  type FocusedDiagnosticSelection,
 } from '../tooling/bun-coverage-evidence.ts';
-import { createSyntheticCoverageFixture, type SyntheticFixture } from './synthetic-coverage-fixture.ts';
+import {
+  createSyntheticCoverageFixture,
+  syntheticFixtureTestPath,
+  type SyntheticFixture,
+} from './synthetic-coverage-fixture.ts';
 
 const expectedFixtureSources = [
   'bin/cli-metadata.ts',
@@ -91,6 +97,137 @@ async function withVersionedFixture(action: (fixture: SyntheticFixture) => Promi
     else console.error(`Preserved failed versioned synthetic coverage fixture at ${fixture.root}`);
   }
 }
+
+async function bindSyntheticFocusedReport(fixture: SyntheticFixture): Promise<FocusedDiagnosticSelection> {
+  const selection: FocusedDiagnosticSelection = {
+    mode: 'focused-diagnostic',
+    contour: 'synthetic-validator-contour',
+    sources: (fixture.report.sources as Array<{ path: string }>).map(({ path: file }) => file),
+    tests: [syntheticFixtureTestPath],
+  };
+  const inputs = await coverageInputs(fixture.root, selection);
+  for (const key of [
+    'sources',
+    'source_fingerprint',
+    'tests',
+    'test_selection',
+    'test_inputs',
+    'test_fingerprint',
+    'tool_inputs',
+    'tool_fingerprint',
+    'module_inputs',
+  ] as const) {
+    fixture.manifest[key] = inputs[key];
+    fixture.report[key] = inputs[key];
+  }
+  const child = record(fixture.child, 'synthetic process receipt');
+  for (const key of [
+    'sources',
+    'source_fingerprint',
+    'test_selection',
+    'test_fingerprint',
+    'tool_fingerprint',
+    'module_inputs',
+  ] as const)
+    child[key] = inputs[key];
+  fixture.report.schema = 'VidaBunFocusedCoverageDiagnostic/v1';
+  fixture.report.qualification_scope = 'focused-diagnostic';
+  fixture.report.full_qualification = false;
+  fixture.report.frozen_budget_qualification = 'pending';
+  fixture.report.function_coverage_kind = 'function-entry-binary';
+  fixture.report.metrics = [];
+  const manifestPath = path.join(fixture.root, ...(fixture.report.manifest_path as string).split('/'));
+  writeFileSync(manifestPath, JSON.stringify(fixture.manifest));
+  fixture.report.manifest_sha256 = sha256(readFileSync(manifestPath));
+  fixture.rewriteChildAndReceiptHash((childRecord) => {
+    for (const key of ['s', 'f', 'b'] as const) {
+      const maps = childRecord.coverage as Record<string, Record<string, Record<string, number | number[]>>>;
+      for (const source of Object.values(maps)) {
+        const counters = source[key];
+        if (!counters) throw new Error('Synthetic focused counter map is missing.');
+        for (const [counter, value] of Object.entries(counters))
+          counters[counter] = Array.isArray(value) ? value.map(() => 1) : 1;
+      }
+    }
+  });
+  writeFileSync(fixture.reportPath, JSON.stringify(fixture.report));
+  return selection;
+}
+
+async function rejectsFocused(
+  fixture: SyntheticFixture,
+  selection: FocusedDiagnosticSelection,
+  expected: RegExp,
+): Promise<void> {
+  let caught: unknown;
+  try {
+    writeFileSync(fixture.reportPath, JSON.stringify(fixture.report));
+    await validateFocusedCoverageReport(fixture.reportPath, fixture.root, selection);
+  } catch (error) {
+    caught = error;
+  }
+  expect(caught).toBeInstanceOf(Error);
+  if (caught instanceof Error) expect(caught.message).toMatch(expected);
+}
+
+test('rejects focused reports from the default global validator', async () => {
+  await withFixture(async (fixture) => {
+    await bindSyntheticFocusedReport(fixture);
+    await rejects(fixture, fixture.reportBytes(), /schema or run identity is invalid/u);
+  });
+});
+
+test('rejects a focused report bound to another requested contour', async () => {
+  await withFixture(async (fixture) => {
+    const selection = await bindSyntheticFocusedReport(fixture);
+    await rejectsFocused(fixture, { ...selection, contour: 'different-contour' }, /Coverage input changed/u);
+  });
+});
+
+test('rejects focused reports with the ordinary report schema', async () => {
+  await withFixture(async (fixture) => {
+    const selection = await bindSyntheticFocusedReport(fixture);
+    fixture.report.schema = 'VidaBunCoverageReport/v1';
+    await rejectsFocused(fixture, selection, /focused diagnostic schema/u);
+  });
+});
+
+test('rejects historical admission metadata on focused diagnostics', async () => {
+  await withFixture(async (fixture) => {
+    const selection = await bindSyntheticFocusedReport(fixture);
+    fixture.report.published_reference = { kind: 'measurement_admitted' };
+    await rejectsFocused(fixture, selection, /cannot admit historical coverage/u);
+  });
+});
+
+test('keeps exact full coverage mandatory for focused diagnostics', async () => {
+  await withFixture(async (fixture) => {
+    const selection = await bindSyntheticFocusedReport(fixture);
+    await rejectsFocused(fixture, selection, /Coverage is not exact 100%/u);
+  });
+});
+
+test('rejects focused aggregate counters that differ from checked process counters', async () => {
+  await withFixture(async (fixture) => {
+    const selection = await bindSyntheticFocusedReport(fixture);
+    const maps = record(fixture.report.coverage, 'synthetic focused counters');
+    const firstFile = record(Object.values(maps)[0], 'synthetic focused file');
+    const statements = record(firstFile.s, 'synthetic focused statements');
+    const firstStatement = Object.keys(statements)[0];
+    if (!firstStatement) throw new Error('Synthetic focused file has no statement counter.');
+    statements[firstStatement] = 0;
+    await rejectsFocused(fixture, selection, /Final counters do not equal merged process counters/u);
+  });
+});
+
+test('rejects focused reports with a faulted process receipt fingerprint', async () => {
+  await withFixture(async (fixture) => {
+    const selection = await bindSyntheticFocusedReport(fixture);
+    const receipt = record((fixture.report.processes as unknown[])[0], 'synthetic process receipt');
+    receipt.sha256 = '0'.repeat(64);
+    await rejectsFocused(fixture, selection, /process receipt fingerprint mismatch/u);
+  });
+});
 
 test('accepts an UNTRUSTED v3 run with two exact v2 shard receipts and one sparse checked merge', async () => {
   await withVersionedFixture(async (fixture) => {

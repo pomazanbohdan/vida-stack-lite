@@ -1,5 +1,14 @@
 import { expect } from 'bun:test';
 
+/** Assert normal synchronous completion before a caller inspects the returned value. */
+export function expectReturned<T>(operation: () => T): T {
+  let result: { value: T } | undefined;
+  expect(() => {
+    result = { value: operation() };
+  }).not.toThrow();
+  return result!.value;
+}
+
 /** Await the actual operation and distinguish rejected undefined from successful fulfillment. */
 export async function rejectionReason(operation: unknown): Promise<unknown> {
   let rejected = false;
