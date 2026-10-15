@@ -134,7 +134,8 @@ function countTestcase(
     bodyEvents,
   );
   const hookFailed =
-    hookFiles.has(suiteFile) || bodyEvents.some((event) => event.kind === 'hook' && event.test_file === suiteFile);
+    (failures.length > 0 && hookFiles.has(suiteFile)) ||
+    bodyEvents.some((event) => event.kind === 'hook' && event.test_file === suiteFile);
   return {
     tests: 1,
     assertions: Number(assertionText),

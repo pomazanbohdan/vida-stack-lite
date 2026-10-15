@@ -33,6 +33,56 @@ describe('mutation JUnit attribution', () => {
     expect(junitOutcome(report(), ['tests/one.test.mjs']).outcome).toBe('passed');
   });
 
+  test('accepts a passing baseline with uninstrumented lifecycle hooks', () => {
+    const outcome = junitOutcome(report(), ['tests/one.test.mjs'], ['tests/one.test.mjs']);
+    expect(confirmedRunnerOutcome(0, outcome.outcome)).toBe('passed');
+    expect(confirmedRunnerOutcome(1, outcome.outcome)).toBe('unknown');
+  });
+
+  test('keeps failed reports with uninstrumented lifecycle hooks unproven', () => {
+    const xml = report({
+      failures: 1,
+      testcase:
+        '<testcase name="[mutation-body:1] assert" classname="" file="tests/one.test.mjs" assertions="1"><failure type="AssertionError">expected 2</failure></testcase>',
+    });
+    const outcome = junitOutcome(
+      xml,
+      ['tests/one.test.mjs'],
+      ['tests/one.test.mjs'],
+      [
+        {
+          schema: 'MutationBodyEvent/v1',
+          test_file: 'tests/one.test.mjs',
+          kind: 'body',
+          body_id: 1,
+          assertion_cause: true,
+          assertion_source: 'bun-expect',
+        },
+      ],
+    );
+    expect(outcome.outcome).toBe('unproven');
+    expect(confirmedRunnerOutcome(1, outcome.outcome)).toBe('unknown');
+  });
+
+  test('rejects an observed hook error even when JUnit reports passing cases', () => {
+    const outcome = junitOutcome(
+      report(),
+      ['tests/one.test.mjs'],
+      [],
+      [
+        {
+          schema: 'MutationBodyEvent/v1',
+          test_file: 'tests/one.test.mjs',
+          kind: 'hook',
+          hook: 'afterAll',
+          error_observed: true,
+        },
+      ],
+    );
+    expect(outcome.outcome).toBe('unproven');
+    expect(confirmedRunnerOutcome(0, outcome.outcome)).toBe('unknown');
+  });
+
   test('accepts only explicit Bun AssertionError failures as assertion evidence', () => {
     const xml = report({
       failures: 1,

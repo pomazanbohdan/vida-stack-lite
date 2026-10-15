@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `3256fee` at origin/main.
+- Published predecessor: `4c6b0d8` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -32,8 +32,8 @@ Apply Fix Root Causes through a real failing control before correction and
 Sequence Verifiable Units through focused checks and strict commit/push per
 packet. Two fresh blind native Luna lanes own only independent review/planning
 artifacts. Astra stay stopped. No duplicate test owner, broad audit or ledger.
-Cloud Superpowers is currently unavailable and no local skill was found;
-repository planning/debug/review rules remain the available execution route.
+Cloud Superpowers is available again on this resumed turn. Root loaded its
+systematic-debugging and test-driven-development practices alongside Pstack.
 
 Published4513b7d fixes the full-selection/partition fingerprint mismatch with
 one shared owner and v3 descriptor, retains exact byte checks and adds rejection
@@ -219,9 +219,32 @@ The host boundary tests launch isolated Bun children without an explicit
 coverage preload. Child counter completeness is therefore a dependency to
 verify, not a presumed supported path. Blind Luna has a bounded design assignment
 for reuse of capture/preload/CRAP owners and the smallest safe diagnostic mode.
-The first cycle is in preparation, with no new coverage/CRAP or host mutation
-score claimed. Earlier attestation7/7 is a different, constants-only scope and
-does not qualify this function contour.
+The first cycle has completed a mutation diagnostic, but no coverage/CRAP or
+host mutation score is admitted. Earlier attestation7/7 is a different,
+constants-only scope and does not qualify this function contour.
+
+At4c6b0d8, the read-only repository mount first blocked legitimate CAS reader
+sidecars; that wrapper error is retained in quality-mutation-supervised-
+4c6b0d8-CORD3g. The corrected repository-writable wrapper completed in116808ms
+without timeout, with complete captures and observed owned-group termination:
+/workspace/attachments/quality-mutation-supervised-4c6b0d8-EgxThQ.
+Its original tests passed16/0 with381assertions in3.96s, but the mutation gate
+rejected baseline attribution. Retain package evidence at
+packages/agent/.tmp/mutation-evidence-5a6d9e55-b55d-4c2b-87d9-fbad8dbf4e79-7ANEAC;
+Stryker Killed rows remain UNKNOWN because that baseline was not admitted.
+
+Root reproduced a tooling defect: conservative uninstrumented-hook file flags
+were counted as hook failures even for successful cases. The correction only
+counts that ambiguity on failed cases; observed hook errors still deny and
+failed cases with uninstrumented hooks remain unproven. Regression before fix:
+quality-host-baseline-hooks-before-4c6-20261015.log (1FAIL/1PASS).
+Focused attribution/async/mixed-error checks after fix passed46/0 with192assertions
+in1.96s: quality-host-baseline-hooks-focused-4c6-20261015.log.
+An added control also denies a hook-error event despite a passing JUnit report.
+That control passed: quality-host-baseline-hook-event-4c6-20261015.log.
+Independent blind Luna accepted the actual causal diff in
+quality-main-host-baseline-cause-4c6-20261015.md. Fresh numeric measurement and
+local coverage/CRAP implementation remain pending.
 
 ## Root-owned rapid test and product audit
 
