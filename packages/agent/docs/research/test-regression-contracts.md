@@ -122,8 +122,9 @@ Check YAML schema, project identity, integration mapping, storage and safe refer
 Check canonical JSON wire equivalence and legal shared references. Deny getters, descriptors, prototypes, `toJSON`, cycles and malformed limits. Preserve finite node, depth and byte bounds. Cache digests only for loader-owned deeply frozen values. Recheck inherited serialization hooks on every read. New YAML or mutable caller data needs fresh validation.
 
 Timestamp controls include trailing LF, CR, CRLF and Unicode line separators.
-A regular expression's `$` can match before a final terminator; the maintained
-parser must still reject the whole invalid timestamp and never admit NaN.
+Check whole-input rejection separately from native parser failure. A scoped
+Date.parse fault proves fail-closed handling of NaN for an otherwise valid
+timestamp; restore the parser in finally and check real parsing afterward.
 The month lookup relies on the regex's 01..12 capture, alongside real calendar
 and leap-second controls. Do not fabricate an out-of-range matched month.
 

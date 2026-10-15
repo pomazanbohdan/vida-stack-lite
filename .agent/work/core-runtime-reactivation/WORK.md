@@ -598,10 +598,12 @@ state was changed and no install=unblock notice was sent.
 
 At published5ebb4f4, inspected the four residual contracts counters using the
 existing report and independent bounded Luna reviews, without another AST or
-inventory scan. A real trailing LF/CR/CRLF/U+2028/U+2029 timestamp is rejected
-by Date.parse even where regex `$` matches before its final terminator. Added
-an exact null/false regression and kept the finite-result guard. This is an
-existing reachable rejection, not a parser injection or a new product defect.
+inventory scan. Added exact null/false rejection controls for trailing LF/CR/
+CRLF/U+2028/U+2029 timestamps and kept the finite-result guard. The initial
+attribution to Date.parse was wrong: post-publication capturebe4aa462 confirms
+the false finite-result arm is still uncovered. A direct pinned Bun regex probe
+shows the no-m timestamp regex rejects these terminators before Date.parse.
+These controls establish an existing boundary rejection, not that later arm.
 
 Removed only three invariant-redundant fallbacks: the matched month is01..12,
 and the private synchronous Ajv ledger validator supplies errors on false and
@@ -619,6 +621,15 @@ Source strict101files and tests strict448files pass. Evidence under attachments:
 Numerical coverage/CC/CRAP is pending a post-publication capture; no100% branch
 claim or new mutation closure follows from these development checks. Existing
 parent BLOCKED results and origin/filtered-run qualification gaps remain intact.
+
+Post-publication capturebe4aa462 completes43PASS/0FAIL/14172assertions in5.41s
+Bun/8482.168956ms owned outer time at commit0c7ee01. It preservesF/L/S100% and
+has one residual public-ingress branch. Added a distinct scoped Date.parse NaN
+fault control with an otherwise valid timestamp, exact argument observations,
+finally restoration and native parsing before/after. This proves defensive
+dependency-failure handling, not a naturally failing valid native timestamp.
+Corrected the regression reference and informed both reviewers of the earlier
+misattribution. Numeric acceptance awaits the next actual capture.
 
 ## Automatic contour progress projection
 

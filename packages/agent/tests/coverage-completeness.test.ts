@@ -1,5 +1,5 @@
 import { rejectionReason } from './helpers/expect-rejection.ts';
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readFileSync } from 'node:fs';
@@ -267,7 +267,7 @@ describe('direct maintained-source completeness', () => {
     expect(isStrictRfc3339Timestamp(null)).toBe(false);
   });
 
-  test('timestamp parsing rejects trailing line terminators without admitting non-finite times', () => {
+  test('timestamp parsing rejects trailing line terminators', () => {
     const timestamp = '2026-10-15T00:00:00Z';
     expect(rfc3339TimestampMilliseconds(timestamp)).toBe(Date.UTC(2026, 9, 15));
     for (const suffix of ['\n', '\r', '\r\n', '\u2028', '\u2029']) {
@@ -275,6 +275,21 @@ describe('direct maintained-source completeness', () => {
       expect(rfc3339TimestampMilliseconds(input)).toBeNull();
       expect(isStrictRfc3339Timestamp(input)).toBe(false);
     }
+  });
+
+  test('timestamp parsing fails closed when the native parser returns a non-finite time', () => {
+    const timestamp = '2026-10-15T00:00:00Z';
+    const expected = Date.UTC(2026, 9, 15);
+    expect(rfc3339TimestampMilliseconds(timestamp)).toBe(expected);
+    const parse = spyOn(Date, 'parse').mockReturnValue(NaN);
+    try {
+      expect(rfc3339TimestampMilliseconds(timestamp)).toBeNull();
+      expect(isStrictRfc3339Timestamp(timestamp)).toBe(false);
+      expect(parse.mock.calls).toEqual([[timestamp], [timestamp]]);
+    } finally {
+      parse.mockRestore();
+    }
+    expect(rfc3339TimestampMilliseconds(timestamp)).toBe(expected);
   });
 
   test('governed write schemas match the maintained RFC3339 timestamp parser', () => {
