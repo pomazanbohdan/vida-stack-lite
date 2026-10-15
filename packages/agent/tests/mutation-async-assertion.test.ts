@@ -58,6 +58,27 @@ async function runAdapterChild(root: string, body: string, suffix: string) {
   };
 }
 
+test('real adapter parses plain TypeScript angle syntax and records the target assertion', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-typescript-syntax-'));
+  try {
+    const child = await runAdapterChild(
+      root,
+      `import { test, expect } from 'bun:test';
+const identity = <T>(value: T): T => value;
+test('generic arrow and angle assertion', () => { expect(identity(<number>1)).toBe(2); });`,
+      'syntax',
+    );
+    expect(child.events).toMatchObject([
+      { kind: 'body', body_id: 1, assertion_cause: true, assertion_source: 'bun-expect' },
+    ]);
+    expect(
+      confirmedRunnerOutcome(child.exitCode, junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome),
+    ).toBe('killed');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('real adapter records async node assertion failures and keeps unrelated errors unproven', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-async-assertion-'));
   try {

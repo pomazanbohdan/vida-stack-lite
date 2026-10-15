@@ -137,6 +137,11 @@ namespaces after every provider case, retaining every cleanup error. Do not use
 mock.restore() to reset module overrides. Keep these mocks serial and exclusive
 until parallel qualification; modified tests invalidate old shard reviews.
 NTFS/ReFS descriptor simulations are not native Windows qualification.
+Observe a successful target call with not.toThrow and separately assert its
+exact result. Keep imports, mocks, hooks and runner health outside that assertion:
+their failure cannot become a product assertion kill. Test Windows provider
+attestation and supported-filesystem proof independently, including false/true
+and true/false combinations; a positive pair alone cannot distinguish AND/OR.
 The full test selection and other mutation partitions retain the completeness
 file. Avoid eager configured-context/index setup in this narrow contour: a
 mutant's import/setup error cannot substitute for the target assertion.
@@ -501,7 +506,8 @@ names and resolution-only `require.resolve` remain outside this static check.
 Preserve the captured bytes and hashes;
 do not add a second Babel AST or filesystem capture pass for this check.
 
-The test-function auditor and focused-test guard share the filename-based Babel
+The test-function auditor, focused-test guard, mutation preload and mutation
+hook-dependency analysis share the filename-based Babel
 syntax owner in `tooling/babel-syntax.ts`. Plain TypeScript retains generic arrow
 and angle-assertion syntax; JSX is enabled only for JSX filenames, including
 discovered `.test.tsx` inputs. The auditor reuses each parsed test AST and reports

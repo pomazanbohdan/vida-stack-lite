@@ -188,6 +188,31 @@ describe('mutation JUnit attribution', () => {
     expect(testFilesWithLifecycleHooks(['tests/helpers/plain.mjs'], testInputs)).toEqual([]);
   });
 
+  test('distinguishes TypeScript generics from JSX while retaining hook and parse denials', () => {
+    const entry = 'tests/typescript-owner.test.ts';
+    const dependency = 'src/generic-owner.ts';
+    const generic = 'export const choose = <T>(value: T): T => value;';
+    const inputs = {
+      [entry]: Buffer.from(`import '../${dependency}';`),
+      [dependency]: Buffer.from(generic),
+    };
+    expect(testFilesWithLifecycleHooks([entry], inputs)).toEqual([]);
+    expect(
+      testFilesWithLifecycleHooks([entry], {
+        ...inputs,
+        [dependency]: Buffer.from(`${generic}\nimport { afterEach } from 'bun:test'; afterEach(() => {});`),
+      }),
+    ).toEqual([entry]);
+    expect(testFilesWithLifecycleHooks([entry], { ...inputs, [dependency]: Buffer.from('export const = ;') })).toEqual([
+      entry,
+    ]);
+    expect(
+      testFilesWithLifecycleHooks(['tests/jsx-owner.test.tsx'], {
+        'tests/jsx-owner.test.tsx': Buffer.from('const element = <section />;'),
+      }),
+    ).toEqual([]);
+  });
+
   test('keeps runtime, loader, setup, and worker Error failures unproven', () => {
     const xml = report({
       assertions: 0,

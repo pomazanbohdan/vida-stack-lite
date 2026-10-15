@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { parse } from '@babel/parser';
+import { typescriptSyntaxPlugins } from './babel-syntax.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const adapterSource = fileURLToPath(new URL('./mutation-test-adapter.ts', import.meta.url));
@@ -65,7 +66,7 @@ function record(value: unknown): value is Record<string, unknown> {
 }
 
 function rewriteTestImports(source: string, testFile: string, adapterUrl: string): string {
-  const tree: unknown = parse(source, { sourceType: 'unambiguous', plugins: ['typescript', 'jsx'] });
+  const tree: unknown = parse(source, { sourceType: 'unambiguous', plugins: typescriptSyntaxPlugins(testFile) });
   if (!record(tree) || !record(tree.program) || !Array.isArray(tree.program.body))
     throw new Error(`Mutation preflight could not parse ${testFile}.`);
   const replacements: { start: number; end: number }[] = [];

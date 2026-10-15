@@ -103,6 +103,10 @@ cause aggregation, not failed native I/O.
 
 ## Run focused checks safely
 
+Run selected package tests from the package working directory with explicit
+`./tests/...` paths. Bare filters from the repository root can also match retained
+coverage snapshots; such a mixed run is not current selected-test evidence.
+
 Use TESTING's exact declared-partition route for an authorized mutation pilot.
 Keep its source/test selection unchanged and its diagnostic schema distinct
 from full qualification. A matching input fingerprint and a perfect partial

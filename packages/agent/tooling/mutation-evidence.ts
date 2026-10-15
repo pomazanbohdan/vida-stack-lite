@@ -3,6 +3,7 @@ import { constants } from 'node:fs';
 import { open, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { parse } from '@babel/parser';
+import { typescriptSyntaxPlugins } from './babel-syntax.js';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 
 export type MutationBodyEvent =
@@ -429,8 +430,8 @@ function collectModuleSpecifiers(tree: unknown): string[] {
   return specifiers;
 }
 
-function moduleSpecifiers(source: string): string[] {
-  const tree = parse(source, { sourceType: 'unambiguous', plugins: ['typescript', 'jsx'] }) as unknown;
+function moduleSpecifiers(source: string, file: string): string[] {
+  const tree = parse(source, { sourceType: 'unambiguous', plugins: typescriptSyntaxPlugins(file) }) as unknown;
   return collectModuleSpecifiers(tree);
 }
 
@@ -458,7 +459,7 @@ export function testFilesWithLifecycleHooks(testFiles: string[], testInputs: Rec
       if (!file.startsWith('tests/') && /\b(?:beforeAll|beforeEach|afterAll|afterEach)\b/u.test(source)) return true;
       let specifiers;
       try {
-        specifiers = moduleSpecifiers(source);
+        specifiers = moduleSpecifiers(source, file);
       } catch {
         return true;
       }

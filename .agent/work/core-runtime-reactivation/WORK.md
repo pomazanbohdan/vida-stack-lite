@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `fe5444d` at origin/main.
+- Published predecessor: `a83f21a` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -204,6 +204,58 @@ original ISSUES verdict in quality-mutation-timeouts-review-3256fee-20261015.md;
 the root applied its exact requested correction without relabeling that review.
 
 ### First joint contour cycle
+
+Publisheda83f21a passed the strict473-file typecheck, format/lint/Knip hook and
+ordinary push. Its fresh focused reportd9082e45-5d55-4216-96ae-2bc695ffb1f7
+measured functions7/7,lines21/21,statements22/22,branches11/11, all100%;
+binary function-entry CC/CRAP1,1,1,3,1,1,2. Outer exit0 in3696.962ms, complete
+capture/group termination: quality-focused-supervised-a83f21a-nlVxMd.
+Summary: quality-main-host-parent-focused-summary-a83f21a-20261015.json.
+Frozen qualification remains pending, and later edits invalidate test evidence.
+
+Its separate mutation pilot completed in46613ms without timeout, full output and
+owned-group termination: quality-mutation-supervised-a83f21a-zY7TlX. Retain
+packages/agent/.tmp/mutation-evidence-0f0c55d1-58ee-4cea-8e2e-236da16c2c73-AfBgQz.
+Baseline passed; raw68Killed/1Survived, confirmed0Killed/68UNKNOWN. Survivor54
+changes attested AND supported-filesystem to OR. Added independent false/true
+and true/false scenarios; both fail under that exact injected change and pass
+with restored original Source: quality-host-attestation-negative-a83-20261015.log
+and quality-host-attestation-matrix-baseline-a83-20261015.log.
+
+Root traced50unproven outcomes to a false hook gap: mutation parsing enabled JSX
+for plain TS, then failed on a genuine generic arrow in safe-repository-access.
+Both remaining unconditional TS/JSX parsers now reuse the existing filename-based
+babel-syntax owner. Two regressions failed before correction and passed after;
+the real child adapter proves causal assertions with generic/angle syntax, while
+malformed syntax and uninstrumented hooks remain denied. Official parser source:
+https://babeljs.io/docs/babel-parser. Logs: quality-mutation-ts-syntax-{before,
+after}-a83-20261015.log. No parser retry, second AST owner or error suppression.
+
+Blind Luna classified the remaining18runtime-error cases in
+quality-host-unknown-causal-analysis-a83-20261015.md. Test success calls now assert
+that only the target call does not throw, then retain exact result assertions.
+The manual Linux fixture Error is removed; imports/mocks/cleanup remain outside
+assertion wrapping. These are test/tool corrections, not established product
+defects. Five affected files passed65tests/271assertions in2.31s:
+quality-host-causal-final-package-batch-a83-20261015.log.
+Independent blind review ACCEPT with no correctness findings:
+quality-host-causal-actual-review-a83-20261015.md. Root retains all infrastructure
+and cleanup UNKNOWN rules. Strict commit/push and fresh measurements follow.
+
+One mistaken development command from the repository root selected retained
+snapshot copies through Bun filename filtering. Root stopped that batch with
+exit143; it is not admitted as current evidence. Keep
+quality-host-causal-final-batch-a83-20261015.log. Parent93882 is absent; child95262
+was observed defunct under hostPID1, so that outer operation remains UNKNOWN.
+The corrected package-root ./tests selection produced the65-test result above.
+Future focused commands use that explicit route; no old evidence is relabeled.
+
+The follow-up design corrects the earlier shared-capture assumption:
+qualityInputProjections currently serves a shared post-run review, not producer
+input transport. Separate focused and pilot reports are the smallest safe
+interim; no new transport/branding framework is added. Artifact:
+quality-focused-shared-capture-minimal-fe5444d-20261015.md. Joint/global acceptance
+stays open.
 
 Current packet replaces all six nested host-test launches with parent-process
 provider cases. Plain full export snapshots restore fs and safe-access namespaces

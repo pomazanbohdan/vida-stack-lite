@@ -18,6 +18,16 @@ async function importFreshHostCapability(caseName: string): Promise<typeof impor
   )) as typeof import('../src/config/host-capability.ts');
 }
 
+function expectCapabilityCall(
+  call: () => NativeNoFollowCapability | null,
+): NativeNoFollowCapability | null | undefined {
+  const observed: { value?: NativeNoFollowCapability | null } = {};
+  expect(() => {
+    observed.value = call();
+  }).not.toThrow();
+  return observed.value;
+}
+
 describe('host capability native boundary', () => {
   test('rejects non-string, relative and noncanonical repository roots', async () => {
     const host = await import('../src/config/host-capability.ts');
@@ -31,7 +41,7 @@ describe('host capability native boundary', () => {
   test('reports and requires the qualified native Linux descriptor capability', async () => {
     const host = await import('../src/config/host-capability.ts');
     expect(host.nativeNoFollowAvailable).toBe(true);
-    const capability = host.detectNativeNoFollowCapability(process.cwd());
+    const capability = expectCapabilityCall(() => host.detectNativeNoFollowCapability(process.cwd()));
     expect(capability).toStrictEqual({
       schema: 'NativeNoFollowCapability/v1',
       platform: 'linux',
@@ -46,7 +56,7 @@ describe('host capability native boundary', () => {
       attested: true,
     });
     expect(capability?.attested).toBe(true);
-    expect(capability).toStrictEqual(host.requireNativeNoFollowCapability(process.cwd()));
+    expect(capability).toStrictEqual(expectCapabilityCall(() => host.requireNativeNoFollowCapability(process.cwd())));
   });
 });
 
@@ -82,7 +92,7 @@ describe('host capability provider boundary', () => {
     );
     const repositoryRoot = process.cwd();
 
-    expect(host.detectNativeNoFollowCapability(repositoryRoot)).toBeNull();
+    expect(expectCapabilityCall(() => host.detectNativeNoFollowCapability(repositoryRoot))).toBeNull();
     expect(() => host.requireNativeNoFollowCapability(repositoryRoot)).toThrow(
       'native no-follow host capability is unavailable; persistent path operations fail closed',
     );
@@ -105,8 +115,7 @@ describe('host capability provider boundary', () => {
         'reports the Linux descriptor capability when the native flags and provider are present',
       );
       const repositoryRoot = process.cwd();
-      const capability = host.detectNativeNoFollowCapability(repositoryRoot);
-      if (!capability) throw new Error('Linux capability fixture is unavailable');
+      const capability = expectCapabilityCall(() => host.detectNativeNoFollowCapability(repositoryRoot));
 
       expect(host.noFollowFlag).toBe(1);
       expect(host.nativeNoFollowAvailable).toBe(true);
@@ -123,7 +132,9 @@ describe('host capability provider boundary', () => {
         filesystem: 'linux-native',
         attested: true,
       });
-      expect(host.requireNativeNoFollowCapability(repositoryRoot)).toStrictEqual(capability);
+      expect(expectCapabilityCall(() => host.requireNativeNoFollowCapability(repositoryRoot))).toStrictEqual(
+        capability,
+      );
     } finally {
       if (originalPlatform) Object.defineProperty(process, 'platform', originalPlatform);
     }
@@ -147,7 +158,7 @@ describe('host capability provider boundary', () => {
       }),
     }));
     const host = await importFreshHostCapability('does not attest unknown Windows filesystems for durable operations');
-    const capability = host.detectNativeNoFollowCapability(process.cwd());
+    const capability = expectCapabilityCall(() => host.detectNativeNoFollowCapability(process.cwd()));
 
     expect(capability).toStrictEqual({
       schema: 'NativeNoFollowCapability/v1',
@@ -243,9 +254,21 @@ describe('host capability provider boundary', () => {
   test('attests the exact ReFS descriptor metadata and required capability', async () => {
     await assertWindowsFilesystemCapability('refs');
   });
+
+  test('rejects an unattested NTFS descriptor despite its supported filesystem', async () => {
+    await assertWindowsFilesystemCapability('ntfs', false, false);
+  });
+
+  test('rejects an unknown filesystem despite the provider claiming attestation', async () => {
+    await assertWindowsFilesystemCapability('unknown', true, false);
+  });
 });
 
-async function assertWindowsFilesystemCapability(filesystem: 'ntfs' | 'refs'): Promise<void> {
+async function assertWindowsFilesystemCapability(
+  filesystem: 'ntfs' | 'refs' | 'unknown',
+  providerAttested = true,
+  expectedAttested = true,
+): Promise<void> {
   const originalPlatform = Object.getOwnPropertyDescriptor(process, 'platform');
   await mock.module('node:fs', () => ({
     ...realFsExports,
@@ -259,14 +282,14 @@ async function assertWindowsFilesystemCapability(filesystem: 'ntfs' | 'refs'): P
       filesystem,
       package: { name: '@openclaw/fs-safe', version: fsSafeVersion, integrity: fsSafeIntegrity },
       residual_risks: ['Windows filesystem attestation is simulated by this descriptor fixture'],
-      attested: true,
+      attested: providerAttested,
     }),
   }));
   Object.defineProperty(process, 'platform', { configurable: true, value: 'win32' });
   try {
-    const host = await importFreshHostCapability(`attested ${filesystem} descriptor metadata`);
+    const host = await importFreshHostCapability(`${filesystem} descriptor provider attested ${providerAttested}`);
     const repositoryRoot = process.cwd();
-    const capability = host.detectNativeNoFollowCapability(repositoryRoot);
+    const capability = expectCapabilityCall(() => host.detectNativeNoFollowCapability(repositoryRoot));
     const expected: NativeNoFollowCapability = {
       schema: 'NativeNoFollowCapability/v1',
       platform: 'win32',
@@ -280,11 +303,17 @@ async function assertWindowsFilesystemCapability(filesystem: 'ntfs' | 'refs'): P
       filesystem,
       package: { name: '@openclaw/fs-safe', version: fsSafeVersion, integrity: fsSafeIntegrity },
       residual_risks: ['Windows filesystem attestation is simulated by this descriptor fixture'],
-      attested: true,
+      attested: expectedAttested,
     };
 
     expect(capability).toStrictEqual(expected);
-    expect(host.requireNativeNoFollowCapability(repositoryRoot)).toStrictEqual(expected);
+    if (expectedAttested) {
+      expect(expectCapabilityCall(() => host.requireNativeNoFollowCapability(repositoryRoot))).toStrictEqual(expected);
+    } else {
+      expect(() => host.requireNativeNoFollowCapability(repositoryRoot)).toThrow(
+        'native no-follow host capability is unavailable; persistent path operations fail closed',
+      );
+    }
   } finally {
     if (originalPlatform) Object.defineProperty(process, 'platform', originalPlatform);
   }
