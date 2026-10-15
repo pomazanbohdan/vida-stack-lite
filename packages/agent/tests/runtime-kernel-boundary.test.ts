@@ -1041,6 +1041,84 @@ describe('runtime kernel boundary', () => {
       ]);
     }
   });
+  test.skipIf(!nativeNoFollowAvailable)(
+    'failed kernel initialization preserves the launcher for a healthy retry',
+    async () => {
+      const root = await createRuntimeRepositoryRoot();
+      let passed = false;
+      try {
+        const configPath = path.join(root, 'agent-runtime.config.v1.yaml');
+        const original = await readFile(configPath, 'utf8');
+        const invalid = original.replace('permit (principal, action, resource) when', 'permit invalid syntax when');
+        expect(invalid).not.toBe(original);
+        await writeFile(configPath, invalid);
+        const current = loadRuntimeConfig(root);
+        expect(current.authorization.cedar.policy).toContain('permit invalid syntax when');
+        const projects = current.projects.map((entry) => entry.project_id).sort();
+        const context = loadProjectSetContext(root, current, current.repository.repository_id, projects);
+        const events: RuntimeTimingEvent[] = [];
+        let ticks = 0n;
+        let serviceCalls = 0;
+        const unexpectedService = (): never => {
+          serviceCalls += 1;
+          throw new Error('failed or readonly kernel must not call write services');
+        };
+        const capability = trustedHostCapability({
+          authentication: {
+            schema: 'TrustedHostAuthentication/v1',
+            repositoryRoot: root,
+            repositoryId: current.repository.repository_id,
+            projectIds: projects,
+            integrationsDigest: context.integrations_digest,
+            principal: 'principal-1',
+            configRevision: current.config_revision,
+            permittedOperations: ['runtime.read'],
+          },
+          services: {
+            resolveIdentity: unexpectedService,
+            verifyApproval: unexpectedService,
+            runtimeRevision: unexpectedService,
+            casWriter: unexpectedService,
+            clock: { monotonicNs: () => (ticks += 1_000_000n) },
+            timingSink: {
+              record: (event) => {
+                events.push(event);
+              },
+            },
+          },
+        });
+        await assert.rejects(() => createTrustedHostComposition(capability), /configured Cedar policy is invalid/);
+        expect(events).toMatchObject([{ operation: 'createRuntimeKernel', outcome: 'error', elapsed_ms: 1 }]);
+        expect(serviceCalls).toBe(0);
+        await writeFile(configPath, original);
+        let composition: Awaited<ReturnType<typeof createTrustedHostComposition>> | undefined;
+        await assert.doesNotReject(async () => {
+          composition = await createTrustedHostComposition(capability);
+        });
+        assert.ok(composition);
+        const initialized = composition;
+        await assert.doesNotReject(() => initialized.runtimeKernel.readConfig());
+        expect(events.map(({ operation, outcome, elapsed_ms }) => ({ operation, outcome, elapsed_ms }))).toEqual([
+          { operation: 'createRuntimeKernel', outcome: 'error', elapsed_ms: 1 },
+          { operation: 'createRuntimeKernel', outcome: 'success', elapsed_ms: 1 },
+          { operation: 'readConfig', outcome: 'success', elapsed_ms: 1 },
+        ]);
+        await assert.rejects(() => createTrustedHostComposition(capability), /launcher capability/);
+        expect(serviceCalls).toBe(0);
+        passed = true;
+      } finally {
+        if (passed) {
+          console.log('Removing owned kernel initialization fixture: ' + root);
+          await rm(root, { recursive: true, force: true }).catch((error: unknown) => {
+            console.error('Retained or uncertain kernel initialization fixture after cleanup failure: ' + root);
+            throw error;
+          });
+          console.log('Removed owned kernel initialization fixture: ' + root);
+        } else console.error('Retained failed kernel initialization fixture: ' + root);
+      }
+    },
+  );
+
   test('trusted launcher capability snapshots context and consumes only after success', async () => {
     const mutableAuthentication: {
       schema: 'TrustedHostAuthentication/v1';

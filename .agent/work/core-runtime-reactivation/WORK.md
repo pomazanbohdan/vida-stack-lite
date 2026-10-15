@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `835070e` at origin/main.
+- Published predecessor: `d42137b` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1445,6 +1445,48 @@ cleanup-resume-20261015.log. Previous kernel numeric proof now describes its
 previous Source bytes; fresh metrics remain pending. Independent blind actual
 review found no blocker and inspected the sole production admitted-composition
 caller: quality-kernel-normalization-actual-review-resume-20261015.md.
+
+Checkpointd42137b passes the strict staged hook and is published. Its complete
+five-file focused capture passes237/0/1805assertions in110.00s (113.562s owned
+outer), within300s; complete output/same boot/group gone. Report:
+packages/agent/coverage/bun-unified/diagnostics/
+51519381-4972-4fe4-a522-6014522f5247.focused-coverage.json; owner
+quality-retirement-coverage-JJBbhf and quality-kernel-normalization-coverage-
+resume-20261015.log. The actual Source metrics are162/162functions(100%),
+600/602lines(99.66%),629/632statements(99.52%),391/408branches(95.83%). All162
+function IDs equal the preceding current capture's IDs. Reuse those producer
+inventories for correspondence; no second AST pass is added. This is not the
+genuine frozen-baseline join. The local admission closure CC drops5->4 and
+resolve CC6->4; maxCC/function-entryCRAP remain31. Denominators changed because
+unreachable duplicate code was removed; do not describe this as only new
+execution coverage. Projection: quality-kernel-normalization-metrics-resume-
+20261015.json. Remaining3statements/17branch counters stay uncovered and the
+diagnostic remains full:false/frozen:pending with no new mutation score.
+
+### Kernel initialization and missing approval acknowledgements
+
+The last statement gaps point to the staged-kernel failure cleanup and malformed
+approval schema rejection. Add one real private configured-repository case:
+malformed embedded Cedar passes config shape loading but rejects during kernel
+formation, preserving the caller's launcher for a healthy retry after restoring
+the exact config. A supplied monotonic clock and timing sink prove the ordered
+error/success/readConfig events; write services remain uncalled, and the
+successful retry consumes the launcher. This tests public retry, not private
+WeakMap discard or physical Runtime acceptance. The existing protected-entry
+matrix adds provider/native missing-approval acknowledgements after real effect
+entry, requiring uncertainty, zero abort/dispatch and reconciliation on replay.
+The seven affected cases pass7/0/48assertions in2.35s:
+quality-kernel-initialization-focused-resume-20261015.log. Static checks pass
+478captured/477checkedTS plus101Source/0diagnostics:
+quality-kernel-initialization-static-final-resume-20261015.log.
+Independent review found a missing cleanup custody log in the new filesystem
+fixture. Add before-deletion and observed-after-deletion logs, and retain/report
+a failed cleanup root without a second deletion attempt; body failure retains
+its owned root. The corrected custody case passes1/0/6assertions in1.78s with
+both root logs: quality-kernel-initialization-custody-focused-resume-20261015.log.
+The reviewer confirms the gap is resolved:
+quality-kernel-initialization-cases-review-resume-20261015.md. Final numeric
+capture remains pending after this case update.
 
 ### Current product correction packet
 

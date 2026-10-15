@@ -1954,8 +1954,10 @@ describe('configured workflow host dispatch (isolated persistence adapters)', ()
   test.each([
     ['provider', 'reserved'],
     ['provider', 'foreign-fence'],
+    ['provider', 'missing-approval'],
     ['native', 'reserved'],
     ['native', 'foreign-fence'],
+    ['native', 'missing-approval'],
   ] as const)(
     'keeps a protected effect fenced when entry acknowledgement is invalid: %s/%s',
     async (surface, malformed) => {
@@ -1965,6 +1967,7 @@ describe('configured workflow host dispatch (isolated persistence adapters)', ()
       attempts.beginWorkflowAttemptEffect = async (authorization) => {
         const entered = await begin(authorization);
         if (malformed === 'reserved') return authorization;
+        if (malformed === 'missing-approval') return { ...entered, approval: null };
         return {
           ...entered,
           approval: {
