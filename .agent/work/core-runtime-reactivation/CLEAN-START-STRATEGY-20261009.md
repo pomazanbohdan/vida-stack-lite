@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `82ae51f`; current correction details are in WORK.
+- Published predecessor: `7eaebf1`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. The fresh host/timing pilots used accepted d320564 CI inputs. Changed inputs need matching CI formation; WORK owns run/artifact receipts.
 - Historical run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Preserve its custody and all older UNKNOWN evidence; do not replay it. Current attempts and source bindings are in WORK and the derived contour document.
@@ -51,9 +51,12 @@ The current rolling wave uses six blind native Luna slots for disjoint copied
 preparation and independent review. A completed handoff immediately receives the
 next ready scope or review. Root has published baseline-only per-test custody;
 the actual main-host pilot passed69/69, while public body/JUnit joins remain open.
-The next integration batch moves fourteen mixed completeness cases to their
-source owners and strengthens activated-config, storage-admission, governance
-and documentation-policy denials. Root owns Source, shared helpers, registry,
+The published integration batch moved fourteen mixed completeness cases to their
+source owners and strengthened activated-config, storage-admission, governance
+and documentation-policy denials. Fresh contracts coverage/scoped CRAP passed;
+its1188-mutant campaign hit900s and remains UNKNOWN. Correct parent assertion
+causality and review complete source-aligned subdivisions before another attempt;
+do not repeat the unchanged campaign or raise its deadline. Root owns Source, shared helpers, registry,
 frozen-plan metadata, documentation, checks and Git. Workers do not run competing
 checks, numerical producers, builds or installs. Exact outcomes live in WORK;
 copied preparation does not close a contour.

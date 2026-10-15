@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `82ae51f8a97ac3d1b312c8ae42609ced318d2604` at origin/main.
+- Published predecessor: `7eaebf14d561e08304b48b5348737a4aa5ae7fcb` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -5472,12 +5472,47 @@ were disclosed and corrected. Neither touched checkout/Git or ran suites, and
 neither command supplies verification evidence. Prompt guidance is not a sandbox.
 Subsequent agents receive fresh blind contexts and explicit execution exclusions.
 
-Next publish this checked selection packet, then refresh complete declared
-main-contracts coverage/scoped CRAP before a new mutation campaign. Its changed
-selection requires a fresh baseline census; old timeout artifacts remain UNKNOWN.
-The remaining full correspondence/budget, public selector/join and global5min
-acceptance prerequisites remain open. Do not alter frozen ceilings or activate
-parallel/filtered execution from these development checks.
+The checked selection packet was published as7eaebf1. Its fresh complete declared
+main-contracts capture ed95214c-20aa-4eea-bc8f-51c022498aee records exact
+102/102functions,296/296lines,326/326statements and152/152branches. The same-run
+scoped frozen CRAP proof passed with maximum CC/CRAP14/14 against
+386bf6c9b576e8e43c903155513358b403468179. Coverage root:
+/workspace/attachments/quality-declared-main-contracts-d0iEHN; outer5321.200469ms,
+35tests passed, zero failed,36205assertions. Capture was complete, process groups
+closed and boot unchanged. This is local proof; global qualification remains open.
+
+The changed selection's actual mutation campaign99f3a764-e640-4ed3-8147-b329f8189244
+instrumented1188mutants and passed its original baseline, but reached the inner
+900000ms deadline before the final Stryker report. Result UNKNOWN, not a score
+of zero and not an assertion-confirmed partial PASS. Root evidence is
+/workspace/attachments/quality-mutation-main-contracts-wvw992; physical retained
+evidence is /tmp/quality-mutation-main-contracts-QyVG3q/package-tmp.
+The outer operation ended in901318.12121ms with complete output, affirmative
+owned-group termination and unchanged boot. Provisional map events remain
+unconfirmed. Do not rerun this unchanged campaign or raise its deadline.
+The derived contour projection now retains107observations and4/44historical
+compatible local triples, with40still open. Its latest UNKNOWN is retained.
+
+The user's rolling-slot instruction is active: each completed useful preparation
+or review receives the next ready disjoint scope immediately. Fresh blind Luna
+workers prepare copied changes and independent reviews; Root integrates and owns
+all checks and publication. Current scopes address canonical serialization image
+consistency, direct active-claim overlap, parent-owned mock assertion causality,
+recovery fixture correctness, shared fixture observers and exact frozen lineage.
+Two source-only reviews substantiate a Proxy image-consistency candidate; it is
+not yet a reproduced product defect or accepted correction. Reviews rejected a
+fixture extraction that lost direct product observers, and corrected a copied
+recovery assertion that mistook observed Work rows for a single state. No worker
+review establishes numeric closure. A further worker disclosed Python editing of
+a scratch report; another ran read-only Git status despite its brief. Neither
+action touched checkout content or supplies verification. Guidance is not sandbox
+enforcement; Root still checks every copied change.
+
+Next correct the causal test and assess bounded source-aligned mutation scopes
+without losing the parent contour's complete matrix. The remaining full
+correspondence/budget, public selector/join and global5min acceptance prerequisites
+remain open. Do not alter frozen ceilings or activate parallel/filtered execution
+from development checks.
 
 ## Historical provenance
 
