@@ -662,6 +662,19 @@ and an affected caller pass do not establish a complete-run timing improvement.
 
 Launch `test:mutation:pinned` only with its separate manual authorization. An inventory check does not prove that mutants ran or were killed.
 
+For an explicitly authorized bounded diagnostic, run
+`bun bin/bun.ts run test:mutation:pinned --pilot-partition <exact-declared-name>`.
+This selects one existing runnable partition with its unchanged sources/tests
+through the same input, process and assertion-evidence owners. No arguments
+still select the complete campaign; `--inventory` remains campaign-free and
+cannot be combined with a pilot selector. Malformed, duplicate, unknown, static
+or pending selections fail before creating campaign evidence.
+The diagnostic emits CandidateMutationPilotReport/v1, selected/omitted
+partitions, assessed sources and full_qualification:false. A pilot-pass and
+its selected-scope effective_score never establish full mutation qualification;
+final quality accepts only the complete CandidateMutationReport/v3 contract.
+Zero mutants, survivors, unconfirmed Killed and UNKNOWN cannot pass the pilot.
+
 Run the selected coverage files with Bun Test under the pinned Bun host. A test
 with a Vitest import fails closed until it is migrated. Do not treat that
 failure as coverage evidence. Keep any remaining Vitest tests under the pinned

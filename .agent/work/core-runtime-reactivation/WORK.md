@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `245e568` at origin/main.
+- Published predecessor: `df93bd7` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -23,6 +23,55 @@ operations or a claim of complete quality/Runtime acceptance.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
+
+## Current bounded mutation execution plan
+
+Packet df93bd7 passed the ordinary strict hook and was pushed nonforce to main.
+The alias closure and mutation-root corrections below are published; numeric
+qualification remains pending. Three blind read-only Luna contours investigate
+recovery timing, existing shard activation and bounded mutation execution.
+
+The current mutation owner offers only inventory or a full campaign. Direct
+Stryker would bypass its assertion/custody classifier, so do not use that route.
+Compare two bounded designs before implementation: exact existing-partition
+selection through this owner, or an explicit selected-partition execution API
+called by a separate adapter. Prefer the smallest design that preserves the
+same partition object, exact declared sources/tests, captured input closure,
+before/after checks, process ownership and assertion-confirmed Killed policy.
+Do not duplicate scanners, hashes, configs or the campaign implementation.
+
+A selected diagnostic must have a different report schema from
+CandidateMutationReport/v3, include its exact selected/omitted partition and
+source scope, and remain explicitly ineligible for full quality admission.
+Reject unknown/duplicate/extra/missing selectors and static/pending selections
+before creating evidence or launching children. Full inventory validation and
+the unchanged complete command retain every maintained source and partition.
+Focused controls must establish default full selection, exact object reuse,
+all selection denials, inventory-child behavior, and rejection of a diagnostic
+report by the final-quality consumer. Root owns implementation and checks.
+After review and static/focused verification, run one real small declared
+partition with its existing evidence owner, preserving failed/UNKNOWN output.
+The user's explicit request to complete mutation supplies manual authorization;
+no inventory or child-classifier fixture will be reported as campaign proof.
+
+Two independent designs are retained as
+quality-mutation-pilot-design-{a,b}-20261015.md. Choose the same-owner CLI
+selection instead of a new exported execution API/adapter:the latter adds a
+second executable caller without reducing the existing evidence boundary.
+The typed selection preserves the original registry array in full/inventory
+mode and the exact single registered object in pilot mode. Inventory and pilot
+are mutually exclusive. Diagnostic status is pilot-pass only after all existing
+selected-scope checks; schema CandidateMutationPilotReport/v1 plus explicit
+full_qualification:false prevents final-quality admission. The normal v3
+report, complete inventory checks and full command retain their requirements.
+Implementation passed independent actual Source review ACCEPT
+(quality-mutation-pilot-actual-review-df9-20261015.md). Focused routing and
+final-admission files passed17tests/0FAIL/272assertions in674.722ms; no campaign
+proof is claimed. Strict TS471checked/472captured/0diagnostics after correcting
+test-only exactOptionalPropertyTypes fixtures to omit absent optional fields.
+Checks quality-mutation-pilot-{focused,static-retry}-df9-20261015.*. TESTING and
+the Bun skill document the bounded command and full-admission separation.
+Strict publication and the first real selected-partition observation are next.
 
 ## Current forward closure and mutation-root correction
 
@@ -69,7 +118,8 @@ static471/0 and independent actual Source review ACCEPT. Attachments:
 `quality-mutation-root-{contract,actual-review,focused,static}-245-20261015.*`.
 This is development tooling, outside the149production Source bindings; those
 were not rescanned. No mutation campaign or assertion-confirmed Killed score
-has been established by these contract tests. Strict publication is pending.
+has been established by these contract tests. Strict publication passed at
+df93bd7; logs quality-forward-mutation-{strict-commit,push}-245-20261015.log.
 
 ## Prospective forward alias-closure correction plan
 

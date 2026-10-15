@@ -187,7 +187,7 @@ function requireCommandPass(result: ChildResult, name: string): void {
     throw new Error(`${name} did not complete with retained output and exit code 0: ${JSON.stringify(result)}`);
 }
 
-function assertMutationSummary(summary: Record<string, unknown>, inputs: Inputs['mutation']): void {
+export function assertMutationSummary(summary: Record<string, unknown>, inputs: Inputs['mutation']): void {
   const identityValid = [
     summary.input_fingerprint === qualityFingerprint(inputs),
     summary.source_fingerprint === inputs.source_fingerprint,

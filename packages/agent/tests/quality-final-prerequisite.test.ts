@@ -4,12 +4,50 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { assertCrapPlanPrerequisites } from '../tooling/crap-gate.ts';
-import { readBudgetPlan } from '../tooling/quality-final.ts';
+import { assertMutationSummary, readBudgetPlan } from '../tooling/quality-final.ts';
+import { qualityFingerprint, type CoverageInputs } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const originalBudgetPlan = process.env.VIDA_CRAP_BUDGET_PLAN;
 const temporaryRoots: string[] = [];
+
+test('final quality rejects a perfect selected mutation pilot even with matching input identities', () => {
+  const inputs: CoverageInputs = {
+    sources: [],
+    source_fingerprint: 'a'.repeat(64),
+    tests: [],
+    test_selection: { mode: 'full-current-test-set', tests: [] },
+    test_inputs: [],
+    test_fingerprint: 'b'.repeat(64),
+    tool_inputs: [],
+    tool_fingerprint: 'c'.repeat(64),
+    module_inputs: [],
+    input_bytes: {},
+  };
+  const summary = {
+    schema: 'CandidateMutationReport/v3',
+    status: 'pass',
+    input_fingerprint: qualityFingerprint(inputs),
+    source_fingerprint: inputs.source_fingerprint,
+    test_fingerprint: inputs.test_fingerprint,
+    tool_fingerprint: inputs.tool_fingerprint,
+    required_effective_score: 1,
+    effective_score: 1,
+    mutants: 2,
+    killed: 2,
+    non_killed: [],
+    unknown_mutants: [],
+  };
+  expect(() => assertMutationSummary(summary, inputs)).not.toThrow();
+  for (const status of ['pass', 'pilot-pass'])
+    expect(() =>
+      assertMutationSummary(
+        { ...summary, schema: 'CandidateMutationPilotReport/v1', status, full_qualification: false },
+        inputs,
+      ),
+    ).toThrow(/100% confirmed assertion-caused Killed/);
+});
 
 function fixtureRoot(): string {
   const root = mkdtempSync(path.join(os.tmpdir(), 'final-quality-plan-prerequisite-'));

@@ -5,7 +5,12 @@ import { expect, test } from 'bun:test';
 import { readPin } from '../bin/bun.ts';
 import strykerConfig from '../stryker.config.ts';
 import { buildMutationTestCommand } from '../tooling/mutation-evidence.js';
-import { runStrykerPartitions, type MutationRunnerResult } from '../tooling/mutation-gate.ts';
+import {
+  runStrykerPartitions,
+  selectMutationPartitions,
+  type MutationPartition,
+  type MutationRunnerResult,
+} from '../tooling/mutation-gate.ts';
 import {
   mutationPartitionSourceBinding,
   mutationPartitionSourceBindingMatches,
@@ -14,6 +19,69 @@ import { maintainedSourceInventory } from '../tooling/maintained-source-inventor
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+test('mutation selection preserves the complete default and exact declared pilot owner', () => {
+  const runnable: MutationPartition = {
+    name: 'one',
+    environment: 'bun',
+    sources: ['src/one.ts'],
+    tests: ['tests/one.test.ts'],
+    report: 'one.json',
+  };
+  const partitions = [runnable, { ...runnable, name: 'two' }];
+  for (const args of [[], ['--inventory']]) {
+    const selected = selectMutationPartitions(args, partitions);
+    expect(selected.scope).toBe('full');
+    expect(selected.inventory).toBe(args.length === 1);
+    expect(selected.partitions).toBe(partitions);
+  }
+  const pilot = selectMutationPartitions(['--pilot-partition', 'one'], partitions);
+  expect(pilot.scope).toBe('partition-pilot');
+  expect(pilot.inventory).toBe(false);
+  expect(pilot.partitions).toHaveLength(1);
+  expect(pilot.partitions[0]).toBe(runnable);
+  expect(partitions).toHaveLength(2);
+  expect(pilot.partitions[0]?.sources).toBe(runnable.sources);
+  expect(pilot.partitions[0]?.tests).toBe(runnable.tests);
+});
+
+test('mutation selection denies ambiguous, malformed and non-runnable pilot scopes', () => {
+  const runnable: MutationPartition = {
+    name: 'one',
+    environment: 'bun',
+    sources: ['src/one.ts'],
+    tests: ['tests/one.test.ts'],
+    report: 'one.json',
+  };
+  for (const args of [
+    ['--pilot-partition'],
+    ['--pilot-partition', ''],
+    ['--pilot-partition', 'unknown'],
+    ['--pilot-partition', 'ONE'],
+    ['--pilot-partition', 'one', 'extra'],
+    ['--pilot-partition', 'one', '--pilot-partition', 'one'],
+    ['--inventory', '--inventory'],
+    ['--inventory', '--pilot-partition', 'one'],
+    ['--unknown'],
+    ['one'],
+  ])
+    expect(() => selectMutationPartitions(args, [runnable])).toThrow();
+  const noReport = { ...runnable };
+  delete noReport.report;
+  for (const partitions of [
+    [runnable, runnable],
+    [{ ...runnable, environment: 'static' }],
+    [{ ...runnable, environment: 'pending' }],
+    [noReport],
+    [{ ...runnable, tests: [] }],
+    [{ ...runnable, sources: [] }],
+    [],
+  ])
+    expect(() => selectMutationPartitions(['--pilot-partition', 'one'], partitions)).toThrow(/runnable partition/);
+  const platformOwner = { ...runnable, requiredReportedSource: 'src/one.ts' };
+  delete platformOwner.sources;
+  expect(selectMutationPartitions(['--pilot-partition', 'one'], [platformOwner]).partitions[0]).toBe(platformOwner);
+});
 
 function runnerResult(overrides: Partial<MutationRunnerResult> = {}): MutationRunnerResult {
   return {

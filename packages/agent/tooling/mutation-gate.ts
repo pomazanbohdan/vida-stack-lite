@@ -44,6 +44,30 @@ export type MutationPartition = {
   requireMutants?: boolean;
   requiredReportedSource?: string;
 };
+type MutationSelection =
+  | { scope: 'full'; inventory: boolean; partitions: MutationPartition[] }
+  | { scope: 'partition-pilot'; inventory: false; partitions: [MutationPartition] };
+
+export function selectMutationPartitions(args: readonly string[], partitions: MutationPartition[]): MutationSelection {
+  if (args.length === 0 || (args.length === 1 && args[0] === '--inventory'))
+    return { scope: 'full', inventory: args.length === 1, partitions };
+  if (args.length !== 2 || args[0] !== '--pilot-partition')
+    throw new Error('Expected no arguments, --inventory, or --pilot-partition <exact-name>.');
+  const matches = partitions.filter((partition) => partition.name === args[1]);
+  const partition = matches[0];
+  if (
+    matches.length !== 1 ||
+    !partition ||
+    partition.environment === 'static' ||
+    partition.environment === 'pending' ||
+    !partition.report ||
+    !partition.tests?.length ||
+    !partitionSources(partition).length
+  )
+    throw new Error('Mutation pilot requires exactly one declared runnable partition.');
+  return { scope: 'partition-pilot', inventory: false, partitions: [partition] };
+}
+
 type MutationRecord = Pick<schema.MutantResult, 'id' | 'status'>;
 type MutationFileReport = Pick<schema.FileResult, 'source' | 'mutants'>;
 type MutationReport = { files: Record<string, MutationFileReport> };
@@ -984,6 +1008,8 @@ async function runMutationGate(): Promise<void> {
       report: 'mutation-windows.json',
     },
   ];
+  const selection = selectMutationPartitions(process.argv.slice(2), partitions);
+  const selectedPartitions = selection.partitions;
   const sourceInventory = maintainedSourceInventory(root);
   const expectedSources = sourceInventory.mutationSources;
   const missingPackageSources = sourceInventory.missingPackageSources;
@@ -1024,7 +1050,7 @@ async function runMutationGate(): Promise<void> {
       status: partition.environment === 'pending' ? 'pending' : 'assigned',
     };
   }
-  if (process.argv.includes('--inventory')) {
+  if (selection.inventory) {
     console.log(
       JSON.stringify({
         schema: 'CandidateMutationInventory/v1',
@@ -1065,7 +1091,7 @@ async function runMutationGate(): Promise<void> {
     throw new Error(
       `Mutation partition inventory is invalid: ${JSON.stringify({ unassignedSources, unknownPartitionSources, invalidOverlaps, missingPackageSources, invalidZeroMutantSources })}`,
     );
-  const pendingPartitions = partitions.filter((partition) => partition.environment === 'pending');
+  const pendingPartitions = selectedPartitions.filter((partition) => partition.environment === 'pending');
   if (pendingPartitions.length)
     throw new Error(
       `Mutation qualification is pending focused behavior tests: ${JSON.stringify(pendingPartitions.map(({ name, sources, intendedTests }) => ({ name, sources, intendedTests })))}`,
@@ -1084,7 +1110,7 @@ async function runMutationGate(): Promise<void> {
   const mutationTools = mutationToolInputs;
   const inputs = await qualityInputs(root, mutationTools);
   const sourceBindings = new Map(
-    partitions.map(
+    selectedPartitions.map(
       (partition) =>
         [
           partition.name,
@@ -1101,7 +1127,7 @@ async function runMutationGate(): Promise<void> {
   {
     const provenanceErrors: PartitionIssue[] = [];
     const runs = await runStrykerPartitions(
-      partitions.filter((partition) => partition.environment !== 'static'),
+      selectedPartitions.filter((partition) => partition.environment !== 'static'),
       async (partition, recordRun) => {
         const reportName = partition.report;
         const testFiles = partition.tests;
@@ -1343,10 +1369,12 @@ async function runMutationGate(): Promise<void> {
     const reportedSources = [...new Set(reports.flatMap(({ reportData }) => Object.keys(reportData.files ?? {})))]
       .map(normalizedSourcePath)
       .sort((left, right) => left.localeCompare(right));
-    const missingSources = expectedSources.filter(
+    const assessedSources =
+      selection.scope === 'full' ? expectedSources : [...new Set(selectedPartitions.flatMap(partitionSources))];
+    const missingSources = assessedSources.filter(
       (file) => !zeroMutantSources.has(file) && !reportedSources.includes(file),
     );
-    const extraSources = reportedSources.filter((file) => !expectedSources.includes(file));
+    const extraSources = reportedSources.filter((file) => !assessedSources.includes(file));
     const runnerExitCodes = runs.map(({ name, result }) => ({
       partition: name,
       exit_code: result.observed_exit_code,
@@ -1361,7 +1389,7 @@ async function runMutationGate(): Promise<void> {
       sourceMismatches.length === 0 &&
       baselineErrors.length === 0 &&
       unknownMutants.length === 0 &&
-      runs.length === partitions.filter((partition) => partition.environment !== 'static').length &&
+      runs.length === selectedPartitions.filter((partition) => partition.environment !== 'static').length &&
       runs.every(({ result }) => result.exitCode === 0) &&
       reportErrors.length === 0 &&
       emptyPartitions.length === 0 &&
@@ -1373,7 +1401,14 @@ async function runMutationGate(): Promise<void> {
       missingSources.length === 0 &&
       extraSources.length === 0;
     const summary = {
-      schema: 'CandidateMutationReport/v3',
+      schema: selection.scope === 'full' ? 'CandidateMutationReport/v3' : 'CandidateMutationPilotReport/v1',
+      qualification_scope: selection.scope,
+      full_qualification: selection.scope === 'full' && pass,
+      selected_partitions: selectedPartitions.map(({ name }) => name),
+      omitted_partitions: partitions
+        .filter((partition) => !selectedPartitions.includes(partition))
+        .map(inventoryPartition),
+      assessed_sources: assessedSources,
       input_fingerprint: fingerprint,
       run_id: runId,
       evidence_directory: reportDirectory,
@@ -1383,7 +1418,7 @@ async function runMutationGate(): Promise<void> {
       source_inputs: inputs.sources,
       test_inputs: inputs.test_inputs,
       tool_inputs: inputs.tool_inputs,
-      partition_source_bindings: partitions.map((partition) => {
+      partition_source_bindings: selectedPartitions.map((partition) => {
         const binding = sourceBindings.get(partition.name);
         return binding
           ? {
@@ -1416,7 +1451,9 @@ async function runMutationGate(): Promise<void> {
         runnerUnknown
           ? 'unknown'
           : pass
-            ? 'pass'
+            ? selection.scope === 'full'
+              ? 'pass'
+              : 'pilot-pass'
             : 'fail',
       runner_exit_codes: runnerExitCodes,
       runner_outputs: runs.map(({ name, result }) => ({

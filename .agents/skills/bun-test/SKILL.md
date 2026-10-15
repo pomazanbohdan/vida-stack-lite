@@ -99,6 +99,11 @@ cause aggregation, not failed native I/O.
 
 ## Run focused checks safely
 
+Use TESTING's exact declared-partition route for an authorized mutation pilot.
+Keep its source/test selection unchanged and its diagnostic schema distinct
+from full qualification. A matching input fingerprint and a perfect partial
+score cannot make the pilot a complete campaign. Inventory remains campaign-free.
+
 Qualify an optional profiler on an inert pass and an intentional assertion
 failure before using it on an owned product case. A runtime export, accepted
 flag or successful test does not prove a usable profile was emitted. Record
