@@ -799,6 +799,41 @@ fixes in-process SDK disposal. Retain earlier uncertain cleanup roots.
 
 ## Evidence and quality gates
 
+### Per-test mutant coverage capture
+
+The shared mutation preload accepts diagnostic `AGENT_MUTATION_PER_TEST_CAPTURE=1`
+and writes `per-test-coverage.json` exclusively inside its invocation-owned
+adapter directory. `MutationPerTestCapture/v1` records file/body registrations,
+body and hook invocations (including pending work and durations), and the public
+Stryker `static`/`perTest` counters. `coverage_observed=false` distinguishes an
+absent runtime map from an observed empty map. This producer has no Killed or
+filtered-run admission authority; the ordinary command runner clears inherited
+opt-in. It does not change the active Stryker runner/configuration.
+
+The instrumenter's `currentTestId` getter reads the shared AsyncLocalStorage
+body identity, keeping concurrent bodies distinct. Settled detached tasks and
+all lifecycle hooks are attributed statically. Static coverage may require the
+full test set; never discard it to improve timing. The preload's global
+`afterAll` finalizes after file-local hooks, following the existing Bun coverage
+owner; Bun test does not invoke process exit listeners.
+
+File/body tokens preserve the existing assertion marker. Bun includes filtered
+registrations as skipped JUnit cases, so executed-body count and JUnit case count
+are different. Before a real filtered runner uses the capture, its parent must
+bind the full original selection, canonical current mutant universe, exact
+planned body set, registered/finished bodies, required scoped lifecycle and
+JUnit outcomes. Missing/pending/foreign/malformed evidence remains UNKNOWN;
+assertion attribution remains with the existing body-event classifier. A capture
+file or a successful producer control does not establish a mutation score.
+
+The global mutant map must cover all maintained Source/partition assignments,
+with explicit pending/omitted/platform gaps. Its stable identities bind Source
+digest, normalized path, position, mutator and replacement; Stryker IDs are local
+joins only. Reuse captured inputs, function inventory and actual test results;
+do not add another project scan, AST or hash producer. Function/scenario links
+without current bound evidence remain unresolved or unreviewed, never execution,
+coverage or assertion proof.
+
 Before each check, verify the actual executing VIDA CLI and involved runner versions. Use the supported `vida-agent version` command. Keep an adapter-reported version separate from the installed executable version and the Source manifest version. Record the executable, command, working directory, exact tool versions, current inputs, exit status and sanitized result. Retain full stdout and stderr separately. Bind reports to the actual current source and operation.
 
 | Evidence class | Meaning                                                                     |

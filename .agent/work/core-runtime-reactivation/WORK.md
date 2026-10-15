@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `1fda065` at origin/main.
+- Published predecessor: `2ebdf49` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -1006,6 +1006,51 @@ original selection and bind any executed subset to its qualified dry-run map;
 missing selected bodies/lifecycle or uncertain causes stay UNKNOWN. Two bounded
 blind Luna reviews inspect public API and existing receipt integration. This is
 a candidate optimization, not a qualified runner or mutation score.
+
+Packet2ebdf49 passed the ordinary strict hook/push. Kernel cycle7 completed
+224PASS/1610assertions in28.57s (outer32636.566ms, same boot, complete output,
+owned group gone). Report04b2c4c5-a466-473f-b47b-6544393b050c.focused-coverage.json:
+functions150/16292.59%, lines582/60296.67%, statements608/63396.05%,
+branches378/41491.30%, maxCC/maxentryCRAP31,12unexecuted. Same eb92da5Source;
+this remains focused diagnostic, not full/frozen qualification.
+
+Human now requests the mutant map globally across all contours. Implement one
+shared map with current Source/config/test/tool bindings and canonical mutant
+identity; preserve all source/partition gaps and local platform outcomes. No
+second scan/AST/hash pipeline, no promotion of static links to dynamic proof.
+Reuse the current function inventory where byte-bound; missing links stay gaps.
+
+First shared producer packet is capture-only, leaving active Stryker config and
+the command runner's admission unchanged. It adds opt-in diagnostic capture in
+the existing assertion-context/adapter/preload, rejects malformed counters and
+foreign test IDs, records pending bodies and clears inherited opt-in in the
+ordinary command runner. ALS-backed currentTestId handles concurrent bodies;
+settled detached callbacks and hooks remain static. Native Instrumenter10 probe
+passed after using the existing preload afterAll pattern; a process-exit-listener
+probe had no output and remains retained. Existing ordinary classifier/JUnit
+owner remains authoritative for assertion causes. Future full parent/map/JUnit/
+required-hook-scope reconciliation is still required before filtered admission.
+
+Focused69PASS/530assertions across4files/2.97s:
+quality-bun-per-test-capture-final-2eb-20261015.log. Controls include concurrent
+bodies, object-row expansion, expected failure, one exact selected row, detached
+work after settlement, escaping assertion, timed-out pending body and malformed/
+foreign maps. First selected-row expectation was wrong: Bun retains4filtered
+registrations as skipped JUnit cases; fix the fixture expectation, not admission.
+Retain its first failing fixture vida-mutation-per-test-filter-R9QkTY and log
+quality-bun-per-test-capture-first-2eb-20261015.log. The real expected20ms timeout
+root is explicitly retained in the final log; it is not PASS/Killed evidence.
+
+Final strict static475captured/474checkedTS plus101Sourcechecked,0diagnostics:
+quality-bun-per-test-static-qualified-2eb-20261015.log. Earlier checks correctly
+rejected an inferred mixed tuple and a missing numeric sort comparator; retain
+those failed static logs. Independent capture-only review ACCEPT:
+quality-bun-per-test-capture-actual-review-2eb-20261015.md. Its future-use barriers
+remain explicit: pending body IDs are live until settlement, hook ancestry and
+callback-free registrations are not yet modeled, and parent counter/universe/
+selection validation is required. These diagnostic artifacts cannot drive
+filtered execution or numeric admission. The new global map must preserve them
+as unqualified evidence until those barriers close.
 
 Range-only mutation slicing is not generally complete for ancestor-spanning
 mutants. Installed Stryker supports mutator-name exclusion buckets as a candidate

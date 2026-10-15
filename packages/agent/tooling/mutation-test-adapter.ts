@@ -1,5 +1,5 @@
 import { appendFileSync, statSync } from 'node:fs';
-import { bodyContext, type MutationBodyState } from './mutation-assertion-context.ts';
+import { bodyContext, mutationCoverage, type MutationBodyState } from './mutation-assertion-context.ts';
 import assertStrict from 'node:assert/strict';
 import {
   afterAll as bunAfterAll,
@@ -21,7 +21,7 @@ type EachInput =
   | { kind: 'object'; key: string; tableRows: Array<{ copy: object; row: unknown }> };
 type BoundEachInput =
   | { kind: 'array'; ids: Set<number> }
-  | { kind: 'object'; key: string; rows: WeakMap<object, { id: number; row: unknown }> };
+  | { kind: 'object'; key: string; rows: WeakMap<object, { id: number; row: unknown }>; ids: Set<number> };
 type EachFactory = { method: Callable; receiver: unknown; args: unknown[] };
 const receiptFile = process.env.AGENT_MUTATION_BODY_RECEIPTS;
 let bodyId = 0;
@@ -171,7 +171,8 @@ function withBody(
       bodyId = binding.id;
       bodyArgs = [binding.row, ...args.slice(1)];
     }
-    const state: BodyState = { id: bodyId, assertionError: null, assertionSource: null };
+    if (!file) throw new Error('Mutation body file is not configured.');
+    const state: BodyState = { id: bodyId, testFile: file, active: true, assertionError: null, assertionSource: null };
     const run = () => {
       let result;
       try {
@@ -200,7 +201,8 @@ function withBody(
       }
       return result;
     };
-    return bodyContext.run(state, run);
+    const invoke = () => bodyContext.run(state, run);
+    return mutationCoverage ? mutationCoverage.body(state, invoke) : invoke();
   };
 }
 
@@ -210,14 +212,18 @@ function withHook(callback: TestCallback, hook: string): TestCallback {
       append({ kind: 'hook', hook, error_observed: true });
       throw error;
     };
-    try {
-      const result = callback.apply(this, args);
-      return result !== null && (typeof result === 'object' || typeof result === 'function') && 'then' in result
-        ? Promise.resolve(result).catch(recordFailure)
-        : result;
-    } catch (error) {
-      return recordFailure(error);
-    }
+    const invoke = () => {
+      try {
+        const result = callback.apply(this, args);
+        return result !== null && (typeof result === 'object' || typeof result === 'function') && 'then' in result
+          ? Promise.resolve(result).catch(recordFailure)
+          : result;
+      } catch (error) {
+        return recordFailure(error);
+      }
+    };
+    if (!file) throw new Error('Mutation hook file is not configured.');
+    return mutationCoverage ? mutationCoverage.hook(file, hook, invoke) : invoke();
   };
 }
 
@@ -240,6 +246,15 @@ function registerArgs(
   if (eachInput?.kind === 'array') next[0] = `[mutation-body:%i] ${next[0]}`;
   else if (eachInput?.kind === 'object') next[0] = `[mutation-body:$${eachInput.key}] ${next[0]}`;
   else next[0] = `[mutation-body:${id}] ${next[0]}`;
+  if (mutationCoverage) {
+    if (!file) throw new Error('Mutation registration file is not configured.');
+    const ids = eachInput ? [...eachInput.ids] : [id];
+    for (const bodyId of ids) mutationCoverage.register(file, bodyId, expectedFailure);
+    next[0] = (next[0] as string).replace(
+      /^(\[mutation-body:[^\]]+\] )/u,
+      `$1[mutation-file:${Buffer.from(file).toString('base64url')}] `,
+    );
+  }
   next[callbackIndex] = withBody(next[callbackIndex] as TestCallback, id, expectedFailure, eachInput);
   return next;
 }
@@ -255,12 +270,14 @@ function bindEachInput(input: EachInput): BoundEachInput {
     return { kind: 'array', ids };
   }
   const rows = new WeakMap<object, { id: number; row: unknown }>();
+  const ids = new Set<number>();
   for (const { copy, row } of input.tableRows) {
     const id = ++bodyId;
+    ids.add(id);
     Object.defineProperty(copy, input.key, { value: id, enumerable: true, configurable: true });
     rows.set(copy, { id, row });
   }
-  return { kind: 'object', key: input.key, rows };
+  return { kind: 'object', key: input.key, rows, ids };
 }
 
 function tableArgumentCount(args: unknown[]): number | null {

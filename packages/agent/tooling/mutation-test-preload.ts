@@ -4,13 +4,18 @@ import path from 'node:path';
 import { parse } from '@babel/parser';
 import { typescriptSyntaxPlugins } from './babel-syntax.js';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { afterAll } from 'bun:test';
 
 const adapterSource = fileURLToPath(new URL('./mutation-test-adapter.ts', import.meta.url));
 const adapterTemplate = readFileSync(adapterSource, 'utf8');
 const bodyReceiptFile = process.env.AGENT_MUTATION_BODY_RECEIPTS;
 const adapterDirectorySetting = process.env.AGENT_MUTATION_ADAPTER_DIRECTORY;
+const perTestCapture = process.env.AGENT_MUTATION_PER_TEST_CAPTURE;
 delete process.env.AGENT_MUTATION_BODY_RECEIPTS;
 delete process.env.AGENT_MUTATION_ADAPTER_DIRECTORY;
+delete process.env.AGENT_MUTATION_PER_TEST_CAPTURE;
+if (perTestCapture !== undefined && perTestCapture !== '1')
+  throw new Error('Mutation per-test capture setting is invalid.');
 
 function requiredAdapterDirectory(): string {
   const value = adapterDirectorySetting;
@@ -24,9 +29,18 @@ mkdirSync(adapterDirectory, { recursive: true, mode: 0o700 });
 const contextPath = path.join(adapterDirectory, 'mutation-assertion-context.ts');
 writeBoundAdapterModule(
   contextPath,
-  readFileSync(fileURLToPath(new URL('./mutation-assertion-context.ts', import.meta.url)), 'utf8'),
+  readFileSync(fileURLToPath(new URL('./mutation-assertion-context.ts', import.meta.url)), 'utf8').replace(
+    'const captureFile: string | undefined = undefined;',
+    `const captureFile: string | undefined = ${perTestCapture === '1' ? JSON.stringify(path.join(adapterDirectory, 'per-test-coverage.json')) : 'undefined'};`,
+  ),
 );
 const contextUrl = pathToFileURL(contextPath).href;
+if (perTestCapture === '1') {
+  const context = (await import(contextUrl)) as typeof import('./mutation-assertion-context.ts');
+  // Like the existing coverage preload, this runs after all file-local hooks.
+  // Bun test does not run process exit listeners.
+  afterAll(() => context.mutationCoverage!.finish());
+}
 const escapedTestRoot = path
   .resolve(process.cwd(), 'tests')
   .replaceAll('\\', '/')

@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +10,12 @@ import { expectRejection } from './helpers/expect-rejection.ts';
 
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
 
-async function runAdapterChild(root: string, body: string, suffix: string) {
+async function runAdapterChild(
+  root: string,
+  body: string,
+  suffix: string,
+  options: { capture?: boolean; exitCode?: 0 | 1; pattern?: string } = {},
+) {
   const sourceFile = path.join(root, 'tests', `child-${suffix}.test.ts`);
   const receiptFile = path.join(root, `body-${suffix}.jsonl`);
   const junitFile = path.join(root, `junit-${suffix}.xml`);
@@ -28,6 +34,7 @@ async function runAdapterChild(root: string, body: string, suffix: string) {
       '--timeout=10000',
       '--reporter=junit',
       `--reporter-outfile=${junitFile}`,
+      ...(options.pattern ? ['--test-name-pattern', options.pattern] : []),
     ],
     {
       cwd: root,
@@ -36,6 +43,7 @@ async function runAdapterChild(root: string, body: string, suffix: string) {
         ...process.env,
         AGENT_MUTATION_BODY_RECEIPTS: receiptFile,
         AGENT_MUTATION_ADAPTER_DIRECTORY: path.join(root, `adapters-${suffix}`),
+        AGENT_MUTATION_PER_TEST_CAPTURE: options.capture ? '1' : undefined,
       },
       stdout: 'pipe',
       stderr: 'pipe',
@@ -46,7 +54,7 @@ async function runAdapterChild(root: string, body: string, suffix: string) {
     new Response(child.stdout).text(),
     new Response(child.stderr).text(),
   ]);
-  expect({ stdout, stderr, exitCode }).toMatchObject({ exitCode: 1 });
+  expect({ stdout, stderr, exitCode }).toMatchObject({ exitCode: options.exitCode ?? 1 });
   return {
     exitCode,
     stderr,
@@ -57,6 +65,194 @@ async function runAdapterChild(root: string, body: string, suffix: string) {
     selectedTest: path.relative(root, sourceFile),
   };
 }
+
+type PerTestCapture = {
+  schema: string;
+  registrations: { test_file: string; body_id: number; expected_failure: boolean }[];
+  invocations: {
+    test_file: string;
+    kind: 'body' | 'hook';
+    id: number;
+    hook?: string;
+    outcome: string;
+    elapsed_ms: number;
+  }[];
+  mutant_coverage: { static: Record<string, number>; perTest: Record<string, Record<string, number>> };
+};
+
+const perTestSubject = `
+import { test, expect, beforeEach, afterAll } from 'bun:test';
+const ns = globalThis.__stryker__;
+function hit(id) {
+  const coverage=ns.mutantCoverage??={static:{},perTest:{}};
+  const map=ns.currentTestId ? coverage.perTest[ns.currentTestId]??={} : coverage.static;
+  map[id]=(map[id]??0)+1;
+}
+hit('module');
+beforeEach(()=>hit('before-each'));
+afterAll(()=>hit('after-all'));
+let releaseFirst,releaseSecond;
+const first=new Promise(resolve=>{releaseFirst=resolve;});
+const second=new Promise(resolve=>{releaseSecond=resolve;});
+test.concurrent('first',async()=>{hit('first');releaseFirst();await second;hit('first');expect(1).toBe(1);});
+test.concurrent('second',async()=>{hit('second');releaseSecond();await first;hit('second');expect(2).toBe(2);});
+test.each([{value:1},{value:2}])('row $value',({value})=>{hit('row-'+value);expect(value).toBeGreaterThan(0);});
+test.failing('expected assertion',()=>{hit('expected');expect(1).toBe(2);});
+`;
+
+test('per-test diagnostic capture isolates concurrent bodies, expanded rows and static lifecycle hits', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-'));
+  let passed = false;
+  try {
+    const child = await runAdapterChild(root, perTestSubject, 'coverage', { capture: true, exitCode: 0 });
+    const capture = JSON.parse(
+      await readFile(path.join(root, 'adapters-coverage', 'per-test-coverage.json'), 'utf8'),
+    ) as PerTestCapture;
+    expect(capture.schema).toBe('MutationPerTestCapture/v1');
+    expect(capture.registrations).toEqual(
+      [1, 2, 3, 4, 5].map((id) => ({
+        test_file: child.selectedTest,
+        body_id: id,
+        expected_failure: id === 5,
+      })),
+    );
+    expect(
+      capture.invocations
+        .filter((entry) => entry.kind === 'body')
+        .map((entry) => entry.id)
+        .sort((left, right) => left - right),
+    ).toEqual([1, 2, 3, 4, 5]);
+    expect(capture.invocations.some((entry) => entry.outcome === 'pending')).toBe(false);
+    expect(capture.invocations.find((entry) => entry.kind === 'body' && entry.id === 5)?.outcome).toBe('threw');
+    expect(capture.invocations.every((entry) => Number.isFinite(entry.elapsed_ms) && entry.elapsed_ms >= 0)).toBe(true);
+    expect(capture.mutant_coverage.static).toEqual({ module: 1, 'before-each': 5, 'after-all': 1 });
+    expect(capture.mutant_coverage.perTest).toEqual(
+      Object.fromEntries(
+        (
+          [
+            ['first', 2],
+            ['second', 2],
+            ['row-1', 1],
+            ['row-2', 1],
+            ['expected', 1],
+          ] as const
+        ).map(([key, count], index) => [`${child.selectedTest}#body:${index + 1}`, { [key]: count }]),
+      ),
+    );
+    expect(junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome).toBe('passed');
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained per-test capture fixture: ' + root);
+  }
+});
+
+test('per-test file token can select one expanded row while preserving registration and causal assertions', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-filter-'));
+  let passed = false;
+  try {
+    const selected = 'tests/child-filter.test.ts';
+    const token = Buffer.from(selected).toString('base64url');
+    const child = await runAdapterChild(root, perTestSubject, 'filter', {
+      capture: true,
+      exitCode: 0,
+      pattern: `\\[mutation-body:4\\] \\[mutation-file:${token}\\] `,
+    });
+    const capture = JSON.parse(
+      await readFile(path.join(root, 'adapters-filter', 'per-test-coverage.json'), 'utf8'),
+    ) as PerTestCapture;
+    expect(capture.registrations).toHaveLength(5);
+    expect(capture.invocations.filter((entry) => entry.kind === 'body').map((entry) => entry.id)).toEqual([4]);
+    expect(capture.mutant_coverage.perTest).toEqual({ [`${selected}#body:4`]: { 'row-2': 1 } });
+    expect(capture.mutant_coverage.static).toEqual({ module: 1, 'before-each': 1, 'after-all': 1 });
+    // Bun retains filtered registrations in JUnit as skipped; one invocation is
+    // not a one-case report. Future subset admission must reconcile both sets.
+    expect(junitOutcome(child.junit, [selected], [], child.events)).toMatchObject({ tests: 5, skipped: 4 });
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained per-test filter fixture: ' + root);
+  }
+});
+
+test('per-test capture preserves assertion causes and makes settled background work static', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-cause-'));
+  let passed = false;
+  try {
+    const child = await runAdapterChild(
+      root,
+      `
+import { test, expect } from 'bun:test';
+const ns=globalThis.__stryker__;
+let release;
+const detached=new Promise(resolve=>{release=resolve;});
+function hit(id) { const c=ns.mutantCoverage??={static:{},perTest:{}};const m=ns.currentTestId?c.perTest[ns.currentTestId]??={}:c.static;m[id]=(m[id]??0)+1; }
+test('first',()=>{detached.then(()=>hit('detached'));hit('first');expect(true).toBe(true);});
+test('second',async()=>{release();await detached;hit('second');expect(1).toBe(2);});`,
+      'cause',
+      { capture: true },
+    );
+    const capture = JSON.parse(
+      await readFile(path.join(root, 'adapters-cause', 'per-test-coverage.json'), 'utf8'),
+    ) as PerTestCapture;
+    expect(capture.mutant_coverage.static).toEqual({ detached: 1 });
+    expect(capture.mutant_coverage.perTest).toEqual({
+      [`${child.selectedTest}#body:1`]: { first: 1 },
+      [`${child.selectedTest}#body:2`]: { second: 1 },
+    });
+    expect(capture.invocations.map((entry) => entry.outcome)).toEqual(['returned', 'threw']);
+    expect(
+      confirmedRunnerOutcome(child.exitCode, junitOutcome(child.junit, [child.selectedTest], [], child.events).outcome),
+    ).toBe('killed');
+    passed = true;
+  } finally {
+    if (passed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained per-test causal fixture: ' + root);
+  }
+});
+
+test('per-test diagnostic preserves a timed-out pending body without claiming a kill', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-pending-'));
+  // An expected timeout is retained evidence, even when this parent control passes.
+  console.error('Retained expected-timeout per-test fixture: ' + root);
+  const child = await runAdapterChild(
+    root,
+    `
+import { test } from 'bun:test';
+test('pending',()=>new Promise(()=>undefined),20);`,
+    'pending',
+    { capture: true },
+  );
+  const capture = JSON.parse(
+    await readFile(path.join(root, 'adapters-pending', 'per-test-coverage.json'), 'utf8'),
+  ) as PerTestCapture;
+  expect(capture.invocations).toMatchObject([{ kind: 'body', id: 1, outcome: 'pending' }]);
+  expect(confirmedRunnerOutcome(child.exitCode, 'unproven')).toBe('unknown');
+});
+
+test.each(['null', '{static:{bad:NaN},perTest:{}}', '{static:{},perTest:{foreign:{"1":1}}}'])(
+  'per-test diagnostic rejects malformed or foreign coverage %s',
+  async (map) => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-per-test-invalid-'));
+    let passed = false;
+    try {
+      const child = await runAdapterChild(
+        root,
+        `
+import { test, expect } from 'bun:test';
+test('invalid map',()=>{globalThis.__stryker__.mutantCoverage=${map};expect(true).toBe(true);});`,
+        'invalid',
+        { capture: true },
+      );
+      expect(existsSync(path.join(root, 'adapters-invalid', 'per-test-coverage.json'))).toBe(false);
+      expect(confirmedRunnerOutcome(child.exitCode, 'unproven')).toBe('unknown');
+      passed = true;
+    } finally {
+      if (passed) await rm(root, { recursive: true, force: true });
+      else console.error('Retained malformed per-test fixture: ' + root);
+    }
+  },
+);
 
 test('real adapter parses plain TypeScript angle syntax and records the target assertion', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-typescript-syntax-'));

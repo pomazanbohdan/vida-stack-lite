@@ -532,6 +532,8 @@ function mutationTestEnvironment(logs: RunnerLogs): Record<string, string> {
     delete environment[name];
   environment.AGENT_MUTATION_BODY_RECEIPTS = logs.bodyEvents;
   environment.AGENT_MUTATION_ADAPTER_DIRECTORY = logs.adapterDirectory;
+  // Per-test capture is not yet an admitted execution mode for this runner.
+  delete environment.AGENT_MUTATION_PER_TEST_CAPTURE;
   delete environment.AGENT_RUNTIME_TEST_CONTEXT_ROOT;
   if (logs.testContext !== null) environment.AGENT_RUNTIME_TEST_CONTEXT_ROOT = logs.testContext.root;
   return environment;
