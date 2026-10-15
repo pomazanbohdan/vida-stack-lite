@@ -18,7 +18,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-config | unknown | unknown | unknown | not imported | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | not imported | local maximum recorded |
 | main-contracts | 102/102 · 296/296 · 325/325 · 152/152 | 15 / 15 | unknown | BLOCKED | open / unknown |
-| main-cedar | 23/25 · 54/56 · 58/60 · 20/21 | 6 / 6 | unknown | BLOCKED | open / unknown |
+| main-cedar | 25/25 · 56/56 · 60/60 · 21/21 | 6 / 6 | unknown | BLOCKED | open / unknown |
 | main-governance | unknown | unknown | unknown | not imported | open / unknown |
 | main-mastra | unknown | unknown | unknown | not imported | open / unknown |
 | main-exports | unknown | unknown | unknown | not imported | N/A: static exports |
@@ -136,6 +136,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | --- | --- | --- | --- | --- | --- | --- |
 | coverage | e8ce05a3-9517-4a8c-a9f4-0c0825eda470 | 8194edd60beb9c59a658b4e1ccc4060c4d7ce366 | 2026-10-15T17:11:41.840Z | focused-diagnostic; owner accepted locally; selection bound | 23/25 · 54/56 · 58/60 · 20/21 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/e8ce05a3-9517-4a8c-a9f4-0c0825eda470.focused-coverage.json |
 | coverage-outcome | e8ce05a3-9517-4a8c-a9f4-0c0825eda470 | not-captured | 2026-10-15T17:11:41.850Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/e8ce05a3-9517-4a8c-a9f4-0c0825eda470.json |
+| coverage | 7e174372-c1b9-4f34-945a-5910e1c4ab6b | 5f01f954de53a3861c12a07d2f2772172f89f27d | 2026-10-15T17:16:31.127Z | focused-diagnostic; owner accepted locally; selection bound | 25/25 · 56/56 · 60/60 · 21/21 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/7e174372-c1b9-4f34-945a-5910e1c4ab6b.focused-coverage.json |
+| coverage-outcome | 7e174372-c1b9-4f34-945a-5910e1c4ab6b | not-captured | 2026-10-15T17:16:31.134Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/7e174372-c1b9-4f34-945a-5910e1c4ab6b.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

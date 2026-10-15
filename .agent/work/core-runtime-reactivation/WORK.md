@@ -718,6 +718,26 @@ Luna reviews Source/test reachability; root owns all writes and final evidence.
 New metrics await publication and actual post-change capture. No mutation,
 frozen acceptance or runtime-unblock result follows from these checks.
 
+Independent review finds no blocker in the actual Cedar selection, parse controls
+and real-input exception case. Strict staged483-root hook passes; published5f01f95
+precedes the new capture7e174372-c1b9-4f34-945a-5910e1c4ab6b. It completes
+33PASS/0FAIL/12273assertions in4.43s Bun/7604.830161ms owned outer time:
+F25/25,L56/56,S60/60,B21/21,all100%,maxCC/entryCRAP6. Complete original
+four-file selection is recorded by the diagnostic adapter. No Source function
+or authorization semantics changed; the existing real Cedar test owner and the
+in-process non-Error boundary provide the missing evidence without a child mock.
+Retained root `/workspace/attachments/quality-declared-main-cedar-RxCB8Q`;
+quality-main-cedar-{coverage,metrics}-5f01-20261015.{log,jsonl} records actual
+outcomes (coverage is .log and metrics is .jsonl). Derived contour report now
+has27observations, preserving parent BLOCKED outcomes and2/44historical
+compatible coverage+confirmed-mutation closures. Contracts and Cedar have local
+four-metric maxima but no complete current mutation/frozen qualification.
+
+Continue the remaining contours and per-test receipt/capture-origin integration
+without repeating these complete coverage selections unless affected changes
+or unresolved evidence justify another run. Do not launch the oversized kernel
+mutation campaign until that runner prerequisite is genuinely qualified.
+
 ## Automatic contour progress projection
 
 The human requested durable per-contour metrics and one automatic consolidated
