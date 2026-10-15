@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { describe, expect, test } from 'bun:test';
 import * as fc from 'fast-check';
+import { expectReturned } from '../helpers/expect-rejection.js';
 import {
   serviceOperationLaunchCapabilityDigest,
   serviceOperationLaunchCapabilityMatches,
@@ -32,15 +33,17 @@ function launchingImage(overrides: Partial<ClaimImage> = {}): ClaimImage {
 
 describe('service operation launch predicates', () => {
   test('digest matches an independent fixed SHA-256 vector', () => {
-    expect(serviceOperationLaunchCapabilityDigest(capability)).toBe(issuedDigest);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityDigest(capability))).toBe(issuedDigest);
     expect(issuedDigest).toBe(createHash('sha256').update(capability, 'utf8').digest('hex'));
   });
 
   test('accepts lowercase UUID-shaped tokens at the zero and nonzero boundaries', () => {
-    expect(serviceOperationLaunchCapabilityDigest('00000000-0000-0000-0000-000000000000')).toBe(
+    expect(expectReturned(() => serviceOperationLaunchCapabilityDigest('00000000-0000-0000-0000-000000000000'))).toBe(
       '12b9377cbe7e5c94e8a70d9d23929523d14afa954793130f8a3959c7b849aca8',
     );
-    expect(serviceOperationLaunchCapabilityDigest('ffffffff-ffff-ffff-ffff-ffffffffffff')).toMatch(/^[a-f0-9]{64}$/u);
+    expect(
+      expectReturned(() => serviceOperationLaunchCapabilityDigest('ffffffff-ffff-ffff-ffff-ffffffffffff')),
+    ).toMatch(/^[a-f0-9]{64}$/u);
   });
 
   test('rejects uppercase and malformed UUID-shaped capability inputs', () => {
@@ -56,7 +59,7 @@ describe('service operation launch predicates', () => {
   });
 
   test('capability matching accepts only the exact token for the exact lowercase digest', () => {
-    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, capability)).toBe(true);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, capability))).toBe(true);
     expect(serviceOperationLaunchCapabilityMatches(issuedDigest, otherCapability)).toBe(false);
     expect(serviceOperationLaunchCapabilityMatches(issuedDigest.toUpperCase(), capability)).toBe(false);
   });
@@ -87,8 +90,8 @@ describe('service operation launch predicates', () => {
     fc.assert(
       fc.property(uuid, uuid, (issued, other) => {
         fc.pre(issued !== other);
-        const digest = serviceOperationLaunchCapabilityDigest(issued);
-        expect(serviceOperationLaunchCapabilityMatches(digest, issued)).toBe(true);
+        const digest = expectReturned(() => serviceOperationLaunchCapabilityDigest(issued));
+        expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(digest, issued))).toBe(true);
         expect(serviceOperationLaunchCapabilityMatches(digest, other)).toBe(false);
       }),
       { seed: 20261010, numRuns: 50 },
@@ -97,14 +100,16 @@ describe('service operation launch predicates', () => {
 
   test('exact launching reservation accepts its one-shot child capability', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage(),
-        workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage(),
+          workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          capability,
+        ),
       ),
     ).toBe(true);
   });

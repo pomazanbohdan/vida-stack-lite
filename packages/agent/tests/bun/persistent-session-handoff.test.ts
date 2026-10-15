@@ -747,6 +747,7 @@ describe('durable Mastra research exposure and invocation identity', () => {
     current = instance.report(workId, requestContext.attempt, current.version, first);
     const exactRetry = instance.report(workId, requestContext.attempt, current.version, first);
     expect(exactRetry.version).toEqual(current.version);
+    expect(exactRetry).toEqual(current);
     expect(() =>
       instance.report(workId, requestContext.attempt, current.version, {
         ...first,

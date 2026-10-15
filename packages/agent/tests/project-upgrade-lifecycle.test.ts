@@ -1127,7 +1127,8 @@ test('fresh resume keeps one operation identity and reaches exact released histo
       expect(intent.plan.instruction_ref).toBe('tests/project-upgrade-lifecycle.test.ts');
 
       const completed = await upgrade.resumeProjectUpgrade(root, planned.plan.operation_id);
-      await assertCompleteHistory(root, planned);
+      const history = await assertCompleteHistory(root, planned);
+      expect(completed).toEqual(history);
       expect(completed.phase).toBe('completed');
 
       const activatedConfig = runtimeConfig.loadRuntimeConfig(root);

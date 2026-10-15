@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stringify as stringifyYaml } from 'yaml';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import {
   buildDevelopmentTaskPacket,
   canonicalJsonDigest,
@@ -1010,16 +1011,26 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('compiles Mastra from the selected graph and enforces role tools', async () => {
-    const result = createConfiguredMastra(repositoryRoot, {
-      team_id: 'default-development',
-      work_item: {
-        kind: 'bug',
-        intent: 'bug_fix',
-        project: fixtureProject(config),
-        risk_flags: [],
-        labels: [],
-      },
-    });
+    const result = expectReturned(() =>
+      createConfiguredMastra(repositoryRoot, {
+        team_id: 'default-development',
+        work_item: {
+          kind: 'bug',
+          intent: 'bug_fix',
+          project: fixtureProject(config),
+          risk_flags: [],
+          labels: [],
+        },
+      }),
+    );
+    expect(result).not.toBeNull();
+    expect(typeof result).toBe('object');
+    expect(result.compiled).not.toBeNull();
+    expect(typeof result.compiled).toBe('object');
+    expect(Array.isArray(result.compiled.waves)).toBe(true);
+    expect(result.hooks).not.toBeNull();
+    expect(typeof result.hooks).toBe('object');
+    expect(typeof result.hooks.beforeToolCall).toBe('function');
     expect(result.agentId).toBe('workflow-dispatcher');
     expect(result.workflowId).toBe('bug_fix');
     expect(result.profileId).toBe('codebase-mapper');
@@ -1031,16 +1042,23 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       output: 'Mastra tool denied by configured role policy',
     });
     expect(await beforeToolCall({ toolName: 'source.read', input: undefined, context: {} })).toBeUndefined();
-    const research = createConfiguredMastra(repositoryRoot, {
-      work_item: {
-        kind: 'research',
-        intent: 'information_research',
-        project: fixtureProject(config),
-        risk_flags: [],
-        labels: [],
-      },
-    });
+    const research = expectReturned(() =>
+      createConfiguredMastra(repositoryRoot, {
+        work_item: {
+          kind: 'research',
+          intent: 'information_research',
+          project: fixtureProject(config),
+          risk_flags: [],
+          labels: [],
+        },
+      }),
+    );
+    expect(research).not.toBeNull();
+    expect(typeof research).toBe('object');
     expect(research.profileId).toBe('web-researcher');
+    expect(research.hooks).not.toBeNull();
+    expect(typeof research.hooks).toBe('object');
+    expect(typeof research.hooks.beforeToolCall).toBe('function');
     const researchBeforeToolCall = required(research.hooks.beforeToolCall, 'research tool hook').bind(research.hooks);
     expect(
       await researchBeforeToolCall({
@@ -1169,7 +1187,10 @@ describe('final v1 artifact contracts', () => {
   });
   test('packet builder accepts another configured read-only profile', async () => {
     const current = await configuredOperationVariant('buildDevelopmentTaskPacket', 'profile', 'web-researcher');
-    expect(buildDevelopmentTaskPacketSource(current, packetInput()).schema).toBe('DevelopmentTaskPacket/v1');
+    const packet = expectReturned(() => buildDevelopmentTaskPacketSource(current, packetInput()));
+    expect(packet).not.toBeNull();
+    expect(typeof packet).toBe('object');
+    expect(packet.schema).toBe('DevelopmentTaskPacket/v1');
   });
   test('packet builder rejects a non-read-only tool policy even with no mutation scope', async () => {
     const current = await configuredOperationVariant('buildDevelopmentTaskPacket', 'profile', 'reviewer-correctness');

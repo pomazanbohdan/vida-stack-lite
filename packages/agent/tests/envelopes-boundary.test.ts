@@ -1,5 +1,6 @@
 import { describe, expect, mock, spyOn, test } from 'bun:test';
 import { createHash } from 'node:crypto';
+import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import type { TrustedProjectIdentity, ProjectAuthorizationRequest } from '../src/contracts/public-ingress.js';
 import type {
@@ -127,6 +128,9 @@ describe('runtime envelope canonicalization boundary', () => {
       'docs/ſafe.txt',
       'docs/COM10.txt',
       'docs/LPT0.txt',
+      'docs/notcon',
+      'docs/name.git',
+      'docs/\uFFFD.txt',
       'docs/ordinary.\u2028',
       'docs/ordinary \u2029',
       'docs/.GiT\u2028',
@@ -162,6 +166,13 @@ describe('runtime envelope canonicalization boundary', () => {
     const arbitraryPath = fc
       .array(fc.integer({ min: 0, max: 0x10ffff }), { maxLength: 48 })
       .map((points) => String.fromCodePoint(...points));
+    assertProperty(
+      fc.property(arbitraryPath, (value) => {
+        const accepted = expectReturned(() => safeWorkflowOwnedPath(value));
+        if (accepted) expect(path.posix.normalize(value)).toBe(value);
+      }),
+      { seed: 20261013, numRuns: 256 },
+    );
     assertProperty(
       fc.property(
         fc.oneof(arbitraryPath, fc.constantFrom('src/**', 'docs/[a-z]/{x,y}.?', 'a\\b', '.git/**')),
@@ -214,7 +225,23 @@ describe('runtime envelope canonicalization boundary', () => {
     for (const [binding, message] of invalidBindings)
       expect(() => consumeRuntimeEnvelope(envelope, binding)).toThrow(message);
 
-    for (const unsafe of ['', '.', '..', '.git/config', 'folder/../file', 'folder\\file', 'C:/file', 'NUL.txt'])
+    for (const unsafe of [
+      '',
+      '.',
+      '..',
+      '/absolute',
+      '//server/share',
+      'folder/../file',
+      'folder//file',
+      'folder/./file',
+      'folder/',
+      'folder\\file',
+      'C:/file',
+      'NUL.txt',
+      '~/file',
+      'docs/\uD800.txt',
+      'docs/\uDC00.txt',
+    ])
       expect(
         expectReturned(() => safeWorkflowOwnedPath(unsafe)),
         unsafe,
@@ -523,7 +550,50 @@ describe('runtime envelope canonicalization boundary', () => {
         path: '$.claims.0',
       },
       {
+        value: { ...ledger, claims: [{ ...claim, work_id: 'foreign-work' }] },
+        code: 'CLAIM_AUTHORITY_INVALID',
+        path: '$.claims.0',
+      },
+      {
+        value: {
+          ...ledger,
+          tickets: [{ ...owner, active_resources: [], expires_at: null }],
+          claims: [{ ...claim, generation: 2, status: 'released' }],
+        },
+        code: 'CLAIM_AUTHORITY_INVALID',
+        path: '$.claims.0',
+      },
+      {
+        value: {
+          ...ledger,
+          open_generation: 2,
+          tickets: [{ ...owner, generation: 2 }],
+          claims: [{ ...claim, generation: 1 }],
+        },
+        code: 'CLAIM_AUTHORITY_INVALID',
+        path: '$.claims.0',
+      },
+      {
+        value: { ...ledger, tickets: [{ ...owner, claim_ids: [] }] },
+        code: 'CLAIM_AUTHORITY_INVALID',
+        path: '$.claims.0',
+      },
+      {
         value: { ...ledger, tickets: [{ ...owner, active_resources: [] }] },
+        code: 'ACTIVE_RESOURCE_PROJECTION_INVALID',
+        path: '$.tickets.0.active_resources',
+      },
+      {
+        value: {
+          ...ledger,
+          tickets: [
+            {
+              ...owner,
+              exclusive_resources: [...owner.exclusive_resources, 'file:src/z.ts'],
+              active_resources: [...owner.active_resources, 'file:src/z.ts'],
+            },
+          ],
+        },
         code: 'ACTIVE_RESOURCE_PROJECTION_INVALID',
         path: '$.tickets.0.active_resources',
       },
@@ -553,6 +623,38 @@ describe('runtime envelope canonicalization boundary', () => {
       expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([{ code: row.code, path: row.path }]);
       expect(row.value).toEqual(before);
     }
+    const partiallyOutOfScopeClaimLedger = {
+      ...ledger,
+      tickets: [{ ...owner, active_resources: [...claim.resources, 'file:src/other.ts'] }],
+      claims: [{ ...claim, resources: [...claim.resources, 'file:src/other.ts'] }],
+    };
+    const partiallyOutOfScopeClaimResult = expectReturned(() =>
+      validateCoordinationLedgerV1(partiallyOutOfScopeClaimLedger),
+    );
+    expect(partiallyOutOfScopeClaimResult).not.toBeNull();
+    expect(typeof partiallyOutOfScopeClaimResult).toBe('object');
+    expect(Array.isArray(partiallyOutOfScopeClaimResult.issues)).toBe(true);
+    expect(partiallyOutOfScopeClaimResult.issues.map(({ code, path }) => ({ code, path }))).toContainEqual({
+      code: 'ACTIVE_CLAIM_SCOPE_INVALID',
+      path: '$.claims.0.resources',
+    });
+    const historicalClaimLedger = {
+      ...ledger,
+      tickets: [
+        {
+          ...owner,
+          exclusive_resources: ['file:docs/a*.md'],
+          active_resources: [],
+          expires_at: null,
+        },
+      ],
+      claims: [{ ...claim, resources: ['file:docs/a*.md'], status: 'released' as const }],
+    };
+    const historicalClaimResult = expectReturned(() => validateCoordinationLedgerV1(historicalClaimLedger));
+    expect(historicalClaimResult).not.toBeNull();
+    expect(typeof historicalClaimResult).toBe('object');
+    expect(Array.isArray(historicalClaimResult.issues)).toBe(true);
+    expect(historicalClaimResult).toEqual({ ok: true, ledger: historicalClaimLedger, issues: [] });
     const readyLedger = { ...ledger, tickets: [{ ...owner, status: 'ready_for_handoff' as const }] };
     const readyResult = expectReturned(() => validateCoordinationLedgerV1(readyLedger));
     expect(readyResult).not.toBeNull();

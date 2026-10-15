@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `4479a37` at origin/main.
+- Published predecessor: `5c240898867a0e331f10d3a95eb4c2c055537ce9` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,8 +18,9 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Current quality preparation:6995of7731roles,149Source byte bindings,
-  736current/178original dispositions missing and19represented static deficits.
+- Current reviewed quality preparation:6991roles,149Source byte bindings.
+  Last broader inventory records736current/178original dispositions missing
+  and19represented static deficits; its earlier total is not a fresh count.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
@@ -5267,6 +5268,97 @@ Next: publish this checked preparation, qualify the actual serial/bail Stryker
 route on the complete69-mutant main-host partition, then refresh main-contracts
 coverage, scoped CRAP and complete mutation evidence. Freeze inputs during each
 numeric run; use the rolling workers only for copied preparation/review.
+
+## Rolling integration and Unicode counterexample correction
+
+Root integrated the independently reviewed next-contour preparation in one
+packet. It strengthens target-return and exact persisted-state assertions across
+governance, CLI, initialization/config, lifecycle, assurance, handoff, repair,
+Source binding and public value boundaries. One shared expectAsyncReturned owner
+replaces duplicated async result observers, including code-rebind and policy
+transition callers. The exact real-adapter control passed with fulfilled and
+rejected undefined, body/file attribution and zero-count Node assertion proof.
+Concurrent Bun zero-assertion failures remain unproven. Seven direct CLEAR API
+cases move intact from zombies into documentation-clear-boundary, selected by
+bun-doc-clear and the same pinned ZOMBIES command; the broad export matrix and
+unreviewed scenario status remain. Publication uses the existing test glob.
+
+Strict typing first caught two copied integration errors: the moved CLEAR helper
+was still needed by two export-matrix cases, and an inferred receiptInput object
+has no sourceStore property. Root restored the helper and derives that mock's
+type from the actual API parameter. Later semantic-case prep referenced an
+out-of-scope variable; Root reused the fixture's actual claim.resources instead.
+Source101 and test452 files passed their respective corrected strict checks.
+
+The33-file behavior batch reached its300s bound and terminated its owned group
+with complete capture and the same boot. It is incomplete, never a full PASS:
+/workspace/attachments/quality-rolling-cli-check-PvJiU8. One observed failure was
+a stale Host approval matcher expecting an old parser diagnostic. Two reviews
+confirmed the exact current strict-schema error and pre-insert denial; the
+corrected case passed with unchanged empty-store assertions. Remaining recovery
+work includes a39s real abrupt-stop case. Its30s wait is the actual stale-lock
+quarantine, not the child watchdog; no clock/owned-exit seam is qualified, so the
+protocol was not shortened. Overall five-minute readiness remains open.
+
+The next7-file focused batch completed348PASS/1FAIL in71.83s,37628 assertions:
+/workspace/attachments/quality-rolling-cli-check-aFBhcX. Its property disproved
+the static normalization-removal argument: Bun's native path conversion changes
+a lone UTF-16 surrogate to U+FFFD. Replay seed20261013/path166:1:8:5:2:4:3:3 stays
+retained. Root added explicit isWellFormed rejection, preserving the original
+Bun denial while removing generic POSIX normalization already covered by the
+remaining lexical guards. High/low-surrogate rejection and accepted literal
+replacement-character cases remain alongside the unweakened arbitrary UTF-16
+property. The corrected complete envelope file passed11cases/2816assertions in
+1.211s at /workspace/attachments/quality-rolling-cli-check-XOTMW0. The changed
+upgrade return/history case separately passed1case/77assertions in8.25s at
+/workspace/attachments/quality-rolling-cli-check-OP01LB;28filtered cases are not
+claimed as execution. No synthetic combined full-suite success is asserted.
+
+The strict hook caught await on Bun's non-thenable rejection matcher in the new
+CLI flag denial. Root reused expectRejection so the actual rejected operation
+settles before the no-filesystem-effect assertion. The complete CLI option file
+passed5cases/15assertions at
+/workspace/attachments/quality-rolling-cli-check-O8fct0. The hook was not bypassed.
+
+One capture of the corrected envelope Source retained all82 callable identities,
+updated their current addresses and bound SHA256
+20450fd8a36444176ff6dc1dfac58e1f17d11e96f5a807e46929039669101193.
+All frozen ceilings, dispositions and counts remain unchanged. The rejected
+intermediate4f362dd6 preparation and its original lineage receipt are retained;
+the corrected receipt is
+/workspace/attachments/quality-envelopes-unicode-lineage-receipt-20261015.json.
+This is lineage/development evidence, not fresh coverage/CRAP/mutation closure.
+
+Before this packet, main-host refreshed its full local triple at5c240898:
+coverage84cad6af-eb01-4342-8f77-8ba2a726de6b and its scoped CRAP report passed;
+the actual Stryker pilot9a42adc6-bd4b-4f44-bb02-94be8bd65149 confirmed69/69 in
+19.457s, with complete receipts, no unknowns and closed process groups. Evidence:
+/workspace/attachments/quality-mutation-main-host-YYMuSy. Main-contracts coverage
+a230f1d1-9570-4385-a3aa-8491b4820515 and same-run scoped CRAP also passed, but
+its actual mutation run reached inner900s without a final report:
+/workspace/attachments/quality-mutation-main-contracts-pTnxWJ. Outer904.788s,
+complete capture, same boot and all groups closed. Its result is UNKNOWN;
+summary zero counts from absent reports are not an actual score. Provisional
+events remain unconfirmed and only guide regression preparation. Historical
+compatible triples remain4/44;40contours remain open.
+
+No unchanged large campaign repeats. Next qualify the existing per-test capture's
+parent custody: an explicit descriptor-bound diagnostic opt-in, fixed invocation
+artifact, one bounded read/digest and existing decoder. Preserve full selected
+argv and default ambient-env scrubbing. A bound capture alone does not authorize
+filtering; independent registration, actual public dry-run/JUnit/body joins and
+static/hook/unmapped full-selection fallback remain separate open qualification.
+Current interface/control proposals are
+/workspace/attachments/quality-next-pertest-custody-ingress-contract-20261015.md,
+/workspace/attachments/quality-next-pertest-custody-adversarial-controls-20261015.md
+and /workspace/attachments/quality-next-pertest-parent-qualification-plan-20261015.md.
+The proposed no-isolate optimization was rejected as unproven/redundant for the
+current serial command. Source reviews found no demonstrated upgrade, loader,
+recovery, installation, controller or policy defect in their bounded paths. The
+v1 reader-misbinding claim was independently rejected and withdrawn: execution
+and binders already own the current identity gates. Legacy storage overlap false
+remains an intentional P0 GAP pending lifetime exclusion and disk recovery proof,
+not permission to activate, replay old state or introduce another active DB.
 
 ## Historical provenance
 

@@ -745,10 +745,31 @@ test('read-only dispatch repair commit rejects work, shared-ledger and journal C
           changedJournal,
         );
       }
+      const beforeRejectedApply = {
+        host: value.database
+          .query(
+            'SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state ORDER BY workspace_id,kind,id',
+          )
+          .all(),
+        journal: value.database
+          .query('SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
+          .all(),
+        repairs: readRepairRows(value.database),
+      };
       expect(() => applyReadOnlyDispatchRepair({ database: value.database, plan, current: value.input })).toThrow(
         /state compare-and-swap conflict/,
       );
-      expect(readRepairRows(value.database)).toEqual([]);
+      expect({
+        host: value.database
+          .query(
+            'SELECT workspace_id,kind,id,revision,payload,digest FROM agent_host_state ORDER BY workspace_id,kind,id',
+          )
+          .all(),
+        journal: value.database
+          .query('SELECT workspace_id,work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
+          .all(),
+        repairs: readRepairRows(value.database),
+      }).toEqual(beforeRejectedApply);
       passed = true;
     } finally {
       closeFixture(value, !passed);

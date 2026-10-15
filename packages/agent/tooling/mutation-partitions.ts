@@ -205,7 +205,11 @@ export function mutationPartitions(): MutationPartition[] {
         'src/documentation/clear-checkpoint-validator.ts',
         'bin/documentation-clear.ts',
       ],
-      tests: ['tests/documentation-clear.test.ts', 'tests/documentation-transition-proof.test.ts'],
+      tests: [
+        'tests/documentation-clear.test.ts',
+        'tests/documentation-transition-proof.test.ts',
+        'tests/documentation-clear-boundary.test.ts',
+      ],
       report: 'mutation-bun-doc-clear.json',
     },
     {

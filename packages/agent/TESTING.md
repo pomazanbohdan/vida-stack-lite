@@ -810,8 +810,11 @@ suite files, and only when the existing exact assertion/body proof classifies it
 as Killed. Omitted cases remain unobserved. Foreign/duplicate files, inconsistent
 counters, runtime/hook errors, incomplete receipts, timeout, signal or uncertain
 process custody remain UNKNOWN. A partial passing report cannot establish PASS.
-Qualify behavior with owned Bun controls and a real complete declared-partition
-Stryker pilot before relying on this path; controls alone are not a score.
+The Linux main-host declared-partition pilot qualified this early-Killed route
+with69/69 assertion-confirmed mutants; its exact receipts are in WORK. It does
+not qualify the full mutant universe or parallel coverage. Other partitions
+retain their own complete receipt and causality requirements; controls alone
+are not a score.
 
 An explicit child environment replaces inheritance; removed parent variables
 must not reappear. Completed output capture must dispose of its deadline timer.
@@ -1277,6 +1280,13 @@ then reads the selected v2 receipt and exact binding. This dependent setup and
 readback phase measured6.144s within the15-case initialization selection; a
 fabricated activation or receipt would remove the proof being tested. The
 exception changes neither the5s default nor the5min aggregate coverage limit.
+
+The activated-config closure case has the same explicit10s composite exception.
+One real completed upgrade supports both a successful cached config load and
+the subsequent schema-valid receipt-identity denial. It measured6.034s, retains
+failed/expired fixtures and checks denial leaves receipt bytes unchanged. Do
+not duplicate the complete upgrade just to give each dependent assertion its
+own case; the default and aggregate limits remain unchanged.
 
 Keep independent CLI denial scenarios in separate tests, each with its own
 case budget. Dependent calls within one scenario share its parent budget;

@@ -71,11 +71,14 @@ spies and injected faults before retrying through the registered cleanup owner.
 A test that reaches an early denial has not exercised a later target boundary.
 Use a phase marker or direct observation to prove the intended operation began.
 
-For expected-success async target calls, reuse the contour's narrow result
-observer where present. Assert doesNotReject around the invocation and retain
-separate exact result/event checks. Keep setup and cleanup outside it. The timing
-contour qualifies this through actual injected mutants and the real assertion
-adapter; a passing original test alone does not prove mutation causality.
+For expected-success async target calls, reuse `expectAsyncReturned` from
+`tests/helpers/expect-rejection.ts`. It observes one invocation through Node's
+doesNotReject and retains its exact value, including fulfilled undefined. Keep
+separate exact result/event checks and leave setup/cleanup outside it. The real
+adapter control qualifies imported helper attribution and rejected undefined
+with zero native JUnit assertions; the concurrent Bun-matcher zero-count case
+still remains unproven. The timing contour separately qualifies its async calls
+through actual injected mutants; a passing original alone is not mutation proof.
 Check value shape/type before a property access or regex matcher can throw its
 own argument error. Preserve unproven results without padding assertion counts.
 Use the existing `expectReturned` helper for expected-success synchronous setup
@@ -84,6 +87,11 @@ For a synchronous Cedar function spy, finish imports before installing it and
 restore it in finally without an intervening await. Confirm restoration with a
 real subsequent call. Module replacement and asynchronous provider cases retain
 their separate namespace-restoration rules below.
+Keep arbitrary UTF-16 values in path properties. A lexical POSIX normalization
+proof missed Bun's native replacement of lone surrogates with U+FFFD. Preserve
+that counterexample, explicit high/low-surrogate denials and accepted literal
+replacement characters when simplifying path guards. Do not narrow a generator
+to make a refactor pass; qualify the executing runtime's string behavior.
 Lifecycle discovery treats strict JSON imports as data, even when their strings
 mention hook names. Malformed JSON and executable-module parse failures still
 fail closed; never skip an executable dependency to obtain a Killed result.

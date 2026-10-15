@@ -5,6 +5,7 @@ import { policy, preparedFixture } from './helpers/documentation-policy-fixture.
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import { executeDocumentationClearFromWork } from '../src/documentation/clear.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { expectAsyncReturned } from './helpers/expect-rejection.ts';
 import {
   documentationPolicyTransitionPath,
   validatePolicyMapAddition,
@@ -64,15 +65,19 @@ test('policy transition parser rejects unknown fields and incomplete forged clos
 
 test('public policy transition preserves genuine baseline and completes one audited cycle', async () => {
   const { f, input, baseline, before, targetPolicy, args } = await preparedFixture();
-  expect(statusOf(await runReconcileArtifacts(args('inspect')))).toBe('inspect_ready_unauthorized');
-  expect(statusOf(await runReconcileArtifacts(args('plan')))).toBe('planned');
-  expect(statusOf(await runReconcileArtifacts(args('apply')))).toBe('author_policy_required');
+  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('inspect'))))).toBe(
+    'inspect_ready_unauthorized',
+  );
+  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('plan'))))).toBe('planned');
+  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('apply'))))).toBe(
+    'author_policy_required',
+  );
   expect(readFileSync(path.join(f.root, f.policyPath), 'utf8')).toBe(f.json(f.oldPolicy));
   f.put(f.policyPath, targetPolicy);
-  expect(statusOf(await runReconcileArtifacts(args('resume')))).toBe('applied');
+  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('resume'))))).toBe('applied');
   const lineage = readFileSync(path.join(f.root, f.oldPolicy.changelog_path), 'utf8');
   expect(lineage.trim().split('\n')).toHaveLength(1);
-  expect(statusOf(await runReconcileArtifacts(args('resume')))).toBe('applied');
+  expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('resume'))))).toBe('applied');
   expect(readFileSync(path.join(f.root, f.oldPolicy.changelog_path), 'utf8')).toBe(lineage);
   expect(readFileSync(path.join(f.root, baseline.path)).equals(before)).toBe(true);
   expect((await executeDocumentationClearFromWork(input, 'verify')).status).toBe('verified');
@@ -83,7 +88,7 @@ const interruptedPhases = ['fence_acquired', 'events_frozen', 'events_published'
 for (const phase of interruptedPhases) {
   test(`public policy transition resumes interruption at ${phase} without duplicate lineage`, async () => {
     const { f, input, baseline, before, targetPolicy, args } = await preparedFixture();
-    await runReconcileArtifacts(args('plan'));
+    await expectAsyncReturned(() => runReconcileArtifacts(args('plan')));
     const fault = {
       onPhase: (actual: string): void => {
         if (actual === phase) throw Error('fixture interruption');
@@ -93,16 +98,18 @@ for (const phase of interruptedPhases) {
       await Promise.resolve(
         expect(runReconcileArtifacts(args('apply'), fault)).rejects.toThrow('fixture interruption'),
       );
-      expect(statusOf(await runReconcileArtifacts(args('resume')))).toBe('author_policy_required');
+      expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('resume'))))).toBe(
+        'author_policy_required',
+      );
       f.put(f.policyPath, targetPolicy);
     } else {
-      await runReconcileArtifacts(args('apply'));
+      await expectAsyncReturned(() => runReconcileArtifacts(args('apply')));
       f.put(f.policyPath, targetPolicy);
       await Promise.resolve(
         expect(runReconcileArtifacts(args('resume'), fault)).rejects.toThrow('fixture interruption'),
       );
     }
-    expect(statusOf(await runReconcileArtifacts(args('resume')))).toBe('applied');
+    expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('resume'))))).toBe('applied');
     const lineage = readFileSync(path.join(f.root, f.oldPolicy.changelog_path), 'utf8');
     expect(lineage.trim().split('\n')).toHaveLength(1);
     expect((await executeDocumentationClearFromWork(input, 'verify')).status).toBe('verified');
@@ -112,8 +119,8 @@ for (const phase of interruptedPhases) {
 
 test('public CLEAR rejects forged phase, events and closure references', async () => {
   const { f, input, targetPolicy, args } = await preparedFixture();
-  await runReconcileArtifacts(args('plan'));
-  await runReconcileArtifacts(args('apply'));
+  await expectAsyncReturned(() => runReconcileArtifacts(args('plan')));
+  await expectAsyncReturned(() => runReconcileArtifacts(args('apply')));
   f.put(f.policyPath, targetPolicy);
   await Promise.resolve(
     expect(
@@ -136,7 +143,7 @@ test('public CLEAR rejects forged phase, events and closure references', async (
     expect(executeDocumentationClearFromWork(input, 'closeout')).rejects.toThrow('closeout reference'),
   );
   f.put(file, original);
-  await runReconcileArtifacts(args('resume'));
+  await expectAsyncReturned(() => runReconcileArtifacts(args('resume')));
   const applied = readFileSync(path.join(f.root, file), 'utf8');
   const mutations: ((record: Record<string, unknown>) => void)[] = [
     (record) => {

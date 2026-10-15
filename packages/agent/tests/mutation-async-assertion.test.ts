@@ -1371,6 +1371,60 @@ test('real adapter confirms failure when the shared rejection helper receives fu
   }
 });
 
+test('real adapter observes node assert in shared async return helper for undefined outcomes', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-async-returned-helper-'));
+  try {
+    const helperPath = fileURLToPath(new URL('./helpers/expect-rejection.ts', import.meta.url));
+    const copiedHelperPath = path.join(root, 'tests', 'helpers', 'expect-rejection.ts');
+    await mkdir(path.dirname(copiedHelperPath), { recursive: true });
+    const helperBytes = await readFile(helperPath);
+    await writeFile(copiedHelperPath, helperBytes);
+    expect(await readFile(copiedHelperPath)).toEqual(helperBytes);
+
+    const child = await runAdapterChild(
+      root,
+      `import { test } from 'bun:test';\nimport { expectAsyncReturned } from ${JSON.stringify(copiedHelperPath)};\ntest('fulfilled undefined is returned', async () => { const value = await expectAsyncReturned(async () => undefined); if (value !== undefined) throw new Error('undefined fulfillment was not preserved'); });\ntest('rejected undefined fails the success helper', async () => { await expectAsyncReturned(async () => { throw undefined; }); });\n`,
+      'async-returned-helper',
+    );
+    expect(child.events).toEqual([
+      {
+        schema: 'MutationBodyEvent/v1',
+        test_file: child.selectedTest,
+        kind: 'body',
+        body_id: 2,
+        assertion_cause: true,
+        assertion_source: 'node-assert',
+      },
+    ]);
+
+    const cases: MutationJUnitCase[] = [];
+    const outcome = junitOutcome(child.junit, [child.selectedTest], [], child.events, (row) => cases.push(row));
+    expect(outcome).toMatchObject({
+      tests: 2,
+      assertions: 0,
+      failures: 1,
+      errors: 0,
+      skipped: 0,
+      outcome: 'killed',
+    });
+    expect(cases).toEqual([
+      {
+        test_file: child.selectedTest,
+        name: '[mutation-body:1] fulfilled undefined is returned',
+        outcome: 'passed',
+      },
+      {
+        test_file: child.selectedTest,
+        name: '[mutation-body:2] rejected undefined fails the success helper',
+        outcome: 'failed',
+      },
+    ]);
+    expect(confirmedRunnerOutcome(child.exitCode, outcome.outcome)).toBe('killed');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test('child health failures never become assertion-confirmed mutation kills', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-child-health-'));
   try {

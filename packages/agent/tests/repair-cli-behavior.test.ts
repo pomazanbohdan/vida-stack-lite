@@ -1292,6 +1292,12 @@ test('synthesis observation dispatcher plans the real provenance collision and p
       'ledger item',
     ),
   ).toEqual(stored.item.observation);
+  const hostBeforeWrongIssue = database
+    .query('SELECT kind,id,revision,payload,digest FROM agent_host_state ORDER BY kind,id')
+    .all();
+  const sessionBeforeWrongIssue = database
+    .query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger')
+    .all();
   const wrongIssue = args('inspect');
   wrongIssue[wrongIssue.indexOf('--issue-id') + 1] = 'foreign-issue';
   await Promise.resolve(expect(runReconcileArtifacts(wrongIssue)).rejects.toThrow('correction scope'));
@@ -1303,6 +1309,12 @@ test('synthesis observation dispatcher plans the real provenance collision and p
   expect(stringField(unchanged, 'payload', 'Mastra session ledger after denial')).toBe(
     stringField(row, 'payload', 'Mastra session ledger'),
   );
+  expect(database.query('SELECT kind,id,revision,payload,digest FROM agent_host_state ORDER BY kind,id').all()).toEqual(
+    hostBeforeWrongIssue,
+  );
+  expect(
+    database.query('SELECT work_id,attempt,revision,payload,digest FROM agent_host_mastra_session_ledger').all(),
+  ).toEqual(sessionBeforeWrongIssue);
   writeFileSync(path.join(context.root, 'packages/agent/TESTING.md'), 'changed source\n');
   await Promise.resolve(expect(runReconcileArtifacts(args('inspect'))).rejects.toThrow('declared source changed'));
   await Promise.resolve(

@@ -4,6 +4,7 @@ import {
   compileImplementationScopeValidator,
   validateImplementationScope,
 } from '../src/contracts/implementation-scope.js';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 const scope = {
   schema: 'ImplementationScope/v1',
@@ -25,28 +26,34 @@ const scope = {
 };
 
 test('bundled scope denies missing fields, unknown fields and duplicate paths', () => {
-  expect(validateImplementationScope(scope)).toBe(true);
+  expect(expectReturned(() => validateImplementationScope(scope))).toBe(true);
   for (const key of Object.keys(scope)) {
     const incomplete: Record<string, unknown> = { ...scope };
     delete incomplete[key];
-    expect(validateImplementationScope(incomplete)).toBe(false);
+    expect(expectReturned(() => validateImplementationScope(incomplete))).toBe(false);
   }
-  expect(validateImplementationScope({ ...scope, unlisted: true })).toBe(false);
-  expect(validateImplementationScope({ ...scope, allowed_paths: ['src/example.ts', 'src/example.ts'] })).toBe(false);
-  expect(validateImplementationScope({ ...scope, allowed_paths: [] })).toBe(false);
+  expect(expectReturned(() => validateImplementationScope({ ...scope, unlisted: true }))).toBe(false);
+  expect(
+    expectReturned(() =>
+      validateImplementationScope({ ...scope, allowed_paths: ['src/example.ts', 'src/example.ts'] }),
+    ),
+  ).toBe(false);
+  expect(expectReturned(() => validateImplementationScope({ ...scope, allowed_paths: [] }))).toBe(false);
 });
 
 test('selected schemas control validation independently of the bundled contract', () => {
   fc.assert(
     fc.property(fc.string(), (selected) => {
-      const validate = compileImplementationScopeValidator({ type: 'string', const: selected });
-      const other = compileImplementationScopeValidator({ type: 'string', const: `${selected}x` });
-      expect(validate(selected)).toBe(true);
-      expect(validate(`${selected}x`)).toBe(false);
-      expect(validate(scope)).toBe(false);
-      expect(other(`${selected}x`)).toBe(true);
-      expect(other(selected)).toBe(false);
-      expect(validate(selected)).toBe(true);
+      const validate = expectReturned(() => compileImplementationScopeValidator({ type: 'string', const: selected }));
+      const other = expectReturned(() =>
+        compileImplementationScopeValidator({ type: 'string', const: `${selected}x` }),
+      );
+      expect(expectReturned(() => validate(selected))).toBe(true);
+      expect(expectReturned(() => validate(`${selected}x`))).toBe(false);
+      expect(expectReturned(() => validate(scope))).toBe(false);
+      expect(expectReturned(() => other(`${selected}x`))).toBe(true);
+      expect(expectReturned(() => other(selected))).toBe(false);
+      expect(expectReturned(() => validate(selected))).toBe(true);
     }),
     { seed: 20261010, numRuns: 50 },
   );
@@ -59,13 +66,15 @@ test('selected schema compilation remains strict', () => {
 });
 
 test('selected schema retains every validation error in one decision', () => {
-  const validate = compileImplementationScopeValidator({
-    type: 'object',
-    properties: { left: { type: 'integer' }, right: { type: 'boolean' } },
-    required: ['left', 'right'],
-    additionalProperties: false,
-  });
-  expect(validate({ left: 'invalid', right: 12, extra: true })).toBe(false);
+  const validate = expectReturned(() =>
+    compileImplementationScopeValidator({
+      type: 'object',
+      properties: { left: { type: 'integer' }, right: { type: 'boolean' } },
+      required: ['left', 'right'],
+      additionalProperties: false,
+    }),
+  );
+  expect(expectReturned(() => validate({ left: 'invalid', right: 12, extra: true }))).toBe(false);
   expect(validate.errors).toHaveLength(3);
   expect(validate.errors?.map((error) => error.keyword).sort()).toEqual(['additionalProperties', 'type', 'type']);
 });

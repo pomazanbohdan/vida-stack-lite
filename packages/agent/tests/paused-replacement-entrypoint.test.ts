@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { expectAsyncReturned } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -790,7 +791,18 @@ test.each([false, true])(
         const pausedForInstall = readOwnerSnapshot();
         expect(pausedForInstall.work.execution.status).toBe('suspended');
         expect(pausedForInstall.work.lease).toBeNull();
-        expect((await runReconcileArtifacts(['--mode', 'plan', ...rebind])).status).toBe('planned');
+        const stateBeforeCodePlan = readOwnerSnapshot();
+        const journalBeforeCodePlan = currentJournalVersion(activeLedger, workId, 'Journal before code rebind plan');
+        const plannedCodeRebind = await expectAsyncReturned(() => runReconcileArtifacts(['--mode', 'plan', ...rebind]));
+        expect(plannedCodeRebind.status).toBe('planned');
+        const stateAfterCodePlan = readOwnerSnapshot();
+        expect(stateAfterCodePlan.work).toEqual(stateBeforeCodePlan.work);
+        expect(stateAfterCodePlan.ledger).toEqual(stateBeforeCodePlan.ledger);
+        expect(stateAfterCodePlan.workVersion).toEqual(stateBeforeCodePlan.workVersion);
+        expect(stateAfterCodePlan.ledgerVersion).toEqual(stateBeforeCodePlan.ledgerVersion);
+        expect(currentJournalVersion(activeLedger, workId, 'Journal after code rebind plan')).toEqual(
+          journalBeforeCodePlan,
+        );
         const stateBeforeTamper = readOwnerSnapshot();
         const journalBeforeTamper = currentJournalVersion(activeLedger, workId, 'Journal version before tamper');
         const db = new Database(path.join(root, config.control.work_root, 'session-handoff.v1.sqlite'));
@@ -891,15 +903,29 @@ test.each([false, true])(
           });
           expect(resumedBeforeRebind.status).toBe('resumed');
         }
-        const rebound = await runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)]);
+        const rebound = await expectAsyncReturned(() =>
+          runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)]),
+        );
         expect(rebound.status).toBe('rebound');
         const resumedForRebind = readOwnerSnapshot();
         expect(resumedForRebind.work.execution.status).toBe('active');
         expect(resumedForRebind.work.lease?.ticket_id).not.toBe(resumed.ticket_id);
         expect(resumedForRebind.ledgerVersion.revision).toBe(pausedForInstall.ledgerVersion.revision + 1);
         expect(rebound.retained_issue_id).toBe(switched.dispatch.issue_id);
-        expect((await runReconcileArtifacts(['--mode', 'resume', ...rebind.slice(0, 6)])).status).toBe(
-          'already_rebound',
+        const beforeRebindReplay = readOwnerSnapshot();
+        const journalBeforeRebindReplay = currentJournalVersion(activeLedger, workId, 'Journal before rebind replay');
+        const rebindReplay = await expectAsyncReturned(() =>
+          runReconcileArtifacts(['--mode', 'resume', ...rebind.slice(0, 6)]),
+        );
+        expect(rebindReplay.status).toBe('already_rebound');
+        expect(rebindReplay.retained_issue_id).toBe(switched.dispatch.issue_id);
+        const afterRebindReplay = readOwnerSnapshot();
+        expect(afterRebindReplay.work).toEqual(beforeRebindReplay.work);
+        expect(afterRebindReplay.ledger).toEqual(beforeRebindReplay.ledger);
+        expect(afterRebindReplay.workVersion).toEqual(beforeRebindReplay.workVersion);
+        expect(afterRebindReplay.ledgerVersion).toEqual(beforeRebindReplay.ledgerVersion);
+        expect(currentJournalVersion(activeLedger, workId, 'Journal after rebind replay')).toEqual(
+          journalBeforeRebindReplay,
         );
         expect(
           readOwnerSnapshot()

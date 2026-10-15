@@ -607,3 +607,53 @@ test('builds implementation evidence from a matching persisted completion and re
     ).toThrow(/durably completed/);
   }
 });
+
+test('does not issue a validation receipt when admitted source changes after implementation evidence', () => {
+  const fixture = completedDevelopmentFixture();
+  const changedEntries = initial.entries.map((entry) =>
+    entry.path === owned[0] ? { ...entry, sha256: 'f'.repeat(64) } : entry,
+  );
+  const changedSource = {
+    schema: 'ScopedSourceSnapshot/v1' as const,
+    entries: changedEntries,
+    digest: canonicalJsonDigest({ schema: 'ScopedSourceSnapshot/v1', entries: changedEntries }),
+  };
+  let snapshotCalls = 0;
+  const hostWork = fixture.host.work;
+  if (!hostWork) throw new Error('Observed validator fixture lost its Host Work.');
+  const expectedIdentity = {
+    repository_id: hostWork.binding.repository_id,
+    project_ids: hostWork.binding.project_ids,
+    integrations_digest: hostWork.binding.integrations_digest,
+    work_id: hostWork.binding.lifecycle_work_id,
+  };
+  const sourceStore: NonNullable<Parameters<typeof issueObservedValidationReceipt>[0]['sourceStore']> = {
+    snapshotCurrentTaskSourceSources(identity, threadId, paths, attempt) {
+      snapshotCalls += 1;
+      expect(identity).toEqual(expectedIdentity);
+      expect(threadId).toBe('observed-validator-caller');
+      expect(paths).toEqual(owned);
+      expect(attempt).toBe(1);
+      return changedSource;
+    },
+  };
+  let receiptCalls = 0;
+  const observedAuthority: DeliveryEvidenceAuthority = {
+    ...authority,
+    issueValidationReceipt: (input) => {
+      receiptCalls += 1;
+      return authority.issueValidationReceipt(input);
+    },
+  };
+
+  expect(() =>
+    issueObservedValidationReceipt({
+      ...receiptInput,
+      host: fixture.host,
+      sourceStore,
+      authority: observedAuthority,
+    }),
+  ).toThrow('observed validation: source changed after implementation evidence');
+  expect(snapshotCalls).toBe(1);
+  expect(receiptCalls).toBe(0);
+});

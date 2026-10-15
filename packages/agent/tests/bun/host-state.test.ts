@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
+import { expectReturned } from '../helpers/expect-rejection.ts';
 import { createWorkflowReconciliationAuthorization } from '../helpers/workflow-reconciliation-authorization-fixture.ts';
 import { validateWorkState } from '../../src/contracts/work-state-schema.ts';
 import type {
@@ -586,9 +587,9 @@ test('Host and readonly inspection share a lazy WorkState schema without caching
     )) as typeof import('../../src/contracts/work-state-schema.ts');
     expect(compiledWorkSchemas).toEqual([]);
     const request = fixture();
-    expect(freshSchema.validateWorkState(request.nextWork)).toBe(true);
+    expect(expectReturned(() => freshSchema.validateWorkState(request.nextWork))).toBe(true);
     expect(compiledWorkSchemas).toHaveLength(1);
-    expect(freshSchema.validateWorkState(request.nextWork)).toBe(true);
+    expect(expectReturned(() => freshSchema.validateWorkState(request.nextWork))).toBe(true);
     expect(compiledWorkSchemas).toHaveLength(1);
     // A qualified query creates a new module instance while Ajv's constructor remains shared.
     const fresh = (await import(
@@ -597,14 +598,14 @@ test('Host and readonly inspection share a lazy WorkState schema without caching
     expect(compiledWorkSchemas).toHaveLength(1);
 
     const freshStore = new fresh.HostStateStore(database, workspace);
-    const committed = freshStore.compareAndSwapHostState(request);
+    const committed = expectReturned(() => freshStore.compareAndSwapHostState(request));
     // Earlier cases may already have compiled the shared ordinary module.
     // The fresh owner above always compiles once; public callers add at most one.
     const publicCompileCount = compiledWorkSchemas.length;
     expect(publicCompileCount).toBeGreaterThanOrEqual(1);
     expect(publicCompileCount).toBeLessThanOrEqual(2);
 
-    const saved = presentSnapshot(freshStore.readHostStateSnapshot(identity));
+    const saved = presentSnapshot(expectReturned(() => freshStore.readHostStateSnapshot(identity)));
     expect(saved.work.workspace_id).toBe(workspace);
     expect(saved.work.binding.lifecycle_work_id).toBe('work');
     expect(saved.workVersion.revision).toBe(saved.work.revision);
@@ -618,11 +619,11 @@ test('Host and readonly inspection share a lazy WorkState schema without caching
     invalid.nextWork.revision = saved.work.revision + 1;
     invalid.nextLedger.revision = saved.ledger.revision + 1;
     expect(Reflect.deleteProperty(invalid.nextWork.execution, 'assignment_attempts')).toBe(true);
-    expect(freshSchema.validateWorkState(invalid.nextWork)).toBe(false);
-    expect(validateWorkState(invalid.nextWork)).toBe(false);
+    expect(expectReturned(() => freshSchema.validateWorkState(invalid.nextWork))).toBe(false);
+    expect(expectReturned(() => validateWorkState(invalid.nextWork))).toBe(false);
     expect(() => freshStore.compareAndSwapHostState(invalid)).toThrow('work record must match current WorkState/v1');
 
-    expect(freshStore.readHostStateSnapshot(identity)).toEqual(saved);
+    expect(expectReturned(() => freshStore.readHostStateSnapshot(identity))).toEqual(saved);
     expect(compiledWorkSchemas).toHaveLength(publicCompileCount);
   } catch (error) {
     preserveHostFixtureRoot = true;
@@ -4194,7 +4195,9 @@ describe('host SQLite governance persistence', () => {
     const malformedApproval = { ...approvalBinding() };
     setFixtureField(malformedApproval, 'extra', true);
     await Promise.resolve(
-      expect(store.consumeApproval('approvals', malformedApproval, async () => {})).rejects.toThrow(/unrecognized/i),
+      expect(store.consumeApproval('approvals', malformedApproval, async () => {})).rejects.toThrow(
+        /^host workflow approval record is invalid$/,
+      ),
     );
     expect(governanceRows()).toEqual([]);
     expect(database.query<GovernanceStoreSqlRow, []>('SELECT * FROM agent_host_governance_stores').all()).toEqual([]);

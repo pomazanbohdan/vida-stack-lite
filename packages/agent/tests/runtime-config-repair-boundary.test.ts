@@ -5,11 +5,14 @@ import path from 'node:path';
 import {
   INITIALIZED_PROJECT_PATHS,
   PROJECT_ACTIVATION_PATH,
+  PROJECT_INITIALIZATION_PATH,
   PROJECT_CONFIGURATION_PATHS,
 } from '../src/config/project-paths.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { validateProjectInitializationReceipt } from '../src/config/project-initialization-record.ts';
 import { configuredTestContext } from './configured-context.ts';
-import { expectRejection } from './helpers/expect-rejection.ts';
+import { expectRejection, expectReturned } from './helpers/expect-rejection.ts';
+import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import {
   activeRuntimeConfigurationSource,
@@ -25,6 +28,24 @@ const { repositoryRoot } = configuredTestContext();
 const sourceBytes = readFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'));
 
 import { captureCoverageConsumerBinding, assertCoverageConsumerBinding } from '../tooling/coverage-consumer-binding.ts';
+
+async function completeFreshUpgrade(root: string, operationId: string): Promise<void> {
+  const upgrade = await import('../src/config/project-upgrade.ts');
+  const planned = await upgrade.planProjectUpgradeRepair(root, {
+    operation_id: operationId,
+    actor: 'test-owner: activated runtime config reader',
+    instruction_ref: 'tests/runtime-config-repair-boundary.test.ts',
+  });
+  expect(planned.plan.operation_id).toBe(operationId);
+  expect(planned.plan.database_mode).toBe('fresh');
+  const completed = await upgrade.resumeProjectUpgrade(root, operationId);
+  expect(completed.phase).toBe('completed');
+}
+
+function finishActivatedConfigFixture(root: string, passed: boolean, deadlineAt: number): void {
+  if (passed && performance.now() < deadlineAt) rmSync(root, { recursive: true, force: true });
+  else process.stderr.write(`Retained failed, expired, or pending activated config fixture: ${root}\n`);
+}
 
 function createLegacyConfigFixture(): { root: string; configFile: string; deadlineAt: number } {
   const deadlineAt = performance.now() + 5000;
@@ -346,4 +367,40 @@ describe('current-v1 exact-byte config repair boundary', () => {
       closeLegacyConfigFixture(fixture, !retain);
     }
   });
+});
+
+describe('activated project config reader closure', () => {
+  test('loads completed project config and rejects changed receipt identity after warming its cache', async () => {
+    const deadlineAt = performance.now() + 10_000;
+    const root = await makeFreshRepository('config-repair-activated-shared-');
+    let passed = false;
+    try {
+      await completeFreshUpgrade(root, 'config-reader-activated-shared-001');
+      const loaded = expectReturned(() => loadRuntimeConfig(root));
+      expect(activeRuntimeConfigurationSource(requireSafeRepositoryAccess(root))).toBe(
+        PROJECT_CONFIGURATION_PATHS.project,
+      );
+      const binding = expectReturned(() => capturedRuntimeConfigurationBinding(loaded));
+      expect(binding.repository_root).toBe(root);
+      expect(binding.source).toBe(PROJECT_CONFIGURATION_PATHS.project);
+      expect(binding.source_digest).toMatch(/^[0-9a-f]{64}$/u);
+      expect(Object.isFrozen(binding)).toBe(true);
+
+      const receiptPath = path.join(root, PROJECT_INITIALIZATION_PATH);
+      const receiptValue: unknown = JSON.parse(readFileSync(receiptPath, 'utf8'));
+      const receipt = validateProjectInitializationReceipt(receiptValue);
+      expect(receipt.current_input_digest).toMatch(/^[0-9a-f]{64}$/u);
+      expect(receipt.current_input_digest).not.toBe('0'.repeat(64));
+      writeFileSync(receiptPath, JSON.stringify({ ...receipt, current_input_digest: '0'.repeat(64) }) + '\n');
+      const changedReceiptBytes = readFileSync(receiptPath);
+      expect(() => loadRuntimeConfig(root)).toThrow(
+        'activated project configuration differs from its exact initialization closure',
+      );
+      expect(readFileSync(receiptPath)).toEqual(changedReceiptBytes);
+      if (performance.now() >= deadlineAt) throw new Error('Activated config fixture deadline expired.');
+      passed = true;
+    } finally {
+      finishActivatedConfigFixture(root, passed, deadlineAt);
+    }
+  }, 10_000);
 });

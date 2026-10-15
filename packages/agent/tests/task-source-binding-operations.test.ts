@@ -1271,7 +1271,15 @@ describe('persisted TaskSource binding operations', () => {
   });
 
   test('changed payload, stale Host CAS and foreign owner are denied without adding operation rows', () => {
-    prepare();
+    const prepared = prepare();
+    const hostBeforeDenials = store.readHostStateSnapshot(identity);
+    const operationBeforeDenials = inspect();
+    expect(operationBeforeDenials).toMatchObject({
+      schema: 'TaskSourceBindingOperationResult/v1',
+      status: 'inspected',
+      operation: prepared.operation,
+      state_version: prepared.state_version,
+    });
     expect(() => prepare(operationRequest({ branch_ref: 'refs/heads/codex/changed' }))).toThrow(/retry changed/);
     const expectedWork = request.expected_host.work;
     assert.ok(expectedWork);
@@ -1295,6 +1303,8 @@ describe('persisted TaskSource binding operations', () => {
       .get();
     assert.ok(operationCount);
     expect(operationCount.count).toBe(1);
+    expect(inspect()).toEqual(operationBeforeDenials);
+    expect(store.readHostStateSnapshot(identity)).toEqual(hostBeforeDenials);
   });
 
   test('inspection without the lazy table has no database effects and missing Host storage is rejected before creation', () => {

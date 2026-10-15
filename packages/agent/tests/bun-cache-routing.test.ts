@@ -5,6 +5,7 @@ import path from 'node:path';
 import { homedir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 import { test } from 'bun:test';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 // TEST SETUP ONLY: preserve fixture/cache outputs. No install, Runtime acceptance,
 // native action or measured speed improvement is asserted by these regressions.
@@ -99,15 +100,15 @@ function expectedCache(root: string): string {
 test('copied bundles have distinct stable cache namespaces and preserve warm contents', () => {
   const first = pinFixture('first'),
     second = pinFixture('second');
-  const firstEnv = pinnedEnvironment(process.execPath, { PATH: 'fixture-path' }, first);
-  const secondEnv = pinnedEnvironment(process.execPath, { PATH: 'fixture-path' }, second);
+  const firstEnv = expectReturned(() => pinnedEnvironment(process.execPath, { PATH: 'fixture-path' }, first));
+  const secondEnv = expectReturned(() => pinnedEnvironment(process.execPath, { PATH: 'fixture-path' }, second));
   assert.equal(firstEnv.BUN_RUNTIME_TRANSPILER_CACHE_PATH, expectedCache(first));
   assert.equal(secondEnv.BUN_RUNTIME_TRANSPILER_CACHE_PATH, expectedCache(second));
   assert.notEqual(firstEnv.BUN_RUNTIME_TRANSPILER_CACHE_PATH, secondEnv.BUN_RUNTIME_TRANSPILER_CACHE_PATH);
   mkdirSync(firstEnv.BUN_RUNTIME_TRANSPILER_CACHE_PATH, { recursive: true });
   const sentinel = path.join(firstEnv.BUN_RUNTIME_TRANSPILER_CACHE_PATH, 'warm-sentinel');
   writeFileSync(sentinel, 'retained warm fixture bytes');
-  const warm = pinnedEnvironment(process.execPath, firstEnv, first);
+  const warm = expectReturned(() => pinnedEnvironment(process.execPath, firstEnv, first));
   assert.equal(warm.BUN_RUNTIME_TRANSPILER_CACHE_PATH, firstEnv.BUN_RUNTIME_TRANSPILER_CACHE_PATH);
   assert.equal(readFileSync(sentinel, 'utf8'), 'retained warm fixture bytes');
 });
@@ -124,11 +125,21 @@ test('private installed-package cache namespaces do not collide when path compon
       JSON.stringify({ packageManager: `bun@${pin}`, engines: { bun: pin } }),
     );
   }
-  const firstCache = pinnedEnvironment(process.execPath, {}, first).BUN_RUNTIME_TRANSPILER_CACHE_PATH;
-  const secondCache = pinnedEnvironment(process.execPath, {}, second).BUN_RUNTIME_TRANSPILER_CACHE_PATH;
+  const firstCache = expectReturned(() =>
+    pinnedEnvironment(process.execPath, {}, first),
+  ).BUN_RUNTIME_TRANSPILER_CACHE_PATH;
+  const secondCache = expectReturned(() =>
+    pinnedEnvironment(process.execPath, {}, second),
+  ).BUN_RUNTIME_TRANSPILER_CACHE_PATH;
   assert.ok(firstCache && secondCache);
-  assert.equal(pinnedEnvironment(process.execPath, {}, first).BUN_RUNTIME_TRANSPILER_CACHE_PATH, firstCache);
-  assert.equal(pinnedEnvironment(process.execPath, {}, second).BUN_RUNTIME_TRANSPILER_CACHE_PATH, secondCache);
+  assert.equal(
+    expectReturned(() => pinnedEnvironment(process.execPath, {}, first)).BUN_RUNTIME_TRANSPILER_CACHE_PATH,
+    firstCache,
+  );
+  assert.equal(
+    expectReturned(() => pinnedEnvironment(process.execPath, {}, second)).BUN_RUNTIME_TRANSPILER_CACHE_PATH,
+    secondCache,
+  );
   assert.notEqual(firstCache, secondCache);
   const privateRoot = path.join(homedir(), '.tmp', 'vida-bun-cache');
   for (const cache of [firstCache, secondCache]) {
@@ -140,15 +151,15 @@ test('private installed-package cache namespaces do not collide when path compon
 test('inherited derived cache follows the actual copy while custom and disabled caches remain explicit', () => {
   const first = pinFixture('inherited'),
     second = pinFixture('actual-copy');
-  const inherited = pinnedEnvironment(process.execPath, {}, first);
+  const inherited = expectReturned(() => pinnedEnvironment(process.execPath, {}, first));
   assert.equal(
-    pinnedEnvironment(process.execPath, inherited, second).BUN_RUNTIME_TRANSPILER_CACHE_PATH,
+    expectReturned(() => pinnedEnvironment(process.execPath, inherited, second)).BUN_RUNTIME_TRANSPILER_CACHE_PATH,
     expectedCache(second),
   );
   const custom = path.join(scratch, 'caller-selected-cache');
   for (const selected of [custom, '0']) {
     const input = { BUN_RUNTIME_TRANSPILER_CACHE_PATH: selected, FIXTURE_VALUE: 'retained' };
-    const actual = pinnedEnvironment(process.execPath, input, second);
+    const actual = expectReturned(() => pinnedEnvironment(process.execPath, input, second));
     assert.equal(actual.BUN_RUNTIME_TRANSPILER_CACHE_PATH, selected);
     assert.equal(actual.FIXTURE_VALUE, input.FIXTURE_VALUE);
     assert.deepEqual(input, { BUN_RUNTIME_TRANSPILER_CACHE_PATH: selected, FIXTURE_VALUE: 'retained' });
@@ -164,16 +175,18 @@ test('pinned launcher checks version then forwards one payload with unchanged ar
     FIXTURE_VALUE: 'retained',
     VIDA_COVERAGE_REVIEW_CLOCK_POLICY: 'forged caller clock claim',
   };
-  const exit = runPinnedBun(argv, {
-    root,
-    cwd: scratch,
-    executable: process.execPath,
-    env,
-    spawn(command: string, args: readonly string[], options: PinnedInvocationOptions) {
-      calls.push({ command, args, options });
-      return { status: calls.length === 1 ? 0 : 23, signal: null, stdout: calls.length === 1 ? pin : '' };
-    },
-  });
+  const exit = expectReturned(() =>
+    runPinnedBun(argv, {
+      root,
+      cwd: scratch,
+      executable: process.execPath,
+      env,
+      spawn(command: string, args: readonly string[], options: PinnedInvocationOptions) {
+        calls.push({ command, args, options });
+        return { status: calls.length === 1 ? 0 : 23, signal: null, stdout: calls.length === 1 ? pin : '' };
+      },
+    }),
+  );
   assert.equal(exit, 23);
   assert.equal(calls.length, 2);
   const versionCall = calls[0];
@@ -193,7 +206,7 @@ test('pinned launcher checks version then forwards one payload with unchanged ar
     VIDA_COVERAGE_REVIEW_CLOCK_POLICY: reviewPolicy,
     ...forwardedEnvironment
   } = payloadCall.options.env;
-  const expectedEnvironment = pinnedEnvironment(process.execPath, env, root);
+  const expectedEnvironment = expectReturned(() => pinnedEnvironment(process.execPath, env, root));
   delete expectedEnvironment.VIDA_COVERAGE_REVIEW_CLOCK_POLICY;
   assert.equal(reviewPolicy, undefined);
   assert.deepEqual(forwardedEnvironment, expectedEnvironment);

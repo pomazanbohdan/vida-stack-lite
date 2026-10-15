@@ -319,7 +319,7 @@
     "test:fuzz": "bun bin/bun.ts run test:fuzz:pinned",
     "test:fuzz:pinned": "bun test --timeout 5000 tests/fuzz.test.ts",
     "test:zombies": "bun bin/bun.ts run test:zombies:pinned",
-    "test:zombies:pinned": "bun test --timeout 5000 tests/zombies.test.ts",
+    "test:zombies:pinned": "bun test --timeout 5000 tests/zombies.test.ts tests/documentation-clear-boundary.test.ts",
     "test:portable": "bun bin/bun.ts run test:portable:pinned",
     "test:portable:pinned": "bun test --timeout 5000 tests/smoke.test.ts tests/property.test.ts tests/portable-instructions.test.ts",
     "quality:contours": "bun bin/bun.ts run quality:contours:pinned",

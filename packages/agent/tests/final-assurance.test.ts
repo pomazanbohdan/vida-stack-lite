@@ -63,7 +63,7 @@ test('settled validator inspection permits test.read without granting unknown or
       egress_policies: { ...baseConfig.agents.egress_policies, none: { allowed_hosts: [] } },
     },
   };
-  expect(configuredReadonlyAssignment(config, request, 'settled-validation')).toBe(true);
+  expect(expectReturned(() => configuredReadonlyAssignment(config, request, 'settled-validation'))).toBe(true);
   expect(configuredReadonlyAssignment(config, request)).toBe(false);
   expect(eligibleReadonlyRelinquishment(config, { request, issue_id: 'unknown', observation: null })).toBe(false);
   for (const tool of ['test.execute', 'runtime.write', 'source.write', 'delivery.write', 'unknown']) {
@@ -174,8 +174,9 @@ function review(state: FinalAssuranceState, index: number) {
   };
 }
 function reviewed(): FinalAssuranceState {
-  let state = issueFinalAssuranceWave(createFinalAssuranceState(packet));
-  for (let index = 0; index < 3; index += 1) state = reportFinalAssurance(state, review(state, index));
+  let state = expectReturned(() => issueFinalAssuranceWave(expectReturned(() => createFinalAssuranceState(packet))));
+  for (let index = 0; index < 3; index += 1)
+    state = expectReturned(() => reportFinalAssurance(state, review(state, index)));
   return state;
 }
 function reverse(state: FinalAssuranceState, index: number) {
@@ -195,7 +196,7 @@ function reverse(state: FinalAssuranceState, index: number) {
 }
 test('progress admits only a complete issued wave and one report per commit', () => {
   const initial = expectReturned(() => createFinalAssuranceState(packet));
-  expect(finalAssuranceStatus(initial)).toBe('ready');
+  expect(expectReturned(() => finalAssuranceStatus(initial))).toBe('ready');
   expectReturned(() => validateFinalAssuranceProgress(null, initial));
 
   const issued = expectReturned(() => issueFinalAssuranceWave(initial));
@@ -218,24 +219,25 @@ test('progress admits only a complete issued wave and one report per commit', ()
   expect(issued.actions.every((action) => action.observation === null)).toBe(true);
 });
 test('two reviewers cannot advance; three pairs satisfy only the reviewed gate', () => {
-  let state = issueFinalAssuranceWave(createFinalAssuranceState(packet));
-  for (let index = 0; index < 2; index += 1) state = reportFinalAssurance(state, review(state, index));
-  expect(finalAssuranceStatus(state)).toBe('issued_outcome_uncertain');
+  let state = expectReturned(() => issueFinalAssuranceWave(expectReturned(() => createFinalAssuranceState(packet))));
+  for (let index = 0; index < 2; index += 1)
+    state = expectReturned(() => reportFinalAssurance(state, review(state, index)));
+  expect(expectReturned(() => finalAssuranceStatus(state))).toBe('issued_outcome_uncertain');
   expect(() => issueFinalAssuranceWave(state)).toThrow();
-  state = reportFinalAssurance(state, review(state, 2));
-  const issued = issueFinalAssuranceWave(state);
-  validateFinalAssuranceProgress(state, issued);
+  state = expectReturned(() => reportFinalAssurance(state, review(state, 2)));
+  const issued = expectReturned(() => issueFinalAssuranceWave(state));
+  expectReturned(() => validateFinalAssuranceProgress(state, issued));
   state = issued;
   for (let index = 0; index < 3; index += 1) {
-    const next = reportFinalAssurance(state, reverse(state, index));
-    validateFinalAssuranceProgress(state, next);
+    const next = expectReturned(() => reportFinalAssurance(state, reverse(state, index)));
+    expectReturned(() => validateFinalAssuranceProgress(state, next));
     state = next;
   }
-  expect(finalAssuranceStatus(state)).toBe('reviewed');
+  expect(expectReturned(() => finalAssuranceStatus(state))).toBe('reviewed');
 });
 test('unissued foreign stale and self-review observations are denied', () => {
-  const blank = createFinalAssuranceState(packet);
-  const state = issueFinalAssuranceWave(blank);
+  const blank = expectReturned(() => createFinalAssuranceState(packet));
+  const state = expectReturned(() => issueFinalAssuranceWave(blank));
   const observation = review(state, 0);
   expect(() => reportFinalAssurance(blank, observation)).toThrow();
   for (const changed of [
@@ -248,10 +250,10 @@ test('unissued foreign stale and self-review observations are denied', () => {
     expect(() => reportFinalAssurance(state, { ...observation, ...changed })).toThrow();
 });
 test('actor history and tool call uniqueness are enforced; exact report retry preserves identity', () => {
-  let state = issueFinalAssuranceWave(createFinalAssuranceState(packet));
+  let state = expectReturned(() => issueFinalAssuranceWave(expectReturned(() => createFinalAssuranceState(packet))));
   const first = review(state, 0);
-  state = reportFinalAssurance(state, first);
-  expect(reportFinalAssurance(state, first)).toBe(state);
+  state = expectReturned(() => reportFinalAssurance(state, first));
+  expect(expectReturned(() => reportFinalAssurance(state, first))).toBe(state);
   expect(() => reportFinalAssurance(state, { ...first, findings: ['changed'] })).toThrow();
   const second = review(state, 1);
   for (const changed of [
@@ -262,7 +264,7 @@ test('actor history and tool call uniqueness are enforced; exact report retry pr
     expect(() => reportFinalAssurance(state, { ...second, ...changed })).toThrow();
 });
 test('reverse must match its reviewer and review using a distinct tool call', () => {
-  const state = issueFinalAssuranceWave(reviewed());
+  const state = expectReturned(() => issueFinalAssuranceWave(reviewed()));
   const observation = reverse(state, 0);
   for (const changed of [
     { agent_id: 'other' },
@@ -274,20 +276,24 @@ test('reverse must match its reviewer and review using a distinct tool call', ()
     expect(() => reportFinalAssurance(state, { ...observation, ...changed })).toThrow();
 });
 test('failed explicit checks cannot pass; accepted FAIL remains blocked', () => {
-  const state = issueFinalAssuranceWave(createFinalAssuranceState(packet));
+  const state = expectReturned(() => issueFinalAssuranceWave(expectReturned(() => createFinalAssuranceState(packet))));
   const observation = review(state, 0);
   expect(() =>
     reportFinalAssurance(state, { ...observation, checks: { ...checks, evidence_invalidation_binding: 'fail' } }),
   ).toThrow();
-  const failed = reportFinalAssurance(state, { ...observation, verdict: 'fail', findings: ['actual defect'] });
-  expect(finalAssuranceStatus(failed)).toBe('blocked');
+  const failed = expectReturned(() =>
+    reportFinalAssurance(state, { ...observation, verdict: 'fail', findings: ['actual defect'] }),
+  );
+  expect(expectReturned(() => finalAssuranceStatus(failed))).toBe('blocked');
   expect(() => issueFinalAssuranceWave(failed)).toThrow();
 });
 test('persisted foreign proof and duplicate issue IDs are rejected on read', () => {
   const bad = structuredClone(reviewed());
   bad.actions[0]!.observation!.work_id = 'foreign';
   expect(() => validateFinalAssuranceState(bad)).toThrow();
-  const duplicated = structuredClone(issueFinalAssuranceWave(createFinalAssuranceState(packet)));
+  const duplicated = structuredClone(
+    expectReturned(() => issueFinalAssuranceWave(expectReturned(() => createFinalAssuranceState(packet)))),
+  );
   duplicated.actions[1]!.issue_id = duplicated.actions[0]!.issue_id;
   expect(() => validateFinalAssuranceState(duplicated)).toThrow();
 });

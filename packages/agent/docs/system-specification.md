@@ -263,6 +263,11 @@ The source repository contains exactly `agent=packages/agent` and
 `plugin=packages/plugin`. Existing Git history and origin are preserved.
 Predecessor framework code is inactive provenance, never an active fallback.
 
+Workflow-owned paths retain exact, well-formed Unicode string identity. Reject
+unpaired UTF-16 surrogates before native path or filesystem conversion can replace
+them with U+FFFD. Existing portable segment, relative-path and historical-wildcard
+rules remain in force; a path predicate does not grant filesystem authority.
+
 Project-upgrade bundle identity and admitted runtime-package Source bindings
 are recomputed from every current package code path at each existing ownership
 and effect fence. Linux may use a verified

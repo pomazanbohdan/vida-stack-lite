@@ -1,4 +1,4 @@
-import { expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectRejection, expectReturned, rejectionReason } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -309,7 +309,9 @@ async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promis
     const mastraBytes = Uint8Array.from(mastra.bytes);
     const hostDigest = sha256(hostBytes);
     const mastraDigest = sha256(mastraBytes);
-    const image = await prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra));
+    const image = await expectAsyncReturned(() =>
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+    );
 
     expect(image.binding.source_host_digest).toBe(hostDigest);
     expect(image.binding.source_mastra_digest).toBe(mastraDigest);
@@ -339,7 +341,9 @@ describe('existing storage image preparation', () => {
   test('preserves source rows including duplicate values, exact BLOBs, large integers, and AUTOINCREMENT sequence', async () => {
     const host = makeHost();
     const mastra = await makeMastra();
-    const image = await prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra));
+    const image = await expectAsyncReturned(() =>
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+    );
 
     const merged = openUnified(image.bytes_base64);
     try {
@@ -459,8 +463,10 @@ describe('existing storage image preparation', () => {
   test('validates serialized unified image shape, canonical base64, size, and byte digest', async () => {
     const host = makeHost();
     const mastra = await makeMastra();
-    const image = await prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra));
-    expect(validateUnifiedDatabaseImage(image)).toEqual(image);
+    const image = await expectAsyncReturned(() =>
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+    );
+    expect(expectReturned(() => validateUnifiedDatabaseImage(image))).toEqual(image);
     expect(() => validateUnifiedDatabaseImage({ ...image, bytes_base64: image.bytes_base64 + '!' })).toThrow();
     expect(() => validateUnifiedDatabaseImage({ ...image, size: image.size + 1 })).toThrow(/bytes or digest differ/u);
     expect(() => validateUnifiedDatabaseImage({ ...image, sha256: '0'.repeat(64) })).toThrow(/bytes or digest differ/u);

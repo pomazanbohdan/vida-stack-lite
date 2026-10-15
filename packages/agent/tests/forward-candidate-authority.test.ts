@@ -210,6 +210,8 @@ test('sealed public admin denies altered authority, root, closure and target bef
     denies(command, /sealed payload bytes differ/);
     writeFileSync(targetPath, before);
   }
-  expect(invoke(command).status).toBe(0);
+  const restoredControl = invoke(command);
+  expect(restoredControl.status, restoredControl.stderr).toBe(0);
+  expect(parseRecord(restoredControl.stdout).status).toBe('inspect_ready_unauthorized');
   unchanged();
 }, 120000);

@@ -419,7 +419,7 @@
     },
     {
       "file": "src/contracts/envelopes.ts",
-      "sha256": "a0902ceb98a1076c1d9a0011a009b2bcbade790f982d00ecab178f7e9d3109f2"
+      "sha256": "20450fd8a36444176ff6dc1dfac58e1f17d11e96f5a807e46929039669101193"
     },
     {
       "file": "src/orchestration/delivered-work-continuation-repair.ts",
@@ -42909,7 +42909,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:reject#0/closure:CallExpression:arguments[0]#0",
@@ -42941,7 +42942,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:errorMessage#0",
@@ -42973,7 +42975,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:rejectCanonical#0",
@@ -43005,7 +43008,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:assertDataOnlyJson#0",
@@ -43037,7 +43041,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateRuntimeEnvelope#0",
@@ -43069,7 +43074,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateRuntimeEnvelope#0/closure:CallExpression:arguments[0]#0",
@@ -43101,7 +43107,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:consumeRuntimeEnvelope#0",
@@ -43133,7 +43140,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:coordinationLedgerJson#0",
@@ -43165,7 +43173,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:coordinationLedgerJson#0/closure:CallExpression:arguments[0]#0",
@@ -43197,7 +43206,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:coordinationComponentJson#0",
@@ -43218,7 +43228,7 @@
         "line": 96,
         "column": 7,
         "start": 3939,
-        "end": 4388,
+        "end": 4380,
         "bodyLine": 96,
         "bodyColumn": 77,
         "bodyEndLine": 102,
@@ -43229,7 +43239,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:coordinationLedgerDigest#0",
@@ -43249,8 +43260,8 @@
       "current_source_address": {
         "line": 104,
         "column": 7,
-        "start": 4397,
-        "end": 4541,
+        "start": 4389,
+        "end": 4533,
         "bodyLine": 104,
         "bodyColumn": 65,
         "bodyEndLine": 106,
@@ -43261,7 +43272,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:sameCoordinationStrings#0",
@@ -43281,8 +43293,8 @@
       "current_source_address": {
         "line": 109,
         "column": 7,
-        "start": 4640,
-        "end": 4831,
+        "start": 4632,
+        "end": 4823,
         "bodyLine": 109,
         "bodyColumn": 100,
         "bodyEndLine": 111,
@@ -43293,7 +43305,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:sameCoordinationStrings#0/closure:CallExpression:arguments[0]#0",
@@ -43313,8 +43326,8 @@
       "current_source_address": {
         "line": 110,
         "column": 52,
-        "start": 4787,
-        "end": 4827,
+        "start": 4779,
+        "end": 4819,
         "bodyLine": 110,
         "bodyColumn": 70,
         "bodyEndLine": 110,
@@ -43325,7 +43338,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#class:CoordinationValidationFailure/method:constructor#0",
@@ -43345,8 +43359,8 @@
       "current_source_address": {
         "line": 176,
         "column": 2,
-        "start": 7277,
-        "end": 7371,
+        "start": 7269,
+        "end": 7363,
         "bodyLine": 176,
         "bodyColumn": 65,
         "bodyEndLine": 178,
@@ -43357,7 +43371,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:invalidPathSegment#0",
@@ -43377,8 +43392,8 @@
       "current_source_address": {
         "line": 189,
         "column": 0,
-        "start": 7803,
-        "end": 7946,
+        "start": 7811,
+        "end": 7954,
         "bodyLine": 189,
         "bodyColumn": 54,
         "bodyEndLine": 191,
@@ -43389,7 +43404,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:safeWorkflowOwnedPath#0",
@@ -43409,11 +43425,11 @@
       "current_source_address": {
         "line": 193,
         "column": 7,
-        "start": 7955,
-        "end": 8332,
+        "start": 7963,
+        "end": 8291,
         "bodyLine": 193,
         "bodyColumn": 62,
-        "bodyEndLine": 205,
+        "bodyEndLine": 204,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43421,7 +43437,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:safeHistoricalWorkflowOwnedPath#0",
@@ -43439,13 +43456,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 207,
+        "line": 206,
         "column": 7,
-        "start": 8341,
-        "end": 8553,
-        "bodyLine": 207,
+        "start": 8300,
+        "end": 8512,
+        "bodyLine": 206,
         "bodyColumn": 72,
-        "bodyEndLine": 211,
+        "bodyEndLine": 210,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43453,7 +43470,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:ledgerFail#0",
@@ -43471,13 +43489,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 213,
+        "line": 212,
         "column": 0,
-        "start": 8555,
-        "end": 8698,
-        "bodyLine": 213,
+        "start": 8514,
+        "end": 8657,
+        "bodyLine": 212,
         "bodyColumn": 72,
-        "bodyEndLine": 215,
+        "bodyEndLine": 214,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43485,7 +43503,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:ledgerRequire#0",
@@ -43503,13 +43522,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 217,
+        "line": 216,
         "column": 0,
-        "start": 8700,
-        "end": 8861,
-        "bodyLine": 217,
+        "start": 8659,
+        "end": 8820,
+        "bodyLine": 216,
         "bodyColumn": 107,
-        "bodyEndLine": 219,
+        "bodyEndLine": 218,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43517,7 +43536,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:uniqueLedgerValues#0",
@@ -43535,13 +43555,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 221,
+        "line": 220,
         "column": 0,
-        "start": 8863,
-        "end": 9114,
-        "bodyLine": 221,
+        "start": 8822,
+        "end": 9073,
+        "bodyLine": 220,
         "bodyColumn": 104,
-        "bodyEndLine": 228,
+        "bodyEndLine": 227,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43549,7 +43569,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:ledgerTimestamp#0",
@@ -43567,13 +43588,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 230,
+        "line": 229,
         "column": 0,
-        "start": 9116,
-        "end": 9367,
-        "bodyLine": 230,
+        "start": 9075,
+        "end": 9326,
+        "bodyLine": 229,
         "bodyColumn": 62,
-        "bodyEndLine": 234,
+        "bodyEndLine": 233,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43581,7 +43602,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:ledgerResourceKey#0",
@@ -43599,13 +43621,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 236,
+        "line": 235,
         "column": 0,
-        "start": 9369,
-        "end": 9801,
-        "bodyLine": 236,
+        "start": 9328,
+        "end": 9760,
+        "bodyLine": 235,
         "bodyColumn": 67,
-        "bodyEndLine": 246,
+        "bodyEndLine": 245,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -43613,7 +43635,8 @@
       "baseline_crap": 3,
       "max_complexity": 3,
       "max_crap": 3,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 3
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:ledgerHistoricalResourceKey#0",
@@ -43631,13 +43654,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 248,
+        "line": 247,
         "column": 0,
-        "start": 9803,
-        "end": 10276,
-        "bodyLine": 248,
+        "start": 9762,
+        "end": 10235,
+        "bodyLine": 247,
         "bodyColumn": 77,
-        "bodyEndLine": 263,
+        "bodyEndLine": 262,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -43645,7 +43668,8 @@
       "baseline_crap": 3,
       "max_complexity": 3,
       "max_crap": 3,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 3
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:ledgerRecordId#0",
@@ -43663,13 +43687,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 265,
+        "line": 264,
         "column": 0,
-        "start": 10278,
-        "end": 10540,
-        "bodyLine": 265,
+        "start": 10237,
+        "end": 10499,
+        "bodyLine": 264,
         "bodyColumn": 103,
-        "bodyEndLine": 269,
+        "bodyEndLine": 268,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43677,7 +43701,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0",
@@ -43695,13 +43720,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 271,
+        "line": 270,
         "column": 0,
-        "start": 10542,
-        "end": 30223,
-        "bodyLine": 271,
+        "start": 10501,
+        "end": 30182,
+        "bodyLine": 270,
         "bodyColumn": 97,
-        "bodyEndLine": 774,
+        "bodyEndLine": 773,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43709,7 +43734,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#0",
@@ -43727,13 +43753,13 @@
         "bodyEndColumn": 31
       },
       "current_source_address": {
-        "line": 289,
+        "line": 288,
         "column": 6,
-        "start": 11104,
-        "end": 11334,
-        "bodyLine": 290,
+        "start": 11063,
+        "end": 11293,
+        "bodyLine": 289,
         "bodyColumn": 8,
-        "bodyEndLine": 295,
+        "bodyEndLine": 294,
         "bodyEndColumn": 31
       },
       "baseline_complexity": 1,
@@ -43741,7 +43767,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#1",
@@ -43759,13 +43786,13 @@
         "bodyEndColumn": 75
       },
       "current_source_address": {
-        "line": 298,
+        "line": 297,
         "column": 27,
-        "start": 11380,
-        "end": 11428,
-        "bodyLine": 298,
+        "start": 11339,
+        "end": 11387,
+        "bodyLine": 297,
         "bodyColumn": 45,
-        "bodyEndLine": 298,
+        "bodyEndLine": 297,
         "bodyEndColumn": 75
       },
       "baseline_complexity": 1,
@@ -43773,7 +43800,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#2",
@@ -43791,13 +43819,13 @@
         "bodyEndColumn": 51
       },
       "current_source_address": {
-        "line": 305,
+        "line": 304,
         "column": 23,
-        "start": 11601,
-        "end": 11629,
-        "bodyLine": 305,
+        "start": 11560,
+        "end": 11588,
+        "bodyLine": 304,
         "bodyColumn": 35,
-        "bodyEndLine": 305,
+        "bodyEndLine": 304,
         "bodyEndColumn": 51
       },
       "baseline_complexity": 1,
@@ -43805,7 +43833,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#3",
@@ -43823,13 +43852,13 @@
         "bodyEndColumn": 58
       },
       "current_source_address": {
-        "line": 311,
+        "line": 310,
         "column": 23,
-        "start": 11752,
-        "end": 11787,
-        "bodyLine": 311,
+        "start": 11711,
+        "end": 11746,
+        "bodyLine": 310,
         "bodyColumn": 35,
-        "bodyEndLine": 311,
+        "bodyEndLine": 310,
         "bodyEndColumn": 58
       },
       "baseline_complexity": 1,
@@ -43837,7 +43866,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#4",
@@ -43855,13 +43885,13 @@
         "bodyEndColumn": 47
       },
       "current_source_address": {
-        "line": 317,
+        "line": 316,
         "column": 22,
-        "start": 11913,
-        "end": 11938,
-        "bodyLine": 317,
+        "start": 11872,
+        "end": 11897,
+        "bodyLine": 316,
         "bodyColumn": 33,
-        "bodyEndLine": 317,
+        "bodyEndLine": 316,
         "bodyEndColumn": 47
       },
       "baseline_complexity": 1,
@@ -43869,7 +43899,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#5",
@@ -43887,13 +43918,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 332,
+        "line": 331,
         "column": 24,
-        "start": 12340,
-        "end": 12412,
-        "bodyLine": 332,
+        "start": 12299,
+        "end": 12371,
+        "bodyLine": 331,
         "bodyColumn": 42,
-        "bodyEndLine": 332,
+        "bodyEndLine": 331,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -43901,7 +43932,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/binding:tickets/closure:CallExpression:arguments[0]#0",
@@ -43919,13 +43951,13 @@
         "bodyEndColumn": 83
       },
       "current_source_address": {
-        "line": 338,
+        "line": 337,
         "column": 45,
-        "start": 12548,
-        "end": 12586,
-        "bodyLine": 338,
+        "start": 12507,
+        "end": 12545,
+        "bodyLine": 337,
         "bodyColumn": 57,
-        "bodyEndLine": 338,
+        "bodyEndLine": 337,
         "bodyEndColumn": 83
       },
       "baseline_complexity": 1,
@@ -43933,7 +43965,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/binding:claims/closure:CallExpression:arguments[0]#0",
@@ -43951,13 +43984,13 @@
         "bodyEndColumn": 77
       },
       "current_source_address": {
-        "line": 339,
+        "line": 338,
         "column": 43,
-        "start": 12633,
-        "end": 12667,
-        "bodyLine": 339,
+        "start": 12592,
+        "end": 12626,
+        "bodyLine": 338,
         "bodyColumn": 54,
-        "bodyEndLine": 339,
+        "bodyEndLine": 338,
         "bodyEndColumn": 77
       },
       "baseline_complexity": 1,
@@ -43965,7 +43998,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6",
@@ -43983,13 +44017,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 341,
+        "line": 340,
         "column": 24,
-        "start": 12760,
-        "end": 14446,
-        "bodyLine": 341,
+        "start": 12719,
+        "end": 14405,
+        "bodyLine": 340,
         "bodyColumn": 42,
-        "bodyEndLine": 378,
+        "bodyEndLine": 377,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -43997,7 +44031,8 @@
       "baseline_crap": 9,
       "max_complexity": 9,
       "max_crap": 9,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 9
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
@@ -44015,13 +44050,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 355,
+        "line": 354,
         "column": 26,
-        "start": 13390,
-        "end": 13638,
-        "bodyLine": 356,
+        "start": 13349,
+        "end": 13597,
+        "bodyLine": 355,
         "bodyColumn": 8,
-        "bodyEndLine": 358,
+        "bodyEndLine": 357,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 2,
@@ -44029,7 +44064,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#1",
@@ -44047,13 +44083,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 367,
+        "line": 366,
         "column": 32,
-        "start": 13878,
-        "end": 13937,
-        "bodyLine": 367,
+        "start": 13837,
+        "end": 13896,
+        "bodyLine": 366,
         "bodyColumn": 46,
-        "bodyEndLine": 367,
+        "bodyEndLine": 366,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44061,7 +44097,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7",
@@ -44079,13 +44116,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 381,
+        "line": 380,
         "column": 25,
-        "start": 14513,
-        "end": 19922,
-        "bodyLine": 381,
+        "start": 14472,
+        "end": 19881,
+        "bodyLine": 380,
         "bodyColumn": 44,
-        "bodyEndLine": 515,
+        "bodyEndLine": 514,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44093,7 +44130,8 @@
       "baseline_crap": 9,
       "max_complexity": 9,
       "max_crap": 9,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 9
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#0",
@@ -44111,13 +44149,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 384,
+        "line": 383,
         "column": 30,
-        "start": 14661,
-        "end": 14787,
-        "bodyLine": 385,
+        "start": 14620,
+        "end": 14746,
+        "bodyLine": 384,
         "bodyColumn": 8,
-        "bodyEndLine": 385,
+        "bodyEndLine": 384,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -44125,7 +44163,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#1",
@@ -44143,13 +44182,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 392,
+        "line": 391,
         "column": 37,
-        "start": 14970,
-        "end": 15103,
-        "bodyLine": 393,
+        "start": 14929,
+        "end": 15062,
+        "bodyLine": 392,
         "bodyColumn": 8,
-        "bodyEndLine": 393,
+        "bodyEndLine": 392,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -44157,7 +44196,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#2",
@@ -44175,13 +44215,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 406,
+        "line": 405,
         "column": 68,
-        "start": 15491,
-        "end": 15604,
-        "bodyLine": 407,
+        "start": 15450,
+        "end": 15563,
+        "bodyLine": 406,
         "bodyColumn": 8,
-        "bodyEndLine": 407,
+        "bodyEndLine": 406,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44189,7 +44229,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#3",
@@ -44207,13 +44248,13 @@
         "bodyEndColumn": 53
       },
       "current_source_address": {
-        "line": 420,
+        "line": 419,
         "column": 70,
-        "start": 15998,
-        "end": 16065,
-        "bodyLine": 421,
+        "start": 15957,
+        "end": 16024,
+        "bodyLine": 420,
         "bodyColumn": 8,
-        "bodyEndLine": 421,
+        "bodyEndLine": 420,
         "bodyEndColumn": 53
       },
       "baseline_complexity": 1,
@@ -44221,7 +44262,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#4",
@@ -44239,13 +44281,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 428,
+        "line": 427,
         "column": 29,
-        "start": 16247,
-        "end": 16279,
-        "bodyLine": 428,
+        "start": 16206,
+        "end": 16238,
+        "bodyLine": 427,
         "bodyColumn": 42,
-        "bodyEndLine": 428,
+        "bodyEndLine": 427,
         "bodyEndColumn": 61
       },
       "baseline_complexity": 1,
@@ -44253,7 +44295,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#5",
@@ -44271,13 +44314,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 434,
+        "line": 433,
         "column": 29,
-        "start": 16448,
-        "end": 16512,
-        "bodyLine": 434,
+        "start": 16407,
+        "end": 16471,
+        "bodyLine": 433,
         "bodyColumn": 42,
-        "bodyEndLine": 434,
+        "bodyEndLine": 433,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 1,
@@ -44285,7 +44328,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:activeClaims/closure:CallExpression:arguments[0]#0",
@@ -44303,13 +44347,13 @@
         "bodyEndColumn": 113
       },
       "current_source_address": {
-        "line": 439,
+        "line": 438,
         "column": 77,
-        "start": 16734,
-        "end": 16770,
-        "bodyLine": 439,
+        "start": 16693,
+        "end": 16729,
+        "bodyLine": 438,
         "bodyColumn": 88,
-        "bodyEndLine": 439,
+        "bodyEndLine": 438,
         "bodyEndColumn": 113
       },
       "baseline_complexity": 1,
@@ -44317,7 +44361,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6",
@@ -44335,13 +44380,13 @@
         "bodyEndColumn": 109
       },
       "current_source_address": {
-        "line": 441,
+        "line": 440,
         "column": 27,
-        "start": 16824,
-        "end": 16944,
-        "bodyLine": 442,
+        "start": 16783,
+        "end": 16903,
+        "bodyLine": 441,
         "bodyColumn": 8,
-        "bodyEndLine": 442,
+        "bodyEndLine": 441,
         "bodyEndColumn": 109
       },
       "baseline_complexity": 1,
@@ -44349,7 +44394,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
@@ -44367,13 +44413,13 @@
         "bodyEndColumn": 108
       },
       "current_source_address": {
-        "line": 442,
+        "line": 441,
         "column": 28,
-        "start": 16863,
-        "end": 16943,
-        "bodyLine": 442,
+        "start": 16822,
+        "end": 16902,
+        "bodyLine": 441,
         "bodyColumn": 42,
-        "bodyEndLine": 442,
+        "bodyEndLine": 441,
         "bodyEndColumn": 108
       },
       "baseline_complexity": 1,
@@ -44381,7 +44427,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:projected/closure:CallExpression:arguments[0]#0",
@@ -44399,13 +44446,13 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 448,
+        "line": 447,
         "column": 55,
-        "start": 17135,
-        "end": 17161,
-        "bodyLine": 448,
+        "start": 17094,
+        "end": 17120,
+        "bodyLine": 447,
         "bodyColumn": 66,
-        "bodyEndLine": 448,
+        "bodyEndLine": 447,
         "bodyEndColumn": 81
       },
       "baseline_complexity": 1,
@@ -44413,7 +44460,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:expiry/closure:CallExpression:arguments[0]#0",
@@ -44431,13 +44479,13 @@
         "bodyEndColumn": 69
       },
       "current_source_address": {
-        "line": 455,
+        "line": 454,
         "column": 36,
-        "start": 17466,
-        "end": 17499,
-        "bodyLine": 455,
+        "start": 17425,
+        "end": 17458,
+        "bodyLine": 454,
         "bodyColumn": 47,
-        "bodyEndLine": 455,
+        "bodyEndLine": 454,
         "bodyEndColumn": 69
       },
       "baseline_complexity": 1,
@@ -44445,7 +44493,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#7",
@@ -44463,13 +44512,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 484,
+        "line": 483,
         "column": 29,
-        "start": 18688,
-        "end": 18766,
-        "bodyLine": 484,
+        "start": 18647,
+        "end": 18725,
+        "bodyLine": 483,
         "bodyColumn": 40,
-        "bodyEndLine": 484,
+        "bodyEndLine": 483,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -44477,7 +44526,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:earlier/closure:CallExpression:arguments[0]#0",
@@ -44495,13 +44545,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 493,
+        "line": 492,
         "column": 8,
-        "start": 19148,
-        "end": 19514,
-        "bodyLine": 494,
+        "start": 19107,
+        "end": 19473,
+        "bodyLine": 493,
         "bodyColumn": 10,
-        "bodyEndLine": 499,
+        "bodyEndLine": 498,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 4,
@@ -44509,7 +44559,8 @@
       "baseline_crap": 4,
       "max_complexity": 4,
       "max_crap": 4,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 4
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:earlier/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
@@ -44527,13 +44578,13 @@
         "bodyEndColumn": 72
       },
       "current_source_address": {
-        "line": 498,
+        "line": 497,
         "column": 12,
-        "start": 19441,
-        "end": 19501,
-        "bodyLine": 498,
+        "start": 19400,
+        "end": 19460,
+        "bodyLine": 497,
         "bodyColumn": 25,
-        "bodyEndLine": 498,
+        "bodyEndLine": 497,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 1,
@@ -44541,7 +44592,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/binding:notices/closure:CallExpression:arguments[0]#0",
@@ -44559,13 +44611,13 @@
         "bodyEndColumn": 88
       },
       "current_source_address": {
-        "line": 517,
+        "line": 516,
         "column": 45,
-        "start": 19971,
-        "end": 20014,
-        "bodyLine": 517,
+        "start": 19930,
+        "end": 19973,
+        "bodyLine": 516,
         "bodyColumn": 56,
-        "bodyEndLine": 517,
+        "bodyEndLine": 516,
         "bodyEndColumn": 88
       },
       "baseline_complexity": 1,
@@ -44573,7 +44625,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#8",
@@ -44591,13 +44644,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 518,
+        "line": 517,
         "column": 25,
-        "start": 20043,
-        "end": 21490,
-        "bodyLine": 518,
+        "start": 20002,
+        "end": 21449,
+        "bodyLine": 517,
         "bodyColumn": 44,
-        "bodyEndLine": 554,
+        "bodyEndLine": 553,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -44605,7 +44658,8 @@
       "baseline_crap": 4,
       "max_complexity": 4,
       "max_crap": 4,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 4
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#8/closure:CallExpression:arguments[0]#0",
@@ -44623,13 +44677,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 527,
+        "line": 526,
         "column": 20,
-        "start": 20390,
-        "end": 20503,
-        "bodyLine": 528,
+        "start": 20349,
+        "end": 20462,
+        "bodyLine": 527,
         "bodyColumn": 8,
-        "bodyEndLine": 528,
+        "bodyEndLine": 527,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44637,7 +44691,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#8/closure:CallExpression:arguments[0]#1",
@@ -44655,13 +44710,13 @@
         "bodyEndColumn": 114
       },
       "current_source_address": {
-        "line": 535,
+        "line": 534,
         "column": 84,
-        "start": 20728,
-        "end": 20758,
-        "bodyLine": 535,
+        "start": 20687,
+        "end": 20717,
+        "bodyLine": 534,
         "bodyColumn": 95,
-        "bodyEndLine": 535,
+        "bodyEndLine": 534,
         "bodyEndColumn": 114
       },
       "baseline_complexity": 1,
@@ -44669,7 +44724,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#8/closure:CallExpression:arguments[0]#2",
@@ -44687,13 +44743,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 549,
+        "line": 548,
         "column": 33,
-        "start": 21274,
-        "end": 21357,
-        "bodyLine": 549,
+        "start": 21233,
+        "end": 21316,
+        "bodyLine": 548,
         "bodyColumn": 44,
-        "bodyEndLine": 549,
+        "bodyEndLine": 548,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 2,
@@ -44701,7 +44757,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#9",
@@ -44719,13 +44776,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 555,
+        "line": 554,
         "column": 30,
-        "start": 21523,
-        "end": 22324,
-        "bodyLine": 555,
+        "start": 21482,
+        "end": 22283,
+        "bodyLine": 554,
         "bodyColumn": 54,
-        "bodyEndLine": 576,
+        "bodyEndLine": 575,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 6,
@@ -44733,7 +44790,8 @@
       "baseline_crap": 6,
       "max_complexity": 6,
       "max_crap": 6,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 6
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/binding:contours/closure:CallExpression:arguments[0]#0",
@@ -44751,13 +44809,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 578,
+        "line": 577,
         "column": 47,
-        "start": 22375,
-        "end": 22419,
-        "bodyLine": 578,
+        "start": 22334,
+        "end": 22378,
+        "bodyLine": 577,
         "bodyColumn": 58,
-        "bodyEndLine": 578,
+        "bodyEndLine": 577,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44765,7 +44823,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#10",
@@ -44783,13 +44842,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 579,
+        "line": 578,
         "column": 26,
-        "start": 22449,
-        "end": 23585,
-        "bodyLine": 579,
+        "start": 22408,
+        "end": 23544,
+        "bodyLine": 578,
         "bodyColumn": 46,
-        "bodyEndLine": 610,
+        "bodyEndLine": 609,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -44797,7 +44856,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#10/binding:contourTickets/closure:CallExpression:arguments[0]#0",
@@ -44815,13 +44875,13 @@
         "bodyEndColumn": 64
       },
       "current_source_address": {
-        "line": 581,
+        "line": 580,
         "column": 41,
-        "start": 22575,
-        "end": 22598,
-        "bodyLine": 581,
+        "start": 22534,
+        "end": 22557,
+        "bodyLine": 580,
         "bodyColumn": 49,
-        "bodyEndLine": 581,
+        "bodyEndLine": 580,
         "bodyEndColumn": 64
       },
       "baseline_complexity": 1,
@@ -44829,7 +44889,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#10/closure:CallExpression:arguments[0]#0",
@@ -44847,13 +44908,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 589,
+        "line": 588,
         "column": 27,
-        "start": 22806,
-        "end": 22859,
-        "bodyLine": 589,
+        "start": 22765,
+        "end": 22818,
+        "bodyLine": 588,
         "bodyColumn": 39,
-        "bodyEndLine": 589,
+        "bodyEndLine": 588,
         "bodyEndColumn": 80
       },
       "baseline_complexity": 1,
@@ -44861,7 +44922,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#10/closure:CallExpression:arguments[0]#1",
@@ -44879,13 +44941,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 590,
+        "line": 589,
         "column": 89,
-        "start": 22953,
-        "end": 22980,
-        "bodyLine": 590,
+        "start": 22912,
+        "end": 22939,
+        "bodyLine": 589,
         "bodyColumn": 101,
-        "bodyEndLine": 590,
+        "bodyEndLine": 589,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -44893,7 +44955,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#11",
@@ -44911,13 +44974,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 611,
+        "line": 610,
         "column": 25,
-        "start": 23613,
-        "end": 26382,
-        "bodyLine": 611,
+        "start": 23572,
+        "end": 26341,
+        "bodyLine": 610,
         "bodyColumn": 43,
-        "bodyEndLine": 678,
+        "bodyEndLine": 677,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 7,
@@ -44925,7 +44988,8 @@
       "baseline_crap": 7,
       "max_complexity": 7,
       "max_crap": 7,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 7
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#11/closure:CallExpression:arguments[0]#0",
@@ -44943,13 +45007,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 622,
+        "line": 621,
         "column": 77,
-        "start": 24089,
-        "end": 24119,
-        "bodyLine": 622,
+        "start": 24048,
+        "end": 24078,
+        "bodyLine": 621,
         "bodyColumn": 88,
-        "bodyEndLine": 622,
+        "bodyEndLine": 621,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -44957,7 +45021,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#11/closure:CallExpression:arguments[0]#1",
@@ -44975,13 +45040,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 644,
+        "line": 643,
         "column": 89,
-        "start": 25059,
-        "end": 25086,
-        "bodyLine": 644,
+        "start": 25018,
+        "end": 25045,
+        "bodyLine": 643,
         "bodyColumn": 100,
-        "bodyEndLine": 644,
+        "bodyEndLine": 643,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -44989,7 +45054,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#11/binding:contourTickets/closure:CallExpression:arguments[0]#0",
@@ -45007,13 +45073,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 650,
+        "line": 649,
         "column": 75,
-        "start": 25359,
-        "end": 25382,
-        "bodyLine": 650,
+        "start": 25318,
+        "end": 25341,
+        "bodyLine": 649,
         "bodyColumn": 83,
-        "bodyEndLine": 650,
+        "bodyEndLine": 649,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -45021,7 +45087,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#11/closure:CallExpression:arguments[0]#2",
@@ -45039,13 +45106,13 @@
         "bodyEndColumn": 102
       },
       "current_source_address": {
-        "line": 660,
+        "line": 659,
         "column": 12,
-        "start": 25665,
-        "end": 25935,
-        "bodyLine": 661,
+        "start": 25624,
+        "end": 25894,
+        "bodyLine": 660,
         "bodyColumn": 14,
-        "bodyEndLine": 664,
+        "bodyEndLine": 663,
         "bodyEndColumn": 102
       },
       "baseline_complexity": 5,
@@ -45053,7 +45120,8 @@
       "baseline_crap": 5,
       "max_complexity": 5,
       "max_crap": 5,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 5
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#11/closure:CallExpression:arguments[0]#2/closure:CallExpression:arguments[0]#0",
@@ -45071,13 +45139,13 @@
         "bodyEndColumn": 101
       },
       "current_source_address": {
-        "line": 664,
+        "line": 663,
         "column": 65,
-        "start": 25898,
-        "end": 25934,
-        "bodyLine": 664,
+        "start": 25857,
+        "end": 25893,
+        "bodyLine": 663,
         "bodyColumn": 76,
-        "bodyEndLine": 664,
+        "bodyEndLine": 663,
         "bodyEndColumn": 101
       },
       "baseline_complexity": 1,
@@ -45085,7 +45153,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#11/closure:CallExpression:arguments[0]#3",
@@ -45103,13 +45172,13 @@
         "bodyEndColumn": 70
       },
       "current_source_address": {
-        "line": 672,
+        "line": 671,
         "column": 31,
-        "start": 26175,
-        "end": 26214,
-        "bodyLine": 672,
+        "start": 26134,
+        "end": 26173,
+        "bodyLine": 671,
         "bodyColumn": 43,
-        "bodyEndLine": 672,
+        "bodyEndLine": 671,
         "bodyEndColumn": 70
       },
       "baseline_complexity": 1,
@@ -45117,7 +45186,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#12",
@@ -45135,13 +45205,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 679,
+        "line": 678,
         "column": 28,
-        "start": 26413,
-        "end": 27706,
-        "bodyLine": 679,
+        "start": 26372,
+        "end": 27665,
+        "bodyLine": 678,
         "bodyColumn": 50,
-        "bodyEndLine": 713,
+        "bodyEndLine": 712,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -45149,7 +45219,8 @@
       "baseline_crap": 3,
       "max_complexity": 3,
       "max_crap": 3,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 3
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#12/closure:CallExpression:arguments[0]#0",
@@ -45167,13 +45238,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 701,
+        "line": 700,
         "column": 24,
-        "start": 27256,
-        "end": 27382,
-        "bodyLine": 702,
+        "start": 27215,
+        "end": 27341,
+        "bodyLine": 701,
         "bodyColumn": 8,
-        "bodyEndLine": 702,
+        "bodyEndLine": 701,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -45181,7 +45252,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#13",
@@ -45199,13 +45271,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 714,
+        "line": 713,
         "column": 25,
-        "start": 27734,
-        "end": 28151,
-        "bodyLine": 715,
+        "start": 27693,
+        "end": 28110,
+        "bodyLine": 714,
         "bodyColumn": 4,
-        "bodyEndLine": 725,
+        "bodyEndLine": 724,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -45213,7 +45285,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#13/closure:CallExpression:arguments[0]#0",
@@ -45231,13 +45304,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 717,
+        "line": 716,
         "column": 8,
-        "start": 27809,
-        "end": 28024,
-        "bodyLine": 718,
+        "start": 27768,
+        "end": 27983,
+        "bodyLine": 717,
         "bodyColumn": 10,
-        "bodyEndLine": 720,
+        "bodyEndLine": 719,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 3,
@@ -45245,7 +45318,8 @@
       "baseline_crap": 3,
       "max_complexity": 3,
       "max_crap": 3,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 3
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#14",
@@ -45263,13 +45337,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 727,
+        "line": 726,
         "column": 29,
-        "start": 28187,
-        "end": 29090,
-        "bodyLine": 727,
+        "start": 28146,
+        "end": 29049,
+        "bodyLine": 726,
         "bodyColumn": 52,
-        "bodyEndLine": 747,
+        "bodyEndLine": 746,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -45277,7 +45351,8 @@
       "baseline_crap": 4,
       "max_complexity": 4,
       "max_crap": 4,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 4
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#14/closure:CallExpression:arguments[0]#0",
@@ -45295,13 +45370,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 744,
+        "line": 743,
         "column": 56,
-        "start": 28953,
-        "end": 29078,
-        "bodyLine": 745,
+        "start": 28912,
+        "end": 29037,
+        "bodyLine": 744,
         "bodyColumn": 6,
-        "bodyEndLine": 745,
+        "bodyEndLine": 744,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -45309,7 +45384,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#15",
@@ -45327,13 +45403,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 748,
+        "line": 747,
         "column": 25,
-        "start": 29118,
-        "end": 30219,
-        "bodyLine": 748,
+        "start": 29077,
+        "end": 30178,
+        "bodyLine": 747,
         "bodyColumn": 44,
-        "bodyEndLine": 773,
+        "bodyEndLine": 772,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 5,
@@ -45341,7 +45417,8 @@
       "baseline_crap": 5,
       "max_complexity": 5,
       "max_crap": 5,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 5
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#15/closure:CallExpression:arguments[0]#0",
@@ -45359,13 +45436,13 @@
         "bodyEndColumn": 71
       },
       "current_source_address": {
-        "line": 759,
+        "line": 758,
         "column": 29,
-        "start": 29596,
-        "end": 29638,
-        "bodyLine": 759,
+        "start": 29555,
+        "end": 29597,
+        "bodyLine": 758,
         "bodyColumn": 43,
-        "bodyEndLine": 759,
+        "bodyEndLine": 758,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -45373,7 +45450,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#15/closure:CallExpression:arguments[0]#1",
@@ -45391,13 +45469,13 @@
         "bodyEndColumn": 9
       },
       "current_source_address": {
-        "line": 760,
+        "line": 759,
         "column": 30,
-        "start": 29673,
-        "end": 29794,
-        "bodyLine": 760,
+        "start": 29632,
+        "end": 29753,
+        "bodyLine": 759,
         "bodyColumn": 38,
-        "bodyEndLine": 763,
+        "bodyEndLine": 762,
         "bodyEndColumn": 9
       },
       "baseline_complexity": 2,
@@ -45405,7 +45483,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#15/closure:CallExpression:arguments[0]#2",
@@ -45423,13 +45502,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 770,
+        "line": 769,
         "column": 22,
-        "start": 30086,
-        "end": 30207,
-        "bodyLine": 771,
+        "start": 30045,
+        "end": 30166,
+        "bodyLine": 770,
         "bodyColumn": 6,
-        "bodyEndLine": 771,
+        "bodyEndLine": 770,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -45437,7 +45516,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateCoordinationLedgerV1#0",
@@ -45455,11 +45535,11 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 780,
+        "line": 779,
         "column": 7,
-        "start": 30545,
-        "end": 31355,
-        "bodyLine": 783,
+        "start": 30504,
+        "end": 31365,
+        "bodyLine": 782,
         "bodyColumn": 38,
         "bodyEndLine": 801,
         "bodyEndColumn": 1
@@ -45469,7 +45549,8 @@
       "baseline_crap": 6,
       "max_complexity": 6,
       "max_crap": 6,
-      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 5
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateCoordinationLedgerV1#0/closure:CallExpression:arguments[0]#0",
@@ -45488,11 +45569,11 @@
       },
       "current_source_address": {
         "line": 788,
-        "column": 49,
-        "start": 30832,
-        "end": 31061,
+        "column": 42,
+        "start": 30862,
+        "end": 31071,
         "bodyLine": 788,
-        "bodyColumn": 61,
+        "bodyColumn": 54,
         "bodyEndLine": 792,
         "bodyEndColumn": 7
       },
@@ -45501,7 +45582,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged."
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/delivered-work-continuation-repair.ts#fn:serializeDeliveredWorkContinuationReceipt#0",
@@ -221069,5 +221151,21 @@
       "/workspace/attachments/quality-cli-cache-function-disposition-review-20261015.md"
     ],
     "limits": "Fresh numerical proof and new immutable review pin required. Existing published review metadata stays historical; no raised or transferred caps."
+  },
+  "envelopes_normalization_correction_20261015": {
+    "status": "SOURCE_CORRECTION_PENDING_NUMERICAL_QUALIFICATION",
+    "prior_source_ref": "5c240898867a0e331f10d3a95eb4c2c055537ce9",
+    "file": "src/contracts/envelopes.ts",
+    "previous_sha256": "a0902ceb98a1076c1d9a0011a009b2bcbade790f982d00ecab178f7e9d3109f2",
+    "rejected_preparation_sha256": "4f362dd6c67da8137593d4873cb985e316f5df2f0ed7537f00724e538e090a5b",
+    "sha256": "20450fd8a36444176ff6dc1dfac58e1f17d11e96f5a807e46929039669101193",
+    "receipt": "/workspace/attachments/quality-envelopes-unicode-lineage-receipt-20261015.json",
+    "reason": "Replace the generic POSIX normalization call with an explicit well-formed Unicode guard plus existing lexical segment guards. A real Bun property counterexample disproved simple removal: its native path API replaces lone UTF-16 surrogates. Retain prior Bun rejection and exact accepted Unicode identity.",
+    "roles": "All 82 callable identities and frozen ceilings retained; no responsibility or budget transfer.",
+    "independent_reviews": [
+      "/workspace/attachments/quality-envelopes-unicode-normalization-correction-review-20261015.md",
+      "/workspace/attachments/quality-envelopes-unicode-proof-correction-20261015.md"
+    ],
+    "limits": "One changed-file inventory/hash capture. Other Source bindings reused without fresh qualification. No numeric, global or Runtime acceptance from lineage."
   }
 }

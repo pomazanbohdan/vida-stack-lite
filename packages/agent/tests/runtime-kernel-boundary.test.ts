@@ -1776,8 +1776,10 @@ describe('runtime kernel boundary', () => {
 
     const descriptor = Object.getOwnPropertyDescriptor(process, 'platform');
     if (descriptor === undefined) throw new Error('process platform descriptor is required by this test');
-    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
     try {
+      Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+      expect(compareRuntimeKernelRepositoryRoots(caseVariant, repositoryRoot)).toBe(true);
+      Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
       expect(compareRuntimeKernelRepositoryRoots(repositoryRoot, repositoryRoot)).toBe(true);
       expect(compareRuntimeKernelRepositoryRoots(caseVariant, repositoryRoot)).toBe(caseVariant === repositoryRoot);
     } finally {

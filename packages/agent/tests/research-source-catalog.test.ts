@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import type {
   ResearchResult,
   ResearchResultRef,
@@ -14,6 +15,7 @@ import {
   qualifiedResearchSourceCatalog,
   resolveQualifiedResearchSource,
 } from '../src/research-source-catalog.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 const source = (sourceId: string, locator: string, claim: string): ResearchSourceRef => ({
   source_id: sourceId,
@@ -133,11 +135,30 @@ test('qualified citations bind local aliases to exact sorted predecessor results
     result('a-b', refs[0]!.digest, [source('business', 'current.md#L197', 'prior claim')]),
     result('a.b', refs[1]!.digest, [source('sys:form', 'form.js#L2', 'form claim')]),
   ];
-  const catalog = qualifiedResearchSourceCatalog(refs, results);
+  const catalog = expectReturned(() => qualifiedResearchSourceCatalog(refs, results));
+  expect(Array.isArray(catalog)).toBe(true);
   expect(catalog.map((entry) => entry.key)).toEqual(['r0:business', 'r1:sys:form', 'r2:business']);
-  expect(resolveQualifiedResearchSource(catalog, 'r0:business').source.locator).toBe('current.md#L197');
-  expect(resolveQualifiedResearchSource(catalog, 'r2:business').source.claim).toBe('current claim');
-  expect(resolveQualifiedResearchSource(catalog, 'r1:sys:form').result_digest).toBe(refs[1]!.digest);
+  const prior = expectReturned(() => resolveQualifiedResearchSource(catalog, 'r0:business'));
+  expect(prior).toEqual({
+    key: 'r0:business',
+    result_id: 'a-b',
+    result_digest: refs[0]!.digest,
+    source: source('business', 'current.md#L197', 'prior claim'),
+  });
+  const current = expectReturned(() => resolveQualifiedResearchSource(catalog, 'r2:business'));
+  expect(current).toEqual({
+    key: 'r2:business',
+    result_id: 'a_b',
+    result_digest: refs[2]!.digest,
+    source: source('business', 'current.md#L215', 'current claim'),
+  });
+  const qualified = expectReturned(() => resolveQualifiedResearchSource(catalog, 'r1:sys:form'));
+  expect(qualified).toEqual({
+    key: 'r1:sys:form',
+    result_id: 'a.b',
+    result_digest: refs[1]!.digest,
+    source: source('sys:form', 'form.js#L2', 'form claim'),
+  });
   for (const invalid of ['business', 'r9:business', 'r01:business', 'r1:business'])
     expect(() => resolveQualifiedResearchSource(catalog, invalid)).toThrow();
   expect(() => qualifiedResearchSourceCatalog([...refs].reverse(), results)).toThrow();
@@ -157,7 +178,8 @@ test('explicit repair qualifies only legacy citations with one exact provenance'
     result('research-c', '3'.repeat(64), [source('registry', 'registry.js', 'registry claim')]),
   ];
   const refs = results.map(({ result_id, digest }) => reference(result_id, digest));
-  const catalog = qualifiedResearchSourceCatalog(refs, results);
+  const catalog = expectReturned(() => qualifiedResearchSourceCatalog(refs, results));
+  expect(Array.isArray(catalog)).toBe(true);
   const old = {
     digest: '0'.repeat(64),
     result_refs: refs,
@@ -166,18 +188,29 @@ test('explicit repair qualifies only legacy citations with one exact provenance'
     options: [{ evidence_refs: ['registry'] }],
     recommendation: { evidence_refs: ['system'] },
   };
-  const repaired = qualifyLegacySynthesisRecord(old, catalog);
+  const original = structuredClone(old);
+  const repaired = expectReturned(() => qualifyLegacySynthesisRecord(old, catalog));
+  expect(typeof repaired.digest).toBe('string');
+  expect(Array.isArray(repaired.findings)).toBe(true);
+  expect(Array.isArray(repaired.conflicts)).toBe(true);
+  expect(Array.isArray(repaired.options)).toBe(true);
   expect(repaired.findings[0]?.source_refs).toEqual(['r0:business']);
   expect(repaired.conflicts[0]?.source_refs).toEqual(['r0:business', 'r1:system']);
   expect(repaired.options[0]?.evidence_refs).toEqual(['r2:registry']);
   expect(repaired.recommendation?.evidence_refs).toEqual(['r1:system']);
   expect(repaired.digest).not.toBe(old.digest);
-  expect(old.findings[0]?.source_refs).toEqual(['business']);
-  const conflict = qualifiedResearchSourceCatalog(refs, [
-    ...results.slice(0, 2),
-    result('research-c', refs[2]!.digest, [source('business', 'requirements.md#L215', 'new claim')]),
-  ]);
+  const { digest, ...qualifiedBody } = repaired;
+  expect(digest).toBe(canonicalJsonDigest(qualifiedBody));
+  expect(old).toEqual(original);
+  const conflict = expectReturned(() =>
+    qualifiedResearchSourceCatalog(refs, [
+      ...results.slice(0, 2),
+      result('research-c', refs[2]!.digest, [source('business', 'requirements.md#L215', 'new claim')]),
+    ]),
+  );
+  expect(Array.isArray(conflict)).toBe(true);
   expect(() => qualifyLegacySynthesisRecord(old, conflict)).toThrow('conflicting provenance');
+  expect(old).toEqual(original);
 });
 
 test('three colliding predecessor aliases require exact qualified citations before a report can commit', () => {
@@ -221,7 +254,9 @@ test('three colliding predecessor aliases require exact qualified citations befo
       evidence_refs: ['r2:business'],
     },
   } satisfies ResearchSynthesis;
-  expect(qualifiedResearchSourceCatalog(refs, results).map(({ key }) => key)).toEqual([
+  const catalog = expectReturned(() => qualifiedResearchSourceCatalog(refs, results));
+  expect(Array.isArray(catalog)).toBe(true);
+  expect(catalog.map(({ key }) => key)).toEqual([
     'r0:business',
     'r0:system',
     'r1:registry',
@@ -299,7 +334,9 @@ test('shared official citations retain qualified aliases and count unique extern
       },
     ],
   } satisfies ResearchSynthesis;
-  expect(qualifiedResearchSourceCatalog(references, results).map((entry) => entry.key)).toEqual([
+  const catalog = expectReturned(() => qualifiedResearchSourceCatalog(references, results));
+  expect(Array.isArray(catalog)).toBe(true);
+  expect(catalog.map((entry) => entry.key)).toEqual([
     'r0:official-a',
     'r0:official-b',
     'r1:official-a',

@@ -14,6 +14,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, test } from 'bun:test';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import {
   boundedSpawnSync,
   checkManifest,
@@ -617,7 +618,8 @@ test('spent caller budget prevents coverage version probes and command spawns', 
 
 test('nested commands get one leading pinned directory even without PATH', () => {
   const executable = path.resolve('cache', 'bun');
-  assert.equal(pinnedEnvironment(executable, {}).PATH, `${path.dirname(executable)}${path.delimiter}`);
+  const environment = expectReturned(() => pinnedEnvironment(executable, {}));
+  assert.equal(environment.PATH, `${path.dirname(executable)}${path.delimiter}`);
 });
 
 test('nested child allowances spend one deadline and fail before an exhausted launch', () => {
@@ -894,10 +896,8 @@ test('npm native executable alias supplies bun to nested shells without selectin
     mkdirSync(commandDirectory);
     symlinkSync(executable, command);
   }
-  assert.equal(
-    pinnedEnvironment(executable, { PATH: 'other-tools' }, root).PATH,
-    `${commandDirectory}${path.delimiter}other-tools`,
-  );
+  const selectedCommandEnvironment = expectReturned(() => pinnedEnvironment(executable, { PATH: 'other-tools' }, root));
+  assert.equal(selectedCommandEnvironment.PATH, `${commandDirectory}${path.delimiter}other-tools`);
 
   if (process.platform === 'win32') {
     rmSync(commandDirectory, { recursive: true });
@@ -911,16 +911,14 @@ test('npm native executable alias supplies bun to nested shells without selectin
     writeFileSync(different, 'different executable');
     symlinkSync(different, command);
   }
-  assert.equal(
-    pinnedEnvironment(executable, { PATH: 'other-tools' }, root).PATH,
-    `${binaryDirectory}${path.delimiter}other-tools`,
-  );
+  const fallbackCommandEnvironment = expectReturned(() => pinnedEnvironment(executable, { PATH: 'other-tools' }, root));
+  assert.equal(fallbackCommandEnvironment.PATH, `${binaryDirectory}${path.delimiter}other-tools`);
 });
 
 test('Windows does not retain competing case variants of PATH', () => {
   if (process.platform !== 'win32') return;
   const executable = path.resolve('cache', 'bun.exe');
-  const env = pinnedEnvironment(executable, { PATH: 'first', Path: 'second', path: 'third' });
+  const env = expectReturned(() => pinnedEnvironment(executable, { PATH: 'first', Path: 'second', path: 'third' }));
   assert.deepEqual(
     Object.keys(env).filter((key) => key.toLowerCase() === 'path'),
     ['PATH'],

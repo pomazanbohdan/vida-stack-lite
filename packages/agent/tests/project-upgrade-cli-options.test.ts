@@ -1,6 +1,12 @@
 import { expect, test } from 'bun:test';
+import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { runProjectUpgradeRepair } from '../bin/project-upgrade-repair.ts';
 import { assertReconcileOptionKeys, reconcileExpectedOptions } from '../bin/reconcile-cli-contracts.ts';
 import { cliMetadataResult } from '../bin/cli-metadata.ts';
+import { expectRejection } from './helpers/expect-rejection.ts';
 
 const resume = {
   '--kind': 'project-upgrade',
@@ -60,4 +66,25 @@ test('project upgrade still rejects missing required and foreign option keys', (
   expect(() => assertReconcileOptionKeys(missingRoot, 'project-upgrade', 'resume')).toThrow();
   expect(() => assertReconcileOptionKeys({ ...resume, '--actor': 'foreign' }, 'project-upgrade', 'resume')).toThrow();
   expect(() => assertReconcileOptionKeys(resume, 'project-upgrade', 'unsupported')).toThrow();
+});
+
+test('project upgrade resume rejects a malformed UNKNOWN policy before repository access', async () => {
+  const root = path.join(tmpdir(), `vida-project-upgrade-invalid-unknown-${randomUUID()}`);
+  expect(existsSync(root)).toBe(false);
+  await expectRejection(
+    runProjectUpgradeRepair([
+      '--kind',
+      'project-upgrade',
+      '--mode',
+      'resume',
+      '--project-root',
+      root,
+      '--repair-id',
+      'same-operation',
+      '--reconcile-unknown',
+      'yes',
+    ]),
+    'VIDA project upgrade: invalid reconciliation flag',
+  );
+  expect(existsSync(root)).toBe(false);
 });

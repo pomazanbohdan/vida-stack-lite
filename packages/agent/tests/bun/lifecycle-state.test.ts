@@ -925,6 +925,40 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
     expect(() => validateLifecycleProgress(before, after)).toThrow('lifecycle transition contains an untyped mutation');
   });
 
+  test('rejects creating a lifecycle seal during same-phase PLAN progress', () => {
+    let before = expectReturned(() => transitionLifecycleState(initialWork(), 'TRACE', 'Trace the scope.'));
+    before = add(
+      before,
+      reference(before, 'source_plan', 'seal-source-plan'),
+      reference(before, 'acceptance_manifest', 'seal-acceptance'),
+      reference(before, 'implementation_scope', 'seal-scope'),
+    );
+    before = expectReturned(() => transitionLifecycleState(before, 'PLAN', 'Authorize the plan.'));
+    before = add(
+      before,
+      reference(before, 'execution_approval', 'seal-approval', { decision: 'approved' }),
+      reference(before, 'platform_knowledge', 'seal-knowledge'),
+      reference(before, 'implementation_policy', 'seal-policy'),
+      reference(before, 'change_impact_pre', 'seal-impact-pre'),
+      reference(before, 'documentation_validation', 'seal-docs', { decision: 'pass' }),
+    );
+
+    const after = clone(before);
+    after.revision++;
+    after.lifecycle.revision++;
+    after.lifecycle.seal = {
+      sealed_revision: after.revision,
+      sealed_at: '2026-09-18T18:00:00.000Z',
+      implementation_fingerprint: hash('e'),
+    };
+    const beforeImage = clone(before);
+    const afterImage = clone(after);
+    expect(after.lifecycle.seal.sealed_revision).toBe(after.revision);
+    expect(() => validateLifecycleProgress(before, after)).toThrow('seal can only be created once during execution');
+    expect(before).toEqual(beforeImage);
+    expect(after).toEqual(afterImage);
+  });
+
   test('rejects duplicate current singleton evidence by kind', () => {
     let work = expectReturned(() => transitionLifecycleState(initialWork(), 'TRACE', 'Trace the accepted scope.'));
     expect(work).not.toBeNull();

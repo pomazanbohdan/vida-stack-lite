@@ -5,6 +5,7 @@ import {
   workflowApprovalConsumptionRecordSchema,
 } from '../src/governance/workflow-approval-consumption-contract.ts';
 import { validateHostWorkflowApprovalRecord } from '../src/governance/edictum-boundary.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 function reservedRecord() {
   return {
@@ -45,7 +46,8 @@ test('reserved approval has its exact shape and parsing remains normalization wi
   assert.notEqual(parsed, input);
   assert.notEqual(parsed.binding, input.binding);
   assert.equal(Object.hasOwn(parsed, 'terminal_at'), false);
-  assert.deepEqual(validateHostWorkflowApprovalRecord(input), parsed);
+  const hostValidated = expectReturned(() => validateHostWorkflowApprovalRecord(input));
+  assert.deepEqual(hostValidated, parsed);
   assert.deepEqual(input, reservedRecord());
 });
 

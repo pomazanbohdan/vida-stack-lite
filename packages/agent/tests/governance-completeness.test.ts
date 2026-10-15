@@ -38,6 +38,7 @@ import type { GovernanceBindings } from '../src/governance/edictum-boundary.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 const repositoryRoot = await createInitializedRepositoryRoot();
 const config = loadRuntimeConfig(repositoryRoot);
 const selectedProject = config.projects[0];
@@ -565,13 +566,13 @@ describe('governed write completeness', () => {
       expect(guardedWriteCalls).toBe(1);
       const guardedReservation = await defaultStore.inspect(guardedFixture.operationHash);
       if (guardedReservation === null) throw new Error('guarded HostState reservation is missing');
-      expect(validateHostOperationReservation(guardedReservation)).toEqual(guardedReservation);
+      expect(expectReturned(() => validateHostOperationReservation(guardedReservation))).toEqual(guardedReservation);
       expect(guardedReservation).toMatchObject({ status: 'applied', store_id: 'candidate-governed-writes' });
 
       expect(await store.inspect(firstFixture.operationHash)).toBeNull();
       const first = await store.reserve(firstFixture.operationHash, firstFixture.request);
       if (first === null) throw new Error('native reservation was not created');
-      expect(validateHostOperationReservation(first)).toEqual(first);
+      expect(expectReturned(() => validateHostOperationReservation(first))).toEqual(first);
       expect(first).toMatchObject({
         store_id: storeId,
         operation_key: firstFixture.operationHash,
@@ -590,13 +591,13 @@ describe('governed write completeness', () => {
       await store.markCommitStarted(first);
       const unknown = await store.inspect(firstFixture.operationHash);
       if (unknown === null) throw new Error('commit-unknown reservation is missing');
-      expect(validateHostOperationReservation(unknown)).toEqual(unknown);
+      expect(expectReturned(() => validateHostOperationReservation(unknown))).toEqual(unknown);
       expect(unknown).toMatchObject({ status: 'commit_unknown', request_digest: first.request_digest });
       const resultDigest = 'b'.repeat(64);
       await store.complete(first, resultDigest);
       const applied = await store.inspect(firstFixture.operationHash);
       if (applied === null) throw new Error('applied reservation is missing');
-      expect(validateHostOperationReservation(applied)).toEqual(applied);
+      expect(expectReturned(() => validateHostOperationReservation(applied))).toEqual(applied);
       expect(applied).toMatchObject({ status: 'applied', result_digest: resultDigest });
 
       const secondFixture = evidence();
@@ -605,7 +606,7 @@ describe('governed write completeness', () => {
       await store.abort(second);
       const aborted = await store.inspect(secondFixture.operationHash);
       if (aborted === null) throw new Error('aborted reservation is missing');
-      expect(validateHostOperationReservation(aborted)).toEqual(aborted);
+      expect(expectReturned(() => validateHostOperationReservation(aborted))).toEqual(aborted);
       expect(aborted).toMatchObject({ status: 'aborted', request_digest: second.request_digest });
 
       closeAttempted.add(database);
@@ -621,8 +622,8 @@ describe('governed write completeness', () => {
       const reopenedAborted = await reopenedStore.inspect(secondFixture.operationHash);
       if (reopenedApplied === null || reopenedAborted === null)
         throw new Error('reopened native reservation records are missing');
-      expect(validateHostOperationReservation(reopenedApplied)).toEqual(reopenedApplied);
-      expect(validateHostOperationReservation(reopenedAborted)).toEqual(reopenedAborted);
+      expect(expectReturned(() => validateHostOperationReservation(reopenedApplied))).toEqual(reopenedApplied);
+      expect(expectReturned(() => validateHostOperationReservation(reopenedAborted))).toEqual(reopenedAborted);
       expect(reopenedApplied).toEqual(applied);
       expect(reopenedAborted).toEqual(aborted);
 

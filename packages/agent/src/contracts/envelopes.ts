@@ -192,14 +192,13 @@ function invalidPathSegment(segment: string): boolean {
 
 export function safeWorkflowOwnedPath(value: string): boolean {
   if (typeof value !== 'string') return false;
-  const normalized = path.posix.normalize(value);
   return ![
     !value,
+    !value.isWellFormed(),
     path.isAbsolute(value),
     value.startsWith('~'),
     value.includes('\\'),
     value.includes(':'),
-    normalized !== value,
     value.split('/').some(invalidPathSegment),
   ].some(Boolean);
 }

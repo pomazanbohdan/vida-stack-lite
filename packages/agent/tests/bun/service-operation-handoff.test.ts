@@ -1,5 +1,4 @@
 import { expect, test } from 'bun:test';
-import assert from 'node:assert/strict';
 import { copyFileSync, renameSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import {
@@ -14,7 +13,7 @@ import {
   reconcileServiceOperationCustody,
   claimReservedServiceOperationLaunch,
 } from '../../src/config/service-operation-custody.js';
-import { expectRejection } from '../helpers/expect-rejection.js';
+import { expectAsyncReturned, expectRejection, expectReturned } from '../helpers/expect-rejection.js';
 import { openCustodyFixture, type ServiceCustodyFixture } from '../helpers/service-custody-fixture.js';
 
 const requestDigest = 'b'.repeat(64);
@@ -26,21 +25,13 @@ const operationId = 'handoff-operation';
 const launchPid = 7312;
 type HandoffVerifier = Parameters<typeof handoffServiceOperationCustody>[7];
 
-async function expectHandoffResult<T>(action: () => Promise<T>): Promise<T> {
-  let result!: T;
-  await assert.doesNotReject(async () => {
-    result = await action();
-  });
-  return result;
-}
-
 test('terminal pack custody transfers to one prepared release image with exact lineage and no owner token', async () => {
   const fixture = openCustodyFixture('handoff-positive-');
   try {
     const prior = finishOperation(fixture, 'release-pack-worker');
     const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
     let verifierCalls = 0;
-    const result = await expectHandoffResult(() =>
+    const result = await expectAsyncReturned(() =>
       handoffServiceOperationCustody(
         source,
         fixture.root,
@@ -61,7 +52,9 @@ test('terminal pack custody transfers to one prepared release image with exact l
     expectHandoffLineage(result, prior);
     const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
     try {
-      expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toEqual(result);
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+      ).toEqual(result);
     } finally {
       closeServiceOperationDatabase(reopened);
     }
@@ -178,7 +171,9 @@ function finishOperation(fixture: ServiceCustodyFixture, kind: 'release-pack-wor
     reservation.child_capability,
   );
   closeServiceOperationCustody(handle, 'terminal', terminalDigest);
-  const terminal = readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId);
+  const terminal = expectReturned(() =>
+    readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+  );
   closeServiceOperationCustodyHandle(handle);
   if (!terminal) throw new Error('Terminal operation custody row disappeared.');
   return terminal;
@@ -246,15 +241,17 @@ async function assertPreparedPackCannotHandoff(): Promise<void> {
       requestDigest,
       evidenceDigest,
     );
-    const prepared = await reconcileServiceOperationCustody(
-      fixture.database,
-      fixture.root,
-      fixture.relative,
-      fixture.workspaceId,
-      'release-pack-worker',
-      operationId,
-      requestDigest,
-      async () => ({ phase: 'prepared', evidence_digest: evidenceDigest }),
+    const prepared = await expectAsyncReturned(() =>
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        async () => ({ phase: 'prepared', evidence_digest: evidenceDigest }),
+      ),
     );
     expect(prepared.phase).toBe('prepared');
     let verifierCalls = 0;
@@ -294,7 +291,9 @@ async function expectHandoffFailure(
   );
   const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
   try {
-    return readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, prior.operation_id);
+    return expectReturned(() =>
+      readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, prior.operation_id),
+    );
   } finally {
     closeServiceOperationDatabase(reopened);
   }
