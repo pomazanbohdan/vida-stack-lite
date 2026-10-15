@@ -4,7 +4,7 @@ import path from 'node:path';
 import { validateProjectContext } from '../config/project-context.js';
 import { loadRuntimeConfig, runtimeConfigDigest, type WorkItemSelection } from '../config/runtime-config.js';
 import type { TrustedProjectIdentity } from '../contracts/public-ingress.js';
-import { canonicalJson, canonicalJsonDigest } from '../contracts/public-ingress.js';
+import { canonicalJson, canonicalJsonDigest, optionalCanonicalJsonDigest } from '../contracts/public-ingress.js';
 import type { ProjectContext } from '../config/project-context.js';
 import type { ProjectAuthorizationResult } from '../authorization/cedar-boundary.js';
 import type { WorkflowEvaluation } from '../governance/policy-workflow.js';
@@ -963,7 +963,7 @@ function currentReadEvidence(context: SourcePolicyCommonInput, operationBinding:
     host_ledger_digest: snapshot.ledgerVersion?.digest ?? null,
     journal_revision: context.journal.version.revision,
     journal_digest: context.journal.version.digest,
-    planning_journal_digest: context.planningJournal ? canonicalJsonDigest(context.planningJournal) : null,
+    planning_journal_digest: optionalCanonicalJsonDigest(context.planningJournal),
     config_digest: runtimeConfigDigest(context.config),
     project_context_digest: context.projectContext.project_context_digest,
     task_packet_digest: context.taskPacket.digest,

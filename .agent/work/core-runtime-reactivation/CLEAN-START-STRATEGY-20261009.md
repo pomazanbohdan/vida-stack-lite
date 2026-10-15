@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date: 2026-10-14. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
+Status date: 2026-10-15. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
 
 ## Objective
 
@@ -38,13 +38,14 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6054roles across143files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds6183roles across147files; installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
-Keep original planner, native recognizer38>32, new recipe owners19/29>10,
+The original planner is39<=40 and current-read evidence5<=5; keep
+native recognizer38>32, new recipe owners19/29>10,
 retained callback/context deficits, runtime adapter2>1 and newly
-observed retained Bun deficits open. Current7719-role inventory leaves1665current
-and1107original dispositions missing, with23represented static overages.
+observed retained Bun deficits open. Current7720-role inventory leaves1537current
+and980original dispositions missing, with21represented static overages.
 WORK owns their exact ceilings and receipts; mapping counts are not coverage.
 Retrieve current CI-formed SDK outputs with their selected formation receipt before the
 complete selection. Maintained aliases now prepare the distinct CI SDK test-input

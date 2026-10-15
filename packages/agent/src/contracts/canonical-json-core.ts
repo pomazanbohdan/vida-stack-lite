@@ -66,6 +66,10 @@ export function canonicalJsonDigest(value: unknown): string {
   return createHash('sha256').update(canonicalJson(value)).digest('hex');
 }
 
+export function optionalCanonicalJsonDigest(value: unknown): string | null {
+  return value ? canonicalJsonDigest(value) : null;
+}
+
 /** JSON-only payloads keep the canonical digest one-to-one with the wire value. */
 export function assertCanonicalJsonValue(
   value: unknown,

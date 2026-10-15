@@ -5,7 +5,7 @@ import {
 } from './workspace-database-cli.ts';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { canonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
+import { canonicalJsonDigest, optionalCanonicalJsonDigest, isPlainRecord } from '../src/contracts/public-ingress.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { loadRuntimeConfig, runtimePackageAccess, runtimePackageCodePaths } from '../src/config/runtime-config.ts';
@@ -816,7 +816,7 @@ function result(
     schema: 'CompletedSourceReportRecoveryResult/v1',
     status,
     attempt: request.attempt,
-    receipt_digest: receipt ? canonicalJsonDigest(receipt) : null,
+    receipt_digest: optionalCanonicalJsonDigest(receipt),
     work_version: host.workVersion,
     ledger_version: host.ledgerVersion,
     journal_version: journal?.version ?? null,
@@ -836,7 +836,7 @@ function result(
     source_rights_granted: false,
     accepted_result: false,
     runtime_accepted: false,
-    verified_current_digest: proof ? canonicalJsonDigest(proof) : null,
+    verified_current_digest: optionalCanonicalJsonDigest(proof),
   };
 }
 

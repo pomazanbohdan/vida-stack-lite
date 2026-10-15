@@ -72,6 +72,7 @@ export {
   canonicalJson,
   canonicalJsonAtDepth,
   canonicalJsonDigest,
+  optionalCanonicalJsonDigest,
   assertCanonicalJsonValue,
 } from './canonical-json-core.js';
 import { assertCanonicalJsonValue, canonicalJsonDigest } from './canonical-json-core.js';

@@ -76,6 +76,9 @@ export const requireRepair: (condition: unknown, message: string) => asserts con
 const identifier = /^[a-z0-9][a-z0-9._-]{0,79}$/;
 const workIdentifier = /^[a-z0-9][a-z0-9-]{0,127}$/;
 const hash = /^[a-f0-9]{64}$/;
+function isBoundedDispatchIdentity(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= 256;
+}
 function configuredValue<T>(values: Record<string, T>, key: string | undefined): T | undefined {
   return key === undefined ? undefined : values[key];
 }
@@ -215,12 +218,8 @@ export function buildReadOnlyDispatchRepairPlan({
       Number.isSafeInteger(attempt) &&
       attempt > 0 &&
       hash.test(actionId) &&
-      typeof issueId === 'string' &&
-      issueId.length > 0 &&
-      issueId.length <= 256 &&
-      typeof nativeHandle === 'string' &&
-      nativeHandle.length > 0 &&
-      nativeHandle.length <= 256 &&
+      isBoundedDispatchIdentity(issueId) &&
+      isBoundedDispatchIdentity(nativeHandle) &&
       typeof actor === 'string' &&
       actor.trim() === actor &&
       actor.length > 0 &&

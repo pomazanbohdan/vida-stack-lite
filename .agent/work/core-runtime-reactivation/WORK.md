@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `f0e7928` at origin/main.
+- Published predecessor: `8954b59` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -993,7 +993,7 @@ The replaced status-refinement role retires explicitly even though its syntactic
 locator is reused by a different raw-key check. The failed initial join safeguard
 wrote no evidence or partial; its corrected role disposition is in the receipt.
 
-Current partial6054roles=4517retained/1537new,77removed,143bound files. Four scoped
+At published8954b59, partial6054roles=4517retained/1537new,77removed,143bound files. Four scoped
 Source captures reuse all other qualified inventory rows. Inventory7719 leaves
 1665current and1107original dispositions missing. Mapping78.4% is not coverage.
 Twenty-three represented static complexity overages stay open with unchanged
@@ -1033,13 +1033,69 @@ bc5cd2f0-ae3c-4093-abdf-f6512ef48427 also ended UNKNOWN. Its exact supervisor:
 Two SIGKILL producers, direct accounting, resourceSafeToAdvance:false; no admitted
 report/resource successor. Preserve original custody and stale review.
 
+## Optional digest, dispatch identity and bounded lineage packet
+
+One optional canonical digest owner replaces three repeated truthiness/digest
+expressions in current-read evidence and recovery results. Absence stays null;
+truthy values retain the canonical validator and native failures. Preflight
+evaluates the supported plain planning-journal field once at the same policy
+stage. No Cedar/Edictum/Host/current-input guard moves. A separate real duplicate,
+opaque issue/native identity validation, shares one private predicate at both
+original short-circuit positions. Strings remain1..256UTF16units with no trim,
+coercion or added control restrictions. The seal validator also loses one
+forward-only wrapper; the actual implementation keeps its original role once.
+
+Boundary controls passed on the old dispatch code before refactoring2/0; after
+refactoring the complete dispatch file passed14/0 in23.88s. The syntax controls
+use an invalid project set to observe guard precedence and establish no native
+or complete valid-plan acceptance. Digest/core/preflight/recovery selection29/0
+in6.19s; affected native seal/reset selection3/0 in867ms. Final Source types
+101files/0diagnostics. These focused selections are not a full numeric run.
+Evidence under `/workspace/attachments/`:
+`quality-dispatch-identity-{before-refactor,final-tests}-20261015.log`,
+`quality-optional-digest-callers-20261015.log`,
+`quality-seal-wrapper-removal-tests-20261015.log`,
+`quality-digest-dispatch-final-source-types-20261015.log`,
+`quality-optional-digest-seal-review-20261015.md`,
+`quality-dispatch-identity-final-review-20261015.md`.
+The first strict hook passed formatting464/types470, then rejected implicit any
+returns in the two Reflect.apply test callbacks. The callbacks now discard the
+return in a block, preserving the same thrown-error assertions; focused2/0.
+Original failure: `/workspace/attachments/quality-digest-dispatch-strict-commit-20261015.log`.
+
+Fresh maintained inventory measures planner39<=original40 and current-read
+evidence5<=original5; new shared predicates/digest owners3/2<=10. The earlier
+source-only review's43 was the cached pre-edit planner, not a new measurement.
+Eight scoped Source AST/SHA captures reuse all other qualified rows. Partial
+6183roles=4644retained/1539new,77removed,147bound files. Inventory7720 leaves
+1537current/980original dispositions and21represented CC overages open. The
+127retained additions and2new owners keep unchanged original caps and exact
+single-use identities. Three callback correspondences were rejected on actual
+responsibility differences, including the global rebind callback and two run
+callbacks. The seal's original7/56 belongs to its actual implementation alone;
+extracted validators retain separate budgets. No complete executable budget,
+dynamic CRAP, full coverage or assertion-confirmed mutation score is claimed.
+Receipt: `/workspace/attachments/quality-digest-dispatch-join-receipt-20261015.json`.
+Independent final integration review accepts the scoped join:
+`/workspace/attachments/quality-digest-dispatch-join-final-review-20261015.md`.
+
+The completed-items fallback review is resolved from actual runtime parsing:
+rebind's checked SQL decoder calls parseMastraSessionLedgerState, which rejects
+non-array completed-wave items before flatMap. No new fallback or test waiver.
+Review: `/workspace/attachments/quality-rebind-completed-items-boundary-20261015.md`.
+One worker stopped on an exec transport disconnect before any read/write. Root
+then observed a successful native read and connected Cloud revision2389 with no
+reported failure. This establishes neither a restart nor its cause. Vex's owned
+bounded lookup refreshed6changed files; it remains navigation, not numeric proof.
+
 ## Next bounded work
 
 1. Complete correspondence/original-budget corrections: pure
-   read-only planner43>40, native recognizer38>32, new recipe owners19/29>10,
+   native recognizer38>32, new recipe owners19/29>10,
    and retained callback/context deficits recorded above. Installer27<=31,
    native loaders4<=4, controller target2<=2 and Host callback3<=3
-   has scoped Source proof above; full dynamic CRAP acceptance remains pending.
+   has scoped Source proof above, alongside planner39<=40 and current-read
+   evidence5<=5; full dynamic CRAP acceptance remains pending.
    Do not relabel roles or raise caps to force acceptance.
 2. Continue same-pattern cleanup review in remaining affected owners, preserving
    causal fixtures and ownership/CAS/UNKNOWN contracts. The native/research packets

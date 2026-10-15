@@ -1,6 +1,6 @@
 # VIDA Core: current CLEAR handoff
 
-Status date: 2026-10-14. The repository owner authorizes comprehensive Pstack
+Status date: 2026-10-15. The repository owner authorizes comprehensive Pstack
 implementation, especially documentation cleanup and maintenance. This request
 continues Source development after the earlier coverage-run pause. It never
 authorizes replay of old operational effects.
@@ -104,13 +104,13 @@ The genuine b549951 baseline was measured once. Its measurement admission does
 not turn its failed suite/quality into PASS. Do not repeat the capture.
 Reviewed partial correspondence is non-executable/incomplete; exhaustive mapping
 and the complete frozen CRAP plan remain open. All final numeric gates remain open.
-The current partial represents6054roles across143bound files. Four scoped
-AST+SHA captures advance the approval/remaining-family packet, reusing qualified
-bindings from the earlier eight-family/Bun and132-file refreshes. Frozen allowances stay original.
+The current partial represents6183roles across147bound files. Eight scoped
+AST+SHA captures advance the digest/dispatch/remaining-family packet, reusing other
+qualified bindings and inventories. Frozen allowances stay original.
 Installer27<=31, native loaders4<=4, controller target2<=2 and Bun resolver34<=37 have scoped proof;
 native recognizer38>32 and retained
-callback/context deficits remain open. Twenty-three represented static overages and
-1665current/1107original dispositions remain; this is not coverage progress.
+callback/context deficits remain open. Twenty-one represented static overages and
+1537current/980original dispositions remain; this is not coverage progress.
 Approval schema/key/identity compatibility is repaired with17focused cases;
 full current numeric evidence remains pending.
 Unbound Source inventory freshness
@@ -120,7 +120,10 @@ executing it. Current SDK formation must include its selected receipt; local
 formation, Source fallback and partial numeric claims remain prohibited.
 Independent responsibility review corrected the old pure planner's pairing:
 its body moved into the Source builder, while the thin CLI wrapper is new.
-The builder remains a numeric blocker at CC43 against the unchanged CC40 ceiling.
+The builder is now CC39 against the unchanged CC40 ceiling after sharing the
+identical bounded opaque dispatch-identity predicate. Current-read evidence is
+CC5 against its original5 after sharing optional canonical digest semantics.
+These scoped static corrections do not establish dynamic CRAP or full coverage.
 Current Source interruption/activation cases have focused proof in retained WORK
 history; they do not qualify active .vida cutover or native Runtime.
 

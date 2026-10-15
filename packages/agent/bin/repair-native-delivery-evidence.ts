@@ -777,12 +777,7 @@ function validateJoinFiles(root: string, operation: string, state: ReleaseRecord
   validateAssuranceFile(root, operation, seal);
 }
 
-function currentSealValue(
-  root: string,
-  operation: string,
-  state: ReleaseRecord,
-  sourcePass: RepairSourcePass,
-): SourceSeal {
+function currentSeal(root: string, operation: string, state: ReleaseRecord, sourcePass: RepairSourcePass): SourceSeal {
   const value = object(root, base(operation) + '/source-seal.json');
   assertSealKeys(value);
   const current = releaseSourceBinding(root, true, sourcePass);
@@ -805,10 +800,6 @@ function currentSealValue(
     sealed_fingerprint: value.sealed_fingerprint,
     entries: value.entries,
   };
-}
-
-function currentSeal(root: string, operation: string, state: ReleaseRecord, sourcePass: RepairSourcePass): SourceSeal {
-  return currentSealValue(root, operation, state, sourcePass);
 }
 
 function unseal(

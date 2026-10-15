@@ -9,6 +9,7 @@ import {
   canonicalJsonAtDepth,
   canonicalJsonComponents,
   canonicalJsonDigest,
+  optionalCanonicalJsonDigest,
   canonicalJsonWithNodeLimit,
   isCanonicalJsonNumber,
   isPlainRecord,
@@ -39,6 +40,31 @@ describe('canonical JSON core contract', () => {
       expectCanonicalFailure(() => canonicalJson(value));
     }
     for (const value of [undefined, 1n, Symbol('value'), () => 1]) expectCanonicalFailure(() => canonicalJson(value));
+  });
+
+  test('maps absent optional values to null and hashes present canonical values', () => {
+    for (const absent of [null, undefined, false, 0, -0, 0n, NaN, '']) {
+      expect(optionalCanonicalJsonDigest(absent)).toBeNull();
+    }
+    expect(optionalCanonicalJsonDigest({ b: 2, a: 1 })).toBe(
+      createHash('sha256').update('{"a":1,"b":2}').digest('hex'),
+    );
+    expect(optionalCanonicalJsonDigest([])).toBe(createHash('sha256').update('[]').digest('hex'));
+    expect(optionalCanonicalJsonDigest(true)).toBe(createHash('sha256').update('true').digest('hex'));
+    for (const invalid of [Infinity, 1n, Symbol('value'), new Date(0)]) {
+      expectCanonicalFailure(() => optionalCanonicalJsonDigest(invalid));
+    }
+    let getterCalls = 0;
+    const accessor = {};
+    Object.defineProperty(accessor, 'value', {
+      enumerable: true,
+      get() {
+        getterCalls += 1;
+        return 1;
+      },
+    });
+    expectCanonicalFailure(() => optionalCanonicalJsonDigest(accessor));
+    expect(getterCalls).toBe(0);
   });
 
   test('accepts plain and null-prototype records only', () => {

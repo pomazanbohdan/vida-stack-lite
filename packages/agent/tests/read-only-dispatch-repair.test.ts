@@ -20,6 +20,38 @@ import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryTemplateRoot = path.resolve(bundle, '../..');
 
+const syntaxRequest = {
+  repairId: 'syntax-fixture',
+  workId: 'repair-fixture',
+  attempt: 1,
+  actionId: 'a'.repeat(64),
+  issueId: 'issue',
+  nativeHandle: 'native',
+  actor: 'fixture-operator',
+  timestamp: '2026-10-15T00:00:00.000Z',
+  projectIds: [],
+};
+
+test('read-only repair rejects invalid opaque dispatch identities before the project-set guard', () => {
+  for (const field of ['issueId', 'nativeHandle']) {
+    for (const value of [undefined, null, false, 1, {}, [], '', 'x'.repeat(257), '😀'.repeat(128) + 'x']) {
+      expect(() => {
+        Reflect.apply(buildReadOnlyDispatchRepairPlan, undefined, [{ ...syntaxRequest, [field]: value }]);
+      }).toThrow('vida read-only dispatch repair: repair request invalid');
+    }
+  }
+});
+
+test('read-only repair accepts bounded opaque identity syntax before the project-set guard', () => {
+  for (const field of ['issueId', 'nativeHandle']) {
+    for (const value of ['x', 'x'.repeat(256), '😀'.repeat(128), ' ', '\u0000']) {
+      expect(() => {
+        Reflect.apply(buildReadOnlyDispatchRepairPlan, undefined, [{ ...syntaxRequest, [field]: value }]);
+      }).toThrow('vida read-only dispatch repair: project set must be exact sorted unique IDs');
+    }
+  }
+});
+
 function completedObservation(actionId: string, issueId: string) {
   return {
     schema: 'VidaSessionObservation/v1' as const,
