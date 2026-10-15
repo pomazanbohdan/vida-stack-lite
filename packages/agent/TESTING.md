@@ -1023,6 +1023,8 @@ declared Source. Main-host uses the separately published independent review
 `--budget-ref 6f687506464048a0360f3fb8932eb7b77c7fc005`; it does not inherit
 v1033's review of other contours. Main-runtime-timing uses its own independently
 reviewed `--budget-ref 6e4655b1db2a32d08ae722940ff50b10d9e56ca6`.
+The independent bun-runtime-facade review uses
+`--budget-ref 64f18b3148a80644787a1c2b997ad7a1ff6e5d5d`.
 The gate accepts only these pinned review/key
 pairs and each review's actual Source scope. Caller-supplied correspondence
 versions are rejected. The shared

@@ -4767,9 +4767,13 @@ manual correspondence: original/current Source, imports, types and all24roles
 are unchanged. The existing partial records that bounded review without changing
 any frozen row. Review memo:
 /workspace/attachments/quality-runtime-facade-lineage-review-20261015.md.
-Bind its published review in the existing gate, then capture exact coverage,
-frozen CC/CRAP and full confirmed mutation. No numerical admission is inferred
+The existing gate now binds the published64f18b31 review to its own Source key;
+next capture exact coverage, frozen CC/CRAP and full confirmed mutation.
+No numerical admission is inferred
 from unchanged Source or manual review.
+Twenty-one focused admission/prerequisite controls pass. Review-refusal rows now
+use native test.each so each case has its own default5s deadline and named
+failure, instead of accumulating subprocess cases under one test deadline.
 The partial stays non-executable/non-exhaustive and missing global historical
 artifacts are not admitted by these local receipts.
 
