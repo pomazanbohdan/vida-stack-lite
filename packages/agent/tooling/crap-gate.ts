@@ -61,6 +61,10 @@ const scopedBudgetReviews = new Map([
     'scope_review_main_governance_validation_20261016',
   ],
   [
+    '171006e51eeb962d4d5f3a7ccd6182acc078f26a:main-governance-validation',
+    'scope_review_main_governance_preparation_20261016',
+  ],
+  [
     '892523d2a83edc6e21d7a05d6e9cca902aab6f44:bun-runtime-initialization',
     'scope_review_runtime_initialization_20261015',
   ],
