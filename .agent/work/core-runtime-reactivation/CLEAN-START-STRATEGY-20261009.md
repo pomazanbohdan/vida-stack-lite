@@ -56,9 +56,10 @@ After each terminal batch, one final owner refreshes it through TESTING's
 `quality:contours` command. Preserve/export its JSON snapshot after freezes before
 commit/push; never maintain manual duplicate percentage tables.
 
-The current rolling wave uses six blind native Luna slots for disjoint copied
-preparation and independent review. A completed handoff immediately receives the
-next ready scope or review. Root has published baseline-only per-test custody;
+The rolling wave follows the root sidecar's
+[one-agent-per-contour policy](../../../AGENT.sidecar.md#orchestration-and-delegation)
+for isolated preparation and review. A completed handoff releases its slot for
+the next ready contour. Root has published baseline-only per-test custody;
 the actual main-host pilot passed69/69, while public body/JUnit joins remain open.
 The published integration batch moved fourteen mixed completeness cases to their
 source owners and strengthened activated-config, storage-admission, governance
@@ -103,9 +104,9 @@ freeze, workers may prepare copied candidates and reviews only under assigned
 attachment paths; they never edit captured checkout inputs or run Git, compilers,
 tests, formatters, inventory/hash scans or index refreshes. Root reviews/applies
 those candidates only after the producer's terminal custody outcome. Prefer
-reviewing/correcting queued packets over accumulating unreviewed changes. Keep
-five useful contour workers, one independent advisor/reviewer and Root as final
-owner; no additional orchestration store is introduced.
+reviewing/correcting queued packets over accumulating unreviewed changes. The
+root sidecar owns the bounded pool and single Root integration/checking policy;
+no additional orchestration store is introduced.
 Before filtered mutation, qualify actual public per-body Stryker dry-run rows,
 independent registration, the existing JUnit/body/canonical-map join and the Bun
 selector lifecycle. The generic command runner supplies only All tests, so it

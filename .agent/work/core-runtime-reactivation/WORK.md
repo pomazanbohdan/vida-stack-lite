@@ -167,6 +167,19 @@ cross-commit proof admission is OPEN until the existing owners can establish
 exact current closure/runtime/environment/custody compatibility without another
 scanner or a weakened gate.
 
+Fresh campaign `f9ae7d6d-65a8-4823-8038-50d0540ba304` is running from the clean
+immutable primary `57353f91b54806f5075801856729bf3e3e9fa6fe`, selecting45 contours.
+Its current-main SDK formation is run38878591427/attempt1/artifact12036491858,
+verified through the maintained input owner. First launch records retained
+workspace-backed scratch with22.6GB available and the unchanged2GiB floor.
+The first core producer already observes a real30s case timeout in interrupted
+Source retirement; it remains active, not accepted coverage. One isolated Luna
+owns that core contour's correction research. The prepared lifecycle split and
+four runtime-code rejection adapters remain unintegrated NEXT packets until
+Root reviews them and affected producer custody is terminal. No primary
+Source, HEAD or index is edited during this run. The CLEAR plan now references
+the sidecar dispatch owner instead of retaining its old six-worker variants.
+
 ## Current config contour
 
 The latest numeric capture binds published Source `85a5ca7` and budget `e5daea5`. Subsequent gate changes require their own fresh evidence.
