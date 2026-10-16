@@ -154,6 +154,16 @@ registry defaults to active declarations; only historical projection opts into
 retired metadata. Preserve each old status, acceptance flag and counter while
 excluding retired contours from active denominators and closure counts.
 
+For public authorization and governed-write validators, assert value equality,
+an independently owned frozen result, and isolation from later caller changes.
+Do not require the input object by reference. Use a valid captured Proxy control
+and an invalid captured image whose live reads would pass; require zero live
+gets during validation. Rebase operation hashes before a scope-denial control
+so an unrelated binding rejection does not mask the intended boundary. The
+builder must consume the returned intent. Native matcher argument errors are
+runtime failures, not assertion-confirmed kills. Neither a generic JUnit Error
+nor a positive testcase assertion count establishes the throwing matcher's cause.
+
 The main-host contour selects `tests/host-capability-boundary.test.ts`. Its two
 native cases own the seven host assertions extracted from the combined Cedar
 completeness case. Provider cases run in the parent Bun process with fresh

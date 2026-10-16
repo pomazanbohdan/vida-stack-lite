@@ -75,7 +75,12 @@ export {
   optionalCanonicalJsonDigest,
   assertCanonicalJsonValue,
 } from './canonical-json-core.js';
-import { assertCanonicalJsonValue, canonicalJsonDigest } from './canonical-json-core.js';
+import {
+  assertCanonicalJsonValue,
+  canonicalJsonDigest,
+  canonicalJsonImageWithNodeLimit,
+  MAX_CANONICAL_NODES,
+} from './canonical-json-core.js';
 
 function reject(conditions: readonly boolean[], message: string): void {
   if (conditions.some(Boolean)) throw new Error(message);
@@ -113,12 +118,12 @@ export function computeWriteOperationHash(input: {
   });
 }
 export function validateAuthorizationRequest(value: unknown): ProjectAuthorizationRequest {
-  assertCanonicalJsonValue(value, '$');
+  const { image } = canonicalJsonImageWithNodeLimit(value, 0, MAX_CANONICAL_NODES);
   reject(
-    [!authorizationValidator(value)],
+    [!authorizationValidator(image)],
     `authorization request rejected: ${errorText(authorizationValidator.errors)}`,
   );
-  return value as ProjectAuthorizationRequest;
+  return freezeJsonValue(image as ProjectAuthorizationRequest);
 }
 export interface GovernedWriteIntent {
   readonly operation: string;
@@ -216,13 +221,12 @@ function assertFresh(issuedAt: string, approvedAt: string, expiresAt: string, ve
   );
 }
 export function validateGovernedWriteRequest(value: unknown): GovernedWriteRequest {
-  assertCanonicalJsonValue(value, '$');
+  const { image } = canonicalJsonImageWithNodeLimit(value, 0, MAX_CANONICAL_NODES);
   reject(
-    [!governedWriteValidator(value)],
+    [!governedWriteValidator(image)],
     'governed write request rejected: ' + errorText(governedWriteValidator.errors),
   );
-  const request = value as GovernedWriteRequest;
-  assertCanonicalJsonValue(request.payload, '$.payload');
+  const request = image as GovernedWriteRequest;
   const authorization = request.authorization;
   const expectedHash = computeWriteOperationHash({
     operation: request.operation,
@@ -262,28 +266,27 @@ export function validateGovernedWriteRequest(value: unknown): GovernedWriteReque
     request.approval.expires_at,
     request.approval.verified_at,
   );
-  return request;
+  return freezeJsonValue(request);
 }
 export function validateGovernedWriteIntent(value: unknown): GovernedWriteIntent {
-  assertCanonicalJsonValue(value, '$');
+  const { image } = canonicalJsonImageWithNodeLimit(value, 0, MAX_CANONICAL_NODES);
   reject(
-    [!governedWriteIntentValidator(value)],
+    [!governedWriteIntentValidator(image)],
     `governed write intent rejected: ${errorText(governedWriteIntentValidator.errors)}`,
   );
-  const intent = value as GovernedWriteIntent;
+  const intent = image as GovernedWriteIntent;
   reject(
     [!isStrictRfc3339Timestamp(intent.approval.approved_at), !isStrictRfc3339Timestamp(intent.approval.expires_at)],
     'governed write intent timestamps invalid',
   );
-  assertCanonicalJsonValue(intent.payload, '$.payload');
-  return intent;
+  return freezeJsonValue(intent);
 }
 export function buildGovernedWriteRequest(
-  intent: GovernedWriteIntent,
+  value: GovernedWriteIntent,
   authorization: AuthorizationReceipt,
   approval: VerifiedApprovalEvidence,
 ): GovernedWriteRequest {
-  validateGovernedWriteIntent(intent);
+  const intent = validateGovernedWriteIntent(value);
   const authorizationFields = [
     authorization.principal === intent.authorization.principal,
     authorization.role === intent.authorization.role,
@@ -306,9 +309,12 @@ export function buildGovernedWriteRequest(
     approval.expires_at === intent.approval.expires_at,
   ];
   reject([!approvalFields.every(Boolean)], 'approval evidence is not bound to the governed write intent');
-  return freezeJsonValue(
-    validateGovernedWriteRequest({ operation: intent.operation, payload: intent.payload, authorization, approval }),
-  );
+  return validateGovernedWriteRequest({
+    operation: intent.operation,
+    payload: intent.payload,
+    authorization,
+    approval,
+  });
 }
 export function freezeJsonValue<T>(value: T, seen = new WeakSet<object>()): T {
   if (value === null || typeof value !== 'object' || seen.has(value)) return value;

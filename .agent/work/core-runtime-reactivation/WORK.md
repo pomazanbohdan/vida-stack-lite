@@ -5885,6 +5885,88 @@ One worker disclosed using Python solely to edit its assigned external report,
 despite the brief; no Source effect or verification credit resulted. Root
 reiterated apply_patch-only report editing and reviewed the actual report bytes.
 
+## Owned public validation correction and strict assertion proof
+
+Root reproduced descriptor/live-value divergence in the public authorization,
+intent and governed-request validators. First public-file regression batch
+retained8PASS/3FAIL at
+`/workspace/attachments/quality-rolling-cli-check-05QrUl`,1277.152149ms. Adding
+the analogous authorization case retained8PASS/4FAIL at
+`/workspace/attachments/quality-rolling-cli-check-dq2sJq`,1326.547056ms. Both
+owned operations captured complete output, closed groups and unchanged boot.
+These are assertion failures at the intended public boundaries, not an observed
+bypass of the protected write flow's private capability.
+
+The three existing validator bodies now schema-check and semantically check
+one descriptor-owned image, then return that deeply frozen image. The builder
+uses the returned intent; the guard checks operation hash and digest against
+the returned request. No helper/cache/WeakSet or moved function body was added.
+The public input-reference assertion changes to value/isolation checks; the
+zombie authorization case confirms the result stays unchanged after a caller
+alias changes. Existing trusted authorization/approval/private token/CAS and
+reservation checks remain. The system specification, TESTING and Bun skill
+describe the owned return contract. Runtime installation/cutover remains pending.
+
+After the Source correction, the full public/Cedar/governance development
+batch passed39/0 with12682assertions in2558.319721ms at
+`/workspace/attachments/quality-rolling-cli-check-i9Pzex`. Later public/zombies
+passed22/0 with14408assertions in1572.1931ms at
+`/workspace/attachments/quality-rolling-cli-check-KPlsdJ`. After targeted hash
+assertions and fail-closed mutation negatives, full public/mixed-errors passed
+21/0 with12444assertions in1369.737406ms at
+`/workspace/attachments/quality-rolling-cli-check-1BnuEr`. Each has complete
+capture, closed groups and unchanged boot. Source TypeScript101files and strict
+tests454files passed. An earlier mistyped nonexistent tsconfig.check.json
+checked zero files and failed; only the actual tsconfig.json program receives
+Source-check credit. No fresh coverage/CRAP/mutation result is claimed for the
+changed Source/tests; the earlier64d33d3 observations remain historical.
+
+Existing owned-image capture replaces the redundant nested payload assertions
+and duplicate outer freeze. New regressions cover future verified_at with later
+expiry, hash domain, non-string timestamp coercion and a valid transient-key
+Proxy exercising the generic freezer's missing-descriptor guard. Critical hash
+assertions now use existing node:assert/strict on Bun after explicit type checks.
+The shared success helper and assertion classifier remain unchanged.
+
+The proposed generic-JUnit-Error exception was independently rejected: exact
+body identity plus a positive testcase assertion count can still label an
+invalid matcher argument as a kill. Root's native probe at
+`/workspace/attachments/quality-rolling-cli-check-Gs4Kfg` passed in12.354189ms:
+both a real comparison failure and invalid received/expected matcher arguments
+are plain Error objects on Bun1.4.3. The first probe at mZFyEl failed because
+expect.getState is absent; its outcome is retained. Official tagged Bun source
+research independently shows the counter increments before argument validation.
+New negative controls preserve generic errors as unproven, even with a matching
+body marker and positive count. No old receipt is replayed or reclassified.
+
+The7receipt-binding UNKNOWN were diagnosed as pre-test configured-context
+crashes under mutated freezeJsonValue. IDs/fingerprints match but JUnit is
+absent. Keep UNKNOWN; do not relax receipt binding or count setup health as a
+kill. Narrow Node-assert attribution and a sealed fixture projection are separate
+prepared tooling lanes requiring actual qualification before another mutation
+run. Temporal boundaries, envelope consistency and descriptor-close candidates
+remain in the rolling queue; Root applies only reviewed concrete packets.
+
+The maintained inventory owner captured only the2changed Source files once:
+`/workspace/attachments/quality-ingress-governance-function-inventory-vc4a-20261016.json`.
+All222current IDs remain unchanged. After independent review, Root applied the
+short address-only metadata owner with beforeimage/intent/completion receipts:
+`/workspace/attachments/quality-ingress-owned-address-only-vc4a-20261016.ts`.
+It changes only222current addresses and2Source bindings. Every original cap,
+measurement, identity/address, all other fields and7075partial counts remain
+unchanged. The earlier273-line unexecuted updater was rejected in favor of this
+bounded owner. The false missing-return review was checked against settled
+Source and withdrawn; the actual validator return and green callers are retained.
+The first strict commit hook passed format and489-file TypeScript but rejected
+five new Proxy traps returning Reflect.get's any. Root retained those values as
+unknown before returning them. The full public file then passed15/0 in
+1245.539735ms at `/workspace/attachments/quality-rolling-cli-check-NTZ4RR`, with
+complete capture, closed groups and unchanged boot. The rejected hook created
+no commit. The updated static inventory overlay reuses149files/7736functions
+with only222current rows and2bindings replaced from the existing capture:
+`/workspace/attachments/quality-current-inventory-overlay-vc4a-20261016.json`.
+It remains qualification not-performed; no second AST/hash capture occurred.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

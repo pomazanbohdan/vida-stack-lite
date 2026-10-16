@@ -1494,6 +1494,14 @@ Owned record images have null prototypes. Owned array images temporarily mask
 inherited serialization hooks while the serializer runs; those internal markers
 are removed before an image is returned for validation. Assertion-only ingress
 uses the same traversal and discards its temporary image.
+Public authorization, governed-intent and governed-request validators apply
+schema and semantic checks to the captured image and return that deeply frozen
+owned value. Returning validation success does not preserve caller object
+identity. Builders consume the validated intent, and the governance guard binds
+its operation hash and request digest to the validated request. Caller getters,
+Proxy reads and later alias changes cannot substitute different fields between
+those checks. Private ingress capabilities and trusted authorization, approval
+and reservation checks remain required.
 Runtime configuration digests may be reused only for actual
 loader-owned deeply frozen configurations. Every digest read still checks live
 inherited serialization hooks without invoking accessors; current YAML bytes

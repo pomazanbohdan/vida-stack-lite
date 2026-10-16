@@ -35,6 +35,25 @@ test('confirms a body assertion as the sole failed outcome', () => {
   expect(confirmedRunnerOutcome(1, result.outcome)).toBe('killed');
 });
 
+test.each([
+  'Received value must be a string: undefined',
+  'Expected value must be a string or regular expression: 42',
+  'Expected: 2; Received: 1',
+])('a generic JUnit Error stays unproven despite a body marker and positive assertion count: %s', (message) => {
+  const failure =
+    '<testcase name="[mutation-body:1] generic matcher error" classname="" file="tests/one.test.mjs" assertions="3"><failure type="Error">' +
+    message +
+    '</failure></testcase>';
+  expect(() =>
+    junitOutcome(
+      junitReport(failure, { tests: 1, assertions: 3, failures: 1 }),
+      ['tests/one.test.mjs'],
+      [],
+      [bodyEvent],
+    ),
+  ).toThrow('JUnit failure is not proven to be a Bun assertion failure.');
+});
+
 test('does not confirm a body assertion when a separate testcase has a runtime error', () => {
   const result = junitOutcome(
     junitReport(assertionFailure + runtimeError, {

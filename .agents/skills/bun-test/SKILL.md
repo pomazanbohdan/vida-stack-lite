@@ -98,6 +98,12 @@ reorders own keys and a nonnumeric length descriptor with a counted coercion
 hook. Require no live gets/coercions, and assert image shape before inspecting
 its properties. Keep temporary intrinsic changes synchronous and restore the
 exact original descriptor while preserving primary and restoration errors.
+Public authorization and governed-write validators return frozen owned images.
+Check value equality and alias isolation; callers consume the returned image.
+For a scope-denial control, first bind the operation hash to the captured fields
+so another guard does not hide the target. Keep invalid matcher arguments
+outside assertion-confirmed kills. A generic JUnit Error and a testcase's total
+expectation count do not prove that its throwing matcher compared values.
 Lifecycle discovery treats strict JSON imports as data, even when their strings
 mention hook names. Malformed JSON and executable-module parse failures still
 fail closed; never skip an executable dependency to obtain a Killed result.

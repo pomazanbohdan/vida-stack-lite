@@ -334,7 +334,11 @@ describe('machine-checked public export ZOMBIES matrix', () => {
     expect(returned).not.toBeNull();
     expect(typeof returned).toBe('object');
     expect(Array.isArray(returned)).toBe(false);
-    expect(returned).toBe(request);
+    expect(returned).toEqual(request);
+    expect(returned).not.toBe(request);
+    expect(Object.isFrozen(returned)).toBe(true);
+    request.principal = 'changed-after-validation';
+    expect(returned.principal).toBe('principal-1');
     expect(returned.action).toBe('write');
     expect(returned.registryHash).toBe('a'.repeat(64));
     expect(returned.operationHash).toBe('b'.repeat(64));

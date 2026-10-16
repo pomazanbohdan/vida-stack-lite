@@ -279,7 +279,7 @@
     },
     {
       "file": "src/contracts/public-ingress.ts",
-      "sha256": "637b5b1d3f665821486021478c7aced8303051c04178355cfcc34118cf566981"
+      "sha256": "6381703a4b903600356255e90b8e09332cc33b4980d4827b657adbb8ee889292"
     },
     {
       "file": "src/orchestration/admitted-session-execution.ts",
@@ -587,7 +587,7 @@
     },
     {
       "file": "src/governance/edictum-boundary.ts",
-      "sha256": "b1db7ddfb54360bf98867fa6234772b37d766442bb6ed8f4cd0701cdbc9cd52b"
+      "sha256": "2b56f2a01871ca18200c00f77aa89d53ce83908685c282d67d8aaf2b2d741a9d"
     },
     {
       "file": "src/orchestration/source-preflight-operations.ts",
@@ -31002,13 +31002,13 @@
       "max_crap": 2,
       "rationale": "The current role checks a list of validation conditions and raises the supplied rejection message; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 80,
+        "line": 85,
         "column": 0,
-        "start": 2962,
-        "end": 3094,
-        "bodyLine": 80,
+        "start": 3025,
+        "end": 3157,
+        "bodyLine": 85,
         "bodyColumn": 71,
-        "bodyEndLine": 82,
+        "bodyEndLine": 87,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31033,13 +31033,13 @@
       "max_crap": 2,
       "rationale": "The current role returns the first non-undefined value in a fallback list; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 83,
+        "line": 88,
         "column": 0,
-        "start": 3095,
-        "end": 3228,
-        "bodyLine": 83,
+        "start": 3158,
+        "end": 3291,
+        "bodyLine": 88,
         "bodyColumn": 59,
-        "bodyEndLine": 85,
+        "bodyEndLine": 90,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31064,13 +31064,13 @@
       "max_crap": 2,
       "rationale": "The current role finds the first defined fallback value; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 84,
+        "line": 89,
         "column": 21,
-        "start": 3177,
-        "end": 3219,
-        "bodyLine": 84,
+        "start": 3240,
+        "end": 3282,
+        "bodyLine": 89,
         "bodyColumn": 44,
-        "bodyEndLine": 84,
+        "bodyEndLine": 89,
         "bodyEndColumn": 63
       },
       "source_address": {
@@ -31095,13 +31095,13 @@
       "max_crap": 1,
       "rationale": "The current role converts validator errors into the public ingress error string; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 86,
+        "line": 91,
         "column": 0,
-        "start": 3229,
-        "end": 3506,
-        "bodyLine": 86,
+        "start": 3292,
+        "end": 3569,
+        "bodyLine": 91,
         "bodyColumn": 69,
-        "bodyEndLine": 89,
+        "bodyEndLine": 94,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31126,13 +31126,13 @@
       "max_crap": 1,
       "rationale": "The current role maps each validator error row into its instance-path and message text; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 87,
+        "line": 92,
         "column": 33,
-        "start": 3333,
-        "end": 3364,
-        "bodyLine": 87,
+        "start": 3396,
+        "end": 3427,
+        "bodyLine": 92,
         "bodyColumn": 44,
-        "bodyEndLine": 87,
+        "bodyEndLine": 92,
         "bodyEndColumn": 64
       },
       "source_address": {
@@ -31157,13 +31157,13 @@
       "max_crap": 2,
       "rationale": "The current role selects the available error array or the empty fallback; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 88,
+        "line": 93,
         "column": 18,
-        "start": 3402,
-        "end": 3491,
-        "bodyLine": 88,
+        "start": 3465,
+        "end": 3554,
+        "bodyLine": 93,
         "bodyColumn": 29,
-        "bodyEndLine": 88,
+        "bodyEndLine": 93,
         "bodyEndColumn": 107
       },
       "source_address": {
@@ -31188,13 +31188,13 @@
       "max_crap": 2,
       "rationale": "The current role builds the canonical digest binding the write operation, payload, principal, scope, and registry; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 90,
+        "line": 95,
         "column": 7,
-        "start": 3514,
-        "end": 4267,
-        "bodyLine": 100,
+        "start": 3577,
+        "end": 4330,
+        "bodyLine": 105,
         "bodyColumn": 11,
-        "bodyEndLine": 114,
+        "bodyEndLine": 119,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31219,13 +31219,13 @@
       "max_crap": 1,
       "rationale": "The current role validates canonical JSON and the authorization request schema; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 115,
+        "line": 120,
         "column": 7,
-        "start": 4275,
-        "end": 4584,
-        "bodyLine": 115,
+        "start": 4338,
+        "end": 4708,
+        "bodyLine": 120,
         "bodyColumn": 90,
-        "bodyEndLine": 122,
+        "bodyEndLine": 127,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31250,13 +31250,13 @@
       "max_crap": 16,
       "rationale": "The current role parses timestamp fields, including date and leap-second validity, into milliseconds; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 170,
+        "line": 176,
         "column": 7,
-        "start": 5825,
-        "end": 6855,
-        "bodyLine": 170,
+        "start": 6040,
+        "end": 7123,
+        "bodyLine": 176,
         "bodyColumn": 76,
-        "bodyEndLine": 193,
+        "bodyEndLine": 202,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31281,13 +31281,13 @@
       "max_crap": 1,
       "rationale": "The current role exposes the strict timestamp validity predicate; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 194,
+        "line": 203,
         "column": 7,
-        "start": 6863,
-        "end": 6988,
-        "bodyLine": 194,
+        "start": 7131,
+        "end": 7256,
+        "bodyLine": 203,
         "bodyColumn": 74,
-        "bodyEndLine": 196,
+        "bodyEndLine": 205,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31312,13 +31312,13 @@
       "max_crap": 2,
       "rationale": "The current role checks governed-write timestamps for ordering, expiration, and freshness; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 197,
+        "line": 206,
         "column": 0,
-        "start": 6989,
-        "end": 8016,
-        "bodyLine": 197,
+        "start": 7257,
+        "end": 8284,
+        "bodyLine": 206,
         "bodyColumn": 104,
-        "bodyEndLine": 213,
+        "bodyEndLine": 222,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31343,13 +31343,13 @@
       "max_crap": 2,
       "rationale": "The current role parses each supplied freshness timestamp through the shared RFC3339 converter; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 200,
+        "line": 209,
         "column": 22,
-        "start": 7241,
-        "end": 7266,
-        "bodyLine": 200,
+        "start": 7509,
+        "end": 7534,
+        "bodyLine": 209,
         "bodyColumn": 33,
-        "bodyEndLine": 200,
+        "bodyEndLine": 209,
         "bodyEndColumn": 47
       },
       "source_address": {
@@ -31374,13 +31374,13 @@
       "max_crap": 2,
       "rationale": "The current role validates the governed request schema, operation/scope binding, and evidence freshness; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 214,
+        "line": 223,
         "column": 7,
-        "start": 8024,
-        "end": 9701,
-        "bodyLine": 214,
+        "start": 8292,
+        "end": 9972,
+        "bodyLine": 223,
         "bodyColumn": 83,
-        "bodyEndLine": 262,
+        "bodyEndLine": 270,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31405,13 +31405,13 @@
       "max_crap": 2,
       "rationale": "The current role validates the pre-authorization governed intent, timestamps, and payload; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 263,
+        "line": 271,
         "column": 7,
-        "start": 9709,
-        "end": 10275,
-        "bodyLine": 263,
+        "start": 9980,
+        "end": 10550,
+        "bodyLine": 271,
         "bodyColumn": 81,
-        "bodyEndLine": 276,
+        "bodyEndLine": 283,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31436,13 +31436,13 @@
       "max_crap": 2,
       "rationale": "The current role binds the intent to matching authorization and approval evidence, then freezes the validated request; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 277,
+        "line": 284,
         "column": 7,
-        "start": 10283,
-        "end": 11886,
-        "bodyLine": 281,
+        "start": 10558,
+        "end": 12167,
+        "bodyLine": 288,
         "bodyColumn": 24,
-        "bodyEndLine": 308,
+        "bodyEndLine": 318,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31467,13 +31467,13 @@
       "max_crap": 7,
       "rationale": "The current role recursively freezes object-valued JSON members while avoiding cycles; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 309,
+        "line": 319,
         "column": 7,
-        "start": 11894,
-        "end": 12392,
-        "bodyLine": 309,
+        "start": 12175,
+        "end": 12673,
+        "bodyLine": 319,
         "bodyColumn": 78,
-        "bodyEndLine": 321,
+        "bodyEndLine": 331,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31498,13 +31498,13 @@
       "max_crap": 2,
       "rationale": "The current role computes the request digest after excluding the ingress token; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 322,
+        "line": 332,
         "column": 7,
-        "start": 12400,
-        "end": 12584,
-        "bodyLine": 322,
+        "start": 12681,
+        "end": 12865,
+        "bodyLine": 332,
         "bodyColumn": 87,
-        "bodyEndLine": 325,
+        "bodyEndLine": 335,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31529,13 +31529,13 @@
       "max_crap": 1,
       "rationale": "The current role builds the authorization receipt only when the request has an operation hash; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 326,
+        "line": 336,
         "column": 7,
-        "start": 12592,
-        "end": 13342,
-        "bodyLine": 330,
+        "start": 12873,
+        "end": 13623,
+        "bodyLine": 340,
         "bodyColumn": 36,
-        "bodyEndLine": 348,
+        "bodyEndLine": 358,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31560,13 +31560,13 @@
       "max_crap": 1,
       "rationale": "The current role constructs receipt fields from the request and issuance context; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 331,
+        "line": 341,
         "column": 16,
-        "start": 12761,
-        "end": 13261,
-        "bodyLine": 331,
+        "start": 13042,
+        "end": 13542,
+        "bodyLine": 341,
         "bodyColumn": 45,
-        "bodyEndLine": 346,
+        "bodyEndLine": 356,
         "bodyEndColumn": 3
       },
       "source_address": {
@@ -31591,13 +31591,13 @@
       "max_crap": 2,
       "rationale": "The current role provides the undefined result for a request without an operation hash; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 347,
+        "line": 357,
         "column": 10,
-        "start": 13273,
-        "end": 13288,
-        "bodyLine": 347,
+        "start": 13554,
+        "end": 13569,
+        "bodyLine": 357,
         "bodyColumn": 16,
-        "bodyEndLine": 347,
+        "bodyEndLine": 357,
         "bodyEndColumn": 25
       },
       "source_address": {
@@ -144872,10 +144872,10 @@
         "line": 1978,
         "column": 0,
         "start": 77717,
-        "end": 79477,
+        "end": 79369,
         "bodyLine": 1978,
         "bodyColumn": 85,
-        "bodyEndLine": 2014,
+        "bodyEndLine": 2013,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -144905,10 +144905,10 @@
         "line": 1996,
         "column": 53,
         "start": 78582,
-        "end": 79369,
+        "end": 79261,
         "bodyLine": 1996,
         "bodyColumn": 63,
-        "bodyEndLine": 2010,
+        "bodyEndLine": 2009,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -144935,13 +144935,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2021,
+        "line": 2020,
         "column": 7,
-        "start": 79692,
-        "end": 80161,
-        "bodyLine": 2021,
+        "start": 79584,
+        "end": 80053,
+        "bodyLine": 2020,
         "bodyColumn": 93,
-        "bodyEndLine": 2029,
+        "bodyEndLine": 2028,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -144968,13 +144968,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2032,
+        "line": 2031,
         "column": 7,
-        "start": 80252,
-        "end": 80420,
-        "bodyLine": 2032,
+        "start": 80144,
+        "end": 80312,
+        "bodyLine": 2031,
         "bodyColumn": 94,
-        "bodyEndLine": 2034,
+        "bodyEndLine": 2033,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -145001,13 +145001,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2037,
+        "line": 2036,
         "column": 7,
-        "start": 80514,
-        "end": 80693,
-        "bodyLine": 2037,
+        "start": 80406,
+        "end": 80585,
+        "bodyLine": 2036,
         "bodyColumn": 105,
-        "bodyEndLine": 2039,
+        "bodyEndLine": 2038,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -145034,13 +145034,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2041,
+        "line": 2040,
         "column": 7,
-        "start": 80702,
-        "end": 80954,
-        "bodyLine": 2045,
+        "start": 80594,
+        "end": 80846,
+        "bodyLine": 2044,
         "bodyColumn": 29,
-        "bodyEndLine": 2047,
+        "bodyEndLine": 2046,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -145067,13 +145067,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2057,
+        "line": 2056,
         "column": 0,
-        "start": 81221,
-        "end": 81562,
-        "bodyLine": 2060,
+        "start": 81113,
+        "end": 81454,
+        "bodyLine": 2059,
         "bodyColumn": 8,
-        "bodyEndLine": 2065,
+        "bodyEndLine": 2064,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -145100,13 +145100,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2066,
+        "line": 2065,
         "column": 0,
-        "start": 81563,
-        "end": 87629,
-        "bodyLine": 2070,
+        "start": 81455,
+        "end": 87521,
+        "bodyLine": 2069,
         "bodyColumn": 37,
-        "bodyEndLine": 2201,
+        "bodyEndLine": 2200,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -145133,13 +145133,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 2083,
+        "line": 2082,
         "column": 26,
-        "start": 82488,
-        "end": 82576,
-        "bodyLine": 2083,
+        "start": 82380,
+        "end": 82468,
+        "bodyLine": 2082,
         "bodyColumn": 32,
-        "bodyEndLine": 2086,
+        "bodyEndLine": 2085,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -145166,13 +145166,13 @@
         "bodyEndColumn": 112
       },
       "current_source_address": {
-        "line": 2119,
+        "line": 2118,
         "column": 48,
-        "start": 84154,
-        "end": 84218,
-        "bodyLine": 2119,
+        "start": 84046,
+        "end": 84110,
+        "bodyLine": 2118,
         "bodyColumn": 61,
-        "bodyEndLine": 2119,
+        "bodyEndLine": 2118,
         "bodyEndColumn": 112
       },
       "baseline_complexity": 1,
@@ -145199,13 +145199,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2203,
+        "line": 2202,
         "column": 0,
-        "start": 87631,
-        "end": 89577,
-        "bodyLine": 2208,
+        "start": 87523,
+        "end": 89469,
+        "bodyLine": 2207,
         "bodyColumn": 20,
-        "bodyEndLine": 2248,
+        "bodyEndLine": 2247,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -145232,13 +145232,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2250,
+        "line": 2249,
         "column": 0,
-        "start": 89579,
-        "end": 90352,
-        "bodyLine": 2255,
+        "start": 89471,
+        "end": 90244,
+        "bodyLine": 2254,
         "bodyColumn": 20,
-        "bodyEndLine": 2267,
+        "bodyEndLine": 2266,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -145265,13 +145265,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2269,
+        "line": 2268,
         "column": 0,
-        "start": 90354,
-        "end": 91188,
-        "bodyLine": 2276,
+        "start": 90246,
+        "end": 91080,
+        "bodyLine": 2275,
         "bodyColumn": 18,
-        "bodyEndLine": 2295,
+        "bodyEndLine": 2294,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -145298,13 +145298,13 @@
         "bodyEndColumn": 7
       },
       "current_source_address": {
-        "line": 2280,
+        "line": 2279,
         "column": 6,
-        "start": 90699,
-        "end": 90846,
-        "bodyLine": 2280,
+        "start": 90591,
+        "end": 90738,
+        "bodyLine": 2279,
         "bodyColumn": 18,
-        "bodyEndLine": 2283,
+        "bodyEndLine": 2282,
         "bodyEndColumn": 7
       },
       "baseline_complexity": 2,
@@ -145331,13 +145331,13 @@
         "bodyEndColumn": 29
       },
       "current_source_address": {
-        "line": 2284,
+        "line": 2283,
         "column": 6,
-        "start": 90854,
-        "end": 90877,
-        "bodyLine": 2284,
+        "start": 90746,
+        "end": 90769,
+        "bodyLine": 2283,
         "bodyColumn": 12,
-        "bodyEndLine": 2284,
+        "bodyEndLine": 2283,
         "bodyEndColumn": 29
       },
       "baseline_complexity": 1,
@@ -145364,13 +145364,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2297,
+        "line": 2296,
         "column": 0,
-        "start": 91190,
-        "end": 91341,
-        "bodyLine": 2297,
+        "start": 91082,
+        "end": 91233,
+        "bodyLine": 2296,
         "bodyColumn": 87,
-        "bodyEndLine": 2299,
+        "bodyEndLine": 2298,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -145397,13 +145397,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2300,
+        "line": 2299,
         "column": 7,
-        "start": 91349,
-        "end": 92432,
-        "bodyLine": 2300,
+        "start": 91241,
+        "end": 92324,
+        "bodyLine": 2299,
         "bodyColumn": 102,
-        "bodyEndLine": 2331,
+        "bodyEndLine": 2330,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -145430,13 +145430,13 @@
         "bodyEndColumn": 76
       },
       "current_source_address": {
-        "line": 2311,
+        "line": 2310,
         "column": 44,
-        "start": 91841,
-        "end": 91923,
-        "bodyLine": 2312,
+        "start": 91733,
+        "end": 91815,
+        "bodyLine": 2311,
         "bodyColumn": 6,
-        "bodyEndLine": 2312,
+        "bodyEndLine": 2311,
         "bodyEndColumn": 76
       },
       "baseline_complexity": 1,
@@ -145463,13 +145463,13 @@
         "bodyEndColumn": 7
       },
       "current_source_address": {
-        "line": 2314,
+        "line": 2313,
         "column": 10,
-        "start": 91941,
-        "end": 92141,
-        "bodyLine": 2315,
+        "start": 91833,
+        "end": 92033,
+        "bodyLine": 2314,
         "bodyColumn": 6,
-        "bodyEndLine": 2318,
+        "bodyEndLine": 2317,
         "bodyEndColumn": 8
       },
       "baseline_complexity": 3,
@@ -145496,13 +145496,13 @@
         "bodyEndColumn": 7
       },
       "current_source_address": {
-        "line": 2320,
+        "line": 2319,
         "column": 11,
-        "start": 92160,
-        "end": 92348,
-        "bodyLine": 2321,
+        "start": 92052,
+        "end": 92240,
+        "bodyLine": 2320,
         "bodyColumn": 6,
-        "bodyEndLine": 2328,
+        "bodyEndLine": 2327,
         "bodyEndColumn": 7
       },
       "baseline_complexity": 1,
@@ -145529,13 +145529,13 @@
         "bodyEndColumn": 72
       },
       "current_source_address": {
-        "line": 2330,
+        "line": 2329,
         "column": 13,
-        "start": 92369,
-        "end": 92428,
-        "bodyLine": 2330,
+        "start": 92261,
+        "end": 92320,
+        "bodyLine": 2329,
         "bodyColumn": 19,
-        "bodyEndLine": 2330,
+        "bodyEndLine": 2329,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 1,
@@ -145562,13 +145562,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 2333,
+        "line": 2332,
         "column": 7,
-        "start": 92441,
-        "end": 92559,
-        "bodyLine": 2333,
+        "start": 92333,
+        "end": 92451,
+        "bodyLine": 2332,
         "bodyColumn": 78,
-        "bodyEndLine": 2335,
+        "bodyEndLine": 2334,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,

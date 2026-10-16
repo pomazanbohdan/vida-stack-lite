@@ -16,6 +16,7 @@ import {
   rfc3339TimestampMilliseconds,
   toAuthorizationReceipt,
   validateAuthorizationRequest,
+  validateGovernedWriteIntent,
   validateGovernedWriteRequest,
 } from '../src/contracts/public-ingress.ts';
 import { buildGovernedWriteRequest, computeWriteOperationHash } from '../src/index.ts';
@@ -143,6 +144,33 @@ describe('direct maintained-source completeness', () => {
       expect(expectReturned(() => rfc3339TimestampMilliseconds(input))).toBeNull();
       expect(expectReturned(() => isStrictRfc3339Timestamp(input))).toBe(false);
     }
+  });
+
+  test('freezer skips a transient own key with no descriptor', () => {
+    const target = {};
+    let keyReads = 0;
+    const proxy = new Proxy(target, {
+      ownKeys(object) {
+        keyReads++;
+        return Object.isExtensible(object) ? ['phantom'] : Reflect.ownKeys(object);
+      },
+    });
+    expect(expectReturned(() => freezeJsonValue(proxy))).toBe(proxy);
+    expect(Object.isFrozen(proxy)).toBe(true);
+    expect(keyReads).toBeGreaterThanOrEqual(2);
+  });
+
+  test('timestamp parsing requires strings without invoking coercion', () => {
+    let coercions = 0;
+    const coercible = {
+      toString() {
+        coercions++;
+        return '2026-10-15T00:00:00Z';
+      },
+    };
+    expect(expectReturned(() => rfc3339TimestampMilliseconds(coercible))).toBeNull();
+    expect(expectReturned(() => isStrictRfc3339Timestamp(coercible))).toBe(false);
+    expect(coercions).toBe(0);
   });
 
   test('timestamp parsing fails closed when the native parser returns a non-finite time', () => {
@@ -372,7 +400,8 @@ describe('direct maintained-source completeness', () => {
 
   test('governed write builders bind and validate all evidence', () => {
     const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
-    expect(fixture.operationHash).toMatch(/^[a-f0-9]{64}$/);
+    assert.equal(typeof fixture.operationHash, 'string', 'operation hash must be a string');
+    assert.match(fixture.operationHash, /^[a-f0-9]{64}$/);
     assert.ok(fixture.receipt);
     expect(fixture.receipt).toMatchObject({ schema: 'AuthorizationReceipt/v1', operation_hash: fixture.operationHash });
     const { approval, intent, operationHash, receipt } = fixture;
@@ -385,8 +414,19 @@ describe('direct maintained-source completeness', () => {
     assert.ok(isPlainRecord(request.approval));
     const unchangedAuthorization: Partial<typeof request.authorization> = {};
     const unchangedApproval: Partial<typeof request.approval> = {};
-    expect(expectReturned(() => validateGovernedWriteRequest(request))).toBe(request);
-    expect(expectReturned(() => computeGovernedWriteRequestDigest(request))).toMatch(/^[a-f0-9]{64}$/);
+    const validatedRequest = expectReturned(() => validateGovernedWriteRequest(request));
+    expect(validatedRequest).toEqual(request);
+    expect(Object.isFrozen(request)).toBe(true);
+    expect(Object.isFrozen(request.payload)).toBe(true);
+    expect(Object.isFrozen(request.authorization)).toBe(true);
+    expect(Object.isFrozen(request.approval)).toBe(true);
+    const unexpectedIntentField = { ...intent, unexpected: true };
+    expect(() => buildGovernedWriteRequest(unexpectedIntentField, receipt, approval)).toThrow(
+      /governed write intent rejected/,
+    );
+    const requestDigest = expectReturned(() => computeGovernedWriteRequestDigest(request));
+    assert.equal(typeof requestDigest, 'string', 'request digest must be a string');
+    assert.match(requestDigest, /^[a-f0-9]{64}$/);
     expect(() => validateGovernedWriteRequest({})).toThrow(
       "governed write request rejected:  must have required property 'operation';  must have required property 'payload';  must have required property 'authorization';  must have required property 'approval'",
     );
@@ -516,6 +556,14 @@ describe('direct maintained-source completeness', () => {
       validateGovernedWriteRequest(
         timeRequest(
           {},
+          { verified_at: new Date(now + 120_000).toISOString(), expires_at: new Date(now + 240_000).toISOString() },
+        ),
+      ),
+    ).toThrow('governed write evidence is from the future');
+    expect(() =>
+      validateGovernedWriteRequest(
+        timeRequest(
+          {},
           { approved_at: new Date(now + 120_000).toISOString(), expires_at: new Date(now + 240_000).toISOString() },
         ),
       ),
@@ -558,5 +606,150 @@ describe('direct maintained-source completeness', () => {
     expect(() =>
       validateGovernedWriteRequest(timeRequest(unchangedAuthorization, { verified_at: '2023-02-29T00:00:00Z' })),
     ).toThrow(/governed write (request rejected|evidence timestamps invalid)/);
+  });
+  test('write operation hashes commit to the write domain and payload boundary', () => {
+    const input = {
+      operation: 'repository.write',
+      payload: { path: 'quality.txt', value: 'updated' },
+      principal: 'principal-1',
+      role: 'developer-orchestrator',
+      tenant: project.repository_id,
+      project: projectBinding.project_id,
+      resourceTenant: project.repository_id,
+      resourceProject: projectBinding.project_id,
+      registryHash: project.registry_hash,
+    };
+    const actualHash = expectReturned(() => computeWriteOperationHash(input));
+    const expectedHash = expectReturned(() => canonicalJsonDigest({ ...input, action: 'write' }));
+    assert.equal(typeof actualHash, 'string', 'operation hash must be a string');
+    assert.equal(actualHash, expectedHash, 'operation hash must bind the canonical write envelope');
+    expect(() => computeWriteOperationHash({ ...input, payload: { bad: 1n } })).toThrow(
+      'non-canonical JSON value at $.payload.bad',
+    );
+    expect(() => validateAuthorizationRequest(1n)).toThrow('non-canonical JSON value at $');
+  });
+
+  test('governed validators reject descriptor images hidden behind valid live values', () => {
+    const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
+    assert.ok(fixture.receipt);
+    const request = expectReturned(() => buildGovernedWriteRequest(fixture.intent, fixture.receipt!, fixture.approval));
+    const authorization = { ...request.authorization, tenant: 'foreign-tenant', resourceTenant: 'another-tenant' };
+    const operationHash = expectReturned(() =>
+      computeWriteOperationHash({
+        operation: request.operation,
+        payload: request.payload,
+        principal: authorization.principal,
+        role: authorization.role,
+        tenant: authorization.tenant,
+        project: authorization.project,
+        resourceTenant: authorization.resourceTenant,
+        resourceProject: authorization.resourceProject,
+        registryHash: authorization.registry_hash,
+      }),
+    );
+    const captured = {
+      ...request,
+      authorization: { ...authorization, operation_hash: operationHash },
+      approval: { ...request.approval, operation_hash: operationHash },
+    };
+    let reads = 0;
+    const changing = new Proxy(captured, {
+      get(target, key, receiver) {
+        reads++;
+        if (key === 'authorization') return request.authorization;
+        if (key === 'approval') return request.approval;
+        const result: unknown = Reflect.get(target, key, receiver);
+        return result;
+      },
+    });
+    expect(() => validateGovernedWriteRequest(changing)).toThrow(
+      'authorization resource is outside the principal tenant/project scope',
+    );
+    expect(reads).toBe(0);
+    const invalidIntent = new Proxy(
+      {
+        ...fixture.intent,
+        authorization: { ...fixture.intent.authorization, action: 'approve' },
+      },
+      {
+        get(target, key, receiver) {
+          reads++;
+          if (key === 'authorization') return fixture.intent.authorization;
+          const result: unknown = Reflect.get(target, key, receiver);
+          return result;
+        },
+      },
+    );
+    expect(() => validateGovernedWriteIntent(invalidIntent)).toThrow(/governed write intent rejected/);
+    expect(reads).toBe(0);
+  });
+
+  test('validated intent owns frozen data and never reads live Proxy values', () => {
+    const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
+    const payload = { ...fixture.intent.payload };
+    const target = { ...fixture.intent, payload };
+    let reads = 0;
+    const changing = new Proxy(target, {
+      get(object, key, receiver) {
+        reads++;
+        if (key === 'payload') return { live: 'different' };
+        const result: unknown = Reflect.get(object, key, receiver);
+        return result;
+      },
+    });
+    const validated = expectReturned(() => validateGovernedWriteIntent(changing));
+    expect(reads).toBe(0);
+    expect(validated).not.toBe(changing);
+    expect(validated.payload).toEqual(fixture.intent.payload);
+    expect(Object.isFrozen(validated)).toBe(true);
+    expect(Object.isFrozen(validated.payload)).toBe(true);
+    payload.changedAfterValidation = true;
+    expect(validated.payload).toEqual(fixture.intent.payload);
+    expect(Object.isFrozen(payload)).toBe(false);
+  });
+
+  test('authorization validation uses captured required fields', () => {
+    const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
+    const valid = fixture.authorizationRequest(fixture.operationHash);
+    let reads = 0;
+    const changing = new Proxy(
+      { ...valid, principal: '' },
+      {
+        get(target, key, receiver) {
+          reads++;
+          if (key === 'principal') return valid.principal;
+          const result: unknown = Reflect.get(target, key, receiver);
+          return result;
+        },
+      },
+    );
+    expect(() => validateAuthorizationRequest(changing)).toThrow(/authorization request rejected/);
+    expect(reads).toBe(0);
+  });
+
+  test('governed write builder consumes the captured intent instead of later live values', () => {
+    const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
+    assert.ok(fixture.receipt);
+    let changed = false;
+    const approval = new Proxy(fixture.intent.approval, {
+      getOwnPropertyDescriptor(target, key) {
+        const descriptor = Reflect.getOwnPropertyDescriptor(target, key);
+        if (key === 'expires_at') changed = true;
+        return descriptor;
+      },
+    });
+    const changing = new Proxy(
+      { ...fixture.intent, approval },
+      {
+        get(target, key, receiver) {
+          if (key === 'authorization' && changed) return { ...fixture.intent.authorization, action: 'approve' };
+          const result: unknown = Reflect.get(target, key, receiver);
+          return result;
+        },
+      },
+    );
+    const request = expectReturned(() => buildGovernedWriteRequest(changing, fixture.receipt!, fixture.approval));
+    expect(request.authorization.action).toBe('write');
+    expect(changed).toBe(true);
   });
 });

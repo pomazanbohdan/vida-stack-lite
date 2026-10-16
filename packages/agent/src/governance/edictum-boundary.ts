@@ -1997,14 +1997,13 @@ function createGuardFromBindings(bindings: GovernanceBindings): OperationPolicyG
     const capability =
       typeof args.ingress_token === 'string' ? guardIngressCapabilities.get(guard)?.get(args.ingress_token) : undefined;
     requireCondition(Boolean(capability), 'governed write must originate from the canonical Cedar ingress');
-    validateGovernedWriteRequest(args);
+    const request = validateGovernedWriteRequest(args);
     requireCondition(
-      (args.authorization as Record<string, unknown>).operation_hash === capability!.operationHash,
+      request.authorization.operation_hash === capability!.operationHash,
       'governed write capability is bound to a different operation',
     );
-    const { ingress_token: _ingressToken, ...request } = args;
     requireCondition(
-      computeGovernedWriteRequestDigest(request as unknown as GovernedWriteRequest) === capability!.requestDigest,
+      computeGovernedWriteRequestDigest(request) === capability!.requestDigest,
       'governed write capability is bound to a different request digest',
     );
   });
