@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `94c70ee`, including the script reuse corrections and failed-tester fixture. Fresh assurance/init coverage below improves locally; neither is exact. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `982dda4`, including the coverage module-union correction and focused fixture extensions. Fresh assurance/storage coverage below improves locally; these contours remain incomplete. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,45 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Exact remaining initialization and admission guards
+
+Packet982dda4 passes its normal strict hook and push. Focused selections here
+omit SDK compatibility, so the existing sdkFormationToolInputPaths owner excludes
+dist; they do not need a repeated SDK download/preparation. No freshness guard is
+disabled and automatic CI formation remains separate. This removes unnecessary
+setup calls from the current sequence, without a new cache or runner.
+
+Fresh runtime initialization `24526373-1fc6-4e06-b7a6-e9f4a32bcd44` (`QShYNk`)
+passes18/0tests,118assertions in34535ms: F18/18, L86/87, S99/100, B53/54,
+CC/entryCRAP9. workspace-identity.ts is exact; the sole remaining initialization
+guard rejects a disagreeing loaded configuration source. Storage admission
+`90531e61-d302-46ee-aae0-a61c5f79f51b` (`zHA0qV`) passes10/0,100assertions
+in7002ms with17/18F,99/100L,102/103S,16/16B,CC/entryCRAP5; the only missing
+callback is the private Host's deny-all release verifier. Existing-storage image
+`0842fd85-d276-4ab8-ab81-2227784f6cb0` (`x7i4B6`) improves49/52 to51/52F,
+200/206L,217/230S,46/52B,CC/entryCRAP7. Assurance
+`b02dda11-0097-4041-9fe1-51398d032071` (`C2EV25`) passes14/0tests in78635ms:
+95/95F,324/325L,361/364S,295/305B,CC/entryCRAP32. All four terminal producers
+have complete captures, closed scopes and unchanged boot. Operation statuses stay
+BLOCKED. The projection reaches445attempts with6/45 local triples; no synthetic
+union of different Source/test closures is admitted.
+
+Root prepares the exact initialization guard via a scoped one-time source-observation
+fault, preserving real loading, lock, pending receipt, Host rows and zero CAS effects;
+the restored ordinary binder then succeeds. Blind v81 distinguishes this negative
+seam control from a claim of naturally occurring loader drift or activated v2 state.
+The admission case probes the real private Host verifier once, attaches both promise
+settlement handlers immediately, verifies denial and unchanged held fence through a
+fresh tracked connection, then uses the original trusted release owner. Blind v82
+reviews the reentrancy and cleanup sequence. Selected `zxtPhb` passes2/0cases,
+26assertions in1443ms; full affected checks and fresh numeric closure follow.
+Full affected `IqXEjx` passes29/0tests,230assertions across2files in29182ms;
+strict505/TS-only506 pass. Oxlint flags the intentionally unbound original
+method capture; Root uses the file's existing Reflect.get/Reflect.apply pattern
+without disabling the rule. Refreshed full Oxlint passes.
+The storage-image remainder is delegated to one isolated writer v84 for native
+cleanup-error and sequence cases. No primary/measured input is shared with that writer.
 
 ### Coverage module-union repair and rolling fixture extensions
 

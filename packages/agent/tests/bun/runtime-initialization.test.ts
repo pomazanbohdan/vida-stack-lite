@@ -781,6 +781,66 @@ test('binding retries one pre-entry lock collision and performs exactly one real
   caseCompleted = true;
 });
 
+test('binding denies a disagreeing configuration-source observation before replacing the real receipt', async () => {
+  const pathsModuleUrl = new URL('../../src/config/project-paths.ts', import.meta.url).href;
+  const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
+  const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
+  const originalPaths = Object.freeze({ ...(await import('../../src/config/project-paths.ts')) });
+  const originalSafe = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
+  const receiptBytes = readFileSync(receiptPath);
+  const hostRows = database!.query('SELECT * FROM agent_host_state').all();
+  let injected = 0;
+  let replacements = 0;
+  try {
+    await mock.module(pathsModuleUrl, () => ({
+      ...originalPaths,
+      runtimeConfigurationSourceFor: (config: Parameters<typeof originalPaths.runtimeConfigurationSourceFor>[0]) => {
+        const source = originalPaths.runtimeConfigurationSourceFor(config);
+        if (source === originalPaths.LEGACY_RUNTIME_CONFIGURATION_PATH && injected === 0) {
+          injected++;
+          return originalPaths.PROJECT_CONFIGURATION_PATHS.project;
+        }
+        return source;
+      },
+    }));
+    await mock.module(safeModuleUrl, () => ({
+      ...originalSafe,
+      requireSafeRepositoryAccess: (requestedRoot: string) => {
+        const access = originalSafe.requireSafeRepositoryAccess(requestedRoot);
+        if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+        return {
+          ...access,
+          replaceAtomicAsync: async (...args: Parameters<typeof access.replaceAtomicAsync>) => {
+            replacements++;
+            return access.replaceAtomicAsync(...args);
+          },
+        };
+      },
+    }));
+    const isolated = (await import(
+      `${initModuleUrl}?selection-fault=${randomUUID()}`
+    )) as typeof import('../../src/runtime-initialization.ts');
+    let failure: unknown;
+    try {
+      await isolated.bindRuntimeInitialization(root, store);
+    } catch (error) {
+      failure = error;
+    }
+    expect(failure).toBeInstanceOf(isolated.RuntimeInitializationBindingError);
+    expect(failure).toHaveProperty('message', 'runtime configuration selection changed');
+    expect({ injected, replacements }).toEqual({ injected: 1, replacements: 0 });
+    expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+    expect(database!.query('SELECT * FROM agent_host_state').all()).toEqual(hostRows);
+  } finally {
+    await mock.module(safeModuleUrl, () => originalSafe);
+    await mock.module(pathsModuleUrl, () => originalPaths);
+  }
+  const bound = await expectAsyncReturned(() => bindRuntimeInitialization(root, store));
+  expect(bound).toEqual({ ...receipt, workspace_binding_status: 'bound' });
+  expect(readFileSync(receiptPath, 'utf8')).toBe(JSON.stringify(bound, null, 2) + '\n');
+  caseCompleted = true;
+});
+
 test('binding propagates a generic pre-entry lock error without retrying or changing receipt bytes', async () => {
   const receiptBytes = readFileSync(receiptPath);
   const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;

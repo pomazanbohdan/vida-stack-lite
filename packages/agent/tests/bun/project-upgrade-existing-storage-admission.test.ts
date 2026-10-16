@@ -177,6 +177,12 @@ describe('native existing-storage admission boundary', () => {
       HostStateStore.prototype,
       'assertMaintenanceFence',
     ) as typeof HostStateStore.prototype.assertMaintenanceFence;
+    const originalReleaseMaintenanceFence = Reflect.get(
+      HostStateStore.prototype,
+      'releaseMaintenanceFence',
+    ) as typeof HostStateStore.prototype.releaseMaintenanceFence;
+    let privateReleaseProbeStarted = false;
+    let privateReleaseProbe: Promise<{ status: 'released' } | { status: 'rejected'; error: unknown }> | undefined;
     const fenceVerificationReceivers = new Set<Database>();
     const hostCheckpointReceivers: Database[] = [];
     let verifyingFence = false;
@@ -192,7 +198,15 @@ describe('native existing-storage admission boundary', () => {
     const observedFenceVerification = function (this: HostStateStore, fenceReceipt: MaintenanceFenceReceipt) {
       verifyingFence = true;
       try {
-        return Reflect.apply(originalAssertMaintenanceFence, this, [fenceReceipt]);
+        const verified = Reflect.apply(originalAssertMaintenanceFence, this, [fenceReceipt]);
+        if (this !== fixture.hostStore && !privateReleaseProbeStarted) {
+          privateReleaseProbeStarted = true;
+          privateReleaseProbe = Reflect.apply(originalReleaseMaintenanceFence, this, [fenceReceipt]).then(
+            () => ({ status: 'released' as const }),
+            (error: unknown) => ({ status: 'rejected' as const, error }),
+          );
+        }
+        return verified;
       } finally {
         verifyingFence = false;
       }
@@ -242,6 +256,22 @@ describe('native existing-storage admission boundary', () => {
       Database.prototype.query = originalQuery;
     }
     expect(result).toBe('admitted');
+    const privateRelease = await privateReleaseProbe;
+    expect(privateReleaseProbeStarted).toBe(true);
+    expect(privateRelease?.status).toBe('rejected');
+    if (privateRelease?.status !== 'rejected') throw new Error('Private verifier did not deny release');
+    expect(privateRelease.error).toBeInstanceOf(Error);
+    expect(privateRelease.error).toHaveProperty('message', 'trusted maintenance closure verification failed');
+    const verificationDatabase = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
+    registerDatabase(verificationDatabase, fixture.root);
+    let verificationFailure: { error: unknown } | undefined;
+    try {
+      expect(new HostStateStore(verificationDatabase, workspaceId).readMaintenanceFence()).toEqual(receipt.fence);
+    } catch (error) {
+      verificationFailure = { error };
+    }
+    completeOwnedCleanup([() => closeOwnedDatabase(verificationDatabase)], verificationFailure);
+    if (verificationFailure) throw verificationFailure.error;
     expect(callbacks).toBe(1);
     expect(() => escapedCapability?.assertActive()).toThrow(/callback capability expired/u);
     expect(() => assertExistingStorageMergeCapability(escapedCapability)).toThrow(

@@ -34,6 +34,10 @@ connector/uploaded-file transport bridge described in TESTING. Keep the actual
 run/attempt/artifact identity and ZIP digest; never copy Source into dist, compile
 locally, rewrite a receipt or disable freshness. Transport preparation is not
 Runtime acceptance. Do not print temporary signed URLs or credential bytes.
+For a focused selection, reuse `sdkFormationToolInputPaths` and the declared tests
+to determine SDK dependency. A selection without the SDK compatibility test does
+not capture dist or need a separate artifact preparation. Keep automatic CI
+formation and all freshness checks for selections that actually consume the SDK.
 
 After a focused producer terminates, use the maintained contour progress CLI's
 `--coverage-run <focused.json>` to import its matching operation outcome and
