@@ -255,6 +255,7 @@ for (const route of ['handoff', 'reconciliation', 'reconciliation_unknown'] as c
       expect(verificationWriteDenied.length).toBeGreaterThan(0);
       for (const denied of verificationWriteDenied) expect(denied).toBe(true);
       for (const value of integers) expect(value).toBe(9007199254740993n);
+      expect(prepared).toBeObject();
       expect(prepared.phase).toBe(route === 'reconciliation_unknown' ? 'unknown' : 'prepared');
       expect(prepared.owner_token).toBeNull();
       expect(prepared.launch_pid).toBeNull();
@@ -492,6 +493,190 @@ test('handoff and reconciliation reject an unbound connection before closing it 
     );
     if (completed) rmSync(fixture.root, { recursive: true, force: true });
     else console.error('Retained failed database binding fixture: ' + fixture.root);
+  }
+});
+
+for (const route of ['handoff', 'reconciliation'] as const) {
+  test(`${route} rejects an absent operation before invoking its receipt verifier`, async () => {
+    const fixture = openCustodyFixture('service-missing-operation-');
+    let reader: Database | undefined;
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      const before = fixture.database
+        .query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'")
+        .get();
+      let verifierCalls = 0;
+      const operation =
+        route === 'handoff'
+          ? handoffServiceOperationCustody(
+              fixture.database,
+              fixture.root,
+              fixture.relative,
+              fixture.workspaceId,
+              operationId,
+              requestDigest,
+              retargetDigest,
+              async () => {
+                verifierCalls++;
+                return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+              },
+            )
+          : reconcileServiceOperationCustody(
+              fixture.database,
+              fixture.root,
+              fixture.relative,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              requestDigest,
+              () => {
+                verifierCalls++;
+                return { phase: 'prepared', evidence_digest: evidenceDigest };
+              },
+            );
+      await expectRejection(
+        operation,
+        route === 'handoff'
+          ? 'Service operation custody: only the exact terminal pack owner can hand off'
+          : 'Service operation custody: same-operation reconciliation is not applicable',
+      );
+      expect(verifierCalls).toBe(0);
+      const reopened = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
+      reader = reopened;
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+      ).toBeNull();
+      expect(reopened.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual([]);
+      expect(
+        reopened.query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'").get(),
+      ).toEqual(before);
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            if (reader !== undefined) closeServiceOperationDatabase(reader);
+            return undefined;
+          },
+          () => {
+            closeServiceOperationDatabase(fixture.database);
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
+      if (completed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Retained failed missing-operation fixture: ' + fixture.root);
+    }
+  });
+}
+
+test('reconciliation rejects schema drift before receipt verification and succeeds after exact restoration', async () => {
+  const fixture = openCustodyFixture('reconcile-schema-drift-');
+  let inspection: Database | undefined;
+  let retry: Database | undefined;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        evidenceDigest,
+      ),
+    );
+    fixture.database.exec('ALTER TABLE agent_host_service_operation_custody ADD COLUMN unexpected TEXT');
+    const before = fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all();
+    const schema = fixture.database
+      .query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'")
+      .get();
+    let verifierCalls = 0;
+    await expectRejection(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest };
+        },
+      ),
+      'Service operation custody: owned service table is absent or differs',
+    );
+    expect(verifierCalls).toBe(0);
+    // The exclusive operation has settled and closed its source. Observe the
+    // real image independently; no second admission handle can block its gate.
+    inspection = new Database(path.join(fixture.root, fixture.relative), { safeIntegers: true });
+    expect(inspection.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual(before);
+    expect(
+      inspection.query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'").get(),
+    ).toEqual(schema);
+    inspection.exec('ALTER TABLE agent_host_service_operation_custody DROP COLUMN unexpected');
+    inspection.close();
+    inspection = undefined;
+    const reopened = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    retry = reopened;
+    const reconciled = await expectAsyncReturned(() =>
+      reconcileServiceOperationCustody(
+        reopened,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest };
+        },
+      ),
+    );
+    expect(verifierCalls).toBe(1);
+    expect(reconciled).toBeObject();
+    expect(reconciled.phase).toBe('prepared');
+    expect(reconciled.evidence_digest).toBe(evidenceDigest);
+    expect(reconciled.revision).toBe(reservation.revision + 1);
+    expect(reconciled.operation_id).toBe(operationId);
+    expect(reconciled.request_digest).toBe(requestDigest);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          inspection?.close();
+          return undefined;
+        },
+        () => {
+          if (retry !== undefined) closeServiceOperationDatabase(retry);
+          return undefined;
+        },
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed reconciliation schema-drift fixture: ' + fixture.root);
   }
 });
 
@@ -1073,83 +1258,116 @@ test('handoff rolls back when an AFTER UPDATE trigger deletes its CAS row', asyn
   }
 });
 
-test('gate replacement during an awaited receipt leaves the original terminal row intact', async () => {
-  const fixture = openCustodyFixture('handoff-replaced-gate-');
-  let restoreRawOpen: (() => void) | undefined;
-  let reader: Database | undefined;
-  let completed = false;
-  let primaryFailure: { error: unknown } | undefined;
-  try {
-    const prior = finishOperation(fixture, 'release-pack-worker');
-    let gateLost = false;
-    let openedAfterGateLoss = 0;
-    const source = expectReturned(() =>
-      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
-    );
-    const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
-    const watched = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
-      if (gateLost) openedAfterGateLoss++;
-      return nativeOpen(...args);
-    });
-    restoreRawOpen = () => watched.mockRestore();
-    const failure = await rejectionReason(
-      handoffServiceOperationCustody(
-        source,
-        fixture.root,
-        fixture.relative,
-        fixture.workspaceId,
-        operationId,
-        requestDigest,
-        retargetDigest,
-        async () => {
-          await Promise.resolve();
-          replaceAdmissionGate(fixture);
-          gateLost = true;
-          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
-        },
-      ),
-    );
-    restoreRawOpen();
-    restoreRawOpen = undefined;
-    const cause: unknown = failure instanceof AggregateError ? failure.errors[0] : failure;
-    expect(cause).toBeInstanceOf(Error);
-    if (!(cause instanceof Error)) throw new Error('Expected gate identity denial after the awaited receipt.');
-    expect(cause.message).toBe('Project storage admission: gate file or parent was replaced');
-    // A revoked owner must fail before acquiring another SQLite connection.
-    expect(openedAfterGateLoss).toBe(0);
-    const reopened = expectReturned(() =>
-      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
-    );
-    reader = reopened;
-    expect(
-      expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
-    ).toEqual(prior);
-    completed = true;
-  } catch (error) {
-    primaryFailure = { error };
-    throw error;
-  } finally {
-    completeOwnedCleanup(
-      [
-        () => {
-          restoreRawOpen?.();
-          return undefined;
-        },
-        () => {
-          if (reader) closeServiceOperationDatabase(reader);
-          return undefined;
-        },
-        () => {
-          closeServiceOperationDatabase(fixture.database);
-          return undefined;
-        },
-      ],
-      primaryFailure,
-    );
-    if (completed) rmSync(fixture.root, { recursive: true, force: true });
-    else console.error('Retained failed awaited gate replacement fixture: ' + fixture.root);
-  }
-});
+for (const route of ['handoff', 'reconciliation'] as const) {
+  test(`${route} gate replacement during an awaited receipt leaves its original row intact`, async () => {
+    const fixture = openCustodyFixture('handoff-replaced-gate-');
+    let restoreRawOpen: (() => void) | undefined;
+    let reader: Database | undefined;
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      let source = fixture.database;
+      let prior: ReturnType<typeof readServiceOperationCustodyForOperation>;
+      if (route === 'handoff') {
+        prior = finishOperation(fixture, 'release-pack-worker');
+        source = expectReturned(() =>
+          openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+        );
+      } else {
+        expectReturned(() =>
+          reserveServiceOperationLaunch(
+            fixture.database,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            evidenceDigest,
+          ),
+        );
+        prior = expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        );
+        expect(prior).toBeObject();
+      }
+      let gateLost = false;
+      let openedAfterGateLoss = 0;
+      const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
+      const watched = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
+        if (gateLost) openedAfterGateLoss++;
+        return nativeOpen(...args);
+      });
+      restoreRawOpen = () => watched.mockRestore();
+      const verifyReceipt = async () => {
+        await Promise.resolve();
+        replaceAdmissionGate(fixture);
+        gateLost = true;
+        return { phase: 'prepared' as const, evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+      };
+      const failure = await rejectionReason(
+        route === 'handoff'
+          ? handoffServiceOperationCustody(
+              source,
+              fixture.root,
+              fixture.relative,
+              fixture.workspaceId,
+              operationId,
+              requestDigest,
+              retargetDigest,
+              verifyReceipt,
+            )
+          : reconcileServiceOperationCustody(
+              source,
+              fixture.root,
+              fixture.relative,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              requestDigest,
+              verifyReceipt,
+            ),
+      );
+      restoreRawOpen();
+      restoreRawOpen = undefined;
+      const cause: unknown = failure instanceof AggregateError ? failure.errors[0] : failure;
+      expect(cause).toBeInstanceOf(Error);
+      if (!(cause instanceof Error)) throw new Error('Expected gate identity denial after the awaited receipt.');
+      expect(cause.message).toBe('Project storage admission: gate file or parent was replaced');
+      // A revoked owner must fail before acquiring another SQLite connection.
+      expect(openedAfterGateLoss).toBe(0);
+      const reopened = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
+      reader = reopened;
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+      ).toEqual(prior);
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            restoreRawOpen?.();
+            return undefined;
+          },
+          () => {
+            if (reader) closeServiceOperationDatabase(reader);
+            return undefined;
+          },
+          () => {
+            closeServiceOperationDatabase(fixture.database);
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
+      if (completed) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('Retained failed awaited gate replacement fixture: ' + fixture.root);
+    }
+  });
+}
 
 function finishOperation(fixture: ServiceCustodyFixture, kind: 'release-pack-worker' | 'release-worker') {
   const reservation = expectReturned(() =>
@@ -1270,6 +1488,7 @@ async function assertPreparedPackCannotHandoff(): Promise<void> {
         async () => ({ phase: 'prepared', evidence_digest: evidenceDigest }),
       ),
     );
+    expect(prepared).toBeObject();
     expect(prepared.phase).toBe('prepared');
     let verifierCalls = 0;
     const verifier: HandoffVerifier = async () => {

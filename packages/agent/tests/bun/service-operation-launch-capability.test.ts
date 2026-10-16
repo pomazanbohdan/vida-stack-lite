@@ -1182,6 +1182,7 @@ test('closed in-flight child reconciles only through its exact same-operation re
         },
       ),
     );
+    expect(reconciled).toBeObject();
     expect(reconciled.operation_id).toBe(operationId);
     expect(reconciled.phase).toBe('prepared');
     expect(reconciled.evidence_digest).toBe('e'.repeat(64));

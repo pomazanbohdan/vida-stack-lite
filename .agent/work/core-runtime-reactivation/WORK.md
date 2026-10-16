@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `9dfc9cb7c4777cd3c32ea6637bd5d21506b71ee1`. Its full-image diagnostic stops at 224 of 700 IDs: 195 assertion-confirmed Killed, 28 Survived, 1 UNKNOWN, 476 unattempted. Corrections below need a new bound numeric run. The older storage-interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `6effd645fc8c4debb9f5d6b603687ed0bc3f80ef`. Its full-image diagnostic stops at 89 of 700 IDs: 85 assertion-confirmed Killed, 3 Survived, 1 UNKNOWN, 611 unattempted. Corrections below need a new bound numeric run. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,72 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Rolling five-lane repair queue
+
+The owner reaffirmed five useful parallel agents and only native blind Luna.
+Current agent inspection finds no active worker; Luna's provider refusal lasts
+until 2026-11-15. Do not substitute another model or repeatedly dispatch known
+blocked calls. The five ready assignments below are queued, not running.
+Each gets an isolated checkout and one contour; Root owns shared integration,
+Git and final numeric checks. Refill a completed slot with the next ready contour.
+
+| Slot | Contour | Bounded assignment and disposition |
+| --- | --- | --- |
+| 1 | `bun-service-operation-custody` | Repair current-run survivors in its three partition test files. Root prepares the first schema-readiness regression in the primary checkout while the measured integration checkout stays immutable. |
+| 2 | `bun-fs-safe-attestation` | Resolve the retained data-only Source / nonempty inventory admission gap. Review its partition and test correspondence; do not weaken the guard or invent functions. Partition edits are proposals for Root. |
+| 3 | `bun-runtime-initialization` | Complete remaining branches in `tests/bun/runtime-initialization.test.ts`; verify the reported bound maintenance-verifier dependency before proposing Source changes. |
+| 4 | `main-mastra` | Reconcile retained assertion repairs and remaining branch evidence in the three declared partition tests. Do not redo already published controls. |
+| 5 | `bun-project-upgrade-storage-admission` | Address remaining storage-admission branch arms in `tests/bun/project-upgrade-existing-storage-admission.test.ts`, preserving real leases, CAS and UNKNOWN semantics. |
+
+Reuse existing partition inventories, scenario matrices and retained failed runs.
+Workers perform scoped static checks, not duplicate complete suites or numeric
+producers. Independent frozen review remains a separate OPEN prerequisite and
+must use a blind Luna reviewer when available, never Root self-approval.
+The active 6effd64 700-ID diagnostic owns only its measured integration checkout;
+collect terminal evidence before integrating prepared repairs there. Local
+preparation does not change contour closure or qualify the active run.
+
+### Terminal 6effd64 diagnostic and next repairs
+
+The producer is now terminal. Outer `native-mutation-full-6effd64-uLzpyg`
+closes in 423882.082579 ms, exit1 without timeout, complete captures, closed
+group and unchanged boot. Inner evidence is
+`packages/agent/.tmp/mutation-batch-54f80a44-6596-4b6a-8287-944f5618dc79-oZwFs1/`.
+Baseline111 passes. Terminal totals are 85 assertion-confirmed Killed,
+3 Survived, 1 UNKNOWN and 611 unattempted of700. Parent input, instrumented
+image and executable readback complete, with no storage denial. Official SDK
+run38933265676/attempt1/artifact12059583879 binds6effd64, ZIP digest
+`sha256:be35811d887a5d4b109358cbcaaecef73df5a9c81bee062c870bfee66485725e`.
+These are diagnostic classifications, not complete contour or parent admission.
+
+Root prepared repairs in the primary checkout while that producer was frozen.
+Local595 removes reconciliation's schema-readiness check. Its new control uses
+real post-admission DDL drift, exact denial before receipt verification, unchanged
+row/schema observation and a successful retry after exact schema restoration.
+Local535 removes handoff's missing-row predicate. Both handoff and reconciliation
+now reject an absent operation with no verifier call, new row or schema change.
+Local673 removes reconciliation's post-receipt gate assertion. The existing real
+awaited gate-replacement matrix now covers both routes and requires zero new
+SQLite opens after gate loss and an unchanged journal.
+UNKNOWN585 replaces the whole reconciliation body with an empty body. Its first
+failure was an undefined-result property access, not a proven assertion. Direct
+object assertions now precede affected reconciliation result-field assertions;
+the original UNKNOWN is retained and not relabelled. No product guard changed.
+
+Focused owner `quality-rolling-cli-check-XJluf0` passes115/0 tests and844
+assertions across the three declared files in21.10s. Outer21113.44646ms closes
+with complete captures, closed group and unchanged boot. A strict check then
+caught one overbroad local test-variable type; the narrowed maintained return
+type passes467 files. These are development checks, not mutation confirmation.
+
+Fresh6effd64 coverage owner `native-coverage-6effd64-g1nr05` closes in
+22008.117946ms,111/0 tests and809 assertions, full captures/closed group/same boot.
+Report `9fd5d241-af97-47f4-a29e-e8eaea37991d.focused-coverage.json` records
+F56/56,L235/235,S243/243,B128/128 and measured maxCC10/maxCRAP10. It is imported
+through the projection owner as historical6effd64 evidence, not the new tests'
+coverage. Frozen scope review remains OPEN; only Luna is authorized and its
+provider is unavailable. No budget or contour completion count is changed.
 
 The 700-ID diagnostic binds 9dfc9cb and official SDK
 run38925648985/attempt1/artifact12057155406, ZIP digest
