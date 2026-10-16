@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `56233931302078e3fd6d498f1e91b6f5eb93e9f7`. Its32-ID native mutation pilot is terminal with27assertion-confirmed kills,5survivors and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `f7e8c3f20ba82be67160f95268bf578faa182fbd`. Its32-ID native mutation pilot is terminal with31assertion-confirmed kills,1survivor and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -14,228 +14,75 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
-The fresh5623393pilot binds official SDK run38917794621/attempt1/artifact12053511012,
-ZIP digest `sha256:9260f1124cab8f05ab3374e34fca05e7ff8a6255e1fcbf07ff30946ebdaae016`.
-Outer `native-mutation-pilot-5623393-vwuL91` closes in183544.18818ms with complete
-captures, closed group and unchanged boot. Inner evidence remains at
-`packages/agent/.tmp/mutation-batch-c355d908-b650-4c4d-8b2c-72ebd2dab1a7-4Og7TT/`.
-The generated universe is700,49fewer than749before digest consolidation, without
-mutator exclusions. Baseline87cases passes;32attempted,27assertion-confirmed
-Killed,5Survived,0UNKNOWN,668unattempted. This is no complete contour score.
+Latest native ID-batch diagnostic binds publishedf7e8c3f and official SDK
+run38918679931/attempt1/artifact12053127723, ZIP digest
+`sha256:96b312f674f804c64d30d18bb20ac7f58bf05448629b755b09b63aae1f7a9e37`.
+Outer `native-mutation-pilot-f7e8c3f-Y6eiVH` closes in145684.53728ms with
+complete captures, closed group and unchanged boot. Inner evidence remains at
+`packages/agent/.tmp/mutation-batch-14405e0d-6b50-4b80-b584-8fe1414d17f6-brfZTo/`.
+Baseline90cases passes;700generated,32attempted,31assertion-confirmed Killed,
+1Survived,0UNKNOWN,668unattempted. This is a bounded diagnostic, not a contour score
+or complete native parent admission. No new full local triple is claimed.
 
-The five survivors expose initializer readiness/empty-table/transaction controls
-and the record entry's missing unbound-connection denial. New tests use real
-SQLite: a different schema, an occupied prepared table and a caller-owned open
-transaction must be rejected without changing their previous state. The schema
-control calls both public readiness and initializer boundaries. Record and claim
-both explicitly reject a real unbound connection with no persisted change.
-Four-file owner `F9NuIV` passes112/0tests,707assertions in4.03s with complete
-captures/closed group/same boot; strict tests467files passes and scoped lint has
-zero diagnostics. Source is unchanged so the next32-ID run targets the same
-canonical selection, with new tests/SDK binding. Confirmation is pending.
+The survivor is local399: removing readiness from PID recording, not its separate
+DB-binding guard. The latest correction changes a real schema after admission,
+requires the exact readiness denial with no row/schema mutation, restores the
+schema, then records the PID successfully. Control `95ae4Q` passes1/0test,
+7assertions with complete captures/closed group/same boot. Strict tests467files
+passes; scoped type-aware lint has zero diagnostics. The previous four-file
+owner `F9NuIV` passes112/0tests,707assertions. Source remains unchanged so the
+next32-ID run checks the same canonical selection with new test/tool/SDK binding.
 
-Safe capacity records:
-`/workspace/attachments/inactive-profile-core-sparse-retention-20261016.json`
-retains the inactive708worktree's working/index patch in a permanent Git ref,
-then sparsifies only its tracked checkout. All2,130ignored path identities,
-sizes and modification times remain exact. The real Bun executable is
-`/home/agent/.local/bin/bun`; its inode and digest remain unchanged after removal
-of an unused byte-identical88,979,072-byte extraction cache with no active users.
-Receipt `/workspace/attachments/unused-bun-bootstrap-extraction-cache-retirement-20261016.json`
-binds both paths/hashes. Available storage rose to2,235,187,200bytes. No failed
-fixture, UNKNOWN record, SDK input or active executable was deleted;2GiBfloor
-remains unchanged.
+Implemented correction scope:
+- Malformed request/evidence digest matrices, exact PID limits, success-return
+  assertions around existing Subject calls, exact persisted phase/token checks,
+  admission binding, prepared evidence, reconciliation identity and close evidence.
+  Primitive fixture health, negative calls and finally cleanup stay outside the
+  successful Subject assertions; state/value checks remain separate.
+- Independent test-only fixture DDL replaces mutable initializer preparation.
+  Real fresh/occupied/mismatched/transaction schema controls exercise initializer
+  and readiness directly. Post-write controls preserve real SQL/CAS/rollback;
+  projections are altered only at their selected dependency boundary.
+- One private digest predicate replaces nine repeated patterns and three nullable
+  fallback literals. The real generated universe falls749->700without exclusions.
+  Redundant WeakMap prechecks, self owner-kind comparison and an unconsumed synthetic
+  handoff owner allocation are removed. Gate ownership, supported SQL owner kinds,
+  workspace/operation identity and exact row/CAS checks remain. No equivalent mutant
+  is declared Killed; no confirmed product defect is inferred from these pilots.
 
-The freshfa55cd8pilot binds official SDK run38916429957/attempt1/artifact12052328885,
-ZIP digest `sha256:0eddc0a88c65933194bed0429f82b99fc8a93244c0972521bade5e432752f880`.
-Outer `native-mutation-pilot-fa55cd8-5GPmrb` closes in220047.803063ms with complete
-captures, closed group and unchanged boot. Inner evidence remains at
-`packages/agent/.tmp/mutation-batch-a4f87bea-0504-4a91-9877-8923ac49b96a-F1ayFe/`.
-Baseline82cases passes;749generated,32attempted,25assertion-confirmed Killed,
-7Survived,0UNKNOWN,717unattempted. Source changes reorder canonical selections;
-these32are not joined with older partial counts or presented as a contour score.
+The explicit native pilot generates one complete public-instrumenter image and
+canonical/local-ID plan, captures package inputs once, runs a full declared test
+argv serially, and reuses the existing body/JUnit/custody classifier. Source is
+read-only, with private evidence/scratch and qualified proc/dev mounts. Integer
+budgets include setup/baseline in the first900s batch; outer ownership is bounded.
+Generated plans carry no invented engine observations. Partial, survived,
+unattempted and UNKNOWN remain distinct; the ordinary mutation gate is unchanged.
 
-One survivor changes a null fallback to a different equally invalid digest.
-The correction consolidates the nine identical digest patterns into one private
-predicate for supported string/null inputs, eliminating three nullable fallback
-literals. It also removes a redundant pre-WeakMap handle conditional and the
-owner-kind comparison whose expected argument was the same returned owner kind.
-WeakMap membership, selected SQL owner kinds, workspace/operation identity,
-gate ownership, exact row checks and CAS remain. No equivalent mutant is declared
-Killed, and no confirmed product defect is inferred from these observations.
+Next: publish the checked readiness regression, prepare its exact SDK, repeat the
+same32IDs, then extend the bounded selection and remeasure coverage. Complete native
+parent join, all700mutants, reviewed frozen correspondence/new-function budgets,
+and same-run CRAP remain open. The private extracted predicate follows the existing
+new-function policy; retained ceilings cannot transfer or reset. One final-check
+owner remains. Luna is provider-limited; Root implements. Vex is absent on this
+host, so navigation uses bounded rg/Babel fallback, with no cold index during runs.
 
-Remaining controls exercise changed reservation capability, vanished afterimage,
-rejected prepared CAS, persisted fractional/unsafe launch PIDs and substituted
-workspace/operation SELECT projections. Native SQL writes and rollback are real;
-the PID afterimage control observes the actual successful update before hiding
-only its subsequent read. A destructive AFTER UPDATE trigger was rejected as a
-fixture: Bun's native changes count includes its extra modification, reaching the
-CAS denial before the intended post-read. The wrong-owner projection test was
-also corrected: this read API accepts either supported owner, with no requested
-owner argument. Both failed controls remain retained. Official Bun SQLite docs
-are retained at `/workspace/attachments/bun-sqlite-official-20261016.md`.
+Capacity custody receipts remain at:
+- `/workspace/attachments/inactive-native-batch-capacity-retention-20261016.json`
+- `/workspace/attachments/inactive-mastra-capacity-retention-20261016.json`
+- `/workspace/attachments/inactive-profile-core-sparse-retention-20261016.json`
+- `/workspace/attachments/bun-bootstrap-download-cache-retirement-20261016.json`
+- `/workspace/attachments/unused-bun-bootstrap-extraction-cache-retirement-20261016.json`
 
-Four-file owner `6HVn5z` passes109/0tests,695assertions in4.27s with complete
-captures/closed group/same boot. Strict tests467files passes. Scoped lint's
-unbound-method/unsafe-return diagnostics prompted an explicit bound real method
-and unknown return in the fixture spy; final lint has zero diagnostics.
-New Source still requires fresh coverage, frozen correspondence/CRAP and mutation
-evidence; these development checks do not close that admission.
+Inactive checkout edits are retained in permanent refs with exact working/index
+and untracked bytes. All2,130ignored profile paths keep their identities/sizes/
+modification times. Only unused bootstrap download/extraction cache was removed;
+the active Bun inode/digest, SDKs and failed/UNKNOWN fixtures remain. The2GiB
+producer floor is unchanged. Do not replay old UNKNOWN attempts or reuse their
+sandbox for a new execution.
 
-The inactive Mastra checkout had2tracked edits and1untracked TypeScript helper,
-with no ignored paths. Its exact working/index/untracked bytes were verified in
-permanent ref `refs/vida-retained-contours/20261016/native-batch-capacity/contour-repair-mastra-20261016`
-before ordinary worktree removal. Receipt:
-`/workspace/attachments/inactive-mastra-capacity-retention-20261016.json`.
-Free space rose2,170,499,072->2,205,597,696bytes; failed/UNKNOWN artifacts were not
-deleted. After the latest pilot available space was2,154,020,864bytes, only about
-6MiBabove the unchanged2GiBfloor. Further execution needs safe capacity, not a
-relaxed storage gate.
-
-The fresh5f2f6b7pilot binds official SDK run38915275682/attempt1/artifact12051797906,
-ZIP digest `sha256:cf368e51bfc4ad907c683d9cd9835f68f77683d2a11e2ccb8afccd7e4679054b`.
-Outer `native-mutation-pilot-5f2f6b7-yiMycj` closes in192470.854102ms with complete
-captures, closed group and unchanged boot. Inner evidence remains at
-`packages/agent/.tmp/mutation-batch-d7d81725-c077-4c0c-a02e-bbcb8aafe658-VrcPtx/`.
-Baseline79cases passes. All32planned IDs execute:23assertion-confirmed Killed,
-9Survived,0UNKNOWN;719of751remain unattempted. All prior8IDs, including the PID
-guard, are Killed. These are bounded diagnostic outcomes, not a contour score.
-
-The correction groups the survivors into digest/error contracts, persisted
-owner-phase validation, unbound DB claim, exact prepared evidence and reconciliation
-identity, phase/evidence close rejection and missing handoff verifier. Tests
-check unchanged persisted state after denials and valid completion afterward.
-The handoff callback's synthetic frozen owner object was never consumed: the
-held gate's operation already verifies the exact terminal row. It now returns
-undefined, preserving that gate and all exact row/CAS checks without an unused
-allocation. This is behavior-preserving simplification, not a confirmed product bug.
-Four-file owner `Squ7Mp` passes104/0tests,660assertions in4.37s with complete
-captures/closed group/same boot. Strict tests467files passes; scoped type-aware
-lint has zero diagnostics. A new numeric run must bind the changed Source/tests.
-Luna remains provider-limited and Root is the only writer/check owner.
-
-Capacity receipt `/workspace/attachments/bun-bootstrap-download-cache-retirement-20261016.json`
-records removal of the42,015,139-byte download ZIP cache only. Its hash is retained;
-the installed Bun executable, release metadata, SDK inputs and failed/UNKNOWN
-artifacts remain. The2GiB producer floor is unchanged.
-
-The fresh5fdaa19 pilot binds official SDK run38914901509/attempt1/artifact12052580348,
-ZIP digest `sha256:1c19ae8b3aee4591555c7b48ec53f053bcddde000ae5079dce8da8e6048ff8be`.
-Outer `native-mutation-pilot-5fdaa19-En9oBB` closes in41233.813748ms with complete
-captures, closed group and unchanged boot. Inner evidence remains at
-`packages/agent/.tmp/mutation-batch-26b4b38f-3a7d-4c56-8d3b-adab37abcfd4-wqH3eg/`.
-Baseline78cases passes. All8planned IDs execute:7assertion-confirmed Killed,
-1Survived,0UNKNOWN;743of751remain unattempted. The previous digest survivor and
-owner-phase runtime UNKNOWN are now confirmed Killed. Schema-string mutant1is
-also confirmed through the independently prepared fixture/Subject contract.
-ID468survives after disabling claim PID validation. No product defect is inferred.
-
-Its correction covers both record and claim boundaries with0,-0,negative,
-fractional, subnormal, NaN, infinite and unsafe integer PIDs; every denial checks
-the exact error and unchanged persisted row. A real PID1record/claim follows,
-then exact prepared custody and closed admission precede fixture deletion.
-Focused `8L2Fvg` passes1/0test with complete captures/closed group/same boot;
-strict tests467files passes and scoped lint has zero diagnostics. Publication,
-matching SDK and an expanded32-ID diagnostic pilot are the next steps. These
-pilot results remain separate from full-contour mutation admission and CRAP.
-
-The fresh53c2923 pilot uses official SDK run38911782687/attempt1/artifact12051075526,
-ZIP digest `sha256:2a6ec0ba49539a7d5eb91c3ecae2f65b7d216a9c2da02f0151d9a3374d964a39`.
-Outer `native-mutation-pilot-53c2923-aaKwzj` closes in26842.510068ms with complete
-captures, closed process group and unchanged boot. Inner evidence remains at
-`packages/agent/.tmp/mutation-batch-aa1eab31-089d-4066-a504-a30f265df118-IGXvxo/`.
-Its real baseline passes74/0tests,439assertions. Of751generated mutants,2were
-attempted: ID36 removes the digest regex's initial anchor and survives; ID186
-changes the owner-phase condition and causes an unasserted Subject runtime error.
-The latter remains UNKNOWN, not Killed.749are unattempted; no complete batch,
-mutation score or full-contour qualification is claimed.
-
-The correction adds malformed request/evidence digest matrices and explicit
-normal-return contracts around119 existing successful Subject calls, retaining
-their state/value assertions. Fixture primitives, negative calls and finally
-cleanup remain outside those success assertions. The test fixture now prepares
-its table from an independent test-only DDL oracle, then asserts only the Subject
-open call; it no longer executes the mutable initializer as preparation. A fresh
-in-memory test checks the initializer's actual schema and empty-table result.
-The independence control genuinely fails against the old helper at `92e9dF`;
-the initial control also exposed and corrected a number/bigint test expectation.
-Final affected four-file control `X6J1RK` passes100/0tests,573assertions in4.35s
-with complete captures, closed group and unchanged boot. Strict tests467files
-passes; scoped type-aware lint has zero diagnostics and documentation links pass.
-Cleanup callbacks preserve the primary failure and return the required undefined.
-These findings establish assertion/fixture gaps, not a confirmed product defect.
-The final-newline regex hypothesis was rejected against actual Bun behavior.
-The next numeric pilot requires publication, its matching SDK, and fresh inputs;
-no old UNKNOWN image or test result is reused as current execution evidence.
-
-The first native execution pilot binds publishede830919 and official SDK
-run38910689053/attempt1/artifact12050376525, ZIP digest
-`sha256:b8147f4ad07bc07b337f0509720711ddd134bb235836a8dfe19b841e8970dee5`.
-It is terminal UNKNOWN before any test/mutant runs: descriptor checks passed,
-but nested Bun spawn returnedEACCES. Original baseline, launcher, image and
-terminal error remain at
-`packages/agent/.tmp/mutation-batch-9a67d6fa-be02-4676-9e17-39214a539bd5-k1nGIB/`.
-Outer owner `native-mutation-pilot-e830919-o9blJa` closed with complete captures,
-group termination and unchanged boot in1963.377744ms. This is not Killed.
-
-Two fresh inert probes reproduced the exact missing-device cause: root bind
-alone denies `/dev/null` and nested spawn; adding official bwrap `/dev` and
-`/proc` mounts succeeds. Regression `Uoz0s9` fails against the same old command;
-`urfSNF` passes nested Bun spawn, real Source-write denial and private scratch
-write through the corrected shared builder. Other maintained bwrap construction
-was inspected and already supplies these mounts. No old UNKNOWN execution was
-replayed. The next packet also reuses the existing integer execution-budget owner;
-capture/generation/baseline spend the first900s allowance, rather than adding
-another baseline allowance or launching with fractional milliseconds.
-
-Two inactiveca68prepared worktrees had no untracked or ignored data. Their
-working/index bytes and binary patches were verified under permanent Git refs
-before ordinary removal. Exact custody receipt:
-`/workspace/attachments/inactive-native-batch-capacity-retention-20261016.json`.
-Observed free storage rose2,150,146,048->2,233,700,352bytes. No failed/UNKNOWN
-runtime fixture, original pilot, installed dependency or active writer was removed.
-
-Corrected seven-file control `SKBAq4` passes156/0tests,650assertions in1474ms
-with complete captures/closed group/same boot. Tooling188files and tests467files
-pass strict typecheck; scoped lint has zero diagnostics and documentation checks
-pass. The first tests-typecheck command used the wrong root and failed before
-reading any files; its log is retained, and the package-cwd checked log records
-the actual467-file result. The fresh53c2923 pilot above supersedes the pending
-execution; the failed e830919 image was not reused.
-
-The published packet implements the ID-batch pilot behind an explicit diagnostic CLI;
-it does not switch ordinary mutation admission. `MutationGeneratedUniverse/v1`
-is distinct from an observed engine plan and carries no invented Run/Killed
-records. The public instrumenter dependency resolves from the qualified installed
-Core owner's physical package path (the first symlink-relative control correctly
-failed). Core CLI/package version ingress now has one shared owner. No dependency
-install, Node execution or build/install test suite is added.
-
-Fresh Source bytes generate one full instrumented image in memory. The pilot
-copies the existing captured package inputs once, binds canonical/local IDs and
-runs the full declared main/Bun test argv serially through the existing command
-runner and assertion/custody classifier. Its inner bwrap mounts Source/tests/tools
-read-only and exposes only owned evidence/scratch for writing. Image, original
-inputs and executable identity are rechecked; original UNKNOWN effects remain
-retained. Count-limited pilot summaries explicitly retain unattempted IDs and
-cannot be imported as complete contour results. The campaign's existing2GiB
-storage owner and900s batch limit are reused. Pilot terminal-record failures use
-the existing body/cleanup error accumulator so the primary cause survives.
-
-Red/green controls and strict checks are retained under
-`/workspace/attachments/mutation-generated-universe-*-20261016.log`,
-`mutation-image-generation-*-20261016.log` and `mutation-native-pilot-*-20261016.log`.
-Focused owner `xAopq1` passes141/0tests,398assertions with complete captures,
-closed group and unchanged boot. The real contour pilot is pending the checked
-packet publication and its matching SDK artifact. Luna remains provider-limited;
-Root implements this packet. Vex is absent; bounded native rg is the fallback.
-
-Final affected seven-file owner `Ewwvqn` passes the added generation/CLI controls,
-existing receipt classifier, descriptor, cleanup and campaign contracts with
-complete captures/closed group/same boot. Strict tooling188files and tests467files
-pass; scoped type-aware lint has zero diagnostics and documentation links pass.
-The new pilot is intentionally not an ordinary gate replacement and no native
-execution, mutation score or complete local triple is claimed by this packet.
+Detailed earlier correction/pilot facts and original failure locators remain in
+published `f7e8c3f20ba82be67160f95268bf578faa182fbd:.agent/work/core-runtime-reactivation/WORK.md`.
+This reference replaces repeated active narratives; retained raw bytes stay intact.
 
 Service cycle `fe7820d9-5176-4a8d-a517-22862ffce9c1` binds630ae8d and is
 terminal:74/0tests,439assertions; custody exact F52/52,L227/227,S234/234,B123/123

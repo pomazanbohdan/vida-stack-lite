@@ -1914,6 +1914,88 @@ for (const field of ['workspace_id', 'operation_id'] as const) {
   });
 }
 
+test('PID recording rejects a schema changed after admission and succeeds after exact schema restoration', () => {
+  const fixture = openCustodyFixture('service-record-schema-change-');
+  let completed = false;
+  let closed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    fixture.database.exec('ALTER TABLE agent_host_service_operation_custody ADD COLUMN unexpected TEXT');
+    const before = fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all();
+    const schema = fixture.database
+      .query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'")
+      .get();
+    expect(() =>
+      recordServiceOperationLaunchPid(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        reservation.revision,
+        1,
+        reservation.child_capability,
+      ),
+    ).toThrow('Service operation custody: owned service table is absent or differs');
+    expect(fixture.database.inTransaction).toBe(false);
+    expect(fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual(before);
+    expect(
+      fixture.database.query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'").get(),
+    ).toEqual(schema);
+    fixture.database.exec('ALTER TABLE agent_host_service_operation_custody DROP COLUMN unexpected');
+    const recorded = expectReturned(() =>
+      recordServiceOperationLaunchPid(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        reservation.revision,
+        1,
+        reservation.child_capability,
+      ),
+    );
+    expect(recorded.launch_pid).toBe(1);
+    expect(recorded.revision).toBe(reservation.revision + 1);
+    fixture.database
+      .query('DELETE FROM agent_host_service_operation_custody WHERE workspace_id=? AND operation_id=?')
+      .run(fixture.workspaceId, operationId);
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toBeNull();
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          closed = true;
+          return undefined;
+        },
+        () => {
+          if (completed && closed) rmSync(fixture.root, { recursive: true, force: true });
+          else retainExpectedUnknownFixture(fixture.root, 'record schema change control failed');
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
 test('reservation retains the original failure and rollback failure without committing its row', () => {
   const fixture = openCustodyFixture('service-reservation-rollback-fault-');
   const nativeExec = fixture.database.exec.bind(fixture.database);
