@@ -263,16 +263,20 @@ test('direct initialization validates existing bindings and resumes the same pen
   const request = {
     projectRoot,
     repository: 'different-repository',
-    projectMappings: ['different-project'],
+    projectMappings: ['second-project=nested', 'different-project=.'],
   } as const;
   let completed = false;
   try {
+    await mkdir(path.join(projectRoot, 'nested'));
     const initialized = await expectAsyncReturned(() => initializeProjectFromBundle(request, source));
     expect(initialized.status).toBe('initialized');
     const existing = await expectAsyncReturned(() =>
       initializeProjectFromBundle({ ...request, reconcileExisting: true }, source),
     );
-    expect(existing.status).toBe('existing');
+    expect(existing).toMatchObject({
+      status: 'existing',
+      receipt: '.agent/runtime-initialization.v1.json',
+    });
     const integrationOutputs = [
       'AGENTS.md',
       'AGENT.sidecar.md',
@@ -355,7 +359,17 @@ test('repeated initialization accepts the complete configured multi-project set'
     expect(initialized.status).toBe('initialized');
     const configBytes = await readFile(path.join(projectRoot, 'agent-runtime.config.v1.yaml'));
     const existing = await expectAsyncReturned(() => initializeProjectFromBundle(request, source));
-    expect(existing.status).toBe('existing');
+    expect(existing).toMatchObject({
+      status: 'existing',
+      existing: [
+        'AGENTS.md',
+        'AGENT.sidecar.md',
+        'agent-runtime.config.v1.yaml',
+        'docs/agent-instructions/documentation-policy.v1.json',
+        '.agent/runtime-initialization.v1.json',
+      ],
+      next_action: 'Use explicit reconciliation for any partial or existing initialization.',
+    });
     expect(await readFile(path.join(projectRoot, 'agent-runtime.config.v1.yaml'))).toEqual(configBytes);
     const config = parseRuntimeConfigYaml(configBytes.toString());
     expect(config.projects.map(({ project_id, project_root }) => ({ project_id, project_root }))).toEqual([

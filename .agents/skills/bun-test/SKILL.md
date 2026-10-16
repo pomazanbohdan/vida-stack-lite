@@ -190,6 +190,15 @@ qualify a later read-error assertion. Preserve target/temp bytes and restore
 aliases before observation; real close followed by an injected error proves
 cause aggregation, not failed native I/O.
 
+For interrupted publication recovery, fail the real store method immediately
+before its final CAS after actual prerequisite validation and packet/reference
+publication. Restore the method through the owned cleanup accumulator, then
+retry against that persisted intermediate state. Assert the same packet bytes,
+reference, generation and Host versions, plus the newly committed result. Do
+not manufacture intermediate rows through SQL or replace authority with mocks.
+This controlled method-boundary fault does not prove a process crash or power
+loss. Keep fresh public CLI success separate from this recovery control.
+
 ## Run focused checks safely
 
 Run selected package tests from the package working directory with explicit

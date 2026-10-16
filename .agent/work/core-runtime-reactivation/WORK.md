@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `801cb4c`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. The complete native main-runtime-timing producer pilot joins151/151 assertion-confirmed Killed at4b99cc6; proof-aware contour-reader and global admission remain open. Fresh final-assurance measurement at801cb4c improves coverage and measured entry-CRAP below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `aa582b5`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2); proof-aware contour-reader and global admission remain open. Fresh final-assurance measurement ataa582b5 improves coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -26,21 +26,21 @@ integration, Git and final numeric checks; workers never run competing suites.
 
 | Slot | Contour | Bounded assignment and disposition |
 | --- | --- | --- |
-| 1 | Native mutation producer | Isolated `luna-native-proof-afd9-20261016` writer implements the exact universe/plan/batch/receipt join and its negatives. Root owns producer wiring. |
-| 2 | Native mutation review | Independent review requires both runner and outer launcher receipts, a positive complete baseline census and exact generated-image references; downstream admission stays closed. |
-| 3 | `bun-final-assurance` | Isolated `luna-final-authority-afd9-20261016` writer adds genuine Host corrective authority, missing-root and tampered-byte denials. Root removes redundant adjacent reads before checks. |
-| 4 | `bun-cli-toolchain` | Isolated `luna-toolchain-next-afd9-20261016` writer adds real ancestor-symlink and Linux lowercase-path cases. Root corrects nested fixture-directory creation before checks. |
-| 5 | Bundle-owned upgrade | Read-only current Source review finds no dependency-ready guard relaxation. Legacy overlap/lifetime exclusion remains a real prerequisite; no schema/loader cutover. |
+| 1 | Native mutation producer | Complete context-bearing v2 pilot ataa582b5 is terminal151/151 confirmed Killed. Final reader/global admission remains open. |
+| 2 | Native mutation reader | Blindv23/v24 design memos are ready for the offline artifact closure and its separate local projection seam; no reader activation or checks claimed. |
+| 3 | `bun-final-assurance` | Root integrates the completed real workflow, actual scoped writer edit and controlled pre-CAS interruption/retry. The full changed-file check passes below. |
+| 4 | `bun-cli-init` | Root integratesv27 assertions and the independently reviewed callable-help defect correction; both runtime regressions reproduce before the fix and pass after it. |
+| 5 | Final-assurance branch analysis | Blindv28 denial plan andv30 controlled pre-CAS interruption review are ready; no new branch closure is inferred. |
 
 Reuse existing partition inventories, scenario matrices and retained failed runs.
 Workers return diffs and unverified dispositions; Root batches the necessary
 checks. Independent frozen review must close its concrete findings before scope
 registration; a completed review with ISSUES is not frozen admission.
-The784d054 final-assurance coverage producer is terminal; its measured checkout
-stayed immutable throughout. Collect terminal evidence before integrating the
-next prepared repair packet there.
-Current proposals live under `/workspace/attachments/luna-*-v6-20261016.md`;
-each lane has its own exact output path. Proposals do not establish closure.
+The current final-assurance coverage producer is terminal and its diagnostic
+plus operation outcome are imported below. Collect native producer terminal
+custody before integrating another packet into its measured checkout. Completed
+review/design lanes are not reported as active workers. Each lane writes its
+exact assigned artifact path; proposals do not establish closure.
 
 The next complete-native slice uses the existing producer's explicit
 `--admit-complete` mode and a distinct partition-local proof/report. It does not
@@ -155,6 +155,97 @@ and unchanged boot. Strict501 and TS-only502 pass with zero diagnostics.
 The normal commit hook remains required before publication.
 
 ### Current native receipt and final-assurance cost investigation
+
+Theaa582b5 context/retry packet is committed and pushed through the ordinary
+strict hook. Successful SDK formation38959608715/attempt1/artifact12072431323
+binds exact head `aa582b5b6fd4cabe7cafd56b96c33d3be6b45e05`, archive647160bytes
+and SHA256 `49ee54fd2c6f6b783236bbf7f23380dff3761fb0281bcbf09148b784e219f176`.
+The maintained readiness owner prepares it without a local build or suites.
+Fresh `native-coverage-contour-yjAoVJ` completes at that unchanged head in
+54050.101251ms, exit0, complete captures, closed process group and unchanged boot.
+Run `8e3d8552-3762-4e1c-9754-a0becd8c87ed` passes12/0 with255 assertions,
+F86/94,L284/325,S319/363,B254/305. This adds4 entered functions,12 lines,
+12 statements and22 branches over the previous801cb4c run. The maintained
+projection imports the diagnostic and its actual BLOCKED operation outcome,
+giving414attempts. Full coverage/frozen/mutation qualification remains pending.
+
+The full context-bearing native `main-runtime-timing` producer pilot completes
+at that same immutable head, owned by `native-partition-complete-B2krgU`.
+Its inner run `d93f8d67-6ed4-428e-94e4-37a114b1cc02` executes all151generated
+mutants across10batches, with151assertion-confirmed Killed and0survived,
+UNKNOWN or unattempted. Outer exit0 in374474.449762ms has full captures, closed
+process group and unchanged boot. Proof v2 is87089bytes/SHA256
+`5935ffbffca06e344b8f12f92441027262f5515f72581a43eaf02622925c8ea8`.
+Its context is21631bytes/SHA256
+`323f0cdb013f8763d6ab23a64593baf316e00b9a398e08d0824595fa6ae12fab`.
+Bounded context readback control reuses the actual proof/context/descriptor
+references and verifies149global Source rows, two selected tests, no hook files,
+unchanged parent identities and Source/tool/quality metadata fingerprints. It
+does not qualify the future full closure reader or admit a contour/global score.
+The retained control is `native-partition-complete-B2krgU/context-readback-control.json`.
+Root prepares changes only in the separate primary checkout and runs no competing
+compiler, suite, hook or index refresh during measurement.
+
+One isolated Luna writer prepares a fresh direct Source assurance case using
+the existing failed-final fixture owner with an explicit passing mode. Real
+fresh admission, Host writer reservation, public CAS reports and the dependent
+tester wave remain in place. Typed passing validator/tester/preparation inputs
+are synthetic caller reports, not native execution evidence. The original CLI
+fresh-creation and failed-correction cases remain. Root preserves the existing
+exported helper name because the absorption contour already imports it, and
+validates parsed report bytes as unknown. Independent review at
+`/workspace/attachments/luna-fresh-source-review-v26-20261016.md` confirms the
+export/typed-input issues and asks to label synthetic failure findings accurately;
+Root integrates those corrections and checks actual published packet bytes/hash.
+Its claimed removal of the old failed-case20s exception is not reproduced: the
+candidate and integrated files both retain20_000. The new fresh case uses the
+documented20s composite exception. The first focused check `7ZrvfM` confirms
+both callable-help repairs but rejects fresh assurance because the actual
+workflow still has its required delivery-proposal stage. Control `0XQQGU` reaches
+that stage through public CAS and rejects its empty deployment path list.
+Both runs close their process groups and preserve failed fixture roots.
+The disproved premise is that the existing no-change failed-writer fixture can
+complete the default delivery workflow: the actual delivery owner requires a
+nonempty deploy/order list bound to real implementation changes. Passing mode
+must perform one actual authorized scoped Source edit before its writer report,
+then report that changed path and a matching typed proposal. Default failed mode
+keeps its original no-change writer. No gate or delivery authority is relaxed.
+
+The completed fresh-workflow control `LT2jel` passes1/0,27 assertions in
+18222.236963ms; the actual case takes17159.24ms under its unchanged20s bound.
+Independent current-code reviewv31 finds no blocker after checking the real
+scoped writer edit, report CAS, terminal proposal and Source digest chain.
+Root then injects a one-shot sentinel before the actual final-assurance CAS,
+after real Host packet/reference publication, restores the method and retries.
+The actual pending packet is reused with unchanged bytes/reference/Host/Journal
+and a newly persisted assurance. This is controlled boundary-fault recovery,
+not an OS crash, power-loss proof or caller-report execution evidence.
+
+The callable init help defect reproduces at `quality-rolling-cli-check-nDwI3z`:
+both injected Bun-runtime true/false cases wrongly set exit1. Root moves the
+existing first-argument help dispatch inside main after its non-main guard and
+before runtime routing; standalone help and non-help delegation retain their
+behavior. Independent plan reviewv29 finds no blocker. Existing function roles
+remain; frozen ceilings are not changed or newly admitted for the init contour.
+
+Complete changed-file check `quality-rolling-cli-check-eVbQUI` passes72/0 across
+four files,638assertions,in95643.774647ms, full captures/closed group/same boot.
+The recovery case takes16275.43ms, failed correction11001.85ms and public
+fresh-assurance flow35598.86ms, all within their existing20s/20s/90s bounds.
+Strict503, TS-only504 and maintained full oxlint pass. The shared helper's
+affected absorption validate scenario separately passes1/0,80assertions at
+`quality-rolling-cli-check-sBjrEv` in42839.963794ms with complete captures,
+closed group and unchanged boot. Publication remains subject to the ordinary
+strict hook. No numeric improvement is inferred from these functional checks.
+
+At the same exactaa582b5, timing coverage run
+`f56c0181-4e01-464c-acdf-1935c19f6afb` passes7/0,271assertions, with exact
+F36/36,L72/72,S81/81,B1/1. Owner `native-coverage-contour-v6ZuSO` completes
+5633.998708ms, complete captures/closed group/same boot. Its same-run scoped
+CRAP proof passes against unchanged published6e4655b ceilings, maxCC1/maxCRAP1;
+owner `scoped-crap-selected-5bapx9` completes1338.414529ms. The automatic
+projection imports coverage, scoped CRAP and actual BLOCKED operation outcome,
+bringing it to417attempts. Native proof admission remains separately pending.
 
 The801cb4c shared-reader/recovery packet is committed and pushed through the
 ordinary strict hook. Successful SDK formation run38957998065/attempt1/artifact

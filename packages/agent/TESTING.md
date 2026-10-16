@@ -1089,9 +1089,9 @@ their existing contracts. Historical v1 proofs do not acquire this context.
 `CandidateNativeMutationReport/v1` keeps its opaque proof artifact reference
 and `native-instrumenter-batches/v1` provenance. Proof and report remain
 partition-local with `full_qualification:false`, without synthetic Stryker
-statuses or events. The context-bearing producer pilot and downstream
-proof-reader qualification remain required; current contour and final-quality
-readers reject them. A future reader must dispatch on the referenced proof
+statuses or events. Require a complete context-bearing producer pilot; keep its
+terminal evidence in WORK. Downstream proof-reader qualification remains
+separate; current contour and final-quality readers reject them. A future reader must dispatch on the referenced proof
 schema and validate the context/descriptor/receipt closure. A new schema or
 passing join-unit fixture is not a qualified mutation score, and old diagnostic
 operations stay diagnostic.
@@ -1602,6 +1602,17 @@ such as observing a complete isolated pool or a real recovery quarantine.
 Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
+
+Direct Source final-assurance preparation uses a20s composite exception. It
+requires fresh admission, the real writer reservation/report, two configured
+validator reports, the dependent tester/delivery-proposal waves and persisted
+packet publication. The passing fixture makes one actual authorized scoped edit
+before reporting its writer result. Fresh preparation measured17.16s; its
+controlled pre-assurance-CAS interruption and exact packet retry stay within the
+same scenario. This method-boundary fault is not a crash or power-loss proof.
+Typed passing reports are synthetic
+caller-report inputs and do not establish native test execution or Runtime
+acceptance. The separate public CLI preparation case remains intact.
 
 The initialization-authority v2 integration case has an explicit10s exception.
 It creates a fresh project, plans and completes the real bundle-owned upgrade,

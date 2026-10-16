@@ -113,12 +113,12 @@ export async function writeFailedFinalPreparationInputs(input: {
         config_digest: work.binding.config_digest,
         ac_ids: work.binding.ac_ids,
         observed_at: new Date().toISOString(),
-        observer_id: 'fixture-observer',
+        observer_id: 'synthetic-caller-report-fixture',
         status: 'pass',
         evidence_refs: ['local://fixture/current-source'],
         observations: labels.map((mechanic) => ({
           mechanic,
-          actual: 'Explicit isolated current contract fixture observation',
+          actual: 'Synthetic typed fixture input; no native planning, research, or documentation observation occurred.',
           evidence_ref: 'local://fixture/current-source',
         })),
         gaps: [],
@@ -142,14 +142,15 @@ export async function writeFailedFinalPreparationInputs(input: {
   return { preparationPath, clearPath: clear.path };
 }
 
-/** Persist the configured two-validator fail wave through the caller's existing Journal report boundary. */
+/** Persist the configured two-validator outcome through the caller's existing Journal report boundary. */
 export async function reportFailedFinalValidatorWave(input: {
   readonly journal: MastraSessionLedgerSnapshot;
+  readonly outcome?: 'failed' | 'passing';
   readonly evidenceRef?: string;
   readonly report: (
     item: MastraSessionLedgerState['items'][number],
     summary: string,
-    status: 'reported_failed',
+    status: 'reported_failed' | 'reported_complete',
   ) => Promise<MastraSessionLedgerSnapshot>;
 }): Promise<MastraSessionLedgerSnapshot> {
   let journal = input.journal;
@@ -159,20 +160,25 @@ export async function reportFailedFinalValidatorWave(input: {
   )
     throw new Error('Expected the configured two-validator final assurance wave');
   for (const item of [...journal.state.items]) {
-    const evidenceRef = input.evidenceRef ?? 'local://fixture/failed-final-validator';
+    const passing = input.outcome === 'passing';
+    const evidenceRef =
+      input.evidenceRef ??
+      `local://fixture/${passing ? 'synthetic-validator-caller-report' : 'failed-final-validator'}`;
     const summary = JSON.stringify({
       schema: 'VidaValidatorVerdict/v1',
-      verdict: 'fail',
-      findings: ['Actual fixture correctness defect'],
+      verdict: passing ? 'pass' : 'fail',
+      findings: passing ? [] : ['Synthetic fixture correctness finding'],
       evidence_refs: [evidenceRef],
     });
-    journal = await input.report(item, summary, 'reported_failed');
+    journal = await input.report(item, summary, passing ? 'reported_complete' : 'reported_failed');
   }
   return journal;
 }
 
 /** Build a real failed final-validation state through admission, Host CAS and persisted Journal report APIs. */
-export async function createFailedFinalCorrectionFixture(): Promise<FailedFinalCorrectionFixture> {
+export async function createFailedFinalCorrectionFixture(
+  outcome: 'failed' | 'passing' = 'failed',
+): Promise<FailedFinalCorrectionFixture> {
   const fixture = createAutomaticWorkAdmissionFixture(true, true);
   let bridge: MastraSessionBridge | undefined;
   let fixtureClosed = false;
@@ -369,6 +375,17 @@ export async function createFailedFinalCorrectionFixture(): Promise<FailedFinalC
     if (!writer?.host_reservation || !writer.issue_id)
       throw new Error('Writer issue has no persisted Host reservation');
     const attemptId = writer.host_reservation.receipt.attempt.attempt_id;
+    if (outcome === 'passing') {
+      const sourcePath = path.join(fixture.root, 'AGENT.sidecar.md');
+      writeFileSync(
+        sourcePath,
+        Buffer.concat([readFileSync(sourcePath), Buffer.from('\nSynthetic final-assurance fixture implementation.\n')]),
+      );
+    }
+    const writerSummary =
+      outcome === 'passing'
+        ? 'The admitted fixture writer updated its owned AGENT.sidecar.md.'
+        : 'The admitted writer completed with no Source byte changes.';
     const writerObservation: SessionBridgeObservation = {
       schema: 'VidaSessionObservation/v1',
       action_id: writer.request.action_id,
@@ -376,11 +393,11 @@ export async function createFailedFinalCorrectionFixture(): Promise<FailedFinalC
       agent_id: 'fixture:failed-final-writer',
       tool_call_ref: 'fixture:failed-final-writer-' + writer.issue_id,
       status: 'reported_complete',
-      summary: 'The admitted writer completed with no Source byte changes.',
-      output_digest: canonicalJsonDigest('The admitted writer completed with no Source byte changes.'),
+      summary: writerSummary,
+      output_digest: canonicalJsonDigest(writerSummary),
       evidence_refs: ['local://fixture/failed-final-writer'],
       host_attempt_id: attemptId,
-      changed_paths: [],
+      changed_paths: outcome === 'passing' ? ['AGENT.sidecar.md'] : [],
     };
     const writerReport = `.agent/work/${id}/failed-final-writer.json`;
     writeFileSync(path.join(fixture.root, writerReport), JSON.stringify(writerObservation));
@@ -395,37 +412,88 @@ export async function createFailedFinalCorrectionFixture(): Promise<FailedFinalC
     ]);
     journal = sync();
     journal = requireSnapshot(ledger.issueWave(id, 1, journal.version));
+    const reportFocused = async (
+      item: MastraSessionLedgerState['items'][number],
+      summary: string,
+      status: 'reported_failed' | 'reported_complete',
+      evidenceRef: string,
+      actor: string,
+    ) => {
+      if (!item.issue_id) throw new Error('Focused fixture issue ID is absent');
+      const observation: SessionBridgeObservation = {
+        schema: 'VidaSessionObservation/v1',
+        action_id: item.request.action_id,
+        issue_id: item.issue_id,
+        agent_id: actor,
+        tool_call_ref: `${actor}-${item.issue_id}`,
+        status,
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        evidence_refs: [evidenceRef],
+      };
+      const reportPath = `.agent/work/${id}/focused-${item.request.action_id}.json`;
+      writeFileSync(path.join(fixture.root, reportPath), JSON.stringify(observation));
+      await publicRun([
+        ...args,
+        '--report',
+        reportPath,
+        '--expected-revision',
+        String(journal.version.revision),
+        '--expected-digest',
+        journal.version.digest,
+      ]);
+      journal = sync();
+      return journal;
+    };
     journal = await reportFailedFinalValidatorWave({
       journal,
-      report: async (item, summary, status) => {
-        if (!item.issue_id) throw new Error('Focused validator issue ID is absent');
-        const evidenceRef = 'local://fixture/failed-final-validator';
-        const observation: SessionBridgeObservation = {
-          schema: 'VidaSessionObservation/v1',
-          action_id: item.request.action_id,
-          issue_id: item.issue_id,
-          agent_id: 'fixture:failed-final-validator-' + item.request.assignment_index,
-          tool_call_ref: 'fixture:failed-final-validator-' + item.issue_id,
-          status,
+      outcome,
+      report: (item, summary, status) =>
+        reportFocused(
+          item,
           summary,
-          output_digest: canonicalJsonDigest(summary),
-          evidence_refs: [evidenceRef],
-        };
-        const reportPath = `.agent/work/${id}/failed-validator-${item.request.assignment_index}.json`;
-        writeFileSync(path.join(fixture.root, reportPath), JSON.stringify(observation));
-        await publicRun([
-          ...args,
-          '--report',
-          reportPath,
-          '--expected-revision',
-          String(journal.version.revision),
-          '--expected-digest',
-          journal.version.digest,
-        ]);
-        journal = sync();
-        return journal;
-      },
+          status,
+          outcome === 'passing'
+            ? 'local://fixture/synthetic-validator-caller-report'
+            : 'local://fixture/failed-final-validator',
+          `fixture:${outcome}-final-validator-${item.request.assignment_index}`,
+        ),
     });
+    if (outcome === 'passing') {
+      journal = requireSnapshot(ledger.issueWave(id, 1, journal.version));
+      if (journal.state.items.length !== 1 || journal.state.items[0]?.request.stage_id !== 'test_task')
+        throw new Error('Expected the configured single tester wave after validator completion');
+      const tester = journal.state.items[0];
+      const evidenceRef = 'local://fixture/synthetic-tester-caller-report';
+      const summary = JSON.stringify({
+        schema: 'VidaTesterVerdict/v1',
+        status: 'pass',
+        evidence_refs: [evidenceRef],
+      });
+      await reportFocused(tester, summary, 'reported_complete', evidenceRef, 'fixture:synthetic-tester-caller-report');
+      journal = requireSnapshot(ledger.issueWave(id, 1, journal.version));
+      if (journal.state.items.length !== 1 || journal.state.items[0]?.request.stage_id !== 'prepare_delivery')
+        throw new Error('Expected the configured single delivery proposal wave after tester completion');
+      const delivery = journal.state.items[0],
+        deliveryEvidence = 'local://fixture/synthetic-delivery-proposal';
+      await reportFocused(
+        delivery,
+        JSON.stringify({
+          schema: 'VidaDeliveryProposal/v1',
+          created: [],
+          modified: ['AGENT.sidecar.md'],
+          deploy: ['AGENT.sidecar.md'],
+          do_not_deploy: [],
+          destination: 'isolated-fixture',
+          order: ['AGENT.sidecar.md'],
+          post_deployment_checks: ['Synthetic caller proposal only; no deployment or Runtime acceptance.'],
+          evidence_refs: [deliveryEvidence],
+        }),
+        'reported_complete',
+        deliveryEvidence,
+        'fixture:synthetic-delivery-proposal',
+      );
+    }
     await bridge.close();
     bridge = undefined;
 

@@ -1,4 +1,4 @@
-import { test, expect } from 'bun:test';
+import { test, expect, spyOn } from 'bun:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -683,12 +683,13 @@ test('public final assurance commits three synthetic review reverse pairs at a r
           config_digest: work.binding.config_digest,
           ac_ids: work.binding.ac_ids,
           observed_at: new Date().toISOString(),
-          observer_id: 'fixture-observer',
+          observer_id: 'synthetic-caller-report-fixture',
           status: 'pass',
           evidence_refs: ['local://fixture/current-source'],
           observations: labels.map((mechanic) => ({
             mechanic,
-            actual: 'Explicit isolated current contract fixture observation',
+            actual:
+              'Synthetic typed fixture input; no native planning, research, or documentation observation occurred.',
             evidence_ref: 'local://fixture/current-source',
           })),
           gaps: [],
@@ -978,6 +979,147 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     );
   }
 }, 90000);
+
+// Fresh admission, writer completion and dependent reports share the measured fixture's composite budget.
+test('direct Source preparation recovers interrupted packet publication from the completed current Journal', async () => {
+  const f = await createFailedFinalCorrectionFixture('passing');
+  let completed = false;
+  let bodyFailure: { error: unknown } | undefined;
+  try {
+    const before = f.store.readHostStateSnapshot(f.identity),
+      journal = f.store.readWorkSessionJournal(f.identity);
+    if (!journal || !before.workVersion || !before.ledgerVersion)
+      throw new Error('Expected fresh persisted Host and Journal state before direct preparation.');
+    assert.ok(journal.state.source_scope);
+    expect(f.store.readFinalAssurance(f.identity, 1)).toBeNull();
+    expect(journal.state.work_id).toBe(f.identity.work_id);
+    expect(journal.state.source_scope?.digest).toBe(
+      snapshotDeclaredSources(requireSafeRepositoryAccess(f.root), currentWork(before).lifecycle.scope.allowed_paths)
+        .digest,
+    );
+    const reports = journal.state.completed.flatMap((wave) => wave.items),
+      validators = reports.filter((item) => item.request.stage_id === 'validate_focused'),
+      tester = reports.filter((item) => item.request.stage_id === 'test_task'),
+      writer = reports.find((item) => item.request.stage_id === 'develop_task');
+    expect(validators).toHaveLength(2);
+    expect(validators.every((item) => item.observation?.status === 'reported_complete')).toBe(true);
+    expect(validators.every((item) => item.issue_id === item.observation?.issue_id)).toBe(true);
+    expect(
+      validators.map((item) => {
+        const value: unknown = JSON.parse(item.observation!.summary);
+        const verdict = z
+          .object({
+            schema: z.literal('VidaValidatorVerdict/v1'),
+            verdict: z.literal('pass'),
+            findings: z.array(z.string()).length(0),
+            evidence_refs: z.array(z.string()),
+          })
+          .strict()
+          .parse(value);
+        expect(verdict.evidence_refs).toEqual(item.observation!.evidence_refs);
+        return verdict.verdict;
+      }),
+    ).toEqual(['pass', 'pass']);
+    expect(tester).toHaveLength(1);
+    expect(tester[0]?.observation?.status).toBe('reported_complete');
+    expect(tester[0]?.issue_id).toBe(tester[0]?.observation?.issue_id);
+    const testerReport: unknown = JSON.parse(tester[0]!.observation!.summary);
+    expect(testerReport).toEqual({
+      schema: 'VidaTesterVerdict/v1',
+      status: 'pass',
+      evidence_refs: tester[0]!.observation!.evidence_refs,
+    });
+    expect(writer?.observation?.status).toBe('reported_complete');
+    expect(writer?.host_reservation).toBeDefined();
+    expect(writer?.observation?.host_attempt_id).toBe(writer?.host_reservation?.receipt.attempt.attempt_id);
+    expect(currentWork(before).execution.assignment_attempts[0]?.status).toBe('completed');
+
+    expect(f.store.readFinalAssurance(f.identity, 1)).toBeNull();
+    const preparation = {
+      root: f.root,
+      config: f.config,
+      store: f.store,
+      identity: f.identity,
+      journal: { ...journal, resume_status: mastraLedgerStatus(journal.state) },
+      preparationPath: f.preparationPath,
+    };
+    const interruption = new Error('Controlled interruption before assurance CAS.'),
+      publication = spyOn(f.store, 'compareAndSwapFinalAssurance').mockImplementationOnce(() => {
+        throw interruption;
+      });
+    let interruptedFailure: { error: unknown } | undefined;
+    try {
+      let observed: { error: unknown } | undefined;
+      try {
+        prepareFinalAssurance(preparation);
+      } catch (error) {
+        observed = { error };
+      }
+      expect(observed?.error).toBe(interruption);
+      expect(publication).toHaveBeenCalledTimes(1);
+    } catch (error) {
+      interruptedFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            publication.mockRestore();
+            return undefined;
+          },
+        ],
+        interruptedFailure,
+      );
+    }
+    expect(f.store.readFinalAssurance(f.identity, 1)).toBeNull();
+    const interruptedHost = f.store.readHostStateSnapshot(f.identity),
+      interruptedWork = currentWork(interruptedHost),
+      interruptedPacket = interruptedWork.lifecycle.references.find(
+        (reference) => reference.kind === 'review_packet' && reference.disposition === 'current',
+      );
+    expect(interruptedWork.lifecycle.phase).toBe('VERIFY');
+    assert.ok(interruptedPacket?.path);
+    const retainedPacket = readFileSync(path.join(f.root, interruptedPacket.path));
+    expect(createHash('sha256').update(retainedPacket).digest('hex')).toBe(interruptedPacket.sha256);
+    const prepared = expectReturned(() => prepareFinalAssurance(preparation));
+    const persisted = f.store.readFinalAssurance(f.identity, 1),
+      after = f.store.readHostStateSnapshot(f.identity),
+      work = currentWork(after);
+    expect(persisted).toEqual(prepared);
+    expect(persisted).not.toBeNull();
+    expect(prepared.state.packet.work_id).toBe(f.identity.work_id);
+    expect(prepared.state.packet.attempt).toBe(1);
+    expect(prepared.state.packet.scope_id).toBe(work.binding.scope_id);
+    expect(prepared.state.packet.implementation_fingerprint).toBe(journal.state.source_scope.digest);
+    expect(work.lifecycle.phase).toBe('VERIFY');
+    const packetReference = work.lifecycle.references.find(
+      (reference) => reference.kind === 'review_packet' && reference.disposition === 'current',
+    );
+    assert.ok(packetReference?.path);
+    const packetBytes = readFileSync(path.join(f.root, packetReference.path)),
+      packetValue: unknown = JSON.parse(packetBytes.toString('utf8'));
+    expect(createHash('sha256').update(packetBytes).digest('hex')).toBe(packetReference.sha256);
+    expect(canonicalJson(packetValue)).toBe(canonicalJson(prepared.state.packet));
+    expect(packetBytes).toEqual(retainedPacket);
+    expect(packetReference).toEqual(interruptedPacket);
+    expect(after).toEqual(interruptedHost);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journal);
+    completed = true;
+  } catch (error) {
+    bodyFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          f.close(completed);
+          return undefined;
+        },
+      ],
+      bodyFailure,
+    );
+  }
+}, 20000);
 
 // Real admission, writer completion and two durable failed validators exceed the default five-second case budget.
 test('failed final correction preparation consumes persisted Host and CAS-bound failed Journal evidence', async () => {

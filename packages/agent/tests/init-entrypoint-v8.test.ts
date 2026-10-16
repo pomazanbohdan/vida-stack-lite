@@ -164,6 +164,36 @@ test('init CLI rejects an omitted project mapping before creating integration st
   }
 });
 
+test.each([true, false])(
+  'callable initializer help bypasses parsing and initialization with Bun runtime %j',
+  async (bunRuntime) => {
+    let initialized = false;
+    const cli = cliHarness({
+      bunRuntime,
+      delegate: () => {
+        throw new Error('Help must not delegate to another runtime.');
+      },
+      initialize: () => {
+        initialized = true;
+        throw new Error('Help must not initialize a project.');
+      },
+    });
+    await cli.run(['--help']);
+    expect(initialized).toBe(false);
+    expect(cli.exit.exitCode).toBeUndefined();
+    expect(cli.messages.err).toEqual([]);
+    expect(cli.messages.out).toHaveLength(1);
+    const help: unknown = JSON.parse(cli.messages.out[0]!);
+    expect(help).toMatchObject({
+      schema: 'VidaAgentCommandResult/v1',
+      status: 'help',
+      command: 'init',
+      syntax:
+        'vida-agent init --project-root ABSOLUTE_PATH --repository SLUG --project ID=RELATIVE_ROOT [--project ID=RELATIVE_ROOT] [--reconcile-existing]',
+    });
+  },
+);
+
 test('public init help works without project configuration', () => {
   const result = spawnSync(process.execPath, [path.join(packageRoot, 'bin/vida-agent.ts'), 'init', '--help'], {
     encoding: 'utf8',
@@ -197,7 +227,13 @@ test('initializer entrypoint help works without project configuration or file mu
     expect(result.status).toBe(0);
     expect(result.stderr).toBe('');
     const help: unknown = JSON.parse(result.stdout);
-    expect(help).toMatchObject({ schema: 'VidaAgentCommandResult/v1', status: 'help', command: 'init' });
+    expect(help).toMatchObject({
+      schema: 'VidaAgentCommandResult/v1',
+      status: 'help',
+      command: 'init',
+      syntax:
+        'vida-agent init --project-root ABSOLUTE_PATH --repository SLUG --project ID=RELATIVE_ROOT [--project ID=RELATIVE_ROOT] [--reconcile-existing]',
+    });
     expect(readdirSync(projectRoot)).toEqual([]);
     completed = true;
   } finally {

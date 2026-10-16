@@ -146,6 +146,10 @@ export async function main({
   delegate,
 }: InitMainOptions = {}): Promise<void> {
   if (!isMain) return;
+  if (args[0] === '--help') {
+    await printHelp(args, io, 'init');
+    return;
+  }
   if (!bunRuntime) {
     await runNodeCli({ args, io, exit, delegate });
     return;
@@ -158,5 +162,4 @@ async function printHelp(args: string[], io: InitIo, command: string): Promise<v
   io.log(JSON.stringify(cliMetadataResult([command, ...args], {})));
 }
 
-if (import.meta.main && process.argv[2] === '--help') await printHelp(process.argv.slice(2), console, 'init');
-else await main();
+await main();
