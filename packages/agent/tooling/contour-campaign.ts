@@ -135,11 +135,19 @@ export async function executeContourCampaign(
   record: (step: Step) => void,
 ): Promise<{ complete: boolean; steps: Step[] }> {
   const steps: Step[] = [];
+  const completeCoverage = new Set<string>();
   // Finish the inexpensive diagnostic pass before spending mutation budgets.
   for (const lanes of [['coverage', 'frozen-crap'], ['mutation']] as const) {
     for (const partition of partitions) {
       for (const lane of lanes) {
-        const outcome = await execute(partition, lane);
+        const outcome: CampaignOutcome =
+          lane === 'frozen-crap' && !completeCoverage.has(partition.name)
+            ? {
+                state: 'gap',
+                detail: 'Same-campaign coverage did not complete at exact maximum; no CRAP producer launched.',
+              }
+            : await execute(partition, lane);
+        if (lane === 'coverage' && outcome.state === 'completed') completeCoverage.add(partition.name);
         const step = { contour: partition.name, lane, outcome };
         record(step);
         steps.push(step);

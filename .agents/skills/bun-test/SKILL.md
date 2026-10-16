@@ -35,6 +35,16 @@ run/attempt/artifact identity and ZIP digest; never copy Source into dist, compi
 locally, rewrite a receipt or disable freshness. Transport preparation is not
 Runtime acceptance. Do not print temporary signed URLs or credential bytes.
 
+After a focused producer terminates, use the maintained contour progress CLI's
+`--coverage-run <focused.json>` to import its matching operation outcome and
+print concise metrics in one step. Do not dump complete instrumented maps just
+to read totals. Preserve the actual BLOCKED/FAIL/UNKNOWN status independently
+of coverage. Reuse `campaignProcessState` in session launchers and separately
+check unchanged boot identity; do not duplicate a weaker custody/log predicate.
+Let the campaign record frozen CRAP as GAP when its coverage lane is nonexact,
+then continue independent mutation. Do not launch CRAP merely to reconfirm that
+known coverage prerequisite failure.
+
 ## Design a regression
 
 For YAML/configured-root fixtures, follow [TESTING's fixture contract](../../../packages/agent/TESTING.md#new-and-modified-files).

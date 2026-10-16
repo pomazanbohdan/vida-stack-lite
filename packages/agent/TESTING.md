@@ -1367,6 +1367,9 @@ The campaign first runs declared focused coverage and same-run scoped frozen
 CRAP per contour, then every selected partition's existing mutation pilot. It
 preserves full Source/test selections and the existing evidence owners. Missing
 pinned scope reviews remain GAP; failed coverage does not silently skip mutation.
+If the coverage lane is not completed at its exact maximum, record frozen CRAP
+as GAP without launching that producer. Continue independent mutation lanes;
+UNKNOWN custody and resource denial still fence every successor.
 The outer coverage envelope is330s around its existing300s owner; mutation uses
 its independent900s partition/930s outer envelope. Per-test defaults stay5s.
 These are separate budgets, not a five-minute allowance for the entire campaign.
@@ -1449,8 +1452,17 @@ Failed/partial/UNKNOWN runs retain the prior achieved numbers and exact closure;
 never combine individual maxima from different inputs. Missing evidence is
 unknown, never zero. No currentness is claimed without the existing owner proof.
 
-Use repeated `--report <JSON>` to import existing producer reports. For an older
-mutation summary that omitted executed tests, supply its actual retained
+Use repeated `--report <JSON>` to import existing producer reports. For a
+focused coverage run, `--coverage-run <focused.json>` imports the diagnostic and
+its sibling `operation-outcomes/<run-id>.json` together. It requires matching
+run, contour and Source/test/tool fingerprints before publication. The concise
+CLI result includes F/L/S/B counters, measured CC/function-entry CRAP and the
+actual operation status. BLOCKED, FAIL and UNKNOWN remain separate operation
+observations; numeric counters never promote them to PASS. This reads retained
+reports only and adds no Source/AST/hash scan or test run. Use this option for
+new focused-run imports; retain `--report` for other owner-issued artifacts.
+
+For an older mutation summary that omitted executed tests, supply its actual retained
 `--selection <partition.inputs.json>` v3 descriptor. It must match the summary's
 input/source/test/tool bindings; today's registry alone cannot establish what
 an old run executed. `--commit <SHA>` binds explicit imports without a Git scan;

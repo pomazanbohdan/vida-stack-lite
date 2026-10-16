@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `bb4345e`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2); proof-aware contour-reader and global admission remain open. Fresh final-assurance and init measurements atbb4345e improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `236df35`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2); proof-aware contour-reader and global admission remain open. Fresh final-assurance and init measurements at236df35 improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,64 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Script workflow reduction, 2026-10-16
+
+The owner requested analysis and implementation of avoidable scripting steps
+from the preceding three hours. Root reviewed the actual recent correction
+packets and active launch/import scripts; blind Luna independently audited the
+same bounded tooling contour. Vex is absent on this host, so navigation used
+current bounded Source reads without a cold index build.
+
+The existing progress CLI now accepts `--coverage-run <focused.json>`. One
+explicit path replaces the separate diagnostic/outcome paths and manual raw
+report reads: it loads each retained report once, binds run/contour and all three
+captured fingerprints, then imports both through the unchanged projection owner.
+It prints concise F/L/S/B, measured CC/function-entry CRAP and actual operation
+status. This adds no Source/AST/hash pass, suite, evidence admission or shared
+writer. Missing or mismatched outcomes reject before snapshot publication.
+
+The campaign records frozen CRAP as GAP without launching a producer after
+noncompleted coverage; later independent mutation still runs. UNKNOWN custody
+and resource denial retain their successor fence. Four active session launchers
+now use the existing `campaignProcessState` instead of duplicated weaker health
+predicates; both direct/group termination and untruncated captures are required.
+The temporary uncovered-entry diagnostic rejects malformed counters/missing
+locations. Host-specific launchers remain outside maintained product Source.
+
+Root's first focused check `quality-rolling-cli-check-06m1ij` passes128/0tests,
+589assertions with complete captures, closed groups and unchanged boot. It uses
+the repaired development launcher; initial strict typing exposed one unknown
+record narrowing error, corrected before this run. Strict503files, TS-only504
+and full Oxlint pass. Additional custody negative assertions and final review
+are recorded with the completed packet; no performance speedup is inferred.
+
+The new import successfully joins actual236df35 assurance run
+`14c4b2c7-8f9c-46fa-bc5e-344196af2091` and its BLOCKED operation outcome,
+raising the projection to423attempts. Owned `native-coverage-contour-H9bbnS`
+completed68056.78702ms with complete captures, closed groups and unchanged boot;
+13/0tests,299assertions; F93/94,L317/325,S352/363,B281/305. No frozen CRAP
+producer was repeated against these known nonexact metrics. Local historical
+triples remain6/45; native reader revision is isolated and unqualified.
+
+Final script packet check `quality-rolling-cli-check-o6E00C` passes128/0tests,
+592assertions with complete captures, closed groups and unchanged boot.
+The additional typed capture fixture required an explicit complete-discriminant
+guard; strict503, TS-only504 and full Oxlint pass after correction. Blind Luna
+review `luna-script-steps-review-v38-20261016.md` found no blocking issue; its
+Markdown-preservation and direct-termination/truncation controls are included.
+The campaign prerequisite refers to its own exact coverage lane result, not
+the separate operation-status observation; those evidence classes stay distinct.
+TESTING and the project Bun skill now direct subsequent agents to the shared
+predicate, paired import and known-prerequisite skip. No targeted full campaign
+or native projection is activated by these workflow changes.
+
+The second actual paired import joins236df35 init run
+`00a95045-5167-4519-bb35-1c34e9dae776` and its BLOCKED outcome, yielding425attempts.
+Owned `native-coverage-contour-68VPKu` completed44779.444306ms with complete
+captures, closed groups and unchanged boot;59/0tests,354assertions;
+F84/84,L302/326,S322/353,B166/211. Every function is entered, but lines,
+statements and branches remain nonexact, so no frozen CRAP producer is repeated.
 
 ### Rolling five-lane repair queue
 

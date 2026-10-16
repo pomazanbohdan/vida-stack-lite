@@ -180,9 +180,19 @@ test('settled known failures, gaps and timeouts preserve remaining independent l
       ({ contour, lane }) => recorded.push(`${contour}:${lane}`),
     );
     expect(result.complete).toBe(true);
-    expect(calls).toHaveLength(6);
+    expect(calls).toEqual([
+      'lane-a:coverage',
+      'lane-b:coverage',
+      'lane-b:frozen-crap',
+      'lane-a:mutation',
+      'lane-b:mutation',
+    ]);
     expect(recorded).toHaveLength(6);
     expect(result.steps[0]?.outcome.state).toBe(state);
+    expect(result.steps[1]?.outcome).toEqual({
+      state: 'gap',
+      detail: 'Same-campaign coverage did not complete at exact maximum; no CRAP producer launched.',
+    });
   }
 });
 
@@ -230,8 +240,20 @@ test('process timeout, output gap and raw mutation evidence stay distinct from c
   expect(campaignProcessState(processResult())).toBe('completed');
   expect(campaignProcessState(processResult({ timedOut: true }))).toBe('timeout');
   expect(campaignProcessState(processResult({ output_capture: { complete: false } }))).toBe('failed');
+  for (const stream of ['stdout', 'stderr'] as const) {
+    const result = processResult();
+    const capture = result.output_capture;
+    if (!capture?.complete) throw new Error('Fixture requires complete capture.');
+    capture[stream].truncated = true;
+    expect(campaignProcessState(result)).toBe('failed');
+  }
   expect(campaignProcessState(processResult({ exitCode: 1 }))).toBe('failed');
   expect(campaignProcessState(processResult({ processCustody: null }))).toBe('unknown');
+  expect(
+    campaignProcessState(
+      processResult({ processCustody: { ...processResult().processCustody!, terminationObserved: false } }),
+    ),
+  ).toBe('unknown');
   expect(
     campaignProcessState(
       processResult({ processCustody: { ...processResult().processCustody!, processGroupTerminationObserved: false } }),

@@ -48,6 +48,104 @@ function coverage() {
     ],
   };
 }
+
+test.each(['PASS', 'FAIL', 'UNKNOWN', 'BLOCKED'])(
+  'coverage-run imports the bound pair and preserves actual %s operation status',
+  (status) => {
+    const root = mkdtempSync(path.join(tmpdir(), 'contour-run-pair-'));
+    let passed = false;
+    try {
+      const report = {
+        ...coverage(),
+        source_fingerprint: 'c'.repeat(64),
+        test_fingerprint: 'd'.repeat(64),
+      };
+      const file = path.join(root, 'coverage.json');
+      mkdirSync(path.join(root, 'operation-outcomes'));
+      writeFileSync(file, JSON.stringify(report));
+      writeFileSync(
+        path.join(root, 'operation-outcomes', report.run_id + '.json'),
+        JSON.stringify({
+          schema: 'VidaBunCoverageOperationOutcome/v1',
+          run_id: report.run_id,
+          status,
+          selection: { contour: report.test_selection.contour, fingerprint: report.test_fingerprint },
+          input_fingerprints: {
+            source: report.source_fingerprint,
+            tests: report.test_fingerprint,
+            tools: report.tool_fingerprint,
+          },
+        }),
+      );
+      const output = path.join(root, 'published');
+      const args = ['--coverage-run', file, '--output', output, '--commit', receipt.commit];
+      runContourProgress(args, root);
+      const bytes = readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8');
+      const snapshot = mergeContourProgress(JSON.parse(bytes) as unknown, []);
+      expect(snapshot.attempts).toHaveLength(2);
+      expect(snapshot.attempts.find((row) => row.lane === 'coverage-outcome')).toMatchObject({
+        status,
+        accepted: false,
+      });
+      expect(snapshot.attempts.find((row) => row.lane === 'coverage')).toMatchObject({
+        coverage: { functions: { covered: 1, total: 1 } },
+        commit: receipt.commit,
+      });
+      runContourProgress(args, root);
+      expect(readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8')).toBe(bytes);
+      passed = true;
+    } finally {
+      if (passed) rmSync(root, { recursive: true });
+    }
+  },
+);
+
+test.each(['missing', 'schema', 'run', 'contour', 'source', 'tests', 'tools', 'selection', 'unsafe'])(
+  'coverage-run rejects %s binding before publication',
+  (kind) => {
+    const root = mkdtempSync(path.join(tmpdir(), 'contour-run-denial-'));
+    let passed = false;
+    try {
+      const report = {
+        ...coverage(),
+        source_fingerprint: 'c'.repeat(64),
+        test_fingerprint: 'd'.repeat(64),
+      };
+      const outcome = {
+        schema: 'VidaBunCoverageOperationOutcome/v1',
+        run_id: report.run_id,
+        status: 'BLOCKED',
+        selection: { contour: report.test_selection.contour, fingerprint: report.test_fingerprint },
+        input_fingerprints: {
+          source: report.source_fingerprint,
+          tests: report.test_fingerprint,
+          tools: report.tool_fingerprint,
+        },
+      };
+      if (kind === 'schema') outcome.schema = 'foreign';
+      if (kind === 'run') outcome.run_id = 'foreign';
+      if (kind === 'contour') outcome.selection.contour = 'main-core';
+      if (kind === 'source' || kind === 'tests' || kind === 'tools') outcome.input_fingerprints[kind] = 'e'.repeat(64);
+      if (kind === 'selection') outcome.selection.fingerprint = 'e'.repeat(64);
+      if (kind === 'unsafe') report.run_id = '../foreign';
+      const file = path.join(root, 'coverage.json');
+      mkdirSync(path.join(root, 'operation-outcomes'));
+      writeFileSync(file, JSON.stringify(report));
+      if (kind !== 'missing')
+        writeFileSync(path.join(root, 'operation-outcomes/coverage-1.json'), JSON.stringify(outcome));
+      const output = path.join(root, 'published');
+      runContourProgress(['--output', output], root);
+      const before = readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8');
+      const markdownBefore = readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8');
+      expect(() => runContourProgress(['--coverage-run', file, '--output', output], root)).toThrow();
+      expect(readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8')).toBe(before);
+      expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toBe(markdownBefore);
+      passed = true;
+    } finally {
+      if (passed) rmSync(root, { recursive: true });
+    }
+  },
+);
 function mutation() {
   return {
     source_inputs: [digest('src/config/host-capability.ts'), digest('src/contracts/envelopes.ts')],

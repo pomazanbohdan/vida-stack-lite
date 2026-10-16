@@ -96,6 +96,39 @@ function withSelections(value: unknown, selections: { file: string; value: unkno
   };
 }
 
+/** Read a retained diagnostic/outcome pair without rescanning Source or promoting operation status. */
+function coverageRun(file: string, report: unknown): { file: string; value: unknown } {
+  if (
+    !isRecord(report) ||
+    report.schema !== 'VidaBunFocusedCoverageDiagnostic/v1' ||
+    typeof report.run_id !== 'string' ||
+    !/^[a-zA-Z0-9_-]+$/u.test(report.run_id) ||
+    !isRecord(report.test_selection)
+  )
+    throw new Error('Expected a focused coverage diagnostic with a safe run identity.');
+  const outcomeFile = path.join(path.dirname(file), 'operation-outcomes', report.run_id + '.json');
+  const outcome = load(outcomeFile);
+  const fingerprints = isRecord(outcome) ? outcome.input_fingerprints : undefined;
+  if (
+    !isRecord(outcome) ||
+    outcome.schema !== 'VidaBunCoverageOperationOutcome/v1' ||
+    outcome.run_id !== report.run_id ||
+    !isRecord(outcome.selection) ||
+    outcome.selection.contour !== report.test_selection.contour ||
+    !isRecord(fingerprints) ||
+    !['source', 'test', 'tool'].every((name) => {
+      const fingerprint = report[name + '_fingerprint'];
+      const key = name === 'source' ? 'source' : name + 's';
+      return (
+        typeof fingerprint === 'string' && /^[a-f0-9]{64}$/u.test(fingerprint) && fingerprints[key] === fingerprint
+      );
+    }) ||
+    outcome.selection.fingerprint !== report.test_fingerprint
+  )
+    throw new Error('Coverage operation outcome differs from its diagnostic.');
+  return { file: outcomeFile, value: outcome };
+}
+
 /** Producer output only: independent per-run files avoid a shared writer during frozen/parallel execution. */
 export function recordContourReport(root: string, report: unknown, artifact: string): void {
   const attempts = contourAttempts(report, { artifact, commit: 'not-captured', recorded_at: new Date().toISOString() });
@@ -122,13 +155,17 @@ export function runContourProgress(
   let snapshotPath: string | undefined;
   let commit = 'not-captured';
   let recordedAt = new Date().toISOString();
-  const reports: string[] = [];
+  const reports: { file: string; pair: boolean }[] = [];
   const selections: { file: string; value: unknown }[] = [];
   for (let index = 0; index < args.length; index++) {
     const name = args[index];
     const value = args[++index];
-    if (!value) throw new Error('Expected --report, --selection, --snapshot, --output, --commit or --at with a value.');
-    if (name === '--report') reports.push(path.resolve(value));
+    if (!value)
+      throw new Error(
+        'Expected --report, --coverage-run, --selection, --snapshot, --output, --commit or --at with a value.',
+      );
+    if (name === '--report' || name === '--coverage-run')
+      reports.push({ file: path.resolve(value), pair: name === '--coverage-run' });
     else if (name === '--selection') selections.push({ file: path.resolve(value), value: load(path.resolve(value)) });
     else if (name === '--snapshot') snapshotPath = path.resolve(value);
     else if (name === '--output') output = path.resolve(value);
@@ -153,10 +190,34 @@ export function runContourProgress(
       incoming.push(...observation.attempts);
     }
   }
-  for (const file of reports)
-    incoming.push(
-      ...contourAttempts(withSelections(load(file), selections), { artifact: file, commit, recorded_at: recordedAt }),
-    );
+  const coverageRuns: unknown[] = [];
+  for (const { file, pair } of reports) {
+    const value = load(file);
+    const attempts = contourAttempts(withSelections(value, selections), {
+      artifact: file,
+      commit,
+      recorded_at: recordedAt,
+    });
+    incoming.push(...attempts);
+    if (pair) {
+      const outcome = coverageRun(file, value);
+      const outcomeAttempts = contourAttempts(outcome.value, {
+        artifact: outcome.file,
+        commit,
+        recorded_at: recordedAt,
+      });
+      incoming.push(...outcomeAttempts);
+      for (const attempt of attempts)
+        coverageRuns.push({
+          contour: attempt.contour,
+          run_id: attempt.run_id,
+          coverage: attempt.coverage,
+          max_cc: attempt.max_cc,
+          max_entry_crap: attempt.max_entry_crap,
+          operation_status: outcomeAttempts[0]!.status,
+        });
+    }
+  }
   snapshot = mergeContourProgress(snapshot, incoming);
   const document = renderContourProgress(snapshot);
   mkdirSync(output, { recursive: true });
@@ -168,6 +229,7 @@ export function runContourProgress(
       schema: snapshot.schema,
       attempts: snapshot.attempts.length,
       report: path.join(output, 'CONTOUR-STATUS.md'),
+      ...(coverageRuns.length ? { coverage_runs: coverageRuns } : {}),
     }) + '\n',
   );
 }
