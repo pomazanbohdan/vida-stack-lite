@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `e268cf0`, including the reviewed late-assurance binding correction at05952f9 and its exact scoped correspondence pin. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `94c70ee`, including the script reuse corrections and failed-tester fixture. Fresh assurance/init coverage below improves locally; neither is exact. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,65 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Coverage module-union repair and rolling fixture extensions
+
+CI SDK run38972696381 attempt1 succeeds for94c70ee, artifact12077168831,
+ZIP SHA eb746619cd625473189273e21603afde0de13531e2890f9f0c76b75d2c135604.
+The maintained readiness owner prepares it in the clean numeric checkout without
+a local build. Assurance `9b85fc72-ac5d-435d-8e37-9af6e3b3e7b8` (`Gpe22z`)
+passes14/0tests,375assertions in78135ms outer: F95/95, L323/325, S360/364,
+B291/305, maxCC/entryCRAP32. Init `4cb73e6e-f7c2-408c-916c-73e1d695bde4`
+(`AZ3NGn`) passes64/0tests in44600ms: F84/84, L304/326, S324/353,
+B168/211, maxCC/entryCRAP12. Both have complete captures, closed scopes and
+unchanged boot; operation statuses remain BLOCKED. The terminal import grows
+the projection to437attempts; local triples stay6/45. Nonexact coverage does not
+launch a redundant frozen check.
+
+Blind Luna lanes v67-v79 prepare/review independent script, initialization,
+storage and assurance scopes without competing commands or Source writers.
+Coverage now keeps each Source's inventory directly from the original Babel
+Program callback in a Map, avoiding a flattened inventory rescan per Source.
+The exact expected Source JSON comparison is cached lazily at its original
+short-circuit boundary. Byte capture, AST count, hashes, guards and custody stay.
+Blind v75 finds no demonstrated regression; lower-value shard/test-membership
+rewrites are deferred without changing their validation order.
+
+Selected coverage checks `YoGCf1` first find6failures from raw untrusted text in
+tool placeholders that are also maintained TypeScript Source. The synthetic
+owner now emits valid inert TypeScript while retaining its untrusted marker.
+The next `39G7Da` run exposes5remaining failures: `capturedModuleInputs` repeated
+an exact logical module path when it belonged to both Source and tooling, causing
+the downstream alias guard to reject valid captures. Unit RED `P8dOss` confirms
+the duplicate row. The shared owner now unions exact logical paths once and
+rejects conflicting digests; separate category evidence and physical alias
+guards remain. Blind v76/v77 confirm the cause and boundary. Final affected
+`quality-rolling-cli-check-1i2eGw` passes80/0tests,273assertions across6files in
+6934ms, complete captures/closed scopes/same boot. This repairs tooling admission,
+not global quality qualification or Runtime unblock.
+
+The existing real v2-upgrade fixture now exercises pending-to-bound public binding
+and byte-preserving repeat through its configured unified database and exact close
+owner. Its Host uses the actual project set and a deny-all maintenance verifier
+to read existing release proof. Another case injects one pre-entry EEXIST, then
+uses the real lock/CAS with2attempts/1callback/1replacement and unchanged Host rows.
+Existing fixtures also cover repository-ID edges, escaped-capability revocation,
+Host/Mastra source-binding denial before deserialize, six retired review/reverse
+references, and a linked initializer root. First `6okjWN` finds two fixture errors:
+the symlink reaches the earlier non-link guard, and v2 Host lacked project authority.
+Root corrects both; `Zfm0Co` passes108/0tests,804assertions across5files in27891ms.
+Blind v78 finds a dual-error cleanup mask; Root uses completeOwnedCleanup to retain
+both body and close errors, including undefined, then explicitly rethrows a lone
+body error. Strict typing catches its void-returning cleanup callback; Root returns
+undefined explicitly. Final v2 case `3YtHHf` passes1/0,9assertions in8671ms; v78
+marks the finding resolved. Refreshed strict505/TS-only506 and full Oxlint pass.
+
+The assurance extension uses the persisted source-planner/read-only item, rather
+than a validator whose test.read policy intentionally fails readonly eligibility.
+Blind v79 verifies that distinction; selected `zqHYz8` passes1/0,41assertions in
+17608ms. These changes preserve real persistence, CAS, ownership, authorization,
+UNKNOWN retention and existing test deadlines. Fresh numeric evidence follows
+publication and matching SDK formation; no new closure is claimed from assertions.
 
 ### Script optimization and failed-tester correction fixture
 

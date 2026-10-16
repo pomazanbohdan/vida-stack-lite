@@ -244,6 +244,9 @@ describe('native existing-storage admission boundary', () => {
     expect(result).toBe('admitted');
     expect(callbacks).toBe(1);
     expect(() => escapedCapability?.assertActive()).toThrow(/callback capability expired/u);
+    expect(() => assertExistingStorageMergeCapability(escapedCapability)).toThrow(
+      /merge capability was not minted by the Host fence owner/u,
+    );
     expect(readdirSync(fixture.root)).toEqual(['.vida']);
     try {
       expect(fenceVerificationReceivers.size).toBeGreaterThan(0);

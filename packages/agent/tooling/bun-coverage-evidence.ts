@@ -1494,9 +1494,15 @@ export function capturedModuleInputs(
   inputs: Pick<CoverageInputs, 'sources' | 'test_inputs' | 'tool_inputs'>,
 ): InputDigest[] {
   const executable = /\.(?:js|mjs|cjs|jsx|ts|mts|cts|tsx|json|txt|yaml|yml|toml|md|svg|png|jpe?g|webp|wasm|xml|csv)$/u;
-  return [...inputs.sources, ...inputs.test_inputs, ...inputs.tool_inputs]
-    .filter((entry) => executable.test(entry.path) && !/\.d\.(?:mts|cts|ts)$/u.test(entry.path))
-    .sort((left, right) => left.path.localeCompare(right.path));
+  const modules = new Map<string, InputDigest>();
+  for (const entry of [...inputs.sources, ...inputs.test_inputs, ...inputs.tool_inputs]) {
+    if (!executable.test(entry.path) || /\.d\.(?:mts|cts|ts)$/u.test(entry.path)) continue;
+    const previous = modules.get(entry.path);
+    if (previous && previous.sha256 !== entry.sha256)
+      throw new Error('Captured module input digest conflicts across categories: ' + entry.path);
+    modules.set(entry.path, entry);
+  }
+  return [...modules.values()].sort((left, right) => left.path.localeCompare(right.path));
 }
 
 export function qualityFingerprint(

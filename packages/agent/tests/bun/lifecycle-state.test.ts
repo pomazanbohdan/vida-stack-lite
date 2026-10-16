@@ -1555,6 +1555,12 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         'user-testing-receipt',
         'delivery-feedback',
         'delivery-correction',
+        'review-2-1',
+        'review-2-2',
+        'review-2-3',
+        'reverse-2-1',
+        'reverse-2-2',
+        'reverse-2-3',
       ])
         expect(deliveryCorrected.lifecycle.references.find((item) => item.record_id === recordId)?.disposition).toBe(
           'retired',

@@ -84,7 +84,13 @@ export async function createSyntheticCoverageFixture(
       );
     for (const file of coverageToolInputs) {
       if (file === '.bun-version' || file === 'package.json') continue;
-      write(root, file, 'UNTRUSTED SYNTHETIC TOOL INPUT\n');
+      write(
+        root,
+        file,
+        file.endsWith('.ts')
+          ? '// UNTRUSTED SYNTHETIC TOOL INPUT\nexport const fixtureToolInput = true;\n'
+          : 'UNTRUSTED SYNTHETIC TOOL INPUT\n',
+      );
     }
     write(root, 'schemas/fixture.schema.json', '{}\n');
     write(root, 'templates/fixture.template.yaml', 'fixture: true\n');

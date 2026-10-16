@@ -353,6 +353,24 @@ async function assertWalImageMerge(walHost: boolean, walMastra: boolean): Promis
 }
 
 describe('existing storage image preparation', () => {
+  test.each([
+    ['Host', 'source_host_digest'],
+    ['Mastra', 'source_mastra_digest'],
+  ] as const)('rejects a %s source binding mismatch before opening either SQLite image', async (label, field) => {
+    const host = makeHost();
+    const mastra = await makeMastra();
+    const opening = spyOn(Database, 'deserialize');
+    try {
+      await expectRejection(
+        prepareUnifiedExistingStorageImage(host, mastra, { ...binding(host, mastra), [field]: '0'.repeat(64) }),
+        new RegExp(label + ' source binding differs', 'u'),
+      );
+      expect(opening).not.toHaveBeenCalled();
+    } finally {
+      opening.mockRestore();
+    }
+  });
+
   test('preserves source rows including duplicate values, exact BLOBs, large integers, and AUTOINCREMENT sequence', async () => {
     const host = makeHost();
     const mastra = await makeMastra();

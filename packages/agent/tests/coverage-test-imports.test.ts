@@ -4,9 +4,24 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { coverageInputs, coverageToolInputs, sha256 } from '../tooling/bun-coverage-evidence.ts';
+import { capturedModuleInputs, coverageInputs, coverageToolInputs, sha256 } from '../tooling/bun-coverage-evidence.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+test('captured module union binds a shared Source/tool once and rejects conflicting byte identities', () => {
+  const shared = { path: 'bin/shared.ts', sha256: sha256('shared Source/tool bytes') };
+  const selectedTest = { path: 'tests/fixture.test.ts', sha256: sha256('test bytes') };
+  const tool = { path: 'tooling/fixture.ts', sha256: sha256('tool bytes') };
+  const inputs = {
+    sources: [shared],
+    test_inputs: [selectedTest],
+    tool_inputs: [tool, { ...shared }],
+  };
+  expect(capturedModuleInputs(inputs)).toEqual([shared, selectedTest, tool]);
+  expect(() =>
+    capturedModuleInputs({ ...inputs, tool_inputs: [tool, { ...shared, sha256: sha256('foreign bytes') }] }),
+  ).toThrow(/Captured module input digest conflicts across categories/u);
+});
 
 async function captureTest(source: string, extension = 'ts'): Promise<void> {
   const root = mkdtempSync(path.join(tmpdir(), 'coverage-import-boundary-'));

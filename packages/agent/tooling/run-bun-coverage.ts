@@ -1306,7 +1306,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     if (fixtureDependencyLink) symlinkSync(path.join(root, 'node_modules'), fixtureDependencyLink, 'dir');
     for (const directory of fixtureOutputs) mkdirSync(directory, { recursive: true, mode: 0o700 });
     const sourceMapEntries: [string, FileCoverageData][] = [];
-    const focusedFunctions: FunctionRow[] = [];
+    const focusedFunctions = new Map<string, FunctionRow[]>();
     const instrumentedSources: InstrumentedSourceDigest[] = [];
     let instrumentedTotalBytes = 0;
     for (const entry of evidence.sources) {
@@ -1317,7 +1317,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       const transformed = instrumentSource(
         absolute,
         source,
-        focused ? (ast) => focusedFunctions.push(...functionInventory(source, entry.path, ast)) : undefined,
+        focused ? (ast) => focusedFunctions.set(entry.path, functionInventory(source, entry.path, ast)) : undefined,
       );
       const artifactBytes = Buffer.from(transformed.code, 'utf8');
       if (
@@ -1526,6 +1526,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       const processReceipts: { file: string; pid: number; shard_id: 'bun-test'; sha256: string }[] = [];
       const expectedPaths = evidence.sources.map((entry) => path.resolve(root, entry.path)).sort();
       const expectedPathSet = new Set(expectedPaths);
+      let expectedSourceIdentity: string | undefined;
       const manifestDigest = sha256(readFileSync(manifestPath));
       for (const name of reportFiles) {
         const reportPath = path.join(reportDirectory, name);
@@ -1545,7 +1546,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
           report.test_fingerprint !== manifest.test_fingerprint ||
           report.tool_fingerprint !== manifest.tool_fingerprint ||
           report.runtime_executable_sha256 !== manifest.runtime_executable_sha256 ||
-          JSON.stringify(report.sources) !== JSON.stringify(evidence.sources)
+          JSON.stringify(report.sources) !== (expectedSourceIdentity ??= JSON.stringify(evidence.sources))
         )
           reportRejected('Foreign or stale per-process coverage report: ' + name);
         if (typeof report.pid !== 'number' || !Number.isSafeInteger(report.pid) || report.pid < 1)
@@ -1628,7 +1629,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
                     .toJSON(),
                   functions: baselineFunctionEvidenceForSource(
                     entry.path,
-                    focusedFunctions.filter((row) => row.file === entry.path),
+                    focusedFunctions.get(entry.path) ?? [],
                     fileCoverage,
                   ),
                 };

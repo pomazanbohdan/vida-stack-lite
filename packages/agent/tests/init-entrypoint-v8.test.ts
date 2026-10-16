@@ -268,7 +268,7 @@ test('Node CLI delegates the same arguments to pinned Bun and preserves its exit
   expect(cli.messages).toEqual({ out: [], err: [] });
 });
 
-test('public initializer rejects a relative project root before initialization', async () => {
+test('public initializer rejects relative and linked project roots before initialization', async () => {
   const failure: unknown = await initializeProject({
     projectRoot: 'relative',
     repository: 'candidate',
@@ -279,6 +279,20 @@ test('public initializer rejects a relative project root before initialization',
   );
   expect(failure).toBeInstanceOf(Error);
   expect(failure).toHaveProperty('message', 'Initialization requires an explicit canonical absolute project root');
+  const parent = mkdtempSync(path.join(tmpdir(), 'vida-init-linked-root-'));
+  try {
+    const target = path.join(parent, 'target');
+    const alias = path.join(parent, 'alias');
+    mkdirSync(target);
+    symlinkSync(target, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    await expectRejection(
+      initializeProject({ projectRoot: alias, repository: 'candidate', projectMappings: ['candidate'] }),
+      /repository root must be a non-link directory/u,
+    );
+    expect(readdirSync(target)).toEqual([]);
+  } finally {
+    rmSync(parent, { recursive: true, force: true });
+  }
 });
 
 test('public initializer reads executing-package resources through the maintained package reader', async () => {

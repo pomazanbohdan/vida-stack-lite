@@ -28,6 +28,7 @@ import type { MastraLedgerItem } from '../src/orchestration/persistent-session-h
 import type { FinalAssuranceReport } from '../src/orchestration/final-assurance.ts';
 import { mastraLedgerStatus } from '../src/orchestration/persistent-session-handoff.ts';
 import {
+  eligibleReadonlyRelinquishment,
   finalAssuranceReceiptReferences,
   prepareFinalAssurance,
   prepareLifecycleForCorrection,
@@ -1035,6 +1036,9 @@ test('direct Source preparation recovers interrupted packet publication from the
     expect(validators).toHaveLength(2);
     expect(validators.every((item) => item.observation?.status === 'reported_complete')).toBe(true);
     expect(validators.every((item) => item.issue_id === item.observation?.issue_id)).toBe(true);
+    const readonlyReview = reports.find((item) => item.request.role === 'source-planner');
+    expect(readonlyReview?.observation?.status).toBe('reported_complete');
+    expect(eligibleReadonlyRelinquishment(f.config, readonlyReview!)).toBe(true);
     expect(
       validators.map((item) => {
         const value: unknown = JSON.parse(item.observation!.summary);

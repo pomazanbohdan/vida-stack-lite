@@ -27,6 +27,7 @@ import {
 } from '../../src/runtime-initialization.ts';
 import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
+import { PROJECT_WORKSPACE_DATABASE_PATH, sessionHandoffDatabaseRelativePath } from '../../src/config/project-paths.js';
 import { deriveWorkspaceId, WorkspaceIdentityError } from '../../src/workspace-identity.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
@@ -35,6 +36,7 @@ import type { RuntimeInitializationReceipt } from '../../src/config/initializati
 import { fixtureInitializationTemplates } from '../helpers/runtime-initialization-fixture.ts';
 import { makeFreshRepository } from '../helpers/project-upgrade-fixture.js';
 import { expectAsyncReturned, expectReturned } from '../helpers/expect-rejection.ts';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.ts';
 
 type Racer = {
   child: ChildProcess;
@@ -168,6 +170,9 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
     rmSync(other, { recursive: true, force: true });
   }
   expect(() => deriveWorkspaceId('Invalid Repository ID', root)).toThrow('repository identity is invalid');
+  expect(expectReturned(() => deriveWorkspaceId('another-repository', root))).not.toBe(receipt.workspace_id);
+  expect(expectReturned(() => deriveWorkspaceId('a'.repeat(64), root))).toMatch(/^[a-f0-9]{64}$/u);
+  expect(() => deriveWorkspaceId('a'.repeat(65), root)).toThrow('repository identity is invalid');
   expect(() => deriveWorkspaceId(receipt.repository_id, 'relative/root')).toThrow(WorkspaceIdentityError);
   expect(() => deriveWorkspaceId(receipt.repository_id, null as unknown as string)).toThrow(WorkspaceIdentityError);
   const missingRoot = path.join(root, 'missing-repository-root');
@@ -244,6 +249,43 @@ test('reads v2 initialization authority from a completed real project upgrade', 
     workspace_id: authority.binding.workspace_id,
     current_config_digest: authority.binding.config_digest,
   });
+  const databaseRelativePath = sessionHandoffDatabaseRelativePath(projectConfig);
+  expect(databaseRelativePath).toBe(PROJECT_WORKSPACE_DATABASE_PATH);
+  const bindingDatabase = openHostStateDatabase(projectRoot, databaseRelativePath, authority.binding.workspace_id);
+  let bindingFailure: { error: unknown } | undefined;
+  try {
+    const bindingStore = new HostStateStore(
+      bindingDatabase,
+      authority.binding.workspace_id,
+      undefined,
+      undefined,
+      undefined,
+      {
+        principal: 'test-owner: runtime initialization binding',
+        projectIds: projectConfig.projects.map(({ project_id }) => project_id).sort(),
+        verify: () => null,
+      },
+      projectRoot,
+    );
+    const bound = await expectAsyncReturned(() => bindRuntimeInitialization(projectRoot, bindingStore));
+    expect(bound).toEqual({ ...authority.receipt, workspace_binding_status: 'bound' });
+    const boundBytes = readFileSync(projectReceiptPath);
+    expect(boundBytes).toEqual(Buffer.from(JSON.stringify(bound, null, 2) + '\n'));
+    expect(await expectAsyncReturned(() => bindRuntimeInitialization(projectRoot, bindingStore))).toEqual(bound);
+    expect(readFileSync(projectReceiptPath)).toEqual(boundBytes);
+  } catch (error) {
+    bindingFailure = { error };
+  }
+  completeOwnedCleanup(
+    [
+      () => {
+        closeWorkspaceDatabaseWithAdmission(bindingDatabase);
+        return undefined;
+      },
+    ],
+    bindingFailure,
+  );
+  if (bindingFailure) throw bindingFailure.error;
   caseCompleted = true;
 }, 10_000);
 
@@ -685,6 +727,57 @@ test('binding preserves a non-Error replacement failure and retries only after r
   expect(JSON.parse(boundBytes.toString('utf8'))).toEqual(bound);
   expect(await expectAsyncReturned(() => bindRuntimeInitialization(root, store))).toEqual(bound);
   expect(readFileSync(receiptPath)).toEqual(boundBytes);
+  caseCompleted = true;
+});
+
+test('binding retries one pre-entry lock collision and performs exactly one real receipt replacement', async () => {
+  const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
+  const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
+  const originalSafeExports = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
+  const receiptRelative = path.relative(root, receiptPath).replaceAll('\\', '/');
+  const hostBefore = database!.query('SELECT * FROM agent_host_state').all();
+  let lockAttempts = 0;
+  let callbackEntries = 0;
+  let replacements = 0;
+  try {
+    await mock.module(safeModuleUrl, () => ({
+      ...originalSafeExports,
+      requireSafeRepositoryAccess: (requestedRoot: string) => {
+        const access = originalSafeExports.requireSafeRepositoryAccess(requestedRoot);
+        if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+        return {
+          ...access,
+          withExclusiveLockAsync: async <T>(target: string, label: string, operation: () => Promise<T>) => {
+            if (target !== receiptRelative) return access.withExclusiveLockAsync(target, label, operation);
+            lockAttempts++;
+            if (lockAttempts === 1) throw Object.assign(new Error('pre-entry lock collision'), { code: 'EEXIST' });
+            return access.withExclusiveLockAsync(target, label, async () => {
+              callbackEntries++;
+              return operation();
+            });
+          },
+          replaceAtomicAsync: async (...args: Parameters<typeof access.replaceAtomicAsync>) => {
+            replacements++;
+            return access.replaceAtomicAsync(...args);
+          },
+        };
+      },
+    }));
+    const isolated = (await import(
+      `${initModuleUrl}?pre-entry-retry=${randomUUID()}`
+    )) as typeof import('../../src/runtime-initialization.ts');
+    const bound = await expectAsyncReturned(() => isolated.bindRuntimeInitialization(root, store));
+    expect(bound).toEqual({ ...receipt, workspace_binding_status: 'bound' });
+    expect(readFileSync(receiptPath, 'utf8')).toBe(JSON.stringify(bound, null, 2) + '\n');
+    expect({ lockAttempts, callbackEntries, replacements }).toEqual({
+      lockAttempts: 2,
+      callbackEntries: 1,
+      replacements: 1,
+    });
+    expect(database!.query('SELECT * FROM agent_host_state').all()).toEqual(hostBefore);
+  } finally {
+    await mock.module(safeModuleUrl, () => originalSafeExports);
+  }
   caseCompleted = true;
 });
 

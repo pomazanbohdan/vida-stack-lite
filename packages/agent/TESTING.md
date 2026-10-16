@@ -12,6 +12,12 @@ Read operational status from the current work and release evidence. Version
 text and passing Source checks do not prove installation or Runtime acceptance.
 Keep dated runs, failed logs and audit history in their evidence stores.
 Preserve FAIL and UNKNOWN. Missing numeric reports remain explicit gaps.
+Coverage inputs retain distinct Source, test and tool categories. Their derived
+runtime module union contains each exact logical path once; conflicting digests
+fail, and distinct physical aliases still reach the existing alias guards.
+Synthetic tool placeholders that are also selected TypeScript Source must be
+valid inert TypeScript. Keep their untrusted marker; capture/instrumentation does
+not turn synthetic fixtures into producer proof.
 An expected-UNKNOWN fixture remains retained even when its denial assertions
 pass. Its test owner marks retention separately from successful case completion.
 For serial cases, an onTestFinished assertion can check exact retained bytes

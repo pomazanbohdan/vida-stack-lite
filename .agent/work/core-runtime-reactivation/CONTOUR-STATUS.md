@@ -33,12 +33,12 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-session-handoff | 189/277 · 509/877 · 560/959 · 382/791 | 29 / 870 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-facade | 24/24 · 89/89 · 104/104 · 104/104 | 10 / 10 | 318/318 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 10 / 10 | local triple recorded |
 | bun-lifecycle-state | 29/29 · 184/184 · 193/193 · 129/129 | 21 / 21 | 521/877 (fail; raw runner Killed; unqualified) | BLOCKED | open / unknown | 21 / 21 | open / unknown |
-| bun-final-assurance | 94/94 · 321/325 · 356/363 · 284/305 | 33 / 33 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-final-assurance | 95/95 · 323/325 · 360/364 · 291/305 | 32 / 32 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-initialization | 18/18 · 87/88 · 99/102 · 53/56 | 9 / 9 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-development-controller | 49/62 · 180/243 · 192/273 · 194/282 | 17 / 132 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-public-entrypoints | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-cli-toolchain | 38/39 · 247/265 · 271/299 · 317/397 | 34 / 34 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
-| bun-cli-init | 84/84 · 303/326 · 323/353 · 167/211 | 12 / 12 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-cli-init | 84/84 · 304/326 · 324/353 · 168/211 | 12 / 12 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-run | 44/557 · 205/2863 · 219/3143 · 217/3663 | 501 / 21756 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-doc-clear | 42/46 · 199/230 · 228/281 · 170/229 | 44 / 44 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-observed-validation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
@@ -571,6 +571,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | 14c4b2c7-8f9c-46fa-bc5e-344196af2091 | 236df3573cb304d88f7f0327a84d478a7fb37eb6 | 2026-10-16T20:39:47.536Z | focused-diagnostic; owner accepted locally; selection bound | 93/94 · 317/325 · 352/363 · 281/305 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/14c4b2c7-8f9c-46fa-bc5e-344196af2091.focused-coverage.json |
 | coverage-outcome | da38c7f4-17f5-4f03-8f05-923504ed9611 | bbb777e97a7fa896604cec80f2ff8075a93ec734 | 2026-10-16T21:28:14.280Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/da38c7f4-17f5-4f03-8f05-923504ed9611.json |
 | coverage | da38c7f4-17f5-4f03-8f05-923504ed9611 | bbb777e97a7fa896604cec80f2ff8075a93ec734 | 2026-10-16T21:28:14.280Z | focused-diagnostic; owner accepted locally; selection bound | 94/94 · 321/325 · 356/363 · 284/305 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/da38c7f4-17f5-4f03-8f05-923504ed9611.focused-coverage.json |
+| coverage-outcome | 9b85fc72-ac5d-435d-8e37-9af6e3b3e7b8 | 94c70ee3c4e56d372ead36f439179ed8a1811adf | 2026-10-16T22:00:46.403Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/9b85fc72-ac5d-435d-8e37-9af6e3b3e7b8.json |
+| coverage | 9b85fc72-ac5d-435d-8e37-9af6e3b3e7b8 | 94c70ee3c4e56d372ead36f439179ed8a1811adf | 2026-10-16T22:00:46.403Z | focused-diagnostic; owner accepted locally; selection bound | 95/95 · 323/325 · 360/364 · 291/305 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/9b85fc72-ac5d-435d-8e37-9af6e3b3e7b8.focused-coverage.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
@@ -669,6 +671,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | 00a95045-5167-4519-bb35-1c34e9dae776 | 236df3573cb304d88f7f0327a84d478a7fb37eb6 | 2026-10-16T20:42:03.378Z | focused-diagnostic; owner accepted locally; selection bound | 84/84 · 302/326 · 322/353 · 166/211 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/00a95045-5167-4519-bb35-1c34e9dae776.focused-coverage.json |
 | coverage-outcome | 31ed5299-71c8-412d-86de-f98bb469d5c2 | bbb777e97a7fa896604cec80f2ff8075a93ec734 | 2026-10-16T21:29:28.747Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/31ed5299-71c8-412d-86de-f98bb469d5c2.json |
 | coverage | 31ed5299-71c8-412d-86de-f98bb469d5c2 | bbb777e97a7fa896604cec80f2ff8075a93ec734 | 2026-10-16T21:29:28.747Z | focused-diagnostic; owner accepted locally; selection bound | 84/84 · 303/326 · 323/353 · 167/211 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/31ed5299-71c8-412d-86de-f98bb469d5c2.focused-coverage.json |
+| coverage-outcome | 4cb73e6e-f7c2-408c-916c-73e1d695bde4 | 94c70ee3c4e56d372ead36f439179ed8a1811adf | 2026-10-16T22:02:15.109Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/4cb73e6e-f7c2-408c-916c-73e1d695bde4.json |
+| coverage | 4cb73e6e-f7c2-408c-916c-73e1d695bde4 | 94c70ee3c4e56d372ead36f439179ed8a1811adf | 2026-10-16T22:02:15.109Z | focused-diagnostic; owner accepted locally; selection bound | 84/84 · 304/326 · 324/353 · 168/211 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/4cb73e6e-f7c2-408c-916c-73e1d695bde4.focused-coverage.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
