@@ -92,6 +92,11 @@ a mixed property, map every prior validator and assertion to its new owner;
 broad unknown-value generation does not replace individually corrupted valid
 requests. Keep private config/context capabilities in the configured Cedar tests,
 and preserve historical retired receipt selection separately from active files.
+For dependency-fault controls, retain the real dependency operation and observe
+its result before altering a diagnostic view. Label malformed dependency output
+explicitly; restore a scoped prototype spy before invoking captured validators.
+Check a normal operation afterward. Never turn fixture health, matcher misuse or
+missing result-property access into mutation-kill evidence.
 Use the existing `expectReturned` helper for expected-success synchronous setup
 inside a test body; do not construct the mutable subject at module scope.
 The shared synchronous helper uses `doesNotThrow`; the real-adapter control

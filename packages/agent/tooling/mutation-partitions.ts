@@ -46,7 +46,11 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
     {
       name: 'main-public-ingress',
       sources: ['src/contracts/public-ingress.ts'],
-      tests: ['tests/public-ingress-boundary.test.ts', 'tests/fuzz-public-ingress.test.ts'],
+      tests: [
+        'tests/public-ingress-boundary.test.ts',
+        'tests/fuzz-public-ingress.test.ts',
+        'tests/public-ingress-error-fallback.test.ts',
+      ],
     },
     {
       name: 'main-envelopes',

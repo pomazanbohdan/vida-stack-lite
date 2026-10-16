@@ -210,7 +210,11 @@ test('contract and fuzz scenarios are selected by their source owners', () => {
   expect(config?.tests).toContain('tests/fuzz-config.test.ts');
   expect(publicIngress).toMatchObject({
     sources: ['src/contracts/public-ingress.ts'],
-    tests: ['tests/public-ingress-boundary.test.ts', 'tests/fuzz-public-ingress.test.ts'],
+    tests: [
+      'tests/public-ingress-boundary.test.ts',
+      'tests/fuzz-public-ingress.test.ts',
+      'tests/public-ingress-error-fallback.test.ts',
+    ],
   });
   expect(envelopes).toMatchObject({
     sources: ['src/contracts/envelopes.ts'],

@@ -233,6 +233,16 @@ main-contracts selector retains its historical fuzz.test.ts path for receipt
 interpretation only; it must never launch an archived suite. Changed selections
 require new receipts and do not rewrite old observations or replay paths.
 
+Ingress residual controls isolate lexical timestamp rejection from native parsing,
+and inject one parsed-null value among valid evidence values. Keep exact native
+error assertions and restore parser spies before normal-call controls. Verify
+object/non-null results before property access so an empty return is an attributable
+assertion failure. The separate error-fallback file wraps a real schema validator:
+only after false with nonempty real diagnostics does it expose a nonmutating
+malformed diagnostic view. This tests defensive formatter fallbacks, not valid
+Ajv ErrorObject data. Restore the compile spy before public calls, then verify
+normal vendor diagnostics. No fake validator success or capability is permitted.
+
 Timing invalid-input cases must observe absence of side effects, not only the
 fallback error code. Give non-string message/code values a counted slice getter,
 and invalid clock/threshold values a counted coercion hook. Require zero reads

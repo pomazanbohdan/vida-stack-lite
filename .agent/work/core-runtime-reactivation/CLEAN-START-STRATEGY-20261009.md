@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `2b52b09`; current correction details are in WORK.
+- Published predecessor: `e27d653`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. The fresh host/timing pilots used accepted d320564 CI inputs. Changed inputs need matching CI formation; WORK owns run/artifact receipts.
 - Historical run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Preserve its custody and all older UNKNOWN evidence; do not replay it. Current attempts and source bindings are in WORK and the derived contour document.

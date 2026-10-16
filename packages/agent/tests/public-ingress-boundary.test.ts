@@ -36,6 +36,105 @@ function required<T>(value: T | undefined, label: string): T {
 }
 const projectBinding = required(project.project_bindings[0], 'a configured project binding');
 describe('direct maintained-source completeness', () => {
+  test('timestamp grammar rejects embedded matches before native parsing', () => {
+    const timestamp = '2026-10-15T00:00:00Z';
+    const parserResult = Date.UTC(2098, 0, 1);
+    const parse = spyOn(Date, 'parse').mockReturnValue(parserResult);
+    try {
+      assert.deepEqual(
+        [
+          expectReturned(() => rfc3339TimestampMilliseconds('x' + timestamp)),
+          expectReturned(() => rfc3339TimestampMilliseconds(timestamp + 'x')),
+        ],
+        [null, null],
+      );
+      assert.deepEqual(parse.mock.calls, []);
+      assert.equal(
+        expectReturned(() => rfc3339TimestampMilliseconds(timestamp)),
+        parserResult,
+      );
+      assert.deepEqual(parse.mock.calls, [[timestamp]]);
+    } finally {
+      parse.mockRestore();
+    }
+    assert.equal(
+      expectReturned(() => rfc3339TimestampMilliseconds(timestamp)),
+      Date.UTC(2026, 9, 15),
+    );
+  });
+
+  test('governed write intent reports every independent schema failure with exact diagnostics', () => {
+    const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
+    const invalid = { ...fixture.intent, operation: 42, payload: null };
+    assert.throws(() => validateGovernedWriteIntent(invalid), {
+      message: 'governed write intent rejected: /operation must be string; /payload must be object',
+    });
+  });
+
+  test('public intent validation rejects one native timestamp parse failure exactly', () => {
+    const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
+    assert.deepEqual(
+      structuredClone(expectReturned(() => validateGovernedWriteIntent(fixture.intent))),
+      structuredClone(fixture.intent),
+    );
+    const failedTimestamp = fixture.intent.approval.approved_at;
+    const builtinParse = Date.parse;
+    const parse = spyOn(Date, 'parse').mockImplementation((text) =>
+      text === failedTimestamp ? Number.NaN : builtinParse(text),
+    );
+    try {
+      assert.throws(() => validateGovernedWriteIntent(fixture.intent), {
+        message: 'governed write intent timestamps invalid',
+      });
+      assert.deepEqual(parse.mock.calls, [[failedTimestamp], [fixture.intent.approval.expires_at]]);
+    } finally {
+      parse.mockRestore();
+    }
+    assert.deepEqual(
+      structuredClone(expectReturned(() => validateGovernedWriteIntent(fixture.intent))),
+      structuredClone(fixture.intent),
+    );
+  });
+
+  test('public request validation rejects one failed evidence timestamp parse exactly', () => {
+    const now = Date.now();
+    const fixture = createGovernedEvidenceFixture(project, now, expectReturned);
+    assert.ok(fixture.receipt);
+    const validRequest = expectReturned(() =>
+      buildGovernedWriteRequest(fixture.intent, fixture.receipt!, fixture.approval),
+    );
+    assert.ok(validRequest !== null && typeof validRequest === 'object');
+    const failedTimestamp = new Date(now - 2_000).toISOString();
+    const request = {
+      ...validRequest,
+      authorization: { ...validRequest.authorization, issued_at: failedTimestamp },
+    };
+    assert.deepEqual(
+      structuredClone(expectReturned(() => validateGovernedWriteRequest(request))),
+      structuredClone(request),
+    );
+    const builtinParse = Date.parse;
+    const parse = spyOn(Date, 'parse').mockImplementation((text) =>
+      text === failedTimestamp ? Number.NaN : builtinParse(text),
+    );
+    try {
+      assert.throws(() => validateGovernedWriteRequest(request), {
+        message: 'governed write evidence timestamps invalid',
+      });
+      assert.deepEqual(parse.mock.calls, [
+        [failedTimestamp],
+        [request.approval.approved_at],
+        [request.approval.expires_at],
+        [request.approval.verified_at],
+      ]);
+    } finally {
+      parse.mockRestore();
+    }
+    assert.deepEqual(
+      structuredClone(expectReturned(() => validateGovernedWriteRequest(request))),
+      structuredClone(request),
+    );
+  });
   test('canonical JSON rejects hostile descriptors and preserves deterministic data', () => {
     expect(expectReturned(() => isPlainRecord({}))).toBe(true);
     expect(expectReturned(() => isPlainRecord(Object.create(null)))).toBe(true);
@@ -766,6 +865,7 @@ describe('direct maintained-source completeness', () => {
     const fixture = createGovernedEvidenceFixture(project, Date.now(), expectReturned);
     assert.ok(fixture.receipt);
     const request = expectReturned(() => buildGovernedWriteRequest(fixture.intent, fixture.receipt!, fixture.approval));
+    assert.ok(request !== null && typeof request === 'object', 'governed write builder must return an object');
     const authorization = { ...request.authorization, tenant: 'foreign-tenant', resourceTenant: 'another-tenant' };
     const operationHash = expectReturned(() =>
       computeWriteOperationHash({

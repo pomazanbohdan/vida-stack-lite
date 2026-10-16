@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `2b52b09` at origin/main.
+- Published predecessor: `e27d653` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -6110,6 +6110,77 @@ unrelated setup instead. Fresh child numeric qualification is the next action;
 all old UNKNOWN and raw-Killed observations retain their original status.
 Five new blind Luna tasks now examine disjoint remaining native-repair, rebind,
 Host, run and safe-access lineage roles while Root owns integration and checks.
+
+## Fresh e27d653 public-ingress cycle
+
+Root froze the published inputs and completed coverage run
+`848b5b6e-0c81-4b97-b45a-1d75a169fd16`: F20/20,L79/79,S91/91,B36/36,
+20tests/5179Bun expectations. Owned receipt mZH3BO records3139.957154ms,
+complete capture, closed process groups and unchanged boot. The scoped frozen
+v1 report passed using386bf6c9 review; max measured CC/entryCRAP is14/14.
+Its historical_measurement_admitted remains false; this conservative Source
+floor proof does not reconstruct the absent original numeric report.
+
+Complete mutation run `d46162cb-5fef-47c5-a40b-f37ed19105f3` endedUNKNOWN:
+335mutants,323assertion-confirmed Killed,10Survived,2UNKNOWN. Raw Stryker325
+Killed is not the confirmed score. Effective confirmed share is96.41791045%.
+Owner `/workspace/attachments/quality-mutation-main-public-ingress-ty61Ik`
+records103931.657438ms, no timeout, complete119558-byte report capture, closed
+groups and unchanged boot. Provenance/source/baseline/report error lists are
+empty. Receipt validation took1583.352239ms with2identity observations and
+1lifecycle analysis. Compared with the earlier64d capture: confirmed share
+73.80281690% ->96.41791045%, UNKNOWN47->2, survivors46->10, outer elapsed
+378086.405582ms ->103931.657438ms. Different Source/tests/denominators are
+explicit:355->335 follows the proven redundant stale-term removal; old receipts
+are not reclassified. The remaining UNKNOWN209/259 are real body TypeErrors
+before an assertion at request.authorization, not setup receipt loss.
+
+Root imported the three owner reports into the maintained projection with
+119observations. Historical complete triples remain4/45;41open,1static,
+1retired. No new contour closure is claimed. Five rolling residual lanes now
+target Ajv diagnostics, selective timestamp parsing, two assertion-shape gaps,
+regex syntax isolation and independent review. Lineage proposals beyond the
+applied40remain external and unintegrated; current counts stay7115/621missing.
+
+## Residual ingress corrections prepared for a fresh run
+
+Root integrated four bounded public-path groups from the five rolling lanes:
+multiple independent intent schema errors with exact ordered diagnostics;
+lexical prefix/suffix rejection with a permissive finite parser control;
+one selective NaN timestamp among valid timestamps for intent/request guards;
+and native object/non-null assertions before the two observed UNKNOWN sites.
+Parser controls delegate other inputs to the original builtin, restore in finally
+and verify subsequent normal validation. All new comparisons/error checks use
+native assertions; unsafe Bun toThrow object-argument drafts were not applied.
+The first two-file check at nvehDJ passed24/0 in368.717899ms.
+
+The two formatter fallback literals now have a bounded dependency-fault control.
+The new file keeps real Ajv compilation and actual false validation with nonempty
+real errors. Only the captured local validator's errors getter exposes explicitly
+malformed path/message diagnostic data; real errors are not mutated. Compile
+spy restoration and identity are checked before public calls, and a fresh normal
+namespace plus ordinary Ajv validation follow. No validator success, capability,
+private export, classifier relaxation or Source change is added. The new file
+belongs to the active ingress selector; retired historical selection is unchanged.
+Independent reviews accepted the actual Root implementation and its limits.
+
+Combined four-file check at
+`/workspace/attachments/quality-rolling-cli-check-Ztuegq` passed96/0,
+5412Bun expectations,736.226995ms outer elapsed with complete capture, closed
+groups and unchanged boot. Strict tests passed459files. No new numeric result or
+mutant kill is claimed from these green originals; Root will run the entire
+declared current contour on the newly published selection. Source inventory and
+caps are unchanged, so no duplicate Source AST/hash pass is needed.
+
+Some workers disclosed prohibited Python use while editing external reports or
+checking their environment. Those operations did not change checkout/Source and
+receive no verification credit; Root used Bun for execution and checks. Prompt-only
+worker guidance is not claimed to prevent tool access. External lineage packets
+remain proposals; none changes the current7115-role plan or numeric acceptance.
+The initial residual commit hook passed formatting and494-file TypeScript but
+rejected two unbound-method warnings in the compile observer. Root switched to
+the existing helper's Reflect.get/type-check pattern and explicit restored-method
+identity observation; the rejected hook created no commit.
 
 ## Historical provenance
 

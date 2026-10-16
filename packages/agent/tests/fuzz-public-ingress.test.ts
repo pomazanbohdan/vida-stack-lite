@@ -98,6 +98,10 @@ describe('deterministic public-ingress fuzz boundaries', () => {
       fc.property(unknownValue, fc.integer({ min: 0, max: validators.length - 1 }), (value, index) => {
         const result = outcome(() => validators[index]!(value));
         if (result.returned) {
+          assert.ok(
+            result.value !== null && typeof result.value === 'object',
+            'successful validator must return an object',
+          );
           expect<unknown>(result.value).toEqual(value);
           if (value !== null && typeof value === 'object') expect(result.value).not.toBe(value);
         }
