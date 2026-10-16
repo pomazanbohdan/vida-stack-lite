@@ -97,6 +97,13 @@ one-to-one and exhaustive. Unpaired current functions require new-function
 budgets, and unpaired published functions require removal dispositions. Do not
 infer correspondence from matching ordinals or body hashes.
 
+Give each inventoried callback or projection its own disposition. A parent row
+does not account for its nested callable. When a new callable extracts original
+inline logic that had no callable identity, review it under the existing
+new-function policy. When an original callable moves into a helper, preserve
+that original identity and ceiling on its actual successor. Added callers or a
+new name do not make that retained role new.
+
 Historical static inventory artifacts can contain both `baseline` and `current`
 arrays. Only the original `baseline` array, corroborated by the published
 measurement and original Source, establishes a frozen retained ceiling. A row

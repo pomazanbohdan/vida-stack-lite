@@ -1,6 +1,6 @@
 # CLEAR execution strategy
 
-Status date: 2026-10-15. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
+Status date: 2026-10-16. This is the single current execution order for the authorized core runtime reactivation work. The backlog retains stable task IDs and priority boundaries. The current evidence projection is in [WORK.md](WORK.md).
 
 ## Objective
 
@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `f3d63b8`; current correction details are in WORK.
+- Published predecessor: `1ca0ec7`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. The fresh host/timing pilots used accepted d320564 CI inputs. Changed inputs need matching CI formation; WORK owns run/artifact receipts.
 - Historical run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Preserve its custody and all older UNKNOWN evidence; do not replay it. Current attempts and source bindings are in WORK and the derived contour document.
@@ -53,12 +53,12 @@ next ready scope or review. Root has published baseline-only per-test custody;
 the actual main-host pilot passed69/69, while public body/JUnit joins remain open.
 The published integration batch moved fourteen mixed completeness cases to their
 source owners and strengthened activated-config, storage-admission, governance
-and documentation-policy denials. Fresh contracts coverage/scoped CRAP passed;
-its1188-mutant campaign hit900s and remains UNKNOWN. Parent assertion causality
-and the reproduced serialization-image defect are corrected in development;
-publish the checked packet, then run one fresh complete existing campaign after
-coverage and same-run scoped CRAP. The final snapshot design respects all prior
-ceilings. A new parent/child join is deferred without measured benefit. Do not
+and documentation-policy denials. The serialization-image correction is published.
+Fresh contracts coverage/scoped CRAP passed at1ca0ec7; the subsequent complete
+1194-mutant attempt also hit900s and remains UNKNOWN without a final report.
+Diagnose that terminal engine/test cost, then select the smallest qualified
+correction using the existing registry and evidence owners. Keep the complete
+Source/test obligation. Do not add a parent/child join without demonstrated need,
 repeat the unchanged campaign or raise its deadline. Root owns Source, shared helpers, registry,
 frozen-plan metadata, documentation, checks and Git. Workers do not run competing
 checks, numerical producers, builds or installs. Exact outcomes live in WORK;
@@ -102,7 +102,10 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds6991roles across149files; installer27<=31, native loaders4<=4,
+The reviewed partial now binds7053roles across149files, with683current and
+178original dispositions still missing. Its original measured report bytes are
+unavailable on this host; static lineage cannot invent those measurements.
+Installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
 The original planner is39<=40 and current-read evidence5<=5; keep

@@ -19,7 +19,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 1 / 1 | local triple recorded |
 | main-config | 338/350 · 924/966 · 977/1024 · 223/266 | 16 / 42 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 3 / 3 | local triple recorded |
-| main-contracts | 102/102 · 296/296 · 326/326 · 152/152 | 14 / 14 | unknown (unknown) | BLOCKED | open / unknown | 14 / 14 | open / unknown |
+| main-contracts | 102/102 · 297/297 · 327/327 · 152/152 | 14 / 14 | unknown (unknown) | BLOCKED | open / unknown | 14 / 14 | open / unknown |
 | main-cedar | 25/25 · 56/56 · 60/60 · 17/17 | 4 / 4 | 189/189 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 4 / 4 | local triple recorded |
 | main-governance | 200/202 · 682/691 · 702/716 · 82/90 | 6 / 6 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | main-mastra | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
@@ -180,6 +180,10 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | ed95214c-20aa-4eea-bc8f-51c022498aee | not-captured | 2026-10-15T23:31:13.482Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/ed95214c-20aa-4eea-bc8f-51c022498aee.json |
 | mutation | 99f3a764-e640-4ed3-8147-b329f8189244 | 7eaebf14d561e08304b48b5348737a4aa5ae7fcb | 2026-10-15T23:48:59.658Z | unknown; unqualified; selection bound | unknown (unknown) | /workspace/attachments/quality-mutation-main-contracts-wvw992/stdout.log |
 | frozen-crap | ed95214c-20aa-4eea-bc8f-51c022498aee | 7eaebf14d561e08304b48b5348737a4aa5ae7fcb | 2026-10-15T23:50:03.334Z | scoped-proof-pass; owner accepted locally; selection bound | 14 / 14 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/ed95214c-20aa-4eea-bc8f-51c022498aee.scoped-crap.json |
+| coverage | 1fa7471a-3e5c-4c8a-b611-fcf1cc9c2286 | 1ca0ec786e0d68251be5ac01080dd7048fd9a744 | 2026-10-16T00:32:31.531Z | focused-diagnostic; owner accepted locally; selection bound | 102/102 · 297/297 · 327/327 · 152/152 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/1fa7471a-3e5c-4c8a-b611-fcf1cc9c2286.focused-coverage.json |
+| coverage-outcome | 1fa7471a-3e5c-4c8a-b611-fcf1cc9c2286 | not-captured | 2026-10-16T00:32:31.540Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/1fa7471a-3e5c-4c8a-b611-fcf1cc9c2286.json |
+| mutation | 36ea3e65-64b2-44fb-8697-361953c594c3 | 1ca0ec786e0d68251be5ac01080dd7048fd9a744 | 2026-10-16T00:47:55.315Z | unknown; unqualified; selection bound | unknown (unknown) | /workspace/attachments/quality-mutation-main-contracts-w8ydMx/stdout.log |
+| frozen-crap | 1fa7471a-3e5c-4c8a-b611-fcf1cc9c2286 | 1ca0ec786e0d68251be5ac01080dd7048fd9a744 | 2026-10-16T00:48:29.029Z | scoped-proof-pass; owner accepted locally; selection bound | 14 / 14 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/1fa7471a-3e5c-4c8a-b611-fcf1cc9c2286.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

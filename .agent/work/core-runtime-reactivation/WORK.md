@@ -1,11 +1,11 @@
 # Core runtime reactivation work
 
-Status date: 2026-10-15. Current execution record, not permission to replay old
+Status date: 2026-10-16. Current execution record, not permission to replay old
 operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `f3d63b8` at origin/main.
+- Published predecessor: `1ca0ec7` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,11 +18,9 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- Reviewed preparation at7fd85e7:6991roles,149Source byte bindings;
-  the82ae51f packet did not change product Source. Older7731-role narration is
-  historical and does not supersede this Source-bound partial.
-  Last broader inventory records736current/178original dispositions missing
-  and19represented static deficits; its earlier total is not a fresh count.
+- The current complete owner inventory at1ca0ec7 has7736functions/149Sources.
+  Reviewed partial7053roles leaves683current/178original dispositions missing,
+  zero stale current IDs,19represented static deficits and2stale Source bindings.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
@@ -5693,16 +5691,81 @@ complete capture, closed groups and unchanged boot. Static selection-completenes
 automation is only a copied advisory proposal using the existing auditor; it adds
 no scan, active gate, implicit broad selection or build/install tests here.
 
-The next numeric attempt must use the changed full selection after publication:
-coverage, same-run scoped CRAP and one complete main-contracts mutation campaign
-under the existing900s cap. Independent current-cost review rejects a new
-parent/child aggregation layer without evidence of benefit. Keep prior UNKNOWN
-and unconfirmed events intact; do not present input/static fixes as an unblock.
+This packet was published as1ca0ec7. Its subsequent complete numeric attempt is
+recorded below. Keep prior UNKNOWN and unconfirmed events intact; input/static
+fixes do not establish an unblock.
 Next-contour revision review also corrected an earlier alarm: max-safe revision
 updates are rejected by post-read validation and the same transaction rolls back.
 An early exhaustion fence is P1 preparation, not a demonstrated persisted unsafe
 revision or incident. Its adjacent paths and direct-row decoding proposals remain
 bounded worker artifacts, not accepted product fixes.
+
+## Current complete contracts attempt and rolling lineage integration
+
+At published1ca0ec7, coverage run1fa7471a-3e5c-4c8a-b611-fcf1cc9c2286 records
+102/102functions,297/297lines,327/327statements and152/152branches. Its same-run
+scoped CRAP passed against immutable review386bf6c9, with maximum CC/CRAP14/14.
+All38selected tests passed with36224assertions. Owned outer5488.995804ms,
+complete output, closed process groups and unchanged boot are recorded at
+`/workspace/attachments/quality-declared-main-contracts-mHk2VO`.
+
+The complete current mutation attempt36ea3e65-64b2-44fb-8697-361953c594c3 is
+terminal UNKNOWN. The full baseline passed in2462ms; Stryker planned1194mutants
+and four runners. Its900000ms inner deadline ended with143 before a final JSON
+report. Receipt validation recorded zero identity/lifecycle observations, so
+parent assertion confirmation did not establish kills. Outer901301.729774ms,
+complete output, both group-termination observations and the same boot are
+retained at `/workspace/attachments/quality-mutation-main-contracts-w8ydMx`.
+No partial event count or report placeholder is a mutation score. The maintained
+projection imported these actual reports and now contains111observations;
+historical complete local triples remain4/44. Do not retry this unchanged
+campaign or increase its deadline. Diagnose the terminal engine/test cost before
+choosing a smaller complete declaration or another qualified execution change.
+
+The maintained inventory's complete149-file capture is
+`/workspace/attachments/quality-current-complete-function-inventory-1ca0ec7-20261016.json`.
+Original static Source was restored from Git archive using only the published
+package manifest, src and bin. The current inventory owner found5701original
+functions/108Sources. Archived code/tools were never executed; this is not a
+recaptured baseline. Static inventory and exact anti-joins are at
+`quality-published-original-static-inventory-20261016.json`,
+`quality-current-unmatched-lineage-1ca0ec7-20261016.json` and
+`quality-original-unmatched-1ca0ec7-20261016.json` under the same attachment root.
+
+After terminal custody, Root joined61independently reviewed new roles using the
+existing prospective10/10policy. The kernel's shared uncertainty persistence
+callback retains the original session callback's1/2ceiling; the second original
+callback is explicitly consolidated into removal, and one obsolete new helper
+row is removed. Existing refresh/pin2/6correspondence remains unchanged. Final
+audit preserves every original field on5433retained rows and records
+1620new/90removed/7053current roles. No stale current IDs remain;683current and
+178original dispositions,19static deficits and2Source bindings remain open.
+The join and audit use existing captured inventories without another AST/hash
+pass. Exact audit and receipt are
+`quality-lineage-applied-audit-v1ca-20261016.json` and
+`quality-lineage-new-roles-join-v1ca-20261016.applied.json` in attachments.
+The partial stays non-executable/non-exhaustive and supplies no dynamic or
+global quality qualification. Missing original report bytes on this host remain
+an evidence gap; do not invent measured coverage/CRAP for newly reviewed pairs.
+
+Root integrated two reviewed public project-path cases for deepest selected
+membership and sibling lexical prefixes. Both expected-success calls use the
+existing assertion helper. The complete file passed17/0 with200assertions in
+owned1593.833188ms, complete output, closed groups and unchanged boot at
+`/workspace/attachments/quality-rolling-cli-check-wkljvl`. The454-file test
+TypeScript program passed. These are development checks, not main-config
+coverage or mutation evidence.
+
+Rolling blind Luna lanes received fresh disjoint scopes/reviews immediately
+after terminal handoffs. Root rejected a false archived-helper claim, corrected
+retained-role budget resets, and retained their reports rather than importing
+them. A worker disclosed Python replacement of its own copied artifact despite
+the brief; no checkout effects or verification credit followed. Source byte
+checks and independent review retained the corrected candidate. Other prepared
+work includes exact rebind/run pairs, Mastra readiness, config cases and a
+descriptor body-plus-close error correction. Unqualified copies do not close
+contours or authorize runtime cutover. The cleanup proposal needs reproduction,
+regressions and caller/correspondence review before Source integration.
 
 ## Historical provenance
 

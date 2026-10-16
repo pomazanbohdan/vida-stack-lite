@@ -215,6 +215,12 @@ before reading its fields. If an impossible Bun name pattern uses
 --pass-with-no-tests, confine that flag to planning and require a nonempty full
 JUnit/registration set, all cases skipped and zero invocations. Keep this
 runtime plan distinct from the static inventory and from the passing baseline.
+Give every inventoried callback its own lineage disposition. A genuinely new
+callable extracted from original inline logic uses the existing prospective
+policy after review. A moved original callable keeps its original ceiling on
+the substantive successor; a thin facade cannot take that allowance instead.
+Do not invent original declarations from names or treat the parent allowance
+as a nested callback's budget. Verify the actual archived Source bytes.
 Use TESTING's per-invocation configured-context fixture for mutation workers;
 keep repository tooling and consumer context roots separate and never reuse
 an archived or another worker's context. Shared package sandboxes alone do not

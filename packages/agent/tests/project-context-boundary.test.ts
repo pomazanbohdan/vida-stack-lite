@@ -20,6 +20,7 @@ import {
   type PathProfileResolutionOptions,
 } from '../src/config/project-context.ts';
 import { configuredTestContext } from './configured-context.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import {
   runtimeConfigDigest,
   resolveAgentRoleProfile,
@@ -231,6 +232,26 @@ describe('project context path boundary', () => {
     ).toEqual([]);
     expect(() => resolveProjectForRepositoryPath(projects, 'outside/../root')).toThrow(/unsafe path segment/);
     expect(() => resolveProjectPathMembership(equalRoots, 'packages/a/../foreign')).toThrow(/unsafe path segment/);
+  });
+
+  test('keeps a nested project boundary when both ancestor and descendant are selected', () => {
+    const projects: PathProfileResolutionEntry[] = [
+      { project_id: 'parent', project_root: 'products' },
+      { project_id: 'foreign', project_root: 'products/foreign' },
+    ];
+    const selected = expectReturned(() =>
+      resolveSelectedProjectForRepositoryPath(projects, 'products/foreign/src/main.ts', ['parent', 'foreign']),
+    );
+    expect(selected).toEqual({ project_id: 'foreign', project_root: 'products/foreign', specificity: 2 });
+  });
+
+  test('does not treat a sibling path prefix as project membership', () => {
+    const projects: PathProfileResolutionEntry[] = [{ project_id: 'billing', project_root: 'services/bill' }];
+    const membership = expectReturned(() => resolveProjectPathMembership(projects, 'services/billing/src/index.ts'));
+    expect(membership).toEqual({ project_ids: [], project_root: null, specificity: -1 });
+    expect(() => resolveProjectForRepositoryPath(projects, 'services/billing/src/index.ts')).toThrow(
+      /not covered by a configured project/,
+    );
   });
 
   test('canonicalizes task project ids without changing project identity', () => {

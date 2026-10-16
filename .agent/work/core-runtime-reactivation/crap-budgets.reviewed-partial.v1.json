@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5434,
-    "new": 1560,
-    "removed": 89,
-    "current_roles": 6994,
+    "retained": 5433,
+    "new": 1620,
+    "removed": 90,
+    "current_roles": 7053,
     "source_files": 149
   },
   "source_bindings": [
@@ -571,7 +571,7 @@
     },
     {
       "file": "src/runtime-kernel.ts",
-      "sha256": "1964f16f3d8d043193206290ecb4ff1660ba7fdc4ff26f4ac201a754572d1ad9"
+      "sha256": "d618904863ed581f1bde014ba9315d9565e84fd76e6b6e32908c5ddb497cbc3d"
     },
     {
       "file": "src/orchestration/mastra-boundary.ts",
@@ -110038,13 +110038,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 121,
+        "line": 123,
         "column": 0,
-        "start": 4789,
-        "end": 5156,
-        "bodyLine": 121,
+        "start": 4945,
+        "end": 5312,
+        "bodyLine": 123,
         "bodyColumn": 75,
-        "bodyEndLine": 132,
+        "bodyEndLine": 134,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110070,13 +110070,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 159,
+        "line": 161,
         "column": 0,
-        "start": 5877,
-        "end": 6178,
-        "bodyLine": 159,
+        "start": 6033,
+        "end": 6334,
+        "bodyLine": 161,
         "bodyColumn": 95,
-        "bodyEndLine": 164,
+        "bodyEndLine": 166,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -110102,13 +110102,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 173,
+        "line": 175,
         "column": 7,
-        "start": 6400,
-        "end": 7305,
-        "bodyLine": 176,
+        "start": 6556,
+        "end": 7461,
+        "bodyLine": 178,
         "bodyColumn": 38,
-        "bodyEndLine": 187,
+        "bodyEndLine": 189,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 5,
@@ -110134,13 +110134,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 182,
+        "line": 184,
         "column": 62,
-        "start": 6983,
-        "end": 7019,
-        "bodyLine": 182,
+        "start": 7139,
+        "end": 7175,
+        "bodyLine": 184,
         "bodyColumn": 71,
-        "bodyEndLine": 182,
+        "bodyEndLine": 184,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -110166,13 +110166,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 211,
+        "line": 213,
         "column": 7,
-        "start": 8248,
-        "end": 8796,
-        "bodyLine": 214,
+        "start": 8404,
+        "end": 8952,
+        "bodyLine": 216,
         "bodyColumn": 20,
-        "bodyEndLine": 221,
+        "bodyEndLine": 223,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -110198,13 +110198,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 224,
+        "line": 226,
         "column": 7,
-        "start": 8894,
-        "end": 9455,
-        "bodyLine": 227,
+        "start": 9050,
+        "end": 9611,
+        "bodyLine": 229,
         "bodyColumn": 39,
-        "bodyEndLine": 233,
+        "bodyEndLine": 235,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -110230,13 +110230,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 236,
+        "line": 238,
         "column": 7,
-        "start": 9556,
-        "end": 10145,
-        "bodyLine": 240,
+        "start": 9712,
+        "end": 10301,
+        "bodyLine": 242,
         "bodyColumn": 17,
-        "bodyEndLine": 247,
+        "bodyEndLine": 249,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -110262,13 +110262,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 250,
+        "line": 252,
         "column": 7,
-        "start": 10257,
-        "end": 10843,
-        "bodyLine": 253,
+        "start": 10413,
+        "end": 10999,
+        "bodyLine": 255,
         "bodyColumn": 46,
-        "bodyEndLine": 259,
+        "bodyEndLine": 261,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -110294,13 +110294,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 298,
+        "line": 300,
         "column": 0,
-        "start": 12429,
-        "end": 12545,
-        "bodyLine": 298,
-        "bodyColumn": 69,
-        "bodyEndLine": 300,
+        "start": 12585,
+        "end": 12714,
+        "bodyLine": 300,
+        "bodyColumn": 82,
+        "bodyEndLine": 302,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -110326,13 +110326,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 318,
+        "line": 320,
         "column": 0,
-        "start": 12998,
-        "end": 13169,
-        "bodyLine": 318,
+        "start": 13145,
+        "end": 13316,
+        "bodyLine": 320,
         "bodyColumn": 70,
-        "bodyEndLine": 320,
+        "bodyEndLine": 322,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -110358,13 +110358,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 321,
+        "line": 323,
         "column": 7,
-        "start": 13177,
-        "end": 13393,
-        "bodyLine": 321,
+        "start": 13324,
+        "end": 13540,
+        "bodyLine": 323,
         "bodyColumn": 102,
-        "bodyEndLine": 323,
+        "bodyEndLine": 325,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110390,13 +110390,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 324,
+        "line": 326,
         "column": 7,
-        "start": 13401,
-        "end": 13628,
-        "bodyLine": 324,
+        "start": 13548,
+        "end": 13775,
+        "bodyLine": 326,
         "bodyColumn": 107,
-        "bodyEndLine": 328,
+        "bodyEndLine": 330,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110422,13 +110422,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 330,
+        "line": 332,
         "column": 7,
-        "start": 13718,
-        "end": 14079,
-        "bodyLine": 330,
+        "start": 13865,
+        "end": 14226,
+        "bodyLine": 332,
         "bodyColumn": 90,
-        "bodyEndLine": 336,
+        "bodyEndLine": 338,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -110454,13 +110454,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 337,
+        "line": 339,
         "column": 0,
-        "start": 14080,
-        "end": 14276,
-        "bodyLine": 341,
+        "start": 14227,
+        "end": 14423,
+        "bodyLine": 343,
         "bodyColumn": 14,
-        "bodyEndLine": 343,
+        "bodyEndLine": 345,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110486,13 +110486,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 344,
+        "line": 346,
         "column": 0,
-        "start": 14277,
-        "end": 14932,
-        "bodyLine": 350,
+        "start": 14424,
+        "end": 15079,
+        "bodyLine": 352,
         "bodyColumn": 8,
-        "bodyEndLine": 361,
+        "bodyEndLine": 363,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110518,13 +110518,13 @@
         "bodyEndColumn": 78
       },
       "current_source_address": {
-        "line": 351,
+        "line": 353,
         "column": 52,
-        "start": 14580,
-        "end": 14606,
-        "bodyLine": 351,
+        "start": 14727,
+        "end": 14753,
+        "bodyLine": 353,
         "bodyColumn": 63,
-        "bodyEndLine": 351,
+        "bodyEndLine": 353,
         "bodyEndColumn": 78
       },
       "baseline_complexity": 1,
@@ -110550,13 +110550,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 362,
+        "line": 364,
         "column": 0,
-        "start": 14933,
-        "end": 16293,
-        "bodyLine": 362,
+        "start": 15080,
+        "end": 16440,
+        "bodyLine": 364,
         "bodyColumn": 75,
-        "bodyEndLine": 383,
+        "bodyEndLine": 385,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -110582,13 +110582,13 @@
         "bodyEndColumn": 100
       },
       "current_source_address": {
-        "line": 373,
+        "line": 375,
         "column": 6,
-        "start": 15555,
-        "end": 15649,
-        "bodyLine": 373,
+        "start": 15702,
+        "end": 15796,
+        "bodyLine": 375,
         "bodyColumn": 21,
-        "bodyEndLine": 373,
+        "bodyEndLine": 375,
         "bodyEndColumn": 100
       },
       "baseline_complexity": 3,
@@ -110614,13 +110614,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 385,
+        "line": 387,
         "column": 0,
-        "start": 16295,
-        "end": 16588,
-        "bodyLine": 385,
+        "start": 16442,
+        "end": 16735,
+        "bodyLine": 387,
         "bodyColumn": 39,
-        "bodyEndLine": 391,
+        "bodyEndLine": 393,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -110646,13 +110646,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 392,
+        "line": 394,
         "column": 0,
-        "start": 16589,
-        "end": 16913,
-        "bodyLine": 392,
+        "start": 16736,
+        "end": 17060,
+        "bodyLine": 394,
         "bodyColumn": 75,
-        "bodyEndLine": 398,
+        "bodyEndLine": 400,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110678,13 +110678,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 401,
+        "line": 403,
         "column": 0,
-        "start": 17008,
-        "end": 17456,
-        "bodyLine": 401,
+        "start": 17155,
+        "end": 17603,
+        "bodyLine": 403,
         "bodyColumn": 112,
-        "bodyEndLine": 409,
+        "bodyEndLine": 411,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110710,13 +110710,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 410,
+        "line": 412,
         "column": 7,
-        "start": 17464,
-        "end": 17678,
-        "bodyLine": 412,
+        "start": 17611,
+        "end": 17825,
+        "bodyLine": 414,
         "bodyColumn": 40,
-        "bodyEndLine": 415,
+        "bodyEndLine": 417,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110742,13 +110742,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 417,
+        "line": 419,
         "column": 0,
-        "start": 17680,
-        "end": 18181,
-        "bodyLine": 417,
+        "start": 17827,
+        "end": 18328,
+        "bodyLine": 419,
         "bodyColumn": 88,
-        "bodyEndLine": 425,
+        "bodyEndLine": 427,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -110774,13 +110774,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 427,
+        "line": 429,
         "column": 0,
-        "start": 18183,
-        "end": 18515,
-        "bodyLine": 430,
+        "start": 18330,
+        "end": 18662,
+        "bodyLine": 432,
         "bodyColumn": 2,
-        "bodyEndLine": 434,
+        "bodyEndLine": 436,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110806,13 +110806,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 436,
+        "line": 438,
         "column": 0,
-        "start": 18517,
-        "end": 18702,
-        "bodyLine": 436,
+        "start": 18664,
+        "end": 18849,
+        "bodyLine": 438,
         "bodyColumn": 72,
-        "bodyEndLine": 439,
+        "bodyEndLine": 441,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110838,13 +110838,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 441,
+        "line": 443,
         "column": 0,
-        "start": 18704,
-        "end": 18929,
-        "bodyLine": 441,
+        "start": 18851,
+        "end": 19076,
+        "bodyLine": 443,
         "bodyColumn": 92,
-        "bodyEndLine": 445,
+        "bodyEndLine": 447,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110870,13 +110870,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 448,
+        "line": 450,
         "column": 7,
-        "start": 19033,
-        "end": 19280,
-        "bodyLine": 448,
+        "start": 19180,
+        "end": 19427,
+        "bodyLine": 450,
         "bodyColumn": 113,
-        "bodyEndLine": 452,
+        "bodyEndLine": 454,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110902,13 +110902,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 455,
+        "line": 457,
         "column": 7,
-        "start": 19392,
-        "end": 19541,
-        "bodyLine": 455,
+        "start": 19539,
+        "end": 19688,
+        "bodyLine": 457,
         "bodyColumn": 96,
-        "bodyEndLine": 458,
+        "bodyEndLine": 460,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110934,13 +110934,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 459,
+        "line": 461,
         "column": 7,
-        "start": 19549,
-        "end": 19706,
-        "bodyLine": 459,
+        "start": 19696,
+        "end": 19853,
+        "bodyLine": 461,
         "bodyColumn": 80,
-        "bodyEndLine": 461,
+        "bodyEndLine": 463,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -110966,13 +110966,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 462,
+        "line": 464,
         "column": 0,
-        "start": 19707,
-        "end": 19990,
-        "bodyLine": 466,
+        "start": 19854,
+        "end": 20137,
+        "bodyLine": 468,
         "bodyColumn": 33,
-        "bodyEndLine": 468,
+        "bodyEndLine": 470,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -110998,13 +110998,13 @@
         "bodyEndColumn": 109
       },
       "current_source_address": {
-        "line": 467,
+        "line": 469,
         "column": 9,
-        "start": 19887,
-        "end": 19987,
-        "bodyLine": 467,
+        "start": 20034,
+        "end": 20134,
+        "bodyLine": 469,
         "bodyColumn": 21,
-        "bodyEndLine": 467,
+        "bodyEndLine": 469,
         "bodyEndColumn": 109
       },
       "baseline_complexity": 1,
@@ -111030,13 +111030,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 469,
+        "line": 471,
         "column": 0,
-        "start": 19991,
-        "end": 20431,
-        "bodyLine": 472,
+        "start": 20138,
+        "end": 20578,
+        "bodyLine": 474,
         "bodyColumn": 41,
-        "bodyEndLine": 482,
+        "bodyEndLine": 484,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -111062,13 +111062,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 473,
+        "line": 475,
         "column": 9,
-        "start": 20151,
-        "end": 20428,
-        "bodyLine": 473,
+        "start": 20298,
+        "end": 20575,
+        "bodyLine": 475,
         "bodyColumn": 27,
-        "bodyEndLine": 481,
+        "bodyEndLine": 483,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -111094,13 +111094,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 483,
+        "line": 485,
         "column": 0,
-        "start": 20432,
-        "end": 21735,
-        "bodyLine": 489,
+        "start": 20579,
+        "end": 21882,
+        "bodyLine": 491,
         "bodyColumn": 31,
-        "bodyEndLine": 510,
+        "bodyEndLine": 512,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -111126,13 +111126,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 502,
+        "line": 504,
         "column": 15,
-        "start": 21315,
-        "end": 21471,
-        "bodyLine": 502,
+        "start": 21462,
+        "end": 21618,
+        "bodyLine": 504,
         "bodyColumn": 37,
-        "bodyEndLine": 505,
+        "bodyEndLine": 507,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -111158,13 +111158,13 @@
         "bodyEndColumn": 106
       },
       "current_source_address": {
-        "line": 506,
+        "line": 508,
         "column": 32,
-        "start": 21505,
-        "end": 21579,
-        "bodyLine": 506,
+        "start": 21652,
+        "end": 21726,
+        "bodyLine": 508,
         "bodyColumn": 38,
-        "bodyEndLine": 506,
+        "bodyEndLine": 508,
         "bodyEndColumn": 106
       },
       "baseline_complexity": 1,
@@ -111190,13 +111190,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 525,
+        "line": 527,
         "column": 7,
-        "start": 22282,
-        "end": 23529,
-        "bodyLine": 530,
+        "start": 22429,
+        "end": 23676,
+        "bodyLine": 532,
         "bodyColumn": 45,
-        "bodyEndLine": 550,
+        "bodyEndLine": 552,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -111222,13 +111222,13 @@
         "bodyEndColumn": 111
       },
       "current_source_address": {
-        "line": 548,
+        "line": 550,
         "column": 24,
-        "start": 23360,
-        "end": 23447,
-        "bodyLine": 548,
+        "start": 23507,
+        "end": 23594,
+        "bodyLine": 550,
         "bodyColumn": 36,
-        "bodyEndLine": 548,
+        "bodyEndLine": 550,
         "bodyEndColumn": 111
       },
       "baseline_complexity": 1,
@@ -111254,13 +111254,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 552,
+        "line": 554,
         "column": 0,
-        "start": 23531,
-        "end": 23776,
-        "bodyLine": 552,
+        "start": 23678,
+        "end": 23923,
+        "bodyLine": 554,
         "bodyColumn": 70,
-        "bodyEndLine": 555,
+        "bodyEndLine": 557,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -111286,13 +111286,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 556,
+        "line": 558,
         "column": 7,
-        "start": 23784,
-        "end": 27058,
-        "bodyLine": 556,
+        "start": 23931,
+        "end": 27205,
+        "bodyLine": 558,
         "bodyColumn": 115,
-        "bodyEndLine": 645,
+        "bodyEndLine": 647,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -111318,13 +111318,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 567,
+        "line": 569,
         "column": 4,
-        "start": 24380,
-        "end": 27034,
-        "bodyLine": 567,
+        "start": 24527,
+        "end": 27181,
+        "bodyLine": 569,
         "bodyColumn": 16,
-        "bodyEndLine": 642,
+        "bodyEndLine": 644,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -111350,13 +111350,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 575,
+        "line": 577,
         "column": 22,
-        "start": 24727,
-        "end": 24812,
-        "bodyLine": 575,
+        "start": 24874,
+        "end": 24959,
+        "bodyLine": 577,
         "bodyColumn": 63,
-        "bodyEndLine": 575,
+        "bodyEndLine": 577,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -111382,13 +111382,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 584,
+        "line": 586,
         "column": 20,
-        "start": 25231,
-        "end": 25548,
-        "bodyLine": 585,
+        "start": 25378,
+        "end": 25695,
+        "bodyLine": 587,
         "bodyColumn": 10,
-        "bodyEndLine": 593,
+        "bodyEndLine": 595,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 1,
@@ -111414,13 +111414,13 @@
         "bodyEndColumn": 13
       },
       "current_source_address": {
-        "line": 587,
+        "line": 589,
         "column": 12,
-        "start": 25302,
-        "end": 25515,
-        "bodyLine": 587,
+        "start": 25449,
+        "end": 25662,
+        "bodyLine": 589,
         "bodyColumn": 24,
-        "bodyEndLine": 591,
+        "bodyEndLine": 593,
         "bodyEndColumn": 13
       },
       "baseline_complexity": 1,
@@ -111446,13 +111446,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 594,
+        "line": 596,
         "column": 28,
-        "start": 25578,
-        "end": 25974,
-        "bodyLine": 595,
+        "start": 25725,
+        "end": 26121,
+        "bodyLine": 597,
         "bodyColumn": 10,
-        "bodyEndLine": 608,
+        "bodyEndLine": 610,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 1,
@@ -111478,13 +111478,13 @@
         "bodyEndColumn": 13
       },
       "current_source_address": {
-        "line": 597,
+        "line": 599,
         "column": 12,
-        "start": 25657,
-        "end": 25941,
-        "bodyLine": 597,
+        "start": 25804,
+        "end": 26088,
+        "bodyLine": 599,
         "bodyColumn": 24,
-        "bodyEndLine": 606,
+        "bodyEndLine": 608,
         "bodyEndColumn": 13
       },
       "baseline_complexity": 1,
@@ -111510,13 +111510,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 609,
+        "line": 611,
         "column": 28,
-        "start": 26004,
-        "end": 26559,
-        "bodyLine": 610,
+        "start": 26151,
+        "end": 26706,
+        "bodyLine": 612,
         "bodyColumn": 10,
-        "bodyEndLine": 625,
+        "bodyEndLine": 627,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 1,
@@ -111542,13 +111542,13 @@
         "bodyEndColumn": 13
       },
       "current_source_address": {
-        "line": 612,
+        "line": 614,
         "column": 12,
-        "start": 26136,
-        "end": 26526,
-        "bodyLine": 612,
+        "start": 26283,
+        "end": 26673,
+        "bodyLine": 614,
         "bodyColumn": 24,
-        "bodyEndLine": 623,
+        "bodyEndLine": 625,
         "bodyEndColumn": 13
       },
       "baseline_complexity": 1,
@@ -111574,13 +111574,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 626,
+        "line": 628,
         "column": 26,
-        "start": 26587,
-        "end": 27017,
-        "bodyLine": 627,
+        "start": 26734,
+        "end": 27164,
+        "bodyLine": 629,
         "bodyColumn": 10,
-        "bodyEndLine": 640,
+        "bodyEndLine": 642,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 1,
@@ -111606,13 +111606,13 @@
         "bodyEndColumn": 13
       },
       "current_source_address": {
-        "line": 629,
+        "line": 631,
         "column": 12,
-        "start": 26678,
-        "end": 26984,
-        "bodyLine": 629,
+        "start": 26825,
+        "end": 27131,
+        "bodyLine": 631,
         "bodyColumn": 24,
-        "bodyEndLine": 638,
+        "bodyEndLine": 640,
         "bodyEndColumn": 13
       },
       "baseline_complexity": 1,
@@ -111638,13 +111638,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 754,
+        "line": 756,
         "column": 0,
-        "start": 31956,
-        "end": 32154,
-        "bodyLine": 754,
+        "start": 32103,
+        "end": 32301,
+        "bodyLine": 756,
         "bodyColumn": 71,
-        "bodyEndLine": 757,
+        "bodyEndLine": 759,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -111670,13 +111670,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 759,
+        "line": 761,
         "column": 0,
-        "start": 32156,
-        "end": 34018,
-        "bodyLine": 759,
+        "start": 32303,
+        "end": 34179,
+        "bodyLine": 761,
         "bodyColumn": 113,
-        "bodyEndLine": 795,
+        "bodyEndLine": 797,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 8,
@@ -111702,14 +111702,14 @@
         "bodyEndColumn": 99
       },
       "current_source_address": {
-        "line": 768,
+        "line": 770,
         "column": 8,
-        "start": 32831,
-        "end": 32922,
-        "bodyLine": 768,
-        "bodyColumn": 23,
-        "bodyEndLine": 768,
-        "bodyEndColumn": 99
+        "start": 32978,
+        "end": 33083,
+        "bodyLine": 770,
+        "bodyColumn": 37,
+        "bodyEndLine": 770,
+        "bodyEndColumn": 113
       },
       "baseline_complexity": 3,
       "baseline_coverage": 1,
@@ -111734,13 +111734,13 @@
         "bodyEndColumn": 89
       },
       "current_source_address": {
-        "line": 782,
+        "line": 784,
         "column": 38,
-        "start": 33576,
-        "end": 33627,
-        "bodyLine": 782,
+        "start": 33737,
+        "end": 33788,
+        "bodyLine": 784,
         "bodyColumn": 53,
-        "bodyEndLine": 782,
+        "bodyEndLine": 784,
         "bodyEndColumn": 89
       },
       "baseline_complexity": 1,
@@ -111766,13 +111766,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 797,
+        "line": 799,
         "column": 0,
-        "start": 34020,
-        "end": 34875,
-        "bodyLine": 797,
+        "start": 34181,
+        "end": 35036,
+        "bodyLine": 799,
         "bodyColumn": 94,
-        "bodyEndLine": 814,
+        "bodyEndLine": 816,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 5,
@@ -111798,13 +111798,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 816,
+        "line": 818,
         "column": 0,
-        "start": 34877,
-        "end": 35281,
-        "bodyLine": 819,
+        "start": 35038,
+        "end": 35442,
+        "bodyLine": 821,
         "bodyColumn": 8,
-        "bodyEndLine": 825,
+        "bodyEndLine": 827,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -111830,13 +111830,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 827,
+        "line": 829,
         "column": 0,
-        "start": 35283,
-        "end": 35450,
-        "bodyLine": 827,
+        "start": 35444,
+        "end": 35611,
+        "bodyLine": 829,
         "bodyColumn": 83,
-        "bodyEndLine": 829,
+        "bodyEndLine": 831,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -111862,13 +111862,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 831,
+        "line": 833,
         "column": 0,
-        "start": 35452,
-        "end": 35649,
-        "bodyLine": 831,
+        "start": 35613,
+        "end": 35810,
+        "bodyLine": 833,
         "bodyColumn": 113,
-        "bodyEndLine": 833,
+        "bodyEndLine": 835,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -111894,13 +111894,13 @@
         "bodyEndColumn": 77
       },
       "current_source_address": {
-        "line": 832,
+        "line": 834,
         "column": 43,
-        "start": 35610,
-        "end": 35644,
-        "bodyLine": 832,
+        "start": 35771,
+        "end": 35805,
+        "bodyLine": 834,
         "bodyColumn": 58,
-        "bodyEndLine": 832,
+        "bodyEndLine": 834,
         "bodyEndColumn": 77
       },
       "baseline_complexity": 1,
@@ -111926,13 +111926,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 835,
+        "line": 837,
         "column": 0,
-        "start": 35651,
-        "end": 36853,
-        "bodyLine": 837,
+        "start": 35812,
+        "end": 37014,
+        "bodyLine": 839,
         "bodyColumn": 43,
-        "bodyEndLine": 855,
+        "bodyEndLine": 857,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -111958,13 +111958,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 857,
+        "line": 859,
         "column": 0,
-        "start": 36855,
-        "end": 38075,
-        "bodyLine": 857,
+        "start": 37016,
+        "end": 38236,
+        "bodyLine": 859,
         "bodyColumn": 96,
-        "bodyEndLine": 885,
+        "bodyEndLine": 887,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -111990,13 +111990,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 887,
+        "line": 889,
         "column": 0,
-        "start": 38077,
-        "end": 38267,
-        "bodyLine": 887,
+        "start": 38238,
+        "end": 38428,
+        "bodyLine": 889,
         "bodyColumn": 72,
-        "bodyEndLine": 889,
+        "bodyEndLine": 891,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -112022,13 +112022,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 891,
+        "line": 893,
         "column": 0,
-        "start": 38269,
-        "end": 38913,
-        "bodyLine": 891,
+        "start": 38430,
+        "end": 39074,
+        "bodyLine": 893,
         "bodyColumn": 106,
-        "bodyEndLine": 898,
+        "bodyEndLine": 900,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -112054,13 +112054,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 900,
+        "line": 902,
         "column": 0,
-        "start": 38915,
-        "end": 40584,
-        "bodyLine": 900,
+        "start": 39076,
+        "end": 40745,
+        "bodyLine": 902,
         "bodyColumn": 95,
-        "bodyEndLine": 924,
+        "bodyEndLine": 926,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -112086,13 +112086,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 926,
+        "line": 928,
         "column": 0,
-        "start": 40586,
-        "end": 40972,
-        "bodyLine": 926,
+        "start": 40747,
+        "end": 41133,
+        "bodyLine": 928,
         "bodyColumn": 110,
-        "bodyEndLine": 932,
+        "bodyEndLine": 934,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -112118,13 +112118,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 934,
+        "line": 936,
         "column": 0,
-        "start": 40974,
-        "end": 41387,
-        "bodyLine": 934,
+        "start": 41135,
+        "end": 41548,
+        "bodyLine": 936,
         "bodyColumn": 111,
-        "bodyEndLine": 940,
+        "bodyEndLine": 942,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -112150,13 +112150,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 943,
+        "line": 945,
         "column": 7,
-        "start": 41491,
-        "end": 41694,
-        "bodyLine": 945,
+        "start": 41652,
+        "end": 41855,
+        "bodyLine": 947,
         "bodyColumn": 33,
-        "bodyEndLine": 948,
+        "bodyEndLine": 950,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -112182,13 +112182,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 951,
+        "line": 953,
         "column": 7,
-        "start": 41800,
-        "end": 44168,
-        "bodyLine": 956,
+        "start": 41961,
+        "end": 44329,
+        "bodyLine": 958,
         "bodyColumn": 22,
-        "bodyEndLine": 999,
+        "bodyEndLine": 1001,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 26,
@@ -112214,13 +112214,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 962,
+        "line": 964,
         "column": 44,
-        "start": 42311,
-        "end": 42358,
-        "bodyLine": 962,
+        "start": 42472,
+        "end": 42519,
+        "bodyLine": 964,
         "bodyColumn": 55,
-        "bodyEndLine": 962,
+        "bodyEndLine": 964,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -112246,13 +112246,13 @@
         "bodyEndColumn": 114
       },
       "current_source_address": {
-        "line": 964,
+        "line": 966,
         "column": 4,
-        "start": 42408,
-        "end": 42533,
-        "bodyLine": 965,
+        "start": 42569,
+        "end": 42694,
+        "bodyLine": 967,
         "bodyColumn": 6,
-        "bodyEndLine": 965,
+        "bodyEndLine": 967,
         "bodyEndColumn": 114
       },
       "baseline_complexity": 3,
@@ -112278,13 +112278,13 @@
         "bodyEndColumn": 83
       },
       "current_source_address": {
-        "line": 967,
+        "line": 969,
         "column": 59,
-        "start": 42599,
-        "end": 42623,
-        "bodyLine": 967,
+        "start": 42760,
+        "end": 42784,
+        "bodyLine": 969,
         "bodyColumn": 69,
-        "bodyEndLine": 967,
+        "bodyEndLine": 969,
         "bodyEndColumn": 83
       },
       "baseline_complexity": 1,
@@ -112310,13 +112310,13 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 986,
+        "line": 988,
         "column": 39,
-        "start": 43437,
-        "end": 43479,
-        "bodyLine": 986,
+        "start": 43598,
+        "end": 43640,
+        "bodyLine": 988,
         "bodyColumn": 53,
-        "bodyEndLine": 986,
+        "bodyEndLine": 988,
         "bodyEndColumn": 81
       },
       "baseline_complexity": 1,
@@ -112342,13 +112342,13 @@
         "bodyEndColumn": 108
       },
       "current_source_address": {
-        "line": 987,
+        "line": 989,
         "column": 26,
-        "start": 43507,
-        "end": 43589,
-        "bodyLine": 987,
+        "start": 43668,
+        "end": 43750,
+        "bodyLine": 989,
         "bodyColumn": 36,
-        "bodyEndLine": 987,
+        "bodyEndLine": 989,
         "bodyEndColumn": 108
       },
       "baseline_complexity": 2,
@@ -112374,13 +112374,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1001,
+        "line": 1003,
         "column": 0,
-        "start": 44170,
-        "end": 44427,
-        "bodyLine": 1001,
+        "start": 44331,
+        "end": 44588,
+        "bodyLine": 1003,
         "bodyColumn": 59,
-        "bodyEndLine": 1005,
+        "bodyEndLine": 1007,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -112406,11 +112406,11 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1012,
+        "line": 1014,
         "column": 7,
-        "start": 44676,
-        "end": 50460,
-        "bodyLine": 1020,
+        "start": 44837,
+        "end": 50575,
+        "bodyLine": 1022,
         "bodyColumn": 36,
         "bodyEndLine": 1136,
         "bodyEndColumn": 1
@@ -112438,13 +112438,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1039,
+        "line": 1041,
         "column": 31,
-        "start": 45922,
-        "end": 46411,
-        "bodyLine": 1039,
+        "start": 46083,
+        "end": 46449,
+        "bodyLine": 1041,
         "bodyColumn": 70,
-        "bodyEndLine": 1051,
+        "bodyEndLine": 1050,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 5,
@@ -112472,8 +112472,8 @@
       "current_source_address": {
         "line": 1079,
         "column": 37,
-        "start": 47600,
-        "end": 47794,
+        "start": 47715,
+        "end": 47909,
         "bodyLine": 1079,
         "bodyColumn": 68,
         "bodyEndLine": 1082,
@@ -112504,8 +112504,8 @@
       "current_source_address": {
         "line": 1083,
         "column": 49,
-        "start": 47845,
-        "end": 48165,
+        "start": 47960,
+        "end": 48280,
         "bodyLine": 1083,
         "bodyColumn": 88,
         "bodyEndLine": 1091,
@@ -112536,8 +112536,8 @@
       "current_source_address": {
         "line": 1092,
         "column": 40,
-        "start": 48207,
-        "end": 48396,
+        "start": 48322,
+        "end": 48511,
         "bodyLine": 1092,
         "bodyColumn": 59,
         "bodyEndLine": 1095,
@@ -112568,8 +112568,8 @@
       "current_source_address": {
         "line": 1096,
         "column": 49,
-        "start": 48447,
-        "end": 48661,
+        "start": 48562,
+        "end": 48776,
         "bodyLine": 1096,
         "bodyColumn": 76,
         "bodyEndLine": 1099,
@@ -112600,8 +112600,8 @@
       "current_source_address": {
         "line": 1100,
         "column": 37,
-        "start": 48700,
-        "end": 48876,
+        "start": 48815,
+        "end": 48991,
         "bodyLine": 1100,
         "bodyColumn": 58,
         "bodyEndLine": 1103,
@@ -112632,8 +112632,8 @@
       "current_source_address": {
         "line": 1104,
         "column": 42,
-        "start": 48920,
-        "end": 49085,
+        "start": 49035,
+        "end": 49200,
         "bodyLine": 1104,
         "bodyColumn": 55,
         "bodyEndLine": 1107,
@@ -112664,8 +112664,8 @@
       "current_source_address": {
         "line": 1108,
         "column": 43,
-        "start": 49130,
-        "end": 49354,
+        "start": 49245,
+        "end": 49469,
         "bodyLine": 1108,
         "bodyColumn": 56,
         "bodyEndLine": 1111,
@@ -112696,8 +112696,8 @@
       "current_source_address": {
         "line": 1112,
         "column": 42,
-        "start": 49398,
-        "end": 49463,
+        "start": 49513,
+        "end": 49578,
         "bodyLine": 1112,
         "bodyColumn": 55,
         "bodyEndLine": 1112,
@@ -112728,8 +112728,8 @@
       "current_source_address": {
         "line": 1114,
         "column": 35,
-        "start": 49513,
-        "end": 49667,
+        "start": 49628,
+        "end": 49782,
         "bodyLine": 1114,
         "bodyColumn": 56,
         "bodyEndLine": 1117,
@@ -112760,8 +112760,8 @@
       "current_source_address": {
         "line": 1118,
         "column": 39,
-        "start": 49708,
-        "end": 49863,
+        "start": 49823,
+        "end": 49978,
         "bodyLine": 1118,
         "bodyColumn": 52,
         "bodyEndLine": 1121,
@@ -112792,8 +112792,8 @@
       "current_source_address": {
         "line": 1122,
         "column": 38,
-        "start": 49903,
-        "end": 50066,
+        "start": 50018,
+        "end": 50181,
         "bodyLine": 1122,
         "bodyColumn": 54,
         "bodyEndLine": 1125,
@@ -112824,8 +112824,8 @@
       "current_source_address": {
         "line": 1126,
         "column": 44,
-        "start": 50112,
-        "end": 50297,
+        "start": 50227,
+        "end": 50412,
         "bodyLine": 1126,
         "bodyColumn": 68,
         "bodyEndLine": 1129,
@@ -112856,8 +112856,8 @@
       "current_source_address": {
         "line": 1138,
         "column": 0,
-        "start": 50462,
-        "end": 50942,
+        "start": 50577,
+        "end": 51057,
         "bodyLine": 1138,
         "bodyColumn": 85,
         "bodyEndLine": 1146,
@@ -112888,8 +112888,8 @@
       "current_source_address": {
         "line": 1148,
         "column": 0,
-        "start": 50944,
-        "end": 51127,
+        "start": 51059,
+        "end": 51242,
         "bodyLine": 1148,
         "bodyColumn": 115,
         "bodyEndLine": 1150,
@@ -112920,8 +112920,8 @@
       "current_source_address": {
         "line": 1152,
         "column": 0,
-        "start": 51129,
-        "end": 51390,
+        "start": 51244,
+        "end": 51505,
         "bodyLine": 1152,
         "bodyColumn": 119,
         "bodyEndLine": 1157,
@@ -112952,11 +112952,11 @@
       "current_source_address": {
         "line": 1159,
         "column": 0,
-        "start": 51392,
-        "end": 53764,
-        "bodyLine": 1163,
+        "start": 51507,
+        "end": 53870,
+        "bodyLine": 1164,
         "bodyColumn": 23,
-        "bodyEndLine": 1206,
+        "bodyEndLine": 1207,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -112982,13 +112982,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1166,
+        "line": 1167,
         "column": 21,
-        "start": 51719,
-        "end": 52727,
-        "bodyLine": 1166,
+        "start": 51825,
+        "end": 52833,
+        "bodyLine": 1167,
         "bodyColumn": 85,
-        "bodyEndLine": 1185,
+        "bodyEndLine": 1186,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 8,
@@ -113014,13 +113014,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1186,
+        "line": 1187,
         "column": 20,
-        "start": 52749,
-        "end": 53236,
-        "bodyLine": 1186,
+        "start": 52855,
+        "end": 53342,
+        "bodyLine": 1187,
         "bodyColumn": 112,
-        "bodyEndLine": 1194,
+        "bodyEndLine": 1195,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 2,
@@ -113046,13 +113046,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1195,
+        "line": 1196,
         "column": 21,
-        "start": 53259,
-        "end": 53381,
-        "bodyLine": 1195,
+        "start": 53365,
+        "end": 53487,
+        "bodyLine": 1196,
         "bodyColumn": 27,
-        "bodyEndLine": 1198,
+        "bodyEndLine": 1199,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -113078,13 +113078,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1199,
+        "line": 1200,
         "column": 15,
-        "start": 53398,
-        "end": 53596,
-        "bodyLine": 1199,
+        "start": 53504,
+        "end": 53702,
+        "bodyLine": 1200,
         "bodyColumn": 87,
-        "bodyEndLine": 1202,
+        "bodyEndLine": 1203,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -113110,13 +113110,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1208,
+        "line": 1209,
         "column": 0,
-        "start": 53766,
-        "end": 54092,
-        "bodyLine": 1208,
+        "start": 53872,
+        "end": 54198,
+        "bodyLine": 1209,
         "bodyColumn": 87,
-        "bodyEndLine": 1217,
+        "bodyEndLine": 1218,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 4,
@@ -113142,13 +113142,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1219,
+        "line": 1220,
         "column": 0,
-        "start": 54094,
-        "end": 54470,
-        "bodyLine": 1222,
+        "start": 54200,
+        "end": 54576,
+        "bodyLine": 1223,
         "bodyColumn": 8,
-        "bodyEndLine": 1228,
+        "bodyEndLine": 1229,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -113174,13 +113174,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1230,
+        "line": 1231,
         "column": 0,
-        "start": 54472,
-        "end": 54899,
-        "bodyLine": 1230,
+        "start": 54578,
+        "end": 55005,
+        "bodyLine": 1231,
         "bodyColumn": 99,
-        "bodyEndLine": 1237,
+        "bodyEndLine": 1238,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -113206,13 +113206,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1239,
+        "line": 1240,
         "column": 0,
-        "start": 54901,
-        "end": 55729,
-        "bodyLine": 1242,
+        "start": 55007,
+        "end": 55835,
+        "bodyLine": 1243,
         "bodyColumn": 34,
-        "bodyEndLine": 1256,
+        "bodyEndLine": 1257,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -113238,13 +113238,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1249,
+        "line": 1250,
         "column": 12,
-        "start": 55411,
-        "end": 55720,
-        "bodyLine": 1249,
+        "start": 55517,
+        "end": 55826,
+        "bodyLine": 1250,
         "bodyColumn": 75,
-        "bodyEndLine": 1254,
+        "bodyEndLine": 1255,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -113270,13 +113270,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1258,
+        "line": 1259,
         "column": 0,
-        "start": 55731,
-        "end": 56599,
-        "bodyLine": 1258,
+        "start": 55837,
+        "end": 56705,
+        "bodyLine": 1259,
         "bodyColumn": 119,
-        "bodyEndLine": 1279,
+        "bodyEndLine": 1280,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -113302,13 +113302,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1262,
+        "line": 1263,
         "column": 16,
-        "start": 55963,
-        "end": 56077,
-        "bodyLine": 1262,
+        "start": 56069,
+        "end": 56183,
+        "bodyLine": 1263,
         "bodyColumn": 22,
-        "bodyEndLine": 1265,
+        "bodyEndLine": 1266,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -113334,13 +113334,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1266,
+        "line": 1267,
         "column": 24,
-        "start": 56103,
-        "end": 56225,
-        "bodyLine": 1266,
+        "start": 56209,
+        "end": 56331,
+        "bodyLine": 1267,
         "bodyColumn": 30,
-        "bodyEndLine": 1269,
+        "bodyEndLine": 1270,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -113366,13 +113366,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1270,
+        "line": 1271,
         "column": 24,
-        "start": 56251,
-        "end": 56426,
-        "bodyLine": 1270,
+        "start": 56357,
+        "end": 56532,
+        "bodyLine": 1271,
         "bodyColumn": 83,
-        "bodyEndLine": 1273,
+        "bodyEndLine": 1274,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -113398,13 +113398,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1274,
+        "line": 1275,
         "column": 22,
-        "start": 56450,
-        "end": 56590,
-        "bodyLine": 1274,
+        "start": 56556,
+        "end": 56696,
+        "bodyLine": 1275,
         "bodyColumn": 42,
-        "bodyEndLine": 1277,
+        "bodyEndLine": 1278,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -113430,13 +113430,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1281,
+        "line": 1282,
         "column": 0,
-        "start": 56601,
-        "end": 57317,
-        "bodyLine": 1285,
+        "start": 56707,
+        "end": 57423,
+        "bodyLine": 1286,
         "bodyColumn": 10,
-        "bodyEndLine": 1298,
+        "bodyEndLine": 1299,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -113462,13 +113462,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1300,
+        "line": 1301,
         "column": 0,
-        "start": 57319,
-        "end": 58469,
-        "bodyLine": 1300,
+        "start": 57425,
+        "end": 58575,
+        "bodyLine": 1301,
         "bodyColumn": 84,
-        "bodyEndLine": 1331,
+        "bodyEndLine": 1332,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -113494,13 +113494,13 @@
         "bodyEndColumn": 105
       },
       "current_source_address": {
-        "line": 1314,
+        "line": 1315,
         "column": 78,
-        "start": 57715,
-        "end": 57742,
-        "bodyLine": 1314,
+        "start": 57821,
+        "end": 57848,
+        "bodyLine": 1315,
         "bodyColumn": 87,
-        "bodyEndLine": 1314,
+        "bodyEndLine": 1315,
         "bodyEndColumn": 105
       },
       "baseline_complexity": 1,
@@ -113526,13 +113526,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1333,
+        "line": 1334,
         "column": 0,
-        "start": 58471,
-        "end": 61506,
-        "bodyLine": 1343,
+        "start": 58577,
+        "end": 61273,
+        "bodyLine": 1344,
         "bodyColumn": 8,
-        "bodyEndLine": 1399,
+        "bodyEndLine": 1393,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 24,
@@ -113559,13 +113559,13 @@
       },
       "current_source_address": {
         "line": 1350,
-        "column": 34,
-        "start": 59236,
-        "end": 59303,
+        "column": 32,
+        "start": 59250,
+        "end": 59317,
         "bodyLine": 1350,
-        "bodyColumn": 49,
+        "bodyColumn": 47,
         "bodyEndLine": 1350,
-        "bodyEndColumn": 101
+        "bodyEndColumn": 99
       },
       "baseline_complexity": 2,
       "baseline_coverage": 1,
@@ -113590,13 +113590,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 1384,
+        "line": 1378,
         "column": 38,
-        "start": 60793,
-        "end": 60914,
-        "bodyLine": 1385,
+        "start": 60560,
+        "end": 60681,
+        "bodyLine": 1379,
         "bodyColumn": 8,
-        "bodyEndLine": 1385,
+        "bodyEndLine": 1379,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 2,
@@ -113622,13 +113622,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 1394,
+        "line": 1388,
         "column": 35,
-        "start": 61236,
-        "end": 61294,
-        "bodyLine": 1394,
+        "start": 61003,
+        "end": 61061,
+        "bodyLine": 1388,
         "bodyColumn": 49,
-        "bodyEndLine": 1394,
+        "bodyEndLine": 1388,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 1,
@@ -113654,13 +113654,13 @@
         "bodyEndColumn": 102
       },
       "current_source_address": {
-        "line": 1396,
+        "line": 1390,
         "column": 43,
-        "start": 61366,
-        "end": 61425,
-        "bodyLine": 1396,
+        "start": 61133,
+        "end": 61192,
+        "bodyLine": 1390,
         "bodyColumn": 54,
-        "bodyEndLine": 1396,
+        "bodyEndLine": 1390,
         "bodyEndColumn": 102
       },
       "baseline_complexity": 1,
@@ -113686,13 +113686,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1401,
+        "line": 1395,
         "column": 0,
-        "start": 61508,
-        "end": 62629,
-        "bodyLine": 1401,
+        "start": 61275,
+        "end": 62396,
+        "bodyLine": 1395,
         "bodyColumn": 104,
-        "bodyEndLine": 1424,
+        "bodyEndLine": 1418,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -113718,13 +113718,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1426,
+        "line": 1420,
         "column": 0,
-        "start": 62631,
-        "end": 66149,
-        "bodyLine": 1431,
+        "start": 62398,
+        "end": 65916,
+        "bodyLine": 1425,
         "bodyColumn": 26,
-        "bodyEndLine": 1499,
+        "bodyEndLine": 1493,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 31,
@@ -113750,13 +113750,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1501,
+        "line": 1531,
         "column": 0,
-        "start": 66151,
-        "end": 87602,
-        "bodyLine": 1506,
+        "start": 67551,
+        "end": 89945,
+        "bodyLine": 1536,
         "bodyColumn": 38,
-        "bodyEndLine": 1981,
+        "bodyEndLine": 2037,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 9,
@@ -113782,13 +113782,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1531,
+        "line": 1563,
         "column": 25,
-        "start": 67502,
-        "end": 67705,
-        "bodyLine": 1531,
+        "start": 68980,
+        "end": 69183,
+        "bodyLine": 1563,
         "bodyColumn": 73,
-        "bodyEndLine": 1538,
+        "bodyEndLine": 1570,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 1,
@@ -113814,13 +113814,13 @@
         "bodyEndColumn": 21
       },
       "current_source_address": {
-        "line": 1534,
+        "line": 1566,
         "column": 6,
-        "start": 67635,
-        "end": 67650,
-        "bodyLine": 1534,
+        "start": 69113,
+        "end": 69128,
+        "bodyLine": 1566,
         "bodyColumn": 12,
-        "bodyEndLine": 1534,
+        "bodyEndLine": 1566,
         "bodyEndColumn": 21
       },
       "baseline_complexity": 1,
@@ -113846,13 +113846,13 @@
         "bodyEndColumn": 21
       },
       "current_source_address": {
-        "line": 1535,
+        "line": 1567,
         "column": 6,
-        "start": 67658,
-        "end": 67673,
-        "bodyLine": 1535,
+        "start": 69136,
+        "end": 69151,
+        "bodyLine": 1567,
         "bodyColumn": 12,
-        "bodyEndLine": 1535,
+        "bodyEndLine": 1567,
         "bodyEndColumn": 21
       },
       "baseline_complexity": 1,
@@ -113878,13 +113878,13 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 1540,
+        "line": 1585,
         "column": 44,
-        "start": 67797,
-        "end": 67891,
-        "bodyLine": 1541,
+        "start": 69772,
+        "end": 69866,
+        "bodyLine": 1586,
         "bodyColumn": 6,
-        "bodyEndLine": 1541,
+        "bodyEndLine": 1586,
         "bodyEndColumn": 81
       },
       "baseline_complexity": 1,
@@ -113910,13 +113910,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 1541,
+        "line": 1586,
         "column": 21,
-        "start": 67831,
-        "end": 67890,
-        "bodyLine": 1541,
+        "start": 69806,
+        "end": 69865,
+        "bodyLine": 1586,
         "bodyColumn": 33,
-        "bodyEndLine": 1541,
+        "bodyEndLine": 1586,
         "bodyEndColumn": 80
       },
       "baseline_complexity": 1,
@@ -113942,13 +113942,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1543,
+        "line": 1588,
         "column": 21,
-        "start": 67921,
-        "end": 68157,
-        "bodyLine": 1543,
+        "start": 69896,
+        "end": 70132,
+        "bodyLine": 1588,
         "bodyColumn": 56,
-        "bodyEndLine": 1547,
+        "bodyEndLine": 1592,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -113974,13 +113974,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1548,
+        "line": 1593,
         "column": 18,
-        "start": 68177,
-        "end": 72448,
-        "bodyLine": 1552,
+        "start": 70152,
+        "end": 74275,
+        "bodyLine": 1597,
         "bodyColumn": 7,
-        "bodyEndLine": 1655,
+        "bodyEndLine": 1697,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 6,
@@ -114006,13 +114006,13 @@
         "bodyEndColumn": 106
       },
       "current_source_address": {
-        "line": 1564,
+        "line": 1609,
         "column": 55,
-        "start": 68956,
-        "end": 69007,
-        "bodyLine": 1564,
+        "start": 70931,
+        "end": 70982,
+        "bodyLine": 1609,
         "bodyColumn": 66,
-        "bodyEndLine": 1564,
+        "bodyEndLine": 1609,
         "bodyEndColumn": 106
       },
       "baseline_complexity": 1,
@@ -114038,13 +114038,13 @@
         "bodyEndColumn": 9
       },
       "current_source_address": {
-        "line": 1636,
+        "line": 1678,
         "column": 9,
-        "start": 71735,
-        "end": 72176,
-        "bodyLine": 1636,
+        "start": 73562,
+        "end": 74003,
+        "bodyLine": 1678,
         "bodyColumn": 15,
-        "bodyEndLine": 1644,
+        "bodyEndLine": 1686,
         "bodyEndColumn": 9
       },
       "baseline_complexity": 3,
@@ -114070,13 +114070,13 @@
         "bodyEndColumn": 113
       },
       "current_source_address": {
-        "line": 1637,
+        "line": 1679,
         "column": 82,
-        "start": 71825,
-        "end": 71856,
-        "bodyLine": 1637,
+        "start": 73652,
+        "end": 73683,
+        "bodyLine": 1679,
         "bodyColumn": 93,
-        "bodyEndLine": 1637,
+        "bodyEndLine": 1679,
         "bodyEndColumn": 113
       },
       "baseline_complexity": 1,
@@ -114102,13 +114102,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1656,
+        "line": 1698,
         "column": 36,
-        "start": 72486,
-        "end": 72905,
-        "bodyLine": 1656,
+        "start": 74313,
+        "end": 74732,
+        "bodyLine": 1698,
         "bodyColumn": 55,
-        "bodyEndLine": 1667,
+        "bodyEndLine": 1709,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 1,
@@ -114134,13 +114134,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1657,
+        "line": 1699,
         "column": 26,
-        "start": 72533,
-        "end": 72899,
-        "bodyLine": 1657,
+        "start": 74360,
+        "end": 74726,
+        "bodyLine": 1699,
         "bodyColumn": 38,
-        "bodyEndLine": 1666,
+        "bodyEndLine": 1708,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -114166,13 +114166,13 @@
         "bodyEndColumn": 6
       },
       "current_source_address": {
-        "line": 1668,
+        "line": 1710,
         "column": 28,
-        "start": 72936,
-        "end": 79562,
-        "bodyLine": 1669,
+        "start": 74763,
+        "end": 81387,
+        "bodyLine": 1711,
         "bodyColumn": 4,
-        "bodyEndLine": 1809,
+        "bodyEndLine": 1851,
         "bodyEndColumn": 6
       },
       "baseline_complexity": 1,
@@ -114198,13 +114198,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1669,
+        "line": 1711,
         "column": 19,
-        "start": 73038,
-        "end": 79561,
-        "bodyLine": 1669,
+        "start": 74865,
+        "end": 81386,
+        "bodyLine": 1711,
         "bodyColumn": 31,
-        "bodyEndLine": 1809,
+        "bodyEndLine": 1851,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 29,
@@ -114230,13 +114230,13 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 1692,
+        "line": 1734,
         "column": 42,
-        "start": 74069,
-        "end": 74108,
-        "bodyLine": 1692,
+        "start": 75896,
+        "end": 75935,
+        "bodyLine": 1734,
         "bodyColumn": 53,
-        "bodyEndLine": 1692,
+        "bodyEndLine": 1734,
         "bodyEndColumn": 81
       },
       "baseline_complexity": 1,
@@ -114262,13 +114262,13 @@
         "bodyEndColumn": 75
       },
       "current_source_address": {
-        "line": 1701,
+        "line": 1743,
         "column": 31,
-        "start": 74615,
-        "end": 74659,
-        "bodyLine": 1701,
+        "start": 76442,
+        "end": 76486,
+        "bodyLine": 1743,
         "bodyColumn": 41,
-        "bodyEndLine": 1701,
+        "bodyEndLine": 1743,
         "bodyEndColumn": 75
       },
       "baseline_complexity": 1,
@@ -114294,13 +114294,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1810,
+        "line": 1852,
         "column": 43,
-        "start": 79607,
-        "end": 80764,
-        "bodyLine": 1810,
+        "start": 81432,
+        "end": 82910,
+        "bodyLine": 1852,
         "bodyColumn": 62,
-        "bodyEndLine": 1833,
+        "bodyEndLine": 1883,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -114326,13 +114326,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1819,
+        "line": 1861,
         "column": 23,
-        "start": 79997,
-        "end": 80518,
-        "bodyLine": 1819,
+        "start": 81820,
+        "end": 82341,
+        "bodyLine": 1861,
         "bodyColumn": 35,
-        "bodyEndLine": 1828,
+        "bodyEndLine": 1870,
         "bodyEndColumn": 9
       },
       "baseline_complexity": 2,
@@ -114358,13 +114358,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1834,
+        "line": 1884,
         "column": 44,
-        "start": 80811,
-        "end": 83336,
-        "bodyLine": 1834,
+        "start": 82957,
+        "end": 85696,
+        "bodyLine": 1884,
         "bodyColumn": 77,
-        "bodyEndLine": 1889,
+        "bodyEndLine": 1947,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 13,
@@ -114390,13 +114390,13 @@
         "bodyEndColumn": 100
       },
       "current_source_address": {
-        "line": 1850,
+        "line": 1900,
         "column": 39,
-        "start": 81606,
-        "end": 81718,
-        "bodyLine": 1851,
+        "start": 83752,
+        "end": 83864,
+        "bodyLine": 1901,
         "bodyColumn": 6,
-        "bodyEndLine": 1851,
+        "bodyEndLine": 1901,
         "bodyEndColumn": 100
       },
       "baseline_complexity": 1,
@@ -114408,7 +114408,7 @@
     },
     {
       "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#3/closure:CallExpression:arguments[0]#0",
-      "current_identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#3/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/binding:markUncertain/binding:markUncertain#0/binding:uncertain/closure:CallExpression:arguments[0]#0",
       "file": "src/runtime-kernel.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -114422,21 +114422,21 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 1866,
+        "line": 1577,
         "column": 27,
-        "start": 82355,
-        "end": 82425,
-        "bodyLine": 1866,
+        "start": 69421,
+        "end": 69479,
+        "bodyLine": 1577,
         "bodyColumn": 39,
-        "bodyEndLine": 1866,
-        "bodyEndColumn": 97
+        "bodyEndLine": 1577,
+        "bodyEndColumn": 85
       },
       "baseline_complexity": 1,
       "baseline_coverage": 0,
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "The original and current full callable spans are text-identical at their supplied source addresses, and the complete enclosing declaration/callback path is the same. This preserves the same semantic owner and nested-call role; the historical allowance is copied unchanged."
+      "rationale": "The shared markUncertain serialized persistence callback retains the original reported-failed session callback role and its unchanged 1/2 ceiling. Executor uncertainty now uses this same callback; the second original callback is explicitly consolidated into it without a second allowance."
     },
     {
       "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#3/binding:completed/closure:CallExpression:arguments[0]#0",
@@ -114454,13 +114454,13 @@
         "bodyEndColumn": 106
       },
       "current_source_address": {
-        "line": 1873,
+        "line": 1923,
         "column": 31,
-        "start": 82700,
-        "end": 82775,
-        "bodyLine": 1873,
+        "start": 84845,
+        "end": 84920,
+        "bodyLine": 1923,
         "bodyColumn": 43,
-        "bodyEndLine": 1873,
+        "bodyEndLine": 1923,
         "bodyEndColumn": 106
       },
       "baseline_complexity": 1,
@@ -114486,13 +114486,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 1875,
+        "line": 1925,
         "column": 33,
-        "start": 82822,
-        "end": 82931,
-        "bodyLine": 1876,
+        "start": 85001,
+        "end": 85110,
+        "bodyLine": 1926,
         "bodyColumn": 14,
-        "bodyEndLine": 1876,
+        "bodyEndLine": 1926,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -114518,13 +114518,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1890,
+        "line": 1948,
         "column": 36,
-        "start": 83375,
-        "end": 87577,
-        "bodyLine": 1890,
+        "start": 85735,
+        "end": 89920,
+        "bodyLine": 1948,
         "bodyColumn": 55,
-        "bodyEndLine": 1979,
+        "bodyEndLine": 2035,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 16,
@@ -114550,13 +114550,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 1903,
+        "line": 1961,
         "column": 31,
-        "start": 84045,
-        "end": 84499,
-        "bodyLine": 1903,
+        "start": 86405,
+        "end": 86859,
+        "bodyLine": 1961,
         "bodyColumn": 43,
-        "bodyEndLine": 1911,
+        "bodyEndLine": 1969,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 2,
@@ -114582,13 +114582,13 @@
         "bodyEndColumn": 117
       },
       "current_source_address": {
-        "line": 1912,
+        "line": 1970,
         "column": 53,
-        "start": 84555,
-        "end": 84619,
-        "bodyLine": 1912,
+        "start": 86915,
+        "end": 86979,
+        "bodyLine": 1970,
         "bodyColumn": 65,
-        "bodyEndLine": 1912,
+        "bodyEndLine": 1970,
         "bodyEndColumn": 117
       },
       "baseline_complexity": 1,
@@ -114614,13 +114614,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 1921,
+        "line": 1980,
         "column": 35,
-        "start": 85013,
-        "end": 85076,
-        "bodyLine": 1921,
+        "start": 87487,
+        "end": 87550,
+        "bodyLine": 1980,
         "bodyColumn": 47,
-        "bodyEndLine": 1921,
+        "bodyEndLine": 1980,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -114646,13 +114646,13 @@
         "bodyEndColumn": 95
       },
       "current_source_address": {
-        "line": 1923,
+        "line": 1982,
         "column": 37,
-        "start": 85131,
-        "end": 85238,
-        "bodyLine": 1924,
+        "start": 87639,
+        "end": 87746,
+        "bodyLine": 1983,
         "bodyColumn": 18,
-        "bodyEndLine": 1924,
+        "bodyEndLine": 1983,
         "bodyEndColumn": 95
       },
       "baseline_complexity": 1,
@@ -114678,46 +114678,14 @@
         "bodyEndColumn": 100
       },
       "current_source_address": {
-        "line": 1935,
+        "line": 1996,
         "column": 33,
-        "start": 85536,
-        "end": 85603,
-        "bodyLine": 1935,
+        "start": 88113,
+        "end": 88180,
+        "bodyLine": 1996,
         "bodyColumn": 45,
-        "bodyEndLine": 1935,
+        "bodyEndLine": 1996,
         "bodyEndColumn": 100
-      },
-      "baseline_complexity": 1,
-      "baseline_coverage": 0,
-      "baseline_crap": 2,
-      "max_complexity": 1,
-      "max_crap": 2,
-      "rationale": "The original and current full callable spans are text-identical at their supplied source addresses, and the complete enclosing declaration/callback path is the same. This preserves the same semantic owner and nested-call role; the historical allowance is copied unchanged."
-    },
-    {
-      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/binding:uncertain/closure:CallExpression:arguments[0]#0",
-      "current_identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/binding:uncertain/closure:CallExpression:arguments[0]#0",
-      "file": "src/runtime-kernel.ts",
-      "name": "closure:CallExpression:arguments[0]",
-      "source_address": {
-        "line": 2070,
-        "column": 33,
-        "start": 90853,
-        "end": 90911,
-        "bodyLine": 2070,
-        "bodyColumn": 45,
-        "bodyEndLine": 2070,
-        "bodyEndColumn": 91
-      },
-      "current_source_address": {
-        "line": 1942,
-        "column": 33,
-        "start": 85870,
-        "end": 85928,
-        "bodyLine": 1942,
-        "bodyColumn": 45,
-        "bodyEndLine": 1942,
-        "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
       "baseline_coverage": 0,
@@ -114742,13 +114710,13 @@
         "bodyEndColumn": 113
       },
       "current_source_address": {
-        "line": 1954,
+        "line": 2011,
         "column": 43,
-        "start": 86333,
-        "end": 86403,
-        "bodyLine": 1954,
+        "start": 88693,
+        "end": 88763,
+        "bodyLine": 2011,
         "bodyColumn": 55,
-        "bodyEndLine": 1954,
+        "bodyEndLine": 2011,
         "bodyEndColumn": 113
       },
       "baseline_complexity": 1,
@@ -114774,14 +114742,14 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 1970,
-        "column": 25,
-        "start": 87247,
-        "end": 87550,
-        "bodyLine": 1970,
-        "bodyColumn": 37,
-        "bodyEndLine": 1977,
-        "bodyEndColumn": 5
+        "line": 2003,
+        "column": 12,
+        "start": 88416,
+        "end": 88470,
+        "bodyLine": 2003,
+        "bodyColumn": 24,
+        "bodyEndLine": 2005,
+        "bodyEndColumn": 13
       },
       "baseline_complexity": 1,
       "baseline_coverage": 1,
@@ -114806,13 +114774,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1988,
+        "line": 2044,
         "column": 7,
-        "start": 87833,
-        "end": 91835,
-        "bodyLine": 1990,
+        "start": 90176,
+        "end": 94255,
+        "bodyLine": 2046,
         "bodyColumn": 35,
-        "bodyEndLine": 2069,
+        "bodyEndLine": 2126,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -201697,37 +201665,19 @@
       "rationale": "nested callback/closure role CallExpression:arguments[0] belongs to closure:CallExpression:arguments[2] in the current project-upgrade operation owner. The b549951 published package has no project-upgrade.ts owner or corresponding role/callsite; the adjacent legacy configuration converter and project-layout mapper remain owned in their own modules and are not this role. Classified as a new current role from owner and callsite context, not by ordinal or body hash. Independent bounded original/current bin/init-core comparison confirms the root-file initializer and its pending-receipt reconcile remain separate. The upgrade operation owns frozen beforeimages, database mode, maintenance fencing and same-operation recovery; the original pure configuration converter remains its retained adjacent owner. Evidence: /workspace/attachments/quality-corrected-four-lineage-review-20261014.md."
     },
     {
-      "identity": "src/runtime-kernel.ts#fn:withUnstartedWorkflowCleanup#0",
-      "file": "src/runtime-kernel.ts",
-      "max_complexity": 10,
-      "max_crap": 10,
-      "current_complexity": 3,
-      "current_source_address": {
-        "line": 302,
-        "column": 0,
-        "start": 12646,
-        "end": 12997,
-        "bodyLine": 306,
-        "bodyColumn": 14,
-        "bodyEndLine": 317,
-        "bodyEndColumn": 1
-      },
-      "rationale": "New callable helper extracted from inline try/catch cleanup and now reused around reservation validation and effect entry. The historical inventory contains no separately callable role for this helper, so it receives the prospective per-callable 10/10 new-role policy; this is not a transferred historical ceiling."
-    },
-    {
       "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/binding:reserveAssignment/binding:reserveAssignment#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#1",
       "file": "src/runtime-kernel.ts",
       "max_complexity": 10,
       "max_crap": 10,
       "current_complexity": 6,
       "current_source_address": {
-        "line": 1772,
+        "line": 1814,
         "column": 8,
-        "start": 77765,
-        "end": 79166,
-        "bodyLine": 1772,
+        "start": 79590,
+        "end": 80991,
+        "bodyLine": 1814,
         "bodyColumn": 20,
-        "bodyEndLine": 1800,
+        "bodyEndLine": 1842,
         "bodyEndColumn": 9
       },
       "rationale": "New callable boundary in the current runtime-kernel call context with no corresponding separately inventoried original callable role. The prospective 10/10 limit is policy only, not a measured current CRAP result."
@@ -201739,13 +201689,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 1801,
+        "line": 1843,
         "column": 8,
-        "start": 79176,
-        "end": 79485,
-        "bodyLine": 1801,
+        "start": 81001,
+        "end": 81310,
+        "bodyLine": 1843,
         "bodyColumn": 20,
-        "bodyEndLine": 1806,
+        "bodyEndLine": 1848,
         "bodyEndColumn": 9
       },
       "rationale": "New callable boundary in the current runtime-kernel call context with no corresponding separately inventoried original callable role. The prospective 10/10 limit is policy only, not a measured current CRAP result."
@@ -201757,13 +201707,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 1818,
+        "line": 1860,
         "column": 6,
-        "start": 79968,
-        "end": 80519,
-        "bodyLine": 1819,
+        "start": 81791,
+        "end": 82342,
+        "bodyLine": 1861,
         "bodyColumn": 8,
-        "bodyEndLine": 1828,
+        "bodyEndLine": 1870,
         "bodyEndColumn": 10
       },
       "rationale": "New callable boundary in the current runtime-kernel call context with no corresponding separately inventoried original callable role. The prospective 10/10 limit is policy only, not a measured current CRAP result."
@@ -201775,13 +201725,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 1829,
+        "line": 1871,
         "column": 6,
-        "start": 80527,
-        "end": 80625,
-        "bodyLine": 1829,
+        "start": 82350,
+        "end": 82448,
+        "bodyLine": 1871,
         "bodyColumn": 12,
-        "bodyEndLine": 1829,
+        "bodyEndLine": 1871,
         "bodyEndColumn": 104
       },
       "rationale": "New callable boundary in the current runtime-kernel call context with no corresponding separately inventoried original callable role. The prospective 10/10 limit is policy only, not a measured current CRAP result."
@@ -201793,13 +201743,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 1829,
+        "line": 1871,
         "column": 27,
-        "start": 80548,
-        "end": 80624,
-        "bodyLine": 1829,
+        "start": 82371,
+        "end": 82447,
+        "bodyLine": 1871,
         "bodyColumn": 39,
-        "bodyEndLine": 1829,
+        "bodyEndLine": 1871,
         "bodyEndColumn": 103
       },
       "rationale": "New callable boundary in the current runtime-kernel call context with no corresponding separately inventoried original callable role. The prospective 10/10 limit is policy only, not a measured current CRAP result."
@@ -203498,6 +203448,1165 @@
         "bodyEndColumn": 1
       },
       "current_complexity": 2
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:addStandaloneInputs#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 7,
+      "current_source_address": {
+        "line": 199,
+        "column": 0,
+        "start": 6973,
+        "end": 7598,
+        "bodyLine": 203,
+        "bodyColumn": 2,
+        "bodyEndLine": 215,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:addInputReferences#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 217,
+        "column": 0,
+        "start": 7600,
+        "end": 7978,
+        "bodyLine": 224,
+        "bodyColumn": 2,
+        "bodyEndLine": 228,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:addFilenameReference#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 230,
+        "column": 0,
+        "start": 7980,
+        "end": 8392,
+        "bodyLine": 236,
+        "bodyColumn": 2,
+        "bodyEndLine": 241,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:addEntryReferences#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 6,
+      "current_source_address": {
+        "line": 243,
+        "column": 0,
+        "start": 8394,
+        "end": 8787,
+        "bodyLine": 249,
+        "bodyColumn": 2,
+        "bodyEndLine": 254,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:addStructuredReference#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 9,
+      "current_source_address": {
+        "line": 256,
+        "column": 0,
+        "start": 8789,
+        "end": 9506,
+        "bodyLine": 264,
+        "bodyColumn": 2,
+        "bodyEndLine": 271,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:seedClosureReferences#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 10,
+      "current_source_address": {
+        "line": 291,
+        "column": 0,
+        "start": 10156,
+        "end": 11106,
+        "bodyLine": 298,
+        "bodyColumn": 2,
+        "bodyEndLine": 308,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:recordOperationDirectory#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 310,
+        "column": 0,
+        "start": 11108,
+        "end": 11811,
+        "bodyLine": 316,
+        "bodyColumn": 2,
+        "bodyEndLine": 330,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:finishClosure#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 332,
+        "column": 0,
+        "start": 11813,
+        "end": 12493,
+        "bodyLine": 338,
+        "bodyColumn": 21,
+        "bodyEndLine": 347,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertEligibleRelease#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 7,
+      "current_source_address": {
+        "line": 535,
+        "column": 0,
+        "start": 20474,
+        "end": 20914,
+        "bodyLine": 535,
+        "bodyColumn": 116,
+        "bodyEndLine": 543,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealEntries#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 4,
+      "current_source_address": {
+        "line": 571,
+        "column": 0,
+        "start": 22067,
+        "end": 22551,
+        "bodyLine": 575,
+        "bodyColumn": 86,
+        "bodyEndLine": 585,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealDigests#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 587,
+        "column": 0,
+        "start": 22553,
+        "end": 22802,
+        "bodyLine": 587,
+        "bodyColumn": 63,
+        "bodyEndLine": 590,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealKeys#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 592,
+        "column": 0,
+        "start": 22804,
+        "end": 22989,
+        "bodyLine": 592,
+        "bodyColumn": 69,
+        "bodyEndLine": 594,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSealIdentity#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 9,
+      "current_source_address": {
+        "line": 596,
+        "column": 0,
+        "start": 22991,
+        "end": 23723,
+        "bodyLine": 609,
+        "bodyColumn": 2,
+        "bodyEndLine": 619,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertArchiveDigest#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 621,
+        "column": 0,
+        "start": 23725,
+        "end": 24108,
+        "bodyLine": 621,
+        "bodyColumn": 100,
+        "bodyEndLine": 628,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertTestEntry#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 9,
+      "current_source_address": {
+        "line": 666,
+        "column": 0,
+        "start": 25701,
+        "end": 26508,
+        "bodyLine": 666,
+        "bodyColumn": 52,
+        "bodyEndLine": 685,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertSuccessfulTestLog#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 687,
+        "column": 0,
+        "start": 26510,
+        "end": 26927,
+        "bodyLine": 687,
+        "bodyColumn": 65,
+        "bodyEndLine": 696,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertCurrentTestBinding#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 698,
+        "column": 0,
+        "start": 26929,
+        "end": 27352,
+        "bodyLine": 703,
+        "bodyColumn": 2,
+        "bodyEndLine": 710,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertCurrentAssurance#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 6,
+      "current_source_address": {
+        "line": 740,
+        "column": 0,
+        "start": 28450,
+        "end": 29228,
+        "bodyLine": 744,
+        "bodyColumn": 54,
+        "bodyEndLine": 762,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:parseFileObservation#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 827,
+        "column": 0,
+        "start": 31675,
+        "end": 32004,
+        "bodyLine": 827,
+        "bodyColumn": 63,
+        "bodyEndLine": 833,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:validateFileObservationKeys#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 835,
+        "column": 0,
+        "start": 32006,
+        "end": 32405,
+        "bodyLine": 835,
+        "bodyColumn": 64,
+        "bodyEndLine": 841,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:parseAbsentFileObservation#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 843,
+        "column": 0,
+        "start": 32407,
+        "end": 32851,
+        "bodyLine": 843,
+        "bodyColumn": 94,
+        "bodyEndLine": 855,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:parsePresentFileObservation#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 4,
+      "current_source_address": {
+        "line": 857,
+        "column": 0,
+        "start": 32853,
+        "end": 33407,
+        "bodyLine": 857,
+        "bodyColumn": 95,
+        "bodyEndLine": 869,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPlanHeader#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 10,
+      "current_source_address": {
+        "line": 914,
+        "column": 0,
+        "start": 35072,
+        "end": 35840,
+        "bodyLine": 917,
+        "bodyColumn": 99,
+        "bodyEndLine": 935,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPresentBeforeimage#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 7,
+      "current_source_address": {
+        "line": 937,
+        "column": 0,
+        "start": 35842,
+        "end": 36328,
+        "bodyLine": 937,
+        "bodyColumn": 86,
+        "bodyEndLine": 945,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertBeforeimage#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 947,
+        "column": 0,
+        "start": 36330,
+        "end": 36800,
+        "bodyLine": 947,
+        "bodyColumn": 76,
+        "bodyEndLine": 955,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPlanBeforeimages#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 957,
+        "column": 0,
+        "start": 36802,
+        "end": 37480,
+        "bodyLine": 957,
+        "bodyColumn": 88,
+        "bodyEndLine": 967,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertPhaseIdentity#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 6,
+      "current_source_address": {
+        "line": 998,
+        "column": 0,
+        "start": 38871,
+        "end": 39356,
+        "bodyLine": 1002,
+        "bodyColumn": 94,
+        "bodyEndLine": 1009,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertCustodyIdentity#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 7,
+      "current_source_address": {
+        "line": 1073,
+        "column": 0,
+        "start": 41353,
+        "end": 41888,
+        "bodyLine": 1077,
+        "bodyColumn": 63,
+        "bodyEndLine": 1085,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:assertCustodyBeforeimage#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 1087,
+        "column": 0,
+        "start": 41890,
+        "end": 42214,
+        "bodyLine": 1087,
+        "bodyColumn": 73,
+        "bodyEndLine": 1091,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:inspectStoredRepair#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 1203,
+        "column": 0,
+        "start": 46415,
+        "end": 47169,
+        "bodyLine": 1203,
+        "bodyColumn": 104,
+        "bodyEndLine": 1218,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:parseRepairArguments#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 1434,
+        "column": 0,
+        "start": 56218,
+        "end": 56864,
+        "bodyLine": 1434,
+        "bodyColumn": 79,
+        "bodyEndLine": 1448,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/repair-native-delivery-evidence.ts#fn:nativeEvidenceCommand#0",
+      "file": "bin/repair-native-delivery-evidence.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 7,
+      "current_source_address": {
+        "line": 1450,
+        "column": 0,
+        "start": 56866,
+        "end": 57828,
+        "bodyLine": 1455,
+        "bodyColumn": 2,
+        "bodyEndLine": 1475,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Distinct extracted callable responsibility reviewed against the original inline implementation and its retained parent/caller. The original parent allowance stays unchanged; this separate current role uses the established prospective 10/10 policy. No measured coverage or CRAP claim.",
+      "independent_review": "/workspace/attachments/quality-repair-39-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:nodeErrorCode#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 102,
+        "column": 0,
+        "start": 3302,
+        "end": 3504,
+        "bodyLine": 102,
+        "bodyColumn": 59,
+        "bodyEndLine": 106,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared typed helper or bridge adapter, independently compared with original distributed inline operations. Retained reader, selector and lexical comparator roles are excluded from this addition; no original allowance is borrowed.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:closeRunSessionBridge#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 152,
+        "column": 0,
+        "start": 5362,
+        "end": 5462,
+        "bodyLine": 152,
+        "bodyColumn": 72,
+        "bodyEndLine": 154,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared typed helper or bridge adapter, independently compared with original distributed inline operations. Retained reader, selector and lexical comparator roles are excluded from this addition; no original allowance is borrowed.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:parseJsonUnknown#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 157,
+        "column": 0,
+        "start": 5511,
+        "end": 5647,
+        "bodyLine": 157,
+        "bodyColumn": 49,
+        "bodyEndLine": 161,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared typed helper or bridge adapter, independently compared with original distributed inline operations. Retained reader, selector and lexical comparator roles are excluded from this addition; no original allowance is borrowed.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:isRecord#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 164,
+        "column": 0,
+        "start": 5723,
+        "end": 5873,
+        "bodyLine": 164,
+        "bodyColumn": 68,
+        "bodyEndLine": 166,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared typed helper or bridge adapter, independently compared with original distributed inline operations. Retained reader, selector and lexical comparator roles are excluded from this addition; no original allowance is borrowed.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:requireActiveRuntimeSelectorRecord#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 201,
+        "column": 0,
+        "start": 6893,
+        "end": 7142,
+        "bodyLine": 203,
+        "bodyColumn": 48,
+        "bodyEndLine": 205,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared typed helper or bridge adapter, independently compared with original distributed inline operations. Retained reader, selector and lexical comparator roles are excluded from this addition; no original allowance is borrowed.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:recordField#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 208,
+        "column": 0,
+        "start": 7213,
+        "end": 7388,
+        "bodyLine": 208,
+        "bodyColumn": 59,
+        "bodyEndLine": 211,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared typed helper or bridge adapter, independently compared with original distributed inline operations. Retained reader, selector and lexical comparator roles are excluded from this addition; no original allowance is borrowed.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:isUnknownArray#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 214,
+        "column": 0,
+        "start": 7450,
+        "end": 7544,
+        "bodyLine": 214,
+        "bodyColumn": 60,
+        "bodyEndLine": 216,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared typed helper or bridge adapter, independently compared with original distributed inline operations. Retained reader, selector and lexical comparator roles are excluded from this addition; no original allowance is borrowed.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:exactStringFields#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 231,
+        "column": 0,
+        "start": 8085,
+        "end": 8364,
+        "bodyLine": 235,
+        "bodyColumn": 51,
+        "bodyEndLine": 237,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared typed helper or bridge adapter, independently compared with original distributed inline operations. Retained reader, selector and lexical comparator roles are excluded from this addition; no original allowance is borrowed.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:exactStringFields#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/run.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 236,
+        "column": 54,
+        "start": 8321,
+        "end": 8360,
+        "bodyLine": 236,
+        "bodyColumn": 63,
+        "bodyEndLine": 236,
+        "bodyEndColumn": 93
+      },
+      "rationale": "New callback within the shared exact-string-fields predicate; no unique published callable counterpart. Independently inventoried and assigned its own prospective 10/10 policy, without borrowing its parent cap.",
+      "independent_review": "/workspace/attachments/quality-run-twelve-budget-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isCheckedWorkState#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 159,
+        "column": 0,
+        "start": 7629,
+        "end": 7765,
+        "bodyLine": 159,
+        "bodyColumn": 70,
+        "bodyEndLine": 161,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isCheckedCoordinationLedger#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 163,
+        "column": 0,
+        "start": 7767,
+        "end": 7907,
+        "bodyLine": 163,
+        "bodyColumn": 88,
+        "bodyEndLine": 165,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isCheckedGovernanceValue#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 167,
+        "column": 0,
+        "start": 7909,
+        "end": 8093,
+        "bodyLine": 167,
+        "bodyColumn": 114,
+        "bodyEndLine": 169,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isCheckedWorkRow#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 171,
+        "column": 0,
+        "start": 8095,
+        "end": 8208,
+        "bodyLine": 171,
+        "bodyColumn": 80,
+        "bodyEndLine": 173,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isCheckedLedgerRow#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 175,
+        "column": 0,
+        "start": 8210,
+        "end": 8336,
+        "bodyLine": 175,
+        "bodyColumn": 91,
+        "bodyEndLine": 177,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isWorkIdentity#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 179,
+        "column": 0,
+        "start": 8338,
+        "end": 8668,
+        "bodyLine": 179,
+        "bodyColumn": 69,
+        "bodyEndLine": 187,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isStateVersion#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 5,
+      "current_source_address": {
+        "line": 189,
+        "column": 0,
+        "start": 8670,
+        "end": 8949,
+        "bodyLine": 189,
+        "bodyColumn": 69,
+        "bodyEndLine": 197,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:parseJsonUnknown#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 656,
+        "column": 0,
+        "start": 25152,
+        "end": 25263,
+        "bodyLine": 656,
+        "bodyColumn": 49,
+        "bodyEndLine": 659,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isUnknownArray#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 794,
+        "column": 0,
+        "start": 31307,
+        "end": 31401,
+        "bodyLine": 794,
+        "bodyColumn": 60,
+        "bodyEndLine": 796,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:hasNulOrLineBreak#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 803,
+        "column": 0,
+        "start": 31604,
+        "end": 31728,
+        "bodyLine": 803,
+        "bodyColumn": 42,
+        "bodyEndLine": 805,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:hasControlCharacter#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 4,
+      "current_source_address": {
+        "line": 807,
+        "column": 0,
+        "start": 31730,
+        "end": 31892,
+        "bodyLine": 807,
+        "bodyColumn": 44,
+        "bodyEndLine": 812,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.ts#fn:isWorkIdentity#0/closure:CallExpression:arguments[0]#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 184,
+        "column": 28,
+        "start": 8563,
+        "end": 8607,
+        "bodyLine": 184,
+        "bodyColumn": 43,
+        "bodyEndLine": 184,
+        "bodyEndColumn": 72
+      },
+      "rationale": "New separately callable typed guard or parser extracted from original inline operations; body and caller roles independently reviewed. The nested predicate has its own inventory row. Existing retained owner ceilings remain unchanged.",
+      "independent_review": "/workspace/attachments/quality-rebind-small-guards-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:withWorkflowFailureCleanup#0",
+      "file": "src/runtime-kernel.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 3,
+      "current_source_address": {
+        "line": 304,
+        "column": 0,
+        "start": 12787,
+        "end": 13144,
+        "bodyLine": 308,
+        "bodyColumn": 14,
+        "bodyEndLine": 319,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
+      "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:validateWorkflowApprovalTransition#0",
+      "file": "src/runtime-kernel.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 9,
+      "current_source_address": {
+        "line": 1495,
+        "column": 0,
+        "start": 65918,
+        "end": 67229,
+        "bodyLine": 1499,
+        "bodyColumn": 40,
+        "bodyEndLine": 1517,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
+      "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:requireMatchingTerminalAttempt#0",
+      "file": "src/runtime-kernel.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 2,
+      "current_source_address": {
+        "line": 1519,
+        "column": 0,
+        "start": 67231,
+        "end": 67549,
+        "bodyLine": 1524,
+        "bodyColumn": 8,
+        "bodyEndLine": 1529,
+        "bodyEndColumn": 1
+      },
+      "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
+      "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/binding:markUncertain/binding:markUncertain#0",
+      "file": "src/runtime-kernel.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 1571,
+        "column": 24,
+        "start": 69209,
+        "end": 69680,
+        "bodyLine": 1575,
+        "bodyColumn": 22,
+        "bodyEndLine": 1583,
+        "bodyEndColumn": 3
+      },
+      "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
+      "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/closure:CallExpression:arguments[0]#0",
+      "file": "src/runtime-kernel.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 1875,
+        "column": 6,
+        "start": 82560,
+        "end": 82735,
+        "bodyLine": 1876,
+        "bodyColumn": 8,
+        "bodyEndLine": 1879,
+        "bodyEndColumn": 10
+      },
+      "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
+      "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/closure:CallExpression:arguments[1]#0",
+      "file": "src/runtime-kernel.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 1880,
+        "column": 6,
+        "start": 82743,
+        "end": 82825,
+        "bodyLine": 1880,
+        "bodyColumn": 12,
+        "bodyEndLine": 1880,
+        "bodyEndColumn": 88
+      },
+      "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
+      "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/closure:CallExpression:arguments[1]#0",
+      "file": "src/runtime-kernel.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 2006,
+        "column": 12,
+        "start": 88484,
+        "end": 88539,
+        "bodyLine": 2006,
+        "bodyColumn": 18,
+        "bodyEndLine": 2006,
+        "bodyEndColumn": 67
+      },
+      "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
+      "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/closure:CallExpression:arguments[0]#6",
+      "file": "src/runtime-kernel.ts",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "current_complexity": 1,
+      "current_source_address": {
+        "line": 2026,
+        "column": 25,
+        "start": 89590,
+        "end": 89893,
+        "bodyLine": 2026,
+        "bodyColumn": 37,
+        "bodyEndLine": 2033,
+        "bodyEndColumn": 5
+      },
+      "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
+      "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
     }
   ],
   "removed_functions": [
@@ -203985,6 +205094,38 @@
     {
       "identity": "bin/bun.mjs#fn:pinnedEnvironment#0/closure:CallExpression:arguments[0]#0",
       "rationale": "The installed-root component-flattening map callback is removed after reproducing a valid scoped-package cache namespace collision. The parent now hashes canonical path bytes directly. No current callable or saved ceiling inherits this removed role."
+    },
+    {
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/binding:uncertain/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/binding:uncertain/closure:CallExpression:arguments[0]#0",
+      "file": "src/runtime-kernel.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 2070,
+        "column": 33,
+        "start": 90853,
+        "end": 90911,
+        "bodyLine": 2070,
+        "bodyColumn": 45,
+        "bodyEndLine": 2070,
+        "bodyEndColumn": 91
+      },
+      "current_source_address": {
+        "line": 1942,
+        "column": 33,
+        "start": 85870,
+        "end": 85928,
+        "bodyLine": 1942,
+        "bodyColumn": 45,
+        "bodyEndLine": 1942,
+        "bodyEndColumn": 91
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 0,
+      "baseline_crap": 2,
+      "max_complexity": 1,
+      "max_crap": 2,
+      "rationale": "Executor uncertainty persistence is consolidated into the original session uncertainty callback now owned by markUncertain. The original identity and saved measurement/cap fields remain provenance; no second allowance is transferred to a current role."
     }
   ],
   "review": {
@@ -221274,5 +222415,78 @@
       "/workspace/attachments/quality-canonical-always-snapshot-independent-review-20261016.md",
       "/workspace/attachments/quality-canonical-array-optimization-independent-review-20261016.md"
     ]
+  },
+  "scope_review_new_roles_20261016": {
+    "source_commit": "1ca0ec786e0d68251be5ac01080dd7048fd9a744",
+    "inventory": "/workspace/attachments/quality-current-complete-function-inventory-1ca0ec7-20261016.json",
+    "added": [
+      "bin/repair-native-delivery-evidence.ts#fn:addStandaloneInputs#0",
+      "bin/repair-native-delivery-evidence.ts#fn:addInputReferences#0",
+      "bin/repair-native-delivery-evidence.ts#fn:addFilenameReference#0",
+      "bin/repair-native-delivery-evidence.ts#fn:addEntryReferences#0",
+      "bin/repair-native-delivery-evidence.ts#fn:addStructuredReference#0",
+      "bin/repair-native-delivery-evidence.ts#fn:seedClosureReferences#0",
+      "bin/repair-native-delivery-evidence.ts#fn:recordOperationDirectory#0",
+      "bin/repair-native-delivery-evidence.ts#fn:finishClosure#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertEligibleRelease#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertSealEntries#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertSealDigests#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertSealKeys#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertSealIdentity#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertArchiveDigest#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertTestEntry#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertSuccessfulTestLog#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertCurrentTestBinding#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertCurrentAssurance#0",
+      "bin/repair-native-delivery-evidence.ts#fn:parseFileObservation#0",
+      "bin/repair-native-delivery-evidence.ts#fn:validateFileObservationKeys#0",
+      "bin/repair-native-delivery-evidence.ts#fn:parseAbsentFileObservation#0",
+      "bin/repair-native-delivery-evidence.ts#fn:parsePresentFileObservation#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertPlanHeader#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertPresentBeforeimage#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertBeforeimage#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertPlanBeforeimages#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertPhaseIdentity#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertCustodyIdentity#0",
+      "bin/repair-native-delivery-evidence.ts#fn:assertCustodyBeforeimage#0",
+      "bin/repair-native-delivery-evidence.ts#fn:inspectStoredRepair#0",
+      "bin/repair-native-delivery-evidence.ts#fn:parseRepairArguments#0",
+      "bin/repair-native-delivery-evidence.ts#fn:nativeEvidenceCommand#0",
+      "bin/run.ts#fn:nodeErrorCode#0",
+      "bin/run.ts#fn:closeRunSessionBridge#0",
+      "bin/run.ts#fn:parseJsonUnknown#0",
+      "bin/run.ts#fn:isRecord#0",
+      "bin/run.ts#fn:requireActiveRuntimeSelectorRecord#0",
+      "bin/run.ts#fn:recordField#0",
+      "bin/run.ts#fn:isUnknownArray#0",
+      "bin/run.ts#fn:exactStringFields#0",
+      "bin/run.ts#fn:exactStringFields#0/closure:CallExpression:arguments[0]#0",
+      "bin/runtime-config-rebind.ts#fn:isCheckedWorkState#0",
+      "bin/runtime-config-rebind.ts#fn:isCheckedCoordinationLedger#0",
+      "bin/runtime-config-rebind.ts#fn:isCheckedGovernanceValue#0",
+      "bin/runtime-config-rebind.ts#fn:isCheckedWorkRow#0",
+      "bin/runtime-config-rebind.ts#fn:isCheckedLedgerRow#0",
+      "bin/runtime-config-rebind.ts#fn:isWorkIdentity#0",
+      "bin/runtime-config-rebind.ts#fn:isStateVersion#0",
+      "bin/runtime-config-rebind.ts#fn:parseJsonUnknown#0",
+      "bin/runtime-config-rebind.ts#fn:isUnknownArray#0",
+      "bin/runtime-config-rebind.ts#fn:hasNulOrLineBreak#0",
+      "bin/runtime-config-rebind.ts#fn:hasControlCharacter#0",
+      "bin/runtime-config-rebind.ts#fn:isWorkIdentity#0/closure:CallExpression:arguments[0]#0",
+      "src/runtime-kernel.ts#fn:withWorkflowFailureCleanup#0",
+      "src/runtime-kernel.ts#fn:validateWorkflowApprovalTransition#0",
+      "src/runtime-kernel.ts#fn:requireMatchingTerminalAttempt#0",
+      "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/binding:markUncertain/binding:markUncertain#0",
+      "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/closure:CallExpression:arguments[0]#0",
+      "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/closure:CallExpression:arguments[1]#0",
+      "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/closure:CallExpression:arguments[1]#0",
+      "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/closure:CallExpression:arguments[0]#6"
+    ],
+    "deferred": [],
+    "redirected_original": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#3/closure:CallExpression:arguments[0]#0",
+    "redirected_current": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/binding:markUncertain/binding:markUncertain#0/binding:uncertain/closure:CallExpression:arguments[0]#0",
+    "consolidated_original": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/binding:uncertain/closure:CallExpression:arguments[0]#0",
+    "removed_stale_new": "src/runtime-kernel.ts#fn:withUnstartedWorkflowCleanup#0",
+    "limits": "Static non-exhaustive role dispositions only. No historical measurement reconstructed, no retained cap changed, no complete frozen plan, dynamic CRAP, coverage, mutation or Runtime qualification."
   }
 }
