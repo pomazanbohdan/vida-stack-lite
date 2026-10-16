@@ -422,6 +422,7 @@ export function mutationPartitions(): MutationPartition[] {
         'tests/public-ingress-boundary.test.ts',
         'tests/envelopes-boundary.test.ts',
         'tests/forward-controller-values.test.ts',
+        'tests/canonical-json-core.test.ts',
         'tests/fuzz.test.ts',
         'tests/governance-completeness.test.ts',
         'tests/edictum-workflow-completeness.test.ts',
@@ -484,6 +485,7 @@ export function mutationPartitions(): MutationPartition[] {
       ],
       tests: [
         'tests/completed-source-report-recovery-cli.test.ts',
+        'tests/bun-sqlite-client.test.ts',
         'tests/session-bridge-contract.test.ts',
         'tests/initial-source-continuation.test.ts',
         'tests/delivered-work-continuation.test.ts',

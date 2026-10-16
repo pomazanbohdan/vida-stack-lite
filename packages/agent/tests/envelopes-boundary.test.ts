@@ -456,6 +456,54 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(executionWire).toEqual(executionLedger);
   });
 
+  test('coordination ledger validates and emits the same captured Proxy image', async () => {
+    const { coordinationLedgerJson } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    let liveReads = 0;
+    let hookCalls = 0;
+    const changing = new Proxy(ledger, {
+      get(target, key, receiver) {
+        if (key === 'revision') {
+          liveReads += 1;
+          return 999;
+        }
+        if (key === 'toJSON')
+          return () => {
+            hookCalls += 1;
+            return {};
+          };
+        const observed: unknown = Reflect.get(target, key, receiver);
+        return observed;
+      },
+    });
+    const encoded = expectReturned(() => coordinationLedgerJson(changing));
+    expect(typeof encoded).toBe('string');
+    expect(JSON.parse(encoded)).toEqual(ledger);
+    expect(liveReads).toBe(0);
+    expect(hookCalls).toBe(0);
+  });
+
+  test('rejects an invalid captured ledger image even when live fields would pass', async () => {
+    const { coordinationLedgerJson } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    let liveReads = 0;
+    const input = new Proxy(ledger, {
+      getOwnPropertyDescriptor(target, key) {
+        const descriptor = Reflect.getOwnPropertyDescriptor(target, key);
+        if (key === 'next_sequence' && descriptor) return { ...descriptor, value: 0 };
+        return descriptor;
+      },
+      get(target, key, receiver) {
+        if (key === 'next_sequence') liveReads++;
+        const observed: unknown = Reflect.get(target, key, receiver);
+        return observed;
+      },
+    });
+    expect(() => coordinationLedgerJson(input)).toThrow('coordination ledger rejected:');
+    expect(liveReads).toBe(0);
+    expect(ledger.next_sequence).toBe(2);
+  });
+
   test('coordination ledger semantics bind claim authority, projections, FIFO, and notice history', async () => {
     const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
     const ledger = coordinationLedgerFixture();

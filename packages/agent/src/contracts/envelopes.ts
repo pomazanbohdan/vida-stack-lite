@@ -3,7 +3,11 @@ import type { ValidateFunction } from 'ajv';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
-import { canonicalJsonWithNodeLimit, MAX_CANONICAL_BYTES } from './canonical-json-core.js';
+import {
+  canonicalJsonImageWithNodeLimit,
+  canonicalJsonWithNodeLimit,
+  MAX_CANONICAL_BYTES,
+} from './canonical-json-core.js';
 import coordinationLedgerSchema from '../../schemas/coordination-ledger.v1.schema.json' with { type: 'json' };
 import envelopeSchema from '../../schemas/runtime-envelope.v1.schema.json' with { type: 'json' };
 import { Result } from 'neverthrow';
@@ -86,8 +90,9 @@ export const localToolEnvelope = z
 
 /** A typed ledger has record/resource limits, not the node budget of one ingress message. */
 export function coordinationLedgerJson(value: unknown, depth = 0): string {
-  const payload = coordinationComponentJson(value, depth);
-  const result = validateCoordinationLedgerV1(value);
+  const { image, json: payload } = canonicalJsonImageWithNodeLimit(value, depth, MAX_CANONICAL_BYTES);
+  reject([Buffer.byteLength(payload) > MAX_CANONICAL_BYTES], 'coordination ledger byte budget exceeded');
+  const result = validateCoordinationLedgerV1(image);
   reject([!result.ok], 'coordination ledger rejected: ' + result.issues.map((issue) => issue.message).join('; '));
   return payload;
 }

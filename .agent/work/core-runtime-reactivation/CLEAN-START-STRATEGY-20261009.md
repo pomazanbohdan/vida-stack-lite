@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `7a6f6ab`; current correction details are in WORK.
+- Published predecessor: `f3d63b8`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. The fresh host/timing pilots used accepted d320564 CI inputs. Changed inputs need matching CI formation; WORK owns run/artifact receipts.
 - Historical run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Preserve its custody and all older UNKNOWN evidence; do not replay it. Current attempts and source bindings are in WORK and the derived contour document.
@@ -55,9 +55,11 @@ The published integration batch moved fourteen mixed completeness cases to their
 source owners and strengthened activated-config, storage-admission, governance
 and documentation-policy denials. Fresh contracts coverage/scoped CRAP passed;
 its1188-mutant campaign hit900s and remains UNKNOWN. Parent assertion causality
-is corrected in development; review complete source-aligned subdivisions and the
-reproduced serialization-image defect before another numeric attempt;
-do not repeat the unchanged campaign or raise its deadline. Root owns Source, shared helpers, registry,
+and the reproduced serialization-image defect are corrected in development;
+publish the checked packet, then run one fresh complete existing campaign after
+coverage and same-run scoped CRAP. The final snapshot design respects all prior
+ceilings. A new parent/child join is deferred without measured benefit. Do not
+repeat the unchanged campaign or raise its deadline. Root owns Source, shared helpers, registry,
 frozen-plan metadata, documentation, checks and Git. Workers do not run competing
 checks, numerical producers, builds or installs. Exact outcomes live in WORK;
 copied preparation does not close a contour.

@@ -8,6 +8,7 @@ export const MAX_CANONICAL_BYTES = 8_388_608;
 interface CanonicalBudget {
   nodes: number;
   bytes: number;
+  capturedArrays?: unknown[][];
 }
 
 function reject(conditions: readonly boolean[], message: string): void {
@@ -57,10 +58,21 @@ export function canonicalJsonAtDepth(value: unknown, depth: number): string {
 }
 /** Internal typed-component seam. Public ingress always uses the fixed ordinary budget. */
 export function canonicalJsonWithNodeLimit(value: unknown, depth: number, maxNodes: number): string {
+  return canonicalJsonImageWithNodeLimit(value, depth, maxNodes).json;
+}
+/** Capture one descriptor-derived image for serialization and downstream validation. */
+export function canonicalJsonImageWithNodeLimit(
+  value: unknown,
+  depth: number,
+  maxNodes: number,
+): { readonly image: unknown; readonly json: string } {
   reject([!Number.isSafeInteger(depth), depth < 0, depth > MAX_CANONICAL_DEPTH], 'canonical JSON root depth invalid');
   reject([!Number.isSafeInteger(maxNodes), maxNodes < 1], 'canonical JSON node limit invalid');
-  assertValue(value, '$', new WeakSet<object>(), depth, { nodes: 0, bytes: 0 }, maxNodes);
-  return serializeCanonicalJson(value);
+  const budget: CanonicalBudget = { nodes: 0, bytes: 0, capturedArrays: [] };
+  const image = assertValue(value, '$', new WeakSet<object>(), depth, budget, maxNodes);
+  const json = serializeCanonicalJson(image);
+  for (const array of budget.capturedArrays!) delete (array as unknown[] & { toJSON?: unknown }).toJSON;
+  return { image, json };
 }
 export function canonicalJsonDigest(value: unknown): string {
   return createHash('sha256').update(canonicalJson(value)).digest('hex');
@@ -87,15 +99,15 @@ function assertValue(
   depth: number,
   budget: CanonicalBudget,
   maxNodes: number,
-): void {
+): unknown {
   budget.nodes += 1;
   reject([budget.nodes > maxNodes], `canonical JSON node budget exceeded at ${pointer}`);
   reject([depth > MAX_CANONICAL_DEPTH], `canonical JSON depth budget exceeded at ${pointer}`);
-  if (value === null || typeof value === 'boolean') return;
+  if (value === null || typeof value === 'boolean') return value;
   const kind = Array.isArray(value) ? 'array' : typeof value;
   const handler = canonicalValidators[kind];
   reject([handler === undefined], `non-canonical JSON value at ${pointer}`);
-  handler!(value, pointer, seen, depth, budget, maxNodes);
+  return handler!(value, pointer, seen, depth, budget, maxNodes);
 }
 
 type CanonicalValidator = (
@@ -105,14 +117,15 @@ type CanonicalValidator = (
   depth: number,
   budget: CanonicalBudget,
   maxNodes: number,
-) => void;
+) => unknown;
 
 export function isCanonicalJsonNumber(value: unknown): value is number {
   return Number.isFinite(value) && (!Number.isInteger(value) || Number.isSafeInteger(value)) && !Object.is(value, -0);
 }
 
-function canonicalNumber(value: unknown, pointer: string): void {
+function canonicalNumber(value: unknown, pointer: string): unknown {
   reject([!isCanonicalJsonNumber(value)], `non-canonical JSON number at ${pointer}`);
+  return value;
 }
 
 function canonicalString(
@@ -121,9 +134,11 @@ function canonicalString(
   _seen: WeakSet<object>,
   _depth: number,
   budget: CanonicalBudget,
-): void {
+  _maxNodes: number,
+): unknown {
   budget.bytes += Buffer.byteLength(value as string, 'utf8');
   reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${pointer}`);
+  return value;
 }
 
 function canonicalArray(
@@ -133,32 +148,54 @@ function canonicalArray(
   depth: number,
   budget: CanonicalBudget,
   maxNodes: number,
-): void {
+): unknown {
   const target = value as unknown[];
   reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
-  canonicalArrayKeys(target, pointer);
+  const { descriptors } = canonicalArrayEntries(target, pointer);
   seen.add(target);
-  for (let index = 0; index < target.length; index += 1)
-    assertValue(target[index], `${pointer}[${index}]`, seen, depth + 1, budget, maxNodes);
+  const image = new Array<unknown>(descriptors.length);
+  for (let index = 0; index < descriptors.length; index += 1) {
+    image[index] = assertValue(descriptors[index]!.value, `${pointer}[${index}]`, seen, depth + 1, budget, maxNodes);
+  }
   seen.delete(target);
+  return ownedArrayImage(image, budget);
+}
+
+function ownedArrayImage(image: unknown[], budget: CanonicalBudget): unknown[] {
+  if (budget.capturedArrays === undefined) return image;
+  Object.defineProperty(image, 'toJSON', {
+    value: undefined,
+    enumerable: false,
+    configurable: true,
+    writable: true,
+  });
+  budget.capturedArrays.push(image);
+  return image;
 }
 
 function canonicalArrayKeys(target: unknown[], pointer: string): string[] {
+  return canonicalArrayEntries(target, pointer).keys;
+}
+
+function canonicalArrayEntries(
+  target: unknown[],
+  pointer: string,
+): { keys: string[]; descriptors: PropertyDescriptor[] } {
   reject([Object.getPrototypeOf(target) !== Array.prototype], `non-canonical array prototype at ${pointer}`);
   reject(
     [hasUnsafeSerializationHook(target as unknown as Record<string, unknown>)],
     `serialization hook at ${pointer}`,
   );
+  const length = Object.getOwnPropertyDescriptor(target, 'length')?.value as number;
+  reject([!Number.isSafeInteger(length)], `non-canonical array length at ${pointer}`);
   const ownKeys = Reflect.ownKeys(target);
-  reject(
-    [ownKeys.some((key) => arrayPropertyInvalid(key, target.length))],
-    `non-canonical array property at ${pointer}`,
-  );
+  reject([ownKeys.some((key) => arrayPropertyInvalid(key, length))], `non-canonical array property at ${pointer}`);
   const elements = ownKeys.filter(arrayElementKey);
-  reject([elements.length !== target.length], `sparse array at ${pointer}`);
+  reject([elements.length !== length], `sparse array at ${pointer}`);
   // Validate every descriptor before any child is inspected; accessors never execute.
-  for (const key of elements) canonicalDescriptor(target, key, `${pointer}[${key}]`);
-  return elements;
+  const descriptors = new Array<PropertyDescriptor>(elements.length);
+  for (const key of elements) descriptors[Number(key)] = canonicalDescriptor(target, key, `${pointer}[${key}]`);
+  return { keys: elements, descriptors };
 }
 
 function canonicalDescriptor(target: object, key: PropertyKey, pointer: string): PropertyDescriptor {
@@ -177,21 +214,28 @@ function canonicalObject(
   depth: number,
   budget: CanonicalBudget,
   maxNodes: number,
-): void {
+): unknown {
   const target = value as Record<string, unknown>;
   reject([!isPlainRecord(target)], `non-canonical JSON object at ${pointer}`);
   reject([hasUnsafeSerializationHook(target)], `serialization hook at ${pointer}`);
   reject([seen.has(target)], `cyclic JSON value at ${pointer}`);
   seen.add(target);
+  const image = Object.create(null) as Record<string, unknown>;
   for (const key of Reflect.ownKeys(target)) {
     reject([typeof key !== 'string'], `symbol property at ${pointer}`);
     const childPointer = `${pointer}.${String(key)}`;
     const descriptor = canonicalDescriptor(target, key, childPointer);
     budget.bytes += Buffer.byteLength(String(key), 'utf8');
     reject([budget.bytes > MAX_CANONICAL_BYTES], `canonical JSON byte budget exceeded at ${childPointer}`);
-    assertValue(descriptor.value, childPointer, seen, depth + 1, budget, maxNodes);
+    Object.defineProperty(image, key, {
+      value: assertValue(descriptor.value, childPointer, seen, depth + 1, budget, maxNodes),
+      enumerable: true,
+      configurable: true,
+      writable: true,
+    });
   }
   seen.delete(target);
+  return image;
 }
 
 const canonicalValidators = Object.freeze(

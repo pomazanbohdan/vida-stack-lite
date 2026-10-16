@@ -9,14 +9,47 @@ import {
   canonicalJsonAtDepth,
   canonicalJsonComponents,
   canonicalJsonDigest,
+  canonicalJsonImageWithNodeLimit,
   optionalCanonicalJsonDigest,
   canonicalJsonWithNodeLimit,
   isCanonicalJsonNumber,
   isPlainRecord,
 } from '../src/contracts/canonical-json-core.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 function expectCanonicalFailure(operation: () => unknown): void {
   expect(operation).toThrow();
+}
+
+function withRestoredOwnProperty<T>(target: object, key: PropertyKey, operation: () => T): T {
+  const original = Object.getOwnPropertyDescriptor(target, key);
+  let result!: T;
+  let operationError: unknown;
+  let operationFailed = false;
+  try {
+    result = operation();
+  } catch (error) {
+    operationFailed = true;
+    operationError = error;
+  }
+  let restorationError: unknown;
+  let restorationFailed = false;
+  try {
+    if (original === undefined) {
+      if (!Reflect.deleteProperty(target, key)) throw new Error(`could not restore absent ${String(key)} property`);
+    } else {
+      Object.defineProperty(target, key, original);
+    }
+  } catch (error) {
+    restorationFailed = true;
+    restorationError = error;
+  }
+  if (operationFailed && restorationFailed) {
+    throw new AggregateError([operationError, restorationError], 'operation and intrinsic restoration both failed');
+  }
+  if (operationFailed) throw operationError;
+  if (restorationFailed) throw restorationError;
+  return result;
 }
 
 describe('canonical JSON core contract', () => {
@@ -28,6 +61,177 @@ describe('canonical JSON core contract', () => {
     expect(canonicalJson({ a: 1, b: 2 })).toBe(canonicalJson({ b: 2, a: 1 }));
     expectCanonicalFailure(() => canonicalJson(-0));
     expect(canonicalJsonAtDepth({ item: 1 }, 8)).toBe('{"item":1}');
+  });
+
+  test('serializes the descriptor image of Proxies without invoking proxy get or toJSON traps', () => {
+    let valueGets = 0;
+    let hookCalls = 0;
+    const input = new Proxy(
+      { value: 1 },
+      {
+        get(target, key, receiver) {
+          if (key === 'value') {
+            valueGets += 1;
+            return 2;
+          }
+          if (key === 'toJSON')
+            return () => {
+              hookCalls += 1;
+              return {};
+            };
+          const observed: unknown = Reflect.get(target, key, receiver);
+          return observed;
+        },
+      },
+    );
+    expect(expectReturned(() => canonicalJson(input))).toBe('{"value":1}');
+    expect(valueGets).toBe(0);
+    expect(hookCalls).toBe(0);
+    const nullRecord = Object.assign(Object.create(null) as Record<string, unknown>, { ['__proto__']: { safe: true } });
+    expect(expectReturned(() => canonicalJson(nullRecord))).toBe('{"__proto__":{"safe":true}}');
+    const shared = { leaf: 1 };
+    expect(expectReturned(() => canonicalJson([shared, shared]))).toBe('[{"leaf":1},{"leaf":1}]');
+    const capturedArray = expectReturned(() => canonicalJsonImageWithNodeLimit([1], 0, MAX_CANONICAL_NODES));
+    expect(capturedArray).toBeInstanceOf(Object);
+    const arrayImage = capturedArray.image;
+    expect(Array.isArray(arrayImage)).toBe(true);
+    expect(Object.getOwnPropertyDescriptor(arrayImage, 'toJSON')).toBeUndefined();
+  });
+
+  test('captures dense Proxy arrays and preserves ordinary toJSON data fields', () => {
+    let liveReads = 0;
+    let hooks = 0;
+    const input = new Proxy([1, { toJSON: 7 }], {
+      ownKeys(target) {
+        return Reflect.ownKeys(target).reverse();
+      },
+      get(_target, key) {
+        liveReads++;
+        if (key === 'toJSON')
+          return () => {
+            hooks++;
+            return [];
+          };
+        return 'unvalidated live value';
+      },
+    });
+    const encoded = expectReturned(() => canonicalJson(input));
+    expect(encoded).toBe('[1,{"toJSON":7}]');
+    expect(liveReads).toBe(0);
+    expect(hooks).toBe(0);
+    const decoded: unknown = JSON.parse(encoded);
+    expect(expectReturned(() => canonicalJson(decoded))).toBe(encoded);
+  });
+
+  test('rejects a borrowed array length descriptor without coercing it', () => {
+    let coercions = 0;
+    const length = {
+      [Symbol.toPrimitive]() {
+        coercions++;
+        return 1;
+      },
+    };
+    const input = new Proxy([1], {
+      getOwnPropertyDescriptor(target, key) {
+        const descriptor = Reflect.getOwnPropertyDescriptor(target, key);
+        return key === 'length' && descriptor ? { ...descriptor, value: length } : descriptor;
+      },
+    });
+    expect(() => canonicalJson(input)).toThrow('non-canonical array length');
+    expect(coercions).toBe(0);
+  });
+
+  test('captured images do not inherit alternating Proxy prototypes', () => {
+    let prototypeReads = 0;
+    const alternate = { inheritedOnly: true };
+    const input = new Proxy(
+      { value: 1 },
+      {
+        getPrototypeOf() {
+          prototypeReads += 1;
+          return prototypeReads === 1 ? (Object.prototype as object) : alternate;
+        },
+      },
+    );
+    const captured = expectReturned(() => canonicalJsonImageWithNodeLimit(input, 0, MAX_CANONICAL_NODES));
+    expect(captured).toBeInstanceOf(Object);
+    expect(captured.json).toBe('{"value":1}');
+    expect(typeof captured.image).toBe('object');
+    expect(captured.image).not.toBeNull();
+    expect(Object.getPrototypeOf(captured.image)).toBe(null);
+    expect('inheritedOnly' in (captured.image as object)).toBe(false);
+  });
+
+  test('shadows late inherited toJSON hooks only during canonical serialization', () => {
+    const input = new Proxy(
+      { value: 1 },
+      {
+        ownKeys(target) {
+          Object.defineProperty(Array.prototype, 'toJSON', {
+            configurable: true,
+            writable: true,
+            value() {
+              arrayHookCalls += 1;
+              return ['forged'];
+            },
+          });
+          return Reflect.ownKeys(target);
+        },
+      },
+    );
+    let arrayHookCalls = 0;
+    const arrayResult = withRestoredOwnProperty(Array.prototype, 'toJSON', () =>
+      expectReturned(() => canonicalJson([input])),
+    );
+    expect(arrayResult).toBe('[{"value":1}]');
+    expect(arrayHookCalls).toBe(0);
+
+    let inheritedHookCalls = 0;
+    const objectTrap = new Proxy(
+      { value: 1 },
+      {
+        ownKeys(target) {
+          Object.defineProperty(Object.prototype, 'toJSON', {
+            configurable: true,
+            writable: true,
+            value() {
+              inheritedHookCalls += 1;
+              return { forged: true };
+            },
+          });
+          return Reflect.ownKeys(target);
+        },
+      },
+    );
+    const inheritedResult = withRestoredOwnProperty(Object.prototype, 'toJSON', () =>
+      expectReturned(() => canonicalJson([objectTrap])),
+    );
+    expect(inheritedResult).toBe('[{"value":1}]');
+    expect(inheritedHookCalls).toBe(0);
+
+    let unrelatedHookCalls = 0;
+    let recordResult = '';
+    const recordTrap = new Proxy(
+      { value: 1 },
+      {
+        ownKeys(target) {
+          Object.defineProperty(Object.prototype, 'toJSON', {
+            configurable: true,
+            writable: true,
+            value() {
+              unrelatedHookCalls += 1;
+              return {};
+            },
+          });
+          return Reflect.ownKeys(target);
+        },
+      },
+    );
+    recordResult = withRestoredOwnProperty(Object.prototype, 'toJSON', () =>
+      expectReturned(() => canonicalJson(recordTrap)),
+    );
+    expect(recordResult).toBe('{"value":1}');
+    expect(unrelatedHookCalls).toBe(0);
   });
 
   test('accepts safe canonical numbers and rejects negative zero, unsafe integers, and non-finite values', () => {

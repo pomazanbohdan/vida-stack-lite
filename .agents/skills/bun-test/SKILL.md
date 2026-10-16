@@ -92,6 +92,12 @@ proof missed Bun's native replacement of lone surrogates with U+FFFD. Preserve
 that counterexample, explicit high/low-surrogate denials and accepted literal
 replacement characters when simplifying path guards. Do not narrow a generator
 to make a refactor pass; qualify the executing runtime's string behavior.
+For descriptor-backed Proxy fixtures, cover both a valid captured image and an
+invalid image whose live getters would pass. Dense arrays need a control that
+reorders own keys and a nonnumeric length descriptor with a counted coercion
+hook. Require no live gets/coercions, and assert image shape before inspecting
+its properties. Keep temporary intrinsic changes synchronous and restore the
+exact original descriptor while preserving primary and restoration errors.
 Lifecycle discovery treats strict JSON imports as data, even when their strings
 mention hook names. Malformed JSON and executable-module parse failures still
 fail closed; never skip an executable dependency to obtain a Killed result.

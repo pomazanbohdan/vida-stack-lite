@@ -1487,7 +1487,14 @@ returns a fresh snapshot, grants no capability and is not a new public SDK surfa
 
 Canonical JSON retains its existing serializer and finite node/depth/byte bounds,
 dense own array elements, descriptor/hook/prototype/cycle rejection and legal
-shared references. Runtime configuration digests may be reused only for actual
+shared references. Canonical emission uses the data descriptors captured during
+that validation traversal, rather than reading caller properties again. The
+coordination ledger's schema and semantic checks consume that same owned image.
+Owned record images have null prototypes. Owned array images temporarily mask
+inherited serialization hooks while the serializer runs; those internal markers
+are removed before an image is returned for validation. Assertion-only ingress
+uses the same traversal and discards its temporary image.
+Runtime configuration digests may be reused only for actual
 loader-owned deeply frozen configurations. Every digest read still checks live
 inherited serialization hooks without invoking accessors; current YAML bytes
 select their current configuration. Arbitrary caller objects remain uncached and

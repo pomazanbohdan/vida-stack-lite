@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 5434,
-    "new": 1557,
+    "new": 1560,
     "removed": 89,
-    "current_roles": 6991,
+    "current_roles": 6994,
     "source_files": 149
   },
   "source_bindings": [
@@ -27,7 +27,7 @@
     },
     {
       "file": "src/contracts/canonical-json-core.ts",
-      "sha256": "8378aee76f485ba95519d40fb64a35954ab2ebca330d125c8ce5142c4c38f9ec"
+      "sha256": "a1a0fed7b95b12a761ce6ac7ce5dbc5d4bfaeb7cf5705673a1499e1b5f90b5dd"
     },
     {
       "file": "src/governance/policy-workflow.ts",
@@ -419,7 +419,7 @@
     },
     {
       "file": "src/contracts/envelopes.ts",
-      "sha256": "20450fd8a36444176ff6dc1dfac58e1f17d11e96f5a807e46929039669101193"
+      "sha256": "ab9a973105d9e7358fa3289e4787cbde82f57b5470b028d62e706f8304fad145"
     },
     {
       "file": "src/orchestration/delivered-work-continuation-repair.ts",
@@ -20497,13 +20497,13 @@
       "max_crap": 2,
       "rationale": "Same guard primitive: throws on any true condition and is still used throughout validation paths.",
       "current_source_address": {
-        "line": 13,
+        "line": 14,
         "column": 0,
-        "start": 315,
-        "end": 447,
-        "bodyLine": 13,
+        "start": 347,
+        "end": 479,
+        "bodyLine": 14,
         "bodyColumn": 71,
-        "bodyEndLine": 15,
+        "bodyEndLine": 16,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20527,13 +20527,13 @@
       "max_crap": 1,
       "rationale": "Same array-index predicate: validates canonical decimal spelling, safe integer range, and array bounds.",
       "current_source_address": {
-        "line": 16,
+        "line": 17,
         "column": 0,
-        "start": 448,
-        "end": 659,
-        "bodyLine": 16,
+        "start": 480,
+        "end": 691,
+        "bodyLine": 17,
         "bodyColumn": 63,
-        "bodyEndLine": 19,
+        "bodyEndLine": 20,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20557,13 +20557,13 @@
       "max_crap": 1,
       "rationale": "Same array own-key policy: permits length and valid dense indices, rejects other properties.",
       "current_source_address": {
-        "line": 20,
+        "line": 21,
         "column": 0,
-        "start": 660,
-        "end": 904,
-        "bodyLine": 20,
+        "start": 692,
+        "end": 936,
+        "bodyLine": 21,
         "bodyColumn": 73,
-        "bodyEndLine": 24,
+        "bodyEndLine": 25,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20587,13 +20587,13 @@
       "max_crap": 1,
       "rationale": "Same element-key selector: selects string keys other than length.",
       "current_source_address": {
-        "line": 25,
+        "line": 26,
         "column": 0,
-        "start": 905,
-        "end": 1035,
-        "bodyLine": 25,
+        "start": 937,
+        "end": 1067,
+        "bodyLine": 26,
         "bodyColumn": 58,
-        "bodyEndLine": 27,
+        "bodyEndLine": 28,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20617,13 +20617,13 @@
       "max_crap": 5,
       "rationale": "Same JSON-object type predicate: excludes null, arrays, and non-plain prototypes while allowing Object.prototype/null.",
       "current_source_address": {
-        "line": 29,
+        "line": 30,
         "column": 7,
-        "start": 1044,
-        "end": 1331,
-        "bodyLine": 29,
+        "start": 1076,
+        "end": 1363,
+        "bodyLine": 30,
         "bodyColumn": 80,
-        "bodyEndLine": 33,
+        "bodyEndLine": 34,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20647,13 +20647,13 @@
       "max_crap": 5,
       "rationale": "Same prototype-chain toJSON safety check: rejects accessors and callable hooks.",
       "current_source_address": {
-        "line": 35,
+        "line": 36,
         "column": 0,
-        "start": 1333,
-        "end": 1807,
-        "bodyLine": 35,
+        "start": 1365,
+        "end": 1839,
+        "bodyLine": 36,
         "bodyColumn": 77,
-        "bodyEndLine": 45,
+        "bodyEndLine": 46,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20677,13 +20677,13 @@
       "max_crap": 2,
       "rationale": "Same canonicalize adapter and undefined-result failure.",
       "current_source_address": {
-        "line": 46,
+        "line": 47,
         "column": 0,
-        "start": 1808,
-        "end": 2027,
-        "bodyLine": 46,
+        "start": 1840,
+        "end": 2059,
+        "bodyLine": 47,
         "bodyColumn": 56,
-        "bodyEndLine": 50,
+        "bodyEndLine": 51,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20707,13 +20707,13 @@
       "max_crap": 1,
       "rationale": "Same public entrypoint delegating root depth zero to canonicalJsonAtDepth.",
       "current_source_address": {
-        "line": 51,
+        "line": 52,
         "column": 7,
-        "start": 2035,
-        "end": 2126,
-        "bodyLine": 51,
+        "start": 2067,
+        "end": 2158,
+        "bodyLine": 52,
         "bodyColumn": 54,
-        "bodyEndLine": 53,
+        "bodyEndLine": 54,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20737,13 +20737,13 @@
       "max_crap": 1,
       "rationale": "Same depth-aware wrapper using the fixed ordinary MAX_CANONICAL_NODES.",
       "current_source_address": {
-        "line": 55,
+        "line": 56,
         "column": 7,
-        "start": 2224,
-        "end": 2368,
-        "bodyLine": 55,
+        "start": 2256,
+        "end": 2400,
+        "bodyLine": 56,
         "bodyColumn": 76,
-        "bodyEndLine": 57,
+        "bodyEndLine": 58,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20767,13 +20767,13 @@
       "max_crap": 1,
       "rationale": "Same validation pipeline for depth/node limits, assertValue, then canonical serialization.",
       "current_source_address": {
-        "line": 59,
+        "line": 60,
         "column": 7,
-        "start": 2468,
-        "end": 2910,
-        "bodyLine": 59,
+        "start": 2500,
+        "end": 2667,
+        "bodyLine": 60,
         "bodyColumn": 100,
-        "bodyEndLine": 64,
+        "bodyEndLine": 62,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20797,13 +20797,13 @@
       "max_crap": 1,
       "rationale": "Same SHA-256 digest of canonicalJson output.",
       "current_source_address": {
-        "line": 65,
+        "line": 77,
         "column": 7,
-        "start": 2918,
-        "end": 3048,
-        "bodyLine": 65,
+        "start": 3485,
+        "end": 3615,
+        "bodyLine": 77,
         "bodyColumn": 60,
-        "bodyEndLine": 67,
+        "bodyEndLine": 79,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20827,13 +20827,13 @@
       "max_crap": 1,
       "rationale": "Same exported JSON-value assertion wrapper using shared traversal and standard node limit.",
       "current_source_address": {
-        "line": 74,
+        "line": 86,
         "column": 7,
-        "start": 3273,
-        "end": 3524,
-        "bodyLine": 80,
+        "start": 3840,
+        "end": 4091,
+        "bodyLine": 92,
         "bodyColumn": 8,
-        "bodyEndLine": 82,
+        "bodyEndLine": 94,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20857,13 +20857,13 @@
       "max_crap": 4,
       "rationale": "Same recursive dispatcher: increments node budget, checks limits, accepts null/boolean, then selects number/string/array/object handler.",
       "current_source_address": {
-        "line": 83,
+        "line": 95,
         "column": 0,
-        "start": 3525,
-        "end": 4193,
-        "bodyLine": 90,
-        "bodyColumn": 8,
-        "bodyEndLine": 99,
+        "start": 4092,
+        "end": 4776,
+        "bodyLine": 102,
+        "bodyColumn": 11,
+        "bodyEndLine": 111,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20887,13 +20887,13 @@
       "max_crap": 2,
       "rationale": "Same number validation role; implementation now delegates to extracted isCanonicalJsonNumber predicate, preserving finite/safe-integer/non-negative-zero constraints.",
       "current_source_address": {
-        "line": 114,
+        "line": 126,
         "column": 0,
-        "start": 4556,
-        "end": 4709,
-        "bodyLine": 114,
-        "bodyColumn": 64,
-        "bodyEndLine": 116,
+        "start": 5142,
+        "end": 5314,
+        "bodyLine": 126,
+        "bodyColumn": 67,
+        "bodyEndLine": 129,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20917,13 +20917,13 @@
       "max_crap": 1,
       "rationale": "Same UTF-8 byte accounting and canonical byte-budget enforcement.",
       "current_source_address": {
-        "line": 118,
+        "line": 131,
         "column": 0,
-        "start": 4711,
-        "end": 5019,
-        "bodyLine": 124,
-        "bodyColumn": 8,
-        "bodyEndLine": 127,
+        "start": 5316,
+        "end": 5664,
+        "bodyLine": 138,
+        "bodyColumn": 11,
+        "bodyEndLine": 142,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20947,13 +20947,13 @@
       "max_crap": 2,
       "rationale": "Same cycle guard, key validation, recursive element traversal, and seen-set cleanup.",
       "current_source_address": {
-        "line": 129,
+        "line": 144,
         "column": 0,
-        "start": 5021,
-        "end": 5515,
-        "bodyLine": 136,
-        "bodyColumn": 8,
-        "bodyEndLine": 144,
+        "start": 5666,
+        "end": 6325,
+        "bodyLine": 151,
+        "bodyColumn": 11,
+        "bodyEndLine": 162,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20977,13 +20977,13 @@
       "max_crap": 2,
       "rationale": "Same array shape/key/descriptor validator; current version additionally requires Array.prototype exactly, tightening accepted inputs.",
       "current_source_address": {
-        "line": 146,
+        "line": 176,
         "column": 0,
-        "start": 5517,
-        "end": 6339,
-        "bodyLine": 146,
+        "start": 6659,
+        "end": 6790,
+        "bodyLine": 176,
         "bodyColumn": 74,
-        "bodyEndLine": 162,
+        "bodyEndLine": 178,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -20999,7 +20999,7 @@
     },
     {
       "identity": "src/contracts/canonical-json-core.ts#fn:canonicalArrayKeys#0/closure:CallExpression:arguments[0]#0",
-      "current_identity": "src/contracts/canonical-json-core.ts#fn:canonicalArrayKeys#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/contracts/canonical-json-core.ts#fn:canonicalArrayEntries#0/closure:CallExpression:arguments[0]#0",
       "baseline_complexity": 1,
       "baseline_coverage": 1,
       "max_complexity": 1,
@@ -21007,14 +21007,14 @@
       "max_crap": 1,
       "rationale": "Same array shape/key/descriptor validator; current version additionally requires Array.prototype exactly, tightening accepted inputs.",
       "current_source_address": {
-        "line": 154,
-        "column": 18,
-        "start": 5909,
-        "end": 5958,
-        "bodyLine": 154,
-        "bodyColumn": 27,
-        "bodyEndLine": 154,
-        "bodyEndColumn": 67
+        "line": 192,
+        "column": 23,
+        "start": 7406,
+        "end": 7448,
+        "bodyLine": 192,
+        "bodyColumn": 32,
+        "bodyEndLine": 192,
+        "bodyEndColumn": 65
       },
       "source_address": {
         "line": 146,
@@ -21037,13 +21037,13 @@
       "max_crap": 1,
       "rationale": "Same own data-property descriptor requirement, rejecting missing/non-enumerable/accessor properties.",
       "current_source_address": {
-        "line": 164,
+        "line": 201,
         "column": 0,
-        "start": 6341,
-        "end": 6696,
-        "bodyLine": 164,
+        "start": 7936,
+        "end": 8291,
+        "bodyLine": 201,
         "bodyColumn": 100,
-        "bodyEndLine": 171,
+        "bodyEndLine": 208,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -21067,13 +21067,13 @@
       "max_crap": 2,
       "rationale": "Same plain-object, hook, cycle, string-key, descriptor, byte-budget, and recursive-value checks.",
       "current_source_address": {
-        "line": 173,
+        "line": 210,
         "column": 0,
-        "start": 6698,
-        "end": 7683,
-        "bodyLine": 180,
-        "bodyColumn": 8,
-        "bodyEndLine": 195,
+        "start": 8293,
+        "end": 9490,
+        "bodyLine": 217,
+        "bodyColumn": 11,
+        "bodyEndLine": 239,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -21097,13 +21097,13 @@
       "max_crap": 9,
       "rationale": "Same component-envelope serializer: validates depth and envelope, orders object keys, delegates child encoding, enforces byteLimit.",
       "current_source_address": {
-        "line": 207,
+        "line": 251,
         "column": 7,
-        "start": 8034,
-        "end": 9479,
-        "bodyLine": 212,
+        "start": 9841,
+        "end": 11286,
+        "bodyLine": 256,
         "bodyColumn": 10,
-        "bodyEndLine": 238,
+        "bodyEndLine": 282,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -21127,13 +21127,13 @@
       "max_crap": 1,
       "rationale": "Same component-envelope serializer: validates depth and envelope, orders object keys, delegates child encoding, enforces byteLimit.",
       "current_source_address": {
-        "line": 224,
+        "line": 268,
         "column": 25,
-        "start": 8778,
-        "end": 8810,
-        "bodyLine": 224,
+        "start": 10585,
+        "end": 10617,
+        "bodyLine": 268,
         "bodyColumn": 34,
-        "bodyEndLine": 224,
+        "bodyEndLine": 268,
         "bodyEndColumn": 57
       },
       "source_address": {
@@ -42895,13 +42895,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 35,
+        "line": 39,
         "column": 0,
-        "start": 1379,
-        "end": 1534,
-        "bodyLine": 35,
+        "start": 1419,
+        "end": 1574,
+        "bodyLine": 39,
         "bodyColumn": 71,
-        "bodyEndLine": 39,
+        "bodyEndLine": 43,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -42928,13 +42928,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 36,
+        "line": 40,
         "column": 37,
-        "start": 1489,
-        "end": 1530,
-        "bodyLine": 36,
+        "start": 1529,
+        "end": 1570,
+        "bodyLine": 40,
         "bodyColumn": 43,
-        "bodyEndLine": 38,
+        "bodyEndLine": 42,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 1,
@@ -42961,13 +42961,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 41,
+        "line": 45,
         "column": 0,
-        "start": 1536,
-        "end": 1670,
-        "bodyLine": 41,
+        "start": 1576,
+        "end": 1710,
+        "bodyLine": 45,
         "bodyColumn": 46,
-        "bodyEndLine": 43,
+        "bodyEndLine": 47,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -42994,13 +42994,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 44,
+        "line": 48,
         "column": 0,
-        "start": 1671,
-        "end": 1783,
-        "bodyLine": 44,
+        "start": 1711,
+        "end": 1823,
+        "bodyLine": 48,
         "bodyColumn": 49,
-        "bodyEndLine": 46,
+        "bodyEndLine": 50,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43027,13 +43027,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 48,
+        "line": 52,
         "column": 0,
-        "start": 1871,
-        "end": 1983,
-        "bodyLine": 48,
+        "start": 1911,
+        "end": 2023,
+        "bodyLine": 52,
         "bodyColumn": 50,
-        "bodyEndLine": 50,
+        "bodyEndLine": 54,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43060,13 +43060,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 52,
+        "line": 56,
         "column": 7,
-        "start": 1992,
-        "end": 2268,
-        "bodyLine": 52,
+        "start": 2032,
+        "end": 2308,
+        "bodyLine": 56,
         "bodyColumn": 73,
-        "bodyEndLine": 59,
+        "bodyEndLine": 63,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43093,13 +43093,13 @@
         "bodyEndColumn": 35
       },
       "current_source_address": {
-        "line": 56,
+        "line": 60,
         "column": 63,
-        "start": 2187,
-        "end": 2211,
-        "bodyLine": 56,
+        "start": 2227,
+        "end": 2251,
+        "bodyLine": 60,
         "bodyColumn": 74,
-        "bodyEndLine": 56,
+        "bodyEndLine": 60,
         "bodyEndColumn": 87
       },
       "baseline_complexity": 1,
@@ -43126,13 +43126,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 64,
+        "line": 68,
         "column": 7,
-        "start": 2466,
-        "end": 3217,
-        "bodyLine": 64,
+        "start": 2506,
+        "end": 3257,
+        "bodyLine": 68,
         "bodyColumn": 113,
-        "bodyEndLine": 76,
+        "bodyEndLine": 80,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43159,13 +43159,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 88,
+        "line": 92,
         "column": 7,
-        "start": 3524,
-        "end": 3840,
-        "bodyLine": 88,
+        "start": 3564,
+        "end": 4030,
+        "bodyLine": 92,
         "bodyColumn": 74,
-        "bodyEndLine": 93,
+        "bodyEndLine": 98,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43192,13 +43192,13 @@
         "bodyEndColumn": 100
       },
       "current_source_address": {
-        "line": 91,
+        "line": 96,
         "column": 76,
-        "start": 3782,
-        "end": 3806,
-        "bodyLine": 91,
+        "start": 3972,
+        "end": 3996,
+        "bodyLine": 96,
         "bodyColumn": 87,
-        "bodyEndLine": 91,
+        "bodyEndLine": 96,
         "bodyEndColumn": 100
       },
       "baseline_complexity": 1,
@@ -43225,13 +43225,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 96,
+        "line": 101,
         "column": 7,
-        "start": 3939,
-        "end": 4380,
-        "bodyLine": 96,
+        "start": 4129,
+        "end": 4570,
+        "bodyLine": 101,
         "bodyColumn": 77,
-        "bodyEndLine": 102,
+        "bodyEndLine": 107,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43258,13 +43258,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 104,
+        "line": 109,
         "column": 7,
-        "start": 4389,
-        "end": 4533,
-        "bodyLine": 104,
+        "start": 4579,
+        "end": 4723,
+        "bodyLine": 109,
         "bodyColumn": 65,
-        "bodyEndLine": 106,
+        "bodyEndLine": 111,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43291,13 +43291,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 109,
+        "line": 114,
         "column": 7,
-        "start": 4632,
-        "end": 4823,
-        "bodyLine": 109,
+        "start": 4822,
+        "end": 5013,
+        "bodyLine": 114,
         "bodyColumn": 100,
-        "bodyEndLine": 111,
+        "bodyEndLine": 116,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43324,13 +43324,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 110,
+        "line": 115,
         "column": 52,
-        "start": 4779,
-        "end": 4819,
-        "bodyLine": 110,
+        "start": 4969,
+        "end": 5009,
+        "bodyLine": 115,
         "bodyColumn": 70,
-        "bodyEndLine": 110,
+        "bodyEndLine": 115,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -43357,13 +43357,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 176,
+        "line": 181,
         "column": 2,
-        "start": 7269,
-        "end": 7363,
-        "bodyLine": 176,
+        "start": 7459,
+        "end": 7553,
+        "bodyLine": 181,
         "bodyColumn": 65,
-        "bodyEndLine": 178,
+        "bodyEndLine": 183,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 1,
@@ -43390,13 +43390,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 189,
+        "line": 194,
         "column": 0,
-        "start": 7811,
-        "end": 7954,
-        "bodyLine": 189,
+        "start": 8001,
+        "end": 8144,
+        "bodyLine": 194,
         "bodyColumn": 54,
-        "bodyEndLine": 191,
+        "bodyEndLine": 196,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43423,13 +43423,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 193,
+        "line": 198,
         "column": 7,
-        "start": 7963,
-        "end": 8291,
-        "bodyLine": 193,
+        "start": 8153,
+        "end": 8481,
+        "bodyLine": 198,
         "bodyColumn": 62,
-        "bodyEndLine": 204,
+        "bodyEndLine": 209,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43456,13 +43456,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 206,
+        "line": 211,
         "column": 7,
-        "start": 8300,
-        "end": 8512,
-        "bodyLine": 206,
+        "start": 8490,
+        "end": 8702,
+        "bodyLine": 211,
         "bodyColumn": 72,
-        "bodyEndLine": 210,
+        "bodyEndLine": 215,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43489,13 +43489,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 212,
+        "line": 217,
         "column": 0,
-        "start": 8514,
-        "end": 8657,
-        "bodyLine": 212,
+        "start": 8704,
+        "end": 8847,
+        "bodyLine": 217,
         "bodyColumn": 72,
-        "bodyEndLine": 214,
+        "bodyEndLine": 219,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43522,13 +43522,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 216,
+        "line": 221,
         "column": 0,
-        "start": 8659,
-        "end": 8820,
-        "bodyLine": 216,
+        "start": 8849,
+        "end": 9010,
+        "bodyLine": 221,
         "bodyColumn": 107,
-        "bodyEndLine": 218,
+        "bodyEndLine": 223,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43555,13 +43555,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 220,
+        "line": 225,
         "column": 0,
-        "start": 8822,
-        "end": 9073,
-        "bodyLine": 220,
+        "start": 9012,
+        "end": 9263,
+        "bodyLine": 225,
         "bodyColumn": 104,
-        "bodyEndLine": 227,
+        "bodyEndLine": 232,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43588,13 +43588,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 229,
+        "line": 234,
         "column": 0,
-        "start": 9075,
-        "end": 9326,
-        "bodyLine": 229,
+        "start": 9265,
+        "end": 9516,
+        "bodyLine": 234,
         "bodyColumn": 62,
-        "bodyEndLine": 233,
+        "bodyEndLine": 238,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43621,13 +43621,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 235,
+        "line": 240,
         "column": 0,
-        "start": 9328,
-        "end": 9760,
-        "bodyLine": 235,
+        "start": 9518,
+        "end": 9950,
+        "bodyLine": 240,
         "bodyColumn": 67,
-        "bodyEndLine": 245,
+        "bodyEndLine": 250,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -43654,13 +43654,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 247,
+        "line": 252,
         "column": 0,
-        "start": 9762,
-        "end": 10235,
-        "bodyLine": 247,
+        "start": 9952,
+        "end": 10425,
+        "bodyLine": 252,
         "bodyColumn": 77,
-        "bodyEndLine": 262,
+        "bodyEndLine": 267,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -43687,13 +43687,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 264,
+        "line": 269,
         "column": 0,
-        "start": 10237,
-        "end": 10499,
-        "bodyLine": 264,
+        "start": 10427,
+        "end": 10689,
+        "bodyLine": 269,
         "bodyColumn": 103,
-        "bodyEndLine": 268,
+        "bodyEndLine": 273,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43720,13 +43720,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 270,
+        "line": 275,
         "column": 0,
-        "start": 10501,
-        "end": 30182,
-        "bodyLine": 270,
+        "start": 10691,
+        "end": 30372,
+        "bodyLine": 275,
         "bodyColumn": 97,
-        "bodyEndLine": 773,
+        "bodyEndLine": 778,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43753,13 +43753,13 @@
         "bodyEndColumn": 31
       },
       "current_source_address": {
-        "line": 288,
+        "line": 293,
         "column": 6,
-        "start": 11063,
-        "end": 11293,
-        "bodyLine": 289,
+        "start": 11253,
+        "end": 11483,
+        "bodyLine": 294,
         "bodyColumn": 8,
-        "bodyEndLine": 294,
+        "bodyEndLine": 299,
         "bodyEndColumn": 31
       },
       "baseline_complexity": 1,
@@ -43786,13 +43786,13 @@
         "bodyEndColumn": 75
       },
       "current_source_address": {
-        "line": 297,
+        "line": 302,
         "column": 27,
-        "start": 11339,
-        "end": 11387,
-        "bodyLine": 297,
+        "start": 11529,
+        "end": 11577,
+        "bodyLine": 302,
         "bodyColumn": 45,
-        "bodyEndLine": 297,
+        "bodyEndLine": 302,
         "bodyEndColumn": 75
       },
       "baseline_complexity": 1,
@@ -43819,13 +43819,13 @@
         "bodyEndColumn": 51
       },
       "current_source_address": {
-        "line": 304,
+        "line": 309,
         "column": 23,
-        "start": 11560,
-        "end": 11588,
-        "bodyLine": 304,
+        "start": 11750,
+        "end": 11778,
+        "bodyLine": 309,
         "bodyColumn": 35,
-        "bodyEndLine": 304,
+        "bodyEndLine": 309,
         "bodyEndColumn": 51
       },
       "baseline_complexity": 1,
@@ -43852,13 +43852,13 @@
         "bodyEndColumn": 58
       },
       "current_source_address": {
-        "line": 310,
+        "line": 315,
         "column": 23,
-        "start": 11711,
-        "end": 11746,
-        "bodyLine": 310,
+        "start": 11901,
+        "end": 11936,
+        "bodyLine": 315,
         "bodyColumn": 35,
-        "bodyEndLine": 310,
+        "bodyEndLine": 315,
         "bodyEndColumn": 58
       },
       "baseline_complexity": 1,
@@ -43885,13 +43885,13 @@
         "bodyEndColumn": 47
       },
       "current_source_address": {
-        "line": 316,
+        "line": 321,
         "column": 22,
-        "start": 11872,
-        "end": 11897,
-        "bodyLine": 316,
+        "start": 12062,
+        "end": 12087,
+        "bodyLine": 321,
         "bodyColumn": 33,
-        "bodyEndLine": 316,
+        "bodyEndLine": 321,
         "bodyEndColumn": 47
       },
       "baseline_complexity": 1,
@@ -43918,13 +43918,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 331,
+        "line": 336,
         "column": 24,
-        "start": 12299,
-        "end": 12371,
-        "bodyLine": 331,
+        "start": 12489,
+        "end": 12561,
+        "bodyLine": 336,
         "bodyColumn": 42,
-        "bodyEndLine": 331,
+        "bodyEndLine": 336,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -43951,13 +43951,13 @@
         "bodyEndColumn": 83
       },
       "current_source_address": {
-        "line": 337,
+        "line": 342,
         "column": 45,
-        "start": 12507,
-        "end": 12545,
-        "bodyLine": 337,
+        "start": 12697,
+        "end": 12735,
+        "bodyLine": 342,
         "bodyColumn": 57,
-        "bodyEndLine": 337,
+        "bodyEndLine": 342,
         "bodyEndColumn": 83
       },
       "baseline_complexity": 1,
@@ -43984,13 +43984,13 @@
         "bodyEndColumn": 77
       },
       "current_source_address": {
-        "line": 338,
+        "line": 343,
         "column": 43,
-        "start": 12592,
-        "end": 12626,
-        "bodyLine": 338,
+        "start": 12782,
+        "end": 12816,
+        "bodyLine": 343,
         "bodyColumn": 54,
-        "bodyEndLine": 338,
+        "bodyEndLine": 343,
         "bodyEndColumn": 77
       },
       "baseline_complexity": 1,
@@ -44017,13 +44017,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 340,
+        "line": 345,
         "column": 24,
-        "start": 12719,
-        "end": 14405,
-        "bodyLine": 340,
+        "start": 12909,
+        "end": 14595,
+        "bodyLine": 345,
         "bodyColumn": 42,
-        "bodyEndLine": 377,
+        "bodyEndLine": 382,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44050,13 +44050,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 354,
+        "line": 359,
         "column": 26,
-        "start": 13349,
-        "end": 13597,
-        "bodyLine": 355,
+        "start": 13539,
+        "end": 13787,
+        "bodyLine": 360,
         "bodyColumn": 8,
-        "bodyEndLine": 357,
+        "bodyEndLine": 362,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 2,
@@ -44083,13 +44083,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 366,
+        "line": 371,
         "column": 32,
-        "start": 13837,
-        "end": 13896,
-        "bodyLine": 366,
+        "start": 14027,
+        "end": 14086,
+        "bodyLine": 371,
         "bodyColumn": 46,
-        "bodyEndLine": 366,
+        "bodyEndLine": 371,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44116,13 +44116,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 380,
+        "line": 385,
         "column": 25,
-        "start": 14472,
-        "end": 19881,
-        "bodyLine": 380,
+        "start": 14662,
+        "end": 20071,
+        "bodyLine": 385,
         "bodyColumn": 44,
-        "bodyEndLine": 514,
+        "bodyEndLine": 519,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44149,13 +44149,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 383,
+        "line": 388,
         "column": 30,
-        "start": 14620,
-        "end": 14746,
-        "bodyLine": 384,
+        "start": 14810,
+        "end": 14936,
+        "bodyLine": 389,
         "bodyColumn": 8,
-        "bodyEndLine": 384,
+        "bodyEndLine": 389,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -44182,13 +44182,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 391,
+        "line": 396,
         "column": 37,
-        "start": 14929,
-        "end": 15062,
-        "bodyLine": 392,
+        "start": 15119,
+        "end": 15252,
+        "bodyLine": 397,
         "bodyColumn": 8,
-        "bodyEndLine": 392,
+        "bodyEndLine": 397,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -44215,13 +44215,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 405,
+        "line": 410,
         "column": 68,
-        "start": 15450,
-        "end": 15563,
-        "bodyLine": 406,
+        "start": 15640,
+        "end": 15753,
+        "bodyLine": 411,
         "bodyColumn": 8,
-        "bodyEndLine": 406,
+        "bodyEndLine": 411,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44248,13 +44248,13 @@
         "bodyEndColumn": 53
       },
       "current_source_address": {
-        "line": 419,
+        "line": 424,
         "column": 70,
-        "start": 15957,
-        "end": 16024,
-        "bodyLine": 420,
+        "start": 16147,
+        "end": 16214,
+        "bodyLine": 425,
         "bodyColumn": 8,
-        "bodyEndLine": 420,
+        "bodyEndLine": 425,
         "bodyEndColumn": 53
       },
       "baseline_complexity": 1,
@@ -44281,13 +44281,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 427,
+        "line": 432,
         "column": 29,
-        "start": 16206,
-        "end": 16238,
-        "bodyLine": 427,
+        "start": 16396,
+        "end": 16428,
+        "bodyLine": 432,
         "bodyColumn": 42,
-        "bodyEndLine": 427,
+        "bodyEndLine": 432,
         "bodyEndColumn": 61
       },
       "baseline_complexity": 1,
@@ -44314,13 +44314,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 433,
+        "line": 438,
         "column": 29,
-        "start": 16407,
-        "end": 16471,
-        "bodyLine": 433,
+        "start": 16597,
+        "end": 16661,
+        "bodyLine": 438,
         "bodyColumn": 42,
-        "bodyEndLine": 433,
+        "bodyEndLine": 438,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 1,
@@ -44347,13 +44347,13 @@
         "bodyEndColumn": 113
       },
       "current_source_address": {
-        "line": 438,
+        "line": 443,
         "column": 77,
-        "start": 16693,
-        "end": 16729,
-        "bodyLine": 438,
+        "start": 16883,
+        "end": 16919,
+        "bodyLine": 443,
         "bodyColumn": 88,
-        "bodyEndLine": 438,
+        "bodyEndLine": 443,
         "bodyEndColumn": 113
       },
       "baseline_complexity": 1,
@@ -44380,13 +44380,13 @@
         "bodyEndColumn": 109
       },
       "current_source_address": {
-        "line": 440,
+        "line": 445,
         "column": 27,
-        "start": 16783,
-        "end": 16903,
-        "bodyLine": 441,
+        "start": 16973,
+        "end": 17093,
+        "bodyLine": 446,
         "bodyColumn": 8,
-        "bodyEndLine": 441,
+        "bodyEndLine": 446,
         "bodyEndColumn": 109
       },
       "baseline_complexity": 1,
@@ -44413,13 +44413,13 @@
         "bodyEndColumn": 108
       },
       "current_source_address": {
-        "line": 441,
+        "line": 446,
         "column": 28,
-        "start": 16822,
-        "end": 16902,
-        "bodyLine": 441,
+        "start": 17012,
+        "end": 17092,
+        "bodyLine": 446,
         "bodyColumn": 42,
-        "bodyEndLine": 441,
+        "bodyEndLine": 446,
         "bodyEndColumn": 108
       },
       "baseline_complexity": 1,
@@ -44446,13 +44446,13 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 447,
+        "line": 452,
         "column": 55,
-        "start": 17094,
-        "end": 17120,
-        "bodyLine": 447,
+        "start": 17284,
+        "end": 17310,
+        "bodyLine": 452,
         "bodyColumn": 66,
-        "bodyEndLine": 447,
+        "bodyEndLine": 452,
         "bodyEndColumn": 81
       },
       "baseline_complexity": 1,
@@ -44479,13 +44479,13 @@
         "bodyEndColumn": 69
       },
       "current_source_address": {
-        "line": 454,
+        "line": 459,
         "column": 36,
-        "start": 17425,
-        "end": 17458,
-        "bodyLine": 454,
+        "start": 17615,
+        "end": 17648,
+        "bodyLine": 459,
         "bodyColumn": 47,
-        "bodyEndLine": 454,
+        "bodyEndLine": 459,
         "bodyEndColumn": 69
       },
       "baseline_complexity": 1,
@@ -44512,13 +44512,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 483,
+        "line": 488,
         "column": 29,
-        "start": 18647,
-        "end": 18725,
-        "bodyLine": 483,
+        "start": 18837,
+        "end": 18915,
+        "bodyLine": 488,
         "bodyColumn": 40,
-        "bodyEndLine": 483,
+        "bodyEndLine": 488,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -44545,13 +44545,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 492,
+        "line": 497,
         "column": 8,
-        "start": 19107,
-        "end": 19473,
-        "bodyLine": 493,
+        "start": 19297,
+        "end": 19663,
+        "bodyLine": 498,
         "bodyColumn": 10,
-        "bodyEndLine": 498,
+        "bodyEndLine": 503,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 4,
@@ -44578,13 +44578,13 @@
         "bodyEndColumn": 72
       },
       "current_source_address": {
-        "line": 497,
+        "line": 502,
         "column": 12,
-        "start": 19400,
-        "end": 19460,
-        "bodyLine": 497,
+        "start": 19590,
+        "end": 19650,
+        "bodyLine": 502,
         "bodyColumn": 25,
-        "bodyEndLine": 497,
+        "bodyEndLine": 502,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 1,
@@ -44611,13 +44611,13 @@
         "bodyEndColumn": 88
       },
       "current_source_address": {
-        "line": 516,
+        "line": 521,
         "column": 45,
-        "start": 19930,
-        "end": 19973,
-        "bodyLine": 516,
+        "start": 20120,
+        "end": 20163,
+        "bodyLine": 521,
         "bodyColumn": 56,
-        "bodyEndLine": 516,
+        "bodyEndLine": 521,
         "bodyEndColumn": 88
       },
       "baseline_complexity": 1,
@@ -44644,13 +44644,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 517,
+        "line": 522,
         "column": 25,
-        "start": 20002,
-        "end": 21449,
-        "bodyLine": 517,
+        "start": 20192,
+        "end": 21639,
+        "bodyLine": 522,
         "bodyColumn": 44,
-        "bodyEndLine": 553,
+        "bodyEndLine": 558,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -44677,13 +44677,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 526,
+        "line": 531,
         "column": 20,
-        "start": 20349,
-        "end": 20462,
-        "bodyLine": 527,
+        "start": 20539,
+        "end": 20652,
+        "bodyLine": 532,
         "bodyColumn": 8,
-        "bodyEndLine": 527,
+        "bodyEndLine": 532,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44710,13 +44710,13 @@
         "bodyEndColumn": 114
       },
       "current_source_address": {
-        "line": 534,
+        "line": 539,
         "column": 84,
-        "start": 20687,
-        "end": 20717,
-        "bodyLine": 534,
+        "start": 20877,
+        "end": 20907,
+        "bodyLine": 539,
         "bodyColumn": 95,
-        "bodyEndLine": 534,
+        "bodyEndLine": 539,
         "bodyEndColumn": 114
       },
       "baseline_complexity": 1,
@@ -44743,13 +44743,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 548,
+        "line": 553,
         "column": 33,
-        "start": 21233,
-        "end": 21316,
-        "bodyLine": 548,
+        "start": 21423,
+        "end": 21506,
+        "bodyLine": 553,
         "bodyColumn": 44,
-        "bodyEndLine": 548,
+        "bodyEndLine": 553,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 2,
@@ -44776,13 +44776,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 554,
+        "line": 559,
         "column": 30,
-        "start": 21482,
-        "end": 22283,
-        "bodyLine": 554,
+        "start": 21672,
+        "end": 22473,
+        "bodyLine": 559,
         "bodyColumn": 54,
-        "bodyEndLine": 575,
+        "bodyEndLine": 580,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 6,
@@ -44809,13 +44809,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 577,
+        "line": 582,
         "column": 47,
-        "start": 22334,
-        "end": 22378,
-        "bodyLine": 577,
+        "start": 22524,
+        "end": 22568,
+        "bodyLine": 582,
         "bodyColumn": 58,
-        "bodyEndLine": 577,
+        "bodyEndLine": 582,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44842,13 +44842,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 578,
+        "line": 583,
         "column": 26,
-        "start": 22408,
-        "end": 23544,
-        "bodyLine": 578,
+        "start": 22598,
+        "end": 23734,
+        "bodyLine": 583,
         "bodyColumn": 46,
-        "bodyEndLine": 609,
+        "bodyEndLine": 614,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -44875,13 +44875,13 @@
         "bodyEndColumn": 64
       },
       "current_source_address": {
-        "line": 580,
+        "line": 585,
         "column": 41,
-        "start": 22534,
-        "end": 22557,
-        "bodyLine": 580,
+        "start": 22724,
+        "end": 22747,
+        "bodyLine": 585,
         "bodyColumn": 49,
-        "bodyEndLine": 580,
+        "bodyEndLine": 585,
         "bodyEndColumn": 64
       },
       "baseline_complexity": 1,
@@ -44908,13 +44908,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 588,
+        "line": 593,
         "column": 27,
-        "start": 22765,
-        "end": 22818,
-        "bodyLine": 588,
+        "start": 22955,
+        "end": 23008,
+        "bodyLine": 593,
         "bodyColumn": 39,
-        "bodyEndLine": 588,
+        "bodyEndLine": 593,
         "bodyEndColumn": 80
       },
       "baseline_complexity": 1,
@@ -44941,13 +44941,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 589,
+        "line": 594,
         "column": 89,
-        "start": 22912,
-        "end": 22939,
-        "bodyLine": 589,
+        "start": 23102,
+        "end": 23129,
+        "bodyLine": 594,
         "bodyColumn": 101,
-        "bodyEndLine": 589,
+        "bodyEndLine": 594,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -44974,13 +44974,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 610,
+        "line": 615,
         "column": 25,
-        "start": 23572,
-        "end": 26341,
-        "bodyLine": 610,
+        "start": 23762,
+        "end": 26531,
+        "bodyLine": 615,
         "bodyColumn": 43,
-        "bodyEndLine": 677,
+        "bodyEndLine": 682,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 7,
@@ -45007,13 +45007,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 621,
+        "line": 626,
         "column": 77,
-        "start": 24048,
-        "end": 24078,
-        "bodyLine": 621,
+        "start": 24238,
+        "end": 24268,
+        "bodyLine": 626,
         "bodyColumn": 88,
-        "bodyEndLine": 621,
+        "bodyEndLine": 626,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -45040,13 +45040,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 643,
+        "line": 648,
         "column": 89,
-        "start": 25018,
-        "end": 25045,
-        "bodyLine": 643,
+        "start": 25208,
+        "end": 25235,
+        "bodyLine": 648,
         "bodyColumn": 100,
-        "bodyEndLine": 643,
+        "bodyEndLine": 648,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -45073,13 +45073,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 649,
+        "line": 654,
         "column": 75,
-        "start": 25318,
-        "end": 25341,
-        "bodyLine": 649,
+        "start": 25508,
+        "end": 25531,
+        "bodyLine": 654,
         "bodyColumn": 83,
-        "bodyEndLine": 649,
+        "bodyEndLine": 654,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -45106,13 +45106,13 @@
         "bodyEndColumn": 102
       },
       "current_source_address": {
-        "line": 659,
+        "line": 664,
         "column": 12,
-        "start": 25624,
-        "end": 25894,
-        "bodyLine": 660,
+        "start": 25814,
+        "end": 26084,
+        "bodyLine": 665,
         "bodyColumn": 14,
-        "bodyEndLine": 663,
+        "bodyEndLine": 668,
         "bodyEndColumn": 102
       },
       "baseline_complexity": 5,
@@ -45139,13 +45139,13 @@
         "bodyEndColumn": 101
       },
       "current_source_address": {
-        "line": 663,
+        "line": 668,
         "column": 65,
-        "start": 25857,
-        "end": 25893,
-        "bodyLine": 663,
+        "start": 26047,
+        "end": 26083,
+        "bodyLine": 668,
         "bodyColumn": 76,
-        "bodyEndLine": 663,
+        "bodyEndLine": 668,
         "bodyEndColumn": 101
       },
       "baseline_complexity": 1,
@@ -45172,13 +45172,13 @@
         "bodyEndColumn": 70
       },
       "current_source_address": {
-        "line": 671,
+        "line": 676,
         "column": 31,
-        "start": 26134,
-        "end": 26173,
-        "bodyLine": 671,
+        "start": 26324,
+        "end": 26363,
+        "bodyLine": 676,
         "bodyColumn": 43,
-        "bodyEndLine": 671,
+        "bodyEndLine": 676,
         "bodyEndColumn": 70
       },
       "baseline_complexity": 1,
@@ -45205,13 +45205,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 678,
+        "line": 683,
         "column": 28,
-        "start": 26372,
-        "end": 27665,
-        "bodyLine": 678,
+        "start": 26562,
+        "end": 27855,
+        "bodyLine": 683,
         "bodyColumn": 50,
-        "bodyEndLine": 712,
+        "bodyEndLine": 717,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -45238,13 +45238,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 700,
+        "line": 705,
         "column": 24,
-        "start": 27215,
-        "end": 27341,
-        "bodyLine": 701,
+        "start": 27405,
+        "end": 27531,
+        "bodyLine": 706,
         "bodyColumn": 8,
-        "bodyEndLine": 701,
+        "bodyEndLine": 706,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -45271,13 +45271,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 713,
+        "line": 718,
         "column": 25,
-        "start": 27693,
-        "end": 28110,
-        "bodyLine": 714,
+        "start": 27883,
+        "end": 28300,
+        "bodyLine": 719,
         "bodyColumn": 4,
-        "bodyEndLine": 724,
+        "bodyEndLine": 729,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -45304,13 +45304,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 716,
+        "line": 721,
         "column": 8,
-        "start": 27768,
-        "end": 27983,
-        "bodyLine": 717,
+        "start": 27958,
+        "end": 28173,
+        "bodyLine": 722,
         "bodyColumn": 10,
-        "bodyEndLine": 719,
+        "bodyEndLine": 724,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 3,
@@ -45337,13 +45337,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 726,
+        "line": 731,
         "column": 29,
-        "start": 28146,
-        "end": 29049,
-        "bodyLine": 726,
+        "start": 28336,
+        "end": 29239,
+        "bodyLine": 731,
         "bodyColumn": 52,
-        "bodyEndLine": 746,
+        "bodyEndLine": 751,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -45370,13 +45370,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 743,
+        "line": 748,
         "column": 56,
-        "start": 28912,
-        "end": 29037,
-        "bodyLine": 744,
+        "start": 29102,
+        "end": 29227,
+        "bodyLine": 749,
         "bodyColumn": 6,
-        "bodyEndLine": 744,
+        "bodyEndLine": 749,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -45403,13 +45403,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 747,
+        "line": 752,
         "column": 25,
-        "start": 29077,
-        "end": 30178,
-        "bodyLine": 747,
+        "start": 29267,
+        "end": 30368,
+        "bodyLine": 752,
         "bodyColumn": 44,
-        "bodyEndLine": 772,
+        "bodyEndLine": 777,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 5,
@@ -45436,13 +45436,13 @@
         "bodyEndColumn": 71
       },
       "current_source_address": {
-        "line": 758,
+        "line": 763,
         "column": 29,
-        "start": 29555,
-        "end": 29597,
-        "bodyLine": 758,
+        "start": 29745,
+        "end": 29787,
+        "bodyLine": 763,
         "bodyColumn": 43,
-        "bodyEndLine": 758,
+        "bodyEndLine": 763,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -45469,13 +45469,13 @@
         "bodyEndColumn": 9
       },
       "current_source_address": {
-        "line": 759,
+        "line": 764,
         "column": 30,
-        "start": 29632,
-        "end": 29753,
-        "bodyLine": 759,
+        "start": 29822,
+        "end": 29943,
+        "bodyLine": 764,
         "bodyColumn": 38,
-        "bodyEndLine": 762,
+        "bodyEndLine": 767,
         "bodyEndColumn": 9
       },
       "baseline_complexity": 2,
@@ -45502,13 +45502,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 769,
+        "line": 774,
         "column": 22,
-        "start": 30045,
-        "end": 30166,
-        "bodyLine": 770,
+        "start": 30235,
+        "end": 30356,
+        "bodyLine": 775,
         "bodyColumn": 6,
-        "bodyEndLine": 770,
+        "bodyEndLine": 775,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -45535,13 +45535,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 779,
+        "line": 784,
         "column": 7,
-        "start": 30504,
-        "end": 31365,
-        "bodyLine": 782,
+        "start": 30694,
+        "end": 31555,
+        "bodyLine": 787,
         "bodyColumn": 38,
-        "bodyEndLine": 801,
+        "bodyEndLine": 806,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -45568,13 +45568,13 @@
         "bodyEndColumn": 7
       },
       "current_source_address": {
-        "line": 788,
+        "line": 793,
         "column": 42,
-        "start": 30862,
-        "end": 31071,
-        "bodyLine": 788,
+        "start": 31052,
+        "end": 31261,
+        "bodyLine": 793,
         "bodyColumn": 54,
-        "bodyEndLine": 792,
+        "bodyEndLine": 797,
         "bodyEndColumn": 7
       },
       "baseline_complexity": 2,
@@ -176322,13 +176322,13 @@
       "max_crap": 10,
       "rationale": "Introduced helper directly implements the canonical-number predicate that was inline in published canonicalNumber. This is extraction and shared access, while the current runtime-config.ts caller reuses it to reject unsafe integers and negative zero where published runtime-config only required finite numbers; therefore the helper itself is a new function and its consumer introduces a stricter configuration contract. The helper is a genuine current addition, not inferred from an ordinal or body hash. The ceiling is the prospective authorized cap, not a measured or activated allowance.",
       "current_source_address": {
-        "line": 110,
+        "line": 122,
         "column": 7,
-        "start": 4368,
-        "end": 4554,
-        "bodyLine": 110,
+        "start": 4954,
+        "end": 5140,
+        "bodyLine": 122,
         "bodyColumn": 71,
-        "bodyEndLine": 112,
+        "bodyEndLine": 124,
         "bodyEndColumn": 1
       },
       "current_complexity": 4
@@ -203053,13 +203053,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 69,
+        "line": 81,
         "column": 7,
-        "start": 3057,
-        "end": 3180,
-        "bodyLine": 69,
+        "start": 3624,
+        "end": 3747,
+        "bodyLine": 81,
         "bodyColumn": 75,
-        "bodyEndLine": 71,
+        "bodyEndLine": 83,
         "bodyEndColumn": 1
       },
       "rationale": "New shared optional-value canonical digest used by preflight and two recovery-result fields. Exact original truthiness, null absence and canonical error propagation; one current planning-journal read at its existing guard stage. No historical allowance."
@@ -203447,6 +203447,57 @@
       "prospective_plan_commit": "245e568",
       "prospective_plan_ref": "/workspace/attachments/quality-forward-linear-prospective-plan-245-20261015.md#prospective-forward-alias-closure-correction-plan",
       "rationale": "Prospectively planned single per-declaration classifier for Identifier edges and exact ordinary createRequire seeds; required shape/initializer/constructor/list checks give8/8, independent of parent original allowance."
+    },
+    {
+      "identity": "src/contracts/canonical-json-core.ts#fn:canonicalJsonImageWithNodeLimit#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Genuine descriptor-image construction/serialization ownership introduced for the canonical image-consistency correction; prospective prior10/10 policy, no inherited or transferred original allowance. Existing validator and callback ceilings remain unchanged.",
+      "current_source_address": {
+        "line": 64,
+        "column": 7,
+        "start": 2764,
+        "end": 3477,
+        "bodyLine": 68,
+        "bodyColumn": 54,
+        "bodyEndLine": 76,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2
+    },
+    {
+      "identity": "src/contracts/canonical-json-core.ts#fn:ownedArrayImage#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Genuine descriptor-image construction/serialization ownership introduced for the canonical image-consistency correction; prospective prior10/10 policy, no inherited or transferred original allowance. Existing validator and callback ceilings remain unchanged.",
+      "current_source_address": {
+        "line": 164,
+        "column": 0,
+        "start": 6327,
+        "end": 6657,
+        "bodyLine": 164,
+        "bodyColumn": 79,
+        "bodyEndLine": 174,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2
+    },
+    {
+      "identity": "src/contracts/canonical-json-core.ts#fn:canonicalArrayEntries#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Genuine descriptor-image construction/serialization ownership introduced for the canonical image-consistency correction; prospective prior10/10 policy, no inherited or transferred original allowance. Existing validator and callback ceilings remain unchanged.",
+      "current_source_address": {
+        "line": 180,
+        "column": 0,
+        "start": 6792,
+        "end": 7934,
+        "bodyLine": 183,
+        "bodyColumn": 57,
+        "bodyEndLine": 199,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2
     }
   ],
   "removed_functions": [
@@ -221185,5 +221236,43 @@
     "receipt": "/workspace/attachments/quality-project-context-lineage-refresh-receipt-20261016.json",
     "independent_review": "/workspace/attachments/quality-config-applied-fence-independent-review-20261016.md",
     "reason": "Retain all existing function roles and frozen allowances; final existing config freshness assertion refuses a snapshot changed during final path validation."
+  },
+  "canonical_snapshot_correction_20261016": {
+    "schema": "CanonicalSnapshotLineageRefresh/v1",
+    "qualification": "not-performed",
+    "inventory": "/workspace/attachments/quality-canonical-final-byte-inventory-20261016.json",
+    "sources": [
+      {
+        "file": "src/contracts/canonical-json-core.ts",
+        "previous_sha256": "8378aee76f485ba95519d40fb64a35954ab2ebca330d125c8ce5142c4c38f9ec",
+        "sha256": "a1a0fed7b95b12a761ce6ac7ce5dbc5d4bfaeb7cf5705673a1499e1b5f90b5dd"
+      },
+      {
+        "file": "src/contracts/envelopes.ts",
+        "previous_sha256": "20450fd8a36444176ff6dc1dfac58e1f17d11e96f5a807e46929039669101193",
+        "sha256": "ab9a973105d9e7358fa3289e4787cbde82f57b5470b028d62e706f8304fad145"
+      }
+    ],
+    "exact_current_id_set": true,
+    "current_functions": 109,
+    "additions": [
+      "src/contracts/canonical-json-core.ts#fn:canonicalJsonImageWithNodeLimit#0",
+      "src/contracts/canonical-json-core.ts#fn:ownedArrayImage#0",
+      "src/contracts/canonical-json-core.ts#fn:canonicalArrayEntries#0"
+    ],
+    "callback_move": {
+      "identity": "src/contracts/canonical-json-core.ts#fn:canonicalArrayKeys#0/closure:CallExpression:arguments[0]#0",
+      "previous_current_identity": "src/contracts/canonical-json-core.ts#fn:canonicalArrayKeys#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/contracts/canonical-json-core.ts#fn:canonicalArrayEntries#0/closure:CallExpression:arguments[0]#0"
+    },
+    "existing_ceilings_changed": false,
+    "existing_static_ceilings_respected": true,
+    "scope": "two-changed-file-partial-lineage-only-not-global-or-dynamic-CRAP",
+    "receipt": "/workspace/attachments/quality-canonical-lineage-refresh-receipt-20261016.json",
+    "reason": "Serialize and validate the same descriptor-owned image. Same array key-shape callback follows its extracted property check; density remains a separate length/count check. Original callback identity and1/1ceilings retained. Three genuine new image/descriptor allocation owners use the pre-existing prospective10/10policy.",
+    "independent_reviews": [
+      "/workspace/attachments/quality-canonical-always-snapshot-independent-review-20261016.md",
+      "/workspace/attachments/quality-canonical-array-optimization-independent-review-20261016.md"
+    ]
   }
 }

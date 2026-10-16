@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `7a6f6ab702f9b779a624da8c527f1096330f343b` at origin/main.
+- Published predecessor: `f3d63b8` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -5618,6 +5618,91 @@ under the same root. This static refresh does not establish dynamic CRAP, curren
 main-config coverage or mutation, or exhaustive global correspondence. Other
 Source bindings were reused without fresh qualification. The canonical snapshot
 correction is still a reviewed copied candidate and is not included in this fix.
+
+### Canonical descriptor-image correction and strict frozen ceilings
+
+Root's reproduced serializer defect is corrected in Source: the existing checked
+descriptor traversal produces an owned image for canonical emission. Ledger Ajv
+and semantic checks validate that same image, not a later read of caller objects.
+Record images have null prototypes. Fresh array images alone receive a temporary
+non-enumerable toJSON shadow during synchronous serialization; it is removed
+before an image reaches validation. Caller arrays and records are never edited.
+The ordinary assertion-only entry uses the same traversal and discards its image.
+This deliberately simplifies ownership at the cost of temporary per-container
+allocation; no claim of zero allocation or measured production speedup is made.
+
+The first optional-capture implementation failed frozen static ceilings:
+hook7>5,array6>2,object5>2. Root rejected it, kept its diagnostic and removed mode
+branches rather than raising caps or relabeling existing validators. The final
+variant preserves every existing ceiling. It also avoids a descriptor wrapper
+object for each array element: keys and descriptors are captured once, descriptors
+are checked before children, and child traversal follows numeric array order.
+A reversed-ownKeys Proxy regression observes no live property reads. A numeric
+length-descriptor guard prevents coercion before any array comparisons; its first
+unpublished candidate failed the targeted case with a sparse-array error, retained
+at /workspace/attachments/quality-rolling-cli-check-iwIc78.
+
+Direct regressions cover differing Proxy get/descriptor values, hidden toJSON,
+alternating prototypes, late inherited hooks with exact intrinsic restoration,
+marker removal, dense Proxy arrays, ordinary toJSON data, round-trip bytes, and
+an invalid descriptor image that a live ledger view would otherwise accept.
+New successful target invocations use existing expectReturned observers; setup
+and restoration stay outside. Root kept the published parent-process mock and
+active-claim overlap tests when merging the copied file. Related borrowed-image
+review found no further established P0 in the bounded component/authorization
+and envelope-return contracts; mutable return-by-identity was not confused with
+emission or delayed authorization ownership.
+
+Final six-file functional check passed68tests/36577assertions in3076.006812ms at
+/workspace/attachments/quality-rolling-cli-check-EHSHOo. Its preceding always-image
+check passed67tests/36575assertions in2916.719965ms at quality-rolling-cli-check-nIzMqs.
+Other intermediate results remain retained; none is a global suite or mutation
+score. The454-file test project passed. Capture was complete, groups closed and
+boot unchanged. Actual reviewed Source is covered by
+quality-canonical-always-snapshot-independent-review-20261016.md and
+quality-canonical-array-optimization-independent-review-20261016.md under
+/workspace/attachments. The final length guard adds a primitive-only denial in
+the new descriptor owner, without changing retained function ceilings.
+
+Strict precommit caught five any-valued expressions in new Proxy fixtures.
+Root kept Reflect results explicitly unknown, replaced an unnecessary assigned
+prototype fixture with a literal, and typed the known intrinsic prototype.
+The two changed complete test files passed again at
+/workspace/attachments/quality-rolling-cli-check-XECDtC in1197.546347ms with
+complete capture, closed groups and unchanged boot. Source/inventory bytes and
+frozen allowances were unaffected; no lint rule was suppressed or hook bypassed.
+
+One final existing-owner inventory captures the two changed Source files:
+/workspace/attachments/quality-canonical-final-byte-inventory-20261016.json.
+The exact partial-plan join binds109functions:106existing roles and3genuine new
+image/descriptor allocation helpers. The existing nested array key-shape callback
+follows its extracted property check with its original identity and1/1ceilings;
+the separate density/count check is not that callback. New helpers use the prior
+prospective10/10policy independently reviewed in
+quality-canonical-exact-lineage-independent-review-20261016.md. All previous
+allowances and original addresses are unchanged. Current partial totals are
+5434retained +1560new =6994roles,89removed,149Source bindings. Receipt:
+/workspace/attachments/quality-canonical-lineage-refresh-receipt-20261016.json.
+This is Source lineage/static preparation, not dynamic CRAP or global acceptance.
+
+Root also corrected two declared-selection omissions: the canonical core owner
+now includes its complete direct test file, and orchestration recovery includes
+bun-sqlite-client.test.ts. Registry/projection and direct adapter controls passed
+at /workspace/attachments/quality-rolling-cli-check-GH01gS in947.792081ms, with
+complete capture, closed groups and unchanged boot. Static selection-completeness
+automation is only a copied advisory proposal using the existing auditor; it adds
+no scan, active gate, implicit broad selection or build/install tests here.
+
+The next numeric attempt must use the changed full selection after publication:
+coverage, same-run scoped CRAP and one complete main-contracts mutation campaign
+under the existing900s cap. Independent current-cost review rejects a new
+parent/child aggregation layer without evidence of benefit. Keep prior UNKNOWN
+and unconfirmed events intact; do not present input/static fixes as an unblock.
+Next-contour revision review also corrected an earlier alarm: max-safe revision
+updates are rejected by post-read validation and the same transaction rolls back.
+An early exhaustion fence is P1 preparation, not a demonstrated persisted unsafe
+revision or incident. Its adjacent paths and direct-row decoding proposals remain
+bounded worker artifacts, not accepted product fixes.
 
 ## Historical provenance
 
