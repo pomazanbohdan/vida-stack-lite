@@ -5,6 +5,7 @@ import { policy, preparedFixture } from './helpers/documentation-policy-fixture.
 import { runReconcileArtifacts } from '../bin/reconcile-artifacts.ts';
 import { executeDocumentationClearFromWork } from '../src/documentation/clear.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
+import { verifySelectedForwardPolicyProof } from '../src/documentation/transition-proof.ts';
 import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
 import {
   documentationPolicyTransitionPath,
@@ -83,6 +84,46 @@ test('public policy transition preserves genuine baseline and completes one audi
   expect((await executeDocumentationClearFromWork(input, 'verify')).status).toBe('verified');
   await Promise.resolve(expect(runReconcileArtifacts(args('restore'))).rejects.toThrow('rollback'));
 }, 30000);
+
+test('selected forward policy proof denies an ordinary persisted transition without admission', async () => {
+  const { f, baseline, targetPolicy, args } = await preparedFixture();
+  await expectAsyncReturned(() => runReconcileArtifacts(args('plan')));
+  await expectAsyncReturned(() => runReconcileArtifacts(args('apply')));
+  f.put(f.policyPath, targetPolicy);
+  await expectAsyncReturned(() => runReconcileArtifacts(args('resume')));
+
+  const operationPath = path.join(f.root, documentationPolicyTransitionPath(f.work));
+  const operationBytes = readFileSync(operationPath);
+  const operation = recordValue(JSON.parse(operationBytes.toString('utf8')));
+  const plan = recordValue(operation.plan);
+  const closeout = recordValue(operation.closeout);
+  if (typeof closeout.path !== 'string') throw new Error('fixture closeout path required');
+  const baselineBytes = readFileSync(path.join(f.root, baseline.path));
+  const closeoutBytes = readFileSync(path.join(f.root, closeout.path));
+  const scopeBytes = readFileSync(path.join(f.root, '.agent/work', f.work, 'scope.json'));
+  if (typeof plan.bundle_digest !== 'string' || typeof plan.target_policy_bytes !== 'string')
+    throw new Error('fixture plan digests required');
+  const parentManifestDigest = plan.bundle_digest;
+
+  expect(() =>
+    verifySelectedForwardPolicyProof({
+      operationBytes,
+      baselineBytes,
+      closeoutBytes,
+      changelogBytes: readFileSync(path.join(f.root, f.oldPolicy.changelog_path)),
+      scopeBytes,
+      priorFiles: [],
+      successorFiles: [],
+      operationId: String(plan.operation_id),
+      parentSelectorDigest: String(plan.selector_digest),
+      parentManifestDigest,
+      successorManifestDigest: canonicalJsonDigest(plan.target_policy_bytes),
+      intentDigest: canonicalJsonDigest(plan),
+      authorizationDigest: canonicalJsonDigest(scopeBytes.toString('utf8')),
+      changes: [],
+    }),
+  ).toThrow('selected policy leaf has no applied transition closure');
+});
 
 const interruptedPhases = ['fence_acquired', 'events_frozen', 'events_published', 'applied', 'released'] as const;
 for (const phase of interruptedPhases) {

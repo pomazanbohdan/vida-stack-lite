@@ -641,6 +641,38 @@ test('fully bound current preflight passes before Host attempt reservation', () 
   assertNoAttemptMarker(value);
 });
 
+test('pending Host request preview remains valid when another assignment has prior history', () => {
+  const value = fixture(),
+    work = workOf(value);
+  setProperty(work.execution, 'assignment_attempts', [
+    {
+      assignment_id: '1'.repeat(64),
+      attempt_id: '2'.repeat(64),
+      previous_attempt_id: null,
+      request_digest: '3'.repeat(64),
+      stage_id: 'another-stage',
+      assignment_index: 0,
+      correction_generation: 0,
+      correction_authorization: null,
+      lease: { ticket_id: 'prior-ticket', thread_id: 'prior-thread', generation: 1 },
+      status: 'completed',
+      result: { status: 'accepted' },
+      result_digest: '4'.repeat(64),
+      reconciliation: null,
+    },
+  ]);
+  const workVersion = value.input.hostSnapshot.workVersion;
+  assert.ok(workVersion, 'fixture Host snapshot contains the Work version');
+  setProperty(work, 'revision', work.revision + 1);
+  setProperty(value.input.hostSnapshot, 'workVersion', {
+    revision: work.revision,
+    digest: canonicalJsonDigest(work),
+  });
+  const before = structuredClone(value.input.hostSnapshot);
+  assert.equal(validateSourceWritePreflight(value.input).length, 5);
+  assert.deepEqual(value.input.hostSnapshot, before);
+});
+
 test('repeated preparation inputs cannot replace omitted current artifacts', () => {
   const value = fixture();
   assert.equal(validateSourceWritePreflight(value.input).length, 5);

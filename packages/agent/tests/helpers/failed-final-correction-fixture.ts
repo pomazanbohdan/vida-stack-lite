@@ -296,7 +296,10 @@ export async function createFailedFinalCorrectionFixture(): Promise<FailedFinalC
       ledger = new MastraSessionLedger(fixture.database, fixture.store.workspaceId, fixture.config, fixture.root, host),
       sync = () => requireSnapshot(ledger.resume(id, 1)),
       publicRun = async (runArgs: string[]) => {
-        const result: unknown = await run(runArgs);
+        const canonicalArgs = runArgs.map((argument, index) =>
+          runArgs[index - 1] === '--report' ? path.resolve(fixture.root, argument) : argument,
+        );
+        const result: unknown = await run(canonicalArgs);
         const record = requireRecord(result, 'In-process configured run result');
         if (record.status === 'blocked') throw new Error('Configured fixture run was blocked');
         return result;

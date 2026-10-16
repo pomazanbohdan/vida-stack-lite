@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
 import { Database, type Changes, type SQLQueryBindings } from 'bun:sqlite';
-import { expectAsyncReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -3005,6 +3005,16 @@ test('public run awaits configured TaskSource policy and serializes the persiste
       },
     });
     expect(typeof wire.operation.action.issue_id).toBe('string');
+    const reportPath = `.agent/work/${workId}/task-source-binding-report.json`,
+      reportAbsolutePath = path.join(repositoryRoot, reportPath);
+    mkdirSync(path.dirname(reportAbsolutePath), { recursive: true });
+    writeFileSync(reportAbsolutePath, '{');
+    const beforeRejectedReportState = fixture.store.readHostStateSnapshot(workIdentity);
+    await expectRejection(
+      executeTaskSourceBindingOperation({ repositoryRoot, mode: 'report', requestPath, reportPath }),
+      /task source report envelope is not valid JSON/,
+    );
+    expect(fixture.store.readHostStateSnapshot(workIdentity)).toEqual(beforeRejectedReportState);
     const finalJournal = fixture.ledger.resume(workId, 1);
     assert.ok(finalJournal);
     expect(finalJournal.version).toEqual(currentJournal.version);

@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published Source base before the campaign packet: `ab86dd0da323685c90247cf29234294a42fa9de6` at `origin/main`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published parent of this repair packet: `6feac496f4a3384f0a3a1af4b9592545e0d7c009`; the original checkout fast-forwarded after campaign termination. The current packet is identified by its Git checkpoint. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -30,9 +30,17 @@ captures, closed groups and unchanged boot. Tooling186files and tests462files
 typechecks pass; CLI help and documentation links pass. These are functional
 checks, not the requested numeric campaign. Its real selection/run follows the
 published packet at `573db21f4ddc0057e8bb248011c8c3a3b9577b2e`. Campaign
-`8916173a-2f23-4e1d-bb7a-388d23426abb` remains active in the original checkout;
-its retained reports are under `packages/agent/coverage/contour-campaigns/`.
-The automatic projection updates only after the producers terminate.
+`8916173a-2f23-4e1d-bb7a-388d23426abb` terminated incomplete in the original
+checkout: after45 coverage selections and nine mutation attempts, the next
+launch failed its2GiB host tmpfs capacity guard. Stage067 launched no producer.
+The retained `interrupted.json`, raw logs and terminal receipts remain under
+`packages/agent/coverage/contour-campaigns/`; the campaign is not replayed.
+Root imported47 existing terminal reports (30 coverage diagnostics, nine scoped
+frozen proofs and eight mutation summaries) through the existing projection
+owner, all with their actual `573db21` commit. Five mutation summaries are
+assertion-confirmed pilot passes; three remain UNKNOWN. Invalid/missing reports
+and the denied core attempt were not promoted. Historical triples remain6/45;
+no changed Source, global gate or Runtime freshness is inferred.
 
 The owner's subsequent dispatch rule is one blind native Luna agent per
 contour, with a rolling pool of up to five useful isolated lanes. Root collects
@@ -98,6 +106,55 @@ at owned `RVzkYO`, with complete captures, closed groups and unchanged boot.
 Strict tests465files pass after the extraction; Root does not rerun that full
 suite without a new change/failure. This still does not replace its scoped
 coverage/frozen CRAP/mutation owners.
+
+The next repair packet keeps the user's one-agent/one-contour rolling rule and
+updates TESTING's older dispatch paragraph to agree. New campaign scratch is
+allocated beneath each retained stage on its actual backing filesystem, with
+the same2GiB free-space floor, recorded filesystem/capacity and existing
+PID/subreaper fences. Both temporary-directory variables point to its private
+bind. No old failed/UNKNOWN root, DB, lease or attempt is moved or deleted.
+The new storage control passes at owned `quality-rolling-cli-check-501p6W`;
+the capacity/mount behavior still needs a fresh committed campaign launch.
+
+Verified current-main SDK inputs were formed by GitHub run38873397454,
+attempt1, artifact12034726241 and admitted through the existing provenance,
+archive and member-digest owner. The alternate connector ZIP transport did not
+replace those checks. With those inputs the final-assurance fixture exposed
+a relative report-path error at owned `nCvUTl`. Root normalized only that path,
+preserving the caller's exact CAS. The corrected case passes1/0 and16 assertions
+at owned `e41jyv`, with complete captures and closed groups. Its65.9s case time
+does not qualify its declared20s allowance; timing remains OPEN. The requested
+CPU flags after the test selection produced no profile and establish no CPU
+diagnosis or speedup.
+
+First next-packet controls at owned `501p6W` pass8 cases and fail one newly
+authored Host-history fixture. Root corrected its Work digest/revision binding
+and replaced an invalid zero-history cleanup assertion with exact unchanged
+snapshot equality. The resulting preflight and two specialized-repair controls
+pass3/0 at owned `YFZNMB`. These are development checks, not numeric closure.
+Specialized fixtures now use genuinely distinct persisted targets, sorted
+multi-reference conflict evidence and the supported two-project identity.
+The runtime-code canonical Source control at owned `YEKxrR` fails both genuine
+positive cases on successor-manifest digest binding; its isolated contour owner
+is correcting fixture images without changing the product guard. Do not accept
+that proposal as measured coverage or replace it with copied-module attribution.
+
+The corrected predecessor/successor fixtures and explicit copied-package
+unplanned-drift denial pass both runtime-code positive cases at owned `0go0g9`,
+with147 assertions, complete captures, closed groups and unchanged boot. The
+successor manifest's full ordered tuple is checked against canonical executing
+package bytes before measured API calls. The genuine CLI child and private
+fixture drift denial retain their own attribution. Normal execution, crash
+recovery, CAS and the original guard assertions remain; no Source guard changed.
+The new special-selector CLI check passes1/0 at owned `7PPGvR`.
+
+The actual forward-admission authority and TaskSource report controls pass2/0
+with104 assertions at owned `gv3HuX`, complete captures, closed groups and
+unchanged boot. The measured admission API now consumes the real sealed fixture
+in-process while retaining its separate public CLI guard checks. A rejected
+malformed TaskSource report preserves the Host snapshot. The completed-readonly
+lane found no test-only shortcut to genuine completed admission/history; its
+success/CAS path remains OPEN rather than fabricating authority.
 
 ## Current config contour
 

@@ -12,7 +12,10 @@ import {
 } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { verifyForwardCandidateAdmission } from '../bin/forward-candidate-admission.ts';
 import { preparedFixture } from './helpers/documentation-policy-fixture.ts';
+import { expectReturned } from './helpers/expect-rejection.ts';
 
 const sha = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
 
@@ -177,6 +180,33 @@ test('sealed public admin denies altered authority, root, closure and target bef
   const control = invoke(command);
   expect(control.status, control.stderr).toBe(0);
   expect(parseRecord(control.stdout).status).toBe('inspect_ready_unauthorized');
+  unchanged();
+  const admitted = expectReturned(() =>
+    verifyForwardCandidateAdmission({
+      root: f.root,
+      payloadRoot: payload,
+      operationId: operation,
+      moduleUrl: pathToFileURL(path.join(bundle, 'bin/documentation-policy-transition.ts')).href,
+      targetPath: f.policyPath,
+    }),
+  );
+  expect(admitted.operation_id).toBe(operation);
+  expect(admitted.payload_root).toBe(payload);
+  expect(admitted.target_path).toBe(f.policyPath);
+  expect(admitted.target_sha256).toBe(sha(targetPolicy));
+  expect(admitted.parent_selector_sha256).toBe(sha(selected));
+  const approvedBytes = readFileSync(path.join(f.root, authorizationPath));
+  f.put(authorizationPath, f.json({ ...parseRecord(approvedBytes.toString('utf8')), outcome: 'rejected' }));
+  expect(() =>
+    verifyForwardCandidateAdmission({
+      root: f.root,
+      payloadRoot: payload,
+      operationId: operation,
+      moduleUrl: pathToFileURL(path.join(bundle, 'bin/documentation-policy-transition.ts')).href,
+      targetPath: f.policyPath,
+    }),
+  ).toThrow('forward authorization differs');
+  f.put(authorizationPath, approvedBytes);
   unchanged();
   const denies = (values: string[], pattern: RegExp): void => {
     const result = invoke(values);

@@ -21,6 +21,7 @@ import {
   type ActivationUse,
   type ObservedActivationUseWritePlan,
   type ObservedResearchRecordPlan,
+  type ResearchSynthesisConflict,
 } from '../src/research-decision.ts';
 import {
   HostStateStore,
@@ -31,6 +32,7 @@ import {
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { retryPendingWorkspaceDatabaseCloses } from '../src/config/workspace-database-raw.ts';
 import { validateCoordinationLedgerV1, type CoordinationLedger } from '../src/contracts/envelopes.ts';
+import { expectAsyncReturned } from './helpers/expect-rejection.ts';
 import {
   observationSchema,
   requestSchema,
@@ -170,6 +172,7 @@ interface SynthesisPlan {
 interface ObservationCorrectionPlan {
   original_item: { observation: ObservationWithDigest };
   predecessor_refs: { result_id: string; digest: string }[];
+  project_ids: string[];
 }
 
 function checkedObservation(value: unknown, description: string): ObservationWithDigest {
@@ -247,7 +250,12 @@ function synthesisPlan(value: unknown): SynthesisPlan {
 }
 
 function observationCorrectionPlan(value: unknown): ObservationCorrectionPlan {
-  if (!isRecord(value) || !isRecord(value.original_item) || !Array.isArray(value.predecessor_refs))
+  if (
+    !isRecord(value) ||
+    !isRecord(value.original_item) ||
+    !Array.isArray(value.predecessor_refs) ||
+    !isStringArray(value.project_ids)
+  )
     throw new Error('synthesis observation correction plan shape invalid');
   const originalObservation = checkedObservation(
     value.original_item.observation,
@@ -259,7 +267,11 @@ function observationCorrectionPlan(value: unknown): ObservationCorrectionPlan {
       throw new Error('synthesis observation predecessor shape invalid');
     return { result_id: entry.result_id, digest: entry.digest };
   });
-  return { original_item: { observation: originalObservation }, predecessor_refs: predecessorRefs };
+  return {
+    original_item: { observation: originalObservation },
+    predecessor_refs: predecessorRefs,
+    project_ids: value.project_ids,
+  };
 }
 
 function parseRecords(bytes: string, description: string): Record<string, unknown>[] {
@@ -518,11 +530,11 @@ const completeness = {
     live_check: null,
   },
 };
-function research(context: ReturnType<typeof fixture>, id: string, locator: string) {
+function research(context: ReturnType<typeof fixture>, id: string, locator: string, workId = 'work-repair') {
   return sealed({
     schema: 'ResearchResult/v1',
     result_id: id,
-    work_item_id: 'work-repair',
+    work_item_id: workId,
     source_revision: context.source.digest,
     scope_id: 'scope-repair',
     contour: 'scope-repair',
@@ -735,11 +747,17 @@ test('research identity dispatcher publishes both transformed records and exactl
   expect(events.every((event) => event.schema === 'DocumentationChangeEvent/v1')).toBe(true);
 });
 
-function synthesis(context: ReturnType<typeof fixture>, results: ReturnType<typeof research>[]) {
+function synthesis(
+  context: ReturnType<typeof fixture>,
+  results: ReturnType<typeof research>[],
+  workId = 'work-repair',
+  bundleId = 'synthesis-test',
+  conflicts: readonly ResearchSynthesisConflict[] = [],
+) {
   return sealed({
     schema: 'ResearchSynthesis/v1',
-    bundle_id: 'synthesis-test',
-    work_item_id: 'work-repair',
+    bundle_id: bundleId,
+    work_item_id: workId,
     source_revision: context.source.digest,
     scope_id: 'scope-repair',
     topic: 'Source provenance',
@@ -754,7 +772,7 @@ function synthesis(context: ReturnType<typeof fixture>, results: ReturnType<type
       },
     ],
     uncertainties: [],
-    conflicts: [],
+    conflicts,
     br_ids: ['BR-1'],
     sr_ids: ['SR-1'],
     ac_ids: ['AC-1'],
@@ -788,6 +806,7 @@ function persisted(
   results: ReturnType<typeof research>[],
   record: ReturnType<typeof synthesis> | null,
   normalized = true,
+  projectIds: readonly string[] = ['agent'],
 ) {
   const database = openHostStateDatabase(
     context.root,
@@ -799,7 +818,6 @@ function persisted(
   database.exec(
     'CREATE TABLE IF NOT EXISTS agent_host_mastra_session_ledger (workspace_id TEXT, work_id TEXT, attempt INTEGER, revision INTEGER, payload TEXT, digest TEXT, PRIMARY KEY(workspace_id,work_id,attempt))',
   );
-  const projectIds = ['agent'];
   const project = loadProjectSetContext(
     context.root,
     context.config,
@@ -808,7 +826,7 @@ function persisted(
   );
   const binding = {
     repository_id: project.repository_id,
-    project_ids: projectIds,
+    project_ids: [...projectIds],
     integrations_digest: project.integrations_digest,
     lifecycle_work_id: 'work-repair',
     work_source_revision: context.source.digest,
@@ -1184,29 +1202,159 @@ function persisted(
   return { item, work, state, ledger, identityKey, pathToRecord };
 }
 
+function addSecondSynthesisRepairTarget(
+  context: ReturnType<typeof fixture>,
+  stored: ReturnType<typeof persisted>,
+  results: ReturnType<typeof research>[],
+  sourceRecord: ReturnType<typeof synthesis>,
+): string {
+  const workId = 'work-repair-2';
+  writeResearch(context, results);
+  const record = sourceRecord;
+  const relativePath = `${context.records}/${record.bundle_id}.synthesis.json`;
+  const recordBytes = json(record);
+  writeFileSync(path.join(context.root, relativePath), recordBytes);
+  const actionId = sha(`${workId}:${record.bundle_id}`);
+  const issueId = randomUUID();
+  const observation = observationSchema.parse({
+    schema: 'VidaSessionObservation/v1',
+    action_id: actionId,
+    issue_id: issueId,
+    agent_id: 'test-setup',
+    tool_call_ref: 'TEST-SETUP-second-synthesis',
+    status: 'reported_complete',
+    summary: JSON.stringify(record),
+    output_digest: canonicalJsonDigest(JSON.stringify(record)),
+    evidence_refs: ['shared'],
+  });
+  const request = requestSchema.parse({
+    ...stored.item.request,
+    action_id: actionId,
+    run_id: 'run-repair-2',
+  });
+  const normalization = sealed({
+    schema: 'ObservedSynthesisRecordPlan/v1' as const,
+    binding: {
+      work_id: workId,
+      attempt: 1,
+      run_id: request.run_id,
+      action_id: actionId,
+      issue_id: issueId,
+      scope_id: stored.work.binding.scope_id,
+      scope_digest: context.source.digest,
+      source_revision: stored.work.binding.work_source_revision,
+      source_scope_digest: context.source.digest,
+      config_digest: stored.work.binding.config_digest,
+      maintenance_generation: 0,
+      lease_ticket_id: 'ticket-test',
+      lease_thread_id: 'thread-test',
+      lease_generation: 1,
+    },
+    observation_digest: canonicalJsonDigest(observation),
+    result_digest: record.digest,
+    record_path: relativePath,
+    record_pre_sha256: null,
+    record_sha256: sha(recordBytes),
+    changelog_path: context.changelog,
+    changelog_pre_sha256: null,
+    changelog_sha256: sha('\n'),
+    before_digest: null,
+  });
+  const item: MastraLedgerItem = { request, issue_id: issueId, observation, research_normalization: normalization };
+  const state: MastraSessionLedgerState = {
+    ...stored.state,
+    work_id: workId,
+    run_id: request.run_id,
+    items: [item],
+    completed: [],
+  };
+  const artifact: WorkArtifactReference = {
+    schema: 'ResearchSynthesis/v1',
+    artifact_id: record.bundle_id,
+    stage_id: request.stage_id,
+    path: relativePath,
+    sha256: sha(recordBytes),
+    source_revision: context.source.digest,
+    scope_id: stored.work.binding.scope_id,
+    ac_ids: stored.work.binding.ac_ids,
+  };
+  const work: WorkState = {
+    ...stored.work,
+    binding: {
+      ...stored.work.binding,
+      lifecycle_work_id: workId,
+      provider_work_item_id: workId,
+      work_item_digest: sha(workId),
+    },
+    execution: { ...stored.work.execution, run_id: request.run_id },
+    artifacts: [artifact],
+  };
+  const identityKey = JSON.stringify([
+    work.binding.repository_id,
+    work.binding.project_ids,
+    work.binding.integrations_digest,
+    workId,
+  ]);
+  const database = new Database(path.join(context.root, '.agent/work/session-handoff.v1.sqlite'));
+  databases.push(database);
+  insert(
+    database,
+    'agent_host_state',
+    ['workspace_id', 'kind', 'id', 'revision', 'payload', 'digest'],
+    [context.workspace, 'work', identityKey, work.revision, canonicalJson(work), canonicalJsonDigest(work)],
+  );
+  insert(
+    database,
+    'agent_host_mastra_session_ledger',
+    ['workspace_id', 'work_id', 'attempt', 'revision', 'payload', 'digest'],
+    [context.workspace, workId, 1, 1, canonicalJson(state), canonicalJsonDigest(state)],
+  );
+  closeWorkspaceDatabaseWithAdmission(database);
+  return relativePath;
+}
+
 test('synthesis qualification dispatcher freezes qualified observation and rejects active owners before any write', async () => {
   const context = fixture();
   const results = [
     research(context, 'research-a', 'same-source.md'),
     research(context, 'research-b', 'same-source.md'),
   ];
-  const record = synthesis(context, results);
+  const record = synthesis(context, results, 'work-repair', 'synthesis-test', [
+    {
+      conflict_id: 'conflict-1',
+      statement: 'Current sources support a reconciled result.',
+      source_refs: ['shared', 'related'],
+      status: 'reconciled',
+    },
+  ]);
   const stored = persisted(context, results, record);
+  const secondResults = [
+    research(context, 'research-a-2', 'same-source.md', 'work-repair-2'),
+    research(context, 'research-b-2', 'same-source.md', 'work-repair-2'),
+  ];
+  const secondRecord = synthesis(context, secondResults, 'work-repair-2', 'synthesis-test-2');
+  const secondPath = addSecondSynthesisRepairTarget(context, stored, secondResults, secondRecord);
+  const secondBefore = readFileSync(path.join(context.root, secondPath), 'utf8');
   const args = planning(context, 'inspect', ['--kind', 'synthesis-qualification']);
-  expect(await runReconcileArtifacts(args)).toMatchObject({
+  expect(await expectAsyncReturned(() => runReconcileArtifacts(args))).toMatchObject({
     status: 'repairable_current_v1',
-    changed_paths: [stored.pathToRecord],
+    changed_paths: [stored.pathToRecord, secondPath].sort(),
   });
-  expect(await runReconcileArtifacts(planning(context, 'plan', ['--kind', 'synthesis-qualification']))).toMatchObject({
-    status: 'planned',
-  });
+  expect(
+    await expectAsyncReturned(() =>
+      runReconcileArtifacts(planning(context, 'plan', ['--kind', 'synthesis-qualification'])),
+    ),
+  ).toMatchObject({ status: 'planned' });
   const plan = synthesisPlan(
     parseRecord(
       readFileSync(path.join(context.root, '.agent/work/repair-test/repair-plan.v1.json'), 'utf8'),
       'synthesis repair plan',
     ),
   );
-  const target = firstItem(plan.targets, 'synthesis repair targets');
+  expect(plan.targets.map((target) => target.path)).toEqual([stored.pathToRecord, secondPath].sort());
+  expect(plan.targets).toHaveLength(2);
+  const target = plan.targets.find((candidate) => candidate.path === stored.pathToRecord);
+  if (!target) throw new Error('primary synthesis repair target is missing');
   const afterRecord = parseRecord(target.after_record, 'repaired synthesis record');
   const findings = arrayField(afterRecord, 'findings', 'repaired synthesis record');
   expect(valueField(arrayRecord(findings, 0, 'synthesis findings'), 'source_refs', 'synthesis finding')).toEqual([
@@ -1214,24 +1362,33 @@ test('synthesis qualification dispatcher freezes qualified observation and rejec
   ]);
   const afterObservation = parseRecord(target.after_observation.summary, 'repaired observation summary');
   expect(recordField(afterObservation, 'recommendation', 'observation summary').evidence_refs).toEqual(['r0:shared']);
+  expect(
+    valueField(
+      arrayRecord(arrayField(afterObservation, 'conflicts', 'observation summary'), 0, 'conflicts'),
+      'source_refs',
+      'conflict',
+    ),
+  ).toEqual(['r0:shared', 'r0:related']);
   expect(target.after_observation.issue_id).toBe(stored.item.issue_id);
-  expect(target.after_observation.evidence_refs).toEqual(['r0:shared']);
+  expect(target.after_observation.evidence_refs).toEqual(['r0:related', 'r0:shared']);
   const database = new Database(path.join(context.root, '.agent/work/session-handoff.v1.sqlite'));
   databases.push(database);
   const changed = { ...stored.work, execution: { ...stored.work.execution, status: 'active' } };
   database
-    .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work'")
-    .run(canonicalJson(changed), canonicalJsonDigest(changed));
+    .query("UPDATE agent_host_state SET payload=?,digest=? WHERE kind='work' AND id=?")
+    .run(canonicalJson(changed), canonicalJsonDigest(changed), stored.identityKey);
   database.close();
   await Promise.resolve(expect(runReconcileArtifacts(args)).rejects.toThrow('not quiescent'));
   expect(readFileSync(path.join(context.root, stored.pathToRecord), 'utf8')).toBe(json(record));
+  expect(readFileSync(path.join(context.root, secondPath), 'utf8')).toBe(secondBefore);
   expect(readFileSync(path.join(context.root, context.changelog), 'utf8')).toBe('\n');
 });
 
 test('synthesis observation dispatcher plans the real provenance collision and preserves the reported native outcome', async () => {
   const context = fixture();
   const results = [research(context, 'research-a', 'source-a.md'), research(context, 'research-b', 'source-b.md')];
-  const stored = persisted(context, results, synthesis(context, results), false);
+  const projectIds = ['agent', 'plugin'];
+  const stored = persisted(context, results, synthesis(context, results), false, projectIds);
   const args = (mode: string): string[] => [
     '--kind',
     'synthesis-observation-correction',
@@ -1242,7 +1399,7 @@ test('synthesis observation dispatcher plans the real provenance collision and p
     '--correction-id',
     'correction-test',
     '--projects',
-    'agent',
+    projectIds.join(','),
     '--work-id',
     'work-repair',
     '--attempt',
@@ -1288,12 +1445,12 @@ test('synthesis observation dispatcher plans the real provenance collision and p
       ),
     ).toThrow();
   }
-  expect(await runReconcileArtifacts(args('inspect'))).toMatchObject({
+  expect(await expectAsyncReturned(() => runReconcileArtifacts(args('inspect')))).toMatchObject({
     status: 'correctable_current_v1',
     retained_native_outcome: 'reported_complete',
     prior_issue_id: stored.item.issue_id,
   });
-  expect(await runReconcileArtifacts(args('plan'))).toMatchObject({
+  expect(await expectAsyncReturned(() => runReconcileArtifacts(args('plan')))).toMatchObject({
     status: 'planned',
     retained_native_outcome: 'reported_complete',
   });
@@ -1308,6 +1465,8 @@ test('synthesis observation dispatcher plans the real provenance collision and p
   );
   expect(plan.original_item.observation).toEqual(stored.item.observation);
   expect(plan.predecessor_refs).toEqual(results.map(({ result_id, digest }) => ({ result_id, digest })));
+  expect(plan.project_ids).toEqual(projectIds);
+  expect(stored.work.binding.project_ids).toEqual(projectIds);
   const row = sqlRow(database, 'SELECT payload FROM agent_host_mastra_session_ledger', 'Mastra session ledger');
   const rowPayload = parseRecord(stringField(row, 'payload', 'Mastra session ledger'), 'Mastra session ledger');
   expect(

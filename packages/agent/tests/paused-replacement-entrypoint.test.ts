@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
-import { expectAsyncReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectReturned, expectRejection } from './helpers/expect-rejection.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
@@ -74,6 +75,31 @@ test('launcher module namespaces require callable named exports', async () => {
   expect(reconcile.runReconcileArtifacts).toBe(launchers.runReconcileArtifacts);
   const invalid: unknown = await import(invalidUrl);
   expect(() => requireLaunchers(invalid, reconcile)).toThrow('Fixture launchers are unavailable.');
+});
+
+test('runtime-code rebind rejects malformed public arguments before reading project state', async () => {
+  const { runRuntimeCodeRebind } = await import('../bin/runtime-code-rebind.ts');
+  const root = path.join(tmpdir(), 'vida-runtime-code-argument-' + randomUUID());
+  await expectRejection(
+    runRuntimeCodeRebind(['--kind', 'runtime-code', '--mode', 'inspect', '--project-root', root]),
+    'kind, mode, root or repair ID invalid',
+  );
+  await expectRejection(
+    runRuntimeCodeRebind([
+      '--kind',
+      'runtime-code',
+      '--kind',
+      'runtime-code',
+      '--mode',
+      'inspect',
+      '--project-root',
+      root,
+      '--repair-id',
+      'argument-check',
+    ]),
+    'arguments invalid',
+  );
+  expect(existsSync(path.join(root, 'agent-runtime.config.v1.yaml'))).toBe(false);
 });
 
 function assertOwnerSnapshot(snapshot: OwnerSnapshot): asserts snapshot is OwnerSnapshot & {
@@ -193,6 +219,7 @@ const createFixture = (root: string, bundleName = 'agent-runtime-new', multiProj
       'instructions',
       'templates',
       'package.json',
+      'bunfig.toml',
       'TESTING.md',
       'bun.lock',
       '.bun-version',
@@ -489,17 +516,71 @@ test.each([false, true])(
     const root = mkdtempSync(path.join(tmpdir(), 'vida-replacement-positive-'));
     let ledger: SessionLedger | undefined;
     let testFailure: { value: unknown } | undefined;
-    let cleanupFailure: { value: unknown } | undefined;
+    let retainFixtureRoot = false;
     try {
       const fixture = createImplementationTask(root);
       const privatePackage = path.join(root, 'vida-agent');
+      const runtimeConfigSource = await import('../src/config/runtime-config.ts');
+      const canonicalRuntimeAccess = runtimeConfigSource.runtimePackageAccess();
+      const canonicalRuntimePaths = [
+        ...runtimeConfigSource.runtimePackageCodePaths('vida-agent', canonicalRuntimeAccess),
+      ];
+      const runtimePath = at(canonicalRuntimePaths, 0, 'Canonical runtime code path');
+      const runtimeFile = path.join(root, runtimePath);
+      const canonicalRuntimeFile = path.join(
+        canonicalRuntimeAccess.repository_root,
+        runtimePath.slice('vida-agent/'.length),
+      );
+      const canonicalRuntimeBytes = readFileSync(canonicalRuntimeFile);
+      writeFileSync(
+        runtimeFile,
+        Buffer.concat([canonicalRuntimeBytes, Buffer.from('\n// fixture predecessor before canonical rebind\n')]),
+      );
       const launchers = requireLaunchers(
         await import(pathToFileURL(path.join(privatePackage, 'bin/run.ts')).href),
         await import(pathToFileURL(path.join(privatePackage, 'bin/reconcile-artifacts.ts')).href),
       );
+      const runtimeCodeRebind = await import('../bin/runtime-code-rebind.ts');
+      const forwardReviewProof = await import('../bin/forward-review-proof.ts');
       const run = async (runArgs: string[]): Promise<MainRunResult> => parseMainRunResult(await launchers.run(runArgs));
-      const runReconcileArtifacts = async (runArgs: string[]): Promise<ReconcileResult> =>
-        parseReconcileResult(await launchers.runReconcileArtifacts(runArgs));
+      const runReconcileArtifacts = async (runArgs: string[]): Promise<ReconcileResult> => {
+        const kindIndex = runArgs.indexOf('--kind');
+        const rawResult =
+          kindIndex >= 0 && runArgs[kindIndex + 1] === 'runtime-code'
+            ? await runtimeCodeRebind.runRuntimeCodeRebind(runArgs)
+            : await launchers.runReconcileArtifacts(runArgs);
+        return parseReconcileResult(rawResult);
+      };
+      const { createNativeTsPublicCliFixtureRunner } = await import('./helpers/public-cli-fixture-runner.ts');
+      const publicCli = createNativeTsPublicCliFixtureRunner({
+        bundleRoot: privatePackage,
+        diagnosticReceiptPath: path.join(root, '.agent', 'work', 'public-cli-entrypoint.jsonl'),
+        fixtureRoot: root,
+        onUnknown: () => {
+          retainFixtureRoot = true;
+        },
+      });
+      const runPublicCli = (runArgs: string[]): MainRunResult => {
+        const result = publicCli.spawn(runArgs);
+        if (result.status !== 0 || result.signal !== null || result.error !== undefined) {
+          retainFixtureRoot = true;
+          throw new Error(
+            `Public run CLI did not exit successfully: ${JSON.stringify({
+              status: result.status,
+              signal: result.signal,
+              error: result.error?.message,
+              stderr: result.stderr?.slice(-4096),
+            })}`,
+          );
+        }
+        let value: unknown;
+        try {
+          value = JSON.parse(result.stdout);
+        } catch {
+          throw new Error('Public run CLI returned malformed JSON.');
+        }
+        return parseMainRunResult(value);
+      };
       const args = fixture.args.map((value, index) =>
         fixture.args[index - 1] === '--workflow'
           ? workflow
@@ -698,10 +779,6 @@ test.each([false, true])(
         });
         expect(resumed.status).toBe('resumed');
         // The raw intake listed only bin/run; omitted engine files still bind freshness.
-        const runtimePath = simulateCrashAfterResume
-          ? 'vida-agent/dist/src/runtime.js'
-          : 'vida-agent/src/runtime-kernel.ts';
-        const runtimeFile = path.join(root, runtimePath);
         const canonicalIntake = readOwnerSnapshot().work.artifacts.find(
           (ref) => ref.artifact_id === 'local-session-intake',
         );
@@ -711,16 +788,30 @@ test.each([false, true])(
         const runtimePaths = requireArray(intakeRecord.runtime_code_paths, 'Runtime code paths').map((entry) =>
           requireString(entry, 'Runtime code path'),
         );
+        expect(runtimePaths).toEqual(canonicalRuntimePaths);
         const manifestFiles = () =>
           runtimePaths.map((relative: string) => {
             const bytes = readFileSync(path.join(root, relative));
             return { path: relative, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
           });
         const parentManifest = { schema: 'VidaAgentPreparedPayload/v1', files: manifestFiles() };
-        const oldBytes = readFileSync(runtimeFile);
-        writeFileSync(runtimeFile, Buffer.concat([oldBytes, Buffer.from('\n// fixture forward runtime update\n')]));
+        writeFileSync(runtimeFile, canonicalRuntimeBytes);
         const newBytes = readFileSync(runtimeFile);
+        expect(newBytes).toEqual(canonicalRuntimeBytes);
         const successorManifest = { schema: 'VidaAgentPreparedPayload/v1', files: manifestFiles() };
+        const canonicalManifestFiles = runtimePaths.map((relative) => {
+          const bytes = readFileSync(
+            path.join(canonicalRuntimeAccess.repository_root, relative.slice('vida-agent/'.length)),
+          );
+          return { path: relative, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') };
+        });
+        expect(parentManifest.files.map((entry) => entry.path)).toEqual(canonicalRuntimePaths);
+        expect(successorManifest.files).toEqual(canonicalManifestFiles);
+        const oldRuntimeManifestEntry = parentManifest.files.find((entry) => entry.path === runtimePath);
+        const newRuntimeManifestEntry = successorManifest.files.find((entry) => entry.path === runtimePath);
+        expect(oldRuntimeManifestEntry).toBeDefined();
+        expect(newRuntimeManifestEntry).toBeDefined();
+        expect(oldRuntimeManifestEntry?.sha256).not.toBe(newRuntimeManifestEntry?.sha256);
         const forwardId = 'fixture-runtime-code-forward';
         const forwardDir = path.join(root, '.agent', 'cutover', forwardId);
         const manifestSha = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
@@ -745,6 +836,9 @@ test.each([false, true])(
             new_payload_manifest_sha256: manifestSha(successorManifest),
           }),
         );
+        expect(() =>
+          forwardReviewProof.verifyForwardReviewSet(root, forwardId, manifestSha(successorManifest), []),
+        ).toThrow('forward review set invalid');
         writeFileSync(
           path.join(root, '.agent', 'active-runtime-selector.v1.json'),
           record({
@@ -873,10 +967,9 @@ test.each([false, true])(
           'Journal version before unplanned runtime drift',
         );
         writeFileSync(runtimeFile, Buffer.concat([newBytes, Buffer.from('// unplanned drift\n')]));
-        await Promise.resolve(
-          expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow(
-            'runtime-code digests differ from forward manifests',
-          ),
+        await expectRejection(
+          launchers.runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)]),
+          'runtime-code digests differ from forward manifests',
         );
         expect(readOwnerSnapshot().workVersion).toEqual(stateBeforeUnplannedDrift.workVersion);
         expect(readOwnerSnapshot().ledgerVersion).toEqual(stateBeforeUnplannedDrift.ledgerVersion);
@@ -986,22 +1079,31 @@ test.each([false, true])(
         observationFor(at(reissued.issued_actions, 0, 'reissued action'), 1),
       );
       expect(current.status).toBe('replacement_observed');
-      const next = await run(continuing);
+      const next = simulateCrashAfterResume
+        ? await expectAsyncReturned(() => run(continuing))
+        : expectReturned(() => runPublicCli(continuing));
       expect(next.resume_status).not.toBe('issued_outcome_uncertain');
       expect(readOwnerSnapshot().work.lifecycle.phase).toBe('INTAKE');
     } catch (error) {
       testFailure = { value: error };
     } finally {
-      ledger?.close();
-      try {
-        rmSync(root, { recursive: true, force: true });
-      } catch (error) {
-        if (!(error instanceof Error) || !('code' in error) || error.code !== 'EBUSY')
-          cleanupFailure = { value: error };
-      }
+      let closed = false;
+      completeOwnedCleanup(
+        [
+          () => {
+            ledger?.close();
+            closed = true;
+          },
+          () => {
+            if (closed && testFailure === undefined && !retainFixtureRoot)
+              rmSync(root, { recursive: true, force: true });
+            else console.error(`Preserved paused replacement fixture root: ${root}`);
+          },
+        ],
+        testFailure === undefined ? undefined : { error: testFailure.value },
+      );
     }
     if (testFailure !== undefined) throw testFailure.value;
-    if (cleanupFailure !== undefined) throw cleanupFailure.value;
   },
   180_000,
 );

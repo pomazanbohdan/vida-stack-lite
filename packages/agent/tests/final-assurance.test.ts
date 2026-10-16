@@ -297,3 +297,28 @@ test('persisted foreign proof and duplicate issue IDs are rejected on read', () 
   duplicated.actions[1]!.issue_id = duplicated.actions[0]!.issue_id;
   expect(() => validateFinalAssuranceState(duplicated)).toThrow();
 });
+
+test('persisted observations cannot replay a tool call or reviewer history', () => {
+  const valid = reviewed();
+  const replayedTool = structuredClone(valid);
+  replayedTool.actions[1]!.observation!.tool_call_ref = replayedTool.actions[0]!.observation!.tool_call_ref;
+  expect(() => validateFinalAssuranceState(replayedTool)).toThrow('GAP-FINAL-ASSURANCE-001: duplicate tool references');
+
+  const replayedHistory = structuredClone(valid);
+  replayedHistory.actions[1]!.observation!.history_id = replayedHistory.actions[0]!.observation!.history_id;
+  expect(() => validateFinalAssuranceState(replayedHistory)).toThrow(
+    'GAP-FINAL-ASSURANCE-001: duplicate reviewers or histories',
+  );
+});
+
+test('progress rejects a no-op and replacement of the sealed packet', () => {
+  const initial = expectReturned(() => createFinalAssuranceState(packet));
+  expect(() => validateFinalAssuranceProgress(initial, initial)).toThrow(
+    'GAP-FINAL-ASSURANCE-001: assurance CAS must make progress',
+  );
+
+  const replacement = expectReturned(() => createFinalAssuranceState({ ...packet, scope_id: 'replacement-scope' }));
+  expect(() => validateFinalAssuranceProgress(initial, replacement)).toThrow(
+    'GAP-FINAL-ASSURANCE-001: sealed packet cannot be replaced',
+  );
+});

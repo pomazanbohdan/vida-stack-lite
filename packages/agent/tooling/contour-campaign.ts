@@ -106,15 +106,20 @@ function writeRecord(directory: string, file: string, record: unknown): void {
   writeFileSync(path.join(directory, file), JSON.stringify(record, null, 2) + '\n', { flag: 'wx', mode: 0o600 });
 }
 
-function isolatedCommand(directory: string, args: string[], tools: { tini: string; bwrap: string }) {
-  const temporary = mkdtempSync('/tmp/vida-contour-campaign-');
+export function isolatedCommand(directory: string, args: string[], tools: { tini: string; bwrap: string }) {
+  const temporary = mkdtempSync(path.join(directory, 'scratch-'));
   const info = statfsSync(temporary, { bigint: true });
-  if (info.type !== 0x01021994n || info.bavail * info.bsize < 2n * 1024n ** 3n)
-    throw new Error('Campaign requires at least 2 GiB free on its private tmpfs.');
+  if (info.bavail * info.bsize < 2n * 1024n ** 3n)
+    throw new Error('Campaign requires at least 2 GiB free for its retained private scratch.');
   const scratch = path.join(temporary, 'scratch');
   mkdirSync(scratch);
   return {
     temporary,
+    scratch_storage: {
+      filesystem_type: String(info.type),
+      available_bytes: String(info.bavail * info.bsize),
+      minimum_free_bytes: String(2n * 1024n ** 3n),
+    },
     command: [
       tools.tini,
       '-s',
@@ -262,7 +267,12 @@ async function main(): Promise<void> {
           outputByteLimit: maximumOutputBytes,
           stdoutFile: path.join(stageDirectory, 'stdout.log'),
           stderrFile: path.join(stageDirectory, 'stderr.log'),
-          env: { ...process.env, TMPDIR: '/tmp', ...(coverage ? { VIDA_BUN_COVERAGE_REPORT: coverage } : {}) },
+          env: {
+            ...process.env,
+            TMPDIR: '/tmp',
+            BUN_TMPDIR: '/tmp',
+            ...(coverage ? { VIDA_BUN_COVERAGE_REPORT: coverage } : {}),
+          },
         });
         const bootAfter = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
         const state = bootAfter === boot ? campaignProcessState(child) : 'unknown';

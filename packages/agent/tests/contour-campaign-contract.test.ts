@@ -4,12 +4,44 @@ import {
   campaignPartition,
   campaignProcessState,
   executeContourCampaign,
+  isolatedCommand,
   type CampaignOutcome,
 } from '../tooling/contour-campaign.ts';
 import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import type { MutationPartition } from '../tooling/mutation-partitions.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 import { selectContourCampaign } from '../tooling/contour-progress.ts';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statfsSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+
+test('campaign retains private scratch with its stage instead of accumulating host tmpfs roots', () => {
+  const parent = path.resolve('.tmp');
+  mkdirSync(parent, { recursive: true });
+  const stage = mkdtempSync(path.join(parent, 'contour-scratch-control-'));
+  let completed = false;
+  try {
+    const isolated = isolatedCommand(stage, ['tooling/contour-campaign.ts', '--coverage-child', 'main-config'], {
+      tini: '/control/tini',
+      bwrap: '/control/bwrap',
+    });
+    expect(path.dirname(isolated.temporary)).toBe(stage);
+    const scratch = path.join(isolated.temporary, 'scratch');
+    expect(isolated.command).toContain(scratch);
+    const index = isolated.command.indexOf(scratch);
+    expect(isolated.command.slice(index - 1, index + 2)).toEqual(['--bind', scratch, '/tmp']);
+    const filesystem = statfsSync(scratch, { bigint: true });
+    expect(isolated.scratch_storage.filesystem_type).toBe(String(filesystem.type));
+    expect(BigInt(isolated.scratch_storage.available_bytes)).toBeGreaterThanOrEqual(2n * 1024n ** 3n);
+    expect(isolated.scratch_storage.minimum_free_bytes).toBe(String(2n * 1024n ** 3n));
+    const retained = path.join(scratch, 'unknown-receipt.json');
+    const bytes = '{"status":"UNKNOWN","scope":"test-fixture-only"}\n';
+    writeFileSync(retained, bytes, { flag: 'wx' });
+    expect(readFileSync(retained, 'utf8')).toBe(bytes);
+    completed = true;
+  } finally {
+    if (completed) rmSync(stage, { recursive: true });
+  }
+});
 
 const contours: MutationPartition[] = [
   { name: 'lane-a', sources: ['src/a.ts'], tests: ['tests/a.test.ts'] },

@@ -1252,7 +1252,11 @@ These are separate budgets, not a five-minute allowance for the entire campaign.
 
 Linux execution requires `bwrap` and `tini` on PATH, or an installed tini path in
 `VIDA_QUALITY_TINI`. Each child has a private PID namespace, subreaper and retained
-host-backed tmpfs scratch with at least2GiB free. Native mutation evidence stays
+host-backed scratch beneath its retained campaign stage with at least2GiB free.
+Record the actual filesystem type and available bytes in `launch.json`; the
+private `/tmp` bind does not imply tmpfs. `TMPDIR` and `BUN_TMPDIR` both select
+that private root. This keeps new scratch off the shared host `/tmp` capacity
+without deleting or relocating any prior FAIL/UNKNOWN fixture. Native mutation evidence stays
 at its real package `.tmp` path; the campaign does not relocate or rewrite it.
 Full captures, boot identity, argv, terminal status, timeout and process-group
 custody are retained in `coverage/contour-campaigns/<run-id>/`. Known failures
@@ -1261,8 +1265,9 @@ campaign is incomplete and never automatically replayed. Execution completion
 does not imply gate success or global mutation qualification: each mutation lane
 retains its pilot scope and requires assertion-confirmed Killed for every mutant.
 Only the final owner publishes the existing contour projection after terminal
-accounting. Fix agents start after that campaign is terminal; build/install and
-hooks do not run the campaign.
+accounting. Repair agents may prepare disjoint changes in isolated checkouts
+while a campaign runs. Root integrates only after the affected producers are
+terminal; build/install and hooks do not run the campaign.
 
 `bun run quality:contours` projects existing terminal reports into
 `coverage/bun-unified/contours/CONTOUR-STATUS.md` and its JSON snapshot. It runs

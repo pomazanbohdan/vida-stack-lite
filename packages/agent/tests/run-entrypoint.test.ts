@@ -2181,6 +2181,27 @@ describe('vida-agent run entrypoint fast checks', () => {
     }
   });
 
+  test('requires exact special-run signals and rejects selectors that conflict with normal operations', async () => {
+    const invalidDispatches = [
+      {
+        args: ['--continue-initial-source', 'false'],
+        message: 'Initial source continuation requires its exact separate signal',
+      },
+      {
+        args: ['--recover-completed-source-report', 'true', '--report', 'report.json'],
+        message: 'Completed Source report recovery requires its exact separate signal',
+      },
+      {
+        args: ['--resume-historical-normalization', 'true', '--issue-wave', 'true'],
+        message: 'Historical normalization resume requires its exact separate signal',
+      },
+    ] as const;
+
+    for (const { args, message } of invalidDispatches) {
+      await assert.rejects(run([...args]), (error: unknown) => error instanceof Error && error.message === message);
+    }
+  });
+
   test('selects an equal-root work path from one explicit project and fails closed on ambiguous or foreign roots', async () => {
     const root = mkdtempSync(path.join(tmpdir(), 'vida-run-project-membership-'));
     let preserveRoot = false;

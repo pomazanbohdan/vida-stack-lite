@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -10,7 +10,11 @@ import { configuredTestContext } from './configured-context.ts';
 import policyTemplate from '../templates/documentation-policy.template.v1.json' with { type: 'json' };
 import * as runtime from '../src/index.ts';
 import type { DocumentationClearInput } from '../src/documentation/clear.ts';
-import { parseForwardClearCheckpoint, parseForwardPolicyIdentity } from '../src/documentation/transition-proof.ts';
+import {
+  parseForwardClearCheckpoint,
+  parseForwardPolicyIdentity,
+  verifyCommittedParentPolicyProof,
+} from '../src/documentation/transition-proof.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
 
 const schemaIds = {
@@ -257,5 +261,103 @@ test('forward proof parsers compile private Ajv validators on first use', async 
     compilation.restore();
     if (passed) fixture.cleanup();
     else console.error(`Retained failed forward checkpoint fixture: ${fixture.root}`);
+  }
+});
+
+test('committed parent policy proof accepts persisted checkpoint and event bindings, then denies attribution drift', () => {
+  const fixture = forwardCheckpointFixture();
+  let passed = false;
+  try {
+    const before = Buffer.from('current\n');
+    const after = Buffer.from('current parent edit\n');
+    const documentPath = 'docs/agent-instructions/current.md';
+    writeFileSync(path.join(fixture.root, documentPath), before);
+    const baseline = expectReturned(() =>
+      runtime.produceDocumentationClearCheckpoint({ ...fixture.input, phase: 'baseline' }),
+    );
+    const baselinePath = `.agent/work/${fixture.input.work_id}/documentation-baseline-0001.v1.json`;
+    const baselineBytes = Buffer.from(JSON.stringify(baseline));
+    writeFileSync(path.join(fixture.root, baselinePath), baselineBytes);
+
+    writeFileSync(path.join(fixture.root, documentPath), after);
+    const closeout = expectReturned(() =>
+      runtime.produceDocumentationClearCheckpoint({
+        ...fixture.input,
+        phase: 'closeout',
+        baseline,
+        baseline_path: baselinePath,
+      }),
+    );
+    const closeoutBytes = Buffer.from(JSON.stringify(closeout));
+    writeFileSync(path.join(fixture.root, 'closeout.json'), closeoutBytes);
+    const policyBytes = readFileSync(path.join(fixture.root, baseline.policy_path));
+    const sha = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');
+    const event = (id: string, file: string, oldBytes: Buffer, newBytes: Buffer) =>
+      Buffer.from(
+        JSON.stringify({
+          schema: 'DocumentationChangeEvent/v1',
+          event_id: id,
+          logical_edit_id: id,
+          work_id: fixture.input.work_id,
+          source_revision: fixture.input.source_revision,
+          operation: 'finalize',
+          document_id: file,
+          path_before: file,
+          path_after: file,
+          before_sha256: sha(oldBytes),
+          after_sha256: sha(newBytes),
+          actor: 'project:forward-checkpoint-test',
+          pointer: 'TEST SETUP: committed parent observation',
+          timestamp: '2026-09-29T00:00:00.000Z',
+        }),
+      );
+    const policyEventBytes = event('policy-event', baseline.policy_path, Buffer.from('prior policy'), policyBytes);
+    const documentEventBytes = event('document-event', documentPath, before, after);
+    writeFileSync(path.join(fixture.root, 'policy-event.json'), policyEventBytes);
+    writeFileSync(path.join(fixture.root, 'document-event.json'), documentEventBytes);
+    const changes = [
+      {
+        path: baseline.policy_path,
+        old_sha256: sha(Buffer.from('prior policy')),
+        new_sha256: sha(policyBytes),
+        old_size: Buffer.byteLength('prior policy'),
+        new_size: policyBytes.byteLength,
+      },
+      {
+        path: documentPath,
+        old_sha256: sha(before),
+        new_sha256: sha(after),
+        old_size: before.byteLength,
+        new_size: after.byteLength,
+      },
+    ];
+    const proof = {
+      baselineBytes: readFileSync(path.join(fixture.root, baselinePath)),
+      closeoutBytes: readFileSync(path.join(fixture.root, 'closeout.json')),
+      baselinePath,
+      policyEventBytes: readFileSync(path.join(fixture.root, 'policy-event.json')),
+      documentEventBytes: readFileSync(path.join(fixture.root, 'document-event.json')),
+      changes,
+    };
+
+    expect(expectReturned(() => verifyCommittedParentPolicyProof(proof))).toBe(baseline.policy_path);
+    const documentEvent: unknown = JSON.parse(proof.documentEventBytes.toString('utf8'));
+    if (documentEvent === null || typeof documentEvent !== 'object' || Array.isArray(documentEvent))
+      throw new Error('Expected a persisted document event object.');
+    expect(() =>
+      verifyCommittedParentPolicyProof({
+        ...proof,
+        documentEventBytes: Buffer.from(
+          JSON.stringify({
+            ...documentEvent,
+            actor: 'project:foreign',
+          }),
+        ),
+      }),
+    ).toThrow('committed parent event attribution differs');
+    passed = true;
+  } finally {
+    if (passed) fixture.cleanup();
+    else console.error(`Retained failed committed parent proof fixture: ${fixture.root}`);
   }
 });
