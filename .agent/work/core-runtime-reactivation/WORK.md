@@ -14,6 +14,85 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
+Repair packet `708c1531020f886046d8d86e20a774eb86d6259b` is published on main;
+primary was clean and advanced ff-only. The ordinary pre-commit passed formatting
+for493 files and strict Source typechecking for499 files. Main SDK formation
+run38890766522/attempt1/artifact12041761695 succeeded; the maintained owner
+admitted its actual ZIP digest
+`sha256:b8feab16f0e5e582cf62f0149349c79ebaec8eb42e7fab8a605cfdbe07f11630`.
+Fresh campaign `fe4f6280-6fef-4161-a55f-d5961c5904f4` selects45 unclosed contours
+at that exact commit. Its log is
+`/workspace/attachments/campaign-unclosed-fresh-708c153-20261016.log`.
+Primary HEAD/index/inputs stay immutable until producers are terminal; this
+continuation record is prepared in the separate repair checkout. No new numeric
+closure is claimed before terminal proof admission.
+
+The next service-custody packet addresses the observed computed import of
+`bin/local-release-artifacts.ts`, which literal traversal did not capture.
+The existing bounded tool-input snapshot now includes that adapter and its
+fingerprint. The new regression fails against the published owner at `rgx2t3`,
+passes against the proposed owner at `RoU8Tw`, and the full projection controls
+pass32/0 with395 assertions at `E8XlUz`. All have complete captures, closed
+groups and unchanged boot. The measured primary was never edited for these
+controls; the red-control restoration happened only in the repair checkout.
+
+Prepared Mastra branch assertions cover malformed URL denial, scalar diagnostic
+preservation, invalid packet digest, a valid bound failed validator receipt,
+and a non-Error assignment diagnostic. The first failed-verdict fixture reached
+an unrelated role guard at `HzNWaG`; it now uses the same required receipt set
+as the existing success case. Corrected controls pass4/0 with75 assertions at
+`iFvs1V`, with complete captures, closed group and unchanged boot. Remaining
+unreached branches and missing reviewed budget stay OPEN; these are no new
+mutation or coverage claims.
+
+The fs-attestation projection gap is now traced exactly: its data-only Source
+and retained raw map both contain zero functions; projection rejects the empty
+function inventory deliberately. No identity/count mismatch was found. Keep
+this admission gap explicit until a reviewed data-only contour policy exists;
+do not remove the nonempty guard, invent a callable or relabel it as complete.
+
+Root prepared isolated opt-in core phase diagnostics, preserving every call,
+assertion, deadline and cleanup path. The first control `4AJ7pa` failed the
+missing SDK precondition and gives no timing evidence. The same official708c153
+archive was then admitted while the diagnostic checkout was clean, before
+restoring its test-only instrumentation. Controls `7wzabF` and `6zuIxh` pass
+the exact protected-session case with33 assertions and complete terminal custody.
+The latter plain-Bun sample places about2.01s in public synthesis,2.60s in public
+prewriter and3.88s in writer issue, against10.67s fixture preparation. Fixture
+total overlaps its component phases. These are diagnostic samples during the
+separate campaign, not an instrumented-coverage profile or a benchmark/speedup
+claim. The coverage timeout still needs its matching phase/CPU attribution.
+
+The CPU-profile attempt `IDDpMf` was rejected: putting global profiler flags
+before `test` dispatched the package script and began a broader suite. Root
+stopped only its verified isolated owner group; terminal exit143 has complete
+captures, closed group and unchanged boot. Preserve its roots and the stop intent
+`/workspace/attachments/core-cpu-profile-stop-708-20261016.intent.json`.
+The separate primary campaign continued. A private two-case CLI control with
+`test` first correctly filters the native case but produces no CPU artifact;
+these flags do not establish native-test CPU profiler support. TESTING now
+requires dispatch, filtering and actual output qualification before profiling.
+No speed or quality evidence is admitted from the accidental broad run.
+
+The proposed v2 initialization binding case is not integrated. Its real completed
+upgrade and read-only Host control `zNltZp` rejects with `maintenance project
+authority mismatch`, retaining complete captures and terminal custody. Both
+public configured Host factories omit the maintenance verifier; the real upgrade
+owner creates it privately and closes it before returning. The pending receipt
+read remains valid, but fabricating a verifier would not prove the bound route.
+The proposal is retained in
+`/workspace/attachments/runtime-init-v2-unqualified-binding-proposal-708-20261016.patch`;
+Root restored the published test bytes in the repair checkout. Keep that authority
+integration GAP and the remaining zero-hit branches explicit; no Source guard
+or verifier contract changed to obtain coverage.
+
+Thirteen additional inactive worktrees were retired only after their exact
+changed bytes were verified in published708c153, with binary diffs retained in
+`/workspace/attachments/worktree-integrated-retirement-20261016.json`.
+None contained ignored/untracked content. Removal used no force and left all
+failed runtime roots intact. Available workspace storage before SDK preparation
+was3,082,407,936bytes, above the unchanged2GiB admission floor.
+
 Campaign `f9ae7d6d-65a8-4823-8038-50d0540ba304` terminated incomplete against
 `57353f91b54806f5075801856729bf3e3e9fa6fe`: stage043 could not be created after
 ENOSPC; it launched no producer. All42 launched process groups have terminal

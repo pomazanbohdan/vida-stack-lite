@@ -141,6 +141,9 @@ export const coverageToolInputs: string[] = [
   'tooling/run-bun-coverage.ts',
   'tooling/coverage-run-outcome.ts',
   'tooling/sdk-artifact-capture.ts',
+  // Some legacy service tests select this adapter through a computed import,
+  // so static runtime-import traversal cannot discover it before execution.
+  'bin/local-release-artifacts.ts',
 ];
 
 export const sha256 = (bytes: string | Uint8Array): string => createHash('sha256').update(bytes).digest('hex');

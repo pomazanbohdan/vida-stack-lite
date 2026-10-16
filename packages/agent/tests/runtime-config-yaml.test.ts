@@ -1235,7 +1235,11 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     expect(typeof research.hooks).toBe('object');
     expect(typeof research.hooks.beforeToolCall).toBe('function');
     const researchBeforeToolCall = required(research.hooks.beforeToolCall, 'research tool hook').bind(research.hooks);
-    for (const url of ['https://alice@github.com/openai', 'https://:secret@github.com/openai']) {
+    for (const url of [
+      'https://alice@github.com/openai',
+      'https://:secret@github.com/openai',
+      'https://[malformed.example/openai',
+    ]) {
       expect(await researchBeforeToolCall({ toolName: 'web.search', input: { url }, context: {} })).toEqual({
         proceed: false,
         output: 'Mastra tool denied by configured role policy',
@@ -1953,6 +1957,15 @@ describe('final v1 artifact contracts', () => {
       return evidenceAuthority.issueTestReceipt({ ...receiptInput, ...overrides });
     };
     expect(() =>
+      issueValidation(required(validators[0], 'first validation receipt'), { packet_digest: 'z'.repeat(64) }),
+    ).toThrow(/packet digest/);
+    const baselineValidation = required(validators[0], 'first validation receipt');
+    const failedValidation = issueValidation(baselineValidation, { verdict: 'fail' });
+    expect(failedValidation.validator_role).toBe(baselineValidation.validator_role);
+    expect(failedValidation.packet_id).toBe(packet.packet_id);
+    expect(failedValidation.packet_digest).toBe(packet.digest);
+    expect(failedValidation.implementation_fingerprint).toBe(fingerprint);
+    expect(() =>
       prepareDeliveryInstruction(
         config,
         packet,
@@ -1996,6 +2009,19 @@ describe('final v1 artifact contracts', () => {
         evidenceAuthority,
       ),
     ).toThrow(/evidence/);
+    expect(() =>
+      prepareDeliveryInstruction(
+        config,
+        packet,
+        input,
+        validators
+          .slice(0, 2)
+          .map((receipt) => (receipt.validator_role === failedValidation.validator_role ? failedValidation : receipt)),
+        testerInstruction,
+        testReceipt,
+        evidenceAuthority,
+      ),
+    ).toThrow(/validator gate is incomplete/);
     expect(() =>
       prepareDeliveryInstruction(
         config,
@@ -2147,7 +2173,10 @@ describe('final v1 artifact contracts', () => {
     ).toBe('DeliveryInstruction/v1');
   });
 });
-async function configuredMastraUnitExecutionFixture(failAssignments: boolean, includeOptionalRiskStage = false) {
+async function configuredMastraUnitExecutionFixture(
+  failAssignments: boolean | string,
+  includeOptionalRiskStage = false,
+) {
   let yaml = authorityText;
   if (includeOptionalRiskStage) {
     const config = mutableClone(parseRuntimeConfigYaml(authorityText));
@@ -2232,7 +2261,11 @@ async function configuredMastraUnitExecutionFixture(failAssignments: boolean, in
     validateWorkflowAssignmentResult: () => {},
     dispatchWorkflowAssignment: async (invocation) => {
       dispatchedRoles.push(invocation.assignment.role);
-      if (failAssignments) throw new Error('controlled research assignment failure');
+      if (failAssignments) {
+        throw typeof failAssignments === 'string'
+          ? failAssignments
+          : new Error('controlled research assignment failure');
+      }
       return { observed: invocation.assignment.role };
     },
     resolveIdentity: () => null,
@@ -2315,6 +2348,22 @@ test('public Mastra dispatch reports failed research assignments and skips later
   ]);
 });
 
+test('public Mastra dispatch reports a non-Error assignment rejection', async () => {
+  const fixture = await configuredMastraUnitExecutionFixture('controlled non-Error assignment failure');
+  const failure = await rejectionReason(fixture.graph.dispatch(fixture.workItem.id));
+  expect(failure).toBeInstanceOf(Error);
+  if (!(failure instanceof Error)) throw new Error('Expected the public dispatch to reject with an Error.');
+  expect(failure.message).toContain('controlled non-Error assignment failure');
+  expect(() => {
+    throw failure;
+  }).toThrow(/Mastra configured workflow execution failed: configured workflow assignment failed/i);
+  expect(fixture.dispatchedRoles.slice().sort()).toEqual([
+    'code-researcher',
+    'documentation-researcher',
+    'platform-researcher',
+  ]);
+});
+
 test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
   const { repositoryRoot, config } = configuredTestContext();
   expect(() => invokeUntrusted(sanitizeDiagnostic, [config, null])).toThrow(/diagnostic|string|non-empty/i);
@@ -2328,6 +2377,7 @@ test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
   expect(sanitizeDiagnostic(config, 'url=https://alice:supersecret@example.com')).toContain(
     'https://alice:[REDACTED]@example.com',
   );
+  expect(sanitizeDiagnostic(config, '42')).toBe('42');
   expect(() => sanitizeDiagnostic(config, 'x'.repeat(4 * 1024 * 1024 + 1))).toThrow(/bounded input/);
   const configured = createConfiguredMastra(repositoryRoot);
   expect(configured.workflowId).toBeTypeOf('string');

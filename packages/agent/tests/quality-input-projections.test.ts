@@ -868,6 +868,39 @@ describe('final quality input projections', () => {
     expect(selected.input_bytes['src/runtime-kernel.ts']).toBeUndefined();
   });
 
+  test('captures the computed legacy release adapter in the focused module snapshot and freshness fingerprint', async () => {
+    const root = fixtureRoot();
+    const adapter = 'bin/local-release-artifacts.ts';
+    const originalAdapterBytes = Buffer.from('export const releaseAdapter = 1;\n');
+    writeFileSync(path.join(root, adapter), originalAdapterBytes);
+    writeFileSync(
+      path.join(root, 'tests/fixture.test.mjs'),
+      "const adapterPath = ['../bin', 'local-release-artifacts.ts'].join('/'); void import(adapterPath);\ntest('computed adapter', () => {});\n",
+    );
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: 'legacy-service-custody',
+      sources: ['src/host-state.ts'],
+      tests: ['tests/fixture.test.mjs'],
+    };
+
+    const before = await coverageInputs(root, selection);
+    const beforeInput = before.module_inputs.find(({ path: file }) => file === adapter);
+    expect(before.sources.map(({ path: file }) => file)).not.toContain(adapter);
+    expect(before.tool_inputs.map(({ path: file }) => file)).toContain(adapter);
+    expect(beforeInput).toEqual({
+      path: adapter,
+      sha256: createHash('sha256').update(originalAdapterBytes).digest('hex'),
+    });
+    expect(before.input_bytes[adapter]).toEqual(originalAdapterBytes);
+
+    writeFileSync(path.join(root, adapter), 'export const releaseAdapter = 2;\n');
+    const after = await coverageInputs(root, selection);
+    expect(after.input_bytes[adapter]).toEqual(Buffer.from('export const releaseAdapter = 2;\n'));
+    expect(after.tool_fingerprint).not.toBe(before.tool_fingerprint);
+    expect(qualityFingerprint(after)).not.toBe(qualityFingerprint(before));
+  });
+
   test('rejects empty, duplicate and foreign focused diagnostic selections', async () => {
     const root = fixtureRoot();
     const select = (sources: string[], tests: string[]) =>

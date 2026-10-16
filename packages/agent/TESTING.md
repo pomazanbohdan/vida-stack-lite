@@ -1468,6 +1468,12 @@ Use deterministic seeds. Record platform skips as GAPs. A descriptor simulation 
 
 ## Process, timeout and fixture safety
 
+Before profiling native tests, qualify the exact command on a private two-case
+fixture. Require the intended case filter, no package-script dispatch and a
+nonempty profile artifact. Global profiler flags before `test` can select the
+package script; native test execution can also ignore runtime profiling flags.
+Runtime help and a passing test alone do not establish profiler support.
+
 The default timeout is 5 seconds per individual test, selected explicitly with
 `bun test --timeout 5000`. It is not a deadline for a file, phase, child pool or
 the whole suite. Explicit per-test exceptions require a contract-backed reason,
