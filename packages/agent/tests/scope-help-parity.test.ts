@@ -1,6 +1,6 @@
 import { expect, test } from 'bun:test';
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,6 +9,7 @@ import { cliMetadataResult } from '../bin/cli-metadata.ts';
 import { inspectScope } from '../bin/scope.ts';
 import { freezeCliDeclaration, cliCommandSet, cliCommandNames } from '../bin/cli-command-contracts.ts';
 import { runOptionDetails, runScalarOptionFields, runRepeatedOptions } from '../bin/run-cli-options.ts';
+import { captureRuntimeInputClosure, readQualityInputs } from '../tooling/bun-coverage-evidence.ts';
 import { expectRejection } from './helpers/expect-rejection.js';
 
 test('malformed scope argv reports actual public help syntax before configuration access', async () => {
@@ -172,26 +173,23 @@ test('native run option details retain unique contracts and isolate each returne
   expect(runOptionDetails().some((option) => option.name === '--foreign')).toBe(false);
 });
 
-function assertDirectHelpMetadataClosure(command: string, entry: string, extra: readonly string[] = []): void {
+async function assertDirectHelpMetadataClosure(command: string, entry: string): Promise<void> {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-reconcile-help-closure-'));
-  const files = [
-    entry,
-    ...extra,
-    'cli-metadata.ts',
-    'cli-command-contracts.ts',
-    'run-cli-options.ts',
-    'reconcile-cli-contracts.ts',
-  ];
-  mkdirSync(path.join(root, 'bin'));
   let passed = false;
   try {
-    for (const file of files)
-      copyFileSync(fileURLToPath(new URL('../bin/' + file, import.meta.url)), path.join(root, 'bin', file));
-    const child = spawnSync(
-      process.execPath,
-      ['--no-env-file', '--no-install', path.join(root, 'bin', entry), '--help'],
-      { cwd: root, encoding: 'utf8', timeout: 2000, env: { PATH: process.env.PATH ?? '' } },
-    );
+    const packageRoot = path.resolve(import.meta.dirname, '..');
+    const entryPath = `bin/${entry}`;
+    const inputBytes = await readQualityInputs(packageRoot, [entryPath]);
+    await captureRuntimeInputClosure(packageRoot, [entryPath], [], [], inputBytes);
+    const files = [...inputBytes.keys()].sort();
+    for (const file of files) mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+    for (const file of files) writeFileSync(path.join(root, file), inputBytes.get(file)!);
+    const child = spawnSync(process.execPath, ['--no-env-file', '--no-install', path.join(root, entryPath), '--help'], {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 2000,
+      env: { PATH: process.env.PATH ?? '' },
+    });
     if (child.error || child.status !== 0)
       console.error(
         JSON.stringify({
@@ -206,8 +204,7 @@ function assertDirectHelpMetadataClosure(command: string, entry: string, extra: 
     expect(child.status).toBe(0);
     expect(child.stderr).toBe('');
     expect(JSON.parse(child.stdout)).toEqual(cliMetadataResult([command, '--help'], manifest));
-    expect(readdirSync(root)).toEqual(['bin']);
-    expect(readdirSync(path.join(root, 'bin')).sort()).toEqual([...files].sort());
+    expect(readdirSync(root).sort()).toEqual([...new Set(files.map((file) => file.split('/', 1).join('')))].sort());
     passed = true;
   } finally {
     if (passed) rmSync(root, { recursive: true, force: true });
@@ -215,11 +212,11 @@ function assertDirectHelpMetadataClosure(command: string, entry: string, extra: 
   }
 }
 
-test('direct reconcile help requires only its metadata closure', () => {
-  assertDirectHelpMetadataClosure('reconcile-artifacts', 'reconcile-artifacts.ts');
+test('direct reconcile help requires only its metadata closure', async () => {
+  await assertDirectHelpMetadataClosure('reconcile-artifacts', 'reconcile-artifacts.ts');
 });
-test('direct run help requires only its metadata closure', () => {
-  assertDirectHelpMetadataClosure('run', 'run.ts', ['bun.ts', 'cli-error-properties.ts']);
+test('direct run help requires only its metadata closure', async () => {
+  await assertDirectHelpMetadataClosure('run', 'run.ts');
 });
 
 test('public command, nested route and compatibility help complete without project effects', () => {

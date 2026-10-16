@@ -28,6 +28,7 @@ test('acceptance schema compilation is lazy, shared, and validates each value', 
 
   try {
     const query = randomUUID();
+    await import('../src/orchestration/local-work-admission.ts');
     await import(`../src/orchestration/admitted-development-packet.ts?acceptance=${query}`);
     await import(`../src/orchestration/local-work-admission.ts?acceptance=${query}`);
     await import(`../src/orchestration/observed-synthesis-result.ts?acceptance=${query}`);

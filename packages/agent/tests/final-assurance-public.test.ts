@@ -26,6 +26,7 @@ import type { StateVersion } from '../src/host-state.ts';
 import type { HostStateSnapshot, WorkState } from '../src/host-state.ts';
 import type { MastraLedgerItem } from '../src/orchestration/persistent-session-handoff.ts';
 import type { FinalAssuranceReport } from '../src/orchestration/final-assurance.ts';
+import { prepareLifecycleForCorrection } from '../src/orchestration/final-assurance.ts';
 import { z } from 'zod';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
 import type { TrustedWorkflowAssignment, WorkflowAssignmentRequest } from '../src/runtime-kernel.ts';
@@ -36,6 +37,7 @@ import type {
   SessionBridgeObservation,
   SessionBridgeRequest,
 } from '../src/orchestration/mastra-session-bridge-contract.ts';
+import { createFailedFinalCorrectionFixture } from './helpers/failed-final-correction-fixture.ts';
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 type MutableAdmissionInput = Omit<
   LocalWorkAdmissionInput,
@@ -891,3 +893,48 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     );
   }
 }, 90000);
+
+// Real admission, writer completion and two durable failed validators exceed the default five-second case budget.
+test('failed final correction preparation consumes persisted Host and CAS-bound failed Journal evidence', async () => {
+  const f = await createFailedFinalCorrectionFixture();
+  let completed = false;
+  try {
+    const prepared = expectReturned(() =>
+      prepareLifecycleForCorrection({
+        root: f.root,
+        config: f.config,
+        store: f.store,
+        identity: f.identity,
+        journal: f.journal,
+        preparationPath: f.preparationPath,
+      }),
+    );
+    const persisted = f.store.readHostStateSnapshot(f.identity),
+      currentJournal = f.store.readWorkSessionJournal(f.identity),
+      work = currentWork(persisted);
+    if (!currentJournal) throw new Error('Expected the persisted failed-final fixture Journal.');
+    expect(work.lifecycle.phase).toBe('VERIFY');
+    expect(work.lifecycle.assurance.correction_count).toBe(0);
+    expect(work.execution.assignment_attempts).toHaveLength(1);
+    expect(prepared.work).toEqual(persisted.work);
+    expect(prepared.ledger).toEqual(persisted.ledger);
+    expect(prepared.workVersion).toEqual(persisted.workVersion);
+    expect(prepared.ledgerVersion).toEqual(persisted.ledgerVersion);
+    expect(f.journal.state).toEqual(currentJournal.state);
+    expect(f.journal.version).toEqual(currentJournal.version);
+
+    const all = [...f.journal.state.items, ...f.journal.state.completed.flatMap((wave) => wave.items)],
+      failed = all.filter((item) => item.observation?.status === 'reported_failed'),
+      writer = all.find((item) => item.request.stage_id === 'develop_task');
+    expect(failed).toHaveLength(2);
+    expect(failed.every((item) => item.request.stage_id === 'validate_focused')).toBe(true);
+    expect(failed.every((item) => item.observation?.issue_id === item.issue_id)).toBe(true);
+    expect(writer?.observation?.status).toBe('reported_complete');
+    expect(writer?.host_reservation).toBeDefined();
+    expect(writer?.observation?.host_attempt_id).toBe(writer?.host_reservation?.receipt.attempt.attempt_id);
+    expect(f.preparationPath).toBe(`.agent/work/${f.identity.work_id}/preparation.json`);
+    completed = true;
+  } finally {
+    f.close(completed);
+  }
+}, 20_000);

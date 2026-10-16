@@ -9,6 +9,11 @@ export type MutationPartition = {
   requiredReportedSource?: string;
 };
 
+/** Resolve the full declared Source set for both explicit and report-bound partitions. */
+export function mutationPartitionSources(partition: MutationPartition): string[] {
+  return [...(partition.sources ?? (partition.requiredReportedSource ? [partition.requiredReportedSource] : []))];
+}
+
 /** Single partition owner; reading it performs no inventory, hashing or execution. */
 export function mutationPartitions(options: { includeRetired?: boolean } = {}): MutationPartition[] {
   const mainSlices: MutationPartition[] = [

@@ -14,8 +14,8 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
-The current user instruction prioritizes an explicit all/unclosed contour campaign
-before the next fix-agent wave. `bun run test:contours --all|--unclosed [--plan]`
+The current user instruction selects an explicit all/unclosed contour campaign
+with useful isolated repair preparation in parallel. `bun run test:contours --all|--unclosed [--plan]`
 coordinates the existing focused coverage, scoped frozen CRAP and partition
 mutation owners. Selection uses the single active registry and compatible local
 triples at the clean captured Source commit. Older complete triples are retained
@@ -29,7 +29,75 @@ Focused orchestration/projection checks pass108/0 with338expectations at owned
 captures, closed groups and unchanged boot. Tooling186files and tests462files
 typechecks pass; CLI help and documentation links pass. These are functional
 checks, not the requested numeric campaign. Its real selection/run follows the
-published packet; exact terminal evidence will replace this pending statement.
+published packet at `573db21f4ddc0057e8bb248011c8c3a3b9577b2e`. Campaign
+`8916173a-2f23-4e1d-bb7a-388d23426abb` remains active in the original checkout;
+its retained reports are under `packages/agent/coverage/contour-campaigns/`.
+The automatic projection updates only after the producers terminate.
+
+The owner's subsequent dispatch rule is one blind native Luna agent per
+contour, with a rolling pool of up to five useful isolated lanes. Root collects
+changes in the separate `codex/one-agent-per-contour-20261016` branch and leaves
+the measured checkout, HEAD and index unchanged until terminal custody. Root
+alone integrates shared files and owns fresh final checks. Unresolved findings
+stay OPEN and are requeued when their prerequisites are available.
+
+The first parallel platform proposal briefly edited and restored six primary
+files despite its read-only assignment. Root denied and stopped the affected
+core mutation attempt; it is not accepted evidence. The explicit stop and
+incident records are `/workspace/attachments/campaign-core-source-drift-stop-20261016.intent.json`
+and `/workspace/attachments/campaign-source-drift-incident-20261016.json`.
+Subsequent writers have physically separate worktrees. Failed and UNKNOWN bytes
+remain retained; the attempt is not replayed.
+
+The repair branch normalizes explicit and report-bound platform Source selections
+through the existing partition registry, captures computed repository tooling
+adapters with the current quality input owner, and prepares contour-specific
+assertions. Module-scope caching of the mutated config parser was rejected and
+reverted: it would weaken body assertion attribution. Static checks and authored
+tests do not establish changed coverage, frozen CRAP or mutation acceptance.
+
+Isolated functional control `quality-rolling-cli-check-QDP8Id` passes109/0 with
+521expectations for campaign/projection contracts, complete captures, closed
+groups and unchanged boot. The first new-case packet `QF5deh` fails and remains
+retained: projection dropped captured computed adapters, parser negative fixtures
+missed earlier required arguments, and the full initialization hook lacked SDK
+artifacts in the new checkout. Root fixed the first two causes. The corrected
+projection/parser controls pass3/0 at `6BQFUk`; the direct initialization case
+passes1/0 at `wHBV3F` with its explicit Source-focused mode (not the SDK suite).
+CLI main passes1/0 at `BLhvSb`; scoped Host identity/lazy-import controls pass3/0
+at `WKn7dp`. All are focused development checks, not numeric admission.
+
+Strict checks pass for tooling186files and tests464files. Final-assurance's
+new persisted fixture remains unverified: `8faLqA` hit the default5s deadline;
+the explicit20s real multi-phase integration exception at `zYGebw` reaches the
+missing SDK export guard instead. No SDK freshness bypass or local substitute
+receipt was introduced. Large-asset control `vxZH7s` reaches24assertions, then
+fails the existing repository-size-dependent beforeimage assumption; its owner
+is preparing a deliberate large fixture without lowering the boundary. Keep
+each failed/uncertain fixture and its original namespace custody.
+
+The corrected large-asset control passes1/0 at owned `YJp2dI`, with complete
+captures, closed groups and unchanged boot. Its scoped Source is deliberately
+enlarged before real beforeimage capture; the original >8MiB assertion stays.
+The wrong-digest asset is created sparsely at the exact expected length and the
+hardlink denial uses/removes a direct alias instead of copying the64MiB asset
+twice. This demonstrates behavior, not an established elapsed-time improvement
+or fresh coverage/CRAP/mutation qualification.
+
+Mastra's selected public research dispatch now uses the supported typed test
+issuer/composition and a shared independent controlled attempt model extracted
+from the existing configured-workflow caller. The clean fixture owns its real
+documentation policy before project-context resolution. An initially optional
+governance capability type and missing fixture profile fail at `EAEpwR`; both
+are corrected. Selected success/failure checks pass2/0 at owned `JqNaAG` with
+complete captures, closed groups and unchanged boot. This is unit/adapter
+evidence; no physical Host custody or Runtime acceptance is inferred.
+
+The migrated configured-workflow caller passes its full177cases/853expectations
+at owned `RVzkYO`, with complete captures, closed groups and unchanged boot.
+Strict tests465files pass after the extraction; Root does not rerun that full
+suite without a new change/failure. This still does not replace its scoped
+coverage/frozen CRAP/mutation owners.
 
 ## Current config contour
 

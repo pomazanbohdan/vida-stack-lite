@@ -18,6 +18,8 @@ import {
 } from '../src/orchestration/mastra-session-bridge.ts';
 import { createStagedRuntimeWitness } from '../src/orchestration/staged-runtime-witness.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
+import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 
 const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const selection: WorkItemSelection = {
@@ -71,6 +73,7 @@ test('staged witness inspects actual completed persistence without producing or 
       lifecycleRisk: 'low',
       selection,
     };
+    const sourceScope = snapshotDeclaredSources(requireSafeRepositoryAccess(root), ['AGENTS.md']);
     const enginePath = path.join(root, config.control.work_root, 'mastra-workflows.v1.sqlite');
     await expectRejected(createStagedRuntimeWitness(input), /absent/);
     expect(existsSync(enginePath)).toBe(false);
@@ -87,7 +90,7 @@ test('staged witness inspects actual completed persistence without producing or 
       workflowId: 'task_execution',
       workspaceId,
     });
-    let engine: SessionBridgeSnapshot = await bridge.start();
+    let engine: SessionBridgeSnapshot = await bridge.start(sourceScope);
     await expectRejected(createStagedRuntimeWitness(input), /identity|checksum|successful/);
     while (engine.status === 'suspended') {
       let journal = ledger.resume('work', 1);
@@ -133,7 +136,7 @@ test('staged witness inspects actual completed persistence without producing or 
         if (!item.observation) throw new Error('Expected the reported fixture observation');
         return item.observation;
       });
-      engine = await bridge.resume(engine.step_id, observations);
+      engine = await bridge.resume(engine.step_id, observations, sourceScope);
     }
     expect(engine.status).toBe('success');
     const database = ledger.sessionProducerBinding().database;
@@ -154,6 +157,7 @@ test('staged witness inspects actual completed persistence without producing or 
     const configBefore = readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'));
     const witness = await createStagedRuntimeWitness(input);
     expect(witness.mastra_status).toBe('success');
+    expect(witness.ledger_state.source_scope).toEqual(sourceScope);
     expect(witness.workflow_id).toBe('task_execution');
     expect(witness.run_id).toBe(engine.run_id);
     const { digest, ...body } = witness;

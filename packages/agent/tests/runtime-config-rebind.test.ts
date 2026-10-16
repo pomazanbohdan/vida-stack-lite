@@ -11,9 +11,10 @@ import {
   rmSync,
   renameSync,
   symlinkSync,
-  copyFileSync,
   linkSync,
   unlinkSync,
+  statSync,
+  truncateSync,
 } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
@@ -658,8 +659,16 @@ test(
   'source correction streams inert native assets above the generic read cap and rejects size, digest and hardlink changes',
   () =>
     withRuntimeConfigFixtureCase(async () => {
-      const fixtureContext = sourceCorrectionFixture(),
-        largeAsset = Buffer.alloc(64 * 1024 * 1024 + 1, 0x5a),
+      const fixtureContext = sourceCorrectionFixture();
+      const changedSourceAbsolute = path.join(fixtureContext.f.root, fixtureContext.changedPath);
+      fixtureContext.f.put(
+        fixtureContext.changedPath,
+        Buffer.concat([
+          readFileSync(changedSourceAbsolute),
+          Buffer.from('\n// retained source-beforeimage fixture ' + 'x'.repeat(1024 * 1024) + '\n'),
+        ]),
+      );
+      const largeAsset = Buffer.alloc(64 * 1024 * 1024 + 1, 0x5a),
         native = sourceCorrectionNativeFixture(fixtureContext.f, fixtureContext.targetVersion, largeAsset),
         rebind = await sourceCorrectionRebindWithNative(native.runtime),
         prepared = await prepareSourceCorrectionRepair(rebind, fixtureContext),
@@ -673,21 +682,25 @@ test(
         sourcePath = checkedString(report.installation_receipt.source_path, 'native source path'),
         sourceAbsolute = path.join(f.root, sourcePath),
         sourceDirectory = path.dirname(sourceAbsolute),
-        copiedPath = path.relative(f.root, path.join(sourceDirectory, 'asset-copy.exe')).split(path.sep).join('/'),
         mismatchedPath = path
           .relative(f.root, path.join(sourceDirectory, 'asset-mismatch.exe'))
           .split(path.sep)
           .join('/'),
         linkedPath = path.relative(f.root, path.join(sourceDirectory, 'asset-hardlink.exe')).split(path.sep).join('/'),
+        mismatchedAbsolute = path.join(f.root, mismatchedPath),
+        linkedAbsolute = path.join(f.root, linkedPath),
         shortPath = path.relative(f.root, path.join(sourceDirectory, 'asset-short.exe')).split(path.sep).join('/'),
         reportPath = path.join(f.root, '.tmp/source-correction-report.json'),
         applyArgs = [...repairArgs('repair-apply'), '--report', reportPath];
-      copyFileSync(sourceAbsolute, path.join(f.root, copiedPath));
-      copyFileSync(sourceAbsolute, path.join(f.root, mismatchedPath));
       const firstLargeAssetByte = largeAsset.at(0);
       if (firstLargeAssetByte === undefined) throw Error('Large native asset fixture is empty');
-      writeFileSync(path.join(f.root, mismatchedPath), Buffer.from([firstLargeAssetByte ^ 0xff]), { flag: 'r+' });
-      linkSync(path.join(f.root, copiedPath), path.join(f.root, linkedPath));
+      writeFileSync(mismatchedAbsolute, Buffer.from([firstLargeAssetByte ^ 0xff]));
+      truncateSync(mismatchedAbsolute, largeAsset.length);
+      const mismatchedStat = statSync(mismatchedAbsolute);
+      expect(mismatchedStat.isFile()).toBe(true);
+      expect(mismatchedStat.nlink).toBe(1);
+      expect(mismatchedStat.size).toBe(largeAsset.length);
+      linkSync(sourceAbsolute, linkedAbsolute);
       f.put(shortPath, Buffer.from([1, 2, 3]));
       const before = databaseState(f),
         denyAssetPath = async (pathValue: string) => {
@@ -704,6 +717,7 @@ test(
           ).toBe('requested');
         };
       await denyAssetPath(linkedPath);
+      unlinkSync(linkedAbsolute);
       await denyAssetPath(shortPath);
       await denyAssetPath(mismatchedPath);
       const custodyParent = path.dirname(fixtureContext.sourceBeforeimagesPath);

@@ -88,6 +88,8 @@ fixes in their assigned isolated checkouts, and Root integrates only after the
 affected producers are terminal. Temporary edits followed by restoration also
 violate this rule. Root alone owns Git, shared-file integration and final checks;
 worker proposals and static checks do not establish numeric closure.
+An unresolved finding remains OPEN and returns to the repair queue when its
+prerequisite is available; a handoff alone does not close the contour.
 Pstack defaults do not replace that route or authorize external model spending.
 Use prepared worker-contract guidance and disjoint file/output assignments.
 Prompt-only guidance does not establish a sandbox or independent Git authority.

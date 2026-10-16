@@ -66,7 +66,10 @@ import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.t
 import { readAdmittedSessionExecutionContext } from '../src/orchestration/admitted-session-execution.ts';
 import { runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { run } from '../bin/run.ts';
-import { executeDocumentationClearOperation } from '../src/documentation/clear.ts';
+import {
+  reportFailedFinalValidatorWave,
+  writeFailedFinalPreparationInputs,
+} from './helpers/failed-final-correction-fixture.ts';
 import { prepareLifecycleForCorrection } from '../src/orchestration/final-assurance.ts';
 import { inspectLocalSession } from '../src/orchestration/inspect-local-session.ts';
 import { expectCorrectiveAuthorizationMetadata, observeMetadataReads } from './helpers/ledger-cache-observer.ts';
@@ -3489,21 +3492,31 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
             ]);
           };
           const validatorItems = [...journal.state.items];
-          for (const item of validatorItems) {
-            const verdict = failureStage === 'validate' ? 'fail' : 'pass';
-            await report(
-              item,
-              JSON.stringify({
-                schema: 'VidaValidatorVerdict/v1',
-                verdict,
-                findings: verdict === 'fail' ? ['Actual fixture correctness defect'] : [],
-                evidence_refs: ['local://fixture/terminal'],
-              }),
-              verdict === 'fail' ? 'reported_failed' : 'reported_complete',
-              runFixture,
-            );
-            journal = sync();
-          }
+          if (failureStage === 'validate')
+            journal = await reportFailedFinalValidatorWave({
+              journal,
+              evidenceRef: 'local://fixture/terminal',
+              report: async (item, summary, status) => {
+                await report(item, summary, status, runFixture);
+                journal = sync();
+                return journal;
+              },
+            });
+          else
+            for (const item of validatorItems) {
+              await report(
+                item,
+                JSON.stringify({
+                  schema: 'VidaValidatorVerdict/v1',
+                  verdict: 'pass',
+                  findings: [],
+                  evidence_refs: ['local://fixture/terminal'],
+                }),
+                'reported_complete',
+                runFixture,
+              );
+              journal = sync();
+            }
           if (failureStage === 'test') {
             journal = requireSessionJournal(ledger.issueWave(id, 1, journal.version));
             await report(
@@ -3571,83 +3584,12 @@ for (const scenario of ['validate', 'test', 'runtime-rebind', 'success'])
           markPhase('correction_clear_preparation');
           await bridge.close();
           const originalVersion = requireJournalVersion(f.store.readWorkSessionJournal(identity));
-          const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
-          writeFileSync(
-            path.join(f.root, policyPath),
-            JSON.stringify({
-              schema: 'DocumentationPolicy/v1',
-              policy_id: 'corrective-public-fixture',
-              project_id: 'sample',
-              source_path: policyPath,
-              owner: 'fixture',
-              required: false,
-              canonical_roots: ['docs'],
-              map_paths: ['AGENT.sidecar.md'],
-              excluded_roots: [],
-              changelog_required: false,
-              changelog_path: null,
-              relations: ['documents'],
-              updated_at: new Date().toISOString(),
-            }),
-          );
-          const doc = {
-            repository_root: f.root,
-            repository_id: work.binding.repository_id,
-            project_id: 'sample',
-            work_id: id,
-            source_revision: work.binding.work_source_revision,
-            scope_paths: ['AGENT.sidecar.md'],
-          };
-          await executeDocumentationClearOperation(doc, 'baseline');
-          const clear = await executeDocumentationClearOperation(doc, 'closeout');
-          const mechanics = {
-            source_plan: ['scope_acceptance_trace', 'verification_rollback'],
-            platform_knowledge: ['platform_contracts', 'official_reference_lookup'],
-            implementation_policy: ['root_cause_owner', 'affected_callers', 'existing_primitives'],
-            change_impact_pre: ['affected_paths', 'invalidation', 'rollback'],
-            documentation_validation: ['current_inventory', 'current_clear'],
-          };
-          const prerequisites = Object.entries(mechanics).map(([kind, labels]) => {
-            const file = `.agent/work/${id}/${kind}.json`;
-            writeFileSync(
-              path.join(f.root, file),
-              JSON.stringify({
-                schema: 'LifecyclePreparationObservation/v1',
-                record_id: kind,
-                kind,
-                work_id: id,
-                attempt: 1,
-                source_revision: work.binding.work_source_revision,
-                scope_id: work.binding.scope_id,
-                config_digest: work.binding.config_digest,
-                ac_ids: work.binding.ac_ids,
-                observed_at: new Date().toISOString(),
-                observer_id: 'fixture-observer',
-                status: 'pass',
-                evidence_refs: ['local://fixture/current-source'],
-                observations: labels.map((mechanic) => ({
-                  mechanic,
-                  actual: 'Explicit isolated current contract fixture observation',
-                  evidence_ref: 'local://fixture/current-source',
-                })),
-                gaps: [],
-              }),
-            );
-            return { kind, path: file };
+          const { preparationPath } = await writeFailedFinalPreparationInputs({
+            root: f.root,
+            work,
+            attempt: 1,
+            policyId: 'corrective-public-fixture',
           });
-          const preparationPath = `.agent/work/${id}/preparation.json`;
-          writeFileSync(
-            path.join(f.root, preparationPath),
-            JSON.stringify({
-              schema: 'FinalAssurancePreparation/v1',
-              work_id: id,
-              attempt: 1,
-              prerequisites,
-              documentation_precheck_path: clear.path,
-              clear_path: clear.path,
-              delivery_manifest_path: `.agent/work/${id}/delivery.json`,
-            }),
-          );
           const planPath = path.join(f.root, `.agent/work/${id}/correction-plan.json`);
           writeFileSync(
             planPath,

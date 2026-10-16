@@ -360,6 +360,9 @@ test('uses only substantive observed research and host-bound identity', async ()
     expect(() => freshConsumer.buildObservedResearchResult({ ...input, acceptanceBytes: Buffer.from('{}') })).toThrow(
       'observed research result: accepted acceptance schema is invalid',
     );
+    expect(() => freshConsumer.buildObservedResearchResult({ ...input, acceptanceBytes: Buffer.from('{') })).toThrow(
+      'observed research result: accepted acceptance is not JSON',
+    );
     const repeatedFreshResult = freshConsumer.buildObservedResearchResult(input);
     expect(repeatedFreshResult.result_id).toBe(freshResult.result_id);
     expect(repeatedFreshResult.actor).toBe(freshResult.actor);

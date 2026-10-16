@@ -127,6 +127,21 @@ describe('configured local context', () => {
     expect(digest).toBe(canonicalJsonDigest(body));
   });
 
+  test('bounds a large local excerpt while retaining both ends of the selected source', () => {
+    const largeSource = `${'A'.repeat(5_000)}${'B'.repeat(5_000)}`;
+    writeFileSync(path.join(root, 'docs/context.md'), largeSource);
+    const result = buildConfiguredContext(root, config, { ...base, source_ids: ['candidate-testing'], skill_refs: [] });
+    const entry = result.entries[0];
+    if (!entry) throw new Error('large configured context entry is missing');
+    expect(entry.truncated).toBe(true);
+    expect(entry.content).toHaveLength(8192);
+    expect(entry.content).toContain('[middle omitted; read source for complete content]');
+    expect(entry.content?.startsWith('A'.repeat(100))).toBe(true);
+    expect(entry.content?.endsWith('B'.repeat(100))).toBe(true);
+    expect(entry.bytes).toBe(Buffer.byteLength(largeSource));
+    expect(entry.sha256).toBe(createHash('sha256').update(largeSource).digest('hex'));
+  });
+
   nativePackageTest('reads the selected package resource twice and binds exact bytes without sidecar writes', () => {
     const packageAccess = runtimePackageAccess();
     const direct = readRuntimePackageResourceBytes(

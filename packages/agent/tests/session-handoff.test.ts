@@ -9,6 +9,7 @@ import { loadRuntimeConfig, type WorkItemSelection } from '../src/config/runtime
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.js';
 import {
   advanceSessionWorkflowHandoff,
+  createSessionActionProjector,
   prepareSessionWorkflowHandoff,
   validateSessionWorkflowHandoffFromConfig,
   type SessionAgentAction,
@@ -17,6 +18,7 @@ import {
   type SessionWorkflowHandoff,
 } from '../src/orchestration/session-handoff.js';
 import { compileDevelopmentWorkflow } from '../src/orchestration/workflow-plan.js';
+import type { CorrectiveExecution } from '../src/orchestration/final-assurance.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 let root = '';
@@ -137,6 +139,44 @@ function simulatedReports(
 }
 
 describe('advisory session agent handoff', () => {
+  test('projector exposes executable waves, stage kinds, and corrective action filtering', () => {
+    const projector = createSessionActionProjector(
+      loadRuntimeConfig(root),
+      selection('feature', 'implementation_new'),
+      'implementation_new',
+    );
+    const waveIndices = projector.executableWaveIndices();
+    expect(waveIndices.length).toBeGreaterThan(0);
+    expect(projector.executableWaveIndices(['develop_change'])).toContain(3);
+    expect(projector.executableWaveIndices(['unknown-stage'])).toEqual([]);
+
+    const firstWave = projector.actionsForWave(context, 0, []);
+    expect(firstWave.length).toBeGreaterThan(0);
+    const firstAction = firstWave[0];
+    if (!firstAction) throw new Error('projected first wave has no action');
+    expect(projector.waveHasStageKind(0, firstAction.stage_kind)).toBe(true);
+    expect(projector.waveHasStageKind(-1, firstAction.stage_kind)).toBe(false);
+    const stageId = firstAction.stage_id;
+    const correctiveExecution: CorrectiveExecution = {
+      schema: 'CorrectiveExecution/v1',
+      base_run_id: 'base-run',
+      engine_run_id: '00000000-0000-4000-8000-000000000001',
+      correction_generation: 1,
+      stage_ids: [stageId],
+      authorization: {
+        schema: 'CorrectiveAssignmentAuthorization/v1',
+        path: '.agent/work/work-17/correction-authorization.json',
+        sha256: 'c'.repeat(64),
+      },
+    };
+    const filtered = projector.actionsForWave(context, 0, [], correctiveExecution);
+    expect(filtered.length).toBeGreaterThan(0);
+    expect(filtered.every((action) => action.stage_id === stageId)).toBe(true);
+    expect(projector.actionsForWave(context, 0, [], { ...correctiveExecution, stage_ids: ['unknown-stage'] })).toEqual(
+      [],
+    );
+  });
+
   test('compiled code workflow preserves every linear wave through delivery', () => {
     const compiled = compileDevelopmentWorkflow(loadRuntimeConfig(root), 'default-development', 'implementation_new');
     expect(compiled.waves.map((wave) => wave.map((stage) => stage.id))).toEqual([

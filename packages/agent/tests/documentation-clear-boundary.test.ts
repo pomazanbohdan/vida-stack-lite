@@ -6,6 +6,7 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { tmpdir } from 'node:os';
 import * as runtime from '../src/index.ts';
 import type { DocumentationClearCheckpoint, DocumentationClearInput } from '../src/documentation/clear.ts';
+import { documentationRelativePath } from '../src/documentation/policy.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const { repositoryRoot, config, context } = configuredTestContext();
@@ -297,5 +298,20 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
     } finally {
       fixture.cleanup();
     }
+  });
+
+  test('CLEAR document paths reject absolute, traversal, empty-segment, and platform-specific spellings', () => {
+    for (const unsafe of [
+      '',
+      '/etc/passwd',
+      '../outside.md',
+      'docs/../outside.md',
+      'docs//current.md',
+      'docs\\current.md',
+      'C:current.md',
+    ]) {
+      expect(() => documentationRelativePath(unsafe)).toThrow('documentation path is not safe and repository-relative');
+    }
+    expect(documentationRelativePath('docs/agent-instructions/current.md')).toBe('docs/agent-instructions/current.md');
   });
 });

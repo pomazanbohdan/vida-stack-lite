@@ -1,5 +1,9 @@
 import { recordContourReport } from './contour-progress-cli.ts';
-import { mutationPartitions, type MutationPartition } from './mutation-partitions.ts';
+import {
+  mutationPartitionSources as partitionSources,
+  mutationPartitions,
+  type MutationPartition,
+} from './mutation-partitions.ts';
 import { randomUUID } from 'node:crypto';
 import { mutationLimits } from './mutation-limits.ts';
 import type { Stats } from 'node:fs';
@@ -157,11 +161,6 @@ function mutationReport(value: unknown): value is MutationReport {
   if (!record(value) || !record(value.files)) return false;
   for (const file of Object.values(value.files)) if (!mutationFileReport(file)) return false;
   return true;
-}
-
-function partitionSources(partition: MutationPartition): string[] {
-  if (partition.sources) return partition.sources;
-  return partition.requiredReportedSource ? [partition.requiredReportedSource] : [];
 }
 
 function junitName(partition: string, mutantId: string | null): string {

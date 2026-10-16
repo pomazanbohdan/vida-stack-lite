@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { observeWorkStateSchemaCompiles } from '../helpers/ajv-compile-observer.ts';
 import { expectReturned, rejectionReason } from '../helpers/expect-rejection.ts';
@@ -87,6 +87,9 @@ import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-re
 import * as persistedRows from '../../src/config/host-persisted-row.ts';
 
 const workspace = 'a'.repeat(64);
+// Keep a stable export snapshot because Bun updates live builtin namespaces when
+// a scoped module mock is registered.
+const originalFsExports = { ...nodeFs };
 const bundleRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const identity = {
   repository_id: 'project-repository',
@@ -580,6 +583,7 @@ test('Host and readonly inspection share a lazy WorkState schema without caching
   const compiledWorkSchemas = compilation.schemas;
 
   try {
+    await import('../../src/orchestration/inspect-local-session.ts');
     await import(`../../src/orchestration/inspect-local-session.ts?lazy=${randomUUID()}`);
     expect(compiledWorkSchemas).toEqual([]);
     const freshSchema = (await import(
@@ -2733,32 +2737,34 @@ test('host database opener pins recoverable SQLite settings and preserves state 
 test.each([
   { label: 'adjacent large inode is rejected', afterInode: 9_007_199_254_740_993n, rejects: true },
   { label: 'unchanged large inode is accepted', afterInode: 9_007_199_254_740_992n, rejects: false },
-])('Host database opener identity: $label', ({ afterInode, rejects }) => {
+])('Host database opener identity: $label', async ({ afterInode, rejects }) => {
   const relative = 'opener-identity.db';
   const target = path.join(root, relative);
-  const originalLstat = nodeFs.lstatSync;
   let directIdentityReads = 0;
-  const observed = spyOn(nodeFs, 'lstatSync').mockImplementation(((...args: Parameters<typeof nodeFs.lstatSync>) => {
-    const actual = Reflect.apply(originalLstat, nodeFs, args);
-    if (actual === undefined || args[0] !== target) return actual;
-    const firstSourceFrame = new Error().stack?.split('\n').find((frame) => frame.includes('/src/host-state.ts:'));
-    const sourceLine = Number(firstSourceFrame?.match(/host-state\.ts:(\d+):/u)?.[1]);
-    // These are the two direct opener identity reads. Match their immediate Source frame, not
-    // an outer openHostStateDatabase/storage-admission frame around safety or lease checks.
-    if (sourceLine !== 4932 && sourceLine !== 4945) return actual;
-    directIdentityReads += 1;
-    const inode = directIdentityReads === 1 ? 9_007_199_254_740_992n : afterInode;
-    const exact = Object.create(actual) as typeof actual;
-    const bigint = args[1] !== undefined && typeof args[1] === 'object' && Reflect.get(args[1], 'bigint') === true;
-    Reflect.set(exact, 'dev', bigint ? 17n : 17);
-    Reflect.set(exact, 'ino', bigint ? inode : Number(inode));
-    return exact;
-  }) as typeof nodeFs.lstatSync);
+  await mock.module('node:fs', () => ({
+    ...originalFsExports,
+    lstatSync: ((...args: Parameters<typeof nodeFs.lstatSync>) => {
+      const actual = Reflect.apply(originalFsExports.lstatSync, originalFsExports, args);
+      const bigint = args[1] !== undefined && typeof args[1] === 'object' && Reflect.get(args[1], 'bigint') === true;
+      if (actual === undefined || args[0] !== target || !bigint) return actual;
+      // The opener's two bigint identity observations are the only such reads for
+      // this unique target. Match the observable call contract, not Source lines.
+      directIdentityReads += 1;
+      const inode = directIdentityReads === 1 ? 9_007_199_254_740_992n : afterInode;
+      const exact = Object.create(actual) as typeof actual;
+      Reflect.set(exact, 'dev', 17n);
+      Reflect.set(exact, 'ino', inode);
+      return exact;
+    }) as typeof nodeFs.lstatSync,
+  }));
   let opened: Database | undefined;
   let failure: unknown;
   try {
     try {
-      opened = openHostStateDatabase(root, relative, workspace);
+      const freshHostState = (await import(
+        `../../src/host-state.ts?identity=${randomUUID()}`
+      )) as typeof import('../../src/host-state.ts');
+      opened = freshHostState.openHostStateDatabase(root, relative, workspace);
     } catch (error) {
       failure = error;
     }
@@ -2777,7 +2783,11 @@ test.each([
       expect(opened.query<{ value: number }, []>('SELECT 1 AS value').get()).toEqual({ value: 1 });
     }
   } finally {
-    observed.mockRestore();
+    try {
+      await mock.module('node:fs', () => originalFsExports);
+    } finally {
+      mock.restore();
+    }
   }
 });
 

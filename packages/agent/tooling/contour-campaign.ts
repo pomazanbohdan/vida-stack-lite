@@ -14,7 +14,7 @@ import { runContourProgress } from './contour-progress-cli.ts';
 import { latestScopedCrapBudgetRef } from './crap-gate.ts';
 import { executeMutationCommand, type MutationProcessResult } from './mutation-evidence.ts';
 import { mutationLimits } from './mutation-limits.ts';
-import { mutationPartitions, type MutationPartition } from './mutation-partitions.ts';
+import { mutationPartitionSources, mutationPartitions, type MutationPartition } from './mutation-partitions.ts';
 
 type Lane = 'coverage' | 'frozen-crap' | 'mutation';
 export type CampaignOutcome = {
@@ -37,6 +37,11 @@ export function campaignOptions(args: readonly string[]): { mode: 'all' | 'unclo
   )
     throw new Error('Usage: bun run test:contours --all|--unclosed [--plan]');
   return { mode: selection[0] === '--all' ? 'all' : 'unclosed', plan: args.includes('--plan') };
+}
+
+/** Campaign producers and reviewed budgets must receive the same complete registry Source selection. */
+export function campaignPartition(partition: MutationPartition): MutationPartition {
+  return { ...partition, sources: mutationPartitionSources(partition) };
 }
 
 /** Known failures do not hide later lanes. Unaccounted process custody fences every successor. */
@@ -151,7 +156,8 @@ async function main(): Promise<void> {
     return;
   }
   if (process.argv[2] === '--coverage-child') {
-    const partition = mutationPartitions().find((row) => row.name === process.argv[3]);
+    const declared = mutationPartitions().find((row) => row.name === process.argv[3]);
+    const partition = declared && campaignPartition(declared);
     if (process.argv.length !== 4 || !partition?.sources?.length || !partition.tests?.length)
       throw new Error('Coverage child requires one declared executable contour.');
     const { runBunCoverage } = await import('./run-bun-coverage.ts');
@@ -173,10 +179,13 @@ async function main(): Promise<void> {
   const snapshot = mergeContourProgress(jsonFile(snapshotPath), []);
   const selected = selectContourCampaign(snapshot, options.mode, commit);
   const lineage = jsonFile(path.join(statusDirectory, 'crap-budgets.reviewed-partial.v1.json'));
-  const partitions = selected.map((partition) => ({
-    ...partition,
-    budget_ref: latestScopedCrapBudgetRef(partition.name, partition.sources ?? [], lineage),
-  }));
+  const partitions = selected.map((row) => {
+    const partition = campaignPartition(row);
+    return {
+      ...partition,
+      budget_ref: latestScopedCrapBudgetRef(partition.name, partition.sources!, lineage),
+    };
+  });
   const plan = {
     schema: 'VidaContourCampaignPlan/v1',
     run_id: randomUUID(),

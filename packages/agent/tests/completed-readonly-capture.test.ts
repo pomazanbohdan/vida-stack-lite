@@ -50,3 +50,33 @@ test('completed readonly capture denies unadmitted source before observation or 
   expect(readFileSync(path.join(f.root, baseline.path)).equals(baselineBefore)).toBe(true);
   expect(readFileSync(path.join(f.root, f.policyPath), 'utf8')).toBe(f.json(f.oldPolicy));
 }, 30000);
+
+test('completed readonly capture rejects an invalid active selector before reading its request', async () => {
+  const { f } = await preparedFixture();
+  const database = path.join(f.root, '.agent/work/session-handoff.v1.sqlite');
+  const before = readFileSync(database);
+  f.put(
+    '.agent/active-runtime-selector.v1.json',
+    f.json({
+      schema: 'ActiveRuntimeSelector/v1',
+      generation: '../outside-selected-generation',
+      payload_manifest_sha256: '1'.repeat(64),
+    }),
+  );
+  const phases: string[] = [];
+  const failure: unknown = await rejectionReason(
+    runCompletedReadOnlyCapture(
+      {
+        root: f.root,
+        payloadRoot: f.bundle,
+        operationId: 'selector-boundary',
+        requestPath: '.agent/work/missing-capture-request.json',
+      },
+      { onPhase: (phase) => phases.push(phase) },
+    ),
+  );
+  expect(failure).toBeInstanceOf(Error);
+  expect((failure as Error).message).toContain('selected generation invalid');
+  expect(phases).toEqual([]);
+  expect(readFileSync(database).equals(before)).toBe(true);
+}, 30000);

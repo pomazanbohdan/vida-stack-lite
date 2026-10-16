@@ -733,11 +733,21 @@ describe('final quality input projections', () => {
       repositoryTool,
       "import { fixture } from '../../packages/agent/src/host-state.ts';\nexport const assurance = fixture;\n",
     );
+    const computedPathAdapter = path.join(repository, 'tooling/agent/release-local.ts');
+    const computedPathAdapterBytes = Buffer.from('export const releaseLocal = true;\n');
+    writeFileSync(computedPathAdapter, computedPathAdapterBytes);
 
     const projections = await qualityInputProjections(root, { coverage: [], mutation: [], guard: [] });
     for (const name of ['coverage', 'mutation', 'guard'] as const) {
       expect(projections[name].tool_inputs.map(({ path: file }) => file)).toContain(
         '_repository/tooling/agent/release-assurance.ts',
+      );
+      expect(projections[name].tool_inputs).toContainEqual({
+        path: '_repository/tooling/agent/release-local.ts',
+        sha256: createHash('sha256').update(computedPathAdapterBytes).digest('hex'),
+      });
+      expect(projections[name].input_bytes['_repository/tooling/agent/release-local.ts']).toEqual(
+        computedPathAdapterBytes,
       );
       expect(projections[name].sources.map(({ path: file }) => file)).toContain('src/host-state.ts');
       expect(projections[name].sources.filter(({ path: file }) => file === 'src/host-state.ts')).toHaveLength(1);

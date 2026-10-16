@@ -1,5 +1,6 @@
 import { expect, test } from 'bun:test';
 import type { Database } from 'bun:sqlite';
+import { createHash } from 'node:crypto';
 import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -8,6 +9,7 @@ import { planReadOnlyDispatchRepair, applyReadOnlyDispatchRepair } from '../bin/
 import { canonicalJson, canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../src/config/runtime-config.ts';
 import { loadProjectSetContext } from '../src/config/project-context.ts';
+import { isActivationEvidence } from '../bin/read-only-dispatch-repair.ts';
 import { buildReadOnlyDispatchRepairPlan } from '../src/orchestration/read-only-dispatch-repair.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
@@ -16,6 +18,7 @@ import type { SessionBridgeRequest } from '../src/orchestration/mastra-session-b
 import { closeWorkspaceDatabaseWithAdmission } from '../src/config/storage-read-admission.ts';
 import { HostStateStore, openHostStateDatabase } from '../src/host-state.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import type { ActivationUse, ObservedActivationUseWritePlan } from '../src/research-decision.ts';
 
 const bundle = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const repositoryTemplateRoot = path.resolve(bundle, '../..');
@@ -49,6 +52,73 @@ test('read-only repair accepts bounded opaque identity syntax before the project
         Reflect.apply(buildReadOnlyDispatchRepairPlan, undefined, [{ ...syntaxRequest, [field]: value }]);
       }).toThrow('vida read-only dispatch repair: project set must be exact sorted unique IDs');
     }
+  }
+});
+
+test('activation evidence type guard accepts an exact sealed image and rejects malformed evidence', () => {
+  const value = fixture();
+  let passed = false;
+  try {
+    const { use, plan } = addPersistedActivation(value);
+    const evidence = { use, plan };
+    expect(isActivationEvidence(evidence)).toBe(true);
+    expect(isActivationEvidence({ ...evidence, extra: true })).toBe(false);
+    expect(isActivationEvidence({ use: { ...use, digest: '0'.repeat(64) }, plan })).toBe(false);
+    expect(isActivationEvidence({ use, plan: { ...plan, digest: '0'.repeat(64) } })).toBe(false);
+    passed = true;
+  } finally {
+    closeFixture(value, !passed);
+  }
+});
+
+test('read-only repair admits only persisted activation evidence bound to its released issue', () => {
+  const value = fixture();
+  let passed = false;
+  try {
+    const persisted = addPersistedActivation(value);
+    const plan = planReadOnlyDispatchRepair(value.input);
+    expect(plan.prior_activation).toEqual({ use: persisted.use, plan: persisted.plan });
+
+    const foreignBinding = {
+      ...persisted.state,
+      items: persisted.state.items.map((item) =>
+        item.request.action_id === value.input.actionId
+          ? {
+              ...item,
+              research_activation: {
+                ...item.research_activation!,
+                plan: {
+                  ...item.research_activation!.plan,
+                  binding: { ...item.research_activation!.plan.binding, issue_id: 'foreign-issue' },
+                },
+              },
+            }
+          : item,
+      ),
+    };
+    replaceJournalRow(
+      value.database,
+      value.input.workspaceId,
+      value.input.workId,
+      value.input.attempt,
+      9,
+      foreignBinding,
+    );
+    expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(/one exact unobserved read-only issue is required/);
+
+    replaceJournalRow(
+      value.database,
+      value.input.workspaceId,
+      value.input.workId,
+      value.input.attempt,
+      9,
+      persisted.state,
+    );
+    writeFileSync(persisted.historyFile, `${canonicalJson(persisted.use)}\n${canonicalJson(persisted.use)}\n`);
+    expect(() => planReadOnlyDispatchRepair(value.input)).toThrow(/one exact unobserved read-only issue is required/);
+    passed = true;
+  } finally {
+    closeFixture(value, !passed);
   }
 });
 
@@ -388,6 +458,72 @@ function repairSnapshot(value: ReturnType<typeof fixture>) {
     value.input.attempt,
   );
   return { projectContext, snapshot };
+}
+
+function addPersistedActivation(value: ReturnType<typeof fixture>) {
+  const sourceScope = value.state.source_scope;
+  if (!sourceScope) throw new Error('fixture source scope is missing');
+  const useBody: Omit<ActivationUse, 'digest'> = {
+    schema: 'InstructionActivationUse/v1',
+    use_id: 'fixture-research-use',
+    work_item_id: value.input.workId,
+    source_revision: value.work.binding.work_source_revision,
+    scope_id: value.work.binding.scope_id,
+    risk: 'high',
+    phase: 'trace',
+    lane: 'researcher',
+    trigger: 'research_intent',
+    required_instruction_ids: [],
+    instruction_ids: ['research-protocol'],
+    registry_digest: 'b'.repeat(64),
+    source_digests: [{ instruction_id: 'research-protocol', source_sha256: 'c'.repeat(64) }],
+    cache_status: 'cold',
+    actor: 'fixture-operator',
+    pointer: 'fixture:persisted-activation',
+    timestamp: '2026-09-28T09:59:00.000Z',
+  };
+  const use: ActivationUse = { ...useBody, digest: canonicalJsonDigest(useBody) };
+  const historyPath = path.posix.join(
+    value.input.config.research_decision.paths.activation_history,
+    value.input.workId,
+    'instruction-activation-history.jsonl',
+  );
+  const history = `${canonicalJson(use)}\n`;
+  const historyFile = path.join(value.repositoryRoot, historyPath);
+  mkdirSync(path.dirname(historyFile), { recursive: true });
+  writeFileSync(historyFile, history);
+  const planBody: Omit<ObservedActivationUseWritePlan, 'digest'> = {
+    schema: 'ObservedActivationUseWritePlan/v1',
+    binding: {
+      work_id: value.input.workId,
+      attempt: value.input.attempt,
+      run_id: value.work.execution.run_id,
+      action_id: value.input.actionId,
+      issue_id: value.input.issueId,
+      scope_id: value.work.binding.scope_id,
+      scope_digest: sourceScope.digest,
+      source_revision: value.work.binding.work_source_revision,
+      source_scope_digest: sourceScope.digest,
+      config_digest: value.work.binding.config_digest,
+      maintenance_generation: 0,
+      lease_ticket_id: 'fixture-released-ticket',
+      lease_thread_id: value.input.nativeHandle,
+      lease_generation: 1,
+    },
+    use_digest: use.digest,
+    history_path: historyPath,
+    history_pre_sha256: null,
+    history_sha256: createHash('sha256').update(history).digest('hex'),
+  };
+  const plan: ObservedActivationUseWritePlan = { ...planBody, digest: canonicalJsonDigest(planBody) };
+  const state = {
+    ...value.state,
+    items: value.state.items.map((item) =>
+      item.request.action_id === value.input.actionId ? { ...item, research_activation: { use, plan } } : item,
+    ),
+  };
+  replaceJournalRow(value.database, value.input.workspaceId, value.input.workId, value.input.attempt, 9, state);
+  return { use, plan, state, historyFile };
 }
 
 test('read-only repair context handoff preserves plan bytes and refuses forged or mismatched contexts', () => {

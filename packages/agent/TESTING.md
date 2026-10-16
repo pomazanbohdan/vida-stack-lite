@@ -1232,6 +1232,7 @@ inputs immutable, including transient edits. Parallel preparation uses separate
 checkouts; integration and numeric rechecks wait for terminal producer custody.
 Track each contour through verified repair or an explicit remaining GAP, without
 promoting a proposal, timeout, UNKNOWN or static check into numeric acceptance.
+An unresolved finding stays OPEN and is requeued once its prerequisite is ready.
 
 The explicit campaign command is `bun run test:contours --all` or
 `bun run test:contours --unclosed`. Add `--plan` to inspect the exact registry

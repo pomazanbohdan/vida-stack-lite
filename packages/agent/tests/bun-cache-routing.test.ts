@@ -1,5 +1,14 @@
 import assert from 'node:assert/strict';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { homedir } from 'node:os';
@@ -66,6 +75,23 @@ interface RunFailureProjection {
   status: unknown;
   code: unknown;
   message: unknown;
+}
+
+interface RunHelpProjection {
+  schema: unknown;
+  status: unknown;
+  command: unknown;
+}
+
+function isRunHelp(value: unknown): value is RunHelpProjection {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !Array.isArray(value) &&
+    'schema' in value &&
+    'status' in value &&
+    'command' in value
+  );
 }
 
 function isRunFailureProjection(value: unknown): value is RunFailureProjection {
@@ -282,6 +308,30 @@ test('actual direct Bun entrypoint terminates with strict public JSON when requi
   assert.equal(typeof failure.message, 'string');
   // Terminal output proves the direct route returns; exact child count is not asserted.
 }, 45000);
+
+test('actual direct run help completes from its metadata-only closure', () => {
+  const { root, parent } = realCopy();
+  const result = spawnSync(process.execPath, [path.join(root, 'bin/run.ts'), '--help'], {
+    cwd: parent,
+    env: cleanEnv(),
+    encoding: 'utf8',
+    windowsHide: true,
+    timeout: 4000,
+  });
+  assert.equal(result.error, undefined);
+  assert.equal(result.signal, null);
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, '');
+  assert.ok(typeof result.stdout === 'string');
+  assert.ok(result.stdout.endsWith('\n'), 'completed help must include its full newline-terminated output');
+  const help: unknown = JSON.parse(result.stdout.slice(0, -1));
+  assert.ok(isRunHelp(help), 'run help must be a typed public metadata record');
+  assert.equal(help.schema, 'VidaAgentCommandResult/v1');
+  assert.equal(help.status, 'help');
+  assert.equal(help.command, 'run');
+  assert.equal(existsSync(path.join(parent, '.agent')), false);
+  assert.equal(existsSync(path.join(parent, '.vida')), false);
+});
 
 test('imported run entrypoint leaves cache selection and execution untouched', () => {
   const { root, parent } = realCopy();

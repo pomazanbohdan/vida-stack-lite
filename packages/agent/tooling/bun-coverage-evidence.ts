@@ -256,6 +256,27 @@ export function repositoryRootForPackage(packageRoot: string): string | null {
   return path.resolve(packageBase, '../..');
 }
 
+async function repositoryToolingInputPaths(packageRoot: string): Promise<string[]> {
+  const repositoryRoot = repositoryRootForPackage(packageRoot);
+  if (!repositoryRoot) return [];
+  const repositoryEntries = await readdir(repositoryRoot, { withFileTypes: true });
+  const toolingEntry = repositoryEntries.find((entry) => entry.name === 'tooling');
+  if (!toolingEntry) return [];
+  if (toolingEntry.isSymbolicLink())
+    throw new Error(`Quality input symlink is not supported: ${path.join(repositoryRoot, toolingEntry.name)}`);
+  if (!toolingEntry.isDirectory()) return [];
+  const toolingRoot = path.join(repositoryRoot, 'tooling');
+  const toolingEntries = await readdir(toolingRoot, { withFileTypes: true });
+  const agentEntry = toolingEntries.find((entry) => entry.name === 'agent');
+  if (!agentEntry) return [];
+  if (agentEntry.isSymbolicLink())
+    throw new Error(`Quality input symlink is not supported: ${path.join(toolingRoot, agentEntry.name)}`);
+  if (!agentEntry.isDirectory()) return [];
+  const repositoryPrefix = 'tooling/agent/';
+  const paths = await walkFiles(repositoryRoot, path.join(repositoryRoot, 'tooling', 'agent'));
+  return paths.map((file) => `${repositoryToolingInputPrefix}/${file.slice(repositoryPrefix.length)}`);
+}
+
 export function canonicalCapturedModulePath(packageRoot: string, absolutePath: string): string | null {
   const packageBase = path.resolve(packageRoot);
   const target = path.resolve(absolutePath);
@@ -1206,8 +1227,13 @@ async function captureQualityInputBase(
       ['schemas', 'templates', 'instructions'].map((directory) => walkFiles(root, path.join(root, directory))),
     )
   ).flat();
+  const repositoryToolInputs = selectionMode === 'current' ? await repositoryToolingInputPaths(root) : [];
   const sdkFormationTools = sdkFormationToolInputPaths(selectionMode, testSelection);
-  const tools = qualityToolInputPaths([...additionalToolInputs, ...sdkFormationTools], contractInputs, selectionMode);
+  const tools = qualityToolInputPaths(
+    [...additionalToolInputs, ...sdkFormationTools, ...repositoryToolInputs],
+    contractInputs,
+    selectionMode,
+  );
   const allInputs = [
     ...new Set([...sources, ...(sdkFormationSourcePaths ?? []), ...capturedTestPaths, ...tools]),
   ].sort();
@@ -1276,7 +1302,7 @@ async function captureQualityInputBase(
     contractInputs,
     inputBytes,
     inputDigests,
-    runtimeToolPaths: capturedRuntimeTools,
+    runtimeToolPaths: [...new Set([...capturedRuntimeTools, ...repositoryToolInputs])].sort(),
     ...(sdkBuilderToolPaths ? { sdkBuilderToolPaths } : {}),
     ...(sdkFormationSourcePaths ? { sdkFormationSourcePaths } : {}),
     ...(selectionMode === 'published-baseline-bun-native'

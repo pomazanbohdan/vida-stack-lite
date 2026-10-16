@@ -171,6 +171,14 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
   expect(() => deriveWorkspaceId(receipt.repository_id, receiptPath)).toThrow(
     'repository root must be a non-link directory',
   );
+  if (process.platform === 'linux') {
+    const linkedRoot = path.join(root, 'linked-checkout');
+    symlinkSync(root, linkedRoot, 'dir');
+    expect(() => deriveWorkspaceId(receipt.repository_id, linkedRoot)).toThrow(
+      'repository root must be a non-link directory',
+    );
+    unlinkSync(linkedRoot);
+  }
   const authority = readRuntimeInitializationAuthority(root, loadRuntimeConfig(root));
   expect(authority).toEqual({
     format: 'RuntimeInitialization/v1',

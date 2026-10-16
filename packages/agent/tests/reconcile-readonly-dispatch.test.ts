@@ -469,6 +469,37 @@ test('public read-only dispatch CLI rejects malformed generations without changi
       }
     };
     const beforeRejectedApplies = dispatchState();
+    writeFileSync(planPath, 'null\n');
+    let malformedPlanRejection: unknown;
+    try {
+      await runReconcileArtifacts(value.args('apply'));
+    } catch (error) {
+      malformedPlanRejection = error;
+    }
+    expect(malformedPlanRejection).toBeInstanceOf(Error);
+    expect(malformedPlanRejection).toHaveProperty(
+      'message',
+      'vida repair artifacts: read-only dispatch plan is not exact canonical JSON',
+    );
+    expect(dispatchState()).toEqual(beforeRejectedApplies);
+    writeFileSync(planPath, originalPlanBytes);
+
+    const malformedActivationPlan = { ...planValue, prior_activation: { use: {}, plan: {} } };
+    writeFileSync(planPath, `${JSON.stringify(malformedActivationPlan, null, 2)}\n`);
+    let malformedActivationRejection: unknown;
+    try {
+      await runReconcileArtifacts(value.args('apply'));
+    } catch (error) {
+      malformedActivationRejection = error;
+    }
+    expect(malformedActivationRejection).toBeInstanceOf(Error);
+    expect(malformedActivationRejection).toHaveProperty(
+      'message',
+      'vida repair artifacts: read-only dispatch plan is not exact canonical JSON',
+    );
+    expect(dispatchState()).toEqual(beforeRejectedApplies);
+
+    writeFileSync(planPath, originalPlanBytes);
     for (const invalidGeneration of [-1, 0.5, '0', null, Number.MAX_SAFE_INTEGER + 1]) {
       const invalidPlan = { ...planValue, maintenance_generation: invalidGeneration };
       writeFileSync(planPath, `${JSON.stringify(invalidPlan, null, 2)}\n`);

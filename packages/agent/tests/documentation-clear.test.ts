@@ -7,7 +7,8 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { isUnknownSynchronousChild } from './helpers/synchronous-child-outcome.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
-import { expectReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectRejection, expectReturned } from './helpers/expect-rejection.ts';
+import { runDocumentationClear } from '../bin/documentation-clear.ts';
 
 type Mode = 'baseline' | 'closeout' | 'verify';
 
@@ -504,3 +505,76 @@ test('closeout rejects an otherwise current baseline whose status is blocked', (
     else console.error(`Retained failed blocked-baseline CLEAR fixture: ${root}`);
   }
 }, 60_000);
+
+test('CLEAR command parser rejects malformed invocations and accepts a complete public baseline request', async () => {
+  const required = [
+    '--mode',
+    'baseline',
+    '--project-root',
+    path.join(tmpdir(), 'vida-clear-parser-project'),
+    '--repository',
+    'creatio-sample-repository',
+    '--project',
+    'refactoring',
+    '--work-id',
+    'cli-clear',
+    '--source-revision',
+    'revision-one',
+  ];
+  const malformedCases: ReadonlyArray<readonly [readonly string[], string]> = [
+    [[], 'documentation CLEAR missing --mode'],
+    [['--unknown', 'value'], 'documentation CLEAR arguments invalid'],
+    [['--mode'], 'documentation CLEAR arguments invalid'],
+    [['--mode', 'baseline', '--mode', 'closeout'], 'documentation CLEAR arguments invalid'],
+    [required.map((value, index) => (index === 1 ? 'unknown' : value)), 'documentation CLEAR mode invalid'],
+    [required.map((value, index) => (index === 3 ? 'relative' : value)), 'documentation project root must be absolute'],
+    [required.map((value, index) => (index === 9 ? '../bad' : value)), 'documentation work id invalid'],
+  ];
+  for (const [args, message] of malformedCases) await expectRejection(runDocumentationClear(args), message);
+
+  const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-cli-direct-'));
+  let completed = false;
+  try {
+    initializeFixture(root);
+    const policy = {
+      schema: 'DocumentationPolicy/v1',
+      policy_id: 'cli-direct',
+      project_id: 'refactoring',
+      source_path: 'docs/agent-instructions/documentation-policy.v1.json',
+      owner: 'project:refactoring',
+      required: true,
+      canonical_roots: ['docs/agent-instructions'],
+      map_paths: ['docs/agent-instructions/index.md'],
+      excluded_roots: ['.agent', '.planning'],
+      changelog_required: false,
+      changelog_path: null,
+      relations: ['owns'],
+      updated_at: new Date().toISOString(),
+    };
+    write(root, policy.source_path, JSON.stringify(policy) + '\n');
+    write(root, policy.map_paths[0]!, 'Current documentation map\n');
+    write(root, 'docs/agent-instructions/current.md', 'Current document\n');
+    write(
+      root,
+      '.agent/work/cli-clear/scope.json',
+      JSON.stringify({
+        schema: 'ImplementationScope/v1',
+        work_id: 'cli-clear',
+        source_revision: 'revision-one',
+        allowed_paths: ['docs/agent-instructions/current.md'],
+      }) + '\n',
+    );
+    const args = [...required];
+    args[3] = root;
+    const result = await expectAsyncReturned(() => runDocumentationClear(args));
+    expect(result).toMatchObject({
+      status: 'pass',
+      path: '.agent/work/cli-clear/documentation-baseline-0001.v1.json',
+    });
+    expect(existsSync(path.join(root, '.agent/work/cli-clear/documentation-baseline-0001.v1.json'))).toBe(true);
+    completed = true;
+  } finally {
+    if (completed) rmSync(root, { recursive: true, force: true });
+    else console.error(`Retained failed direct CLEAR command fixture: ${root}`);
+  }
+});

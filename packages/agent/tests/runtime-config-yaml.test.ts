@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Composer, parse as parseYaml, stringify as stringifyYaml } from 'yaml';
-import { expectReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectReturned } from './helpers/expect-rejection.ts';
 import {
   buildDevelopmentTaskPacket,
   canonicalJsonDigest,
@@ -62,6 +62,13 @@ import {
   validateWorkflowConfiguration,
 } from '../src/config/runtime-config.ts';
 import { createRuntimeKernelHost } from '../src/runtime-kernel.ts';
+import type { TrustedHostServices, WorkExecutionContextRequest } from '../src/runtime-kernel.ts';
+import { loadProjectSetContext } from '../src/config/project-context.ts';
+import {
+  createControlledWorkExecutionContext,
+  createControlledWorkflowAttemptFixture,
+  createWorkflowUnitComposition,
+} from './helpers/configured-workflow-unit-host.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const temporaryRoots: string[] = [];
@@ -1267,6 +1274,18 @@ describe('profiles, work items, teams, and workflow graphs', () => {
       proceed: false,
       output: 'Mastra tool denied by configured role policy',
     });
+    const cyclicDestinations: unknown[] = [];
+    cyclicDestinations.push(cyclicDestinations, { url: 'https://evil.example/array-exfiltrate' });
+    expect(
+      await researchBeforeToolCall({
+        toolName: 'web.search',
+        input: cyclicDestinations,
+        context: {},
+      }),
+    ).toEqual({
+      proceed: false,
+      output: 'Mastra tool denied by configured role policy',
+    });
     expect(await researchBeforeToolCall({ toolName: 'web.search', input: { query: 'openai' }, context: {} })).toEqual({
       proceed: false,
       output: 'Mastra tool denied by configured role policy',
@@ -2115,6 +2134,147 @@ describe('final v1 artifact contracts', () => {
     ).toBe('DeliveryInstruction/v1');
   });
 });
+async function configuredMastraUnitExecutionFixture(failAssignments: boolean) {
+  const root = await fixtureRoot();
+  const config = loadRuntimeConfig(root);
+  const projectIds = config.projects.map((project) => project.project_id).sort();
+  const projectId = projectIds[0];
+  if (!projectId) throw new Error('Mastra unit fixture requires a configured project.');
+  const policyPath = 'docs/agent-instructions/documentation-policy.v1.json';
+  await mkdir(path.join(root, 'docs/agent-instructions'), { recursive: true });
+  await writeFile(
+    path.join(root, policyPath),
+    `${JSON.stringify(
+      {
+        schema: 'DocumentationPolicy/v1',
+        policy_id: 'configured-mastra-unit-fixture',
+        project_id: projectId,
+        source_path: policyPath,
+        owner: 'runtime-yaml-test',
+        required: false,
+        canonical_roots: ['docs'],
+        map_paths: ['AGENT.sidecar.md'],
+        excluded_roots: [],
+        changelog_required: false,
+        changelog_path: null,
+        relations: ['documents'],
+        updated_at: '2026-09-28T00:00:00.000Z',
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  const integrationsDigest = loadProjectSetContext(
+    root,
+    config,
+    config.repository.repository_id,
+    projectIds,
+  ).integrations_digest;
+  const workItem: WorkExecutionContextRequest['workItem'] = {
+    schema: 'WorkItem/v1',
+    id: 'mastra-unit-work',
+    provider: 'local',
+    provider_type: 'Research',
+    canonical_kind: 'research',
+    intent: 'information_research',
+    project_id: projectId,
+    title: 'Configured research workflow fixture',
+    description: '',
+    labels: [],
+    risk_flags: [],
+  };
+  const contextState = {
+    checkpointRevision: 1,
+    checkpointDigest: 'c'.repeat(64),
+    runtimeRevision: 1,
+    ledgerRevision: 1,
+    expiresAt: new Date(Date.now() + 60_000).toISOString(),
+  };
+  const attempts = createControlledWorkflowAttemptFixture();
+  const dispatchedRoles: string[] = [];
+  const services: TrustedHostServices = {
+    governanceCapability: attempts.governanceCapability,
+    workflowAttempts: attempts,
+    resolveWorkflowWorkItem: (workItemId) => (workItemId === workItem.id ? workItem : null),
+    resolveWorkExecutionContext: (invocation) =>
+      createControlledWorkExecutionContext({ config, integrationsDigest, contextState, invocation }),
+    validateWorkflowAssignmentResult: () => {},
+    dispatchWorkflowAssignment: async (invocation) => {
+      dispatchedRoles.push(invocation.assignment.role);
+      if (failAssignments) throw new Error('controlled research assignment failure');
+      return { observed: invocation.assignment.role };
+    },
+    resolveIdentity: () => null,
+    verifyApproval: () => null,
+    runtimeRevision: () => ({ sourceRevision: 'fixture-source', currentRevision: contextState.runtimeRevision }),
+    casWriter: () => {
+      throw new Error('Configured research workflow must not issue a source write.');
+    },
+  };
+  const composition = await createWorkflowUnitComposition({
+    authentication: {
+      schema: 'TrustedHostAuthentication/v1',
+      repositoryRoot: root,
+      repositoryId: config.repository.repository_id,
+      projectIds,
+      integrationsDigest,
+      principal: 'fixture:mastra-unit',
+      configRevision: config.config_revision,
+      permittedOperations: ['workflow', 'runtime.write'],
+    },
+    services,
+  });
+  const capability = composition.workflowExecutionCapability;
+  if (capability === null) throw new Error('Mastra unit fixture did not issue its workflow capability.');
+  const graph = createConfiguredMastra(
+    root,
+    {
+      team_id: 'default-development',
+      work_item: {
+        kind: 'research',
+        intent: 'information_research',
+        project: projectId,
+        risk_flags: [],
+        labels: [],
+      },
+    },
+    { workflowExecutionCapability: capability },
+  );
+  return { graph, workItem, dispatchedRoles };
+}
+
+test('public Mastra dispatch executes configured research branches through the typed unit adapter', async () => {
+  const fixture = await configuredMastraUnitExecutionFixture(false);
+  const result = await expectAsyncReturned(() => fixture.graph.dispatch(fixture.workItem.id));
+  expect(result.workflowId).toBe('information_research_light');
+  expect(result.failedAssignments).toEqual([]);
+  expect(result.stageOutputs.research_parallel?.map((output) => output.role)).toEqual([
+    'documentation-researcher',
+    'code-researcher',
+    'platform-researcher',
+  ]);
+  expect(result.stageOutputs.synthesize_research?.map((output) => output.role)).toEqual(['research-synthesizer']);
+  expect(fixture.dispatchedRoles.slice().sort()).toEqual([
+    'code-researcher',
+    'documentation-researcher',
+    'platform-researcher',
+    'research-synthesizer',
+  ]);
+});
+
+test('public Mastra dispatch reports failed research assignments and skips later stages', async () => {
+  const fixture = await configuredMastraUnitExecutionFixture(true);
+  const failure = await rejectionReason(fixture.graph.dispatch(fixture.workItem.id));
+  expect(() => {
+    throw failure;
+  }).toThrow(/Mastra configured workflow execution failed: configured workflow assignment failed/i);
+  expect(fixture.dispatchedRoles.slice().sort()).toEqual([
+    'code-researcher',
+    'documentation-researcher',
+    'platform-researcher',
+  ]);
+});
+
 test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
   const { repositoryRoot, config } = configuredTestContext();
   expect(() => invokeUntrusted(sanitizeDiagnostic, [config, null])).toThrow(/diagnostic|string|non-empty/i);

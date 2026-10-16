@@ -424,6 +424,34 @@ describe('existing storage image preparation', () => {
     );
   });
 
+  test.each([
+    ['Host', 0],
+    ['Mastra', 1],
+  ] as const)(
+    'rejects a correctly sized %s image with a stale digest before deserializing it',
+    async (label, expectedOpens) => {
+      const host = makeHost();
+      const mastra = await makeMastra();
+      const invalidHost = label === 'Host' ? { ...host, sha256: '0'.repeat(64) } : host;
+      const invalidMastra = label === 'Mastra' ? { ...mastra, sha256: '0'.repeat(64) } : mastra;
+      const deserialize = Database.deserialize.bind(Database);
+      let opens = 0;
+      const opening = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+        opens++;
+        return typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+      });
+      try {
+        await expectRejection(
+          prepareUnifiedExistingStorageImage(invalidHost, invalidMastra, binding(invalidHost, invalidMastra)),
+          new RegExp(label + ' image digest differs', 'u'),
+        );
+        expect(opens).toBe(expectedOpens);
+      } finally {
+        opening.mockRestore();
+      }
+    },
+  );
+
   test('rejects a Host schema exceeding the 1024-object inventory bound within the image byte limit', async () => {
     const host = makeHostOverTableBound();
     const mastra = await makeMastra();

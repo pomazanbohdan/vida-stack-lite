@@ -89,6 +89,7 @@ test('controller failure diagnostics decode buffers and byte views before redact
 });
 
 test('qualified development controller preserves Source identity and accepts a scoped new target bin through unchanged current code', async () => {
+  await import('../src/config/runtime-config.ts');
   const scratch = mkdtempSync(path.join(tmpdir(), 'vida-controller-'));
   let completed = false;
   try {

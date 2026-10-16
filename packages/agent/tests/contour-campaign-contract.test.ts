@@ -1,12 +1,15 @@
 import { expect, test } from 'bun:test';
 import {
   campaignOptions,
+  campaignPartition,
   campaignProcessState,
   executeContourCampaign,
   type CampaignOutcome,
 } from '../tooling/contour-campaign.ts';
 import type { MutationProcessResult } from '../tooling/mutation-evidence.ts';
 import type { MutationPartition } from '../tooling/mutation-partitions.ts';
+import { mutationPartitions } from '../tooling/mutation-partitions.ts';
+import { selectContourCampaign } from '../tooling/contour-progress.ts';
 
 const contours: MutationPartition[] = [
   { name: 'lane-a', sources: ['src/a.ts'], tests: ['tests/a.test.ts'] },
@@ -21,6 +24,26 @@ test('campaign options require exactly one strict selection and reject malformed
   for (const args of [[], ['--all', '--unclosed'], ['--all', '--all'], ['--all', '--wat'], ['--plan']]) {
     expect(() => campaignOptions(args)).toThrow();
   }
+});
+
+test('campaign selection normalizes every active executable registry Source and preserves full test sets', () => {
+  const registry = mutationPartitions();
+  const selected = selectContourCampaign({ schema: 'VidaContourProgress/v1', attempts: [] }, 'all', 'fixture-commit');
+  expect(selected.map((partition) => partition.name)).toEqual(
+    registry.filter((partition) => partition.environment !== 'static').map((partition) => partition.name),
+  );
+  for (const partition of selected) {
+    const normalized = campaignPartition(partition);
+    expect(normalized.sources).toEqual(
+      partition.sources ?? (partition.requiredReportedSource ? [partition.requiredReportedSource] : []),
+    );
+    expect(normalized.tests).toEqual(partition.tests);
+    expect(normalized.sources?.length).toBeGreaterThan(0);
+    expect(normalized.tests?.length).toBeGreaterThan(0);
+  }
+  const linux = campaignPartition(selected.find((partition) => partition.name === 'linux')!);
+  expect(linux.sources).toEqual(['src/config/safe-repository-access.ts']);
+  expect(linux.tests).toEqual(registry.find((partition) => partition.name === 'linux')?.tests);
 });
 
 test('every contour completes coverage and frozen CRAP before any mutation begins', async () => {

@@ -522,6 +522,41 @@ test('readonly local inspection keeps Work, Ledger and Journal on one committed 
   if (errors.length > 1) throw new AggregateError(errors, 'Snapshot inspection and cleanup failed');
 });
 
+test('run CLI main forwards parsed arguments and preserves integer and JSON result routes', async () => {
+  const { main } = await import('../bin/run.ts');
+  const logged: string[] = [];
+  const errors: string[] = [];
+  const args = ['--project', 'agent', '--workflow', 'review'];
+  let received: string[] | undefined;
+  const integerExit: { exitCode?: number } = {};
+  await main({
+    isMain: true,
+    args,
+    execute: async (forwarded) => {
+      received = forwarded;
+      return 7;
+    },
+    io: { log: (value: string) => logged.push(value), error: (value: string) => errors.push(value) },
+    exit: integerExit,
+  });
+  expect(received).toEqual(args);
+  expect(integerExit.exitCode).toBe(7);
+  expect(logged).toEqual([]);
+  expect(errors).toEqual([]);
+
+  const jsonExit: { exitCode?: number } = {};
+  await main({
+    isMain: true,
+    args: ['--inspect'],
+    execute: () => ({ status: 'inspected', rights_granted: false }),
+    io: { log: (value: string) => logged.push(value), error: (value: string) => errors.push(value) },
+    exit: jsonExit,
+  });
+  expect(jsonExit.exitCode).toBeUndefined();
+  expect(logged).toEqual(['{"status":"inspected","rights_granted":false}']);
+  expect(errors).toEqual([]);
+});
+
 test('lease recovery eligibility denies repeat advice while retaining expiry, CAS and redaction diagnostics', async () => {
   const { main } = await import('../bin/run.ts');
   const diagnose = async (message: string): Promise<{ readonly message: string }> => {

@@ -1,7 +1,7 @@
 import { Ajv } from 'ajv';
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
-import { mutationPartitions } from './mutation-partitions.ts';
+import { mutationPartitionSources, mutationPartitions } from './mutation-partitions.ts';
 
 type Digest = { path: string; sha256: string };
 type Counter = { covered: number; total: number };
@@ -194,7 +194,7 @@ function declaredSources(contour: string): string[] {
   const partition = mutationPartitions({ includeRetired: true }).find((row) => row.name === contour);
   if (!partition || partition.environment === 'static')
     throw new Error('Unknown or static executable contour: ' + contour);
-  return [...(partition.sources ?? [partition.requiredReportedSource!])].sort();
+  return mutationPartitionSources(partition).sort();
 }
 function checkedSources(contour: string, value: unknown, complete = true): Digest[] {
   const result = digests(value);

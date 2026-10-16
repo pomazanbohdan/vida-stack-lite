@@ -15,6 +15,7 @@ import {
   qualifiedResearchSourceCatalog,
   resolveQualifiedResearchSource,
 } from '../src/research-source-catalog.ts';
+import { synthesisSourceCatalog } from '../src/orchestration/observed-synthesis-result.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
 
 const source = (sourceId: string, locator: string, claim: string): ResearchSourceRef => ({
@@ -161,6 +162,16 @@ test('qualified citations bind local aliases to exact sorted predecessor results
   });
   for (const invalid of ['business', 'r9:business', 'r01:business', 'r1:business'])
     expect(() => resolveQualifiedResearchSource(catalog, invalid)).toThrow();
+  expect(() => resolveQualifiedResearchSource([...catalog, catalog[0]!], 'r0:business')).toThrow(
+    'unknown or ambiguous',
+  );
+  expect(() => qualifiedResearchSourceCatalog([], [])).toThrow('predecessor set is missing');
+  expect(() =>
+    qualifiedResearchSourceCatalog(
+      [reference('a-b', refs[0]!.digest), reference('a-b', refs[0]!.digest)],
+      [results[0]!, results[0]!],
+    ),
+  ).toThrow('predecessor set is missing');
   expect(() => qualifiedResearchSourceCatalog([...refs].reverse(), results)).toThrow();
   expect(() => qualifiedResearchSourceCatalog(refs, results.slice(1))).toThrow();
   expect(() =>
@@ -211,6 +222,15 @@ test('explicit repair qualifies only legacy citations with one exact provenance'
   expect(Array.isArray(conflict)).toBe(true);
   expect(() => qualifyLegacySynthesisRecord(old, conflict)).toThrow('conflicting provenance');
   expect(old).toEqual(original);
+  const unresolved = {
+    ...old,
+    findings: [{ source_refs: ['unrecorded-source'] }],
+  };
+  const unresolvedOriginal = structuredClone(unresolved);
+  expect(() => qualifyLegacySynthesisRecord(unresolved, catalog)).toThrow('legacy citation has no predecessor source');
+  expect(unresolved).toEqual(unresolvedOriginal);
+  const withoutRecommendation = { ...old, recommendation: null };
+  expect(qualifyLegacySynthesisRecord(withoutRecommendation, catalog).recommendation).toBeNull();
 });
 
 test('three colliding predecessor aliases require exact qualified citations before a report can commit', () => {
@@ -291,6 +311,22 @@ test('three colliding predecessor aliases require exact qualified citations befo
     statement: 'x'.repeat(2200),
   });
   expect(summary.length).toBeLessThan(4096);
+});
+
+test('synthesis issues a sorted catalog bound to each exact predecessor digest', () => {
+  const predecessors = [
+    result('z-result', '2'.repeat(64), [source('local', 'z.md#L1', 'later predecessor')]),
+    result('a-result', '1'.repeat(64), [source('local', 'a.md#L1', 'earlier predecessor')]),
+  ];
+  const catalog = synthesisSourceCatalog(predecessors);
+  expect(catalog.result_refs).toEqual([
+    { result_id: 'a-result', digest: '1'.repeat(64) },
+    { result_id: 'z-result', digest: '2'.repeat(64) },
+  ]);
+  expect(catalog.sources).toEqual([
+    { key: 'r0:local', locator: 'a.md#L1', claim: 'earlier predecessor', source_kind: 'internal' },
+    { key: 'r1:local', locator: 'z.md#L1', claim: 'later predecessor', source_kind: 'internal' },
+  ]);
 });
 
 test('shared official citations retain qualified aliases and count unique external support', () => {

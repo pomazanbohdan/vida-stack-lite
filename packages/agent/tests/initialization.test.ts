@@ -15,6 +15,8 @@ import {
   type RuntimeInitializationReceipt,
 } from '../src/config/initialization-record.ts';
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
+import { initializeProjectFromBundle } from '../bin/init-core.ts';
+import { expectAsyncReturned, expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputPaths = [
@@ -255,6 +257,77 @@ v8CoverageTest(
   },
   30_000,
 );
+
+test('direct initialization validates existing bindings and resumes the same pending receipt with and without its canonical receipt', async () => {
+  const projectRoot = await mkdtemp(path.join(tmpdir(), 'portable-runtime-init-core-'));
+  const request = {
+    projectRoot,
+    repository: 'different-repository',
+    projectMappings: ['different-project'],
+  } as const;
+  let completed = false;
+  try {
+    const initialized = await expectAsyncReturned(() => initializeProjectFromBundle(request, source));
+    expect(initialized.status).toBe('initialized');
+    const existing = await expectAsyncReturned(() =>
+      initializeProjectFromBundle({ ...request, reconcileExisting: true }, source),
+    );
+    expect(existing.status).toBe('existing');
+    await expectRejection(
+      initializeProjectFromBundle({ ...request, repository: 'foreign-repository', reconcileExisting: true }, source),
+      'Existing configuration does not match',
+    );
+    const receiptPath = path.join(projectRoot, '.agent/runtime-initialization.v1.json');
+    const pendingPath = path.join(projectRoot, '.agent/runtime-initialization.pending.v1.json');
+    const archiveDirectory = path.join(projectRoot, '.agent/initialization-provenance');
+    const [archiveName] = await readdir(archiveDirectory);
+    if (!archiveName) throw new Error('Initialization did not archive its pending intent.');
+    const archivePath = path.join(archiveDirectory, archiveName);
+    const archivedIntent = await readFile(archivePath);
+    const canonicalReceipt = await readFile(receiptPath);
+
+    await writeFile(pendingPath, archivedIntent);
+    await rm(archivePath);
+    const withReceipt = await expectAsyncReturned(() =>
+      initializeProjectFromBundle({ ...request, reconcileExisting: true }, source),
+    );
+    expect(withReceipt.status).toBe('resumed_initialization');
+    expect(await readFile(receiptPath)).toEqual(canonicalReceipt);
+
+    await writeFile(pendingPath, archivedIntent);
+    await rm(archivePath);
+    await rm(receiptPath);
+    const withoutReceipt = await expectAsyncReturned(() =>
+      initializeProjectFromBundle({ ...request, reconcileExisting: true }, source),
+    );
+    expect(withoutReceipt.status).toBe('resumed_initialization');
+    const receiptValue: unknown = JSON.parse(await readFile(receiptPath, 'utf8'));
+    const rawSchema = await readFile(path.join(source, 'schemas/runtime-initialization.v1.schema.json'), 'utf8');
+    expect(validateRuntimeInitializationReceipt(receiptValue, rawSchema)).toMatchObject({
+      provenance: 'generated',
+      workspace_binding_status: 'pending',
+    });
+    expect(await rejectionReason(readFile(pendingPath))).toMatchObject({ code: 'ENOENT' });
+
+    await rm(receiptPath);
+    const sidecarPath = path.join(projectRoot, 'AGENT.sidecar.md');
+    const ownerSidecar = Buffer.concat([await readFile(sidecarPath), Buffer.from('\nProject-owned note.\n')]);
+    await writeFile(sidecarPath, ownerSidecar);
+    const adopted = await expectAsyncReturned(() =>
+      initializeProjectFromBundle({ ...request, reconcileExisting: true }, source),
+    );
+    expect(adopted.status).toBe('reconciled_existing');
+    expect(await readFile(sidecarPath)).toEqual(ownerSidecar);
+    const adoptedValue: unknown = JSON.parse(await readFile(receiptPath, 'utf8'));
+    expect(validateRuntimeInitializationReceipt(adoptedValue, rawSchema)).toMatchObject({
+      provenance: 'adopted_existing',
+    });
+    completed = true;
+  } finally {
+    if (completed) await rm(projectRoot, { recursive: true, force: true });
+    else console.error(`Retained failed init-core fixture: ${projectRoot}`);
+  }
+});
 
 v8CoverageTest(
   'explicit reconciliation adopts only complete matching existing integration files',

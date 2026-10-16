@@ -787,6 +787,8 @@ describe('durable Mastra research exposure and invocation identity', () => {
       mastraObservation(secondItem.request, secondItem.issue_id, sharedRef, undefined, 'same-agent'),
     );
     expect(current.state.items.map((item) => item.observation?.tool_call_ref)).toEqual([sharedRef, sharedRef]);
+    expect(instance.currentSnapshot(workId)).toEqual(current);
+    expect(instance.currentSnapshot('unrecorded-work')).toBeNull();
   });
 
   test('rejects generated validator batching across mismatched context, role, identity, stage, wave, or scope', async () => {

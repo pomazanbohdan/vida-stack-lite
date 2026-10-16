@@ -170,8 +170,8 @@ function controlledPacketSnapshot(
     revision: 1,
     binding,
     contracts: {
-      scope: { schema: 'ContractReference/v1', path: scopePath, sha256: digest(scopeBytes) },
-      acceptance: { schema: 'ContractReference/v1', path: acceptancePath, sha256: digest(acceptanceBytes) },
+      scope: { schema: 'ImplementationScope/v1', path: scopePath, sha256: digest(scopeBytes) },
+      acceptance: { schema: 'AcceptanceManifest/v1', path: acceptancePath, sha256: digest(acceptanceBytes) },
       decisions: [],
     },
     lease: { ticket_id: 'packet-test-ticket', thread_id: 'packet-test-thread', generation: 1 },

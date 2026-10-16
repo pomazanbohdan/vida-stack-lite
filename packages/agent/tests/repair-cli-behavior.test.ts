@@ -541,6 +541,17 @@ function research(context: ReturnType<typeof fixture>, id: string, locator: stri
         independence_group: locator,
         digest: 'd'.repeat(64),
       },
+      {
+        source_id: 'related',
+        source_kind: 'internal',
+        locator: `${locator}#related`,
+        title: 'Related source',
+        version_or_date: '2026-09-30',
+        claim: 'AC-1 SR-1 corroborating evidence.',
+        retrieved_at: timestamp,
+        independence_group: `${locator}-related`,
+        digest: 'e'.repeat(64),
+      },
     ],
     findings: [
       {
@@ -552,7 +563,14 @@ function research(context: ReturnType<typeof fixture>, id: string, locator: stri
       },
     ],
     uncertainties: [],
-    conflicts: [],
+    conflicts: [
+      {
+        conflict_id: 'conflict-1',
+        statement: 'Sources require reconciliation.',
+        source_ids: ['shared', 'related'],
+        status: 'reconciled',
+      },
+    ],
     evidence_classes: ['Static'],
     br_ids: ['BR-1'],
     sr_ids: ['SR-1'],
@@ -636,6 +654,13 @@ test('research identity dispatcher plans exact rewrites and rejects dependencies
         'option',
       ),
     ).toEqual([change.new_source_id]);
+    expect(
+      valueField(
+        arrayRecord(arrayField(transformed, 'conflicts', 'research result'), 0, 'conflicts'),
+        'source_ids',
+        'conflict',
+      ),
+    ).toEqual([change.new_source_id, 'related']);
     expect(recordField(transformed, 'recommendation', 'research result').evidence_refs).toEqual([change.new_source_id]);
   }
   const before = paths.map((relative) => readFileSync(path.join(context.root, relative), 'utf8'));
