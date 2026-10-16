@@ -273,10 +273,22 @@ test('direct initialization validates existing bindings and resumes the same pen
       initializeProjectFromBundle({ ...request, reconcileExisting: true }, source),
     );
     expect(existing.status).toBe('existing');
+    const integrationOutputs = [
+      'AGENTS.md',
+      'AGENT.sidecar.md',
+      'agent-runtime.config.v1.yaml',
+      'docs/agent-instructions/documentation-policy.v1.json',
+    ] as const;
+    const beforeDeniedReconciliation = await Promise.all(
+      integrationOutputs.map(async (output) => [output, await readFile(path.join(projectRoot, output))] as const),
+    );
     await expectRejection(
       initializeProjectFromBundle({ ...request, repository: 'foreign-repository', reconcileExisting: true }, source),
       'Existing configuration does not match',
     );
+    for (const [output, before] of beforeDeniedReconciliation) {
+      expect(await readFile(path.join(projectRoot, output))).toEqual(before);
+    }
     const receiptPath = path.join(projectRoot, '.agent/runtime-initialization.v1.json');
     const pendingPath = path.join(projectRoot, '.agent/runtime-initialization.pending.v1.json');
     const archiveDirectory = path.join(projectRoot, '.agent/initialization-provenance');

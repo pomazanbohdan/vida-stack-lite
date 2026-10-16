@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current pin packet: `8ca2af97480326becc98d76b26d3ae6ade2fd699`. The latest full-image diagnostic is bound to `a740bd2644018e6704aa2eab49a1f810644629c8` and stops at358 of700 IDs:340 assertion-confirmed Killed,17 Survived,1 UNKNOWN,342 unattempted. It is diagnostic-only, without parent qualification. Corrections below need fresh bound numeric evidence. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current evidence packet: `3f84ece8933868af6a7c1c346501d61f841f11cf`. Fresh custody coverage and same-run pinned scoped CRAP pass below. Its mutation closure remains open: the latest full-image diagnostic is bound to `a740bd2644018e6704aa2eab49a1f810644629c8` and stops at358 of700 IDs:340 assertion-confirmed Killed,17 Survived,1 UNKNOWN,342 unattempted. It is diagnostic-only, without parent qualification; old classifications are unchanged. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -180,6 +180,37 @@ the complete final-assurance selection. Earlier final-assurance FAIL lacks raw
 Bun case output and remains unresolved, not overwritten by this focused pass.
 
 ### Pin, remaining diagnostic controls and next numeric cycle
+
+Fresh numerical evidence at3f84ece uses official SDK test inputs from successful
+CI38948500490 attempt1, artifact12066728280, ZIP SHA256
+`55b1d954cf092af4d062161d71bb28d6a7a797012b3951769aace928a0402cc7`.
+The maintained readiness owner validates and installs those test inputs; no local
+SDK compilation runs. Owned coverage `native-coverage-3f84ece-ZBKAnt` completes
+in26004.421824ms,123/0tests and1026 assertions, with full captures, closed group
+and unchanged boot. Run74006c3c-5bcf-46cc-a573-2b65130f360d records exact
+F56/56,L235/235,S243/243,B123/123 and maximum CC/entry CRAP9/9.
+The existing scoped owner consumes that same report without rerunning tests:
+`scoped-crap-3f84ece-lMHje5` completes in684.807833ms with
+`VidaScopedCrapBudgetReport/v3: scoped-proof-pass`, using the pinned independent
+8ca2af9 review and every unchanged per-function ceiling. Its exact report is
+`coverage/bun-unified/diagnostics/74006c3c-5bcf-46cc-a573-2b65130f360d.scoped-crap.json`
+in the measured checkout. Root imports both producer reports through the existing
+projection owner:403attempts,10/45historical same-run coverage/frozen pairs,
+6/45local triples and39open. Full qualification and mutation closure stay open.
+
+Blind Luna independently reviews the corrected custody packet with no blocking
+finding (`luna-packet-independent-review-v2-20261016.md`). The documentation-clear
+validation review finds its proposed extra boundaries already covered, so no
+duplicate tests are added. Initialization has one genuine missing preservation
+assertion: Root adds exact byte comparisons for four existing integration outputs
+around the receipt-backed foreign-binding reconciliation denial. The actual guard
+diagnostic remains required. The focused existing case passes1/0 with17assertions
+at `quality-rolling-cli-check-w6ngrh` in1451.249042ms, full captures/closed group/same
+boot. This extends assertions, not a claim of a reproduced initialization defect.
+The normal hook catches an unchecked array-index Buffer type in that proposal;
+Root stores each output path and captured bytes as a typed pair instead. The
+corrected case passes1/0 at `quality-rolling-cli-check-z0Cig8` in1613.034236ms;
+Tests TypeScript467files passes. No hook bypass or assertion cast is used.
 
 The56-role scope review and custody corrections are published at8ca2af9 after the
 normal strict precommit. Root adds only its exact commit/contour-to-review-key pin

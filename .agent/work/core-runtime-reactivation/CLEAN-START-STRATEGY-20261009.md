@@ -53,9 +53,9 @@ terminal disposition before a contour score exists. Batch boundaries must not
 reset Source identity, omit survivors, reuse UNKNOWN outcomes or activate an
 unqualified per-test filter. Existing independent limits and frozen gates remain.
 
-The next custody packet publishes its independently reviewed56-role freeze before
-the later exact scope pin. Measure coverage and same-run scoped CRAP only after
-that pin is stable. Native diagnostic batches need a qualified parent join before
+The custody56-role review is published and pinned. Current3f84ece coverage and
+same-run scoped CRAP pass; WORK owns their exact receipts. Native diagnostic
+batches still need a qualified parent join before
 they can count toward closure. Reuse the existing input, canonical-map, assertion,
 custody and readback owners. An explicit native provenance may replace duplicate
 Stryker execution only after activation and denominator controls plus exhaustive
