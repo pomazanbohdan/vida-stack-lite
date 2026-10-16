@@ -270,6 +270,267 @@ function frozenCrapV2(c = coverage()) {
     ],
   };
 }
+function frozenCrapV3() {
+  const base = frozenCrapV2();
+  const partition = mutationPartitions().find((row) => row.name === 'main-config')!;
+  const originals = ['src/config/runtime-config.ts', 'src/config/legacy-project-context.ts'];
+  const currents = ['src/config/runtime-config.ts', 'src/config/project-context.ts'];
+  const kept = (identity: string, current_identity: string, originalComplexity: number) => ({
+    kind: 'retained',
+    identity,
+    current_identity,
+    original_source_complexity: originalComplexity,
+    maximum_complexity: originalComplexity,
+    maximum_crap: originalComplexity,
+    complexity: 1,
+    coverage: 1,
+    crap: 1,
+    rationale: 'Explicit reviewed implementation responsibility.',
+  });
+  const functions: Record<string, unknown>[] = [
+    kept('src/config/runtime-config.ts#old-runtime', 'src/config/runtime-config.ts#runtime', 2),
+    kept('src/config/runtime-config.ts#old-project', 'src/config/project-context.ts#project', 4),
+    kept('src/config/legacy-project-context.ts#old-other', 'src/config/project-context.ts#other', 6),
+  ];
+  const identityReuses: Record<string, unknown>[] = [];
+  const newSourcePaths: string[] = [],
+    removedSourcePaths: string[] = [];
+  return {
+    ...base,
+    schema: 'VidaScopedCrapBudgetReport/v3',
+    contour: partition.name,
+    source_mapping_kind: 'reviewed-pairs',
+    identity_reuses: identityReuses,
+    new_source_paths: newSourcePaths,
+    removed_source_paths: removedSourcePaths,
+    original_sources: originals.map((file) => digest(file, 'd')),
+    sources: currents.map((file) => digest(file)),
+    module_inputs: currents.map((file) => digest(file)),
+    test_inputs: partition.tests!.map((file) => digest(file)),
+    test_selection: {
+      ...base.test_selection,
+      contour: partition.name,
+      sources: currents,
+      tests: [...partition.tests!],
+    },
+    source_mappings: [
+      { original_path: originals[0]!, current_path: currents[0]!, rationale: 'Reviewed retained runtime module.' },
+      {
+        original_path: originals[0]!,
+        current_path: currents[1]!,
+        rationale: 'Reviewed project implementation extraction.',
+      },
+      {
+        original_path: originals[1]!,
+        current_path: currents[1]!,
+        rationale: 'Reviewed merge of other project responsibility.',
+      },
+    ],
+    functions,
+  };
+}
+
+function frozenCrapV3WithAdapter() {
+  const report = frozenCrapV3();
+  report.functions.push({
+    kind: 'new',
+    identity: 'src/config/runtime-config.ts#old-project',
+    current_identity: 'src/config/runtime-config.ts#old-project',
+    maximum_complexity: 1,
+    maximum_crap: 1,
+    complexity: 1,
+    coverage: 1,
+    crap: 1,
+    rationale: 'Independently capped new adapter with the old name.',
+  });
+  report.identity_reuses.push({
+    original_identity: 'src/config/runtime-config.ts#old-project',
+    successor_identity: 'src/config/project-context.ts#project',
+    rationale: 'Implementation moved; the old name belongs to a new thin adapter.',
+  });
+  return report;
+}
+
+test('v3 projects reviewed source splits and merges and preserves its snapshot schema', () => {
+  const [attempt] = contourAttempts(frozenCrapV3(), receipt);
+  expect(attempt).toMatchObject({
+    producer_schema: 'VidaScopedCrapBudgetReport/v3',
+    accepted: true,
+    function_count: 3,
+  });
+  const snapshot = mergeContourProgress(empty, [attempt!]);
+  expect(mergeContourProgress(snapshot, []).attempts).toHaveLength(1);
+  const legacy: Record<string, unknown> = { ...frozenCrapV3(), schema: 'VidaScopedCrapBudgetReport/v2' };
+  delete legacy.source_mapping_kind;
+  delete legacy.identity_reuses;
+  delete legacy.new_source_paths;
+  delete legacy.removed_source_paths;
+  expect(() => contourAttempts(legacy, receipt)).toThrow('one-to-one');
+});
+
+test.each([
+  'duplicate-edge',
+  'foreign-edge',
+  'missing-pair',
+  'cap-transfer',
+  'duplicate-function',
+  'missing-kind',
+  'missing-reuses',
+  'extra-field',
+] as const)('v3 rejects %s proof claims', (kind) => {
+  const report = frozenCrapV3();
+  const malformed: Record<string, unknown> = report;
+  if (kind === 'duplicate-edge') report.source_mappings.push({ ...report.source_mappings[0]! });
+  if (kind === 'foreign-edge')
+    report.source_mappings.push({
+      original_path: 'src/foreign.ts',
+      current_path: 'src/config/runtime-config.ts',
+      rationale: 'Foreign source endpoint.',
+    });
+  if (kind === 'missing-pair') report.source_mappings.splice(1, 1);
+  if (kind === 'cap-transfer') report.functions[2]!.maximum_complexity = 4;
+  if (kind === 'duplicate-function') report.functions.push({ ...report.functions[0]! });
+  if (kind === 'missing-kind') delete malformed.source_mapping_kind;
+  if (kind === 'missing-reuses') delete malformed.identity_reuses;
+  if (kind === 'extra-field') malformed.unreviewed_claim = true;
+  expect(() => contourAttempts(malformed, receipt)).toThrow();
+});
+
+test('v3 admits a reviewed implementation successor and independently capped reused adapter name', () => {
+  expect(contourAttempts(frozenCrapV3WithAdapter(), receipt)[0]).toMatchObject({
+    accepted: true,
+    function_count: 4,
+    producer_schema: 'VidaScopedCrapBudgetReport/v3',
+  });
+});
+
+test('v3 requires explicit Source addition/removal paths even when every function has a disposition', () => {
+  const report = frozenCrapV3();
+  report.source_mappings = [report.source_mappings[0]!];
+  report.functions = [
+    report.functions[0]!,
+    {
+      kind: 'removed',
+      identity: 'src/config/runtime-config.ts#old-project',
+      file: 'src/config/runtime-config.ts',
+      rationale: 'Reviewed removal of the original project role.',
+    },
+    {
+      kind: 'removed',
+      identity: 'src/config/legacy-project-context.ts#old-other',
+      file: 'src/config/legacy-project-context.ts',
+      rationale: 'Reviewed retirement of the original module.',
+    },
+    {
+      kind: 'new',
+      identity: 'src/config/project-context.ts#new-project',
+      current_identity: 'src/config/project-context.ts#new-project',
+      maximum_complexity: 1,
+      maximum_crap: 1,
+      complexity: 1,
+      coverage: 1,
+      crap: 1,
+      rationale: 'Independent new implementation with its own cap.',
+    },
+  ];
+  expect(() => contourAttempts(report, receipt)).toThrow('Source paths');
+  report.new_source_paths = ['src/config/project-context.ts'];
+  report.removed_source_paths = ['src/config/legacy-project-context.ts'];
+  expect(contourAttempts(report, receipt)[0]).toMatchObject({ accepted: true, function_count: 2 });
+});
+
+test.each([
+  'missing-new',
+  'missing-removed',
+  'mapped-new',
+  'mapped-removed',
+  'duplicate-inventory',
+  'downgrade',
+] as const)('v3 rejects %s source disposition', (kind) => {
+  const report = frozenCrapV3();
+  const malformed: Record<string, unknown> = report;
+  if (kind === 'missing-new') delete malformed.new_source_paths;
+  if (kind === 'missing-removed') delete malformed.removed_source_paths;
+  if (kind === 'mapped-new') report.new_source_paths.push('src/config/project-context.ts');
+  if (kind === 'mapped-removed') report.removed_source_paths.push('src/config/runtime-config.ts');
+  if (kind === 'duplicate-inventory') report.sources.push({ ...report.sources[0]! });
+  if (kind === 'downgrade') malformed.schema = 'VidaScopedCrapBudgetReport/v2';
+  expect(() => contourAttempts(malformed, receipt)).toThrow();
+});
+
+test('v3 identity reuse is independent of new/retained/removed row ordering', () => {
+  const report = frozenCrapV3WithAdapter();
+  const removed = {
+    kind: 'removed',
+    identity: 'src/config/runtime-config.ts#discarded',
+    file: 'src/config/runtime-config.ts',
+    rationale: 'Reviewed removal does not transfer a ceiling.',
+  };
+  report.functions = [report.functions[3]!, removed, ...report.functions.slice(0, 3)];
+  expect(contourAttempts(report, receipt)[0]).toMatchObject({ accepted: true, function_count: 4 });
+  const overlap = frozenCrapV3WithAdapter();
+  overlap.functions.push({
+    kind: 'removed',
+    identity: 'src/config/runtime-config.ts#old-project',
+    file: 'src/config/runtime-config.ts',
+    rationale: 'The retained original cannot also be removed.',
+  });
+  expect(() => contourAttempts(overlap, receipt)).toThrow();
+});
+
+test('retired governance observations survive the split without closing the new active contour', () => {
+  const prior = coverage();
+  const old = mutationPartitions({ includeRetired: true }).find((row) => row.name === 'main-governance')!;
+  const source = 'src/governance/edictum-boundary.ts';
+  prior.test_selection = { contour: old.name, tests: [...old.tests!] };
+  prior.sources = [digest(source)];
+  prior.module_inputs = [digest(source)];
+  prior.test_inputs = old.tests!.map((file) => digest(file));
+  prior.metrics[0]!.file = source;
+  const attempts = contourAttempts(prior, receipt);
+  const snapshot = mergeContourProgress(empty, attempts);
+  expect(snapshot.attempts[0]?.accepted).toBe(true);
+  const rendered = renderContourProgress(snapshot);
+  expect(rendered).toContain('main-governance (retired)');
+  expect(rendered).toContain('| main-governance-validation | unknown');
+  expect(rendered).toContain(zeroOfActive);
+  expect(() =>
+    mergeContourProgress(empty, [
+      {
+        ...attempts[0]!,
+        sources: [digest(source), digest('src/governance/workflow-approval-consumption-contract.ts')],
+      },
+    ]),
+  ).toThrow('Contour Source selection differs');
+  const owners = mutationPartitions().filter((row) =>
+    row.sources?.includes('src/governance/workflow-approval-consumption-contract.ts'),
+  );
+  expect(owners.map((row) => row.name)).toEqual(['main-governance-validation']);
+});
+
+test.each([
+  'missing',
+  'duplicate',
+  'foreign',
+  'same-identity',
+  'wrong-successor',
+  'no-adapter',
+  'uncapped-adapter',
+  'extra-field',
+] as const)('v3 rejects %s adapter identity reuse', (kind) => {
+  const report = frozenCrapV3WithAdapter();
+  if (kind === 'missing') report.identity_reuses = [];
+  if (kind === 'duplicate') report.identity_reuses.push({ ...report.identity_reuses[0]! });
+  if (kind === 'foreign') report.identity_reuses[0]!.original_identity = 'src/foreign.ts#caller';
+  if (kind === 'same-identity')
+    report.identity_reuses[0]!.successor_identity = report.identity_reuses[0]!.original_identity;
+  if (kind === 'wrong-successor') report.identity_reuses[0]!.successor_identity = 'src/config/project-context.ts#other';
+  if (kind === 'no-adapter') report.functions.pop();
+  if (kind === 'uncapped-adapter') report.functions[3]!.maximum_complexity = 11;
+  if (kind === 'extra-field') report.identity_reuses[0]!.unreviewed_claim = true;
+  expect(() => contourAttempts(report, receipt)).toThrow();
+});
+
 function projected(c = coverage(), m = mutation()) {
   return mergeContourProgress(empty, [...contourAttempts(c, receipt), ...contourAttempts(m, receipt)]);
 }

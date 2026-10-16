@@ -145760,7 +145760,8 @@
       "baseline_crap": 15,
       "max_complexity": 15,
       "max_crap": 15,
-      "rationale": "Retained original host approval-record validation responsibility, now owned by the shared parser. Genuine original15/15 is attached only to this callable, replacing its prior mistaken new-role classification. Strict status shapes, exact raw key counts, plain-record guards, shared identity syntax and legacy ordinary-error mapping restore the boundary; parsed-copy normalization stays intentional. No allowance is assigned to a parser/callback group."
+      "rationale": "Retained original host approval-record validation responsibility, now owned by the shared parser. Genuine original15/15 is attached only to this callable, replacing its prior mistaken new-role classification. Strict status shapes, exact raw key counts, plain-record guards, shared identity syntax and legacy ordinary-error mapping restore the boundary; parsed-copy normalization stays intentional. No allowance is assigned to a parser/callback group.",
+      "current_complexity": 2
     },
     {
       "identity": "src/config/safe-repository-access.ts#fn:closeQuietly#0",
@@ -224458,5 +224459,41 @@
     "review_artifact": "/workspace/attachments/quality-project-root-tautology-review-20261016.md",
     "correspondence": "316 retained original roles and 34 previously declared prospective roles exactly partition 350 current roles. The original 318 roles partition into 316 retained and two existing explicit removals. Nine project-context callback moves and one runtime-config cache-hit move follow actual responsibility; no new allowance or current-derived increase.",
     "limits": "Source lineage only. Global original numeric report admission remains missing. Fresh exact coverage, scoped frozen proof, assertion-confirmed mutation and Runtime qualification remain separate."
+  },
+  "scope_review_main_governance_validation_20261016": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [
+      "src/governance/edictum-boundary.ts"
+    ],
+    "source_mapping_kind": "reviewed-pairs",
+    "new_source_paths": [],
+    "removed_source_paths": [],
+    "source_mappings": [
+      {
+        "original_path": "src/governance/edictum-boundary.ts",
+        "current_path": "src/governance/edictum-boundary.ts",
+        "rationale": "Retained Edictum implementation roles remain in their module; the old validator name is a separately capped new adapter."
+      },
+      {
+        "original_path": "src/governance/edictum-boundary.ts",
+        "current_path": "src/governance/workflow-approval-consumption-contract.ts",
+        "rationale": "The complete published host-record validator responsibility moved to the shared parser with its exact original15/15 ceiling."
+      }
+    ],
+    "identity_reuses": [
+      {
+        "original_identity": "src/governance/edictum-boundary.ts#fn:validateHostWorkflowApprovalRecord#0",
+        "successor_identity": "src/governance/workflow-approval-consumption-contract.ts#fn:parseWorkflowApprovalConsumptionRecord#0",
+        "rationale": "The original validator implementation moved to the parser; its old name belongs to a new thin adapter with independent10/10 caps."
+      }
+    ],
+    "review_artifact": "/workspace/attachments/quality-governance-exact-role-split-review-20261016.md",
+    "protocol_review_artifacts": [
+      "/workspace/attachments/quality-scoped-crap-file-split-review-20261016.md",
+      "/workspace/attachments/quality-scoped-crap-identity-reuse-review-20261016.md",
+      "/workspace/attachments/quality-governance-contour-history-transition-review-20261016.md"
+    ],
+    "correspondence": "205 original roles partition into202 retained and three existing removals;202 retained plus four independently capped prospective roles exactly cover206 current roles. No identity, original measure, ceiling, removal or count changes.",
+    "limits": "Source lineage only; complete current coverage, scoped frozen proof, assertion-confirmed mutation, global original numeric admission and Runtime qualification remain separate."
   }
 }

@@ -48,6 +48,296 @@ const v2Rows = [
 ] satisfies ScopedFunctionDisposition[];
 const v2Caps = new Map([['src/a.ts#old', { max_complexity: 2, max_crap: 3 }]]);
 
+function splitProofInputs(): Parameters<typeof scopedCrapDispositionProof> {
+  return [
+    [
+      { identity: 'src/original.ts#alpha', file: 'src/original.ts', complexity: 2 },
+      { identity: 'src/original.ts#beta', file: 'src/original.ts', complexity: 4 },
+    ],
+    [
+      { identity: 'src/alpha.ts#alpha', file: 'src/alpha.ts', complexity: 1, coverage: 1, crap: 1 },
+      { identity: 'src/beta.ts#beta', file: 'src/beta.ts', complexity: 3, coverage: 1, crap: 3 },
+    ],
+    [
+      {
+        kind: 'retained',
+        identity: 'src/original.ts#alpha',
+        current_identity: 'src/alpha.ts#alpha',
+        max_complexity: 2,
+        max_crap: 3,
+        rationale: 'Reviewed alpha implementation move.',
+      },
+      {
+        kind: 'retained',
+        identity: 'src/original.ts#beta',
+        current_identity: 'src/beta.ts#beta',
+        max_complexity: 4,
+        max_crap: 5,
+        rationale: 'Reviewed beta implementation move.',
+      },
+    ],
+    [
+      {
+        original_path: 'src/original.ts',
+        current_path: 'src/alpha.ts',
+        rationale: 'Reviewed alpha module extraction.',
+      },
+      { original_path: 'src/original.ts', current_path: 'src/beta.ts', rationale: 'Reviewed beta module extraction.' },
+    ],
+    ['src/original.ts'],
+    ['src/alpha.ts', 'src/beta.ts'],
+    [],
+    [],
+    new Map([
+      ['src/original.ts#alpha', { max_complexity: 2, max_crap: 3 }],
+      ['src/original.ts#beta', { max_complexity: 4, max_crap: 5 }],
+    ]),
+    { source_mapping_kind: 'reviewed-pairs', identity_reuses: [] },
+  ];
+}
+
+test('scoped CRAP v3 preserves individual frozen caps across a reviewed source split', () => {
+  expect(
+    scopedCrapDispositionProof(...splitProofInputs()).map((row) => [
+      row.identity,
+      row.current_identity,
+      row.maximum_complexity,
+      row.maximum_crap,
+    ]),
+  ).toEqual([
+    ['src/original.ts#alpha', 'src/alpha.ts#alpha', 2, 3],
+    ['src/original.ts#beta', 'src/beta.ts#beta', 4, 5],
+  ]);
+  const legacy = splitProofInputs();
+  legacy[9] = { source_mapping_kind: 'one-to-one' };
+  expect(() => scopedCrapDispositionProof(...legacy)).toThrow('source mapping');
+});
+
+test('scoped CRAP v3 preserves individual frozen caps across a reviewed source merge', () => {
+  const input = splitProofInputs();
+  input[0] = input[0].map((row, index) => ({
+    ...row,
+    file: index ? 'src/beta.ts' : 'src/alpha.ts',
+    identity: index ? 'src/beta.ts#beta' : 'src/alpha.ts#alpha',
+  }));
+  input[1] = input[1].map((row, index) => ({
+    ...row,
+    file: 'src/merged.ts',
+    identity: index ? 'src/merged.ts#beta' : 'src/merged.ts#alpha',
+  }));
+  input[2] = [
+    {
+      kind: 'retained',
+      identity: 'src/alpha.ts#alpha',
+      current_identity: 'src/merged.ts#alpha',
+      max_complexity: 2,
+      max_crap: 3,
+      rationale: 'Reviewed alpha merge responsibility.',
+    },
+    {
+      kind: 'retained',
+      identity: 'src/beta.ts#beta',
+      current_identity: 'src/merged.ts#beta',
+      max_complexity: 4,
+      max_crap: 5,
+      rationale: 'Reviewed beta merge responsibility.',
+    },
+  ];
+  input[3] = ['src/alpha.ts', 'src/beta.ts'].map((file) => ({
+    original_path: file,
+    current_path: 'src/merged.ts',
+    rationale: 'Reviewed source merge.',
+  }));
+  input[4] = ['src/alpha.ts', 'src/beta.ts'];
+  input[5] = ['src/merged.ts'];
+  input[8] = new Map([
+    ['src/alpha.ts#alpha', { max_complexity: 2, max_crap: 3 }],
+    ['src/beta.ts#beta', { max_complexity: 4, max_crap: 5 }],
+  ]);
+  expect(scopedCrapDispositionProof(...input).map((row) => row.maximum_complexity)).toEqual([2, 4]);
+});
+
+test.each([
+  'duplicate-edge',
+  'foreign-edge',
+  'missing-edge',
+  'removed-edge',
+  'new-edge',
+  'cap-transfer',
+  'duplicate-original',
+] as const)('scoped CRAP v3 rejects %s with complete function budgets', (kind) => {
+  const input = splitProofInputs();
+  if (kind === 'duplicate-edge') input[3] = [...input[3], input[3][0]!];
+  if (kind === 'foreign-edge')
+    input[3] = [
+      ...input[3],
+      { original_path: 'src/foreign.ts', current_path: 'src/alpha.ts', rationale: 'Foreign source must fail.' },
+    ];
+  if (kind === 'missing-edge') {
+    input[3] = [input[3][1]!];
+    input[7] = ['src/alpha.ts'];
+  }
+  if (kind === 'removed-edge') input[6] = ['src/original.ts'];
+  if (kind === 'new-edge') input[7] = ['src/alpha.ts'];
+  if (kind === 'cap-transfer') {
+    const row = input[2][0];
+    if (row?.kind !== 'retained') throw new Error('Expected retained fixture role');
+    input[2] = [{ ...row, max_complexity: 4, max_crap: 5 }, input[2][1]!];
+  }
+  if (kind === 'duplicate-original') input[2] = [...input[2], input[2][0]!];
+  expect(() => scopedCrapDispositionProof(...input)).toThrow();
+});
+
+function reuseProofInputs(): Parameters<typeof scopedCrapDispositionProof> {
+  const input = splitProofInputs();
+  input[1] = [
+    ...input[1],
+    { identity: 'src/original.ts#alpha', file: 'src/original.ts', complexity: 1, coverage: 1, crap: 1 },
+  ];
+  input[2] = [
+    ...input[2],
+    {
+      kind: 'new',
+      identity: 'src/original.ts#alpha',
+      max_complexity: 1,
+      max_crap: 1,
+      rationale: 'Separately capped thin caller with the original name.',
+    },
+  ];
+  input[3] = [
+    ...input[3],
+    {
+      original_path: 'src/original.ts',
+      current_path: 'src/original.ts',
+      rationale: 'Original module retains only a new adapter.',
+    },
+  ];
+  input[5] = [...input[5], 'src/original.ts'];
+  input[9] = {
+    source_mapping_kind: 'reviewed-pairs',
+    identity_reuses: [
+      {
+        original_identity: 'src/original.ts#alpha',
+        successor_identity: 'src/alpha.ts#alpha',
+        rationale: 'Original implementation moves; its name belongs to an independent thin adapter.',
+      },
+    ],
+  };
+  return input;
+}
+
+test('scoped CRAP v3 binds a reused adapter name to its retained implementation successor', () => {
+  expect(scopedCrapDispositionProof(...reuseProofInputs()).map((row) => [row.kind, row.maximum_complexity])).toEqual([
+    ['retained', 2],
+    ['retained', 4],
+    ['new', 1],
+  ]);
+});
+
+test('scoped CRAP v3 requires explicit Source additions/removals rather than missing edges', () => {
+  const input = splitProofInputs();
+  input[0] = [input[0][0]!, { identity: 'src/retired.ts#old', file: 'src/retired.ts', complexity: 4 }];
+  input[1] = [input[1][0]!, { identity: 'src/new.ts#new', file: 'src/new.ts', complexity: 1, coverage: 1, crap: 1 }];
+  input[2] = [
+    input[2][0]!,
+    { kind: 'removed', identity: 'src/retired.ts#old', rationale: 'Reviewed retirement without allowance transfer.' },
+    {
+      kind: 'new',
+      identity: 'src/new.ts#new',
+      max_complexity: 1,
+      max_crap: 1,
+      rationale: 'Independent new module with its own ceiling.',
+    },
+  ];
+  input[3] = [input[3][0]!];
+  input[4] = ['src/original.ts', 'src/retired.ts'];
+  input[5] = ['src/alpha.ts', 'src/new.ts'];
+  input[8] = new Map([['src/original.ts#alpha', { max_complexity: 2, max_crap: 3 }]]);
+  expect(() => scopedCrapDispositionProof(...input)).toThrow('partition exact source inventories');
+  input[6] = ['src/retired.ts'];
+  input[7] = ['src/new.ts'];
+  expect(scopedCrapDispositionProof(...input).map((row) => row.kind)).toEqual(['retained', 'removed', 'new']);
+});
+
+test('scoped CRAP v3 reuses an adapter identity independently of disposition order', () => {
+  const input = reuseProofInputs();
+  input[0] = [...input[0], { identity: 'src/original.ts#discarded', file: 'src/original.ts', complexity: 1 }];
+  input[2] = [
+    input[2][2]!,
+    {
+      kind: 'removed',
+      identity: 'src/original.ts#discarded',
+      rationale: 'Reviewed independent removal with no ceiling transfer.',
+    },
+    ...input[2].slice(0, 2),
+  ];
+  expect(scopedCrapDispositionProof(...input).map((row) => row.kind)).toEqual([
+    'new',
+    'removed',
+    'retained',
+    'retained',
+  ]);
+  input[2] = [
+    ...input[2],
+    {
+      kind: 'removed',
+      identity: 'src/original.ts#alpha',
+      rationale: 'A retained implementation cannot also be removed.',
+    },
+  ];
+  expect(() => scopedCrapDispositionProof(...input)).toThrow();
+});
+
+test.each([
+  'missing',
+  'duplicate',
+  'foreign',
+  'same-identity',
+  'wrong-successor',
+  'no-adapter',
+  'uncapped-adapter',
+] as const)('scoped CRAP v3 rejects %s identity reuse', (kind) => {
+  const input = reuseProofInputs();
+  const reuse = {
+    original_identity: 'src/original.ts#alpha',
+    successor_identity: 'src/alpha.ts#alpha',
+    rationale: 'Explicit reviewed implementation and new adapter roles.',
+  };
+  if (kind === 'missing') input[9] = { source_mapping_kind: 'reviewed-pairs', identity_reuses: [] };
+  if (kind === 'duplicate') input[9] = { source_mapping_kind: 'reviewed-pairs', identity_reuses: [reuse, reuse] };
+  if (kind === 'foreign')
+    input[9] = {
+      source_mapping_kind: 'reviewed-pairs',
+      identity_reuses: [{ ...reuse, original_identity: 'src/foreign.ts#alpha' }],
+    };
+  if (kind === 'same-identity')
+    input[9] = {
+      source_mapping_kind: 'reviewed-pairs',
+      identity_reuses: [{ ...reuse, successor_identity: reuse.original_identity }],
+    };
+  if (kind === 'wrong-successor')
+    input[9] = {
+      source_mapping_kind: 'reviewed-pairs',
+      identity_reuses: [{ ...reuse, successor_identity: 'src/beta.ts#beta' }],
+    };
+  if (kind === 'no-adapter') {
+    input[1] = input[1].slice(0, 2);
+    input[2] = input[2].slice(0, 2);
+  }
+  if (kind === 'uncapped-adapter')
+    input[2] = [
+      ...input[2].slice(0, 2),
+      {
+        kind: 'new',
+        identity: 'src/original.ts#alpha',
+        max_complexity: 11,
+        max_crap: 11,
+        rationale: 'An adapter cannot inherit an original allowance.',
+      },
+    ];
+  expect(() => scopedCrapDispositionProof(...input)).toThrow();
+});
+
 test('scoped CRAP v2 admits disjoint retained and new roles with explicit source mapping', () => {
   const rows = scopedCrapDispositionProof(
     v2Original,

@@ -64,8 +64,8 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       tests: ['tests/cedar-validation.test.ts', 'tests/envelopes-boundary.test.ts', 'tests/fuzz-authorization.test.ts'],
     },
     {
-      name: 'main-governance',
-      sources: ['src/governance/edictum-boundary.ts'],
+      name: 'main-governance-validation',
+      sources: ['src/governance/edictum-boundary.ts', 'src/governance/workflow-approval-consumption-contract.ts'],
       tests: [
         'tests/workflow-approval-consumption-contract.test.ts',
         'tests/governance-completeness.test.ts',
@@ -421,7 +421,6 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
         'src/contracts/implementation-scope.ts',
         'src/governance/operation-policy.ts',
         'src/governance/policy-workflow.ts',
-        'src/governance/workflow-approval-consumption-contract.ts',
       ],
       tests: [
         'tests/public-ingress-boundary.test.ts',
@@ -575,18 +574,32 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
     },
   ];
   if (options.includeRetired)
-    partitions.push({
-      name: 'main-contracts',
-      environment: 'retired',
-      sources: ['src/contracts/public-ingress.ts', 'src/contracts/envelopes.ts'],
-      tests: [
-        'tests/public-ingress-boundary.test.ts',
-        'tests/envelopes-boundary.test.ts',
-        // Historical selector only; never execute or rewrite its recorded inputs.
-        'tests/fuzz.test.ts',
-        'tests/zombies.test.ts',
-      ],
-      report: 'main-contracts.json',
-    });
+    partitions.push(
+      {
+        name: 'main-contracts',
+        environment: 'retired',
+        sources: ['src/contracts/public-ingress.ts', 'src/contracts/envelopes.ts'],
+        tests: [
+          'tests/public-ingress-boundary.test.ts',
+          'tests/envelopes-boundary.test.ts',
+          // Historical selector only; never execute or rewrite its recorded inputs.
+          'tests/fuzz.test.ts',
+          'tests/zombies.test.ts',
+        ],
+        report: 'main-contracts.json',
+      },
+      {
+        name: 'main-governance',
+        environment: 'retired',
+        sources: ['src/governance/edictum-boundary.ts'],
+        tests: [
+          'tests/workflow-approval-consumption-contract.test.ts',
+          'tests/governance-completeness.test.ts',
+          'tests/edictum-workflow-completeness.test.ts',
+          'tests/smoke.test.ts',
+        ],
+        report: 'main-governance.json',
+      },
+    );
   return partitions;
 }

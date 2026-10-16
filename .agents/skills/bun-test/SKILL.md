@@ -270,6 +270,11 @@ Use TESTING's per-invocation configured-context fixture for mutation workers;
 keep repository tooling and consumer context roots separate and never reuse
 an archived or another worker's context. Shared package sandboxes alone do not
 isolate configured consumer reads.
+For a function moved across files, use the reviewed v3 Source-pair relation;
+retain its original ceiling on the implementation successor. A new adapter
+reusing the old name needs its own independent budget and explicit identity
+reuse record. Preserve older report semantics and retire an old contour shape
+before assigning its Source differently; never rewrite historical receipts.
 For child runners, test explicit environment deletion as well as inheritance,
 and verify observation timers are disposed when output completes early.
 

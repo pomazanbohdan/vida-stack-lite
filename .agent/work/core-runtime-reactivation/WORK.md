@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published Source base: `f06eab959f6bacedda990cf709e008c63b5608bd` at `origin/main`. Current repair tail is separate from that published base. Source, formation, installation and Runtime acceptance are distinct states.
+- Published Source base: `85a5ca761222b40a1bf21eea4be87fd9547e4a31` at `origin/main`. Current repair tail is separate from that published base. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -14,9 +14,9 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current config contour
 
-The latest numeric capture binds published Source `f06eab9` and budget `e5daea5`. Subsequent correction changes require their own fresh evidence.
+The latest numeric capture binds published Source `85a5ca7` and budget `e5daea5`. Subsequent gate changes require their own fresh evidence.
 
-Coverage run `6352ece4-6eb0-40c9-8aba-e7f7509f709b` reports F350/350, L964/964, S1022/1022, B253/253. Same-run scoped CRAP passes with maxCC16/maxCRAP16. All 113 tests pass. Owned producer `SUPBIg` completed in 17,320.732906 ms with complete captures, closed groups and unchanged boot. Both reports are imported to the automatic projection. These results fill a local evidence step; they do not establish global acceptance.
+Coverage run `e32af441-17a1-4b4b-b9b1-a295d871cf11` reports F350/350, L964/964, S1022/1022, B253/253. Same-run scoped CRAP passes with maxCC16/maxCRAP16. All 113 tests pass. Owned producer `gjjEh7` completed in17611.45578ms with complete captures, closed groups and unchanged boot. Both reports are imported to the automatic projection. These results fill a local evidence step; they do not establish global acceptance. Earlier6352ece4 evidence stays retained separately.
 
 Main-config mutation run `225134e0-f8d9-4ba2-af93-3788adc97ddd`, owned at `/workspace/attachments/quality-mutation-main-config-aeF4nu`, generated 2,864 mutants. Candidate41 removed the project-root string-type guard and passed all113tests. Root stopped the owned namespace to correct this concrete assertion gap. Its terminal receipt is exit143,405705.406372ms, complete empty producer captures, closed groups, unchanged boot. Preserve its map, events, receipts and `/workspace/attachments/quality-config-root-survivor-stop-20261016.intent.json`. No complete report or mutation score exists; do not replay or promote this attempt.
 
@@ -34,6 +34,27 @@ The exact branch-gap packet is `/workspace/attachments/quality-main-config-gap-p
 - Bun docs do not guarantee positional file priority under current seeded randomization; `/workspace/attachments/quality-bun-test-order-docs-20261016.md` records this gap. No unqualified scheduling flag or increased deadline is activated.
 
 ## Execution order
+
+The next governance proof exposed two tool-model limitations: a one-file rename
+relation cannot express the retained validator's extraction, and a blanket name
+overlap ban rejects its independently capped new adapter. The versioned v3 route
+uses explicit reviewed Source pairs and exact identity-reuse records, preserving
+v1/v2 semantics, every original ceiling and the exhaustive function bijection.
+Both producer and projection enforce the records. The independent protocol and
+actual-role reviews are recorded in `scope_review_main_governance_validation_20261016`.
+Its static join is205original=202retained+3existing removals;202+4prospective=206current.
+All global counts/caps remain unchanged. The old single-Source contour is retired
+without rewriting its receipts; the active replacement owns the parser as well,
+with the same tests and45active contours. Fresh governance numeric proof is pending.
+
+The v3 Source additions/removals are explicit, exhaustive arrays, independently
+checked by producer and projection; they cannot be inferred from missing edges.
+The final focused gate/projection/CLI checks pass170/0 at owned `ICDuaI`
+(11813.145507ms, complete captures, closed groups, unchanged boot). The preceding
+169/1 attempt `q4Gx1w` is retained: its legacy-downgrade fixture omitted removal
+of the two new v3 fields and correctly hit the unrecognized-claim guard first.
+Strict tooling185files and tests460files checks pass. These are functional checks,
+not fresh contour coverage, frozen numeric admission or mutation results.
 
 1. Maintain documentation under the sidecar's single-owner protocol.
 2. Complete approved Cloud/profile guards and reproducible Pstack bootstrap; keep Source checks, SDK verification, native qualification and acceptance separate.

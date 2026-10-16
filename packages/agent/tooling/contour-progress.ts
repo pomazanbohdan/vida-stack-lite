@@ -107,6 +107,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
               'VidaBunCoverageOperationOutcome/v1',
               'VidaScopedCrapBudgetReport/v1',
               'VidaScopedCrapBudgetReport/v2',
+              'VidaScopedCrapBudgetReport/v3',
               'CandidateMutationPilotReport/v2',
               'CandidateMutationReport/v4',
             ],
@@ -150,6 +151,10 @@ function rows(value: unknown): Record<string, unknown>[] {
 function text(value: unknown): string {
   if (typeof value !== 'string' || !value) throw new Error('Contour report requires nonempty text.');
   return value;
+}
+function stringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) throw new Error('Contour report requires an explicit text array.');
+  return value.map(text);
 }
 function number(value: unknown): number {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) throw new Error('Invalid contour number.');
@@ -268,7 +273,9 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
     tests: digests(report.test_inputs),
     tools: digests(report.tool_inputs),
     tool_fingerprint:
-      report.schema === 'VidaScopedCrapBudgetReport/v1' || report.schema === 'VidaScopedCrapBudgetReport/v2'
+      report.schema === 'VidaScopedCrapBudgetReport/v1' ||
+      report.schema === 'VidaScopedCrapBudgetReport/v2' ||
+      report.schema === 'VidaScopedCrapBudgetReport/v3'
         ? null
         : text(report.tool_fingerprint),
     producer_schema: text(report.schema),
@@ -438,7 +445,8 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
       },
     ];
   }
-  if (report.schema === 'VidaScopedCrapBudgetReport/v2') {
+  if (report.schema === 'VidaScopedCrapBudgetReport/v2' || report.schema === 'VidaScopedCrapBudgetReport/v3') {
+    const reviewedPairs = report.schema === 'VidaScopedCrapBudgetReport/v3';
     const allowed = [
       'schema',
       'status',
@@ -454,6 +462,7 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
       'budget_sha256',
       'original_sources',
       'source_mappings',
+      ...(reviewedPairs ? ['source_mapping_kind', 'identity_reuses', 'new_source_paths', 'removed_source_paths'] : []),
       'run_id',
       'coverage_run_id',
       'coverage_report',
@@ -468,9 +477,11 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
       'limits',
     ];
     if (allowed.some((key) => !(key in report)))
-      throw new Error('Scoped CRAP v2 report is missing owner-issued proof fields.');
+      throw new Error(`Scoped CRAP ${reviewedPairs ? 'v3' : 'v2'} report is missing owner-issued proof fields.`);
     if (Object.keys(report).some((key) => !allowed.includes(key)))
-      throw new Error('Scoped CRAP v2 report contains unrecognized claims.');
+      throw new Error(`Scoped CRAP ${reviewedPairs ? 'v3' : 'v2'} report contains unrecognized claims.`);
+    if (reviewedPairs && report.source_mapping_kind !== 'reviewed-pairs')
+      throw new Error('Scoped CRAP v3 source mapping kind is unsupported.');
     const contour = text(report.contour);
     const runId = text(report.run_id);
     if (
@@ -501,7 +512,7 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
     const mappingRows = rows(report.source_mappings);
     const originalPaths = new Set(originalSources.map((row) => row.path));
     const currentPaths = new Set(sources.map((row) => row.path));
-    const sourceMap = new Map<string, string>();
+    const sourceMap = new Map<string, Set<string>>();
     const mappedCurrent = new Set<string>();
     for (const row of mappingRows) {
       exactKeys(row, ['original_path', 'current_path', 'rationale']);
@@ -516,16 +527,32 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         !currentPaths.has(currentPath)
       )
         throw new Error('Scoped CRAP v2 source mapping is malformed.');
-      if (sourceMap.has(originalPath) || mappedCurrent.has(currentPath))
+      if (sourceMap.get(originalPath)?.has(currentPath))
+        throw new Error(
+          reviewedPairs
+            ? 'Scoped CRAP v3 source mappings contain a duplicate pair.'
+            : 'Scoped CRAP v2 source mappings must be one-to-one.',
+        );
+      if (!reviewedPairs && (sourceMap.has(originalPath) || mappedCurrent.has(currentPath)))
         throw new Error('Scoped CRAP v2 source mappings must be one-to-one.');
-      sourceMap.set(originalPath, currentPath);
+      const destinations = sourceMap.get(originalPath) ?? new Set<string>();
+      destinations.add(currentPath);
+      sourceMap.set(originalPath, destinations);
       mappedCurrent.add(currentPath);
     }
-    const removedSourcePaths = new Set([...originalPaths].filter((file) => !sourceMap.has(file)));
-    const newSourcePaths = new Set([...currentPaths].filter((file) => !mappedCurrent.has(file)));
+    const removedPaths = reviewedPairs
+      ? stringArray(report.removed_source_paths)
+      : [...originalPaths].filter((file) => !sourceMap.has(file));
+    const addedPaths = reviewedPairs
+      ? stringArray(report.new_source_paths)
+      : [...currentPaths].filter((file) => !mappedCurrent.has(file));
+    const removedSourcePaths = new Set(removedPaths);
+    const newSourcePaths = new Set(addedPaths);
     if (
-      [...sourceMap.keys(), ...removedSourcePaths].some((file) => !originalPaths.has(file)) ||
-      [...mappedCurrent, ...newSourcePaths].some((file) => !currentPaths.has(file))
+      removedSourcePaths.size !== removedPaths.length ||
+      newSourcePaths.size !== addedPaths.length ||
+      canonicalJson([...sourceMap.keys(), ...removedSourcePaths].sort()) !== canonicalJson([...originalPaths].sort()) ||
+      canonicalJson([...mappedCurrent, ...newSourcePaths].sort()) !== canonicalJson([...currentPaths].sort())
     )
       throw new Error('Scoped CRAP v2 source mappings and additions/removals differ from exact Source paths.');
 
@@ -543,6 +570,7 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
     const functions = rows(report.functions);
     if (!functions.length) throw new Error('Scoped CRAP v2 report has no function dispositions.');
     const originalIds = new Set<string>();
+    const retainedSuccessors = new Map<string, string>();
     const currentIds = new Set<string>();
     const newIds = new Set<string>();
     const currentRows: { complexity: number; crap: number }[] = [];
@@ -573,9 +601,14 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         const currentIdentity = text(row.current_identity);
         const originalPath = sourceOfIdentity(identity);
         const currentPath = sourceOfIdentity(currentIdentity);
-        if (sourceMap.get(originalPath) !== currentPath || originalIds.has(identity) || currentIds.has(currentIdentity))
+        if (
+          !sourceMap.get(originalPath)?.has(currentPath) ||
+          originalIds.has(identity) ||
+          currentIds.has(currentIdentity)
+        )
           throw new Error('Scoped CRAP v2 function lineage is not one-to-one through reviewed source mappings.');
         originalIds.add(identity);
+        retainedSuccessors.set(identity, currentIdentity);
         currentIds.add(currentIdentity);
         const originalComplexity = positiveInteger(row.original_source_complexity);
         const maximumComplexity = positiveInteger(row.maximum_complexity);
@@ -610,7 +643,7 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         if (
           identity !== currentIdentity ||
           !currentPaths.has(currentPath) ||
-          originalIds.has(identity) ||
+          (!reviewedPairs && originalIds.has(identity)) ||
           currentIds.has(currentIdentity)
         )
           throw new Error('Scoped CRAP v2 new function identity is not bound to a reviewed current Source.');
@@ -646,7 +679,26 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         throw new Error('Scoped CRAP v2 function kind is invalid.');
       }
     }
-    if ([...newIds].some((identity) => originalIds.has(identity)))
+    const allowedReuses = new Set<string>();
+    if (reviewedPairs) {
+      for (const row of rows(report.identity_reuses)) {
+        exactKeys(row, ['original_identity', 'successor_identity', 'rationale']);
+        const identity = text(row.original_identity),
+          successor = text(row.successor_identity);
+        if (
+          text(row.rationale).trim().length < 8 ||
+          identity === successor ||
+          allowedReuses.has(identity) ||
+          retainedSuccessors.get(identity) !== successor ||
+          !newIds.has(identity)
+        )
+          throw new Error(
+            'Scoped CRAP v3 identity reuse does not bind a retained successor and independently capped adapter.',
+          );
+        allowedReuses.add(identity);
+      }
+    }
+    if ([...newIds].some((identity) => originalIds.has(identity) && !allowedReuses.has(identity)))
       throw new Error('Scoped CRAP v2 new function overlaps a reviewed original identity.');
     if (!currentRows.length) throw new Error('Scoped CRAP v2 report has no current function measurements.');
     return [
@@ -820,7 +872,8 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
       (attempt.lane === 'frozen-crap' &&
         (!attempt.accepted ||
           (attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v1' &&
-            attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v2') ||
+            attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v2' &&
+            attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v3') ||
           attempt.coverage_run_id !== attempt.run_id ||
           !Number.isSafeInteger(attempt.function_count) ||
           attempt.coverage !== null ||

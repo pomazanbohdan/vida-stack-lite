@@ -104,6 +104,30 @@ new-function policy. When an original callable moves into a helper, preserve
 that original identity and ceiling on its actual successor. Added callers or a
 new name do not make that retained role new.
 
+Scoped report v3 uses explicit reviewed Source pairs when an implementation
+splits across files or several files merge. The original/current function
+dispositions remain exhaustive and one-to-one, with every original ceiling
+unchanged. V1/v2 retain their existing interpretation. A reused original name
+for a new thin adapter requires an explicit published `identity_reuses` record
+binding the original role to its different substantive successor, plus a
+separate new-function budget for the adapter. The producer and projection
+consumer both reject missing, duplicate, foreign or unused reuse records.
+Removed-plus-new identity resets remain forbidden. V3 requires
+`source_mapping_kind: reviewed-pairs` and an explicit `identity_reuses` array,
+including an empty array when no name is reused.
+V3 also requires explicit `new_source_paths` and `removed_source_paths` arrays
+in the published review and report. Together with the reviewed pairs they must
+partition the exact current/original Source inventories without overlaps;
+an omitted edge cannot silently classify a Source as added or removed.
+
+Keep recorded contour Source selections immutable. A changed active Source
+group gets a new contour name; preserve its predecessor under the existing
+retired registry rather than invalidating historical receipts. The current
+`main-governance-validation` owns both Edictum and the extracted approval-record
+parser. Historical `main-governance` keeps its original single-Source selection.
+All affected test selections stay intact; reassignment does not establish a
+new closure, improve a score or change global Source coverage requirements.
+
 Historical static inventory artifacts can contain both `baseline` and `current`
 arrays. Only the original `baseline` array, corroborated by the published
 measurement and original Source, establishes a frozen retained ceiling. A row

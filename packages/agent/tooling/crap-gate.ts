@@ -68,6 +68,11 @@ const scopedBudgetReviews = new Map([
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
+function reviewedSourcePaths(value: unknown): string[] {
+  if (!Array.isArray(value) || !value.every((entry: unknown): entry is string => typeof entry === 'string'))
+    throw new Error('Reviewed v3 Source additions and removals must be explicit path arrays.');
+  return value;
+}
 
 function assertCrapPlanIdentity(value: unknown): asserts value is Record<string, unknown> {
   if (!isRecord(value) || value.schema !== 'VidaCrapBudgetPlan/v1' || value.baseline_ref !== baselineRef)
@@ -184,6 +189,14 @@ export type ScopedSourceMapping = {
   readonly current_path: string;
   readonly rationale: string;
 };
+export type ScopedIdentityReuse = {
+  readonly original_identity: string;
+  readonly successor_identity: string;
+  readonly rationale: string;
+};
+type ScopedCorrespondencePolicy =
+  | { readonly source_mapping_kind: 'one-to-one'; readonly identity_reuses?: never }
+  | { readonly source_mapping_kind: 'reviewed-pairs'; readonly identity_reuses: readonly ScopedIdentityReuse[] };
 export type ScopedFunctionDisposition =
   | {
       readonly kind: 'retained';
@@ -202,7 +215,7 @@ export type ScopedFunctionDisposition =
     }
   | { readonly kind: 'removed'; readonly identity: string; readonly rationale: string };
 
-/** Pure v2 disposition check; historical measurements are deliberately absent. */
+/** Pure reviewed correspondence; historical measurements are deliberately absent. */
 export function scopedCrapDispositionProof(
   original: readonly Pick<FunctionRow, 'identity' | 'file' | 'complexity'>[],
   current: readonly (Pick<FunctionRow, 'identity' | 'file' | 'complexity'> &
@@ -214,7 +227,15 @@ export function scopedCrapDispositionProof(
   removedSources: readonly string[],
   newSources: readonly string[],
   retainedCeilings: ReadonlyMap<string, { readonly max_complexity: number; readonly max_crap: number }>,
+  policy: ScopedCorrespondencePolicy = { source_mapping_kind: 'one-to-one' },
 ) {
+  const sourceMappingKind = policy.source_mapping_kind;
+  if (sourceMappingKind !== 'one-to-one' && sourceMappingKind !== 'reviewed-pairs')
+    throw new Error('Scoped CRAP source mapping kind is invalid.');
+  if (sourceMappingKind === 'one-to-one' && Object.hasOwn(policy, 'identity_reuses'))
+    throw new Error('Scoped CRAP v2 cannot authorize identity reuse.');
+  const identityReuses = sourceMappingKind === 'reviewed-pairs' ? policy.identity_reuses : [];
+  if (!Array.isArray(identityReuses)) throw new Error('Scoped CRAP v3 requires explicit identity reuse records.');
   if (!current.length || !dispositions.length)
     throw new Error('Scoped CRAP v2 requires current function roles and explicit dispositions.');
   const originals = new Map(original.map((row) => [row.identity, row]));
@@ -232,18 +253,21 @@ export function scopedCrapDispositionProof(
     newPathSet.size !== newSources.length
   )
     throw new Error('Scoped CRAP v2 source inventories contain duplicate paths.');
-  const pathMap = new Map<string, string>();
+  const pathMap = new Map<string, Set<string>>();
   const mappedCurrent = new Set<string>();
   for (const mapping of sourceMappings) {
     if (
       !originalPathSet.has(mapping.original_path) ||
       !currentPathSet.has(mapping.current_path) ||
       mapping.rationale.trim().length < 8 ||
-      pathMap.has(mapping.original_path) ||
-      mappedCurrent.has(mapping.current_path)
+      pathMap.get(mapping.original_path)?.has(mapping.current_path) ||
+      (sourceMappingKind === 'one-to-one' &&
+        (pathMap.has(mapping.original_path) || mappedCurrent.has(mapping.current_path)))
     )
       throw new Error('Scoped CRAP v2 source mapping is invalid, duplicated or outside exact inventories.');
-    pathMap.set(mapping.original_path, mapping.current_path);
+    const destinations = pathMap.get(mapping.original_path) ?? new Set<string>();
+    destinations.add(mapping.current_path);
+    pathMap.set(mapping.original_path, destinations);
     mappedCurrent.add(mapping.current_path);
   }
   if (
@@ -252,7 +276,7 @@ export function scopedCrapDispositionProof(
   )
     throw new Error('Scoped CRAP v2 source mappings and additions/removals do not partition exact source inventories.');
 
-  const retainedOriginal = new Set<string>();
+  const retainedOriginal = new Map<string, string>();
   const retainedCurrent = new Set<string>();
   const removed = new Set<string>();
   const added = new Set<string>();
@@ -269,7 +293,7 @@ export function scopedCrapDispositionProof(
         !ceiling ||
         retainedOriginal.has(disposition.identity) ||
         retainedCurrent.has(disposition.current_identity) ||
-        pathMap.get(before.file) !== after.file
+        !pathMap.get(before.file)?.has(after.file)
       )
         throw new Error('Scoped CRAP v2 retained correspondence is missing, duplicated or source-mismapped.');
       if (
@@ -290,7 +314,7 @@ export function scopedCrapDispositionProof(
         after.crap > disposition.max_crap
       )
         throw new Error('Scoped CRAP v2 retained current function is uncovered or exceeds frozen ceilings.');
-      retainedOriginal.add(disposition.identity);
+      retainedOriginal.set(disposition.identity, disposition.current_identity);
       retainedCurrent.add(disposition.current_identity);
       result.push({
         kind: 'retained',
@@ -351,11 +375,32 @@ export function scopedCrapDispositionProof(
       });
     }
   }
-  const originalPartition = [...retainedOriginal, ...removed].sort();
+  const allowedReuses = new Set<string>();
+  for (const reuse of identityReuses) {
+    if (
+      !isRecord(reuse) ||
+      Object.keys(reuse).length !== 3 ||
+      typeof reuse.original_identity !== 'string' ||
+      typeof reuse.successor_identity !== 'string' ||
+      typeof reuse.rationale !== 'string' ||
+      reuse.rationale.trim().length < 8 ||
+      reuse.original_identity === reuse.successor_identity ||
+      allowedReuses.has(reuse.original_identity) ||
+      !originals.has(reuse.original_identity) ||
+      !added.has(reuse.original_identity) ||
+      removed.has(reuse.original_identity) ||
+      retainedOriginal.get(reuse.original_identity) !== reuse.successor_identity
+    )
+      throw new Error(
+        'Scoped CRAP v3 identity reuse does not bind a retained successor and independently capped adapter.',
+      );
+    allowedReuses.add(reuse.original_identity);
+  }
+  const originalPartition = [...retainedOriginal.keys(), ...removed].sort();
   const currentPartition = [...retainedCurrent, ...added].sort();
   if (
     [...removed].some((identity) => candidates.has(identity)) ||
-    [...added].some((identity) => originals.has(identity))
+    [...added].some((identity) => originals.has(identity) && !allowedReuses.has(identity))
   )
     throw new Error('Scoped CRAP v2 cannot reset a shared original/current identity as removed plus new.');
   if (
@@ -913,6 +958,18 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
     const review = budget[reviewKey];
     const reviewedFiles = isRecord(review) && Array.isArray(review.files) ? new Set(review.files) : new Set();
     const v2Review = isRecord(review) && Object.hasOwn(review, 'source_mappings');
+    const sourceMappingKind =
+      isRecord(review) && Object.hasOwn(review, 'source_mapping_kind') ? review.source_mapping_kind : 'one-to-one';
+    if (sourceMappingKind !== 'one-to-one' && sourceMappingKind !== 'reviewed-pairs')
+      throw new Error('Reviewed Source mapping kind is invalid.');
+    if (sourceMappingKind === 'reviewed-pairs' && !v2Review)
+      throw new Error('Reviewed Source pairs require explicit mappings; the route cannot fall back to v1.');
+    if (
+      sourceMappingKind === 'one-to-one' &&
+      isRecord(review) &&
+      ['identity_reuses', 'new_source_paths', 'removed_source_paths'].some((field) => Object.hasOwn(review, field))
+    )
+      throw new Error('Reviewed v2 correspondence cannot authorize identity reuse.');
     if (v2Review && !Array.isArray(review.source_mappings))
       throw new Error('Reviewed v2 source mappings are malformed; the route cannot fall back to v1.');
     if (!v2Review && partition.sources.some((file) => !reviewedFiles.has(file)))
@@ -924,6 +981,26 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
       tests: partition.tests,
     });
     if (v2Review && isRecord(review) && Array.isArray(review.source_mappings)) {
+      const identityReuses: ScopedIdentityReuse[] = [];
+      if (sourceMappingKind === 'reviewed-pairs') {
+        if (!Array.isArray(review.identity_reuses))
+          throw new Error('Reviewed v3 correspondence requires explicit identity reuse records.');
+        for (const row of review.identity_reuses) {
+          if (
+            !isRecord(row) ||
+            Object.keys(row).length !== 3 ||
+            typeof row.original_identity !== 'string' ||
+            typeof row.successor_identity !== 'string' ||
+            typeof row.rationale !== 'string'
+          )
+            throw new Error('Reviewed v3 identity reuse record is malformed.');
+          identityReuses.push({
+            original_identity: row.original_identity,
+            successor_identity: row.successor_identity,
+            rationale: row.rationale,
+          });
+        }
+      }
       const sourceMappings: ScopedSourceMapping[] = review.source_mappings.map((raw: unknown) => {
         if (
           !isRecord(raw) ||
@@ -943,8 +1020,14 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         throw new Error('Reviewed v2 original Source paths are duplicated.');
       const mappedOriginal = new Set(sourceMappings.map((entry) => entry.original_path));
       const mappedCurrent = new Set(sourceMappings.map((entry) => entry.current_path));
-      const removedSourcePaths = originalSources.filter((file) => !mappedOriginal.has(file));
-      const newSourcePaths = currentSources.filter((file) => !mappedCurrent.has(file));
+      const removedSourcePaths =
+        sourceMappingKind === 'reviewed-pairs'
+          ? reviewedSourcePaths(review.removed_source_paths)
+          : originalSources.filter((file) => !mappedOriginal.has(file));
+      const newSourcePaths =
+        sourceMappingKind === 'reviewed-pairs'
+          ? reviewedSourcePaths(review.new_source_paths)
+          : currentSources.filter((file) => !mappedCurrent.has(file));
       const originalSourceSet = new Set(originalSources);
       if (originalSourceSet.size !== originalSources.length)
         throw new Error('Reviewed v2 original source paths are duplicated.');
@@ -1029,6 +1112,9 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         removedSourcePaths,
         newSourcePaths,
         retainedCeilings,
+        sourceMappingKind === 'reviewed-pairs'
+          ? { source_mapping_kind: sourceMappingKind, identity_reuses: identityReuses }
+          : { source_mapping_kind: sourceMappingKind },
       );
       if (
         [...reviewedRemovedFunctions.keys()].some((identity) => !originalIdentities.has(identity)) ||
@@ -1037,7 +1123,16 @@ if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === imp
         throw new Error('Reviewed v2 new/removal rows do not name exact current/original function identities.');
       const report = validation.report;
       const result = {
-        schema: 'VidaScopedCrapBudgetReport/v2',
+        schema:
+          sourceMappingKind === 'reviewed-pairs' ? 'VidaScopedCrapBudgetReport/v3' : 'VidaScopedCrapBudgetReport/v2',
+        ...(sourceMappingKind === 'reviewed-pairs'
+          ? {
+              source_mapping_kind: sourceMappingKind,
+              identity_reuses: identityReuses,
+              new_source_paths: newSourcePaths,
+              removed_source_paths: removedSourcePaths,
+            }
+          : {}),
         status: 'scoped-proof-pass',
         contour: partition.name,
         qualification_scope: 'declared-contour-reviewed-function-budgets',
