@@ -12,9 +12,11 @@ import {
   executeMutationCommand,
   junitOutcome,
   mutationReceiptMatches,
+  nativeMutationActivationHitCount,
   parseMutationBodyEvents,
   settleTimedOutChild,
   testFilesWithLifecycleHooks,
+  type MutationBodyEvent,
 } from '../tooling/mutation-evidence.ts';
 
 test('parent invocation projection matches a fresh identity and isolates command/test/file metadata aliases', async () => {
@@ -361,6 +363,49 @@ describe('mutation JUnit attribution', () => {
     expect(parseMutationBodyEvents(bytes, ['tests/one.test.mjs'])).toHaveLength(1);
     expect(() => parseMutationBodyEvents(Buffer.from('{"kind":"body"}\n'), ['tests/one.test.mjs'])).toThrow(/invalid/u);
     expect(() => parseMutationBodyEvents(bytes, ['tests/other.test.mjs'])).toThrow(/binding/u);
+  });
+
+  test('parses strict activation observations and binds native activation to the selected ID', () => {
+    const event = {
+      schema: 'MutationBodyEvent/v1',
+      test_file: 'tests/one.test.mjs',
+      kind: 'body',
+      body_id: 1,
+      assertion_cause: true,
+      assertion_source: 'bun-expect',
+      activation: { mutant_id: 'mutant-7', hit_count: 2 },
+    } satisfies MutationBodyEvent;
+    const parsed = parseMutationBodyEvents(Buffer.from(`${JSON.stringify(event)}\n`), ['tests/one.test.mjs']);
+    expect(parsed).toEqual([event]);
+    expect(nativeMutationActivationHitCount(parsed, 'mutant-7')).toBe(2);
+    expect(nativeMutationActivationHitCount([], 'mutant-7')).toBeUndefined();
+    expect(nativeMutationActivationHitCount([], null)).toBeUndefined();
+    const inactive = parseMutationBodyEvents(
+      Buffer.from(`${JSON.stringify({ ...event, activation: { mutant_id: 'mutant-7', hit_count: 0 } })}\n`),
+      ['tests/one.test.mjs'],
+    );
+    expect(nativeMutationActivationHitCount(inactive, 'mutant-7')).toBe(0);
+    const foreign = parseMutationBodyEvents(
+      Buffer.from(`${JSON.stringify({ ...event, activation: { mutant_id: 'mutant-8', hit_count: 2 } })}\n`),
+      ['tests/one.test.mjs'],
+    );
+    expect(nativeMutationActivationHitCount(foreign, 'mutant-7', false)).toBeUndefined();
+    expect(() => nativeMutationActivationHitCount(foreign, 'mutant-7')).toThrow(/foreign mutant activation/u);
+    expect(() => nativeMutationActivationHitCount(foreign, null)).toThrow(/Baseline receipt/u);
+    expect(() => nativeMutationActivationHitCount([...parsed, ...foreign], 'mutant-7')).toThrow(
+      /foreign mutant activation/u,
+    );
+    for (const invalid of [
+      { ...event, activation: { mutant_id: 'mutant-7', hit_count: -1 } },
+      { ...event, activation: { mutant_id: 'mutant-7', hit_count: 1.5 } },
+      { ...event, activation: { mutant_id: '', hit_count: 1 } },
+      { ...event, activation: { mutant_id: 'mutant-7' } },
+      { ...event, activation: { mutant_id: 'mutant-7', hit_count: 1, extra: true } },
+      { ...event, extra: true },
+    ])
+      expect(() =>
+        parseMutationBodyEvents(Buffer.from(`${JSON.stringify(invalid)}\n`), ['tests/one.test.mjs']),
+      ).toThrow(/invalid body event/u);
   });
 
   test('follows relative test helpers when locating lifecycle hooks', () => {

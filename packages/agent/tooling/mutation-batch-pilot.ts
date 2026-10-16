@@ -289,6 +289,8 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         source.fingerprint,
         context,
         census,
+        undefined,
+        true,
       );
     };
     const baseline = await invoke(null, firstBudget.remaining(mutationLimits.dryRunEnvelopeMs));

@@ -37,6 +37,7 @@ import {
   executeMutationCommand,
   junitOutcome,
   type MutationJUnitCase,
+  nativeMutationActivationHitCount,
   mutationReceiptMatches,
   mutationToolInputs,
   parseMutationBodyEvents,
@@ -391,6 +392,7 @@ export async function confirmRunnerReceipt(
   context: ReceiptValidationContext,
   expectedCases?: readonly MutationJUnitCase[],
   perTestCapture?: 'diagnostic-v2',
+  requireNativeActivation = false,
 ): Promise<ReceiptOutcome> {
   try {
     const junitFile = junitName(partition, mutantId);
@@ -464,6 +466,7 @@ export async function confirmRunnerReceipt(
     if (sha256(bodyBytes) !== receipt.body_events_sha256 || bodyBytes.length !== receipt.body_events_bytes)
       throw new Error('Mutation body events differ from the runner receipt.');
     const bodyEvents = parseMutationBodyEvents(bodyBytes, tests);
+    const activationHitCount = nativeMutationActivationHitCount(bodyEvents, mutantId, requireNativeActivation);
     const hookGaps = context.hookFiles;
     const cases: MutationJUnitCase[] = [];
     const outcome = junitOutcome(
@@ -474,7 +477,11 @@ export async function confirmRunnerReceipt(
       (row) => cases.push(row),
       mutantId !== null,
     );
-    const result = confirmedRunnerOutcome(receipt.exit_code, outcome.outcome);
+    const result = confirmedRunnerOutcome(
+      receipt.exit_code,
+      outcome.outcome,
+      requireNativeActivation && mutantId !== null ? (activationHitCount ?? 0) : undefined,
+    );
     if (result === 'passed') {
       if (expectedCases && !mutationJUnitCaseCensusMatches(expectedCases, cases))
         throw new Error('Survived mutant JUnit case outcomes differ from the validated baseline census.');

@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current evidence packet: `3f84ece8933868af6a7c1c346501d61f841f11cf`. Fresh custody coverage and same-run pinned scoped CRAP pass below. Its mutation closure remains open: the latest full-image diagnostic is bound to `a740bd2644018e6704aa2eab49a1f810644629c8` and stops at358 of700 IDs:340 assertion-confirmed Killed,17 Survived,1 UNKNOWN,342 unattempted. It is diagnostic-only, without parent qualification; old classifications are unchanged. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current activation/evidence packet: `0e0babf`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Its mutation closure remains open: the latest full-image diagnostic is bound to `a740bd2644018e6704aa2eab49a1f810644629c8` and stops at358 of700 IDs:340 assertion-confirmed Killed,17 Survived,1 UNKNOWN,342 unattempted. It is diagnostic-only, without parent qualification; old classifications are unchanged. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -178,6 +178,64 @@ The direct policy-transition work-ID boundary control passes in
 82068.130023ms, full captures/closed group/same boot). Its filter does not establish
 the complete final-assurance selection. Earlier final-assurance FAIL lacks raw
 Bun case output and remains unresolved, not overwritten by this focused pass.
+
+### Native activation prerequisite and current adjacent contour failures
+
+Blind Luna prepares the activation prerequisite in its isolated3f84ece worktree;
+Root reviews and integrates the exact packet. The existing body event carries
+one optional typed activation object. Its strict parser rejects malformed keys,
+IDs and counts. Preload initializes the locked instrumenter's counter before
+imports; the adapter records it synchronously at body failure, without afterAll.
+Native receipt confirmation requires a positive matching observation in addition
+to the unchanged assertion/JUnit proof, and rejects foreign/mixed or baseline
+observations. Stryker keeps its prior confirmation route. Root reduces the
+activation join to one pass without temporary observation arrays and sets the
+existing child-test default to5s after independent review found an unjustified10s.
+Stryker's existing effective null plugins/empty exclusions/ignorers are explicit
+in its typed configuration; no engine events or statuses are synthesized.
+
+Before implementation ingress, the added classifier control genuinely fails
+against the old implementation (`quality-rolling-cli-check-Z0X8Cv`: expected
+UNKNOWN for zero observed hits, got Killed). An earlier typo selects0cases at
+`CDx3yE` and is not counted as red evidence. Root corrects a widened test literal
+type and case-sensitive diagnostic expectation; the final four-file owner check
+`quality-rolling-cli-check-ln1rbf` passes173/0 with747assertions in4153.466166ms,
+full captures, closed group and unchanged boot. This includes the real public
+instrumenter-generated selected-ID positive and foreign-ID zero-hit controls,
+old parser compatibility and existing map/runner controls. It is development
+evidence, not native parent or complete mutation qualification. The independent
+review is `luna-native-activation-independent-review-v4-20261016.md`.
+After the review's5s child default correction and explicit Stryker options,
+the four-file selection passes173/0 again at `quality-rolling-cli-check-8M6BWs`
+in4090.344274ms, with full captures, closed group and unchanged boot.
+
+Current3f84ece adjacent complete declared coverage selections are terminal:
+runtime-initialization17/0 in35509.756219ms (`native-coverage-3f84ece-bun-runtime-initialization-B2PhyM`),
+storage-admission9/0 in7645.564986ms (`native-coverage-3f84ece-bun-project-upgrade-storage-admission-iUuxKR`),
+and toolchain62/0 in8972.633383ms (`native-coverage-3f84ece-bun-cli-toolchain-tHL6CG`).
+Root imports their owner reports and the final-assurance failure outcome through
+the existing projection:407attempts. Runtime-initialization improves to
+F18/18,L87/88,S99/102,B53/56. Storage-admission is F17/18,L99/100,S102/103,B16/16;
+the unused release-denial closure remains unexecuted. Dropping its entire verifier
+is unsafe: HostStateStore also derives required maintenance project authority
+from it. Toolchain retains its nonhost Windows gaps. Luna proposals remain
+review candidates, not newly qualified behavior. No additional primary-error
+swallow is found among maintained cleanup-accumulator callers.
+
+Final-assurance coverage at3f84ece fails11/1 with176assertions in126440.879034ms
+at `native-coverage-3f84ece-bun-final-assurance-E539KJ`: the failed-correction case
+takes68716.96ms and reports its20s timeout. The outer process did not time out;
+captures are complete, group closed and boot unchanged. Owner outcome
+`coverage/bun-unified/diagnostics/operation-outcomes/6d302b15-691b-4e7c-af59-3a3d1c3ced61.json`
+retains FAIL, incomplete quality and required custody. No coverage score is
+issued from that partial success. Root wires the existing opt-in public-run
+timing owner into the real fixture, retaining all effects and CAS. A focused
+development check `quality-rolling-cli-check-zMH7l6` passes1/0 in65530.954081ms;
+its6observed public calls account for48417.41516ms, including16980.922595ms and
+13153.731059ms calls. This explains the budget deficit, not the internal limiter.
+The attempted CLI CPU flags under Bun Test produce no profile; that observation
+does not qualify profiling or a speedup. Use a separately qualified direct
+fixture probe to attribute the cost before optimizing. Do not increase deadlines.
 
 ### Pin, remaining diagnostic controls and next numeric cycle
 

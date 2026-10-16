@@ -6,6 +6,9 @@ test('native mutation classifier requires an exact exit and assertion-proven out
   expect(existsSync(new URL('../tooling/mutation-evidence.ts', import.meta.url))).toBe(true);
   const { confirmedRunnerOutcome } = await import('../tooling/mutation-evidence.ts');
   expect(confirmedRunnerOutcome(1, 'killed')).toBe('killed');
+  expect(confirmedRunnerOutcome(1, 'killed', 1)).toBe('killed');
+  for (const count of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1])
+    expect(confirmedRunnerOutcome(1, 'killed', count)).toBe('unknown');
   expect(confirmedRunnerOutcome(0, 'passed')).toBe('passed');
   for (const outcome of ['unproven', 'passed', 'timeout', 'runtime-error', 'compile-error', 'NoCoverage']) {
     expect(confirmedRunnerOutcome(1, outcome)).toBe('unknown');

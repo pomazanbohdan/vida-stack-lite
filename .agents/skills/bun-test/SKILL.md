@@ -214,6 +214,12 @@ mutation partitions. Stryker instruments even the dry-run Source, which cannot
 match a receipt for unmutated CI formation. Preserve the complete ordinary
 selection and SDK freshness; never rebuild or waive receipt checks per mutant.
 
+For native mutation controls, distinguish the requested ID from the selected
+instrumented branch hit. Assert the real generated-image positive and zero-hit
+controls, and preserve the body's digest binding and assertion cause. Capture
+activation at failure time; a bailing mutant cannot rely on afterAll completion.
+TESTING owns the native receipt and complete-universe admission requirements.
+
 For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and
 check the descriptor's rejection stage before investigating assertions. A

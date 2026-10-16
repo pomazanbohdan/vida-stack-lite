@@ -28,6 +28,8 @@ const config = {
   ignorePatterns: ['.tmp/**', 'coverage/**'],
   tsconfigFile: '.stryker-no-tsconfig.json',
   coverageAnalysis: 'off',
+  mutator: { plugins: null, excludedMutations: [] },
+  ignorers: [],
   plugins: [new URL('./tooling/mutation-map-reporter.ts', import.meta.url).href],
   reporters: ['progress-append-only', 'clear-text', 'json', 'vida-mutant-map'],
   jsonReporter: {

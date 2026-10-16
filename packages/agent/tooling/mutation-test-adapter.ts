@@ -33,7 +33,17 @@ let receiptBytes = 0;
 
 function append(event: Record<string, unknown>): void {
   if (!receiptFile || !file) throw new Error('Mutation body receipt channel is not configured.');
-  const line = `${JSON.stringify({ schema: 'MutationBodyEvent/v1', test_file: file, ...event })}\n`;
+  const activationId = event.kind === 'body' ? process.env.__STRYKER_ACTIVE_MUTANT__ : undefined;
+  const strykerState = (globalThis as typeof globalThis & { __stryker__?: unknown }).__stryker__;
+  const hitCount =
+    strykerState !== null && typeof strykerState === 'object' && !Array.isArray(strykerState)
+      ? (strykerState as Record<string, unknown>).hitCount
+      : undefined;
+  const activation =
+    activationId !== undefined && activationId.length > 0 && Number.isSafeInteger(hitCount) && Number(hitCount) >= 0
+      ? { activation: { mutant_id: activationId, hit_count: hitCount } }
+      : {};
+  const line = `${JSON.stringify({ schema: 'MutationBodyEvent/v1', test_file: file, ...event, ...activation })}\n`;
   receiptBytes += Buffer.byteLength(line);
   if (receiptBytes + statSync(receiptFile).size > 4 * 1024 * 1024)
     throw new Error('Mutation body receipts exceeded their size bound.');

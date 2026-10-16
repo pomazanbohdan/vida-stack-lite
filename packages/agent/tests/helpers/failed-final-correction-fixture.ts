@@ -5,6 +5,7 @@ import { randomUUID, createHash } from 'node:crypto';
 import { createAutomaticWorkAdmissionFixture } from './automatic-work-admission-fixture.js';
 import { fixtureInitializationTemplates } from './runtime-initialization-fixture.js';
 import { runSourcePrewriterPublicActions } from './public-prewriter-fixture.js';
+import { runWithInitialSourceTiming } from './initial-source-run-timing-diagnostic.js';
 import { admitLocalSessionWork, acquireLocalSourceWriterLease } from '../../src/orchestration/local-work-admission.js';
 import { runtimeConfigDigest } from '../../src/config/runtime-config.js';
 import { snapshotDeclaredSources } from '../../src/orchestration/scoped-source-snapshot.js';
@@ -299,7 +300,7 @@ export async function createFailedFinalCorrectionFixture(): Promise<FailedFinalC
         const canonicalArgs = runArgs.map((argument, index) =>
           runArgs[index - 1] === '--report' ? path.resolve(fixture.root, argument) : argument,
         );
-        const result: unknown = await run(canonicalArgs);
+        const result: unknown = await runWithInitialSourceTiming(runArgs, () => run(canonicalArgs));
         const record = requireRecord(result, 'In-process configured run result');
         if (record.status === 'blocked') throw new Error('Configured fixture run was blocked');
         return result;

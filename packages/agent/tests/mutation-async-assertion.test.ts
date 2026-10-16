@@ -1,4 +1,5 @@
 import { expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
@@ -7,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   confirmedRunnerOutcome,
   junitOutcome,
+  nativeMutationActivationHitCount,
   parseMutationBodyEvents,
   type MutationJUnitCase,
 } from '../tooling/mutation-evidence.js';
@@ -14,6 +16,7 @@ import { requireSynchronousChildSuccess } from './helpers/synchronous-child-outc
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import { validateMutationPerTestJoin } from '../tooling/mutation-per-test-evidence.ts';
+import { generateMutationImage } from '../tooling/mutation-generation.ts';
 
 const preloadPath = fileURLToPath(new URL('../tooling/mutation-test-preload.ts', import.meta.url));
 const elapsedMatcher: unknown = expect.any(Number);
@@ -30,6 +33,7 @@ async function runAdapterChild(
     maxConcurrency?: number;
     parallel?: number;
     pattern?: string;
+    activeMutantId?: string;
   } = {},
 ) {
   const sourceFiles = [{ suffix, body }, ...(options.additionalFiles ?? [])].map(
@@ -53,7 +57,7 @@ async function runAdapterChild(
       '--preload',
       preloadPath,
       ...sourceFiles.map(({ file }) => file),
-      '--timeout=10000',
+      '--timeout=5000',
       '--reporter=junit',
       ...(options.bail ? ['--bail=1'] : []),
       ...(options.parallel === undefined ? [] : [`--parallel=${options.parallel}`]),
@@ -69,6 +73,7 @@ async function runAdapterChild(
         AGENT_MUTATION_BODY_RECEIPTS: receiptFile,
         AGENT_MUTATION_ADAPTER_DIRECTORY: path.join(root, `adapters-${suffix}`),
         AGENT_MUTATION_PER_TEST_CAPTURE: options.capture ? '1' : undefined,
+        ...(options.activeMutantId === undefined ? {} : { __STRYKER_ACTIVE_MUTANT__: options.activeMutantId }),
       },
       stdout: 'pipe',
       stderr: 'pipe',
@@ -97,6 +102,69 @@ async function runAdapterChild(
     selectedTests: sourceFiles.map(({ file }) => path.relative(root, file)),
   };
 }
+
+test('generated image activation records only the selected local ID at a failing body', async () => {
+  const packageRoot = path.resolve(import.meta.dir, '..');
+  const source = Buffer.from('export const flag = () => true;\n');
+  const sourceDigest = createHash('sha256').update(source).digest('hex');
+  const image = await generateMutationImage(
+    packageRoot,
+    {
+      run_id: '00000000-0000-4000-8000-000000000001',
+      partition: 'activation-test',
+      input_fingerprint: '1'.repeat(64),
+      source_fingerprint: '2'.repeat(64),
+      test_fingerprint: '3'.repeat(64),
+      tool_fingerprint: '4'.repeat(64),
+      partition_sources: [{ path: 'src/flag.ts', sha256: sourceDigest }],
+    },
+    { 'src/flag.ts': source },
+  );
+  const mutant = image.universe.mutants.find((row) => row.replacement === 'false');
+  expect(mutant).toBeDefined();
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-activation-'));
+  let completed = false;
+  try {
+    await mkdir(path.join(root, 'src'), { recursive: true });
+    await writeFile(path.join(root, 'src/flag.ts'), image.files[0]!.content);
+    const body = `import { test, expect } from 'bun:test';\nimport { flag } from '../src/flag.ts';\ntest('generated selected branch', () => { expect(flag()).toBe(true); expect(false).toBe(true); });\n`;
+    const selected = await runAdapterChild(root, body, 'selected', {
+      activeMutantId: mutant!.local_id,
+      exitCode: 1,
+    });
+    const selectedEvent = selected.events.find(
+      (event) => event.kind === 'body' && event.assertion_cause && event.activation?.mutant_id === mutant!.local_id,
+    );
+    const selectedHitCount = selectedEvent?.kind === 'body' ? selectedEvent.activation?.hit_count : undefined;
+    expect(selectedHitCount).toBeDefined();
+    if (selectedHitCount === undefined) throw new Error('Selected generated branch has no activation observation.');
+    expect(selectedHitCount).toBeGreaterThan(0);
+    expect(junitOutcome(selected.junit, [selected.selectedTest], [], selected.events).outcome).toBe('killed');
+    expect(nativeMutationActivationHitCount(selected.events, mutant!.local_id)).toBeGreaterThan(0);
+    expect(confirmedRunnerOutcome(selected.exitCode, 'killed', selectedHitCount)).toBe('killed');
+
+    const foreign = await runAdapterChild(root, body, 'foreign', {
+      activeMutantId: `foreign-${mutant!.local_id}`,
+      exitCode: 1,
+    });
+    const foreignEvent = foreign.events.find((event) => event.kind === 'body' && event.assertion_cause);
+    expect(foreignEvent?.kind === 'body' ? foreignEvent.activation : undefined).toEqual({
+      mutant_id: `foreign-${mutant!.local_id}`,
+      hit_count: 0,
+    });
+    const foreignHitCount = foreignEvent?.kind === 'body' ? foreignEvent.activation?.hit_count : undefined;
+    expect(foreignHitCount).toBe(0);
+    expect(junitOutcome(foreign.junit, [foreign.selectedTest], [], foreign.events).outcome).toBe('killed');
+    expect(confirmedRunnerOutcome(foreign.exitCode, 'killed', foreignHitCount)).toBe('unknown');
+    expect(() => nativeMutationActivationHitCount(foreign.events, mutant!.local_id)).toThrow(
+      'foreign mutant activation',
+    );
+    completed = true;
+  } finally {
+    if (completed) await rm(root, { recursive: true, force: true });
+    else console.error('Retained generated-image activation fixture: ' + root);
+  }
+});
 
 type PerTestCapture = {
   schema: string;

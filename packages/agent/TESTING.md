@@ -1034,6 +1034,23 @@ Native receipts still require exact baseline census, process/output closure,
 input/executable/image bindings and body assertion proof. Errors, timeouts and
 unattempted IDs remain separate. Its generated universe, image and diagnostic
 batch summaries are retained under one new `.tmp/mutation-batch-*` operation.
+Native mutant confirmation also requires an actual selected-branch hit. The
+preload initializes the locked instrumenter's `__stryker__.hitCount` before
+Source imports. A failing body records its optional exact-key `activation`
+object (`mutant_id`, `hit_count`) in the existing digest-bound body event.
+Observe it synchronously before rethrow; `--bail=1` cannot depend on afterAll.
+The native parent requires a matching ID and positive count on an assertion-caused
+body, rejects every foreign observation and rejects baseline observations. An
+absent or zero-hit observation cannot confirm Killed. Activation alone never
+establishes an assertion. The ordinary Stryker confirmation route retains its
+existing contract; historical receipts do not acquire activation evidence.
+The real generated-image control pairs an active BooleanLiteral branch with an
+inactive foreign-ID assertion failure. This cooperative in-process observation
+is not protection against hostile code rewriting the public counter. It qualifies
+the activation seam only; a fresh native receipt pilot and complete-universe
+parent admission remain distinct requirements. The native universe contains all
+mutants from the captured public instrumenter call, with explicit empty exclusions
+and ignorers and null parser plugins, not fabricated Stryker engine dispositions.
 V2 batch/terminal diagnostics retain a structured storage denial and completed
 observations. A storage denial before a launch leaves that ID unattempted; it
 does not create an UNKNOWN or Killed observation. Parent input/image/executable

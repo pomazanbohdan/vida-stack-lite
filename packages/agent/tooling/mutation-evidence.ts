@@ -14,6 +14,7 @@ export type MutationBodyEvent =
       body_id: number;
       assertion_cause: boolean;
       assertion_source: 'bun-expect' | 'node-assert' | null;
+      activation?: { mutant_id: string; hit_count: number };
     }
   | { schema: 'MutationBodyEvent/v1'; test_file: string; kind: 'hook'; hook: string; error_observed: true };
 export type MutationJUnitCase = { test_file: string; name: string; outcome: 'passed' | 'skipped' | 'failed' | 'error' };
@@ -361,15 +362,27 @@ function bodyEventHeader(value: unknown, allowed: Set<string>): value is Record<
 
 function bodyAssertionEvent(value: Record<string, unknown>): value is Extract<MutationBodyEvent, { kind: 'body' }> {
   const keys = Object.keys(value).sort();
+  const legacyKeys = 'assertion_cause,assertion_source,body_id,kind,schema,test_file';
+  const activationKeys = `activation,${legacyKeys}`;
+  const hasActivation = keys.join(',') === activationKeys;
+  const activation = value.activation;
+  const validActivation =
+    evidenceRecord(activation) &&
+    Object.keys(activation).sort().join(',') === 'hit_count,mutant_id' &&
+    typeof activation.mutant_id === 'string' &&
+    activation.mutant_id.length > 0 &&
+    Number.isSafeInteger(activation.hit_count) &&
+    Number(activation.hit_count) >= 0;
   return (
-    keys.join(',') === 'assertion_cause,assertion_source,body_id,kind,schema,test_file' &&
+    (keys.join(',') === legacyKeys || hasActivation) &&
     value.kind === 'body' &&
     Number.isSafeInteger(value.body_id) &&
     Number(value.body_id) > 0 &&
     typeof value.assertion_cause === 'boolean' &&
     (value.assertion_source === 'bun-expect' ||
       value.assertion_source === 'node-assert' ||
-      value.assertion_source === null)
+      value.assertion_source === null) &&
+    (!hasActivation || validActivation)
   );
 }
 
@@ -408,6 +421,23 @@ export function parseMutationBodyEvents(bytes: Uint8Array, expectedTests: string
   if (lines.at(-1) === '') lines.pop();
   const ids: Set<string> = new Set();
   return lines.map((line) => parseBodyEventLine(line, allowed, ids));
+}
+
+export function nativeMutationActivationHitCount(
+  bodyEvents: MutationBodyEvent[],
+  mutantId: string | null,
+  requireNativeActivation = true,
+) {
+  if (!requireNativeActivation) return undefined;
+  let hitCount: number | undefined;
+  for (const event of bodyEvents) {
+    if (event.kind !== 'body' || !event.activation) continue;
+    if (mutantId === null) throw new Error('Baseline receipt contains a mutant activation observation.');
+    if (event.activation.mutant_id !== mutantId)
+      throw new Error('Runner body event contains a foreign mutant activation observation.');
+    if (event.assertion_cause) hitCount = Math.max(hitCount ?? 0, event.activation.hit_count);
+  }
+  return hitCount;
 }
 
 export function junitOutcome(
@@ -523,9 +553,14 @@ export function testFilesWithLifecycleHooks(testFiles: string[], testInputs: Rec
   });
 }
 
-export function confirmedRunnerOutcome(exitCode: number | null, outcome: string) {
+export function confirmedRunnerOutcome(exitCode: number | null, outcome: string, activationHitCount?: number) {
   if (exitCode === 0 && outcome === 'passed') return 'passed';
-  if (exitCode === 1 && outcome === 'killed') return 'killed';
+  if (
+    exitCode === 1 &&
+    outcome === 'killed' &&
+    (activationHitCount === undefined || (Number.isSafeInteger(activationHitCount) && activationHitCount > 0))
+  )
+    return 'killed';
   return 'unknown';
 }
 

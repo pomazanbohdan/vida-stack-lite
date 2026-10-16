@@ -17,6 +17,21 @@ delete process.env.AGENT_MUTATION_PER_TEST_CAPTURE;
 if (perTestCapture !== undefined && perTestCapture !== '1')
   throw new Error('Mutation per-test capture setting is invalid.');
 
+const strykerState = (globalThis as typeof globalThis & { __stryker__?: unknown }).__stryker__;
+if (
+  strykerState !== undefined &&
+  (strykerState === null || typeof strykerState !== 'object' || Array.isArray(strykerState))
+)
+  throw new Error('Stryker activation state is invalid.');
+const activationState = (strykerState ?? {}) as Record<string, unknown>;
+if (
+  activationState.hitCount !== undefined &&
+  (!Number.isSafeInteger(activationState.hitCount) || Number(activationState.hitCount) < 0)
+)
+  throw new Error('Stryker activation count is invalid.');
+activationState.hitCount = 0;
+(globalThis as typeof globalThis & { __stryker__?: unknown }).__stryker__ = activationState;
+
 function requiredAdapterDirectory(): string {
   const value = adapterDirectorySetting;
   if (!value) throw new Error('Mutation adapter directory is not configured.');
