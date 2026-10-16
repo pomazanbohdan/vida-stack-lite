@@ -50,6 +50,12 @@ in2950ms, complete captures/closed scopes/same boot; strict505/TS-only506/Oxlint
 Blind v86 finds no concrete regression. No whole extra test file or duplicate fixture
 is added. Fresh image coverage is pending publication; mutation remains independent.
 
+The reviewed packet commits asd6cab7c after its normal strict hook. The following
+adapter pin names exactly that immutable review and admission contour. Publish
+both dependent commits in one push to avoid duplicate automatic CI formation;
+neither hook is bypassed. Fresh admission coverage and its same-run v3 proof must
+use the new tool closure; the earlier exact46a66c9 observation stays historical.
+
 ### Exact remaining initialization and admission guards
 
 Packet982dda4 passes its normal strict hook and push. Focused selections here
