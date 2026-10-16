@@ -18,6 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { initializeProject, main } from '../bin/init.ts';
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { createInitializationBundle } from './helpers/init-bundle.js';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.js';
 import * as safeRepositoryAccess from '../src/config/safe-repository-access.js';
 
@@ -176,6 +177,32 @@ test('public init help works without project configuration', () => {
   expect(result.stderr).toBe('');
   const help: unknown = JSON.parse(result.stdout);
   expect(help).toMatchObject({ schema: 'VidaAgentCommandResult/v1', status: 'help', command: 'init' });
+});
+
+test('initializer entrypoint help works without project configuration or file mutation', () => {
+  const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-entrypoint-help-'));
+  let completed = false;
+  try {
+    const result = expectReturned(() =>
+      spawnSync(process.execPath, [path.join(packageRoot, 'bin/init.ts'), '--help'], {
+        cwd: projectRoot,
+        encoding: 'utf8',
+        windowsHide: true,
+        timeout: 5_000,
+        maxBuffer: 128 * 1024,
+      }),
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.signal).toBeNull();
+    expect(result.status).toBe(0);
+    expect(result.stderr).toBe('');
+    const help: unknown = JSON.parse(result.stdout);
+    expect(help).toMatchObject({ schema: 'VidaAgentCommandResult/v1', status: 'help', command: 'init' });
+    expect(readdirSync(projectRoot)).toEqual([]);
+    completed = true;
+  } finally {
+    retainedCleanup(projectRoot, completed);
+  }
 });
 
 test('init CLI reports initializer failure without printing a success receipt', async () => {

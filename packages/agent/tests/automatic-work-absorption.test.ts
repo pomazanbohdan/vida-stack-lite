@@ -1112,23 +1112,40 @@ test('expired real execution-only admission rebinds only its owned execution res
   try {
     const initial = f.admit(f.prepare('old', 'user:old'));
     assertPersistedAdmission(initial);
-    const historical: Record<string, unknown> = {
-      ...parseMastraSessionLedgerJson(
-        f.database
-          .query<{ payload: string }, [string]>('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?')
-          .get('old')?.payload ?? '',
-      ),
-    };
-    historical.completed = [
-      {
-        step_id: 'fixture-accepted-readonly',
-        items: [{ issue_id: randomUUID(), observation: { status: 'reported_complete' } }],
+    const historical = parseMastraSessionLedgerJson(
+      f.database
+        .query<{ payload: string }, [string]>('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?')
+        .get('old')?.payload ?? '',
+    );
+    const priorItem = historical.items[0];
+    if (!priorItem) throw new Error('expired admission fixture has no persisted session request');
+    const issueId = randomUUID(),
+      summary = 'Observed completed readonly fixture request',
+      observation: Parameters<MastraSessionLedger['report']>[3] = {
+        schema: 'VidaSessionObservation/v1',
+        action_id: priorItem.request.action_id,
+        issue_id: issueId,
+        agent_id: 'fixture-reader',
+        tool_call_ref: 'fixture-expired-readonly',
+        status: 'reported_complete',
+        summary,
+        output_digest: canonicalJsonDigest(summary),
+        evidence_refs: ['fixture:accepted-readonly'],
       },
-    ];
-    historical.items = [{ issue_id: null, observation: null }];
+      historicalWithCompletion = {
+        ...historical,
+        items: historical.items.slice(1),
+        completed: [
+          ...historical.completed,
+          {
+            step_id: 'fixture-accepted-readonly',
+            items: [{ ...priorItem, issue_id: issueId, observation }],
+          },
+        ],
+      };
     f.database
       .query('UPDATE agent_host_mastra_session_ledger SET revision=2,payload=?,digest=? WHERE work_id=?')
-      .run(canonicalJson(historical), canonicalJsonDigest(historical), 'old');
+      .run(canonicalJson(historicalWithCompletion), canonicalJsonDigest(historicalWithCompletion), 'old');
     const work = initial.host.work,
       lease = requireWorkLease(work),
       journal = f.store.readWorkSessionJournal({
@@ -1160,9 +1177,11 @@ test('expired real execution-only admission rebinds only its owned execution res
       });
       assertCompleteHostSnapshot(recovered);
       expect(requireHostLedger(recovered).rebinds.at(-1)?.resources).toEqual(['execution:old']);
-      expect(requireHostLedger(recovered).claims.filter((claim) => claim.status === 'active')[0]?.resources).toEqual([
-        'execution:old',
-      ]);
+      expect(
+        requireHostLedger(recovered)
+          .claims.filter((claim) => claim.status === 'active')
+          .map((claim) => claim.resources),
+      ).toEqual([['execution:old']]);
       expect(recovered.work.binding.allowed_resources).toEqual(work.binding.allowed_resources);
     } finally {
       Date.now = originalClock;
@@ -2057,13 +2076,18 @@ test('admission rejects forged foreign implementation paths before source snapsh
       integration = rawConfig.integrations.providers[0];
     if (!project || !integration) throw new Error('fixture config is missing project or integration');
     const foreignProject = {
-      ...project,
+      ...structuredClone(project),
       project_id: 'foreign',
       title: 'foreign',
       delivery_group: 'foreign',
       project_root: 'products/foreign',
     };
-    const foreignIntegration = { ...integration, id: 'local-foreign', project_id: 'foreign', namespace: 'foreign' };
+    const foreignIntegration = {
+      ...structuredClone(integration),
+      id: 'local-foreign',
+      project_id: 'foreign',
+      namespace: 'foreign',
+    };
     const changedConfig: AgentRuntimeConfig = {
       ...rawConfig,
       projects: [{ ...project, project_root: 'products' }, foreignProject],

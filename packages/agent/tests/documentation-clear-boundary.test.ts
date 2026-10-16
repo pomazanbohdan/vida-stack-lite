@@ -2,11 +2,13 @@ import { configuredTestContext } from './configured-context.ts';
 import { describe, expect, test } from 'bun:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createHash } from 'node:crypto';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as runtime from '../src/index.ts';
 import type { DocumentationClearCheckpoint, DocumentationClearInput } from '../src/documentation/clear.ts';
 import { documentationRelativePath } from '../src/documentation/policy.ts';
+import { expectAsyncReturned, expectReturned } from './helpers/expect-rejection.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
 const { repositoryRoot, config, context } = configuredTestContext();
@@ -31,7 +33,7 @@ function requiredProjectId(): string {
   if (!projectId) throw new Error('Configured test context has no project ID.');
   return projectId;
 }
-function documentationClearFixture(): DocumentationClearFixture {
+function documentationClearFixture(options: { readonly changelogRequired?: boolean } = {}): DocumentationClearFixture {
   const root = mkdtempSync(path.join(tmpdir(), 'vida-clear-zombies-'));
   const write = (relativePath: string, content: string): void => {
     const file = path.join(root, relativePath);
@@ -66,12 +68,13 @@ function documentationClearFixture(): DocumentationClearFixture {
     canonical_roots: ['docs/agent-instructions'],
     map_paths: ['docs/agent-instructions/index.md'],
     excluded_roots: ['.agent', '.planning'],
-    changelog_required: false,
-    changelog_path: null,
+    changelog_required: options.changelogRequired ?? false,
+    changelog_path: options.changelogRequired ? 'docs/agent-instructions/agent-instructions.changelog.jsonl' : null,
     relations: ['owns'],
     updated_at: new Date().toISOString(),
   };
   write(policy.source_path, JSON.stringify(policy) + '\n');
+  if (policy.changelog_required && policy.changelog_path) write(policy.changelog_path, '');
 
   write(
     `.agent/work/${input.work_id}/scope.json`,
@@ -295,6 +298,126 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
       expect(checkpoint.status).toBe('pass');
       expect(checkpoint.baseline_path).toBeNull();
       expect(checkpoint.documents.some((document) => document.path === fixture.input.scope_paths[0])).toBe(true);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('closeout accepts a real finalize event for a changed governed document', async () => {
+    const fixture = documentationClearFixture({ changelogRequired: true });
+    try {
+      const baselineResult = await expectAsyncReturned(() =>
+        runtime.executeDocumentationClearOperation(fixture.input, 'baseline'),
+      );
+      const baseline = readCheckpoint(path.join(fixture.root, baselineResult.path));
+      const before = 'current\n';
+      const after = 'current, revised\n';
+      fixture.write('docs/agent-instructions/current.md', after);
+      const digest = (content: string): string => createHash('sha256').update(content).digest('hex');
+      const event = {
+        schema: 'DocumentationChangeEvent/v1',
+        event_id: 'finalize-current-1',
+        logical_edit_id: 'finalize-current-1',
+        work_id: fixture.input.work_id,
+        source_revision: fixture.input.source_revision,
+        operation: 'finalize',
+        document_id: 'docs/agent-instructions/current.md',
+        path_before: 'docs/agent-instructions/current.md',
+        path_after: 'docs/agent-instructions/current.md',
+        before_sha256: digest(before),
+        after_sha256: digest(after),
+        actor: 'test:documentation-owner',
+        pointer: 'test:finalize-current-1',
+        timestamp: new Date().toISOString(),
+      };
+      fixture.write('docs/agent-instructions/agent-instructions.changelog.jsonl', JSON.stringify(event) + '\n');
+
+      const closeout = await expectAsyncReturned(() =>
+        runtime.executeDocumentationClearOperation(fixture.input, 'closeout'),
+      );
+      const checkpoint = readCheckpoint(path.join(fixture.root, closeout.path));
+      expect(checkpoint.status).toBe('pass');
+      expect(checkpoint.gaps).toEqual([]);
+      expect(checkpoint.baseline_digest).toBe(baseline.digest);
+      expect(expectReturned(() => runtime.validateDocumentationClearCheckpoint(checkpoint, fixture.input))).toEqual(
+        checkpoint,
+      );
+      expect(checkpoint.documents).toContainEqual({
+        path: 'docs/agent-instructions/current.md',
+        sha256: digest(after),
+        size: Buffer.byteLength(after),
+      });
+
+      const produced = expectReturned(() =>
+        runtime.produceDocumentationClearCheckpoint({
+          ...fixture.input,
+          phase: 'closeout',
+          baseline,
+          baseline_path: baselineResult.path,
+          cycle: 1,
+        }),
+      );
+      expect(produced).toMatchObject({
+        inventory_digest: checkpoint.inventory_digest,
+        documents: checkpoint.documents,
+        baseline_path: checkpoint.baseline_path,
+        baseline_digest: checkpoint.baseline_digest,
+        policy_id: checkpoint.policy_id,
+        policy_digest: checkpoint.policy_digest,
+        scope_digest: checkpoint.scope_digest,
+        status: checkpoint.status,
+        gaps: checkpoint.gaps,
+      });
+      expect(runtime.canonicalJsonDigest((({ digest: _digest, ...body }) => body)(produced))).toBe(produced.digest);
+      expect(runtime.validateDocumentationClearCheckpoint(produced, fixture.input)).toEqual(produced);
+    } finally {
+      fixture.cleanup();
+    }
+  });
+
+  test('closeout blocks a typed event from another source revision', async () => {
+    const fixture = documentationClearFixture({ changelogRequired: true });
+    try {
+      const baselineResult = await expectAsyncReturned(() =>
+        runtime.executeDocumentationClearOperation(fixture.input, 'baseline'),
+      );
+      const baseline = readCheckpoint(path.join(fixture.root, baselineResult.path));
+      const before = 'current\n';
+      const after = 'current, revised\n';
+      fixture.write('docs/agent-instructions/current.md', after);
+      const digest = (content: string): string => createHash('sha256').update(content).digest('hex');
+      fixture.write(
+        'docs/agent-instructions/agent-instructions.changelog.jsonl',
+        `${JSON.stringify({
+          schema: 'DocumentationChangeEvent/v1',
+          event_id: 'foreign-revision-finalize',
+          logical_edit_id: 'foreign-revision-finalize',
+          work_id: fixture.input.work_id,
+          source_revision: 'another-revision',
+          operation: 'finalize',
+          document_id: 'docs/agent-instructions/current.md',
+          path_before: 'docs/agent-instructions/current.md',
+          path_after: 'docs/agent-instructions/current.md',
+          before_sha256: digest(before),
+          after_sha256: digest(after),
+          actor: 'test:documentation-owner',
+          pointer: 'test:foreign-revision-finalize',
+          timestamp: new Date().toISOString(),
+        })}\n`,
+      );
+
+      const blocked = expectReturned(() =>
+        runtime.produceDocumentationClearCheckpoint({
+          ...fixture.input,
+          phase: 'closeout',
+          baseline,
+          baseline_path: baselineResult.path,
+          cycle: 1,
+        }),
+      );
+      expect(blocked.status).toBe('blocked');
+      expect(blocked.gaps).toContain('GAP-DOCUMENTATION-CHANGELOG-001');
+      expect(() => runtime.validateDocumentationClearCheckpoint(blocked, fixture.input)).toThrow(/not ready/);
     } finally {
       fixture.cleanup();
     }

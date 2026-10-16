@@ -329,6 +329,34 @@ test('direct initialization validates existing bindings and resumes the same pen
   }
 });
 
+test('repeated initialization accepts the complete configured multi-project set', async () => {
+  const projectRoot = await mkdtemp(path.join(tmpdir(), 'portable-runtime-init-multi-existing-'));
+  const request = {
+    projectRoot,
+    repository: 'different-repository',
+    projectMappings: ['beta=nested', 'alpha=.'],
+  } as const;
+  let completed = false;
+  try {
+    await mkdir(path.join(projectRoot, 'nested'));
+    const initialized = await expectAsyncReturned(() => initializeProjectFromBundle(request, source));
+    expect(initialized.status).toBe('initialized');
+    const configBytes = await readFile(path.join(projectRoot, 'agent-runtime.config.v1.yaml'));
+    const existing = await expectAsyncReturned(() => initializeProjectFromBundle(request, source));
+    expect(existing.status).toBe('existing');
+    expect(await readFile(path.join(projectRoot, 'agent-runtime.config.v1.yaml'))).toEqual(configBytes);
+    const config = parseRuntimeConfigYaml(configBytes.toString());
+    expect(config.projects.map(({ project_id, project_root }) => ({ project_id, project_root }))).toEqual([
+      { project_id: 'alpha', project_root: '.' },
+      { project_id: 'beta', project_root: 'nested' },
+    ]);
+    completed = true;
+  } finally {
+    if (completed) await rm(projectRoot, { recursive: true, force: true });
+    else console.error(`Retained failed init-core fixture: ${projectRoot}`);
+  }
+});
+
 v8CoverageTest(
   'explicit reconciliation adopts only complete matching existing integration files',
   async (budget) => {

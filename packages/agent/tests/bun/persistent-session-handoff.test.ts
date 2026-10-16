@@ -297,6 +297,7 @@ async function configuredFactoryFixture(name: string): Promise<string> {
 function combinedConstructorAndCloseFailure(
   repositoryRoot: string,
   factory: (repositoryRoot: string) => unknown,
+  closeFailure: unknown,
 ): void {
   const fixtureConfig = loadRuntimeConfig(repositoryRoot);
   const fixtureWorkspaceId = deriveWorkspaceId(fixtureConfig.repository.repository_id, repositoryRoot);
@@ -304,7 +305,6 @@ function combinedConstructorAndCloseFailure(
   const originalClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
   const admittedDatabases: Database[] = [];
   let constructorError: Error | undefined;
-  let closeError: Error | undefined;
   let synchronousFullCount = 0;
   const order: string[] = [];
   const nativeCloseReceivers: Database[] = [];
@@ -328,10 +328,9 @@ function combinedConstructorAndCloseFailure(
   const observedClose = function (this: Database, throwOnError?: boolean) {
     if (this === admittedDatabases[0]) {
       nativeCloseReceivers.push(this);
-      closeError ??= new Error('injected native admitted database close failure');
       if (nativeCloseReceivers.length <= 2) {
         if (nativeCloseReceivers.length === 1) order.push('close');
-        throw closeError;
+        throw closeFailure;
       }
     }
     return originalClose.call(this, throwOnError);
@@ -348,13 +347,13 @@ function combinedConstructorAndCloseFailure(
     Database.prototype.exec = originalExec;
   }
   let assertionError: unknown;
+  let hasAssertionError = false;
   let retrySucceeded = false;
   try {
     const admittedDatabase = admittedDatabases[0];
     expect(admittedDatabase).toBeDefined();
     if (admittedDatabase === undefined) throw new Error('configured factory did not open its admitted source');
     expect(constructorError).toBeDefined();
-    expect(closeError).toBeDefined();
     expect(caught).toBeInstanceOf(AggregateError);
     const aggregate = caught as AggregateError;
     const originalCauses = (error: unknown): unknown[] =>
@@ -362,10 +361,11 @@ function combinedConstructorAndCloseFailure(
     const causes = originalCauses(aggregate);
     expect(causes).toHaveLength(2);
     expect(causes[0]).toBe(constructorError);
-    expect(causes[1]).toBe(closeError);
+    expect(causes[1]).toBe(closeFailure);
     expect(order).toEqual(['constructor', 'close']);
     expect(nativeCloseReceivers).toEqual([admittedDatabase]);
 
+    let contenderFailed = false;
     let contenderError: unknown;
     try {
       openHostStateDatabase(
@@ -374,12 +374,16 @@ function combinedConstructorAndCloseFailure(
         fixtureWorkspaceId,
       );
     } catch (error) {
+      contenderFailed = true;
       contenderError = error;
     }
-    expect(contenderError).toBeDefined();
+    expect(contenderFailed).toBe(true);
+    expect(contenderError).toBeInstanceOf(AggregateError);
+    expect(originalCauses(contenderError)).toEqual([closeFailure]);
     expect(nativeCloseReceivers).toEqual([admittedDatabase, admittedDatabase]);
   } catch (error) {
     assertionError = error;
+    hasAssertionError = true;
   } finally {
     Database.prototype.close = originalClose;
     try {
@@ -387,10 +391,13 @@ function combinedConstructorAndCloseFailure(
       retrySucceeded = true;
     } catch (error) {
       retainScratch = true;
-      assertionError ??= error;
+      if (!hasAssertionError) {
+        assertionError = error;
+        hasAssertionError = true;
+      }
     }
   }
-  if (assertionError !== undefined) throw assertionError;
+  if (hasAssertionError) throw assertionError;
   expect(retrySucceeded).toBe(true);
   const admittedDatabase = admittedDatabases[0];
   if (admittedDatabase === undefined) throw new Error('configured factory did not retain its admitted source');
@@ -405,14 +412,19 @@ describe('persistent advisory session handoff', () => {
   });
 
   test.each([
-    ['handoff store', openConfiguredSessionHandoffStore],
-    ['Mastra ledger', openConfiguredMastraSessionLedger],
-  ] as const)('preserves constructor and close failures for the configured %s factory', async (name, factory) => {
-    const repositoryRoot = await configuredFactoryFixture(name.replaceAll(' ', '-'));
-    retainScratch = true;
-    combinedConstructorAndCloseFailure(repositoryRoot, factory);
-    retainScratch = false;
-  });
+    ['handoff store', openConfiguredSessionHandoffStore, new Error('injected native admitted database close failure')],
+    ['Mastra ledger', openConfiguredMastraSessionLedger, new Error('injected native admitted database close failure')],
+    ['handoff store when close throws undefined', openConfiguredSessionHandoffStore, undefined],
+    ['Mastra ledger when close throws undefined', openConfiguredMastraSessionLedger, undefined],
+  ] as const)(
+    'preserves constructor and close failures for the configured %s factory',
+    async (name, factory, closeFailure) => {
+      const repositoryRoot = await configuredFactoryFixture(name.replaceAll(' ', '-'));
+      retainScratch = true;
+      combinedConstructorAndCloseFailure(repositoryRoot, factory, closeFailure);
+      retainScratch = false;
+    },
+  );
 
   test.each(flows)('persists issue and report barriers for %s', async (workflow, kind, intent) => {
     scratch = await mkdtemp(path.join(tmpdir(), 'session-state-'));

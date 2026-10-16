@@ -19,7 +19,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { expectReturned } from '../helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectReturned } from '../helpers/expect-rejection.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 type Mutable<T> = T extends readonly (infer Item)[]
@@ -245,8 +245,8 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         source_revision: 'source-1',
         scope_paths: ['src/task.ts'],
       };
-      await executeDocumentationClearOperation(clearInput, 'baseline');
-      const clearResult = await executeDocumentationClearOperation(clearInput, 'closeout');
+      await expectAsyncReturned(() => executeDocumentationClearOperation(clearInput, 'baseline'));
+      const clearResult = await expectAsyncReturned(() => executeDocumentationClearOperation(clearInput, 'closeout'));
       const clearContext: DocumentationVerificationContext = {
         repository_root: fixture.root,
         repository_id: clearInput.repository_id,
@@ -1270,8 +1270,8 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
         source_revision: 'source-1',
         scope_paths: ['src/task.ts'],
       };
-      await executeDocumentationClearOperation(clearInput, 'baseline');
-      const firstClear = await executeDocumentationClearOperation(clearInput, 'closeout');
+      await expectAsyncReturned(() => executeDocumentationClearOperation(clearInput, 'baseline'));
+      const firstClear = await expectAsyncReturned(() => executeDocumentationClearOperation(clearInput, 'closeout'));
       const firstRecordId = clearRecordId(readFileSync(path.join(fixture.root, firstClear.path), 'utf8'));
       work = samePhase(work, (next) => {
         next.lifecycle.assurance.review_generation = 1;
@@ -1337,8 +1337,8 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       );
       expect(verifiedAgain).not.toBeNull();
       expect(typeof verifiedAgain).toBe('object');
-      await executeDocumentationClearOperation(clearInput, 'baseline');
-      const secondClear = await executeDocumentationClearOperation(clearInput, 'closeout');
+      await expectAsyncReturned(() => executeDocumentationClearOperation(clearInput, 'baseline'));
+      const secondClear = await expectAsyncReturned(() => executeDocumentationClearOperation(clearInput, 'closeout'));
       expect(secondClear.path).toContain('documentation-closeout-0002.v1.json');
       const secondRecordId = clearRecordId(readFileSync(path.join(fixture.root, secondClear.path), 'utf8'));
       const secondFingerprint = hash('f');

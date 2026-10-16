@@ -816,10 +816,9 @@ test.each([false, true])(
         const forwardDir = path.join(root, '.agent', 'cutover', forwardId);
         const manifestSha = (value: unknown) => createHash('sha256').update(record(value)).digest('hex');
         const beforeDenied = readOwnerSnapshot();
-        await Promise.resolve(
-          expect(run([...continuing, ...expected(pausedVersion), '--issue-wave', 'true'])).rejects.toThrow(
-            'Admitted runtime code changed',
-          ),
+        await expectRejection(
+          run([...continuing, ...expected(pausedVersion), '--issue-wave', 'true']),
+          'Admitted runtime code changed',
         );
         expect(currentJournalVersion(activeLedger, workId, 'Paused journal version')).toEqual(pausedVersion);
         expect(readOwnerSnapshot().workVersion).toEqual(beforeDenied.workVersion);
@@ -875,10 +874,9 @@ test.each([false, true])(
         ];
         const selectorFile = path.join(root, '.agent', 'active-runtime-selector.v1.json');
         writeFileSync(selectorFile, record({ payload_manifest_sha256: '0'.repeat(64) }));
-        await Promise.resolve(
-          expect(runReconcileArtifacts(['--mode', 'inspect', ...rebind])).rejects.toThrow(
-            'installed forward lineage or selector differs',
-          ),
+        await expectRejection(
+          runReconcileArtifacts(['--mode', 'inspect', ...rebind]),
+          'installed forward lineage or selector differs',
         );
         writeFileSync(selectorFile, record({ payload_manifest_sha256: manifestSha(successorManifest) }));
         pauseFixtureOwner('after-forward');
@@ -937,10 +935,9 @@ test.each([false, true])(
         expect(requireString(persistedTamperBody.prior_issue_id, 'Persisted forged prior issue ID')).toBe(
           'forged-prior-issue',
         );
-        await Promise.resolve(
-          expect(runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)])).rejects.toThrow(
-            'current owner, journal or issued replacement differs',
-          ),
+        await expectRejection(
+          runReconcileArtifacts(['--mode', 'apply', ...rebind.slice(0, 6)]),
+          'current owner, journal or issued replacement differs',
         );
         expect(readOwnerSnapshot().workVersion).toEqual(stateBeforeTamper.workVersion);
         expect(readOwnerSnapshot().ledgerVersion).toEqual(stateBeforeTamper.ledgerVersion);
@@ -1057,9 +1054,7 @@ test.each([false, true])(
         'instruction-activation-history.jsonl',
       );
       const historyBeforeReplay = readFileSync(historyPath, 'utf8');
-      await Promise.resolve(
-        expect(report(current.state_version, observationFor(at(original, 1, 'original action'), 1))).rejects.toThrow(),
-      );
+      await expectRejection(report(current.state_version, observationFor(at(original, 1, 'original action'), 1)));
       expect(currentJournalVersion(activeLedger, workId, 'Current journal version')).toEqual(current.state_version);
       const reissued = await run([...continuing, ...expected(current.state_version), '--issue-wave', 'true']);
       const retriedAction = at(reissued.issued_actions, 0, 'retried action');

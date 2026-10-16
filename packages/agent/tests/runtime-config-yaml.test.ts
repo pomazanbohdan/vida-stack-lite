@@ -1635,15 +1635,18 @@ describe('final v1 artifact contracts', () => {
       config,
       JSON.stringify({
         outer: { client_secret: 'nested-secret', deeper: { authorization: 'nested-token' } },
+        entries: [{ api_key: 'array-secret', safe: 'array-visible' }],
         safe: 'visible',
       }),
     );
     expect(JSON.parse(nestedDiagnostic)).toEqual({
       outer: { client_secret: '[REDACTED]', deeper: { authorization: '[REDACTED]' } },
+      entries: [{ api_key: '[REDACTED]', safe: 'array-visible' }],
       safe: 'visible',
     });
     expect(nestedDiagnostic).not.toContain('nested-secret');
     expect(nestedDiagnostic).not.toContain('nested-token');
+    expect(nestedDiagnostic).not.toContain('array-secret');
     const encodedNestedDiagnostic = sanitizeDiagnostic(
       config,
       JSON.stringify({
@@ -1894,6 +1897,16 @@ describe('final v1 artifact contracts', () => {
       changed_paths: ['agent-runtime.config.v1.yaml', 'agent-runtime-new/src/orchestration/mastra-boundary.ts'],
       test_refs: ['bun test tests/runtime-config-yaml.test.ts'],
     });
+    expect(() =>
+      buildImplementationResult(packet, {
+        result_id: 'implementation-result-invalid-path',
+        packet_id: packetId,
+        source_revision: packet.source_revision,
+        implementation_fingerprint: fingerprint,
+        changed_paths: [42] as unknown as string[],
+        test_refs: ['bun test tests/runtime-config-yaml.test.ts'],
+      }),
+    ).toThrow(/owned paths must contain non-empty values/i);
     const testerInstruction = buildTesterInstruction(packet, 'test-instruction-1', fingerprint);
     const validators = ['correctness-validator', 'requirements-validator', 'security-data-validator'].map(
       (role, index) =>
@@ -2134,8 +2147,26 @@ describe('final v1 artifact contracts', () => {
     ).toBe('DeliveryInstruction/v1');
   });
 });
-async function configuredMastraUnitExecutionFixture(failAssignments: boolean) {
-  const root = await fixtureRoot();
+async function configuredMastraUnitExecutionFixture(failAssignments: boolean, includeOptionalRiskStage = false) {
+  let yaml = authorityText;
+  if (includeOptionalRiskStage) {
+    const config = mutableClone(parseRuntimeConfigYaml(authorityText));
+    const workflow = required(config.workflows.information_research_light, 'research workflow');
+    const researchStage = required(
+      workflow.stages.find((stage) => stage.id === 'research_parallel'),
+      'parallel research stage',
+    );
+    const optionalStageId = 'optional_security_research';
+    workflow.stages.push({
+      ...structuredClone(researchStage),
+      id: optionalStageId,
+      required_after: ['research_parallel'],
+      risk_flags: ['security'],
+    });
+    workflow.edges.push(['research_parallel', optionalStageId]);
+    yaml = stringifyYaml(config, { lineWidth: 0 });
+  }
+  const root = await fixtureRoot(yaml);
   const config = loadRuntimeConfig(root);
   const projectIds = config.projects.map((project) => project.project_id).sort();
   const projectId = projectIds[0];
@@ -2244,7 +2275,7 @@ async function configuredMastraUnitExecutionFixture(failAssignments: boolean) {
 }
 
 test('public Mastra dispatch executes configured research branches through the typed unit adapter', async () => {
-  const fixture = await configuredMastraUnitExecutionFixture(false);
+  const fixture = await configuredMastraUnitExecutionFixture(false, true);
   const result = await expectAsyncReturned(() => fixture.graph.dispatch(fixture.workItem.id));
   expect(result.workflowId).toBe('information_research_light');
   expect(result.failedAssignments).toEqual([]);
@@ -2254,6 +2285,15 @@ test('public Mastra dispatch executes configured research branches through the t
     'platform-researcher',
   ]);
   expect(result.stageOutputs.synthesize_research?.map((output) => output.role)).toEqual(['research-synthesizer']);
+  expect(result.stageOutputs.optional_security_research).toEqual([]);
+  for (const output of [
+    ...(result.stageOutputs.research_parallel ?? []),
+    ...(result.stageOutputs.synthesize_research ?? []),
+  ]) {
+    expect(output.output).toEqual({ observed: output.role });
+    expect(output.outputDigest).toBe(canonicalJsonDigest(output.output));
+    expect(Object.isFrozen(output.output)).toBe(true);
+  }
   expect(fixture.dispatchedRoles.slice().sort()).toEqual([
     'code-researcher',
     'documentation-researcher',

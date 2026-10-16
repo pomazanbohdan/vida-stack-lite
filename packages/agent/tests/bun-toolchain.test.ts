@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  realpathSync,
   readdirSync,
   rmSync,
   symlinkSync,
@@ -25,6 +26,8 @@ import {
   pinnedEnvironment,
   readPin,
   runPinnedBun,
+  standaloneEnvironment,
+  standaloneRuntime,
   syncPin,
 } from '../bin/bun.ts';
 import { coverageReviewEnvironmentSha256, coverageEnvironmentSha256 } from '../tooling/bun-coverage-evidence.ts';
@@ -106,6 +109,109 @@ test('one pin owns the checked package metadata', () => {
   assert.match(pin, /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/);
   assert.equal(Bun.version, pin, 'toolchain tests must run under the selected pinned Bun');
   assert.doesNotThrow(() => checkManifest(path.resolve(import.meta.dirname, '..'), pin));
+});
+
+test('embedded runtime markers select one package root and strip loader options before wrapper dispatch', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'runtime-bun-embedded-'));
+  temporaryRoots.add(root);
+  const pin = expectReturned(() => readPin());
+  writeFileSync(path.join(root, '.bun-version'), `${pin}\n`);
+  writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({ name: 'vida-agent', packageManager: `bun@${pin}`, engines: { bun: pin } }),
+  );
+  const env: NodeJS.ProcessEnv = {
+    PATH: 'caller-path',
+    NODE_OPTIONS: '--require caller-loader',
+    bUn_OpTiOnS: '--preload caller-loader',
+    BUN_BE_BUN: '1',
+    VIDA_STANDALONE_ROOT: root,
+    VIDA_STANDALONE_EXECUTABLE: process.execPath,
+    FIXTURE_VALUE: 'retained',
+  };
+  const before = { ...env };
+  const selected = expectReturned(() => standaloneRuntime(env));
+  assert.deepEqual(selected, { root, executable: realpathSync(process.execPath) });
+
+  const childCalls: LauncherCall[] = [];
+  const exit = expectReturned(() =>
+    runPinnedBun(['--version'], {
+      env,
+      spawn(command, argv, options) {
+        childCalls.push({ command, argv, options });
+        return { status: 23, signal: null };
+      },
+    }),
+  );
+
+  assert.equal(exit, 23);
+  assert.equal(childCalls.length, 1, 'embedded dispatch must not probe PATH, Node, npm, or another runtime');
+  const child = childCalls[0];
+  assert.ok(child);
+  assert.equal(child.command, realpathSync(process.execPath));
+  assert.deepEqual(child.argv, [
+    '--no-env-file',
+    '--no-install',
+    '--config=' + path.join(root, 'bunfig.toml'),
+    '--version',
+  ]);
+  assert.equal(child.options.env?.NODE_OPTIONS, undefined);
+  assert.equal(child.options.env?.bUn_OpTiOnS, undefined);
+  assert.equal(child.options.env?.BUN_BE_BUN, '1');
+  assert.equal(child.options.env?.FIXTURE_VALUE, 'retained');
+  assert.deepEqual(env, before, 'loader removal must not mutate the caller environment');
+  const clean = expectReturned(() => standaloneEnvironment(env));
+  assert.equal(clean.NODE_OPTIONS, undefined);
+  assert.equal(clean.bUn_OpTiOnS, undefined);
+  assert.equal(clean.BUN_BE_BUN, '1');
+  assert.equal(clean.FIXTURE_VALUE, 'retained');
+});
+
+test('embedded runtime rejects partial or mismatched selectors before spawning', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'runtime-bun-embedded-invalid-'));
+  temporaryRoots.add(root);
+  const pin = expectReturned(() => readPin());
+  writeFileSync(path.join(root, '.bun-version'), `${pin}\n`);
+  writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({ name: 'vida-agent', packageManager: `bun@${pin}`, engines: { bun: pin } }),
+  );
+  const differentExecutable = path.join(root, 'other-bun');
+  writeFileSync(differentExecutable, 'different executable identity');
+  const valid: NodeJS.ProcessEnv = {
+    BUN_BE_BUN: '1',
+    VIDA_STANDALONE_ROOT: root,
+    VIDA_STANDALONE_EXECUTABLE: process.execPath,
+  };
+  const invalid: Array<[string, NodeJS.ProcessEnv]> = [
+    ['missing runtime flag', { ...valid, BUN_BE_BUN: '0' }],
+    ['noncanonical root', { ...valid, VIDA_STANDALONE_ROOT: root + path.sep + '..' + path.sep + path.basename(root) }],
+    ['different executable', { ...valid, VIDA_STANDALONE_EXECUTABLE: differentExecutable }],
+    ['partial markers', { BUN_BE_BUN: '1', VIDA_STANDALONE_ROOT: root }],
+  ];
+  for (const [label, env] of invalid) {
+    assert.throws(
+      () =>
+        runPinnedBun([], {
+          env,
+          spawn: () => assert.fail(`${label} must fail before a child launch`),
+        }),
+      /Embedded runtime markers do not match/,
+      label,
+    );
+  }
+  writeFileSync(
+    path.join(root, 'package.json'),
+    JSON.stringify({ name: 'another-package', packageManager: `bun@${pin}`, engines: { bun: pin } }),
+  );
+  assert.throws(
+    () =>
+      runPinnedBun([], {
+        env: valid,
+        spawn: () => assert.fail('foreign embedded package identity must fail before a child launch'),
+      }),
+    /Embedded package identity differs/,
+  );
 });
 
 test('explicit synchronization preserves other settings and is idempotent', () => {

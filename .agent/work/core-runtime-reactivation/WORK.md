@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published parent of this repair packet: `6feac496f4a3384f0a3a1af4b9592545e0d7c009`; the original checkout fast-forwarded after campaign termination. The current packet is identified by its Git checkpoint. Source, formation, installation and Runtime acceptance are distinct states.
+- Published parent of this prepared repair packet: `a4b5b0c0317f1410e3f81cf73f47f9f756ee300f`; the active campaign's original checkout remains at `57353f9`. Root preserves this unqualified candidate in the separate repair branch. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,57 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+Campaign `f9ae7d6d-65a8-4823-8038-50d0540ba304` is active against the clean
+`57353f91b54806f5075801856729bf3e3e9fa6fe` checkout. Root retains its unchanged
+HEAD, index and measured inputs. Its main CI SDK artifact was admitted before
+launch; durable stage scratch passed the unchanged capacity guard. Current
+outcomes are not imported until the producer is terminal. Historical closure
+counts remain in the automatic projection and are not current-source claims.
+
+The next isolated repair batch addresses the actual controller child temporary
+directory denial, initialization and toolchain coverage gaps, and the absorption
+fixture's forbidden YAML anchors. Each contour has one blind native Luna writer;
+a fifth read-only lane examines the commit/publication freshness loop using
+existing evidence owners. Root reviews prepared Mastra assertions and runtime-code
+rejection attribution separately. Config activation and core fixture timing
+remain OPEN pending phase evidence; static inspection did not justify removing
+real preparation or increasing their deadlines. The prepared upgrade split is
+also OPEN until selection, hook teardown and actual focused sharding are qualified.
+
+The prepared next batch now contains test changes for ten contours: Mastra,
+runtime-code rebind, public entrypoints, toolchain, initialization, documentation
+CLEAR, persistent session handoff, existing-storage image, lifecycle state and
+CLI initialization. These are authored candidates, not additional closures.
+Root reviewed the diffs and corrected fresh-module error-constructor identity,
+the per-call access-factory fault target and timestamp-dependent checkpoint
+digest comparisons. The absorption fixtures now avoid YAML alias identity and
+retain required ledger request/observation fields. Constructor/close fault cases
+include thrown `undefined` without losing the first failure or retained custody.
+No product Source, schema/loader selection, timeout or quality threshold changed.
+Behavioral controls and all numerical gates remain pending the current campaign's
+terminal custody; static checks alone do not qualify these candidates.
+
+The controller environment hypothesis was rejected: the inspected child chain
+already preserves both temporary-directory variables. Bun's versioned installer
+source also uses its cache for temp-file creation/rename, so the observed EROFS
+does not prove a missing variable. No speculative allowlist change was retained.
+Governance/public inspection produced no supported missing-behavior patch. The
+publication-only logical-commit suggestion remains unaccepted until SDK/runtime,
+environment and custody input compatibility can be proved by existing owners;
+historical triples are never promoted merely by ignoring a commit difference.
+
+Blind contour reviews additionally required validation of the saved CLEAR
+checkpoint, the complete active-claim set, and the exact pending-close cause
+before a contender can open. Root applied those assertions. The retained-close
+case proves the cleanup fence rather than an independently reached admission
+lease gate. A Mastra review's measurement-gap suggestion was rejected after the
+actual existing function map located the unexecuted empty-stage adapter at
+`mastra-boundary.ts:1623`; an optional risk-filtered stage fixture is prepared
+instead of relabeling that counter. Its public dispatch output must still be
+verified. Prepared worker-contract launches
+were corrected to use their executable entrypoint and verified nonempty output;
+the earlier empty files are not accepted preparation receipts.
 
 The current user instruction selects an explicit all/unclosed contour campaign
 with useful isolated repair preparation in parallel. `bun run test:contours --all|--unclosed [--plan]`

@@ -333,6 +333,40 @@ test('actual direct run help completes from its metadata-only closure', () => {
   assert.equal(existsSync(path.join(parent, '.vida')), false);
 });
 
+test('actual Bun wrapper routes embedded markers to the selected root and cache namespace', () => {
+  const { root, parent } = realCopy();
+  const program = `console.log(JSON.stringify({
+  runtime: process.versions.bun,
+  root: process.env.VIDA_STANDALONE_ROOT,
+  executable: process.env.VIDA_STANDALONE_EXECUTABLE,
+  cache: process.env.BUN_RUNTIME_TRANSPILER_CACHE_PATH
+}));`;
+  const result = spawnSync(process.execPath, [path.join(root, 'bin/bun.ts'), '-e', program], {
+    cwd: parent,
+    env: {
+      ...cleanEnv(),
+      BUN_BE_BUN: '1',
+      VIDA_STANDALONE_ROOT: root,
+      VIDA_STANDALONE_EXECUTABLE: process.execPath,
+    },
+    encoding: 'utf8',
+    windowsHide: true,
+    timeout: 4000,
+  });
+  assert.equal(result.error, undefined);
+  assert.equal(result.signal, null);
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, '');
+  assert.ok(typeof result.stdout === 'string');
+  assert.ok(result.stdout.endsWith('\n'), 'embedded child must complete its JSON output line');
+  const child: unknown = JSON.parse(result.stdout.slice(0, -1));
+  assert.ok(typeof child === 'object' && child !== null && !Array.isArray(child));
+  assert.equal(Reflect.get(child, 'runtime'), pin);
+  assert.equal(Reflect.get(child, 'root'), root);
+  assert.equal(Reflect.get(child, 'executable'), process.execPath);
+  assert.equal(Reflect.get(child, 'cache'), expectedCache(root));
+});
+
 test('imported run entrypoint leaves cache selection and execution untouched', () => {
   const { root, parent } = realCopy();
   const moduleUrl = pathToFileURL(path.join(root, 'bin/run.ts')).href;

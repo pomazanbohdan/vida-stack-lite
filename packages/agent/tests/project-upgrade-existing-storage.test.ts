@@ -39,6 +39,11 @@ function makeHost(sequenceValue: bigint | number | string = 9007199254740993n): 
     insert.run('same-group', 9007199254740995n, Buffer.from([255, 128, 127, 1, 0]));
     database.query('DELETE FROM merge_sequence_fixture WHERE id=3').run();
     database.query("UPDATE sqlite_sequence SET seq=? WHERE name='merge_sequence_fixture'").run(sequenceValue);
+    database.exec(
+      'CREATE TABLE merge_sequence_secondary_fixture(id INTEGER PRIMARY KEY AUTOINCREMENT, label TEXT NOT NULL)',
+    );
+    database.query('INSERT INTO merge_sequence_secondary_fixture(label) VALUES(?)').run('secondary-sequence');
+    database.query("UPDATE sqlite_sequence SET seq=? WHERE name='merge_sequence_secondary_fixture'").run(41);
     return closedImage(database);
   } finally {
     database.close(true);
@@ -252,6 +257,16 @@ function preserveMergeFixture(merged: Database): void {
       .query<{ seq: number | bigint }, []>("SELECT seq FROM sqlite_sequence WHERE name='merge_sequence_fixture'")
       .get()?.seq,
   ).toBe(9007199254740993n);
+  expect(
+    merged
+      .query<{ seq: number | bigint }, []>(
+        "SELECT seq FROM sqlite_sequence WHERE name='merge_sequence_secondary_fixture'",
+      )
+      .get()?.seq,
+  ).toBe(41n);
+  expect(merged.query<{ label: string }, []>('SELECT label FROM merge_sequence_secondary_fixture').get()?.label).toBe(
+    'secondary-sequence',
+  );
   const thread = merged
     .query<{ id: string; title: string; resourceId: string }, [string]>(
       'SELECT id,title,"resourceId" FROM mastra_threads WHERE id=?',
