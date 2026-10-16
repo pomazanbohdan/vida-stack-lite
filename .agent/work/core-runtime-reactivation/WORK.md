@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `630ae8d9fdebdd557957c6f749e88d602e125872`. Its focused coverage recheck is terminal; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `e830919cb4506efa40bb543a1e354778f747b155`. Its native mutation pilot is terminal UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,41 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+The first native execution pilot binds publishede830919 and official SDK
+run38910689053/attempt1/artifact12050376525, ZIP digest
+`sha256:b8147f4ad07bc07b337f0509720711ddd134bb235836a8dfe19b841e8970dee5`.
+It is terminal UNKNOWN before any test/mutant runs: descriptor checks passed,
+but nested Bun spawn returnedEACCES. Original baseline, launcher, image and
+terminal error remain at
+`packages/agent/.tmp/mutation-batch-9a67d6fa-be02-4676-9e17-39214a539bd5-k1nGIB/`.
+Outer owner `native-mutation-pilot-e830919-o9blJa` closed with complete captures,
+group termination and unchanged boot in1963.377744ms. This is not Killed.
+
+Two fresh inert probes reproduced the exact missing-device cause: root bind
+alone denies `/dev/null` and nested spawn; adding official bwrap `/dev` and
+`/proc` mounts succeeds. Regression `Uoz0s9` fails against the same old command;
+`urfSNF` passes nested Bun spawn, real Source-write denial and private scratch
+write through the corrected shared builder. Other maintained bwrap construction
+was inspected and already supplies these mounts. No old UNKNOWN execution was
+replayed. The next packet also reuses the existing integer execution-budget owner;
+capture/generation/baseline spend the first900s allowance, rather than adding
+another baseline allowance or launching with fractional milliseconds.
+
+Two inactiveca68prepared worktrees had no untracked or ignored data. Their
+working/index bytes and binary patches were verified under permanent Git refs
+before ordinary removal. Exact custody receipt:
+`/workspace/attachments/inactive-native-batch-capacity-retention-20261016.json`.
+Observed free storage rose2,150,146,048->2,233,700,352bytes. No failed/UNKNOWN
+runtime fixture, original pilot, installed dependency or active writer was removed.
+
+Corrected seven-file control `SKBAq4` passes156/0tests,650assertions in1474ms
+with complete captures/closed group/same boot. Tooling188files and tests467files
+pass strict typecheck; scoped lint has zero diagnostics and documentation checks
+pass. The first tests-typecheck command used the wrong root and failed before
+reading any files; its log is retained, and the package-cwd checked log records
+the actual467-file result. The next fresh pilot remains pending publication and
+matching SDK preparation; the failed e830919 image is not reused for execution.
 
 The next packet implements the ID-batch pilot behind an explicit diagnostic CLI;
 it does not switch ordinary mutation admission. `MutationGeneratedUniverse/v1`

@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { checkManifest, readPin } from '../bin/bun.ts';
+import { checkManifest, executionBudget, readPin } from '../bin/bun.ts';
 import {
   qualityInputs,
   qualityFingerprint,
@@ -56,8 +56,48 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
   };
 }
 
+export function nativeMutationBatchCommand(
+  bwrap: string,
+  directory: string,
+  sandbox: string,
+  sandboxTmp: string,
+  executable: string,
+): string[] {
+  return [
+    bwrap,
+    '--die-with-parent',
+    '--ro-bind',
+    '/',
+    '/',
+    '--proc',
+    '/proc',
+    '--dev',
+    '/dev',
+    '--bind',
+    '/tmp',
+    '/tmp',
+    '--bind',
+    directory,
+    directory,
+    '--ro-bind',
+    sandbox,
+    sandbox,
+    '--bind',
+    sandboxTmp,
+    sandboxTmp,
+    '--chdir',
+    sandbox,
+    executable,
+    '--no-env-file',
+    '--no-install',
+    'tooling/mutation-command-runner.ts',
+  ];
+}
+
 /** Bounded diagnostic only; ordinary gate selection and global admission stay unchanged. */
 async function runMutationBatchPilot(root: string, args: readonly string[]): Promise<void> {
+  const pilotStarted = performance.now();
+  const firstBudget = executionBudget(mutationLimits.partitionMs, 0);
   const { partition, batchSize, maxBatches } = selectMutationBatchPilot(args, mutationPartitions());
   const pin = readPin(root);
   checkManifest(root, pin);
@@ -159,31 +199,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       });
     const identity = await parentIdentity();
     const context = { identity, hookFiles: testFilesWithLifecycleHooks(tests, inputs.input_bytes) };
-    const command = [
-      bwrap,
-      '--die-with-parent',
-      '--ro-bind',
-      '/',
-      '/',
-      '--bind',
-      directory,
-      directory,
-      '--ro-bind',
-      sandbox,
-      sandbox,
-      '--bind',
-      sandboxTmp,
-      sandboxTmp,
-      '--bind',
-      '/tmp',
-      '/tmp',
-      '--chdir',
-      sandbox,
-      process.execPath,
-      '--no-env-file',
-      '--no-install',
-      'tooling/mutation-command-runner.ts',
-    ];
+    const command = nativeMutationBatchCommand(bwrap, directory, sandbox, sandboxTmp, process.execPath);
     const invoke = async (id: string | null, remaining: number, census?: readonly MutationJUnitCase[]) => {
       requireCampaignStorage(directory);
       const key = id === null ? 'dry-run' : sha256(id);
@@ -221,7 +237,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         census,
       );
     };
-    const baseline = await invoke(null, mutationLimits.dryRunEnvelopeMs);
+    const baseline = await invoke(null, firstBudget.remaining(mutationLimits.dryRunEnvelopeMs));
     record('baseline.json', baseline);
     if (baseline.status !== 'passed') throw new Error('Native mutation baseline is not a complete passing receipt.');
     const results: {
@@ -231,11 +247,18 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       reason?: string;
     }[] = [];
     for (const [index, batch] of plan.batches.slice(0, maxBatches).entries()) {
-      const started = performance.now();
+      const started = index === 0 ? pilotStarted : performance.now();
+      const budget = index === 0 ? firstBudget : executionBudget(mutationLimits.partitionMs, 0);
       const current: typeof results = [];
+      let budgetExhausted = false;
       for (const [offset, id] of batch.local_ids.entries()) {
-        const remaining = mutationLimits.partitionMs - (performance.now() - started);
-        if (remaining <= 0) break;
+        let remaining: number;
+        try {
+          remaining = budget.remaining();
+        } catch {
+          budgetExhausted = true;
+          break;
+        }
         const observed = await invoke(id, remaining, baseline.cases);
         const row = {
           identity: batch.identities[offset]!,
@@ -266,6 +289,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         index,
         elapsed_ms: performance.now() - started,
         complete: current.length === batch.identities.length,
+        budget_exhausted: budgetExhausted,
         results: current,
       });
       if (current.length !== batch.identities.length || current.some((row) => row.status === 'unknown')) break;

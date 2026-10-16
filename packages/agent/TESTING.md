@@ -1012,6 +1012,13 @@ and execution is serial in a private sandbox with read-only Source/test/tool fil
 and private writable scratch. The full declared test argv runs for each ID.
 Each selected batch has its own900s deadline; command/case limits remain with
 their existing owners. Storage admission reuses the unchanged2GiB campaign owner.
+The first batch includes capture, generation and baseline in that same allowance;
+use the existing integer execution-budget owner rather than subtracting floating
+clock values at launch. Nested bwrap includes fresh `/dev` and `/proc` mounts:
+binding `/` alone denies `/dev/null` and prevents Bun's own child spawn. Mount
+private `/tmp` before the sandbox's final read-only and writable-scratch bindings.
+The real inert control verifies nested spawn, denied Source writes and allowed
+private scratch writes; option-string inspection alone does not qualify it.
 Native receipts still require exact baseline census, process/output closure,
 input/executable/image bindings and body assertion proof. Errors, timeouts and
 unattempted IDs remain separate. Its generated universe, image and diagnostic
