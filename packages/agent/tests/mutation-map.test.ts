@@ -652,6 +652,22 @@ test('native partition proof rejects survivors, unknown or interrupted batches, 
   });
 });
 
+test('native partition proof requires launcher exits to agree with its admitted outcomes', () => {
+  for (const exitCode of [0, 2, null]) {
+    expectRejectedNativeProof((fixture) => {
+      const firstId = fixture.universe.mutants[0]!.local_id;
+      const receipt = fixture.evidence.receipts.get(firstId)!;
+      fixture.evidence.receipts.set(firstId, {
+        ...receipt,
+        launcher: { ...receipt.launcher, result: { ...receipt.launcher.result, exitCode } },
+      });
+    });
+  }
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.baseline.native_receipt.launcher.result.exitCode = 1;
+  });
+});
+
 test('native partition proof requires outer launcher output and process-group custody', () => {
   expectRejectedNativeProof((fixture) => {
     const firstId = fixture.universe.mutants[0]!.local_id;

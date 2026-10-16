@@ -7,9 +7,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { mkdtempSync, rmSync } from 'node:fs';
-import { computeWriteOperationHash } from '../src/index.ts';
+import { computeWriteOperationHash, type TrustedProjectIdentity } from '../src/contracts/public-ingress.ts';
 import { configuredTestContext } from './configured-context.ts';
-import type { TrustedProjectIdentity } from '../src/contracts/public-ingress.ts';
 import { defaultRuntimeClock, type RuntimeTimingEvent } from '../src/runtime-timing.ts';
 import { createRuntimeKernel, createRuntimeKernelHost } from '../src/runtime-kernel.ts';
 import type { RuntimeKernelHostBindings } from '../src/runtime-kernel.ts';
@@ -19,13 +18,10 @@ import { HostStateStore } from '../src/host-state.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
-const { repositoryRoot, context: project } = configuredTestContext();
 function required<T>(value: T | undefined, label: string): T {
   if (value === undefined) throw new Error(`Expected ${label}.`);
   return value;
 }
-
-const projectBinding = required(project.project_bindings[0], 'a configured project binding');
 
 function invokeUntrusted(
   target: (...args: never[]) => unknown,
@@ -36,20 +32,20 @@ function invokeUntrusted(
   return result;
 }
 
-function identity(): TrustedProjectIdentity {
-  return Object.freeze({
-    schema: 'TrustedProjectIdentity/v1',
-    source: 'authenticated-context',
-    principal: 'principal-1',
-    role: 'developer-orchestrator',
-    tenant: project.repository_id,
-    project: projectBinding.project_id,
-    registry_hash: project.registry_hash,
-  });
-}
-
 describe('direct maintained-source completeness', () => {
   test('runtime kernel composes issued hosts and exposes timed reads', async () => {
+    const { repositoryRoot, context: project } = configuredTestContext();
+    const projectBinding = required(project.project_bindings[0], 'a configured project binding');
+    const resolveIdentity = (): TrustedProjectIdentity =>
+      Object.freeze({
+        schema: 'TrustedProjectIdentity/v1',
+        source: 'authenticated-context',
+        principal: 'principal-1',
+        role: 'developer-orchestrator',
+        tenant: project.repository_id,
+        project: projectBinding.project_id,
+        registry_hash: project.registry_hash,
+      });
     expect(nativeNoFollowAvailable).toBe(true);
     const caseDeadline = performance.now() + 5_000;
     const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-kernel-host-'));
@@ -69,7 +65,7 @@ describe('direct maintained-source completeness', () => {
         projectIds: project.project_ids,
         integrationsDigest: project.integrations_digest,
         governanceCapability,
-        resolveIdentity: () => identity(),
+        resolveIdentity,
         verifyApproval: () => null,
         runtimeRevision: () => ({ sourceRevision: 'source-1', currentRevision: 1 }),
         casWriter: () => ({ applied: true }),
@@ -166,7 +162,7 @@ describe('direct maintained-source completeness', () => {
         projectIds: project.project_ids,
         integrationsDigest: project.integrations_digest,
         governanceCapability,
-        resolveIdentity: () => identity(),
+        resolveIdentity,
         verifyApproval: () => null,
         runtimeRevision: () => ({ sourceRevision: 'source-1', currentRevision: 1 }),
         casWriter: () => ({ applied: true }),

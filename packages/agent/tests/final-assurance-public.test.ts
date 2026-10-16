@@ -962,9 +962,9 @@ test('failed final correction preparation consumes persisted Host and CAS-bound 
     const authorityPath = path.join(f.root, execution.authorization.path),
       authorityBytes = readFileSync(authorityPath),
       persistedAuthority: unknown = JSON.parse(authorityBytes.toString('utf8')),
-      validateCurrentAuthority = (root?: string) =>
+      validateCurrentAuthority = (root?: string, current: WorkState = authorizedWork) =>
         validateWorkSessionBindingAndReturnCorrectiveAuthority(
-          authorizedWork,
+          current,
           {
             attempt: journal.attempt,
             run_id: journal.state.run_id,
@@ -1000,6 +1000,48 @@ test('failed final correction preparation consumes persisted Host and CAS-bound 
     expect(actualAuthority?.ledger_version).toEqual(prepared.ledgerVersion);
     expect(actualAuthority?.journal_version).toEqual(currentJournal.version);
     expect(() => validateCurrentAuthority()).toThrow('corrective session binding differs');
+
+    const withoutAuthority: WorkState = {
+      ...authorizedWork,
+      lifecycle: {
+        ...authorizedWork.lifecycle,
+        references: authorizedWork.lifecycle.references.filter(
+          (reference) =>
+            !(
+              reference.kind === 'correction_authorization' &&
+              reference.decision === 'approved' &&
+              reference.artifact_schema === execution.authorization.schema &&
+              reference.path === execution.authorization.path &&
+              reference.sha256 === execution.authorization.sha256
+            ),
+        ),
+      },
+    };
+    expect(() => validateCurrentAuthority(f.root, withoutAuthority)).toThrow(
+      'consumed Host correction authority missing',
+    );
+    expect(() =>
+      validateCurrentAuthority(f.root, {
+        ...authorizedWork,
+        binding: { ...authorizedWork.binding, scope_id: `${authorizedWork.binding.scope_id}-negative-control` },
+      }),
+    ).toThrow('corrective authority contract differs');
+    const foreignPath = `${authorizedWork.lifecycle.scope.allowed_paths[0]}.foreign`;
+    expect(authorizedWork.lifecycle.scope.allowed_paths).not.toContain(foreignPath);
+    expect(() =>
+      validateCurrentAuthority(f.root, {
+        ...authorizedWork,
+        lifecycle: {
+          ...authorizedWork.lifecycle,
+          scope: {
+            ...authorizedWork.lifecycle.scope,
+            allowed_paths: [...authorizedWork.lifecycle.scope.allowed_paths, foreignPath],
+          },
+        },
+      }),
+    ).toThrow('corrective authority contract differs');
+    assert.deepEqual(validateCurrentAuthority(f.root), persistedAuthority);
+    expect(readFileSync(authorityPath)).toEqual(authorityBytes);
 
     let tamperFailed = false;
     let tamperFailure: unknown;

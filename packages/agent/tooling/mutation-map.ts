@@ -414,11 +414,7 @@ function validateNativeMutationReceipt(
     value.launcher.result.processCustody?.scope !== 'owned-process-group' ||
     value.launcher.result.processCustody.terminationObserved !== true ||
     value.launcher.result.processCustody?.processGroupTerminationObserved !== true ||
-    !Number.isSafeInteger(value.launcher.result.exitCode) ||
-    (value.launcher.result.exitCode as number) < 0 ||
-    (value.launcher.result.exitCode as number) > 255 ||
-    (baseline && value.launcher.result.exitCode !== 0) ||
-    (!baseline && value.launcher.result.exitCode !== 0 && value.launcher.result.exitCode !== 1)
+    value.launcher.result.exitCode !== (baseline ? 0 : 1)
   )
     throw new Error('Native mutation runner receipt does not bind its admitted outcome.');
 }

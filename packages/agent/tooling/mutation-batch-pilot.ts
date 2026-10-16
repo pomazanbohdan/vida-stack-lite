@@ -310,6 +310,11 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         true,
       );
       if (outcome.status === 'unknown') return outcome;
+      if (result.exitCode !== (outcome.status === 'passed' ? 0 : 1))
+        return {
+          status: 'unknown' as const,
+          reason: 'Native launcher exit differs from the confirmed runner outcome.',
+        };
       if (!outcome.native_receipt)
         return { status: 'unknown' as const, reason: 'Native mutation receipt reference is missing.' };
       const nativeReceipt = { ...outcome.native_receipt, launcher: { artifact: launcherArtifact, result } };

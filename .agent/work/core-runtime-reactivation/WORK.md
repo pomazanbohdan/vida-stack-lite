@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `afd9cc9`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Native activation has a real one-ID receipt join at784d054, recorded below; full-universe parent qualification and mutation closure remain open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `4b99cc6`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. The complete native main-runtime-timing producer pilot now joins151/151 assertion-confirmed Killed at4b99cc6; proof-aware contour-reader and global admission remain open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -48,8 +48,8 @@ add a second execution, capture, Source scan or Stryker event stream. Root retai
 shared-file integration; three isolated writers own disjoint exact paths. The
 independent review's missing outer launcher binding is integrated for baseline
 and every ID. Native proof-reader/global qualification remains open. Current
-packet checks are recorded below; the actual complete producer pilot remains
-pending. Do not infer a score.
+packet checks and the terminal complete producer pilot are recorded below.
+Producer qualification does not activate downstream readers.
 
 Root integrates the separate complete native partition candidate and its exact
 negative cases. `confirmRunnerReceipt` returns a reference from its already-read
@@ -92,7 +92,67 @@ with complete captures, closed group and unchanged boot. Final hook status is
 established by the ordinary subsequent commit, without a bypass.
 Original core entered-role CRAP ceiling and operation-authorized v2 binding Host
 remain explicit GAPs after separate bounded reviews; no ceiling or verifier is
-invented. An actual complete native producer pilot is the next check.
+invented.
+
+### Complete native partition producer pilot at4b99cc6
+
+The full declared `main-runtime-timing` selection completes at exact published
+`4b99cc64c0dc65e54cd321bab53e69035a7bfd9b`. SDK inputs come from successful CI
+run38954695654/attempt1/artifact12070441193, archive647158bytes with SHA256
+`c12bf9ec4f5a849fdd79c88db104f889908a3eb6daaf70390b24c4876f43d188`.
+The maintained readiness owner prepares those inputs without local formation
+or test suites. The measured checkout remains unchanged throughout execution.
+
+Outer evidence `native-partition-complete-VVQOls/execution.json` records exit0
+in384148.003998ms, no timeout/signal/spawn error, complete nontruncated captures,
+closed owned process group and unchanged boot. Inner run
+`8ccb6ab0-934a-4e9a-a866-6a22eb71cfcc` generates151 IDs once and executes all10
+planned batches. Its seven-case passing baseline and every activated mutant
+join their runner and outer launcher receipts. All151 are assertion-confirmed
+Killed; survived0, UNKNOWN0 and unattempted0. The producer emits the distinct
+`NativeMutationPartitionProof/v1` and `CandidateNativeMutationReport/v1`, with
+partition-local scope and full_qualification:false. This is a complete producer
+pilot, not a new global triple or an admitted current contour projection.
+Proof-aware downstream reading remains a separate bounded qualification slice.
+
+The preflight negative `native-partition-preflight-ZZXqmx` exits1 as expected
+in1204.269040ms when complete admission requests only one of the custody
+contour's required batches. It retains only image, plan, descriptor and terminal
+error; no baseline or test runner starts. A budget-truncated selection cannot
+obtain a complete candidate proof.
+
+The next corrective-authority test packet adds three read-only invalid Work
+views of the real persisted authority. It denies a missing consumed approval,
+a different scope identity and an extra allowed path. An adjacent healthy read
+and exact authority bytes check precede the existing tamper/restore control.
+Focused `quality-rolling-cli-check-d8AtbW` passes1/0,47 assertions, in12281.569938ms;
+the case itself takes11171.80ms within its unchanged20s exception. Captures close
+completely, the process group terminates and boot identity is unchanged.
+No new coverage or mutation result is inferred.
+
+Five fresh blind Luna lanes review native reader integration, producer admission,
+the authority denials, the timing import simplification and the next independent
+contour gap. Root retains all checks, Git and final evidence publication.
+
+The producer review identifies an actual tooling defect: a Killed inner receipt
+could be paired with a launcher exit0. New regression
+`quality-rolling-cli-check-hvp0ho` reproduces that acceptance as a failing test.
+Root requires launcher0 for a passing outcome and launcher1 for a Killed outcome
+in both invocation and complete-proof admission. Contradictions become UNKNOWN;
+no extra inner-exit field or weaker classification is added. A fresh independent
+review confirms the real direct bwrap/Bun runner propagates the child's exit.
+Retained-pilot metadata control `native-partition-complete-VVQOls/exit-pair-control.json`
+checks its baseline pair0/0 and all151 mutant pairs1/1 without contradiction.
+This control does not re-admit the proof or claim a new current run.
+
+The timing composition test now imports the hash function from its direct owner
+and constructs configured context inside its registered case. Its two Host
+callbacks share one local identity resolver; the public SDK re-export, real
+filesystem operations, assertions and deadlines are unchanged. No speedup is
+claimed. The combined seven-file `quality-rolling-cli-check-7BL7Th` passes190/0,
+1216 assertions, in53858.385586ms with complete captures, closed process group
+and unchanged boot. Strict501 and TS-only502 pass with zero diagnostics.
+The normal commit hook remains required before publication.
 
 ### Current native receipt and final-assurance cost investigation
 
