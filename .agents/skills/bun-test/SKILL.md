@@ -81,6 +81,11 @@ still remains unproven. The timing contour separately qualifies its async calls
 through actual injected mutants; a passing original alone is not mutation proof.
 Check value shape/type before a property access or regex matcher can throw its
 own argument error. Preserve unproven results without padding assertion counts.
+For descriptor/image regressions, exercise the actual capture with a Proxy
+rather than replacing a module whose import route may change. Assert the returned
+image's identity, prototype and nested alias isolation, and verify a later ordinary
+call still succeeds. Envelope images are owned and mutable; do not assume the
+deep-freeze contract of the separate public-ingress validators.
 Use the existing `expectReturned` helper for expected-success synchronous setup
 inside a test body; do not construct the mutable subject at module scope.
 The real-adapter copied-helper pilot qualifies a synchronous `doesNotThrow`

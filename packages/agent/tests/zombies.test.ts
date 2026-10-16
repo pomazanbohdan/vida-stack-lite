@@ -355,7 +355,10 @@ describe('machine-checked public export ZOMBIES matrix', () => {
       return { input, returned: runtime.validateRuntimeEnvelope(input) };
     });
     expect(envelopes).toHaveLength(64);
-    for (const { input, returned } of envelopes) expect(returned).toBe(input);
+    for (const { input, returned } of envelopes) {
+      expect(returned).toEqual(input);
+      expect(returned).not.toBe(input);
+    }
   });
 
   test('Boundary: traversal and stale revision edges are rejected', () => {
@@ -389,12 +392,12 @@ describe('machine-checked public export ZOMBIES matrix', () => {
 
   test('Simple: nominal envelope and configuration contracts remain directly usable', () => {
     const envelope = validEnvelope();
-    expect(
-      runtime.consumeRuntimeEnvelope(envelope, {
-        sourceRevision: 'source-1',
-        currentRevision: 1,
-      }),
-    ).toBe(envelope);
+    const consumed = runtime.consumeRuntimeEnvelope(envelope, {
+      sourceRevision: 'source-1',
+      currentRevision: 1,
+    });
+    expect(consumed).toEqual(envelope);
+    expect(consumed).not.toBe(envelope);
     expect(runtime.validateCandidateIsolation(config)).toBeUndefined();
     expect(
       runtime.computeEdictumWorkflowApprovalEvidenceDigest({

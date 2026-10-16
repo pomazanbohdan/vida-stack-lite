@@ -6,13 +6,14 @@ import { Buffer } from 'node:buffer';
 import {
   canonicalJsonImageWithNodeLimit,
   canonicalJsonWithNodeLimit,
+  MAX_CANONICAL_NODES,
   MAX_CANONICAL_BYTES,
 } from './canonical-json-core.js';
 import coordinationLedgerSchema from '../../schemas/coordination-ledger.v1.schema.json' with { type: 'json' };
 import envelopeSchema from '../../schemas/runtime-envelope.v1.schema.json' with { type: 'json' };
 import { Result } from 'neverthrow';
 import z from 'zod';
-import { assertCanonicalJsonValue, canonicalJsonDigest, rfc3339TimestampMilliseconds } from './public-ingress.js';
+import { canonicalJsonDigest, rfc3339TimestampMilliseconds } from './public-ingress.js';
 
 export interface RuntimeEnvelope<TPayload = unknown> {
   readonly schema: 'RuntimeEnvelope/v1';
@@ -48,18 +49,16 @@ function errorMessage(error: unknown): string {
 function rejectCanonical(message: string): never {
   throw new Error('runtime envelope rejected: ' + message);
 }
-const canonicalAttempt = Result.fromThrowable(assertCanonicalJsonValue, errorMessage);
-function assertDataOnlyJson(value: unknown): void {
-  canonicalAttempt(value).match(Boolean, rejectCanonical);
+const canonicalAttempt = Result.fromThrowable(canonicalJsonImageWithNodeLimit, errorMessage);
+function assertDataOnlyJson(value: unknown): unknown {
+  return canonicalAttempt(value, 0, MAX_CANONICAL_NODES).mapErr(rejectCanonical)._unsafeUnwrap().image;
 }
 
 export function validateRuntimeEnvelope(value: unknown): RuntimeEnvelope {
-  assertDataOnlyJson(value);
-  reject(
-    [!validator(value)],
-    `runtime envelope rejected: ${(validator.errors ?? []).map((error) => error.message).join('; ')}`,
-  );
-  return value as RuntimeEnvelope;
+  const image = assertDataOnlyJson(value);
+  const valid = validator(image);
+  reject([!valid], `runtime envelope rejected: ${(validator.errors ?? []).map((error) => error.message).join('; ')}`);
+  return image as RuntimeEnvelope;
 }
 
 /** Consumes the envelope revision pair at a mutation boundary. Schema shape

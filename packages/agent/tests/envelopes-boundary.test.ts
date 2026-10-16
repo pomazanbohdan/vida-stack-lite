@@ -1,4 +1,4 @@
-import { describe, expect, mock, spyOn, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import type { TrustedProjectIdentity, ProjectAuthorizationRequest } from '../src/contracts/public-ingress.js';
@@ -193,7 +193,8 @@ describe('runtime envelope canonicalization boundary', () => {
     );
     expect(consumed).not.toBeNull();
     expect(typeof consumed).toBe('object');
-    expect(consumed).toBe(envelope);
+    expect(consumed).toEqual(envelope);
+    expect(consumed).not.toBe(envelope);
     const staleSource: RuntimeEnvelopeRevisionBinding = { sourceRevision: 'source-2', currentRevision: 3 };
     const staleRevision: RuntimeEnvelopeRevisionBinding = { sourceRevision: 'source-1', currentRevision: 4 };
     const missingSource: RuntimeEnvelopeRevisionBinding = { sourceRevision: '', currentRevision: 3 };
@@ -1108,7 +1109,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('normalizes a non-Error canonicalizer failure before rejecting', async () => {
-    const originalIngress = { ...(await import('../src/contracts/public-ingress.js')) };
+    const envelopes = await import('../src/contracts/envelopes.js');
     const envelope: RuntimeEnvelope = {
       schema: 'RuntimeEnvelope/v1',
       kind: 'quality-check',
@@ -1117,35 +1118,20 @@ describe('runtime envelope canonicalization boundary', () => {
       expectedRevision: 1,
       payload: {},
     };
-    const failures: unknown[] = [];
-    try {
-      await mock.module('../src/contracts/public-ingress.js', () => ({
-        ...originalIngress,
-        assertCanonicalJsonValue: () => {
-          throw 'string canonical failure';
-        },
-      }));
-      const envelopes = (await import(
-        String('../src/contracts/envelopes.js?case=non-error-canonicalizer')
-      )) as typeof import('../src/contracts/envelopes.js');
-      expect(() => envelopes.validateRuntimeEnvelope(envelope)).toThrow(
-        'runtime envelope rejected: string canonical failure',
-      );
-    } catch (error) {
-      failures.push(error);
-    } finally {
-      try {
-        await mock.module('../src/contracts/public-ingress.js', () => originalIngress);
-      } catch (error) {
-        failures.push(error);
-      }
-    }
-    if (failures.length === 1) throw failures[0];
-    if (failures.length > 1) throw new AggregateError(failures, 'Canonicalizer assertion and restoration failed');
-    const restored = (await import(
-      String('../src/contracts/envelopes.js?case=canonicalizer-restored')
-    )) as typeof import('../src/contracts/envelopes.js');
-    expect(expectReturned(() => restored.validateRuntimeEnvelope(envelope))).toBe(envelope);
+    let descriptorReads = 0;
+    const rejected = new Proxy(envelope, {
+      ownKeys() {
+        descriptorReads++;
+        throw 'string canonical failure';
+      },
+    });
+    expect(() => envelopes.validateRuntimeEnvelope(rejected)).toThrow(
+      'runtime envelope rejected: string canonical failure',
+    );
+    expect(descriptorReads).toBeGreaterThan(0);
+    const restoredEnvelope = expectReturned(() => envelopes.validateRuntimeEnvelope(envelope));
+    expect(restoredEnvelope).toEqual(envelope);
+    expect(restoredEnvelope).not.toBe(envelope);
   });
 
   test('normalizes a non-Error authorization failure before denying', async () => {
@@ -1253,10 +1239,14 @@ test('envelopes validate JSON data, revision bindings, and local tool inputs', a
     expectedRevision: 1,
     payload: { value: true },
   };
-  expect(expectReturned(() => validateRuntimeEnvelope(envelope))).toBe(envelope);
-  expect(
-    expectReturned(() => consumeRuntimeEnvelope(envelope, { sourceRevision: 'source-1', currentRevision: 1 })),
-  ).toBe(envelope);
+  const validated = expectReturned(() => validateRuntimeEnvelope(envelope));
+  expect(validated).toEqual(envelope);
+  expect(validated).not.toBe(envelope);
+  const consumed = expectReturned(() =>
+    consumeRuntimeEnvelope(envelope, { sourceRevision: 'source-1', currentRevision: 1 }),
+  );
+  expect(consumed).toEqual(envelope);
+  expect(consumed).not.toBe(envelope);
   expect(() => validateRuntimeEnvelope({ ...envelope, payload: 1n })).toThrow(/non-canonical/);
   expect(() => validateRuntimeEnvelope({ ...envelope, kind: '', operation: '' })).toThrow(
     'runtime envelope rejected: must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._/-]*$"; must NOT have fewer than 1 characters; must match pattern "^[A-Za-z][A-Za-z0-9._:/-]*$"',
@@ -1312,3 +1302,69 @@ function invokeUntrusted(
   const [receiver, args] = invocation.length === 1 ? [undefined, invocation[0]] : invocation;
   return Reflect.apply(target, receiver, args);
 }
+
+test('runtime envelopes validate and consume one captured Proxy descriptor image', async () => {
+  const { consumeRuntimeEnvelope, validateRuntimeEnvelope } = await import('../src/contracts/envelopes.js');
+  const descriptorImage: RuntimeEnvelope = {
+    schema: 'RuntimeEnvelope/v1',
+    kind: 'quality-check',
+    operation: 'runtime.read',
+    sourceRevision: 'source-1',
+    expectedRevision: 1,
+    payload: { value: true },
+  };
+  const liveGets = new Map<PropertyKey, number>();
+  const withLiveValues = (target: object, overrides: Partial<RuntimeEnvelope> = {}) =>
+    new Proxy(target, {
+      get(object, key, receiver) {
+        liveGets.set(key, (liveGets.get(key) ?? 0) + 1);
+        const result: unknown = Object.hasOwn(overrides, key)
+          ? overrides[key as keyof RuntimeEnvelope]
+          : Reflect.get(object, key, receiver);
+        return result;
+      },
+    });
+  const getCount = () => [...liveGets.values()].reduce((sum, count) => sum + count, 0);
+
+  const invalidCapturedSchema = withLiveValues(
+    { ...descriptorImage, schema: 'NotRuntimeEnvelope/v1' },
+    { schema: 'RuntimeEnvelope/v1' },
+  );
+  expect(() => validateRuntimeEnvelope(invalidCapturedSchema)).toThrow(/runtime envelope rejected/);
+  expect(getCount()).toBe(0);
+
+  liveGets.clear();
+  const invalidCapturedKind = withLiveValues({ ...descriptorImage, kind: 'invalid kind' }, { kind: 'quality-check' });
+  expect(() => validateRuntimeEnvelope(invalidCapturedKind)).toThrow(/runtime envelope rejected/);
+  expect(getCount()).toBe(0);
+
+  liveGets.clear();
+  const staleCapturedRevision = withLiveValues(
+    { ...descriptorImage, sourceRevision: 'source-2' },
+    { sourceRevision: 'source-1' },
+  );
+  expect(() =>
+    consumeRuntimeEnvelope(staleCapturedRevision, { sourceRevision: 'source-1', currentRevision: 1 }),
+  ).toThrow('runtime envelope source revision is stale');
+  expect(getCount()).toBe(0);
+
+  liveGets.clear();
+  const benign = withLiveValues({ ...descriptorImage });
+  const benignResult = validateRuntimeEnvelope(benign);
+  expect(benignResult).toEqual(descriptorImage);
+  expect(benignResult).not.toBe(benign);
+  expect(Object.getPrototypeOf(benignResult)).toBeNull();
+  expect(Object.getPrototypeOf(benignResult.payload as object)).toBeNull();
+  expect(getCount()).toBe(0);
+  liveGets.clear();
+  const benignConsumed = consumeRuntimeEnvelope(benign, { sourceRevision: 'source-1', currentRevision: 1 });
+  expect(benignConsumed).toEqual(descriptorImage);
+  expect(benignConsumed).not.toBe(benign);
+  expect(Object.getPrototypeOf(benignConsumed)).toBeNull();
+  expect(Object.getPrototypeOf(benignConsumed.payload as object)).toBeNull();
+  const originalPayload = descriptorImage.payload as { value: boolean };
+  originalPayload.value = false;
+  expect(benignResult.payload).toEqual({ value: true });
+  expect(benignConsumed.payload).toEqual({ value: true });
+  expect(getCount()).toBe(0);
+});

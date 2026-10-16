@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `f7903e8` at origin/main.
+- Published predecessor: `1e8decc` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,9 +18,10 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- The current complete owner inventory at1ca0ec7 has7736functions/149Sources.
-  Reviewed partial7053roles leaves683current/178original dispositions missing,
-  zero stale current IDs,19represented static deficits and2stale Source bindings.
+- The complete owner inventory has7736functions/149Sources; reuse its captured
+  overlay and settled per-file captures below. Reviewed partial7075roles leaves
+  661current/156original dispositions missing. The retained19static deficits
+  remain open; new prospective batches are not yet integrated.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
@@ -5996,6 +5997,49 @@ All output is external, with Root as sole checkout/Git/numeric owner. Independen
 review found a concrete v4 context-binding filter/count blocker; fuzz additionally
 requires more than the proposed three-field projection. Neither proposal has
 been applied or called qualified. Workers are preparing bounded corrections.
+
+## Runtime envelope captured-image correction
+
+Root reproduced the same descriptor/live-read class of defect in the envelope
+owner: the Proxy's captured schema was NotRuntimeEnvelope/v1 but its live read
+returned the allowed literal, and the old validator accepted it. Red receipt
+`/workspace/attachments/quality-rolling-cli-check-Lya8QF` records0/1failed,
+391.25373ms outer elapsed, complete capture and closed groups.
+
+Validation now passes one canonical captured image to Ajv and returns it;
+consumption applies both revision checks to that returned image. Public error
+normalization and existing bounds remain. Tests assert invalid captured schema,
+kind and stale revisions, zero live gets, actual consumed result, independent
+identity, null-prototype records and nested payload alias isolation. The envelope
+image remains mutable, as now documented in the system contract.
+
+The first combined check KZpfTZ had22pass/1fail: its old module mock targeted
+public-ingress rather than the actual canonical capture. Root replaced that mock
+with a real ownKeys string-throw Proxy and subsequent ordinary validation,
+eliminating module replacement/restoration overhead. The three selected caller
+files then passed31/0,23925expectations at KVhAVu,1971.897812ms. Root rejected
+the draft try/catch because the retained assertDataOnlyJson CC1 ceiling would
+be exceeded. The settled expression reuses Result.fromThrowable, maps errors
+through the existing throwing rejectCanonical owner, and unwraps only success.
+No helper/callback or allowance is added. Its final full caller check at
+`/workspace/attachments/quality-rolling-cli-check-MhUg46` passed31/0,
+23925expectations,1916.945464ms. All checks retained complete capture, closed
+groups and unchanged boot. This is behavioral verification, not numeric closure.
+
+Independent final review is
+`/workspace/attachments/quality-envelope-root-final-review-v1e8-20261016.md`.
+The first draft static inventory recorded CC2 and is retained without credit;
+settled single-file inventory
+`/workspace/attachments/quality-envelope-settled-inventory-v1e8-20261016.json`
+records82unchanged identities and assertDataOnlyJson CC1. Root applied the
+reviewed address-only owner at
+`/workspace/attachments/quality-envelope-address-only-v1e8-20261016.ts` with
+beforeimage/intent/completion. Only82current addresses and one Source binding
+changed; all caps, original fields, counts and partial status remain unchanged.
+No fresh numeric run or new contour closure is claimed yet.
+The first envelope commit hook passed formatting and489-file TypeScript but
+rejected the now-unused mock import. Root removed that import; no commit was
+created by the rejected hook.
 
 ## Historical provenance
 

@@ -211,6 +211,12 @@ mechanism qualification, not a mutant score or deployment of the shared helper.
 Its four serial adapter children justify the enclosing test's explicit 15 s limit;
 the default remains 5 s per test.
 
+Envelope descriptor regressions must check invalid captured schema/kind and stale
+captured revisions against benign Proxy reads. Require zero live reads, independent
+returned identity, null-prototype records and payload alias isolation. Assert the
+actual consumed result. Envelope images remain mutable; public ingress validators'
+deep-freeze contract does not extend to envelope validation.
+
 Timing invalid-input cases must observe absence of side effects, not only the
 fallback error code. Give non-string message/code values a counted slice getter,
 and invalid clock/threshold values a counted coercion hook. Require zero reads
