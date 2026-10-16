@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `916fa8a`. Runtime initialization and storage admission have exact coverage plus same-run frozen CRAP. Existing-storage image has exact coverage; its reviewed scope pin and numeric CRAP proof follow below. Their mutation closures remain open. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published implementation main: `f278189`. Runtime initialization, storage admission and existing-storage image have local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open; fresh targeted repairs below qualify individual Killed results only. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -15,6 +15,27 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 ## Global contour campaign packet
 
 ### Coverage receipt reuse and fixture import closure
+
+Fresh f278189 admission run `0bbbf445-ac76-41d1-96d7-fb8ac2aafc0f`
+(`Vkc809`) passes17/0tests,169assertions in9165ms. Exact F18/18,L100/100,
+S103/103,B16/16 andCC/CRAP5 are retained. Same-run frozen v3 `iei42A` passes
+against d6cab7c in702ms, without a changed allowance. Full captures, closed groups
+and unchanged boot are confirmed; coverage operation remains BLOCKED. The derived
+projection records464attempts,15/45 exact coverage,14/45 same-run frozen pairs
+and6/45 complete local triples. No global or Runtime acceptance is implied.
+
+The real targeted path qualifies local178 in new run
+`235bce91-84c5-40c3-8df5-f93b17728982` (`yjcbkT`,13417ms), retaining original
+batch index42 and the complete227-mutant plan. Canonical identity and Source
+digest match the earlier UNKNOWN; the fresh body event proves AssertionError
+cause and activation1. Local44's earlier survivor is Killed in separate new run
+`329b4b50-34d4-44d9-89ac-c1e6cf56cbb4` (`tNZ9rE`,12828ms), original index4,
+with the same identity and body/activation proof. Each runs a complete17-case
+passing baseline, attempts exactly1mutant and leaves226unattempted. Both owners
+terminate with complete captures/closed groups/same boot. Their diagnostic-only
+exit1 and full_contour_qualification:false are intentional; neither creates a
+candidate proof or combined contour score. Old survivors/UNKNOWN retain their
+original classifications and custody. No preceding mutants are replayed.
 
 The follow-up adds an exact physical hardlink-denial case and a same-operation,
 different-manifest expected binding. `YLfE4s` passes17/0tests,169assertions
