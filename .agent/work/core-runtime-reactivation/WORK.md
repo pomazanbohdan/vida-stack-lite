@@ -172,6 +172,12 @@ paths with their captured bytes instead of indexing parallel arrays. Refreshed
 strict505/TS-only506 and full Oxlint pass; final `FggYXb` passes the new case in
 775ms (1675ms whole command) after that correction. No init Source behavior changed.
 
+The checked correction is published as `05952f945174190be9c9ebc257f01414908855f0`
+through the normal strict hook and push. A subsequent exact-commit/contour pin
+selects its Source-only final-assurance reuse review before any new measurement.
+Its95-role correspondence and prospective cap remain separate from still-missing
+exact coverage, scoped frozen proof and complete mutation. No global policy changes.
+
 ### Offline native proof reader verification
 
 Root integrated the isolated reader/test draft and corrected its actual static
