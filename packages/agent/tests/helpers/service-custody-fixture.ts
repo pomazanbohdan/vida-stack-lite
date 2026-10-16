@@ -5,11 +5,22 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deriveWorkspaceId } from '../../src/workspace-identity.js';
 import { loadRuntimeConfig } from '../../src/config/runtime-config.js';
-import {
-  initializeServiceOperationCustodySchema,
-  openServiceOperationDatabase,
-} from '../../src/config/service-operation-custody.js';
+import { openServiceOperationDatabase } from '../../src/config/service-operation-custody.js';
 import { acquireStorageReadAdmission } from '../../src/config/storage-read-admission.js';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
+import { expectReturned } from './expect-rejection.js';
+
+// Independent test oracle: fixture preparation must not execute the mutable
+// schema initializer. Its real SQLite output is checked against this contract.
+export const serviceCustodyFixtureSql =
+  'CREATE TABLE agent_host_service_operation_custody (' +
+  "workspace_id TEXT NOT NULL CHECK(length(workspace_id)=64),owner_kind TEXT NOT NULL CHECK(owner_kind IN ('release-pack-worker','release-worker'))," +
+  'operation_id TEXT NOT NULL,request_digest TEXT NOT NULL CHECK(length(request_digest)=64),' +
+  'owner_token TEXT,revision INTEGER NOT NULL CHECK(revision>0),' +
+  "phase TEXT NOT NULL CHECK(phase IN ('launching','in_flight','unknown','prepared','terminal'))," +
+  'evidence_digest TEXT,launch_pid INTEGER CHECK(launch_pid IS NULL OR launch_pid>0),handoff_digest TEXT,handoff_from_kind TEXT,handoff_from_phase TEXT,' +
+  'handoff_from_request_digest TEXT,handoff_from_revision INTEGER,handoff_from_evidence_digest TEXT,' +
+  'PRIMARY KEY(workspace_id,operation_id))';
 
 export interface ServiceCustodyFixture {
   readonly root: string;
@@ -29,11 +40,29 @@ export function openCustodyFixture(prefix = 'service-capability-'): ServiceCusto
     const admission = acquireStorageReadAdmission(root, workspaceId, relative);
     admission.close();
     const prepared = new Database(path.join(root, relative));
-    initializeServiceOperationCustodySchema(prepared);
-    prepared.close();
-    return { root, workspaceId, relative, database: openServiceOperationDatabase(root, relative, workspaceId) };
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      prepared.exec(serviceCustodyFixtureSql);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            prepared.close();
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
+    }
+    // Assert only the Subject's open contract after independent preparation.
+    // Filesystem, admission and raw SQLite setup failures remain runtime errors.
+    const database = expectReturned(() => openServiceOperationDatabase(root, relative, workspaceId));
+    return { root, workspaceId, relative, database };
   } catch (error) {
-    rmSync(root, { recursive: true, force: true });
+    console.error('Retained failed custody fixture preparation: ' + root);
     throw error;
   }
 }

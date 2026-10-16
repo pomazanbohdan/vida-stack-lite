@@ -31,7 +31,9 @@ test('terminal pack custody transfers to one prepared release image with exact l
   const fixture = openCustodyFixture('handoff-positive-');
   try {
     const prior = finishOperation(fixture, 'release-pack-worker');
-    const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    const source = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
     let verifierCalls = 0;
     const result = await expectAsyncReturned(() =>
       handoffServiceOperationCustody(
@@ -52,7 +54,9 @@ test('terminal pack custody transfers to one prepared release image with exact l
     expect(verifierCalls).toBe(1);
     expect(() => source.query('SELECT 1').get()).toThrow();
     expectHandoffLineage(result, prior);
-    const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    const reopened = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
     try {
       expect(
         expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
@@ -132,7 +136,9 @@ for (const failCas of [false, true]) {
     let reconciled = false;
     try {
       const prior = finishOperation(fixture, 'release-pack-worker');
-      const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      const source = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
       if (failCas)
         source.exec(
           'CREATE TRIGGER reject_handoff BEFORE UPDATE OF owner_kind ON agent_host_service_operation_custody ' +
@@ -168,9 +174,13 @@ for (const failCas of [false, true]) {
       restoreClose?.();
       restoreClose = undefined;
       retryPendingWorkspaceDatabaseCloses();
-      const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      const reopened = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
       try {
-        const row = readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId);
+        const row = expectReturned(() =>
+          readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId),
+        );
         if (failCas) expect(row).toEqual(prior);
         else {
           expect(row).not.toBeNull();
@@ -196,13 +206,15 @@ test('receipt failure retains its cause when closing the real UNKNOWN connection
   const cleanupError = new Error('injected UNKNOWN source close failure');
   let restoreClose: (() => void) | undefined;
   try {
-    reserveServiceOperationLaunch(
-      fixture.database,
-      fixture.workspaceId,
-      'release-pack-worker',
-      operationId,
-      requestDigest,
-      evidenceDigest,
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        evidenceDigest,
+      ),
     );
     const failure = await rejectionReason(
       reconcileServiceOperationCustody(
@@ -226,9 +238,13 @@ test('receipt failure retains its cause when closing the real UNKNOWN connection
     restoreClose?.();
     restoreClose = undefined;
     retryPendingWorkspaceDatabaseCloses();
-    const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    const reopened = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
     try {
-      const row = readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId);
+      const row = expectReturned(() =>
+        readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId),
+      );
       expect(row?.phase).toBe('unknown');
       expect(row?.owner_token).toBeNull();
       expect(row?.revision).toBe(2);
@@ -274,7 +290,9 @@ for (const operation of ['handoff', 'reconciliation'] as const) {
     try {
       if (operation === 'handoff') {
         finishOperation(fixture, 'release-pack-worker');
-        const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+        const source = expectReturned(() =>
+          openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+        );
         await expectRejection(
           handoffServiceOperationCustody(
             source,
@@ -292,13 +310,15 @@ for (const operation of ['handoff', 'reconciliation'] as const) {
           'handed-off owner row disappeared',
         );
       } else {
-        reserveServiceOperationLaunch(
-          fixture.database,
-          fixture.workspaceId,
-          'release-pack-worker',
-          operationId,
-          requestDigest,
-          evidenceDigest,
+        expectReturned(() =>
+          reserveServiceOperationLaunch(
+            fixture.database,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            evidenceDigest,
+          ),
         );
         await expectRejection(
           reconcileServiceOperationCustody(
@@ -320,9 +340,13 @@ for (const operation of ['handoff', 'reconciliation'] as const) {
       expect(removals).toBe(1);
       restoreExec?.();
       restoreExec = undefined;
-      const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      const reopened = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
       try {
-        expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toBeNull();
+        expect(
+          expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+        ).toBeNull();
       } finally {
         closeServiceOperationDatabase(reopened);
       }
@@ -352,7 +376,9 @@ for (const [label, column, value] of invalidPersistedHandoffCases) {
     let database: ReturnType<typeof openServiceOperationDatabase> | undefined;
     try {
       finishOperation(fixture, 'release-pack-worker');
-      const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      const source = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
       await expectAsyncReturned(() =>
         handoffServiceOperationCustody(
           source,
@@ -365,7 +391,9 @@ for (const [label, column, value] of invalidPersistedHandoffCases) {
           preparedReceipt,
         ),
       );
-      database = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      database = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
       database
         .query(`UPDATE agent_host_service_operation_custody SET ${column}=? WHERE workspace_id=? AND operation_id=?`)
         .run(value, fixture.workspaceId, operationId);
@@ -383,14 +411,18 @@ test('handoff rolls back when an AFTER UPDATE trigger deletes its CAS row', asyn
   const fixture = openCustodyFixture('handoff-missing-afterimage-');
   try {
     const prior = finishOperation(fixture, 'release-pack-worker');
-    const setup = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    const setup = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
     setup.exec(
       'CREATE TRIGGER remove_handoff_custody AFTER UPDATE OF owner_kind ON agent_host_service_operation_custody ' +
         "WHEN NEW.owner_kind='release-worker' BEGIN DELETE FROM agent_host_service_operation_custody " +
         'WHERE workspace_id=NEW.workspace_id AND operation_id=NEW.operation_id; END',
     );
-    closeServiceOperationDatabase(setup);
-    const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    expectReturned(() => closeServiceOperationDatabase(setup));
+    const source = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
     await expectRejection(
       handoffServiceOperationCustody(
         source,
@@ -404,9 +436,13 @@ test('handoff rolls back when an AFTER UPDATE trigger deletes its CAS row', asyn
       ),
       'same-operation handoff compare-and-swap failed',
     );
-    const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    const reopened = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
     try {
-      expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toEqual(prior);
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+      ).toEqual(prior);
     } finally {
       closeServiceOperationDatabase(reopened);
     }
@@ -436,38 +472,44 @@ test('gate replacement during an awaited receipt leaves the original terminal ro
 });
 
 function finishOperation(fixture: ServiceCustodyFixture, kind: 'release-pack-worker' | 'release-worker') {
-  const reservation = reserveServiceOperationLaunch(
-    fixture.database,
-    fixture.workspaceId,
-    kind,
-    operationId,
-    requestDigest,
-    evidenceDigest,
+  const reservation = expectReturned(() =>
+    reserveServiceOperationLaunch(
+      fixture.database,
+      fixture.workspaceId,
+      kind,
+      operationId,
+      requestDigest,
+      evidenceDigest,
+    ),
   );
-  recordServiceOperationLaunchPid(
-    fixture.database,
-    fixture.workspaceId,
-    kind,
-    operationId,
-    requestDigest,
-    reservation.revision,
-    launchPid,
-    reservation.child_capability,
+  expectReturned(() =>
+    recordServiceOperationLaunchPid(
+      fixture.database,
+      fixture.workspaceId,
+      kind,
+      operationId,
+      requestDigest,
+      reservation.revision,
+      launchPid,
+      reservation.child_capability,
+    ),
   );
-  const handle = claimReservedServiceOperationLaunch(
-    fixture.database,
-    fixture.workspaceId,
-    kind,
-    operationId,
-    requestDigest,
-    launchPid,
-    reservation.child_capability,
+  const handle = expectReturned(() =>
+    claimReservedServiceOperationLaunch(
+      fixture.database,
+      fixture.workspaceId,
+      kind,
+      operationId,
+      requestDigest,
+      launchPid,
+      reservation.child_capability,
+    ),
   );
-  closeServiceOperationCustody(handle, 'terminal', terminalDigest);
+  expectReturned(() => closeServiceOperationCustody(handle, 'terminal', terminalDigest));
   const terminal = expectReturned(() =>
     readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
   );
-  closeServiceOperationCustodyHandle(handle);
+  expectReturned(() => closeServiceOperationCustodyHandle(handle));
   if (!terminal) throw new Error('Terminal operation custody row disappeared.');
   return terminal;
 }
@@ -526,13 +568,15 @@ async function assertRejectedLineage(
 async function assertPreparedPackCannotHandoff(): Promise<void> {
   const fixture = openCustodyFixture('handoff-nonterminal-');
   try {
-    reserveServiceOperationLaunch(
-      fixture.database,
-      fixture.workspaceId,
-      'release-pack-worker',
-      operationId,
-      requestDigest,
-      evidenceDigest,
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        evidenceDigest,
+      ),
     );
     const prepared = await expectAsyncReturned(() =>
       reconcileServiceOperationCustody(
@@ -568,7 +612,9 @@ async function expectHandoffFailure(
   message: string | RegExp,
   priorRequest = requestDigest,
 ) {
-  const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+  const source = expectReturned(() =>
+    openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+  );
   await expectRejection(
     handoffServiceOperationCustody(
       source,
@@ -582,7 +628,9 @@ async function expectHandoffFailure(
     ),
     message,
   );
-  const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+  const reopened = expectReturned(() =>
+    openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+  );
   try {
     return expectReturned(() =>
       readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, prior.operation_id),

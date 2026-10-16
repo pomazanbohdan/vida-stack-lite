@@ -81,8 +81,8 @@ describe('service operation launch predicates', () => {
       expect(() => serviceOperationLaunchCapabilityDigest(malformed)).toThrow(
         'Service operation launch capability is invalid.',
       );
-      expect(serviceOperationLaunchCapabilityMatches(issuedDigest, malformed)).toBe(false);
-      expect(serviceOperationLaunchCapabilityMatches(independentlyHashed, malformed)).toBe(false);
+      expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, malformed))).toBe(false);
+      expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(independentlyHashed, malformed))).toBe(false);
     });
   }
 
@@ -103,30 +103,32 @@ describe('service operation launch predicates', () => {
       expect(() => serviceOperationLaunchCapabilityDigest(malformed)).toThrow(
         'Service operation launch capability is invalid.',
       );
-      expect(serviceOperationLaunchCapabilityMatches(issuedDigest, malformed)).toBe(false);
-      expect(serviceOperationLaunchCapabilityMatches(independentlyHashed, malformed)).toBe(false);
-      expect(serviceOperationLaunchCapabilityMatches(malformedDigest, capability)).toBe(false);
+      expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, malformed))).toBe(false);
+      expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(independentlyHashed, malformed))).toBe(false);
+      expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(malformedDigest, capability))).toBe(false);
     });
   }
 
   test('capability matching accepts only the exact token for the exact lowercase digest', () => {
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, capability))).toBe(true);
-    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, otherCapability)).toBe(false);
-    expect(serviceOperationLaunchCapabilityMatches(issuedDigest.toUpperCase(), capability)).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, otherCapability))).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest.toUpperCase(), capability))).toBe(
+      false,
+    );
   });
 
   test('capability matching rejects null, short, long, and non-hex expected digests', () => {
-    expect(serviceOperationLaunchCapabilityMatches(null, capability)).toBe(false);
-    expect(serviceOperationLaunchCapabilityMatches('a'.repeat(63), capability)).toBe(false);
-    expect(serviceOperationLaunchCapabilityMatches('a'.repeat(65), capability)).toBe(false);
-    expect(serviceOperationLaunchCapabilityMatches(`${'a'.repeat(63)}g`, capability)).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(null, capability))).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches('a'.repeat(63), capability))).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches('a'.repeat(65), capability))).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(`${'a'.repeat(63)}g`, capability))).toBe(false);
   });
 
   test('capability matching rejects malformed and wrong-runtime-type capability values', () => {
-    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, 'UPPERCASE-UUID')).toBe(false);
-    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, null)).toBe(false);
-    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, 7312)).toBe(false);
-    expect(serviceOperationLaunchCapabilityMatches(issuedDigest, {})).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, 'UPPERCASE-UUID'))).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, null))).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, 7312))).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, {}))).toBe(false);
   });
 
   test('deterministic bounded UUID property: the issued token matches and a distinct token does not', () => {
@@ -143,7 +145,7 @@ describe('service operation launch predicates', () => {
         fc.pre(issued !== other);
         const digest = expectReturned(() => serviceOperationLaunchCapabilityDigest(issued));
         expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(digest, issued))).toBe(true);
-        expect(serviceOperationLaunchCapabilityMatches(digest, other)).toBe(false);
+        expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(digest, other))).toBe(false);
       }),
       { seed: 20261010, numRuns: 50 },
     );
@@ -167,126 +169,144 @@ describe('service operation launch predicates', () => {
 
   test('null prior reservation denies a claim', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        null,
-        workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          null,
+          workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          capability,
+        ),
       ),
     ).toBe(false);
   });
 
   test('workspace mismatch alone denies a claim', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage(),
-        'c'.repeat(64),
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage(),
+          'c'.repeat(64),
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          capability,
+        ),
       ),
     ).toBe(false);
   });
 
   test('owner-kind mismatch alone denies a claim', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage(),
-        workspaceId,
-        'release-worker',
-        operationId,
-        requestDigest,
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage(),
+          workspaceId,
+          'release-worker',
+          operationId,
+          requestDigest,
+          pid,
+          capability,
+        ),
       ),
     ).toBe(false);
   });
 
   test('operation mismatch alone denies a claim', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage(),
-        workspaceId,
-        'release-pack-worker',
-        'different-operation',
-        requestDigest,
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage(),
+          workspaceId,
+          'release-pack-worker',
+          'different-operation',
+          requestDigest,
+          pid,
+          capability,
+        ),
       ),
     ).toBe(false);
   });
 
   test('request digest mismatch alone denies a claim', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage(),
-        workspaceId,
-        'release-pack-worker',
-        operationId,
-        'd'.repeat(64),
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage(),
+          workspaceId,
+          'release-pack-worker',
+          operationId,
+          'd'.repeat(64),
+          pid,
+          capability,
+        ),
       ),
     ).toBe(false);
   });
 
   test('non-launching phase alone denies a claim', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage({ phase: 'prepared' }),
-        workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage({ phase: 'prepared' }),
+          workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          capability,
+        ),
       ),
     ).toBe(false);
   });
 
   test('PID mismatch alone denies a claim', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage(),
-        workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid + 1,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage(),
+          workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid + 1,
+          capability,
+        ),
       ),
     ).toBe(false);
   });
 
   test('owner-token mismatch alone denies a claim', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage({ owner_token: 'a'.repeat(64) }),
-        workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage({ owner_token: 'a'.repeat(64) }),
+          workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          capability,
+        ),
       ),
     ).toBe(false);
   });
 
   test('consumed reservation denies replay of its previously issued capability', () => {
     expect(
-      serviceOperationLaunchClaimMatches(
-        launchingImage({ owner_token: otherCapability, phase: 'in_flight', launch_pid: null }),
-        workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        capability,
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage({ owner_token: otherCapability, phase: 'in_flight', launch_pid: null }),
+          workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          capability,
+        ),
       ),
     ).toBe(false);
   });

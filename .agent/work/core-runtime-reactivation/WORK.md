@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `e830919cb4506efa40bb543a1e354778f747b155`. Its native mutation pilot is terminal UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `53c29238529a559b6e198f1d423cb0dcd33cece0`. Its bounded native mutation pilot is terminal with one survivor and one runtime UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,35 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+The fresh53c2923 pilot uses official SDK run38911782687/attempt1/artifact12051075526,
+ZIP digest `sha256:2a6ec0ba49539a7d5eb91c3ecae2f65b7d216a9c2da02f0151d9a3374d964a39`.
+Outer `native-mutation-pilot-53c2923-aaKwzj` closes in26842.510068ms with complete
+captures, closed process group and unchanged boot. Inner evidence remains at
+`packages/agent/.tmp/mutation-batch-aa1eab31-089d-4066-a504-a30f265df118-IGXvxo/`.
+Its real baseline passes74/0tests,439assertions. Of751generated mutants,2were
+attempted: ID36 removes the digest regex's initial anchor and survives; ID186
+changes the owner-phase condition and causes an unasserted Subject runtime error.
+The latter remains UNKNOWN, not Killed.749are unattempted; no complete batch,
+mutation score or full-contour qualification is claimed.
+
+The correction adds malformed request/evidence digest matrices and explicit
+normal-return contracts around119 existing successful Subject calls, retaining
+their state/value assertions. Fixture primitives, negative calls and finally
+cleanup remain outside those success assertions. The test fixture now prepares
+its table from an independent test-only DDL oracle, then asserts only the Subject
+open call; it no longer executes the mutable initializer as preparation. A fresh
+in-memory test checks the initializer's actual schema and empty-table result.
+The independence control genuinely fails against the old helper at `92e9dF`;
+the initial control also exposed and corrected a number/bigint test expectation.
+Final affected four-file control `X6J1RK` passes100/0tests,573assertions in4.35s
+with complete captures, closed group and unchanged boot. Strict tests467files
+passes; scoped type-aware lint has zero diagnostics and documentation links pass.
+Cleanup callbacks preserve the primary failure and return the required undefined.
+These findings establish assertion/fixture gaps, not a confirmed product defect.
+The final-newline regex hypothesis was rejected against actual Bun behavior.
+The next numeric pilot requires publication, its matching SDK, and fresh inputs;
+no old UNKNOWN image or test result is reused as current execution evidence.
 
 The first native execution pilot binds publishede830919 and official SDK
 run38910689053/attempt1/artifact12050376525, ZIP digest
@@ -46,10 +75,10 @@ with complete captures/closed group/same boot. Tooling188files and tests467files
 pass strict typecheck; scoped lint has zero diagnostics and documentation checks
 pass. The first tests-typecheck command used the wrong root and failed before
 reading any files; its log is retained, and the package-cwd checked log records
-the actual467-file result. The next fresh pilot remains pending publication and
-matching SDK preparation; the failed e830919 image is not reused for execution.
+the actual467-file result. The fresh53c2923 pilot above supersedes the pending
+execution; the failed e830919 image was not reused.
 
-The next packet implements the ID-batch pilot behind an explicit diagnostic CLI;
+The published packet implements the ID-batch pilot behind an explicit diagnostic CLI;
 it does not switch ordinary mutation admission. `MutationGeneratedUniverse/v1`
 is distinct from an observed engine plan and carries no invented Run/Killed
 records. The public instrumenter dependency resolves from the qualified installed
