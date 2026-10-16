@@ -67,6 +67,11 @@ and release through the trusted owner. Blind v96 finds no actionable issue.
 Real busy effects and synthetic Host authority are not claimed. Source remains
 unchanged; a fresh native diagnostic must establish the new assertions' kill.
 
+Packet9469a4e passes the normal strict hook. Its immutable image review is the
+new scoped adapter pin. Publish the checked implementation and dependent pin
+together; then refresh the affected numerical captures for their new tool closure.
+No hook bypass, extra whole suite, SDK preparation or AST pass is needed.
+
 ### Exact coverage and isolated storage-image error cases
 
 Published46a66c9's runtime-initialization run

@@ -81,6 +81,10 @@ const scopedBudgetReviews = new Map([
     'd6cab7c0c7d8962d813f17c5c96e396032cd98ec:bun-project-upgrade-storage-admission',
     'scope_review_existing_storage_admission_20261016',
   ],
+  [
+    '9469a4e1663750e8de022e8f9dfca7a4327c9a08:bun-project-upgrade-existing-storage-image',
+    'scope_review_existing_storage_image_20261016',
+  ],
 ]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
