@@ -158,16 +158,34 @@ export function mutationResultMapRow(root: string, binding: MutationMapBinding, 
   };
 }
 
-/** Reconcile an observed plan with its parent and the already-parsed engine report. */
-export function validateMutationPartitionMap(
+/** Generation evidence has no test plans, engine dispositions or assertion evidence. */
+export function mutationGeneratedUniverse(root: string, binding: MutationMapBinding, mutants: readonly Mutant[]) {
+  const value = {
+    schema: 'MutationGeneratedUniverse/v1' as const,
+    binding,
+    position_basis: 'one-based-start-inclusive-end-exclusive' as const,
+    generated_universe_complete: true as const,
+    globally_qualified: false as const,
+    mutants: mutants.map((mutant) => ({
+      ...mutationMapIdentity(root, binding.partition_sources, mutant, 0),
+      local_id: mutant.id,
+      generated_status: mutant.status ?? 'Pending',
+      confirmed_status: 'unconfirmed' as const,
+    })),
+  };
+  validateMutationUniverse(value, root, binding, 'MutationGeneratedUniverse/v1');
+  return value;
+}
+
+function validateMutationUniverse(
   value: unknown,
   root: string,
   binding: MutationMapBinding,
-  reported?: readonly ReportedMutant[],
+  schema: 'MutationPartitionMap/v1' | 'MutationGeneratedUniverse/v1',
 ) {
   if (
     !isRecord(value) ||
-    value.schema !== 'MutationPartitionMap/v1' ||
+    value.schema !== schema ||
     value.position_basis !== 'one-based-start-inclusive-end-exclusive' ||
     value.generated_universe_complete !== true ||
     value.globally_qualified !== false ||
@@ -211,6 +229,18 @@ export function validateMutationPartitionMap(
     sourceCounts[canonical.source] = (sourceCounts[canonical.source] ?? 0) + 1;
     identities.add(canonical.identity);
   }
+  return { mutants: localIds.size, localIds, sourceCounts };
+}
+
+/** Reconcile an observed plan with its parent and the already-parsed engine report. */
+export function validateMutationPartitionMap(
+  value: unknown,
+  root: string,
+  binding: MutationMapBinding,
+  reported?: readonly ReportedMutant[],
+) {
+  const validated = validateMutationUniverse(value, root, binding, 'MutationPartitionMap/v1');
+  const { localIds } = validated;
   if (reported) {
     const reportedIds = new Set<string>();
     for (const { file, mutant } of reported) {
@@ -221,14 +251,21 @@ export function validateMutationPartitionMap(
     }
     if (reportedIds.size !== localIds.size) throw new Error('Mutation partition map universe is incomplete.');
   }
-  return { mutants: localIds.size, localIds, sourceCounts };
+  return validated;
 }
 
 /** Plan IDs from one complete generation; never regenerate a subset with different mutator semantics. */
 export function planMutationBatches(root: string, binding: MutationMapBinding, value: unknown, limit: number) {
   if (!Number.isSafeInteger(limit) || limit < 1) throw new Error('Mutation batch limit must be a positive integer.');
-  validateMutationPartitionMap(value, root, binding);
-  const universe = value as ReturnType<typeof mutationPartitionMap>;
+  validateMutationUniverse(
+    value,
+    root,
+    binding,
+    isRecord(value) && value.schema === 'MutationGeneratedUniverse/v1'
+      ? 'MutationGeneratedUniverse/v1'
+      : 'MutationPartitionMap/v1',
+  );
+  const universe = value as ReturnType<typeof mutationPartitionMap> | ReturnType<typeof mutationGeneratedUniverse>;
   if (!universe.mutants.length) throw new Error('Mutation batch universe is empty.');
   const rows = [...universe.mutants].sort((left, right) =>
     left.identity < right.identity ? -1 : left.identity > right.identity ? 1 : 0,

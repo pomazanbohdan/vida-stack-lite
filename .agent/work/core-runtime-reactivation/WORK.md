@@ -14,6 +14,40 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
+The next packet implements the ID-batch pilot behind an explicit diagnostic CLI;
+it does not switch ordinary mutation admission. `MutationGeneratedUniverse/v1`
+is distinct from an observed engine plan and carries no invented Run/Killed
+records. The public instrumenter dependency resolves from the qualified installed
+Core owner's physical package path (the first symlink-relative control correctly
+failed). Core CLI/package version ingress now has one shared owner. No dependency
+install, Node execution or build/install test suite is added.
+
+Fresh Source bytes generate one full instrumented image in memory. The pilot
+copies the existing captured package inputs once, binds canonical/local IDs and
+runs the full declared main/Bun test argv serially through the existing command
+runner and assertion/custody classifier. Its inner bwrap mounts Source/tests/tools
+read-only and exposes only owned evidence/scratch for writing. Image, original
+inputs and executable identity are rechecked; original UNKNOWN effects remain
+retained. Count-limited pilot summaries explicitly retain unattempted IDs and
+cannot be imported as complete contour results. The campaign's existing2GiB
+storage owner and900s batch limit are reused. Pilot terminal-record failures use
+the existing body/cleanup error accumulator so the primary cause survives.
+
+Red/green controls and strict checks are retained under
+`/workspace/attachments/mutation-generated-universe-*-20261016.log`,
+`mutation-image-generation-*-20261016.log` and `mutation-native-pilot-*-20261016.log`.
+Focused owner `xAopq1` passes141/0tests,398assertions with complete captures,
+closed group and unchanged boot. The real contour pilot is pending the checked
+packet publication and its matching SDK artifact. Luna remains provider-limited;
+Root implements this packet. Vex is absent; bounded native rg is the fallback.
+
+Final affected seven-file owner `Ewwvqn` passes the added generation/CLI controls,
+existing receipt classifier, descriptor, cleanup and campaign contracts with
+complete captures/closed group/same boot. Strict tooling188files and tests467files
+pass; scoped type-aware lint has zero diagnostics and documentation links pass.
+The new pilot is intentionally not an ordinary gate replacement and no native
+execution, mutation score or complete local triple is claimed by this packet.
+
 Service cycle `fe7820d9-5176-4a8d-a517-22862ffce9c1` binds630ae8d and is
 terminal:74/0tests,439assertions; custody exact F52/52,L227/227,S234/234,B123/123
 and launch-capability F3/3,L7/7,S8/8,B16/16. Captures are complete, group closed,

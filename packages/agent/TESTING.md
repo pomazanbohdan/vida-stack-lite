@@ -1001,6 +1001,25 @@ A retained timeout map can inform static planning research only; it cannot quali
 a current batch or restore an interrupted attempt. Missing children or any drift
 remain GAP/UNKNOWN. The900s partition and independent per-case limits are unchanged.
 
+The Linux-only diagnostic `bun run mutation:batch:pilot --contour <exact-name>
+--batch-size 8 --max-batches 1` uses one complete public Stryker instrumenter
+generation and the existing Bun command runner/receipt classifier. It supports
+declared main/Bun contours, default16IDs and1batch, bounded1..128 for each option;
+`--help` describes the options. It does not accept a caller-supplied test list.
+Use the existing owned PID1/isolation and SDK-readiness ingress before invocation.
+The package/root input capture is shared, the instrumented image is created once,
+and execution is serial in a private sandbox with read-only Source/test/tool files
+and private writable scratch. The full declared test argv runs for each ID.
+Each selected batch has its own900s deadline; command/case limits remain with
+their existing owners. Storage admission reuses the unchanged2GiB campaign owner.
+Native receipts still require exact baseline census, process/output closure,
+input/executable/image bindings and body assertion proof. Errors, timeouts and
+unattempted IDs remain separate. Its generated universe, image and diagnostic
+batch summaries are retained under one new `.tmp/mutation-batch-*` operation.
+No old operation is resumed. These schemas are deliberately not contour-progress
+admission: until the complete execution/custody pilot and parent join qualify,
+the ordinary mutation gate and global quality command remain unchanged.
+
 Parent receipt validation reuses one partition-local execution observation and
 lifecycle-hook analysis of the already captured immutable test/import bytes.
 Each receipt still binds its exact command, tests, sources, tools, JUnit, context

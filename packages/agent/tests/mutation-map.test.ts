@@ -11,6 +11,7 @@ import {
   mutationPartitionMap,
   mutationResultMapRow,
   planMutationBatches,
+  mutationGeneratedUniverse,
   validateMutationMapEvents,
   validateMutationPartitionMap,
   type MutationMapBinding,
@@ -23,6 +24,8 @@ import {
   readMutationPerTestCapture,
 } from '../tooling/mutation-per-test-evidence.ts';
 import type { MutationPerTestCapture } from '../tooling/mutation-assertion-context.ts';
+import { generateMutationImage } from '../tooling/mutation-generation.ts';
+import { selectMutationBatchPilot } from '../tooling/mutation-batch-pilot.ts';
 
 const root = path.resolve('/mutation-map-fixture');
 const sources = [
@@ -72,6 +75,70 @@ function result(item = plan()): MutantResult {
     killedBy: ['test:1'],
   };
 }
+
+test('a full generated universe plans activation IDs without inventing a tested engine plan', () => {
+  const item = plan('17');
+  const generated = mutationGeneratedUniverse(root, binding, [item.mutant]);
+  expect(generated.schema).toBe('MutationGeneratedUniverse/v1');
+  expect(generated.mutants[0]?.identity).toBe(mutationMapIdentity(root, sources, item.mutant, 0).identity);
+  expect(generated.mutants[0]).not.toHaveProperty('plan');
+  expect(generated.mutants[0]).not.toHaveProperty('engine_status');
+  expect(planMutationBatches(root, binding, generated, 64).batches[0]?.local_ids).toEqual(['17']);
+  expect(() => validateMutationPartitionMap(generated, root, binding)).toThrow('parent');
+  expect(() => mutationGeneratedUniverse(root, binding, [item.mutant, { ...item.mutant, id: '18' }])).toThrow(
+    'duplicate',
+  );
+  expect(() => mutationGeneratedUniverse(root, binding, [{ ...item.mutant, fileName: '/foreign.ts' }])).toThrow(
+    'Source binding',
+  );
+});
+
+test('public Stryker generation binds one instrumented image to captured Source and activation IDs', async () => {
+  const bytes = Buffer.from('export const signal = (value: boolean) => value ? "yes" : "no";\n');
+  const captured = { ...binding, partition_sources: [{ path: 'src/one.ts', sha256: sha256(bytes) }] };
+  const packageRoot = path.resolve(import.meta.dir, '..');
+  const image = await generateMutationImage(packageRoot, captured, { 'src/one.ts': bytes });
+  expect(image.universe.schema).toBe('MutationGeneratedUniverse/v1');
+  expect(image.universe.mutants.length).toBeGreaterThan(0);
+  expect(image.files).toHaveLength(1);
+  expect(image.files[0]?.path).toBe('src/one.ts');
+  expect(image.files[0]?.content).not.toBe(bytes.toString('utf8'));
+  expect(image.files[0]?.sha256).toBe(sha256(image.files[0]!.content));
+  expect(image.generator.instrumenter_version).toBe(image.generator.core_version);
+  expect(image.generator.entry_sha256).toMatch(/^[a-f0-9]{64}$/u);
+  const planned = planMutationBatches(packageRoot, captured, image.universe, 2);
+  expect(planned.batches.flatMap((batch) => batch.local_ids).sort()).toEqual(
+    image.universe.mutants.map((row) => row.local_id).sort(),
+  );
+  await expectRejection(
+    generateMutationImage(packageRoot, captured, { 'src/one.ts': Buffer.from('export const signal = 0;') }),
+    'captured Source',
+  );
+  await expectRejection(generateMutationImage(packageRoot, captured, {}), 'captured Source');
+});
+
+test('native batch pilot keeps exact declared contours and finite per-batch bounds', () => {
+  const declared = [
+    { name: 'one', sources: ['src/one.ts'], tests: ['tests/one.test.ts'], report: 'one.json', environment: 'bun' },
+  ];
+  const selected = selectMutationBatchPilot(['--contour', 'one', '--batch-size', '8', '--max-batches', '2'], declared);
+  expect(selected.partition).toBe(declared[0]!);
+  expect(selected.batchSize).toBe(8);
+  expect(selected.maxBatches).toBe(2);
+  expect(() => selectMutationBatchPilot(['--contour', 'one'], [{ ...declared[0]!, environment: 'windows' }])).toThrow(
+    'main and Bun',
+  );
+  for (const args of [
+    [],
+    ['--contour', 'foreign'],
+    ['--contour', 'one', '--batch-size', '0'],
+    ['--contour', 'one', '--batch-size', '129'],
+    ['--contour', 'one', '--batch-size', '1\n'],
+    ['--contour', 'one', '--max-batches', 'Infinity'],
+    ['--contour', 'one', '--tests', 'tests/foreign.ts'],
+  ])
+    expect(() => selectMutationBatchPilot(args, declared)).toThrow();
+});
 
 test('mutation batches own every generated identity once without changing generation ranges', () => {
   const items = [plan('0'), plan('1'), plan('2'), plan('3', 'src/two.ts')];

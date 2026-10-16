@@ -540,6 +540,8 @@ export const mutationToolInputs = [
   'tooling/mutation-gate.ts',
   'tooling/mutation-partitions.ts',
   'tooling/mutation-map.ts',
+  'tooling/mutation-generation.ts',
+  'tooling/mutation-batch-pilot.ts',
   'tooling/mutation-map-reporter.ts',
   'tooling/mutation-command-runner.ts',
   'tooling/mutation-evidence.ts',

@@ -47,7 +47,7 @@ class CampaignResourceError extends Error {
   }
 }
 
-function requireCampaignStorage(directory: string): void {
+export function requireCampaignStorage(directory: string): void {
   let availableBytes: bigint;
   try {
     const info = statfsSync(directory, { bigint: true });

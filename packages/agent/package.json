@@ -272,6 +272,8 @@
     "tests/coordination-writer-entrypoint.test.ts",
     "tests/contained-controller-fixture.ts",
     "tooling/mutation-map.ts",
+    "tooling/mutation-generation.ts",
+    "tooling/mutation-batch-pilot.ts",
     "tooling/mutation-map-reporter.ts",
     "tooling/mutation-assertion-context.ts",
     "tests/mutation-map.test.ts"
@@ -331,6 +333,7 @@
     "test:contours:pinned": "bun tooling/contour-campaign.ts",
     "test:mutation": "bun bin/bun.ts run test:mutation:pinned",
     "test:mutation:pinned": "bun tooling/mutation-gate.ts",
+    "mutation:batch:pilot": "bun bin/bun.ts tooling/mutation-batch-pilot.ts",
     "mutation:engine:help": "bun bin/bun.ts run mutation:engine:help:pinned",
     "mutation:engine:help:pinned": "bun run --bun stryker --help",
     "test:coverage": "bun bin/bun.ts ../../tooling/agent/run-coverage.ts",

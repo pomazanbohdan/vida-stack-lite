@@ -6,6 +6,7 @@ import {
 } from './mutation-partitions.ts';
 import { randomUUID } from 'node:crypto';
 import { mutationLimits } from './mutation-limits.ts';
+import { installedStrykerCli } from './mutation-generation.ts';
 import type { Stats } from 'node:fs';
 import { lstat, mkdir, mkdtemp, open, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -377,7 +378,7 @@ async function runCapturedStryker(
   return result;
 }
 
-async function confirmRunnerReceipt(
+export async function confirmRunnerReceipt(
   reportDirectory: string,
   runId: string,
   partition: string,
@@ -491,35 +492,7 @@ async function runMutationGate(): Promise<void> {
   checkManifest(root, pin);
   if (process.versions.bun !== pin) throw new Error('Mutation gate requires the pinned Bun executable.');
   const testRepositoryRoot = repositoryRootForPackage(root);
-  async function installedStrykerCli(): Promise<string> {
-    const declaredBin: (typeof import('@stryker-mutator/core/package.json'))['bin']['stryker'] = './bin/stryker.js';
-    const packageRoot = path.join(root, 'node_modules/@stryker-mutator/core');
-    const packageBytes = await readFile(path.join(packageRoot, 'package.json'));
-    const installed: unknown = JSON.parse(packageBytes.toString('utf8'));
-    const declared: unknown = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
-    if (!record(installed) || installed.name !== '@stryker-mutator/core' || !record(declared))
-      throw new Error('Installed Stryker Core package owner is invalid.');
-    const dependencies = record(declared.devDependencies)
-      ? declared.devDependencies
-      : record(declared.dependencies)
-        ? declared.dependencies
-        : null;
-    if (
-      !dependencies ||
-      typeof dependencies['@stryker-mutator/core'] !== 'string' ||
-      !/^\d+\.\d+\.\d+$/u.test(dependencies['@stryker-mutator/core']) ||
-      installed.version !== dependencies['@stryker-mutator/core'] ||
-      !record(installed.bin) ||
-      installed.bin.stryker !== declaredBin
-    )
-      throw new Error('Installed Stryker Core does not match its exact package owner and CLI entry.');
-    const cli = path.join(packageRoot, installed.bin.stryker);
-    const cliInfo = await lstat(cli);
-    if (!cliInfo.isFile() || cliInfo.isSymbolicLink())
-      throw new Error('Installed Stryker Core CLI must be a regular file.');
-    return cli;
-  }
-  const strykerCli = await installedStrykerCli();
+  const strykerCli = await installedStrykerCli(root);
   const partitions = mutationPartitions();
   const selection = selectMutationPartitions(process.argv.slice(2), partitions);
   const selectedPartitions = selection.partitions;
