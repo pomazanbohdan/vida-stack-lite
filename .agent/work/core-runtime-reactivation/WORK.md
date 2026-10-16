@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `e27d653` at origin/main.
+- Published predecessor: `775ce21` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -6181,6 +6181,42 @@ The initial residual commit hook passed formatting and494-file TypeScript but
 rejected two unbound-method warnings in the compile observer. Root switched to
 the existing helper's Reflect.get/type-check pattern and explicit restored-method
 identity observation; the rejected hook created no commit.
+
+## Public-ingress complete local triple at775ce21
+
+The fresh declared three-file selection completed coverage run
+`2254ed80-23e6-495b-8d9b-359b79820cc7`: F20/20,L79/79,S91/91,B36/36.
+Owned receipt XP0DQh records3452.564497ms, complete capture, closed groups and
+unchanged boot. The corresponding scoped v1 frozen Source-floor proof passed
+at386bf6c9review with maxCC/entryCRAP14/14; original measured proof remains
+unadmitted rather than reconstructed.
+
+Mutation run `c9f0922f-6d0d-413c-8ebe-67be4c02d3e4` returnedpilot-pass:
+335/335assertion-confirmed Killed, effective_score1, zero survivors/UNKNOWN,
+empty provenance/source/baseline/report errors. Owner
+`/workspace/attachments/quality-mutation-main-public-ingress-L658wG`
+records127836.760504ms, no timeout, complete111898-byte capture, closed groups
+and unchanged boot. Receipt validation took1731.296496ms with2identity
+observations and1lifecycle analysis. Root imported the three current owner
+reports; the derived ledger has123observations and5/45historical local triples,
+40stillopen,1static,1retired. This is a complete local maximum for the captured
+selection, not global frozen/exact acceptance or Runtime qualification.
+
+The initial residual hook rejected two unbound-method warnings after a passing
+494-file program. Root reused the observer's Reflect.get/type-check pattern;
+the corrected fallback test passed1/0 atn0UQkM in208.539481ms. The corrected
+strict hook passed formatting,494-file TypeScript and the strict lint/Knip lane;
+775ce21 was published before the numeric freeze. Source and caps were unchanged.
+
+The five blind next-contour lanes prepared envelopes/ledger while this run was
+frozen. A nullish canonicalizer exception normalization issue has a concrete
+public regression proposal and an existing shared owner; Root must reproduce
+red before applying it and account for the removed local function explicitly.
+The broad historical-owner cross-check proposal was withdrawn after comparison
+with valid retry/rebind histories. Do not implement current-head equality for
+immutable historical snapshots. The resource-conflict deletion remains a static
+proposal requiring its stable-JSON input boundary to be respected. Prepared
+cases and independent reviews are external; no successor Source is qualified yet.
 
 ## Historical provenance
 

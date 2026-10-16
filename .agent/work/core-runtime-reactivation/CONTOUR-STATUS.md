@@ -4,10 +4,10 @@
 
 Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.
 
-Historical complete coverage + assertion-confirmed mutation pair closures: **4/45**; static contours: **1**.
-Separate same-coverage-run local triples with scoped frozen CRAP: **4/45**.
-Executable contours without a recorded coverage + mutation pair: **41**.
-Executable contours without a recorded complete local triple: **41**.
+Historical complete coverage + assertion-confirmed mutation pair closures: **5/45**; static contours: **1**.
+Separate same-coverage-run local triples with scoped frozen CRAP: **5/45**.
+Executable contours without a recorded coverage + mutation pair: **40**.
+Executable contours without a recorded complete local triple: **40**.
 
 Current freshness is unverified. Parent operation statuses are owner-reported without re-admitting their receipts. The scoped frozen CRAP lane records its owner-issued local measurements; exact coverage qualification and global frozen-gate acceptance remain pending. A local triple is not global acceptance.
 
@@ -19,7 +19,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 1 / 1 | local triple recorded |
 | main-config | 338/350 · 924/966 · 977/1024 · 223/266 | 16 / 42 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 3 / 3 | local triple recorded |
-| main-public-ingress | 20/20 · 79/79 · 91/91 · 36/36 | 14 / 14 | 325/335 (unknown; raw runner Killed; unqualified) | BLOCKED | open / unknown | 14 / 14 | open / unknown |
+| main-public-ingress | 20/20 · 79/79 · 91/91 · 36/36 | 14 / 14 | 335/335 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 14 / 14 | local triple recorded |
 | main-envelopes | unknown | unknown | unknown | not imported | open / unknown | unknown | open / unknown |
 | main-cedar | 25/25 · 56/56 · 60/60 · 17/17 | 4 / 4 | 189/189 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 4 / 4 | local triple recorded |
 | main-governance | 200/202 · 682/691 · 702/716 · 82/90 | 6 / 6 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
@@ -147,10 +147,10 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 ### main-public-ingress
 
-Historical complete local closure: not recorded.
-Achieved in that closure: F/L/S/B unknown; CC / entry CRAP unknown; mutation unknown.
-Historical complete local coverage + mutation + frozen CRAP closure: not recorded.
-Frozen CRAP measurement in that closure: unknown; scoped receipt coverage run: unknown.
+Historical complete local closure: `2254ed80-23e6-495b-8d9b-359b79820cc7` + `c9f0922f-6d0d-413c-8ebe-67be4c02d3e4`.
+Achieved in that closure: F/L/S/B 20/20 · 79/79 · 91/91 · 36/36; CC / entry CRAP 14 / 14; mutation 335/335 (pilot-pass; assertion-confirmed).
+Historical complete local coverage + mutation + frozen CRAP closure: `2254ed80-23e6-495b-8d9b-359b79820cc7` + `c9f0922f-6d0d-413c-8ebe-67be4c02d3e4` + `2254ed80-23e6-495b-8d9b-359b79820cc7`.
+Frozen CRAP measurement in that closure: 14 / 14; scoped receipt coverage run: `2254ed80-23e6-495b-8d9b-359b79820cc7`.
 Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
@@ -163,6 +163,10 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 848b5b6e-0c81-4b97-b45a-1d75a169fd16 | not-captured | 2026-10-16T02:00:36.420Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/848b5b6e-0c81-4b97-b45a-1d75a169fd16.json |
 | mutation | d46162cb-5fef-47c5-a40b-f37ed19105f3 | e27d653caab4da650196151c716f3b9e5950ecd3 | 2026-10-16T02:02:35.424Z | unknown; unqualified; selection bound | 325/335 (unknown; raw runner Killed; unqualified) | /workspace/attachments/quality-mutation-main-public-ingress-ty61Ik/stdout.log |
 | frozen-crap | 848b5b6e-0c81-4b97-b45a-1d75a169fd16 | e27d653caab4da650196151c716f3b9e5950ecd3 | 2026-10-16T02:03:53.621Z | scoped-proof-pass; owner accepted locally; selection bound | 14 / 14 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/848b5b6e-0c81-4b97-b45a-1d75a169fd16.scoped-crap.json |
+| coverage | 2254ed80-23e6-495b-8d9b-359b79820cc7 | 775ce210edbd3e35a40e749e0b07f3c0ef06d84f | 2026-10-16T02:14:12.820Z | focused-diagnostic; owner accepted locally; selection bound | 20/20 · 79/79 · 91/91 · 36/36 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/2254ed80-23e6-495b-8d9b-359b79820cc7.focused-coverage.json |
+| coverage-outcome | 2254ed80-23e6-495b-8d9b-359b79820cc7 | not-captured | 2026-10-16T02:14:12.828Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/2254ed80-23e6-495b-8d9b-359b79820cc7.json |
+| mutation | c9f0922f-6d0d-413c-8ebe-67be4c02d3e4 | 775ce210edbd3e35a40e749e0b07f3c0ef06d84f | 2026-10-16T02:17:38.596Z | pilot-pass; owner accepted locally; selection bound | 335/335 (pilot-pass; assertion-confirmed) | /workspace/attachments/quality-mutation-main-public-ingress-L658wG/stdout.log |
+| frozen-crap | 2254ed80-23e6-495b-8d9b-359b79820cc7 | 775ce210edbd3e35a40e749e0b07f3c0ef06d84f | 2026-10-16T02:18:58.396Z | scoped-proof-pass; owner accepted locally; selection bound | 14 / 14 (scoped proof; owner measured) | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/2254ed80-23e6-495b-8d9b-359b79820cc7.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
