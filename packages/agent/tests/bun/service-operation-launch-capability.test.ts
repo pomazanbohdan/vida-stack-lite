@@ -1191,6 +1191,137 @@ for (const role of ['request', 'prepared evidence'] as const) {
   });
 }
 
+test('record and claim reject invalid PID boundaries without changing the exact reservation', () => {
+  const fixture = openCustodyFixture('service-invalid-pid-');
+  let handle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
+  let completed = false;
+  let closed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const invalidPids = [
+      0,
+      -0,
+      -1,
+      1.5,
+      Number.MIN_VALUE,
+      Number.NaN,
+      Infinity,
+      -Infinity,
+      Number.MAX_SAFE_INTEGER + 1,
+    ];
+    for (const stage of ['record', 'claim'] as const) {
+      const before = expectReturned(() =>
+        readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+      );
+      expect(before?.phase).toBe('launching');
+      expect(before?.launch_pid).toBe(stage === 'record' ? null : 1);
+      for (const invalidPid of invalidPids) {
+        expect(() =>
+          stage === 'record'
+            ? recordServiceOperationLaunchPid(
+                fixture.database,
+                fixture.workspaceId,
+                'release-pack-worker',
+                operationId,
+                requestDigest,
+                reservation.revision,
+                invalidPid,
+                reservation.child_capability,
+              )
+            : claimReservedServiceOperationLaunch(
+                fixture.database,
+                fixture.workspaceId,
+                'release-pack-worker',
+                operationId,
+                requestDigest,
+                invalidPid,
+                reservation.child_capability,
+              ),
+        ).toThrow(`Service operation custody: ${stage === 'record' ? 'spawned worker' : 'worker'} pid is invalid`);
+        expect(
+          expectReturned(() =>
+            readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+          ),
+        ).toEqual(before);
+      }
+      if (stage === 'record') {
+        const recorded = expectReturned(() =>
+          recordServiceOperationLaunchPid(
+            fixture.database,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            reservation.revision,
+            1,
+            reservation.child_capability,
+          ),
+        );
+        expect(recorded.launch_pid).toBe(1);
+        expect(recorded.revision).toBe(reservation.revision + 1);
+      }
+    }
+    const claimed = expectReturned(() =>
+      claimReservedServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        1,
+        reservation.child_capability,
+      ),
+    );
+    handle = claimed;
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId))
+        ?.phase,
+    ).toBe('in_flight');
+    expectReturned(() => closeServiceOperationCustody(claimed, 'prepared', 'c'.repeat(64)));
+    const after = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(after?.phase).toBe('prepared');
+    expect(after?.owner_token).toBeNull();
+    expect(after?.launch_pid).toBeNull();
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (handle) closeServiceOperationCustodyHandle(handle);
+          else closeServiceOperationDatabase(fixture.database);
+          closed = true;
+          return undefined;
+        },
+        () => {
+          if (completed && closed) rmSync(fixture.root, { recursive: true, force: true });
+          else
+            retainExpectedUnknownFixture(
+              fixture.root,
+              'PID boundary control did not prove prepared custody and closed admission',
+            );
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
 test('reservation retains the original failure and rollback failure without committing its row', () => {
   const fixture = openCustodyFixture('service-reservation-rollback-fault-');
   const nativeExec = fixture.database.exec.bind(fixture.database);

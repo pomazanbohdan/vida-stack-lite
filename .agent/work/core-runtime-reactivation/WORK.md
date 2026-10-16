@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `53c29238529a559b6e198f1d423cb0dcd33cece0`. Its bounded native mutation pilot is terminal with one survivor and one runtime UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `5fdaa1918d8297215b7b16b51c1fd34d2e7d4235`. Its bounded native mutation pilot is terminal with7assertion-confirmed kills,1survivor and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,26 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+The fresh5fdaa19 pilot binds official SDK run38914901509/attempt1/artifact12052580348,
+ZIP digest `sha256:1c19ae8b3aee4591555c7b48ec53f053bcddde000ae5079dce8da8e6048ff8be`.
+Outer `native-mutation-pilot-5fdaa19-En9oBB` closes in41233.813748ms with complete
+captures, closed group and unchanged boot. Inner evidence remains at
+`packages/agent/.tmp/mutation-batch-26b4b38f-3a7d-4c56-8d3b-adab37abcfd4-wqH3eg/`.
+Baseline78cases passes. All8planned IDs execute:7assertion-confirmed Killed,
+1Survived,0UNKNOWN;743of751remain unattempted. The previous digest survivor and
+owner-phase runtime UNKNOWN are now confirmed Killed. Schema-string mutant1is
+also confirmed through the independently prepared fixture/Subject contract.
+ID468survives after disabling claim PID validation. No product defect is inferred.
+
+Its correction covers both record and claim boundaries with0,-0,negative,
+fractional, subnormal, NaN, infinite and unsafe integer PIDs; every denial checks
+the exact error and unchanged persisted row. A real PID1record/claim follows,
+then exact prepared custody and closed admission precede fixture deletion.
+Focused `8L2Fvg` passes1/0test with complete captures/closed group/same boot;
+strict tests467files passes and scoped lint has zero diagnostics. Publication,
+matching SDK and an expanded32-ID diagnostic pilot are the next steps. These
+pilot results remain separate from full-contour mutation admission and CRAP.
 
 The fresh53c2923 pilot uses official SDK run38911782687/attempt1/artifact12051075526,
 ZIP digest `sha256:2a6ec0ba49539a7d5eb91c3ecae2f65b7d216a9c2da02f0151d9a3374d964a39`.
