@@ -119,6 +119,7 @@ test.each([
   ['main-host', dispositionReview, 'pinned published reviewed budget commit'],
   ['main-host', cacheDispositionReview, 'pinned published reviewed budget commit'],
   ['unknown', reviewed, 'complete declared executable contour'],
+  ['main-contracts', contractsReview, 'complete declared executable contour'],
 ])('scoped CRAP refuses %s with review %s before numerical admission', (contour, reference, message) => {
   const result = spawnSync(process.execPath, [script, '--contour', contour!, '--budget-ref', reference!], {
     cwd: root,
@@ -139,7 +140,8 @@ test.each([
   ['main-runtime-timing', timingReview],
   ['bun-runtime-facade', facadeReview],
   ['bun-lifecycle-state', lifecycleReview],
-  ['main-contracts', contractsReview],
+  ['main-public-ingress', contractsReview],
+  ['main-envelopes', contractsReview],
   ['bun-runtime-initialization', dispositionReview],
   ['bun-cli-toolchain', dispositionReview],
   ['bun-cli-toolchain', cacheDispositionReview],

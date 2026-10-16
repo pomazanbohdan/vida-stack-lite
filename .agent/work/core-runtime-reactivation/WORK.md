@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `1ca0ec7` at origin/main.
+- Published predecessor: `f7903e8` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -5766,6 +5766,64 @@ work includes exact rebind/run pairs, Mastra readiness, config cases and a
 descriptor body-plus-close error correction. Unqualified copies do not close
 contours or authorize runtime cutover. The cleanup proposal needs reproduction,
 regressions and caller/correspondence review before Source integration.
+
+## Source-aligned contracts execution and immutable retired history
+
+After the second complete900s UNKNOWN, independent terminal cost review selects
+two complete existing-registry declarations. `main-public-ingress` owns the public
+Source and its boundary/fuzz files; `main-envelopes` owns envelope Source and its
+boundary/fuzz/zombies files. Their exact Source and test unions equal the former
+combined obligation. No speedup or child result is established by this change.
+The normal runner, Source/descriptor/canonical-map validation, original dry run,
+assertion confirmation, process custody and all deadlines remain unchanged.
+
+The registry defaults to active contours. Only progress import/render requests
+the old parent metadata. The first copied implementation incorrectly overwrote
+all retired statuses/acceptance with UNKNOWN; Root rejected it. Current adapter
+and immutable-merge logic retain original observations unchanged, including old
+accepted coverage/CRAP, unaccepted operation outcomes and mutation UNKNOWN.
+Retired rendering uses the same row formatter as active history. Rendering reads
+one registry snapshot and excludes retired history from active closure counts;
+there is no new parent-result aggregator or evidence store.
+
+Projection regeneration preserves all111JSON observations byte-for-byte and
+shows4historical local triples out of45active executable contours,41open, plus
+one static and one retired contour. The denominator increased because one
+executable declaration became two; Source/test obligations were not removed.
+The immutable386bf6c9file-scoped review continues to cover either child's same
+Source; genuine fresh numeric evidence remains required. The retired parent is
+refused by executable/scoped entrypoints. Current global/runtime qualification
+remains GAP.
+
+The185-file tooling and454-file tests programs passed. The complete four-file
+development batch retained189PASS/1FAIL at
+`/workspace/attachments/quality-rolling-cli-check-IDGBOc` in8795.153397ms with
+complete capture, closed groups and unchanged boot. The failure was Root's new
+test expecting absent raw counts from an intentionally count-bearing UNKNOWN
+fixture. It now requires the exact raw-runner/unqualified label; neither counts
+nor UNKNOWN semantics changed. The complete projection file then passed71/0,
+228assertions in178.308827ms at
+`/workspace/attachments/quality-rolling-cli-check-D7Ha06`, with the same custody
+guarantees. After sharing the active/retired row formatter and reusing one
+registry snapshot, the complete projection file again passed71/0 with228
+assertions in168.720205ms at
+`/workspace/attachments/quality-rolling-cli-check-MbgM24`, with complete output,
+closed process groups and unchanged boot. Regeneration retained the same111JSON
+observations without a byte change. Unchanged passing CLI/map/descriptor cases
+are reused. Further final format/type/lint/Knip and publication outcomes belong
+to this packet's commit. The first strict hook passed format and489-file
+TypeScript but rejected one new test's array sort without a comparator. Root
+added the explicit Source-path comparator; the complete file passed71/0,
+228assertions in173.389393ms at
+`/workspace/attachments/quality-rolling-cli-check-T5FdVW`, with complete capture,
+closed groups and unchanged boot. The rejected commit created no commit.
+
+Independent Root-code review is
+`/workspace/attachments/quality-root-contract-split-final-independent-review-vf790-20261016.md`.
+The copied-proposal rejection and terminal cost decisions remain in attachments;
+none converts raw events to a score. Before the new first-child measurement,
+settle these inputs and publish. Finish its exact coverage/scoped/mutation gates;
+stop on failure or UNKNOWN and correct that complete child before another.
 
 ## Historical provenance
 

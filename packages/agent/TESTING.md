@@ -144,6 +144,16 @@ acceptance. Preserve exact coverage and frozen complexity/CRAP requirements.
 Retained .tmp and coverage report/snapshot trees are evidence, not fresh Stryker
 sandbox inputs; keep them excluded from sandbox copying without deleting them.
 
+The former combined `main-contracts` campaign is retired after two complete
+attempts reached its unchanged deadline. Its original reports remain historical
+observations. The active `main-public-ingress` and `main-envelopes` declarations
+preserve its exact two-Source and four-test union, including shared fuzz tests.
+Run and qualify each complete child separately. Neither child alone closes the
+former obligation, and their results never synthesize a parent score. The
+registry defaults to active declarations; only historical projection opts into
+retired metadata. Preserve each old status, acceptance flag and counter while
+excluding retired contours from active denominators and closure counts.
+
 The main-host contour selects `tests/host-capability-boundary.test.ts`. Its two
 native cases own the seven host assertions extracted from the combined Cedar
 completeness case. Provider cases run in the parent Bun process with fresh

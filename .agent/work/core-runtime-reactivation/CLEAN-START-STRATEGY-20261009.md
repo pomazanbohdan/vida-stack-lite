@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `1ca0ec7`; current correction details are in WORK.
+- Published predecessor: `f7903e8`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. The fresh host/timing pilots used accepted d320564 CI inputs. Changed inputs need matching CI formation; WORK owns run/artifact receipts.
 - Historical run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Preserve its custody and all older UNKNOWN evidence; do not replay it. Current attempts and source bindings are in WORK and the derived contour document.
@@ -56,10 +56,14 @@ source owners and strengthened activated-config, storage-admission, governance
 and documentation-policy denials. The serialization-image correction is published.
 Fresh contracts coverage/scoped CRAP passed at1ca0ec7; the subsequent complete
 1194-mutant attempt also hit900s and remains UNKNOWN without a final report.
-Diagnose that terminal engine/test cost, then select the smallest qualified
-correction using the existing registry and evidence owners. Keep the complete
-Source/test obligation. Do not add a parent/child join without demonstrated need,
-repeat the unchanged campaign or raise its deadline. Root owns Source, shared helpers, registry,
+The next bounded correction uses two complete source-aligned declarations,
+`main-public-ingress` and `main-envelopes`, in the existing registry. Keep their
+exact original Source/test union and shared fuzz tests. Retain the former parent
+as historical metadata outside active counts, without changing old observations.
+Verify/publish the split, then qualify the first complete child through coverage,
+same-run scoped CRAP and assertion-confirmed mutation before advancing. Do not
+add another parent join, repeat the unchanged campaign or raise its deadline.
+Root owns Source, shared helpers, registry,
 frozen-plan metadata, documentation, checks and Git. Workers do not run competing
 checks, numerical producers, builds or installs. Exact outcomes live in WORK;
 copied preparation does not close a contour.

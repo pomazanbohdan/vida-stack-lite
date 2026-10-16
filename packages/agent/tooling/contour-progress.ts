@@ -184,7 +184,7 @@ function inputClosure(...groups: Digest[][]): Digest[] {
   return [...merged.values()].sort((a, b) => a.path.localeCompare(b.path));
 }
 function declaredSources(contour: string): string[] {
-  const partition = mutationPartitions().find((row) => row.name === contour);
+  const partition = mutationPartitions({ includeRetired: true }).find((row) => row.name === contour);
   if (!partition || partition.environment === 'static')
     throw new Error('Unknown or static executable contour: ' + contour);
   return [...(partition.sources ?? [partition.requiredReportedSource!])].sort();
@@ -219,7 +219,7 @@ function selectedTests(
       return input;
     })
     .sort((a, b) => a.path.localeCompare(b.path));
-  const expected = mutationPartitions().find((row) => row.name === contour)?.tests ?? [];
+  const expected = mutationPartitions({ includeRetired: true }).find((row) => row.name === contour)?.tests ?? [];
   return {
     selected_tests,
     selection_complete:
@@ -695,7 +695,9 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
       'non_killed',
     ].every((key) => empty(report[key]));
   return report.selected_partitions
-    .filter((name) => mutationPartitions().find((row) => row.name === name)?.environment !== 'static')
+    .filter(
+      (name) => mutationPartitions({ includeRetired: true }).find((row) => row.name === name)?.environment !== 'static',
+    )
     .map((name) => {
       const contour = text(name);
       const binding = rows(report.partition_source_bindings).filter((row) => row.partition === contour);
@@ -954,8 +956,14 @@ function lastCompleteTripleClosure(
   return undefined;
 }
 
+function attemptRow(row: Attempt): string {
+  return `| ${row.lane} | ${cell(row.run_id)} | ${cell(row.commit)} | ${row.recorded_at} | ${cell(row.status)}; ${row.accepted ? 'owner accepted locally' : 'unqualified'}; selection ${row.selection_complete ? 'bound' : 'unbound'} | ${cell(counts(row))} | ${cell(row.artifact)} |`;
+}
+
 export function renderContourProgress(snapshot: Snapshot): string {
-  const partitions = mutationPartitions();
+  const registry = mutationPartitions({ includeRetired: true });
+  const partitions = registry.filter((row) => row.environment !== 'retired');
+  const retiredPartitions = registry.filter((row) => row.environment === 'retired');
   let completed = 0;
   let tripleCompleted = 0;
   const body: string[] = [];
@@ -988,12 +996,28 @@ export function renderContourProgress(snapshot: Snapshot): string {
       '',
       '| Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |',
       '| --- | --- | --- | --- | --- | --- | --- |',
-      ...attempts.map(
-        (row) =>
-          `| ${row.lane} | ${cell(row.run_id)} | ${cell(row.commit)} | ${row.recorded_at} | ${cell(row.status)}; ${row.accepted ? 'owner accepted locally' : 'unqualified'}; selection ${row.selection_complete ? 'bound' : 'unbound'} | ${cell(counts(row))} | ${cell(row.artifact)} |`,
-      ),
+      ...attempts.map(attemptRow),
       '',
       'Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.',
+      '',
+    );
+  }
+  for (const partition of retiredPartitions) {
+    const attempts = snapshot.attempts.filter((row) => row.contour === partition.name);
+    const lastCoverage = attempts.filter((row) => row.lane === 'coverage').at(-1);
+    const lastMutation = attempts.filter((row) => row.lane === 'mutation').at(-1);
+    const lastCrap = attempts.filter((row) => row.lane === 'frozen-crap').at(-1);
+    body.push(
+      `| ${partition.name} (retired) | ${cell(counts(lastCoverage))} | ${lastCoverage ? `${lastCoverage.max_cc} / ${lastCoverage.max_entry_crap}` : 'unknown'} | ${cell(counts(lastMutation))} | historical only | retired; excluded | ${lastCrap ? `${lastCrap.max_cc} / ${lastCrap.max_entry_crap}` : 'unknown'} | retired; excluded |`,
+    );
+    if (!attempts.length) continue;
+    details.push(
+      `### ${partition.name} (retired historical contour)\n`,
+      'Original observations remain unchanged and are excluded from active closure counts. Child results never synthesize a parent result.',
+      '',
+      '| Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |',
+      '| --- | --- | --- | --- | --- | --- | --- |',
+      ...attempts.map(attemptRow),
       '',
     );
   }

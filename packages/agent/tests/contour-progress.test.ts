@@ -6,6 +6,10 @@ import { contourAttempts, mergeContourProgress, renderContourProgress } from '..
 import { recordContourReport, runContourProgress } from '../tooling/contour-progress-cli.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 
+const activeCount = mutationPartitions().filter((row) => row.environment !== 'static').length;
+const oneOfActive = '**1/' + activeCount + '**';
+const zeroOfActive = '**0/' + activeCount + '**';
+
 // Projection-only fixture subjects; these are not production coverage or confirmed mutation evidence.
 const digest = (file: string, hash = 'a') => ({ path: file, sha256: hash.repeat(64) });
 const receipt = {
@@ -196,10 +200,135 @@ test('zero evidence keeps canonical static and executable contours visible as un
   expect(report).toContain('exact coverage qualification');
 });
 
+test('contract Sources and selected tests are split exactly, with fuzz shared by both active children', () => {
+  const active = mutationPartitions();
+  const publicIngress = active.find((row) => row.name === 'main-public-ingress');
+  const envelopes = active.find((row) => row.name === 'main-envelopes');
+  expect(publicIngress).toMatchObject({
+    sources: ['src/contracts/public-ingress.ts'],
+    tests: ['tests/public-ingress-boundary.test.ts', 'tests/fuzz.test.ts'],
+  });
+  expect(envelopes).toMatchObject({
+    sources: ['src/contracts/envelopes.ts'],
+    tests: ['tests/envelopes-boundary.test.ts', 'tests/fuzz.test.ts', 'tests/zombies.test.ts'],
+  });
+  expect(active.some((row) => row.name === 'main-contracts')).toBe(false);
+  expect(mutationPartitions({ includeRetired: true }).find((row) => row.name === 'main-contracts')).toMatchObject({
+    environment: 'retired',
+    sources: ['src/contracts/public-ingress.ts', 'src/contracts/envelopes.ts'],
+    tests: [
+      'tests/public-ingress-boundary.test.ts',
+      'tests/envelopes-boundary.test.ts',
+      'tests/fuzz.test.ts',
+      'tests/zombies.test.ts',
+    ],
+  });
+  const owners = active.flatMap((row) => (row.sources ?? []).map((source) => [source, row.name] as const));
+  expect(
+    owners
+      .filter(([source]) => ['src/contracts/public-ingress.ts', 'src/contracts/envelopes.ts'].includes(source))
+      .sort(([left], [right]) => left.localeCompare(right)),
+  ).toEqual([
+    ['src/contracts/envelopes.ts', 'main-envelopes'],
+    ['src/contracts/public-ingress.ts', 'main-public-ingress'],
+  ]);
+});
+
+function retiredCoverage() {
+  const c = coverage();
+  const sources = [digest('src/contracts/public-ingress.ts'), digest('src/contracts/envelopes.ts')];
+  const tests = [
+    'tests/public-ingress-boundary.test.ts',
+    'tests/envelopes-boundary.test.ts',
+    'tests/fuzz.test.ts',
+    'tests/zombies.test.ts',
+  ];
+  return {
+    ...c,
+    sources,
+    module_inputs: sources,
+    test_selection: { contour: 'main-contracts', tests },
+    test_inputs: tests.map((file) => digest(file)),
+    metrics: sources.map(({ path: file }) => ({
+      ...structuredClone(c.metrics[0]!),
+      file,
+      functions: [{ identity: file + '#fixture', complexity: 2, coverage: 1, crap: 2 }],
+    })),
+  };
+}
+
+test('retired coverage retains its owner status and is idempotent historical evidence', () => {
+  const original = contourAttempts(retiredCoverage(), receipt);
+  expect(original).toHaveLength(1);
+  expect(original[0]).toMatchObject({ contour: 'main-contracts', status: 'focused-diagnostic', accepted: true });
+  const before = structuredClone(original);
+  const snapshot = mergeContourProgress(empty, original);
+  const replay = mergeContourProgress(snapshot, contourAttempts(retiredCoverage(), receipt));
+  expect(replay).toEqual(snapshot);
+  expect(replay.attempts).toEqual(before);
+  const report = renderContourProgress(replay);
+  expect(report).toContain('main-contracts (retired)');
+  expect(report).toContain('focused-diagnostic; owner accepted locally');
+  expect(report).toContain('Child results never synthesize a parent result');
+  expect(report).toContain(zeroOfActive);
+  const conflict = structuredClone(before);
+  conflict[0]!.status = 'changed';
+  expect(() => mergeContourProgress(snapshot, conflict)).toThrow(/Conflicting/);
+});
+
+test('a retired complete pair and frozen proof never close either active child', () => {
+  const c = retiredCoverage();
+  const m = mutation();
+  m.source_inputs = structuredClone(c.sources);
+  m.selected_partitions = ['main-contracts'];
+  m.test_inputs = structuredClone(c.test_inputs);
+  m.partition_source_bindings = [
+    {
+      partition: 'main-contracts',
+      tests: [...c.test_selection.tests],
+      source_inputs: structuredClone(c.sources),
+    },
+  ];
+  const legacy = {
+    ...m,
+    partition_statuses: { 'main-contracts': { Killed: 3 } },
+    runner_processes: m.runner_processes.map((row) => ({ ...row, partition: 'main-contracts' })),
+  };
+  const frozen = frozenCrap(c);
+  const crap = {
+    ...frozen,
+    contour: 'main-contracts',
+    original_sources: structuredClone(c.sources),
+    functions: [
+      ...frozen.functions,
+      { ...frozen.functions[0]!, identity: 'original#second', current_identity: 'current#second' },
+    ],
+  };
+  const observations = [
+    ...contourAttempts(c, receipt),
+    ...contourAttempts(legacy, receipt),
+    ...contourAttempts(crap, receipt),
+  ];
+  expect(observations.every((row) => row.accepted)).toBe(true);
+  const snapshot = mergeContourProgress(empty, observations);
+  expect(mergeContourProgress(snapshot, observations)).toEqual(snapshot);
+  const report = renderContourProgress(snapshot);
+  expect(report).toContain(zeroOfActive);
+  expect(report).toContain('scoped-proof-pass; owner accepted locally');
+  expect(report).toContain('pilot-pass; owner accepted locally');
+  expect(report).not.toContain('local triple recorded');
+  const unknown = { ...legacy, run_id: 'mutation-unknown', status: 'unknown', effective_score: 0 };
+  const failed = contourAttempts(unknown, receipt);
+  expect(failed[0]).toMatchObject({ status: 'unknown', accepted: false });
+  const after = mergeContourProgress(snapshot, failed);
+  expect(after.attempts.slice(0, observations.length)).toEqual(snapshot.attempts);
+  expect(renderContourProgress(after)).toContain('3/3 (unknown; raw runner Killed; unqualified)');
+});
+
 test('compatible complete observations record a local maximum without claiming frozen or freshness acceptance', () => {
   const snapshot = projected();
   const report = renderContourProgress(snapshot);
-  expect(report).toContain('**1/44**');
+  expect(report).toContain(oneOfActive);
   expect(report).toContain('1/1 · 1/1 · 1/1 · 1/1');
   expect(report).toContain('2 / 2');
   expect(report).toContain('3/3 (pilot-pass; assertion-confirmed)');
@@ -210,8 +339,12 @@ test('compatible complete observations record a local maximum without claiming f
 
 test('coverage and mutation pair remains recorded when the scoped frozen CRAP receipt is absent', () => {
   const report = renderContourProgress(projected());
-  expect(report).toContain('Historical complete coverage + assertion-confirmed mutation pair closures: **1/44**');
-  expect(report).toContain('Separate same-coverage-run local triples with scoped frozen CRAP: **0/44**');
+  expect(report).toContain(
+    'Historical complete coverage + assertion-confirmed mutation pair closures: **1/' + activeCount + '**',
+  );
+  expect(report).toContain(
+    'Separate same-coverage-run local triples with scoped frozen CRAP: **0/' + activeCount + '**',
+  );
 });
 
 test.each(['coverage-run', 'source', 'test', 'tool', 'closure', 'functions'] as const)(
@@ -238,8 +371,12 @@ test.each(['coverage-run', 'source', 'test', 'tool', 'closure', 'functions'] as 
       ...contourAttempts(crap, receipt),
     ]);
     const report = renderContourProgress(snapshot);
-    expect(report).toContain('Historical complete coverage + assertion-confirmed mutation pair closures: **1/44**');
-    expect(report).toContain('Separate same-coverage-run local triples with scoped frozen CRAP: **0/44**');
+    expect(report).toContain(
+      'Historical complete coverage + assertion-confirmed mutation pair closures: **1/' + activeCount + '**',
+    );
+    expect(report).toContain(
+      'Separate same-coverage-run local triples with scoped frozen CRAP: **0/' + activeCount + '**',
+    );
   },
 );
 
@@ -251,8 +388,12 @@ test('compatible exact coverage, scoped frozen CRAP and assertion-confirmed muta
     ...contourAttempts(frozenCrap(c), receipt),
   ]);
   const report = renderContourProgress(snapshot);
-  expect(report).toContain('Historical complete coverage + assertion-confirmed mutation pair closures: **1/44**');
-  expect(report).toContain('Separate same-coverage-run local triples with scoped frozen CRAP: **1/44**');
+  expect(report).toContain(
+    'Historical complete coverage + assertion-confirmed mutation pair closures: **1/' + activeCount + '**',
+  );
+  expect(report).toContain(
+    'Separate same-coverage-run local triples with scoped frozen CRAP: **1/' + activeCount + '**',
+  );
   expect(report).toContain(
     'Historical complete local coverage + mutation + frozen CRAP closure: `coverage-1` + `mutation-1` + `coverage-1`.',
   );
@@ -278,7 +419,9 @@ test('v2 projects retained and new measurements while excluding removed roles fr
     ...contourAttempts(crap, receipt),
   ]);
   const report = renderContourProgress(snapshot);
-  expect(report).toContain('Separate same-coverage-run local triples with scoped frozen CRAP: **1/44**');
+  expect(report).toContain(
+    'Separate same-coverage-run local triples with scoped frozen CRAP: **1/' + activeCount + '**',
+  );
   expect(report).toContain('Current freshness: unverified');
   expect(report).toContain('qualification: pending');
 });
@@ -399,7 +542,7 @@ test.each(['source', 'test', 'tool', 'missing-test', 'missing-tool', 'dependency
       m.partition_source_bindings[0]!.tests = [];
     }
     if (kind === 'missing-tool') m.tool_inputs = [];
-    expect(renderContourProgress(projected(coverage(), m))).toContain('**0/44**');
+    expect(renderContourProgress(projected(coverage(), m))).toContain(zeroOfActive);
   },
 );
 
@@ -428,7 +571,7 @@ test.each(['timeout', 'signal', 'output', 'custody', 'runtime', 'survivor', 'pro
     );
     expect(after.attempts.at(-1)!.accepted).toBe(false);
     const report = renderContourProgress(after);
-    expect(report).toContain('**1/44**');
+    expect(report).toContain(oneOfActive);
     expect(report).toContain('unqualified');
     expect(report).toContain('mutation-1');
     expect(report).toContain('mutation-2');
@@ -440,20 +583,20 @@ test('partial coverage retains its denominator and cannot supply missing branche
   c.metrics[0]!.coverage.branches = { covered: 0, total: 1 };
   const report = renderContourProgress(projected(c));
   expect(report).toContain('1/1 · 1/1 · 1/1 · 0/1');
-  expect(report).toContain('**0/44**');
+  expect(report).toContain(zeroOfActive);
 });
 
 test('captured tests outside the declared executed selection do not establish contour completion', () => {
   const c = coverage();
   c.test_inputs.push(digest('tests/other.test.ts'));
   c.test_selection.tests = ['tests/other.test.ts'];
-  expect(renderContourProgress(projected(c))).toContain('**0/44**');
+  expect(renderContourProgress(projected(c))).toContain(zeroOfActive);
 });
 
 test('a dependency may be classified as a focused tool and campaign Source with the same captured bytes', () => {
   const c = coverage();
   c.tool_inputs.push(digest('src/contracts/envelopes.ts'));
-  expect(renderContourProgress(projected(c))).toContain('**1/44**');
+  expect(renderContourProgress(projected(c))).toContain(oneOfActive);
 });
 
 test('UNKNOWN with no executed mutants or process receipt retains historical completion and an unknown denominator', () => {
@@ -472,7 +615,7 @@ test('UNKNOWN with no executed mutants or process receipt retains historical com
   );
   expect(snapshot.attempts.at(-1)!.mutants).toBeNull();
   expect(renderContourProgress(snapshot)).toContain('unknown (unknown)');
-  expect(renderContourProgress(snapshot)).toContain('**1/44**');
+  expect(renderContourProgress(snapshot)).toContain(oneOfActive);
 });
 
 test.each(['FAIL', 'UNKNOWN', 'BLOCKED'])(
@@ -486,7 +629,7 @@ test.each(['FAIL', 'UNKNOWN', 'BLOCKED'])(
     expect(snapshot.attempts.at(-1)!.coverage).toBeNull();
     expect(snapshot.attempts.at(-1)!.accepted).toBe(false);
     const document = renderContourProgress(snapshot);
-    expect(document).toContain('**1/44**');
+    expect(document).toContain(oneOfActive);
     expect(document).toContain('1/1 · 1/1 · 1/1 · 1/1');
     expect(document).toContain('| ' + status + ' | local maximum recorded');
   },
@@ -521,7 +664,7 @@ test('publication interruption after JSON commit is repaired by regenerating Mar
     rmSync(document, { recursive: true });
     runContourProgress(['--output', output], root);
     expect(readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8')).toBe(committed);
-    expect(readFileSync(document, 'utf8')).toContain('**1/44**');
+    expect(readFileSync(document, 'utf8')).toContain(oneOfActive);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -559,9 +702,9 @@ test('legacy mutation summary needs its captured descriptor and rejects a foreig
     recordContourReport(root, coverage(), '/retained/coverage.json');
     const output = path.join(root, 'published');
     runContourProgress(['--output', output, '--report', report], root);
-    expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toContain('**0/44**');
+    expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toContain(zeroOfActive);
     runContourProgress(['--output', output, '--report', report, '--selection', selection], root);
-    expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toContain('**1/44**');
+    expect(readFileSync(path.join(output, 'CONTOUR-STATUS.md'), 'utf8')).toContain(oneOfActive);
     const before = readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8');
     writeFileSync(selection, JSON.stringify({ ...descriptor, input_fingerprint: '0'.repeat(64) }));
     expect(() => runContourProgress(['--output', output, '--report', report, '--selection', selection], root)).toThrow(
@@ -606,7 +749,7 @@ test('file adapter merges independent producer outputs, exports a durable snapsh
     const before = readFileSync(json, 'utf8');
     const parsed: unknown = JSON.parse(before);
     expect(renderContourProgress(mergeContourProgress(parsed, []))).toBe(readFileSync(markdown, 'utf8'));
-    expect(readFileSync(markdown, 'utf8')).toContain('**1/44**');
+    expect(readFileSync(markdown, 'utf8')).toContain(oneOfActive);
     runContourProgress(['--output', output], root);
     expect(readFileSync(json, 'utf8')).toBe(before);
     const bad = path.join(root, 'bad.json');

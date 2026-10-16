@@ -10,7 +10,7 @@ export type MutationPartition = {
 };
 
 /** Single partition owner; reading it performs no inventory, hashing or execution. */
-export function mutationPartitions(): MutationPartition[] {
+export function mutationPartitions(options: { includeRetired?: boolean } = {}): MutationPartition[] {
   const mainSlices: MutationPartition[] = [
     {
       name: 'main-runtime-core',
@@ -44,14 +44,14 @@ export function mutationPartitions(): MutationPartition[] {
       tests: ['tests/host-capability-boundary.test.ts'],
     },
     {
-      name: 'main-contracts',
-      sources: ['src/contracts/public-ingress.ts', 'src/contracts/envelopes.ts'],
-      tests: [
-        'tests/public-ingress-boundary.test.ts',
-        'tests/envelopes-boundary.test.ts',
-        'tests/fuzz.test.ts',
-        'tests/zombies.test.ts',
-      ],
+      name: 'main-public-ingress',
+      sources: ['src/contracts/public-ingress.ts'],
+      tests: ['tests/public-ingress-boundary.test.ts', 'tests/fuzz.test.ts'],
+    },
+    {
+      name: 'main-envelopes',
+      sources: ['src/contracts/envelopes.ts'],
+      tests: ['tests/envelopes-boundary.test.ts', 'tests/fuzz.test.ts', 'tests/zombies.test.ts'],
     },
     {
       name: 'main-cedar',
@@ -568,5 +568,18 @@ export function mutationPartitions(): MutationPartition[] {
       report: 'mutation-windows.json',
     },
   ];
+  if (options.includeRetired)
+    partitions.push({
+      name: 'main-contracts',
+      environment: 'retired',
+      sources: ['src/contracts/public-ingress.ts', 'src/contracts/envelopes.ts'],
+      tests: [
+        'tests/public-ingress-boundary.test.ts',
+        'tests/envelopes-boundary.test.ts',
+        'tests/fuzz.test.ts',
+        'tests/zombies.test.ts',
+      ],
+      report: 'main-contracts.json',
+    });
   return partitions;
 }
