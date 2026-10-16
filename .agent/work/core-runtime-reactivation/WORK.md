@@ -4,11 +4,11 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `a740bd2644018e6704aa2eab49a1f810644629c8`. Its full-image diagnostic stops at358 of700 IDs:340 assertion-confirmed Killed,17 Survived,1 UNKNOWN,342 unattempted. It is diagnostic-only, without parent qualification. Corrections below need fresh bound numeric evidence. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current pin packet: `8ca2af97480326becc98d76b26d3ae6ade2fd699`. The latest full-image diagnostic is bound to `a740bd2644018e6704aa2eab49a1f810644629c8` and stops at358 of700 IDs:340 assertion-confirmed Killed,17 Survived,1 UNKNOWN,342 unattempted. It is diagnostic-only, without parent qualification. Corrections below need fresh bound numeric evidence. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
-- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence: 7,111 roles; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
+- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence: 7,112 roles; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
@@ -178,6 +178,52 @@ The direct policy-transition work-ID boundary control passes in
 82068.130023ms, full captures/closed group/same boot). Its filter does not establish
 the complete final-assurance selection. Earlier final-assurance FAIL lacks raw
 Bun case output and remains unresolved, not overwritten by this focused pass.
+
+### Pin, remaining diagnostic controls and next numeric cycle
+
+The56-role scope review and custody corrections are published at8ca2af9 after the
+normal strict precommit. Root adds only its exact commit/contour-to-review-key pin
+to the existing CRAP owner. Development check `quality-rolling-cli-check-UMlo8i`
+passes68/0 with292 assertions in13519.735992ms. Tooling TypeScript188files passes.
+This qualifies the changed contract tests, not a numeric CRAP measurement.
+
+All four diagnostic survivor scenarios now have proposed public controls: exhausted
+revision with unchanged reservation, malformed reconciliation/new handoff request
+digests before verification, and a real schema-read rejection plus owned close
+failure retaining both causes and handoff context. Root reuses the shared cleanup
+accumulator instead of one repeated catch per handle. Full custody development
+check `quality-rolling-cli-check-gKSFYP` passes123/0 with1026 assertions in
+20263.201379ms. The old survivor/UNKNOWN classifications are not relabelled.
+
+The normal precommit rejected an explicit rethrow inside the new diagnostic
+test's finally block (`no-unsafe-finally`). Root moves the existing cleanup
+accumulator after the captured body outcome; every owned cleanup and both error
+causes remain preserved. The corrected exact case passes1/0 with12 assertions
+at `quality-rolling-cli-check-hbvvpd` in1157.080039ms, with complete captures,
+closed process group and unchanged boot. Tests TypeScript467files passes.
+
+The existing controller main is exported in place for direct CLI-path checks,
+preserving its identity, control flow and retained ceiling. Invalid arguments and
+real verify/inspect execute through that seam; the subprocess exec check remains.
+Three TaskSource path-identity controls use inert real closed SQLite files for
+symlink, hardlink and outside-root denials. They avoid Host/admission setup and
+retain failed roots without changing the enclosing suite's hooks. Root fixes the
+new Buffer types and cleanup callback return contract before behavior execution.
+`quality-rolling-cli-check-QMDNeY` passes4/0 with28 filtered and42 assertions in
+86968.672931ms: the controller composite takes86283.78ms and the three path cases
+take3.12/3.05/5.64ms. Complete captures, closed groups and unchanged boot hold for
+these development checks. Full final-assurance selection
+`quality-rolling-cli-check-KMUg7n` passes12/0 with176 assertions in120568.592397ms;
+its old FAIL remains retained. These checks do not establish exact coverage.
+
+The next stable-source sequence is fresh custody coverage, its same-run pinned
+scoped CRAP proof, then the complete canonical mutation selection. Native batch
+parent admission remains a distinct tooling gap. The reviewed design permits a
+separately identified native producer only after exhaustive universe/batch/receipt
+joins, positive activation and denominator controls, full baseline and readbacks.
+Do not fabricate Stryker engine events/statuses or promote diagnostic totals. This
+is verification of the existing native tool path under TEST013, not a runtime
+engine feature. The current Stryker route and all exact quality gates remain.
 
 ### Terminal 6effd64 diagnostic and next repairs
 
@@ -1159,7 +1205,7 @@ CLEAR and backlog retain the P0/P1/P2 definitions and all stable task IDs. Missi
 ## Evidence boundaries
 
 - The retained capture has exact local coverage and same-run scoped CRAP for its bound inputs. Subsequent changes need fresh evidence. No complete config mutation outcome exists.
-- Partial 7,111-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
+- Partial 7,112-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
 - Historical local contour triples are 6/45; 39 remain unclosed. They stay qualified as historical/local and do not imply a globally ready system.
 - Adapter/unit evidence does not establish physical HostState or native Windows behavior. Formation is not installation; installation is not attributable user Runtime acceptance.
 - Keep failures, expected failures and UNKNOWN outcomes with original classifications and receipts. Do not turn interruption, missing output, timeout or partial counters into PASS or Killed.

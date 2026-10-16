@@ -53,6 +53,15 @@ terminal disposition before a contour score exists. Batch boundaries must not
 reset Source identity, omit survivors, reuse UNKNOWN outcomes or activate an
 unqualified per-test filter. Existing independent limits and frozen gates remain.
 
+The next custody packet publishes its independently reviewed56-role freeze before
+the later exact scope pin. Measure coverage and same-run scoped CRAP only after
+that pin is stable. Native diagnostic batches need a qualified parent join before
+they can count toward closure. Reuse the existing input, canonical-map, assertion,
+custody and readback owners. An explicit native provenance may replace duplicate
+Stryker execution only after activation and denominator controls plus exhaustive
+per-ID proof; it never synthesizes Stryker events or statuses. Until implemented
+and qualified, native batches remain diagnostic and global acceptance stays open.
+
 Complete exact frozen function correspondence against the genuine `b549951` baseline. Complete and review the full CRAP plan before using dynamic CRAP as an acceptance gate. Qualify resource custody and shard behavior before running the complete numeric suite. Require 100% functions, lines, statements, and branches, plus 100% assertion-confirmed Killed mutants. Keep the required tests and SDK in the final input set. Record CRAP results and these outcomes from one admitted current capture. A timeout, incomplete report, partial budget, or split set of focused runs does not satisfy full numeric acceptance.
 
 The global canonical mutant map is implemented across the maintained Source and

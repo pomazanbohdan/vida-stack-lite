@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { test, expect } from 'bun:test';
+import { test, expect, spyOn } from 'bun:test';
 import {
   mkdtempSync,
   readFileSync,
@@ -17,9 +17,9 @@ import { spawnSync } from 'node:child_process';
 import {
   prepareDevelopmentController,
   inspectDevelopmentController,
-  verifyDevelopmentController,
   executeDevelopmentController,
   developmentControllerChildDiagnostic,
+  main,
 } from '../bin/development-controller.ts';
 import { readPortableLock } from '../bin/install.ts';
 
@@ -107,11 +107,56 @@ test('qualified development controller preserves Source identity and accepts a s
         executeDevelopmentController({ controllerRoot, command: 'run', args: ['--project-root', sourceRoot] }),
       ).rejects.toThrow('qualified'),
     );
-    let ready: Awaited<ReturnType<typeof verifyDevelopmentController>> | undefined;
-    await assert.doesNotReject(async () => {
-      ready = await verifyDevelopmentController({ controllerRoot });
+    const output: string[] = [];
+    let verifyOutput = '';
+    let inspectOutput = '';
+    const stdout = spyOn(process.stdout, 'write').mockImplementation((chunk: unknown) => {
+      output.push(String(chunk));
+      return true;
     });
-    assert.ok(ready, 'controller verification returned a result');
+    try {
+      await assert.rejects(main(['unknown']), /development-controller prepare/);
+      assert.equal(output.length, 0);
+      await assert.rejects(
+        main(['inspect', '--controller-root', controllerRoot, '--unknown', 'value']),
+        /Invalid controller option/,
+      );
+      assert.equal(output.length, 0);
+      await assert.rejects(
+        main(['inspect', '--controller-root', controllerRoot, '--target', sourceRoot]),
+        /not supported for this mode/,
+      );
+      assert.equal(output.length, 0);
+      await assert.rejects(main(['exec', '--controller-root', controllerRoot]), /separator missing/);
+      assert.equal(output.length, 0);
+      await main(['verify', '--controller-root', controllerRoot]);
+      verifyOutput = output.splice(0).join('');
+      await main(['inspect', '--controller-root', controllerRoot]);
+      inspectOutput = output.join('');
+    } finally {
+      stdout.mockRestore();
+    }
+    const verifyValue: unknown = JSON.parse(verifyOutput);
+    const inspectValue: unknown = JSON.parse(inspectOutput);
+    if (
+      typeof verifyValue !== 'object' ||
+      verifyValue === null ||
+      Array.isArray(verifyValue) ||
+      typeof inspectValue !== 'object' ||
+      inspectValue === null ||
+      Array.isArray(inspectValue)
+    )
+      throw new TypeError('Controller CLI output must be a record.');
+    const verifyResult = verifyValue as Record<string, unknown>;
+    const inspectResult = inspectValue as Record<string, unknown>;
+    expect(verifyResult.schema).toBe('VidaDevelopmentController/v1');
+    expect(verifyResult.status).toBe('ready');
+    expect(verifyResult.next_action).toBe('exec');
+    expect(inspectResult.schema).toBe('VidaDevelopmentController/v1');
+    expect(inspectResult.status).toBe('ready');
+    expect(inspectResult.next_action).toBe('exec');
+    const ready = await inspectDevelopmentController({ controllerRoot });
+    assert.ok(ready, 'controller inspection returned a result');
     expect(ready.status).toBe('ready');
     if (ready.qualification === undefined) throw new Error('ready controller is missing its qualification');
     expect(ready.qualification.schema).toBe('DevelopmentControllerQualification/v1');

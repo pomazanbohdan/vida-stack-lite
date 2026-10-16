@@ -661,7 +661,7 @@ function parseControllerCli(args: string[]): {
   return { action, options, args };
 }
 
-async function main(args: string[]): Promise<void> {
+export async function main(args: string[]): Promise<void> {
   const { action, options, args: commandArgs } = parseControllerCli(args);
   const input: ControllerInput = {
     target: options['--target'],

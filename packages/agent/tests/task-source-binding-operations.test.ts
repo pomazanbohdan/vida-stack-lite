@@ -3,10 +3,21 @@ import { Database, type Changes, type SQLQueryBindings } from 'bun:sqlite';
 import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  lstatSync,
+  linkSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import {
   assertWorkspaceDatabaseAdmission,
   closeWorkspaceDatabaseWithAdmission,
@@ -113,6 +124,62 @@ function openFixtureDatabase(repositoryRoot: string, databasePath: string, works
   const databaseRelativePath = path.relative(repositoryRoot, databasePath);
   assert.ok(databaseRelativePath && !path.isAbsolute(databaseRelativePath));
   return openHostStateDatabase(repositoryRoot, databaseRelativePath, workspaceId);
+}
+interface TaskSourceHostIdentityFixture {
+  readonly fixtureRoot: string;
+  readonly hostRoot: string;
+  readonly hostDatabasePath: string;
+  readonly outsideDatabasePath: string | null;
+  readonly hostBytes: Buffer<ArrayBuffer>;
+  readonly outsideBytes: Buffer<ArrayBuffer> | null;
+}
+function withTaskSourceHostIdentityFixture(
+  action: (fixture: TaskSourceHostIdentityFixture) => void,
+  includeOutsideDatabase = false,
+): void {
+  const fixtureRoot = mkdtempSync(path.join(tmpdir(), 'vida-task-source-host-identity-')),
+    hostRoot = path.join(fixtureRoot, 'host'),
+    hostDatabasePath = path.join(hostRoot, 'host.sqlite'),
+    outsideRoot = includeOutsideDatabase ? path.join(fixtureRoot, 'outside') : null,
+    outsideDatabasePath = outsideRoot ? path.join(outsideRoot, 'host.sqlite') : null;
+  let bodySucceeded = false;
+  try {
+    for (const databasePath of outsideDatabasePath ? [hostDatabasePath, outsideDatabasePath] : [hostDatabasePath]) {
+      mkdirSync(path.dirname(databasePath), { recursive: true });
+      const database = new Database(databasePath);
+      let failure: { error: unknown } | undefined;
+      try {
+        database.exec('CREATE TABLE fixture(value TEXT)');
+      } catch (error) {
+        failure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              database.close();
+              return undefined;
+            },
+          ],
+          failure,
+        );
+      }
+    }
+    action({
+      fixtureRoot,
+      hostRoot,
+      hostDatabasePath,
+      outsideDatabasePath,
+      hostBytes: readFileSync(hostDatabasePath),
+      outsideBytes: outsideDatabasePath ? readFileSync(outsideDatabasePath) : null,
+    });
+    bodySucceeded = true;
+  } catch (error) {
+    console.error('Retained TaskSource Host identity fixture: ' + fixtureRoot);
+    throw error;
+  } finally {
+    if (bodySucceeded) rmSync(fixtureRoot, { recursive: true, force: true });
+  }
 }
 interface ActionRow {
   readonly operation_id: string;
@@ -1732,6 +1799,56 @@ describe('persisted TaskSource binding operations', () => {
       }
     },
   );
+});
+
+describe('TaskSource Host database filesystem identity', () => {
+  test('rejects a real symlink before following its outside target and accepts the in-root database', () => {
+    withTaskSourceHostIdentityFixture(({ hostRoot, hostDatabasePath, outsideDatabasePath, outsideBytes }) => {
+      assert.ok(outsideDatabasePath && outsideBytes);
+      const symlinkPath = path.join(hostRoot, 'host-symlink.sqlite');
+      symlinkSync(outsideDatabasePath, symlinkPath);
+
+      expect(lstatSync(symlinkPath).isSymbolicLink()).toBe(true);
+      expect(() => assertExistingTaskSourceHostDatabase(hostRoot, symlinkPath)).toThrow(/database is unsafe/);
+      expect(existsSync(symlinkPath)).toBe(true);
+      expect(readFileSync(outsideDatabasePath)).toEqual(outsideBytes);
+      expect(readFileSync(symlinkPath)).toEqual(outsideBytes);
+
+      rmSync(symlinkPath);
+      expect(readFileSync(outsideDatabasePath)).toEqual(outsideBytes);
+      expect(() => assertExistingTaskSourceHostDatabase(hostRoot, hostDatabasePath)).not.toThrow();
+    }, true);
+  }, 5_000);
+
+  test('rejects a real second hard link and accepts the restored single link', () => {
+    withTaskSourceHostIdentityFixture(({ hostRoot, hostDatabasePath, hostBytes }) => {
+      const hardLinkPath = path.join(hostRoot, 'host-hard-link.sqlite');
+      linkSync(hostDatabasePath, hardLinkPath);
+
+      expect(lstatSync(hardLinkPath).nlink).toBe(2);
+      expect(() => assertExistingTaskSourceHostDatabase(hostRoot, hardLinkPath)).toThrow(/database is unsafe/);
+      expect(readFileSync(hostDatabasePath)).toEqual(hostBytes);
+      expect(readFileSync(hardLinkPath)).toEqual(hostBytes);
+
+      rmSync(hardLinkPath);
+      expect(readFileSync(hostDatabasePath)).toEqual(hostBytes);
+      expect(() => assertExistingTaskSourceHostDatabase(hostRoot, hostDatabasePath)).not.toThrow();
+    });
+  }, 5_000);
+
+  test('rejects a real regular database outside the configured root', () => {
+    withTaskSourceHostIdentityFixture(({ hostRoot, hostDatabasePath, outsideDatabasePath, outsideBytes }) => {
+      assert.ok(outsideDatabasePath && outsideBytes);
+      expect(lstatSync(outsideDatabasePath).isFile()).toBe(true);
+      expect(lstatSync(outsideDatabasePath).nlink).toBe(1);
+      expect(() => assertExistingTaskSourceHostDatabase(hostRoot, outsideDatabasePath)).toThrow(
+        /outside the configured Host root/,
+      );
+      expect(existsSync(outsideDatabasePath)).toBe(true);
+      expect(readFileSync(outsideDatabasePath)).toEqual(outsideBytes);
+      expect(() => assertExistingTaskSourceHostDatabase(hostRoot, hostDatabasePath)).not.toThrow();
+    }, true);
+  }, 5_000);
 });
 
 test('configured inspect and admitted packet/result read current TaskSource bytes while Host files stay unchanged', async () => {

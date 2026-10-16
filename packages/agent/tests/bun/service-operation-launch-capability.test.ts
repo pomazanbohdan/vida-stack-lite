@@ -2665,6 +2665,66 @@ test('PID recording rejects a different capability at the current revision witho
   }
 });
 
+test('PID recording reports revision exhaustion and preserves the persisted reservation', () => {
+  const fixture = openCustodyFixture('service-revision-limit-');
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    fixture.database
+      .query('UPDATE agent_host_service_operation_custody SET revision=? WHERE workspace_id=? AND operation_id=?')
+      .run(Number.MAX_SAFE_INTEGER, fixture.workspaceId, operationId);
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(before?.revision).toBe(Number.MAX_SAFE_INTEGER);
+
+    expect(() =>
+      recordServiceOperationLaunchPid(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        Number.MAX_SAFE_INTEGER,
+        pid,
+        reservation.child_capability,
+      ),
+    ).toThrow('Service operation custody: custody revision limit reached');
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(before);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          if (completed) rmSync(fixture.root, { recursive: true, force: true });
+          else retainExpectedUnknownFixture(fixture.root, 'revision-limit denial did not preserve the reservation');
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
 test('reconciliation rejects a foreign workspace binding before receipt verification or custody changes', async () => {
   const fixture = openCustodyFixture('service-reconcile-foreign-workspace-');
   let completed = false;

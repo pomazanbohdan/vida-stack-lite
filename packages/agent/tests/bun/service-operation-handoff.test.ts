@@ -290,7 +290,7 @@ for (const route of ['handoff', 'reconciliation', 'reconciliation_unknown'] as c
   });
 }
 
-test('reconciliation rejects malformed operation keys before verifying or mutating a journal', async () => {
+test('reconciliation rejects malformed keys and request digests before verifying or mutating a journal', async () => {
   const fixture = openCustodyFixture('reconcile-invalid-operation-key-');
   let reader: Database | undefined;
   let completed = false;
@@ -299,8 +299,24 @@ test('reconciliation rejects malformed operation keys before verifying or mutati
     closeServiceOperationDatabase(fixture.database);
     let verifierCalls = 0;
     for (const key of [
-      { kind: 'release-pack-worker' as const, operation: '!' + operationId, message: 'operation identity is invalid' },
-      { kind: 'invalid-worker' as 'release-pack-worker', operation: operationId, message: 'owner kind is invalid' },
+      {
+        kind: 'release-pack-worker' as const,
+        operation: '!' + operationId,
+        digest: requestDigest,
+        message: 'operation identity is invalid',
+      },
+      {
+        kind: 'invalid-worker' as 'release-pack-worker',
+        operation: operationId,
+        digest: requestDigest,
+        message: 'owner kind is invalid',
+      },
+      {
+        kind: 'release-pack-worker' as const,
+        operation: operationId,
+        digest: 'g'.repeat(64),
+        message: 'request digest is invalid',
+      },
     ]) {
       const source = expectReturned(() =>
         openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
@@ -314,7 +330,7 @@ test('reconciliation rejects malformed operation keys before verifying or mutati
           fixture.workspaceId,
           key.kind,
           key.operation,
-          requestDigest,
+          key.digest,
           () => {
             verifierCalls++;
             return { phase: 'prepared', evidence_digest: evidenceDigest };
@@ -356,8 +372,8 @@ test('reconciliation rejects malformed operation keys before verifying or mutati
   }
 });
 
-test('handoff rejects a malformed prior digest before verifying and preserves its terminal row', async () => {
-  const fixture = openCustodyFixture('handoff-invalid-prior-digest-');
+test('handoff rejects malformed prior and new request digests before verifying and preserves its terminal row', async () => {
+  const fixture = openCustodyFixture('handoff-invalid-request-digest-');
   let completed = false;
   let failure: { error: unknown } | undefined;
   try {
@@ -372,6 +388,19 @@ test('handoff rejects a malformed prior digest before verifying and preserves it
           return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
         },
         'Service operation custody: prior request digest is invalid',
+        'g'.repeat(64),
+      ),
+    ).toEqual(prior);
+    expect(
+      await expectHandoffFailure(
+        fixture,
+        prior,
+        async () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+        'Service operation custody: request digest is invalid',
+        requestDigest,
         'g'.repeat(64),
       ),
     ).toEqual(prior);
@@ -898,6 +927,145 @@ test('handoff rejects custody schema drift before verification and succeeds afte
     if (completed) rmSync(fixture.root, { recursive: true, force: true });
     else console.error('Retained failed handoff schema-drift fixture: ' + fixture.root);
   }
+});
+
+test('handoff keeps its source-read diagnostic when owned source cleanup also fails', async () => {
+  const fixture = openCustodyFixture('handoff-read-close-fault-');
+  let source: Database | undefined;
+  let inspection: Database | undefined;
+  let reader: Database | undefined;
+  let restoreRawOpen: (() => void) | undefined;
+  let restoreClose: (() => void) | undefined;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const prior = finishOperation(fixture, 'release-pack-worker');
+    source = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+    source.exec('ALTER TABLE agent_host_service_operation_custody ADD COLUMN unexpected TEXT');
+
+    let ownedSource: Database | undefined;
+    const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
+    const watchedOpen = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
+      const database = nativeOpen(...args);
+      if (ownedSource === undefined && args[0] === fixture.root && args[1] === fixture.relative) ownedSource = database;
+      return database;
+    });
+    restoreRawOpen = () => watchedOpen.mockRestore();
+
+    const closeError = new Error('injected handoff source cleanup failure');
+    let closeFaultReached = false;
+    let verifierCalls = 0;
+    const nativeClose = Reflect.get(Database.prototype, 'close') as Database['close'];
+    const watchedClose = spyOn(Database.prototype, 'close').mockImplementation(function (
+      this: Database,
+      force?: boolean,
+    ): void {
+      if (this === ownedSource && !closeFaultReached) {
+        closeFaultReached = true;
+        throw closeError;
+      }
+      nativeClose.call(this, force);
+    });
+    restoreClose = () => watchedClose.mockRestore();
+
+    const failure = await rejectionReason(
+      handoffServiceOperationCustody(
+        source,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        async () => {
+          verifierCalls++;
+          throw new Error('handoff verifier must not run after a source-read failure');
+        },
+      ).finally(() => {
+        source = undefined;
+      }),
+    );
+    expect(closeFaultReached).toBe(true);
+    expect(verifierCalls).toBe(0);
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError)) throw new Error('Handoff source read and close causes must survive.');
+    expect(failure.message).toBe('handoff source read and close failed');
+    expect(failure.errors).toHaveLength(2);
+    expect(failure.errors[0]).toBeInstanceOf(Error);
+    if (!(failure.errors[0] instanceof Error)) throw new Error('The custody schema read error must survive.');
+    expect(failure.errors[0].message).toBe('Service operation custody: owned service table is absent or differs');
+    expect(failure.errors[1]).toBe(closeError);
+
+    restoreClose();
+    restoreClose = undefined;
+    restoreRawOpen();
+    restoreRawOpen = undefined;
+    retryPendingWorkspaceDatabaseCloses();
+
+    inspection = new Database(path.join(fixture.root, fixture.relative));
+    expect(
+      inspection
+        .query(
+          'SELECT workspace_id,owner_kind,operation_id,request_digest,owner_token,revision,phase,evidence_digest,' +
+            'launch_pid,handoff_digest,handoff_from_kind,handoff_from_phase,handoff_from_request_digest,' +
+            'handoff_from_revision,handoff_from_evidence_digest FROM agent_host_service_operation_custody ' +
+            'WHERE workspace_id=? AND operation_id=?',
+        )
+        .get(fixture.workspaceId, operationId),
+    ).toEqual(prior);
+    inspection.exec('ALTER TABLE agent_host_service_operation_custody DROP COLUMN unexpected');
+    inspection.close();
+    inspection = undefined;
+
+    reader = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(reader!, fixture.workspaceId, operationId)),
+    ).toEqual(prior);
+    closeServiceOperationDatabase(reader);
+    reader = undefined;
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+  }
+  try {
+    completeOwnedCleanup(
+      [
+        () => {
+          restoreClose?.();
+          return undefined;
+        },
+        () => {
+          restoreRawOpen?.();
+          return undefined;
+        },
+        () => {
+          retryPendingWorkspaceDatabaseCloses();
+          return undefined;
+        },
+        () => {
+          if (source !== undefined) closeServiceOperationDatabase(source);
+          return undefined;
+        },
+        () => {
+          inspection?.close();
+          return undefined;
+        },
+        () => {
+          if (reader !== undefined) closeServiceOperationDatabase(reader);
+          return undefined;
+        },
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  } catch (error) {
+    console.error('Retained failed handoff source-read close fixture: ' + fixture.root);
+    throw error;
+  }
+  if (completed) rmSync(fixture.root, { recursive: true, force: true });
 });
 
 test('handoff rejects a release owner, a different prior request, and a nonterminal pack row without mutation', async () => {
@@ -1616,6 +1784,7 @@ async function expectHandoffFailure(
   verifier: HandoffVerifier,
   message: string | RegExp,
   priorRequest = requestDigest,
+  request = retargetDigest,
 ) {
   const source = expectReturned(() =>
     openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
@@ -1628,7 +1797,7 @@ async function expectHandoffFailure(
       fixture.workspaceId,
       operationId,
       priorRequest,
-      retargetDigest,
+      request,
       verifier,
     ),
     message,
