@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published Source base: `922dd35ed0e8aa3a585916a1c93713ad3ce54307` at `origin/main`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published Source base: `86092e26b94029647447a1dfce727314cd30ace7` at `origin/main`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -138,7 +138,7 @@ boot. The previous Windows comparison arm is now covered by the actual selection
 Only the null-expiry dependency-fault arm remains; a new test injects that invalid
 snapshot result without persisting it, verifies denial, restores the method and
 checks the unchanged real snapshot and healthy retry. Its final numeric result is
-pending. Core frozen scope admission is also pending explicit151original-role
+recorded below. Core frozen scope admission is still pending explicit151original-role
 reconciliation: original entered-effect callback was consolidated, while a new
 cleanup wrapper reuses its lexical identity. Do not transfer caps or silently
 classify this as retained by name. Review locators:
@@ -151,6 +151,26 @@ passes with maxCC21/maxCRAP21 against published e9629b3. Owner `mzHTFt`
 completed4309.693333ms with complete captures/closed groups/same boot. Both reports
 are imported. The old unqualified521/877mutation report stays historical, not a
 current score. No new complete local triple or Runtime acceptance is established.
+
+Final core run `ef1d0279-bdef-4306-b412-563c61a660b4` binds published86092e2:
+238/0tests,1316assertions, exact F162/162,L602/602,S632/632,B400/400, measured
+maxCC31/maxCRAP31. Owned `cnSNwg` completed117093.285947ms with complete captures,
+closed groups and unchanged boot. The projection imports it; this closes local
+coverage only, not the unresolved frozen role disposition or mutation.
+The automatic header now separately derives coverage-only, same-run coverage/CRAP,
+and full triples from its existing observations, excluding static/retired scopes.
+Owner `vo69Vs` passes103/0projection tests,302assertions,193.135827ms; mismatched
+Source/test/tool/closure/function/run proofs remain rejected. No extra inventory,
+Source hash pass or suite is added to render the counters.
+
+The parent mutation evidence reader now allocates observed file size+1 after its
+existing size bound, retaining the extra EOF byte and all identity/size/hash/close
+checks. The static proof is
+`/workspace/attachments/quality-parent-evidence-buffer-controls-20261016.md`.
+Strict tooling185files passes. Existing parent inventory acceptance at `dl5yz6`
+passes with full captures/closed groups/same boot; this does not directly exercise
+reader boundary/race behavior. No benchmark speedup or mutation acceptance is
+inferred. Later campaigns must bind the changed tooling bytes.
 
 1. Maintain documentation under the sidecar's single-owner protocol.
 2. Complete approved Cloud/profile guards and reproducible Pstack bootstrap; keep Source checks, SDK verification, native qualification and acceptance separate.

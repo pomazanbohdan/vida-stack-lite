@@ -1069,8 +1069,11 @@ export function renderContourProgress(snapshot: Snapshot): string {
   const registry = mutationPartitions({ includeRetired: true });
   const partitions = registry.filter((row) => row.environment !== 'retired');
   const retiredPartitions = registry.filter((row) => row.environment === 'retired');
+  const executableCount = partitions.filter((row) => row.environment !== 'static').length;
   let completed = 0;
   let tripleCompleted = 0;
+  let coverageCompleted = 0;
+  let coverageFrozenCompleted = 0;
   const body: string[] = [];
   const details: string[] = [];
   for (const partition of partitions) {
@@ -1078,15 +1081,22 @@ export function renderContourProgress(snapshot: Snapshot): string {
     const coverage = attempts.filter((row) => row.lane === 'coverage');
     const mutation = attempts.filter((row) => row.lane === 'mutation');
     const crap = attempts.filter((row) => row.lane === 'frozen-crap');
+    const staticOnly = partition.environment === 'static';
     const best = lastCompleteClosure(coverage, mutation);
     const triple = lastCompleteTripleClosure(coverage, mutation, crap);
+    const completeCoverage = coverage.filter(maximum);
+    if (!staticOnly && completeCoverage.length > 0) coverageCompleted++;
+    if (
+      !staticOnly &&
+      completeCoverage.some((current) => crap.some((row) => maximum(row) && compatibleFrozenCrap(current, row)))
+    )
+      coverageFrozenCompleted++;
     if (best) completed++;
     if (triple) tripleCompleted++;
     const lastCoverage = coverage.at(-1);
     const lastMutation = mutation.at(-1);
     const lastCrap = crap.at(-1);
     const lastOutcome = attempts.filter((row) => row.lane === 'coverage-outcome').at(-1);
-    const staticOnly = partition.environment === 'static';
     body.push(
       `| ${partition.name} | ${cell(counts(lastCoverage))} | ${lastCoverage ? `${lastCoverage.max_cc} / ${lastCoverage.max_entry_crap}` : 'unknown'} | ${cell(counts(lastMutation))} | ${lastOutcome?.status ?? 'not imported'} | ${staticOnly ? 'N/A: static exports' : best ? 'local maximum recorded' : 'open / unknown'} | ${lastCrap ? `${lastCrap.max_cc} / ${lastCrap.max_entry_crap}` : 'unknown'} | ${triple ? 'local triple recorded' : 'open / unknown'} |`,
     );
@@ -1134,10 +1144,12 @@ export function renderContourProgress(snapshot: Snapshot): string {
       '',
       'Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.',
       '',
-      `Historical complete coverage + assertion-confirmed mutation pair closures: **${completed}/${partitions.filter((row) => row.environment !== 'static').length}**; static contours: **${partitions.filter((row) => row.environment === 'static').length}**.`,
-      `Separate same-coverage-run local triples with scoped frozen CRAP: **${tripleCompleted}/${partitions.filter((row) => row.environment !== 'static').length}**.`,
-      `Executable contours without a recorded coverage + mutation pair: **${partitions.filter((row) => row.environment !== 'static').length - completed}**.`,
-      `Executable contours without a recorded complete local triple: **${partitions.filter((row) => row.environment !== 'static').length - tripleCompleted}**.`,
+      `Historical contours with exact F/L/S/B coverage: **${coverageCompleted}/${executableCount}**.`,
+      `Historical same-coverage-run coverage + scoped frozen CRAP pairs: **${coverageFrozenCompleted}/${executableCount}**.`,
+      `Historical complete coverage + assertion-confirmed mutation pair closures: **${completed}/${executableCount}**; static contours: **${partitions.length - executableCount}**.`,
+      `Separate same-coverage-run local triples with scoped frozen CRAP: **${tripleCompleted}/${executableCount}**.`,
+      `Executable contours without a recorded coverage + mutation pair: **${executableCount - completed}**.`,
+      `Executable contours without a recorded complete local triple: **${executableCount - tripleCompleted}**.`,
       '',
       'Current freshness is unverified. Parent operation statuses are owner-reported without re-admitting their receipts. The scoped frozen CRAP lane records its owner-issued local measurements; exact coverage qualification and global frozen-gate acceptance remain pending. A local triple is not global acceptance.',
       '',

@@ -209,7 +209,7 @@ async function readBoundedEvidence(
   try {
     const opened = await handle.stat();
     if (!matchesOpenedEvidence(opened, info)) throw new Error('Evidence file changed while opening.');
-    const buffer = Buffer.alloc(byteLimit + 1);
+    const buffer = Buffer.alloc(info.size + 1);
     const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
     const after = await handle.stat();
     if (!matchesOpenedEvidence(after, info) || bytesRead !== info.size || bytesRead > byteLimit)

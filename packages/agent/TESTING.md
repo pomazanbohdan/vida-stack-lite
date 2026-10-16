@@ -1231,6 +1231,13 @@ is shared with the mutation gate in `tooling/mutation-partitions.ts`; do not
 maintain a second list. The document is a derived view, not acceptance evidence
 or a new planning ledger. WORK remains the decision owner.
 
+The summary separates historical exact F/L/S/B coverage, coverage plus compatible
+same-run scoped frozen CRAP, and the complete triple including confirmed mutation.
+These counters reuse the imported observations and existing compatibility checks;
+they trigger no new scans or runs. Retired and static contours do not enter the
+executable denominator. A coverage-only result never implies a CRAP or mutation
+PASS, and historical counters do not establish current input freshness.
+
 Mutation attempts retain raw runner counters separately from an optional
 assertion-confirmed count. Global producer totals apply to a contour only for a
 single selected partition with matching denominator. Same-run imports may enrich

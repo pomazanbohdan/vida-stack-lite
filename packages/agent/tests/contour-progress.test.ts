@@ -696,6 +696,10 @@ test('compatible complete observations record a local maximum without claiming f
 
 test('coverage and mutation pair remains recorded when the scoped frozen CRAP receipt is absent', () => {
   const report = renderContourProgress(projected());
+  expect(report).toContain('Historical contours with exact F/L/S/B coverage: **1/' + activeCount + '**.');
+  expect(report).toContain(
+    'Historical same-coverage-run coverage + scoped frozen CRAP pairs: **0/' + activeCount + '**.',
+  );
   expect(report).toContain(
     'Historical complete coverage + assertion-confirmed mutation pair closures: **1/' + activeCount + '**',
   );
@@ -734,6 +738,9 @@ test.each(['coverage-run', 'source', 'test', 'tool', 'closure', 'functions'] as 
     expect(report).toContain(
       'Separate same-coverage-run local triples with scoped frozen CRAP: **0/' + activeCount + '**',
     );
+    expect(report).toContain(
+      'Historical same-coverage-run coverage + scoped frozen CRAP pairs: **0/' + activeCount + '**.',
+    );
   },
 );
 
@@ -751,11 +758,31 @@ test('compatible exact coverage, scoped frozen CRAP and assertion-confirmed muta
   expect(report).toContain(
     'Separate same-coverage-run local triples with scoped frozen CRAP: **1/' + activeCount + '**',
   );
+  expect(report).toContain('Historical contours with exact F/L/S/B coverage: **1/' + activeCount + '**.');
+  expect(report).toContain(
+    'Historical same-coverage-run coverage + scoped frozen CRAP pairs: **1/' + activeCount + '**.',
+  );
   expect(report).toContain(
     'Historical complete local coverage + mutation + frozen CRAP closure: `coverage-1` + `mutation-1` + `coverage-1`.',
   );
   expect(report).toContain('Current freshness: unverified');
   expect(report).toContain('qualification: pending');
+});
+
+test('coverage and same-run frozen proof are visible while mutation remains open', () => {
+  const c = coverage();
+  const snapshot = mergeContourProgress(empty, [
+    ...contourAttempts(c, receipt),
+    ...contourAttempts(frozenCrap(c), receipt),
+  ]);
+  const report = renderContourProgress(snapshot);
+  expect(report).toContain('Historical contours with exact F/L/S/B coverage: **1/' + activeCount + '**.');
+  expect(report).toContain(
+    'Historical same-coverage-run coverage + scoped frozen CRAP pairs: **1/' + activeCount + '**.',
+  );
+  expect(report).toContain(
+    'Separate same-coverage-run local triples with scoped frozen CRAP: **0/' + activeCount + '**',
+  );
 });
 
 test('v2 projects retained and new measurements while excluding removed roles from current maxima', () => {
