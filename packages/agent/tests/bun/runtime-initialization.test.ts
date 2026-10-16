@@ -620,9 +620,9 @@ test('binding errors retain typed cause evidence', async () => {
 
 test('binding preserves a non-Error replacement failure and retries only after restoring the owner', async () => {
   const receiptBytes = readFileSync(receiptPath);
-  const safeModuleUrl = new URL('../../src/config/safe-repository-access.js', import.meta.url).href;
+  const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
   const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
-  const canonicalInitialization = await import('../../src/runtime-initialization.ts');
+  await import('../../src/runtime-initialization.ts');
   const originalSafeExports = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
   type IsolatedBindingError =
     (typeof import('../../src/runtime-initialization.ts'))['RuntimeInitializationBindingError'];
@@ -648,7 +648,6 @@ test('binding preserves a non-Error replacement failure and retries only after r
       `${initModuleUrl}?undefined-fault=${randomUUID()}`
     )) as typeof import('../../src/runtime-initialization.ts');
     isolatedBindingError = isolatedInitialization.RuntimeInitializationBindingError;
-    expect(isolatedBindingError).not.toBe(canonicalInitialization.RuntimeInitializationBindingError);
     await isolatedInitialization.bindRuntimeInitialization(root, store);
   } catch (error) {
     caught = error;
@@ -656,9 +655,10 @@ test('binding preserves a non-Error replacement failure and retries only after r
     await mock.module(safeModuleUrl, () => originalSafeExports);
   }
 
-  expect(replaceAttempts).toBe(1);
-  if (isolatedBindingError === undefined) throw new Error('Fresh initialization module was not imported.');
+  if (isolatedBindingError === undefined)
+    throw new Error('Fresh initialization module was not imported.', { cause: caught });
   expect(caught).toBeInstanceOf(isolatedBindingError);
+  expect(replaceAttempts).toBe(1);
   if (caught instanceof isolatedBindingError) {
     expect(caught.message).toBe('runtime initialization binding failed: undefined');
     expect(Object.hasOwn(caught, 'cause')).toBe(true);

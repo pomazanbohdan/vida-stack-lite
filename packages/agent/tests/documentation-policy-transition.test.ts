@@ -64,6 +64,43 @@ test('policy transition parser rejects unknown fields and incomplete forged clos
   ).toThrow('schema');
 });
 
+test('public policy transition rejects a persisted malformed source admission before effects', async () => {
+  const { f, baseline, args } = await preparedFixture();
+  await expectAsyncReturned(() => runReconcileArtifacts(args('plan')));
+  const operationPath = path.join(f.root, documentationPolicyTransitionPath(f.work));
+  const original = recordValue(JSON.parse(readFileSync(operationPath, 'utf8')));
+  const plan = recordValue(original.plan);
+  const malformedPlan = { ...plan, source_admission: {} };
+  const { operation_digest: _oldDigest, ...operationBody } = original;
+  const body = {
+    ...operationBody,
+    plan: malformedPlan,
+    plan_digest: canonicalJsonDigest(malformedPlan),
+  };
+  f.put(documentationPolicyTransitionPath(f.work), f.json({ ...body, operation_digest: canonicalJsonDigest(body) }));
+  expect(recordValue(recordValue(JSON.parse(readFileSync(operationPath, 'utf8'))).plan).source_admission).toEqual({});
+  const policyBefore = readFileSync(path.join(f.root, f.policyPath));
+  const baselineBefore = readFileSync(path.join(f.root, baseline.path));
+  const changelogBefore = readFileSync(path.join(f.root, f.oldPolicy.changelog_path));
+
+  await expectRejection(runReconcileArtifacts(args('resume')), 'operation schema invalid');
+  expect(readFileSync(path.join(f.root, f.policyPath))).toEqual(policyBefore);
+  expect(readFileSync(path.join(f.root, baseline.path))).toEqual(baselineBefore);
+  expect(readFileSync(path.join(f.root, f.oldPolicy.changelog_path))).toEqual(changelogBefore);
+}, 30000);
+
+test('public policy transition denies forward overlay inspection without sealed admission', async () => {
+  const { f, args } = await preparedFixture();
+  f.put('.agent/cutover/fixture-parent/maintenance-lock.v1.json', f.json({ schema: 'occupied-overlay-fixture' }));
+  const database = readFileSync(path.join(f.root, '.agent/work/session-handoff.v1.sqlite'));
+  const policyBefore = readFileSync(path.join(f.root, f.policyPath));
+
+  await expectRejection(runReconcileArtifacts(args('inspect')), 'sealed administrative admission');
+  expect(readFileSync(path.join(f.root, '.agent/work/session-handoff.v1.sqlite'))).toEqual(database);
+  expect(readFileSync(path.join(f.root, f.policyPath))).toEqual(policyBefore);
+  expect(existsSync(path.join(f.root, documentationPolicyTransitionPath(f.work)))).toBe(false);
+});
+
 test('public policy transition preserves genuine baseline and completes one audited cycle', async () => {
   const { f, input, baseline, before, targetPolicy, args } = await preparedFixture();
   expect(statusOf(await expectAsyncReturned(() => runReconcileArtifacts(args('inspect'))))).toBe(

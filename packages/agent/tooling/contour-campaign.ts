@@ -18,7 +18,7 @@ import { mutationPartitionSources, mutationPartitions, type MutationPartition } 
 
 type Lane = 'coverage' | 'frozen-crap' | 'mutation';
 export type CampaignOutcome = {
-  state: 'completed' | 'failed' | 'timeout' | 'gap' | 'unknown';
+  state: 'completed' | 'failed' | 'timeout' | 'gap' | 'resource' | 'unknown';
   detail: string;
   report?: string;
 };
@@ -27,6 +27,90 @@ const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 const repositoryRoot = path.resolve(packageRoot, '../..');
 const statusDirectory = path.join(repositoryRoot, '.agent/work/core-runtime-reactivation');
 const maximumOutputBytes = 128 * 1024 * 1024;
+const minimumScratchFreeBytes = 2n * 1024n ** 3n;
+
+export function campaignStorageAdmitted(availableBytes: bigint): boolean {
+  return availableBytes >= minimumScratchFreeBytes;
+}
+
+class CampaignResourceError extends Error {
+  constructor(
+    readonly observedPath: string,
+    readonly availableBytes: string | null,
+  ) {
+    super(
+      availableBytes === null
+        ? `Campaign could not observe free storage at ${observedPath}.`
+        : `Campaign requires at least 2 GiB free at ${observedPath}; observed ${availableBytes} bytes.`,
+    );
+    this.name = 'CampaignResourceError';
+  }
+}
+
+function requireCampaignStorage(directory: string): void {
+  let availableBytes: bigint;
+  try {
+    const info = statfsSync(directory, { bigint: true });
+    availableBytes = info.bavail * info.bsize;
+  } catch {
+    throw new CampaignResourceError(directory, null);
+  }
+  if (!campaignStorageAdmitted(availableBytes)) throw new CampaignResourceError(directory, String(availableBytes));
+}
+
+function isCampaignResourceFailure(error: unknown): boolean {
+  return (
+    error instanceof CampaignResourceError || (isRecord(error) && (error.code === 'ENOSPC' || error.code === 'EDQUOT'))
+  );
+}
+
+export function campaignScratchDirectory(runId: string, stage: string): string {
+  return path.join(statusDirectory, 'campaign-scratch', runId, stage);
+}
+
+export function throwAfterCampaignReceiptFailure(
+  primaryError: unknown,
+  receiptError: unknown,
+  context: { source_commit: string; boot?: string },
+  writeDiagnostic: (line: string) => void = (line) => {
+    process.stderr.write(line);
+  },
+): never {
+  const resourceFailure = isCampaignResourceFailure(primaryError) || isCampaignResourceFailure(receiptError);
+  const diagnostic = {
+    schema: 'VidaContourCampaignOutcome/v1',
+    status: resourceFailure ? 'resource-incomplete' : 'incomplete',
+    ...context,
+    error: String(primaryError),
+    receipt_error: String(receiptError),
+  };
+  try {
+    writeDiagnostic(JSON.stringify(diagnostic) + '\n');
+  } catch (diagnosticError) {
+    throw new AggregateError(
+      [primaryError, receiptError, diagnosticError],
+      'Campaign failure and receipt failure could not be fully reported.',
+    );
+  }
+  throw new AggregateError(
+    [primaryError, receiptError],
+    'Campaign failure receipt could not be retained; see inherited stderr diagnostic.',
+  );
+}
+
+function recordCampaignFailure(directory: string, commit: string, boot: string, error: unknown): never {
+  try {
+    writeRecord(directory, 'interrupted.json', {
+      status: isCampaignResourceFailure(error) ? 'resource-incomplete' : 'incomplete',
+      error: String(error),
+      source_commit: commit,
+      boot,
+    });
+  } catch (receiptError) {
+    return throwAfterCampaignReceiptFailure(error, receiptError, { source_commit: commit, boot });
+  }
+  throw error;
+}
 
 export function campaignOptions(args: readonly string[]): { mode: 'all' | 'unclosed'; plan: boolean } {
   const selection = args.filter((arg) => arg === '--all' || arg === '--unclosed');
@@ -59,7 +143,7 @@ export async function executeContourCampaign(
         const step = { contour: partition.name, lane, outcome };
         record(step);
         steps.push(step);
-        if (outcome.state === 'unknown') return { complete: false, steps };
+        if (outcome.state === 'unknown' || outcome.state === 'resource') return { complete: false, steps };
       }
     }
   }
@@ -107,14 +191,17 @@ function writeRecord(directory: string, file: string, record: unknown): void {
 }
 
 export function isolatedCommand(directory: string, args: string[], tools: { tini: string; bwrap: string }) {
+  requireCampaignStorage(directory);
   const temporary = mkdtempSync(path.join(directory, 'scratch-'));
   const info = statfsSync(temporary, { bigint: true });
-  if (info.bavail * info.bsize < 2n * 1024n ** 3n)
-    throw new Error('Campaign requires at least 2 GiB free for its retained private scratch.');
+  if (!campaignStorageAdmitted(info.bavail * info.bsize))
+    throw new CampaignResourceError(temporary, String(info.bavail * info.bsize));
   const scratch = path.join(temporary, 'scratch');
   mkdirSync(scratch);
+  mkdirSync(path.join(scratch, 'bun-install-cache'));
   return {
     temporary,
+    environment: { TMPDIR: '/tmp', BUN_TMPDIR: '/tmp', BUN_INSTALL_CACHE_DIR: '/tmp/bun-install-cache' },
     scratch_storage: {
       filesystem_type: String(info.type),
       available_bytes: String(info.bavail * info.bsize),
@@ -206,20 +293,59 @@ async function main(): Promise<void> {
     process.stdout.write(JSON.stringify(plan, null, 2) + '\n');
     return;
   }
+  try {
+    requireCampaignStorage(repositoryRoot);
+  } catch (error) {
+    process.stdout.write(
+      JSON.stringify({
+        schema: 'VidaContourCampaignOutcome/v1',
+        status: 'resource-incomplete',
+        source_commit: commit,
+        detail: String(error),
+        producers_launched: false,
+      }) + '\n',
+    );
+    process.exitCode = 1;
+    return;
+  }
   const directory = path.join(packageRoot, 'coverage/contour-campaigns', plan.run_id);
-  mkdirSync(directory, { recursive: true });
-  writeRecord(directory, 'plan.json', plan);
+  try {
+    mkdirSync(directory, { recursive: true });
+    writeRecord(directory, 'plan.json', plan);
+  } catch (error) {
+    const status = isCampaignResourceFailure(error) ? 'resource-incomplete' : 'incomplete';
+    try {
+      process.stderr.write(
+        JSON.stringify({
+          schema: 'VidaContourCampaignOutcome/v1',
+          status,
+          source_commit: commit,
+          detail: String(error),
+          producers_launched: false,
+        }) + '\n',
+      );
+    } catch (diagnosticError) {
+      throw new AggregateError([error, diagnosticError], 'Campaign setup and inherited stderr reporting failed.');
+    }
+    process.exitCode = 1;
+    return;
+  }
   process.stdout.write(
     JSON.stringify({ campaign: directory, contours: partitions.length, source_commit: commit }) + '\n',
   );
   const tools = { tini: process.env.VIDA_QUALITY_TINI ?? Bun.which('tini'), bwrap: Bun.which('bwrap') };
   if (!tools.tini || !tools.bwrap) {
-    writeRecord(directory, 'terminal.json', {
-      status: 'setup-failed',
-      detail:
-        'Linux bwrap and tini are required; VIDA_QUALITY_TINI may name an installed tini binary. No producers launched.',
-    });
-    throw new Error('Campaign isolation prerequisites are missing.');
+    const setupError = new Error('Campaign isolation prerequisites are missing.');
+    try {
+      writeRecord(directory, 'terminal.json', {
+        status: 'setup-failed',
+        detail:
+          'Linux bwrap and tini are required; VIDA_QUALITY_TINI may name an installed tini binary. No producers launched.',
+      });
+    } catch (receiptError) {
+      return throwAfterCampaignReceiptFailure(setupError, receiptError, { source_commit: commit });
+    }
+    throw setupError;
   }
   const isolationTools = { tini: tools.tini, bwrap: tools.bwrap };
   const boot = readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
@@ -243,14 +369,30 @@ async function main(): Promise<void> {
           };
         const stage = `${String(++index).padStart(3, '0')}-${partition.name}-${lane}`;
         const stageDirectory = path.join(directory, stage);
-        mkdirSync(stageDirectory);
+        const privateScratchDirectory = campaignScratchDirectory(plan.run_id, stage);
+        try {
+          requireCampaignStorage(repositoryRoot);
+          mkdirSync(privateScratchDirectory, { recursive: true });
+          mkdirSync(stageDirectory);
+        } catch (error) {
+          return isCampaignResourceFailure(error)
+            ? { state: 'resource', detail: String(error) }
+            : { state: 'failed', detail: `Stage setup failed before producer launch: ${String(error)}` };
+        }
         const args =
           lane === 'coverage'
             ? ['tooling/contour-campaign.ts', '--coverage-child', partition.name]
             : lane === 'mutation'
               ? ['tooling/mutation-gate.ts', '--pilot-partition', partition.name]
               : ['tooling/crap-gate.ts', '--contour', partition.name, '--budget-ref', budget!];
-        const isolated = isolatedCommand(stageDirectory, args, isolationTools);
+        let isolated: ReturnType<typeof isolatedCommand>;
+        try {
+          isolated = isolatedCommand(privateScratchDirectory, args, isolationTools);
+        } catch (error) {
+          return isCampaignResourceFailure(error)
+            ? { state: 'resource', detail: String(error) }
+            : { state: 'failed', detail: `Scratch setup failed before producer launch: ${String(error)}` };
+        }
         const timeoutMs =
           lane === 'mutation' ? mutationLimits.partitionMs + 30_000 : lane === 'coverage' ? 330_000 : 60_000;
         writeRecord(stageDirectory, 'launch.json', {
@@ -269,8 +411,7 @@ async function main(): Promise<void> {
           stderrFile: path.join(stageDirectory, 'stderr.log'),
           env: {
             ...process.env,
-            TMPDIR: '/tmp',
-            BUN_TMPDIR: '/tmp',
+            ...isolated.environment,
             ...(coverage ? { VIDA_BUN_COVERAGE_REPORT: coverage } : {}),
           },
         });
@@ -337,15 +478,6 @@ async function main(): Promise<void> {
     const remaining = selectContourCampaign(mergeContourProgress(snapshot, incoming), 'unclosed', commit)
       .filter((partition) => partitions.some((selected) => selected.name === partition.name))
       .map((partition) => partition.name);
-    writeRecord(directory, 'terminal.json', {
-      schema: 'VidaContourCampaignOutcome/v1',
-      source_commit: commit,
-      boot,
-      status: result.complete ? 'execution-complete' : 'unknown-fenced',
-      qualification: 'individual producer proofs only; execution-complete does not mean gates passed',
-      selected_contours_without_complete_triple: remaining,
-      ...result,
-    });
     runContourProgress(
       [
         '--snapshot',
@@ -358,17 +490,24 @@ async function main(): Promise<void> {
       ],
       packageRoot,
     );
+    writeRecord(directory, 'terminal.json', {
+      schema: 'VidaContourCampaignOutcome/v1',
+      source_commit: commit,
+      boot,
+      status: result.steps.some((step) => step.outcome.state === 'resource')
+        ? 'resource-incomplete'
+        : result.complete
+          ? 'execution-complete'
+          : 'unknown-fenced',
+      qualification: 'individual producer proofs only; execution-complete does not mean gates passed',
+      selected_contours_without_complete_triple: remaining,
+      ...result,
+    });
     // This is an execution command; a successful exit requires all lane owners to finish without a gap.
     if (!result.complete || remaining.length || result.steps.some((step) => step.outcome.state !== 'completed'))
       process.exitCode = 1;
   } catch (error) {
-    writeRecord(directory, 'interrupted.json', {
-      status: 'incomplete',
-      error: String(error),
-      source_commit: commit,
-      boot,
-    });
-    throw error;
+    return recordCampaignFailure(directory, commit, boot, error);
   }
 }
 

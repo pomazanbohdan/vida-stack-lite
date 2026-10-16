@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published parent of this prepared repair packet: `a4b5b0c0317f1410e3f81cf73f47f9f756ee300f`; the active campaign's original checkout remains at `57353f9`. Root preserves this unqualified candidate in the separate repair branch. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `a4b5b0c0317f1410e3f81cf73f47f9f756ee300f`; the terminal campaign's original checkout remains at `57353f9`. Private repair checkpoint `58bebaf40b1f2a54236f3ac49c4539f58abe4eeb` is pushed. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -14,12 +14,62 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
-Campaign `f9ae7d6d-65a8-4823-8038-50d0540ba304` is active against the clean
-`57353f91b54806f5075801856729bf3e3e9fa6fe` checkout. Root retains its unchanged
-HEAD, index and measured inputs. Its main CI SDK artifact was admitted before
-launch; durable stage scratch passed the unchanged capacity guard. Current
-outcomes are not imported until the producer is terminal. Historical closure
-counts remain in the automatic projection and are not current-source claims.
+Campaign `f9ae7d6d-65a8-4823-8038-50d0540ba304` terminated incomplete against
+`57353f91b54806f5075801856729bf3e3e9fa6fe`: stage043 could not be created after
+ENOSPC; it launched no producer. All42 launched process groups have terminal
+receipts. Coverage outcomes are8 completed,9 failed and15 GAP; frozen outcomes
+are8 completed and24 GAP. Mutation did not start. Root imported25 valid terminal
+reports through the existing projection owner at their actual57353 commit;
+the fs-safe data-only inventory mismatch remains rejected. The retained import
+manifest is `/workspace/attachments/terminal-campaign-f9ae-import-20261016.json`.
+Historical closure counts do not establish freshness for this repair branch.
+
+The forward-authority whole-bundle fixture copied generated coverage containing
+its own scratch, causing recursive growth to about21GiB. The prepared correction
+excludes coverage and moves future campaign scratch outside the package. The
+2GiB floor remains unchanged and a resource outcome fences successors. Original
+failed roots and receipts remain in place; five settled private Bun install
+caches alone were reclaimed with terminal/capture custody checks. That released
+2,507,694,080bytes; the reclamation receipt is
+`/workspace/attachments/vida-settled-bun-cache-reclamation-20261016.json`.
+
+Focused development checks pass14/0 at `quality-rolling-cli-check-wkUe7o` and
+11/12 at `Krkb0Q`; the latter retained a malformed-plan fixture failure. That
+fixture wrote an absolute path through a root-relative writer, leaving the
+actual operation unchanged. Corrected persisted admission rejection passes at
+`yA7tFN`; it checks readback and unchanged policy/baseline/changelog. Its other
+failure exposed an empty current recovery wave. The corrected absorption fixture
+uses planner-derived completed readonly history and a nonempty unissued successor;
+its exact execution-resource recovery control passes at `S0HPcB`. Research
+provenance and other stateful controls pass16/17 at `7lbPpF`; its remaining failure
+was that same absorption fixture. All these producers have complete captures,
+closed groups and unchanged boot. They are not coverage or mutation qualification.
+The runtime-initialization fault targets the physical `.ts` module; mocking its
+`.js` alias did not intercept the actual dependency. No product guard was weakened.
+
+The resource review findings are corrected: terminal publication follows
+projection publication, a failed interruption receipt emits structured stderr
+while preserving both causes, and a third diagnostic failure is retained too.
+The production scratch-path contract and private cache writability are tested.
+Campaign controls pass12/0 with237 assertions at `mndq7H`, with complete captures,
+closed groups and unchanged boot. This does not prove arbitrary disk exhaustion
+can retain a durable receipt when no writable channel exists.
+
+The actual Bun installer failure was EROFS despite both temp variables being
+forwarded. A new empty private install cache inside the existing scratch bind
+passes all5 controller tests and52 assertions at `SIbpg8`, with full captures,
+closed group and unchanged boot. The campaign now supplies that cache per stage;
+no controller product change, host-cache copy or raised timeout is needed.
+Eight inactive clean worktrees with no ignored/untracked content were retired
+without force, releasing291,921,920bytes; remaining prepared patches and every
+failed runtime root remain retained. The exact retirement receipt is
+`/workspace/attachments/worktree-clean-retirement-20261016.json`.
+Fresh official SDK inputs remain required before the next full campaign.
+
+Strict checks pass for465 test files and186 tooling files; scoped type-aware
+lint reports0 diagnostics, changed-file formatting passes, and documentation
+checks resolve33 local links across3 changed documents without failures. These
+checks validate this Source repair packet, not numerical contour closure.
 
 The next isolated repair batch addresses the actual controller child temporary
 directory denial, initialization and toolchain coverage gaps, and the absorption
@@ -41,8 +91,8 @@ digest comparisons. The absorption fixtures now avoid YAML alias identity and
 retain required ledger request/observation fields. Constructor/close fault cases
 include thrown `undefined` without losing the first failure or retained custody.
 No product Source, schema/loader selection, timeout or quality threshold changed.
-Behavioral controls and all numerical gates remain pending the current campaign's
-terminal custody; static checks alone do not qualify these candidates.
+Focused behavioral controls are recorded above; all numerical gates remain
+pending a fresh campaign. Static checks alone do not qualify these candidates.
 
 The controller environment hypothesis was rejected: the inspected child chain
 already preserves both temporary-directory variables. Bun's versioned installer
@@ -218,13 +268,13 @@ cross-commit proof admission is OPEN until the existing owners can establish
 exact current closure/runtime/environment/custody compatibility without another
 scanner or a weakened gate.
 
-Fresh campaign `f9ae7d6d-65a8-4823-8038-50d0540ba304` is running from the clean
+Terminal campaign `f9ae7d6d-65a8-4823-8038-50d0540ba304` ran from the clean
 immutable primary `57353f91b54806f5075801856729bf3e3e9fa6fe`, selecting45 contours.
 Its current-main SDK formation is run38878591427/attempt1/artifact12036491858,
 verified through the maintained input owner. First launch records retained
 workspace-backed scratch with22.6GB available and the unchanged2GiB floor.
-The first core producer already observes a real30s case timeout in interrupted
-Source retirement; it remains active, not accepted coverage. One isolated Luna
+The first core producer observed a real30s case timeout in interrupted
+Source retirement; it is not accepted coverage. One isolated Luna
 owns that core contour's correction research. The prepared lifecycle split and
 four runtime-code rejection adapters remain unintegrated NEXT packets until
 Root reviews them and affected producer custody is terminal. No primary

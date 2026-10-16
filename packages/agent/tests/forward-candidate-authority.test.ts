@@ -36,7 +36,8 @@ test('sealed public admin denies altered authority, root, closure and target bef
   cpSync(f.bundle, bundle, {
     recursive: true,
     filter: (file) =>
-      !['node_modules', '.tmp'].includes(path.basename(file)) && !/^\..+\.cas\.lock(?:\.|$)/u.test(path.basename(file)),
+      !['node_modules', '.tmp', 'coverage'].includes(path.basename(file)) &&
+      !/^\..+\.cas\.lock(?:\.|$)/u.test(path.basename(file)),
   });
   // This private test payload uses current source; its synthetic review tuple is setup only.
   for (const file of ['bin/forward-candidate-admission.ts', 'bin/documentation-policy-transition.ts'])

@@ -556,12 +556,14 @@ function research(context: ReturnType<typeof fixture>, id: string, locator: stri
       {
         source_id: 'related',
         source_kind: 'internal',
-        locator: `${locator}#related`,
+        // Keep the corroborating identity stable so the pair contains exactly one
+        // source-ID provenance conflict: the intended `shared` identity above.
+        locator: 'shared-related-source.md',
         title: 'Related source',
         version_or_date: '2026-09-30',
         claim: 'AC-1 SR-1 corroborating evidence.',
         retrieved_at: timestamp,
-        independence_group: `${locator}-related`,
+        independence_group: 'shared-related-source',
         digest: 'e'.repeat(64),
       },
     ],

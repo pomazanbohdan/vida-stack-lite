@@ -53,6 +53,12 @@ import type {
   SessionBridgeObservation,
   SessionBridgeRequest,
 } from '../src/orchestration/mastra-session-bridge-contract.ts';
+import { buildSessionBridgeRequest } from '../src/orchestration/mastra-session-bridge-contract.ts';
+import {
+  advanceSessionWorkflowHandoffFromConfig,
+  prepareSessionWorkflowHandoffFromConfig,
+  type SessionAgentOutcome,
+} from '../src/orchestration/session-handoff.ts';
 import { readSessionEngineSnapshot } from '../src/orchestration/session-engine-snapshot.ts';
 import { createStagedRuntimeWitness } from '../src/orchestration/staged-runtime-witness.ts';
 import {
@@ -1110,42 +1116,114 @@ test('public admission preserves same-request parallel contours and atomically a
 test('expired real execution-only admission rebinds only its owned execution resource', () => {
   const f = fixture();
   try {
-    const initial = f.admit(f.prepare('old', 'user:old'));
+    const input = f.prepare('old', 'user:old'),
+      initial = f.admit(input),
+      planned = prepareSessionWorkflowHandoffFromConfig(f.config, input.selection, input.context),
+      runId = requireWorkRunId(initial.host.work);
     assertPersistedAdmission(initial);
+    if (
+      planned.workflow_id !== initial.host.work.binding.workflow_id ||
+      planned.config_digest !== initial.host.work.binding.config_digest
+    )
+      throw new Error('expired admission session plan differs from its admitted workflow binding');
+    const acceptedReadonly = planned.actions.map((action, index) => {
+      const issueId = randomUUID(),
+        summary =
+          index === 0
+            ? 'Observed completed readonly fixture request'
+            : `Observed completed readonly fixture request for ${action.role}`,
+        toolCallRef = index === 0 ? 'fixture-expired-readonly' : `fixture-expired-readonly-${index}`,
+        observation: SessionBridgeObservation = {
+          schema: 'VidaSessionObservation/v1',
+          action_id: action.action_id,
+          issue_id: issueId,
+          agent_id: index === 0 ? 'fixture-reader' : `fixture-reader-${index}`,
+          tool_call_ref: toolCallRef,
+          status: 'reported_complete',
+          summary,
+          output_digest: canonicalJsonDigest(summary),
+          evidence_refs: ['fixture:accepted-readonly'],
+        },
+        outcome: SessionAgentOutcome = {
+          action_id: action.action_id,
+          handoff_digest: planned.digest,
+          work_id: action.work_id,
+          attempt: action.attempt,
+          scope_digest: action.scope_digest,
+          wave_index: action.wave_index,
+          action_order: action.action_order,
+          stage_id: action.stage_id,
+          role: action.role,
+          status: 'reported_complete',
+          summary,
+          session_result: {
+            issue_id: issueId,
+            agent_id: observation.agent_id,
+            tool_call_ref: toolCallRef,
+            output_digest: observation.output_digest,
+          },
+          evidence_refs: observation.evidence_refs,
+        };
+      return {
+        outcome,
+        item: {
+          request: buildSessionBridgeRequest({
+            runId,
+            workflowId: planned.workflow_id,
+            configDigest: planned.config_digest,
+            context: input.context,
+            waveIndex: planned.wave_index,
+            action,
+            configuredContext: null,
+            priorResults: [],
+          }),
+          issue_id: issueId,
+          observation,
+        },
+      };
+    });
+    const nextPlan = advanceSessionWorkflowHandoffFromConfig(
+        f.config,
+        planned,
+        acceptedReadonly.map(({ outcome }) => outcome),
+      ),
+      nextAction = nextPlan.actions[0];
+    if (!nextAction) throw new Error('expired admission session planner produced no unissued successor action');
+    const request = buildSessionBridgeRequest({
+      runId,
+      workflowId: nextPlan.workflow_id,
+      configDigest: nextPlan.config_digest,
+      context: input.context,
+      waveIndex: nextPlan.wave_index,
+      action: nextAction,
+      configuredContext: null,
+      priorResults: acceptedReadonly.map(({ item }) => item.observation),
+    });
+    const plannedJournal = parseMastraSessionLedgerState({
+      ...parseMastraSessionLedgerJson(
+        f.database
+          .query<{ payload: string }, [string]>('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?')
+          .get('old')?.payload ?? '',
+      ),
+      step_id: 'wave-' + nextPlan.wave_index,
+      items: [{ request, issue_id: null, observation: null }],
+      completed: [
+        {
+          step_id: 'wave-' + planned.wave_index,
+          items: acceptedReadonly.map(({ item }) => item),
+        },
+      ],
+    });
+    f.database
+      .query('UPDATE agent_host_mastra_session_ledger SET revision=2,payload=?,digest=? WHERE work_id=?')
+      .run(canonicalJson(plannedJournal), canonicalJsonDigest(plannedJournal), 'old');
     const historical = parseMastraSessionLedgerJson(
       f.database
         .query<{ payload: string }, [string]>('SELECT payload FROM agent_host_mastra_session_ledger WHERE work_id=?')
         .get('old')?.payload ?? '',
     );
-    const priorItem = historical.items[0];
-    if (!priorItem) throw new Error('expired admission fixture has no persisted session request');
-    const issueId = randomUUID(),
-      summary = 'Observed completed readonly fixture request',
-      observation: Parameters<MastraSessionLedger['report']>[3] = {
-        schema: 'VidaSessionObservation/v1',
-        action_id: priorItem.request.action_id,
-        issue_id: issueId,
-        agent_id: 'fixture-reader',
-        tool_call_ref: 'fixture-expired-readonly',
-        status: 'reported_complete',
-        summary,
-        output_digest: canonicalJsonDigest(summary),
-        evidence_refs: ['fixture:accepted-readonly'],
-      },
-      historicalWithCompletion = {
-        ...historical,
-        items: historical.items.slice(1),
-        completed: [
-          ...historical.completed,
-          {
-            step_id: 'fixture-accepted-readonly',
-            items: [{ ...priorItem, issue_id: issueId, observation }],
-          },
-        ],
-      };
-    f.database
-      .query('UPDATE agent_host_mastra_session_ledger SET revision=2,payload=?,digest=? WHERE work_id=?')
-      .run(canonicalJson(historicalWithCompletion), canonicalJsonDigest(historicalWithCompletion), 'old');
+    const priorItem = historical.completed[0]?.items[0];
+    if (!priorItem?.observation) throw new Error('expired admission fixture has no accepted readonly observation');
     const work = initial.host.work,
       lease = requireWorkLease(work),
       journal = f.store.readWorkSessionJournal({

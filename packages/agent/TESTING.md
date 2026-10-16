@@ -1252,10 +1252,16 @@ These are separate budgets, not a five-minute allowance for the entire campaign.
 
 Linux execution requires `bwrap` and `tini` on PATH, or an installed tini path in
 `VIDA_QUALITY_TINI`. Each child has a private PID namespace, subreaper and retained
-host-backed scratch beneath its retained campaign stage with at least2GiB free.
+host-backed scratch under `.agent/work/core-runtime-reactivation/campaign-scratch/<run-id>/<stage>/`
+with at least2GiB free. This root stays outside `packages/agent` so bundle
+fixtures cannot recursively copy their own scratch. Whole-bundle copies also
+exclude generated `coverage` output. Capacity denial fences every successor and
+records `resource-incomplete`; it is not a test failure or a mutation kill.
 Record the actual filesystem type and available bytes in `launch.json`; the
 private `/tmp` bind does not imply tmpfs. `TMPDIR` and `BUN_TMPDIR` both select
-that private root. This keeps new scratch off the shared host `/tmp` capacity
+that private root. `BUN_INSTALL_CACHE_DIR` selects its fresh writable
+`/tmp/bun-install-cache`; do not copy the whole host cache into each stage.
+This keeps new scratch off the shared host `/tmp` capacity
 without deleting or relocating any prior FAIL/UNKNOWN fixture. Native mutation evidence stays
 at its real package `.tmp` path; the campaign does not relocate or rewrite it.
 Full captures, boot identity, argv, terminal status, timeout and process-group
@@ -1265,7 +1271,10 @@ campaign is incomplete and never automatically replayed. Execution completion
 does not imply gate success or global mutation qualification: each mutation lane
 retains its pilot scope and requires assertion-confirmed Killed for every mutant.
 Only the final owner publishes the existing contour projection after terminal
-accounting. Repair agents may prepare disjoint changes in isolated checkouts
+producer accounting. The campaign terminal record follows successful projection
+publication. A failed interruption receipt emits a structured diagnostic on
+inherited stderr and preserves both causes; a failed diagnostic channel remains
+an additional error, never successful reporting. Repair agents may prepare disjoint changes in isolated checkouts
 while a campaign runs. Root integrates only after the affected producers are
 terminal; build/install and hooks do not run the campaign.
 
