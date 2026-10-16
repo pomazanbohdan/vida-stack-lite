@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `982dda4`, including the coverage module-union correction and focused fixture extensions. Fresh assurance/storage coverage below improves locally; these contours remain incomplete. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `46a66c9`. Runtime initialization has exact coverage plus same-run frozen CRAP; storage admission has exact coverage, with its scope pin/mutation still pending. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,42 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Exact coverage and isolated storage-image error cases
+
+Published46a66c9's runtime-initialization run
+`505cbd15-366e-44e9-a3ed-26e973bc1a54` (`GsCc4G`) passes19/0tests,125assertions
+in35222ms with exact F18/18,L87/87,S100/100,B54/54 andCC/entryCRAP9.
+Same-run frozen v2 report at `scoped-crap-selected-v3QPkV` passes in1232ms
+against immutable892523d; no allowance changes, full_qualification:false.
+Admission `4db0fb61-296f-4781-8290-f9ae36740a06` (`fliB51`) passes10/0tests,
+105assertions in7062ms with exact F18/18,L100/100,S103/103,B16/16,
+CC/entryCRAP5. Both complete custody/log captures and preserve the same boot;
+coverage operations stay BLOCKED. The derived snapshot reaches450attempts,
+14/45 exact-coverage contours and12/45 coverage+frozen pairs; complete local
+triples remain6/45. No mutation maximum is implied.
+
+Blind v85 approves admission as a wholly new Source for allowance lineage,
+preserving all18 existing prospective10/10 rows. Its addendum corrects an earlier
+location/count description: all18 are already in global new_functions; no row or
+counter promotion is needed. Root's inspection reuses the validated capture,
+checks exact IDs, unchanged caps/current Source digest and absent original Git path.
+`storage-admission-review-inspection-20261016.json` records those mechanical checks;
+no AST/hash/inventory pass is added. The new v3 review has no original paths or
+retained mappings, explicitly records the new Source, and leaves the global plan
+partial/non-executable. Its immutable scope pin and numeric proof follow separately.
+
+Root integrates isolated v84's six native SQLite/LibSQL error/sequence cases.
+First `IWGIBX` records25/2 plus two type errors and three lint findings. The draft
+injected a Database close error inside LibSQLStore.close before its intended store
+acknowledgement; Root separates those two close phases, delegates the generic query
+unchanged, records receivers in Sets and fixes the parameterized query's binding type.
+Each case has one unique parameterized title because Bun leaves later placeholders
+literal. Body throw undefined and ordered dual cleanup causes stay explicit; native
+closes run before acknowledgement faults. Final `tngwLm` passes27/0tests,181assertions
+in2950ms, complete captures/closed scopes/same boot; strict505/TS-only506/Oxlint pass.
+Blind v86 finds no concrete regression. No whole extra test file or duplicate fixture
+is added. Fresh image coverage is pending publication; mutation remains independent.
 
 ### Exact remaining initialization and admission guards
 

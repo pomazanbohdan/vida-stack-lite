@@ -224734,5 +224734,33 @@
       "removed": 0
     },
     "limits": "Root mechanically checks exact current callable sets and static caps. Existing baseline provenance and all ceilings remain unchanged; only the established prospective10/10 cap is added. Independent final Source review, exact coverage and scoped numeric qualification remain separate; global plan stays partial/non-executable."
+  },
+  "scope_review_existing_storage_admission_20261016": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-project-upgrade-storage-admission",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/project-upgrade-existing-storage-admission.ts"
+    ],
+    "removed_source_paths": [],
+    "current_source_bindings": [
+      {
+        "file": "src/config/project-upgrade-existing-storage-admission.ts",
+        "sha256": "324ba3d8e741d86e5ce521cd30ff5216071eba11a2a794b30d7e6b7156053dd1"
+      }
+    ],
+    "reviewed_source_context": "46a66c97eb99141fa71d70a1543f2713cd8691c5",
+    "review_artifacts": [
+      "/workspace/attachments/luna-storage-admission-frozen-review-v85-20261016.md"
+    ],
+    "selected_rows": {
+      "retained": 0,
+      "new": 18,
+      "removed": 0
+    },
+    "limits": "All18 existing prospective10/10 rows remain unchanged. Original b549951 contains no Source at this path; no historical allowance is inherited. Exact capture IDs and Source digest match the existing partial. Scope pin and same-run numeric proof remain separate; global plan stays partial/non-executable."
   }
 }

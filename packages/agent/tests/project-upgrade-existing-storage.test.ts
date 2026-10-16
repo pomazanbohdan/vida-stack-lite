@@ -168,6 +168,199 @@ function openUnified(bytesBase64: string): Database {
   return Database.deserialize(Buffer.from(bytesBase64, 'base64'), { strict: true, safeIntegers: true });
 }
 
+async function expectPinnedPhaseFailure(phase: 'inventory' | 'Host clone', failCleanup: boolean): Promise<void> {
+  const host = makeHost();
+  const mastra = await makeMastra();
+  const targetInit = phase === 'inventory' ? 1 : 2;
+  const bodyError: unknown = undefined;
+  const storeCloseError = new Error(phase + ' LibSQLStore close acknowledgement failed');
+  const init = Reflect.get(LibSQLStore.prototype, 'init') as typeof LibSQLStore.prototype.init;
+  const storeClose = Reflect.get(LibSQLStore.prototype, 'close') as typeof LibSQLStore.prototype.close;
+  const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+  const serialize = Reflect.get(Database.prototype, 'serialize') as typeof Database.prototype.serialize;
+  const databaseClose = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+  let initCount = 0;
+  let observingTargetInit = false;
+  let targetReady = false;
+  const targetStores = new Set<LibSQLStore>();
+  const targetDatabases = new Set<Database>();
+  let bodyReached = false;
+  let storeCloseReached = false;
+  let databaseCloseReached = false;
+  let closingStoreInProgress = false;
+  const initializing = spyOn(LibSQLStore.prototype, 'init').mockImplementation(async function (
+    this: LibSQLStore,
+    ...args
+  ) {
+    const current = ++initCount;
+    if (current === targetInit) {
+      targetStores.add(this);
+      observingTargetInit = true;
+    }
+    try {
+      const result = await init.apply(this, args);
+      if (current === targetInit) targetReady = true;
+      return result;
+    } finally {
+      observingTargetInit = false;
+    }
+  });
+  const observingQueries = spyOn(Database.prototype, 'query').mockImplementation(function (
+    this: Database,
+    sql: string,
+  ) {
+    if (observingTargetInit) targetDatabases.add(this);
+    return Reflect.apply(query, this, [sql]);
+  } as typeof Database.prototype.query);
+  const serializing = spyOn(Database.prototype, 'serialize').mockImplementation(function (this: Database, ...args) {
+    const bytes = serialize.apply(this, args);
+    if (targetReady && targetDatabases.has(this)) {
+      targetReady = false;
+      bodyReached = true;
+      throw bodyError;
+    }
+    return bytes;
+  });
+  const closingStore = spyOn(LibSQLStore.prototype, 'close').mockImplementation(async function (
+    this: LibSQLStore,
+    ...args
+  ) {
+    closingStoreInProgress = true;
+    try {
+      const result = await storeClose.apply(this, args);
+      if (targetStores.has(this)) {
+        storeCloseReached = true;
+        if (failCleanup) throw storeCloseError;
+      }
+      return result;
+    } finally {
+      closingStoreInProgress = false;
+    }
+  });
+  const closingDatabase = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, ...args) {
+    databaseClose.apply(this, args);
+    if (targetDatabases.has(this)) {
+      databaseCloseReached = true;
+      if (failCleanup && !closingStoreInProgress) throw undefined;
+    }
+  });
+  try {
+    const failure = await rejectionReason(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+    expect(initCount).toBe(targetInit);
+    expect(targetStores.size).toBe(1);
+    expect(targetDatabases.size).toBe(1);
+    expect(bodyReached).toBe(true);
+    expect(storeCloseReached).toBe(true);
+    expect(databaseCloseReached).toBe(true);
+    if (failCleanup) {
+      expect(failure).toBeInstanceOf(AggregateError);
+      if (!(failure instanceof AggregateError)) throw new Error('Expected retained body and cleanup causes.');
+      expect(failure.errors).toEqual([bodyError, storeCloseError, undefined]);
+    } else expect(failure).toBeUndefined();
+  } finally {
+    closingDatabase.mockRestore();
+    closingStore.mockRestore();
+    serializing.mockRestore();
+    observingQueries.mockRestore();
+    initializing.mockRestore();
+  }
+  for (const database of targetDatabases) expect(() => database.query('SELECT 1').get()).toThrow();
+}
+
+test.each([
+  ['inventory / clean teardown', 'inventory', false],
+  ['inventory / cleanup failures', 'inventory', true],
+  ['Host clone / clean teardown', 'Host clone', false],
+  ['Host clone / cleanup failures', 'Host clone', true],
+] as const)('%s retains body and close errors', async (_label, phase, failCleanup) => {
+  await expectPinnedPhaseFailure(phase, failCleanup);
+});
+
+test('reports an outer close acknowledgement error after a successful merge and attempts every close', async () => {
+  const host = makeHost();
+  const mastra = await makeMastra();
+  const closeError = new Error('unified target close acknowledgement failed');
+  const deserialize = Database.deserialize.bind(Database);
+  const exec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+  const close = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+  const opened: Database[] = [];
+  const targets = new Set<Database>();
+  let targetCloseReached = false;
+  const opening = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+    const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+    opened.push(database);
+    return database;
+  });
+  const executing = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, ...args) {
+    const result = exec.apply(this, args);
+    if (String(args[0]).includes('CREATE TABLE vida_workspace_storage_migration')) targets.add(this);
+    return result;
+  });
+  const closing = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, ...args) {
+    close.apply(this, args);
+    if (targets.has(this)) {
+      targetCloseReached = true;
+      throw closeError;
+    }
+  });
+  let failure: unknown;
+  try {
+    failure = await rejectionReason(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+  } finally {
+    closing.mockRestore();
+    executing.mockRestore();
+    opening.mockRestore();
+  }
+  expect(targets.size).toBe(1);
+  expect(targetCloseReached).toBe(true);
+  expect(opened.length).toBeGreaterThan(0);
+  expect(failure).toBeInstanceOf(AggregateError);
+  if (!(failure instanceof AggregateError)) throw new Error('Expected the close acknowledgement error.');
+  expect(failure.errors).toEqual([closeError]);
+  for (const database of opened) expect(() => database.query('SELECT 1').get()).toThrow();
+});
+
+test('imports an owned Mastra sqlite_sequence row from the serialized Mastra image', async () => {
+  const host = makeHost();
+  const generatedMastra = await makeMastra();
+  const originalBytes = Uint8Array.from(generatedMastra.bytes);
+  const mastraDatabase = Database.deserialize(Buffer.from(generatedMastra.bytes), {
+    strict: true,
+    safeIntegers: true,
+  });
+  let mastra: ClosedDatabaseImage;
+  try {
+    mastraDatabase.exec('CREATE TABLE vida_storage_sequence_seed(id INTEGER PRIMARY KEY AUTOINCREMENT)');
+    mastraDatabase.query('INSERT INTO vida_storage_sequence_seed DEFAULT VALUES').run();
+    mastraDatabase.query('DELETE FROM sqlite_sequence WHERE name=?').run('mastra_threads');
+    mastraDatabase
+      .query('UPDATE sqlite_sequence SET name=?,seq=? WHERE name=?')
+      .run('mastra_threads', 73, 'vida_storage_sequence_seed');
+    mastraDatabase.exec('DROP TABLE vida_storage_sequence_seed');
+    mastra = closedImage(mastraDatabase);
+  } finally {
+    mastraDatabase.close(true);
+  }
+  expect(Buffer.from(generatedMastra.bytes)).toEqual(Buffer.from(originalBytes));
+  const serializedMastra = Uint8Array.from(mastra.bytes);
+  const image = await expectAsyncReturned(() =>
+    prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+  );
+  expect(Buffer.from(mastra.bytes)).toEqual(Buffer.from(serializedMastra));
+  const merged = openUnified(image.bytes_base64);
+  try {
+    expect(
+      merged.query<{ seq: number | bigint }, []>("SELECT seq FROM sqlite_sequence WHERE name='mastra_threads'").get()
+        ?.seq,
+    ).toBe(73n);
+    expect(
+      merged.query<{ id: string }, [string]>('SELECT id FROM mastra_threads WHERE id=?').get('merge-thread-1')?.id,
+    ).toBe('merge-thread-1');
+  } finally {
+    merged.close(true);
+  }
+});
+
 test.each([false, true])(
   'existing merge closes the first image on second-open failure, cleanup failure=%s',
   async (cleanupFails) => {
