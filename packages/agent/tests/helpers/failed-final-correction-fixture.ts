@@ -47,6 +47,7 @@ export interface FailedFinalCorrectionFixture {
   readonly store: HostStateStore;
   readonly identity: WorkIdentity;
   readonly journal: MastraSessionLedgerSnapshot;
+  readonly plannedHost: HostStateSnapshot | null;
   readonly preparationPath: string;
   close(completed: boolean): void;
 }
@@ -354,6 +355,7 @@ export async function createFailedFinalCorrectionFixture(
       attempt: 1,
       work,
     });
+    const plannedHost = outcome === 'failed' ? host.readHostStateSnapshot(identity) : null;
 
     const issuedWriter = requireRecord(
       await publicRun([
@@ -504,6 +506,7 @@ export async function createFailedFinalCorrectionFixture(
       store: host,
       identity,
       journal,
+      plannedHost,
       preparationPath,
       close,
     };

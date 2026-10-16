@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `aa582b5`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2); proof-aware contour-reader and global admission remain open. Fresh final-assurance measurement ataa582b5 improves coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `bb4345e`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2); proof-aware contour-reader and global admission remain open. Fresh final-assurance and init measurements atbb4345e improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -155,6 +155,47 @@ and unchanged boot. Strict501 and TS-only502 pass with zero diagnostics.
 The normal commit hook remains required before publication.
 
 ### Current native receipt and final-assurance cost investigation
+
+Thebb4345e init-help/assurance-recovery packet is committed and pushed through
+the ordinary strict hook. SDK formation38961787848/attempt1/artifact12072907547
+binds exact head `bb4345e107f9aee30db1c856075ac9556a7aa8a1`, archive647134bytes,
+SHA256 `1f295e6736b642fe1d82f8b399b084c737bae5877009ef0fb18d5490d1a767da`.
+The maintained readiness owner prepares it without a local build or suites.
+
+Fresh final-assurance run `f769c48c-0758-4f20-9ddf-58b1ab672f9f` passes13/0,
+291assertions, F92/94,L314/325,S349/363,B275/305. Owner
+`native-coverage-contour-qOGQJW` completes73080.045168ms, full captures,
+closed group and same boot. The scoped frozen gate correctly rejects nonexact
+function coverage; `scoped-crap-selected-66ZUAR` retains exit1 in1372.968632ms
+with complete captures/closed group/same boot. No scoped CRAP PASS is inferred.
+Fresh init run `a353ad82-f546-494b-a165-6a3afe4590da` passes59/0,347assertions,
+F83/84,L300/326,S320/353,B164/211. Owner `native-coverage-contour-7meYln`
+completes47306.392439ms, full captures/closed group/same boot. The projection
+imports both diagnostics and their actual BLOCKED outcomes, reaching421attempts.
+Historical triples remain6/45; no new complete contour is admitted.
+
+The remaining measured zero-hit locations are final-assurance936/967 and
+init-core240. Root adds exact recovery/race controls without another DB fixture.
+The failed fixture records its real PLAN Host snapshot after public prewriters;
+a one-shot stale initial read reaches actual Host CAS and the exact conflict,
+preserving live Host/Journal before healthy preparation. The passing fixture
+also faults VERIFY projection after actual implementation seal publication,
+then resumes the sealed EXECUTE and pending-packet paths. Init removes only its
+owned fixture AGENTS and asserts structured partial denial plus exact preservation
+of all other integration bytes. Independent exact-code reviewv36 finds no blocker.
+Focused `quality-rolling-cli-check-2i0AJ8` passes3/0,106assertions in
+28350.443528ms with full captures/closed group/same boot; the fresh recovery case
+takes16163.32ms under20s. Strict503, TS-only504 and full oxlint pass. Numeric
+entry/branch improvement remains unmeasured until the next published capture.
+
+The offline native proof-reader proposal stays isolated, outside integrated
+Source. Independentv33 review identifies an always-rejecting canonical-schema
+comparison, incomplete identity validation, unbounded aggregate reads and no
+positive closure test. A fresh Luna revision owns only its two draft files;
+Root requires positive/negative tests and real151pilot readback before any
+reader or projection activation. Captured global selection claims remain
+distinct from independently current global inventory/freshness admission;
+no external attestation or duplicate Source scan is introduced.
 
 Theaa582b5 context/retry packet is committed and pushed through the ordinary
 strict hook. Successful SDK formation38959608715/attempt1/artifact12072431323

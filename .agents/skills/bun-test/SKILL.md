@@ -198,6 +198,10 @@ reference, generation and Host versions, plus the newly committed result. Do
 not manufacture intermediate rows through SQL or replace authority with mocks.
 This controlled method-boundary fault does not prove a process crash or power
 loss. Keep fresh public CLI success separate from this recovery control.
+For a stale-read race, retain an actual earlier persisted snapshot, return it
+only for the initial read, and let the real store enforce current CAS. Assert
+the exact conflict and unchanged live state before a healthy retry. A fabricated
+Work or version is not this control, and the stale snapshot grants no authority.
 
 ## Run focused checks safely
 

@@ -376,6 +376,27 @@ test('repeated initialization accepts the complete configured multi-project set'
       { project_id: 'alpha', project_root: '.' },
       { project_id: 'beta', project_root: 'nested' },
     ]);
+    const protectedPaths = [
+      'AGENT.sidecar.md',
+      'agent-runtime.config.v1.yaml',
+      'docs/agent-instructions/documentation-policy.v1.json',
+      '.agent/runtime-initialization.v1.json',
+    ];
+    const protectedBytes = await Promise.all(protectedPaths.map((file) => readFile(path.join(projectRoot, file))));
+    await rm(path.join(projectRoot, 'AGENTS.md'));
+    const failure = await rejectionReason(initializeProjectFromBundle(request, source));
+    if (!(failure instanceof Error)) throw new Error('Partial initialization must return a structured failure.');
+    expect(parseJsonRecord(failure.message, 'partial initialization')).toEqual({
+      status: 'partial_not_ready',
+      ready: false,
+      existing: protectedPaths,
+      missing: ['AGENTS.md'],
+      next_action: 'Complete the project-owned integration files, then use explicit reconciliation.',
+    });
+    expect(requireSafeRepositoryAccess(projectRoot).fileExists('AGENTS.md', 'denied initialization')).toBe(false);
+    for (const [index, file] of protectedPaths.entries()) {
+      expect(await readFile(path.join(projectRoot, file))).toEqual(protectedBytes[index]!);
+    }
     completed = true;
   } finally {
     if (completed) await rm(projectRoot, { recursive: true, force: true });

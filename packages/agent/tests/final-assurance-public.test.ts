@@ -1043,19 +1043,55 @@ test('direct Source preparation recovers interrupted packet publication from the
       journal: { ...journal, resume_status: mastraLedgerStatus(journal.state) },
       preparationPath: f.preparationPath,
     };
+    const projectTransition = f.store.projectLifecycleTransition.bind(f.store),
+      sealInterruption = new Error('Controlled interruption after implementation seal publication.'),
+      transition = spyOn(f.store, 'projectLifecycleTransition').mockImplementation((work, target, action, context) => {
+        if (target === 'VERIFY') throw sealInterruption;
+        return projectTransition(work, target, action, context);
+      });
+    let transitionFailure: { error: unknown } | undefined;
+    try {
+      assert.throws(
+        () => prepareFinalAssurance(preparation),
+        (error: unknown) => error === sealInterruption,
+      );
+    } catch (error) {
+      transitionFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            transition.mockRestore();
+            return undefined;
+          },
+        ],
+        transitionFailure,
+      );
+    }
+    const sealedHost = f.store.readHostStateSnapshot(f.identity),
+      sealedWork = currentWork(sealedHost);
+    expect(sealedWork.lifecycle.phase).toBe('EXECUTE');
+    expect(sealedWork.lifecycle.seal?.implementation_fingerprint).toBe(journal.state.source_scope.digest);
+    expect(
+      sealedWork.lifecycle.references.some(
+        (reference) =>
+          reference.kind === 'implementation_result' &&
+          reference.disposition === 'current' &&
+          reference.implementation_fingerprint === journal.state.source_scope?.digest,
+      ),
+    ).toBe(true);
+    expect(f.store.readFinalAssurance(f.identity, 1)).toBeNull();
     const interruption = new Error('Controlled interruption before assurance CAS.'),
       publication = spyOn(f.store, 'compareAndSwapFinalAssurance').mockImplementationOnce(() => {
         throw interruption;
       });
     let interruptedFailure: { error: unknown } | undefined;
     try {
-      let observed: { error: unknown } | undefined;
-      try {
-        prepareFinalAssurance(preparation);
-      } catch (error) {
-        observed = { error };
-      }
-      expect(observed?.error).toBe(interruption);
+      assert.throws(
+        () => prepareFinalAssurance(preparation),
+        (error: unknown) => error === interruption,
+      );
       expect(publication).toHaveBeenCalledTimes(1);
     } catch (error) {
       interruptedFailure = { error };
@@ -1127,16 +1163,40 @@ test('failed final correction preparation consumes persisted Host and CAS-bound 
   let completed = false;
   let bodyFailure: { error: unknown } | undefined;
   try {
-    const prepared = expectReturned(() =>
-      prepareLifecycleForCorrection({
-        root: f.root,
-        config: f.config,
-        store: f.store,
-        identity: f.identity,
-        journal: f.journal,
-        preparationPath: f.preparationPath,
-      }),
-    );
+    const preparation = {
+      root: f.root,
+      config: f.config,
+      store: f.store,
+      identity: f.identity,
+      journal: f.journal,
+      preparationPath: f.preparationPath,
+    };
+    assert.ok(f.plannedHost);
+    expect(currentWork(f.plannedHost).lifecycle.phase).toBe('PLAN');
+    const beforeRace = f.store.readHostStateSnapshot(f.identity),
+      journalBeforeRace = f.store.readWorkSessionJournal(f.identity);
+    expect(f.plannedHost.workVersion).not.toEqual(beforeRace.workVersion);
+    const staleRead = spyOn(f.store, 'readHostStateSnapshot').mockReturnValueOnce(f.plannedHost);
+    let raceFailure: { error: unknown } | undefined;
+    try {
+      expect(() => prepareLifecycleForCorrection(preparation)).toThrow('state compare-and-swap conflict');
+    } catch (error) {
+      raceFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            staleRead.mockRestore();
+            return undefined;
+          },
+        ],
+        raceFailure,
+      );
+    }
+    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeRace);
+    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBeforeRace);
+    const prepared = expectReturned(() => prepareLifecycleForCorrection(preparation));
     const persisted = f.store.readHostStateSnapshot(f.identity),
       currentJournal = f.store.readWorkSessionJournal(f.identity),
       work = currentWork(persisted);

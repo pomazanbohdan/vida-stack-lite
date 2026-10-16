@@ -33,12 +33,12 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-session-handoff | 189/277 · 509/877 · 560/959 · 382/791 | 29 / 870 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-facade | 24/24 · 89/89 · 104/104 · 104/104 | 10 / 10 | 318/318 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 10 / 10 | local triple recorded |
 | bun-lifecycle-state | 29/29 · 184/184 · 193/193 · 129/129 | 21 / 21 | 521/877 (fail; raw runner Killed; unqualified) | BLOCKED | open / unknown | 21 / 21 | open / unknown |
-| bun-final-assurance | 86/94 · 284/325 · 319/363 · 254/305 | 33 / 33 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-final-assurance | 92/94 · 314/325 · 349/363 · 275/305 | 33 / 33 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-initialization | 18/18 · 87/88 · 99/102 · 53/56 | 9 / 9 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-development-controller | 49/62 · 180/243 · 192/273 · 194/282 | 17 / 132 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-public-entrypoints | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-cli-toolchain | 38/39 · 247/265 · 271/299 · 317/397 | 34 / 34 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
-| bun-cli-init | 81/84 · 295/324 · 315/352 · 164/213 | 12 / 12 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-cli-init | 83/84 · 300/326 · 320/353 · 164/211 | 12 / 12 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-cli-run | 44/557 · 205/2863 · 219/3143 · 217/3663 | 501 / 21756 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-doc-clear | 42/46 · 199/230 · 228/281 · 170/229 | 44 / 44 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-observed-validation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
@@ -561,6 +561,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | b25d112e-997b-45b1-8a1e-71517c85a03a | 801cb4c0e9adfb53053a4e2f03ffe5e988f288d8 | 2026-10-16T19:54:17.608Z | focused-diagnostic; owner accepted locally; selection bound | 82/94 · 272/325 · 307/363 · 232/305 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/b25d112e-997b-45b1-8a1e-71517c85a03a.focused-coverage.json |
 | coverage-outcome | 8e3d8552-3762-4e1c-9754-a0becd8c87ed | aa582b5b6fd4cabe7cafd56b96c33d3be6b45e05 | 2026-10-16T20:07:00.638Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/8e3d8552-3762-4e1c-9754-a0becd8c87ed.json |
 | coverage | 8e3d8552-3762-4e1c-9754-a0becd8c87ed | aa582b5b6fd4cabe7cafd56b96c33d3be6b45e05 | 2026-10-16T20:07:00.638Z | focused-diagnostic; owner accepted locally; selection bound | 86/94 · 284/325 · 319/363 · 254/305 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/8e3d8552-3762-4e1c-9754-a0becd8c87ed.focused-coverage.json |
+| coverage-outcome | f769c48c-0758-4f20-9ddf-58b1ab672f9f | bb4345e107f9aee30db1c856075ac9556a7aa8a1 | 2026-10-16T20:28:27.398Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/f769c48c-0758-4f20-9ddf-58b1ab672f9f.json |
+| coverage | f769c48c-0758-4f20-9ddf-58b1ab672f9f | bb4345e107f9aee30db1c856075ac9556a7aa8a1 | 2026-10-16T20:28:27.398Z | focused-diagnostic; owner accepted locally; selection bound | 92/94 · 314/325 · 349/363 · 275/305 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/f769c48c-0758-4f20-9ddf-58b1ab672f9f.focused-coverage.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
@@ -653,6 +655,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | 65109b21-116c-436b-97bb-4cab61df4a9b | not-captured | 2026-10-16T09:30:27.570Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/65109b21-116c-436b-97bb-4cab61df4a9b.json |
 | coverage | cbf420e9-24e7-44eb-b784-fe19a441f26c | 708c1531020f886046d8d86e20a774eb86d6259b | 2026-10-16T11:20:53.433Z | focused-diagnostic; owner accepted locally; selection bound | 81/84 · 295/324 · 315/352 · 164/213 | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/cbf420e9-24e7-44eb-b784-fe19a441f26c.focused-coverage.json |
 | coverage-outcome | cbf420e9-24e7-44eb-b784-fe19a441f26c | not-captured | 2026-10-16T11:20:53.441Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/cbf420e9-24e7-44eb-b784-fe19a441f26c.json |
+| coverage-outcome | a353ad82-f546-494b-a165-6a3afe4590da | bb4345e107f9aee30db1c856075ac9556a7aa8a1 | 2026-10-16T20:28:27.398Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/a353ad82-f546-494b-a165-6a3afe4590da.json |
+| coverage | a353ad82-f546-494b-a165-6a3afe4590da | bb4345e107f9aee30db1c856075ac9556a7aa8a1 | 2026-10-16T20:28:27.398Z | focused-diagnostic; owner accepted locally; selection bound | 83/84 · 300/326 · 320/353 · 164/211 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/a353ad82-f546-494b-a165-6a3afe4590da.focused-coverage.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
