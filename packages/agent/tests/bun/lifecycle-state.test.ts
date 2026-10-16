@@ -688,10 +688,14 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       reference(predecessor, 'acceptance_manifest', 'history-acceptance'),
       reference(predecessor, 'execution_approval', 'history-approval', { decision: 'approved' }),
     ];
-    const continued = clone(predecessor);
-    continued.binding.work_source_revision = 'source-2';
-    continued.lifecycle.source_revision = 'source-2';
-    continued.lifecycle.references.push(...history);
+    const continueWithHistory = (): MutableWork => {
+      const continued = clone(predecessor);
+      continued.binding.work_source_revision = 'source-2';
+      continued.lifecycle.source_revision = 'source-2';
+      continued.lifecycle.references.push(...history);
+      return continued;
+    };
+    const continued = continueWithHistory();
     expectReturned(() => validateLifecycleAggregate(continued, history));
     const foreign = {
       ...reference(predecessor, 'implementation_scope', 'foreign-scope'),
@@ -701,6 +705,58 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
     expect(() => validateLifecycleAggregate(continued, [...history, foreign])).toThrow(
       'lifecycle artifact authority binding differs from current work',
     );
+    const admit = (work: MutableWork, ...references: MutableReference[]): MutableWork => {
+      const next = clone(work);
+      next.revision++;
+      next.lifecycle.revision++;
+      next.lifecycle.references.push(...references);
+      expectReturned(() => validateLifecycleProgress(work, next, undefined, history));
+      return next;
+    };
+    const trace = expectReturned(() =>
+      transitionLifecycleState(continueWithHistory(), 'TRACE', 'Trace the rebound source.', undefined, history),
+    );
+    const traced = admit(trace, reference(trace, 'source_plan', 'rebound-source-plan'));
+    const plan = expectReturned(() =>
+      transitionLifecycleState(traced, 'PLAN', 'Bind current execution evidence.', undefined, history),
+    );
+    const readyWithoutCurrentApproval = admit(
+      plan,
+      reference(plan, 'platform_knowledge', 'rebound-knowledge'),
+      reference(plan, 'implementation_policy', 'rebound-policy'),
+      reference(plan, 'change_impact_pre', 'rebound-impact-pre'),
+      reference(plan, 'documentation_validation', 'rebound-docs', { decision: 'pass' }),
+    );
+    let staleApprovalError: unknown;
+    try {
+      transitionLifecycleState(
+        readyWithoutCurrentApproval,
+        'EXECUTE',
+        'Execute with current authority.',
+        undefined,
+        history,
+      );
+    } catch (error) {
+      staleApprovalError = error;
+    }
+    expect(staleApprovalError).toBeInstanceOf(LifecycleStateError);
+    if (!(staleApprovalError instanceof LifecycleStateError)) throw new Error('stale approval was not rejected');
+    expect(staleApprovalError.code).toBe('GAP-LIFECYCLE-STATE-001');
+    expect(staleApprovalError.message).toBe('current execution_approval reference required');
+    const readyWithCurrentApproval = admit(
+      readyWithoutCurrentApproval,
+      reference(plan, 'execution_approval', 'rebound-approval', { decision: 'approved' }),
+    );
+    const executed = expectReturned(() =>
+      transitionLifecycleState(
+        readyWithCurrentApproval,
+        'EXECUTE',
+        'Execute with current authority.',
+        undefined,
+        history,
+      ),
+    );
+    expect(executed.lifecycle.phase).toBe('EXECUTE');
   });
 
   test('rejects malformed aggregate bindings, seal and assurance metadata', () => {

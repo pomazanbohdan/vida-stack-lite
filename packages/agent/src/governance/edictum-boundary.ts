@@ -16,7 +16,7 @@ import {
   type WorkflowState,
 } from './policy-workflow.js';
 import type { ProjectAuthorizer } from '../authorization/cedar-boundary.js';
-import { Result, ResultAsync } from 'neverthrow';
+import { Result, ResultAsync, ok, err } from 'neverthrow';
 import { requireSafeRepositoryAccess } from '../config/safe-repository-access.js';
 import {
   detectNativeNoFollowCapability,
@@ -2066,7 +2066,7 @@ async function prepareGovernedWrite(
   guard: OperationPolicyGuard,
   bindings: GovernanceBindings | undefined,
   input: unknown,
-): Promise<GovernedWritePreparation> {
+): Promise<Result<GovernedWritePreparation, GovernanceDenied>> {
   const failures = {
     configuration: 'governed write runtime configuration is unavailable or changed',
     envelope: 'governed write runtime envelope is missing, invalid or stale',
@@ -2156,16 +2156,20 @@ async function prepareGovernedWrite(
     const parsed = buildGovernedWriteRequest(intent, authorization.receipt!, approval!);
     const operationKey = governedWriteOperationKey(parsed);
     phase = 'reservation';
+    const ingressToken = randomUUID();
     const reservation = await trusted.reservationStore.reserve(operationKey, parsed);
     requireCondition(Boolean(reservation), 'governed write operation already reserved');
-    let consumed = false;
-    let ingressToken: string | undefined;
     try {
       assertCurrent();
       phase = 'reservation';
-      consumeGovernedWriteOnce(guard, parsed);
-      consumed = true;
-      ingressToken = randomUUID();
+      const prepared = ok<GovernedWritePreparation, GovernanceDenied>({
+        args: { ...(parsed as unknown as Record<string, unknown>), ingress_token: ingressToken },
+        ingressToken,
+        reservation: reservation!,
+        operationKey,
+        sourceRevision: envelope.sourceRevision,
+        expectedRevision: envelope.expectedRevision,
+      });
       guardIngressCapabilities.get(guard)?.set(ingressToken, {
         operationHash: parsed.authorization.operation_hash,
         requestDigest: reservation!.request_digest,
@@ -2174,28 +2178,22 @@ async function prepareGovernedWrite(
         sourceRevision: envelope.sourceRevision,
         expectedRevision: envelope.expectedRevision,
       });
-      return {
-        args: { ...(parsed as unknown as Record<string, unknown>), ingress_token: ingressToken },
-        ingressToken,
-        reservation: reservation!,
-        operationKey,
-        sourceRevision: envelope.sourceRevision,
-        expectedRevision: envelope.expectedRevision,
-      };
+      // Publish no token until the final consume-once step succeeds.
+      consumeGovernedWriteOnce(guard, parsed);
+      return prepared;
     } catch (error) {
       try {
         await trusted.reservationStore.abort(reservation!);
-        if (consumed) consumedOperationKeys.get(guard)?.delete(operationKey);
       } catch (cleanupError) {
         phase = 'cleanup';
         throw new AggregateError([error, cleanupError], failures.cleanup);
       } finally {
-        if (ingressToken !== undefined) guardIngressCapabilities.get(guard)?.delete(ingressToken);
+        guardIngressCapabilities.get(guard)?.delete(ingressToken);
       }
       throw error;
     }
   } catch (cause) {
-    throw new GovernanceDenied(failures[phase], 'preparation', phase, { cause });
+    return err(new GovernanceDenied(failures[phase], 'preparation', phase, { cause }));
   }
 }
 
@@ -2298,13 +2296,9 @@ function cleanupGovernedWrite(guard: OperationPolicyGuard, ingressToken: string)
 }
 export async function runGovernedWrite(guard: OperationPolicyGuard, input: unknown): Promise<unknown> {
   const bindings = guardBindings.get(guard);
-  let preparation: GovernedWritePreparation;
-  try {
-    preparation = await prepareGovernedWrite(guard, bindings, input);
-  } catch (error) {
-    if (!(error instanceof GovernanceDenied)) throw error;
-    return guard.rejectPreparation(error);
-  }
+  const prepared = await prepareGovernedWrite(guard, bindings, input);
+  if (prepared.isErr()) return guard.rejectPreparation(prepared.error);
+  const preparation = prepared.value;
   const commitStarted = { value: false };
   return guard
     .run('runtime.write', preparation.args, () =>

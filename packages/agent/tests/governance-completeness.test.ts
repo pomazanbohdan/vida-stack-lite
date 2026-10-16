@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, mock, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
 import path from 'node:path';
 import os from 'node:os';
@@ -39,6 +39,8 @@ import { HostStateStore } from '../src/host-state.ts';
 import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.ts';
 import { expectAsyncReturned, expectRejection, expectReturned } from './helpers/expect-rejection.ts';
+import * as repositoryAccess from '../src/config/safe-repository-access.ts';
+const originalRepositoryAccess = Object.freeze({ ...repositoryAccess });
 const repositoryRoot = await createInitializedRepositoryRoot();
 const config = loadRuntimeConfig(repositoryRoot);
 const selectedProject = config.projects[0];
@@ -831,6 +833,102 @@ describe('governed write completeness', () => {
       }
     },
   );
+  test.skipIf(!nativeNoFollowAvailable)(
+    'durable reservation rereads actual peer terminal writes after a stale transition read',
+    async () => {
+      const temporaryRoot = mkdtempSync(path.join(os.tmpdir(), 'agent-runtime-reservation-peer-'));
+      let safeToCleanup = false;
+      let pending: { marker: string; beforeWrite: () => Promise<void> } | undefined;
+      let intercepted = 0;
+      try {
+        const store = await createFileOperationReservationStore(temporaryRoot, 'quality-peer');
+        const peer = await createFileOperationReservationStore(temporaryRoot, 'quality-peer');
+        await mock.module('../src/config/safe-repository-access.ts', () => ({
+          ...originalRepositoryAccess,
+          requireSafeRepositoryAccess: (...args: Parameters<typeof repositoryAccess.requireSafeRepositoryAccess>) => {
+            const access = originalRepositoryAccess.requireSafeRepositoryAccess(...args);
+            return {
+              ...access,
+              writeExclusiveAsync: async (...writeArgs: Parameters<typeof access.writeExclusiveAsync>) => {
+                if (pending?.marker === writeArgs[0]) {
+                  const checkpoint = pending;
+                  pending = undefined;
+                  intercepted++;
+                  // The peer uses its real public store and native exclusive write.
+                  // Only scheduling is controlled; the subject observes the real EEXIST.
+                  await checkpoint.beforeWrite();
+                }
+                return access.writeExclusiveAsync(...writeArgs);
+              },
+            };
+          },
+        }));
+        for (const kind of [
+          'same-unknown',
+          'same-applied',
+          'different-digest',
+          'same-aborted',
+          'different-status',
+        ] as const) {
+          const fixture = evidence();
+          const reservation = await store.reserve(fixture.operationHash, fixture.request);
+          if (reservation === null) throw new Error('peer fixture reservation was not created');
+          const filename = readdirSync(temporaryRoot).find((name) => {
+            if (!name.endsWith('.json')) return false;
+            const value = JSON.parse(readFileSync(path.join(temporaryRoot, name), 'utf8')) as { operation_key: string };
+            return value.operation_key === fixture.operationHash;
+          });
+          if (filename === undefined) throw new Error('peer fixture reservation file is missing');
+          const basePath = path.join(temporaryRoot, filename);
+          const baseBytes = readFileSync(basePath);
+          const digest = 'a'.repeat(64);
+          const peerAction = async () => {
+            if (kind === 'same-unknown') await peer.markCommitStarted(reservation);
+            else if (kind === 'same-aborted' || kind === 'different-status') await peer.abort(reservation);
+            else await peer.complete(reservation, kind === 'different-digest' ? 'b'.repeat(64) : digest);
+          };
+          pending = { marker: `${basePath}.terminal`, beforeWrite: peerAction };
+          const result = Promise.resolve(
+            kind === 'same-aborted'
+              ? store.abort(reservation)
+              : kind === 'same-unknown' || kind === 'different-status'
+                ? store.markCommitStarted(reservation)
+                : store.complete(reservation, digest),
+          );
+          if (kind === 'different-status') await expectRejection(result, 'durable reservation terminal state conflict');
+          else if (kind === 'different-digest')
+            await expectRejection(result, 'durable reservation result digest conflict');
+          else await expectAsyncReturned(() => result);
+          expect(pending).toBeUndefined();
+          expect(readFileSync(basePath)).toEqual(baseBytes);
+          const observed = await peer.inspect(fixture.operationHash);
+          expect(observed).toMatchObject({
+            fencing_token: reservation.fencing_token,
+            status:
+              kind === 'same-unknown'
+                ? 'commit_unknown'
+                : kind === 'same-aborted' || kind === 'different-status'
+                  ? 'aborted'
+                  : 'applied',
+          });
+          if (kind === 'different-digest' || kind === 'same-applied')
+            expect(observed?.result_digest).toBe(kind === 'different-digest' ? 'b'.repeat(64) : digest);
+          // This fixture has no external effect; settle its synthetic unknown outcome.
+          if (kind === 'same-unknown') await peer.complete(reservation, digest);
+        }
+        expect(intercepted).toBe(5);
+        safeToCleanup = true;
+      } finally {
+        pending = undefined;
+        await mock.module('../src/config/safe-repository-access.ts', () => originalRepositoryAccess);
+        const restored = await import('../src/config/safe-repository-access.ts');
+        expect(restored.requireSafeRepositoryAccess).toBe(originalRepositoryAccess.requireSafeRepositoryAccess);
+        if (safeToCleanup) rmSync(temporaryRoot, { recursive: true, force: true });
+        else process.stderr.write(`Retained peer reservation fixture root: ${temporaryRoot}\n`);
+      }
+    },
+  );
+
   test.skipIf(!nativeNoFollowAvailable)(
     'durable reservation store persists every legal transition and rejects replay',
     async () => {

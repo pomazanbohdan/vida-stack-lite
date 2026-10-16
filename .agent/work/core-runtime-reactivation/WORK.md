@@ -45,7 +45,8 @@ actual-role reviews are recorded in `scope_review_main_governance_validation_202
 Its static join is205original=202retained+3existing removals;202+4prospective=206current.
 All global counts/caps remain unchanged. The old single-Source contour is retired
 without rewriting its receipts; the active replacement owns the parser as well,
-with the same tests and45active contours. Fresh governance numeric proof is pending.
+with the same tests and45active contours. Both v3 and its published scope pin are
+now on `origin/main` (`450bae0`, then `05a4f7f`).
 
 The v3 Source additions/removals are explicit, exhaustive arrays, independently
 checked by producer and projection; they cannot be inferred from missing edges.
@@ -55,6 +56,38 @@ The final focused gate/projection/CLI checks pass170/0 at owned `ICDuaI`
 of the two new v3 fields and correctly hit the unrecognized-claim guard first.
 Strict tooling185files and tests460files checks pass. These are functional checks,
 not fresh contour coverage, frozen numeric admission or mutation results.
+
+Fresh governance run `12de26cc-49ea-4ff0-b029-b9078bea3ffc` binds published
+`05a4f7f`:63/0tests, F204/206,L699/708,S721/735,B89/94 across its two Sources.
+The parser is exact100%; the validator has two unexecuted transition-error
+callbacks and five missing branch arms. Owner `YCDXw0` completed8016.532634ms,
+complete captures, closed groups, unchanged boot. The projection imports this
+diagnostic. Same-run CRAP correctly fails exact function coverage, so no new
+frozen or mutation PASS is claimed. Exact missed locations are retained at
+`/workspace/attachments/quality-governance-current-uncovered-locations-20261016.json`.
+Current tests add deterministic real-peer scheduling before the native exclusive
+write, rather than a scheduler-dependent collision. Matching and foreign store
+identity controls preserve exact emitted bytes and observe native EEXIST. An
+initial URL/query mock binding did not intercept (I7gTLm/81EFNW FAIL retained);
+the literal maintained TS module binding and public entry resolve that fixture gap.
+The settled governance/lifecycle batch at `8XQfb0` passes58/0,614assertions,
+4950.27789ms, complete captures/closed groups/same boot. Strict Source and tests pass.
+
+Governed-write preparation now returns a typed Result, prepares all allocations
+before its final consume-once step, and stages no publicly visible token on error.
+Abort, ordered primary/cleanup causes, reservation retention and post-commit
+UNKNOWN handling stay unchanged. Independent exact-diff review is
+`/workspace/attachments/quality-governance-preparation-exact-diff-review-20261016.md`.
+Fresh single-Source inventory reuses the unchanged parser capture: all206 roles
+and global counts/caps stay exact. Preparation CC6->4 and run CC3->2 retain6/3
+original ceilings. The CAS refresh receipt is
+`/workspace/attachments/quality-governance-preparation-lineage-refresh-20261016.applied.json`;
+do not rerun that updater. Fresh numeric evidence for this settled packet is pending.
+The lifecycle history case additionally proves old-source approval rejection at
+PLAN->EXECUTE and current-source approval acceptance without replacing preserved history.
+The normal Git hook initially rejected the identity test's untyped dynamic module
+restoration and unsafe-finally syntax. Its log stays retained; the restoration
+uses the maintained module type and an explicit assertion. No hook was bypassed.
 
 1. Maintain documentation under the sidecar's single-owner protocol.
 2. Complete approved Cloud/profile guards and reproducible Pstack bootstrap; keep Source checks, SDK verification, native qualification and acceptance separate.

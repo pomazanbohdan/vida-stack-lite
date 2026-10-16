@@ -1,5 +1,5 @@
-import { afterAll, describe, expect, test } from 'bun:test';
-import { randomUUID } from 'node:crypto';
+import { afterAll, describe, expect, mock, test } from 'bun:test';
+import { createHash, randomUUID } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -25,6 +25,8 @@ import {
   type WorkflowHostCapability,
 } from '../src/governance/edictum-boundary.js';
 import { nativeNoFollowAvailable } from '../src/config/host-capability.js';
+import * as repositoryAccess from '../src/config/safe-repository-access.js';
+const originalRepositoryAccess = Object.freeze({ ...repositoryAccess });
 const repositoryRoot = await createInitializedFixture();
 let sessionSequence = 0;
 
@@ -560,6 +562,172 @@ describe('configured Edictum workflow completeness', () => {
       }
     },
   );
+  for (const identityState of ['matching', 'foreign'] as const)
+    test.skipIf(!nativeNoFollowAvailable)(
+      `file workflow host checks a ${identityState} store identity after a real peer exclusive write`,
+      async () => {
+        let fixtureRoot: string | undefined;
+        let bodyFailed = false;
+        let bodyError: unknown;
+        let bodyPassed = false;
+        let restoreFailed = false;
+        let restoreError: unknown;
+        const safeAccessSpecifier = '../src/config/safe-repository-access.ts';
+        try {
+          fixtureRoot = await createInitializedFixture((created) => {
+            fixtureRoot = created;
+          });
+          const storeId = 'identity-peer-' + randomUUID();
+          const principal = 'human:identity-peer-reviewer';
+          const identityPath = path.join(
+            fixtureRoot,
+            '.agent',
+            'work',
+            'runtime-workflow-approvals',
+            storeId,
+            '.identity.json',
+          );
+          let armed = true;
+          let intercepted = 0;
+          let peerCapability: WorkflowHostCapability | undefined;
+          let createPeer: (() => Promise<WorkflowHostCapability>) | undefined;
+          let peerIdentityBytes: string | undefined;
+          let nativeCollision: unknown;
+
+          await mock.module(safeAccessSpecifier, () => ({
+            ...originalRepositoryAccess,
+            requireSafeRepositoryAccess: (...args: Parameters<typeof repositoryAccess.requireSafeRepositoryAccess>) => {
+              const access = originalRepositoryAccess.requireSafeRepositoryAccess(...args);
+              if (path.resolve(args[0]) !== path.resolve(fixtureRoot!)) return access;
+              const originalWrite = access.writeExclusiveAsync;
+              return {
+                ...access,
+                writeExclusiveAsync: async (...writeArgs: Parameters<typeof access.writeExclusiveAsync>) => {
+                  if (!armed || path.resolve(writeArgs[0]) !== identityPath) return originalWrite(...writeArgs);
+                  armed = false;
+                  intercepted += 1;
+                  if (createPeer === undefined) throw new Error('peer workflow host factory was not prepared');
+                  peerCapability = await createPeer();
+                  peerIdentityBytes = readFileSync(identityPath, 'utf8');
+                  if (identityState === 'foreign') {
+                    const foreign: unknown = JSON.parse(peerIdentityBytes);
+                    if (!isRecord(foreign)) throw new Error('peer identity is not a record');
+                    foreign.store_id = 'foreign-store';
+                    // Simulate an actor replacing the identity in the observed create gap.
+                    await access.replaceAtomicAsync(
+                      identityPath,
+                      createHash('sha256').update(peerIdentityBytes).digest('hex'),
+                      JSON.stringify(foreign),
+                      'foreign identity fixture',
+                    );
+                    peerIdentityBytes = readFileSync(identityPath, 'utf8');
+                  }
+                  try {
+                    return await originalWrite(...writeArgs);
+                  } catch (error: unknown) {
+                    nativeCollision = error;
+                    throw error;
+                  }
+                },
+              };
+            },
+          }));
+
+          createPeer = () => createFileWorkflowHostCapability(fixtureRoot!, principal, storeId);
+          let subjectCapability: WorkflowHostCapability | undefined;
+          let subjectFailure: unknown;
+          try {
+            subjectCapability = await createFileWorkflowHostCapability(fixtureRoot, principal, storeId);
+          } catch (error) {
+            subjectFailure = error;
+          }
+
+          expect(intercepted).toBe(1);
+          expect(armed).toBe(false);
+          expect(peerCapability).toBeDefined();
+          expect(nativeCollision).toMatchObject({ code: 'EEXIST' });
+          expect(peerIdentityBytes).toBeDefined();
+          if (peerCapability === undefined || peerIdentityBytes === undefined)
+            throw new Error('peer identity collision control did not capture its actual identity');
+          const identityAfterSubject = readFileSync(identityPath, 'utf8');
+          expect(identityAfterSubject).toBe(peerIdentityBytes);
+          const identity: unknown = JSON.parse(identityAfterSubject);
+          expect(identity).toMatchObject({
+            schema: 'EdictumWorkflowApprovalStoreIdentity/v1',
+            repository_root: path.resolve(fixtureRoot),
+            store_id: identityState === 'foreign' ? 'foreign-store' : storeId,
+          });
+          if (identityState === 'foreign') {
+            expect(subjectCapability).toBeUndefined();
+            expect(subjectFailure).toBe(nativeCollision);
+            expect(subjectFailure).toBeInstanceOf(Error);
+            bodyPassed = true;
+            return;
+          }
+          expect(subjectFailure).toBeUndefined();
+          if (subjectCapability === undefined) throw new Error('matching peer identity was not adopted');
+          const binding: WorkflowApprovalBinding = {
+            stage_id: 'identity-peer-stage',
+            approval_id: 'identity-peer-' + randomUUID(),
+            operation_hash: 'a'.repeat(64),
+            tenant: 'identity-peer-tenant',
+            project: 'identity-peer-project',
+          };
+          let peerApplyCalls = 0;
+          await peerCapability.consumeApproval(binding, async () => {
+            peerApplyCalls += 1;
+          });
+          expect(peerApplyCalls).toBe(1);
+          let subjectReplayApplyCalls = 0;
+          const replayFailure: unknown = await subjectCapability
+            .consumeApproval(binding, async () => {
+              subjectReplayApplyCalls += 1;
+            })
+            .then(
+              () => undefined,
+              (error: unknown) => error,
+            );
+          expect(replayFailure).toBeInstanceOf(Error);
+          if (!(replayFailure instanceof Error)) throw new Error('shared identity generation did not reject replay');
+          expect(replayFailure.message).toMatch(/replay/);
+          expect(subjectReplayApplyCalls).toBe(0);
+          bodyPassed = true;
+        } catch (error: unknown) {
+          bodyFailed = true;
+          bodyError = error;
+        } finally {
+          try {
+            await mock.module(safeAccessSpecifier, () => originalRepositoryAccess);
+            const restored = (await import(
+              safeAccessSpecifier
+            )) as typeof import('../src/config/safe-repository-access.ts');
+            expect(restored.requireSafeRepositoryAccess).toBe(originalRepositoryAccess.requireSafeRepositoryAccess);
+          } catch (error: unknown) {
+            restoreFailed = true;
+            restoreError = error;
+          }
+          completeOwnedCleanup(
+            [
+              () => {
+                if (restoreFailed) throw restoreError;
+                return undefined;
+              },
+              () => {
+                if (!bodyPassed || restoreFailed || fixtureRoot === undefined) {
+                  if (fixtureRoot !== undefined)
+                    process.stderr.write(`Retained failed identity-peer workflow fixture root: ${fixtureRoot}\n`);
+                  return undefined;
+                }
+                rmSync(fixtureRoot, { recursive: true, force: true });
+                return undefined;
+              },
+            ],
+            bodyFailed ? { error: bodyError } : undefined,
+          );
+        }
+        if (bodyFailed) throw bodyError;
+      },
+    );
   test.skipIf(!nativeNoFollowAvailable)(
     'file workflow aborts a failed application, retries the same binding, then denies replay',
     async () => {
