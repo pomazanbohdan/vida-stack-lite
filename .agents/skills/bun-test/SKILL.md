@@ -83,6 +83,11 @@ Check value shape/type before a property access or regex matcher can throw its
 own argument error. Preserve unproven results without padding assertion counts.
 Use the existing `expectReturned` helper for expected-success synchronous setup
 inside a test body; do not construct the mutable subject at module scope.
+The real-adapter copied-helper pilot qualifies a synchronous `doesNotThrow`
+backend, including thrown undefined, while rejecting invalid arguments and
+unrelated runtime errors. The shared helper still uses its current backend;
+this controlled pilot does not qualify actual mutants or justify a generic
+JUnit Error exception. Preserve its exact native AssertionError/body attribution.
 For a synchronous Cedar function spy, finish imports before installing it and
 restore it in finally without an intervening await. Confirm restoration with a
 real subsequent call. Module replacement and asynchronous provider cases retain

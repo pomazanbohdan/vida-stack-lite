@@ -202,6 +202,15 @@ matchers, so a missing target value fails the intended assertion. A raw runtime
 exception or a matcher argument error remains unproven. Do not pad assertion
 counts or relax the classifier to admit it.
 
+The real-adapter synchronous-helper pilot copies `expect-rejection.ts` and changes
+only that copy's `expectReturned` assertion to `node:assert/strict.doesNotThrow`.
+It qualifies preserved ordinary/undefined returns and an attributable AssertionError
+for thrown undefined with zero JUnit assertions. Invalid assertion arguments and
+unrelated runtime errors remain rejected by the strict JUnit reader. This is
+mechanism qualification, not a mutant score or deployment of the shared helper.
+Its four serial adapter children justify the enclosing test's explicit 15 s limit;
+the default remains 5 s per test.
+
 Timing invalid-input cases must observe absence of side effects, not only the
 fallback error code. Give non-string message/code values a counted slice getter,
 and invalid clock/threshold values a counted coercion hook. Require zero reads

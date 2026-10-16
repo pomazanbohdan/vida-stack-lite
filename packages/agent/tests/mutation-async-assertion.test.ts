@@ -1425,6 +1425,103 @@ test('real adapter observes node assert in shared async return helper for undefi
   }
 });
 
+// Four serial adapter children each have a 2 s custody limit; keep one explicit bounded exception.
+test('real adapter attributes a copied synchronous return helper through imported node assert', async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-sync-returned-helper-'));
+  let completed = false;
+  try {
+    const sourceHelper = fileURLToPath(new URL('./helpers/expect-rejection.ts', import.meta.url));
+    const candidateHelper = path.join(root, 'tests', 'helpers', 'expect-rejection.ts');
+    await mkdir(path.dirname(candidateHelper), { recursive: true });
+    const original = await readFile(sourceHelper, 'utf8');
+    const before = `  expect(() => {\n    result = { value: operation() };\n  }).not.toThrow();`;
+    const after = `  assert.doesNotThrow(() => {\n    result = { value: operation() };\n  });`;
+    expect(original.split(before).length - 1).toBe(1);
+    const candidate = original.replace(before, after);
+    expect(candidate).not.toBe(original);
+    expect(candidate.split(after).length - 1).toBe(1);
+    expect(candidate.replace(after, before)).toBe(original);
+    await writeFile(candidateHelper, candidate);
+    expect(await readFile(candidateHelper, 'utf8')).toBe(candidate);
+
+    const imported = JSON.stringify(candidateHelper);
+    const passing = await runAdapterChild(
+      root,
+      `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\nimport { expectReturned } from ${imported};\ntest('ordinary return is preserved', () => { assert.equal(expectReturned(() => 42), 42); });\ntest('undefined return is preserved', () => { assert.equal(expectReturned(() => undefined), undefined); });\n`,
+      'sync-return-pass',
+      { exitCode: 0 },
+    );
+    expect(passing.events).toEqual([]);
+    expect(junitOutcome(passing.junit, [passing.selectedTest], [], passing.events)).toMatchObject({
+      tests: 2,
+      failures: 0,
+      errors: 0,
+      outcome: 'passed',
+    });
+
+    const thrownUndefined = await runAdapterChild(
+      root,
+      `import { test } from 'bun:test';\nimport { expectReturned } from ${imported};\ntest('throwing undefined is an assertion failure', () => { let caught: unknown; try { expectReturned(() => { throw undefined; }); } catch (error) { caught = error; } if (!(caught instanceof Error) || caught.name !== 'AssertionError' || !('actual' in caught) || caught.actual !== undefined) throw new Error('throw undefined did not preserve the node assertion actual'); process.stderr.write("VIDA_SYNC_THROW_UNDEFINED_ACTUAL_OK" + String.fromCharCode(10)); throw caught; });\n`,
+      'sync-return-undefined',
+    );
+    expect(thrownUndefined.stderr).toContain('VIDA_SYNC_THROW_UNDEFINED_ACTUAL_OK');
+    expect(thrownUndefined.events).toEqual([
+      {
+        schema: 'MutationBodyEvent/v1',
+        test_file: thrownUndefined.selectedTest,
+        kind: 'body',
+        body_id: 1,
+        assertion_cause: true,
+        assertion_source: 'node-assert',
+      },
+    ]);
+    const thrownOutcome = junitOutcome(
+      thrownUndefined.junit,
+      [thrownUndefined.selectedTest],
+      [],
+      thrownUndefined.events,
+    );
+    expect(thrownOutcome).toMatchObject({ assertions: 0, failures: 1, errors: 0, outcome: 'killed' });
+    expect(confirmedRunnerOutcome(thrownUndefined.exitCode, thrownOutcome.outcome)).toBe('killed');
+
+    const invalidArgument = await runAdapterChild(
+      root,
+      `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\ntest('native assert argument error is not an assertion kill', () => { let caught: unknown; try { assert.doesNotThrow(null as never); } catch (error) { caught = error; } if (!(caught instanceof TypeError)) throw new Error('invalid doesNotThrow argument did not produce a TypeError'); process.stderr.write("VIDA_NATIVE_ASSERT_ARGUMENT_TYPEERROR" + String.fromCharCode(10)); throw caught; });\n`,
+      'sync-return-invalid-assert-argument',
+    );
+    expect(invalidArgument.stderr).toContain('VIDA_NATIVE_ASSERT_ARGUMENT_TYPEERROR');
+    expect(invalidArgument.events).toMatchObject([
+      { kind: 'body', body_id: 1, assertion_cause: true, assertion_source: 'node-assert' },
+    ]);
+    expect(() =>
+      junitOutcome(invalidArgument.junit, [invalidArgument.selectedTest], [], invalidArgument.events),
+    ).toThrow('JUnit failure is not proven to be a Bun assertion failure.');
+
+    const unrelatedRuntime = await runAdapterChild(
+      root,
+      `import assert from 'node:assert/strict';\nimport { test } from 'bun:test';\ntest('runtime error after successful assertion is unrelated', () => { assert.equal(1, 1); throw new Error('runtime failure'); });\n`,
+      'sync-return-unrelated-runtime',
+    );
+    expect(unrelatedRuntime.events).toEqual([
+      {
+        schema: 'MutationBodyEvent/v1',
+        test_file: unrelatedRuntime.selectedTest,
+        kind: 'body',
+        body_id: 1,
+        assertion_cause: false,
+        assertion_source: null,
+      },
+    ]);
+    expect(() =>
+      junitOutcome(unrelatedRuntime.junit, [unrelatedRuntime.selectedTest], [], unrelatedRuntime.events),
+    ).toThrow('JUnit failure is not proven to be a Bun assertion failure.');
+    completed = true;
+  } finally {
+    if (completed) await rm(root, { recursive: true, force: true });
+    else console.error('VIDA_SYNC_NODE_PILOT_RETAINED:' + root);
+  }
+}, 15_000);
+
 test('child health failures never become assertion-confirmed mutation kills', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-child-health-'));
   try {

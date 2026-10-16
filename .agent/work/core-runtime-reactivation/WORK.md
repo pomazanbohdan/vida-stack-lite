@@ -5967,6 +5967,36 @@ with only222current rows and2bindings replaced from the existing capture:
 `/workspace/attachments/quality-current-inventory-overlay-vc4a-20261016.json`.
 It remains qualification not-performed; no second AST/hash capture occurred.
 
+## Synchronous assertion attribution pilot and rolling dispatch
+
+Root qualified the copied synchronous success-helper through the real adapter.
+The focused corrected run at
+`/workspace/attachments/quality-rolling-cli-check-uD35hU` passed1/0,
+20expectations,442.411849ms outer elapsed. The complete changed test file at
+`/workspace/attachments/quality-rolling-cli-check-1anjI3` passed53/0,
+365expectations,3208.503697ms outer elapsed. Both have complete capture, closed
+process groups and unchanged boot. Ordinary and undefined returns are retained;
+thrown undefined produces exact native AssertionError/body evidence with zero
+JUnit assertions. Invalid assertion arguments and unrelated runtime errors are
+strict-reader rejections. No classifier or shared helper change, mutant-score
+credit or new contour closure is claimed.
+
+Earlier failed pilot attempts remain retained: 8Oetsc exposed the candidate's
+incorrect expectation that invalid native arguments returned an unproven outcome
+rather than strict-parser rejection; TIaOtc contains Root's nested-string escape
+mistake; tEraQ3 retains the corrected child with the same negative-control
+expectation error. The final version uses explicit character-code newlines,
+expects strict rejection and retains fixture bytes on failure. Its15s exception
+covers four serial children with2s custody limits; the5s default is unchanged.
+
+After completed workers were left idle during Root verification/reporting, Root
+restored five blind Luna lanes: sealed-projection review, envelope correction,
+new40 metadata review, native-checklist public regression and fuzz setup isolation.
+All output is external, with Root as sole checkout/Git/numeric owner. Independent
+review found a concrete v4 context-binding filter/count blocker; fuzz additionally
+requires more than the proposed three-field projection. Neither proposal has
+been applied or called qualified. Workers are preparing bounded corrections.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
