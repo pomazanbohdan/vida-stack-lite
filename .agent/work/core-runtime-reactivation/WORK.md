@@ -60,6 +60,12 @@ check passes4documents/39links. Blind v50 adapter and v51 TRACE-fixture reviews
 find no actionable issue. Root remains the sole Source/check/Git owner; fresh
 Core, init and assurance numerics remain the next checks on published Source.
 
+Source packet `6b0298b148bd1e49bc67b8bb6057a859c519bca6` is published after
+the normal strict commit hook passes. The subsequent adapter pins exactly that
+commit and `main-runtime-core` review key for scoped CRAP, using the existing
+immutable review mechanism. It neither admits the global partial plan nor
+changes any cap. Fresh numeric measurement is still pending this pin.
+
 ### Offline native proof reader verification
 
 Root integrated the isolated reader/test draft and corrected its actual static
