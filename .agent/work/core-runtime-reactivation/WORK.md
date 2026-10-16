@@ -202,6 +202,17 @@ causes remain preserved. The corrected exact case passes1/0 with12 assertions
 at `quality-rolling-cli-check-hbvvpd` in1157.080039ms, with complete captures,
 closed process group and unchanged boot. Tests TypeScript467files passes.
 
+Packet1392eae is published after the normal strict hook. A subsequent Root review
+catches the cleanup accumulator's deliberate contract: it aggregates cleanup
+failures but does not rethrow a primary failure when cleanup succeeds. The test
+now explicitly rethrows that captured value after cleanup, including undefined.
+An injected `throw undefined` in this actual case fails0/1 and retains its root
+at `quality-rolling-cli-check-nNkie7`; after restoring the body, the corrected
+case passes1/0 with12 assertions at `quality-rolling-cli-check-fK9VBF` in
+855.412841ms. Both checks have full captures, closed groups and unchanged boot.
+The injected Source is restored before checks/publication; no numeric producer
+ran during that development-only negative control.
+
 The existing controller main is exported in place for direct CLI-path checks,
 preserving its identity, control flow and retained ceiling. Invalid arguments and
 real verify/inspect execute through that seam; the subprocess exec check remains.

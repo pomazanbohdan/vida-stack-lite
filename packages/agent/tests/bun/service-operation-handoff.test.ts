@@ -1061,6 +1061,7 @@ test('handoff keeps its source-read diagnostic when owned source cleanup also fa
       ],
       primaryFailure,
     );
+    if (primaryFailure !== undefined) throw primaryFailure.error;
   } catch (error) {
     console.error('Retained failed handoff source-read close fixture: ' + fixture.root);
     throw error;
