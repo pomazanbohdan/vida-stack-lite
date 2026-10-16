@@ -102,6 +102,13 @@ A test that reaches an early denial has not exercised a later target boundary.
 Use a phase marker or direct observation to prove the intended operation began.
 Limit injected faults to that phase. If a mutation skips the intended call,
 forward later owners unchanged so their cleanup does not mask the failed assertion.
+After capturing a failed behavioral assertion, run necessary cleanup and preserve
+that error. Keep later behavioral probes on the successful path. A later passing
+matcher consumes assertion provenance; the adapter must not carry it forward.
+Recheck a known repair through the native pilot's `--diagnostic-mutant-id` with
+singleton batch bounds. Resolve its current canonical identity and Source binding;
+do not rerun all preceding IDs or treat one diagnostic kill as a contour score.
+Keep the full baseline and unfiltered tests; TESTING owns complete admission.
 
 For expected-success async target calls, reuse `expectAsyncReturned` from
 `tests/helpers/expect-rejection.ts`. It observes one invocation through Node's

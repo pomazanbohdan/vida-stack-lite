@@ -36,6 +36,7 @@ import {
   collectNativeMutationBatch,
   nativeMutationBatchCommand,
   selectMutationBatchPilot,
+  selectNativeMutationBatchWindow,
 } from '../tooling/mutation-batch-pilot.ts';
 import { executeMutationCommand } from '../tooling/mutation-evidence.ts';
 import { CampaignResourceError } from '../tooling/contour-campaign.ts';
@@ -253,6 +254,36 @@ test('native batch pilot keeps exact declared contours and finite per-batch boun
     ['--contour', 'one', '--tests', 'tests/foreign.ts'],
   ])
     expect(() => selectMutationBatchPilot(args, declared)).toThrow();
+});
+
+test('native targeted diagnostics require one immutable-plan mutant and never allow complete admission', () => {
+  const declared = [
+    { name: 'one', sources: ['src/one.ts'], tests: ['tests/one.test.ts'], report: 'one.json', environment: 'bun' },
+  ];
+  const args = ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-id', '178'];
+  const selected = selectMutationBatchPilot(args, declared);
+  expect(selected).toHaveProperty('diagnosticMutantId', '178');
+  expect(selected.admitComplete).toBe(false);
+  for (const denied of [
+    [...args, '--admit-complete'],
+    [...args, '--max-batches', '2'],
+    ['--contour', 'one', '--diagnostic-mutant-id', '178'],
+    ['--contour', 'one', '--batch-size', '1', '--diagnostic-mutant-id', ''],
+  ])
+    expect(() => selectMutationBatchPilot(denied, declared)).toThrow();
+});
+
+test('targeted batch keeps its original plan index and leaves the full universe unchanged', () => {
+  const batches = ['85', '177', '178'].map((id) => ({ identities: ['identity-' + id], local_ids: [id] }));
+  const before = structuredClone(batches);
+  const plan = { limit: 1, batches };
+  expect(selectNativeMutationBatchWindow(plan, 1, '178')).toEqual({ start: 2, end: 3 });
+  expect(selectNativeMutationBatchWindow(plan, 2)).toEqual({ start: 0, end: 2 });
+  expect(selectNativeMutationBatchWindow(plan, 8)).toEqual({ start: 0, end: 3 });
+  expect(() => selectNativeMutationBatchWindow(plan, 1, 'foreign')).toThrow('complete generated plan');
+  expect(() => selectNativeMutationBatchWindow({ ...plan, limit: 2 }, 1, '178')).toThrow('singleton batches');
+  expect(() => selectNativeMutationBatchWindow(plan, 2, '178')).toThrow('singleton batches');
+  expect(batches).toEqual(before);
 });
 
 // Controlled collector observations qualify bookkeeping only, never mutation kills.

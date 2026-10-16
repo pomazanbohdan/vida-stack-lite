@@ -100,6 +100,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
       'batch-size': { type: 'string', default: '16' },
       'max-batches': { type: 'string', default: '1' },
       'admit-complete': { type: 'boolean', default: false },
+      'diagnostic-mutant-id': { type: 'string' },
     },
     strict: true,
     allowPositionals: false,
@@ -114,12 +115,34 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
   if (selected.scope !== 'partition-pilot') throw new Error('Mutation batch pilot requires one exact contour.');
   if (selected.partitions[0].environment !== 'main' && selected.partitions[0].environment !== 'bun')
     throw new Error('Native mutation batch pilot currently supports main and Bun contours only.');
+  const batchSize = finite(values['batch-size']);
+  const maxBatches = finite(values['max-batches']);
+  const admitComplete = values['admit-complete'] === true;
+  const diagnosticMutantId = values['diagnostic-mutant-id'];
+  if (
+    diagnosticMutantId !== undefined &&
+    (!diagnosticMutantId || diagnosticMutantId.length > 200 || batchSize !== 1 || maxBatches !== 1 || admitComplete)
+  )
+    throw new Error('Targeted diagnostics require one mutant, one batch and no complete admission.');
   return {
     partition: selected.partitions[0],
-    batchSize: finite(values['batch-size']),
-    maxBatches: finite(values['max-batches']),
-    admitComplete: values['admit-complete'] === true,
+    batchSize,
+    maxBatches,
+    admitComplete,
+    diagnosticMutantId,
   };
+}
+
+export function selectNativeMutationBatchWindow(
+  plan: Pick<ReturnType<typeof planMutationBatches>, 'limit' | 'batches'>,
+  maxBatches: number,
+  diagnosticMutantId?: string,
+) {
+  if (diagnosticMutantId === undefined) return { start: 0, end: Math.min(maxBatches, plan.batches.length) };
+  if (plan.limit !== 1 || maxBatches !== 1) throw new Error('Targeted diagnostics require singleton batches.');
+  const index = plan.batches.findIndex((batch) => batch.local_ids[0] === diagnosticMutantId);
+  if (index < 0) throw new Error('Diagnostic mutant is absent from the complete generated plan.');
+  return { start: index, end: index + 1 };
 }
 
 export function nativeMutationBatchCommand(
@@ -164,7 +187,10 @@ export function nativeMutationBatchCommand(
 async function runMutationBatchPilot(root: string, args: readonly string[]): Promise<void> {
   const pilotStarted = performance.now();
   const firstBudget = executionBudget(mutationLimits.partitionMs, 0);
-  const { partition, batchSize, maxBatches, admitComplete } = selectMutationBatchPilot(args, mutationPartitions());
+  const { partition, batchSize, maxBatches, admitComplete, diagnosticMutantId } = selectMutationBatchPilot(
+    args,
+    mutationPartitions(),
+  );
   const pin = readPin(root);
   checkManifest(root, pin);
   if (process.versions.bun !== pin) throw new Error('Mutation batch pilot requires the pinned Bun.');
@@ -198,6 +224,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     if (image.universe.mutants.some((row) => row.generated_status !== 'Pending'))
       throw new Error('Generated dispositions require review before a native batch pilot.');
     const plan = planMutationBatches(root, binding, image.universe, batchSize);
+    const window = selectNativeMutationBatchWindow(plan, maxBatches, diagnosticMutantId);
     const artifacts = {
       generated_image: record('generated-image.json', image),
       batch_plan: record('batch-plan.json', plan),
@@ -338,9 +365,10 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       unattempted: image.universe.mutants.length,
     };
     let resourceBlocked: { observed_path: string; available_bytes: string | null } | undefined;
-    for (const [index, batch] of plan.batches.slice(0, maxBatches).entries()) {
-      const started = index === 0 ? pilotStarted : performance.now();
-      const budget = index === 0 ? firstBudget : executionBudget(mutationLimits.partitionMs, 0);
+    for (let index = window.start; index < window.end; index++) {
+      const batch = plan.batches[index]!;
+      const started = index === window.start ? pilotStarted : performance.now();
+      const budget = index === window.start ? firstBudget : executionBudget(mutationLimits.partitionMs, 0);
       const observed = await collectNativeMutationBatch(
         batch,
         () => budget.remaining(),
@@ -415,6 +443,9 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       baseline_cases: baseline.cases.length,
       resource_blocked: resourceBlocked ?? null,
       totals,
+      ...(diagnosticMutantId !== undefined
+        ? { diagnostic_selection: { local_id: diagnosticMutantId, batch_index: window.start } }
+        : {}),
     };
     record('terminal-summary.json', summary);
     console.log(JSON.stringify(summary));
@@ -490,7 +521,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
 if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
-      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete]. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
+      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--diagnostic-mutant-id <generated local ID>]. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
     );
   else
     await runMutationBatchPilot(

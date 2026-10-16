@@ -1082,6 +1082,16 @@ duplicate, foreign, partial, survived, UNKNOWN or resource-blocked observations
 produce no passing candidate. The metadata universe digest has one shared owner;
 this join adds no Source scan or test suite.
 
+For a fresh repair diagnostic, `--diagnostic-mutant-id <generated local ID>`
+requires `--batch-size 1 --max-batches 1` and rejects `--admit-complete`. Resolve
+the ID from the current generated canonical map; local IDs can change with Source.
+The producer keeps the complete universe/plan and original batch index, rejects
+an absent ID before baseline execution, and runs the full passing baseline and
+the full unfiltered selected tests for that mutant. Other rows remain unattempted.
+The terminal summary records its diagnostic selection; it supplies no candidate
+partition proof, contour score or global qualification. All activation, assertion,
+input/image/executable readbacks, custody and time limits remain in force.
+
 The in-memory `NativeMutationPartitionProof/v1` join remains the semantic owner.
 The producer writes `NativeMutationPartitionProof/v2` with one referenced
 `NativeMutationValidationContext/v1`, after the existing parent input and

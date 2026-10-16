@@ -2,7 +2,16 @@ import { beforeEach, describe, expect, test } from 'bun:test';
 import assert from 'node:assert/strict';
 import { Database } from 'bun:sqlite';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import {
+  linkSync,
+  lstatSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -20,6 +29,7 @@ import {
   withExistingStorageMergeCapability,
 } from '../../src/config/project-upgrade-existing-storage-admission.js';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.js';
+import { withWorkspaceDatabaseClose } from '../../src/config/workspace-database-raw.js';
 import { prepareExistingProjectUpgradeDatabase } from '../../src/config/project-upgrade.js';
 import { expectReturned } from '../helpers/expect-rejection.ts';
 import { cleanupTrackedFixtureRoots } from '../helpers/tracked-fixture-root-cleanup.ts';
@@ -252,16 +262,7 @@ describe('native existing-storage admission boundary', () => {
       expect(closeCount).toBe(1);
       expect(mergeCount).toBe(0);
 
-      const persistedHost = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
-      registerDatabase(persistedHost, fixture.root);
-      let inspectionFailure: { error: unknown } | undefined;
-      try {
-        expect(new HostStateStore(persistedHost, workspaceId).readMaintenanceFence()).toEqual(receipt.fence);
-      } catch (error) {
-        inspectionFailure = { error };
-      }
-      completeOwnedCleanup([() => closeOwnedDatabase(persistedHost)], inspectionFailure);
-      if (inspectionFailure) throw inspectionFailure.error;
+      expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(receipt.fence);
       await releaseFence(fixture.root, receipt);
     });
   }
@@ -361,16 +362,7 @@ describe('native existing-storage admission boundary', () => {
     if (privateRelease?.status !== 'rejected') throw new Error('Private verifier did not deny release');
     expect(privateRelease.error).toBeInstanceOf(Error);
     expect(privateRelease.error).toHaveProperty('message', 'trusted maintenance closure verification failed');
-    const verificationDatabase = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
-    registerDatabase(verificationDatabase, fixture.root);
-    let verificationFailure: { error: unknown } | undefined;
-    try {
-      expect(new HostStateStore(verificationDatabase, workspaceId).readMaintenanceFence()).toEqual(receipt.fence);
-    } catch (error) {
-      verificationFailure = { error };
-    }
-    completeOwnedCleanup([() => closeOwnedDatabase(verificationDatabase)], verificationFailure);
-    if (verificationFailure) throw verificationFailure.error;
+    expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(receipt.fence);
     expect(callbacks).toBe(1);
     expect(() => escapedCapability?.assertActive()).toThrow(/callback capability expired/u);
     expect(() => assertExistingStorageMergeCapability(escapedCapability)).toThrow(
@@ -462,6 +454,135 @@ describe('native existing-storage admission boundary', () => {
         throw new AggregateError(
           [bodyFailure.error, restoreFailure.error],
           'Source drift assertion and restoration failed',
+        );
+      if (bodyFailure) throw bodyFailure.error;
+      if (restoreFailure) throw restoreFailure.error;
+      await releaseFence(fixture.root, fixture.receipt);
+    });
+  }
+
+  for (const invalidImage of [
+    { label: 'zero-byte', size: 0 },
+    { label: 'over-limit', size: 4 * 1024 * 1024 + 1 },
+    { label: 'multiply-linked', size: null },
+  ]) {
+    trackedTest(`denies a real Mastra source that is ${invalidImage.label} after its healthy checkpoint`, async () => {
+      const fixture = freshFixture();
+      const mastraPath = path.join(fixture.root, mastraRelative);
+      const fenceBefore = fixture.hostStore.readMaintenanceFence();
+      const originalQuery = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+      let originalMastraBytes: Buffer<ArrayBuffer> | undefined;
+      let checkpointRows = 0;
+      let targetedCheckpoints = 0;
+      let closeCount = 0;
+      let mergeCount = 0;
+      let rejected = false;
+      let caught: unknown;
+      let exactDenial = false;
+      let bodyFailure: { error: unknown } | undefined;
+      const observedQuery = function (this: Database, sql: string) {
+        const query = Reflect.apply(originalQuery, this, [sql]);
+        if (sql.trim().toLowerCase() !== 'pragma wal_checkpoint(truncate)' || this.filename !== mastraPath)
+          return query;
+
+        targetedCheckpoints++;
+        return new Proxy(query, {
+          get(target, property, receiver) {
+            const value = Reflect.get(target, property, receiver) as unknown;
+            if (property !== 'get' || typeof value !== 'function') return value;
+            return function (this: unknown, ...args: unknown[]) {
+              const row = Reflect.apply(value, target, args) as {
+                busy: number | bigint;
+                log: number | bigint;
+                checkpointed: number | bigint;
+              } | null;
+              if (row === null) throw new Error('Real Mastra checkpoint returned no row.');
+              checkpointRows++;
+              if (BigInt(row.busy) !== 0n || BigInt(row.checkpointed) < BigInt(row.log))
+                throw new Error('Real Mastra checkpoint was not healthy before source-size injection.');
+              originalMastraBytes = Buffer.from(readFileSync(mastraPath));
+              if (invalidImage.size === null) linkSync(mastraPath, mastraPath + '.owned-alias');
+              else writeFileSync(mastraPath, Buffer.alloc(invalidImage.size));
+              return row;
+            };
+          },
+        });
+      } as unknown as typeof Database.prototype.query;
+
+      Database.prototype.query = observedQuery;
+      try {
+        try {
+          await withExistingStorageMergeCapability({
+            repositoryRoot: fixture.root,
+            workspaceId,
+            operationId: binding.operation_id,
+            planDigest: '9'.repeat(64),
+            expectedFenceBinding: binding,
+            receipt: fixture.receipt,
+            hostRelative,
+            mastraRelative,
+            closeHostOwner: () => {
+              closeCount++;
+              closeHostOwner(fixture);
+            },
+            operation: async () => {
+              mergeCount++;
+            },
+          });
+        } catch (error) {
+          rejected = true;
+          caught = error;
+        }
+      } catch (error) {
+        bodyFailure = { error };
+      } finally {
+        Database.prototype.query = originalQuery;
+      }
+
+      if (!bodyFailure) {
+        try {
+          expect(rejected).toBe(true);
+          expect(caught).toBeInstanceOf(Error);
+          expect(caught).toHaveProperty(
+            'message',
+            invalidImage.size === null
+              ? 'VIDA existing storage admission: source is not a private regular file'
+              : 'VIDA existing storage admission: source exceeds the merge byte bound',
+          );
+          expect(targetedCheckpoints).toBe(1);
+          expect(checkpointRows).toBe(1);
+          expect(originalMastraBytes).toBeInstanceOf(Buffer);
+          if (invalidImage.size === null) expect(lstatSync(mastraPath, { bigint: true }).nlink).toBe(2n);
+          else expect(readFileSync(mastraPath)).toHaveLength(invalidImage.size);
+          expect(closeCount).toBe(1);
+          expect(mergeCount).toBe(0);
+          expect(expectReturned(() => readPersistedFence(fixture.root))).toEqual(fenceBefore);
+          exactDenial = true;
+        } catch (error) {
+          bodyFailure = { error };
+        }
+      }
+
+      let restoreFailure: { error: unknown } | undefined;
+      if (exactDenial) {
+        try {
+          if (!originalMastraBytes) throw new Error('Original Mastra bytes were not captured after checkpoint.');
+          if (invalidImage.size === null) unlinkSync(mastraPath + '.owned-alias');
+          else writeFileSync(mastraPath, originalMastraBytes);
+          expect(readFileSync(mastraPath)).toEqual(originalMastraBytes);
+        } catch (error) {
+          restoreFailure = { error };
+          retainedRoots.add(fixture.root);
+          console.error(`Retained failed source-size fixture: ${fixture.root}`);
+        }
+      } else {
+        retainedRoots.add(fixture.root);
+        console.error(`Retained failed source-size fixture: ${fixture.root}`);
+      }
+      if (bodyFailure && restoreFailure)
+        throw new AggregateError(
+          [bodyFailure.error, restoreFailure.error],
+          'Source-size denial and restoration failed',
         );
       if (bodyFailure) throw bodyFailure.error;
       if (restoreFailure) throw restoreFailure.error;
@@ -667,7 +788,7 @@ describe('native existing-storage admission boundary', () => {
     let contender: Database | undefined;
     const contenderCleanupFailures: unknown[] = [];
     try {
-      if (retainedConnection) {
+      if (retainedConnection && assertionFailures.length === 0) {
         closeHostOwner(fixture);
         contender = new Database(path.join(fixture.root, '.vida/storage-admission.v1.sqlite'), {
           create: false,
@@ -747,6 +868,95 @@ describe('native existing-storage admission boundary', () => {
     expect(closes).toBe(0);
     expect(operations).toBe(0);
     expect(fixture.hostStore.readMaintenanceFence()).toEqual(fenceBefore);
+    expect(readFileSync(path.join(fixture.root, mastraRelative))).toEqual(mastraBefore);
+    await releaseFence(fixture.root, fixture.receipt);
+  });
+
+  trackedTest('denies malformed string preflight fields before any close or merge effect', async () => {
+    const fixture = freshFixture();
+    const hostBefore = readFileSync(path.join(fixture.root, hostRelative));
+    const mastraBefore = readFileSync(path.join(fixture.root, mastraRelative));
+    const fenceBefore = fixture.hostStore.readMaintenanceFence();
+    type AdmissionInput = Parameters<typeof withExistingStorageMergeCapability>[0];
+    const invalidRequests: Array<{
+      label: string;
+      expectedMessage: string;
+      override: Partial<AdmissionInput>;
+    }> = [
+      {
+        label: 'plan digest prefix',
+        expectedMessage: 'VIDA existing storage admission: plan digest is invalid',
+        override: { planDigest: 'z' + '9'.repeat(64) },
+      },
+      {
+        label: 'workspace digest prefix',
+        expectedMessage: 'VIDA existing storage admission: workspace digest is invalid',
+        override: { workspaceId: 'z' + 'a'.repeat(64) },
+      },
+      {
+        label: 'operation id punctuation',
+        expectedMessage: 'VIDA existing storage admission: operation id is invalid',
+        override: { operationId: '_' },
+      },
+      {
+        label: 'operation id length',
+        expectedMessage: 'VIDA existing storage admission: operation id is invalid',
+        override: { operationId: 'a'.repeat(81) },
+      },
+      {
+        label: 'colliding source paths',
+        expectedMessage: 'VIDA existing storage admission: Host and Mastra paths collide',
+        override: { hostRelative: mastraRelative },
+      },
+      {
+        label: 'mismatched expected fence operation',
+        expectedMessage: 'VIDA existing storage admission: fence binding operation differs',
+        override: { expectedFenceBinding: { ...binding, operation_id: 'different-operation' } },
+      },
+      {
+        label: 'different expected fence manifest with the same operation',
+        expectedMessage: 'VIDA existing storage admission: held Host fence binding differs',
+        override: { expectedFenceBinding: { ...binding, manifest_digest: '8'.repeat(64) } },
+      },
+    ];
+    let closeCount = 0;
+    let mergeCount = 0;
+
+    for (const invalidRequest of invalidRequests) {
+      let rejected = false;
+      let caught: unknown;
+      try {
+        await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => {
+            closeCount++;
+            closeHostOwner(fixture);
+          },
+          operation: async () => {
+            mergeCount++;
+          },
+          ...invalidRequest.override,
+        });
+      } catch (error) {
+        rejected = true;
+        caught = error;
+      }
+      assert.equal(rejected, true, invalidRequest.label);
+      assert.ok(caught instanceof Error, invalidRequest.label);
+      expect(caught).toHaveProperty('message', invalidRequest.expectedMessage);
+      assert.equal(closeCount, 0, invalidRequest.label);
+      assert.equal(mergeCount, 0, invalidRequest.label);
+    }
+
+    expect(fixture.hostStore.readMaintenanceFence()).toEqual(fenceBefore);
+    expect(readFileSync(path.join(fixture.root, hostRelative))).toEqual(hostBefore);
     expect(readFileSync(path.join(fixture.root, mastraRelative))).toEqual(mastraBefore);
     await releaseFence(fixture.root, fixture.receipt);
   });
@@ -985,6 +1195,17 @@ function freshFixture(): Fixture {
 
 function closeHostOwner(fixture: Fixture): void {
   closeOwnedDatabase(fixture.hostOwner);
+}
+
+function readPersistedFence(root: string) {
+  const database = openHostStateDatabase(root, hostRelative, workspaceId);
+  registerDatabase(database, root);
+  return withWorkspaceDatabaseClose(
+    database,
+    () => new HostStateStore(database, workspaceId).readMaintenanceFence(),
+    closeOwnedDatabase,
+    'Persisted fence inspection and owned close failed',
+  );
 }
 
 async function advanceFence(fixture: Fixture): Promise<MaintenanceFenceReceipt> {

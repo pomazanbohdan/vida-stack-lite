@@ -16,6 +16,48 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ### Coverage receipt reuse and fixture import closure
 
+The follow-up adds an exact physical hardlink-denial case and a same-operation,
+different-manifest expected binding. `YLfE4s` passes17/0tests,169assertions
+in2179ms. Independent v99/v100 reviews find no actionable issue. These cases
+exercise observed survivors without weakening Source guards; unresolved gate,
+sidecar and verifier-result variants remain in the native repair queue.
+
+The native pilot now accepts `--diagnostic-mutant-id` only with singleton batch
+bounds and no complete admission. It resolves the local ID in the current full
+generated plan, retains its original index, rejects absent IDs before baseline
+launch, and keeps full baseline/unfiltered tests, all227 universe rows, custody,
+readbacks and unchanged Killed rules. Only the selected ID runs; other rows stay
+unattempted and no candidate proof is emitted. No new AST/hash pipeline or test
+filter is added. The ordinary loop also avoids its temporary slice allocation.
+RED `WsaW3X` shows the unsupported option. `y1NC0z` then catches a new unit fixture
+missing its required partition report declaration; the fixture is corrected.
+Final `bNmIo7` passes109/0tests,438assertions across2files in3669ms with complete
+captures/closed groups/same boot. Strict505/TS-only506 and Oxlint pass; CLI help
+prints the new diagnostic limits. Blind v101 finds no correctness issue. A real
+fresh targeted run must qualify the selected repair; unit controls are not kills.
+
+Published954ba0f's complete native request
+`f10c8cfb-1db7-4e1a-ae1a-cf9218069e9a` terminates in149698ms with30Killed,
+12survived,1UNKNOWN and184unattempted of227, full captures/closed groups/same
+boot. The earlier local177 blocker is now assertion-confirmed Killed. Local178
+empties the initial verification catch; its actual body assertion fails on the
+missing cause, but a later successful busy probe consumes the recorded assertion
+provenance. The adapter correctly rejects that as UNKNOWN. Skip that later
+behavioral probe after an assertion failure; still perform all exact-owned cleanup
+and retain failures. Do not weaken the adapter or reclassify the old run.
+
+Isolated v98 prepares real Mastra zero-byte/over4MiB boundary cases and one
+six-call string-preflight matrix, including the observed missing regex anchor.
+The size fault runs only after an observed healthy native checkpoint. Root uses
+a fresh registered Host reader because the caller's original owner is already
+closed, then restores original Source bytes only after exact denial. Its shared
+readPersistedFence helper delegates body/close joining to withWorkspaceDatabaseClose
+and replaces three duplicated fresh-reader blocks. Buffer allocation moves inside
+the selected fault instead of test registration. `X2RQEI` passes16/0tests,
+157assertions in2403ms, complete captures/closed groups/same boot. Strict505,
+TS-only506 and Oxlint pass. Fresh numeric evidence follows after publication;
+the remaining survivors and unattempted rows stay open in the original native map.
+
 Published9a5e3d8's image run `420ca75a-3b40-4863-a5fd-6c83eef2973e`
 (`nuF3lI`) passes27/0tests,181assertions in5319ms, exact52/52F,206/206L,
 230/230S,52/52B andCC/CRAP7. Same-run frozen v3 `dgRWAF` passes against
