@@ -1090,11 +1090,24 @@ their existing contracts. Historical v1 proofs do not acquire this context.
 and `native-instrumenter-batches/v1` provenance. Proof and report remain
 partition-local with `full_qualification:false`, without synthetic Stryker
 statuses or events. Require a complete context-bearing producer pilot; keep its
-terminal evidence in WORK. Downstream proof-reader qualification remains
-separate; current contour and final-quality readers reject them. A future reader must dispatch on the referenced proof
-schema and validate the context/descriptor/receipt closure. A new schema or
-passing join-unit fixture is not a qualified mutation score, and old diagnostic
-operations stay diagnostic.
+terminal evidence in WORK. The offline
+`readNativeMutationPartitionProof` owner in `tooling/native-mutation-proof-reader.ts`
+dispatches on the context-bearing proof and verifies the descriptor, generated
+universe/plan, complete baseline and every runner/launcher/JUnit/body/output
+artifact through the unchanged semantic join. It reuses the shared bounded
+file reader, reads sequentially and caps aggregate retained bytes at128MiB;
+overflow is an incomplete-evidence GAP. Captured absolute invocation spelling
+can differ from the recorded physical executable path. Bind both through the
+captured command and identity, without current-host realpath or executable
+hashing. Captured global test-selection metadata is not fresh global inventory.
+
+The reader is separately checked with synthetic controls and a complete retained
+context-bearing producer closure. It launches no tests, regenerates no Source
+inventory and grants no freshness or Runtime authority. Its returned canonical
+proof stays partition-local with `full_qualification:false`. Current contour
+and final-quality readers continue to reject native candidates until their
+separate adapters qualify; offline readback alone does not activate admission.
+Historical v1 proofs stay historical, and old diagnostic operations stay diagnostic.
 
 Mutation artifact byte reads share `tooling/mutation-artifact-reader.ts` rather
 than importing the gate's orchestration. Its default4MiB evidence and explicit

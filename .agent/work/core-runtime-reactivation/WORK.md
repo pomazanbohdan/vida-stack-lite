@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `236df35`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2); proof-aware contour-reader and global admission remain open. Fresh final-assurance and init measurements at236df35 improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `b6e514a`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline proof reader now passes synthetic and actual retained151/151 closure checks below; contour/global adapters remain open. Fresh final-assurance and init measurements at236df35 improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,55 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Offline native proof reader verification
+
+Root integrated the isolated reader/test draft and corrected its actual static
+errors before checks. The isolated checkout had no dependency/type tree, so its
+formatter/typecheck setup failures are retained as setup failures, not Source
+diagnostics. Existing primary dependencies were reused; no install was run.
+The package manifest/ordinary test phase enroll each new file once.
+
+The reader uses the existing bounded artifact and canonical semantic owners.
+All JSON stays unknown until structural validation; runner/launcher/JUnit/body
+and raw output bindings remain required. It reads the retained closure
+sequentially under a128MiB aggregate bound, with32MiB report/4MiB raw-file
+bounds. Captured raw absolute invocation aliases remain distinct from captured
+physical executable identity. There is no current-host executable rehash,
+realpath lookup, Source/AST inventory or new test execution for offline readback.
+Root consolidated digest-row validation into one pass and reuses each validated
+launcher observation instead of reparsing it. Redundant same-input binding and
+Source-projection checks were removed after their owning boundary validation.
+
+First reader check `quality-rolling-cli-check-seiUoG` records9/1: the stdout
+corruption fixture changed size, correctly reaching the earlier byte-count
+guard rather than its expected digest guard. The corrected fixture separately
+checks size and equal-size digest corruption; `ScQJfG` passes10/0.
+Final affected-owner run `quality-rolling-cli-check-If2MRQ` passes155/0tests,
+505assertions across4files in1045.518755ms, with complete captures, closed
+groups and unchanged boot. Strict505files, TS-only506 and full Oxlint pass.
+
+The old lexical executable-equality predicate was reinstated only in a bounded
+development negative control after all prior checks terminated. Actual alias
+case `BuK5yp` records0/1 with12filtered and the exact invocation-path rejection;
+the predicate was removed and `ExxDLK` passes1/0. The Source is restored to the
+reviewed implementation. This is regression sensitivity evidence, not a mutation
+score or a change to retained producer bytes. Failed control roots are retained.
+
+Actual historicalaa582b5 native run
+`d93f8d67-6ed4-428e-94e4-37a114b1cc02` is independently read through the new
+owner at `native-partition-proof-readback-ass5vy`:151/151 confirmed Killed,
+full canonical artifact closure,0new tests launched. Original evidence remains
+at measured package `.tmp/mutation-batch-d93f8d67-6ed4-428e-94e4-37a114b1cc02-El5nnG`;
+proof SHA5935ffbffca06e344b8f12f92441027262f5515f72581a43eaf02622925c8ea8,
+context SHA323f0cdb013f8763d6ab23a64593baf316e00b9a398e08d0824595fa6ae12fab.
+Blind Luna final review `luna-native-reader-final-review-v41-20261016.md`
+finds no actionable issue. The check qualifies the offline local reader, not
+current global freshness, a projection adapter, Runtime acceptance or a new
+closed contour. Historical local triples remain6/45.
+The first normal strict hook rejects one unused exported candidate DTO type;
+Root keeps that internal wire type private instead of weakening Knip. The
+public checked reader/result API remains available.
 
 ### Script workflow reduction, 2026-10-16
 
@@ -51,7 +100,8 @@ raising the projection to423attempts. Owned `native-coverage-contour-H9bbnS`
 completed68056.78702ms with complete captures, closed groups and unchanged boot;
 13/0tests,299assertions; F93/94,L317/325,S352/363,B281/305. No frozen CRAP
 producer was repeated against these known nonexact metrics. Local historical
-triples remain6/45; native reader revision is isolated and unqualified.
+triples remain6/45; the then-isolated reader draft is superseded by the verified
+offline reader packet above, while its projection adapter remains pending.
 
 Final script packet check `quality-rolling-cli-check-o6E00C` passes128/0tests,
 592assertions with complete captures, closed groups and unchanged boot.
@@ -85,7 +135,7 @@ integration, Git and final numeric checks; workers never run competing suites.
 | Slot | Contour | Bounded assignment and disposition |
 | --- | --- | --- |
 | 1 | Native mutation producer | Complete context-bearing v2 pilot ataa582b5 is terminal151/151 confirmed Killed. Final reader/global admission remains open. |
-| 2 | Native mutation reader | Blindv23/v24 design memos are ready for the offline artifact closure and its separate local projection seam; no reader activation or checks claimed. |
+| 2 | Native mutation reader | Offline reader and synthetic controls pass, including actual151/151 historical closure readback and blind final review; native contour/global adapter remains pending. |
 | 3 | `bun-final-assurance` | Root integrates the completed real workflow, actual scoped writer edit and controlled pre-CAS interruption/retry. The full changed-file check passes below. |
 | 4 | `bun-cli-init` | Root integratesv27 assertions and the independently reviewed callable-help defect correction; both runtime regressions reproduce before the fix and pass after it. |
 | 5 | Final-assurance branch analysis | Blindv28 denial plan andv30 controlled pre-CAS interruption review are ready; no new branch closure is inferred. |

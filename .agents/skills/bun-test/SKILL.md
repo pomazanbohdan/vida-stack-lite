@@ -243,6 +243,15 @@ controls, and preserve the body's digest binding and assertion cause. Capture
 activation at failure time; a bailing mutant cannot rely on afterAll completion.
 TESTING owns the native receipt and complete-universe admission requirements.
 
+For persisted native proofs, reuse `readNativeMutationPartitionProof` instead
+of rebuilding a receipt parser or rerunning the producer. Verify synthetic
+boundary controls and an actual retained context-bearing closure separately.
+Keep a captured executable alias distinct from its recorded physical identity;
+reconstruct its exact command without querying today's host. When testing a
+digest denial, preserve byte count so the earlier size guard does not mask it;
+test size denial separately. Offline readback is local evidence, not projection
+activation or fresh global qualification.
+
 For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and
 check the descriptor's rejection stage before investigating assertions. A
