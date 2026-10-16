@@ -16,9 +16,13 @@ export interface GovernedEvidenceFixture {
   readonly authorizationRequest: (operationHash?: string) => ProjectAuthorizationRequest;
 }
 
-/** Pure fixture construction from an already validated project context and explicit time. */
+/** Pure synthetic fixture construction from ingress identity fields and time. */
+export type GovernedEvidenceProject = Pick<ProjectContext, 'repository_id' | 'registry_hash'> & {
+  readonly project_bindings: readonly Pick<ProjectContext['project_bindings'][number], 'project_id'>[];
+};
+
 export function createGovernedEvidenceFixture(
-  project: ProjectContext,
+  project: GovernedEvidenceProject,
   nowMs: number,
   expectReturned: <T>(operation: () => T) => T,
 ): GovernedEvidenceFixture {

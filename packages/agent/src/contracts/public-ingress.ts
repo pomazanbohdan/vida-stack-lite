@@ -215,10 +215,8 @@ function assertFresh(issuedAt: string, approvedAt: string, expiresAt: string, ve
   reject([approved < issued], 'approval evidence predates authorization receipt');
   reject([[expires <= now, expires < approved, expires < verified].some(Boolean)], 'approval evidence is expired');
   reject([verified < approved], 'approval verification predates approval evidence');
-  reject(
-    [[now - issued > 5 * 60_000, now - approved > 5 * 60_000, now - verified > 5 * 60_000].some(Boolean)],
-    'governed write evidence is stale',
-  );
+  // Earlier ordering guards establish issued <= approved <= verified.
+  reject([now - issued > 5 * 60_000], 'governed write evidence is stale');
 }
 export function validateGovernedWriteRequest(value: unknown): GovernedWriteRequest {
   const { image } = canonicalJsonImageWithNodeLimit(value, 0, MAX_CANONICAL_NODES);

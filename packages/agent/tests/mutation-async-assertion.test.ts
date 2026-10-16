@@ -1426,7 +1426,7 @@ test('real adapter observes node assert in shared async return helper for undefi
 });
 
 // Four serial adapter children each have a 2 s custody limit; keep one explicit bounded exception.
-test('real adapter attributes a copied synchronous return helper through imported node assert', async () => {
+test('real adapter attributes the maintained synchronous return helper through imported node assert', async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), 'vida-mutation-sync-returned-helper-'));
   let completed = false;
   try {
@@ -1434,15 +1434,8 @@ test('real adapter attributes a copied synchronous return helper through importe
     const candidateHelper = path.join(root, 'tests', 'helpers', 'expect-rejection.ts');
     await mkdir(path.dirname(candidateHelper), { recursive: true });
     const original = await readFile(sourceHelper, 'utf8');
-    const before = `  expect(() => {\n    result = { value: operation() };\n  }).not.toThrow();`;
-    const after = `  assert.doesNotThrow(() => {\n    result = { value: operation() };\n  });`;
-    expect(original.split(before).length - 1).toBe(1);
-    const candidate = original.replace(before, after);
-    expect(candidate).not.toBe(original);
-    expect(candidate.split(after).length - 1).toBe(1);
-    expect(candidate.replace(after, before)).toBe(original);
-    await writeFile(candidateHelper, candidate);
-    expect(await readFile(candidateHelper, 'utf8')).toBe(candidate);
+    await writeFile(candidateHelper, original);
+    expect(await readFile(candidateHelper, 'utf8')).toBe(original);
 
     const imported = JSON.stringify(candidateHelper);
     const passing = await runAdapterChild(

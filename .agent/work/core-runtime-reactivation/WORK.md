@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `1e8decc` at origin/main.
+- Published predecessor: `2b52b09` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -19,9 +19,9 @@ operations or a claim of complete quality/Runtime acceptance.
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
 - The complete owner inventory has7736functions/149Sources; reuse its captured
-  overlay and settled per-file captures below. Reviewed partial7075roles leaves
-  661current/156original dispositions missing. The retained19static deficits
-  remain open; new prospective batches are not yet integrated.
+  overlay and settled per-file captures below. Reviewed partial7115roles leaves
+  621current/156original dispositions missing. The retained19static deficits
+  remain open. Static correspondence is distinct from numeric acceptance.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
   Separate admission DB stays until qualified lifetime exclusion/repair.
@@ -6040,6 +6040,76 @@ No fresh numeric run or new contour closure is claimed yet.
 The first envelope commit hook passed formatting and489-file TypeScript but
 rejected the now-unused mock import. Root removed that import; no commit was
 created by the rejected hook.
+
+## Owner-specific fuzz, strict assertions and retained lineage
+
+Root integrated the reviewed four-file fuzz owner split with an inert shared
+arbitrary/settings helper. Pure public ingress no longer eagerly loads trusted
+config/context and imports build/hash directly from its Source owner. Its fixture
+uses explicitly synthetic identity fields only; the shared governed fixture type
+now accepts exactly those consumed fields. Configured Cedar keeps actual issued
+capabilities. All eight original scenario groups and seven validators remain;
+the mixed unknown-validator property now runs1000trials per each of three owner
+groups. Independent review caught the named-field corruption assertion missing
+from ingress selection. Root moved that direct property to ingress while keeping
+the matched trusted authorization denial property in Cedar.
+
+The first six-file run at8S75NB passed95/failed1: changing the retired selector
+invalidated historical scoped-proof selection. Root restored its original
+fuzz.test.ts metadata without restoring/deploying an archived file or modifying
+any historical report. Active selectors use only new owner files. The corrected
+six-file run at `/workspace/attachments/quality-rolling-cli-check-5Bm9dT`
+passed97/0,23602Bun expectations,1337.312774ms outer elapsed. The first strict
+test program found two unknown-value matcher overload errors; explicit unknown
+matcher parameters fixed both. The full458-file tests program then passed.
+
+Native timestamp comparisons preserve the exact calendar/pattern cases. New
+clock-controlled cases cover future/stale equality, isolated issue age,
+expiry/order and a public parsed-null guard under Date.parse NaN. Initial
+native deep-equality attempts xuS1U0 and9wc9Xl failed on intentional image
+prototype differences; Root compares structured clones on both sides for data
+equality while retaining separate image/prototype assertions. Corrected TL17hy
+passed15/0 in1253.399704ms. The independent review's expiry masking claim was
+checked against actual input and withdrawn: expiry now is later than both past
+approval and verification. No misleading missing-case claim is retained.
+
+Root removed the two genuinely redundant approval/verification age terms.
+The earlier guards already establish issued <= approved <= verified; the oldest
+issue timestamp completely determines staleness with the same diagnostic and
+branch precedence. Expiry/future/ordering guards remain. Settled20-ID inventory
+`/workspace/attachments/quality-ingress-stale-guard-inventory-v2b5-20261016.json`
+retains assertFresh CC1. The address-only updater of the same prefix refreshes
+only20addresses and one Source binding; no cap or original field is changed.
+
+After the published copied-helper pilot, Root promoted the same native
+doesNotThrow backend in the existing synchronous helper. The adapter control now
+copies the exact maintained helper instead of rewriting a candidate; undefined
+return/throw, invalid arguments and unrelated-error controls remain. Independent
+review found no static blocker, including the13-assertion project-context caller.
+The final eight-file adapter, fuzz, ingress, contour and project-context check
+at `/workspace/attachments/quality-rolling-cli-check-iLBnpY` passed167/0,
+17975Bun expectations,5469.164889ms outer elapsed. Native assertions do not pad
+the Bun expectation counter. All named receipts have complete capture, closed
+groups and unchanged boot; none is a numeric closure or actual mutant kill.
+
+The40-row prospective metadata batch was independently accepted and applied
+through `/workspace/attachments/quality-new40-integration-v1e8-20261016.ts`.
+Root rejected the315-line unrelated full-inventory validation draft. The bounded
+replacement's initial comparison aliased the changed baseline; independent
+review caught it, Root derived the expected baseline independently from before,
+and final review accepted before candidate/apply execution. Beforeimage, intent,
+candidate and completion receipts remain beside the script. Counts now5455
+retained +1660new =7115current,90removed. Only the exact digest-callback rationale
+was corrected among old rows; its1/1 and host4/20,27/756allowances remain.
+No original measured coverage/CRAP was fabricated and the global gate stays GAP.
+
+The v4 sealed-fixture proposal remains unapplied. A larger serialized-context
+extension would conflict with private process-local trust, and body-only mutant
+activation would change Stryker static-mutant semantics. The owner split removes
+unrelated setup instead. Fresh child numeric qualification is the next action;
+all old UNKNOWN and raw-Killed observations retain their original status.
+Five new blind Luna tasks now examine disjoint remaining native-repair, rebind,
+Host, run and safe-access lineage roles while Root owns integration and checks.
 
 ## Historical provenance
 

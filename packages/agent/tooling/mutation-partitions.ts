@@ -33,7 +33,7 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       sources: ['src/config/runtime-config.ts', 'src/config/project-context.ts'],
       tests: [
         'tests/project-context-boundary.test.ts',
-        'tests/fuzz.test.ts',
+        'tests/fuzz-config.test.ts',
         'tests/runtime-config-repair-boundary.test.ts',
         'tests/runtime-config-yaml.test.ts',
       ],
@@ -46,17 +46,17 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
     {
       name: 'main-public-ingress',
       sources: ['src/contracts/public-ingress.ts'],
-      tests: ['tests/public-ingress-boundary.test.ts', 'tests/fuzz.test.ts'],
+      tests: ['tests/public-ingress-boundary.test.ts', 'tests/fuzz-public-ingress.test.ts'],
     },
     {
       name: 'main-envelopes',
       sources: ['src/contracts/envelopes.ts'],
-      tests: ['tests/envelopes-boundary.test.ts', 'tests/fuzz.test.ts', 'tests/zombies.test.ts'],
+      tests: ['tests/envelopes-boundary.test.ts', 'tests/fuzz-envelopes.test.ts', 'tests/zombies.test.ts'],
     },
     {
       name: 'main-cedar',
       sources: ['src/authorization/cedar-boundary.ts'],
-      tests: ['tests/cedar-validation.test.ts', 'tests/envelopes-boundary.test.ts', 'tests/fuzz.test.ts'],
+      tests: ['tests/cedar-validation.test.ts', 'tests/envelopes-boundary.test.ts', 'tests/fuzz-authorization.test.ts'],
     },
     {
       name: 'main-governance',
@@ -423,7 +423,8 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
         'tests/envelopes-boundary.test.ts',
         'tests/forward-controller-values.test.ts',
         'tests/canonical-json-core.test.ts',
-        'tests/fuzz.test.ts',
+        'tests/fuzz-public-ingress.test.ts',
+        'tests/fuzz-envelopes.test.ts',
         'tests/governance-completeness.test.ts',
         'tests/edictum-workflow-completeness.test.ts',
         'tests/documentation-policy-transition.test.ts',
@@ -576,6 +577,7 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       tests: [
         'tests/public-ingress-boundary.test.ts',
         'tests/envelopes-boundary.test.ts',
+        // Historical selector only; never execute or rewrite its recorded inputs.
         'tests/fuzz.test.ts',
         'tests/zombies.test.ts',
       ],

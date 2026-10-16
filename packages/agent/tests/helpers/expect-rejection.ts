@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 /** Assert normal synchronous completion before a caller inspects the returned value. */
 export function expectReturned<T>(operation: () => T): T {
   let result: { value: T } | undefined;
-  expect(() => {
+  assert.doesNotThrow(() => {
     result = { value: operation() };
-  }).not.toThrow();
+  });
   return result!.value;
 }
 

@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 5455,
-    "new": 1620,
+    "new": 1660,
     "removed": 90,
-    "current_roles": 7075,
+    "current_roles": 7115,
     "source_files": 149
   },
   "source_bindings": [
@@ -279,7 +279,7 @@
     },
     {
       "file": "src/contracts/public-ingress.ts",
-      "sha256": "6381703a4b903600356255e90b8e09332cc33b4980d4827b657adbb8ee889292"
+      "sha256": "d99ea5921e1aea3b0f72387835e44c6ca2dad98f4a7b6ac296253230cce08939"
     },
     {
       "file": "src/orchestration/admitted-session-execution.ts",
@@ -31315,10 +31315,10 @@
         "line": 206,
         "column": 0,
         "start": 7257,
-        "end": 8284,
+        "end": 8268,
         "bodyLine": 206,
         "bodyColumn": 104,
-        "bodyEndLine": 222,
+        "bodyEndLine": 220,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31374,13 +31374,13 @@
       "max_crap": 2,
       "rationale": "The current role validates the governed request schema, operation/scope binding, and evidence freshness; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 223,
+        "line": 221,
         "column": 7,
-        "start": 8292,
-        "end": 9972,
-        "bodyLine": 223,
+        "start": 8276,
+        "end": 9956,
+        "bodyLine": 221,
         "bodyColumn": 83,
-        "bodyEndLine": 270,
+        "bodyEndLine": 268,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31405,13 +31405,13 @@
       "max_crap": 2,
       "rationale": "The current role validates the pre-authorization governed intent, timestamps, and payload; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 271,
+        "line": 269,
         "column": 7,
-        "start": 9980,
-        "end": 10550,
-        "bodyLine": 271,
+        "start": 9964,
+        "end": 10534,
+        "bodyLine": 269,
         "bodyColumn": 81,
-        "bodyEndLine": 283,
+        "bodyEndLine": 281,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31436,13 +31436,13 @@
       "max_crap": 2,
       "rationale": "The current role binds the intent to matching authorization and approval evidence, then freezes the validated request; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 284,
+        "line": 282,
         "column": 7,
-        "start": 10558,
-        "end": 12167,
-        "bodyLine": 288,
+        "start": 10542,
+        "end": 12151,
+        "bodyLine": 286,
         "bodyColumn": 24,
-        "bodyEndLine": 318,
+        "bodyEndLine": 316,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31467,13 +31467,13 @@
       "max_crap": 7,
       "rationale": "The current role recursively freezes object-valued JSON members while avoiding cycles; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 319,
+        "line": 317,
         "column": 7,
-        "start": 12175,
-        "end": 12673,
-        "bodyLine": 319,
+        "start": 12159,
+        "end": 12657,
+        "bodyLine": 317,
         "bodyColumn": 78,
-        "bodyEndLine": 331,
+        "bodyEndLine": 329,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31498,13 +31498,13 @@
       "max_crap": 2,
       "rationale": "The current role computes the request digest after excluding the ingress token; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 332,
+        "line": 330,
         "column": 7,
-        "start": 12681,
-        "end": 12865,
-        "bodyLine": 332,
+        "start": 12665,
+        "end": 12849,
+        "bodyLine": 330,
         "bodyColumn": 87,
-        "bodyEndLine": 335,
+        "bodyEndLine": 333,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31529,13 +31529,13 @@
       "max_crap": 1,
       "rationale": "The current role builds the authorization receipt only when the request has an operation hash; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 336,
+        "line": 334,
         "column": 7,
-        "start": 12873,
-        "end": 13623,
-        "bodyLine": 340,
+        "start": 12857,
+        "end": 13607,
+        "bodyLine": 338,
         "bodyColumn": 36,
-        "bodyEndLine": 358,
+        "bodyEndLine": 356,
         "bodyEndColumn": 1
       },
       "source_address": {
@@ -31560,13 +31560,13 @@
       "max_crap": 1,
       "rationale": "The current role constructs receipt fields from the request and issuance context; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 341,
+        "line": 339,
         "column": 16,
-        "start": 13042,
-        "end": 13542,
-        "bodyLine": 341,
+        "start": 13026,
+        "end": 13526,
+        "bodyLine": 339,
         "bodyColumn": 45,
-        "bodyEndLine": 356,
+        "bodyEndLine": 354,
         "bodyEndColumn": 3
       },
       "source_address": {
@@ -31591,13 +31591,13 @@
       "max_crap": 2,
       "rationale": "The current role provides the undefined result for a request without an operation hash; the bounded b549951 src/contracts/public-ingress.ts source has the same behavior and exact identity.",
       "current_source_address": {
-        "line": 357,
+        "line": 355,
         "column": 10,
-        "start": 13554,
-        "end": 13569,
-        "bodyLine": 357,
+        "start": 13538,
+        "end": 13553,
+        "bodyLine": 355,
         "bodyColumn": 16,
-        "bodyEndLine": 357,
+        "bodyEndLine": 355,
         "bodyEndColumn": 25
       },
       "source_address": {
@@ -59680,7 +59680,7 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Same nested per-file digest responsibility within fsSafePackageTreeHash in the original and current safe-repository-access owner. The enclosing hash function and its files.forEach callsite establish the callback role; the former target file is absent from retained b549951."
+      "rationale": "Retains the same nested per-file digest callback within fsSafePackageTreeHash in the original and current safe-repository-access owner. The original files.forEach callback is present at line 231 and the current counterpart is at line 215. Preserve this existing 1/1 allowance separately; the three prospective file-record construction and sorting callbacks have different roles and do not receive it."
     },
     {
       "identity": "bin/forward-candidate-admission.mjs#binding:sha/binding:sha#0",
@@ -205349,6 +205349,766 @@
       },
       "rationale": "New shared cleanup/transition helper or wrapper callback. The original context refresh/pin callback remains redirected to its existing inner entry callback with unchanged 2/6 ceiling; the original uncertainty persistence callback separately retains its 1/2 ceiling. This addition borrows neither cap. Entry acknowledgement failure records uncertainty through markUncertain; it does not abort an already-entered effect.",
       "independent_review": "/workspace/attachments/quality-kernel-corrected-final-independent-review-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#class:SafeRepositoryLockContentionError/method:constructor#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 100,
+        "column": 2,
+        "start": 3236,
+        "end": 3536,
+        "bodyLine": 100,
+        "bodyColumn": 44,
+        "bodyEndLine": 104,
+        "bodyEndColumn": 3
+      },
+      "current_complexity": 3,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Constructs the lock-reclaim contention failure, preserving an optional underlying cause and selecting the contention or EEXIST code. Caller review: Current source throws this class from lock/reclaim admission paths, including openExclusiveLockAt and reportLockFailure. The published source has no corresponding error class or constructor role; its lock failures were represented directly at those callers. Lineage: The published file contains lock acquisition and stale-lock cleanup, but no constructor that packages reclaim contention, code and cause into a reusable typed error. Same subsystem context does not establish one-to-one lineage.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#class:SafeRepositoryLockPendingQuarantineError/method:constructor#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 109,
+        "column": 2,
+        "start": 3723,
+        "end": 3982,
+        "bodyLine": 109,
+        "bodyColumn": 53,
+        "bodyEndLine": 113,
+        "bodyEndColumn": 3
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Specializes lock contention for an observed pending quarantine and records that custody remains retained. Caller review: Current reportLockFailure selects this error when a quarantine name remains. The published source has no quarantine-specific error type or constructor. Lineage: The original stale-lock paths do not construct a typed pending-quarantine failure. This constructor is a new failure classification, not the old lock contention implementation.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#class:SafeRepositoryLockReleaseError/method:constructor#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 119,
+        "column": 2,
+        "start": 4196,
+        "end": 4391,
+        "bodyLine": 119,
+        "bodyColumn": 32,
+        "bodyEndLine": 122,
+        "bodyEndColumn": 3
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Represents incomplete release after an operation entered, retaining exact lock custody in its message and code. Caller review: Current release failure handling throws this type when release cleanup is incomplete. No equivalent typed release error constructor appears in the published file. Lineage: The published release paths perform cleanup but do not expose a separate error constructor distinguishing post-entry release failure from admission contention.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#class:SafeRepositoryLockRestoreError/method:constructor#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 128,
+        "column": 2,
+        "start": 4610,
+        "end": 4864,
+        "bodyLine": 128,
+        "bodyColumn": 64,
+        "bodyEndLine": 133,
+        "bodyEndColumn": 3
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Represents failed restoration of a quarantined namespace while retaining quarantine custody. Caller review: Current restoreReclaimedEntry and cleanup aggregation throw this type on failed namespace restoration. The published source has no corresponding restoration error class or constructor. Lineage: The original implementation performs restoration as cleanup but does not define a separate callable that preserves the restore endpoints and cause as a typed outcome.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:resolveFsSafeNativePackageRoot#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 186,
+        "column": 0,
+        "start": 6651,
+        "end": 7438,
+        "bodyLine": 186,
+        "bodyColumn": 84,
+        "bodyEndLine": 202,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Resolves the target-specific native package entry and validates its package name, version, main file and exact native entry path. Caller review: Current fsSafePackageTreeHash and matchesAttestedNativeBinding call this resolver. The published source hashes the native binary through a path under the main fs-safe package and has no target-package resolver. Lineage: The published resolveFsSafePackageRoot handles the top-level @openclaw/fs-safe package; it does not resolve or validate the target-specific @openclaw/fs-safe-<target> package. Matching the general name root/resolver is insufficient, and the original exact ID is not claimed.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:fsSafePackageTreeHash#0/binding:files/closure:CallExpression:arguments[0]#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 206,
+        "column": 33,
+        "start": 7640,
+        "end": 7693,
+        "bodyLine": 206,
+        "bodyColumn": 48,
+        "bodyEndLine": 206,
+        "bodyEndColumn": 85
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Maps each declared top-level package manifest path into a root/relative/logical file record for a unified tree attestation. Caller review: This callback constructs the first file-record group consumed by the sort and hash loop in current fsSafePackageTreeHash. Lineage: Published fsSafePackageTreeHash uses a flat relative-path list and hashes each path in its forEach callback. It has no callback that creates root/relative/logical records, so the original hashing callback is a different callable responsibility and is not reassigned.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:fsSafePackageTreeHash#0/binding:files/closure:CallExpression:arguments[0]#1",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 207,
+        "column": 51,
+        "start": 7747,
+        "end": 7868,
+        "bodyLine": 207,
+        "bodyColumn": 66,
+        "bodyEndLine": 211,
+        "bodyEndColumn": 5
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Maps package.json and fs-safe-native.node inside the resolved native package into native-target-qualified logical file records. Caller review: This callback constructs the native-package file-record group consumed by current fsSafePackageTreeHash. Lineage: The published hash reads a native binary from the top-level package's dist/native path; it does not map files rooted in a separately resolved target package or produce native-target logical names.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:fsSafePackageTreeHash#0/binding:files/closure:CallExpression:arguments[0]#2",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 212,
+        "column": 9,
+        "start": 7880,
+        "end": 7971,
+        "bodyLine": 212,
+        "bodyColumn": 27,
+        "bodyEndLine": 212,
+        "bodyEndColumn": 99
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Orders file records by their logical package path to make the attestation digest deterministic. Caller review: This comparator is the sort callback over the two current file-record groups immediately before the hashing loop. Lineage: The published implementation sorts its flat relative-path strings with default sort and has no comparator callable over structured logical file records. Similar ordering intent does not establish an exact callable match.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:matchesAttestedNativeBinding#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 229,
+        "column": 0,
+        "start": 8740,
+        "end": 9075,
+        "bodyLine": 229,
+        "bodyColumn": 96,
+        "bodyEndLine": 233,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 3,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Requires a still-attested package and verifies the returned binding is the module loaded from the resolved native package path. Caller review: Current loadLinuxNativeBinding and loadWindowsNativeBinding call this predicate after rechecking the package tree. The published versions check platform, package hash and required methods but do not check binding identity against the resolved native package module. Lineage: No published callable has the distinct runtime binding identity comparison. The old provider loaders are callers with related validation, but assigning their allowance to this extracted predicate would double-count responsibilities.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:assertFsSafeNativeCreateEnabled#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 274,
+        "column": 0,
+        "start": 11091,
+        "end": 11293,
+        "bodyLine": 274,
+        "bodyColumn": 62,
+        "bodyEndLine": 279,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Rejects a native create operation when the configured fs-safe native mode has been turned off. Caller review: Current Windows and Linux native create/write provider callbacks invoke this guard immediately before native create operations. The published source has no same guard callable. Lineage: The published source evaluates mode and native-provider availability in broader provider selection and operation flows; it has no one-to-one extracted create-mode assertion. Name or same decision theme cannot justify reusing those allowances.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/config/safe-repository-access.ts#fn:assertLinuxNativeProviderCurrent#0",
+      "file": "src/config/safe-repository-access.ts",
+      "current_source_address": {
+        "line": 280,
+        "column": 0,
+        "start": 11294,
+        "end": 11521,
+        "bodyLine": 280,
+        "bodyColumn": 63,
+        "bodyEndLine": 285,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Rejects an operation if the selected Linux native binding is absent or no longer equals the currently loaded attested provider. Caller review: Current Linux native create/write provider callbacks invoke this check alongside the enabled-mode guard before sensitive operations. The published loader checks provider availability at load time but has no per-operation current-provider assertion. Lineage: The old Linux loader's startup availability check and this current per-operation freshness check differ in timing and caller role. No published per-callable equivalent is established.",
+      "independent_review": "/workspace/attachments/quality-safe-native-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:normalizeCorrectionRepairReceipt#0",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 379,
+        "column": 0,
+        "start": 15147,
+        "end": 15681,
+        "bodyLine": 379,
+        "bodyColumn": 67,
+        "bodyEndLine": 390,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 4,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Receipt-level normalization: preserve unrelated receipt fields, reject a one-sided correction authority pair, default a fully absent pair to generation 0 and authorization null. Callers: normalizeCorrectionRepairItem lines 400 and 402; parseCorrectionRepairJournal maps items for top-level and completed-wave journal records; repair reads call the parser at lines 10238 and 10361. Disposition: new_extracted_projection_separate_from_retained_original",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:normalizeCorrectionRepairItem#0",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 392,
+        "column": 0,
+        "start": 15683,
+        "end": 16257,
+        "bodyLine": 392,
+        "bodyColumn": 64,
+        "bodyEndLine": 406,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 4,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Item-level pre-parse projection: copy the item/reservation and normalize reservation and optional authorization receipts using the receipt helper. Callers: parseCorrectionRepairJournal maps top-level items at line 417 and completed-wave items through normalizeWave at line 413; repair reads call the parser at lines 10238 and 10361. Disposition: new_extracted_projection_separate_from_retained_original",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:taskSourceProjectionRows#0",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1798,
+        "column": 0,
+        "start": 72556,
+        "end": 73903,
+        "bodyLine": 1802,
+        "bodyColumn": 33,
+        "bodyEndLine": 1828,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 5,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Bounded bulk read of workspace operation rows, with optional work_id projection detection, table-shape validation, checked row decoding, and row/byte bounds. Callers: Projection consistency/repair paths at lines 2172, 2232, and 2261. Disposition: new_projection_role",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:taskSourceProjectionRows#0/binding:hasProjection/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1806,
+        "column": 37,
+        "start": 72868,
+        "end": 72905,
+        "bodyLine": 1806,
+        "bodyColumn": 49,
+        "bodyEndLine": 1806,
+        "bodyEndColumn": 74
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Detect whether PRAGMA table information contains work_id to choose legacy or projected row shape. Callers: Nested in taskSourceProjectionRows. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceProjectionOperation#0",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1863,
+        "column": 0,
+        "start": 75170,
+        "end": 76024,
+        "bodyLine": 1868,
+        "bodyColumn": 8,
+        "bodyEndLine": 1882,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 10,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validate exact projection operation keys, schema/status, row identity and revisions, request digest, and optional work_id binding. Callers: taskSourceProjectionRow at line 1848, called from taskSourceProjectionRows at line 1818. Disposition: new_extracted_projection_assertion",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:canonicalTaskSourceProjectionIndexKey#0",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1896,
+        "column": 0,
+        "start": 76399,
+        "end": 76687,
+        "bodyLine": 1899,
+        "bodyColumn": 11,
+        "bodyEndLine": 1901,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 3,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validate projection index key order, ascending direction, and BINARY collation. Callers: keys.every callback in assertTaskSourceWorkProjectionIndex at line 1922. Disposition: new_projection_role",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1927,
+        "column": 0,
+        "start": 77756,
+        "end": 79087,
+        "bodyLine": 1927,
+        "bodyColumn": 95,
+        "bodyEndLine": 1960,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 10,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validate exact columns, types, nullability, composite keys and non-key columns for legacy/projected table forms, then request uniqueness validation. Callers: taskSourceProjectionRows at line 1808; schema readiness/preparation paths at lines 1994 and 2011; additional caller at line 5242. Disposition: new_table_shape_projection_assertion",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0/closure:CallExpression:arguments[0]#0",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1947,
+        "column": 13,
+        "start": 78337,
+        "end": 78360,
+        "bodyLine": 1947,
+        "bodyColumn": 25,
+        "bodyEndLine": 1947,
+        "bodyEndColumn": 36
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Map current column metadata to sorted names for exact-set comparison. Callers: Nested in assertTaskSourceOperationTableShape. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0/closure:CallExpression:arguments[0]#1",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1950,
+        "column": 20,
+        "start": 78455,
+        "end": 78532,
+        "bodyLine": 1950,
+        "bodyColumn": 32,
+        "bodyEndLine": 1950,
+        "bodyEndColumn": 97
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Check the expected SQL type for each column. Callers: Nested in assertTaskSourceOperationTableShape. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0/closure:CallExpression:arguments[0]#2",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1951,
+        "column": 21,
+        "start": 78558,
+        "end": 78595,
+        "bodyLine": 1951,
+        "bodyColumn": 33,
+        "bodyEndLine": 1951,
+        "bodyEndColumn": 58
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Select non-optional columns before checking NOT NULL constraints. Callers: Nested in assertTaskSourceOperationTableShape. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0/closure:CallExpression:arguments[0]#3",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1951,
+        "column": 66,
+        "start": 78603,
+        "end": 78644,
+        "bodyLine": 1951,
+        "bodyColumn": 78,
+        "bodyEndLine": 1951,
+        "bodyEndColumn": 107
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Locate workspace_id metadata to verify its primary-key ordinal. Callers: Nested in assertTaskSourceOperationTableShape. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0/closure:CallExpression:arguments[0]#4",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1952,
+        "column": 26,
+        "start": 78675,
+        "end": 78717,
+        "bodyLine": 1952,
+        "bodyColumn": 38,
+        "bodyEndLine": 1952,
+        "bodyEndColumn": 68
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Locate operation_id metadata to verify its primary-key ordinal. Callers: Nested in assertTaskSourceOperationTableShape. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0/closure:CallExpression:arguments[0]#5",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1953,
+        "column": 26,
+        "start": 78766,
+        "end": 78808,
+        "bodyLine": 1953,
+        "bodyColumn": 38,
+        "bodyEndLine": 1953,
+        "bodyEndColumn": 68
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Select non-key columns for primary-key ordinal checks. Callers: Nested in assertTaskSourceOperationTableShape. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0/closure:CallExpression:arguments[0]#6",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1955,
+        "column": 16,
+        "start": 78861,
+        "end": 78928,
+        "bodyLine": 1955,
+        "bodyColumn": 28,
+        "bodyEndLine": 1955,
+        "bodyEndColumn": 83
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Check expected non-key column membership after excluding workspace_id and operation_id. Callers: Nested in assertTaskSourceOperationTableShape. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "src/host-state.ts#fn:assertTaskSourceOperationTableShape#0/closure:CallExpression:arguments[0]#7",
+      "file": "src/host-state.ts",
+      "current_source_address": {
+        "line": 1956,
+        "column": 15,
+        "start": 78945,
+        "end": 78981,
+        "bodyLine": 1956,
+        "bodyColumn": 27,
+        "bodyEndLine": 1956,
+        "bodyEndColumn": 51
+      },
+      "current_complexity": 1,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Ensure all non-key columns have primary-key ordinal zero. Callers: Nested in assertTaskSourceOperationTableShape. Disposition: new_nested_projection_callback",
+      "independent_review": "/workspace/attachments/quality-host-projection-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:isCutoverEvidence#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 462,
+        "column": 0,
+        "start": 17567,
+        "end": 17924,
+        "bodyLine": 462,
+        "bodyColumn": 69,
+        "bodyEndLine": 471,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 6,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Five-field evidence-record shape predicate; prepared-cutover caller retains status, digest, actor, pointer, path, containment, and file binding checks. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:isForwardFileChange#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 474,
+        "column": 0,
+        "start": 17994,
+        "end": 18376,
+        "bodyLine": 474,
+        "bodyColumn": 73,
+        "bodyEndLine": 483,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 8,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Per-entry changed-file record shape predicate, composed by hasForwardPlanCollections; old inline parent callback remains parent-owned. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:isForwardUpdatePlan#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 486,
+        "column": 0,
+        "start": 18446,
+        "end": 18595,
+        "bodyLine": 486,
+        "bodyColumn": 73,
+        "bodyEndLine": 488,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Composes extracted header and collection predicates to narrow an unknown plan value. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:isForwardPlanHeader#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 491,
+        "column": 0,
+        "start": 18671,
+        "end": 18971,
+        "bodyLine": 491,
+        "bodyColumn": 79,
+        "bodyEndLine": 498,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 5,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Composes identity, digest, and first-attempt shape checks. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:hasForwardPlanIdentity#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 501,
+        "column": 0,
+        "start": 19038,
+        "end": 19247,
+        "bodyLine": 501,
+        "bodyColumn": 73,
+        "bodyEndLine": 505,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 3,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks that three plan identity fields are strings. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:hasForwardPlanDigests#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 508,
+        "column": 0,
+        "start": 19314,
+        "end": 19685,
+        "bodyLine": 508,
+        "bodyColumn": 72,
+        "bodyEndLine": 516,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 5,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Checks that five digest/generation fields are strings. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:hasForwardPlanCollections#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 519,
+        "column": 0,
+        "start": 19752,
+        "end": 19982,
+        "bodyLine": 519,
+        "bodyColumn": 76,
+        "bodyEndLine": 525,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 3,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Requires collection arrays and validates changed entries through the named isForwardFileChange predicate. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:isForwardUpdateAuthorization#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 528,
+        "column": 0,
+        "start": 20061,
+        "end": 20486,
+        "bodyLine": 528,
+        "bodyColumn": 91,
+        "bodyEndLine": 539,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 8,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Authorization record shape/evidence-ownership predicate; caller retains cross-record authorization checks. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:requireForwardUpdatePlan#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 542,
+        "column": 0,
+        "start": 20564,
+        "end": 20762,
+        "bodyLine": 542,
+        "bodyColumn": 86,
+        "bodyEndLine": 544,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Assertion boundary applying isForwardUpdatePlan and its established failure behavior. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:requireForwardUpdateAuthorization#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 547,
+        "column": 0,
+        "start": 20849,
+        "end": 21074,
+        "bodyLine": 547,
+        "bodyColumn": 104,
+        "bodyEndLine": 549,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Assertion boundary applying isForwardUpdateAuthorization and its established failure behavior. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:requireForwardReviewEvidence#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 552,
+        "column": 0,
+        "start": 21154,
+        "end": 21402,
+        "bodyLine": 552,
+        "bodyColumn": 92,
+        "bodyEndLine": 555,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Requires the exact assurance/correctness/security evidence-kind set via hasEvidenceKinds. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:requireForwardParentSelector#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 558,
+        "column": 0,
+        "start": 21490,
+        "end": 21712,
+        "bodyLine": 558,
+        "bodyColumn": 100,
+        "bodyEndLine": 560,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Assertion boundary for active-selector record shape; caller retains lineage binding checks. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:requireForwardFileLeaf#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 563,
+        "column": 0,
+        "start": 21772,
+        "end": 21949,
+        "bodyLine": 563,
+        "bodyColumn": 66,
+        "bodyEndLine": 566,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Rejects an absent path leaf before installed-file reading and returns the present leaf. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
+    },
+    {
+      "identity": "bin/run.ts#fn:requireSelectorRecord#0",
+      "file": "bin/run.ts",
+      "current_source_address": {
+        "line": 569,
+        "column": 0,
+        "start": 22016,
+        "end": 22214,
+        "bodyLine": 569,
+        "bodyColumn": 72,
+        "bodyEndLine": 572,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2,
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Validates the selected preserved-output value as a record before the successful return path. Original callable comparison: GAP",
+      "independent_review": "/workspace/attachments/quality-run-forward-clean-independent-v64d-20261016.md"
     }
   ],
   "removed_functions": [

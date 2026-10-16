@@ -200,18 +200,26 @@ test('zero evidence keeps canonical static and executable contours visible as un
   expect(report).toContain('exact coverage qualification');
 });
 
-test('contract Sources and selected tests are split exactly, with fuzz shared by both active children', () => {
+test('contract and fuzz scenarios are selected by their source owners', () => {
   const active = mutationPartitions();
+  const config = active.find((row) => row.name === 'main-config');
   const publicIngress = active.find((row) => row.name === 'main-public-ingress');
   const envelopes = active.find((row) => row.name === 'main-envelopes');
+  const cedar = active.find((row) => row.name === 'main-cedar');
+  const governance = active.find((row) => row.name === 'bun-governance-and-public-contracts');
+  expect(config?.tests).toContain('tests/fuzz-config.test.ts');
   expect(publicIngress).toMatchObject({
     sources: ['src/contracts/public-ingress.ts'],
-    tests: ['tests/public-ingress-boundary.test.ts', 'tests/fuzz.test.ts'],
+    tests: ['tests/public-ingress-boundary.test.ts', 'tests/fuzz-public-ingress.test.ts'],
   });
   expect(envelopes).toMatchObject({
     sources: ['src/contracts/envelopes.ts'],
-    tests: ['tests/envelopes-boundary.test.ts', 'tests/fuzz.test.ts', 'tests/zombies.test.ts'],
+    tests: ['tests/envelopes-boundary.test.ts', 'tests/fuzz-envelopes.test.ts', 'tests/zombies.test.ts'],
   });
+  expect(cedar?.tests).toContain('tests/fuzz-authorization.test.ts');
+  expect(governance?.tests).toContain('tests/fuzz-public-ingress.test.ts');
+  expect(governance?.tests).toContain('tests/fuzz-envelopes.test.ts');
+  expect(active.flatMap((row) => row.tests ?? [])).not.toContain('tests/fuzz.test.ts');
   expect(active.some((row) => row.name === 'main-contracts')).toBe(false);
   expect(mutationPartitions({ includeRetired: true }).find((row) => row.name === 'main-contracts')).toMatchObject({
     environment: 'retired',
@@ -240,6 +248,7 @@ function retiredCoverage() {
   const tests = [
     'tests/public-ingress-boundary.test.ts',
     'tests/envelopes-boundary.test.ts',
+    // Historical report fixture: preserve the recorded v1 test path as old evidence.
     'tests/fuzz.test.ts',
     'tests/zombies.test.ts',
   ];

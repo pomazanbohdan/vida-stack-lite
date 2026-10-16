@@ -202,12 +202,13 @@ matchers, so a missing target value fails the intended assertion. A raw runtime
 exception or a matcher argument error remains unproven. Do not pad assertion
 counts or relax the classifier to admit it.
 
-The real-adapter synchronous-helper pilot copies `expect-rejection.ts` and changes
-only that copy's `expectReturned` assertion to `node:assert/strict.doesNotThrow`.
+`expectReturned` uses `node:assert/strict.doesNotThrow`. The real-adapter
+synchronous-helper control copies the maintained `expect-rejection.ts` byte-for-byte.
 It qualifies preserved ordinary/undefined returns and an attributable AssertionError
 for thrown undefined with zero JUnit assertions. Invalid assertion arguments and
 unrelated runtime errors remain rejected by the strict JUnit reader. This is
-mechanism qualification, not a mutant score or deployment of the shared helper.
+mechanism qualification, not a mutant score. Retain separate result assertions;
+the helper checks completion of the target invocation only, not fixture health.
 Its four serial adapter children justify the enclosing test's explicit 15 s limit;
 the default remains 5 s per test.
 
@@ -216,6 +217,21 @@ captured revisions against benign Proxy reads. Require zero live reads, independ
 returned identity, null-prototype records and payload alias isolation. Assert the
 actual consumed result. Envelope images remain mutable; public ingress validators'
 deep-freeze contract does not extend to envelope validation.
+
+Fuzz scenarios are selected by source owner: `fuzz-public-ingress.test.ts`,
+`fuzz-config.test.ts`, `fuzz-envelopes.test.ts` and `fuzz-authorization.test.ts`.
+Their shared helper owns seed/run/replay settings and unknown-value generation;
+it registers no tests and loads no configuration. Pure ingress fixtures carry
+synthetic identity fields only. Configured authorization keeps genuinely issued
+config/context capabilities. Preserve the named-field malformed request checks
+in ingress and the corresponding authorization denials in Cedar. Keep all seven
+unknown-value validators: the three owner groups each retain the configured run
+count, increasing this property's default total from 1,000 to 3,000 trials. Named-field
+validation remains a separate 1,000-trial check; Cedar retains its 1,000 denial trials.
+Do not import an aggregate test module during full discovery. The retired
+main-contracts selector retains its historical fuzz.test.ts path for receipt
+interpretation only; it must never launch an archived suite. Changed selections
+require new receipts and do not rewrite old observations or replay paths.
 
 Timing invalid-input cases must observe absence of side effects, not only the
 fallback error code. Give non-string message/code values a counted slice getter,

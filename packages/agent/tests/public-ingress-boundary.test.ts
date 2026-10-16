@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, spyOn, test } from 'bun:test';
-import { configuredTestContext } from './configured-context.ts';
 import { rfc3339LeapSecondAlternation, updateLeapSecondSchemaPatterns } from '../tooling/rfc3339-schema-patterns.ts';
 import {
   assertCanonicalJsonValue,
@@ -19,12 +18,18 @@ import {
   validateGovernedWriteIntent,
   validateGovernedWriteRequest,
 } from '../src/contracts/public-ingress.ts';
-import { buildGovernedWriteRequest, computeWriteOperationHash } from '../src/index.ts';
+import { buildGovernedWriteRequest, computeWriteOperationHash } from '../src/contracts/public-ingress.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
 import { createGovernedEvidenceFixture } from './helpers/governed-evidence-fixture.ts';
 
 const packageRoot = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
-const { context: project } = configuredTestContext();
+// Synthetic ingress identity fields only: this fixture makes no configured
+// project issuance or Cedar authorization capability claim.
+const project = {
+  repository_id: 'fixture-repository',
+  registry_hash: 'a'.repeat(64),
+  project_bindings: [{ project_id: 'fixture-project' }],
+};
 function required<T>(value: T | undefined, label: string): T {
   if (value === undefined) throw new Error(`Expected ${label}.`);
   return value;
@@ -223,14 +228,16 @@ describe('direct maintained-source completeness', () => {
 
     for (const date of RFC3339_KNOWN_LEAP_DATES_FOR_TEST) {
       const utc = `${date}T23:59:60Z`;
-      expect(
+      assert.equal(
         expectReturned(() => isStrictRfc3339Timestamp(utc)),
+        true,
         utc,
-      ).toBe(true);
-      expect(
+      );
+      assert.notEqual(
         expectReturned(() => rfc3339TimestampMilliseconds(utc)),
+        null,
         utc,
-      ).not.toBeNull();
+      );
     }
 
     const equivalentInstants = [
@@ -243,20 +250,24 @@ describe('direct maintained-source completeness', () => {
       ['2017-01-01T00:59:60.5+01:00', '2016-12-31T23:59:60.5Z'],
     ] as const;
     for (const [local, utc] of equivalentInstants) {
-      expect(
+      assert.equal(
         expectReturned(() => isStrictRfc3339Timestamp(local)),
+        true,
         local,
-      ).toBe(true);
-      expect(
+      );
+      assert.equal(
         expectReturned(() => rfc3339TimestampMilliseconds(local)),
+        expectReturned(() => rfc3339TimestampMilliseconds(utc)),
         local,
-      ).toBe(expectReturned(() => rfc3339TimestampMilliseconds(utc)));
+      );
     }
 
     // -00:00 has zero numeric offset for instant computation, but its unknown
     // local-offset provenance remains in the original evidence string.
-    expect(expectReturned(() => rfc3339TimestampMilliseconds(equivalentInstants[3]![0]))).toBe(
+    assert.equal(
       expectReturned(() => rfc3339TimestampMilliseconds(equivalentInstants[3]![1])),
+      expectReturned(() => rfc3339TimestampMilliseconds(equivalentInstants[3]![0])),
+      'the +00:00 and UTC spellings identify the same instant',
     );
 
     const rejected = [
@@ -276,14 +287,16 @@ describe('direct maintained-source completeness', () => {
       '2016-12-31T23:59:60Z\u2029',
     ];
     for (const value of rejected) {
-      expect(
+      assert.equal(
         expectReturned(() => rfc3339TimestampMilliseconds(value)),
+        null,
         value,
-      ).toBeNull();
-      expect(
+      );
+      assert.equal(
         expectReturned(() => isStrictRfc3339Timestamp(value)),
+        false,
         value,
-      ).toBe(false);
+      );
     }
   });
 
@@ -321,14 +334,15 @@ describe('direct maintained-source completeness', () => {
     }
     expect(leaves).toHaveLength(16);
     const generated = expectReturned(() => rfc3339LeapSecondAlternation(RFC3339_KNOWN_LEAP_DATES_FOR_TEST));
-    for (const leaf of leaves) expect(leaf.pattern.includes(generated), `${leaf.file}:${leaf.key}`).toBe(true);
+    for (const leaf of leaves) assert.equal(leaf.pattern.includes(generated), true, `${leaf.file}:${leaf.key}`);
     const patterns = [...new Set(leaves.map((leaf) => leaf.pattern))].map((pattern) => new RegExp(pattern));
     const check = (value: string, expected: number | null): void => {
-      expect(
+      assert.equal(
         expectReturned(() => rfc3339TimestampMilliseconds(value)),
+        expected,
         value,
-      ).toBe(expected);
-      for (const pattern of patterns) expect(pattern.test(value), value).toBe(expected !== null);
+      );
+      for (const pattern of patterns) assert.equal(pattern.test(value), expected !== null, value);
     };
     for (const date of RFC3339_KNOWN_LEAP_DATES_FOR_TEST) {
       const [year, month, day] = date.split('-').map(Number);
@@ -511,7 +525,8 @@ describe('direct maintained-source completeness', () => {
           registryHash: authorization.registry_hash,
         }),
       );
-      expect(nextHash).toMatch(/^[a-f0-9]{64}$/);
+      assert.equal(typeof nextHash, 'string', 'operation hash must be a string');
+      assert.match(nextHash, /^[a-f0-9]{64}$/);
       return {
         ...request,
         authorization: { ...authorization, operation_hash: nextHash },
@@ -547,6 +562,124 @@ describe('direct maintained-source completeness', () => {
       authorization: { ...request.authorization, ...authorizationChanges },
       approval: { ...request.approval, ...approvalChanges },
     });
+    const timestamp = (milliseconds: number): string => new Date(milliseconds).toISOString();
+    const clock = spyOn(Date, 'now').mockReturnValue(now);
+    try {
+      const exactFutureBoundary = timeRequest(
+        { issued_at: timestamp(now + 60_000) },
+        {
+          approved_at: timestamp(now + 60_000),
+          verified_at: timestamp(now + 60_000),
+          expires_at: timestamp(now + 120_000),
+        },
+      );
+      assert.deepEqual(
+        structuredClone(expectReturned(() => validateGovernedWriteRequest(exactFutureBoundary))),
+        structuredClone(exactFutureBoundary),
+      );
+
+      const exactStaleBoundary = timeRequest(
+        { issued_at: timestamp(now - 300_000) },
+        {
+          approved_at: timestamp(now - 300_000),
+          verified_at: timestamp(now - 300_000),
+          expires_at: timestamp(now + 60_000),
+        },
+      );
+      assert.deepEqual(
+        structuredClone(expectReturned(() => validateGovernedWriteRequest(exactStaleBoundary))),
+        structuredClone(exactStaleBoundary),
+      );
+      assert.throws(
+        () =>
+          validateGovernedWriteRequest(
+            timeRequest(
+              { issued_at: timestamp(now - 400_000) },
+              {
+                approved_at: timestamp(now - 1_000),
+                verified_at: timestamp(now - 1_000),
+                expires_at: timestamp(now + 60_000),
+              },
+            ),
+          ),
+        { message: 'governed write evidence is stale' },
+      );
+
+      assert.throws(
+        () =>
+          validateGovernedWriteRequest(
+            timeRequest(
+              { issued_at: timestamp(now - 2_000) },
+              {
+                approved_at: timestamp(now - 1_000),
+                verified_at: timestamp(now - 1_000),
+                expires_at: timestamp(now),
+              },
+            ),
+          ),
+        { message: 'approval evidence is expired' },
+      );
+      assert.throws(
+        () =>
+          validateGovernedWriteRequest(
+            timeRequest(
+              { issued_at: timestamp(now - 3_000) },
+              {
+                approved_at: timestamp(now - 1_000),
+                verified_at: timestamp(now + 3_000),
+                expires_at: timestamp(now + 2_000),
+              },
+            ),
+          ),
+        { message: 'approval evidence is expired' },
+      );
+
+      const expirationAtEvidenceTimes = timeRequest(
+        { issued_at: timestamp(now - 1_000) },
+        {
+          approved_at: timestamp(now + 1_000),
+          verified_at: timestamp(now + 1_000),
+          expires_at: timestamp(now + 1_000),
+        },
+      );
+      assert.deepEqual(
+        structuredClone(expectReturned(() => validateGovernedWriteRequest(expirationAtEvidenceTimes))),
+        structuredClone(expirationAtEvidenceTimes),
+      );
+      assert.throws(
+        () =>
+          validateGovernedWriteRequest(
+            timeRequest(
+              { issued_at: timestamp(now - 3_000) },
+              {
+                approved_at: timestamp(now - 1_000),
+                verified_at: timestamp(now - 2_000),
+                expires_at: timestamp(now + 60_000),
+              },
+            ),
+          ),
+        { message: 'approval verification predates approval evidence' },
+      );
+
+      // Valid schema input reaches assertFresh's parsed-null guard when the
+      // native parser is fault-injected; restore the builtin even on failure.
+      const parse = spyOn(Date, 'parse').mockReturnValue(Number.NaN);
+      try {
+        assert.throws(() => validateGovernedWriteRequest(exactFutureBoundary), {
+          message: 'governed write evidence timestamps invalid',
+        });
+        assert.deepEqual(parse.mock.calls, [
+          [exactFutureBoundary.authorization.issued_at],
+          [exactFutureBoundary.approval.approved_at],
+          [exactFutureBoundary.approval.expires_at],
+          [exactFutureBoundary.approval.verified_at],
+        ]);
+      } finally {
+        parse.mockRestore();
+      }
+    } finally {
+      clock.mockRestore();
+    }
     expect(() =>
       validateGovernedWriteRequest(
         timeRequest({ issued_at: new Date(now + 120_000).toISOString() }, unchangedApproval),
