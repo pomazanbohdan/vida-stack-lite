@@ -42,6 +42,17 @@ reviews stay GAP. After terminal accounting, dispatch blind Luna fix lanes from
 the actual findings. This does not waive the global admission prerequisites or
 qualify the still-inactive per-test filter.
 
+The two current monolithic mutation rechecks exhausted their900s partition
+budgets without complete reports. Do not repeat that schedule merely because
+more cases were added. First reduce repeated input/setup work without skipping
+any captured input. Then qualify bounded mutation batches under the same contour:
+preserve its full Source/test/config binding, original canonical mutant plan,
+disjoint and exhaustive batch membership, actual native receipts and parent
+assertion-confirmed admission. Every planned mutant must have one compatible
+terminal disposition before a contour score exists. Batch boundaries must not
+reset Source identity, omit survivors, reuse UNKNOWN outcomes or activate an
+unqualified per-test filter. Existing independent limits and frozen gates remain.
+
 Complete exact frozen function correspondence against the genuine `b549951` baseline. Complete and review the full CRAP plan before using dynamic CRAP as an acceptance gate. Qualify resource custody and shard behavior before running the complete numeric suite. Require 100% functions, lines, statements, and branches, plus 100% assertion-confirmed Killed mutants. Keep the required tests and SDK in the final input set. Record CRAP results and these outcomes from one admitted current capture. A timeout, incomplete report, partial budget, or split set of focused runs does not satisfy full numeric acceptance.
 
 The global canonical mutant map is implemented across the maintained Source and

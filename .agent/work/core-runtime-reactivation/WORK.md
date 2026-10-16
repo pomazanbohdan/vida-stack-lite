@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `4a825b422809ef4959ddf8aec206a1a1fefc26dc`. Its focused recheck is terminal; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `ca68f43a34ebceb66515585ded3f8dbe5a30c6f1`. Its focused recheck is terminal; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,51 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+The next focused cycle `0ccbecfa-1976-4b7d-9058-99bc053dae80` ran publishedca68f43
+with official SDK run38899887813/attempt1/artifact12044619416, digest
+`sha256:2eb3bc6fa8770e62c3507ba77fc1c55002a98192d1ff102eee8e875f005b398a`.
+All producers are terminal with complete captures and owned groups closed.
+Coverage passes54/0service cases and96/0Mastra cases. The launch-capability Source
+has exact F/L/S/B100%; custody has F52/52,L219/226,S224/233,B113/124; Mastra has
+F191/191,L642/642,S686/686,B204/205. Actualca68f43 coverage reports are admitted
+by the existing projection owner (387attempts). Both mutation owners reached
+their900s deadline: service approximately612/748attempts and Mastra306/1970.
+Both summaries remain UNKNOWN with zero accepted results, not measured score0.
+No complete triple or reviewed scope CRAP budget is established.
+
+The next repair captures a genuine Mastra assignment callback through its public
+workflow dependency, lets the real workflow finish, restores spies, then invokes
+that callback late. It asserts the inactive-execution denial and unchanged role
+dispatches; no guard is removed. Service cases add existing-schema preparation,
+an exact prepared-image reservation with a fresh capability, invalid-handle
+denial and malformed persisted handoff lineage. Real SQLite delete triggers test
+rollback at the CAS guard. Initial controls correctly rejected them before the
+proposed afterimage assertion; their claims now describe actual rollback and
+verify the original row. They do not claim last-read failure coverage. The
+reconciliation control retains its unresolved reservation. The successful
+re-reservation case consumes its second capability and closes it as prepared
+before cleanup, rather than deleting an UNKNOWN launch fixture.
+
+Native input verification currently checks255test and139tool files per service
+mutant. The next implementation reads bounded groups of8 with allSettled, keeps
+every regular-file/size/digest check, drains each batch before returning, and
+commits context bytes in input order. No input or binary-identity check is cached
+or removed. A15-input regression checks late-batch drift, rejection and recovery
+only after exact byte restoration. Controls `A5xYCq` and `b2bg5z` pass the focused
+boundaries and the affected eight-file selection (198/0,3377assertions), with
+complete captures/closed groups/same boot. There is no throughput improvement
+claim until a comparable admitted run finishes. CLEAR records the bounded-batch
+qualification prerequisite before another monolithic mutation replay.
+
+The Mastra Luna lane hit its provider usage limit; Root continues that scope.
+Five additional inactive worktrees, including their untracked helper proposals,
+are preserved byte-for-byte in permanent Git refs before ordinary removal:
+`/workspace/attachments/inactive-contour-worktree-retention-ca68-20261016.json`.
+Their working and index trees remain recoverable; no runtime fixtures were
+removed. Git repack retained unreachable objects and every ref; it reduced
+physical Git storage from186MiB to15MiB. Observed free workspace storage then
+was2,228,011,008bytes, only slightly above the unchanged2GiB producer floor.
 
 Campaign `fe4f6280-6fef-4161-a55f-d5961c5904f4` is terminal
 `resource-incomplete` at708c153, before mutation. All launched producers settled;

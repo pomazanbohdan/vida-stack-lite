@@ -122,6 +122,83 @@ test('verifier rejection and malformed prepared receipt preserve the terminal pa
   }
 });
 
+const invalidPersistedHandoffCases = [
+  ['handoff digest', 'handoff_digest', 'invalid'],
+  ['predecessor request digest', 'handoff_from_request_digest', 'invalid'],
+  ['predecessor evidence digest', 'handoff_from_evidence_digest', 'invalid'],
+  ['predecessor phase', 'handoff_from_phase', 'prepared'],
+  ['zero predecessor revision', 'handoff_from_revision', 0],
+] as const;
+
+for (const [label, column, value] of invalidPersistedHandoffCases) {
+  test(`reader rejects a persisted ${label} that breaks handoff lineage`, async () => {
+    const fixture = openCustodyFixture('handoff-invalid-lineage-');
+    let database: ReturnType<typeof openServiceOperationDatabase> | undefined;
+    try {
+      finishOperation(fixture, 'release-pack-worker');
+      const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      await expectAsyncReturned(() =>
+        handoffServiceOperationCustody(
+          source,
+          fixture.root,
+          fixture.relative,
+          fixture.workspaceId,
+          operationId,
+          requestDigest,
+          retargetDigest,
+          preparedReceipt,
+        ),
+      );
+      database = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      database
+        .query(`UPDATE agent_host_service_operation_custody SET ${column}=? WHERE workspace_id=? AND operation_id=?`)
+        .run(value, fixture.workspaceId, operationId);
+      expect(() => readServiceOperationCustodyForOperation(database!, fixture.workspaceId, operationId)).toThrow(
+        'Service operation custody: stored operation handoff is invalid',
+      );
+    } finally {
+      if (database) closeServiceOperationDatabase(database);
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
+  });
+}
+
+test('handoff rolls back when an AFTER UPDATE trigger deletes its CAS row', async () => {
+  const fixture = openCustodyFixture('handoff-missing-afterimage-');
+  try {
+    const prior = finishOperation(fixture, 'release-pack-worker');
+    const setup = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    setup.exec(
+      'CREATE TRIGGER remove_handoff_custody AFTER UPDATE OF owner_kind ON agent_host_service_operation_custody ' +
+        "WHEN NEW.owner_kind='release-worker' BEGIN DELETE FROM agent_host_service_operation_custody " +
+        'WHERE workspace_id=NEW.workspace_id AND operation_id=NEW.operation_id; END',
+    );
+    closeServiceOperationDatabase(setup);
+    const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    await expectRejection(
+      handoffServiceOperationCustody(
+        source,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        preparedReceipt,
+      ),
+      'same-operation handoff compare-and-swap failed',
+    );
+    const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    try {
+      expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toEqual(prior);
+    } finally {
+      closeServiceOperationDatabase(reopened);
+    }
+  } finally {
+    rmSync(fixture.root, { recursive: true, force: true });
+  }
+});
+
 test('gate replacement during an awaited receipt leaves the original terminal row intact', async () => {
   const fixture = openCustodyFixture('handoff-replaced-gate-');
   try {

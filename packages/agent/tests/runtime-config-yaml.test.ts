@@ -2493,6 +2493,52 @@ test('public Mastra dispatch skips the remaining assignments after a sequential 
   expect(fixture.dispatchedRoles).toEqual(['documentation-researcher']);
 });
 
+test('a late dependency assignment callback is denied after its workflow finishes', async () => {
+  const thenMethod: unknown = Object.getOwnPropertyDescriptor(Workflow.prototype, 'then')?.value;
+  if (typeof thenMethod !== 'function') throw new Error('Workflow then method is unavailable');
+  let late: (() => Promise<unknown>) | undefined;
+  let restoreExecution: (() => void) | undefined;
+  const then = spyOn(Workflow.prototype, 'then').mockImplementation(function (
+    this: Workflow,
+    step: Parameters<Workflow['then']>[0],
+  ): unknown {
+    if (step.id === 'research_parallel-assignment-0') {
+      const execute = step.execute.bind(step);
+      const execution = spyOn(step, 'execute').mockImplementation(async (parameters) => {
+        late = async () => execute(parameters);
+        return execute(parameters);
+      });
+      restoreExecution = () => execution.mockRestore();
+    }
+    const appended: unknown = Reflect.apply(thenMethod, this, [step]);
+    if (!(appended instanceof Workflow)) throw new Error('Workflow then did not return a workflow');
+    return appended;
+  } as Workflow['then']);
+  try {
+    const fixture = await configuredMastraUnitExecutionFixture(false, false, true);
+    const normal = await expectAsyncReturned(() => fixture.graph.dispatch(fixture.workItem.id));
+    expect(normal.failedAssignments).toEqual([]);
+    const dispatched = [...fixture.dispatchedRoles];
+    then.mockRestore();
+    restoreExecution?.();
+    if (!late) throw new Error('Expected the real assignment callback to execute');
+    const result = await expectAsyncReturned(late);
+    if (
+      !result ||
+      typeof result !== 'object' ||
+      !('failedAssignments' in result) ||
+      !Array.isArray(result.failedAssignments)
+    )
+      throw new Error('Late assignment did not return a failure result');
+    expect(result.failedAssignments).toHaveLength(1);
+    expect(result.failedAssignments[0]).toContain('configured workflow execution has stopped');
+    expect(fixture.dispatchedRoles).toEqual(dispatched);
+  } finally {
+    then.mockRestore();
+    restoreExecution?.();
+  }
+});
+
 test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
   const { repositoryRoot, config } = configuredTestContext();
   expect(() => invokeUntrusted(sanitizeDiagnostic, [config, null])).toThrow(/diagnostic|string|non-empty/i);

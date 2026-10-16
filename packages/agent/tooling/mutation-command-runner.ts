@@ -399,17 +399,31 @@ function descriptorMatchesParent(
 
 async function verifyDescriptorFiles(root: string, entries: MutationInputDigest[]): Promise<Map<string, Buffer>> {
   const contextInputs = new Map<string, Buffer>();
-  for (const entry of entries) {
-    const packageRoot = entry.path.startsWith('_repository/')
-      ? path.join(required(process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT, 'test repository root'), 'packages/agent')
-      : root;
-    const absolute = capturedModuleAbsolutePath(packageRoot, entry.path);
-    const info = await lstat(absolute);
-    if (!info.isFile() || info.isSymbolicLink()) throw new Error('Mutation input is not a regular file.');
-    const contents = await readFile(absolute);
-    if (contents.length !== info.size || sha256(contents) !== entry.sha256)
-      throw new Error('Mutation input differs from its parent snapshot.');
-    if (repositoryTestContextRelativePath(entry.path) !== null) contextInputs.set(entry.path, contents);
+  for (let offset = 0; offset < entries.length; offset += 8) {
+    const batch = entries.slice(offset, offset + 8);
+    const results = await Promise.allSettled(
+      batch.map(async (entry) => {
+        const packageRoot = entry.path.startsWith('_repository/')
+          ? path.join(
+              required(process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT, 'test repository root'),
+              'packages/agent',
+            )
+          : root;
+        const absolute = capturedModuleAbsolutePath(packageRoot, entry.path);
+        const info = await lstat(absolute);
+        if (!info.isFile() || info.isSymbolicLink()) throw new Error('Mutation input is not a regular file.');
+        const contents = await readFile(absolute);
+        if (contents.length !== info.size || sha256(contents) !== entry.sha256)
+          throw new Error('Mutation input differs from its parent snapshot.');
+        return contents;
+      }),
+    );
+    for (let index = 0; index < batch.length; index++) {
+      const result = results[index]!;
+      if (result.status === 'rejected') throw result.reason;
+      const entry = batch[index]!;
+      if (repositoryTestContextRelativePath(entry.path) !== null) contextInputs.set(entry.path, result.value);
+    }
   }
   return contextInputs;
 }

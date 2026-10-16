@@ -123,6 +123,24 @@ test('mutation runner accepts a partition subset bound to the full captured test
   expect((await input.verify()).rejection).toBeNull();
 });
 
+test('mutation input verification rejects drift beyond the first read batch and permits only restored bytes', async () => {
+  const input = fixture();
+  const { descriptor } = input;
+  for (let index = 0; index < 12; index++)
+    descriptor.test_inputs.push(
+      input.write(`tests/helpers/batch-${String(index).padStart(2, '0')}.ts`, `// fixture ${index}\n`),
+    );
+  descriptor.test_inputs.sort((left, right) => (left.path < right.path ? -1 : left.path > right.path ? 1 : 0));
+  descriptor.test_fingerprint = testSelectionFingerprint(descriptor.test_selection, descriptor.test_inputs);
+  process.env.AGENT_RUNTIME_TEST_FINGERPRINT = descriptor.test_fingerprint;
+  input.bindTools();
+  expect((await input.verify()).rejection).toBeNull();
+  input.write('tests/helpers/batch-11.ts', '// drifted last input\n');
+  expect((await input.verify()).rejection).toBe('test-inputs');
+  input.write('tests/helpers/batch-11.ts', '// fixture 11\n');
+  expect((await input.verify()).rejection).toBeNull();
+});
+
 test('quality fingerprint preserves the ordinary preimage and separately binds explicit capture mode', () => {
   const inputs = { source_fingerprint: 'source', test_fingerprint: 'tests', tool_fingerprint: 'tools' };
   const ordinary = sha256('{"sources":"source","tests":"tests","tooling":"tools"}');

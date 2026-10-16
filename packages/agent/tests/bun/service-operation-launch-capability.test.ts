@@ -8,6 +8,7 @@ import {
   closeServiceOperationCustody,
   closeServiceOperationCustodyHandle,
   closeServiceOperationDatabase,
+  initializeServiceOperationCustodySchema,
   openServiceOperationDatabase,
   readServiceOperationCustodyForOperation,
   recordServiceOperationLaunchPid,
@@ -854,6 +855,144 @@ test('launch reservation cannot replace UNKNOWN, terminal, or already launching 
     }
   } finally {
     retainExpectedUnknownFixture(fixture.root, 'UNKNOWN launch reservation remains nonreplaceable');
+  }
+});
+
+test('an exact prepared image can be reserved again with a fresh revision and capability', () => {
+  const fixture = openCustodyFixture();
+  let originalClosed = false;
+  let handle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
+  let reopened: ReturnType<typeof openServiceOperationDatabase> | undefined;
+  try {
+    initializeServiceOperationCustodySchema(fixture.database);
+    const first = reserveServiceOperationLaunch(
+      fixture.database,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      'c'.repeat(64),
+    );
+    recordServiceOperationLaunchPid(
+      fixture.database,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      first.revision,
+      pid,
+      first.child_capability,
+    );
+    handle = claimReservedServiceOperationLaunch(
+      fixture.database,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      pid,
+      first.child_capability,
+    );
+    const preparedRevision = closeServiceOperationCustody(handle, 'prepared', 'e'.repeat(64));
+    closeServiceOperationCustodyHandle(handle);
+    handle = undefined;
+    originalClosed = true;
+
+    reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    const second = reserveServiceOperationLaunch(
+      reopened,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      'e'.repeat(64),
+    );
+    expect(second.phase).toBe('launching');
+    expect(second.revision).toBe(preparedRevision + 1);
+    expect(second.child_capability).not.toBe(first.child_capability);
+    expect(second.owner_token).toBe(serviceOperationLaunchCapabilityDigest(second.child_capability));
+    const persisted = readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId);
+    expect(persisted?.phase).toBe('launching');
+    expect(persisted?.revision).toBe(second.revision);
+    expect(persisted?.owner_token).toBe(second.owner_token);
+    recordServiceOperationLaunchPid(
+      reopened,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      second.revision,
+      pid,
+      second.child_capability,
+    );
+    handle = claimReservedServiceOperationLaunch(
+      reopened,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      pid,
+      second.child_capability,
+    );
+    closeServiceOperationCustody(handle, 'prepared', 'e'.repeat(64));
+    closeServiceOperationCustodyHandle(handle);
+    handle = undefined;
+    reopened = undefined;
+  } finally {
+    if (handle) closeServiceOperationCustodyHandle(handle);
+    else if (!originalClosed) closeServiceOperationDatabase(fixture.database);
+    if (reopened) closeServiceOperationDatabase(reopened);
+    rmSync(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test('closing a non-live handle is rejected before reading its custody', () => {
+  expect(() =>
+    closeServiceOperationCustody(
+      null as unknown as Parameters<typeof closeServiceOperationCustody>[0],
+      'prepared',
+      null,
+    ),
+  ).toThrow('Service operation custody: live operation handle is required');
+});
+
+test('reconciliation rolls back when an AFTER UPDATE trigger deletes its CAS row', async () => {
+  const fixture = openCustodyFixture();
+  try {
+    const prior = reserveServiceOperationLaunch(
+      fixture.database,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      'c'.repeat(64),
+    );
+    fixture.database.exec(
+      'CREATE TRIGGER remove_reconciled_custody AFTER UPDATE OF phase ON agent_host_service_operation_custody ' +
+        "WHEN NEW.phase='prepared' BEGIN DELETE FROM agent_host_service_operation_custody " +
+        'WHERE workspace_id=NEW.workspace_id AND operation_id=NEW.operation_id; END',
+    );
+    await expectRejection(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => ({ phase: 'prepared', evidence_digest: 'c'.repeat(64) }),
+      ),
+      'same-operation reconciliation compare-and-swap failed',
+    );
+    const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    try {
+      const { child_capability: _childCapability, ...before } = prior;
+      expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toEqual(before);
+    } finally {
+      closeServiceOperationDatabase(reopened);
+    }
+  } finally {
+    retainExpectedUnknownFixture(fixture.root, 'failed launch reconciliation retains its original reservation');
   }
 });
 
