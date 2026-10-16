@@ -1122,6 +1122,13 @@ Its tickets, claims and history records keep those component bounds during
 comparison and validation. They do not inherit the 10,000-node limit of one
 untrusted ingress message. Ordinary ingress retains that limit. Existing v1
 canonical bytes, digests, CAS, FIFO and authority checks remain unchanged.
+Direct ledger validation captures one owned descriptor image before schema and
+semantic checks, and success returns that mutable image without caller aliases.
+The codec validates its existing captured image without recapturing it. Capture
+failure or encoded-byte overflow returns `SCHEMA_INVALID` at `$` without
+converting arbitrary thrown values. Canonical JSON that reaches the schema gate
+retains its ordered diagnostics. Optional host clock observation follows schema
+success; the returned image grants no later authority or freshness.
 Composite continuation receipts have a 64MiB aggregate bound and validate
 property descriptors before reading fields; accessors and serialization hooks
 are rejected without invocation.

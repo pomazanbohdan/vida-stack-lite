@@ -63,8 +63,12 @@ as historical metadata outside active counts, without changing old observations.
 The split is published at64d33d3. The corrected public-ingress child has a complete
 local triple at775ce21, recorded in WORK and the automatic contour document.
 Earlier failures and UNKNOWN receipts retain their original classification.
-Advance to main-envelopes: preserve the shared error-normalizer correction and
-explicit removed-function lineage, then run its complete declared selection.
+Advance main-envelopes through its owned-image correction and complete declared
+selection. Retain the shared error normalizer, private substantive validator's
+original ceilings, explicit three callable removals and separately bounded capture
+facade. The second complete mutation cycle reached696/831confirmed Killed and
+remains open; WORK owns exact receipts. Do not reset reused function IDs or
+weaken the strict correspondence gate to admit the new facade.
 Do not add another parent join, repeat an unchanged campaign or raise its deadline.
 Root owns Source, shared helpers, registry,
 frozen-plan metadata, documentation, checks and Git. Workers do not run competing

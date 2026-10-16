@@ -48,6 +48,7 @@ function rejectCanonical(message: string): never {
   throw new Error('runtime envelope rejected: ' + message);
 }
 const canonicalAttempt = Result.fromThrowable(canonicalJsonImageWithNodeLimit, errorMessage);
+const ledgerImageAttempt = Result.fromThrowable(canonicalJsonImageWithNodeLimit);
 function assertDataOnlyJson(value: unknown): unknown {
   return canonicalAttempt(value, 0, MAX_CANONICAL_NODES).mapErr(rejectCanonical)._unsafeUnwrap().image;
 }
@@ -88,7 +89,7 @@ export const localToolEnvelope = z
 export function coordinationLedgerJson(value: unknown, depth = 0): string {
   const { image, json: payload } = canonicalJsonImageWithNodeLimit(value, depth, MAX_CANONICAL_BYTES);
   reject([Buffer.byteLength(payload) > MAX_CANONICAL_BYTES], 'coordination ledger byte budget exceeded');
-  const result = validateCoordinationLedgerV1(image);
+  const result = validateCoordinationLedgerImageV1(image, {});
   reject([!result.ok], 'coordination ledger rejected: ' + result.issues.map((issue) => issue.message).join('; '));
   return payload;
 }
@@ -262,12 +263,6 @@ function ledgerHistoricalResourceKey(resource: string, path: string): string {
   return resource.toLowerCase();
 }
 
-function ledgerRecordId(value: Readonly<Record<string, unknown>>, field: string, path: string): string {
-  const id = value[field];
-  ledgerRequire(typeof id === 'string' && id.length > 0, 'HISTORY_ID_MISSING', path, 'history identifier missing');
-  return id;
-}
-
 function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: number | null): void {
   ledgerRequire(
     ledger.tickets.length +
@@ -329,15 +324,20 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
     ['retirements', 'retirement_id'],
   ] as const)
     uniqueLedgerValues(
-      ledger[field].map((entry, index) => ledgerRecordId(entry, id, `$.${field}.${index}.${id}`)),
+      ledger[field].map((entry) => entry[id] as string),
       'HISTORY_ID_DUPLICATE',
       `$.${field}`,
       field + ' identifiers',
     );
 
-  const tickets = new Map(ledger.tickets.map((ticket) => [ticket.ticket_id, ticket]));
+  const activeClaimsByTicket = new Map<string, CoordinationClaim[]>();
+  const tickets = new Map(
+    ledger.tickets.map((ticket) => {
+      activeClaimsByTicket.set(ticket.ticket_id, []);
+      return [ticket.ticket_id, ticket];
+    }),
+  );
   const claims = new Map(ledger.claims.map((claim) => [claim.claim_id, claim]));
-  const claimsByTicket = new Map<string, CoordinationClaim[]>();
   ledger.claims.forEach((claim, index) => {
     const ticket = tickets.get(claim.ticket_id);
     ledgerRequire(ticket, 'CLAIM_TICKET_MISSING', `$.claims.${index}.ticket_id`, 'claim ticket is missing');
@@ -361,23 +361,20 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       `$.claims.${index}.resources`,
       'claim resources',
     );
-    if (claim.status === 'active')
+    if (claim.status === 'active') {
       ledgerRequire(
-        claim.resources.length > 0 &&
-          claim.resources.every((resource) => ticket.exclusive_resources.includes(resource)),
+        claim.resources.every((resource) => ticket.exclusive_resources.includes(resource)),
         'ACTIVE_CLAIM_SCOPE_INVALID',
         `$.claims.${index}.resources`,
         'active claim exceeds ticket resource scope',
       );
+      activeClaimsByTicket.get(claim.ticket_id)!.push(claim);
+    }
     ledgerTimestamp(claim.lease_expires_at, `$.claims.${index}.lease_expires_at`);
     ledgerTimestamp(claim.created_at, `$.claims.${index}.created_at`);
     ledgerTimestamp(claim.renewed_at, `$.claims.${index}.renewed_at`);
-    const entries = claimsByTicket.get(claim.ticket_id) ?? [];
-    entries.push(claim);
-    claimsByTicket.set(claim.ticket_id, entries);
   });
 
-  const occupied = new Set<string>();
   ledger.tickets.forEach((ticket, index) => {
     ledgerTimestamp(ticket.created_at, `$.tickets.${index}.created_at`);
     uniqueLedgerValues(
@@ -395,12 +392,6 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       'TICKET_RESOURCE_DUPLICATE',
       `$.tickets.${index}.exclusive_resources`,
       'ticket exclusive resources',
-    );
-    uniqueLedgerValues(
-      ticket.claim_ids,
-      'TICKET_CLAIM_DUPLICATE',
-      `$.tickets.${index}.claim_ids`,
-      'ticket claim identifiers',
     );
     uniqueLedgerValues(
       [...ticket.active_resources, ...ticket.blocked_resources].map((resource, resourceIndex) =>
@@ -436,7 +427,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       `$.tickets.${index}.claim_ids`,
       'ticket references a claim owned by another ticket',
     );
-    const activeClaims = (claimsByTicket.get(ticket.ticket_id) ?? []).filter((claim) => claim.status === 'active');
+    const activeClaims = activeClaimsByTicket.get(ticket.ticket_id)!;
     uniqueLedgerValues(
       activeClaims.flatMap((claim) =>
         claim.resources.map((resource) => ledgerResourceKey(resource, `$.tickets.${index}.active_resources`)),
@@ -445,7 +436,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       `$.tickets.${index}.active_resources`,
       'active claim ownership',
     );
-    const projected = [...new Set(activeClaims.flatMap((claim) => claim.resources))].sort();
+    const projected = activeClaims.flatMap((claim) => claim.resources).sort();
     ledgerRequire(
       sameCoordinationStrings(projected, [...ticket.active_resources].sort()),
       'ACTIVE_RESOURCE_PROJECTION_INVALID',
@@ -473,8 +464,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
     );
     if (ticket.status === 'ready_for_handoff') {
       ledgerRequire(
-        ticket.blocked_resources.length === 0 &&
-          sameCoordinationStrings([...ticket.active_resources].sort(), [...ticket.exclusive_resources].sort()),
+        sameCoordinationStrings([...ticket.active_resources].sort(), [...ticket.exclusive_resources].sort()),
         'READY_OWNERSHIP_INCOMPLETE',
         `$.tickets.${index}`,
         'ready ticket requires complete current ownership',
@@ -491,7 +481,6 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       const key = ledgerResourceKey(resource, `$.tickets.${index}.active_resources.${resourceIndex}`);
       const earlier = ledger.tickets.find(
         (candidate) =>
-          candidate.ticket_id !== ticket.ticket_id &&
           candidate.sequence < ticket.sequence &&
           ['queued', 'active', 'ready_for_handoff'].includes(candidate.status) &&
           [...candidate.active_resources, ...candidate.blocked_resources].some(
@@ -504,13 +493,6 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
         `$.tickets.${index}.active_resources`,
         'resource activation violates coordination FIFO',
       );
-      ledgerRequire(
-        !occupied.has(key),
-        'ACTIVE_RESOURCE_CONFLICT',
-        `$.tickets.${index}.active_resources`,
-        'resource has conflicting owners',
-      );
-      occupied.add(key);
     }
   });
 
@@ -561,18 +543,6 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       `$.dispositions.${index}`,
       'disposition subject is missing',
     );
-    ledgerRequire(
-      disposition.kind !== 'recover_expired' || kind === 'claim',
-      'DISPOSITION_SUBJECT_KIND_INVALID',
-      `$.dispositions.${index}`,
-      'claim recovery disposition requires a claim subject',
-    );
-    ledgerRequire(
-      disposition.kind === 'recover_expired' || kind === 'notice',
-      'DISPOSITION_SUBJECT_KIND_INVALID',
-      `$.dispositions.${index}`,
-      'conflict disposition requires a notice subject',
-    );
   });
 
   const contours = new Map(ledger.contours.map((entry) => [String(entry.contour_id), entry]));
@@ -586,8 +556,8 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       'contour ticket is missing',
     );
     ledgerRequire(
-      contourTickets.every((ticket) => ticket?.generation === contour.generation) &&
-        canonicalJsonDigest(contour.work_ids) === canonicalJsonDigest(contourTickets.map((ticket) => ticket?.work_id)),
+      contourTickets.every((ticket) => ticket!.generation === contour.generation) &&
+        canonicalJsonDigest(contour.work_ids) === canonicalJsonDigest(contourTickets.map((ticket) => ticket!.work_id)),
       'CONTOUR_TICKET_BINDING_INVALID',
       `$.contours.${index}`,
       'contour ticket binding invalid',
@@ -648,28 +618,16 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
     );
     if (batch.status !== 'ready_for_user_testing') {
       const contourTickets = (contour.ticket_ids as readonly string[]).map((id) => tickets.get(id));
-      ledgerRequire(
-        contourTickets.every(Boolean),
-        'BATCH_TICKET_MISSING',
-        `$.batches.${index}`,
-        'release batch ticket is missing',
-      );
       if (batch.status === 'accepted')
         ledgerRequire(
-          contourTickets.every(
-            (ticket) =>
-              ticket?.status === 'released' &&
-              ticket.active_resources.length === 0 &&
-              ticket.blocked_resources.length === 0 &&
-              !(claimsByTicket.get(ticket.ticket_id) ?? []).some((claim) => claim.status === 'active'),
-          ),
+          contourTickets.every((ticket) => ticket!.status === 'released'),
           'ACCEPTED_BATCH_NOT_RELEASED',
           `$.batches.${index}`,
           'accepted release batch must atomically release contour tickets',
         );
       else
         ledgerRequire(
-          contourTickets.every((ticket) => ticket?.status === 'queued'),
+          contourTickets.every((ticket) => ticket!.status === 'queued'),
           'RETURNED_BATCH_NOT_QUEUED',
           `$.batches.${index}`,
           'returned release batch must atomically queue contour tickets',
@@ -714,10 +672,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
   ledger.batches.forEach((batch, index) =>
     ledgerRequire(
       ledger.operations.some(
-        (operation) =>
-          operation.kind === 'contour_assurance' &&
-          operation.contour_id === batch.contour_id &&
-          operation.contour_digest === contours.get(String(batch.contour_id))?.contour_digest,
+        (operation) => operation.kind === 'contour_assurance' && operation.contour_id === batch.contour_id,
       ),
       'BATCH_ASSURANCE_MISSING',
       `$.batches.${index}`,
@@ -773,13 +728,9 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
   });
 }
 
-/** Current-v1 coordination validation shared by migration and the trusted host.
- * Historical entries validate their immutable snapshots and references; only
- * active claims are rebound to the current ticket scope. Lease freshness is a
- * host observation and is checked only when currentTimeMs is supplied. */
-export function validateCoordinationLedgerV1(
+function validateCoordinationLedgerImageV1(
   value: unknown,
-  options: { readonly currentTimeMs?: number | null } = {},
+  options: { readonly currentTimeMs?: number | null },
 ): CoordinationLedgerValidationResult {
   if (!ledgerValidator(value))
     return {
@@ -800,3 +751,28 @@ export function validateCoordinationLedgerV1(
     throw error;
   }
 }
+
+/** Validate one owned descriptor image; later caller mutation cannot change
+ * what schema and semantic checks observed. History keeps immutable bindings;
+ * host lease freshness is checked only when currentTimeMs is supplied. */
+function captureCoordinationLedgerV1(
+  value: unknown,
+  options: { readonly currentTimeMs?: number | null } = {},
+): CoordinationLedgerValidationResult {
+  const captured = ledgerImageAttempt(value, 0, MAX_CANONICAL_BYTES);
+  if (captured.isErr() || Buffer.byteLength(captured.value.json) > MAX_CANONICAL_BYTES)
+    return {
+      ok: false,
+      ledger: null,
+      issues: [
+        {
+          code: 'SCHEMA_INVALID',
+          path: '$',
+          message: 'ledger record must match current CoordinationLedger/v1: canonical JSON input is invalid',
+        },
+      ],
+    };
+  return validateCoordinationLedgerImageV1(captured.value.image, options);
+}
+
+export { captureCoordinationLedgerV1 as validateCoordinationLedgerV1 };

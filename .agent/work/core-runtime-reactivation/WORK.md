@@ -6360,6 +6360,70 @@ Apply the reviewed ZOMBIES successful-call assertion wrappers and actual fresh
 terminal findings in the same checked packet. No equivalent-mutant waiver,
 current Runtime cutover or install/unblock is authorized by these Source checks.
 
+## Owned ledger image correction and settled lineage
+
+The actual descriptor/live-value regression failed before Source changes at
+ownerWnILdc:0PASS/1FAIL,585.944372ms, native true!==false. The prior validator
+accepted a live next_sequence2 while its data descriptor held invalid0. The
+fixed boundary passed the three new image/capture controls at oYp1NT in467.646293ms.
+Ledger validation now captures once before Ajv/semantics and returns a mutable
+owned image; the codec validates its own already captured image privately.
+Unmapped neverthrow capture rejects hostile errors without conversion. Envelope
+error rendering, active schema/loader, authority/CAS and UNKNOWN are unchanged.
+The system specification records this boundary and its structured failure policy.
+
+The integrated batch removes schema-implied nonempty/history-ID/claim-ID and
+disposition-pair guards, the redundant FIFO occupied set and same-ticket term,
+later batch ticket existence/released-resource/digest repeats, and proven optional
+reads. Earlier schema, scope, normalized uniqueness, projection, FIFO search,
+ticket/claim/contour/operation binding and host freshness checks retain order.
+The existing ticket-index callback seeds active-claim groups, and the claim pass
+fills only active groups; this removes repeated get/set/default/filter work and
+avoids an extra ticket traversal. A first static capture exposed parentCC3>2;
+reusing that existing index callback restores parentCC2 without raising its cap.
+Both superseded static captures remain diagnostic, not numerical qualification.
+
+Native success assertions compare JSON values while separately checking ownership;
+their prior plain-prototype assumptions initially failed four affected cases.
+New tests cover hostile capture errors, encoded byte/depth bounds, no live reads,
+alias isolation/mutability, codec issue propagation, all aggregate count fields
+in two mixed fixtures, exact duplicate diagnostics, missing claim references,
+calendar dates, reversed minimum-expiry order/FIFO array order, retirement
+increment/bound isolation, and Unicode ß/ss keys that uppercase folding merges.
+The reviewer initially called uppercase folding equivalent; that claim was
+disproved by the passing concrete Unicode witness. A separate review's alleged
+empty-active-claim regression overlooked schema claim.allOf/minItems1. Actual
+schema rejection is now explicitly asserted; the existing conditional remains.
+ZOMBIES successful validation/consumption calls use the existing expectReturned
+owner; old six UNKNOWN outcomes are not reclassified.
+
+Final complete three-file check passed40/0 at uw4KAw in4080.703112ms, with
+complete capture, closed process group and same boot. Source101 and tests459
+passed TypeScript. Earlier failed/wrong-path development invocation is retained
+as its own evidence and is not complete-selection proof. These are affected
+checks, not current numerical coverage/CRAP/mutation acceptance.
+The strict hook then rejected two Proxy Reflect.get returns with unsafe-any
+lint. They now explicitly cross as unknown; no hook override was used. The
+same complete selection passed40/0 at gcr1ON in2832.457905ms after adding positive
+open-notice/no-disposition, partial active ownership and absent host-clock/past
+lease controls. Their exact outputs distinguish otherwise unobserved conditionals.
+
+One final settled Source capture quality-ledger-owned-image-settled-v3-inventory-
+20261016.json has79roles. Independent final review is
+/workspace/attachments/quality-ledger-owned-image-v3-final-independent-20261016.md.
+The root-owned bounded updater quality-ledger-owned-image-plan-update-20261016.ts
+uses prepared v3 candidate/receipt bytes and serialized CAS. It retains78original
+roles, explicitly removes ledgerRecordId, the active-status filter callback and
+the accepted-batch active-claim callback, and adds one prospectively bounded10/10
+capture facade. Original validator6/6 and diagnostic callback2/2 remain on private
+ImageV1 successors with all original measurements unchanged. The facade has its
+own captureCoordinationLedgerV1 ID and exports the existing public module binding;
+the strict gate's ban on resetting a shared identity is unchanged. Counts are
+5451retained/1661new/94removed/7112current roles across149bound Sources. Historical
+reviews and missing original report admission remain unchanged. The new v2 key
+is scope_review_main_envelopes_owned_image_20261016. Fresh exact coverage,
+same-run scoped CRAP and complete declared mutation follow publication.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

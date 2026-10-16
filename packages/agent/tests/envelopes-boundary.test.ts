@@ -36,7 +36,34 @@ function assertLedgerRejection(result: CoordinationLedgerValidationResult, code:
   assert.equal(typeof issue.message, 'string');
   assert.ok(issue.message.trim().length > 0);
   assert.equal(issue.message, issue.message.trim());
-  if (code.endsWith('DUPLICATE')) assert.match(issue.message, / contains aliases or duplicate identifiers$/);
+  if (code.endsWith('DUPLICATE')) {
+    const labels: Readonly<Record<string, string>> = {
+      TICKET_ID_DUPLICATE: 'ticket identifiers',
+      TICKET_SEQUENCE_DUPLICATE: 'ticket sequences',
+      CLAIM_ID_DUPLICATE: 'claim identifiers',
+      CLAIM_RESOURCE_DUPLICATE: 'claim resources',
+      TICKET_CONTOUR_DUPLICATE: 'ticket contour keys',
+      TICKET_RESOURCE_DUPLICATE: 'ticket exclusive resources',
+      TICKET_ACTIVE_RESOURCE_DUPLICATE: 'ticket resources',
+      ACTIVE_CLAIM_RESOURCE_DUPLICATE: 'active claim ownership',
+      NOTICE_RESOURCE_DUPLICATE: 'notice resources',
+      NOTICE_ACKNOWLEDGEMENT_DUPLICATE: 'notice acknowledgement actors',
+      BATCH_OPERATION_ORDER_DUPLICATE: 'release batch operation orders',
+      POST_DEPLOYMENT_CHECK_DUPLICATE: 'post-deployment check identifiers',
+    };
+    const label = code === 'HISTORY_ID_DUPLICATE' ? pointer.slice(2) + ' identifiers' : labels[code];
+    assert.equal(typeof label, 'string');
+    assert.equal(issue.message, label + ' contains aliases or duplicate identifiers');
+  }
+}
+
+function assertLedgerAccepted(result: CoordinationLedgerValidationResult, expected: unknown): void {
+  assert.ok(result !== null && typeof result === 'object');
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.issues, []);
+  if (!result.ok) assert.fail('ledger image should validate');
+  assert.notEqual(result.ledger, expected);
+  assert.deepEqual(JSON.parse(JSON.stringify(result.ledger)), expected);
 }
 
 function coordinationLedgerFixture(): CoordinationLedger {
@@ -95,16 +122,30 @@ function coordinationLedgerFixture(): CoordinationLedger {
 
 describe('runtime envelope canonicalization boundary', () => {
   test('distinguishes the ledger encoded byte cap from the canonical raw string cap', async () => {
-    const { coordinationLedgerJson } = await import('../src/contracts/envelopes.js');
+    const { coordinationLedgerJson, validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
     const { MAX_CANONICAL_BYTES } = await import('../src/contracts/canonical-json-core.js');
     // A JSON string adds two quote bytes. At the cap it reaches schema rejection;
     // one encoded byte above it must stop at the earlier ledger byte guard.
-    assert.throws(() => coordinationLedgerJson('a'.repeat(MAX_CANONICAL_BYTES - 2)), {
+    const exact = 'a'.repeat(MAX_CANONICAL_BYTES - 2);
+    const above = 'a'.repeat(MAX_CANONICAL_BYTES - 1);
+    assert.throws(() => coordinationLedgerJson(exact), {
       message: 'coordination ledger rejected: ledger record must match current CoordinationLedger/v1: must be object',
     });
-    assert.throws(() => coordinationLedgerJson('a'.repeat(MAX_CANONICAL_BYTES - 1)), {
+    assert.throws(() => coordinationLedgerJson(above), {
       message: 'coordination ledger byte budget exceeded',
     });
+    const exactResult = expectReturned(() => validateCoordinationLedgerV1(exact));
+    assertLedgerRejection(exactResult, 'SCHEMA_INVALID', '$');
+    assert.equal(
+      exactResult.issues[0]!.message,
+      'ledger record must match current CoordinationLedger/v1: must be object',
+    );
+    const aboveResult = expectReturned(() => validateCoordinationLedgerV1(above));
+    assertLedgerRejection(aboveResult, 'SCHEMA_INVALID', '$');
+    assert.equal(
+      aboveResult.issues[0]!.message,
+      'ledger record must match current CoordinationLedger/v1: canonical JSON input is invalid',
+    );
   });
 
   test('owned paths preserve Unicode, device and historical wildcard boundaries', async () => {
@@ -404,7 +445,7 @@ describe('runtime envelope canonicalization boundary', () => {
   });
 
   test('coordination schema rejection retains every diagnostic and leaves a later valid ledger usable', async () => {
-    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const { validateCoordinationLedgerV1, coordinationLedgerJson } = await import('../src/contracts/envelopes.js');
     const ledger = coordinationLedgerFixture();
     const invalid = { ...ledger, revision: 0, workspace_id: 'not-a-workspace-digest' };
     const before = structuredClone(invalid);
@@ -428,6 +469,9 @@ describe('runtime envelope canonicalization boundary', () => {
       assert.doesNotMatch(issue.message, /undefined|invalid value/);
     }
     expect(invalid).toEqual(before);
+    assert.throws(() => coordinationLedgerJson(invalid), {
+      message: 'coordination ledger rejected: ' + result.issues.map((issue) => issue.message).join('; '),
+    });
     const validResult = expectReturned(() => validateCoordinationLedgerV1(ledger));
     expect(validResult).not.toBeNull();
     expect(typeof validResult).toBe('object');
@@ -438,6 +482,138 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(typeof repeated).toBe('object');
     expect(Array.isArray(repeated.issues)).toBe(true);
     expect(repeated).toEqual(result);
+    const emptyActiveClaim = expectReturned(() =>
+      validateCoordinationLedgerV1({
+        ...ledger,
+        tickets: [{ ...ledger.tickets[0]!, active_resources: [] }],
+        claims: [{ ...ledger.claims[0]!, resources: [] }],
+      }),
+    );
+    assert.equal(emptyActiveClaim.ok, false);
+    assert.equal(emptyActiveClaim.ledger, null);
+    assert.equal(emptyActiveClaim.issues[0]?.code, 'SCHEMA_INVALID');
+    assert.equal(emptyActiveClaim.issues[0]?.path, '$.claims.0.resources');
+    assert.equal(
+      emptyActiveClaim.issues[0]?.message,
+      'ledger record must match current CoordinationLedger/v1: must NOT have fewer than 1 items',
+    );
+    assert.ok(emptyActiveClaim.issues.every((issue) => issue.code === 'SCHEMA_INVALID'));
+  });
+
+  test('captures descriptor values once before schema rejection and defers the clock option', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    let liveReads = 0;
+    let clockReads = 0;
+    let descriptorProbes = 0;
+    const value = new Proxy(ledger, {
+      get(target, key, receiver) {
+        liveReads++;
+        if (key === 'next_sequence') return 2;
+        return Reflect.get(target, key, receiver) as unknown;
+      },
+      getOwnPropertyDescriptor(target, key) {
+        if (key === 'next_sequence') {
+          descriptorProbes++;
+          return { configurable: true, enumerable: true, writable: true, value: 0 };
+        }
+        return Reflect.getOwnPropertyDescriptor(target, key);
+      },
+    });
+    const result = expectReturned(() =>
+      validateCoordinationLedgerV1(value, {
+        get currentTimeMs() {
+          clockReads++;
+          return Date.parse('2026-10-16T00:00:00.000Z');
+        },
+      }),
+    );
+    assertLedgerRejection(result, 'SCHEMA_INVALID', '$.next_sequence');
+    assert.equal(liveReads, 0);
+    assert.equal(descriptorProbes, 1);
+    assert.equal(clockReads, 0);
+  });
+
+  test('returns an isolated mutable ledger image built from valid descriptors', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    const expected = JSON.parse(JSON.stringify(ledger)) as unknown;
+    let liveReads = 0;
+    let clockReads = 0;
+    const value = new Proxy(ledger, {
+      get(target, key, receiver) {
+        liveReads++;
+        if (key === 'workspace_id') return 'not-a-workspace-digest';
+        return Reflect.get(target, key, receiver) as unknown;
+      },
+    });
+    const result = expectReturned(() =>
+      validateCoordinationLedgerV1(value, {
+        get currentTimeMs() {
+          clockReads++;
+          return Date.parse('2026-10-16T00:00:00.000Z');
+        },
+      }),
+    );
+    assert.equal(result.ok, true);
+    if (!result.ok) throw new Error('descriptor image should validate');
+    const owned = result.ledger;
+    assert.notEqual(owned, value);
+    assert.notEqual(owned.tickets, ledger.tickets);
+    assert.notEqual(owned.tickets[0], ledger.tickets[0]);
+    assert.equal(Object.getPrototypeOf(owned), null);
+    assert.equal(Object.getPrototypeOf(owned.tickets[0]), null);
+    assert.deepEqual(JSON.parse(JSON.stringify(owned)), expected);
+    assert.deepEqual(JSON.parse(JSON.stringify(ledger)), expected);
+    assert.equal(liveReads, 0);
+    assert.equal(clockReads, 1);
+    Object.defineProperty(ledger, 'workspace_id', { value: 'c'.repeat(64) });
+    Object.defineProperty(ledger.tickets[0]!, 'ticket_id', { value: 'ticket-mutated-after-validation' });
+    assert.deepEqual(JSON.parse(JSON.stringify(owned)), expected);
+    Object.defineProperty(owned, 'revision', { value: 2 });
+    assert.equal(owned.revision, 2);
+    assert.equal(ledger.revision, 1);
+  });
+
+  test('ledger capture failures reject without converting arbitrary thrown values', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    let conversions = 0;
+    const hostile = {
+      [Symbol.toPrimitive]() {
+        conversions++;
+        throw new Error('capture failure must not be converted');
+      },
+    };
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    const failures: unknown[] = [cyclic, undefined, 1n];
+    for (const failure of [null, undefined, hostile]) {
+      failures.push(
+        new Proxy(
+          {},
+          {
+            getOwnPropertyDescriptor() {
+              throw failure;
+            },
+            ownKeys() {
+              return ['field'];
+            },
+          },
+        ),
+      );
+    }
+    let nested: unknown = null;
+    for (let depth = 0; depth < 66; depth++) nested = { child: nested };
+    failures.push(nested);
+    for (const input of failures) {
+      const result = expectReturned(() => validateCoordinationLedgerV1(input));
+      assertLedgerRejection(result, 'SCHEMA_INVALID', '$');
+      assert.equal(
+        result.issues[0]!.message,
+        'ledger record must match current CoordinationLedger/v1: canonical JSON input is invalid',
+      );
+    }
+    assert.equal(conversions, 0);
   });
 
   test('coordination ledger codec preserves typed ticket and claim records without mutation', async () => {
@@ -623,6 +799,23 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(typeof historicalResult).toBe('object');
     expect(Array.isArray(historicalResult.issues)).toBe(true);
     expect(historicalResult.ok).toBe(true);
+    const openNoticeLedger = {
+      ...historicalLedger,
+      notices: [{ ...notice, status: 'open', acknowledgements: [] }],
+      dispositions: [],
+    };
+    assertLedgerAccepted(
+      expectReturned(() => validateCoordinationLedgerV1(openNoticeLedger)),
+      openNoticeLedger,
+    );
+    const partialOwnership = {
+      ...ledger,
+      tickets: [{ ...owner, exclusive_resources: [...owner.exclusive_resources, 'resource:unowned'] }],
+    };
+    assertLedgerAccepted(
+      expectReturned(() => validateCoordinationLedgerV1(partialOwnership)),
+      partialOwnership,
+    );
     const acknowledgedResult = expectReturned(() =>
       validateCoordinationLedgerV1({ ...historicalLedger, notices: [{ ...notice, status: 'acknowledged' }] }),
     );
@@ -641,9 +834,9 @@ describe('runtime envelope canonicalization boundary', () => {
       notices: [expandedNotice, { ...expandedNotice, notice_id: 'notice-2' }],
       dispositions: [disposition, { ...disposition, disposition_id: 'disposition-2', subject_id: 'notice-2' }],
     };
-    assert.deepEqual(
+    assertLedgerAccepted(
       expectReturned(() => validateCoordinationLedgerV1(multiNotice)),
-      { ok: true, ledger: multiNotice, issues: [] },
+      multiNotice,
     );
 
     const cases: ReadonlyArray<{
@@ -805,6 +998,21 @@ describe('runtime envelope canonicalization boundary', () => {
         path: '$.tickets.1.active_resources',
       },
       {
+        value: { ...ledger, tickets: [activeAfterWaiter, earlierQueued], next_sequence: 3 },
+        code: 'FIFO_VIOLATION',
+        path: '$.tickets.0.active_resources',
+      },
+      {
+        value: { ...ledger, claims: [{ ...claim, ticket_id: 'ticket-absent' }] },
+        code: 'CLAIM_TICKET_MISSING',
+        path: '$.claims.0.ticket_id',
+      },
+      {
+        value: { ...ledger, tickets: [{ ...owner, claim_ids: [...owner.claim_ids, 'claim-absent'] }] },
+        code: 'TICKET_CLAIM_MISSING',
+        path: '$.tickets.0.claim_ids',
+      },
+      {
         value: { ...historicalLedger, notices: [{ ...notice, status: 'acknowledged', acknowledgements: [] }] },
         code: 'NOTICE_ACKNOWLEDGEMENT_MISSING',
         path: '$.notices.0.acknowledgements',
@@ -886,6 +1094,16 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(typeof readyResult).toBe('object');
     expect(Array.isArray(readyResult.issues)).toBe(true);
     expect(readyResult.ok).toBe(true);
+    const pastLease = '1969-12-31T00:00:00.000Z';
+    const noObservedClock = {
+      ...readyLedger,
+      tickets: readyLedger.tickets.map((ticket) => ({ ...ticket, expires_at: pastLease })),
+      claims: readyLedger.claims.map((entry) => ({ ...entry, lease_expires_at: pastLease })),
+    };
+    assertLedgerAccepted(
+      expectReturned(() => validateCoordinationLedgerV1(noObservedClock)),
+      noObservedClock,
+    );
     const currentReadyResult = expectReturned(() =>
       validateCoordinationLedgerV1(readyLedger, { currentTimeMs: Date.parse('2098-09-18T00:00:00.000Z') }),
     );
@@ -957,17 +1175,13 @@ describe('runtime envelope canonicalization boundary', () => {
       ],
       claims: [claim, { ...overlappingClaim, resources: [otherResource], lease_expires_at: laterLeaseExpiresAt }],
     } satisfies CoordinationLedger;
-    assert.deepEqual(
+    assertLedgerAccepted(
       expectReturned(() =>
         validateCoordinationLedgerV1(disjoint, {
           currentTimeMs: Date.parse('2099-09-17T00:00:00.000Z'),
         }),
       ),
-      {
-        ok: true,
-        ledger: disjoint,
-        issues: [],
-      },
+      disjoint,
     );
     const laterExpiryResult = expectReturned(() =>
       validateCoordinationLedgerV1(
@@ -978,19 +1192,20 @@ describe('runtime envelope canonicalization boundary', () => {
         { currentTimeMs: Date.parse('2099-09-17T00:00:00.000Z') },
       ),
     );
+    const reverseClaimOrder = { ...disjoint, claims: [...disjoint.claims].reverse() };
+    assertLedgerAccepted(
+      expectReturned(() => validateCoordinationLedgerV1(reverseClaimOrder)),
+      reverseClaimOrder,
+    );
     const readyWithTwoClaims = {
       ...disjoint,
       tickets: [{ ...disjoint.tickets[0]!, status: 'ready_for_handoff' as const }],
     } satisfies CoordinationLedger;
-    assert.deepEqual(
+    assertLedgerAccepted(
       expectReturned(() =>
         validateCoordinationLedgerV1(readyWithTwoClaims, { currentTimeMs: Date.parse('2099-09-17T00:00:00.000Z') }),
       ),
-      {
-        ok: true,
-        ledger: readyWithTwoClaims,
-        issues: [],
-      },
+      readyWithTwoClaims,
     );
     for (const currentTime of ['2099-09-18T00:00:00.000Z', '2099-09-18T12:00:00.000Z']) {
       assertLedgerRejection(
@@ -1046,11 +1261,123 @@ describe('runtime envelope canonicalization boundary', () => {
         path: '$.tickets',
       },
       { value: { ...ledger, claims: [claim, { ...claim }] }, code: 'CLAIM_ID_DUPLICATE', path: '$.claims' },
+      {
+        value: { ...ledger, tickets: [{ ...ticket, claim_ids: [claim.claim_id, claim.claim_id] }] },
+        code: 'SCHEMA_INVALID',
+        path: '$.tickets.0.claim_ids',
+      },
     ];
     for (const row of cases) {
       const result = expectReturned(() => validateCoordinationLedgerV1(row.value));
       assertLedgerRejection(result, row.code, row.path);
     }
+  });
+
+  test('rejects malformed ledger keys and calendar dates with their exact diagnostics', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const base = coordinationLedgerFixture();
+    const ticket = base.tickets[0]!;
+    const claim = base.claims[0]!;
+    for (const value of [' file:src/task.ts', 'file:src/task.ts ', 'file:src/\u0001task.ts']) {
+      const result = expectReturned(() =>
+        validateCoordinationLedgerV1({ ...base, claims: [{ ...claim, resources: [value] }] }),
+      );
+      assert.deepEqual(result.issues, [
+        { code: 'RESOURCE_KEY_INVALID', path: '$.claims.0.resources.0', message: 'resource key is invalid' },
+      ]);
+      assert.equal(result.ok, false);
+      assert.equal(result.ledger, null);
+      const historical = expectReturned(() =>
+        validateCoordinationLedgerV1({
+          ...base,
+          claims: [],
+          tickets: [
+            {
+              ...ticket,
+              exclusive_resources: [value],
+              status: 'released',
+              claim_ids: [],
+              active_resources: [],
+              expires_at: null,
+            },
+          ],
+        }),
+      );
+      assert.deepEqual(historical.issues, [
+        { code: 'RESOURCE_KEY_INVALID', path: '$.tickets.0.exclusive_resources.0', message: 'resource key is invalid' },
+      ]);
+      assert.equal(historical.ok, false);
+      assert.equal(historical.ledger, null);
+    }
+    for (const field of ['lease_expires_at', 'created_at', 'renewed_at']) {
+      const invalidTime = expectReturned(() =>
+        validateCoordinationLedgerV1({ ...base, claims: [{ ...claim, [field]: '2099-02-29T00:00:00Z' }] }),
+      );
+      assert.deepEqual(invalidTime.issues, [
+        { code: 'TIMESTAMP_INVALID', path: '$.claims.0.' + field, message: 'lease expiry is invalid' },
+      ]);
+      assert.equal(invalidTime.ok, false);
+      assert.equal(invalidTime.ledger, null);
+    }
+    const invalidTicketTime = expectReturned(() =>
+      validateCoordinationLedgerV1({ ...base, tickets: [{ ...ticket, created_at: '2099-02-29T00:00:00Z' }] }),
+    );
+    assertLedgerRejection(invalidTicketTime, 'TIMESTAMP_INVALID', '$.tickets.0.created_at');
+    assert.equal(invalidTicketTime.issues[0]!.message, 'lease expiry is invalid');
+  });
+
+  test('checks normalized resource aliases and combined ticket scope before projections', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const base = coordinationLedgerFixture();
+    const ticket = base.tickets[0]!;
+    const claim = base.claims[0]!;
+    const aliases = ['file:src/task.ts', 'file:SRC/TASK.TS'];
+    for (const row of [
+      {
+        value: {
+          ...base,
+          tickets: [{ ...ticket, exclusive_resources: aliases }],
+          claims: [{ ...claim, resources: aliases }],
+        },
+        code: 'CLAIM_RESOURCE_DUPLICATE',
+        pointer: '$.claims.0.resources',
+      },
+      {
+        value: { ...base, tickets: [{ ...ticket, contour_keys: aliases }] },
+        code: 'TICKET_CONTOUR_DUPLICATE',
+        pointer: '$.tickets.0.contour_keys',
+      },
+      {
+        value: { ...base, tickets: [{ ...ticket, blocked_resources: [...ticket.active_resources] }] },
+        code: 'TICKET_ACTIVE_RESOURCE_DUPLICATE',
+        pointer: '$.tickets.0',
+      },
+      {
+        value: { ...base, tickets: [{ ...ticket, blocked_resources: ['resource:outside-scope'] }] },
+        code: 'TICKET_RESOURCE_SCOPE_INVALID',
+        pointer: '$.tickets.0',
+      },
+    ]) {
+      const result = expectReturned(() => validateCoordinationLedgerV1(row.value));
+      assertLedgerRejection(result, row.code, row.pointer);
+      if (row.code === 'TICKET_RESOURCE_SCOPE_INVALID')
+        assert.equal(result.issues[0]!.message, 'ticket resources exceed exclusive scope');
+    }
+  });
+
+  test('keeps Unicode file keys distinct when uppercase folding would merge them', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const base = coordinationLedgerFixture();
+    const resources = ['file:src/ß.ts', 'file:src/ss.ts'];
+    const ledger = {
+      ...base,
+      tickets: [{ ...base.tickets[0]!, exclusive_resources: resources, active_resources: resources }],
+      claims: [{ ...base.claims[0]!, resources }],
+    };
+    assertLedgerAccepted(
+      expectReturned(() => validateCoordinationLedgerV1(ledger)),
+      ledger,
+    );
   });
 
   test('accepts a released claim from an earlier ticket generation', async () => {
@@ -1062,9 +1389,9 @@ describe('runtime envelope canonicalization boundary', () => {
       tickets: [{ ...base.tickets[0]!, generation: 2, status: 'released', active_resources: [], expires_at: null }],
       claims: [{ ...base.claims[0]!, generation: 1, status: 'released' }],
     };
-    assert.deepEqual(
+    assertLedgerAccepted(
       expectReturned(() => validateCoordinationLedgerV1(historical)),
-      { ok: true, ledger: historical, issues: [] },
+      historical,
     );
   });
 
@@ -1159,6 +1486,38 @@ describe('runtime envelope canonicalization boundary', () => {
       assertLedgerRejection(result, code, pointer);
       assert.equal(result.issues[0]!.message, message);
     }
+  });
+
+  test('counts every resource field in a mixed aggregate overflow before later semantic errors', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const base = coordinationLedgerFixture();
+    const resources = (prefix: string, count: number) =>
+      Array.from({ length: count }, (_, index) => `${prefix}:${index}`);
+    const ticket: CoordinationTicket = {
+      ...base.tickets[0]!,
+      contour_keys: resources('contour', 64),
+      exclusive_resources: resources('exclusive', 64),
+      active_resources: resources('active', 64),
+      blocked_resources: resources('blocked', 63),
+      claim_ids: ['claim-owner'],
+    };
+    assert.deepEqual(
+      [
+        ticket.contour_keys.length,
+        ticket.exclusive_resources.length,
+        ticket.active_resources.length,
+        ticket.blocked_resources.length,
+        ticket.claim_ids.length,
+        base.claims[0]!.resources.length,
+      ],
+      [64, 64, 64, 63, 1, 1],
+    );
+    const mixed = { ...base, tickets: Array.from({ length: 256 }, () => ticket) };
+    assert.equal(mixed.tickets.length, 256);
+    assert.equal(256 * (64 + 64 + 64 + 63 + 1) + 1, 65537);
+    const result = expectReturned(() => validateCoordinationLedgerV1(mixed));
+    assertLedgerRejection(result, 'AGGREGATE_RESOURCE_LIMIT', '$');
+    assert.equal(result.issues[0]!.message, 'coordination ledger aggregate resource limit exceeded');
   });
 
   test('coordination release history binds contour assurance, batch state, rebind, and retirement', async () => {
@@ -1373,9 +1732,9 @@ describe('runtime envelope canonicalization boundary', () => {
         },
       ],
     };
-    assert.deepEqual(
+    assertLedgerAccepted(
       expectReturned(() => validateCoordinationLedgerV1(multiEntry)),
-      { ok: true, ledger: multiEntry, issues: [] },
+      multiEntry,
     );
     const laterGenerationTicket = {
       ...supersedingTicket,
@@ -1440,6 +1799,44 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(typeof recoveredResult).toBe('object');
     expect(Array.isArray(recoveredResult.issues)).toBe(true);
     expect(recoveredResult.ok).toBe(true);
+
+    const repeatedNotice = {
+      schema: 'ConflictNotice/v1',
+      notice_id: 'notice-budget',
+      generation: 1,
+      contender_ticket_id: owner.ticket_id,
+      contender_work_id: owner.work_id,
+      owner_ticket_id: owner.ticket_id,
+      owner_work_id: owner.work_id,
+      owner_thread_id: owner.thread_id,
+      resources: [resource],
+      status: 'open',
+      acknowledgements: [],
+      created_at: '2026-09-18T00:00:00.000Z',
+    };
+    const allRecordFields = {
+      ...ready,
+      dispositions: [recoveryDisposition],
+      notices: Array.from({ length: 4085 }, () => repeatedNotice),
+    };
+    assert.deepEqual(
+      [
+        allRecordFields.tickets.length,
+        allRecordFields.claims.length,
+        allRecordFields.notices.length,
+        allRecordFields.dispositions.length,
+        allRecordFields.contours.length,
+        allRecordFields.batches.length,
+        allRecordFields.rebinds.length,
+        allRecordFields.operations.length,
+        allRecordFields.retirements.length,
+      ],
+      [3, 2, 4085, 1, 1, 1, 1, 2, 1],
+    );
+    assert.equal(3 + 2 + 4085 + 1 + 1 + 1 + 1 + 2 + 1, 4097);
+    const recordOverflow = expectReturned(() => validateCoordinationLedgerV1(allRecordFields));
+    assertLedgerRejection(recordOverflow, 'AGGREGATE_RECORD_LIMIT', '$');
+    assert.equal(recordOverflow.issues[0]!.message, 'coordination ledger aggregate record limit exceeded');
 
     const clockFailure = new Error('injected current-time observation failure');
     let observedFailure: unknown;
@@ -1653,6 +2050,16 @@ describe('runtime envelope canonicalization boundary', () => {
       },
       {
         value: { ...ready, retirements: [{ ...retirement, to_revision: 3 }] },
+        code: 'RETIREMENT_REVISION_INVALID',
+        path: '$.retirements.0',
+      },
+      {
+        value: { ...ready, retirements: [{ ...retirement, from_ledger_revision: 1, to_ledger_revision: 3 }] },
+        code: 'RETIREMENT_REVISION_INVALID',
+        path: '$.retirements.0',
+      },
+      {
+        value: { ...ready, retirements: [{ ...retirement, from_ledger_revision: 2, to_ledger_revision: 4 }] },
         code: 'RETIREMENT_REVISION_INVALID',
         path: '$.retirements.0',
       },

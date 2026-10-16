@@ -353,7 +353,7 @@ describe('machine-checked public export ZOMBIES matrix', () => {
     expect(new Set(digests).size).toBe(1);
     const envelopes = Array.from({ length: 64 }, () => {
       const input = validEnvelope();
-      return { input, returned: runtime.validateRuntimeEnvelope(input) };
+      return { input, returned: expectReturned(() => runtime.validateRuntimeEnvelope(input)) };
     });
     expect(envelopes).toHaveLength(64);
     for (const { input, returned } of envelopes) {
@@ -395,10 +395,12 @@ describe('machine-checked public export ZOMBIES matrix', () => {
 
   test('Simple: nominal envelope and configuration contracts remain directly usable', () => {
     const envelope = validEnvelope();
-    const consumed = runtime.consumeRuntimeEnvelope(envelope, {
-      sourceRevision: 'source-1',
-      currentRevision: 1,
-    });
+    const consumed = expectReturned(() =>
+      runtime.consumeRuntimeEnvelope(envelope, {
+        sourceRevision: 'source-1',
+        currentRevision: 1,
+      }),
+    );
     expect(consumed).toEqual(envelope);
     expect(consumed).not.toBe(envelope);
     expect(runtime.validateCandidateIsolation(config)).toBeUndefined();
