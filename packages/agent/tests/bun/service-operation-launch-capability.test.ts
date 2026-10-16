@@ -11,6 +11,7 @@ import {
   closeServiceOperationCustodyHandle,
   closeServiceOperationDatabase,
   initializeServiceOperationCustodySchema,
+  assertServiceOperationCustodyReady,
   openServiceOperationDatabase,
   readServiceOperationCustodyForOperation,
   recordServiceOperationLaunchPid,
@@ -1128,6 +1129,62 @@ test('initializer creates the exact empty custody schema in a fresh SQLite datab
   }
 });
 
+for (const contract of ['schema', 'occupied', 'transaction'] as const) {
+  test(`initializer rejects ${contract} input without changing the existing SQLite state`, () => {
+    const database = new Database(':memory:');
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      if (contract === 'schema')
+        database.exec(serviceCustodyFixtureSql.replace('workspace_id TEXT NOT NULL', 'workspace_id BLOB NOT NULL'));
+      if (contract === 'occupied') {
+        database.exec(serviceCustodyFixtureSql);
+        database
+          .query(
+            "INSERT INTO agent_host_service_operation_custody(workspace_id,owner_kind,operation_id,request_digest,revision,phase,evidence_digest) VALUES(?,'release-pack-worker',?,?,1,'prepared',?)",
+          )
+          .run(workspaceId, operationId, requestDigest, 'c'.repeat(64));
+      }
+      if (contract === 'transaction') database.exec('BEGIN IMMEDIATE');
+      const before = database
+        .query<{ name: string; sql: string }, []>('SELECT name,sql FROM sqlite_master ORDER BY name')
+        .all();
+      const rows =
+        contract === 'occupied'
+          ? database.query('SELECT * FROM agent_host_service_operation_custody').all()
+          : undefined;
+      const message =
+        'Service operation custody: ' +
+        (contract === 'schema'
+          ? 'owned service table is absent or differs'
+          : contract === 'occupied'
+            ? 'prepared service table must be empty'
+            : 'schema requires an unshared database');
+      if (contract === 'schema') expect(() => assertServiceOperationCustodyReady(database)).toThrow(message);
+      expect(() => initializeServiceOperationCustodySchema(database)).toThrow(message);
+      expect(database.query('SELECT name,sql FROM sqlite_master ORDER BY name').all()).toEqual(before);
+      expect(database.inTransaction).toBe(contract === 'transaction');
+      if (rows) expect(database.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual(rows);
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            if (database.inTransaction) database.exec('ROLLBACK');
+            return undefined;
+          },
+          () => {
+            database.close();
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  });
+}
+
 for (const role of ['request', 'prepared evidence'] as const) {
   test(`reservation rejects malformed ${role} digests before any custody write`, () => {
     const fixture = openCustodyFixture('service-invalid-digest-');
@@ -1395,6 +1452,18 @@ test('record and claim reject invalid PID boundaries without changing the exact 
     const unbound = new Database(path.join(fixture.root, fixture.relative));
     let unboundFailure: { error: unknown } | undefined;
     try {
+      expect(() =>
+        recordServiceOperationLaunchPid(
+          unbound,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          reservation.revision,
+          1,
+          reservation.child_capability,
+        ),
+      ).toThrow('Service operation custody: workspace database binding differs');
       expect(() =>
         claimReservedServiceOperationLaunch(
           unbound,

@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `fa55cd897a50efc5f5ea18642bf9b69589cc052e`. Its32-ID native mutation pilot is terminal with25assertion-confirmed kills,7survivors and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `56233931302078e3fd6d498f1e91b6f5eb93e9f7`. Its32-ID native mutation pilot is terminal with27assertion-confirmed kills,5survivors and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,38 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+The fresh5623393pilot binds official SDK run38917794621/attempt1/artifact12053511012,
+ZIP digest `sha256:9260f1124cab8f05ab3374e34fca05e7ff8a6255e1fcbf07ff30946ebdaae016`.
+Outer `native-mutation-pilot-5623393-vwuL91` closes in183544.18818ms with complete
+captures, closed group and unchanged boot. Inner evidence remains at
+`packages/agent/.tmp/mutation-batch-c355d908-b650-4c4d-8b2c-72ebd2dab1a7-4Og7TT/`.
+The generated universe is700,49fewer than749before digest consolidation, without
+mutator exclusions. Baseline87cases passes;32attempted,27assertion-confirmed
+Killed,5Survived,0UNKNOWN,668unattempted. This is no complete contour score.
+
+The five survivors expose initializer readiness/empty-table/transaction controls
+and the record entry's missing unbound-connection denial. New tests use real
+SQLite: a different schema, an occupied prepared table and a caller-owned open
+transaction must be rejected without changing their previous state. The schema
+control calls both public readiness and initializer boundaries. Record and claim
+both explicitly reject a real unbound connection with no persisted change.
+Four-file owner `F9NuIV` passes112/0tests,707assertions in4.03s with complete
+captures/closed group/same boot; strict tests467files passes and scoped lint has
+zero diagnostics. Source is unchanged so the next32-ID run targets the same
+canonical selection, with new tests/SDK binding. Confirmation is pending.
+
+Safe capacity records:
+`/workspace/attachments/inactive-profile-core-sparse-retention-20261016.json`
+retains the inactive708worktree's working/index patch in a permanent Git ref,
+then sparsifies only its tracked checkout. All2,130ignored path identities,
+sizes and modification times remain exact. The real Bun executable is
+`/home/agent/.local/bin/bun`; its inode and digest remain unchanged after removal
+of an unused byte-identical88,979,072-byte extraction cache with no active users.
+Receipt `/workspace/attachments/unused-bun-bootstrap-extraction-cache-retirement-20261016.json`
+binds both paths/hashes. Available storage rose to2,235,187,200bytes. No failed
+fixture, UNKNOWN record, SDK input or active executable was deleted;2GiBfloor
+remains unchanged.
 
 The freshfa55cd8pilot binds official SDK run38916429957/attempt1/artifact12052328885,
 ZIP digest `sha256:0eddc0a88c65933194bed0429f82b99fc8a93244c0972521bade5e432752f880`.
