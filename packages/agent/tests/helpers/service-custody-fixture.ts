@@ -1,5 +1,5 @@
 import { Database } from 'bun:sqlite';
-import { copyFileSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -17,6 +17,10 @@ export interface ServiceCustodyFixture {
   readonly relative: string;
   readonly database: Database;
 }
+
+// Cache only the inert repository ID for identical fixture YAML, never a
+// root-bound configuration, database, admission handle or launch capability.
+const repositoryIdsByConfiguration = new Map<string, string>();
 
 export function openCustodyFixture(prefix = 'service-capability-'): ServiceCustodyFixture {
   const { root, workspaceId } = openRepositoryFixture(prefix);
@@ -39,8 +43,14 @@ function openRepositoryFixture(prefix: string): { readonly root: string; readonl
   try {
     copyRepositoryConfiguration(root);
     mkdirSync(path.join(root, '.vida'));
-    const config = loadRuntimeConfig(root);
-    return { root, workspaceId: deriveWorkspaceId(config.repository.repository_id, root) };
+    const configuration = readFileSync(path.join(root, 'agent-runtime.config.v1.yaml'), 'utf8');
+    let repositoryId = repositoryIdsByConfiguration.get(configuration);
+    if (repositoryId === undefined) {
+      repositoryId = loadRuntimeConfig(root).repository.repository_id;
+      repositoryIdsByConfiguration.clear();
+      repositoryIdsByConfiguration.set(configuration, repositoryId);
+    }
+    return { root, workspaceId: deriveWorkspaceId(repositoryId, root) };
   } catch (error) {
     rmSync(root, { recursive: true, force: true });
     throw error;

@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `a4b5b0c0317f1410e3f81cf73f47f9f756ee300f`; the terminal campaign's original checkout remains at `57353f9`. Private repair checkpoint `58bebaf40b1f2a54236f3ac49c4539f58abe4eeb` is pushed. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `4a825b422809ef4959ddf8aec206a1a1fefc26dc`. Its focused recheck is terminal; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,106 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+Campaign `fe4f6280-6fef-4161-a55f-d5961c5904f4` is terminal
+`resource-incomplete` at708c153, before mutation. All launched producers settled;
+the2GiB storage floor denied the next launch with2,061,094,912bytes available.
+Its existing projection owner imported the admissible reports (377attempts).
+The generated projection bytes are retained in the primary and copied into this
+repair packet; the original binary patch is
+`/workspace/attachments/campaign-fe4f6280-projection-20261016.patch`.
+
+Both computed-adapter capture and initial Mastra branch assertions were published
+to main at4a825b4. Official SDK run38894343763/attempt1/artifact12043052605
+completed; its selected ZIP digest is
+`sha256:9adcf3595cd7f3d54be27992814392e7e7fae55f63f4ce9da2a313b78c7a47c2`.
+The maintained SDK owner admitted it in the clean repair checkout before the
+focused two-contour recheck `8b81cfed-5e68-4f99-8984-15581351fa25` began.
+That recheck is terminal, with log
+`/workspace/attachments/affected-contours-4a825b4-20261016.log`.
+Mastra passes91tests/2612assertions with F191/191,L642/642,S684/686,B197/209;
+its actual4a825b4 report is imported through the projection owner. Neither
+contour has a pinned reviewed budget. Service coverage passes34/35cases and
+fails at the next uncaptured transitive dependency, `tooling/pack-sdk.ts`.
+The release adapter itself was captured but never traversed as a runtime closure
+entrypoint. The new test-owned entrypoint uses the existing bounded closure,
+byte snapshots and freshness hashes for every literal transitive import.
+Regression control `b0ThLF` fails against the4a825b4 owner; corrected full
+projection controls `WBjH5d` pass33/0 with403assertions, complete captures,
+closed groups and unchanged boot. No preload admission guard is relaxed.
+
+The service mutation run is UNKNOWN after the unchanged900s deadline. Retained
+map events show521/748completed attempts, so the silent stdout was not evidence
+of deadlock. Engine labels (302Killed/219Survived) are all unconfirmed; missing
+final JSON means no accepted mutation score. The group termination and captures
+are complete. Mastra mutation never launched because free storage fell below
+the unchanged2GiB floor. Existing native evidence remains at
+`packages/agent/.tmp/mutation-evidence-7402f628-6188-4023-9721-76ae1172329d-Vc8JmK/`.
+The next config uses Stryker10's existing `progress-append-only` reporter;
+progress is diagnostic and does not change final receipt admission.
+
+An owned diagnostic `Zimvhf` runs the unchanged three-file service selection:
+35/0tests,298assertions,2478.539524ms. Temporary helper instrumentation attributes
+16fresh config loads: first284.8ms, then42–60ms; actual DB setup12–22ms.
+Instrumentation is restored before integration. The helper now caches only the
+primitive repository ID keyed by exact copied YAML bytes. Every fixture still
+has fresh configuration files, a physical-root-derived workspace ID, real
+admission, database and capability state. Config objects/authority are not shared.
+The broader affected-helper control `GzidvR` passes57/0tests,401assertions,
+1970.990733ms, with complete captures/closed groups/same boot. Its selection is
+different, so these timings do not establish a speedup ratio or mutant throughput.
+
+Resource custody receipts are
+`/workspace/attachments/controller-cache-reclamation-fe4f6280-20261016.json`,
+`/workspace/attachments/reclaimed-download-caches-4a-cycle-20261016.json`, and
+`/workspace/attachments/inactive-contour-worktree-retention-4a-20261016.json`.
+The download-cache deletion reclaimed only65,937,408physical bytes; apparent
+cache sizes were shared/lower-layer bytes. Twenty-eight inactive worktrees were
+removed ordinarily only after tracked working and index bytes were verified in
+permanent `refs/vida-retained-contours/20261016/` stash-shaped Git refs, with
+binary patches and per-file hashes in the receipt. Untracked/ignored trees and
+active writers were excluded. This recovered1,011,957,760bytes, to2,897,084,416
+free. All FAIL/UNKNOWN roots, logs, reports and installed dependencies remain.
+Prepared work in these retained refs is not newly qualified or published code.
+
+The repair adds capability prefix/suffix, individual UUID segment lengths,
+uppercase and LF/CR/CRLF/Unicode line-ending cases, including independently hashed
+malformed tokens. Control `BRwnK5` caught a test-fixture error: uppercasing an
+all-digit UUID leaves it unchanged. Root corrected the fixture to contain `A`.
+The trailing-line-ending controls already passed; no product regex defect was
+established and the service Source guards remain unchanged.
+
+Mastra additions cover scalar diagnostic values, a valid converging research
+retry graph, failed sequential assignment skipping, dependency tripwire/suspended
+statuses and a real LibSQL first-close fault followed by cleanup retry. Initial
+fixtures `GELnve`/`7gSVpZ` failed existing configuration/attempt guards; the final
+fixture uses an allowed research DAG with a configured two-attempt policy.
+Control `n0Bsfy` passes96/0tests,2629assertions with full custody. Two private
+defaults whose callers always pass booleans and an impossible missing-map fallback
+were removed. The active-execution guard and finally cleanup remain intact.
+The existing frozen plan is partial/non-executable; no reviewed Mastra/service
+scope budget was found. Numeric rechecks must keep those prerequisites as GAP.
+
+Independent readonly review found no blocker in the primitive-ID cache, closure
+or built-in progress reporter. Its follow-up controls now check transitive-leaf
+freshness and same-YAML/different-root workspace and DB isolation. The cache is
+bounded to one YAML identity. Final focused control `Xtnyab` passes the combined
+affected selections with complete captures/closed group/same boot; full results
+are at `/workspace/attachments/repair-batch-final-focused-4a-20261016.log`.
+Strict Source101files, tests465files and tooling186files pass. The selected
+Source/test/tooling type-aware lint passes with zero warnings. Root config is
+typechecked through the test project; an earlier manual lint command outside its
+declared project emitted unrelated unresolved-type diagnostics and is retained.
+Changed documentation check passes33local links across3documents. These checks
+are development evidence; no new coverage or mutation maximum is claimed.
+Final boundary controls `YJmVCF` pass after the cleanup-retention review and
+real-workflow status substitution. They execute the genuine workflow first,
+observe success, then substitute only the dependency status view; all four
+research roles are asserted. The prototype is restored before the real call and
+the instance spy restores in finally. The service isolation control keeps the
+first fixture accounted if second setup fails, and logs any retained close
+failure before rethrowing it through the shared cleanup owner. The project
+bun-test reference records these verified fixture/capture/progress techniques.
 
 Repair packet `708c1531020f886046d8d86e20a774eb86d6259b` is published on main;
 primary was clean and advanced ff-only. The ordinary pre-commit passed formatting

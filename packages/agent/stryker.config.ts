@@ -29,7 +29,7 @@ const config = {
   tsconfigFile: '.stryker-no-tsconfig.json',
   coverageAnalysis: 'off',
   plugins: [new URL('./tooling/mutation-map-reporter.ts', import.meta.url).href],
-  reporters: ['clear-text', 'json', 'vida-mutant-map'],
+  reporters: ['progress-append-only', 'clear-text', 'json', 'vida-mutant-map'],
   jsonReporter: {
     fileName: reportPath(
       mutationReport ??

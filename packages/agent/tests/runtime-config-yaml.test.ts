@@ -2,6 +2,8 @@ import { afterAll, describe, expect, spyOn, test } from 'bun:test';
 import { configuredTestContext } from './configured-context.ts';
 import { rejectionReason } from './helpers/expect-rejection.ts';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { LibSQLStore } from '@mastra/libsql';
+import { Workflow } from '@mastra/core/workflows';
 
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -38,6 +40,7 @@ import {
   buildImplementationResult as buildImplementationResultSource,
   buildTesterInstruction as buildTesterInstructionSource,
   createDeliveryEvidenceAuthority,
+  runLibSqlSmoke,
   prepareDeliveryInstruction as prepareDeliveryInstructionSource,
   validateDeliveryReceipt as validateDeliveryReceiptSource,
   validateImplementationResult as validateImplementationResultSource,
@@ -1640,12 +1643,14 @@ describe('final v1 artifact contracts', () => {
       JSON.stringify({
         outer: { client_secret: 'nested-secret', deeper: { authorization: 'nested-token' } },
         entries: [{ api_key: 'array-secret', safe: 'array-visible' }],
+        metadata: { count: 3, enabled: true, empty: null },
         safe: 'visible',
       }),
     );
     expect(JSON.parse(nestedDiagnostic)).toEqual({
       outer: { client_secret: '[REDACTED]', deeper: { authorization: '[REDACTED]' } },
       entries: [{ api_key: '[REDACTED]', safe: 'array-visible' }],
+      metadata: { count: 3, enabled: true, empty: null },
       safe: 'visible',
     });
     expect(nestedDiagnostic).not.toContain('nested-secret');
@@ -1794,6 +1799,65 @@ describe('final v1 artifact contracts', () => {
     expect(() =>
       retryDevelopmentTaskPacket(config, retry, repeated, 'packet-3', new Date(Date.now() + 180_000).toISOString()),
     ).toThrow(/already attempted/);
+  });
+
+  test('retry packet validation traverses shared ancestors in a converging workflow', async () => {
+    const document = mutableClone(parseRuntimeConfigYaml(authorityText));
+    const workflow = required(document.workflows.information_research_light, 'research workflow');
+    workflow.max_attempts = 2;
+    const researchStage = required(
+      workflow.stages.find((stage) => stage.id === 'research_parallel'),
+      'parallel research stage',
+    );
+    const synthesisStage = required(
+      workflow.stages.find((stage) => stage.id === 'synthesize_research'),
+      'research synthesis stage',
+    );
+    const alternateResearchId = 'research_parallel_alternate';
+    workflow.stages.push({
+      ...structuredClone(researchStage),
+      id: alternateResearchId,
+      required_after: ['research_parallel'],
+    });
+    workflow.edges.push(['research_parallel', alternateResearchId], [alternateResearchId, synthesisStage.id]);
+    synthesisStage.required_after.push(alternateResearchId);
+    const config = loadRuntimeConfig(await fixtureRoot(stringifyYaml(document, { lineWidth: 0 })));
+    const project = fixtureProject(config);
+    const packetInputForResearch: DevelopmentTaskPacketInput = {
+      ...packetInput(),
+      workflow_id: 'information_research_light',
+      work_item: {
+        kind: 'research',
+        intent: 'information_research',
+        project,
+        risk_flags: [],
+        labels: [],
+      },
+    };
+    const packet = buildDevelopmentTaskPacket(config, packetInputForResearch);
+    const failure = buildFailureArtifact(config, {
+      failure_id: 'failure-converging-route',
+      packet_id: packet.packet_id,
+      stage_id: synthesisStage.id,
+      agent_role: 'research-synthesizer',
+      attempt: packet.attempt,
+      error_class: 'IMPLEMENTATION_FAILURE',
+      log_refs: ['artifact://failure/converging-route'],
+      broken_acceptance: ['The implementation succeeds.'],
+      failed_approach_fingerprint: 'd'.repeat(64),
+      retryable: true,
+      next_route: researchStage.id,
+      message: 'The synthesis failed.',
+    });
+    const retry = retryDevelopmentTaskPacket(
+      config,
+      packet,
+      failure,
+      'packet-converging-route-retry',
+      new Date(Date.now() + 120_000).toISOString(),
+    );
+    expect(retry.attempt).toBe(2);
+    expect(retry.packet_id).toBe('packet-converging-route-retry');
   });
 
   test('task execution packet does not invent a research artifact', () => {
@@ -2174,25 +2238,29 @@ describe('final v1 artifact contracts', () => {
   });
 });
 async function configuredMastraUnitExecutionFixture(
-  failAssignments: boolean | string,
+  failAssignments: boolean | string | { readonly role: string; readonly message: string },
   includeOptionalRiskStage = false,
+  sequentialAssignments = false,
 ) {
   let yaml = authorityText;
-  if (includeOptionalRiskStage) {
+  if (includeOptionalRiskStage || sequentialAssignments) {
     const config = mutableClone(parseRuntimeConfigYaml(authorityText));
     const workflow = required(config.workflows.information_research_light, 'research workflow');
     const researchStage = required(
       workflow.stages.find((stage) => stage.id === 'research_parallel'),
       'parallel research stage',
     );
-    const optionalStageId = 'optional_security_research';
-    workflow.stages.push({
-      ...structuredClone(researchStage),
-      id: optionalStageId,
-      required_after: ['research_parallel'],
-      risk_flags: ['security'],
-    });
-    workflow.edges.push(['research_parallel', optionalStageId]);
+    if (sequentialAssignments) researchStage.mode = 'single';
+    if (includeOptionalRiskStage) {
+      const optionalStageId = 'optional_security_research';
+      workflow.stages.push({
+        ...structuredClone(researchStage),
+        id: optionalStageId,
+        required_after: ['research_parallel'],
+        risk_flags: ['security'],
+      });
+      workflow.edges.push(['research_parallel', optionalStageId]);
+    }
     yaml = stringifyYaml(config, { lineWidth: 0 });
   }
   const root = await fixtureRoot(yaml);
@@ -2261,10 +2329,16 @@ async function configuredMastraUnitExecutionFixture(
     validateWorkflowAssignmentResult: () => {},
     dispatchWorkflowAssignment: async (invocation) => {
       dispatchedRoles.push(invocation.assignment.role);
-      if (failAssignments) {
+      const targetedFailure =
+        typeof failAssignments === 'object' && failAssignments.role === invocation.assignment.role;
+      if (
+        typeof failAssignments === 'boolean' ? failAssignments : typeof failAssignments === 'string' || targetedFailure
+      ) {
         throw typeof failAssignments === 'string'
           ? failAssignments
-          : new Error('controlled research assignment failure');
+          : new Error(
+              typeof failAssignments === 'object' ? failAssignments.message : 'controlled research assignment failure',
+            );
       }
       return { observed: invocation.assignment.role };
     },
@@ -2364,6 +2438,61 @@ test('public Mastra dispatch reports a non-Error assignment rejection', async ()
   ]);
 });
 
+test.each([
+  [
+    'tripwire',
+    { status: 'tripwire', tripwire: { reason: 'dependency tripwire fixture' } },
+    'workflow tripwire: dependency tripwire fixture',
+  ],
+  ['suspended', { status: 'suspended' }, 'workflow stopped with status suspended'],
+] as const)('public Mastra dispatch preserves dependency %s status', async (_label, result, message) => {
+  const createRun = spyOn(Workflow.prototype, 'createRun').mockImplementation(async function (
+    this: Workflow,
+    ...args: Parameters<Workflow['createRun']>
+  ) {
+    createRun.mockRestore();
+    const run = await this.createRun(...args);
+    const start = run.start.bind(run);
+    const substitutedStart = spyOn(run, 'start').mockImplementation(async (...startArgs) => {
+      try {
+        const observed = await start(...startArgs);
+        expect(observed.status).toBe('success');
+        return { ...observed, ...result } as never;
+      } finally {
+        substitutedStart.mockRestore();
+      }
+    });
+    return run;
+  });
+  try {
+    const fixture = await configuredMastraUnitExecutionFixture(false);
+    const failure = await rejectionReason(fixture.graph.dispatch(fixture.workItem.id));
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as Error).message).toContain(message);
+    expect(fixture.dispatchedRoles.slice().sort()).toEqual([
+      'code-researcher',
+      'documentation-researcher',
+      'platform-researcher',
+      'research-synthesizer',
+    ]);
+  } finally {
+    createRun.mockRestore();
+  }
+});
+
+test('public Mastra dispatch skips the remaining assignments after a sequential failure', async () => {
+  const fixture = await configuredMastraUnitExecutionFixture(
+    { role: 'documentation-researcher', message: 'first sequential assignment failed' },
+    false,
+    true,
+  );
+  const failure = await rejectionReason(fixture.graph.dispatch(fixture.workItem.id));
+  expect(() => {
+    throw failure;
+  }).toThrow(/Mastra configured workflow execution failed: configured workflow assignment failed/i);
+  expect(fixture.dispatchedRoles).toEqual(['documentation-researcher']);
+});
+
 test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
   const { repositoryRoot, config } = configuredTestContext();
   expect(() => invokeUntrusted(sanitizeDiagnostic, [config, null])).toThrow(/diagnostic|string|non-empty/i);
@@ -2396,6 +2525,25 @@ test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
   const afterToolCall = configured.hooks.afterToolCall;
   if (!afterToolCall) throw new Error('Expected the configured afterToolCall hook.');
   expect(await afterToolCall({ toolName: 'source.read', input: {}, context: {} })).toBeUndefined();
+});
+
+test('LibSQL cleanup retries the first store after its initial close fails', async () => {
+  const originalClose: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'close')?.value;
+  if (typeof originalClose !== 'function') throw new Error('LibSQL close method is unavailable');
+  let closeCalls = 0;
+  const close = spyOn(LibSQLStore.prototype, 'close').mockImplementation(async function (this: LibSQLStore) {
+    closeCalls += 1;
+    if (closeCalls === 1) throw new Error('injected initial LibSQL close failure');
+    await Reflect.apply(originalClose, this, []);
+  });
+  try {
+    const failure = await rejectionReason(runLibSqlSmoke());
+    expect(failure).toBeInstanceOf(Error);
+    expect((failure as Error).message).toBe('injected initial LibSQL close failure');
+    expect(closeCalls).toBe(2);
+  } finally {
+    close.mockRestore();
+  }
 });
 
 function invokeUntrusted(

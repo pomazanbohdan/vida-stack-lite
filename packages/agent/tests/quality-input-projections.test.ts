@@ -13,6 +13,7 @@ import {
   capturedModuleAbsolutePath,
   capturedModuleInputs,
   coverageToolInputs,
+  repositoryToolingInputPrefix,
   type CoverageReviewGitChange,
   coverageReviewInputPaths,
   sdkFormationToolInputPaths,
@@ -899,6 +900,63 @@ describe('final quality input projections', () => {
     expect(after.input_bytes[adapter]).toEqual(Buffer.from('export const releaseAdapter = 2;\n'));
     expect(after.tool_fingerprint).not.toBe(before.tool_fingerprint);
     expect(qualityFingerprint(after)).not.toBe(qualityFingerprint(before));
+  });
+
+  test('traverses package imports of the repository adapter selected by the service custody test', async () => {
+    const root = fixtureRoot(true);
+    const repository = path.resolve(root, '../..');
+    const testPath = 'tests/bun/service-operation-launch-capability.test.ts';
+    const testFile = path.join(root, testPath);
+    mkdirSync(path.dirname(testFile), { recursive: true });
+    writeFileSync(
+      testFile,
+      "const target = ['tooling', 'agent', 'release-local.ts'].join('/'); void createRequire(import.meta.url)(target);\ntest('computed repository adapter', () => {});\n",
+    );
+
+    const repositoryAdapter = path.join(repository, 'tooling/agent/release-local.ts');
+    const adapterBytes = Buffer.from(
+      "import { sdkCompatibilityManifest } from '../../packages/agent/tooling/pack-sdk.ts';\nexport const release = sdkCompatibilityManifest;\n",
+    );
+    mkdirSync(path.dirname(repositoryAdapter), { recursive: true });
+    writeFileSync(repositoryAdapter, adapterBytes);
+    const packSdk = 'tooling/pack-sdk.ts';
+    const packSdkBytes = Buffer.from(
+      "import { value } from './pack-sdk-leaf.ts';\nexport const sdkCompatibilityManifest = value;\n",
+    );
+    writeFileSync(path.join(root, packSdk), packSdkBytes);
+    const packSdkLeaf = 'tooling/pack-sdk-leaf.ts';
+    writeFileSync(path.join(root, packSdkLeaf), 'export const value = true;\n');
+
+    const selection = {
+      mode: 'focused-diagnostic' as const,
+      contour: 'bun-service-operation-custody',
+      sources: ['src/host-state.ts'],
+      tests: [testPath],
+    };
+    const before = await coverageInputs(root, selection);
+    for (const file of [`${repositoryToolingInputPrefix}/release-local.ts`, packSdk, packSdkLeaf])
+      expect(before.module_inputs.map(({ path: captured }) => captured)).toContain(file);
+    expect(before.input_bytes[packSdk]).toEqual(packSdkBytes);
+    expect(before.module_inputs.find(({ path: file }) => file === packSdk)).toEqual({
+      path: packSdk,
+      sha256: createHash('sha256').update(packSdkBytes).digest('hex'),
+    });
+    expect(before.tool_inputs.map(({ path: file }) => file)).toContain(packSdk);
+
+    const changedLeaf = Buffer.from('export const value = false;\n');
+    writeFileSync(path.join(root, packSdkLeaf), changedLeaf);
+    const leafChanged = await coverageInputs(root, selection);
+    expect(leafChanged.input_bytes[packSdkLeaf]).toEqual(changedLeaf);
+    expect(leafChanged.module_inputs.find(({ path: file }) => file === packSdkLeaf)?.sha256).toBe(
+      createHash('sha256').update(changedLeaf).digest('hex'),
+    );
+    expect(leafChanged.tool_fingerprint).not.toBe(before.tool_fingerprint);
+    writeFileSync(path.join(root, packSdkLeaf), 'export const value = true;\n');
+
+    writeFileSync(path.join(root, packSdk), 'export const sdkCompatibilityManifest = null;\n');
+    const after = await coverageInputs(root, selection);
+    expect(after.input_bytes[packSdk]).toEqual(Buffer.from('export const sdkCompatibilityManifest = null;\n'));
+    expect(after.tool_fingerprint).not.toBe(before.tool_fingerprint);
   });
 
   test('rejects empty, duplicate and foreign focused diagnostic selections', async () => {

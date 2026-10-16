@@ -298,6 +298,21 @@ phase costs, not only an overrun. Preserve its freshness/CAS checks and document
 the exception in TESTING. Reuse one snapshot for adjacent work/ledger assertions
 only when no effect separates them; never cache live authority across public calls.
 
+For repeated fixture setup, measure configuration and database phases separately.
+An exact-byte, one-entry cache may retain an inert repository ID; keep each
+physical root, derived workspace ID, admission handle and database separate.
+Do not reuse a root-bound loaded configuration. Check identical-YAML fixtures
+have different workspace identities and isolated database state. This shortcut
+does not qualify per-root configuration-loader behavior.
+For computed repository adapters, capture the known entrypoint through the
+existing bounded runtime closure. Capturing only its own bytes misses package
+imports. Check transitive-leaf bytes, digests and fingerprint drift; preserve
+the preload's fail-closed admission guards.
+Inspect existing mutation-map events before calling a quiet run stalled. Engine
+events remain unconfirmed until final report/assertion/process admission. Use
+Stryker's existing append-only progress reporter; avoid a second journal or
+heartbeat owner. Missing final output or a deadline still means incomplete proof.
+
 Keep pure helper cases independent of filesystem/config initialization they do
 not use. Preserve required setup inside the invoking registered body. For a
 JavaScript type-guard mutation, exercise values that actually reach that guard;

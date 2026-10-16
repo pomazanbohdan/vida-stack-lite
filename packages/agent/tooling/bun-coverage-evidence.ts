@@ -238,6 +238,12 @@ export function coverageReviewEnvironmentSha256(environment: NodeJS.ProcessEnv, 
   });
 }
 export const repositoryToolingInputPrefix = '_repository/tooling/agent';
+// Computed module loads are invisible to Bun's static import scanner. Keep
+// their test-owned entrypoints explicit, then let the shared bounded closure
+// capture each entrypoint's literal transitive imports and freshness inputs.
+const computedModuleEntryPointsByTest: Readonly<Record<string, readonly string[]>> = Object.freeze({
+  'tests/bun/service-operation-launch-capability.test.ts': [`${repositoryToolingInputPrefix}/release-local.ts`],
+});
 export const repositoryTestContextInputPrefix = '_repository/test-context';
 export const repositoryTestContextFiles: readonly string[] = Object.freeze([
   'agent-runtime.config.v1.yaml',
@@ -1247,11 +1253,14 @@ async function captureQualityInputBase(
     selectionMode === 'current' && inputBytes.has('tooling/build-package.ts') ? 'tooling/build-package.ts' : undefined;
   const sdkBuilderEdges = new Map<string, Set<string>>();
   const runtimeTestPaths = focused ? testSelection.tests : testInputsAll;
+  const runtimeEntrypoints = [...testSelection.tests, ...(sdkBuilderEntrypoint ? [sdkBuilderEntrypoint] : [])];
+  for (const testPath of testSelection.tests)
+    runtimeEntrypoints.push(...(computedModuleEntryPointsByTest[testPath] ?? []));
   const runtimeToolPaths =
     selectionMode === 'current'
       ? await captureRuntimeInputClosure(
           root,
-          [...testSelection.tests, ...(sdkBuilderEntrypoint ? [sdkBuilderEntrypoint] : [])],
+          runtimeEntrypoints,
           sources,
           runtimeTestPaths,
           inputBytes,

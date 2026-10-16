@@ -2172,6 +2172,15 @@ Log the owned root before deletion and its actual completion after deletion. A d
 
 Reuse immutable instruction or repair-fixture bytes only while their binding is current. Each mutable workflow has its own project, configuration, Host, journal, artifacts and working directory. Keep process interruption, restart, CAS and report boundaries real. No shared fixture cache may carry authority or mutable consumer state.
 
+The service-custody fixture reuses only a primitive repository ID for exact YAML
+bytes in a one-entry cache. Every call copies configuration into a new physical
+root and opens real admission and SQLite handles. This identity shortcut does
+not validate the configuration loader for each root; loader tests retain that
+responsibility. Keep different-root identity and database-isolation controls.
+Mutation progress uses Stryker's built-in append-only reporter. Its engine labels
+are diagnostic; only complete reports joined with assertion and process receipts
+can establish Killed. Partial events or a quiet log cannot establish a score.
+
 Source-only fixtures exclude the exact generated `dist/standalone` directory. Keep required sources, schemas, instructions and current SDK outputs. Do not change the repository text-read limit.
 
 ## Required agent regressions

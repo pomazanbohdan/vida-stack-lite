@@ -58,6 +58,57 @@ describe('service operation launch predicates', () => {
     );
   });
 
+  const uuidSegments = capability.split('-');
+  const malformedCapabilityBoundaries: readonly (readonly [string, string])[] = [
+    ['prefixed token', `x${capability}`],
+    ['suffixed token', `${capability}x`],
+    ...uuidSegments.flatMap((segment, index) => {
+      const short = [...uuidSegments];
+      short[index] = segment.slice(1);
+      const long = [...uuidSegments];
+      long[index] = `${segment}0`;
+      return [
+        [`short UUID segment ${index + 1}`, short.join('-')] as const,
+        [`long UUID segment ${index + 1}`, long.join('-')] as const,
+      ];
+    }),
+    ['uppercase token', `A${capability.slice(1)}`],
+  ];
+
+  for (const [label, malformed] of malformedCapabilityBoundaries) {
+    test(`rejects ${label} for digest creation and matching`, () => {
+      const independentlyHashed = createHash('sha256').update(malformed, 'utf8').digest('hex');
+      expect(() => serviceOperationLaunchCapabilityDigest(malformed)).toThrow(
+        'Service operation launch capability is invalid.',
+      );
+      expect(serviceOperationLaunchCapabilityMatches(issuedDigest, malformed)).toBe(false);
+      expect(serviceOperationLaunchCapabilityMatches(independentlyHashed, malformed)).toBe(false);
+    });
+  }
+
+  const trailingLineEndings = [
+    ['LF', '\n'],
+    ['CR', '\r'],
+    ['CRLF', '\r\n'],
+    ['Unicode line separator', '\u2028'],
+    ['Unicode paragraph separator', '\u2029'],
+  ] as const;
+
+  for (const [label, ending] of trailingLineEndings) {
+    test(`rejects trailing ${label} in capability and expected digest`, () => {
+      const malformed = `${capability}${ending}`;
+      const malformedDigest = `${issuedDigest}${ending}`;
+      const independentlyHashed = createHash('sha256').update(malformed, 'utf8').digest('hex');
+
+      expect(() => serviceOperationLaunchCapabilityDigest(malformed)).toThrow(
+        'Service operation launch capability is invalid.',
+      );
+      expect(serviceOperationLaunchCapabilityMatches(issuedDigest, malformed)).toBe(false);
+      expect(serviceOperationLaunchCapabilityMatches(independentlyHashed, malformed)).toBe(false);
+      expect(serviceOperationLaunchCapabilityMatches(malformedDigest, capability)).toBe(false);
+    });
+  }
+
   test('capability matching accepts only the exact token for the exact lowercase digest', () => {
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, capability))).toBe(true);
     expect(serviceOperationLaunchCapabilityMatches(issuedDigest, otherCapability)).toBe(false);

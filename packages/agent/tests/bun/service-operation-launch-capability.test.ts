@@ -87,6 +87,44 @@ function launchingRow(overrides: Partial<LaunchingImage> = {}): LaunchingImage {
 }
 
 describe('private service launch capability', () => {
+  test('identical fixture configuration keeps physical workspace identities and database state separate', () => {
+    const fixtures: ReturnType<typeof openCustodyFixture>[] = [];
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      fixtures.push(openCustodyFixture());
+      fixtures.push(openCustodyFixture());
+      const [first, second] = fixtures;
+      if (!first || !second) throw new Error('Expected two custody fixtures');
+      expect(readFileSync(path.join(first.root, 'agent-runtime.config.v1.yaml'))).toEqual(
+        readFileSync(path.join(second.root, 'agent-runtime.config.v1.yaml')),
+      );
+      expect(first.root).not.toBe(second.root);
+      expect(first.workspaceId).not.toBe(second.workspaceId);
+      first.database.exec('CREATE TABLE fixture_isolation (value TEXT)');
+      expect(second.database.query("SELECT name FROM sqlite_master WHERE name='fixture_isolation'").get()).toBeNull();
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        fixtures.map((fixture) => (): undefined => {
+          try {
+            closeServiceOperationDatabase(fixture.database);
+          } catch (error) {
+            console.error('Retained custody fixture after close failure: ' + fixture.root);
+            throw error;
+          }
+          if (completed) rmSync(fixture.root, { recursive: true, force: true });
+          else console.error('Retained failed custody fixture isolation control: ' + fixture.root);
+          return undefined;
+        }),
+        primaryFailure,
+      );
+    }
+  });
+
   test('only the issued capability matches its stored digest', () => {
     const digest = serviceOperationLaunchCapabilityDigest(capability);
     expect(serviceOperationLaunchCapabilityMatches(digest, capability)).toBe(true);

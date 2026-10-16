@@ -401,7 +401,7 @@ function nonEmpty(value: unknown, label: string): string {
   return value as string;
 }
 
-function nonEmptyList(values: readonly string[], label: string, allowEmpty = false): readonly string[] {
+function nonEmptyList(values: readonly string[], label: string, allowEmpty: boolean): readonly string[] {
   assert(Array.isArray(values), label + ' must contain non-empty values');
   assert(listLengthIsValid(values, allowEmpty), label + ' must contain non-empty values');
   assert(values.every(nonEmptyStringValue), label + ' must contain non-empty values');
@@ -597,7 +597,7 @@ function validatePacketDigest(packet: DevelopmentTaskPacket): void {
 
 const researchArtifacts = new Set(['ResearchResult/v1', 'ResearchSynthesis/v1']);
 
-function validatePacketDiagnostics(config: AgentRuntimeConfig, value: unknown, requireSanitized = false): void {
+function validatePacketDiagnostics(config: AgentRuntimeConfig, value: unknown, requireSanitized: boolean): void {
   assert(Array.isArray(value), 'packet diagnostics must be an array');
   const diagnostics = value as readonly unknown[];
   assert(
@@ -917,7 +917,7 @@ export function retryDevelopmentTaskPacket(
   workflow!.stages.forEach((stage) => incoming.set(stage.id, []));
   workflow!.edges.forEach(([from, to]) => incoming.get(to)!.push(from));
   const collectRecoveryRoute = (stageId: string): void => {
-    (incoming.get(stageId) ?? []).forEach((predecessor) => {
+    incoming.get(stageId)!.forEach((predecessor) => {
       if (!recoveryRoutes.has(predecessor)) {
         recoveryRoutes.add(predecessor);
         collectRecoveryRoute(predecessor);
