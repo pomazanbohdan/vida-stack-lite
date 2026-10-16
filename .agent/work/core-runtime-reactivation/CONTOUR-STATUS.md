@@ -4,7 +4,7 @@
 
 Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.
 
-Historical contours with exact F/L/S/B coverage: **10/45**.
+Historical contours with exact F/L/S/B coverage: **11/45**.
 Historical same-coverage-run coverage + scoped frozen CRAP pairs: **9/45**.
 Historical complete coverage + assertion-confirmed mutation pair closures: **6/45**; static contours: **1**.
 Separate same-coverage-run local triples with scoped frozen CRAP: **6/45**.
@@ -25,10 +25,10 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-envelopes | 78/78 · 211/211 · 228/228 · 96/96 | 8 / 8 | 739/739 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 8 / 8 | local triple recorded |
 | main-cedar | 25/25 · 56/56 · 60/60 · 17/17 | 4 / 4 | 189/189 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 4 / 4 | local triple recorded |
 | main-governance-validation | 206/206 · 705/705 · 730/730 · 90/90 | 6 / 6 | unknown (unknown) | BLOCKED | open / unknown | 6 / 6 | open / unknown |
-| main-mastra | 191/191 · 642/642 · 686/686 · 204/205 | 8 / 8 | unknown (unknown) | BLOCKED | open / unknown | unknown | open / unknown |
+| main-mastra | 191/191 · 642/642 · 686/686 · 205/205 | 8 / 8 | unknown (unknown) | BLOCKED | open / unknown | unknown | open / unknown |
 | main-exports | unknown | unknown | unknown | not imported | N/A: static exports | unknown | open / unknown |
 | bun-fs-safe-attestation | unknown | unknown | unknown | BLOCKED | open / unknown | unknown | open / unknown |
-| bun-service-operation-custody | 55/55 · 226/233 · 232/241 · 129/140 | 10 / 10 | unknown (unknown) | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-service-operation-custody | 55/55 · 229/233 · 235/241 · 132/140 | 10 / 10 | unknown (unknown) | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-host-state | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-session-handoff | 189/277 · 509/877 · 560/959 · 382/791 | 29 / 870 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-facade | 24/24 · 89/89 · 104/104 · 104/104 | 10 / 10 | 318/318 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 10 / 10 | local triple recorded |
@@ -376,6 +376,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | a22c4431-507f-4b05-8d19-62f0793f2ba7 | ca68f43a34ebceb66515585ded3f8dbe5a30c6f1 | 2026-10-16T12:22:21.582Z | focused-diagnostic; owner accepted locally; selection bound | 191/191 · 642/642 · 686/686 · 204/205 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/a22c4431-507f-4b05-8d19-62f0793f2ba7.focused-coverage.json |
 | coverage-outcome | a22c4431-507f-4b05-8d19-62f0793f2ba7 | not-captured | 2026-10-16T12:22:21.590Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/a22c4431-507f-4b05-8d19-62f0793f2ba7.json |
 | mutation | 2b93c841-86bb-4615-8f37-b3a8c815e118 | not-captured | 2026-10-16T12:52:29.309Z | unknown; unqualified; selection bound | unknown (unknown) | /workspace/attachments/contour-repair-policy-20261016/packages/agent/.tmp/mutation-evidence-2b93c841-86bb-4615-8f37-b3a8c815e118-8x9L2h/terminal-summary.json |
+| coverage | 5b412d0c-3732-46f5-9fd9-ae7c17fa4327 | 62c1fca50217f02ea4829660e6d71bdecc57ebda | 2026-10-16T13:03:59.996Z | focused-diagnostic; owner accepted locally; selection bound | 191/191 · 642/642 · 686/686 · 205/205 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/5b412d0c-3732-46f5-9fd9-ae7c17fa4327.focused-coverage.json |
+| coverage-outcome | 5b412d0c-3732-46f5-9fd9-ae7c17fa4327 | not-captured | 2026-10-16T13:04:00.011Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/5b412d0c-3732-46f5-9fd9-ae7c17fa4327.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
@@ -413,6 +415,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | d7405ac6-1249-48d4-b91f-ddc4aac9f41a | ca68f43a34ebceb66515585ded3f8dbe5a30c6f1 | 2026-10-16T12:22:06.985Z | focused-diagnostic; owner accepted locally; selection bound | 55/55 · 226/233 · 232/241 · 129/140 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/d7405ac6-1249-48d4-b91f-ddc4aac9f41a.focused-coverage.json |
 | coverage-outcome | d7405ac6-1249-48d4-b91f-ddc4aac9f41a | not-captured | 2026-10-16T12:22:06.995Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/d7405ac6-1249-48d4-b91f-ddc4aac9f41a.json |
 | mutation | c037cede-355f-4b14-a82f-831988632677 | not-captured | 2026-10-16T12:37:22.986Z | unknown; unqualified; selection bound | unknown (unknown) | /workspace/attachments/contour-repair-policy-20261016/packages/agent/.tmp/mutation-evidence-c037cede-355f-4b14-a82f-831988632677-y148n2/terminal-summary.json |
+| coverage | ba2687bb-400f-4a62-9c89-26d7052ca138 | 62c1fca50217f02ea4829660e6d71bdecc57ebda | 2026-10-16T13:03:44.426Z | focused-diagnostic; owner accepted locally; selection bound | 55/55 · 229/233 · 235/241 · 132/140 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/ba2687bb-400f-4a62-9c89-26d7052ca138.focused-coverage.json |
+| coverage-outcome | ba2687bb-400f-4a62-9c89-26d7052ca138 | not-captured | 2026-10-16T13:03:44.434Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/ba2687bb-400f-4a62-9c89-26d7052ca138.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

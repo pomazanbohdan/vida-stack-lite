@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -953,6 +953,44 @@ test('closing a non-live handle is rejected before reading its custody', () => {
       null,
     ),
   ).toThrow('Service operation custody: live operation handle is required');
+});
+
+test('reservation retains the original failure and rollback failure without committing its row', () => {
+  const fixture = openCustodyFixture('service-reservation-rollback-fault-');
+  const nativeExec = fixture.database.exec.bind(fixture.database);
+  const commitError = new Error('injected reservation commit failure');
+  const rollbackError = new Error('injected reservation rollback acknowledgement failure');
+  const exec = spyOn(fixture.database, 'exec').mockImplementation((sql: string) => {
+    if (sql === 'COMMIT') throw commitError;
+    const result = nativeExec(sql);
+    if (sql === 'ROLLBACK') throw rollbackError;
+    return result;
+  });
+  try {
+    let observed: unknown;
+    try {
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      );
+    } catch (error) {
+      observed = error;
+    }
+    expect(observed).toBeInstanceOf(AggregateError);
+    if (!(observed instanceof AggregateError)) throw new Error('Both transaction failures must be retained.');
+    expect(observed.message).toBe('Service custody transaction and rollback failed.');
+    expect(observed.errors).toEqual([commitError, rollbackError]);
+    expect(fixture.database.inTransaction).toBe(false);
+    expect(readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toBeNull();
+  } finally {
+    exec.mockRestore();
+    closeServiceOperationDatabase(fixture.database);
+    rmSync(fixture.root, { recursive: true, force: true });
+  }
 });
 
 test('reconciliation rolls back when an AFTER UPDATE trigger deletes its CAS row', async () => {

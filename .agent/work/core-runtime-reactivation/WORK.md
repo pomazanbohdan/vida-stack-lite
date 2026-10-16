@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `ca68f43a34ebceb66515585ded3f8dbe5a30c6f1`. Its focused recheck is terminal; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `62c1fca50217f02ea4829660e6d71bdecc57ebda`. Its focused coverage recheck is terminal; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,33 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+Focused cycle `b65d73f8-c303-48d7-90ab-ca8f37af145d` is terminal on62c1fca.
+Mastra passes97/0tests,2635assertions with exact F191/191,L642/642,S686/686,
+B205/205. Service passes63/0tests,380assertions; custody has F52/52,L222/226,
+S227/233,B116/124 and launch-capability retains exact100%. Both coverage reports
+are admitted through the projection owner (391attempts). CRAP lacks pinned
+reviewed scope budgets; mutation was explicitly unattempted, not PASS. The
+existing900s timeouts remain UNKNOWN and are not replayed. Exact records are in
+`/workspace/attachments/affected-contour-recheck-b65d73f8-c303-48d7-90ab-ca8f37af145d/`.
+
+The next service packet exercises null persisted handoff fields, paired commit/
+rollback failures, cleanup after genuine CAS, CAS plus cleanup failure, and the
+real UNKNOWN write followed by a close failure. Exact-path close faults retain
+native connections under the existing pending-close owner; spies restore before
+that owner's cleanup retry. Two controls remove a row only after native COMMIT
+and verify the afterimage guards, rather than forging CAS results. Interrupted
+and UNKNOWN fixtures remain retained. Focused full service selection `0F8S18`
+passes with complete captures, closed group and unchanged boot; strict tests
+typecheck and scoped lint have zero diagnostics. Numeric recheck is pending.
+
+Bounded mutation research verified installed Core10/instrumenter semantics:
+`dryRunOnly` does not emit the mutation-plan callback; range selection requires
+the whole node to fit, so naive windows omit spanning mutants. Ignore-plugin
+reasons propagate through descendants, so arbitrary hash buckets can also omit
+mutants. Neither shortcut is activated. A supported batch adapter must bind the
+complete canonical universe, prove exhaustive/disjoint execution and preserve
+the full test argv plus assertion-confirmed receipts before parent admission.
 
 The next focused cycle `0ccbecfa-1976-4b7d-9058-99bc053dae80` ran publishedca68f43
 with official SDK run38899887813/attempt1/artifact12044619416, digest

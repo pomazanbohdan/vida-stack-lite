@@ -1,4 +1,5 @@
-import { expect, test } from 'bun:test';
+import { expect, spyOn, test } from 'bun:test';
+import { Database } from 'bun:sqlite';
 import { copyFileSync, renameSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import {
@@ -13,7 +14,8 @@ import {
   reconcileServiceOperationCustody,
   claimReservedServiceOperationLaunch,
 } from '../../src/config/service-operation-custody.js';
-import { expectAsyncReturned, expectRejection, expectReturned } from '../helpers/expect-rejection.js';
+import { expectAsyncReturned, expectRejection, expectReturned, rejectionReason } from '../helpers/expect-rejection.js';
+import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.js';
 import { openCustodyFixture, type ServiceCustodyFixture } from '../helpers/service-custody-fixture.js';
 
 const requestDigest = 'b'.repeat(64);
@@ -122,12 +124,225 @@ test('verifier rejection and malformed prepared receipt preserve the terminal pa
   }
 });
 
+for (const failCas of [false, true]) {
+  test(`handoff retains ${failCas ? 'CAS and close failures' : 'a close failure after its real CAS'}`, async () => {
+    const fixture = openCustodyFixture('handoff-close-fault-');
+    const cleanupError = new Error('injected exact service connection close failure');
+    let restoreClose: (() => void) | undefined;
+    let reconciled = false;
+    try {
+      const prior = finishOperation(fixture, 'release-pack-worker');
+      const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      if (failCas)
+        source.exec(
+          'CREATE TRIGGER reject_handoff BEFORE UPDATE OF owner_kind ON agent_host_service_operation_custody ' +
+            "BEGIN SELECT RAISE(ABORT, 'injected handoff CAS failure'); END",
+        );
+      const failure = await rejectionReason(
+        handoffServiceOperationCustody(
+          source,
+          fixture.root,
+          fixture.relative,
+          fixture.workspaceId,
+          operationId,
+          requestDigest,
+          retargetDigest,
+          async () => {
+            // Install only after the real beforeimage connection has closed.
+            restoreClose = failExactServiceClose(fixture, cleanupError);
+            return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+          },
+        ),
+      );
+      if (failCas) {
+        expect(failure).toBeInstanceOf(AggregateError);
+        if (!(failure instanceof AggregateError)) throw new Error('CAS and close failures must both survive.');
+        expect(failure.message).toBe('handoff CAS and close failed');
+        const causes: readonly unknown[] = failure.errors;
+        expect(causes).toHaveLength(2);
+        expect(causes[0]).toBeInstanceOf(Error);
+        if (!(causes[0] instanceof Error)) throw new Error('The native CAS failure must survive.');
+        expect(causes[0].message).toContain('injected handoff CAS failure');
+        expect(causes[1]).toBe(cleanupError);
+      } else expect(failure).toBe(cleanupError);
+      restoreClose?.();
+      restoreClose = undefined;
+      retryPendingWorkspaceDatabaseCloses();
+      const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      try {
+        const row = readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId);
+        if (failCas) expect(row).toEqual(prior);
+        else {
+          expect(row).not.toBeNull();
+          if (row === null) throw new Error('The committed handoff must remain observable.');
+          expectHandoffLineage(row, prior);
+        }
+        reconciled = true;
+      } finally {
+        closeServiceOperationDatabase(reopened);
+      }
+    } finally {
+      restoreClose?.();
+      retryPendingWorkspaceDatabaseCloses();
+      if (reconciled) rmSync(fixture.root, { recursive: true, force: true });
+      else console.error('SERVICE_CUSTODY_CLOSE_FAULT_FIXTURE_RETAINED', fixture.root);
+    }
+  });
+}
+
+test('receipt failure retains its cause when closing the real UNKNOWN connection also fails', async () => {
+  const fixture = openCustodyFixture('service-receipt-close-fault-');
+  const receiptError = new Error('injected receipt verification failure');
+  const cleanupError = new Error('injected UNKNOWN source close failure');
+  let restoreClose: (() => void) | undefined;
+  try {
+    reserveServiceOperationLaunch(
+      fixture.database,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      evidenceDigest,
+    );
+    const failure = await rejectionReason(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          restoreClose = failExactServiceClose(fixture, cleanupError);
+          throw receiptError;
+        },
+      ),
+    );
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError)) throw new Error('Receipt and close failures must both survive.');
+    expect(failure.message).toBe('reconciliation receipt failed and UNKNOWN custody cleanup is unresolved');
+    expect(failure.errors).toEqual([receiptError, cleanupError]);
+    restoreClose?.();
+    restoreClose = undefined;
+    retryPendingWorkspaceDatabaseCloses();
+    const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+    try {
+      const row = readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId);
+      expect(row?.phase).toBe('unknown');
+      expect(row?.owner_token).toBeNull();
+      expect(row?.revision).toBe(2);
+    } finally {
+      closeServiceOperationDatabase(reopened);
+    }
+  } finally {
+    restoreClose?.();
+    retryPendingWorkspaceDatabaseCloses();
+    console.error('SERVICE_CUSTODY_EXPECTED_UNKNOWN_FIXTURE_RETAINED', fixture.root);
+  }
+});
+
+function failExactServiceClose(fixture: ServiceCustodyFixture, error: Error): () => void {
+  const nativeClose = Reflect.get(Database.prototype, 'close') as Database['close'];
+  const file = path.join(fixture.root, fixture.relative);
+  const close = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, force?: boolean): void {
+    if (path.resolve(this.filename) === file) throw error;
+    nativeClose.call(this, force);
+  });
+  return () => close.mockRestore();
+}
+
+for (const operation of ['handoff', 'reconciliation'] as const) {
+  test(`${operation} rejects a custody row removed after its real COMMIT`, async () => {
+    const fixture = openCustodyFixture('service-missing-committed-afterimage-');
+    const file = path.join(fixture.root, fixture.relative);
+    const nativeExec = Reflect.get(Database.prototype, 'exec') as Database['exec'];
+    let restoreExec: (() => void) | undefined;
+    let removals = 0;
+    const removeAfterCommit = () => {
+      const exec = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, sql: string) {
+        const result = nativeExec.call(this, sql);
+        if (path.resolve(this.filename) === file && sql === 'COMMIT') {
+          // A real commit followed by an external deletion, not a forged CAS result.
+          nativeExec.call(this, 'DELETE FROM agent_host_service_operation_custody');
+          removals++;
+        }
+        return result;
+      });
+      restoreExec = () => exec.mockRestore();
+    };
+    try {
+      if (operation === 'handoff') {
+        finishOperation(fixture, 'release-pack-worker');
+        const source = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+        await expectRejection(
+          handoffServiceOperationCustody(
+            source,
+            fixture.root,
+            fixture.relative,
+            fixture.workspaceId,
+            operationId,
+            requestDigest,
+            retargetDigest,
+            async () => {
+              removeAfterCommit();
+              return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+            },
+          ),
+          'handed-off owner row disappeared',
+        );
+      } else {
+        reserveServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          evidenceDigest,
+        );
+        await expectRejection(
+          reconcileServiceOperationCustody(
+            fixture.database,
+            fixture.root,
+            fixture.relative,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            () => {
+              removeAfterCommit();
+              return { phase: 'prepared', evidence_digest: evidenceDigest };
+            },
+          ),
+          'reconciled owner row disappeared',
+        );
+      }
+      expect(removals).toBe(1);
+      restoreExec?.();
+      restoreExec = undefined;
+      const reopened = openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId);
+      try {
+        expect(readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)).toBeNull();
+      } finally {
+        closeServiceOperationDatabase(reopened);
+      }
+    } finally {
+      restoreExec?.();
+      console.error('SERVICE_CUSTODY_AFTERIMAGE_FAULT_FIXTURE_RETAINED', fixture.root);
+    }
+  });
+}
+
 const invalidPersistedHandoffCases = [
   ['handoff digest', 'handoff_digest', 'invalid'],
+  ['absent handoff digest', 'handoff_digest', null],
   ['predecessor request digest', 'handoff_from_request_digest', 'invalid'],
+  ['absent predecessor request digest', 'handoff_from_request_digest', null],
   ['predecessor evidence digest', 'handoff_from_evidence_digest', 'invalid'],
+  ['absent predecessor evidence digest', 'handoff_from_evidence_digest', null],
   ['predecessor phase', 'handoff_from_phase', 'prepared'],
   ['zero predecessor revision', 'handoff_from_revision', 0],
+  ['absent predecessor revision', 'handoff_from_revision', null],
 ] as const;
 
 for (const [label, column, value] of invalidPersistedHandoffCases) {
