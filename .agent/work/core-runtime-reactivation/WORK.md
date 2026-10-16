@@ -6723,6 +6723,20 @@ reserved legally writes an applied .terminal; only commit_unknown-to-applied use
 .final. The existing direct-store test covers it. Preserve that validator branch;
 the earlier proposal's unreachable-path premise is false.
 
+Independent source review proves the second normalizeProjectRoot guard tautological:
+the local root is either the original value or '.' for undefined, so the removed
+strict-equality disjunction cannot fail for any JavaScript input. The preceding
+non-empty-string check and all path safety checks remain in their original order.
+The exact negative project_root matrix and implicit/explicit-dot controls remain.
+Review: `/workspace/attachments/quality-project-root-tautology-review-20261016.md`.
+The fresh118role project-context capture is joined with the unchanged232role
+runtime-config capture rather than reparsing it. The new
+`scope_review_main_config_root_normalization_20261016` retains all316original
+roles,34prospective roles and two existing removals; no original measurement,
+ceiling, identity, removal or count changes. Source typecheck passes. Fresh exact
+coverage, same-run scoped CRAP and a complete qualified mutation run remain
+separate pending checks; interrupted campaigns are not reused as a score.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

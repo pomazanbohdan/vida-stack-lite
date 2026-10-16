@@ -167,7 +167,6 @@ function failPath(message: string): never {
 function normalizeProjectRoot(value: string | undefined, label: string): string {
   const root = value === undefined ? '.' : value;
   enforce(typeof root === 'string' && root.length > 0, label + ' must be a non-empty relative path');
-  enforce(root !== '.' || value === undefined || value === '.', label + ' must use a stable relative root');
   enforce(!path.posix.isAbsolute(root) && !root.includes('\\'), label + ' must be repository-relative');
   const normalized = root === '.' ? '.' : root.replace(/\/+$/, '');
   enforce(
