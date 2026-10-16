@@ -51,6 +51,7 @@ const scopedBudgetReviews = new Map([
   ['64f18b3148a80644787a1c2b997ad7a1ff6e5d5d', 'scope_review_runtime_facade_20261015'],
   ['e9629b3c45cde992ef688af33b2538c7e3a67391', 'scope_review_lifecycle_state_20261015'],
   ['386bf6c9b576e8e43c903155513358b403468179', 'scope_review_main_contracts_20261015'],
+  ['a03c2e2a29d26aeb11f3106b973f1c1f6642f128:main-envelopes', 'scope_review_main_envelopes_shared_error_20261016'],
   [
     '892523d2a83edc6e21d7a05d6e9cca902aab6f44:bun-runtime-initialization',
     'scope_review_runtime_initialization_20261015',
