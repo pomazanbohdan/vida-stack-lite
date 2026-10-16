@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `a60fb28a96d265426e8e01ca4515d087895e0fcd`. Its complete64-ID diagnostic observes60assertion-confirmed Killed,4Survived and0UNKNOWN;636of700generated IDs remain unattempted. The older5ef19ac storage-interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this evidence packet: `bcbd426887187fcedb747a0c138fe29288b2aa8f`. Its complete 64-ID diagnostic observes 64 assertion-confirmed Killed, 0 Survived and 0 UNKNOWN; 636 of 700 generated IDs remain unattempted. The older 5ef19ac storage-interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,27 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+The after-correction diagnostic binds bcbd426 and official SDK
+run38924493666/attempt1/artifact12055553459, ZIP digest
+`sha256:a3989d3bbf6244179b4c128eda4bc89b39b550c10b18d8ce4919b222b52a98fe`.
+Outer `native-mutation-pilot-bcbd426-gMbS97` closes in311965.133984ms with
+complete captures, closed group and unchanged boot. Inner evidence is
+`packages/agent/.tmp/mutation-batch-03bb7d05-98fd-4254-9ae1-c38ea41b6ba4-ZcMf1s/`.
+Baseline97cases passes. All64selected IDs are assertion-confirmed Killed;
+0Survived/0UNKNOWN,636unattempted out of700generated. All four prior survivors
+are now Killed. Parent inputs/image/executable readback complete; no storage
+denial occurs. This diagnostic does not admit a whole-contour score or closure.
+
+The same bcbd426 coverage owner `native-coverage-bcbd426-nQ0Gjr` closes in
+18776.213422ms,97/0tests,663assertions, with complete captures/closed group/same
+boot. Report
+`coverage/bun-unified/diagnostics/a8dde706-234a-4a1e-9bb4-b2263b0141d6.focused-coverage.json`
+records F56/56,L235/235,S243/243,B128/128 and observed maxCC10/maxCRAP10.
+The projection owner imports that exact report. The reviewed frozen scope budget
+and complete native parent admission remain open; historical triples stay6/45.
+The next mutation cycle must generate a new complete700-ID image and execute its
+disjoint batches, not resume either retained64-ID operation or combine their rows.
 
 Both active checkouts were clean and published at a60fb28 before the user's
 save-and-cleanup request. Native producers had stopped; prior retired-worktree
@@ -30,7 +51,7 @@ walker safely completed the remaining accessible duplicate comparison. The
 manifests were compressed only after full decompressed byte-count/SHA-256
 equality. This neither reclassifies historical failures nor admits old results.
 
-Fresh diagnostic binds a60fb28 and official SDK run38921256856/attempt1,
+The before-correction diagnostic binds a60fb28 and official SDK run38921256856/attempt1,
 artifact12055045679, ZIP digest
 `sha256:9929efcb386b69df22a661a7b7c9d0c30d235e59624e4b25a99fc507be5a1de2`.
 Outer `native-mutation-pilot-a60fb28-S8Mgsn` closes in384330.530521ms with
@@ -41,7 +62,7 @@ Baseline94cases passes;64of700IDs complete:60Killed,4Survived,0UNKNOWN,
 denial occurs. Both previous local266and618 survivors are now Killed. This is
 still diagnostic-only, not complete contour or native-parent admission.
 
-New survivors are local311(binding denial),558(gate check before a new SQLite
+Its survivors are local311(binding denial),558(gate check before a new SQLite
 open),24(operation-key prefix) and593(lossless integer transport). Corrections
 add unbound-connection denial with no verifier/close/effect, operation-key
 boundary matrices, and a real gate-replacement boundary proving no new SQLite
@@ -53,7 +74,7 @@ All Source guards remain. The bigint transport contract follows the official
 Fixture deletion now follows successful completion of every cleanup callback,
 so a cleanup failure retains the root. Focused owner `JzLRqB` passes62/0tests,476assertions
 across2files in2.74s with complete captures, closed group and unchanged boot.
-Strict tests467files passes. Numeric confirmation needs a fresh bound run.
+Strict tests467files passes. The later bcbd426 diagnostic confirms all four fixes.
 
 Native coverage owner `native-coverage-a60fb28-9aIEiA` closes in18314.754987ms,
 94/0tests,619assertions, complete captures/closed group/same boot. Report
