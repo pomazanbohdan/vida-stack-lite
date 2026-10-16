@@ -262,6 +262,25 @@ interrupts a command before a complete receipt, the result remains timeout or
 UNKNOWN; never infer an assertion-confirmed kill. Split oversized scopes rather
 than raising all budgets. Changed limit/tool inputs require fresh affected proof.
 
+Keep assertion diagnostics bounded for large payloads. A missing-throw Bun
+`toThrow` assertion can serialize a multi-megabyte return into stderr and JUnit,
+exceeding receipt bounds. Use native `assert.throws` with the expected error
+message; assert the type before a large successful-value comparison, then compare
+with a boolean assertion instead of printing both payloads. Qualify the missing-
+throw negative control separately and retain its expected failure. Do not raise
+capture limits or admit truncated artifacts. Path assertions whose custom Bun
+labels produce generic JUnit Error need native assertions, preserving the exact
+corpus, seeds and malformed UTF-16 values; positive body events alone do not waive
+the AssertionError and custody requirements.
+
+Budget fixtures retain exact thresholds while limiting per-array work. Prefer
+many short unique string lists over a few enormous lists when testing an aggregate
+resource cap; account independently for every included list and record. Exact-
+limit invalid fixtures may deliberately reach a named later guard, while over-
+limit fixtures must reach the aggregate guard first. They do not prove that the
+whole invalid ledger is accepted. Check schema conditionals and uniqueItems before
+claiming a semantic witness; earlier schema rejection cannot kill that later guard.
+
 Stryker partitions reuse one scratch root. Record each process receipt and
 post-run input check before deciding whether another partition may start.
 UNKNOWN, incomplete output, signal, spawn error or missing owned-group termination

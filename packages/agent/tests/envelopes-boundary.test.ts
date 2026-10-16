@@ -9,6 +9,7 @@ import type {
   CoordinationLedger,
   CoordinationTicket,
   CoordinationClaim,
+  CoordinationLedgerValidationResult,
 } from '../src/contracts/envelopes.js';
 import { configuredTestContext } from './configured-context.js';
 import fc from 'fast-check';
@@ -17,6 +18,25 @@ import { expectReturned } from './helpers/expect-rejection.ts';
 
 function hasValidateRequest(value: unknown): value is { readonly validateRequest: true } {
   return typeof value === 'object' && value !== null && 'validateRequest' in value && value.validateRequest === true;
+}
+
+function assertLedgerRejection(result: CoordinationLedgerValidationResult, code: string, pointer: string): void {
+  assert.ok(result !== null && typeof result === 'object');
+  assert.equal(result.ok, false);
+  assert.equal(result.ledger, null);
+  const issues = result.issues;
+  const issueShape: unknown = issues;
+  assert.ok(Array.isArray(issueShape));
+  assert.deepEqual(
+    issues.map((issue) => ({ code: issue?.code, path: issue?.path })),
+    [{ code, path: pointer }],
+  );
+  const issue = issues[0];
+  assert.ok(issue);
+  assert.equal(typeof issue.message, 'string');
+  assert.ok(issue.message.trim().length > 0);
+  assert.equal(issue.message, issue.message.trim());
+  if (code.endsWith('DUPLICATE')) assert.match(issue.message, / contains aliases or duplicate identifiers$/);
 }
 
 function coordinationLedgerFixture(): CoordinationLedger {
@@ -74,6 +94,19 @@ function coordinationLedgerFixture(): CoordinationLedger {
 }
 
 describe('runtime envelope canonicalization boundary', () => {
+  test('distinguishes the ledger encoded byte cap from the canonical raw string cap', async () => {
+    const { coordinationLedgerJson } = await import('../src/contracts/envelopes.js');
+    const { MAX_CANONICAL_BYTES } = await import('../src/contracts/canonical-json-core.js');
+    // A JSON string adds two quote bytes. At the cap it reaches schema rejection;
+    // one encoded byte above it must stop at the earlier ledger byte guard.
+    assert.throws(() => coordinationLedgerJson('a'.repeat(MAX_CANONICAL_BYTES - 2)), {
+      message: 'coordination ledger rejected: ledger record must match current CoordinationLedger/v1: must be object',
+    });
+    assert.throws(() => coordinationLedgerJson('a'.repeat(MAX_CANONICAL_BYTES - 1)), {
+      message: 'coordination ledger byte budget exceeded',
+    });
+  });
+
   test('owned paths preserve Unicode, device and historical wildcard boundaries', async () => {
     const { safeWorkflowOwnedPath, safeHistoricalWorkflowOwnedPath } = await import('../src/contracts/envelopes.js');
     const controls = Array.from({ length: 32 }, (_, index) => String.fromCodePoint(index)).concat(
@@ -106,10 +139,11 @@ describe('runtime envelope canonicalization boundary', () => {
       '*',
       ...controls,
     ])
-      expect(
+      assert.equal(
         expectReturned(() => safeWorkflowOwnedPath(`docs/${segment}/file.txt`)),
+        false,
         segment,
-      ).toBe(false);
+      );
     for (const value of [
       'docs/ї🚀.txt',
       'docs/clocK$.txt',
@@ -124,13 +158,18 @@ describe('runtime envelope canonicalization boundary', () => {
       'docs/.GiT\u2028',
       'docs/\u2029',
     ])
-      expect(
+      assert.equal(
         expectReturned(() => safeWorkflowOwnedPath(value)),
+        true,
         value,
-      ).toBe(true);
+      );
     for (const value of [null, undefined, 1, {}, []]) {
-      expect(expectReturned((): unknown => Reflect.apply(safeWorkflowOwnedPath, undefined, [value]))).toBe(false);
-      expect(expectReturned((): unknown => Reflect.apply(safeHistoricalWorkflowOwnedPath, undefined, [value]))).toBe(
+      assert.equal(
+        expectReturned((): unknown => Reflect.apply(safeWorkflowOwnedPath, undefined, [value])),
+        false,
+      );
+      assert.equal(
+        expectReturned((): unknown => Reflect.apply(safeHistoricalWorkflowOwnedPath, undefined, [value])),
         false,
       );
     }
@@ -145,8 +184,14 @@ describe('runtime envelope canonicalization boundary', () => {
       .map((segments) => segments.join('/'));
     assertProperty(
       fc.property(ordinaryPath, fc.constantFrom(...controls), (value, control) => {
-        expect(expectReturned(() => safeWorkflowOwnedPath(value))).toBe(true);
-        expect(expectReturned(() => safeWorkflowOwnedPath(`${value}${control}.txt`))).toBe(false);
+        assert.equal(
+          expectReturned(() => safeWorkflowOwnedPath(value)),
+          true,
+        );
+        assert.equal(
+          expectReturned(() => safeWorkflowOwnedPath(`${value}${control}.txt`)),
+          false,
+        );
       }),
       { seed: 20261011, numRuns: 256 },
     );
@@ -157,7 +202,7 @@ describe('runtime envelope canonicalization boundary', () => {
     assertProperty(
       fc.property(arbitraryPath, (value) => {
         const accepted = expectReturned(() => safeWorkflowOwnedPath(value));
-        if (accepted) expect(path.posix.normalize(value)).toBe(value);
+        if (accepted) assert.equal(path.posix.normalize(value), value);
       }),
       { seed: 20261013, numRuns: 256 },
     );
@@ -168,7 +213,7 @@ describe('runtime envelope canonicalization boundary', () => {
           const probe = Array.from(value, (character) => (probeCharacters.has(character) ? 'x' : character)).join('');
           const historical = expectReturned(() => safeHistoricalWorkflowOwnedPath(value));
           const current = expectReturned(() => safeWorkflowOwnedPath(probe));
-          expect(historical).toBe(current);
+          assert.equal(historical, current);
         },
       ),
       { seed: 20261012, numRuns: 256 },
@@ -231,15 +276,17 @@ describe('runtime envelope canonicalization boundary', () => {
       'docs/\uD800.txt',
       'docs/\uDC00.txt',
     ])
-      expect(
+      assert.equal(
         expectReturned(() => safeWorkflowOwnedPath(unsafe)),
+        false,
         unsafe,
-      ).toBe(false);
+      );
     for (const safe of ['WORK.md', '.agent/work/run/WORK.md', 'folder name/file.json'])
-      expect(
+      assert.equal(
         expectReturned(() => safeWorkflowOwnedPath(safe)),
+        true,
         safe,
-      ).toBe(true);
+      );
   });
 
   test("rejects a ticket that lists another ticket's claim", async () => {
@@ -367,13 +414,18 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(Array.isArray(result.issues)).toBe(true);
     expect(result.ok).toBe(false);
     expect(result.ledger).toBeNull();
-    expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([
-      { code: 'SCHEMA_INVALID', path: '$.workspace_id' },
-      { code: 'SCHEMA_INVALID', path: '$.revision' },
-    ]);
+    assert.deepEqual(
+      result.issues.map((issue) => ({ code: issue?.code, path: issue?.path })),
+      [
+        { code: 'SCHEMA_INVALID', path: '$.workspace_id' },
+        { code: 'SCHEMA_INVALID', path: '$.revision' },
+      ],
+    );
     for (const issue of result.issues) {
-      expect(issue.message).toMatch(/^ledger record must match current CoordinationLedger\/v1: must /);
-      expect(issue.message).not.toMatch(/undefined|invalid value/);
+      assert.ok(issue !== null && typeof issue === 'object');
+      assert.equal(typeof issue.message, 'string');
+      assert.match(issue.message, /^ledger record must match current CoordinationLedger\/v1: must /);
+      assert.doesNotMatch(issue.message, /undefined|invalid value/);
     }
     expect(invalid).toEqual(before);
     const validResult = expectReturned(() => validateCoordinationLedgerV1(ledger));
@@ -432,9 +484,12 @@ describe('runtime envelope canonicalization boundary', () => {
     const { MAX_CANONICAL_BYTES } = await import('../src/contracts/public-ingress.js');
     const atByteLimit = '\n'.repeat(MAX_CANONICAL_BYTES / 2 - 1);
     const encodedAtByteLimit = expectReturned(() => coordinationComponentJson(atByteLimit));
-    expect(encodedAtByteLimit).toBe(JSON.stringify(atByteLimit));
-    expect(Buffer.byteLength(encodedAtByteLimit)).toBe(MAX_CANONICAL_BYTES);
-    expect(() => coordinationComponentJson(atByteLimit + '\n')).toThrow('coordination ledger byte budget exceeded');
+    assert.equal(typeof encodedAtByteLimit, 'string');
+    assert.ok(encodedAtByteLimit === JSON.stringify(atByteLimit));
+    assert.equal(Buffer.byteLength(encodedAtByteLimit), MAX_CANONICAL_BYTES);
+    assert.throws(() => coordinationComponentJson(atByteLimit + '\n'), {
+      message: 'coordination ledger byte budget exceeded',
+    });
     expect(ledger).toEqual(before);
 
     const executionResource = 'execution:work-owner';
@@ -576,11 +631,102 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(Array.isArray(acknowledgedResult.issues)).toBe(true);
     expect(acknowledgedResult.ok).toBe(true);
 
+    const expandedNotice = {
+      ...notice,
+      resources: [...notice.resources, 'file:docs/guide.md'],
+      acknowledgements: [...notice.acknowledgements, { actor: 'operator-2', at: '2026-09-18T00:00:02.000Z' }],
+    };
+    const multiNotice = {
+      ...historicalLedger,
+      notices: [expandedNotice, { ...expandedNotice, notice_id: 'notice-2' }],
+      dispositions: [disposition, { ...disposition, disposition_id: 'disposition-2', subject_id: 'notice-2' }],
+    };
+    assert.deepEqual(
+      expectReturned(() => validateCoordinationLedgerV1(multiNotice)),
+      { ok: true, ledger: multiNotice, issues: [] },
+    );
+
     const cases: ReadonlyArray<{
       readonly value: unknown;
       readonly code: string;
       readonly path: string;
     }> = [
+      ...(['active', 'ready_for_handoff'] as const).map((status) => {
+        const resources = [...owner.exclusive_resources, 'file:src/other.ts'];
+        const earlier = {
+          ...owner,
+          ticket_id: 'ticket-earlier',
+          work_id: 'work-earlier',
+          thread_id: 'thread-earlier',
+          sequence: 1,
+          status,
+          claim_ids: ['claim-earlier'],
+          exclusive_resources: resources,
+          active_resources: resources,
+        };
+        const earlierClaim = {
+          ...claim,
+          claim_id: 'claim-earlier',
+          ticket_id: earlier.ticket_id,
+          work_id: earlier.work_id,
+          thread_id: earlier.thread_id,
+          resources,
+        };
+        return {
+          value: { ...ledger, tickets: [earlier, activeAfterWaiter], claims: [earlierClaim, claim], next_sequence: 3 },
+          code: 'FIFO_VIOLATION',
+          path: '$.tickets.1.active_resources',
+        };
+      }),
+      {
+        value: {
+          ...ledger,
+          tickets: [
+            earlierQueued,
+            { ...activeAfterWaiter, exclusive_resources: ['file:SRC/TASK.TS'], active_resources: ['file:SRC/TASK.TS'] },
+          ],
+          claims: [{ ...claim, resources: ['file:SRC/TASK.TS'] }],
+          next_sequence: 3,
+        },
+        code: 'FIFO_VIOLATION',
+        path: '$.tickets.1.active_resources',
+      },
+      {
+        value: { ...ledger, tickets: [{ ...owner, status: 'blocked' }] },
+        code: 'INACTIVE_TICKET_OWNS_RESOURCE',
+        path: '$.tickets.0.active_resources',
+      },
+      {
+        value: {
+          ...ledger,
+          tickets: [
+            {
+              ...owner,
+              status: 'released',
+              active_resources: [],
+              blocked_resources: [...owner.exclusive_resources],
+              expires_at: null,
+            },
+          ],
+          claims: [{ ...claim, status: 'released' }],
+        },
+        code: 'CLOSED_TICKET_BLOCKED',
+        path: '$.tickets.0.blocked_resources',
+      },
+      {
+        value: {
+          ...ledger,
+          tickets: [
+            {
+              ...owner,
+              status: 'ready_for_handoff',
+              exclusive_resources: [...owner.exclusive_resources, 'file:src/other.ts'],
+            },
+          ],
+        },
+        code: 'READY_OWNERSHIP_INCOMPLETE',
+        path: '$.tickets.0',
+      },
       {
         value: { ...ledger, claims: [{ ...claim, thread_id: 'foreign-thread' }] },
         code: 'CLAIM_AUTHORITY_INVALID',
@@ -626,6 +772,20 @@ describe('runtime envelope canonicalization boundary', () => {
           tickets: [
             {
               ...owner,
+              exclusive_resources: [...owner.exclusive_resources, 'file:src/other.ts'],
+              active_resources: ['file:src/other.ts'],
+            },
+          ],
+        },
+        code: 'ACTIVE_RESOURCE_PROJECTION_INVALID',
+        path: '$.tickets.0.active_resources',
+      },
+      {
+        value: {
+          ...ledger,
+          tickets: [
+            {
+              ...owner,
               exclusive_resources: [...owner.exclusive_resources, 'file:src/z.ts'],
               active_resources: [...owner.active_resources, 'file:src/z.ts'],
             },
@@ -649,15 +809,49 @@ describe('runtime envelope canonicalization boundary', () => {
         code: 'NOTICE_ACKNOWLEDGEMENT_MISSING',
         path: '$.notices.0.acknowledgements',
       },
+      {
+        value: { ...historicalLedger, notices: [{ ...notice, owner_ticket_id: 'ticket-absent' }] },
+        code: 'NOTICE_TICKET_MISSING',
+        path: '$.notices.0',
+      },
+      {
+        value: { ...historicalLedger, notices: [{ ...notice, resources: [...notice.resources, 'file:SRC/TASK.TS'] }] },
+        code: 'NOTICE_RESOURCE_DUPLICATE',
+        path: '$.notices.0.resources',
+      },
+      {
+        value: {
+          ...historicalLedger,
+          notices: [
+            {
+              ...notice,
+              acknowledgements: [...notice.acknowledgements, { actor: 'operator-1', at: '2026-09-18T00:00:02.000Z' }],
+            },
+          ],
+        },
+        code: 'NOTICE_ACKNOWLEDGEMENT_DUPLICATE',
+        path: '$.notices.0.acknowledgements',
+      },
+      { value: { ...historicalLedger, dispositions: [] }, code: 'NOTICE_DISPOSITION_MISSING', path: '$.notices.0' },
+      {
+        value: {
+          ...historicalLedger,
+          notices: [{ ...notice, status: 'acknowledged' }],
+          dispositions: [{ ...disposition, subject_id: 'notice-absent' }],
+        },
+        code: 'DISPOSITION_SUBJECT_MISSING',
+        path: '$.dispositions.0',
+      },
+      {
+        value: { ...multiNotice, dispositions: [{ ...disposition, subject_id: 'notice-2' }] },
+        code: 'NOTICE_DISPOSITION_MISSING',
+        path: '$.notices.0',
+      },
     ];
     for (const row of cases) {
       const before = structuredClone(row.value);
       const result = expectReturned(() => validateCoordinationLedgerV1(row.value));
-      expect(result).not.toBeNull();
-      expect(typeof result).toBe('object');
-      expect(Array.isArray(result.issues)).toBe(true);
-      expect(result.ok).toBe(false);
-      expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([{ code: row.code, path: row.path }]);
+      assertLedgerRejection(result, row.code, row.path);
       expect(row.value).toEqual(before);
     }
     const partiallyOutOfScopeClaimLedger = {
@@ -668,13 +862,7 @@ describe('runtime envelope canonicalization boundary', () => {
     const partiallyOutOfScopeClaimResult = expectReturned(() =>
       validateCoordinationLedgerV1(partiallyOutOfScopeClaimLedger),
     );
-    expect(partiallyOutOfScopeClaimResult).not.toBeNull();
-    expect(typeof partiallyOutOfScopeClaimResult).toBe('object');
-    expect(Array.isArray(partiallyOutOfScopeClaimResult.issues)).toBe(true);
-    expect(partiallyOutOfScopeClaimResult.issues.map(({ code, path }) => ({ code, path }))).toContainEqual({
-      code: 'ACTIVE_CLAIM_SCOPE_INVALID',
-      path: '$.claims.0.resources',
-    });
+    assertLedgerRejection(partiallyOutOfScopeClaimResult, 'ACTIVE_CLAIM_SCOPE_INVALID', '$.claims.0.resources');
     const historicalClaimLedger = {
       ...ledger,
       tickets: [
@@ -757,6 +945,7 @@ describe('runtime envelope canonicalization boundary', () => {
     });
 
     const otherResource = 'file:src/other.ts';
+    const laterLeaseExpiresAt = '2099-09-19T00:00:00.000Z';
     const disjoint = {
       ...overlapping,
       tickets: [
@@ -766,13 +955,78 @@ describe('runtime envelope canonicalization boundary', () => {
           active_resources: [...ticket.active_resources, otherResource],
         },
       ],
-      claims: [claim, { ...overlappingClaim, resources: [otherResource] }],
+      claims: [claim, { ...overlappingClaim, resources: [otherResource], lease_expires_at: laterLeaseExpiresAt }],
     } satisfies CoordinationLedger;
-    expect(expectReturned(() => validateCoordinationLedgerV1(disjoint))).toEqual({
-      ok: true,
-      ledger: disjoint,
-      issues: [],
-    });
+    assert.deepEqual(
+      expectReturned(() =>
+        validateCoordinationLedgerV1(disjoint, {
+          currentTimeMs: Date.parse('2099-09-17T00:00:00.000Z'),
+        }),
+      ),
+      {
+        ok: true,
+        ledger: disjoint,
+        issues: [],
+      },
+    );
+    const laterExpiryResult = expectReturned(() =>
+      validateCoordinationLedgerV1(
+        {
+          ...disjoint,
+          tickets: [{ ...disjoint.tickets[0]!, expires_at: laterLeaseExpiresAt }],
+        },
+        { currentTimeMs: Date.parse('2099-09-17T00:00:00.000Z') },
+      ),
+    );
+    const readyWithTwoClaims = {
+      ...disjoint,
+      tickets: [{ ...disjoint.tickets[0]!, status: 'ready_for_handoff' as const }],
+    } satisfies CoordinationLedger;
+    assert.deepEqual(
+      expectReturned(() =>
+        validateCoordinationLedgerV1(readyWithTwoClaims, { currentTimeMs: Date.parse('2099-09-17T00:00:00.000Z') }),
+      ),
+      {
+        ok: true,
+        ledger: readyWithTwoClaims,
+        issues: [],
+      },
+    );
+    for (const currentTime of ['2099-09-18T00:00:00.000Z', '2099-09-18T12:00:00.000Z']) {
+      assertLedgerRejection(
+        expectReturned(() =>
+          validateCoordinationLedgerV1(readyWithTwoClaims, {
+            currentTimeMs: Date.parse(currentTime),
+          }),
+        ),
+        'READY_LEASE_EXPIRED',
+        '$.tickets.0',
+      );
+    }
+    assert.equal(laterExpiryResult.ok, false);
+    assert.equal(laterExpiryResult.ledger, null);
+    assert.deepEqual(
+      laterExpiryResult.issues.map(({ code, path }) => ({ code, path })),
+      [{ code: 'TICKET_EXPIRY_PROJECTION_INVALID', path: '$.tickets.0.expires_at' }],
+    );
+  });
+
+  test('reports case aliases in ticket exclusive resources', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    const value: CoordinationLedger = {
+      ...ledger,
+      tickets: [{ ...ledger.tickets[0]!, exclusive_resources: ['file:src/task.ts', 'file:SRC/TASK.TS'] }],
+    };
+    const before = structuredClone(value);
+    const result = expectReturned(() => validateCoordinationLedgerV1(value));
+    assert.equal(result.ok, false);
+    assert.equal(result.ledger, null);
+    assert.deepEqual(
+      result.issues.map(({ code, path }) => ({ code, path })),
+      [{ code: 'TICKET_RESOURCE_DUPLICATE', path: '$.tickets.0.exclusive_resources' }],
+    );
+    assert.deepEqual(value, before);
   });
 
   test('reports duplicate ticket and claim identity diagnostics', async () => {
@@ -795,12 +1049,115 @@ describe('runtime envelope canonicalization boundary', () => {
     ];
     for (const row of cases) {
       const result = expectReturned(() => validateCoordinationLedgerV1(row.value));
-      assert.equal(result.ok, false);
-      assert.equal(result.ledger, null);
-      assert.deepEqual(
-        result.issues.map(({ code, path }) => ({ code, path })),
-        [{ code: row.code, path: row.path }],
+      assertLedgerRejection(result, row.code, row.path);
+    }
+  });
+
+  test('accepts a released claim from an earlier ticket generation', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const base = coordinationLedgerFixture();
+    const historical = {
+      ...base,
+      open_generation: 2,
+      tickets: [{ ...base.tickets[0]!, generation: 2, status: 'released', active_resources: [], expires_at: null }],
+      claims: [{ ...base.claims[0]!, generation: 1, status: 'released' }],
+    };
+    assert.deepEqual(
+      expectReturned(() => validateCoordinationLedgerV1(historical)),
+      { ok: true, ledger: historical, issues: [] },
+    );
+  });
+
+  test('rejects a wildcard resource at the active claim boundary', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const base = coordinationLedgerFixture();
+    const wildcard = 'file:src/*.ts';
+    const result = expectReturned(() =>
+      validateCoordinationLedgerV1({
+        ...base,
+        tickets: [{ ...base.tickets[0]!, exclusive_resources: [wildcard], active_resources: [wildcard] }],
+        claims: [{ ...base.claims[0]!, resources: [wildcard] }],
+      }),
+    );
+    assertLedgerRejection(result, 'RESOURCE_PATH_UNSAFE', '$.claims.0.resources.0');
+    assert.equal(result.issues[0]!.message, 'resource file path is unsafe');
+  });
+
+  test('rejects a ticket sequence equal to the next sequence', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const base = coordinationLedgerFixture();
+    const result = expectReturned(() =>
+      validateCoordinationLedgerV1({
+        ...base,
+        tickets: [{ ...base.tickets[0]!, sequence: 2 }],
+        next_sequence: 2,
+      }),
+    );
+    assertLedgerRejection(result, 'TICKET_SEQUENCE_INVALID', '$.tickets.0.sequence');
+    assert.equal(result.issues[0]!.message, 'ticket sequence is outside ledger order');
+  });
+
+  test('enforces aggregate coordination ledger record and resource budgets', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const base = coordinationLedgerFixture();
+    const notice = {
+      schema: 'ConflictNotice/v1',
+      notice_id: 'notice-duplicate',
+      generation: 1,
+      contender_ticket_id: 'ticket-owner',
+      contender_work_id: 'work-contender',
+      owner_ticket_id: 'ticket-owner',
+      owner_work_id: 'work-owner',
+      owner_thread_id: 'thread-owner',
+      resources: ['file:src/task.ts'],
+      status: 'open',
+      acknowledgements: [],
+      created_at: '2026-09-18T00:00:00.000Z',
+    };
+    for (const [count, code, pointer, message] of [
+      [4094, 'HISTORY_ID_DUPLICATE', '$.notices', 'notices identifiers contains aliases or duplicate identifiers'],
+      [4095, 'AGGREGATE_RECORD_LIMIT', '$', 'coordination ledger aggregate record limit exceeded'],
+    ] as const) {
+      const result = expectReturned(() =>
+        validateCoordinationLedgerV1({
+          ...base,
+          notices: Array.from({ length: count }, () => ({ ...notice })),
+        }),
       );
+      assertLedgerRejection(result, code, pointer);
+      assert.equal(result.issues[0]!.message, message);
+    }
+    const resourceList = (prefix: string, length: number) => Array.from({ length }, (_, index) => `${prefix}:${index}`);
+    const contourKeys = resourceList('contour', 128);
+    const exclusiveResources = resourceList('resource', 128);
+    const ticket = (sequence: number): CoordinationTicket => ({
+      ...base.tickets[0]!,
+      ticket_id: 'ticket-duplicate',
+      sequence,
+      status: 'queued',
+      claim_ids: [],
+      expires_at: null,
+      active_resources: [],
+      blocked_resources: [],
+      contour_keys: contourKeys,
+      exclusive_resources: exclusiveResources,
+    });
+    const tickets = Array.from({ length: 256 }, (_, index) => ticket(index + 1));
+    const extra: CoordinationTicket = {
+      ...tickets[0]!,
+      sequence: 257,
+      contour_keys: ['contour-3:0'],
+      exclusive_resources: [],
+    };
+    for (const [selected, code, pointer, message] of [
+      [tickets, 'TICKET_ID_DUPLICATE', '$.tickets', 'ticket identifiers contains aliases or duplicate identifiers'],
+      [[...tickets, extra], 'AGGREGATE_RESOURCE_LIMIT', '$', 'coordination ledger aggregate resource limit exceeded'],
+    ] as const) {
+      const result = expectReturned(() =>
+        validateCoordinationLedgerV1({ ...base, tickets: selected, claims: [], next_sequence: 258 }),
+      );
+      assertLedgerRejection(result, code, pointer);
+      assert.equal(result.issues[0]!.message, message);
     }
   });
 
@@ -981,8 +1338,57 @@ describe('runtime envelope canonicalization boundary', () => {
     const accepted = makeLedger('accepted');
     const feedback = makeLedger('feedback');
     const rejected = makeLedger('rejected');
+    const releaseHistoryBefore = [ready, accepted, feedback, rejected].map((ledger) => structuredClone(ledger));
     const readyBatch = ready.batches[0]!;
     const acceptedBatch = accepted.batches[0]!;
+    const withContourMembers = (input: typeof ready, members: readonly { ticket_id: string; work_id: string }[]) => {
+      const identity = {
+        ...contourIdentity,
+        ticket_ids: members.map((ticket) => ticket.ticket_id),
+        work_ids: members.map((ticket) => ticket.work_id),
+      };
+      const digest = expectReturned(() => canonicalJsonDigest(identity));
+      return {
+        ...input,
+        contours: [{ ...identity, contour_digest: digest }],
+        batches: [{ ...input.batches[0]!, work_ids: identity.work_ids }],
+        operations: input.operations.map((operation) =>
+          operation.kind === 'contour_assurance' ? { ...operation, contour_digest: digest } : operation,
+        ),
+      };
+    };
+    const multiEntry = {
+      ...ready,
+      batches: [
+        {
+          ...readyBatch,
+          operations: [
+            ...readyBatch.operations,
+            { ...readyBatch.operations[0]!, order: 2, source: 'packages/agent/src/runtime-kernel.ts' },
+          ],
+          post_deployment_checks: [
+            ...readyBatch.post_deployment_checks,
+            { ...readyBatch.post_deployment_checks[0]!, id: 'check-2' },
+          ],
+        },
+      ],
+    };
+    assert.deepEqual(
+      expectReturned(() => validateCoordinationLedgerV1(multiEntry)),
+      { ok: true, ledger: multiEntry, issues: [] },
+    );
+    const laterGenerationTicket = {
+      ...supersedingTicket,
+      ticket_id: 'ticket-generation-2',
+      work_id: 'work-generation-2',
+      generation: 2,
+      sequence: 4,
+      blocked_resources: [],
+    };
+    const mixedGeneration = withContourMembers(
+      { ...ready, open_generation: 2, next_sequence: 5, tickets: [...ready.tickets, laterGenerationTicket] },
+      [owner, laterGenerationTicket],
+    );
     for (const ledger of [ready, accepted, feedback, rejected]) {
       const result = expectReturned(() => validateCoordinationLedgerV1(ledger));
       expect(result).not.toBeNull();
@@ -990,6 +1396,7 @@ describe('runtime envelope canonicalization boundary', () => {
       expect(Array.isArray(result.issues)).toBe(true);
       expect(result.ok).toBe(true);
     }
+    assert.deepEqual([ready, accepted, feedback, rejected], releaseHistoryBefore);
     const { claimed_resources: _claimedResources, ...historicalRebind } = rebind;
     const historicalRebindResult = expectReturned(() =>
       validateCoordinationLedgerV1({ ...ready, rebinds: [historicalRebind] }),
@@ -1048,6 +1455,58 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(observedFailure).toBe(clockFailure);
 
     const cases: ReadonlyArray<{ readonly value: unknown; readonly code: string; readonly path: string }> = [
+      { value: mixedGeneration, code: 'CONTOUR_TICKET_BINDING_INVALID', path: '$.contours.0' },
+      {
+        value: withContourMembers(accepted, [accepted.tickets[0]!, oldTicket]),
+        code: 'ACCEPTED_BATCH_NOT_RELEASED',
+        path: '$.batches.0',
+      },
+      {
+        value: withContourMembers(feedback, [feedback.tickets[0]!, oldTicket]),
+        code: 'RETURNED_BATCH_NOT_QUEUED',
+        path: '$.batches.0',
+      },
+      {
+        value: {
+          ...accepted,
+          tickets: accepted.tickets.map((ticket) =>
+            ticket.ticket_id === owner.ticket_id ? { ...ticket, status: 'queued' } : ticket,
+          ),
+        },
+        code: 'ACCEPTED_BATCH_NOT_RELEASED',
+        path: '$.batches.0',
+      },
+      {
+        value: {
+          ...ready,
+          contours: [
+            {
+              ...contourIdentity,
+              ticket_ids: [owner.ticket_id, 'ticket-missing'],
+              contour_digest: expectReturned(() =>
+                canonicalJsonDigest({ ...contourIdentity, ticket_ids: [owner.ticket_id, 'ticket-missing'] }),
+              ),
+            },
+          ],
+        },
+        code: 'CONTOUR_TICKET_MISSING',
+        path: '$.contours.0',
+      },
+      {
+        value: { ...ready, operations: [{ ...release, resources: ['file:../private.json'] }, assurance] },
+        code: 'RESOURCE_PATH_UNSAFE',
+        path: '$.operations.0.resources.0',
+      },
+      {
+        value: { ...ready, rebinds: [{ ...rebind, retired_claim_ids: [oldClaim.claim_id, ownerClaim.claim_id] }] },
+        code: 'REBIND_REFERENCE_INVALID',
+        path: '$.rebinds.0',
+      },
+      {
+        value: { ...ready, rebinds: [{ ...rebind, from_ledger_revision: 3, to_ledger_revision: 4 }] },
+        code: 'REBIND_REFERENCE_INVALID',
+        path: '$.rebinds.0',
+      },
       {
         value: { ...ready, dispositions: [{ ...recoveryDisposition, subject_id: 'missing-claim' }] },
         code: 'DISPOSITION_SUBJECT_MISSING',
@@ -1098,12 +1557,74 @@ describe('runtime envelope canonicalization boundary', () => {
         path: '$.contours.0.contour_digest',
       },
       {
+        value: {
+          ...ready,
+          contours: [
+            {
+              ...contourIdentity,
+              work_ids: ['work-other'],
+              contour_digest: expectReturned(() =>
+                canonicalJsonDigest({ ...contourIdentity, work_ids: ['work-other'] }),
+              ),
+            },
+          ],
+        },
+        code: 'CONTOUR_TICKET_BINDING_INVALID',
+        path: '$.contours.0',
+      },
+      {
+        value: {
+          ...ready,
+          contours: [
+            {
+              ...contourIdentity,
+              ticket_ids: ['ticket-missing'],
+              contour_digest: expectReturned(() =>
+                canonicalJsonDigest({ ...contourIdentity, ticket_ids: ['ticket-missing'] }),
+              ),
+            },
+          ],
+        },
+        code: 'CONTOUR_TICKET_MISSING',
+        path: '$.contours.0',
+      },
+      {
         value: { ...ready, operations: [release, { ...assurance, contour_digest: 'c'.repeat(64) }] },
         code: 'ASSURANCE_CONTOUR_BINDING_INVALID',
         path: '$.operations.1',
       },
       {
+        value: { ...ready, operations: [{ ...release, to_ledger_revision: 3 }, assurance] },
+        code: 'OPERATION_REVISION_INVALID',
+        path: '$.operations.0',
+      },
+      {
+        value: { ...ready, operations: [{ ...release, from_ledger_revision: 3, to_ledger_revision: 4 }, assurance] },
+        code: 'OPERATION_REVISION_INVALID',
+        path: '$.operations.0',
+      },
+      {
+        value: { ...ready, operations: [{ ...release, ticket_id: 'ticket-missing' }, assurance] },
+        code: 'RELEASE_TICKET_MISSING',
+        path: '$.operations.0.ticket_id',
+      },
+      {
+        value: { ...ready, operations: [{ ...release, resources: [] }, assurance] },
+        code: 'RELEASE_RESOURCE_EMPTY',
+        path: '$.operations.0.resources',
+      },
+      {
         value: { ...ready, batches: [{ ...readyBatch, generation: 2 }] },
+        code: 'BATCH_CONTOUR_BINDING_INVALID',
+        path: '$.batches.0',
+      },
+      {
+        value: { ...ready, batches: [{ ...readyBatch, work_ids: ['work-other'] }] },
+        code: 'BATCH_CONTOUR_BINDING_INVALID',
+        path: '$.batches.0',
+      },
+      {
+        value: { ...ready, batches: [{ ...readyBatch, contour_id: 'contour-missing' }] },
         code: 'BATCH_CONTOUR_BINDING_INVALID',
         path: '$.batches.0',
       },
@@ -1135,15 +1656,59 @@ describe('runtime envelope canonicalization boundary', () => {
         code: 'RETIREMENT_REVISION_INVALID',
         path: '$.retirements.0',
       },
+      {
+        value: { ...ready, rebinds: [{ ...rebind, retired_claim_ids: ['claim-missing'] }] },
+        code: 'REBIND_REFERENCE_INVALID',
+        path: '$.rebinds.0',
+      },
+      {
+        value: { ...ready, rebinds: [{ ...rebind, retired_claim_ids: [ownerClaim.claim_id] }] },
+        code: 'REBIND_REFERENCE_INVALID',
+        path: '$.rebinds.0',
+      },
+      {
+        value: { ...ready, rebinds: [{ ...rebind, ticket_id: 'ticket-missing' }] },
+        code: 'REBIND_TICKET_MISSING',
+        path: '$.rebinds.0',
+      },
+      {
+        value: { ...ready, rebinds: [{ ...rebind, to_ledger_revision: 2 }] },
+        code: 'REBIND_REFERENCE_INVALID',
+        path: '$.rebinds.0',
+      },
+      {
+        value: {
+          ...ready,
+          rebinds: [{ ...rebind, resources: ['file:../private.json'], claimed_resources: ['file:../private.json'] }],
+        },
+        code: 'RESOURCE_PATH_UNSAFE',
+        path: '$.rebinds.0.resources.0',
+      },
+      {
+        value: { ...ready, retirements: [{ ...retirement, ticket_id: 'ticket-missing' }] },
+        code: 'RETIREMENT_TICKET_MISSING',
+        path: '$.retirements.0',
+      },
+      {
+        value: { ...ready, retirements: [{ ...retirement, superseding_ticket_id: 'ticket-missing' }] },
+        code: 'RETIREMENT_TICKET_MISSING',
+        path: '$.retirements.0',
+      },
+      {
+        value: { ...ready, retirements: [{ ...retirement, from_ledger_revision: 3, to_ledger_revision: 4 }] },
+        code: 'RETIREMENT_REVISION_INVALID',
+        path: '$.retirements.0',
+      },
+      {
+        value: { ...ready, retirements: [{ ...retirement, resources: ['file:../private.json'] }] },
+        code: 'RESOURCE_PATH_UNSAFE',
+        path: '$.retirements.0.resources.0',
+      },
     ];
     for (const row of cases) {
       const before = structuredClone(row.value);
       const result = expectReturned(() => validateCoordinationLedgerV1(row.value));
-      expect(result).not.toBeNull();
-      expect(typeof result).toBe('object');
-      expect(Array.isArray(result.issues)).toBe(true);
-      expect(result.ok).toBe(false);
-      expect(result.issues.map(({ code, path }) => ({ code, path }))).toEqual([{ code: row.code, path: row.path }]);
+      assertLedgerRejection(result, row.code, row.path);
       expect(row.value).toEqual(before);
     }
   });
@@ -1365,6 +1930,16 @@ test('envelopes validate JSON data, revision bindings, and local tool inputs', a
     localToolEnvelope.safeParse({ tool: '', tenant: 'tenant', project: 'project', input: {} }),
   );
   expect(invalidTool).toMatchObject({ success: false });
+  for (const invalidInput of [
+    { tool: 'source.read', tenant: '', project: 'project', input: {} },
+    { tool: 'source.read', tenant: 'tenant', project: '', input: {} },
+    { tool: 'source.read', tenant: 'tenant', project: 'project', input: null },
+    { tool: 'source.read', tenant: 'tenant', project: 'project', input: [] },
+  ]) {
+    const result = expectReturned(() => localToolEnvelope.safeParse(invalidInput));
+    assert.ok(result !== null && typeof result === 'object');
+    assert.equal(result.success, false);
+  }
   const extraToolField = expectReturned(() =>
     localToolEnvelope.safeParse({
       tool: 'source.read',
@@ -1432,14 +2007,16 @@ test('runtime envelopes validate and consume one captured Proxy descriptor image
 
   liveGets.clear();
   const benign = withLiveValues({ ...descriptorImage });
-  const benignResult = validateRuntimeEnvelope(benign);
+  const benignResult = expectReturned(() => validateRuntimeEnvelope(benign));
   expect(benignResult).toEqual(descriptorImage);
   expect(benignResult).not.toBe(benign);
   expect(Object.getPrototypeOf(benignResult)).toBeNull();
   expect(Object.getPrototypeOf(benignResult.payload as object)).toBeNull();
   expect(getCount()).toBe(0);
   liveGets.clear();
-  const benignConsumed = consumeRuntimeEnvelope(benign, { sourceRevision: 'source-1', currentRevision: 1 });
+  const benignConsumed = expectReturned(() =>
+    consumeRuntimeEnvelope(benign, { sourceRevision: 'source-1', currentRevision: 1 }),
+  );
   expect(benignConsumed).toEqual(descriptorImage);
   expect(benignConsumed).not.toBe(benign);
   expect(Object.getPrototypeOf(benignConsumed)).toBeNull();

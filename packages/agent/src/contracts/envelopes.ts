@@ -54,8 +54,7 @@ function assertDataOnlyJson(value: unknown): unknown {
 
 export function validateRuntimeEnvelope(value: unknown): RuntimeEnvelope {
   const image = assertDataOnlyJson(value);
-  const valid = validator(image);
-  reject([!valid], `runtime envelope rejected: ${(validator.errors ?? []).map((error) => error.message).join('; ')}`);
+  if (!validator(image)) rejectCanonical(validator.errors!.map((error) => error.message).join('; '));
   return image as RuntimeEnvelope;
 }
 
@@ -230,7 +229,7 @@ function uniqueLedgerValues(values: readonly string[], code: string, path: strin
 
 function ledgerTimestamp(value: string, path: string): number {
   const parsed = rfc3339TimestampMilliseconds(value);
-  ledgerRequire(parsed !== null && Number.isFinite(parsed), 'TIMESTAMP_INVALID', path, 'lease expiry is invalid');
+  ledgerRequire(parsed !== null, 'TIMESTAMP_INVALID', path, 'lease expiry is invalid');
   return parsed;
 }
 

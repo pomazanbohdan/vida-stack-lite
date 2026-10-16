@@ -124,6 +124,18 @@ For a scope-denial control, first bind the operation hash to the captured fields
 so another guard does not hide the target. Keep invalid matcher arguments
 outside assertion-confirmed kills. A generic JUnit Error and a testcase's total
 expectation count do not prove that its throwing matcher compared values.
+For large-return rejection cases, use native `assert.throws` with a bounded
+message expectation. A failed Bun `toThrow` can dump the return into stderr and
+JUnit beyond custody limits. Keep type and boolean equality assertions for large
+success values so an unexpected value cannot expand the evidence. Verify an
+intentional missing-throw control separately; it is not a mutant kill. Native
+path assertions preserve custom labels without relying on generic JUnit Error.
+Keep every corpus value, including lone surrogates, and all seeds/runs unchanged.
+Aggregate-budget fixtures can use many short unique lists to avoid quadratic
+per-list schema work. Independently count all fields at the exact boundary and
+one above; if the exact-limit input intentionally violates a later rule, assert
+that later rule and do not call the whole ledger valid. Earlier schema rejection
+does not qualify a later semantic predicate.
 Lifecycle discovery treats strict JSON imports as data, even when their strings
 mention hook names. Malformed JSON and executable-module parse failures still
 fail closed; never skip an executable dependency to obtain a Killed result.

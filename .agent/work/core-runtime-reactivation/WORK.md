@@ -6257,6 +6257,63 @@ No current envelope numerical maximum or global acceptance is established yet.
 Five Luna lanes prepare/review disjoint candidates while Root retains all
 checkout writes, final checks and Git; no duplicate AST/hash/full-suite pass.
 
+## First main-envelopes cycle and bounded corrective batch
+
+Published Source/review commits a03c2e2 and ae19d64 precede the settled run.
+Coverage c17f6781-f301-4cdf-8f01-813dcb5f461a passed F81/81,L215/215,S234/234,
+B116/116 at ownerl6UuNx in4897.086668ms. Same-run scoped v2 frozen proof passed
+at immutable a03c2e2a29d26aeb11f3106b973f1c1f6642f128, retaining81 original
+roles and the explicit removed wrapper. Historical measurement admission isfalse.
+
+The complete mutation run85015b27-bff1-4ede-aafa-5d569eff6621 endedUNKNOWN:
+835total,501assertion-confirmed Killed (effective_score0.6),312Survived and22UNKNOWN.
+Raw Stryker reports523Killed;22lack admission. Parent CFDXVc finished740311.079260ms,
+no timeout/signal/spawn error, complete316212-byte output, closed groups and same
+boot. Provenance/baseline/report/source error arrays are empty. Reports imported
+through the existing contour CLI; this contour remains open. Full report:
+/workspace/attachments/quality-mutation-main-envelopes-CFDXVc/stdout.log.
+
+Five scoped Luna lanes reused terminal findings and retained receipts. Root's
+corrective batch adds exact record4096/4097 and resource65536/65537 boundaries,
+serialized-byte limits, same-cardinality projection mismatch, case aliases,
+multi-claim minimum expiry/equality/mixed freshness, active/ready FIFO, notice
+history, mixed-generation/released history and isolated rebind/retirement cases.
+One native rejection helper checks shape, false/null output, exact code/path,
+trimmed nonempty human diagnostics and the duplicate-message suffix. It replaces
+three copied assertion sequences. Genuine schema invariants remain: duplicate
+notice strings reject at schema first, so the semantic witness uses distinct
+case aliases. Kind/subject combinations excluded by schema were withdrawn from
+the semantic matrix; no fake schema success is introduced. Remaining equivalent
+or unisolated guards remain GAP, not waived Killed.
+
+The initial aggregate test cost3011.46ms. Keeping exact resource counts while
+using256tickets with two128-item lists and one extra resource reduced the focused
+case to157.77ms (owner3Qa5IT); later full-selection observation was55.25ms. These
+are body observations under their stated runs, not a whole-campaign speedup claim.
+No cap, corpus, seed or run count was lowered.
+
+Mutants71/73 retained truncated stderr (12585750/12585752 total vs4194304 kept)
+and oversized JUnit (25170195/25170194bytes, no admitted digest). A missing Bun
+toThrow formatted the8MiB returned value. The tests now use native throws and
+bounded type/boolean success comparisons. Separate owned control pY0kyj observed
+one positive and one intentional Missing expected exception failure:979stderr
+bytes, complete capture,26.109018ms, closed group/same boot. This proves bounded
+control behavior, not a mutant kill. Twelve path failures had generic JUnit Error
+despite positive body events; native assertions preserve all Unicode/surrogate
+inputs while keeping the classifier strict. No old UNKNOWN is reclassified.
+
+Source P1 removes eager Ajv success-message construction under the actual
+synchronous false=>errors invariant and removes only ledgerTimestamp's redundant
+finite test after the finite-or-null RFC3339 owner. Independent Source/metadata
+review is quality-envelope-p1-final-independent-20261016.md; installed Ajv evidence
+is quality-envelope-actual-codec-20261016/P1-SIMPLIFICATION-REVIEW.md. One maintained
+81-role static capture feeds the bounded current-address refresh. Only current
+addresses/Source binding and ledgerTimestamp currentCC2->1 change; every frozen
+cap, original field, count, removal and shared allowance is preserved. No old
+report is recovered or admitted. Root's complete changed three-file selection
+passed33/0 at yHR3r3 in1868.672929ms; tests459files passed TypeScript. Fresh
+coverage/scoped CRAP/full mutation remains required for this corrected payload.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

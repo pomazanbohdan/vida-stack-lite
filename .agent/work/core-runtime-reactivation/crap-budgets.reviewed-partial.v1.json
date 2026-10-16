@@ -419,7 +419,7 @@
     },
     {
       "file": "src/contracts/envelopes.ts",
-      "sha256": "880f08590c8685e7e09ad90dab66ebcce07a141d595b6ecee91c868010d0cdbf"
+      "sha256": "b7c46516de71ca0ff0d838f0707626b1e72088a62431413057cb0899231432a2"
     },
     {
       "file": "src/orchestration/delivered-work-continuation-repair.ts",
@@ -43090,10 +43090,10 @@
         "line": 55,
         "column": 7,
         "start": 2012,
-        "end": 2312,
+        "end": 2261,
         "bodyLine": 55,
         "bodyColumn": 73,
-        "bodyEndLine": 60,
+        "bodyEndLine": 59,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43120,14 +43120,14 @@
         "bodyEndColumn": 35
       },
       "current_source_address": {
-        "line": 58,
-        "column": 78,
-        "start": 2235,
-        "end": 2259,
-        "bodyLine": 58,
-        "bodyColumn": 89,
-        "bodyEndLine": 58,
-        "bodyEndColumn": 102
+        "line": 57,
+        "column": 63,
+        "start": 2186,
+        "end": 2210,
+        "bodyLine": 57,
+        "bodyColumn": 74,
+        "bodyEndLine": 57,
+        "bodyEndColumn": 87
       },
       "baseline_complexity": 1,
       "baseline_coverage": 0,
@@ -43153,13 +43153,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 65,
+        "line": 64,
         "column": 7,
-        "start": 2510,
-        "end": 3261,
-        "bodyLine": 65,
+        "start": 2459,
+        "end": 3210,
+        "bodyLine": 64,
         "bodyColumn": 113,
-        "bodyEndLine": 77,
+        "bodyEndLine": 76,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43186,13 +43186,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 89,
+        "line": 88,
         "column": 7,
-        "start": 3568,
-        "end": 4034,
-        "bodyLine": 89,
+        "start": 3517,
+        "end": 3983,
+        "bodyLine": 88,
         "bodyColumn": 74,
-        "bodyEndLine": 95,
+        "bodyEndLine": 94,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43219,13 +43219,13 @@
         "bodyEndColumn": 100
       },
       "current_source_address": {
-        "line": 93,
+        "line": 92,
         "column": 76,
-        "start": 3976,
-        "end": 4000,
-        "bodyLine": 93,
+        "start": 3925,
+        "end": 3949,
+        "bodyLine": 92,
         "bodyColumn": 87,
-        "bodyEndLine": 93,
+        "bodyEndLine": 92,
         "bodyEndColumn": 100
       },
       "baseline_complexity": 1,
@@ -43252,13 +43252,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 98,
+        "line": 97,
         "column": 7,
-        "start": 4133,
-        "end": 4574,
-        "bodyLine": 98,
+        "start": 4082,
+        "end": 4523,
+        "bodyLine": 97,
         "bodyColumn": 77,
-        "bodyEndLine": 104,
+        "bodyEndLine": 103,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43285,13 +43285,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 106,
+        "line": 105,
         "column": 7,
-        "start": 4583,
-        "end": 4727,
-        "bodyLine": 106,
+        "start": 4532,
+        "end": 4676,
+        "bodyLine": 105,
         "bodyColumn": 65,
-        "bodyEndLine": 108,
+        "bodyEndLine": 107,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43318,13 +43318,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 111,
+        "line": 110,
         "column": 7,
-        "start": 4826,
-        "end": 5017,
-        "bodyLine": 111,
+        "start": 4775,
+        "end": 4966,
+        "bodyLine": 110,
         "bodyColumn": 100,
-        "bodyEndLine": 113,
+        "bodyEndLine": 112,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43351,13 +43351,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 112,
+        "line": 111,
         "column": 52,
-        "start": 4973,
-        "end": 5013,
-        "bodyLine": 112,
+        "start": 4922,
+        "end": 4962,
+        "bodyLine": 111,
         "bodyColumn": 70,
-        "bodyEndLine": 112,
+        "bodyEndLine": 111,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -43384,13 +43384,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 178,
+        "line": 177,
         "column": 2,
-        "start": 7463,
-        "end": 7557,
-        "bodyLine": 178,
+        "start": 7412,
+        "end": 7506,
+        "bodyLine": 177,
         "bodyColumn": 65,
-        "bodyEndLine": 180,
+        "bodyEndLine": 179,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 1,
@@ -43417,13 +43417,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 191,
+        "line": 190,
         "column": 0,
-        "start": 8005,
-        "end": 8148,
-        "bodyLine": 191,
+        "start": 7954,
+        "end": 8097,
+        "bodyLine": 190,
         "bodyColumn": 54,
-        "bodyEndLine": 193,
+        "bodyEndLine": 192,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43450,13 +43450,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 195,
+        "line": 194,
         "column": 7,
-        "start": 8157,
-        "end": 8485,
-        "bodyLine": 195,
+        "start": 8106,
+        "end": 8434,
+        "bodyLine": 194,
         "bodyColumn": 62,
-        "bodyEndLine": 206,
+        "bodyEndLine": 205,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43483,13 +43483,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 208,
+        "line": 207,
         "column": 7,
-        "start": 8494,
-        "end": 8706,
-        "bodyLine": 208,
+        "start": 8443,
+        "end": 8655,
+        "bodyLine": 207,
         "bodyColumn": 72,
-        "bodyEndLine": 212,
+        "bodyEndLine": 211,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43516,13 +43516,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 214,
+        "line": 213,
         "column": 0,
-        "start": 8708,
-        "end": 8851,
-        "bodyLine": 214,
+        "start": 8657,
+        "end": 8800,
+        "bodyLine": 213,
         "bodyColumn": 72,
-        "bodyEndLine": 216,
+        "bodyEndLine": 215,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43549,13 +43549,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 218,
+        "line": 217,
         "column": 0,
-        "start": 8853,
-        "end": 9014,
-        "bodyLine": 218,
+        "start": 8802,
+        "end": 8963,
+        "bodyLine": 217,
         "bodyColumn": 107,
-        "bodyEndLine": 220,
+        "bodyEndLine": 219,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43582,13 +43582,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 222,
+        "line": 221,
         "column": 0,
-        "start": 9016,
-        "end": 9267,
-        "bodyLine": 222,
+        "start": 8965,
+        "end": 9216,
+        "bodyLine": 221,
         "bodyColumn": 104,
-        "bodyEndLine": 229,
+        "bodyEndLine": 228,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -43615,13 +43615,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 231,
+        "line": 230,
         "column": 0,
-        "start": 9269,
-        "end": 9520,
-        "bodyLine": 231,
+        "start": 9218,
+        "end": 9442,
+        "bodyLine": 230,
         "bodyColumn": 62,
-        "bodyEndLine": 235,
+        "bodyEndLine": 234,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43630,7 +43630,7 @@
       "max_complexity": 2,
       "max_crap": 2,
       "rationale": "Same named function or method declaration and contract in both source versions; reviewed actual source diff. Independently reviewed wave3; original measured ceiling unchanged.",
-      "current_complexity": 2
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:ledgerResourceKey#0",
@@ -43648,13 +43648,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 237,
+        "line": 236,
         "column": 0,
-        "start": 9522,
-        "end": 9954,
-        "bodyLine": 237,
+        "start": 9444,
+        "end": 9876,
+        "bodyLine": 236,
         "bodyColumn": 67,
-        "bodyEndLine": 247,
+        "bodyEndLine": 246,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -43681,13 +43681,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 249,
+        "line": 248,
         "column": 0,
-        "start": 9956,
-        "end": 10429,
-        "bodyLine": 249,
+        "start": 9878,
+        "end": 10351,
+        "bodyLine": 248,
         "bodyColumn": 77,
-        "bodyEndLine": 264,
+        "bodyEndLine": 263,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -43714,13 +43714,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 266,
+        "line": 265,
         "column": 0,
-        "start": 10431,
-        "end": 10693,
-        "bodyLine": 266,
+        "start": 10353,
+        "end": 10615,
+        "bodyLine": 265,
         "bodyColumn": 103,
-        "bodyEndLine": 270,
+        "bodyEndLine": 269,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43747,13 +43747,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 272,
+        "line": 271,
         "column": 0,
-        "start": 10695,
-        "end": 30376,
-        "bodyLine": 272,
+        "start": 10617,
+        "end": 30298,
+        "bodyLine": 271,
         "bodyColumn": 97,
-        "bodyEndLine": 775,
+        "bodyEndLine": 774,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43780,13 +43780,13 @@
         "bodyEndColumn": 31
       },
       "current_source_address": {
-        "line": 290,
+        "line": 289,
         "column": 6,
-        "start": 11257,
-        "end": 11487,
-        "bodyLine": 291,
+        "start": 11179,
+        "end": 11409,
+        "bodyLine": 290,
         "bodyColumn": 8,
-        "bodyEndLine": 296,
+        "bodyEndLine": 295,
         "bodyEndColumn": 31
       },
       "baseline_complexity": 1,
@@ -43813,13 +43813,13 @@
         "bodyEndColumn": 75
       },
       "current_source_address": {
-        "line": 299,
+        "line": 298,
         "column": 27,
-        "start": 11533,
-        "end": 11581,
-        "bodyLine": 299,
+        "start": 11455,
+        "end": 11503,
+        "bodyLine": 298,
         "bodyColumn": 45,
-        "bodyEndLine": 299,
+        "bodyEndLine": 298,
         "bodyEndColumn": 75
       },
       "baseline_complexity": 1,
@@ -43846,13 +43846,13 @@
         "bodyEndColumn": 51
       },
       "current_source_address": {
-        "line": 306,
+        "line": 305,
         "column": 23,
-        "start": 11754,
-        "end": 11782,
-        "bodyLine": 306,
+        "start": 11676,
+        "end": 11704,
+        "bodyLine": 305,
         "bodyColumn": 35,
-        "bodyEndLine": 306,
+        "bodyEndLine": 305,
         "bodyEndColumn": 51
       },
       "baseline_complexity": 1,
@@ -43879,13 +43879,13 @@
         "bodyEndColumn": 58
       },
       "current_source_address": {
-        "line": 312,
+        "line": 311,
         "column": 23,
-        "start": 11905,
-        "end": 11940,
-        "bodyLine": 312,
+        "start": 11827,
+        "end": 11862,
+        "bodyLine": 311,
         "bodyColumn": 35,
-        "bodyEndLine": 312,
+        "bodyEndLine": 311,
         "bodyEndColumn": 58
       },
       "baseline_complexity": 1,
@@ -43912,13 +43912,13 @@
         "bodyEndColumn": 47
       },
       "current_source_address": {
-        "line": 318,
+        "line": 317,
         "column": 22,
-        "start": 12066,
-        "end": 12091,
-        "bodyLine": 318,
+        "start": 11988,
+        "end": 12013,
+        "bodyLine": 317,
         "bodyColumn": 33,
-        "bodyEndLine": 318,
+        "bodyEndLine": 317,
         "bodyEndColumn": 47
       },
       "baseline_complexity": 1,
@@ -43945,13 +43945,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 333,
+        "line": 332,
         "column": 24,
-        "start": 12493,
-        "end": 12565,
-        "bodyLine": 333,
+        "start": 12415,
+        "end": 12487,
+        "bodyLine": 332,
         "bodyColumn": 42,
-        "bodyEndLine": 333,
+        "bodyEndLine": 332,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -43978,13 +43978,13 @@
         "bodyEndColumn": 83
       },
       "current_source_address": {
-        "line": 339,
+        "line": 338,
         "column": 45,
-        "start": 12701,
-        "end": 12739,
-        "bodyLine": 339,
+        "start": 12623,
+        "end": 12661,
+        "bodyLine": 338,
         "bodyColumn": 57,
-        "bodyEndLine": 339,
+        "bodyEndLine": 338,
         "bodyEndColumn": 83
       },
       "baseline_complexity": 1,
@@ -44011,13 +44011,13 @@
         "bodyEndColumn": 77
       },
       "current_source_address": {
-        "line": 340,
+        "line": 339,
         "column": 43,
-        "start": 12786,
-        "end": 12820,
-        "bodyLine": 340,
+        "start": 12708,
+        "end": 12742,
+        "bodyLine": 339,
         "bodyColumn": 54,
-        "bodyEndLine": 340,
+        "bodyEndLine": 339,
         "bodyEndColumn": 77
       },
       "baseline_complexity": 1,
@@ -44044,13 +44044,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 342,
+        "line": 341,
         "column": 24,
-        "start": 12913,
-        "end": 14599,
-        "bodyLine": 342,
+        "start": 12835,
+        "end": 14521,
+        "bodyLine": 341,
         "bodyColumn": 42,
-        "bodyEndLine": 379,
+        "bodyEndLine": 378,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44077,13 +44077,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 356,
+        "line": 355,
         "column": 26,
-        "start": 13543,
-        "end": 13791,
-        "bodyLine": 357,
+        "start": 13465,
+        "end": 13713,
+        "bodyLine": 356,
         "bodyColumn": 8,
-        "bodyEndLine": 359,
+        "bodyEndLine": 358,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 2,
@@ -44110,13 +44110,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 368,
+        "line": 367,
         "column": 32,
-        "start": 14031,
-        "end": 14090,
-        "bodyLine": 368,
+        "start": 13953,
+        "end": 14012,
+        "bodyLine": 367,
         "bodyColumn": 46,
-        "bodyEndLine": 368,
+        "bodyEndLine": 367,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44143,13 +44143,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 382,
+        "line": 381,
         "column": 25,
-        "start": 14666,
-        "end": 20075,
-        "bodyLine": 382,
+        "start": 14588,
+        "end": 19997,
+        "bodyLine": 381,
         "bodyColumn": 44,
-        "bodyEndLine": 516,
+        "bodyEndLine": 515,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44176,13 +44176,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 385,
+        "line": 384,
         "column": 30,
-        "start": 14814,
-        "end": 14940,
-        "bodyLine": 386,
+        "start": 14736,
+        "end": 14862,
+        "bodyLine": 385,
         "bodyColumn": 8,
-        "bodyEndLine": 386,
+        "bodyEndLine": 385,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -44209,13 +44209,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 393,
+        "line": 392,
         "column": 37,
-        "start": 15123,
-        "end": 15256,
-        "bodyLine": 394,
+        "start": 15045,
+        "end": 15178,
+        "bodyLine": 393,
         "bodyColumn": 8,
-        "bodyEndLine": 394,
+        "bodyEndLine": 393,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -44242,13 +44242,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 407,
+        "line": 406,
         "column": 68,
-        "start": 15644,
-        "end": 15757,
-        "bodyLine": 408,
+        "start": 15566,
+        "end": 15679,
+        "bodyLine": 407,
         "bodyColumn": 8,
-        "bodyEndLine": 408,
+        "bodyEndLine": 407,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44275,13 +44275,13 @@
         "bodyEndColumn": 53
       },
       "current_source_address": {
-        "line": 421,
+        "line": 420,
         "column": 70,
-        "start": 16151,
-        "end": 16218,
-        "bodyLine": 422,
+        "start": 16073,
+        "end": 16140,
+        "bodyLine": 421,
         "bodyColumn": 8,
-        "bodyEndLine": 422,
+        "bodyEndLine": 421,
         "bodyEndColumn": 53
       },
       "baseline_complexity": 1,
@@ -44308,13 +44308,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 429,
+        "line": 428,
         "column": 29,
-        "start": 16400,
-        "end": 16432,
-        "bodyLine": 429,
+        "start": 16322,
+        "end": 16354,
+        "bodyLine": 428,
         "bodyColumn": 42,
-        "bodyEndLine": 429,
+        "bodyEndLine": 428,
         "bodyEndColumn": 61
       },
       "baseline_complexity": 1,
@@ -44341,13 +44341,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 435,
+        "line": 434,
         "column": 29,
-        "start": 16601,
-        "end": 16665,
-        "bodyLine": 435,
+        "start": 16523,
+        "end": 16587,
+        "bodyLine": 434,
         "bodyColumn": 42,
-        "bodyEndLine": 435,
+        "bodyEndLine": 434,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 1,
@@ -44374,13 +44374,13 @@
         "bodyEndColumn": 113
       },
       "current_source_address": {
-        "line": 440,
+        "line": 439,
         "column": 77,
-        "start": 16887,
-        "end": 16923,
-        "bodyLine": 440,
+        "start": 16809,
+        "end": 16845,
+        "bodyLine": 439,
         "bodyColumn": 88,
-        "bodyEndLine": 440,
+        "bodyEndLine": 439,
         "bodyEndColumn": 113
       },
       "baseline_complexity": 1,
@@ -44407,13 +44407,13 @@
         "bodyEndColumn": 109
       },
       "current_source_address": {
-        "line": 442,
+        "line": 441,
         "column": 27,
-        "start": 16977,
-        "end": 17097,
-        "bodyLine": 443,
+        "start": 16899,
+        "end": 17019,
+        "bodyLine": 442,
         "bodyColumn": 8,
-        "bodyEndLine": 443,
+        "bodyEndLine": 442,
         "bodyEndColumn": 109
       },
       "baseline_complexity": 1,
@@ -44440,13 +44440,13 @@
         "bodyEndColumn": 108
       },
       "current_source_address": {
-        "line": 443,
+        "line": 442,
         "column": 28,
-        "start": 17016,
-        "end": 17096,
-        "bodyLine": 443,
+        "start": 16938,
+        "end": 17018,
+        "bodyLine": 442,
         "bodyColumn": 42,
-        "bodyEndLine": 443,
+        "bodyEndLine": 442,
         "bodyEndColumn": 108
       },
       "baseline_complexity": 1,
@@ -44473,13 +44473,13 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 449,
+        "line": 448,
         "column": 55,
-        "start": 17288,
-        "end": 17314,
-        "bodyLine": 449,
+        "start": 17210,
+        "end": 17236,
+        "bodyLine": 448,
         "bodyColumn": 66,
-        "bodyEndLine": 449,
+        "bodyEndLine": 448,
         "bodyEndColumn": 81
       },
       "baseline_complexity": 1,
@@ -44506,13 +44506,13 @@
         "bodyEndColumn": 69
       },
       "current_source_address": {
-        "line": 456,
+        "line": 455,
         "column": 36,
-        "start": 17619,
-        "end": 17652,
-        "bodyLine": 456,
+        "start": 17541,
+        "end": 17574,
+        "bodyLine": 455,
         "bodyColumn": 47,
-        "bodyEndLine": 456,
+        "bodyEndLine": 455,
         "bodyEndColumn": 69
       },
       "baseline_complexity": 1,
@@ -44539,13 +44539,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 485,
+        "line": 484,
         "column": 29,
-        "start": 18841,
-        "end": 18919,
-        "bodyLine": 485,
+        "start": 18763,
+        "end": 18841,
+        "bodyLine": 484,
         "bodyColumn": 40,
-        "bodyEndLine": 485,
+        "bodyEndLine": 484,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -44572,13 +44572,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 494,
+        "line": 493,
         "column": 8,
-        "start": 19301,
-        "end": 19667,
-        "bodyLine": 495,
+        "start": 19223,
+        "end": 19589,
+        "bodyLine": 494,
         "bodyColumn": 10,
-        "bodyEndLine": 500,
+        "bodyEndLine": 499,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 4,
@@ -44605,13 +44605,13 @@
         "bodyEndColumn": 72
       },
       "current_source_address": {
-        "line": 499,
+        "line": 498,
         "column": 12,
-        "start": 19594,
-        "end": 19654,
-        "bodyLine": 499,
+        "start": 19516,
+        "end": 19576,
+        "bodyLine": 498,
         "bodyColumn": 25,
-        "bodyEndLine": 499,
+        "bodyEndLine": 498,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 1,
@@ -44638,13 +44638,13 @@
         "bodyEndColumn": 88
       },
       "current_source_address": {
-        "line": 518,
+        "line": 517,
         "column": 45,
-        "start": 20124,
-        "end": 20167,
-        "bodyLine": 518,
+        "start": 20046,
+        "end": 20089,
+        "bodyLine": 517,
         "bodyColumn": 56,
-        "bodyEndLine": 518,
+        "bodyEndLine": 517,
         "bodyEndColumn": 88
       },
       "baseline_complexity": 1,
@@ -44671,13 +44671,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 519,
+        "line": 518,
         "column": 25,
-        "start": 20196,
-        "end": 21643,
-        "bodyLine": 519,
+        "start": 20118,
+        "end": 21565,
+        "bodyLine": 518,
         "bodyColumn": 44,
-        "bodyEndLine": 555,
+        "bodyEndLine": 554,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -44704,13 +44704,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 528,
+        "line": 527,
         "column": 20,
-        "start": 20543,
-        "end": 20656,
-        "bodyLine": 529,
+        "start": 20465,
+        "end": 20578,
+        "bodyLine": 528,
         "bodyColumn": 8,
-        "bodyEndLine": 529,
+        "bodyEndLine": 528,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44737,13 +44737,13 @@
         "bodyEndColumn": 114
       },
       "current_source_address": {
-        "line": 536,
+        "line": 535,
         "column": 84,
-        "start": 20881,
-        "end": 20911,
-        "bodyLine": 536,
+        "start": 20803,
+        "end": 20833,
+        "bodyLine": 535,
         "bodyColumn": 95,
-        "bodyEndLine": 536,
+        "bodyEndLine": 535,
         "bodyEndColumn": 114
       },
       "baseline_complexity": 1,
@@ -44770,13 +44770,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 550,
+        "line": 549,
         "column": 33,
-        "start": 21427,
-        "end": 21510,
-        "bodyLine": 550,
+        "start": 21349,
+        "end": 21432,
+        "bodyLine": 549,
         "bodyColumn": 44,
-        "bodyEndLine": 550,
+        "bodyEndLine": 549,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 2,
@@ -44803,13 +44803,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 556,
+        "line": 555,
         "column": 30,
-        "start": 21676,
-        "end": 22477,
-        "bodyLine": 556,
+        "start": 21598,
+        "end": 22399,
+        "bodyLine": 555,
         "bodyColumn": 54,
-        "bodyEndLine": 577,
+        "bodyEndLine": 576,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 6,
@@ -44836,13 +44836,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 579,
+        "line": 578,
         "column": 47,
-        "start": 22528,
-        "end": 22572,
-        "bodyLine": 579,
+        "start": 22450,
+        "end": 22494,
+        "bodyLine": 578,
         "bodyColumn": 58,
-        "bodyEndLine": 579,
+        "bodyEndLine": 578,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44869,13 +44869,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 580,
+        "line": 579,
         "column": 26,
-        "start": 22602,
-        "end": 23738,
-        "bodyLine": 580,
+        "start": 22524,
+        "end": 23660,
+        "bodyLine": 579,
         "bodyColumn": 46,
-        "bodyEndLine": 611,
+        "bodyEndLine": 610,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -44902,13 +44902,13 @@
         "bodyEndColumn": 64
       },
       "current_source_address": {
-        "line": 582,
+        "line": 581,
         "column": 41,
-        "start": 22728,
-        "end": 22751,
-        "bodyLine": 582,
+        "start": 22650,
+        "end": 22673,
+        "bodyLine": 581,
         "bodyColumn": 49,
-        "bodyEndLine": 582,
+        "bodyEndLine": 581,
         "bodyEndColumn": 64
       },
       "baseline_complexity": 1,
@@ -44935,13 +44935,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 590,
+        "line": 589,
         "column": 27,
-        "start": 22959,
-        "end": 23012,
-        "bodyLine": 590,
+        "start": 22881,
+        "end": 22934,
+        "bodyLine": 589,
         "bodyColumn": 39,
-        "bodyEndLine": 590,
+        "bodyEndLine": 589,
         "bodyEndColumn": 80
       },
       "baseline_complexity": 1,
@@ -44968,13 +44968,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 591,
+        "line": 590,
         "column": 89,
-        "start": 23106,
-        "end": 23133,
-        "bodyLine": 591,
+        "start": 23028,
+        "end": 23055,
+        "bodyLine": 590,
         "bodyColumn": 101,
-        "bodyEndLine": 591,
+        "bodyEndLine": 590,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -45001,13 +45001,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 612,
+        "line": 611,
         "column": 25,
-        "start": 23766,
-        "end": 26535,
-        "bodyLine": 612,
+        "start": 23688,
+        "end": 26457,
+        "bodyLine": 611,
         "bodyColumn": 43,
-        "bodyEndLine": 679,
+        "bodyEndLine": 678,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 7,
@@ -45034,13 +45034,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 623,
+        "line": 622,
         "column": 77,
-        "start": 24242,
-        "end": 24272,
-        "bodyLine": 623,
+        "start": 24164,
+        "end": 24194,
+        "bodyLine": 622,
         "bodyColumn": 88,
-        "bodyEndLine": 623,
+        "bodyEndLine": 622,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -45067,13 +45067,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 645,
+        "line": 644,
         "column": 89,
-        "start": 25212,
-        "end": 25239,
-        "bodyLine": 645,
+        "start": 25134,
+        "end": 25161,
+        "bodyLine": 644,
         "bodyColumn": 100,
-        "bodyEndLine": 645,
+        "bodyEndLine": 644,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -45100,13 +45100,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 651,
+        "line": 650,
         "column": 75,
-        "start": 25512,
-        "end": 25535,
-        "bodyLine": 651,
+        "start": 25434,
+        "end": 25457,
+        "bodyLine": 650,
         "bodyColumn": 83,
-        "bodyEndLine": 651,
+        "bodyEndLine": 650,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -45133,13 +45133,13 @@
         "bodyEndColumn": 102
       },
       "current_source_address": {
-        "line": 661,
+        "line": 660,
         "column": 12,
-        "start": 25818,
-        "end": 26088,
-        "bodyLine": 662,
+        "start": 25740,
+        "end": 26010,
+        "bodyLine": 661,
         "bodyColumn": 14,
-        "bodyEndLine": 665,
+        "bodyEndLine": 664,
         "bodyEndColumn": 102
       },
       "baseline_complexity": 5,
@@ -45166,13 +45166,13 @@
         "bodyEndColumn": 101
       },
       "current_source_address": {
-        "line": 665,
+        "line": 664,
         "column": 65,
-        "start": 26051,
-        "end": 26087,
-        "bodyLine": 665,
+        "start": 25973,
+        "end": 26009,
+        "bodyLine": 664,
         "bodyColumn": 76,
-        "bodyEndLine": 665,
+        "bodyEndLine": 664,
         "bodyEndColumn": 101
       },
       "baseline_complexity": 1,
@@ -45199,13 +45199,13 @@
         "bodyEndColumn": 70
       },
       "current_source_address": {
-        "line": 673,
+        "line": 672,
         "column": 31,
-        "start": 26328,
-        "end": 26367,
-        "bodyLine": 673,
+        "start": 26250,
+        "end": 26289,
+        "bodyLine": 672,
         "bodyColumn": 43,
-        "bodyEndLine": 673,
+        "bodyEndLine": 672,
         "bodyEndColumn": 70
       },
       "baseline_complexity": 1,
@@ -45232,13 +45232,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 680,
+        "line": 679,
         "column": 28,
-        "start": 26566,
-        "end": 27859,
-        "bodyLine": 680,
+        "start": 26488,
+        "end": 27781,
+        "bodyLine": 679,
         "bodyColumn": 50,
-        "bodyEndLine": 714,
+        "bodyEndLine": 713,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -45265,13 +45265,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 702,
+        "line": 701,
         "column": 24,
-        "start": 27409,
-        "end": 27535,
-        "bodyLine": 703,
+        "start": 27331,
+        "end": 27457,
+        "bodyLine": 702,
         "bodyColumn": 8,
-        "bodyEndLine": 703,
+        "bodyEndLine": 702,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -45298,13 +45298,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 715,
+        "line": 714,
         "column": 25,
-        "start": 27887,
-        "end": 28304,
-        "bodyLine": 716,
+        "start": 27809,
+        "end": 28226,
+        "bodyLine": 715,
         "bodyColumn": 4,
-        "bodyEndLine": 726,
+        "bodyEndLine": 725,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -45331,13 +45331,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 718,
+        "line": 717,
         "column": 8,
-        "start": 27962,
-        "end": 28177,
-        "bodyLine": 719,
+        "start": 27884,
+        "end": 28099,
+        "bodyLine": 718,
         "bodyColumn": 10,
-        "bodyEndLine": 721,
+        "bodyEndLine": 720,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 3,
@@ -45364,13 +45364,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 728,
+        "line": 727,
         "column": 29,
-        "start": 28340,
-        "end": 29243,
-        "bodyLine": 728,
+        "start": 28262,
+        "end": 29165,
+        "bodyLine": 727,
         "bodyColumn": 52,
-        "bodyEndLine": 748,
+        "bodyEndLine": 747,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -45397,13 +45397,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 745,
+        "line": 744,
         "column": 56,
-        "start": 29106,
-        "end": 29231,
-        "bodyLine": 746,
+        "start": 29028,
+        "end": 29153,
+        "bodyLine": 745,
         "bodyColumn": 6,
-        "bodyEndLine": 746,
+        "bodyEndLine": 745,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -45430,13 +45430,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 749,
+        "line": 748,
         "column": 25,
-        "start": 29271,
-        "end": 30372,
-        "bodyLine": 749,
+        "start": 29193,
+        "end": 30294,
+        "bodyLine": 748,
         "bodyColumn": 44,
-        "bodyEndLine": 774,
+        "bodyEndLine": 773,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 5,
@@ -45463,13 +45463,13 @@
         "bodyEndColumn": 71
       },
       "current_source_address": {
-        "line": 760,
+        "line": 759,
         "column": 29,
-        "start": 29749,
-        "end": 29791,
-        "bodyLine": 760,
+        "start": 29671,
+        "end": 29713,
+        "bodyLine": 759,
         "bodyColumn": 43,
-        "bodyEndLine": 760,
+        "bodyEndLine": 759,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -45496,13 +45496,13 @@
         "bodyEndColumn": 9
       },
       "current_source_address": {
-        "line": 761,
+        "line": 760,
         "column": 30,
-        "start": 29826,
-        "end": 29947,
-        "bodyLine": 761,
+        "start": 29748,
+        "end": 29869,
+        "bodyLine": 760,
         "bodyColumn": 38,
-        "bodyEndLine": 764,
+        "bodyEndLine": 763,
         "bodyEndColumn": 9
       },
       "baseline_complexity": 2,
@@ -45529,13 +45529,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 771,
+        "line": 770,
         "column": 22,
-        "start": 30239,
-        "end": 30360,
-        "bodyLine": 772,
+        "start": 30161,
+        "end": 30282,
+        "bodyLine": 771,
         "bodyColumn": 6,
-        "bodyEndLine": 772,
+        "bodyEndLine": 771,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -45562,13 +45562,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 781,
+        "line": 780,
         "column": 7,
-        "start": 30698,
-        "end": 31559,
-        "bodyLine": 784,
+        "start": 30620,
+        "end": 31481,
+        "bodyLine": 783,
         "bodyColumn": 38,
-        "bodyEndLine": 803,
+        "bodyEndLine": 802,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -45595,13 +45595,13 @@
         "bodyEndColumn": 7
       },
       "current_source_address": {
-        "line": 790,
+        "line": 789,
         "column": 42,
-        "start": 31056,
-        "end": 31265,
-        "bodyLine": 790,
+        "start": 30978,
+        "end": 31187,
+        "bodyLine": 789,
         "bodyColumn": 54,
-        "bodyEndLine": 794,
+        "bodyEndLine": 793,
         "bodyEndColumn": 7
       },
       "baseline_complexity": 2,
