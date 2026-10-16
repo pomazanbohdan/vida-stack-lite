@@ -12,13 +12,22 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { contourAttempts, mergeContourProgress, renderContourProgress } from './contour-progress.ts';
+import {
+  contourAttempts,
+  mergeContourProgress,
+  nativeMutationAttempt,
+  renderContourProgress,
+} from './contour-progress.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
+import { readBoundedMutationArtifact, mutationArtifactByteLimit } from './mutation-artifact-reader.ts';
+import { mutationPartitions } from './mutation-partitions.ts';
+import { readNativeMutationPartitionProof } from './native-mutation-proof-reader.ts';
 
 const empty = { schema: 'VidaContourProgress/v1', attempts: [] };
 const maximumBytes = 32 * 1024 * 1024;
+const fatalDecoder = new TextDecoder('utf-8', { fatal: true });
 function load(file: string): unknown {
   const bytes = readFileSync(file);
   if (bytes.length > maximumBytes) throw new Error('Contour artifact exceeds byte bound: ' + file);
@@ -150,6 +159,7 @@ export function recordContourReport(root: string, report: unknown, artifact: str
 export function runContourProgress(
   args: string[],
   root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
+  qualifiedNativeAttempts: ReturnType<typeof contourAttempts> = [],
 ): void {
   let output = outputRoot(root);
   let snapshotPath: string | undefined;
@@ -178,7 +188,7 @@ export function runContourProgress(
   let snapshot = mergeContourProgress(existsSync(target) ? load(target) : empty, []);
   if (snapshotPath && snapshotPath !== target)
     snapshot = mergeContourProgress(snapshot, mergeContourProgress(load(snapshotPath), []).attempts);
-  const incoming: ReturnType<typeof contourAttempts> = [];
+  const incoming: ReturnType<typeof contourAttempts> = [...qualifiedNativeAttempts];
   const observations = path.join(outputRoot(root), 'observations');
   if (existsSync(observations)) {
     const names = readdirSync(observations)
@@ -233,4 +243,44 @@ export function runContourProgress(
     }) + '\n',
   );
 }
-if (import.meta.main) runContourProgress(process.argv.slice(2));
+
+/** Native reports enter the synchronous publisher only after persisted-reader qualification. */
+export async function runContourProgressWithNative(
+  args: string[],
+  root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'),
+): Promise<void> {
+  const nativeFiles: string[] = [];
+  const ordinary: string[] = [];
+  for (let index = 0; index < args.length; index++) {
+    if (args[index] === '--native-report') {
+      const file = args[++index];
+      if (!file) throw new Error('Expected --native-report with a value.');
+      nativeFiles.push(path.resolve(file));
+    } else ordinary.push(args[index]!);
+  }
+  const commitIndex = ordinary.lastIndexOf('--commit');
+  const atIndex = ordinary.lastIndexOf('--at');
+  const commit = commitIndex >= 0 ? (ordinary[commitIndex + 1] ?? 'not-captured') : 'not-captured';
+  const recorded_at = atIndex >= 0 ? (ordinary[atIndex + 1] ?? new Date().toISOString()) : new Date().toISOString();
+  const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+  const attempts: ReturnType<typeof contourAttempts> = [];
+  for (const file of nativeFiles) {
+    const bytes = await readBoundedMutationArtifact(path.dirname(file), path.basename(file), mutationArtifactByteLimit);
+    const report: unknown = JSON.parse(fatalDecoder.decode(bytes));
+    if (!isRecord(report) || !isRecord(report.binding) || typeof report.binding.partition !== 'string')
+      throw new Error('Native report does not bind a declared partition.');
+    const partitionName = report.binding.partition;
+    const partition = mutationPartitions().find((row) => row.name === partitionName);
+    if (!partition || partition.environment === 'static' || partition.environment === 'retired')
+      throw new Error('Native report does not bind an active executable partition.');
+    const read = await readNativeMutationPartitionProof({
+      packageRoot,
+      artifactDirectory: path.dirname(file),
+      report,
+      expectedPartition: partition,
+    });
+    attempts.push(nativeMutationAttempt(read, { artifact: file, commit, recorded_at }));
+  }
+  runContourProgress(ordinary, root, attempts);
+}
+if (import.meta.main) await runContourProgressWithNative(process.argv.slice(2));

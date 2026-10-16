@@ -18,7 +18,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | Contour | Latest F / L / S / B | CC / entry CRAP | Latest mutation | Reported coverage operation | Historical coverage + mutation pair | Latest frozen CC / CRAP | Same-run local triple |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | main-runtime-core | 162/162 · 602/602 · 632/632 · 400/400 | 31 / 31 | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
-| main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 1 / 1 | local triple recorded |
+| main-runtime-timing | 36/36 · 72/72 · 81/81 · 1/1 | 1 / 1 | 151/151 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 1 / 1 | local triple recorded |
 | main-config | 350/350 · 964/964 · 1022/1022 · 253/253 | 16 / 16 | unknown (unknown) | BLOCKED | open / unknown | 16 / 16 | open / unknown |
 | main-host | 7/7 · 21/21 · 22/22 · 11/11 | 3 / 3 | 69/69 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 3 / 3 | local triple recorded |
 | main-public-ingress | 20/20 · 79/79 · 91/91 · 36/36 | 14 / 14 | 335/335 (pilot-pass; assertion-confirmed) | BLOCKED | local maximum recorded | 14 / 14 | local triple recorded |
@@ -96,10 +96,10 @@ Bindings, counters and failed/UNKNOWN observations are retained in the sibling J
 
 ### main-runtime-timing
 
-Historical complete local closure: `b69e8382-5b6a-4638-9be8-c861b786778d` + `0da17c33-d6b0-4892-84ff-980657879a0e`.
-Achieved in that closure: F/L/S/B 36/36 · 72/72 · 81/81 · 1/1; CC / entry CRAP 1 / 1; mutation 151/151 (pilot-pass; assertion-confirmed).
-Historical complete local coverage + mutation + frozen CRAP closure: `b69e8382-5b6a-4638-9be8-c861b786778d` + `0da17c33-d6b0-4892-84ff-980657879a0e` + `b69e8382-5b6a-4638-9be8-c861b786778d`.
-Frozen CRAP measurement in that closure: 1 / 1; scoped receipt coverage run: `b69e8382-5b6a-4638-9be8-c861b786778d`.
+Historical complete local closure: `f56c0181-4e01-464c-acdf-1935c19f6afb` + `d93f8d67-6ed4-428e-94e4-37a114b1cc02`.
+Achieved in that closure: F/L/S/B 36/36 · 72/72 · 81/81 · 1/1; CC / entry CRAP 1 / 1; mutation 151/151 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only).
+Historical complete local coverage + mutation + frozen CRAP closure: `f56c0181-4e01-464c-acdf-1935c19f6afb` + `d93f8d67-6ed4-428e-94e4-37a114b1cc02` + `f56c0181-4e01-464c-acdf-1935c19f6afb`.
+Frozen CRAP measurement in that closure: 1 / 1; scoped receipt coverage run: `f56c0181-4e01-464c-acdf-1935c19f6afb`.
 Current freshness: unverified; this projection never rehashes Source/tests/config or re-admits custody. Global frozen complexity/CRAP and exact coverage qualification: pending.
 
 | Lane | Run | Commit | Recorded UTC | Status | Measurements | Artifact |
@@ -123,6 +123,7 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | f56c0181-4e01-464c-acdf-1935c19f6afb | aa582b5b6fd4cabe7cafd56b96c33d3be6b45e05 | 2026-10-16T20:18:58.336Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/f56c0181-4e01-464c-acdf-1935c19f6afb.json |
 | coverage | f56c0181-4e01-464c-acdf-1935c19f6afb | aa582b5b6fd4cabe7cafd56b96c33d3be6b45e05 | 2026-10-16T20:18:58.336Z | focused-diagnostic; owner accepted locally; selection bound | 36/36 · 72/72 · 81/81 · 1/1 | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/f56c0181-4e01-464c-acdf-1935c19f6afb.focused-coverage.json |
 | frozen-crap | f56c0181-4e01-464c-acdf-1935c19f6afb | aa582b5b6fd4cabe7cafd56b96c33d3be6b45e05 | 2026-10-16T20:18:58.336Z | scoped-proof-pass; owner accepted locally; selection bound | 1 / 1 (scoped proof; owner measured) | /workspace/attachments/contour-repair-policy-20261016/packages/agent/coverage/bun-unified/diagnostics/f56c0181-4e01-464c-acdf-1935c19f6afb.scoped-crap.json |
+| native-mutation | d93f8d67-6ed4-428e-94e4-37a114b1cc02 | aa582b5b6fd4cabe7cafd56b96c33d3be6b45e05 | 2026-10-16T21:14:02.808Z | pilot-pass; owner accepted locally; selection bound | 151/151 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | /workspace/attachments/contour-repair-policy-20261016/packages/agent/.tmp/mutation-batch-d93f8d67-6ed4-428e-94e4-37a114b1cc02-El5nnG/native-partition-report.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

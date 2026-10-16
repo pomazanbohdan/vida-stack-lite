@@ -2,13 +2,15 @@ import { Ajv } from 'ajv';
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
 import { mutationPartitionSources, mutationPartitions } from './mutation-partitions.ts';
+import type { NativeMutationPartitionRead } from './native-mutation-proof-reader.ts';
+import type { NativeMutationArtifactRef } from './mutation-map.ts';
 
 type Digest = { path: string; sha256: string };
 type Counter = { covered: number; total: number };
 type Coverage = Record<'functions' | 'lines' | 'statements' | 'branches', Counter>;
 type Attempt = {
   contour: string;
-  lane: 'coverage' | 'frozen-crap' | 'mutation' | 'coverage-outcome';
+  lane: 'coverage' | 'frozen-crap' | 'mutation' | 'native-mutation' | 'coverage-outcome';
   run_id: string;
   coverage_run_id?: string;
   function_count?: number;
@@ -32,6 +34,17 @@ type Attempt = {
   killed: number | null;
   mutants: number | null;
   confirmed_killed?: number;
+  native_provenance?: {
+    binding_fingerprints: {
+      input_fingerprint: string;
+      source_fingerprint: string;
+      test_fingerprint: string;
+      tool_fingerprint: string;
+    };
+    universe_sha256: string;
+    proof_artifact: { file: string; bytes: number; sha256: string };
+    context_artifact: { file: string; bytes: number; sha256: string };
+  };
 };
 type Snapshot = { schema: 'VidaContourProgress/v1'; attempts: Attempt[] };
 type Receipt = Pick<Attempt, 'recorded_at' | 'commit' | 'artifact'>;
@@ -51,6 +64,16 @@ const counterSchema = {
   properties: { covered: { type: 'integer', minimum: 0 }, total: { type: 'integer', minimum: 0 } },
 };
 const metrics = ['functions', 'lines', 'statements', 'branches'] as const;
+const nativeArtifactRefSchema = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['file', 'bytes', 'sha256'],
+  properties: {
+    file: { type: 'string', pattern: '^[^/]+\\.json$' },
+    bytes: { type: 'integer', minimum: 1, maximum: 33554432 },
+    sha256: { type: 'string', pattern: '^[a-f0-9]{64}$' },
+  },
+};
 const validateSnapshot = new Ajv().compile<Snapshot>({
   type: 'object',
   additionalProperties: false,
@@ -88,7 +111,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
         ],
         properties: {
           contour: { type: 'string', minLength: 1 },
-          lane: { enum: ['coverage', 'frozen-crap', 'mutation', 'coverage-outcome'] },
+          lane: { enum: ['coverage', 'frozen-crap', 'mutation', 'native-mutation', 'coverage-outcome'] },
           run_id: { type: 'string', minLength: 1 },
           coverage_run_id: { type: 'string', minLength: 1 },
           function_count: { type: 'integer', minimum: 1 },
@@ -110,6 +133,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
               'VidaScopedCrapBudgetReport/v3',
               'CandidateMutationPilotReport/v2',
               'CandidateMutationReport/v4',
+              'CandidateNativeMutationReport/v1',
             ],
           },
           selection_artifact: { type: ['string', 'null'] },
@@ -134,6 +158,27 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
             ]),
           ),
           confirmed_killed: { type: 'integer', minimum: 0 },
+          native_provenance: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['binding_fingerprints', 'universe_sha256', 'proof_artifact', 'context_artifact'],
+            properties: {
+              binding_fingerprints: {
+                type: 'object',
+                additionalProperties: false,
+                required: ['input_fingerprint', 'source_fingerprint', 'test_fingerprint', 'tool_fingerprint'],
+                properties: Object.fromEntries(
+                  ['input_fingerprint', 'source_fingerprint', 'test_fingerprint', 'tool_fingerprint'].map((key) => [
+                    key,
+                    { type: 'string', pattern: '^[a-f0-9]{64}$' },
+                  ]),
+                ),
+              },
+              universe_sha256: { type: 'string', pattern: '^[a-f0-9]{64}$' },
+              proof_artifact: nativeArtifactRefSchema,
+              context_artifact: nativeArtifactRefSchema,
+            },
+          },
         },
       },
     },
@@ -210,6 +255,89 @@ function empty(value: unknown): boolean {
   return Array.isArray(value) && value.length === 0;
 }
 
+/** Projects only a result returned by the persisted native proof reader. */
+export type NativeMutationProjection = {
+  report: NativeMutationPartitionRead['report'];
+  proof: Pick<
+    NativeMutationPartitionRead['proof'],
+    'schema' | 'binding' | 'qualification_scope' | 'full_qualification' | 'mutants' | 'universe_sha256'
+  >;
+  validation_context: NativeMutationArtifactRef;
+  descriptor: Record<string, unknown>;
+  context: { source_inputs: unknown };
+};
+export function nativeMutationAttempt(read: NativeMutationProjection, receipt: Receipt): Attempt {
+  const { report, proof, validation_context, descriptor, context } = read;
+  if (
+    report.schema !== 'CandidateNativeMutationReport/v1' ||
+    report.producer_kind !== 'native-instrumenter-batches/v1' ||
+    report.qualification_scope !== 'partition' ||
+    report.full_qualification !== false ||
+    report.status !== 'pilot-pass' ||
+    report.required_effective_score !== 1 ||
+    report.effective_score !== 1 ||
+    report.non_killed.length !== 0 ||
+    report.unknown_mutants.length !== 0 ||
+    proof.schema !== 'NativeMutationPartitionProof/v1' ||
+    proof.qualification_scope !== 'partition' ||
+    proof.full_qualification !== false ||
+    canonicalJson(report.binding) !== canonicalJson(proof.binding)
+  )
+    throw new Error('Native mutation projection does not preserve the reader-validated partition pilot contract.');
+  const contour = report.binding.partition;
+  const partition = mutationPartitions().find((row) => row.name === contour);
+  if (!partition || partition.environment === 'static' || partition.environment === 'retired')
+    throw new Error('Native mutation report is not bound to an active executable contour.');
+  const sources = digests(report.binding.partition_sources);
+  const expectedSources = mutationPartitionSources(partition).sort();
+  if (
+    canonicalJson(sources.map((row) => row.path)) !== canonicalJson(expectedSources) ||
+    canonicalJson(sources) !== canonicalJson(digests(descriptor.partition_source_inputs))
+  )
+    throw new Error('Native mutation Source selection differs from its registered partition.');
+  const tests = digests(descriptor.test_inputs);
+  const tools = digests(descriptor.tool_inputs);
+  const globalSources = digests(context.source_inputs);
+  const selected = selectedTests(contour, report.tests, tests);
+  if (!selected.selection_complete)
+    throw new Error('Native mutation test selection differs from its registered partition.');
+  const proofCount = proof.mutants.length;
+  if (proofCount < 1 || report.killed !== proofCount || report.mutants !== proofCount || report.effective_score !== 1)
+    throw new Error('Native mutation report counts differ from its reader-validated proof.');
+  return {
+    ...receipt,
+    contour,
+    lane: 'native-mutation',
+    run_id: report.binding.run_id,
+    sources,
+    tests,
+    tools,
+    closure: inputClosure(globalSources, tests, tools, sources),
+    ...selected,
+    producer_schema: 'CandidateNativeMutationReport/v1',
+    selection_artifact: receipt.artifact,
+    tool_fingerprint: report.binding.tool_fingerprint,
+    status: 'pilot-pass',
+    accepted: true,
+    coverage: null,
+    max_cc: null,
+    max_entry_crap: null,
+    killed: proofCount,
+    mutants: proofCount,
+    native_provenance: {
+      binding_fingerprints: {
+        input_fingerprint: report.binding.input_fingerprint,
+        source_fingerprint: report.binding.source_fingerprint,
+        test_fingerprint: report.binding.test_fingerprint,
+        tool_fingerprint: report.binding.tool_fingerprint,
+      },
+      universe_sha256: proof.universe_sha256,
+      proof_artifact: report.native_partition_proof,
+      context_artifact: validation_context,
+    },
+  };
+}
+
 function selectedTests(
   contour: string,
   value: unknown,
@@ -237,6 +365,8 @@ function selectedTests(
 /** Adapts owner-issued terminal reports only. It does not re-admit their receipts or establish current freshness. */
 export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
   const report = object(value);
+  if (report.schema === 'CandidateNativeMutationReport/v1')
+    throw new Error('Native mutation reports require the validated --native-report route.');
   if (report.schema === 'VidaBunCoverageOperationOutcome/v1') {
     const contour = text(object(report.selection).contour);
     declaredSources(contour);
@@ -865,10 +995,20 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
           attempt.max_entry_crap === null ||
           attempt.killed !== null ||
           attempt.mutants !== null)) ||
-      (attempt.lane === 'mutation' &&
+      ((attempt.lane === 'mutation' || attempt.lane === 'native-mutation') &&
         (attempt.max_cc !== null ||
           attempt.max_entry_crap !== null ||
           (attempt.killed === null) !== (attempt.mutants === null))) ||
+      (attempt.lane === 'native-mutation' &&
+        (!attempt.accepted ||
+          attempt.producer_schema !== 'CandidateNativeMutationReport/v1' ||
+          attempt.status !== 'pilot-pass' ||
+          attempt.killed === null ||
+          attempt.killed !== attempt.mutants ||
+          attempt.killed <= 0 ||
+          !attempt.native_provenance)) ||
+      (attempt.lane !== 'native-mutation' &&
+        (attempt.native_provenance !== undefined || attempt.producer_schema === 'CandidateNativeMutationReport/v1')) ||
       (attempt.lane === 'frozen-crap' &&
         (!attempt.accepted ||
           (attempt.producer_schema !== 'VidaScopedCrapBudgetReport/v1' &&
@@ -1008,7 +1148,7 @@ function compatibleFrozenCrap(coverage: Attempt, crap: Attempt): boolean {
 function maximum(attempt: Attempt): boolean {
   return (
     attempt.accepted &&
-    (attempt.lane === 'mutation'
+    (attempt.lane === 'mutation' || attempt.lane === 'native-mutation'
       ? attempt.killed === attempt.mutants && attempt.mutants! > 0
       : attempt.lane === 'frozen-crap'
         ? attempt.max_cc !== null && attempt.max_entry_crap !== null
@@ -1023,7 +1163,10 @@ function cell(value: string): string {
 function counts(attempt: Attempt | undefined): string {
   if (!attempt) return 'unknown';
   if (attempt.lane === 'coverage-outcome') return 'no metric evidence';
-  if (attempt.lane === 'mutation' && attempt.mutants === null) return 'unknown (' + attempt.status + ')';
+  if ((attempt.lane === 'mutation' || attempt.lane === 'native-mutation') && attempt.mutants === null)
+    return 'unknown (' + attempt.status + ')';
+  if (attempt.lane === 'native-mutation')
+    return `${attempt.killed}/${attempt.mutants} (${attempt.status}; reader-validated native assertion-confirmed partition proof; local only)`;
   if (attempt.lane === 'mutation') {
     const qualification = attempt.accepted
       ? 'assertion-confirmed'
@@ -1070,7 +1213,7 @@ export function selectContourCampaign(snapshot: Snapshot, mode: 'all' | 'unclose
     const current = snapshot.attempts.filter((row) => row.contour === partition.name && row.commit === commit);
     return !lastCompleteTripleClosure(
       current.filter((row) => row.lane === 'coverage'),
-      current.filter((row) => row.lane === 'mutation'),
+      current.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation'),
       current.filter((row) => row.lane === 'frozen-crap'),
     );
   });
@@ -1094,7 +1237,7 @@ export function renderContourProgress(snapshot: Snapshot): string {
   for (const partition of partitions) {
     const attempts = snapshot.attempts.filter((row) => row.contour === partition.name);
     const coverage = attempts.filter((row) => row.lane === 'coverage');
-    const mutation = attempts.filter((row) => row.lane === 'mutation');
+    const mutation = attempts.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation');
     const crap = attempts.filter((row) => row.lane === 'frozen-crap');
     const staticOnly = partition.environment === 'static';
     const best = lastCompleteClosure(coverage, mutation);
@@ -1135,7 +1278,7 @@ export function renderContourProgress(snapshot: Snapshot): string {
   for (const partition of retiredPartitions) {
     const attempts = snapshot.attempts.filter((row) => row.contour === partition.name);
     const lastCoverage = attempts.filter((row) => row.lane === 'coverage').at(-1);
-    const lastMutation = attempts.filter((row) => row.lane === 'mutation').at(-1);
+    const lastMutation = attempts.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation').at(-1);
     const lastCrap = attempts.filter((row) => row.lane === 'frozen-crap').at(-1);
     body.push(
       `| ${partition.name} (retired) | ${cell(counts(lastCoverage))} | ${lastCoverage ? `${lastCoverage.max_cc} / ${lastCoverage.max_entry_crap}` : 'unknown'} | ${cell(counts(lastMutation))} | historical only | retired; excluded | ${lastCrap ? `${lastCrap.max_cc} / ${lastCrap.max_entry_crap}` : 'unknown'} | retired; excluded |`,

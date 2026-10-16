@@ -1104,9 +1104,14 @@ hashing. Captured global test-selection metadata is not fresh global inventory.
 The reader is separately checked with synthetic controls and a complete retained
 context-bearing producer closure. It launches no tests, regenerates no Source
 inventory and grants no freshness or Runtime authority. Its returned canonical
-proof stays partition-local with `full_qualification:false`. Current contour
-and final-quality readers continue to reject native candidates until their
-separate adapters qualify; offline readback alone does not activate admission.
+proof stays partition-local with `full_qualification:false`. The contour CLI's
+explicit `--native-report` route calls that reader before projecting a separate
+`native-mutation` lane. It retains proof/context references, universe and binding
+fingerprints alongside the existing exact Source/test/tool closure. Ordinary
+`--report` still rejects raw native candidates. Matching coverage and frozen
+CRAP can form historical local pairs/triples only through the existing exact
+closure checks. Global/current qualification and final-quality native admission
+remain pending; offline readback alone does not activate those boundaries.
 Historical v1 proofs stay historical, and old diagnostic operations stay diagnostic.
 
 Mutation artifact byte reads share `tooling/mutation-artifact-reader.ts` rather

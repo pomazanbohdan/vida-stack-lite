@@ -47,6 +47,7 @@ export interface FailedFinalCorrectionFixture {
   readonly store: HostStateStore;
   readonly identity: WorkIdentity;
   readonly journal: MastraSessionLedgerSnapshot;
+  readonly tracedHost: HostStateSnapshot | null;
   readonly plannedHost: HostStateSnapshot | null;
   readonly preparationPath: string;
   close(completed: boolean): void;
@@ -346,6 +347,26 @@ export async function createFailedFinalCorrectionFixture(
       suspendedObservations.push(observation);
     }
     await bridge.resume(suspendedStepId, suspendedObservations, source);
+    journal = sync();
+    let tracedHost: HostStateSnapshot | null = null;
+    if (outcome === 'failed') {
+      const intake = host.readHostStateSnapshot(identity);
+      if (!intake.ledger) throw new Error('Failed-final fixture has no admitted ledger');
+      // Persist a real intermediate phase through the same transition/CAS owners,
+      // before the public prewriter reports attach the plan references.
+      tracedHost = host.compareAndSwapHostState({
+        expectedWork: intake.workVersion,
+        expectedLedger: intake.ledgerVersion,
+        expectedMaintenanceGeneration: intake.maintenanceGeneration,
+        expectedSessionJournal: { attempt: 1, version: journal.version },
+        nextWork: host.projectLifecycleTransition(
+          requireWork(intake),
+          'TRACE',
+          'Fixture begins accepted Source planning.',
+        ),
+        nextLedger: { ...intake.ledger, revision: intake.ledger.revision + 1 },
+      });
+    }
     journal = await runSourcePrewriterPublicActions({
       args,
       publicRun,
@@ -506,6 +527,7 @@ export async function createFailedFinalCorrectionFixture(
       store: host,
       identity,
       journal,
+      tracedHost,
       plannedHost,
       preparationPath,
       close,

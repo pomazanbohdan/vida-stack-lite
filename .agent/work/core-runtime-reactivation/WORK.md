@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `b6e514a`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline proof reader now passes synthetic and actual retained151/151 closure checks below; contour/global adapters remain open. Fresh final-assurance and init measurements at236df35 improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `1652c73`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the current contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Fresh final-assurance and init measurements at236df35 improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,52 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Native local projection and next scoped corrections
+
+The explicit `--native-report` adapter reuses the persisted reader, then adds a
+separate native lane with compact proof/context/universe provenance and existing
+exact Source/test/tool closure. It does not reread Source or launch a producer.
+Raw native JSON remains denied by ordinary `--report`. The canonical semantic
+proof returned by the v2 persisted reader is v1; blind review v50 corrected its
+initial input/return-schema confusion after inspecting the actual return owner.
+No schema guard was relaxed. Actual retained151/151 import passes at
+`native-local-projection-hQTnv8`, then updates the existing snapshot to426attempts.
+Local triples remain6/45; global currentness remains unverified. Selected23cases
+pass at `quality-rolling-cli-check-RkcNpT`; full affected checks follow below.
+
+Init extends the existing CLI denial case with absent/nonnumeric delegate error
+codes, isolates the non-main idle case and checks a genuinely missing configured
+root marker using the existing lightweight bundle fixture. No product behavior
+changes in this init packet.
+
+Core's private entry acknowledgement binding now distinguishes the new cleanup
+wrapper from a removed begin-only callback. One current-file inventory reconciles
+151original roles as149retained+2removed and162current roles as149retained+13new.
+Existing caps and original provenance stay unchanged. Blind v48/v49 reviews
+approve the semantic moves, removals and one lexical identity reuse; v49 checks
+row counts/addresses/caps independently, while exact AST set equality remains
+Root's mechanical check. The candidate is ready only for immutable scoped pinning
+and fresh numerics. Global partial-plan status remains non-executable.
+
+Final-assurance raw function locations identify the remaining callback as TRACE's
+source-plan lookup, not PLAN's filter. The first fixture control `gAWs8J` correctly
+rejects the assumption that bridge resume already persisted TRACE (actual INTAKE).
+The fixture now explicitly persists the legal intermediate phase through the
+real transition/CAS owner, then uses public prewriter actions as before. The
+initial `lkKd0m` setup denies stale Journal CAS; synchronizing after bridge resume
+fixes that fixture defect. `QaRgD4` passes the existing case with61assertions in
+12.19s. It checks captured TRACE and PLAN stale reads, real CAS rejection, unchanged
+Host/Journal and healthy retry without another expensive fixture. These are
+behavioral checks, not a claim of improved numeric coverage. Failed roots remain.
+
+Final affected owner `quality-rolling-cli-check-KixZLn` passes208/0tests with
+1023assertions across5files in32468.23ms; captures are complete, both process
+scopes terminate and boot identity is unchanged. Refreshed strict505files,
+TS-only506 and Oxlint pass after the Journal synchronization. Documentation
+check passes4documents/39links. Blind v50 adapter and v51 TRACE-fixture reviews
+find no actionable issue. Root remains the sole Source/check/Git owner; fresh
+Core, init and assurance numerics remain the next checks on published Source.
 
 ### Offline native proof reader verification
 

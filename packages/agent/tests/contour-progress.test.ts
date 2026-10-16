@@ -5,11 +5,18 @@ import path from 'node:path';
 import {
   contourAttempts,
   mergeContourProgress,
+  nativeMutationAttempt,
   renderContourProgress,
   selectContourCampaign,
 } from '../tooling/contour-progress.ts';
-import { recordContourReport, runContourProgress } from '../tooling/contour-progress-cli.ts';
+import type { NativeMutationProjection } from '../tooling/contour-progress.ts';
+import {
+  recordContourReport,
+  runContourProgress,
+  runContourProgressWithNative,
+} from '../tooling/contour-progress-cli.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
+import { expectAsyncReturned, expectRejection } from './helpers/expect-rejection.ts';
 
 const activeCount = mutationPartitions().filter((row) => row.environment !== 'static').length;
 const oneOfActive = '**1/' + activeCount + '**';
@@ -23,6 +30,194 @@ const receipt = {
   recorded_at: '2026-10-15T00:00:00.000Z',
 };
 const empty = { schema: 'VidaContourProgress/v1', attempts: [] };
+const nativeArtifact = (file: string, hash = 'e') => ({ file, bytes: 1, sha256: hash.repeat(64) });
+function nativeProjectionFixture() {
+  const c = coverage();
+  const partition = mutationPartitions().find((row) => row.name === 'main-runtime-timing')!;
+  const source = digest('src/runtime-timing.ts');
+  const testRows = partition.tests!.map((file) => digest(file));
+  const toolRows = [digest('bun.lock')];
+  const binding = {
+    run_id: 'native-run-1',
+    partition: partition.name,
+    input_fingerprint: 'a'.repeat(64),
+    source_fingerprint: 'b'.repeat(64),
+    test_fingerprint: 'c'.repeat(64),
+    tool_fingerprint: 'd'.repeat(64),
+    partition_sources: [source],
+  };
+  const read: NativeMutationProjection = {
+    report: {
+      binding,
+      tests: partition.tests!,
+      schema: 'CandidateNativeMutationReport/v1',
+      producer_kind: 'native-instrumenter-batches/v1',
+      qualification_scope: 'partition',
+      full_qualification: false,
+      status: 'pilot-pass',
+      required_effective_score: 1,
+      non_killed: [],
+      unknown_mutants: [],
+      killed: 2,
+      mutants: 2,
+      effective_score: 1,
+      native_partition_proof: nativeArtifact('proof.json'),
+    },
+    proof: {
+      schema: 'NativeMutationPartitionProof/v1',
+      binding: structuredClone(binding),
+      qualification_scope: 'partition',
+      full_qualification: false,
+      mutants: ['1', '2'].map((local_id) => ({
+        identity: 'fixture#mutant-' + local_id,
+        local_id,
+        outcome: 'assertion-confirmed-killed' as const,
+        runner_receipt: nativeArtifact('runner-' + local_id + '.json'),
+        launcher_receipt: nativeArtifact('launcher-' + local_id + '.json'),
+      })),
+      universe_sha256: 'f'.repeat(64),
+    },
+    validation_context: nativeArtifact('context.json', 'a'),
+    descriptor: { test_inputs: testRows, tool_inputs: toolRows, partition_source_inputs: [source] },
+    context: { source_inputs: [source, digest('src/runtime-config.ts')] },
+  };
+  c.run_id = 'native-coverage-1';
+  c.test_selection.contour = partition.name;
+  c.test_selection.tests = partition.tests!;
+  c.test_inputs = testRows;
+  c.tool_inputs = toolRows;
+  c.sources = [source];
+  c.module_inputs = [source, digest('src/runtime-config.ts')];
+  c.metrics[0]!.file = source.path;
+  return { c, read, partition };
+}
+
+test('synthetic reader projection forms an exact local native pair and replays immutably', async () => {
+  const { c, read } = nativeProjectionFixture();
+  const attempt = nativeMutationAttempt(read, { ...receipt, artifact: '/retained/native-report.json' });
+  expect(attempt).toMatchObject({
+    lane: 'native-mutation',
+    producer_schema: 'CandidateNativeMutationReport/v1',
+    status: 'pilot-pass',
+    accepted: true,
+    killed: 2,
+    mutants: 2,
+    native_provenance: { universe_sha256: 'f'.repeat(64) },
+  });
+  const coverageAttempt = contourAttempts(c, receipt)[0]!;
+  const crap = frozenCrap(c);
+  crap.contour = 'main-runtime-timing';
+  crap.original_sources = [digest('src/runtime-timing.ts')];
+  const snapshot = mergeContourProgress(empty, [coverageAttempt, attempt, ...contourAttempts(crap, receipt)]);
+  expect(mergeContourProgress(snapshot, [attempt])).toEqual(snapshot);
+  expect(renderContourProgress(snapshot)).toContain(
+    '2/2 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only)',
+  );
+  expect(renderContourProgress(snapshot)).toContain(
+    'Historical complete coverage + assertion-confirmed mutation pair closures: **1/' + activeCount + '**',
+  );
+  expect(renderContourProgress(snapshot)).toContain(
+    'Separate same-coverage-run local triples with scoped frozen CRAP: **1/' + activeCount + '**.',
+  );
+  const sameRunStryker = {
+    ...attempt,
+    lane: 'mutation' as const,
+    producer_schema: 'CandidateMutationReport/v4',
+  };
+  delete sameRunStryker.native_provenance;
+  const split = mergeContourProgress(snapshot, [sameRunStryker]);
+  expect(split.attempts.filter((row) => row.contour === attempt.contour && row.run_id === attempt.run_id)).toHaveLength(
+    2,
+  );
+  for (const change of ['binding', 'proof', 'context', 'universe', 'closure'] as const) {
+    const changed = structuredClone(attempt);
+    if (change === 'binding') changed.native_provenance!.binding_fingerprints.input_fingerprint = '0'.repeat(64);
+    if (change === 'proof') changed.native_provenance!.proof_artifact.sha256 = '0'.repeat(64);
+    if (change === 'context') changed.native_provenance!.context_artifact.sha256 = '0'.repeat(64);
+    if (change === 'universe') changed.native_provenance!.universe_sha256 = '0'.repeat(64);
+    if (change === 'closure') changed.closure[0]!.sha256 = '0'.repeat(64);
+    await expectRejection(
+      Promise.resolve().then(() => mergeContourProgress(snapshot, [changed])),
+      /Conflicting contour run/,
+    );
+  }
+  const splitBinding = structuredClone(read);
+  Object.assign(splitBinding.proof.binding, { input_fingerprint: '0'.repeat(64) });
+  expect(() => nativeMutationAttempt(splitBinding, { ...receipt, artifact: '/retained/native-report.json' })).toThrow(
+    'Native mutation projection does not preserve the reader-validated partition pilot contract.',
+  );
+  const changedStatus = structuredClone(read);
+  Object.assign(changedStatus.report, { status: 'unknown' });
+  expect(() => nativeMutationAttempt(changedStatus, { ...receipt, artifact: '/retained/native-report.json' })).toThrow(
+    'Native mutation projection does not preserve the reader-validated partition pilot contract.',
+  );
+});
+
+test('raw native reports remain rejected by the ordinary --report CLI route', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-native-raw-report-'));
+  try {
+    const file = path.join(root, 'native-report.json');
+    writeFileSync(file, JSON.stringify({ schema: 'CandidateNativeMutationReport/v1' }));
+    expect(() => runContourProgress(['--report', file, '--output', path.join(root, 'out')], root)).toThrow(
+      'Native mutation reports require the validated --native-report route.',
+    );
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test('native report CLI routes the candidate through the bounded proof reader and rejects an invalid envelope', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-native-reader-route-'));
+  try {
+    const file = path.join(root, 'candidate.json');
+    writeFileSync(
+      file,
+      JSON.stringify({ schema: 'CandidateNativeMutationReport/v1', binding: { partition: 'main-host' } }),
+    );
+    await expectRejection(
+      runContourProgressWithNative(['--native-report', file, '--output', path.join(root, 'out')], root),
+      /Candidate report is not an exact native partition pilot report/,
+    );
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
+
+test('native CLI adapter uses the synchronous publisher last-value semantics for singleton metadata', async () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'contour-native-cli-options-'));
+  try {
+    const report = path.join(root, 'coverage.json');
+    const output = path.join(root, 'out');
+    writeFileSync(report, JSON.stringify(coverage()));
+    const later = '2026-10-15T02:00:00.000Z';
+    await expectAsyncReturned(() =>
+      runContourProgressWithNative(
+        [
+          '--report',
+          report,
+          '--commit',
+          'earlier',
+          '--at',
+          receipt.recorded_at,
+          '--commit',
+          'later',
+          '--at',
+          later,
+          '--output',
+          output,
+        ],
+        root,
+      ),
+    );
+    const snapshot = mergeContourProgress(
+      JSON.parse(readFileSync(path.join(output, 'CONTOUR-STATUS.json'), 'utf8')) as unknown,
+      [],
+    );
+    expect(snapshot.attempts[0]).toMatchObject({ commit: 'later', recorded_at: later });
+  } finally {
+    rmSync(root, { recursive: true });
+  }
+});
 function coverage() {
   return {
     schema: 'VidaBunFocusedCoverageDiagnostic/v1',

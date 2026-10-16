@@ -1856,7 +1856,7 @@ function issueWorkflowExecutionCapability(
       'workflow session action was already completed or requires reconciliation',
     );
     if (reserved.approvalAction === null) return reserved;
-    const entered = await withWorkflowFailureCleanup(
+    const entryAcknowledgement = await withWorkflowFailureCleanup(
       () =>
         serializeState(async () => {
           const fresh = await resolve(request, request.stageId, request.assignmentIndex);
@@ -1875,7 +1875,7 @@ function issueWorkflowExecutionCapability(
       async () =>
         freezeJsonValue({
           ...reserved,
-          authorization: validateWorkflowApprovalTransition(entered, reserved.authorization!, 'entry'),
+          authorization: validateWorkflowApprovalTransition(entryAcknowledgement, reserved.authorization!, 'entry'),
         }),
       () => markUncertain(reserved.receipt, reserved.invocation, reserved.requestDigest),
       'Workflow entry acknowledgement and uncertainty recording failed',

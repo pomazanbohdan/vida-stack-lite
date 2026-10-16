@@ -18,7 +18,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { initializeProject, main } from '../bin/init.ts';
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { createInitializationBundle } from './helpers/init-bundle.js';
-import { expectReturned } from './helpers/expect-rejection.ts';
+import { expectReturned, expectRejection } from './helpers/expect-rejection.ts';
 import { loadRuntimeConfig } from '../src/config/runtime-config.js';
 import * as safeRepositoryAccess from '../src/config/safe-repository-access.js';
 
@@ -414,17 +414,24 @@ test('public initializer does not fall back or publish when a verified package r
   }
 });
 
-test('Node CLI reports delegator errors and a non-main import performs no work', async () => {
+test.each([
+  ['numeric', 9, 9],
+  ['absent', undefined, 1],
+  ['nonnumeric', '9', 1],
+] as const)('Node CLI reports delegator errors with %s exit code', async (_label, exitCode, expectedCode) => {
   const cli = cliHarness();
-  const error = Object.assign(new Error('Bun unavailable'), { exitCode: 9 });
+  const error = Object.assign(new Error('Bun unavailable'), exitCode === undefined ? {} : { exitCode });
   await cli.run([], {
     bunRuntime: false,
     delegate: () => {
       throw error;
     },
   });
-  expect(cli.messages.err).toEqual(['Bun unavailable']);
-  expect(cli.exit.exitCode).toBe(9);
+  expect(cli.messages).toEqual({ out: [], err: ['Bun unavailable'] });
+  expect(cli.exit.exitCode).toBe(expectedCode);
+});
+
+test('a non-main initializer import performs no work', async () => {
   const idle = cliHarness({
     isMain: false,
     initialize: () => {
@@ -434,6 +441,29 @@ test('Node CLI reports delegator errors and a non-main import performs no work',
   await idle.run([]);
   expect(idle.messages).toEqual({ out: [], err: [] });
   expect(idle.exit.exitCode).toBeUndefined();
+});
+
+test('initializer rejects a missing configured marker before publishing integration state', async () => {
+  const projectRoot = mkdtempSync(path.join(tmpdir(), 'vida-init-missing-marker-'));
+  let completed = false;
+  try {
+    const bundleRoot = createInitializationBundle(packageRoot, projectRoot);
+    const templateFile = path.join(bundleRoot, 'templates/agent-runtime.config.template.v1.yaml');
+    const template = readFileSync(templateFile, 'utf8');
+    const expected = '    - agent-runtime.config.v1.yaml';
+    expect(template.split(expected)).toHaveLength(2);
+    writeFileSync(templateFile, template.replace(expected, expected + '\n    - OWNER.marker'));
+    await expectRejection(
+      initializeProjectFromBundle(validRequest(projectRoot), bundleRoot),
+      'Missing configured root marker',
+    );
+    expect(readdirSync(projectRoot)).toEqual(['vida-agent']);
+    expect(integrationNames.some((entry) => existsSync(path.join(projectRoot, entry)))).toBe(false);
+    expect(existsSync(path.join(projectRoot, 'OWNER.marker'))).toBe(false);
+    completed = true;
+  } finally {
+    retainedCleanup(projectRoot, completed);
+  }
 });
 
 test('init preserves explicit nested project roots and their distinct identities', async () => {

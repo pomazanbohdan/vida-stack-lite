@@ -249,8 +249,11 @@ boundary controls and an actual retained context-bearing closure separately.
 Keep a captured executable alias distinct from its recorded physical identity;
 reconstruct its exact command without querying today's host. When testing a
 digest denial, preserve byte count so the earlier size guard does not mask it;
-test size denial separately. Offline readback is local evidence, not projection
-activation or fresh global qualification.
+test size denial separately. To project a qualified retained closure, use the
+contour CLI's explicit `--native-report` route; ordinary `--report` must reject
+raw native JSON. Native provenance occupies its own lane and contributes only
+to exact historical local closure. Neither route establishes fresh global
+qualification or Runtime acceptance.
 
 For mutation inputs, keep the full captured test-selection identity separate
 from the partition's executed tests. Reuse the coverage fingerprint owner and

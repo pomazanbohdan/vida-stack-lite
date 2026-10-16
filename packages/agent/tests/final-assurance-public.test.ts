@@ -1171,31 +1171,35 @@ test('failed final correction preparation consumes persisted Host and CAS-bound 
       journal: f.journal,
       preparationPath: f.preparationPath,
     };
+    assert.ok(f.tracedHost);
     assert.ok(f.plannedHost);
+    expect(currentWork(f.tracedHost).lifecycle.phase).toBe('TRACE');
     expect(currentWork(f.plannedHost).lifecycle.phase).toBe('PLAN');
     const beforeRace = f.store.readHostStateSnapshot(f.identity),
       journalBeforeRace = f.store.readWorkSessionJournal(f.identity);
-    expect(f.plannedHost.workVersion).not.toEqual(beforeRace.workVersion);
-    const staleRead = spyOn(f.store, 'readHostStateSnapshot').mockReturnValueOnce(f.plannedHost);
-    let raceFailure: { error: unknown } | undefined;
-    try {
-      expect(() => prepareLifecycleForCorrection(preparation)).toThrow('state compare-and-swap conflict');
-    } catch (error) {
-      raceFailure = { error };
-      throw error;
-    } finally {
-      completeOwnedCleanup(
-        [
-          () => {
-            staleRead.mockRestore();
-            return undefined;
-          },
-        ],
-        raceFailure,
-      );
+    for (const staleHost of [f.tracedHost, f.plannedHost]) {
+      expect(staleHost.workVersion).not.toEqual(beforeRace.workVersion);
+      const staleRead = spyOn(f.store, 'readHostStateSnapshot').mockReturnValueOnce(staleHost);
+      let raceFailure: { error: unknown } | undefined;
+      try {
+        expect(() => prepareLifecycleForCorrection(preparation)).toThrow('state compare-and-swap conflict');
+      } catch (error) {
+        raceFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              staleRead.mockRestore();
+              return undefined;
+            },
+          ],
+          raceFailure,
+        );
+      }
+      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeRace);
+      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBeforeRace);
     }
-    expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeRace);
-    expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBeforeRace);
     const prepared = expectReturned(() => prepareLifecycleForCorrection(preparation));
     const persisted = f.store.readHostStateSnapshot(f.identity),
       currentJournal = f.store.readWorkSessionJournal(f.identity),

@@ -51,6 +51,7 @@ type CandidateNativeMutationReport = {
 export type NativeMutationPartitionRead = {
   report: CandidateNativeMutationReport;
   proof: NativeMutationPartitionProof;
+  validation_context: NativeMutationArtifactRef;
   descriptor: Record<string, unknown>;
   context: NativeMutationValidationContext;
 };
@@ -873,5 +874,5 @@ export async function readNativeMutationPartitionProof(input: {
     throw new Error('Persisted native mutation proof differs from the canonical exhaustive semantic join.');
   if (report.mutants !== canonical.mutants.length || report.killed !== canonical.mutants.length)
     throw new Error('Candidate report counts differ from the complete canonical proof.');
-  return { report, proof: canonical, descriptor, context };
+  return { report, proof: canonical, validation_context: contextRef, descriptor, context };
 }

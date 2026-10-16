@@ -113758,7 +113758,7 @@
         "line": 1531,
         "column": 0,
         "start": 67551,
-        "end": 89945,
+        "end": 89971,
         "bodyLine": 1536,
         "bodyColumn": 38,
         "bodyEndLine": 2037,
@@ -114302,7 +114302,7 @@
         "line": 1852,
         "column": 43,
         "start": 81432,
-        "end": 82910,
+        "end": 82936,
         "bodyLine": 1852,
         "bodyColumn": 62,
         "bodyEndLine": 1883,
@@ -114317,7 +114317,7 @@
     },
     {
       "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/closure:CallExpression:arguments[0]#0",
-      "current_identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entered/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entryAcknowledgement/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
       "file": "src/runtime-kernel.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -114333,8 +114333,8 @@
       "current_source_address": {
         "line": 1861,
         "column": 23,
-        "start": 81820,
-        "end": 82341,
+        "start": 81833,
+        "end": 82354,
         "bodyLine": 1861,
         "bodyColumn": 35,
         "bodyEndLine": 1870,
@@ -114365,8 +114365,8 @@
       "current_source_address": {
         "line": 1884,
         "column": 44,
-        "start": 82957,
-        "end": 85696,
+        "start": 82983,
+        "end": 85722,
         "bodyLine": 1884,
         "bodyColumn": 77,
         "bodyEndLine": 1947,
@@ -114397,8 +114397,8 @@
       "current_source_address": {
         "line": 1900,
         "column": 39,
-        "start": 83752,
-        "end": 83864,
+        "start": 83778,
+        "end": 83890,
         "bodyLine": 1901,
         "bodyColumn": 6,
         "bodyEndLine": 1901,
@@ -114461,8 +114461,8 @@
       "current_source_address": {
         "line": 1923,
         "column": 31,
-        "start": 84845,
-        "end": 84920,
+        "start": 84871,
+        "end": 84946,
         "bodyLine": 1923,
         "bodyColumn": 43,
         "bodyEndLine": 1923,
@@ -114493,8 +114493,8 @@
       "current_source_address": {
         "line": 1925,
         "column": 33,
-        "start": 85001,
-        "end": 85110,
+        "start": 85027,
+        "end": 85136,
         "bodyLine": 1926,
         "bodyColumn": 14,
         "bodyEndLine": 1926,
@@ -114525,8 +114525,8 @@
       "current_source_address": {
         "line": 1948,
         "column": 36,
-        "start": 85735,
-        "end": 89920,
+        "start": 85761,
+        "end": 89946,
         "bodyLine": 1948,
         "bodyColumn": 55,
         "bodyEndLine": 2035,
@@ -114557,8 +114557,8 @@
       "current_source_address": {
         "line": 1961,
         "column": 31,
-        "start": 86405,
-        "end": 86859,
+        "start": 86431,
+        "end": 86885,
         "bodyLine": 1961,
         "bodyColumn": 43,
         "bodyEndLine": 1969,
@@ -114589,8 +114589,8 @@
       "current_source_address": {
         "line": 1970,
         "column": 53,
-        "start": 86915,
-        "end": 86979,
+        "start": 86941,
+        "end": 87005,
         "bodyLine": 1970,
         "bodyColumn": 65,
         "bodyEndLine": 1970,
@@ -114621,8 +114621,8 @@
       "current_source_address": {
         "line": 1980,
         "column": 35,
-        "start": 87487,
-        "end": 87550,
+        "start": 87513,
+        "end": 87576,
         "bodyLine": 1980,
         "bodyColumn": 47,
         "bodyEndLine": 1980,
@@ -114653,8 +114653,8 @@
       "current_source_address": {
         "line": 1982,
         "column": 37,
-        "start": 87639,
-        "end": 87746,
+        "start": 87665,
+        "end": 87772,
         "bodyLine": 1983,
         "bodyColumn": 18,
         "bodyEndLine": 1983,
@@ -114685,8 +114685,8 @@
       "current_source_address": {
         "line": 1996,
         "column": 33,
-        "start": 88113,
-        "end": 88180,
+        "start": 88139,
+        "end": 88206,
         "bodyLine": 1996,
         "bodyColumn": 45,
         "bodyEndLine": 1996,
@@ -114717,8 +114717,8 @@
       "current_source_address": {
         "line": 2011,
         "column": 43,
-        "start": 88693,
-        "end": 88763,
+        "start": 88719,
+        "end": 88789,
         "bodyLine": 2011,
         "bodyColumn": 55,
         "bodyEndLine": 2011,
@@ -114749,8 +114749,8 @@
       "current_source_address": {
         "line": 2003,
         "column": 12,
-        "start": 88416,
-        "end": 88470,
+        "start": 88442,
+        "end": 88496,
         "bodyLine": 2003,
         "bodyColumn": 24,
         "bodyEndLine": 2005,
@@ -114781,8 +114781,8 @@
       "current_source_address": {
         "line": 2044,
         "column": 7,
-        "start": 90176,
-        "end": 94255,
+        "start": 90202,
+        "end": 94281,
         "bodyLine": 2046,
         "bodyColumn": 35,
         "bodyEndLine": 2126,
@@ -202595,7 +202595,7 @@
       "rationale": "New callable boundary in the current runtime-kernel call context with no corresponding separately inventoried original callable role. The prospective 10/10 limit is policy only, not a measured current CRAP result."
     },
     {
-      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entered/closure:CallExpression:arguments[0]#0",
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entryAcknowledgement/closure:CallExpression:arguments[0]#0",
       "file": "src/runtime-kernel.ts",
       "max_complexity": 10,
       "max_crap": 10,
@@ -202603,8 +202603,8 @@
       "current_source_address": {
         "line": 1860,
         "column": 6,
-        "start": 81791,
-        "end": 82342,
+        "start": 81804,
+        "end": 82355,
         "bodyLine": 1861,
         "bodyColumn": 8,
         "bodyEndLine": 1870,
@@ -202613,7 +202613,7 @@
       "rationale": "New callable boundary in the current runtime-kernel call context with no corresponding separately inventoried original callable role. The prospective 10/10 limit is policy only, not a measured current CRAP result."
     },
     {
-      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entered/closure:CallExpression:arguments[1]#0",
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entryAcknowledgement/closure:CallExpression:arguments[1]#0",
       "file": "src/runtime-kernel.ts",
       "max_complexity": 10,
       "max_crap": 10,
@@ -202621,8 +202621,8 @@
       "current_source_address": {
         "line": 1871,
         "column": 6,
-        "start": 82350,
-        "end": 82448,
+        "start": 82363,
+        "end": 82461,
         "bodyLine": 1871,
         "bodyColumn": 12,
         "bodyEndLine": 1871,
@@ -202631,7 +202631,7 @@
       "rationale": "New callable boundary in the current runtime-kernel call context with no corresponding separately inventoried original callable role. The prospective 10/10 limit is policy only, not a measured current CRAP result."
     },
     {
-      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entered/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#0",
+      "identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entryAcknowledgement/closure:CallExpression:arguments[1]#0/closure:CallExpression:arguments[0]#0",
       "file": "src/runtime-kernel.ts",
       "max_complexity": 10,
       "max_crap": 10,
@@ -202639,8 +202639,8 @@
       "current_source_address": {
         "line": 1871,
         "column": 27,
-        "start": 82371,
-        "end": 82447,
+        "start": 82384,
+        "end": 82460,
         "bodyLine": 1871,
         "bodyColumn": 39,
         "bodyEndLine": 1871,
@@ -205435,8 +205435,8 @@
       "current_source_address": {
         "line": 1875,
         "column": 6,
-        "start": 82560,
-        "end": 82735,
+        "start": 82573,
+        "end": 82761,
         "bodyLine": 1876,
         "bodyColumn": 8,
         "bodyEndLine": 1879,
@@ -205454,8 +205454,8 @@
       "current_source_address": {
         "line": 1880,
         "column": 6,
-        "start": 82743,
-        "end": 82825,
+        "start": 82769,
+        "end": 82851,
         "bodyLine": 1880,
         "bodyColumn": 12,
         "bodyEndLine": 1880,
@@ -205473,8 +205473,8 @@
       "current_source_address": {
         "line": 2006,
         "column": 12,
-        "start": 88484,
-        "end": 88539,
+        "start": 88510,
+        "end": 88565,
         "bodyLine": 2006,
         "bodyColumn": 18,
         "bodyEndLine": 2006,
@@ -205492,8 +205492,8 @@
       "current_source_address": {
         "line": 2026,
         "column": 25,
-        "start": 89590,
-        "end": 89893,
+        "start": 89616,
+        "end": 89919,
         "bodyLine": 2026,
         "bodyColumn": 37,
         "bodyEndLine": 2033,
@@ -224570,5 +224570,37 @@
     ],
     "correspondence": "No same-responsibility baseline b549951 callable in the bounded independent lineage review. Both new Source paths have56 new roles; preserve55 published10/10 ceilings and add only isDigest under the pre-existing prospective policy. No baseline role, ceiling or removal is reassigned.",
     "limits": "Only this exact contour can receive a later pinned scoped review. Global partial status and absent global qualification remain unchanged. Current exact coverage, scoped frozen proof and assertion-confirmed mutation remain separate."
+  },
+  "scope_review_main_runtime_core_20261016": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "independent_review_status": "source-lineage-approved-for-scoped-numeric-qualification",
+    "independent_review_lane": "blind-native-luna",
+    "files": [
+      "src/runtime-kernel.ts"
+    ],
+    "source_mapping_kind": "reviewed-pairs",
+    "new_source_paths": [],
+    "removed_source_paths": [],
+    "source_mappings": [
+      {
+        "original_path": "src/runtime-kernel.ts",
+        "current_path": "src/runtime-kernel.ts",
+        "rationale": "The runtime kernel implementation retains its published module; its two consolidated callback removals and independently capped cleanup adapters are explicitly partitioned."
+      }
+    ],
+    "identity_reuses": [
+      {
+        "original_identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/closure:CallExpression:arguments[0]#0",
+        "successor_identity": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#2/binding:entryAcknowledgement/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
+        "rationale": "The original serialized context validation remains once in the nested entry operation with its unchanged frozen ceiling. The current acknowledgement-validation callback occupying its former lexical identity is a distinct cleanup adapter with the existing independently declared prospective ceiling."
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/luna-core-conservative-budget-v47-20261016.md",
+      "/workspace/attachments/luna-core-entry-identity-review-v48-20261016.md",
+      "/workspace/attachments/luna-core-exact-scope-review-v49-20261016.md"
+    ],
+    "correspondence": "151 original roles partition into149 retained and two existing removals;149 retained plus13 independently capped prospective roles exactly cover162 current roles. Original identities, baseline provenance and all ceilings stay unchanged; current Source locators and the acknowledgement binding are refreshed.",
+    "limits": "Root mechanically checked exact callable sets and static ceilings; blind Luna independently reviewed saved row counts, caps, removals, semantic moves and the identity reuse. Neither establishes measured coverage/CRAP. Candidate numeric qualification remains pending; a subsequent exact-commit pin must preserve these reviewed bytes. Global original numeric admission, mutation and Runtime acceptance remain separate."
   }
 }
