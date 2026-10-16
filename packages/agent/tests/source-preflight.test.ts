@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { expectReturned } from './helpers/expect-rejection.ts';
 import { createHash } from 'node:crypto';
 import { test } from 'bun:test';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
@@ -632,7 +633,7 @@ function correctivePlanningFixture(): PreflightFixture {
 
 test('fully bound current preflight passes before Host attempt reservation', () => {
   const value = fixture();
-  const result = validateSourceWritePreflight(value.input);
+  const result = expectReturned(() => validateSourceWritePreflight(value.input));
   assert.equal(result.length, 5);
   assert.equal(
     result.every((reference) => workOf(value).lifecycle.references.includes(reference)),
@@ -669,13 +670,13 @@ test('pending Host request preview remains valid when another assignment has pri
     digest: canonicalJsonDigest(work),
   });
   const before = structuredClone(value.input.hostSnapshot);
-  assert.equal(validateSourceWritePreflight(value.input).length, 5);
+  assert.equal(expectReturned(() => validateSourceWritePreflight(value.input)).length, 5);
   assert.deepEqual(value.input.hostSnapshot, before);
 });
 
 test('repeated preparation inputs cannot replace omitted current artifacts', () => {
   const value = fixture();
-  assert.equal(validateSourceWritePreflight(value.input).length, 5);
+  assert.equal(expectReturned(() => validateSourceWritePreflight(value.input)).length, 5);
   const plan = value.input.preparations.find((item) => item.reference.kind === 'source_plan');
   assert.ok(plan);
   value.input.preparations = value.input.preparations.map(() => plan);
@@ -686,14 +687,14 @@ test('repeated preparation inputs cannot replace omitted current artifacts', () 
 test('corrective preflight binds the engine run to its unchanged Host base run before reservation', () => {
   const value = fixture({ corrective: true });
   assert.notEqual(value.input.journal.state.run_id, workOf(value).execution.run_id);
-  assert.equal(validateSourceWritePreflight(value.input).length, 5);
+  assert.equal(expectReturned(() => validateSourceWritePreflight(value.input)).length, 5);
   assertNoAttemptMarker(value);
 });
 
 test('corrective preflight uses authenticated original planning observations without reissuing them', () => {
   const value = correctivePlanningFixture();
   assert.equal(value.input.journal.state.completed.length, 0);
-  assert.equal(validateSourceWritePreflight(value.input).length, 5);
+  assert.equal(expectReturned(() => validateSourceWritePreflight(value.input)).length, 5);
   assertNoAttemptMarker(value);
 });
 
@@ -769,7 +770,7 @@ test.each(['before', 'after'] as const)(
     const evidence = sourcePreparationJournalEvidence(value.input.journal, workOf(value), planning);
     const reference = `artifact://session-observation/${planning.run_id}/${base.request.action_id}/${base.observation.output_digest}`;
     assert.equal(evidence.get(reference), base);
-    assert.equal(validateSourceWritePreflight(value.input).length, 5);
+    assert.equal(expectReturned(() => validateSourceWritePreflight(value.input)).length, 5);
     assertNoAttemptMarker(value);
   },
 );
@@ -805,7 +806,7 @@ test('evidence uniqueness is per run and ignores structurally mismatched duplica
     const unrelated = clone(base);
     change(unrelated);
     setProperty(planning, 'items', [unrelated]);
-    assert.equal(validateSourceWritePreflight(value.input).length, 5);
+    assert.equal(expectReturned(() => validateSourceWritePreflight(value.input)).length, 5);
     assertNoAttemptMarker(value);
   }
 });
@@ -841,7 +842,7 @@ test('route without a current Source plan is denied before Host attempt reservat
 
 test('current project selection resolves the configured project_id and rejects foreign projects', () => {
   const current = fixture();
-  assert.equal(validateSourceWritePreflight(current.input).length, 5);
+  assert.equal(expectReturned(() => validateSourceWritePreflight(current.input)).length, 5);
   assertNoAttemptMarker(current);
 
   const foreign = fixture({ configuredProjectId: 'foreign-agent' });
@@ -913,11 +914,11 @@ test('a digest-invalid twin cannot supply configured reviewer attribution', () =
 
 test('high-risk preflight accepts only the configured prewriter reviewer observation in the current journal', () => {
   const value = fixture({ highRisk: true });
-  assert.equal(validateSourceWritePreflight(value.input).length, 5);
+  assert.equal(expectReturned(() => validateSourceWritePreflight(value.input)).length, 5);
   assertNoAttemptMarker(value);
 
   const packetHigh = fixture({ lifecycleRisk: 'low', taskRiskFlags: ['high'] });
-  assert.equal(validateSourceWritePreflight(packetHigh.input).length, 5);
+  assert.equal(expectReturned(() => validateSourceWritePreflight(packetHigh.input)).length, 5);
   assertNoAttemptMarker(packetHigh);
 
   const packetHighWithoutSecurity = fixture({

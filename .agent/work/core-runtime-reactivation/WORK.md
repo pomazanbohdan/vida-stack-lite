@@ -156,6 +156,17 @@ malformed TaskSource report preserves the Host snapshot. The completed-readonly
 lane found no test-only shortcut to genuine completed admission/history; its
 success/CAS path remains OPEN rather than fabricating authority.
 
+The preflight contour's ten success calls now enter the existing `expectReturned`
+assertion boundary before result checks, so a thrown target error can be tested
+as an expected-success assertion failure. Its full19-case control passes at
+owned `Kp2aJF`; the final primary success guard has a separate focused recheck.
+Neither control qualifies injected mutants. The unclosed selector's exact-HEAD
+rule can reopen unchanged inputs after committing status output; a read-only
+analysis confirmed this publication loop. Historical triples remain historical;
+cross-commit proof admission is OPEN until the existing owners can establish
+exact current closure/runtime/environment/custody compatibility without another
+scanner or a weakened gate.
+
 ## Current config contour
 
 The latest numeric capture binds published Source `85a5ca7` and budget `e5daea5`. Subsequent gate changes require their own fresh evidence.
