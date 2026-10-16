@@ -90,6 +90,62 @@ function launchingRow(overrides: Partial<LaunchingImage> = {}): LaunchingImage {
   };
 }
 
+test('operation keys reject malformed prefixes, suffixes and lengths without inserting custody', () => {
+  const fixture = openCustodyFixture('service-operation-key-boundaries-');
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    for (const valid of ['a', '0', 'a'.repeat(96), 'a' + '-'.repeat(95)]) {
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, valid)),
+      ).toBeNull();
+    }
+    for (const invalid of [
+      '',
+      '-operation',
+      '!operation',
+      'Operation',
+      'operation!',
+      'a'.repeat(97),
+      ...['\n', '\r', '\r\n', '\u2028', '\u2029'].map((ending) => operationId + ending),
+    ]) {
+      expect(() =>
+        reserveServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          invalid,
+          requestDigest,
+          'c'.repeat(64),
+        ),
+      ).toThrow('Service operation custody: operation identity is invalid');
+      expect(
+        Number(
+          fixture.database
+            .query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM agent_host_service_operation_custody')
+            .get()?.count,
+        ),
+      ).toBe(0);
+    }
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else retainExpectedUnknownFixture(fixture.root, 'operation key boundary control failed');
+  }
+});
+
 describe('private service launch capability', () => {
   test('identical fixture configuration keeps physical workspace identities and database state separate', () => {
     const fixtures: ReturnType<typeof openCustodyFixture>[] = [];

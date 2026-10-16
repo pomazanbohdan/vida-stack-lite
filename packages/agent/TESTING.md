@@ -23,6 +23,17 @@ Qualify retained bytes and normal terminal cleanup separately. An applied contro
 uses the real reserved-to-commit_unknown-to-applied transition; successful child
 exit alone does not authorize disposal of another unresolved producer's lock.
 
+Regenerable caches are not retained operation evidence. With no active owner,
+clear Bun transpiler or install caches by their exact namespace; keep Source,
+installed dependencies, executable binaries and unique operation evidence.
+Never copy generated coverage or scratch into fixture Source payloads.
+Deduplicate an old artifact copy only after byte/hash equality with a stable
+original outside the cleanup tree. Keep a path/digest custody manifest and leave
+unmatched or unreadable files in place. Lossless compression must reproduce the
+original byte count and SHA-256 before removing the uncompressed manifest.
+Cleanup neither changes FAIL/UNKNOWN classifications nor resumes an old attempt.
+Do not touch an active producer's input image, output or scratch.
+
 Coverage must use a provider compatible with Bun and report all required
 metrics. The frozen-budget CRAP policy must match its executable gate; a fixed
 legacy threshold does not establish that match. Pre-commit is authorized after

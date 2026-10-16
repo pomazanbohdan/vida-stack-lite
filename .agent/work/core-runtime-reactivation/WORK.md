@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `5ef19ac9b28361d4311bce5833f5bd3a189f2565`. Its64-ID pilot stopped before ID51at the unchanged2GiBstorage floor. Its partial child observations lack final parent readback and are not admitted. The last fully bracketed32-ID diagnostic is f7e8c3f,31Killed/1Survived; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `a60fb28a96d265426e8e01ca4515d087895e0fcd`. Its complete64-ID diagnostic observes60assertion-confirmed Killed,4Survived and0UNKNOWN;636of700generated IDs remain unattempted. The older5ef19ac storage-interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -14,7 +14,56 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
-Latest64-ID diagnostic binds published5ef19ac and official SDK
+Both active checkouts were clean and published at a60fb28 before the user's
+save-and-cleanup request. Native producers had stopped; prior retired-worktree
+changes remain in their retained Git refs. No old effect, DB or attempt resumed.
+Cleanup removed 76,420 regenerable Bun transpiler files and 614,479 byte-identical
+files from the old recursively copied coverage tree. Originals outside the
+cleanup tree, unique/unreadable files, raw operation state, Source, configs,
+instructions, installed dependencies and the active Bun executable remain.
+The exact counts, byte totals and free-space observations are recorded at
+`/workspace/attachments/vida-safe-cleanup-final-20261016.json`.
+Each duplicate has an original-path/hash custody record. ENAMETOOLONG and Bun
+chdir ERANGE stopped the first walkers; their completed deletions were paired
+with intents and sealed as incomplete cleanup packets. A fresh GNU execdir
+walker safely completed the remaining accessible duplicate comparison. The
+manifests were compressed only after full decompressed byte-count/SHA-256
+equality. This neither reclassifies historical failures nor admits old results.
+
+Fresh diagnostic binds a60fb28 and official SDK run38921256856/attempt1,
+artifact12055045679, ZIP digest
+`sha256:9929efcb386b69df22a661a7b7c9d0c30d235e59624e4b25a99fc507be5a1de2`.
+Outer `native-mutation-pilot-a60fb28-S8Mgsn` closes in384330.530521ms with
+complete captures, closed group and unchanged boot. Inner evidence is
+`packages/agent/.tmp/mutation-batch-55752f18-bcbd-4292-bf04-b663ac094241-K6sxkM/`.
+Baseline94cases passes;64of700IDs complete:60Killed,4Survived,0UNKNOWN,
+636unattempted. Image, parent inputs and executable readback complete; no storage
+denial occurs. Both previous local266and618 survivors are now Killed. This is
+still diagnostic-only, not complete contour or native-parent admission.
+
+New survivors are local311(binding denial),558(gate check before a new SQLite
+open),24(operation-key prefix) and593(lossless integer transport). Corrections
+add unbound-connection denial with no verifier/close/effect, operation-key
+boundary matrices, and a real gate-replacement boundary proving no new SQLite
+open after ownership loss. A real SQLite int64 vector above2^53 observes captured
+reconciliation connections before normalization; it forwards native opens and
+custody unchanged and asserts exact bigint data, not an option-string mock.
+All Source guards remain. The bigint transport contract follows the official
+[Bun SQLite integer documentation](https://bun.com/docs/runtime/sqlite#integers).
+Fixture deletion now follows successful completion of every cleanup callback,
+so a cleanup failure retains the root. Focused owner `JzLRqB` passes62/0tests,476assertions
+across2files in2.74s with complete captures, closed group and unchanged boot.
+Strict tests467files passes. Numeric confirmation needs a fresh bound run.
+
+Native coverage owner `native-coverage-a60fb28-9aIEiA` closes in18314.754987ms,
+94/0tests,619assertions, complete captures/closed group/same boot. Report
+`coverage/bun-unified/diagnostics/9c545aec-39db-423a-9765-091811eb2fe6.focused-coverage.json`
+records exact F56/56,L235/235,S243/243,B128/128 across both Sources and observed
+maxCC10/maxCRAP10. The projection owner imports the actual a60fb28 observation
+(397attempts). This is before the new test changes and supplies no reviewed
+scope budget, frozen acceptance or mutation closure. Historical triples stay6/45.
+
+Earlier incomplete64-ID diagnostic binds published5ef19ac and official SDK
 run38919637309/attempt1/artifact12054470853, ZIP digest
 `sha256:6596f4d668d5e2841a20150396e98215578966209e0ec84e10707b76666388d2`.
 Outer `native-mutation-pilot-5ef19ac-5NDjYc` closes in241820.968494ms with complete
@@ -42,7 +91,7 @@ The latter keeps native held-owner verification and source close, proves the
 receipt verifier was never called, and checks the unchanged row. The apparently
 repeated initial assertActive is retained: this control establishes its ownership
 boundary. No ownership guard is removed to improve a score. Numeric confirmation
-of both fixes remains pending. Focused gate control `23oHWG` passes1/0,6assertions.
+of both fixes is now present in the later a60fb28 diagnostic. Focused gate control `23oHWG` passes1/0,6assertions.
 Final affected owner `uAMXU4` passes212/0tests,1184assertions across7files in4.18s,
 with complete captures/closed group/same boot. Strict tooling188files and
 tests467files pass; scoped type-aware lint has zero diagnostics.
