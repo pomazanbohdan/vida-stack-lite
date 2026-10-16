@@ -27,7 +27,7 @@ import {
 } from '../../src/runtime-initialization.ts';
 import { HostStateStore, openHostStateDatabase } from '../../src/host-state.ts';
 import { closeWorkspaceDatabaseWithAdmission } from '../../src/config/storage-read-admission.ts';
-import { deriveWorkspaceId } from '../../src/workspace-identity.ts';
+import { deriveWorkspaceId, WorkspaceIdentityError } from '../../src/workspace-identity.ts';
 import { loadRuntimeConfig, runtimeConfigDigest } from '../../src/config/runtime-config.ts';
 import { canonicalJsonDigest } from '../../src/contracts/public-ingress.ts';
 import { SafeRepositoryLockContentionError } from '../../src/config/safe-repository-access.ts';
@@ -168,6 +168,11 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
     rmSync(other, { recursive: true, force: true });
   }
   expect(() => deriveWorkspaceId('Invalid Repository ID', root)).toThrow('repository identity is invalid');
+  expect(() => deriveWorkspaceId(receipt.repository_id, 'relative/root')).toThrow(WorkspaceIdentityError);
+  expect(() => deriveWorkspaceId(receipt.repository_id, null as unknown as string)).toThrow(WorkspaceIdentityError);
+  const missingRoot = path.join(root, 'missing-repository-root');
+  expect(existsSync(missingRoot)).toBe(false);
+  expect(() => deriveWorkspaceId(receipt.repository_id, missingRoot)).toThrow('repository root is unavailable');
   expect(() => deriveWorkspaceId(receipt.repository_id, receiptPath)).toThrow(
     'repository root must be a non-link directory',
   );
@@ -197,6 +202,7 @@ test('derives one stable workspace ID for normalized spelling and different IDs 
 test('reads v2 initialization authority from a completed real project upgrade', async () => {
   const projectRoot = await makeFreshRepository('vida-init-authority-v2-');
   projectAuthorityFixtureRoot = projectRoot;
+  const legacyConfig = loadRuntimeConfig(projectRoot);
   const upgrade = await import('../../src/config/project-upgrade.ts');
   const operationId = 'runtime-init-authority-v2-001';
   const planned = await expectInitializationResult(() =>
@@ -206,14 +212,21 @@ test('reads v2 initialization authority from a completed real project upgrade', 
       instruction_ref: 'tests/bun/runtime-initialization.test.ts',
     }),
   );
-  expect(planned.plan.operation_id).toBe(operationId);
-  expect(planned.plan.database_mode).toBe('fresh');
+  assert.equal(planned?.plan?.operation_id, operationId);
+  assert.equal(planned?.plan?.database_mode, 'fresh');
   const completed = await expectInitializationResult(() => upgrade.resumeProjectUpgrade(projectRoot, operationId));
-  expect(completed.phase).toBe('completed');
+  assert.equal(completed?.phase, 'completed');
+
+  const projectReceiptPath = path.join(projectRoot, '.vida/runtime-initialization.v2.json');
+  const projectReceiptBytes = readFileSync(projectReceiptPath);
+  expect(() => readRuntimeInitializationAuthority(projectRoot, legacyConfig)).toThrow(
+    RuntimeInitializationBindingError,
+  );
+  expect(readFileSync(projectReceiptPath)).toEqual(projectReceiptBytes);
 
   const projectConfig = loadRuntimeConfig(projectRoot);
   const authority = expectReturned(() => readRuntimeInitializationAuthority(projectRoot, projectConfig));
-  expect(authority.format).toBe('RuntimeInitialization/v2');
+  assert.equal(authority?.format, 'RuntimeInitialization/v2');
   expect(authority.binding).toEqual({
     repository_id: projectConfig.repository.repository_id,
     project_ids: projectConfig.projects.map(({ project_id }) => project_id).sort(),
@@ -672,6 +685,57 @@ test('binding preserves a non-Error replacement failure and retries only after r
   expect(JSON.parse(boundBytes.toString('utf8'))).toEqual(bound);
   expect(await expectAsyncReturned(() => bindRuntimeInitialization(root, store))).toEqual(bound);
   expect(readFileSync(receiptPath)).toEqual(boundBytes);
+  caseCompleted = true;
+});
+
+test('binding propagates a generic pre-entry lock error without retrying or changing receipt bytes', async () => {
+  const receiptBytes = readFileSync(receiptPath);
+  const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
+  const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
+  await import('../../src/runtime-initialization.ts');
+  const originalSafeExports = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
+  type IsolatedBindingError =
+    (typeof import('../../src/runtime-initialization.ts'))['RuntimeInitializationBindingError'];
+  const lockFailure = new Error('generic pre-entry lock failure');
+  let isolatedBindingError: IsolatedBindingError | undefined;
+  let lockAttempts = 0;
+  let caught: unknown;
+  try {
+    await mock.module(safeModuleUrl, () => ({
+      ...originalSafeExports,
+      requireSafeRepositoryAccess: (requestedRoot: string) => {
+        const access = originalSafeExports.requireSafeRepositoryAccess(requestedRoot);
+        if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+        return {
+          ...access,
+          withExclusiveLockAsync: async () => {
+            lockAttempts += 1;
+            throw lockFailure;
+          },
+        };
+      },
+    }));
+    const isolatedInitialization = (await import(
+      `${initModuleUrl}?pre-entry-lock=${randomUUID()}`
+    )) as typeof import('../../src/runtime-initialization.ts');
+    isolatedBindingError = isolatedInitialization.RuntimeInitializationBindingError;
+    await isolatedInitialization.bindRuntimeInitialization(root, store);
+  } catch (error) {
+    caught = error;
+  } finally {
+    await mock.module(safeModuleUrl, () => originalSafeExports);
+  }
+
+  if (isolatedBindingError === undefined)
+    throw new Error('Fresh initialization module was not imported.', { cause: caught });
+  expect(caught).toBeInstanceOf(isolatedBindingError);
+  expect(lockAttempts).toBe(1);
+  if (caught instanceof isolatedBindingError) expect(caught.cause).toBe(lockFailure);
+  expect(readFileSync(receiptPath)).toEqual(receiptBytes);
+
+  const bound = await expectAsyncReturned(() => bindRuntimeInitialization(root, store));
+  expect(bound).toEqual({ ...receipt, workspace_binding_status: 'bound' });
+  expect(readFileSync(receiptPath, 'utf8')).toEqual(JSON.stringify(bound, null, 2) + '\n');
   caseCompleted = true;
 });
 

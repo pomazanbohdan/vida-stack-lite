@@ -2162,6 +2162,12 @@ awaited async adapter close. Tag work outcomes explicitly so `throw undefined`
 remains a failure; retain original work then cleanup causes, and rethrow a sole
 failure by identity. Large caller bodies keep their existing control flow and
 ownership transfer; constructor success must leave its returned owner live.
+LibSQL smoke owns at most one store at a time. Close it before removing its
+temporary root. A failed close retains that root and its diagnostic; preserve
+both work and cleanup causes, including thrown `undefined`. Its root observer
+captures the exact invocation through a scoped module mock. Run those cases
+serially with other users of that module registry until cross-file isolation is
+qualified. An ALS observation token alone does not isolate module replacement.
 Exercise real configured factory and public TaskSource failure paths separately
 from opaque ledger/bridge protocol controls. Capture live admission before
 close starts: its read authority deliberately expires on the first close attempt.

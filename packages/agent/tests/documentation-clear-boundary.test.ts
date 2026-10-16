@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import * as runtime from '../src/index.ts';
 import type { DocumentationClearCheckpoint, DocumentationClearInput } from '../src/documentation/clear.ts';
@@ -420,6 +420,49 @@ describe('documentation CLEAR public ZOMBIES boundary', () => {
       expect(() => runtime.validateDocumentationClearCheckpoint(blocked, fixture.input)).toThrow(/not ready/);
     } finally {
       fixture.cleanup();
+    }
+  });
+
+  test('CLEAR denies a missing canonical map target without changing persisted state, then accepts its repair', async () => {
+    const fixture = documentationClearFixture();
+    let passed = false;
+    try {
+      const baselineResult = await runtime.executeDocumentationClearOperation(fixture.input, 'baseline');
+      const baselinePath = path.join(fixture.root, baselineResult.path);
+      const baselineBytes = readFileSync(baselinePath);
+      const closeoutPath = path.join(
+        fixture.root,
+        `.agent/work/${fixture.input.work_id}/documentation-closeout-0001.v1.json`,
+      );
+      fixture.write('docs/agent-instructions/index.md', '[Missing target](missing.md)\n');
+
+      const denied = runtime.produceDocumentationClearCheckpoint({
+        ...fixture.input,
+        phase: 'closeout',
+        baseline: readCheckpoint(baselinePath),
+        baseline_path: baselineResult.path,
+        cycle: 1,
+      });
+      expect(denied.status).toBe('blocked');
+      expect(denied.gaps).toEqual(['GAP-DOCUMENTATION-MAP-001']);
+      await Promise.resolve(
+        expect(runtime.executeDocumentationClearOperation(fixture.input, 'closeout')).rejects.toThrow(
+          'documentation CLEAR blocked: GAP-DOCUMENTATION-MAP-001',
+        ),
+      );
+      expect(readFileSync(baselinePath)).toEqual(baselineBytes);
+      expect(existsSync(closeoutPath)).toBe(false);
+
+      fixture.write('docs/agent-instructions/missing.md', 'repaired target\n');
+      const repaired = await runtime.executeDocumentationClearOperation(fixture.input, 'closeout');
+      const closeout = readCheckpoint(path.join(fixture.root, repaired.path));
+      expect(repaired.status).toBe('pass');
+      expect(closeout.status).toBe('pass');
+      expect(closeout.gaps).toEqual([]);
+      expect(closeout.documents.some((document) => document.path === 'docs/agent-instructions/missing.md')).toBe(true);
+      passed = true;
+    } finally {
+      if (passed) fixture.cleanup();
     }
   });
 

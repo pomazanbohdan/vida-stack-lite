@@ -219,7 +219,9 @@ test('explicit synchronization preserves other settings and is idempotent', () =
   const file = path.join(root, 'package.json');
   writeFileSync(path.join(root, '.bun-version'), '9.8.7\n');
   const changedPin = expectReturned(() => readPin(root));
-  assert.throws(() => checkManifest(root, changedPin), /--sync-pin/);
+  assert.throws(() => checkManifest(root, changedPin), {
+    message: 'Bun manifest mirrors differ from .bun-version; run bun bin/bun.ts --sync-pin from packages/agent.',
+  });
   assert.equal(syncPin(root), true);
   const bytes = readFileSync(file, 'utf8');
   assert.deepEqual(JSON.parse(bytes), {
@@ -498,6 +500,32 @@ test('reuses a supplied pinned executable, still verifies its version, and clean
   const timeout = calls[1]!.options.timeout;
   assert.ok(typeof timeout === 'number' && timeout > 0 && timeout <= 123);
   assert.equal(calls[1]!.options.detached, process.platform !== 'win32');
+});
+
+test('pinned command preserves the payload spawn error as its cause', () => {
+  const { root, pin } = fixture();
+  const payloadError = systemError('ENOENT', 'payload executable disappeared');
+  let calls = 0;
+  let thrown: unknown;
+  try {
+    runPinnedBun(['test', 'tests/smoke.test.ts'], {
+      root,
+      executable: '/fixture/pinned-bun',
+      env: {},
+      spawn() {
+        calls++;
+        return calls === 1 ? success(pin) : { status: null, signal: null, error: payloadError };
+      },
+    });
+  } catch (error: unknown) {
+    thrown = error;
+  }
+  assert.equal(calls, 2, 'the version probe succeeds before the payload launch fails');
+  assert.ok(thrown instanceof Error);
+  assert.equal(thrown.message, 'Pinned Bun command failed.');
+  assert.equal((thrown as Error & { exitCode?: number }).exitCode, 1);
+  assert.equal((thrown as Error & { cause?: unknown }).cause, payloadError);
+  assert.equal((thrown as Error & { cause: NodeJS.ErrnoException }).cause.code, 'ENOENT');
 });
 
 test.each([

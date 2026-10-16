@@ -1,7 +1,9 @@
-import { afterAll, describe, expect, spyOn, test } from 'bun:test';
+import { afterAll, describe, expect, mock, spyOn, test } from 'bun:test';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { configuredTestContext } from './configured-context.ts';
 import { rejectionReason } from './helpers/expect-rejection.ts';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import * as fsPromises from 'node:fs/promises';
 import { LibSQLStore } from '@mastra/libsql';
 import { Workflow } from '@mastra/core/workflows';
 
@@ -2574,8 +2576,10 @@ test('Mastra defaults, hooks, and diagnostic boundaries execute', async () => {
 });
 
 test('LibSQL cleanup retries the first store after its initial close fails', async () => {
+  const deadline = performance.now() + 5_000;
   const originalClose: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'close')?.value;
   if (typeof originalClose !== 'function') throw new Error('LibSQL close method is unavailable');
+  const rootObservation = await observeLibSqlSmokeRoot();
   let closeCalls = 0;
   const close = spyOn(LibSQLStore.prototype, 'close').mockImplementation(async function (this: LibSQLStore) {
     closeCalls += 1;
@@ -2583,14 +2587,256 @@ test('LibSQL cleanup retries the first store after its initial close fails', asy
     await Reflect.apply(originalClose, this, []);
   });
   try {
-    const failure = await rejectionReason(runLibSqlSmoke());
+    const failure = await rejectionReason(rootObservation.run(() => runLibSqlSmoke()));
+    rootObservation.assertOneRoot();
+    assertLibSqlSmokeDeadline(deadline, 'initial-close retry');
     expect(failure).toBeInstanceOf(Error);
     expect((failure as Error).message).toBe('injected initial LibSQL close failure');
     expect(closeCalls).toBe(2);
   } finally {
     close.mockRestore();
+    await rootObservation.restore();
   }
-});
+  expect(await libSqlSmokeRootExists(rootObservation.root())).toBe(false);
+  assertLibSqlSmokeDeadline(deadline, 'initial-close retry cleanup');
+}, 5_000);
+
+test('LibSQL smoke preserves body and close failures and retains the root', async () => {
+  const deadline = performance.now() + 5_000;
+  const originalInit: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'init')?.value;
+  const originalClose: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'close')?.value;
+  if (typeof originalInit !== 'function' || typeof originalClose !== 'function')
+    throw new Error('LibSQL init and close methods are unavailable');
+  const rootObservation = await observeLibSqlSmokeRoot();
+  const bodyFailure = new Error('injected LibSQL smoke body failure');
+  const closeFailure = new Error('injected LibSQL cleanup close failure');
+  let closeCalls = 0;
+  const init = spyOn(LibSQLStore.prototype, 'init').mockImplementation(async function (this: LibSQLStore) {
+    await Reflect.apply(originalInit, this, []);
+    throw bodyFailure;
+  });
+  const close = spyOn(LibSQLStore.prototype, 'close').mockImplementation(async function (this: LibSQLStore) {
+    closeCalls += 1;
+    await Reflect.apply(originalClose, this, []);
+    throw closeFailure;
+  });
+  try {
+    const failure = await rejectionReason(rootObservation.run(() => runLibSqlSmoke()));
+    rootObservation.assertOneRoot();
+    expect(failure).toBeInstanceOf(AggregateError);
+    const errors = (failure as AggregateError).errors;
+    expect(errors[0]).toBe(bodyFailure);
+    expect(errors[1]).toBeInstanceOf(AggregateError);
+    expect((errors[1] as AggregateError).errors).toEqual([closeFailure]);
+    const retainedRoot = retainedLibSqlSmokeRoot(failure);
+    expect(retainedRoot).toBe(rootObservation.root());
+    expect(await libSqlSmokeRootExists(retainedRoot)).toBe(true);
+    expect(closeCalls).toBe(1);
+    assertLibSqlSmokeDeadline(deadline, 'body and close failure assertions');
+  } finally {
+    close.mockRestore();
+    init.mockRestore();
+    await rootObservation.restore();
+  }
+  await removeRetainedLibSqlSmokeRoot(rootObservation.root(), deadline);
+}, 5_000);
+
+test('LibSQL smoke reports cleanup-only failure and retains the root', async () => {
+  const deadline = performance.now() + 5_000;
+  const originalClose: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'close')?.value;
+  if (typeof originalClose !== 'function') throw new Error('LibSQL close method is unavailable');
+  const rootObservation = await observeLibSqlSmokeRoot();
+  const closeFailure = new Error('injected final LibSQL close failure');
+  let closeCalls = 0;
+  const close = spyOn(LibSQLStore.prototype, 'close').mockImplementation(async function (this: LibSQLStore) {
+    closeCalls += 1;
+    await Reflect.apply(originalClose, this, []);
+    if (closeCalls === 2) throw closeFailure;
+  });
+  try {
+    const failure = await rejectionReason(rootObservation.run(() => runLibSqlSmoke()));
+    rootObservation.assertOneRoot();
+    expect(failure).toBeInstanceOf(AggregateError);
+    expect((failure as AggregateError).errors).toEqual([closeFailure]);
+    const retainedRoot = retainedLibSqlSmokeRoot(failure);
+    expect(retainedRoot).toBe(rootObservation.root());
+    expect(await libSqlSmokeRootExists(retainedRoot)).toBe(true);
+    expect(closeCalls).toBe(2);
+    assertLibSqlSmokeDeadline(deadline, 'cleanup-only failure assertions');
+  } finally {
+    close.mockRestore();
+    await rootObservation.restore();
+  }
+  await removeRetainedLibSqlSmokeRoot(rootObservation.root(), deadline);
+}, 5_000);
+
+test('LibSQL smoke preserves a thrown undefined body failure after successful cleanup', async () => {
+  const deadline = performance.now() + 5_000;
+  const originalInit: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'init')?.value;
+  const originalClose: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'close')?.value;
+  if (typeof originalInit !== 'function' || typeof originalClose !== 'function')
+    throw new Error('LibSQL init and close methods are unavailable');
+  const rootObservation = await observeLibSqlSmokeRoot();
+  let closeCalls = 0;
+  const init = spyOn(LibSQLStore.prototype, 'init').mockImplementation(async function (this: LibSQLStore) {
+    await Reflect.apply(originalInit, this, []);
+    throw undefined;
+  });
+  const close = spyOn(LibSQLStore.prototype, 'close').mockImplementation(async function (this: LibSQLStore) {
+    closeCalls += 1;
+    await Reflect.apply(originalClose, this, []);
+  });
+  try {
+    expect(await rejectionReason(rootObservation.run(() => runLibSqlSmoke()))).toBeUndefined();
+    rootObservation.assertOneRoot();
+    expect(closeCalls).toBe(1);
+    expect(await libSqlSmokeRootExists(rootObservation.root())).toBe(false);
+    assertLibSqlSmokeDeadline(deadline, 'thrown-undefined cleanup assertions');
+  } finally {
+    close.mockRestore();
+    init.mockRestore();
+    await rootObservation.restore();
+  }
+}, 5_000);
+
+test('LibSQL smoke preserves a thrown undefined body failure and cleanup cause', async () => {
+  const deadline = performance.now() + 5_000;
+  const originalInit: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'init')?.value;
+  const originalClose: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'close')?.value;
+  if (typeof originalInit !== 'function' || typeof originalClose !== 'function')
+    throw new Error('LibSQL init and close methods are unavailable');
+  const rootObservation = await observeLibSqlSmokeRoot();
+  const closeFailure = new Error('injected LibSQL close failure after undefined body failure');
+  const init = spyOn(LibSQLStore.prototype, 'init').mockImplementation(async function (this: LibSQLStore) {
+    await Reflect.apply(originalInit, this, []);
+    throw undefined;
+  });
+  const close = spyOn(LibSQLStore.prototype, 'close').mockImplementation(async function (this: LibSQLStore) {
+    await Reflect.apply(originalClose, this, []);
+    throw closeFailure;
+  });
+  try {
+    const failure = await rejectionReason(rootObservation.run(() => runLibSqlSmoke()));
+    rootObservation.assertOneRoot();
+    expect(failure).toBeInstanceOf(AggregateError);
+    const errors = (failure as AggregateError).errors;
+    expect(errors).toHaveLength(2);
+    expect(errors[0]).toBeUndefined();
+    expect(errors[1]).toBeInstanceOf(AggregateError);
+    expect((errors[1] as AggregateError).errors).toEqual([closeFailure]);
+    const retainedRoot = retainedLibSqlSmokeRoot(failure);
+    expect(retainedRoot).toBe(rootObservation.root());
+    expect(await libSqlSmokeRootExists(retainedRoot)).toBe(true);
+    assertLibSqlSmokeDeadline(deadline, 'undefined body and cleanup failure assertions');
+  } finally {
+    close.mockRestore();
+    init.mockRestore();
+    await rootObservation.restore();
+  }
+  await removeRetainedLibSqlSmokeRoot(rootObservation.root(), deadline);
+}, 5_000);
+
+test('LibSQL smoke returns the public success shape after closing and removing its root', async () => {
+  const deadline = performance.now() + 5_000;
+  const originalClose: unknown = Object.getOwnPropertyDescriptor(LibSQLStore.prototype, 'close')?.value;
+  if (typeof originalClose !== 'function') throw new Error('LibSQL close method is unavailable');
+  const rootObservation = await observeLibSqlSmokeRoot();
+  let closeCalls = 0;
+  const close = spyOn(LibSQLStore.prototype, 'close').mockImplementation(async function (this: LibSQLStore) {
+    closeCalls += 1;
+    await Reflect.apply(originalClose, this, []);
+  });
+  try {
+    expect(await rootObservation.run(() => runLibSqlSmoke())).toEqual({
+      reopened: true,
+      persisted: true,
+      cleanupDeferred: false,
+    });
+    rootObservation.assertOneRoot();
+    expect(closeCalls).toBe(2);
+    expect(await libSqlSmokeRootExists(rootObservation.root())).toBe(false);
+    assertLibSqlSmokeDeadline(deadline, 'successful smoke cleanup assertions');
+  } finally {
+    close.mockRestore();
+    await rootObservation.restore();
+  }
+}, 5_000);
+
+async function observeLibSqlSmokeRoot(): Promise<{
+  assertOneRoot(): void;
+  restore(): Promise<void>;
+  root(): string;
+  run<T>(operation: () => Promise<T>): Promise<T>;
+}> {
+  const observedRoots: string[] = [];
+  const scopeToken = Symbol('LibSQL smoke root observation');
+  const scope = new AsyncLocalStorage<symbol>();
+  const originalFsPromises = { ...fsPromises };
+  const smokePrefix = path.join(tmpdir(), 'agent-runtime-new-libsql-');
+  await mock.module('node:fs/promises', () => ({
+    ...originalFsPromises,
+    mkdtemp: async (...args: Parameters<typeof mkdtemp>): Promise<string> => {
+      const root = await originalFsPromises.mkdtemp(...args);
+      if (scope.getStore() === scopeToken && args[0] === smokePrefix) observedRoots.push(root);
+      return root;
+    },
+  }));
+  return {
+    assertOneRoot(): void {
+      expect(observedRoots).toHaveLength(1);
+    },
+    async restore(): Promise<void> {
+      await mock.module('node:fs/promises', () => ({ ...originalFsPromises }));
+    },
+    root(): string {
+      const [root] = observedRoots;
+      if (root === undefined || observedRoots.length !== 1)
+        throw new Error('Expected exactly one root from this LibSQL smoke invocation');
+      return root;
+    },
+    run<T>(operation: () => Promise<T>): Promise<T> {
+      return scope.run(scopeToken, operation);
+    },
+  };
+}
+
+async function libSqlSmokeRootExists(root: string): Promise<boolean> {
+  try {
+    await stat(root);
+    return true;
+  } catch (error) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') return false;
+    throw error;
+  }
+}
+
+function assertLibSqlSmokeDeadline(deadline: number, stage: string): void {
+  if (!Number.isFinite(deadline) || performance.now() >= deadline)
+    throw new Error(`LibSQL smoke case deadline elapsed ${stage}`);
+}
+
+async function removeRetainedLibSqlSmokeRoot(root: string, deadline: number): Promise<void> {
+  assertLibSqlSmokeDeadline(deadline, 'before retained-root cleanup');
+  await rm(root, { recursive: true, force: true });
+  assertLibSqlSmokeDeadline(deadline, 'after retained-root cleanup');
+  if (await libSqlSmokeRootExists(root)) throw new Error(`LibSQL smoke root remained after cleanup: ${root}`);
+  assertLibSqlSmokeDeadline(deadline, 'after retained-root cleanup verification');
+}
+
+function retainedLibSqlSmokeRoot(failure: unknown): string {
+  const prefix = 'LibSQL smoke cleanup failed; retained temporary root: ';
+  if (failure instanceof AggregateError) {
+    if (failure.message.startsWith(prefix)) return failure.message.slice(prefix.length);
+    for (const error of failure.errors) {
+      try {
+        return retainedLibSqlSmokeRoot(error);
+      } catch {
+        continue;
+      }
+    }
+  }
+  throw new Error('LibSQL smoke error did not report retained root custody');
+}
 
 function invokeUntrusted(
   target: (...args: never[]) => unknown,

@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `6effd645fc8c4debb9f5d6b603687ed0bc3f80ef`. Its full-image diagnostic stops at 89 of 700 IDs: 85 assertion-confirmed Killed, 3 Survived, 1 UNKNOWN, 611 unattempted. Corrections below need a new bound numeric run. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `a740bd2644018e6704aa2eab49a1f810644629c8`. Its full-image diagnostic stops at358 of700 IDs:340 assertion-confirmed Killed,17 Survived,1 UNKNOWN,342 unattempted. It is diagnostic-only, without parent qualification. Corrections below need fresh bound numeric evidence. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -17,27 +17,118 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 ### Rolling five-lane repair queue
 
 The owner reaffirmed five useful parallel agents and only native blind Luna.
-Current agent inspection finds no active worker; Luna's provider refusal lasts
-until 2026-11-15. Do not substitute another model or repeatedly dispatch known
-blocked calls. The five ready assignments below are queued, not running.
-Each gets an isolated checkout and one contour; Root owns shared integration,
-Git and final numeric checks. Refill a completed slot with the next ready contour.
+At the owner's explicit retry request, a fresh Luna probe successfully read
+Source and completed its independent56-role review. The prior provider refusal
+is historical, not the current availability state. No model substitution was used.
+Root dispatched five blind lanes and immediately refilled completed analysis
+slots with isolated writers or the next ready contour. Root owns shared
+integration, Git and final numeric checks; workers never run competing suites.
 
 | Slot | Contour | Bounded assignment and disposition |
 | --- | --- | --- |
-| 1 | `bun-service-operation-custody` | Repair current-run survivors in its three partition test files. Root prepares the first schema-readiness regression in the primary checkout while the measured integration checkout stays immutable. |
-| 2 | `bun-fs-safe-attestation` | Resolve the retained data-only Source / nonempty inventory admission gap. Review its partition and test correspondence; do not weaken the guard or invent functions. Partition edits are proposals for Root. |
-| 3 | `bun-runtime-initialization` | Complete remaining branches in `tests/bun/runtime-initialization.test.ts`; verify the reported bound maintenance-verifier dependency before proposing Source changes. |
-| 4 | `main-mastra` | Reconcile retained assertion repairs and remaining branch evidence in the three declared partition tests. Do not redo already published controls. |
-| 5 | `bun-project-upgrade-storage-admission` | Address remaining storage-admission branch arms in `tests/bun/project-upgrade-existing-storage-admission.test.ts`, preserving real leases, CAS and UNKNOWN semantics. |
+| 1 | `bun-service-operation-custody` | Independent review identifies56 current roles/55 budget rows, missing isDigest and per-role rationale/pinned-review gaps. A fresh blind lane prepares a rationale proposal without changing caps or Source. |
+| 2 | `bun-lifecycle-state` | The completed data-only attestation analysis is retained; its slot moved to lifecycle analysis, then to the isolated `luna-repair-lifecycle-a740-20261016` writer for the missing allowed +1 review-failure counter boundary. |
+| 3 | `bun-runtime-initialization` | Isolated `luna-repair-init-a740-20261016` writer adds ordinary public-input/selector regressions. Missing trusted Mastra maintenance capability stays GAP; no forged verifier. |
+| 4 | `main-mastra` | Isolated `luna-repair-mastra-a740-20261016` writer corrects real smoke cleanup cause loss and root removal before failed closes settle, with targeted regression cases. |
+| 5 | `bun-project-upgrade-storage-admission` | Isolated `luna-repair-upgrade-admission-a740-20261016` writer adds genuine capability assertions and paired receipt/close failure evidence while preserving real leases, CAS and UNKNOWN. |
 
 Reuse existing partition inventories, scenario matrices and retained failed runs.
-Workers perform scoped static checks, not duplicate complete suites or numeric
-producers. Independent frozen review remains a separate OPEN prerequisite and
-must use a blind Luna reviewer when available, never Root self-approval.
-The active 6effd64 700-ID diagnostic owns only its measured integration checkout;
-collect terminal evidence before integrating prepared repairs there. Local
-preparation does not change contour closure or qualify the active run.
+Workers return diffs and unverified dispositions; Root batches the necessary
+checks. Independent frozen review must close its concrete findings before scope
+registration; a completed review with ISSUES is not frozen admission.
+The active a740bd2 700-ID diagnostic owns its immutable measured integration
+checkout. Collect terminal evidence before integrating prepared repairs there.
+Analysis artifacts live under `/workspace/attachments/luna-*-a740-20261016.md`;
+each native lane has its own exact output path. These proposals and preparations
+do not change contour closure or qualify the active run.
+
+Published repair `a740bd2644018e6704aa2eab49a1f810644629c8` passed normal
+precommit and SDK CI run38935284947/attempt1/artifact12060990969, ZIP digest
+`sha256:b88083a38599946d5f6e34cdc4d413a191e391ff6ef90f18d01284c7a571e2da`.
+Fresh coverage `native-coverage-a740bd2-1fK8ct` passes115/0 tests,844 assertions,
+outer23022.59658ms with full captures, closed group and unchanged boot. Report
+`0fc9e39e-6dd9-47c5-92e9-5ecc0f9784cb.focused-coverage.json` records
+F56/56,L235/235,S243/243,B128/128 and measured maxCC10/maxCRAP10. Frozen
+qualification remains pending. Root imported that coverage through the maintained
+projection owner, preserving its exact a740bd2 binding; the snapshot now has401
+attempts. Mutation `native-mutation-full-a740bd2-OLTjsO` is terminal, not qualified.
+Its `execution.json` records exit1, no timeout/signal/spawn error, complete captures,
+closed process group and unchanged boot in1926802.262974ms. Inner run
+`152b3d80-e4ba-49ed-9ee0-5c1277ca7c52` records340 Killed,17 Survived,1 UNKNOWN
+and342 unattempted. No contour score or new closure follows. The native diagnostic
+does not emit the Stryker engine report/map/event join required by the current
+parent admission owner; aggregate counters cannot replace that proof.
+
+### Follow-on repair preparation
+
+Blind Luna analysis and isolated writers prepared four disjoint repair packets
+for runtime initialization, lifecycle progress, existing-storage admission and
+Mastra smoke cleanup. Root integrated the candidates only in the primary
+checkout; the a740bd2 measured integration checkout remains unchanged.
+Root's first owned four-file development check `quality-rolling-cli-check-5SUMYP`
+closes52482.412144ms with full captures/closed group/same boot:128 PASS,1 FAIL,
+1016 assertions. The failure is the new initialization test comparing a Buffer
+with serialized text. It now reads UTF8; strict tests467files passes. Raw failure
+evidence remains. Root's corrected six-file development check
+`quality-rolling-cli-check-m0PNPP` passes144/0 with3108 assertions in48253.33307ms,
+complete captures, closed group and unchanged boot. This is focused behavioral
+evidence, not numeric qualification.
+
+Independent review replaces process-wide Mastra temp-directory snapshots with
+observation of the exact invocation's real root. Existing-storage failure tests
+also need direct native gate contention before retrying the retained source,
+because an open SQLite source alone does not prove its paired gate lease remains
+held. Root integrated both corrections. Independent review then found that the
+fixture Host owner's separate lease could itself cause SQLITE_BUSY. Root now
+closes and unregisters that owner after the fence/byte assertions and before the
+native contender, isolating the retained connection's lease. Probe and assertion
+errors accumulate without replacing an earlier cause; contender cleanup precedes
+the exact captured connection's registered retry. Final admission recheck
+`quality-rolling-cli-check-C6qwRe` passes9/0 with89 assertions in4030.147511ms,
+complete captures, closed group and unchanged boot.
+The strict hook then rejects a `no-this-alias` capture in that new test. Root
+uses the established exact-receiver Set pattern and asserts one captured handle.
+Post-correction control `quality-rolling-cli-check-nlMkEL` passes1/0 with17
+assertions in1234.80604ms, full captures, closed group and unchanged boot. No lint
+suppression or hook bypass is used; final hook status follows publication.
+Mastra's original runLibSqlSmoke budget is CC3/CRAP12, with its old predicate
+closure CC1/CRAP2. Root requires a coherent separate cleanup responsibility and
+exact correspondence before numeric admission; no cap rises. The entry keeps its
+identity and role. The old predicate is retired without ceiling transfer; cleanup
+is a separate new callable. Independent review accepts the single-store sequential
+close-before-remove simplification and reuse of the shared async outcome owner.
+The exact-root namespace observer passed the real six LibSQL controls; module-mock
+cross-file concurrency remains unqualified and serial execution remains required.
+
+Root's subsequent five-file check `quality-rolling-cli-check-7saIGn` closes with
+163 PASS,1 FAIL and797 assertions in38341.448905ms. All six simplified LibSQL cases,
+the new payload-spawn cause case and direct CLEAR missing-map/repair case pass.
+The failure identifies the public mutation batch script missing its standard
+`:pinned` companion. Root corrects the manifest instead of weakening the invariant.
+The targeted control `quality-rolling-cli-check-gWX6xx` then passes1/0; the complete
+toolchain/cache selection `quality-rolling-cli-check-dCBaPJ` passes62/0 in5589.554909ms.
+Both have complete captures, closed groups and unchanged boot. The old FAIL is retained.
+
+CLI diagnostics now name the supported Bun synchronization command and preserve
+the original payload-spawn error as cause. Direct CLEAR map denial preserves the
+baseline and writes no denied closeout; a repaired target permits a real closeout.
+Failed CLEAR fixtures remain retained. The initialization generic lock-error case
+proves wrapper cause forwarding through its mock, not real SafeAccess acquisition;
+that latter boundary and the missing trusted v2 maintenance capability remain GAP.
+
+The fs-safe data-only contour remains executable and OPEN. Independent analysis
+rejects adding its whole consumer to a third contour because that duplicates
+Linux/Windows tests and mutation scope. Root selects a narrow reviewed data-only
+N/A contract for preparation, preserving exact applicable coverage, an explicit
+zero-function inventory, a positive confirmed-mutant denominator and pinned
+review. Ordinary empty executable inventories must still fail. No such acceptance
+path or renamed contour has been implemented or admitted yet.
+
+Fresh custody findings are prepared separately while the current producer runs.
+One removed null predicate is reported as semantically equivalent because
+Number.isSafeInteger(null) is false. This is not Killed and cannot be relabelled;
+Root must validate the proof and any redundancy simplification under the exact
+correspondence policy. Other survivor assertions still require fresh execution.
 
 ### Terminal 6effd64 diagnostic and next repairs
 

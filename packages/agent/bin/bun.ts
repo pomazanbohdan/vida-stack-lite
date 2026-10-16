@@ -160,7 +160,9 @@ function manifestEngines(manifest: Record<string, unknown>): Record<string, unkn
 export function checkManifest(root: string, pin: string): void {
   const manifest = parseManifest(readFileSync(path.join(root, 'package.json'), 'utf8'));
   if (manifest.packageManager !== `bun@${pin}` || manifestEngines(manifest).bun !== pin) {
-    throw new Error('Bun manifest mirrors differ from .bun-version; run node bin/bun.ts --sync-pin.');
+    throw new Error(
+      'Bun manifest mirrors differ from .bun-version; run bun bin/bun.ts --sync-pin from packages/agent.',
+    );
   }
 }
 
@@ -246,6 +248,7 @@ function succeeded(result: TrackedCommandResult, label: string): string {
       {
         exitCode: positiveExitStatus(result.status),
         timedOut: result.timedOut ?? false,
+        cause: result.error,
       },
     );
     throw error;

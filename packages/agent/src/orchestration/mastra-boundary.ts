@@ -28,6 +28,7 @@ import {
   isPlainRecord,
   rfc3339TimestampMilliseconds,
 } from '../contracts/public-ingress.js';
+import { finishWorkspaceDatabaseCloseAsync, type DatabaseWorkOutcome } from '../config/workspace-database-raw.js';
 import {
   safeWorkflowOwnedPath as safeOwnedPath,
   dispatchWorkflowAssignment,
@@ -72,6 +73,11 @@ export interface LibSqlSmokeResult {
   readonly reopened: boolean;
   readonly persisted: boolean;
   readonly cleanupDeferred: boolean;
+}
+
+interface LibSqlSmokeCleanupOwner {
+  readonly root: string;
+  store?: LibSQLStore;
 }
 
 export interface ConfiguredMastraRequest {
@@ -1889,13 +1895,11 @@ export function createConfiguredMastra(
 export async function runLibSqlSmoke(): Promise<LibSqlSmokeResult> {
   const root = await mkdtemp(path.join(tmpdir(), 'agent-runtime-new-libsql-'));
   const database = path.join(root, 'candidate.db');
-  let first: LibSQLStore | undefined;
-  let second: LibSQLStore | undefined;
-  let reopened = false;
-  let persisted = false;
-  let cleanupDeferred = false;
+  const owner: LibSqlSmokeCleanupOwner = { root };
+  let outcome: DatabaseWorkOutcome<LibSqlSmokeResult>;
   try {
-    first = new LibSQLStore({ id: 'candidate-storage', url: 'file:' + database });
+    const first = new LibSQLStore({ id: 'candidate-storage', url: 'file:' + database });
+    owner.store = first;
     await first.init();
     const firstMemory = await first.getStore('memory');
     assert(Boolean(firstMemory), 'Mastra LibSQL memory store unavailable');
@@ -1910,21 +1914,33 @@ export async function runLibSqlSmoke(): Promise<LibSqlSmokeResult> {
       },
     });
     await first.close();
-    first = undefined;
-    second = new LibSQLStore({ id: 'candidate-storage', url: 'file:' + database });
+    delete owner.store;
+    const second = new LibSQLStore({ id: 'candidate-storage', url: 'file:' + database });
+    owner.store = second;
     await second.init();
     const secondMemory = await second.getStore('memory');
-    reopened = Boolean(secondMemory);
-    persisted = Boolean(
+    const reopened = Boolean(secondMemory);
+    const persisted = Boolean(
       await secondMemory?.getThreadById({ threadId: 'candidate-thread', resourceId: 'candidate-resource' }),
     );
-  } finally {
-    const cleanupResults = await Promise.allSettled([
-      ...(first ? [first.close()] : []),
-      ...(second ? [second.close()] : []),
-      rm(root, { recursive: true, force: true }),
-    ]);
-    cleanupDeferred = cleanupResults.some((result) => result.status === 'rejected');
+    outcome = { ok: true, value: { reopened, persisted, cleanupDeferred: false } };
+  } catch (error) {
+    outcome = { ok: false, error };
   }
-  return { reopened, persisted, cleanupDeferred };
+  return finishWorkspaceDatabaseCloseAsync(
+    owner,
+    outcome,
+    cleanupLibSqlSmokeResources,
+    `LibSQL smoke cleanup failed; retained temporary root: ${root}`,
+  );
+}
+
+async function cleanupLibSqlSmokeResources(owner: LibSqlSmokeCleanupOwner): Promise<void> {
+  try {
+    if (owner.store) await owner.store.close();
+    await rm(owner.root, { recursive: true, force: true });
+  } catch (error) {
+    const message = `LibSQL smoke cleanup failed; retained temporary root: ${owner.root}`;
+    throw new AggregateError([error], message, { cause: error });
+  }
 }

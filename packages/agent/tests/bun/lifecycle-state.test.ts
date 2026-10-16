@@ -966,6 +966,29 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       mutate(after);
       expect(() => validateLifecycleProgress(before, after)).toThrow(message);
     }
+    const beforeSingleReviewFailure = initialWork();
+    const afterSingleReviewFailure = clone(beforeSingleReviewFailure);
+    afterSingleReviewFailure.revision++;
+    afterSingleReviewFailure.lifecycle.revision++;
+    afterSingleReviewFailure.lifecycle.assurance.review_failure_count++;
+    expectReturned(() => validateLifecycleProgress(beforeSingleReviewFailure, afterSingleReviewFailure));
+    expect(afterSingleReviewFailure.revision).toBe(beforeSingleReviewFailure.revision + 1);
+    expect(afterSingleReviewFailure.lifecycle.revision).toBe(beforeSingleReviewFailure.lifecycle.revision + 1);
+    expect(afterSingleReviewFailure.lifecycle.assurance.review_failure_count).toBe(
+      beforeSingleReviewFailure.lifecycle.assurance.review_failure_count + 1,
+    );
+    expect(afterSingleReviewFailure.lifecycle.assurance.review_generation).toBe(
+      beforeSingleReviewFailure.lifecycle.assurance.review_generation,
+    );
+    expect(afterSingleReviewFailure.lifecycle.assurance.correction_count).toBe(
+      beforeSingleReviewFailure.lifecycle.assurance.correction_count,
+    );
+    expect(afterSingleReviewFailure.lifecycle.assurance.epoch).toBe(
+      beforeSingleReviewFailure.lifecycle.assurance.epoch,
+    );
+    expect(afterSingleReviewFailure.lifecycle.assurance.delivery_cycle_id).toBe(
+      beforeSingleReviewFailure.lifecycle.assurance.delivery_cycle_id,
+    );
     for (const field of ['review_generation', 'review_failure_count'] as const) {
       const before = initialWork();
       before.lifecycle.assurance[field] = 1;

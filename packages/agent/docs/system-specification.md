@@ -320,6 +320,12 @@ ProjectContext, ownership/CAS, maintenance, Cedar, fs-safe and Mastra/LibSQL
 semantics remain unchanged. A convenience ABI or loader flag is not established
 as a supported mechanism without actual target qualification.
 
+The LibSQL persistence smoke closes its owned store before removing the temporary
+database root. Failed close or removal rejects with the cleanup cause and the
+retained root path. If work also fails, preserve work and cleanup causes in that
+order, including an undefined thrown value. A successful result is returned only
+after cleanup completes; `cleanupDeferred` is false in that result.
+
 CLI help is a maintained public contract. `vida-agent --help` lists every
 top-level command, alias and global option. Each command supports `--help`
 with its purpose, syntax, options, types, required values, defaults, supported
