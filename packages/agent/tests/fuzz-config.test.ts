@@ -21,7 +21,7 @@ describe('deterministic config fuzz boundaries', () => {
     assertProperty(
       fc.property(unknownValue, fc.integer({ min: 0, max: validators.length - 1 }), (value, index) => {
         const result = outcome(() => validators[index]!(value));
-        if (result.returned) expect<unknown>(result.value).toBe(value);
+        if (result.returned) expect(result.value !== undefined && Object.is(result.value, value)).toBe(true);
       }),
       parameters,
     );

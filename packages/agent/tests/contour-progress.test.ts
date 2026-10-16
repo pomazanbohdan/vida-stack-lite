@@ -87,6 +87,89 @@ function mutation() {
     ],
   };
 }
+function unknownMutation() {
+  return {
+    ...mutation(),
+    status: 'unknown',
+    effective_score: 719 / 744,
+    partition_statuses: { 'main-host': { Killed: 722, Survived: 22 } },
+    killed: 719,
+    mutants: 744,
+    unknown_mutants: ['778', '791', '803'].map((mutant_id) => ({ partition: 'main-host', mutant_id })),
+  };
+}
+
+test('unknown mutation projects confirmed counts without admitting raw kills or closing the contour', () => {
+  const attempt = contourAttempts(unknownMutation(), receipt)[0]!;
+  expect(attempt).toMatchObject({ accepted: false, killed: 722, confirmed_killed: 719, mutants: 744 });
+  const document = renderContourProgress(mergeContourProgress(empty, [attempt]));
+  expect(document).toContain('719/744 (unknown; assertion-confirmed count; raw runner Killed 722; unqualified)');
+  expect(document).toContain(zeroOfActive);
+  expect(document).not.toContain('local triple recorded');
+});
+
+test('same-run confirmed counts enrich legacy rows in either order and reject contradictions', () => {
+  const confirmed = contourAttempts(unknownMutation(), receipt)[0]!;
+  const legacy = { ...confirmed };
+  delete legacy.confirmed_killed;
+  for (const attempts of [
+    [legacy, confirmed],
+    [confirmed, legacy],
+  ]) {
+    const first = mergeContourProgress(empty, [attempts[0]!]);
+    const enriched = mergeContourProgress(first, [attempts[1]!]);
+    expect(enriched.attempts[0]).toMatchObject({ accepted: false, killed: 722, confirmed_killed: 719, mutants: 744 });
+    expect(() => mergeContourProgress(enriched, [{ ...confirmed, confirmed_killed: 718 }])).toThrow(
+      'Conflicting confirmed mutation count',
+    );
+  }
+  expect(() => mergeContourProgress(empty, [{ ...confirmed, accepted: true }])).toThrow(
+    'Accepted mutation count differs from raw runner count',
+  );
+  expect(() => mergeContourProgress(empty, [{ ...confirmed, confirmed_killed: 723 }])).toThrow(
+    'Invalid confirmed mutation count',
+  );
+  expect(() =>
+    mergeContourProgress(empty, [{ ...contourAttempts(coverage(), receipt)[0]!, confirmed_killed: 0 }]),
+  ).toThrow('Invalid confirmed mutation count');
+});
+
+test('single-partition producer counters cannot contradict its raw denominator or accepted result', () => {
+  for (const counters of [
+    { killed: 4, mutants: 3 },
+    { killed: -1, mutants: 3 },
+    { killed: 2, mutants: 4 },
+  ]) {
+    expect(() => contourAttempts({ ...mutation(), ...counters }, receipt)).toThrow(
+      'Mutation producer counts differ from the sole partition',
+    );
+  }
+  expect(() => contourAttempts({ ...mutation(), killed: 2, mutants: 3 }, receipt)).toThrow(
+    'Accepted mutation count differs from raw runner count',
+  );
+});
+
+test('multi-partition producer totals are never copied onto individual contours', () => {
+  const original = mutation();
+  const report = {
+    ...unknownMutation(),
+    selected_partitions: ['main-host', 'main-runtime-timing'],
+    partition_statuses: { 'main-host': { Killed: 722, Survived: 22 }, 'main-runtime-timing': { Killed: 1 } },
+    killed: 720,
+    mutants: 745,
+    partition_source_bindings: [
+      ...original.partition_source_bindings,
+      { partition: 'main-runtime-timing', source_inputs: [] },
+    ],
+    runner_processes: [],
+  };
+  const attempts = contourAttempts(report, receipt);
+  expect(attempts).toHaveLength(2);
+  expect(attempts[0]).toMatchObject({ contour: 'main-host', killed: 722, mutants: 744 });
+  expect(attempts[1]).toMatchObject({ contour: 'main-runtime-timing', killed: 1, mutants: 1 });
+  for (const attempt of attempts) expect(attempt.confirmed_killed).toBeUndefined();
+});
+
 function frozenCrap(c = coverage()) {
   return {
     schema: 'VidaScopedCrapBudgetReport/v1',

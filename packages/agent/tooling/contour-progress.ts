@@ -31,6 +31,7 @@ type Attempt = {
   max_entry_crap: number | null;
   killed: number | null;
   mutants: number | null;
+  confirmed_killed?: number;
 };
 type Snapshot = { schema: 'VidaContourProgress/v1'; attempts: Attempt[] };
 type Receipt = Pick<Attempt, 'recorded_at' | 'commit' | 'artifact'>;
@@ -131,6 +132,7 @@ const validateSnapshot = new Ajv().compile<Snapshot>({
               { type: ['number', 'null'], minimum: 0 },
             ]),
           ),
+          confirmed_killed: { type: 'integer', minimum: 0 },
         },
       },
     },
@@ -677,6 +679,7 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
     throw new Error('Unsupported contour producer schema.');
   if (!Array.isArray(report.selected_partitions) || !report.selected_partitions.length)
     throw new Error('Mutation report has no selected partitions.');
+  const soleSelectedPartition: unknown = report.selected_partitions.length === 1 ? report.selected_partitions[0] : null;
   const ownerAccepted =
     ['pass', 'pilot-pass'].includes(text(report.status)) &&
     report.effective_score === 1 &&
@@ -710,6 +713,25 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         ? Object.values(statuses).reduce<number>((sum, count) => sum + number(count), 0)
         : null;
       const killed = isRecord(statuses) ? number(statuses.Killed ?? 0) : null;
+      // Producer totals apply to one contour only when it is the sole selected partition.
+      let confirmedKilled: number | undefined;
+      if (
+        soleSelectedPartition === contour &&
+        mutants !== null &&
+        (Object.hasOwn(report, 'killed') || Object.hasOwn(report, 'mutants'))
+      ) {
+        const confirmed = report.killed;
+        if (
+          typeof confirmed !== 'number' ||
+          !Number.isSafeInteger(confirmed) ||
+          confirmed < 0 ||
+          killed === null ||
+          confirmed > killed ||
+          report.mutants !== mutants
+        )
+          throw new Error('Mutation producer counts differ from the sole partition.');
+        confirmedKilled = confirmed;
+      }
       const process = processes[0] ?? {};
       const custody = isRecord(process.process_custody) ? process.process_custody : {};
       const accepted =
@@ -724,6 +746,8 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         process.output_complete === true &&
         custody.terminationObserved === true &&
         custody.processGroupTerminationObserved === true;
+      if (accepted && confirmedKilled !== undefined && confirmedKilled !== killed)
+        throw new Error('Accepted mutation count differs from raw runner count.');
       return {
         ...common,
         contour,
@@ -743,6 +767,7 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         max_cc: null,
         max_entry_crap: null,
         killed,
+        ...(confirmedKilled !== undefined ? { confirmed_killed: confirmedKilled } : {}),
         mutants,
       };
     });
@@ -759,6 +784,7 @@ function evidence(attempt: Attempt): string {
     selection_artifact: _selectionArtifact,
     selected_tests: _selectedTests,
     selection_complete: _selectionComplete,
+    confirmed_killed: _confirmedKilled,
     ...data
   } = attempt;
   return canonicalJson(data);
@@ -809,6 +835,17 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
     )
       throw new Error('Contour lane metrics differ.');
     if (
+      attempt.confirmed_killed !== undefined &&
+      (attempt.lane !== 'mutation' ||
+        attempt.killed === null ||
+        !Number.isSafeInteger(attempt.confirmed_killed) ||
+        attempt.confirmed_killed < 0 ||
+        attempt.confirmed_killed > attempt.killed)
+    )
+      throw new Error('Invalid confirmed mutation count.');
+    if (attempt.accepted && attempt.confirmed_killed !== undefined && attempt.confirmed_killed !== attempt.killed)
+      throw new Error('Accepted mutation count differs from raw runner count.');
+    if (
       attempt.lane === 'coverage-outcome' &&
       (attempt.accepted ||
         attempt.coverage !== null ||
@@ -847,6 +884,12 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
       canonicalJson(before.selected_tests) !== canonicalJson(attempt.selected_tests)
     )
       throw new Error('Conflicting executed test selection: ' + key(attempt));
+    if (
+      before.confirmed_killed !== undefined &&
+      attempt.confirmed_killed !== undefined &&
+      before.confirmed_killed !== attempt.confirmed_killed
+    )
+      throw new Error('Conflicting confirmed mutation count: ' + key(attempt));
     // Missing selection metadata may be enriched by the same run's verified descriptor.
     // An explicit, contradictory selected list never overwrites another list.
     const preferred =
@@ -869,6 +912,9 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
       selected_tests: selected.selected_tests,
       selection_complete: before.selection_complete || attempt.selection_complete,
       selection_artifact: selected.selection_artifact,
+      ...((before.confirmed_killed ?? attempt.confirmed_killed) !== undefined
+        ? { confirmed_killed: before.confirmed_killed ?? attempt.confirmed_killed }
+        : {}),
     });
   }
   return {
@@ -924,8 +970,14 @@ function counts(attempt: Attempt | undefined): string {
   if (!attempt) return 'unknown';
   if (attempt.lane === 'coverage-outcome') return 'no metric evidence';
   if (attempt.lane === 'mutation' && attempt.mutants === null) return 'unknown (' + attempt.status + ')';
-  if (attempt.lane === 'mutation')
-    return `${attempt.killed}/${attempt.mutants} (${attempt.status}; ${attempt.accepted ? 'assertion-confirmed' : 'raw runner Killed; unqualified'})`;
+  if (attempt.lane === 'mutation') {
+    const qualification = attempt.accepted
+      ? 'assertion-confirmed'
+      : attempt.confirmed_killed !== undefined
+        ? `assertion-confirmed count; raw runner Killed ${attempt.killed}; unqualified`
+        : 'raw runner Killed; unqualified';
+    return `${attempt.confirmed_killed ?? attempt.killed}/${attempt.mutants} (${attempt.status}; ${qualification})`;
+  }
   if (attempt.lane === 'frozen-crap')
     return `${attempt.max_cc} / ${attempt.max_entry_crap} (scoped proof; owner measured)`;
   return metrics.map((name) => `${attempt.coverage![name].covered}/${attempt.coverage![name].total}`).join(' · ');

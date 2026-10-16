@@ -1472,6 +1472,20 @@ describe('runtime envelope canonicalization boundary', () => {
       expectReturned(() => validateCoordinationLedgerV1(historical)),
       historical,
     );
+    const historicalOutsideCurrentScope = {
+      ...historical,
+      claims: [
+        {
+          ...historical.claims[0]!,
+          thread_id: 'thread-earlier-generation',
+          resources: ['file:archive/old-task.ts'],
+        },
+      ],
+    };
+    assertLedgerAccepted(
+      expectReturned(() => validateCoordinationLedgerV1(historicalOutsideCurrentScope)),
+      historicalOutsideCurrentScope,
+    );
   });
 
   test('rejects a wildcard resource at the active claim boundary', async () => {

@@ -26,6 +26,7 @@ import {
   resolveAgentRoleProfile,
   resolveProviderWorkItemKind,
   selectWorkflow,
+  RuntimeConfigError,
   validateCandidateIsolation,
   validateConfiguredRepositoryAccess,
   validateWorkflowConfiguration,
@@ -146,7 +147,7 @@ function expectPathFailure(value: unknown): void {
       ]);
     },
     'unsafe path accepted: ' + JSON.stringify(value),
-  ).toThrow();
+  ).toThrow(PathProfileError);
 }
 
 afterEach(() => {
@@ -803,7 +804,8 @@ describe('project context path boundary', () => {
     expect(() =>
       isolated.loadProjectContext(repositoryRoot, repositoryConfig, 'unconfigured-repository', projectId),
     ).toThrow('project context repository identity is invalid');
-    expect(() =>
+    let scopeMismatch: unknown;
+    try {
       isolated.resolvePathProfile(repositoryRoot, repositoryConfig, {
         processing_scope: 'selected_project',
         repository_id: config.repository.repository_id,
@@ -813,8 +815,15 @@ describe('project context path boundary', () => {
           scope_id: 'repository:' + config.config_id,
           paths: { work_root: '.' },
         }),
-      }),
-    ).toThrow();
+      });
+    } catch (error) {
+      scopeMismatch = error;
+    }
+    expect(
+      scopeMismatch instanceof PathProfileError &&
+        scopeMismatch.message ===
+          'GAP-RTNEW-PATH-PROFILE-001: trusted path override is not bound to the selected scope',
+    ).toBe(true);
     const partialConfig = loadConfigFixture({
       ...structuredClone(config),
       projects: config.projects.map(({ path_overrides, ...entry }) =>
@@ -942,7 +951,16 @@ test('configuration and project selectors cover valid and invalid interfaces', (
       labels: [],
     }),
   ).toThrow();
-  expect(() => validateCandidateIsolation({ ...config, runtime: { ...config.runtime, bundle: 'other' } })).toThrow();
+  let bundleIsolationFailure: unknown;
+  try {
+    validateCandidateIsolation({ ...config, runtime: { ...config.runtime, bundle: 'other' } });
+  } catch (error) {
+    bundleIsolationFailure = error;
+  }
+  expect(
+    bundleIsolationFailure instanceof RuntimeConfigError &&
+      bundleIsolationFailure.message === 'GAP-RTNEW-ISOLATION-001: runtime roots do not match the bundle',
+  ).toBe(true);
   for (const rootKey of ['schema_root', 'instruction_root', 'tooling_root']) {
     expect(() =>
       validateCandidateIsolation({ ...config, runtime: { ...config.runtime, [rootKey]: 'agent-runtime' } }),

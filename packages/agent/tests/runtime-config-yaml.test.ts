@@ -17,6 +17,7 @@ import {
   retryDevelopmentTaskPacket,
   sanitizeDiagnostic,
   loadRuntimeConfig,
+  RuntimeConfigError,
   resolveAgentRoleProfile,
   resolveProviderWorkItemKind,
   runtimeConfigDigest,
@@ -815,9 +816,16 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     expect(() => selectWorkflowSource(sourceConfig, invalidSelection)).toThrow(
       'workflow selection work item kind is invalid',
     );
-    expect(() => selectWorkflowSource(sourceConfig, { ...selection, team: 'missing-team' })).toThrow(
-      'workflow selection team is unavailable',
-    );
+    let missingTeamFailure: unknown;
+    try {
+      selectWorkflowSource(sourceConfig, { ...selection, team: 'missing-team' });
+    } catch (error) {
+      missingTeamFailure = error;
+    }
+    expect(
+      missingTeamFailure instanceof RuntimeConfigError &&
+        missingTeamFailure.message === 'workflow selection team is unavailable',
+    ).toBe(true);
   });
   test('workflow selection distinguishes explicit risk and complete label matching', async () => {
     const document = mutableClone(parseRuntimeConfigYaml(authorityText));
@@ -1062,6 +1070,12 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     expect(typeof research.hooks).toBe('object');
     expect(typeof research.hooks.beforeToolCall).toBe('function');
     const researchBeforeToolCall = required(research.hooks.beforeToolCall, 'research tool hook').bind(research.hooks);
+    for (const url of ['https://alice@github.com/openai', 'https://:secret@github.com/openai']) {
+      expect(await researchBeforeToolCall({ toolName: 'web.search', input: { url }, context: {} })).toEqual({
+        proceed: false,
+        output: 'Mastra tool denied by configured role policy',
+      });
+    }
     expect(
       await researchBeforeToolCall({
         toolName: 'web.search',

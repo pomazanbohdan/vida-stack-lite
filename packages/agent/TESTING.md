@@ -1204,6 +1204,12 @@ is shared with the mutation gate in `tooling/mutation-partitions.ts`; do not
 maintain a second list. The document is a derived view, not acceptance evidence
 or a new planning ledger. WORK remains the decision owner.
 
+Mutation attempts retain raw runner counters separately from an optional
+assertion-confirmed count. Global producer totals apply to a contour only for a
+single selected partition with matching denominator. Same-run imports may enrich
+a missing confirmed count; contradictory counts fail. Neither enrichment nor a
+nonpassing confirmed subtotal admits a closure or changes the producer's result.
+
 Focused coverage and mutation producers automatically write independent,
 per-run observations under that ignored directory. Coverage records its final
 parent outcome separately, including FAIL/UNKNOWN. A killed parent that cannot

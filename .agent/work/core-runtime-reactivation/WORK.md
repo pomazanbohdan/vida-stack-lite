@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published predecessor: `775ce21` at origin/main.
+- Published checkpoint: `9ee5a2d` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -18,9 +18,11 @@ operations or a claim of complete quality/Runtime acceptance.
 - Preserve unrelated untracked BASE/root bun.lock, Git history, failed/UNKNOWN
   evidence. Root owns checks/Git; native Luna lanes have one writer per file.
   Build/install run no suites. No old DB/lease/attempt/effect replay.
-- The complete owner inventory has7736functions/149Sources; reuse its captured
-  overlay and settled per-file captures below. Reviewed partial7115roles leaves
-  621current/156original dispositions missing. The retained19static deficits
+- The captured owner inventory has7736functions/149Sources before the rolling
+  per-file corrections below; reuse its captured overlay and settled captures.
+  Reviewed partial now has7111roles; its global qualification is still incomplete.
+  The previous correspondence gap was621current/156original dispositions.
+  The retained19static deficits
   remain open. Static correspondence is distinct from numeric acceptance.
   These are correspondence/static counters, not measured coverage/CRAP/mutation.
 - Active `.vida` loader/init/native and one-database disk cutover remain open.
@@ -6482,6 +6484,47 @@ scope_review_main_envelopes_validated_rows_20261016. Original caps/measurements,
 prior reviews and absent original report admission remain unchanged. Publish
 review and immutable gate pin before fresh coverage, same-run scoped CRAP and
 complete declared mutation. Current changed Source has no new numerical claim.
+
+## Validated-row terminal cycle and next exact check
+
+Published9ee5a2d has exact coverage c2ebc126-1598-42d0-b064-fd068ab8f5e5:
+F78/78,L211/211,S228/228,B96/96. Ownerlntzvk completed5206.247131ms;
+same-run scoped v2 CRAP passed against immutable
+e32d956079716a362373bdfa410298eb5339c8fe. The complete mutation campaign
+df40f43f-42bd-4467-b51a-a2769d2bdc11 completed586746.636483ms at EdD1Gc:
+738/739assertion-confirmed Killed,1Survived,0UNKNOWN,effective0.9986468200270636.
+Source, baseline, provenance and report error arrays are empty. Captures are
+complete112478bytes, no timeout/signal/spawn error, groups closed and same boot.
+The logical FAIL remains retained; this is no contour/global closure.
+
+The sole survivor applies the active-claim scope guard to historical released
+claims. The existing earlier-generation acceptance case now additionally checks
+a released claim outside the current ticket scope, with its historical thread;
+exact captured output is asserted. Source behavior and frozen caps are unchanged.
+The new test proposal is independently recorded in attachments at
+quality-envelope-active-scope-survivor-20261016.md.
+
+The contour importer now retains a separate optional confirmed_killed annotation
+alongside immutable raw counters. Global producer totals bind only a sole
+selected partition with the exact denominator; inconsistent counts reject.
+Same-run enrichment preserves known counts in either import order and rejects
+contradictions. Legacy/multi-partition raw counts stay explicitly unqualified.
+The producer's acceptance and closure rules remain unchanged. The previous
+719confirmed/722raw/744total UNKNOWN observation was enriched through the CLI;
+it remains UNKNOWN. Numeric receipts are never reclassified by this projection.
+
+The complete affected envelope/projection check passes115/0 in2359.751722ms
+at nBYVWn. Next-contour config assertions now capture each failure once and
+assert class plus exact message. Fuzz preserves Object.is identity semantics,
+generator/seeds/runs and one assertion per successful value. Separate username-
+only and password-only URL denials retain the allowlisted-host positive control.
+The complete current main-config selection passes102/0 in12849.098412ms at
+EguDBi; these cases repair missing proof, not a demonstrated product defect.
+Tests459 and tooling185 TypeScript pass. The initial tooling narrowing error
+and dependent test-program failure are retained; capturing the sole partition
+before the callback fixes TS18046 without an unsafe cast or another scan.
+Fresh envelope coverage, same-run scoped CRAP and complete mutation follow
+publication; current changed test/tool inputs have no new numeric claim yet.
 
 ## Historical provenance
 
