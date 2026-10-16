@@ -741,6 +741,18 @@ type AssurancePreparationInput = {
   journal: MastraSessionLedgerSnapshot;
   preparationPath: string;
 };
+function requireReusableFinalAssurance(
+  existing: FinalAssuranceSnapshot,
+  sourceDigest: string,
+  preparationPath: string,
+): FinalAssuranceSnapshot {
+  requireAssurance(
+    existing.state.packet.implementation_fingerprint === sourceDigest &&
+      existing.state.packet.preparation_path === preparationPath,
+    'existing assurance requires normal correction/revalidation',
+  );
+  return existing;
+}
 export function prepareFinalAssurance(input: AssurancePreparationInput): FinalAssuranceSnapshot {
   return prepareLifecycleAssurance(input, 'final') as FinalAssuranceSnapshot;
 }
@@ -817,14 +829,7 @@ function prepareLifecycleAssurance(
     'current source differs from accepted focused evidence',
   );
   const existing = goal === 'final' ? store.readFinalAssurance(identity, preparation.attempt) : null;
-  if (existing) {
-    requireAssurance(
-      existing.state.packet.implementation_fingerprint === source.digest &&
-        existing.state.packet.preparation_path === preparationPath,
-      'existing assurance requires normal correction/revalidation',
-    );
-    return existing;
-  }
+  if (existing) return requireReusableFinalAssurance(existing, source.digest, preparationPath);
   const precheckBytes = access.readBytes(
       preparation.documentation_precheck_path,
       'actual current documentation precheck',
@@ -1019,7 +1024,7 @@ function prepareLifecycleAssurance(
   requireAssurance(work!.lifecycle.phase === 'VERIFY', 'work is not in verification');
   if (goal === 'correction') return host;
   const currentAssurance = store.readFinalAssurance(identity, preparation.attempt);
-  if (currentAssurance) return currentAssurance;
+  if (currentAssurance) return requireReusableFinalAssurance(currentAssurance, source.digest, preparationPath);
   const pendingPacket = work!.lifecycle.references.find(
     (ref) => ref.kind === 'review_packet' && ref.disposition === 'current',
   );

@@ -1299,6 +1299,13 @@ cannot release the lock. Keep descriptor/path checks, original and close errors,
 and UNKNOWN retention. This does not make pathname unlink atomic against a
 concurrent namespace swap; no hostile-local-caller exclusion is claimed.
 
+If an interrupted producer leaves this custody in its checkout, preserve that
+checkout and its output. Continue independent diagnostics in a clean isolated
+checkout of the same immutable Source, with matching qualified SDK inputs and
+one final owner. Bind the new checkout in the launcher and retain its actual
+output paths. A new output namespace does not resolve the old UNKNOWN operation
+or authorize deletion of its lock, fixtures or evidence.
+
 Its `VidaBunFocusedCoverageDiagnostic/v1` report lives under
 `coverage/bun-unified/diagnostics/<run-id>.focused-coverage.json` and never
 replaces coverage-final.json. It reports four local coverage metrics plus exact

@@ -92955,7 +92955,8 @@
       "baseline_crap": 18,
       "max_complexity": 18,
       "max_crap": 18,
-      "rationale": "Retains the same public Host base/corrective-session binding operation and call-facing name. The current declaration delegates to extracted pure identity validation and current authorization-byte validation; no original allowance is transferred to the helpers."
+      "rationale": "Retains the same public Host base/corrective-session binding operation and call-facing name. The current declaration delegates to extracted pure identity validation and current authorization-byte validation; no original allowance is transferred to the helpers.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateWorkSessionBinding#0/closure:CallExpression:arguments[0]#0",
@@ -92987,7 +92988,8 @@
       "baseline_crap": 30,
       "max_complexity": 5,
       "max_crap": 30,
-      "rationale": "Retained moved nested role: the original callback under validateWorkSessionBinding checked an approved correction_authorization reference against schema, path and digest. The same references.some predicate now lives once inside readValidatedCorrectiveAuthority; this is its only current counterpart and consumes this one original ceiling."
+      "rationale": "Retained moved nested role: the original callback under validateWorkSessionBinding checked an approved correction_authorization reference against schema, path and digest. The same references.some predicate now lives once inside readValidatedCorrectiveAuthority; this is its only current counterpart and consumes this one original ceiling.",
+      "current_complexity": 5
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:settledSessionItems#0",
@@ -93019,7 +93021,8 @@
       "baseline_crap": 12,
       "max_complexity": 3,
       "max_crap": 12,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 3
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:settledSessionItems#0/binding:terminal/binding:terminal#0",
@@ -93051,7 +93054,8 @@
       "baseline_crap": 30,
       "max_complexity": 5,
       "max_crap": 30,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 5
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:settledSessionItems#0/binding:inert/binding:inert#0",
@@ -93083,7 +93087,8 @@
       "baseline_crap": 30,
       "max_complexity": 5,
       "max_crap": 30,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 5
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:settledSessionItems#0/binding:completed/closure:CallExpression:arguments[0]#0",
@@ -93115,7 +93120,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:configuredReadonlyAssignment#0",
@@ -93147,7 +93153,8 @@
       "baseline_crap": 13,
       "max_complexity": 13,
       "max_crap": 13,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 13
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:configuredReadonlyAssignment#0/binding:stages/closure:OptionalCallExpression:arguments[0]#0",
@@ -93179,7 +93186,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:configuredReadonlyAssignment#0/closure:CallExpression:arguments[0]#0",
@@ -93211,7 +93219,8 @@
       "baseline_crap": 4,
       "max_complexity": 4,
       "max_crap": 4,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 4
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:configuredReadonlyAssignment#0/closure:CallExpression:arguments[0]#1",
@@ -93243,7 +93252,8 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:eligibleReadonlyRelinquishment#0",
@@ -93275,7 +93285,8 @@
       "baseline_crap": 210,
       "max_complexity": 14,
       "max_crap": 210,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 14
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:eligibleReadonlyRelinquishment#0/binding:assignment/closure:OptionalCallExpression:arguments[0]#0",
@@ -93307,7 +93318,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:selectCorrectiveEvidence#0",
@@ -93339,7 +93351,8 @@
       "baseline_crap": 30,
       "max_complexity": 5,
       "max_crap": 30,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 5
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:selectCorrectiveEvidence#0/binding:failed/closure:CallExpression:arguments[0]#0",
@@ -93371,7 +93384,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:selectCorrectiveEvidence#0/binding:stage/closure:CallExpression:arguments[0]#0",
@@ -93403,7 +93417,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:readCorrectivePlanningJournal#0",
@@ -93435,7 +93450,8 @@
       "baseline_crap": 132,
       "max_complexity": 11,
       "max_crap": 132,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 11
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:readCorrectivePlanningJournal#0/closure:CallExpression:arguments[0]#0",
@@ -93467,7 +93483,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:requireAssurance#0",
@@ -93499,7 +93516,8 @@
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#binding:sha256/binding:sha256#0",
@@ -93531,7 +93549,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:finalAssuranceStatus#0",
@@ -93563,7 +93582,8 @@
       "baseline_crap": 20,
       "max_complexity": 4,
       "max_crap": 20,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 4
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:finalAssuranceStatus#0/closure:CallExpression:arguments[0]#0",
@@ -93595,7 +93615,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:finalAssuranceStatus#0/closure:CallExpression:arguments[0]#1",
@@ -93627,7 +93648,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:finalAssuranceStatus#0/closure:CallExpression:arguments[0]#2",
@@ -93659,7 +93681,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:createFinalAssuranceState#0",
@@ -93691,7 +93714,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:createFinalAssuranceState#0/closure:CallExpression:arguments[0]#0",
@@ -93723,7 +93747,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:createFinalAssuranceState#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
@@ -93755,7 +93780,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:issueFinalAssuranceWave#0",
@@ -93787,7 +93813,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:issueFinalAssuranceWave#0/binding:reviews/closure:CallExpression:arguments[0]#0",
@@ -93819,7 +93846,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:issueFinalAssuranceWave#0/binding:kind/closure:CallExpression:arguments[0]#0",
@@ -93851,7 +93879,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:issueFinalAssuranceWave#0/closure:CallExpression:arguments[0]#0",
@@ -93883,7 +93912,8 @@
       "baseline_crap": 20,
       "max_complexity": 4,
       "max_crap": 20,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 4
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:issueFinalAssuranceWave#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
@@ -93915,7 +93945,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reportFinalAssurance#0",
@@ -93947,7 +93978,8 @@
       "baseline_crap": 240,
       "max_complexity": 15,
       "max_crap": 240,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 15
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reportFinalAssurance#0/binding:action/closure:CallExpression:arguments[0]#0",
@@ -93979,7 +94011,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reportFinalAssurance#0/closure:CallExpression:arguments[0]#0",
@@ -94011,7 +94044,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reportFinalAssurance#0/closure:CallExpression:arguments[0]#1",
@@ -94043,7 +94077,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reportFinalAssurance#0/binding:reviews/closure:CallExpression:arguments[0]#0",
@@ -94075,7 +94110,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reportFinalAssurance#0/closure:CallExpression:arguments[0]#2",
@@ -94107,7 +94143,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reportFinalAssurance#0/binding:review/closure:CallExpression:arguments[0]#0",
@@ -94139,7 +94176,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reportFinalAssurance#0/binding:next/closure:CallExpression:arguments[0]#0",
@@ -94171,7 +94209,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0",
@@ -94203,7 +94242,8 @@
       "baseline_crap": 552,
       "max_complexity": 23,
       "max_crap": 552,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 23
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/closure:CallExpression:arguments[0]#0",
@@ -94235,7 +94275,8 @@
       "baseline_crap": 30,
       "max_complexity": 5,
       "max_crap": 30,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 5
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/binding:observed/closure:CallExpression:arguments[0]#0",
@@ -94267,7 +94308,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/closure:CallExpression:arguments[0]#1",
@@ -94299,7 +94341,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/binding:reviews/closure:CallExpression:arguments[0]#0",
@@ -94331,7 +94374,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/closure:CallExpression:arguments[0]#2",
@@ -94363,7 +94407,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/closure:CallExpression:arguments[0]#3",
@@ -94395,7 +94440,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/binding:issued/closure:CallExpression:arguments[0]#0",
@@ -94427,7 +94473,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/closure:CallExpression:arguments[0]#4",
@@ -94459,7 +94506,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/closure:CallExpression:arguments[0]#5",
@@ -94491,7 +94539,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/closure:CallExpression:arguments[0]#6",
@@ -94523,7 +94572,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/closure:CallExpression:arguments[0]#7",
@@ -94555,7 +94605,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceState#0/binding:review/closure:CallExpression:arguments[0]#0",
@@ -94587,7 +94638,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceProgress#0",
@@ -94619,7 +94671,8 @@
       "baseline_crap": 20,
       "max_complexity": 4,
       "max_crap": 20,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 4
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceProgress#0/binding:changed/closure:CallExpression:arguments[0]#0",
@@ -94651,7 +94704,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceProgress#0/closure:CallExpression:arguments[0]#0",
@@ -94683,7 +94737,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:validateFinalAssuranceProgress#0/closure:CallExpression:arguments[0]#1",
@@ -94715,7 +94770,8 @@
       "baseline_crap": 20,
       "max_complexity": 4,
       "max_crap": 20,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 4
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:reference#0",
@@ -94747,7 +94803,8 @@
       "baseline_crap": 30,
       "max_complexity": 5,
       "max_crap": 30,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 5
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:publish#0",
@@ -94779,7 +94836,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareFinalAssurance#0",
@@ -94797,13 +94855,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 744,
+        "line": 756,
         "column": 7,
-        "start": 30643,
-        "end": 30813,
-        "bodyLine": 744,
+        "start": 31049,
+        "end": 31219,
+        "bodyLine": 756,
         "bodyColumn": 96,
-        "bodyEndLine": 746,
+        "bodyEndLine": 758,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -94811,7 +94869,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleForCorrection#0",
@@ -94829,13 +94888,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 747,
+        "line": 759,
         "column": 7,
-        "start": 30821,
-        "end": 30994,
-        "bodyLine": 747,
+        "start": 31227,
+        "end": 31400,
+        "bodyLine": 759,
         "bodyColumn": 99,
-        "bodyEndLine": 749,
+        "bodyEndLine": 761,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -94843,7 +94902,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0",
@@ -94861,13 +94921,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 750,
+        "line": 762,
         "column": 0,
-        "start": 30995,
-        "end": 45662,
-        "bodyLine": 753,
+        "start": 31401,
+        "end": 45943,
+        "bodyLine": 765,
         "bodyColumn": 46,
-        "bodyEndLine": 1112,
+        "bodyEndLine": 1117,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 33,
@@ -94875,7 +94935,8 @@
       "baseline_crap": 1122,
       "max_complexity": 33,
       "max_crap": 1122,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 32
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:completed/closure:CallExpression:arguments[0]#0",
@@ -94893,13 +94954,13 @@
         "bodyEndColumn": 60
       },
       "current_source_address": {
-        "line": 776,
+        "line": 788,
         "column": 40,
-        "start": 32339,
-        "end": 32359,
-        "bodyLine": 776,
+        "start": 32745,
+        "end": 32765,
+        "bodyLine": 788,
         "bodyColumn": 50,
-        "bodyEndLine": 776,
+        "bodyEndLine": 788,
         "bodyEndColumn": 60
       },
       "baseline_complexity": 1,
@@ -94907,7 +94968,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/closure:CallExpression:arguments[0]#0",
@@ -94925,13 +94987,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 781,
+        "line": 793,
         "column": 8,
-        "start": 32459,
-        "end": 32610,
-        "bodyLine": 782,
+        "start": 32865,
+        "end": 33016,
+        "bodyLine": 794,
         "bodyColumn": 10,
-        "bodyEndLine": 784,
+        "bodyEndLine": 796,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 4,
@@ -94939,7 +95001,8 @@
       "baseline_crap": 20,
       "max_complexity": 4,
       "max_crap": 20,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 4
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:stages/closure:CallExpression:arguments[0]#0",
@@ -94957,13 +95020,13 @@
         "bodyEndColumn": 108
       },
       "current_source_address": {
-        "line": 788,
+        "line": 800,
         "column": 31,
-        "start": 32712,
-        "end": 32789,
-        "bodyLine": 788,
+        "start": 33118,
+        "end": 33195,
+        "bodyLine": 800,
         "bodyColumn": 41,
-        "bodyEndLine": 788,
+        "bodyEndLine": 800,
         "bodyEndColumn": 108
       },
       "baseline_complexity": 1,
@@ -94971,7 +95034,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:stages/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
@@ -94989,13 +95053,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 788,
+        "line": 800,
         "column": 62,
-        "start": 32743,
-        "end": 32788,
-        "bodyLine": 788,
+        "start": 33149,
+        "end": 33194,
+        "bodyLine": 800,
         "bodyColumn": 73,
-        "bodyEndLine": 788,
+        "bodyEndLine": 800,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -95003,7 +95067,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:kinds/closure:CallExpression:arguments[0]#0",
@@ -95021,13 +95086,13 @@
         "bodyEndColumn": 49
       },
       "current_source_address": {
-        "line": 789,
+        "line": 801,
         "column": 27,
-        "start": 32819,
-        "end": 32841,
-        "bodyLine": 789,
+        "start": 33225,
+        "end": 33247,
+        "bodyLine": 801,
         "bodyColumn": 38,
-        "bodyEndLine": 789,
+        "bodyEndLine": 801,
         "bodyEndColumn": 49
       },
       "baseline_complexity": 1,
@@ -95035,7 +95100,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/closure:CallExpression:arguments[0]#1",
@@ -95053,13 +95119,13 @@
         "bodyEndColumn": 106
       },
       "current_source_address": {
-        "line": 792,
+        "line": 804,
         "column": 18,
-        "start": 32915,
-        "end": 33003,
-        "bodyLine": 792,
+        "start": 33321,
+        "end": 33409,
+        "bodyLine": 804,
         "bodyColumn": 29,
-        "bodyEndLine": 792,
+        "bodyEndLine": 804,
         "bodyEndColumn": 106
       },
       "baseline_complexity": 2,
@@ -95067,7 +95133,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:stage/closure:CallExpression:arguments[0]#0",
@@ -95085,13 +95152,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 797,
+        "line": 809,
         "column": 39,
-        "start": 33206,
-        "end": 33251,
-        "bodyLine": 797,
+        "start": 33612,
+        "end": 33657,
+        "bodyLine": 809,
         "bodyColumn": 50,
-        "bodyEndLine": 797,
+        "bodyEndLine": 809,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -95099,7 +95166,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/closure:CallExpression:arguments[0]#2",
@@ -95117,13 +95185,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 848,
+        "line": 853,
         "column": 42,
-        "start": 35460,
-        "end": 35479,
-        "bodyLine": 848,
+        "start": 35678,
+        "end": 35697,
+        "bodyLine": 853,
         "bodyColumn": 52,
-        "bodyEndLine": 848,
+        "bodyEndLine": 853,
         "bodyEndColumn": 61
       },
       "baseline_complexity": 1,
@@ -95131,7 +95199,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:prerequisites/closure:CallExpression:arguments[0]#0",
@@ -95149,13 +95218,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 851,
+        "line": 856,
         "column": 54,
-        "start": 35600,
-        "end": 37550,
-        "bodyLine": 851,
+        "start": 35818,
+        "end": 37768,
+        "bodyLine": 856,
         "bodyColumn": 64,
-        "bodyEndLine": 892,
+        "bodyEndLine": 897,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 10,
@@ -95163,7 +95232,8 @@
       "baseline_crap": 110,
       "max_complexity": 10,
       "max_crap": 110,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 10
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:prerequisites/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
@@ -95181,13 +95251,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 869,
+        "line": 874,
         "column": 32,
-        "start": 36568,
-        "end": 36640,
-        "bodyLine": 869,
+        "start": 36786,
+        "end": 36858,
+        "bodyLine": 874,
         "bodyColumn": 49,
-        "bodyEndLine": 869,
+        "bodyEndLine": 874,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -95195,7 +95265,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:prerequisites/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#1",
@@ -95213,13 +95284,13 @@
         "bodyEndColumn": 111
       },
       "current_source_address": {
-        "line": 880,
+        "line": 885,
         "column": 21,
-        "start": 37184,
-        "end": 37274,
-        "bodyLine": 880,
+        "start": 37402,
+        "end": 37492,
+        "bodyLine": 885,
         "bodyColumn": 35,
-        "bodyEndLine": 880,
+        "bodyEndLine": 885,
         "bodyEndColumn": 111
       },
       "baseline_complexity": 1,
@@ -95227,7 +95298,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:prerequisites/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#1/closure:CallExpression:arguments[0]#0",
@@ -95245,13 +95317,13 @@
         "bodyEndColumn": 110
       },
       "current_source_address": {
-        "line": 880,
+        "line": 885,
         "column": 60,
-        "start": 37223,
-        "end": 37273,
-        "bodyLine": 880,
+        "start": 37441,
+        "end": 37491,
+        "bodyLine": 885,
         "bodyColumn": 77,
-        "bodyEndLine": 880,
+        "bodyEndLine": 885,
         "bodyEndColumn": 110
       },
       "baseline_complexity": 1,
@@ -95259,7 +95331,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:commit/binding:commit#0",
@@ -95277,13 +95350,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 893,
+        "line": 898,
         "column": 17,
-        "start": 37570,
-        "end": 38003,
-        "bodyLine": 893,
+        "start": 37788,
+        "end": 38221,
+        "bodyLine": 898,
         "bodyColumn": 38,
-        "bodyEndLine": 903,
+        "bodyEndLine": 908,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 1,
@@ -95291,7 +95364,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:append/binding:append#0",
@@ -95309,13 +95383,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 904,
+        "line": 909,
         "column": 17,
-        "start": 38022,
-        "end": 38803,
-        "bodyLine": 904,
+        "start": 38240,
+        "end": 39021,
+        "bodyLine": 909,
         "bodyColumn": 102,
-        "bodyEndLine": 924,
+        "bodyEndLine": 929,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -95323,7 +95397,8 @@
       "baseline_crap": 12,
       "max_complexity": 3,
       "max_crap": 12,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 3
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:append/binding:append#0/binding:fresh/closure:CallExpression:arguments[0]#0",
@@ -95341,13 +95416,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 905,
+        "line": 910,
         "column": 30,
-        "start": 38139,
-        "end": 38478,
-        "bodyLine": 905,
+        "start": 38357,
+        "end": 38696,
+        "bodyLine": 910,
         "bodyColumn": 39,
-        "bodyEndLine": 912,
+        "bodyEndLine": 917,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 2,
@@ -95355,7 +95430,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:append/binding:append#0/binding:fresh/closure:CallExpression:arguments[0]#0/binding:old/closure:CallExpression:arguments[0]#0",
@@ -95373,13 +95449,13 @@
         "bodyEndColumn": 106
       },
       "current_source_address": {
-        "line": 907,
+        "line": 912,
         "column": 8,
-        "start": 38209,
-        "end": 38307,
-        "bodyLine": 907,
+        "start": 38427,
+        "end": 38525,
+        "bodyLine": 912,
         "bodyColumn": 17,
-        "bodyEndLine": 907,
+        "bodyEndLine": 912,
         "bodyEndColumn": 106
       },
       "baseline_complexity": 3,
@@ -95387,7 +95463,8 @@
       "baseline_crap": 12,
       "max_complexity": 3,
       "max_crap": 12,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 3
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:transition/binding:transition#0",
@@ -95405,13 +95482,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 925,
+        "line": 930,
         "column": 21,
-        "start": 38826,
-        "end": 39067,
-        "bodyLine": 926,
+        "start": 39044,
+        "end": 39285,
+        "bodyLine": 931,
         "bodyColumn": 4,
-        "bodyEndLine": 932,
+        "bodyEndLine": 937,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -95419,7 +95496,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/closure:CallExpression:arguments[0]#3",
@@ -95437,13 +95515,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 936,
+        "line": 941,
         "column": 56,
-        "start": 39242,
-        "end": 39279,
-        "bodyLine": 936,
+        "start": 39460,
+        "end": 39497,
+        "bodyLine": 941,
         "bodyColumn": 66,
-        "bodyEndLine": 936,
+        "bodyEndLine": 941,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 1,
@@ -95451,7 +95529,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/closure:CallExpression:arguments[0]#4",
@@ -95469,13 +95548,13 @@
         "bodyEndColumn": 67
       },
       "current_source_address": {
-        "line": 957,
+        "line": 962,
         "column": 32,
-        "start": 39898,
-        "end": 39933,
-        "bodyLine": 957,
+        "start": 40116,
+        "end": 40151,
+        "bodyLine": 962,
         "bodyColumn": 41,
-        "bodyEndLine": 957,
+        "bodyEndLine": 962,
         "bodyEndColumn": 67
       },
       "baseline_complexity": 1,
@@ -95483,7 +95562,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/closure:CallExpression:arguments[0]#5",
@@ -95501,13 +95581,13 @@
         "bodyEndColumn": 62
       },
       "current_source_address": {
-        "line": 966,
+        "line": 971,
         "column": 12,
-        "start": 40317,
-        "end": 40489,
-        "bodyLine": 967,
+        "start": 40535,
+        "end": 40707,
+        "bodyLine": 972,
         "bodyColumn": 14,
-        "bodyEndLine": 969,
+        "bodyEndLine": 974,
         "bodyEndColumn": 62
       },
       "baseline_complexity": 3,
@@ -95515,7 +95595,8 @@
       "baseline_crap": 12,
       "max_complexity": 3,
       "max_crap": 12,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 3
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:implementation/closure:CallExpression:arguments[0]#0",
@@ -95533,13 +95614,13 @@
         "bodyEndColumn": 79
       },
       "current_source_address": {
-        "line": 981,
+        "line": 986,
         "column": 39,
-        "start": 40934,
-        "end": 40974,
-        "bodyLine": 981,
+        "start": 41152,
+        "end": 41192,
+        "bodyLine": 986,
         "bodyColumn": 53,
-        "bodyEndLine": 981,
+        "bodyEndLine": 986,
         "bodyEndColumn": 79
       },
       "baseline_complexity": 1,
@@ -95547,7 +95628,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:implementation/closure:CallExpression:arguments[0]#1",
@@ -95565,13 +95647,13 @@
         "bodyEndColumn": 111
       },
       "current_source_address": {
-        "line": 981,
+        "line": 986,
         "column": 85,
-        "start": 40980,
-        "end": 41006,
-        "bodyLine": 981,
+        "start": 41198,
+        "end": 41224,
+        "bodyLine": 986,
         "bodyColumn": 95,
-        "bodyEndLine": 981,
+        "bodyEndLine": 986,
         "bodyEndColumn": 111
       },
       "baseline_complexity": 1,
@@ -95579,7 +95661,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:pendingPacket/closure:CallExpression:arguments[0]#0",
@@ -95597,13 +95680,13 @@
         "bodyEndColumn": 74
       },
       "current_source_address": {
-        "line": 1024,
+        "line": 1029,
         "column": 4,
-        "start": 42313,
-        "end": 42383,
-        "bodyLine": 1024,
+        "start": 42594,
+        "end": 42664,
+        "bodyLine": 1029,
         "bodyColumn": 13,
-        "bodyEndLine": 1024,
+        "bodyEndLine": 1029,
         "bodyEndColumn": 74
       },
       "baseline_complexity": 2,
@@ -95611,7 +95694,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:assignment/closure:CallExpression:arguments[0]#0",
@@ -95629,13 +95713,13 @@
         "bodyEndColumn": 99
       },
       "current_source_address": {
-        "line": 1046,
+        "line": 1051,
         "column": 12,
-        "start": 43216,
-        "end": 43303,
-        "bodyLine": 1046,
+        "start": 43497,
+        "end": 43584,
+        "bodyLine": 1051,
         "bodyColumn": 23,
-        "bodyEndLine": 1046,
+        "bodyEndLine": 1051,
         "bodyEndColumn": 99
       },
       "baseline_complexity": 2,
@@ -95643,7 +95727,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:assignment/closure:CallExpression:arguments[0]#1",
@@ -95661,13 +95746,13 @@
         "bodyEndColumn": 41
       },
       "current_source_address": {
-        "line": 1047,
+        "line": 1052,
         "column": 13,
-        "start": 43318,
-        "end": 43346,
-        "bodyLine": 1047,
+        "start": 43599,
+        "end": 43627,
+        "bodyLine": 1052,
         "bodyColumn": 24,
-        "bodyEndLine": 1047,
+        "bodyEndLine": 1052,
         "bodyEndColumn": 41
       },
       "baseline_complexity": 1,
@@ -95675,7 +95760,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:assignment/closure:CallExpression:arguments[0]#2",
@@ -95693,13 +95779,13 @@
         "bodyEndColumn": 85
       },
       "current_source_address": {
-        "line": 1048,
+        "line": 1053,
         "column": 10,
-        "start": 43358,
-        "end": 43433,
-        "bodyLine": 1048,
+        "start": 43639,
+        "end": 43714,
+        "bodyLine": 1053,
         "bodyColumn": 21,
-        "bodyEndLine": 1048,
+        "bodyEndLine": 1053,
         "bodyEndColumn": 85
       },
       "baseline_complexity": 1,
@@ -95707,7 +95793,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:packet/closure:CallExpression:arguments[0]#0",
@@ -95725,13 +95812,13 @@
         "bodyEndColumn": 86
       },
       "current_source_address": {
-        "line": 1062,
+        "line": 1067,
         "column": 50,
-        "start": 44083,
-        "end": 44119,
-        "bodyLine": 1062,
+        "start": 44364,
+        "end": 44400,
+        "bodyLine": 1067,
         "bodyColumn": 60,
-        "bodyEndLine": 1062,
+        "bodyEndLine": 1067,
         "bodyEndColumn": 86
       },
       "baseline_complexity": 1,
@@ -95739,7 +95826,8 @@
       "baseline_crap": 2,
       "max_complexity": 1,
       "max_crap": 2,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 1
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:prepareLifecycleAssurance#0/binding:receipts/closure:CallExpression:arguments[0]#0",
@@ -95757,13 +95845,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1081,
+        "line": 1086,
         "column": 37,
-        "start": 44645,
-        "end": 45232,
-        "bodyLine": 1081,
+        "start": 44926,
+        "end": 45513,
+        "bodyLine": 1086,
         "bodyColumn": 54,
-        "bodyEndLine": 1099,
+        "bodyEndLine": 1104,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 5,
@@ -95771,7 +95859,8 @@
       "baseline_crap": 30,
       "max_complexity": 5,
       "max_crap": 30,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 5
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:finalAssuranceReceiptReferences#0",
@@ -95789,13 +95878,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 1114,
+        "line": 1119,
         "column": 7,
-        "start": 45671,
-        "end": 48540,
-        "bodyLine": 1118,
+        "start": 45952,
+        "end": 48821,
+        "bodyLine": 1123,
         "bodyColumn": 32,
-        "bodyEndLine": 1195,
+        "bodyEndLine": 1200,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 8,
@@ -95803,7 +95892,8 @@
       "baseline_crap": 72,
       "max_complexity": 8,
       "max_crap": 72,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 8
     },
     {
       "identity": "src/orchestration/final-assurance.ts#fn:finalAssuranceReceiptReferences#0/binding:refs/closure:CallExpression:arguments[0]#0",
@@ -95821,13 +95911,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 1123,
+        "line": 1128,
         "column": 33,
-        "start": 46146,
-        "end": 46561,
-        "bodyLine": 1123,
+        "start": 46427,
+        "end": 46842,
+        "bodyLine": 1128,
         "bodyColumn": 45,
-        "bodyEndLine": 1137,
+        "bodyEndLine": 1142,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -95835,7 +95925,8 @@
       "baseline_crap": 6,
       "max_complexity": 2,
       "max_crap": 6,
-      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved."
+      "rationale": "Retains the same callable role and operation in the same enclosing final-assurance flow. Direct comparison of the genuine published Source and current Source shows this body and its call relationship are unchanged; only the extracted corrective-binding block and formatting-only edits differ elsewhere in the file. The original measured ceiling is preserved.",
+      "current_complexity": 2
     },
     {
       "identity": "bin/repair-release-retarget.mjs#binding:archivePath/binding:archivePath#0",
@@ -206284,6 +206375,23 @@
       "max_complexity": 10,
       "max_crap": 10,
       "rationale": "Recognizes the exact 64-character lowercase hex digest used by workspace, request, evidence and handoff identities. Obligation: Shared by key, evidence, row and handoff validators; the independent reviewer must verify it is new relative to the published baseline before applying the standing new-role cap. Root adopts the standing prospective10/10 policy published at3ef093df0b80831a4f45d3a0b97d287ef64e0aba, before this helper was introduced at56233931302078e3fd6d498f1e91b6f5eb93e9f7. No individual earlier row is claimed; no candidate measurement supplies this ceiling."
+    },
+    {
+      "identity": "src/orchestration/final-assurance.ts#fn:requireReusableFinalAssurance#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "New private callable shares the existing captured Source/preparation reuse guard between early and late reads. Apply the established prospective10/10 cap independently; no retained allowance is transferred or increased.",
+      "current_source_address": {
+        "line": 744,
+        "column": 0,
+        "start": 30636,
+        "end": 31041,
+        "bodyLine": 748,
+        "bodyColumn": 26,
+        "bodyEndLine": 755,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 2
     }
   ],
   "removed_functions": [
@@ -224602,5 +224710,29 @@
     ],
     "correspondence": "151 original roles partition into149 retained and two existing removals;149 retained plus13 independently capped prospective roles exactly cover162 current roles. Original identities, baseline provenance and all ceilings stay unchanged; current Source locators and the acknowledgement binding are refreshed.",
     "limits": "Root mechanically checked exact callable sets and static ceilings; blind Luna independently reviewed saved row counts, caps, removals, semantic moves and the identity reuse. Neither establishes measured coverage/CRAP. Candidate numeric qualification remains pending; a subsequent exact-commit pin must preserve these reviewed bytes. Global original numeric admission, mutation and Runtime acceptance remain separate."
+  },
+  "scope_review_bun_final_assurance_reuse_20261016": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "independent_review_status": "source-lineage-approved-for-future-scoped-numeric-qualification",
+    "independent_review_lane": "blind-native-luna",
+    "files": [
+      "src/orchestration/final-assurance.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/orchestration/final-assurance.ts",
+        "current_path": "src/orchestration/final-assurance.ts",
+        "rationale": "All91 retained published callable roles and3 existing extracted callables remain. One new private shared reuse validator closes the late-read binding gap; no callable or Source path is removed or renamed."
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/luna-assurance-reuse-binding-review-v57-20261016.md"
+    ],
+    "selected_rows": {
+      "retained": 91,
+      "new": 4,
+      "removed": 0
+    },
+    "limits": "Root mechanically checks exact current callable sets and static caps. Existing baseline provenance and all ceilings remain unchanged; only the established prospective10/10 cap is added. Independent final Source review, exact coverage and scoped numeric qualification remain separate; global plan stays partial/non-executable."
   }
 }

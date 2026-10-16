@@ -773,6 +773,37 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       directRetry = expectReturned(() => prepareFinalAssurance(directInput));
     expect(directRetry.version).toEqual(response.state_version);
     expect(directRetry).toEqual(existingAssurance);
+    const alternatePreparationPath = preparationPath + '.alias.json';
+    writeFileSync(path.join(f.root, alternatePreparationPath), readFileSync(path.join(f.root, preparationPath)));
+    expect(readFileSync(path.join(f.root, alternatePreparationPath))).toEqual(
+      readFileSync(path.join(f.root, preparationPath)),
+    );
+    // A stale initial read models publication becoming visible only at the
+    // second read. Reuse must preserve the same binding at either boundary.
+    for (const selectedPreparation of [preparationPath, alternatePreparationPath]) {
+      const staleAssurance = spyOn(f.store, 'readFinalAssurance').mockReturnValueOnce(null);
+      let reuseFailure: { error: unknown } | undefined;
+      try {
+        const retry = () => prepareFinalAssurance({ ...directInput, preparationPath: selectedPreparation });
+        if (selectedPreparation === preparationPath) expect(expectReturned(retry)).toEqual(existingAssurance);
+        else expect(retry).toThrow('existing assurance requires normal correction/revalidation');
+        expect(staleAssurance).toHaveBeenCalledTimes(2);
+      } catch (error) {
+        reuseFailure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              staleAssurance.mockRestore();
+              return undefined;
+            },
+          ],
+          reuseFailure,
+        );
+      }
+    }
+    expect(f.store.readWorkSessionJournal(identity)).toEqual(directJournal);
     const packetValue: unknown = JSON.parse(packetBefore.toString('utf8'));
     assert.equal(canonicalJson(packetValue), canonicalJson(directRetry.state.packet));
     expect(readFileSync(packetFile)).toEqual(packetBefore);

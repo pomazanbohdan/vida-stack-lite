@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `1652c73`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the current contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Fresh final-assurance and init measurements at236df35 improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `bbb777e`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the current contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Fresh final-assurance and init measurements at236df35 improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -65,6 +65,112 @@ the normal strict commit hook passes. The subsequent adapter pins exactly that
 commit and `main-runtime-core` review key for scoped CRAP, using the existing
 immutable review mechanism. It neither admits the global partial plan nor
 changes any cap. Fresh numeric measurement is still pending this pin.
+
+The pin is published at `bbb777e97a7fa896604cec80f2ff8075a93ec734` after its
+normal strict hook passes. CI SDK run38968293758 attempt1 succeeds; artifact
+12074839093 has ZIP SHA d45ce4ae5c45bcf071d3cc6da47c19413214939f997477cb8ac4fe7288783b21.
+The maintained readiness owner prepares that exact artifact without a local build.
+
+Fresh disk-backed Core diagnostic `native-coverage-contour-8detFp` observes two
+real interrupted-source fixture timeouts (59952ms/30000ms and67265ms/60000ms).
+Root stops that already nonqualifying producer with an exact boot/command/PID/
+start-time-bound intent, retained beside complete logs and terminal custody:
+exit143 at192191ms, unchanged boot, closed group. No score is admitted.
+Its coverage lock and unresolved fixture roots remain untouched. The attempted
+same-checkout tmpfs setup `lA4fKx` correctly denies that retained lock before tests.
+
+Blind v53 approves retained host tmpfs only for live-host functional/process
+recovery, including real database/fsync/CAS operations. It identifies the package
+`.tmp` clone bypassing TMPDIR. The new clean same-commit numeric checkout
+`/workspace/attachments/core-numeric-bbb777e-20261016` has the same qualified SDK
+inputs; no old state/effect is replayed. The generalized session launchers select
+that checkout explicitly instead of copying more scripts. New Core diagnostic
+`native-coverage-contour-XH72le` uses capacity/memory-checked retained host tmpfs
+for both temporary fixture and package `.tmp` paths; old evidence remains intact.
+Storage policy is supported by current [SQLite synchronous](https://www.sqlite.org/pragma.html#pragma_synchronous)
+and [Linux tmpfs](https://docs.kernel.org/filesystems/tmpfs.html) docs;
+it makes no power-loss durability claim. Fresh result remains pending until the
+complete child and outer custody close.
+
+Blind v52 lifecycle triage distinguishes the historical356Survived/0UNKNOWN from
+current proof and avoids rebasing old coordinates. Root strengthens the three
+existing correction cases with review-generation increment, cleared delivery
+cycle and seal assertions, using their existing fixtures. These assertions are
+unverified until the current numeric owner terminates; no new mutation score is
+claimed from this edit.
+
+Core fresh tmpfs coverage `fa695231-baf7-4d77-92fe-811e4dda5b55` atbbb777e
+finishes238/0tests,1316assertions across5files, outer112963.56ms, with complete
+captures, closed group and unchanged boot. Exact F162/162, L602/602, S632/632,
+B400/400; maxCC31/entryCRAP31. The same first two interrupted-source cases now
+pass at9794.90ms and10582.25ms without deadline, fixture or assertion changes.
+All nine interrupted-source cases pass. Operation outcome remains BLOCKED for
+separate global admission gaps; exact local coverage does not override that.
+Same-run frozen Core report v3 passes against immutable budget6b0298b at
+`scoped-crap-selected-52MWaJ` in1482.24ms, full_qualification:false. Importing
+both terminal artifacts grows the projection to429attempts and11/45 historical
+coverage+scoped frozen pairs; local triples remain6/45. No Core mutation score
+or Runtime unblock is claimed.
+
+Next bounded slots use fresh final-assurance and init coverage. Native Core
+cost review v54 recommends the existing one-ID/one-batch diagnostic without
+complete admission, retaining all5test files and full baseline census. It
+confirms per-test capture exists but filtered execution remains unqualified;
+Root does not activate that route or repeat a known full900s schedule.
+
+Fresh final-assurance run `da38c7f4-17f5-4f03-8f05-923504ed9611` atbbb777e
+(`native-coverage-contour-msiSi9`) finishes13/0tests,304assertions across2files,
+outer70096ms, complete captures/closed group/same boot. F improves93/94→94/94,
+L317/325→321/325, S352/363→356/363, B281/305→284/305. MaxCC/entryCRAP stays33.
+This nonexact coverage remains locally incomplete, so no redundant frozen run
+is launched. Init run `31ed5299-71c8-412d-86de-f98bb469d5c2` (`QcUST7`) passes
+63/0tests,364assertions in42462ms: F84/84, L303/326, S323/353, B167/211,
+maxCC/entryCRAP12; operation remains BLOCKED. Their terminal imports bring the
+projection to433attempts without changing6/45 local triples.
+
+One-ID Core native diagnostic `979c604d-4f1a-450d-a836-3d2091f2447c` atbbb777e
+(`native-partition-diagnostic-C6RsCI`) completes its full238-case baseline and
+one assertion-confirmed Killed from the1981-mutant universe, with1980unattempted.
+It ends exit1/diagnostic-only in124432ms with complete logs/closed group/same boot;
+no contour score or admission is fabricated. Its retained host tmpfs artifact
+root is `/dev/shm/vida-native-functional-pUws5O/package-tmp/mutation-batch-979c604d-4f1a-450d-a836-3d2091f2447c-Pa8oVD`.
+The virtual package `.tmp` location printed inside its namespace differs from
+this actual retained host backing. The launch record binds both. No old run is
+resumed and this diagnostic is not imported as a complete native proof.
+
+### Late assurance reuse binding correction
+
+The current measurement's zero late-reuse counter is not inconsistent with the
+existing direct retry: the normal retry returns at the earlier read. Root's new
+control makes only the first read stale/null, then uses the real persisted ready
+assurance at the second read. A real equal-byte preparation alias has a distinct
+path. The old late branch returns that foreign-path state instead of rejecting;
+RED `quality-rolling-cli-check-OvvexX` fails at the intended missing denial in
+6851ms with closed custody. Blind v57 independently confirms the caller-binding
+gap; the store validates its own Work/packet but cannot compare caller inputs.
+
+One private `requireReusableFinalAssurance` now validates captured Source digest
+and requested preparation path at both existing return sites, preserves the
+existing error/original snapshot and adds no reads or effects. Full affected
+`quality-rolling-cli-check-taN2mE` passes29/0tests,561assertions across3files in
+69096ms, including lifecycle correction-counter/delivery-cycle/seal assertions.
+Strict505/TS-only506/Oxlint pass. One current-file inventory preserves91original
+roles and3existing prospective roles, adds the helper at the established10/10
+cap (staticCC2), and lowers max currentCC33→32. No old cap/provenance changes.
+New scope candidate v57 final review is Source-only; fresh95-function numeric
+coverage and scoped frozen qualification remain pending. Existing measured
+94-function reports retain their original Source binding.
+
+Blind v55 also adds the inert unissued relinquishment case to the existing unit
+test. Blind v58 prepares a pending-initialization byte-CAS denial. Root replaces
+its initial unbound subprocess plan with a scoped parent factory spy that calls
+all real filesystem/CAS owners and restores through completeOwnedCleanup.
+`quality-rolling-cli-check-NCsMY0` passes the new case in1906ms under default5s,
+with10assertions and no new receipt/changed owner outputs. Its strict check finds
+one possibly-undefined array index in test snapshot comparison; Root pairs output
+paths with their captured bytes instead of indexing parallel arrays. Refreshed
+strict505/TS-only506 and full Oxlint pass; final `FggYXb` passes the new case in
+775ms (1675ms whole command) after that correction. No init Source behavior changed.
 
 ### Offline native proof reader verification
 

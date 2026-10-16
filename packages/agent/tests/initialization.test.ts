@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, expect, test } from 'bun:test';
+import { afterAll, afterEach, beforeAll, expect, spyOn, test } from 'bun:test';
 import { cp, mkdir, mkdtemp, readFile, readdir, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { parseRuntimeConfigYaml } from '../src/config/runtime-config.ts';
+import * as safeRepositoryAccess from '../src/config/safe-repository-access.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { snapshotDeclaredSources } from '../src/orchestration/scoped-source-snapshot.ts';
 import {
@@ -17,6 +18,7 @@ import {
 import { deriveWorkspaceId } from '../src/workspace-identity.ts';
 import { initializeProjectFromBundle } from '../bin/init-core.ts';
 import { expectAsyncReturned, expectRejection, rejectionReason } from './helpers/expect-rejection.ts';
+import { completeOwnedCleanup } from '../tooling/owned-cleanup-completion.ts';
 
 const source = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const outputPaths = [
@@ -718,6 +720,82 @@ v8CoverageTest(
   },
   30_000,
 );
+
+test('pending initialization intent changed at the final resume guard prevents canonical receipt publication', async () => {
+  const projectRoot = await mkdtemp(path.join(tmpdir(), 'portable-runtime-init-pending-cas-'));
+  let completed = false;
+  try {
+    const request = {
+      projectRoot,
+      repository: 'different-repository',
+      projectMappings: ['different-project'],
+    } as const;
+    const initialized = await expectAsyncReturned(() => initializeProjectFromBundle(request, source));
+    expect(initialized.status).toBe('initialized');
+    const receiptPath = path.join(projectRoot, '.agent/runtime-initialization.v1.json');
+    const pendingPath = path.join(projectRoot, '.agent/runtime-initialization.pending.v1.json');
+    const archiveDirectory = path.join(projectRoot, '.agent/initialization-provenance');
+    const [archiveName] = await readdir(archiveDirectory);
+    if (!archiveName) throw new Error('Initialization did not archive its pending intent.');
+    const archivePath = path.join(archiveDirectory, archiveName);
+    const pendingIntent = await readFile(archivePath);
+    await rm(archivePath);
+    await writeFile(pendingPath, pendingIntent);
+    await rm(receiptPath);
+
+    const ownerOutputs = [
+      'AGENTS.md',
+      'AGENT.sidecar.md',
+      'agent-runtime.config.v1.yaml',
+      'docs/agent-instructions/documentation-policy.v1.json',
+    ] as const;
+    const ownerBytes = await Promise.all(
+      ownerOutputs.map(async (output) => ({ output, bytes: await readFile(path.join(projectRoot, output)) })),
+    );
+    const originalRequire = safeRepositoryAccess.requireSafeRepositoryAccess;
+    const accessSpy = spyOn(safeRepositoryAccess, 'requireSafeRepositoryAccess').mockImplementation((accessRoot) => {
+      const nativeAccess = originalRequire(accessRoot);
+      if (path.resolve(accessRoot) !== path.resolve(projectRoot)) return nativeAccess;
+      return {
+        ...nativeAccess,
+        prepareExclusiveCreation: async () => {
+          const creator = await nativeAccess.prepareExclusiveCreation();
+          await writeFile(pendingPath, Buffer.concat([await readFile(pendingPath), Buffer.from('\n')]));
+          return creator;
+        },
+      };
+    });
+    let failure: { error: unknown } | undefined;
+    try {
+      await expectRejection(
+        initializeProjectFromBundle({ ...request, reconcileExisting: true }, source),
+        'Pending initialization intent changed during resume',
+      );
+      expect(await readFile(pendingPath)).toEqual(Buffer.concat([pendingIntent, Buffer.from('\n')]));
+      expect(await rejectionReason(readFile(receiptPath))).toMatchObject({ code: 'ENOENT' });
+      for (const { output, bytes } of ownerBytes) {
+        expect(await readFile(path.join(projectRoot, output))).toEqual(bytes);
+      }
+      completed = true;
+    } catch (error) {
+      failure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            accessSpy.mockRestore();
+            return undefined;
+          },
+        ],
+        failure,
+      );
+    }
+  } finally {
+    if (completed) await rm(projectRoot, { recursive: true, force: true });
+    else console.error(`Retained failed pending CAS fixture: ${projectRoot}`);
+  }
+});
 
 v8CoverageTest(
   'malformed template and invalid generated configuration fail before output',

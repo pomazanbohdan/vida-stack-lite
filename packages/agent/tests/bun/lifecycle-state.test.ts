@@ -1327,6 +1327,8 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expectReturned(() => validateLifecycleProgress(work, corrected));
       expect(corrected.lifecycle.seal).toBeNull();
       expect(corrected.lifecycle.assurance.correction_count).toBe(1);
+      expect(corrected.lifecycle.assurance.review_generation).toBe(work.lifecycle.assurance.review_generation + 1);
+      expect(corrected.lifecycle.assurance.delivery_cycle_id).toBeNull();
       expect(corrected.lifecycle.references.find((item) => item.kind === 'implementation_result')?.disposition).toBe(
         'retired',
       );
@@ -1536,6 +1538,11 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(typeof deliveryCorrected).toBe('object');
       expect(deliveryCorrected.lifecycle.phase).toBe('EXECUTE');
       expect(deliveryCorrected.lifecycle.assurance.correction_count).toBe(2);
+      expect(deliveryCorrected.lifecycle.seal).toBeNull();
+      expect(deliveryCorrected.lifecycle.assurance.review_generation).toBe(
+        deliveryAuthorized.lifecycle.assurance.review_generation + 1,
+      );
+      expect(deliveryCorrected.lifecycle.assurance.delivery_cycle_id).toBeNull();
       expect(
         deliveryCorrected.lifecycle.references.find((item) => item.record_id === 'delivery-consumption')?.disposition,
       ).toBe('consumed');
@@ -1566,6 +1573,11 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
       expect(secondCorrected).not.toBeNull();
       expect(typeof secondCorrected).toBe('object');
       expect(secondCorrected.lifecycle.assurance.correction_count).toBe(2);
+      expect(secondCorrected.lifecycle.seal).toBeNull();
+      expect(secondCorrected.lifecycle.assurance.review_generation).toBe(
+        secondAuthorized.lifecycle.assurance.review_generation + 1,
+      );
+      expect(secondCorrected.lifecycle.assurance.delivery_cycle_id).toBeNull();
       for (const recordId of ['validation-2', 'test-2', 'reservation-2', 'attestation-2', 'review-packet-2'])
         expect(secondCorrected.lifecycle.references.find((item) => item.record_id === recordId)?.disposition).toBe(
           'retired',

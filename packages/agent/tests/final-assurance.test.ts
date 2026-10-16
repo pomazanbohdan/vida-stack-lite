@@ -80,6 +80,13 @@ test('settled validator inspection permits test.read without granting unknown or
     },
   };
   expect(configuredReadonlyAssignment(readonlyConfig, request)).toBe(true);
+  expect(
+    eligibleReadonlyRelinquishment(readonlyConfig, {
+      request,
+      issue_id: null,
+      observation: null,
+    }),
+  ).toBe(true);
   const unobservedUnknown = { request, issue_id: 'unknown', observation: null };
   expect(eligibleReadonlyRelinquishment(readonlyConfig, unobservedUnknown)).toBe(true);
   const configuredHost: AgentRuntimeConfig = {

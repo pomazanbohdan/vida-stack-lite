@@ -44,6 +44,9 @@ check unchanged boot identity; do not duplicate a weaker custody/log predicate.
 Let the campaign record frozen CRAP as GAP when its coverage lane is nonexact,
 then continue independent mutation. Do not launch CRAP merely to reconfirm that
 known coverage prerequisite failure.
+If an interrupted checkout retains coverage custody, keep it intact and use a
+clean same-commit checkout with matching SDK inputs for independent diagnostics.
+Record both namespaces; never turn the old lock or UNKNOWN into a completed run.
 
 ## Design a regression
 
