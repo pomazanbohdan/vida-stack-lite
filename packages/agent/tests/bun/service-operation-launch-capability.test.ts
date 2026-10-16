@@ -254,6 +254,53 @@ for (const closedThrough of ['service', 'admission'] as const) {
   });
 }
 
+test('a bound service database rejects another workspace before reserving a row', () => {
+  const fixture = openCustodyFixture('service-wrong-workspace-binding-');
+  let completed = false;
+  let failure: { error: unknown } | undefined;
+  try {
+    expect(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        'c'.repeat(64),
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    ).toThrow('Service operation custody: workspace database binding differs');
+    expect(
+      Number(
+        fixture.database
+          .query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM agent_host_service_operation_custody')
+          .get()?.count,
+      ),
+    ).toBe(0);
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toBeNull();
+    completed = true;
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          if (completed) rmSync(fixture.root, { recursive: true, force: true });
+          else retainExpectedUnknownFixture(fixture.root, 'wrong workspace binding control failed');
+          return undefined;
+        },
+      ],
+      failure,
+    );
+  }
+});
+
 test('stored request, revision, token and evidence defects fail before exposing a custody row', () => {
   const fixture = openCustodyFixture('service-stored-row-boundaries-');
   let completed = false;
@@ -1044,8 +1091,95 @@ test('a mismatched prepared digest preserves the same operation as UNKNOWN and r
     } finally {
       closeServiceOperationDatabase(reopened);
     }
+    const unknownSource = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    const recovered = await expectAsyncReturned(() =>
+      reconcileServiceOperationCustody(
+        unknownSource,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => ({ phase: 'prepared', evidence_digest: 'e'.repeat(64) }),
+      ),
+    );
+    expect(recovered).toBeObject();
+    if (!recovered) throw new Error('Expected the persisted UNKNOWN operation to reconcile from a fresh receipt.');
+    expect(recovered.phase).toBe('prepared');
+    expect(recovered.evidence_digest).toBe('e'.repeat(64));
+    expect(recovered.owner_token).toBeNull();
+    expect(recovered.launch_pid).toBeNull();
   } finally {
-    retainExpectedUnknownFixture(fixture.root, 'prepared receipt mismatch preserved as UNKNOWN');
+    retainExpectedUnknownFixture(
+      fixture.root,
+      'prepared receipt mismatch persisted UNKNOWN before a fresh receipt retry',
+    );
+  }
+});
+
+test('an unresolved receipt keeps its diagnostic and persists UNKNOWN custody', async () => {
+  const fixture = openCustodyFixture('service-unresolved-receipt-diagnostic-');
+  let failure: { error: unknown } | undefined;
+  try {
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    await expectRejection(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => ({ phase: 'unknown', evidence_digest: 'e'.repeat(64) }) as never,
+      ),
+      'Service operation custody: existing operation receipt is unresolved',
+    );
+    const reader = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    try {
+      const row = expectReturned(() =>
+        readServiceOperationCustodyForOperation(reader, fixture.workspaceId, operationId),
+      );
+      expect(row).toBeObject();
+      if (!row) throw new Error('Expected the unresolved receipt to persist UNKNOWN custody.');
+      expect(row.phase).toBe('unknown');
+      expect(row.owner_token).toBeNull();
+      expect(row.launch_pid).toBeNull();
+      expect(row.evidence_digest).toBeNull();
+    } finally {
+      closeServiceOperationDatabase(reader);
+    }
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          retainExpectedUnknownFixture(fixture.root, 'unresolved receipt remained UNKNOWN');
+          return undefined;
+        },
+      ],
+      failure,
+    );
   }
 });
 
@@ -1122,72 +1256,87 @@ test('an active child paired lease denies exclusive reconciliation without chang
 });
 
 test('closed in-flight child reconciles only through its exact same-operation receipt', async () => {
-  const fixture = openCustodyFixture();
-  try {
-    const reservation = expectReturned(() =>
-      reserveServiceOperationLaunch(
-        fixture.database,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        'c'.repeat(64),
-      ),
-    );
-    expectReturned(() =>
-      recordServiceOperationLaunchPid(
-        fixture.database,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        reservation.revision,
-        pid,
-        reservation.child_capability,
-      ),
-    );
-    const handle = expectReturned(() =>
-      claimReservedServiceOperationLaunch(
-        fixture.database,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        pid,
-        reservation.child_capability,
-      ),
-    );
-    const inFlight = expectReturned(() =>
-      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
-    );
-    expect(inFlight?.phase).toBe('in_flight');
-    expectReturned(() => closeServiceOperationCustodyHandle(handle));
-    const source = expectReturned(() =>
-      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
-    );
-    const reconciled = await expectAsyncReturned(() =>
-      reconcileServiceOperationCustody(
-        source,
-        fixture.root,
-        fixture.relative,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        (row) => {
-          expect(row.operation_id).toBe(operationId);
-          expect(row.request_digest).toBe(requestDigest);
-          expect(row.phase).toBe('in_flight');
-          return { phase: 'prepared', evidence_digest: 'e'.repeat(64) };
-        },
-      ),
-    );
-    expect(reconciled).toBeObject();
-    expect(reconciled.operation_id).toBe(operationId);
-    expect(reconciled.phase).toBe('prepared');
-    expect(reconciled.evidence_digest).toBe('e'.repeat(64));
-  } finally {
-    rmSync(fixture.root, { recursive: true, force: true });
+  for (const receiptPhase of ['prepared', 'terminal'] as const) {
+    const fixture = openCustodyFixture(`closed-child-${receiptPhase}-`);
+    try {
+      const reservation = expectReturned(() =>
+        reserveServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          'c'.repeat(64),
+        ),
+      );
+      expectReturned(() =>
+        recordServiceOperationLaunchPid(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          reservation.revision,
+          pid,
+          reservation.child_capability,
+        ),
+      );
+      const handle = expectReturned(() =>
+        claimReservedServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          reservation.child_capability,
+        ),
+      );
+      const inFlight = expectReturned(() =>
+        readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+      );
+      expect(inFlight?.phase).toBe('in_flight');
+      expectReturned(() => closeServiceOperationCustodyHandle(handle));
+      const source = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
+      const reconciled = await expectAsyncReturned(() =>
+        reconcileServiceOperationCustody(
+          source,
+          fixture.root,
+          fixture.relative,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          (row) => {
+            expect(row.operation_id).toBe(operationId);
+            expect(row.request_digest).toBe(requestDigest);
+            expect(row.phase).toBe('in_flight');
+            return { phase: receiptPhase, evidence_digest: 'e'.repeat(64) };
+          },
+        ),
+      );
+      expect(reconciled).toBeObject();
+      expect(reconciled.operation_id).toBe(operationId);
+      expect(reconciled.phase).toBe(receiptPhase);
+      expect(reconciled.evidence_digest).toBe('e'.repeat(64));
+      const reopened = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
+      try {
+        const persisted = expectReturned(() =>
+          readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId),
+        );
+        expect(persisted).toEqual(reconciled);
+        expect(persisted?.phase).toBe(receiptPhase);
+        expect(persisted?.evidence_digest).toBe('e'.repeat(64));
+      } finally {
+        closeServiceOperationDatabase(reopened);
+      }
+    } finally {
+      rmSync(fixture.root, { recursive: true, force: true });
+    }
   }
 });
 
@@ -1682,23 +1831,30 @@ test('persisted owner tokens must match their exact phase before a row can be re
       { phase: 'launching', token: capability, launchPid: null },
       { phase: 'launching', token: 'd'.repeat(64), launchPid: 1.5 },
       { phase: 'launching', token: 'd'.repeat(64), launchPid: Number.MAX_SAFE_INTEGER + 1 },
+      { phase: 'launching', token: 'd'.repeat(64), launchPid: 0 },
       { phase: 'in_flight', token: 'd'.repeat(64), launchPid: null },
       { phase: 'in_flight', token: null, launchPid: null },
       { phase: 'prepared', token: capability, launchPid: null },
+      { phase: 'prepared', token: 'd'.repeat(64), launchPid: null },
       { phase: 'terminal', token: null, launchPid: 1 },
     ]) {
-      fixture.database
-        .query(
-          'UPDATE agent_host_service_operation_custody SET phase=?,owner_token=?,launch_pid=?,evidence_digest=? WHERE workspace_id=? AND operation_id=?',
-        )
-        .run(
-          row.phase,
-          row.token,
-          row.launchPid,
-          row.phase === 'in_flight' ? null : 'c'.repeat(64),
-          fixture.workspaceId,
-          operationId,
-        );
+      if (row.launchPid === 0) fixture.database.exec('PRAGMA ignore_check_constraints=ON');
+      try {
+        fixture.database
+          .query(
+            'UPDATE agent_host_service_operation_custody SET phase=?,owner_token=?,launch_pid=?,evidence_digest=? WHERE workspace_id=? AND operation_id=?',
+          )
+          .run(
+            row.phase,
+            row.token,
+            row.launchPid,
+            row.phase === 'in_flight' ? null : 'c'.repeat(64),
+            fixture.workspaceId,
+            operationId,
+          );
+      } finally {
+        if (row.launchPid === 0) fixture.database.exec('PRAGMA ignore_check_constraints=OFF');
+      }
       expect(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toThrow(
         'Service operation custody: stored owner phase is invalid',
       );
@@ -2456,6 +2612,105 @@ test('PID recording rejects a schema changed after admission and succeeds after 
   }
 });
 
+test('PID recording rejects a different capability at the current revision without changing the reservation', () => {
+  const fixture = openCustodyFixture('service-record-wrong-capability-');
+  let completed = false;
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const recorded = expectReturned(() =>
+      recordServiceOperationLaunchPid(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        reservation.revision,
+        pid,
+        reservation.child_capability,
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(before).toEqual(recorded);
+    expect(() =>
+      recordServiceOperationLaunchPid(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        recorded.revision,
+        pid,
+        otherCapability,
+      ),
+    ).toThrow('Service operation custody: spawned worker pid compare-and-swap failed');
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(before);
+    completed = true;
+  } finally {
+    closeServiceOperationDatabase(fixture.database);
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else retainExpectedUnknownFixture(fixture.root, 'wrong launch capability left the reservation unverified');
+  }
+});
+
+test('reconciliation rejects a foreign workspace binding before receipt verification or custody changes', async () => {
+  const fixture = openCustodyFixture('service-reconcile-foreign-workspace-');
+  let completed = false;
+  try {
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    let verifierCalls = 0;
+    await expectRejection(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        'd'.repeat(64),
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: 'e'.repeat(64) };
+        },
+      ),
+      'Service operation custody: workspace database path binding differs',
+    );
+    expect(verifierCalls).toBe(0);
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(before);
+    completed = true;
+  } finally {
+    closeServiceOperationDatabase(fixture.database);
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else retainExpectedUnknownFixture(fixture.root, 'foreign workspace binding control failed');
+  }
+});
+
 test('reservation retains the original failure and rollback failure without committing its row', () => {
   const fixture = openCustodyFixture('service-reservation-rollback-fault-');
   const nativeExec = fixture.database.exec.bind(fixture.database);
@@ -2651,6 +2906,84 @@ test('receipt failure presence is preserved when gate replacement blocks UNKNOWN
       restoreOpen?.();
       retainExpectedUnknownFixture(fixture.root, 'UNKNOWN cleanup remained unresolved after gate replacement');
     }
+  }
+});
+
+test('UNKNOWN cleanup reports a trigger-blocked CAS and retains the launching row', async () => {
+  const fixture = openCustodyFixture('service-unknown-trigger-block-');
+  let inspection: Database | undefined;
+  let reconciliationStarted = false;
+  const receiptFailure = new Error('receipt verification failed before UNKNOWN cleanup');
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const recorded = expectReturned(() =>
+      recordServiceOperationLaunchPid(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        reservation.revision,
+        pid,
+        reservation.child_capability,
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(before).toEqual(recorded);
+    fixture.database.exec(
+      "CREATE TRIGGER ignore_unknown_custody_cleanup BEFORE UPDATE ON agent_host_service_operation_custody WHEN NEW.phase='unknown' BEGIN SELECT RAISE(IGNORE); END",
+    );
+    reconciliationStarted = true;
+    const failure: unknown = await reconcileServiceOperationCustody(
+      fixture.database,
+      fixture.root,
+      fixture.relative,
+      fixture.workspaceId,
+      'release-pack-worker',
+      operationId,
+      requestDigest,
+      () => {
+        throw receiptFailure;
+      },
+    ).then(
+      () => undefined,
+      (error: unknown) => error,
+    );
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError)) throw new Error('Receipt and UNKNOWN cleanup failures must be retained.');
+    expect(failure.message).toBe('reconciliation receipt failed and UNKNOWN custody cleanup is unresolved');
+    expect(failure.errors).toHaveLength(2);
+    expect(failure.errors[0]).toBe(receiptFailure);
+    expect(failure.errors[1]).toMatchObject({
+      message: 'Service operation custody: UNKNOWN reconciliation compare-and-swap failed',
+    });
+
+    inspection = new Database(path.join(fixture.root, fixture.relative));
+    const persisted = inspection
+      .query('SELECT * FROM agent_host_service_operation_custody WHERE workspace_id=? AND operation_id=?')
+      .get(fixture.workspaceId, operationId);
+    expect(persisted).toEqual(before);
+    expect(persisted).toMatchObject({
+      phase: 'launching',
+      owner_token: expectReturned(() => serviceOperationLaunchCapabilityDigest(reservation.child_capability)),
+      launch_pid: pid,
+      evidence_digest: 'c'.repeat(64),
+    });
+  } finally {
+    inspection?.close();
+    if (!reconciliationStarted) closeServiceOperationDatabase(fixture.database);
+    retainExpectedUnknownFixture(fixture.root, 'trigger-blocked UNKNOWN cleanup preserved the launching owner');
   }
 });
 

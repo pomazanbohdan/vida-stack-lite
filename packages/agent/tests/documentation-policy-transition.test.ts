@@ -31,6 +31,17 @@ function statusOf(value: unknown): string {
   return result.status;
 }
 
+test('policy transition paths reject unsafe work IDs and preserve valid length boundaries', () => {
+  for (const workId of ['', '../outside', 'Uppercase', 'a/b', 'a'.repeat(129)])
+    expect(() => documentationPolicyTransitionPath(workId)).toThrow(
+      'documentation policy transition: work identity invalid',
+    );
+  for (const workId of ['a', 'work.id_1-test', 'a'.repeat(128)])
+    expect(documentationPolicyTransitionPath(workId)).toBe(
+      `.agent/work/${workId}/documentation-policy-transition.v1.json`,
+    );
+});
+
 test('policy registration accepts additive maps with every other field exact', () => {
   expect(validatePolicyMapAddition(bytes(policy), bytes(target))).toEqual(['bundle/TESTING.md']);
 });

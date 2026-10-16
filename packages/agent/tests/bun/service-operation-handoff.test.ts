@@ -812,6 +812,94 @@ test('terminal pack custody transfers to one prepared release image with exact l
   }
 });
 
+test('handoff rejects custody schema drift before verification and succeeds after exact restoration', async () => {
+  const fixture = openCustodyFixture('handoff-schema-drift-');
+  let source: Database | undefined;
+  let inspection: Database | undefined;
+  let retry: Database | undefined;
+  let completed = false;
+  try {
+    const prior = finishOperation(fixture, 'release-pack-worker');
+    source = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+    source.exec('ALTER TABLE agent_host_service_operation_custody ADD COLUMN unexpected TEXT');
+    const before = source.query('SELECT * FROM agent_host_service_operation_custody').all();
+    const schema = source
+      .query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'")
+      .get();
+    let verifierCalls = 0;
+    await expectRejection(
+      handoffServiceOperationCustody(
+        source,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        async () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+      ),
+      'Service operation custody: owned service table is absent or differs',
+    ).finally(() => {
+      source = undefined;
+    });
+    expect(verifierCalls).toBe(0);
+
+    inspection = new Database(path.join(fixture.root, fixture.relative), { safeIntegers: true });
+    expect(inspection.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual(before);
+    expect(
+      inspection.query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'").get(),
+    ).toEqual(schema);
+    inspection.exec('ALTER TABLE agent_host_service_operation_custody DROP COLUMN unexpected');
+    inspection.close();
+    inspection = undefined;
+
+    retry = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(retry!, fixture.workspaceId, operationId)),
+    ).toEqual(prior);
+    const result = await expectAsyncReturned(() =>
+      handoffServiceOperationCustody(
+        retry!,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        async (observed) => {
+          verifierCalls++;
+          expect(observed).toEqual(prior);
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+      ),
+    ).finally(() => {
+      retry = undefined;
+    });
+    expect(verifierCalls).toBe(1);
+    expectHandoffLineage(result, prior);
+    const reopened = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    try {
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+      ).toEqual(result);
+    } finally {
+      closeServiceOperationDatabase(reopened);
+    }
+    completed = true;
+  } finally {
+    inspection?.close();
+    if (source !== undefined) closeServiceOperationDatabase(source);
+    if (retry !== undefined) closeServiceOperationDatabase(retry);
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed handoff schema-drift fixture: ' + fixture.root);
+  }
+});
+
 test('handoff rejects a release owner, a different prior request, and a nonterminal pack row without mutation', async () => {
   await assertRejectedLineage(
     'handoff-wrong-owner-',
@@ -1181,6 +1269,8 @@ for (const [label, column, value] of invalidPersistedHandoffCases) {
   test(`reader rejects a persisted ${label} that breaks handoff lineage`, async () => {
     const fixture = openCustodyFixture('handoff-invalid-lineage-');
     let database: ReturnType<typeof openServiceOperationDatabase> | undefined;
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
     try {
       finishOperation(fixture, 'release-pack-worker');
       const source = expectReturned(() =>
@@ -1207,9 +1297,25 @@ for (const [label, column, value] of invalidPersistedHandoffCases) {
       expect(() => readServiceOperationCustodyForOperation(database!, fixture.workspaceId, operationId)).toThrow(
         'Service operation custody: stored operation handoff is invalid',
       );
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
     } finally {
-      if (database) closeServiceOperationDatabase(database);
-      rmSync(fixture.root, { recursive: true, force: true });
+      completeOwnedCleanup(
+        [
+          () => {
+            if (database) closeServiceOperationDatabase(database);
+            return undefined;
+          },
+          () => {
+            if (completed) rmSync(fixture.root, { recursive: true, force: true });
+            else console.error('SERVICE_CUSTODY_INVALID_HANDOFF_FIXTURE_RETAINED', { root: fixture.root, label });
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
     }
   });
 }

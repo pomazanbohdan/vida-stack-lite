@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 5450,
-    "new": 1661,
+    "new": 1662,
     "removed": 95,
-    "current_roles": 7111,
+    "current_roles": 7112,
     "source_files": 149
   },
   "source_bindings": [
@@ -177318,7 +177318,7 @@
       "identity": "src/config/service-operation-launch-capability.ts#fn:serviceOperationLaunchCapabilityDigest#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "rationale": "New one-shot launch capability digest/matching/reservation predicate callable. No published standalone capability-custody counterpart or displaced old callable. Root fixed prospective CC/CRAP 10/10 before current measurement; current measurements do not define these ceilings.",
+      "rationale": "Accepts only UUID-shaped one-shot capabilities and hashes them before persistence. Obligation: `service-operation-launch-capability.test.ts` and `service-operation-launch-predicates.test.ts`: malformed capability rejects; persisted token is a digest, not the secret.",
       "current_source_address": {
         "line": 15,
         "column": 7,
@@ -177335,7 +177335,7 @@
       "identity": "src/config/service-operation-launch-capability.ts#fn:serviceOperationLaunchCapabilityMatches#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "rationale": "New one-shot launch capability digest/matching/reservation predicate callable. No published standalone capability-custody counterpart or displaced old callable. Root fixed prospective CC/CRAP 10/10 before current measurement; current measurements do not define these ceilings.",
+      "rationale": "Validates expected digest and candidate capability, hashes candidate, then compares fixed-length digests in constant time. Obligation: Predicate and custody claim tests: null/malformed/wrong capability cannot authorize a launch.",
       "current_source_address": {
         "line": 20,
         "column": 7,
@@ -177352,7 +177352,7 @@
       "identity": "src/config/service-operation-launch-capability.ts#fn:serviceOperationLaunchClaimMatches#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "rationale": "New one-shot launch capability digest/matching/reservation predicate callable. No published standalone capability-custody counterpart or displaced old callable. Root fixed prospective CC/CRAP 10/10 before current measurement; current measurements do not define these ceilings.",
+      "rationale": "Matches all reservation identity fields, phase, PID and capability as one claim predicate. Obligation: Claim tests require exact workspace, owner, operation, request, PID, launching phase and capability together.",
       "current_source_address": {
         "line": 34,
         "column": 7,
@@ -187846,7 +187846,7 @@
         "bodyEndLine": 84,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (requireCustody); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Central fail-closed assertion; turns any false custody invariant into a service-scoped error. Obligation: Every public operation and row validator; rejection must precede an unsafe write."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:validateKey#0",
@@ -187863,7 +187863,7 @@
         "bodyEndLine": 90,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (validateKey); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Validates workspace digest, allowed owner kind, and bounded operation ID as one admission key. Obligation: Reserve, record, claim, reconcile and handoff inputs; malformed-key tests require no verifier call or journal mutation."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:validateDigest#0",
@@ -187880,7 +187880,7 @@
         "bodyEndLine": 94,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (validateDigest); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Applies a labeled digest guard to request, evidence, receipt and predecessor values. Obligation: Launch, handoff and reconcile boundary validation; malformed digests must reject before effects."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:nextRevision#0",
@@ -187897,7 +187897,7 @@
         "bodyEndLine": 100,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (nextRevision); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Increments revision and rejects unsafe integer overflow. Obligation: Every CAS transition; boundary tests must preserve the prior row when revision cannot advance."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:initializeServiceOperationCustodySchema#0",
@@ -187914,7 +187914,7 @@
         "bodyEndLine": 112,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (initializeServiceOperationCustodySchema); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Creates only an absent exact schema on an unshared nontransactional DB, validates it, then requires an empty table. Obligation: Fresh initialization and invalid/shared/transactional schema inputs; no mutation of a nonempty or mismatched table."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:assertServiceOperationCustodyReady#0",
@@ -187931,7 +187931,7 @@
         "bodyEndLine": 119,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (assertServiceOperationCustodyReady); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Requires the stored table DDL to match the owned schema byte-for-byte. Obligation: Every custody route checks drift before reads/writes; altered schema must reject before receipt verification or writes."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:readRow#0",
@@ -187948,7 +187948,7 @@
         "bodyEndLine": 146,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (readRow); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Reads one workspace-operation row, normalizes numeric values, then validates identity, phase, evidence and handoff invariants. Obligation: Public read, reserve, claim, handoff and reconcile; corrupted persisted projections must fail closed."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:normalizeHandoffRevision#0",
@@ -187965,7 +187965,7 @@
         "bodyEndLine": 162,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (normalizeHandoffRevision); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Converts SQLite integer representations to the typed number fields while preserving nullable lineage. Obligation: `readRow`; tests cover int64 precision and null/non-null revision normalization."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:runShortTransaction#0",
@@ -187982,7 +187982,7 @@
         "bodyEndLine": 179,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (runShortTransaction); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Owns immediate transaction, commit, rollback and aggregate reporting if both body and rollback fail. Obligation: Reservation, claim and CAS writers; rollback failures must retain both causes and avoid a false commit claim."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:withCleanup#0",
@@ -187999,7 +187999,7 @@
         "bodyEndLine": 203,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (withCleanup); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Always attempts close/cleanup and preserves operation and cleanup errors together. Obligation: Handoff/reconcile source reads and writes; close failures and body failures remain observable."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:assertCustodyRowIdentity#0",
@@ -188016,7 +188016,7 @@
         "bodyEndLine": 215,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (assertCustodyRowIdentity); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Binds a persisted row to the exact requested workspace and operation. Obligation: `readRow`; substituted row identity must reject before any transition."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:assertCustodyRowState#0",
@@ -188033,7 +188033,7 @@
         "bodyEndLine": 229,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (assertCustodyRowState); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Checks request/token encodings and positive safe revision before phase-specific checks. Obligation: `readRow`; malformed persisted values reject without accepting a journal row."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:assertCustodyOwnerPhase#0",
@@ -188050,7 +188050,7 @@
         "bodyEndLine": 244,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (assertCustodyOwnerPhase); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Enforces owner-token and PID invariants for launching, in-flight, unknown, prepared and terminal states. Obligation: `readRow`; phase/token/PID matrix tests cover malformed persisted states."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:assertCustodyEvidence#0",
@@ -188067,7 +188067,7 @@
         "bodyEndLine": 254,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (assertCustodyEvidence); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Requires a valid digest exactly in phases that carry evidence, and null evidence otherwise. Obligation: `readRow`, close and reconcile; evidence mismatch rejects or leaves durable UNKNOWN."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:assertCustodyHandoff#0",
@@ -188084,7 +188084,7 @@
         "bodyEndLine": 258,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (assertCustodyHandoff); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Accepts only a wholly absent handoff image or a complete valid retarget lineage. Obligation: `readRow`; corrupted or partial persisted handoff lineage rejects."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:noHandoff#0",
@@ -188101,7 +188101,7 @@
         "bodyEndLine": 269,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (noHandoff); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Recognizes the all-null no-handoff state across six lineage fields. Obligation: `assertCustodyHandoff`; partial lineage must not be treated as absent."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:noHandoff#0/closure:CallExpression:arguments[0]#0",
@@ -188118,7 +188118,7 @@
         "bodyEndLine": 268,
         "bodyEndColumn": 35
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Per-field predicate for the all-null lineage check. Obligation: `noHandoff`; every handoff column participates in the no-lineage case."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:isRetargetHandoff#0",
@@ -188135,7 +188135,7 @@
         "bodyEndLine": 273,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (isRetargetHandoff); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Conjoins owner, digest and predecessor predicates for a completed retarget. Obligation: `assertCustodyHandoff`; a handoff is accepted only when all subcontracts hold."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:hasHandoffOwner#0",
@@ -188152,7 +188152,7 @@
         "bodyEndLine": 277,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (hasHandoffOwner); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Restricts lineage to release-worker current ownership from release-pack-worker. Obligation: `isRetargetHandoff`; wrong-direction or wrong-owner transfer rejects."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:hasHandoffDigests#0",
@@ -188169,7 +188169,7 @@
         "bodyEndLine": 285,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (hasHandoffDigests); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Validates receipt, prior request and prior evidence digests as one lineage set. Obligation: `isRetargetHandoff`; malformed predecessor/receipt digest rejects."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:hasHandoffPredecessor#0",
@@ -188186,7 +188186,7 @@
         "bodyEndLine": 293,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (hasHandoffPredecessor); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Requires a terminal predecessor and positive safe predecessor revision. Obligation: `isRetargetHandoff`; incomplete or nonterminal predecessor rejects."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:assertServiceDatabase#0",
@@ -188203,7 +188203,7 @@
         "bodyEndLine": 299,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (assertServiceDatabase); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Requires the connection’s WeakMap binding to match workspace and active admission. Obligation: Reserve, record, claim and direct read; foreign or stale connections reject."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:assertServiceDatabaseBinding#0",
@@ -188220,7 +188220,7 @@
         "bodyEndLine": 311,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (assertServiceDatabaseBinding); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Requires exact root, relative path and workspace binding plus active admission. Obligation: Handoff/reconcile close and reopen lifecycle; a mismatched source binding rejects before close or verifier invocation."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:openServiceOperationDatabase#0",
@@ -188237,7 +188237,7 @@
         "bodyEndLine": 321,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (openServiceOperationDatabase); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Opens only the selected existing workspace DB and records its connection binding. Obligation: Custody callers; database lease remains paired until the matching close path."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reserveServiceOperationLaunch#0",
@@ -188254,7 +188254,7 @@
         "bodyEndLine": 373,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (reserveServiceOperationLaunch); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Validates inputs/readiness, creates an ephemeral capability, stores only its digest, and reserves an absent or exact prepared row. Obligation: One-shot launch tests: no replacing UNKNOWN/terminal/launching; exact prepared beforeimage can reserve at next revision with a fresh capability."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reserveServiceOperationLaunch#0/binding:reserved/closure:CallExpression:arguments[1]#0",
@@ -188271,7 +188271,7 @@
         "bodyEndLine": 371,
         "bodyEndColumn": 3
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Transaction body chooses insert versus exact prepared-state CAS, then rereads and verifies the launching reservation. Obligation: Reservation tests cover first insert, exact prepared retry, stale CAS, and no replacement of unrelated state."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:recordServiceOperationLaunchPid#0",
@@ -188288,7 +188288,7 @@
         "bodyEndLine": 415,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (recordServiceOperationLaunchPid); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Validates positive safe PID and binds it to the exact still-launching reservation by owner digest and revision CAS. Obligation: PID boundary/schema-drift tests; failed recording preserves the reservation."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:recordServiceOperationLaunchPid#0/closure:CallExpression:arguments[1]#0",
@@ -188305,7 +188305,7 @@
         "bodyEndLine": 414,
         "bodyEndColumn": 3
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Transaction body updates PID/revision and verifies the recorded launch row. Obligation: Exact launch row and CAS tests; mismatched capability or stale revision cannot bind another child."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:claimReservedServiceOperationLaunch#0",
@@ -188322,7 +188322,7 @@
         "bodyEndLine": 463,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (claimReservedServiceOperationLaunch); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Requires exact workspace/kind/operation/request/PID/capability match, consumes the reservation, and creates a live in-flight handle. Obligation: Claim tests require every identity component and valid child capability; claim is one-shot."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:claimReservedServiceOperationLaunch#0/binding:revision/closure:CallExpression:arguments[1]#0",
@@ -188339,7 +188339,7 @@
         "bodyEndLine": 451,
         "bodyEndColumn": 3
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Transaction validates the complete claim image and CASes launching to in-flight while revoking launch PID/capability. Obligation: Wrong owner/request/PID/capability and concurrent/stale claims reject without consuming the wrong row."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:closeServiceOperationCustody#0",
@@ -188356,7 +188356,7 @@
         "bodyEndLine": 498,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (closeServiceOperationCustody); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Closes only the exact live owner by revision/token CAS; UNKNOWN has no evidence, resolved phases require a digest. Obligation: Close tests cover phase/evidence combinations, stale ownership and durable UNKNOWN on unresolved external outcomes."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:closeServiceOperationCustody#0/closure:CallExpression:arguments[1]#0",
@@ -188373,7 +188373,7 @@
         "bodyEndLine": 496,
         "bodyEndColumn": 3
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Transaction body releases owner token and updates phase/evidence under the exact in-flight CAS. Obligation: Close-CAS tests ensure stale handles cannot close a successor row."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:closeServiceOperationCustodyHandle#0",
@@ -188390,7 +188390,7 @@
         "bodyEndLine": 505,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (closeServiceOperationCustodyHandle); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Closes the DB admission lease for an exact live handle, then deletes that handle from live ownership. Obligation: Live/non-live handle tests; handle cannot be reused after close."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:closeServiceOperationDatabase#0",
@@ -188407,7 +188407,7 @@
         "bodyEndLine": 510,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (closeServiceOperationDatabase); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Closes through admission-aware DB cleanup and removes the database binding. Obligation: All database lifecycle paths; stale connection metadata cannot be reused."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:readServiceOperationCustodyForOperation#0",
@@ -188424,7 +188424,7 @@
         "bodyEndLine": 521,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (readServiceOperationCustodyForOperation); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Validates key, bound connection and exact table before returning one row. Obligation: Direct read and malformed/corrupt persisted-row scenarios."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:handoffServiceOperationCustody#0",
@@ -188441,7 +188441,7 @@
         "bodyEndLine": 606,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (handoffServiceOperationCustody); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Closes the caller’s lease, holds exclusive admission, verifies exact terminal pack owner plus prepared receipt, then same-operation CASes to release-worker with lineage. Obligation: `service-operation-handoff.test.ts`: wrong owner/request/phase, verifier failure, malformed receipt, gate replacement, CAS/close failures, and exact successful handoff."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:handoffServiceOperationCustody#0/closure:CallExpression:arguments[2]#0",
@@ -188458,7 +188458,7 @@
         "bodyEndLine": 544,
         "bodyEndColumn": 81
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Supplies the no-op acquisition observation; the held-owner callback performs the actual exact row check. Obligation: Exclusive admission contract; no synthetic owner value grants write authority."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:handoffServiceOperationCustody#0/closure:CallExpression:arguments[3]#0",
@@ -188475,7 +188475,7 @@
         "bodyEndLine": 602,
         "bodyEndColumn": 5
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Exclusive handoff body verifies source row, awaits receipt, rechecks gate, then writes and rereads the exact transfer. Obligation: Successful/failed receipt and same-operation CAS scenarios; no transfer before the proof."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:handoffServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/binding:prior/closure:CallExpression:arguments[0]#0",
@@ -188492,7 +188492,7 @@
         "bodyEndLine": 560,
         "bodyEndColumn": 9
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Reads and validates the exact terminal pack owner under the held gate. Obligation: Missing row, wrong owner/request/phase and schema drift reject before verifier call."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:handoffServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/binding:prior/closure:CallExpression:arguments[1]#0",
@@ -188509,7 +188509,7 @@
         "bodyEndLine": 561,
         "bodyEndColumn": 43
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Closes the read-only handoff source connection with cleanup error retention. Obligation: Handoff read/close failure scenarios preserve both operation and cleanup causes."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:handoffServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/closure:CallExpression:arguments[0]#0",
@@ -188526,7 +188526,7 @@
         "bodyEndLine": 598,
         "bodyEndColumn": 9
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Owns the exclusive callback’s initial read connection and returns the validated source owner. Obligation: No source write authority before receipt; gate-held exact source observation."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:handoffServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[1]#0",
@@ -188543,7 +188543,7 @@
         "bodyEndLine": 595,
         "bodyEndColumn": 11
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Closes that initial read connection through the exclusive owner. Obligation: Read-side cleanup is required on both success and failure."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:handoffServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/closure:CallExpression:arguments[1]#0",
@@ -188560,7 +188560,7 @@
         "bodyEndLine": 599,
         "bodyEndColumn": 45
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Closes the write connection after the handoff CAS and row reread. Obligation: CAS/close failure tests retain the terminal or resulting exact journal state."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0",
@@ -188577,7 +188577,7 @@
         "bodyEndLine": 732,
         "bodyEndColumn": 1
       },
-      "rationale": "New service-operation custody role (reconcileServiceOperationCustody); it validates or performs the dedicated release worker launch, persisted custody, handoff, or reconciliation contract. No same-responsibility standalone role is present in published b549951 Source."
+      "rationale": "Reconciles only an exact same-operation launching/in-flight/unknown journal under exclusive admission using a receipt. Obligation: `service-operation-handoff.test.ts` and launch tests: wrong identity, missing row, active lease, gate replacement, malformed/failed receipt, UNKNOWN preservation and exact receipt CAS."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0/closure:CallExpression:arguments[2]#0",
@@ -188594,7 +188594,7 @@
         "bodyEndLine": 649,
         "bodyEndColumn": 5
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Captures the exact eligible source row under admission before exclusive receipt processing. Obligation: Exact owner/request/phase and missing-row tests; source DB closes before verifier effects."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[0]#0",
@@ -188611,7 +188611,7 @@
         "bodyEndLine": 645,
         "bodyEndColumn": 9
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Validates schema and reads the exact eligible row. Obligation: Wrong or terminal row rejects before receipt verifier invocation."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0/closure:CallExpression:arguments[2]#0/closure:CallExpression:arguments[1]#0",
@@ -188628,7 +188628,7 @@
         "bodyEndLine": 646,
         "bodyEndColumn": 47
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Closes the initial reconciliation read connection. Obligation: Cleanup failure remains visible; no stale lease silently survives."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0/closure:CallExpression:arguments[3]#0",
@@ -188645,7 +188645,7 @@
         "bodyEndLine": 728,
         "bodyEndColumn": 5
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Verifies prepared/terminal receipt; on uncertainty CASes to durable UNKNOWN; on valid proof CASes exact row to resolved phase. Obligation: Receipt failure and cleanup failure retention, launch revocation, UNKNOWN cleanup, exact same-operation transition and CAS tests."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/closure:CallExpression:arguments[1]#0",
@@ -188662,7 +188662,7 @@
         "bodyEndLine": 680,
         "bodyEndColumn": 11
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Closes the connection used for UNKNOWN custody cleanup. Obligation: Failed cleanup must aggregate with receipt failure and leave effect unresolved."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/closure:CallExpression:arguments[0]#0",
@@ -188679,7 +188679,7 @@
         "bodyEndLine": 724,
         "bodyEndColumn": 9
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Runs the resolution CAS transaction and rereads the resulting row. Obligation: Exact revision/phase CAS; trigger-deleted or stale row must reject."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[1]#0",
@@ -188696,7 +188696,7 @@
         "bodyEndLine": 721,
         "bodyEndColumn": 11
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Applies resolved phase/evidence and clears ownership/PID in the transaction. Obligation: Reconciliation CAS tests ensure only the exact observed same-operation row changes."
     },
     {
       "identity": "src/config/service-operation-custody.ts#fn:reconcileServiceOperationCustody#0/closure:CallExpression:arguments[3]#0/closure:CallExpression:arguments[1]#1",
@@ -188713,7 +188713,7 @@
         "bodyEndLine": 725,
         "bodyEndColumn": 45
       },
-      "rationale": "New nested callback in the service-operation custody transaction/cleanup flow; its exact lexical owner and callsite are recorded below."
+      "rationale": "Closes the successful reconciliation write connection. Obligation: Close failure remains reported after the actual CAS; result cannot claim clean closure."
     },
     {
       "identity": "src/orchestration/bun-sqlite-client.ts#fn:requireClient#0",
@@ -206278,6 +206278,12 @@
         "bodyEndColumn": 1
       },
       "current_complexity": 3
+    },
+    {
+      "identity": "src/config/service-operation-custody.ts#fn:isDigest#0",
+      "max_complexity": 10,
+      "max_crap": 10,
+      "rationale": "Recognizes the exact 64-character lowercase hex digest used by workspace, request, evidence and handoff identities. Obligation: Shared by key, evidence, row and handoff validators; the independent reviewer must verify it is new relative to the published baseline before applying the standing new-role cap. Root adopts the standing prospective10/10 policy published at3ef093df0b80831a4f45d3a0b97d287ef64e0aba, before this helper was introduced at56233931302078e3fd6d498f1e91b6f5eb93e9f7. No individual earlier row is claimed; no candidate measurement supplies this ceiling."
     }
   ],
   "removed_functions": [
@@ -224536,5 +224542,33 @@
       "/workspace/attachments/quality-governance-preparation-exact-diff-review-20261016.md"
     ],
     "preparation_change": "Explicit typed preparation result; allocate before the final consume-once commit point. Exact same202 retained+four prospective roles; no original measure, identity, ceiling, removal or count changes."
+  },
+  "scope_review_bun_service_operation_custody_20261016": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/service-operation-custody.ts",
+      "src/config/service-operation-launch-capability.ts"
+    ],
+    "removed_source_paths": [],
+    "reviewed_current_sources": [
+      {
+        "path": "src/config/service-operation-custody.ts",
+        "sha256": "d877863cd29eb48e6999cf3a0c53f94cd2f04f6c95dcd290022b1920bb03ecf5"
+      },
+      {
+        "path": "src/config/service-operation-launch-capability.ts",
+        "sha256": "f84391052658e7b78b8e0ded3b4f1a34112aef6684b375d0871f5e857b597c24"
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/luna-review-custody-budget-draft-a740-20261016.md",
+      "/workspace/attachments/luna-custody-baseline-correspondence-a740-20261016.md"
+    ],
+    "correspondence": "No same-responsibility baseline b549951 callable in the bounded independent lineage review. Both new Source paths have56 new roles; preserve55 published10/10 ceilings and add only isDigest under the pre-existing prospective policy. No baseline role, ceiling or removal is reassigned.",
+    "limits": "Only this exact contour can receive a later pinned scoped review. Global partial status and absent global qualification remain unchanged. Current exact coverage, scoped frozen proof and assertion-confirmed mutation remain separate."
   }
 }

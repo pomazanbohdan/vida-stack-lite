@@ -111,8 +111,8 @@ export function initializeServiceOperationCustodySchema(database: Database): voi
     .get(table);
   if (!existing) database.exec(serviceOperationCustodySql);
   assertServiceOperationCustodyReady(database);
-  const count = database.query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM ' + table).get()?.count;
-  requireCustody(count !== undefined && BigInt(count) === 0n, 'prepared service table must be empty');
+  const count = database.query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM ' + table).get()!.count;
+  requireCustody(BigInt(count) === 0n, 'prepared service table must be empty');
 }
 
 export function assertServiceOperationCustodyReady(database: Database): void {
@@ -229,7 +229,7 @@ function assertCustodyOwnerPhase(found: ServiceOperationCustody): void {
   requireCustody(
     ['launching', 'in_flight', 'unknown', 'prepared', 'terminal'].includes(found.phase) &&
       (found.phase === 'in_flight'
-        ? found.owner_token !== null && /^[0-9a-f-]{36}$/u.test(found.owner_token)
+        ? /^[0-9a-f-]{36}$/u.test(found.owner_token!)
         : found.phase === 'launching'
           ? found.owner_token === null || isDigest(found.owner_token)
           : found.owner_token === null) &&
@@ -283,7 +283,7 @@ function hasHandoffDigests(found: ServiceOperationCustody): boolean {
 
 function hasHandoffPredecessor(found: ServiceOperationCustody): boolean {
   const revision = found.handoff_from_revision;
-  return found.handoff_from_phase === 'terminal' && revision !== null && Number.isSafeInteger(revision) && revision > 0;
+  return found.handoff_from_phase === 'terminal' && Number.isSafeInteger(revision) && revision! > 0;
 }
 
 function assertServiceDatabase(database: Database, workspaceId: string): void {

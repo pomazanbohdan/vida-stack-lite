@@ -130,6 +130,55 @@ Number.isSafeInteger(null) is false. This is not Killed and cannot be relabelled
 Root must validate the proof and any redundancy simplification under the exact
 correspondence policy. Other survivor assertions still require fresh execution.
 
+### Current custody repair and scoped freeze
+
+Published correction `d5b0efc039e3324ee04c1844197c19a0de48e529` passes the normal
+precommit and is pushed to main. SDK CI run38942583458/attempt1 succeeds with
+artifact12063668703, ZIP digest
+`sha256:a2c5834c80e2e9f3164280358751af14e51981abf31c3a82a5a34985b6b46d6d`.
+The measured checkout fast-forwards only after the preceding producer is terminal.
+
+Root integrates the next custody test proposal for same-PID/wrong-capability CAS,
+ignored UNKNOWN cleanup CAS, prepared digest-token corruption, valid terminal
+receipt, handoff schema drift and foreign workspace denial. The earlier workspace,
+unresolved receipt, zero-PID and UNKNOWN eligibility controls remain included.
+Root preserves the earlier custody workspace guard: its specific diagnostic makes
+it observably different from the later admission denial.
+
+Three predicates are redundant under their actual domains: the safe-integer check
+already rejects a null predecessor revision, the UUID regex rejects a null token,
+and native ungrouped SQLite COUNT returns one non-null count. Root removes those
+redundancies without adding callables or changing retained roles/ceilings. This is
+not relabelling their old surviving mutants as Killed. A fresh generated map must
+bind the changed Source. Four diagnostic-label survivors remain explicitly open.
+
+UNKNOWN325's receipt shows an empty-body open mutant returning undefined, followed
+by fixture `.exec` and cleanup `.close` runtime errors with zero assertions. Root
+puts a returned-Database assertion in the existing shared fixture before use,
+removing the proposed duplicated setup case. Failed preparation retains its root;
+runtime setup failures remain distinct. The original UNKNOWN stays unchanged.
+Development check `quality-rolling-cli-check-S0rybb` passes121/0 with1005 assertions
+across the exact three custody test files in21707.939919ms, full captures, closed
+group and unchanged boot. It is not mutation or numeric closure.
+
+The [independent scoped review](CUSTODY-SCOPED-BUDGET-REVIEW-20261016.md) accepts
+the exact56-role metadata candidate for publication and a later immutable pin.
+All55 existing10/10 ceilings remain unchanged. The missing isDigest row uses the
+standing prospective policy at3ef093df0b80831a4f45d3a0b97d287ef64e0aba, preceding
+its introduction at56233931302078e3fd6d498f1e91b6f5eb93e9f7. Individual earlier
+budgeting is not claimed. Reviewed partial counts become7112 roles, including1662
+new roles; the separate captured inventory remains7736. Global partial/non-executable
+status remains unchanged. Root verifies the existing scoped v3 route supports
+zero original Sources plus the exact two new Source paths; the global rejection
+of partial plans is a separate route. No new bypass is introduced. This packet
+publishes the reviewed plan; registration and fresh scoped proof remain pending.
+
+The direct policy-transition work-ID boundary control passes in
+`quality-rolling-cli-check-D2tULM` (16 PASS,14 filtered,213 assertions across3 files,
+82068.130023ms, full captures/closed group/same boot). Its filter does not establish
+the complete final-assurance selection. Earlier final-assurance FAIL lacks raw
+Bun case output and remains unresolved, not overwritten by this focused pass.
+
 ### Terminal 6effd64 diagnostic and next repairs
 
 The producer is now terminal. Outer `native-mutation-full-6effd64-uLzpyg`

@@ -1,4 +1,5 @@
 import { Database } from 'bun:sqlite';
+import { expect } from 'bun:test';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -63,6 +64,7 @@ export function openCustodyFixture(prefix = 'service-capability-'): ServiceCusto
     // Assert only the Subject's open contract after independent preparation.
     // Filesystem, admission and raw SQLite setup failures remain runtime errors.
     const database = expectReturned(() => openServiceOperationDatabase(root, relative, workspaceId));
+    expect(database).toBeInstanceOf(Database);
     try {
       // The Subject returns a writable custody connection. Check that capability
       // with a zero-row write before independent fixture controls use the handle.
