@@ -5,7 +5,7 @@
 Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.
 
 Historical contours with exact F/L/S/B coverage: **15/45**.
-Historical same-coverage-run coverage + scoped frozen CRAP pairs: **13/45**.
+Historical same-coverage-run coverage + scoped frozen CRAP pairs: **14/45**.
 Historical complete coverage + assertion-confirmed mutation pair closures: **6/45**; static contours: **1**.
 Separate same-coverage-run local triples with scoped frozen CRAP: **6/45**.
 Executable contours without a recorded coverage + mutation pair: **39**.
@@ -56,7 +56,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-governance-and-public-contracts | 94/106 · 329/362 · 355/404 · 182/249 | 32 / 32 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-lifecycle | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-storage-admission | 18/18 · 100/100 · 103/103 · 16/16 | 5 / 5 | unknown | BLOCKED | open / unknown | 5 / 5 | open / unknown |
-| bun-project-upgrade-existing-storage-image | 52/52 · 206/206 · 230/230 · 52/52 | 7 / 7 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-project-upgrade-existing-storage-image | 52/52 · 206/206 · 230/230 · 52/52 | 7 / 7 | unknown | BLOCKED | open / unknown | 7 / 7 | open / unknown |
 | bun-orchestration-recovery-contracts | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-cli-release-and-installation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-controller-observation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
@@ -962,6 +962,9 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | e73567e4-3d4a-4319-8f9b-754b749e4430 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:34:15.770Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/e73567e4-3d4a-4319-8f9b-754b749e4430.json |
 | coverage | e73567e4-3d4a-4319-8f9b-754b749e4430 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:34:15.770Z | focused-diagnostic; owner accepted locally; selection bound | 18/18 · 100/100 · 103/103 · 16/16 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/e73567e4-3d4a-4319-8f9b-754b749e4430.focused-coverage.json |
 | frozen-crap | e73567e4-3d4a-4319-8f9b-754b749e4430 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:34:32.839Z | scoped-proof-pass; owner accepted locally; selection bound | 5 / 5 (scoped proof; owner measured) | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/e73567e4-3d4a-4319-8f9b-754b749e4430.scoped-crap.json |
+| coverage-outcome | 31dd6cad-10c4-4010-a73c-d7badb2fcc41 | 9a5e3d883f33e7e3aaa5c6ddd059167916a2fff1 | 2026-10-16T22:44:03.965Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/31dd6cad-10c4-4010-a73c-d7badb2fcc41.json |
+| coverage | 31dd6cad-10c4-4010-a73c-d7badb2fcc41 | 9a5e3d883f33e7e3aaa5c6ddd059167916a2fff1 | 2026-10-16T22:44:03.965Z | focused-diagnostic; owner accepted locally; selection bound | 18/18 · 100/100 · 103/103 · 16/16 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/31dd6cad-10c4-4010-a73c-d7badb2fcc41.focused-coverage.json |
+| frozen-crap | 31dd6cad-10c4-4010-a73c-d7badb2fcc41 | 9a5e3d883f33e7e3aaa5c6ddd059167916a2fff1 | 2026-10-16T22:44:11.860Z | scoped-proof-pass; owner accepted locally; selection bound | 5 / 5 (scoped proof; owner measured) | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/31dd6cad-10c4-4010-a73c-d7badb2fcc41.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
@@ -981,6 +984,9 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | 0842fd85-d276-4ab8-ab81-2227784f6cb0 | 982dda4b379df73dbc43f2eea0977c4eb3479b58 | 2026-10-16T22:16:19.298Z | focused-diagnostic; owner accepted locally; selection bound | 51/52 · 200/206 · 217/230 · 46/52 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/0842fd85-d276-4ab8-ab81-2227784f6cb0.focused-coverage.json |
 | coverage-outcome | dc9e9914-92e1-4e3d-8870-ad9cea8d65d2 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:31:34.612Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/dc9e9914-92e1-4e3d-8870-ad9cea8d65d2.json |
 | coverage | dc9e9914-92e1-4e3d-8870-ad9cea8d65d2 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:31:34.612Z | focused-diagnostic; owner accepted locally; selection bound | 52/52 · 206/206 · 230/230 · 52/52 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/dc9e9914-92e1-4e3d-8870-ad9cea8d65d2.focused-coverage.json |
+| coverage-outcome | 420ca75a-3b40-4863-a5fd-6c83eef2973e | 9a5e3d883f33e7e3aaa5c6ddd059167916a2fff1 | 2026-10-16T22:43:37.145Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/420ca75a-3b40-4863-a5fd-6c83eef2973e.json |
+| coverage | 420ca75a-3b40-4863-a5fd-6c83eef2973e | 9a5e3d883f33e7e3aaa5c6ddd059167916a2fff1 | 2026-10-16T22:43:37.145Z | focused-diagnostic; owner accepted locally; selection bound | 52/52 · 206/206 · 230/230 · 52/52 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/420ca75a-3b40-4863-a5fd-6c83eef2973e.focused-coverage.json |
+| frozen-crap | 420ca75a-3b40-4863-a5fd-6c83eef2973e | 9a5e3d883f33e7e3aaa5c6ddd059167916a2fff1 | 2026-10-16T22:43:45.849Z | scoped-proof-pass; owner accepted locally; selection bound | 7 / 7 (scoped proof; owner measured) | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/420ca75a-3b40-4863-a5fd-6c83eef2973e.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

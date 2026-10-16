@@ -16,6 +16,30 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ### Coverage receipt reuse and fixture import closure
 
+Published9a5e3d8's image run `420ca75a-3b40-4863-a5fd-6c83eef2973e`
+(`nuF3lI`) passes27/0tests,181assertions in5319ms, exact52/52F,206/206L,
+230/230S,52/52B andCC/CRAP7. Same-run frozen v3 `dgRWAF` passes against
+9469a4e. Admission `31dd6cad-10c4-4010-a73c-d7badb2fcc41` (`PwfWZC`)
+passes13/0tests,126assertions in7953ms, exact18/18F,100/100L,103/103S,16/16B
+andCC/CRAP5; same-run frozen v3 `tmcBvS` passes against d6cab7c. All owners
+terminate with complete captures/closed groups/same boot; operations stay BLOCKED.
+The projection now records15/45 exact coverage,14/45 frozen pairs and6/45 triples.
+
+Native diagnostic `aa77a072-453f-4379-b81c-f65823ea2db6` confirms the previously
+surviving local85 as Killed with a body AssertionError, actual activation1 and
+passing13-case baseline. Its scope remains1/227 diagnostic, not a contour score.
+The complete request `2e5df111-7069-404e-a0fb-76428f01a2c2` then stops after
+2Killed/1UNKNOWN/224unattempted in13574ms. Local177 removes initial verification;
+the test's generic verifier fault attaches to the later exclusive/unadmitted
+owner, then its paired close assumptions add infrastructure errors. Preserve
+that UNKNOWN. Narrow the injection to before the actual caller-owner close;
+later verifiers forward unchanged, so a skipped target produces its intended
+body assertion instead of unrelated cleanup faults. No generic global retry,
+weaker assertions or product change. Blind v97 confirms the ownership distinction.
+Focused `BmB0LT` passes13/0tests,126assertions in1948ms with full captures,
+closed groups and unchanged boot; strict505/TS-only506 and Oxlint pass. A fresh
+native run must qualify the mutant after publication.
+
 Fresh admission run `e73567e4-3d4a-4319-8f9b-754b749e4430` at916fa8a passes
 10/0tests,105assertions in6657ms; exact F18/18,L100/100,S103/103,B16/16,
 CC/entryCRAP5. Same-run frozen v3 `scoped-crap-selected-k0tqZK` passes in678ms

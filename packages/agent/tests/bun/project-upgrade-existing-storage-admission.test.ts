@@ -589,6 +589,7 @@ describe('native existing-storage admission boundary', () => {
       return Reflect.apply(originalQuery, this, [sql]);
     } as unknown as typeof Database.prototype.query;
     const observedAssertMaintenanceFence = function (this: HostStateStore, receipt: MaintenanceFenceReceipt) {
+      if (callerOwnerCloses !== 0) return Reflect.apply(originalAssertMaintenanceFence, this, [receipt]);
       verifyingFence = true;
       try {
         Reflect.apply(originalAssertMaintenanceFence, this, [receipt]);

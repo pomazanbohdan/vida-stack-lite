@@ -100,6 +100,8 @@ original work error and cleanup error, including `throw undefined`. Restore
 spies and injected faults before retrying through the registered cleanup owner.
 A test that reaches an early denial has not exercised a later target boundary.
 Use a phase marker or direct observation to prove the intended operation began.
+Limit injected faults to that phase. If a mutation skips the intended call,
+forward later owners unchanged so their cleanup does not mask the failed assertion.
 
 For expected-success async target calls, reuse `expectAsyncReturned` from
 `tests/helpers/expect-rejection.ts`. It observes one invocation through Node's
