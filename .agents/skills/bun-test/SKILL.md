@@ -99,6 +99,10 @@ Check a normal operation afterward. Never turn fixture health, matcher misuse or
 missing result-property access into mutation-kill evidence.
 Use the existing `expectReturned` helper for expected-success synchronous setup
 inside a test body; do not construct the mutable subject at module scope.
+`describe` callbacks also run during registration. Keep their Source-dependent
+loads inside the registered bodies that consume them. A failed `beforeAll` is
+hook evidence, including a hook AssertionError; it is not an assertion-confirmed
+kill. Do not hide that error or cache its failure to manufacture body evidence.
 The shared synchronous helper uses `doesNotThrow`; the real-adapter control
 copies its maintained bytes and checks thrown undefined while rejecting invalid
 arguments and unrelated runtime errors. This control does not qualify actual mutants or justify a generic

@@ -6651,6 +6651,27 @@ context. Strict test TypeScript passes. Current product Source,350role inventory
 and frozen limits are unchanged, so no duplicate Source AST/hash pass is needed.
 Fresh coverage and mutation must bind the corrected test closure separately.
 
+The first corrected-closure coverage attempt6WvK0H failed because Root added an
+unnecessary single-name bundle regex; configured fixtures legally use packages/agent.
+Removing that extra restriction restores113/0 and exact350/965/1023/256 coverage in
+60913965-6ca2-46d1-b7bf-7de8a6a3e82a, with same-run frozen proof PASS16/16 and
+owner6T0I7j completing17934.838301ms. That report captures the one-line fixture fix
+before its publication; the report's exact Source/test bindings remain authoritative.
+No Source function or budget changed, and the failed attempt is retained.
+
+The analogous project-context beforeAll risks unproven hook failures. A blind
+independent plan review accepts moving the actual setup calls into whichever
+registered body first needs them. The existing single successful boundary fixture
+remains shared only within that serial test file, with no stored failure or setup
+test dependency. All18bodies directly await its initializer. Actual Source calls
+use expected-return assertions; success latches only after complete setup, each
+failed attempt receives a fresh retained root, and native cleanup runs only after
+successful initialization. This is not a hook-error reclassification or a new
+consumer authority cache. Strict test TypeScript and the18test focused check pass
+at72LIr6 in2504.694591ms; mutation attribution still needs an actual fresh campaign.
+The bun-test skill now explicitly includes describe-time and beforeAll failure
+boundaries in its existing setup guidance.
+
 The ordinary test:config:pinned and test:pinned routes now select the new layout
 file, preserving the moved cases' ordinary execution as well as contour selection.
 The governance compatibility review rejects a proposed deletion: complete from

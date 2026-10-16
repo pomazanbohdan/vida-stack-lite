@@ -101,8 +101,8 @@ function configuredBundleFromYaml(yaml: string): string {
   if (typeof runtime !== 'object' || runtime === null || Array.isArray(runtime))
     throw new Error('Configured YAML fixture requires a runtime mapping');
   const bundle: unknown = Reflect.get(runtime, 'bundle');
-  if (typeof bundle !== 'string' || !/^[A-Za-z0-9._-]+$/.test(bundle))
-    throw new Error('Configured YAML fixture requires a safe runtime bundle');
+  if (typeof bundle !== 'string' || bundle.length === 0)
+    throw new Error('Configured YAML fixture requires a runtime bundle');
   return bundle;
 }
 

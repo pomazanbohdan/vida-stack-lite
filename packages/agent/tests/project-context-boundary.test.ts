@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from 'bun:test';
+import { afterAll, afterEach, describe, expect, spyOn, test } from 'bun:test';
 import assert from 'node:assert/strict';
 import {
   loadProjectContext,
@@ -22,7 +22,7 @@ import {
   type PathProfileResolutionOptions,
 } from '../src/config/project-context.ts';
 import { configuredTestContext } from './configured-context.ts';
-import { expectReturned } from './helpers/expect-rejection.ts';
+import { expectAsyncReturned, expectReturned } from './helpers/expect-rejection.ts';
 import {
   runtimeConfigDigest,
   resolveAgentRoleProfile,
@@ -66,6 +66,8 @@ let scopeId: string;
 let runtimeConfigPath: string;
 let initialRuntimeConfig: string;
 const temporaryRoots: string[] = [];
+let boundaryFixtureReady = false;
+const failedBoundaryRoots: string[] = [];
 
 function binding(context: ProjectContext, selectedProjectId: string): ProjectContextProjectBinding {
   const result = projectBindingFor(context, selectedProjectId);
@@ -77,22 +79,34 @@ function required<T>(value: T | undefined, label: string): T {
   return value;
 }
 
-beforeAll(async () => {
+async function ensureBoundaryFixture(): Promise<void> {
+  if (boundaryFixtureReady) return;
   repositoryRoot = mkdtempSync(path.join(tmpdir(), 'project-context-boundary-'));
-  mkdirSync(path.join(repositoryRoot, 'products', projectId), { recursive: true });
-  mkdirSync(path.join(repositoryRoot, 'products', secondProjectId), { recursive: true });
-  await initializeProject({
-    projectRoot: repositoryRoot,
-    repository: 'project-context-fixture',
-    projectMappings: [`${projectId}=products/${projectId}`, `${secondProjectId}=products/${secondProjectId}`],
-  });
-  runtimeConfigPath = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
-  initialRuntimeConfig = readFileSync(runtimeConfigPath, 'utf8');
-  mkdirSync(path.join(repositoryRoot, '.agent', 'work'), { recursive: true });
-  config = loadRuntimeConfig(repositoryRoot);
-  project = loadProjectContext(repositoryRoot, config, config.repository.repository_id, projectId);
-  scopeId = binding(project, projectId).path_profile.scope_id;
-});
+  try {
+    mkdirSync(path.join(repositoryRoot, 'products', projectId), { recursive: true });
+    mkdirSync(path.join(repositoryRoot, 'products', secondProjectId), { recursive: true });
+    await expectAsyncReturned(() =>
+      initializeProject({
+        projectRoot: repositoryRoot,
+        repository: 'project-context-fixture',
+        projectMappings: [`${projectId}=products/${projectId}`, `${secondProjectId}=products/${secondProjectId}`],
+      }),
+    );
+    runtimeConfigPath = path.join(repositoryRoot, 'agent-runtime.config.v1.yaml');
+    initialRuntimeConfig = readFileSync(runtimeConfigPath, 'utf8');
+    mkdirSync(path.join(repositoryRoot, '.agent', 'work'), { recursive: true });
+    config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
+    project = expectReturned(() =>
+      loadProjectContext(repositoryRoot, config, config.repository.repository_id, projectId),
+    );
+    scopeId = expectReturned(() => binding(project, projectId).path_profile.scope_id);
+    boundaryFixtureReady = true;
+  } catch (error) {
+    failedBoundaryRoots.push(repositoryRoot);
+    process.stderr.write(`Retained failed boundary fixture: ${repositoryRoot}\n`);
+    throw error;
+  }
+}
 
 function relative(value: string): string {
   return path.relative(repositoryRoot, value).split(path.sep).join('/');
@@ -153,6 +167,7 @@ function expectPathFailure(value: unknown): void {
 }
 
 afterEach(() => {
+  if (!boundaryFixtureReady) return;
   writeFileSync(runtimeConfigPath, initialRuntimeConfig);
   while (temporaryRoots.length) {
     const root = temporaryRoots.pop();
@@ -161,11 +176,14 @@ afterEach(() => {
 });
 
 afterAll(() => {
-  if (repositoryRoot) rmSync(repositoryRoot, { recursive: true, force: true });
+  if (boundaryFixtureReady) rmSync(repositoryRoot, { recursive: true, force: true });
+  if (failedBoundaryRoots.length)
+    process.stderr.write(`Retained failed boundary fixtures: ${failedBoundaryRoots.join(', ')}\n`);
 });
 
 describe('project context path boundary', () => {
-  test('resolves deepest project membership and requires a selected member for shared roots', () => {
+  test('resolves deepest project membership and requires a selected member for shared roots', async () => {
+    await ensureBoundaryFixture();
     const projects: PathProfileResolutionEntry[] = [
       { project_id: 'root', project_root: '.' },
       { project_id: 'services', project_root: 'services' },
@@ -259,7 +277,8 @@ describe('project context path boundary', () => {
     expect(() => resolveProjectPathMembership(equalRoots, 'packages/a/../foreign')).toThrow(/unsafe path segment/);
   });
 
-  test('keeps a nested project boundary when both ancestor and descendant are selected', () => {
+  test('keeps a nested project boundary when both ancestor and descendant are selected', async () => {
+    await ensureBoundaryFixture();
     const projects: PathProfileResolutionEntry[] = [
       { project_id: 'parent', project_root: 'products' },
       { project_id: 'foreign', project_root: 'products/foreign' },
@@ -270,7 +289,8 @@ describe('project context path boundary', () => {
     expect(selected).toEqual({ project_id: 'foreign', project_root: 'products/foreign', specificity: 2 });
   });
 
-  test('does not treat a sibling path prefix as project membership', () => {
+  test('does not treat a sibling path prefix as project membership', async () => {
+    await ensureBoundaryFixture();
     const projects: PathProfileResolutionEntry[] = [{ project_id: 'billing', project_root: 'services/bill' }];
     const membership = expectReturned(() => resolveProjectPathMembership(projects, 'services/billing/src/index.ts'));
     expect(membership).toEqual({ project_ids: [], project_root: null, specificity: -1 });
@@ -279,13 +299,15 @@ describe('project context path boundary', () => {
     );
   });
 
-  test('canonicalizes task project ids without changing project identity', () => {
+  test('canonicalizes task project ids without changing project identity', async () => {
+    await ensureBoundaryFixture();
     expect(normalizeProjectIds(['billing', 'root', 'billing'])).toEqual(['billing', 'root']);
     expect(() => normalizeProjectIds([])).toThrow(/project ids must be non-empty/);
     expect(() => normalizeProjectIds(['billing', ''])).toThrow(/project id is invalid/);
   });
 
-  test('denies a caller-owned project identity that drifts after membership admission', () => {
+  test('denies a caller-owned project identity that drifts after membership admission', async () => {
+    await ensureBoundaryFixture();
     let reads = 0;
     const projects: PathProfileResolutionEntry[] = [
       {
@@ -304,7 +326,8 @@ describe('project context path boundary', () => {
     assert.ok(reads > 7, 'the caller-owned identity must actually drift after configured-ID admission');
   });
 
-  test('binds an exact multi-project context without a primary project', () => {
+  test('binds an exact multi-project context without a primary project', async () => {
+    await ensureBoundaryFixture();
     expect(projectBindingFor(project, 'missing-project')).toBeNull();
     const first = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
       secondProjectId,
@@ -344,7 +367,8 @@ describe('project context path boundary', () => {
     ).toThrow(/exactly the selected project set/);
   });
 
-  test('rejects unsafe repository-relative path forms', () => {
+  test('rejects unsafe repository-relative path forms', async () => {
+    await ensureBoundaryFixture();
     expect(() => resolve({ work_root: '' })).toThrow(/work_root must be a non-empty relative path/);
     expect(() =>
       resolveUntrustedOptions({
@@ -396,7 +420,8 @@ describe('project context path boundary', () => {
     expect(resolve({ work_root: 'a/conx' }).paths.work_root).toBe('a/conx');
     expect(resolve({ work_root: 'a/xcon' }).paths.work_root).toBe('a/xcon');
   });
-  test('rejects unissued caller path overrides', () => {
+  test('rejects unissued caller path overrides', async () => {
+    await ensureBoundaryFixture();
     const forged: unknown = {
       schema: 'TrustedPathProfileOverride/v1',
       scope_id: binding(project, projectId).path_profile.scope_id,
@@ -413,7 +438,8 @@ describe('project context path boundary', () => {
       ]);
     }).toThrow(/capability/);
   });
-  test('rejects selector and snapshot violations', () => {
+  test('rejects selector and snapshot violations', async () => {
+    await ensureBoundaryFixture();
     expect(() =>
       resolveUntrustedOptions({
         processing_scope: 'selected_project',
@@ -506,7 +532,8 @@ describe('project context path boundary', () => {
     ]);
   });
 
-  test('rejects wrong target types, hard links, blocked ancestors, and reparses', () => {
+  test('rejects wrong target types, hard links, blocked ancestors, and reparses', async () => {
+    await ensureBoundaryFixture();
     const root = tempRoot();
     const directory = path.join(root, 'directory');
     const file = path.join(root, 'file.txt');
@@ -544,7 +571,8 @@ describe('project context path boundary', () => {
     );
   });
 
-  test('path profile identities preserve large stat values exactly', () => {
+  test('path profile identities preserve large stat values exactly', async () => {
+    await ensureBoundaryFixture();
     const expectedDev = 9_007_199_254_740_992n;
     const expectedIno = 9_007_199_254_740_993n;
     const originalStat = fs.lstatSync;
@@ -572,7 +600,8 @@ describe('project context path boundary', () => {
     }
   });
 
-  test('issues canonical profiles and validates bindings, identities, and path kinds', () => {
+  test('issues canonical profiles and validates bindings, identities, and path kinds', async () => {
+    await ensureBoundaryFixture();
     const whole = resolvePathProfile(repositoryRoot, config, { processing_scope: 'whole_repository' });
     expect(whole.schema).toBe('ResolvedPathProfile/v1');
     expect(whole.scope_id).toBe('repository:' + config.config_id);
@@ -670,7 +699,8 @@ describe('project context path boundary', () => {
     });
   });
 
-  test('validates each selected project path profile with one filesystem scan', () => {
+  test('validates each selected project path profile with one filesystem scan', async () => {
+    await ensureBoundaryFixture();
     const trusted_overrides = Object.fromEntries(
       [projectId, secondProjectId].map((id) => {
         const base = loadProjectContext(repositoryRoot, config, config.repository.repository_id, id);
@@ -721,7 +751,8 @@ describe('project context path boundary', () => {
     }
   });
 
-  test('rejects unissued and foreign-root profiles before reading runtime configuration', () => {
+  test('rejects unissued and foreign-root profiles before reading runtime configuration', async () => {
+    await ensureBoundaryFixture();
     writeFileSync(runtimeConfigPath, 'not a runtime config');
     expect(() => validateResolvedPathProfile({}, repositoryRoot)).toThrow(
       'resolved path profile must be issued by resolvePathProfile',
@@ -731,7 +762,8 @@ describe('project context path boundary', () => {
     ).toThrow('resolved path profile identity is invalid');
   });
 
-  test('rejects a runtime config change during project path validation', () => {
+  test('rejects a runtime config change during project path validation', async () => {
+    await ensureBoundaryFixture();
     const target = binding(project, projectId).path_profile.resolved_paths.project_root;
     const originalStat = fs.lstatSync;
     let changed = false;
@@ -758,7 +790,8 @@ describe('project context path boundary', () => {
     }
   });
 
-  test('rejects a runtime config change during the final selected project profile scan', () => {
+  test('rejects a runtime config change during the final selected project profile scan', async () => {
+    await ensureBoundaryFixture();
     const selected = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
       secondProjectId,
       projectId,
@@ -819,6 +852,7 @@ describe('project context path boundary', () => {
   });
 
   test('binds current-v1 repository and project contours', async () => {
+    await ensureBoundaryFixture();
     expect.assertions(13);
     const repositoryConfig = loadConfigFixture({
       ...structuredClone(config),
@@ -942,7 +976,8 @@ describe('project context path boundary', () => {
     );
   });
 });
-test('configuration and project selectors cover valid and invalid interfaces', () => {
+test('configuration and project selectors cover valid and invalid interfaces', async () => {
+  await ensureBoundaryFixture();
   const { repositoryRoot, config, context: project } = configuredTestContext();
   const projectBinding = required(project.project_bindings[0], 'a configured project binding');
   expect(runtimeConfigDigest(validateRuntimeConfig(config, repositoryRoot))).toBe(runtimeConfigDigest(config));
