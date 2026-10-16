@@ -1878,6 +1878,40 @@ describe('runtime kernel boundary', () => {
         expect(ledgerRow).toEqual({ payload: encoded, digest: canonicalJsonDigest(ledger) });
       }
     }));
+  test('local admission denies missing expiry from a faulted snapshot dependency without persisting it', () =>
+    withAutomaticWorkAdmissionCase(async ({ createFixture }) => {
+      const { fixture, identity, nativeSessionHandle } = await prepareAdmittedSessionFixture(
+        'local-expiry-fault-' + randomUUID(),
+        createFixture(false, true),
+      );
+      const request = { repositoryRoot: fixture.root, identity, store: fixture.store, nativeSessionHandle };
+      const before = fixture.store.readHostStateSnapshot(identity);
+      assert.ok(before.work?.lease && before.ledger);
+      const ticketId = before.work.lease.ticket_id;
+      const ticket = before.ledger.tickets.find((entry) => entry.ticket_id === ticketId);
+      assert.ok(ticket?.expires_at);
+      assert.doesNotThrow(() => requireLiveLocalSessionAdmission(request));
+      // This invalid dependency result never enters HostState's persisted ledger.
+      const read = spyOn(fixture.store, 'readHostStateSnapshot').mockReturnValue({
+        ...before,
+        ledger: {
+          ...before.ledger,
+          tickets: before.ledger.tickets.map((entry) =>
+            entry.ticket_id === ticketId ? { ...entry, expires_at: null } : entry,
+          ),
+        },
+      });
+      try {
+        expect(() => requireLiveLocalSessionAdmission(request)).toThrow(
+          'local workflow admission or exact-path lease is stale',
+        );
+      } finally {
+        read.mockRestore();
+      }
+      expect(fixture.store.readHostStateSnapshot(identity)).toEqual(before);
+      assert.doesNotThrow(() => requireLiveLocalSessionAdmission(request));
+    }));
+
   test('denies an expired lease before reading malformed current configuration', async () => {
     const { fixture, identity, nativeSessionHandle } = await prepareAdmittedSessionFixture('preflight-expired-lease');
     try {

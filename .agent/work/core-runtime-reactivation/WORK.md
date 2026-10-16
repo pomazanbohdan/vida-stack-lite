@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published Source base: `917583e7373a255c40e2448f080c7fc0ac254786` at `origin/main`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published Source base: `922dd35ed0e8aa3a585916a1c93713ad3ce54307` at `origin/main`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -123,7 +123,34 @@ not a complete Stryker score or rewritten historical Killed statuses. Suspected
 equivalent17/27/30/32 stay reviewed GAPs under the unchanged executable gate;
 do not exclude them or weaken validators to manufacture100%. The broad Zod
 replacement is deferred after review because ownership/getter/diagnostic risks
-outweigh its unproven benefit. Fresh settled-test numeric evidence remains next.
+outweigh its unproven benefit.
+
+Settled assertion-fix governance run `2854ea0f-c72c-40b2-974b-1694ea77c6e9`
+binds published922dd35:67/0tests,432assertions, exact F206/206,L705/705,S730/730,B90/90;
+same-run v3 CRAP passes with maxCC6/maxCRAP6, original ceilings unchanged.
+Owned `UT4ACV` completed9082.781824ms with complete captures/closed groups/same boot.
+The automatic projection imports both reports without promoting mutation.
+
+Fresh declared core run `49d35a06-74dc-42a1-ae82-5d62ec91b197` binds the same
+published Source:237/0tests,1314assertions, F162/162,L602/602,S632/632,B399/400.
+Owned `HBwAfU` completed123805.677366ms with complete captures/closed groups/same
+boot. The previous Windows comparison arm is now covered by the actual selection.
+Only the null-expiry dependency-fault arm remains; a new test injects that invalid
+snapshot result without persisting it, verifies denial, restores the method and
+checks the unchanged real snapshot and healthy retry. Its final numeric result is
+pending. Core frozen scope admission is also pending explicit151original-role
+reconciliation: original entered-effect callback was consolidated, while a new
+cleanup wrapper reuses its lexical identity. Do not transfer caps or silently
+classify this as retained by name. Review locators:
+`/workspace/attachments/quality-runtime-core-entered-role-reconciliation-20261016.md`
+and `/workspace/attachments/quality-runtime-core-frozen-scope-review-20261016.md`.
+
+Fresh lifecycle run `b59743c9-96ce-4313-ba04-fbc10ecf23b9` binds922dd35:16/0tests,
+235assertions, exact F29/29,L184/184,S193/193,B129/129. Same-run scoped v1 CRAP
+passes with maxCC21/maxCRAP21 against published e9629b3. Owner `mzHTFt`
+completed4309.693333ms with complete captures/closed groups/same boot. Both reports
+are imported. The old unqualified521/877mutation report stays historical, not a
+current score. No new complete local triple or Runtime acceptance is established.
 
 1. Maintain documentation under the sidecar's single-owner protocol.
 2. Complete approved Cloud/profile guards and reproducible Pstack bootstrap; keep Source checks, SDK verification, native qualification and acceptance separate.
