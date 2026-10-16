@@ -176,6 +176,15 @@ function callWithMalformedArgument<Target extends (...arguments_: never[]) => un
 }
 
 describe('governed write completeness', () => {
+  test('rejects a stale config snapshot when loading the configured Edictum policy', () => {
+    const matching = expectReturned(() => loadConfiguredEdictumGovernancePolicy(repositoryRoot, config));
+    expect(matching.policyVersion).toBe(config.governance.edictum.policy_version);
+    const stale = { ...config, config_revision: config.config_revision + 1 };
+    expect(() => loadConfiguredEdictumGovernancePolicy(repositoryRoot, stale)).toThrow(
+      'Edictum policy config snapshot is stale',
+    );
+    expect(loadRuntimeConfig(repositoryRoot).config_revision).toBe(config.config_revision);
+  });
   test('rejects an unsupported flat Edictum sandbox allowlist', () => {
     const unsupported = {
       ...config,
@@ -575,6 +584,21 @@ describe('governed write completeness', () => {
       const first = await store.reserve(firstFixture.operationHash, firstFixture.request);
       if (first === null) throw new Error('native reservation was not created');
       expect(expectReturned(() => validateHostOperationReservation(first))).toEqual(first);
+      for (const storeId of [123, true, null, undefined, {}, ['store']])
+        expect(() => validateHostOperationReservation({ ...first, store_id: storeId })).toThrow(
+          'durable reservation record is invalid',
+        );
+      let revisionCoercions = 0;
+      const nonNumericRevision = {
+        valueOf: () => {
+          revisionCoercions++;
+          return 1;
+        },
+      };
+      expect(() => validateHostOperationReservation({ ...first, revision: nonNumericRevision })).toThrow(
+        'durable reservation record is invalid',
+      );
+      expect(revisionCoercions).toBe(0);
       expect(first).toMatchObject({
         store_id: storeId,
         operation_key: firstFixture.operationHash,

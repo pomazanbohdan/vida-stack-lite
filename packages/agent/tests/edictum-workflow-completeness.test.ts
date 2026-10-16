@@ -961,7 +961,9 @@ describe('configured Edictum workflow completeness', () => {
         expect(failure).toBeInstanceOf(Error);
         expect(failure).toMatchObject({ code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001' });
         if (!(failure instanceof Error)) throw new Error('commit-unknown fallback did not return an Error');
-        expect(failure.message).toMatch(/recovery marker recorded/);
+        expect(failure.message).toBe(
+          'Edictum workflow approval commit state is unknown; recovery marker recorded; recovery is required before replay',
+        );
         expect(beforeCommitCalls).toBe(1);
         expect(reservationPath).toBeDefined();
         if (reservationPath === undefined || alteredReservationBytes === undefined)
@@ -1045,7 +1047,9 @@ describe('configured Edictum workflow completeness', () => {
         expect(failure).toBeInstanceOf(Error);
         expect(failure).toMatchObject({ code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001' });
         if (!(failure instanceof Error)) throw new Error('unrecorded commit-unknown did not return an Error');
-        expect(failure.message).toMatch(/durable recovery marker unavailable/);
+        expect(failure.message).toBe(
+          'Edictum workflow approval commit state is unknown; durable recovery marker unavailable; recovery is required before replay',
+        );
         expect(beforeCommitCalls).toBe(1);
         expect(applicationCalls).toBe(1);
         expect(reservationPath).toBeDefined();
@@ -1107,7 +1111,11 @@ describe('configured Edictum workflow completeness', () => {
             host.consumeApproval(binding, async () => {
               replayApplyCalls += 1;
             }),
-          ).rejects.toMatchObject({ code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001' }),
+          ).rejects.toMatchObject({
+            code: 'GAP-RTNEW-EDICTUM-COMMIT-UNKNOWN-001',
+            message:
+              'Edictum workflow approval commit state is unknown; recovery marker recorded; recovery is required before replay',
+          }),
         );
         expect(replayApplyCalls).toBe(0);
         await Promise.resolve(expect(candidate.approve(approval)).rejects.toThrow(/stage is not pending/));

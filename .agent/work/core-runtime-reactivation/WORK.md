@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published Source base: `85a5ca761222b40a1bf21eea4be87fd9547e4a31` at `origin/main`. Current repair tail is separate from that published base. Source, formation, installation and Runtime acceptance are distinct states.
+- Published Source base: `917583e7373a255c40e2448f080c7fc0ac254786` at `origin/main`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -82,12 +82,48 @@ Fresh single-Source inventory reuses the unchanged parser capture: all206 roles
 and global counts/caps stay exact. Preparation CC6->4 and run CC3->2 retain6/3
 original ceilings. The CAS refresh receipt is
 `/workspace/attachments/quality-governance-preparation-lineage-refresh-20261016.applied.json`;
-do not rerun that updater. Fresh numeric evidence for this settled packet is pending.
+do not rerun that updater.
 The lifecycle history case additionally proves old-source approval rejection at
 PLAN->EXECUTE and current-source approval acceptance without replacing preserved history.
 The normal Git hook initially rejected the identity test's untyped dynamic module
 restoration and unsafe-finally syntax. Its log stays retained; the restoration
 uses the maintained module type and an explicit assertion. No hook was bypassed.
+
+Settled governance coverage run `ff014256-5d40-4954-bb64-5837d202fe60` binds
+published `917583e`:66/0tests,421assertions, exact F206/206,L705/705,S730/730,B90/90.
+Same-run scoped v3 CRAP passes using published budget `171006e` and every original
+ceiling. Owned `gwiFsA` completed7958.793521ms with complete captures, closed groups
+and unchanged boot. Both reports are imported to the automatic projection. These
+fill coverage/frozen local steps; no governance mutation score or complete triple
+is yet established.
+
+Governance mutation run `eb46ac27-73a0-4276-aaaa-6f0cd3ce5795` binds that same
+`917583e` and four-file selection, with1666generated mutants and a successful
+baseline. Actual candidates13/27/30/32/36/40/41/53 each pass all66tests. Four blind
+Luna lanes now separate assertion gaps from equivalent mutations for type guards,
+exact fields, UNKNOWN diagnostics and stale policy snapshots. Root stopped only
+its proven owned namespace to correct those findings. Terminal owner `llCYSk` is
+exit143,161085.83579900002ms, complete empty outer captures, closed groups and same
+boot. Preserve the original events/receipts and
+`/workspace/attachments/quality-governance-first-survivors-stop-20261016.intent.json`.
+No complete mutation report or score exists; never promote these partial counters.
+Do not replay the PID-specific stop script.
+
+The survivor correction strengthens existing public cases for non-string store
+IDs, nonnumeric revisions without invoking valueOf, exact UNKNOWN code/message,
+and stale policy config. The stale snapshot is supplied as a typed value; no
+fixture config write/restore or extra setup is needed. Healthy owner `awg1Iy`
+passes the two selected governance files; the added coercion control separately
+passes at `KF5yzx`. Strict tests460files pass. Exact original mutation expressions
+13/19/36/40/41/53 each now fail an assertion in a bounded public test. Their
+independent owned controls are `KMTw9o/GNVYo8/n3rPUQ/9zDU16/EZkOEu/lI9c1X`.
+`/workspace/attachments/quality-governance-survivor-negative-controls-20261016.restored.json`
+binds6/6controls and exact c78815Source restoration. These are local controls,
+not a complete Stryker score or rewritten historical Killed statuses. Suspected
+equivalent17/27/30/32 stay reviewed GAPs under the unchanged executable gate;
+do not exclude them or weaken validators to manufacture100%. The broad Zod
+replacement is deferred after review because ownership/getter/diagnostic risks
+outweigh its unproven benefit. Fresh settled-test numeric evidence remains next.
 
 1. Maintain documentation under the sidecar's single-owner protocol.
 2. Complete approved Cloud/profile guards and reproducible Pstack bootstrap; keep Source checks, SDK verification, native qualification and acceptance separate.
