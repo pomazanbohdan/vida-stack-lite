@@ -163,6 +163,14 @@ type ChildOutcome = {
   unknown: boolean;
 };
 
+type SnapshotReceiptBinding = {
+  module_inputs: string;
+  execution_scope: string;
+  active_argv: string;
+  preload_input: string;
+  loaded_inputs: Map<string, string>;
+};
+
 class CoverageReportRejectedError extends Error {
   constructor(message: string) {
     super(message);
@@ -989,7 +997,12 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     );
   }
 
-  function requireSnapshotReceipt(receipt: Record<string, unknown>, manifest: RunManifest, name: string) {
+  function requireSnapshotReceipt(
+    receipt: Record<string, unknown>,
+    manifest: RunManifest,
+    expected: SnapshotReceiptBinding,
+    name: string,
+  ) {
     const sourcePaths = Object.keys(record(receipt.coverage, `${name}.coverage`)).map((file) =>
       path.relative(root, path.resolve(file)).replaceAll('\\', '/'),
     );
@@ -1008,33 +1021,28 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
     } catch (error) {
       rejectPureReportValidator(error);
     }
-    requireSnapshotIdentity(receipt, manifest, name);
-    requireSnapshotLoadedInputs(receipt, manifest, name);
+    requireSnapshotIdentity(receipt, expected, name);
+    requireSnapshotLoadedInputs(receipt, manifest, expected.loaded_inputs, name);
   }
 
-  function requireSnapshotIdentity(receipt: Record<string, unknown>, manifest: RunManifest, name: string) {
+  function requireSnapshotIdentity(receipt: Record<string, unknown>, expected: SnapshotReceiptBinding, name: string) {
     if (
-      JSON.stringify(receipt.module_inputs) !== JSON.stringify(manifest.module_inputs) ||
-      JSON.stringify(receipt.execution_scope) !== JSON.stringify(manifest.execution_scope) ||
-      JSON.stringify(receipt.active_argv) !== JSON.stringify(manifest.active_argv)
+      JSON.stringify(receipt.module_inputs) !== expected.module_inputs ||
+      JSON.stringify(receipt.execution_scope) !== expected.execution_scope ||
+      JSON.stringify(receipt.active_argv) !== expected.active_argv
     )
       reportRejected('Coverage process snapshot metadata differs from its manifest: ' + name);
-    const preload = manifest.tool_inputs.find((entry) => entry.path === 'tooling/bun-coverage-preload.ts');
-    if (
-      JSON.stringify(receipt.preload_input) !==
-      JSON.stringify({ path: 'tooling/bun-coverage-preload.ts', sha256: preload?.sha256 })
-    )
+    if (JSON.stringify(receipt.preload_input) !== expected.preload_input)
       reportRejected('Coverage process preload identity differs from its manifest: ' + name);
   }
 
-  function requireSnapshotLoadedInputs(receipt: Record<string, unknown>, manifest: RunManifest, name: string) {
+  function requireSnapshotLoadedInputs(
+    receipt: Record<string, unknown>,
+    manifest: RunManifest,
+    expected: Map<string, string>,
+    name: string,
+  ) {
     requireExternalModuleInputs(receipt.external_module_inputs, name);
-    const expected = new Map(
-      [...manifest.sources, ...manifest.test_inputs, ...manifest.tool_inputs].map((entry) => [
-        entry.path,
-        entry.sha256,
-      ]),
-    );
     const loaded = receipt.loaded_inputs;
     if (!Array.isArray(loaded)) reportRejected('Coverage process loaded-input receipt is missing: ' + name);
     const loadedItems: unknown[] = loaded;
@@ -1527,6 +1535,19 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       const expectedPaths = evidence.sources.map((entry) => path.resolve(root, entry.path)).sort();
       const expectedPathSet = new Set(expectedPaths);
       let expectedSourceIdentity: string | undefined;
+      const preload = manifest.tool_inputs.find((entry) => entry.path === 'tooling/bun-coverage-preload.ts');
+      const expectedReceipt: SnapshotReceiptBinding = {
+        module_inputs: JSON.stringify(manifest.module_inputs),
+        execution_scope: JSON.stringify(manifest.execution_scope),
+        active_argv: JSON.stringify(manifest.active_argv),
+        preload_input: JSON.stringify({ path: 'tooling/bun-coverage-preload.ts', sha256: preload?.sha256 }),
+        loaded_inputs: new Map(
+          [...manifest.sources, ...manifest.test_inputs, ...manifest.tool_inputs].map((entry) => [
+            entry.path,
+            entry.sha256,
+          ]),
+        ),
+      };
       const manifestDigest = sha256(readFileSync(manifestPath));
       for (const name of reportFiles) {
         const reportPath = path.join(reportDirectory, name);
@@ -1551,7 +1572,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
           reportRejected('Foreign or stale per-process coverage report: ' + name);
         if (typeof report.pid !== 'number' || !Number.isSafeInteger(report.pid) || report.pid < 1)
           reportRejected('Invalid coverage report process identity.');
-        requireSnapshotReceipt(report, manifest, name);
+        requireSnapshotReceipt(report, manifest, expectedReceipt, name);
         if (historicalJUnitBytes && publishedFixture && fixtureRoot) {
           if (historicalInventory) throw new Error('Historical inventory has duplicate process observations.');
           historicalInventory = {

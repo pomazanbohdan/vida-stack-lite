@@ -33,10 +33,10 @@ function write(root: string, relative: string, bytes: string | Uint8Array): void
   writeFileSync(target, bytes);
 }
 
-function createRunnerCandidate(): string {
+async function createRunnerCandidate(): Promise<string> {
   const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-runner-lock-candidate-'));
   try {
-    prepareCoverageRunnerInputs(root, packageRoot, ['src/**', 'bin/**']);
+    await prepareCoverageRunnerInputs(root, packageRoot, ['src/**', 'bin/**']);
     for (const source of maintainedSources) write(root, source, 'export const fixture = true;\n');
     write(
       root,
@@ -111,8 +111,8 @@ function launchRunner(
   );
 }
 
-test('focused runner retains both canonical implicit-else branch arms', () => {
-  const root = createRunnerCandidate();
+test('focused runner retains both canonical implicit-else branch arms', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     write(
@@ -167,8 +167,8 @@ console.log(${JSON.stringify(completion)});\n`,
   }
 });
 
-test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy: %s', (mode) => {
-  const root = createRunnerCandidate();
+test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy: %s', async (mode) => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     const prepared = path.join(root, 'sdk-preparation.json');
@@ -235,8 +235,8 @@ test.each(['sdk', 'no-sdk', 'review'] as const)('focused SDK preparation policy:
   }
 });
 
-test('real Bun coverage runner preserves a foreign lock and artifacts before staging a run', () => {
-  const root = createRunnerCandidate();
+test('real Bun coverage runner preserves a foreign lock and artifacts before staging a run', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     const outputRoot = path.join(root, 'coverage', 'bun-unified');
@@ -285,8 +285,8 @@ test('real Bun coverage runner preserves a foreign lock and artifacts before sta
   }
 });
 
-test('real Bun coverage runner captures once under its owned lock and cleans up after capture failure', () => {
-  const root = createRunnerCandidate();
+test('real Bun coverage runner captures once under its owned lock and cleans up after capture failure', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     const outputRoot = path.join(root, 'coverage', 'bun-unified');
@@ -327,8 +327,8 @@ test('real Bun coverage runner captures once under its owned lock and cleans up 
   }
 });
 
-test('current coverage typecheck failure releases the owned lock before capture', () => {
-  const root = createRunnerCandidate();
+test('current coverage typecheck failure releases the owned lock before capture', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     const manifest = JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')) as {
@@ -352,8 +352,8 @@ test('current coverage typecheck failure releases the owned lock before capture'
   }
 });
 
-test('historical baseline selection skips current typecheck before a controlled capture failure', () => {
-  const root = createRunnerCandidate();
+test('historical baseline selection skips current typecheck before a controlled capture failure', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     const preload = writeCaptureProbe(root, "throw new Error('controlled baseline capture failure');");
@@ -374,8 +374,8 @@ test('historical baseline selection skips current typecheck before a controlled 
   }
 });
 
-test('unknown current typecheck producer retains the shared coverage lock', () => {
-  const root = createRunnerCandidate();
+test('unknown current typecheck producer retains the shared coverage lock', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     write(
@@ -426,8 +426,8 @@ mock.module('node:child_process', () => ({
   expect(existsSync(path.join(root, 'coverage/bun-unified/coverage-run.lock'))).toBe(true);
 });
 
-test('spent inherited command budget launches neither typecheck nor capture', () => {
-  const root = createRunnerCandidate();
+test('spent inherited command budget launches neither typecheck nor capture', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     const preload = writeCaptureProbe(root, "throw new Error('capture must not run with spent budget');");
@@ -446,8 +446,8 @@ test('spent inherited command budget launches neither typecheck nor capture', ()
   }
 });
 
-test('real Bun coverage runner preserves a foreign replacement lock after capture failure', () => {
-  const root = createRunnerCandidate();
+test('real Bun coverage runner preserves a foreign replacement lock after capture failure', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     const outputRoot = path.join(root, 'coverage', 'bun-unified');
@@ -490,8 +490,8 @@ test('real Bun coverage runner preserves a foreign replacement lock after captur
   }
 });
 
-test('real Bun coverage runner rejects captured pin drift before staging', () => {
-  const root = createRunnerCandidate();
+test('real Bun coverage runner rejects captured pin drift before staging', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     const outputRoot = path.join(root, 'coverage', 'bun-unified');
@@ -512,8 +512,8 @@ test('real Bun coverage runner rejects captured pin drift before staging', () =>
   }
 });
 
-test('an asynchronously observed coverage producer timeout retains the run but releases its reservation', () => {
-  const root = createRunnerCandidate();
+test('an asynchronously observed coverage producer timeout retains the run but releases its reservation', async () => {
+  const root = await createRunnerCandidate();
   let passed = false;
   try {
     write(

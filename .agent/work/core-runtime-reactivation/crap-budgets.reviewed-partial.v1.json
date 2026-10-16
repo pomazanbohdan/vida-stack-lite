@@ -224762,5 +224762,33 @@
       "removed": 0
     },
     "limits": "All18 existing prospective10/10 rows remain unchanged. Original b549951 contains no Source at this path; no historical allowance is inherited. Exact capture IDs and Source digest match the existing partial. Scope pin and same-run numeric proof remain separate; global plan stays partial/non-executable."
+  },
+  "scope_review_existing_storage_image_20261016": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-project-upgrade-existing-storage-image",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/project-upgrade-existing-storage.ts"
+    ],
+    "removed_source_paths": [],
+    "current_source_bindings": [
+      {
+        "file": "src/config/project-upgrade-existing-storage.ts",
+        "sha256": "8c017d4faec5415c643feea5ca0a20dde56bb9ee0b282f78caf38eba3f914be2"
+      }
+    ],
+    "reviewed_source_context": "916fa8aeee2b420dace404b085c65535b06fb1ed",
+    "review_artifacts": [
+      "/workspace/attachments/luna-storage-image-frozen-review-v87-20261016.md"
+    ],
+    "selected_rows": {
+      "retained": 0,
+      "new": 52,
+      "removed": 0
+    },
+    "limits": "All52 existing prospective10/10 rows remain unchanged. Original b549951 contains no Source at this path; no historical allowance is inherited. Exact capture IDs and Source digest match the existing partial. Scope pin and same-run numeric proof remain separate; global plan stays partial/non-executable."
   }
 }

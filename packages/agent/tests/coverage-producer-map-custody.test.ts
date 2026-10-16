@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { captureCoverageConsumerBinding } from '../tooling/coverage-consumer-binding.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
-import { instrumentSource, sha256 } from '../tooling/bun-coverage-evidence.ts';
+import { instrumentSource, repositoryTestContextFiles, sha256 } from '../tooling/bun-coverage-evidence.ts';
 import { validateCoverageReport } from '../tooling/bun-coverage-report-validator.ts';
 import { prepareCoverageRunnerInputs, restoreOwnedCoverageDirectoryWrites } from './helpers/coverage-fixture.ts';
 
@@ -24,11 +24,14 @@ function record(value: unknown): Record<string, unknown> {
 // Real producer over inert owned Source, not candidate quality or historical evidence.
 // Its final CRAP stage must fail because this fixture has no published Git baseline.
 test('real producer and consumer preserve pristine initialization maps while merging executed counters', async () => {
-  const root = mkdtempSync(path.join(os.tmpdir(), 'coverage-map-custody-'));
+  const fixtureRoot = mkdtempSync(path.join(os.tmpdir(), 'coverage-map-custody-'));
+  const root = path.join(fixtureRoot, 'packages', 'agent');
   const consumerConfiguration = await captureCoverageConsumerBinding(packageRoot, process.env);
   let passed = false;
   try {
-    prepareCoverageRunnerInputs(root, packageRoot, ['src/**']);
+    for (const file of repositoryTestContextFiles)
+      write(fixtureRoot, file, readFileSync(path.resolve(packageRoot, '../..', file)));
+    await prepareCoverageRunnerInputs(root, packageRoot, ['src/**']);
     write(root, 'src/sum.ts', 'export function sum(a: number, b: number): number { return a + b; }\n');
     write(
       root,
@@ -320,8 +323,8 @@ mock.module('./bun-coverage-evidence.ts', () => ({
     passed = true;
   } finally {
     if (passed) {
-      restoreOwnedCoverageDirectoryWrites(root);
-      rmSync(root, { recursive: true, force: true });
+      restoreOwnedCoverageDirectoryWrites(fixtureRoot);
+      rmSync(fixtureRoot, { recursive: true, force: true });
     } else console.error('Preserved failed real map fixture: ' + root);
   }
 }, 20000);

@@ -18,18 +18,12 @@ import {
 } from '../tooling/bun-coverage-evidence.ts';
 import {
   createSyntheticCoverageFixture,
+  syntheticFixtureSourcePaths,
   syntheticFixtureTestPath,
   type SyntheticFixture,
 } from './synthetic-coverage-fixture.ts';
 
-const expectedFixtureSources = [
-  'bin/cli-metadata.ts',
-  'src/host-state.ts',
-  'src/lifecycle/lifecycle-state.ts',
-  'src/orchestration/persistent-session-handoff.ts',
-  'src/orchestration/session-handoff.ts',
-  'src/runtime-kernel.ts',
-];
+const expectedFixtureSources = syntheticFixtureSourcePaths;
 
 test('maps only the canonical repository tooling namespace to its checkout path', () => {
   const packageRoot = path.resolve('/synthetic/repository/packages/agent');

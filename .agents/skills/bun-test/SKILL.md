@@ -65,6 +65,12 @@ For synthetic coverage fixtures, a tool input can also be maintained Source.
 Use valid inert TypeScript for those bytes and preserve the untrusted marker.
 Reuse the captured-module union owner for exact-path deduplication; keep category
 digests and the independent alias checks intact.
+Real runner fixtures await `prepareCoverageRunnerInputs` and its bounded runtime
+closure capture. Do not maintain a second transitive import list. Keep explicit
+computed-module seeds, which static imports cannot discover. Synthetic fixtures
+derive declared Source/tool overlaps from their input owner. Configured-context
+fixtures use a real `packages/agent` layout and the declared repository context
+files; unrelated temporary directories cannot represent that admitted namespace.
 
 Start from the contract and the function or boundary that owns it. Map each
 plausible regression to a fixture, a concrete case, and an assertion at that

@@ -1,9 +1,13 @@
-import { chmodSync, cpSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { chmodSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { coverageToolInputs } from '../../tooling/bun-coverage-evidence.ts';
+import { captureRuntimeInputClosure, coverageToolInputs } from '../../tooling/bun-coverage-evidence.ts';
 
 /** Materialize the actual runner import closure and inert current typecheck input. */
-export function prepareCoverageRunnerInputs(root: string, packageRoot: string, packageFiles: string[]): void {
+export async function prepareCoverageRunnerInputs(
+  root: string,
+  packageRoot: string,
+  packageFiles: string[],
+): Promise<void> {
   const write = (relative: string, bytes: string | Uint8Array) => {
     const target = path.join(root, relative);
     mkdirSync(path.dirname(target), { recursive: true });
@@ -19,28 +23,15 @@ export function prepareCoverageRunnerInputs(root: string, packageRoot: string, p
       },
     }),
   );
+  const runtimeBytes = new Map<string, Buffer>();
   for (const file of coverageToolInputs) {
     if (file === '.bun-version' || file === 'package.json') continue;
-    if (file.startsWith('bin/')) continue;
-    if (file.startsWith('tooling/')) {
-      const target = path.join(root, file);
-      mkdirSync(path.dirname(target), { recursive: true });
-      cpSync(path.join(packageRoot, file), target);
+    if (file.startsWith('tooling/') || file.startsWith('bin/')) {
+      runtimeBytes.set(file, readFileSync(path.join(packageRoot, file)));
     } else write(file, 'inert fixture capture input\n');
   }
-  // Materialize the real runner's eager CLI/provider/source-identity closure;
-  // inert candidates still load these exact maintained implementation bytes.
-  for (const file of [
-    'bin/bun.ts',
-    'bin/cli-error-properties.ts',
-    'src/config/project-paths.ts',
-    'src/config/safe-repository-access.ts',
-    'src/config/fs-safe-attestation.ts',
-  ]) {
-    const target = path.join(root, file);
-    mkdirSync(path.dirname(target), { recursive: true });
-    cpSync(path.join(packageRoot, file), target);
-  }
+  await captureRuntimeInputClosure(packageRoot, [...runtimeBytes.keys()], [], [], runtimeBytes);
+  for (const [file, bytes] of runtimeBytes) if (file !== 'package.json' && file !== '.bun-version') write(file, bytes);
 }
 
 /** Only for a completed, owned inert fixture; never follow its dependency links. */

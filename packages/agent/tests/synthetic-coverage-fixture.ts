@@ -24,6 +24,13 @@ const sourcePaths = [
   'src/orchestration/session-handoff.ts',
   'src/runtime-kernel.ts',
 ];
+export const syntheticFixtureSourcePaths = [
+  ...new Set([
+    ...sourcePaths,
+    'bin/cli-metadata.ts',
+    ...coverageToolInputs.filter((file) => /^(?:src|bin)\/.+\.ts$/u.test(file)),
+  ]),
+].sort();
 const bootstrapPaths = [
   'tooling/bun-coverage-preload.ts',
   'tooling/bun-coverage-evidence.ts',

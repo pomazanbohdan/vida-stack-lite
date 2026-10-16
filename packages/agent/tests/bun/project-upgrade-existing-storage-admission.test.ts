@@ -167,6 +167,105 @@ function trackedTest(name: string, body: () => Promise<void>): void {
 }
 
 describe('native existing-storage admission boundary', () => {
+  for (const checkpointFault of [
+    { label: 'null checkpoint result', result: null },
+    { label: 'busy checkpoint result', result: { busy: 1, log: 0, checkpointed: 0 } },
+    { label: 'incomplete checkpoint result', result: { busy: 0, log: 2, checkpointed: 1 } },
+  ] as const) {
+    trackedTest(`denies a ${checkpointFault.label} after observing the real healthy Host checkpoint`, async () => {
+      const fixture = freshFixture();
+      const receipt = fixture.receipt;
+      const originalQuery = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+      const healthyResults: Array<{ busy: bigint; log: bigint; checkpointed: bigint }> = [];
+      let targetedCheckpointCount = 0;
+      let closeCount = 0;
+      let mergeCount = 0;
+      let caught: unknown;
+      const observedQuery = function (this: Database, sql: string) {
+        const query = Reflect.apply(originalQuery, this, [sql]);
+        if (
+          sql.trim().toLowerCase() !== 'pragma wal_checkpoint(truncate)' ||
+          this.filename !== path.join(fixture.root, hostRelative)
+        )
+          return query;
+
+        targetedCheckpointCount++;
+        return new Proxy(query, {
+          get(target, property, receiver) {
+            const value = Reflect.get(target, property, receiver) as unknown;
+            if (property !== 'get' || typeof value !== 'function') return value;
+            return function (this: unknown, ...args: unknown[]) {
+              const row = Reflect.apply(value, target, args) as {
+                busy: number | bigint;
+                log: number | bigint;
+                checkpointed: number | bigint;
+              } | null;
+              if (row === null) throw new Error('Real Host checkpoint returned no row.');
+              const observed = {
+                busy: BigInt(row.busy),
+                log: BigInt(row.log),
+                checkpointed: BigInt(row.checkpointed),
+              };
+              healthyResults.push(observed);
+              if (observed.busy !== 0n || observed.checkpointed < observed.log)
+                throw new Error('Real Host checkpoint was not healthy before fault injection.');
+              return checkpointFault.result;
+            };
+          },
+        });
+      } as unknown as typeof Database.prototype.query;
+
+      Database.prototype.query = observedQuery;
+      try {
+        try {
+          await withExistingStorageMergeCapability({
+            repositoryRoot: fixture.root,
+            workspaceId,
+            operationId: binding.operation_id,
+            planDigest: '9'.repeat(64),
+            expectedFenceBinding: binding,
+            receipt,
+            hostRelative,
+            mastraRelative,
+            closeHostOwner: () => {
+              closeCount++;
+              closeHostOwner(fixture);
+            },
+            operation: async () => {
+              mergeCount++;
+            },
+          });
+        } catch (error) {
+          caught = error;
+        }
+      } finally {
+        Database.prototype.query = originalQuery;
+      }
+
+      expect(caught).toBeInstanceOf(Error);
+      expect(caught).toHaveProperty(
+        'message',
+        'VIDA existing storage admission: source WAL checkpoint did not complete',
+      );
+      expect(healthyResults).toHaveLength(1);
+      expect(targetedCheckpointCount).toBe(1);
+      expect(closeCount).toBe(1);
+      expect(mergeCount).toBe(0);
+
+      const persistedHost = openHostStateDatabase(fixture.root, hostRelative, workspaceId);
+      registerDatabase(persistedHost, fixture.root);
+      let inspectionFailure: { error: unknown } | undefined;
+      try {
+        expect(new HostStateStore(persistedHost, workspaceId).readMaintenanceFence()).toEqual(receipt.fence);
+      } catch (error) {
+        inspectionFailure = { error };
+      }
+      completeOwnedCleanup([() => closeOwnedDatabase(persistedHost)], inspectionFailure);
+      if (inspectionFailure) throw inspectionFailure.error;
+      await releaseFence(fixture.root, receipt);
+    });
+  }
+
   trackedTest('mints a callback-scoped capability from exact fresh Host receipt and closed source files', async () => {
     const fixture = freshFixture();
     const receipt = fixture.receipt;

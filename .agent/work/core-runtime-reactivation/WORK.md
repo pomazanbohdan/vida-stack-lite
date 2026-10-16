@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `46a66c9`. Runtime initialization has exact coverage plus same-run frozen CRAP; storage admission has exact coverage, with its scope pin/mutation still pending. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `916fa8a`. Runtime initialization and storage admission have exact coverage plus same-run frozen CRAP. Existing-storage image has exact coverage; its reviewed scope pin and numeric CRAP proof follow below. Their mutation closures remain open. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,59 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Coverage receipt reuse and fixture import closure
+
+Fresh admission run `e73567e4-3d4a-4319-8f9b-754b749e4430` at916fa8a passes
+10/0tests,105assertions in6657ms; exact F18/18,L100/100,S103/103,B16/16,
+CC/entryCRAP5. Same-run frozen v3 `scoped-crap-selected-k0tqZK` passes in678ms
+against immutable d6cab7c with unchanged prospective10/10 caps. Image run
+`dc9e9914-92e1-4e3d-8870-ad9cea8d65d2` passes27/0,181assertions in4817ms;
+exact F52/52,L206/206,S230/230,B52/52,CC/entryCRAP7. Both owners terminate with
+complete captures/closed groups/same boot. Coverage operations stay BLOCKED.
+Their imported projection records15/45 exact coverage,13/45 same-run frozen
+pairs and6/45 local triples. No mutation maximum is inferred.
+
+Blind v87 and Root's `storage-image-review-inspection-20261016.json` reconcile
+the image's52 roles as wholly new Source. The original b549951 path is absent;
+the existing partial's exact ID set and Source digest match the validated capture.
+No original ceiling is inherited, prospective10/10 rows and global counts stay
+unchanged, and no new AST/hash/inventory pass is added. The scope pin follows its
+immutable review commit; global correspondence remains partial/non-executable.
+
+Blind lanes v88-v92 inspect independent capture, projection, assurance, CLI and
+mutation scopes. Only the concrete capture preparation optimization is adopted:
+serial receipt validation now prepares manifest identity JSON, preload binding
+and the loaded-input Map once per run. Receipt-side comparisons, duplicate/path
+checks, category digests and physical-alias guards stay intact. There is no
+cross-run cache. Blind v94 finds no blocking issue. Mutation invocation hashes
+and whole-image drift checks are retained; the bounded review found no safe
+small removal. Assurance/CLI proposals remain unverified repair candidates.
+
+Affected check `R1KSA7` records71/14 because actual runner fixtures omitted the
+new contour projection import closure and synthetic expected Source omitted a
+declared bin/tool overlap. The shared fixture now awaits the existing bounded
+runtime collector over declared tooling/bin seeds, replacing the manual five-path
+closure. A subsequent96/3 check `rOYnw8` and2/1 check `mTckxr` expose the skipped
+computed bin seed and a configured-context fixture outside the admitted repository
+layout. Both are corrected. `TiEbLy` then passes the real producer/consumer case,
+1/0tests,110assertions in3976ms. The fixture now has a real packages/agent layout
+and the declared repository context files; synthetic data remains untrusted.
+Final affected `DUhsQD` passes99/0tests,539assertions across6files in24992ms.
+Both have complete captures/closed groups/same boot. Strict505/TS-only506 and
+Oxlint pass. Blind v95 reviews the shared capture/awaiting contract.
+
+Native diagnostic `9d924d84-b670-402c-8e71-ca671eb59239` at916fa8a terminates
+in11716ms, complete captures/closed groups/same boot, with a passing10-case
+baseline. Its first of227 generated mutants survives (local85, checkpoint denial
+message becomes empty);226 remain unattempted. This is diagnostic-only and not a
+score. Isolated writer v93 adds three checkpoint dependency-fault controls which
+first execute/observe the exact healthy native Host PRAGMA, then substitute null,
+busy or incomplete result views. They assert the full denial message, zero merge,
+one exact owner close and unchanged persisted held fence, restore the prototype
+and release through the trusted owner. Blind v96 finds no actionable issue.
+Real busy effects and synthetic Host authority are not claimed. Source remains
+unchanged; a fresh native diagnostic must establish the new assertions' kill.
 
 ### Exact coverage and isolated storage-image error cases
 
@@ -50,7 +103,7 @@ in2950ms, complete captures/closed scopes/same boot; strict505/TS-only506/Oxlint
 Blind v86 finds no concrete regression. No whole extra test file or duplicate fixture
 is added. Fresh image coverage is pending publication; mutation remains independent.
 
-The reviewed packet commits asd6cab7c after its normal strict hook. The following
+The reviewed packet commits as d6cab7c after its normal strict hook. The following
 adapter pin names exactly that immutable review and admission contour. Publish
 both dependent commits in one push to avoid duplicate automatic CI formation;
 neither hook is bypassed. Fresh admission coverage and its same-run v3 proof must

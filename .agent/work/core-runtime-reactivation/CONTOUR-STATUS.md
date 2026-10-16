@@ -4,8 +4,8 @@
 
 Derived, non-gating view of owner-issued reports. WORK remains the decision owner. Values are recorded observations, not a new acceptance authority.
 
-Historical contours with exact F/L/S/B coverage: **14/45**.
-Historical same-coverage-run coverage + scoped frozen CRAP pairs: **12/45**.
+Historical contours with exact F/L/S/B coverage: **15/45**.
+Historical same-coverage-run coverage + scoped frozen CRAP pairs: **13/45**.
 Historical complete coverage + assertion-confirmed mutation pair closures: **6/45**; static contours: **1**.
 Separate same-coverage-run local triples with scoped frozen CRAP: **6/45**.
 Executable contours without a recorded coverage + mutation pair: **39**.
@@ -55,8 +55,8 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | bun-project-configuration-lifecycle | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-governance-and-public-contracts | 94/106 · 329/362 · 355/404 · 182/249 | 32 / 32 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-project-upgrade-lifecycle | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
-| bun-project-upgrade-storage-admission | 18/18 · 100/100 · 103/103 · 16/16 | 5 / 5 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
-| bun-project-upgrade-existing-storage-image | 51/52 · 200/206 · 217/230 · 46/52 | 7 / 7 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
+| bun-project-upgrade-storage-admission | 18/18 · 100/100 · 103/103 · 16/16 | 5 / 5 | unknown | BLOCKED | open / unknown | 5 / 5 | open / unknown |
+| bun-project-upgrade-existing-storage-image | 52/52 · 206/206 · 230/230 · 52/52 | 7 / 7 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-orchestration-recovery-contracts | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-cli-release-and-installation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
 | bun-controller-observation | unknown | unknown | unknown | FAIL | open / unknown | unknown | open / unknown |
@@ -959,6 +959,9 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage | 90531e61-d302-46ee-aae0-a61c5f79f51b | 982dda4b379df73dbc43f2eea0977c4eb3479b58 | 2026-10-16T22:15:05.282Z | focused-diagnostic; owner accepted locally; selection bound | 17/18 · 99/100 · 102/103 · 16/16 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/90531e61-d302-46ee-aae0-a61c5f79f51b.focused-coverage.json |
 | coverage-outcome | 4db0fb61-296f-4781-8290-f9ae36740a06 | 46a66c97eb99141fa71d70a1543f2713cd8691c5 | 2026-10-16T22:24:36.656Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/4db0fb61-296f-4781-8290-f9ae36740a06.json |
 | coverage | 4db0fb61-296f-4781-8290-f9ae36740a06 | 46a66c97eb99141fa71d70a1543f2713cd8691c5 | 2026-10-16T22:24:36.656Z | focused-diagnostic; owner accepted locally; selection bound | 18/18 · 100/100 · 103/103 · 16/16 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/4db0fb61-296f-4781-8290-f9ae36740a06.focused-coverage.json |
+| coverage-outcome | e73567e4-3d4a-4319-8f9b-754b749e4430 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:34:15.770Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/e73567e4-3d4a-4319-8f9b-754b749e4430.json |
+| coverage | e73567e4-3d4a-4319-8f9b-754b749e4430 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:34:15.770Z | focused-diagnostic; owner accepted locally; selection bound | 18/18 · 100/100 · 103/103 · 16/16 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/e73567e4-3d4a-4319-8f9b-754b749e4430.focused-coverage.json |
+| frozen-crap | e73567e4-3d4a-4319-8f9b-754b749e4430 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:34:32.839Z | scoped-proof-pass; owner accepted locally; selection bound | 5 / 5 (scoped proof; owner measured) | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/e73567e4-3d4a-4319-8f9b-754b749e4430.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
@@ -976,6 +979,8 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | aaefc92f-9779-4143-8e71-c9775fc04049 | not-captured | 2026-10-16T07:11:54.959Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/vida-stack-lite/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/aaefc92f-9779-4143-8e71-c9775fc04049.json |
 | coverage-outcome | 0842fd85-d276-4ab8-ab81-2227784f6cb0 | 982dda4b379df73dbc43f2eea0977c4eb3479b58 | 2026-10-16T22:16:19.298Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/0842fd85-d276-4ab8-ab81-2227784f6cb0.json |
 | coverage | 0842fd85-d276-4ab8-ab81-2227784f6cb0 | 982dda4b379df73dbc43f2eea0977c4eb3479b58 | 2026-10-16T22:16:19.298Z | focused-diagnostic; owner accepted locally; selection bound | 51/52 · 200/206 · 217/230 · 46/52 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/0842fd85-d276-4ab8-ab81-2227784f6cb0.focused-coverage.json |
+| coverage-outcome | dc9e9914-92e1-4e3d-8870-ad9cea8d65d2 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:31:34.612Z | BLOCKED; unqualified; selection unbound | no metric evidence | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/dc9e9914-92e1-4e3d-8870-ad9cea8d65d2.json |
+| coverage | dc9e9914-92e1-4e3d-8870-ad9cea8d65d2 | 916fa8aeee2b420dace404b085c65535b06fb1ed | 2026-10-16T22:31:34.612Z | focused-diagnostic; owner accepted locally; selection bound | 52/52 · 206/206 · 230/230 · 52/52 | /workspace/attachments/core-numeric-bbb777e-20261016/packages/agent/coverage/bun-unified/diagnostics/dc9e9914-92e1-4e3d-8870-ad9cea8d65d2.focused-coverage.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 
