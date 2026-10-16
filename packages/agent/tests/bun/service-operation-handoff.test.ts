@@ -1,5 +1,6 @@
 import { expect, spyOn, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
+import * as storageAdmission from '../../src/config/storage-read-admission.js';
 import { copyFileSync, renameSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import {
@@ -17,6 +18,7 @@ import {
 import { expectAsyncReturned, expectRejection, expectReturned, rejectionReason } from '../helpers/expect-rejection.js';
 import { retryPendingWorkspaceDatabaseCloses } from '../../src/config/workspace-database-raw.js';
 import { openCustodyFixture, type ServiceCustodyFixture } from '../helpers/service-custody-fixture.js';
+import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
 
 const requestDigest = 'b'.repeat(64);
 const retargetDigest = 'd'.repeat(64);
@@ -26,6 +28,96 @@ const handoffDigest = '9'.repeat(64);
 const operationId = 'handoff-operation';
 const launchPid = 7312;
 type HandoffVerifier = Parameters<typeof handoffServiceOperationCustody>[7];
+
+test('reconciliation rechecks a gate replaced immediately before its operation callback', async () => {
+  const fixture = openCustodyFixture('reconcile-entry-gate-replacement-');
+  let restoreAdmission: (() => void) | undefined;
+  let reader: Database | undefined;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        evidenceDigest,
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    const nativeAdmission = storageAdmission.withExclusiveServiceOperationAdmission;
+    let interleavings = 0;
+    let verifierCalls = 0;
+    const interleave: typeof nativeAdmission = (root, workspaceId, verify, operation) =>
+      nativeAdmission(root, workspaceId, verify, async (proof) => {
+        // Keep the real gate, held-owner verification and source close, then
+        // interleave a real namespace replacement at the callback boundary.
+        replaceAdmissionGate(fixture);
+        interleavings++;
+        return operation(proof);
+      });
+    const admission = spyOn(storageAdmission, 'withExclusiveServiceOperationAdmission').mockImplementation(interleave);
+    restoreAdmission = () => admission.mockRestore();
+    const failure = await rejectionReason(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest };
+        },
+      ),
+    );
+    restoreAdmission();
+    restoreAdmission = undefined;
+    expect(interleavings).toBe(1);
+    expect(verifierCalls).toBe(0);
+    const cause: unknown = failure instanceof AggregateError ? failure.errors[0] : failure;
+    expect(cause).toBeInstanceOf(Error);
+    if (!(cause instanceof Error)) throw new Error('Expected the real gate identity denial.');
+    expect(cause.message).toBe('Project storage admission: gate file or parent was replaced');
+    const reopened = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    reader = reopened;
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+    ).toEqual(before);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          restoreAdmission?.();
+          return undefined;
+        },
+        () => {
+          if (reader) closeServiceOperationDatabase(reader);
+          return undefined;
+        },
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          console.error('SERVICE_CUSTODY_ENTRY_GATE_REPLACEMENT_FIXTURE_RETAINED', fixture.root);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
 
 test('terminal pack custody transfers to one prepared release image with exact lineage and no owner token', async () => {
   const fixture = openCustodyFixture('handoff-positive-');
@@ -378,6 +470,8 @@ for (const operation of ['handoff', 'reconciliation'] as const) {
 }
 
 const invalidPersistedHandoffCases = [
+  ['retargeted owner kind', 'owner_kind', 'release-pack-worker'],
+  ['predecessor owner kind', 'handoff_from_kind', 'release-worker'],
   ['handoff digest', 'handoff_digest', 'invalid'],
   ['absent handoff digest', 'handoff_digest', null],
   ['predecessor request digest', 'handoff_from_request_digest', 'invalid'],

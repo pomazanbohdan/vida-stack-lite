@@ -11,7 +11,7 @@ import {
   repositoryRootForPackage,
   sha256,
 } from './bun-coverage-evidence.ts';
-import { requireCampaignStorage } from './contour-campaign.ts';
+import { CampaignResourceError, requireCampaignStorage } from './contour-campaign.ts';
 import { generateMutationImage } from './mutation-generation.ts';
 import { confirmRunnerReceipt, selectMutationPartitions } from './mutation-gate.ts';
 import { mutationPartitionSourceBinding } from './mutation-command-runner.ts';
@@ -27,6 +27,60 @@ import { mutationLimits } from './mutation-limits.ts';
 import { planMutationBatches, writeMutationMapArtifact, type MutationMapBinding } from './mutation-map.ts';
 import { mutationPartitions, mutationPartitionSources, type MutationPartition } from './mutation-partitions.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
+
+type NativeBatchRow = {
+  identity: string;
+  local_id: string;
+  status: 'killed' | 'survived' | 'unknown';
+  reason?: string;
+};
+
+/** Preserve observed rows when a later launch is denied, interrupted or budget-spent. */
+export async function collectNativeMutationBatch(
+  batch: { identities: readonly string[]; local_ids: readonly string[] },
+  remaining: () => number,
+  invoke: (id: string, remaining: number) => Promise<{ status: 'passed' | 'killed' | 'unknown'; reason?: string }>,
+  progress: (row: NativeBatchRow, completed: number) => void,
+) {
+  if (batch.identities.length !== batch.local_ids.length) throw new Error('Native batch identity pairing differs.');
+  const results: NativeBatchRow[] = [];
+  let budgetExhausted = false;
+  let resourceBlocked: { observed_path: string; available_bytes: string | null } | undefined;
+  let failure: { error: unknown } | undefined;
+  try {
+    for (const [offset, id] of batch.local_ids.entries()) {
+      let allowance: number;
+      try {
+        allowance = remaining();
+      } catch {
+        budgetExhausted = true;
+        break;
+      }
+      let observed: Awaited<ReturnType<typeof invoke>>;
+      try {
+        observed = await invoke(id, allowance);
+      } catch (error) {
+        if (error instanceof CampaignResourceError) {
+          resourceBlocked = { observed_path: error.observedPath, available_bytes: error.availableBytes };
+          break;
+        }
+        throw error;
+      }
+      const row: NativeBatchRow = {
+        identity: batch.identities[offset]!,
+        local_id: id,
+        status: observed.status === 'passed' ? 'survived' : observed.status,
+        ...(observed.status === 'unknown' ? { reason: observed.reason } : {}),
+      };
+      results.push(row);
+      progress(row, results.length);
+      if (row.status === 'unknown') break;
+    }
+  } catch (error) {
+    failure = { error };
+  }
+  return { results, budgetExhausted, resourceBlocked, failure };
+}
 
 export function selectMutationBatchPilot(args: readonly string[], partitions: MutationPartition[]) {
   const { values } = parseArgs({
@@ -240,58 +294,61 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const baseline = await invoke(null, firstBudget.remaining(mutationLimits.dryRunEnvelopeMs));
     record('baseline.json', baseline);
     if (baseline.status !== 'passed') throw new Error('Native mutation baseline is not a complete passing receipt.');
-    const results: {
-      identity: string;
-      local_id: string;
-      status: 'killed' | 'survived' | 'unknown';
-      reason?: string;
-    }[] = [];
+    const results: NativeBatchRow[] = [];
+    let resourceBlocked: { observed_path: string; available_bytes: string | null } | undefined;
     for (const [index, batch] of plan.batches.slice(0, maxBatches).entries()) {
       const started = index === 0 ? pilotStarted : performance.now();
       const budget = index === 0 ? firstBudget : executionBudget(mutationLimits.partitionMs, 0);
-      const current: typeof results = [];
-      let budgetExhausted = false;
-      for (const [offset, id] of batch.local_ids.entries()) {
-        let remaining: number;
-        try {
-          remaining = budget.remaining();
-        } catch {
-          budgetExhausted = true;
-          break;
-        }
-        const observed = await invoke(id, remaining, baseline.cases);
-        const row = {
-          identity: batch.identities[offset]!,
-          local_id: id,
-          status: observed.status === 'passed' ? ('survived' as const) : observed.status,
-          ...(observed.status === 'unknown' ? { reason: observed.reason } : {}),
-        };
-        current.push(row);
-        results.push(row);
-        console.log(
-          JSON.stringify({
-            schema: 'MutationBatchPilotProgress/v1',
-            batch: index,
-            completed: current.length,
-            planned: batch.identities.length,
-            status: row.status,
-          }),
+      const observed = await collectNativeMutationBatch(
+        batch,
+        () => budget.remaining(),
+        (id, remaining) => invoke(id, remaining, baseline.cases),
+        (row, completed) => {
+          console.log(
+            JSON.stringify({
+              schema: 'MutationBatchPilotProgress/v1',
+              batch: index,
+              completed,
+              planned: batch.identities.length,
+              status: row.status,
+            }),
+          );
+        },
+      );
+      const current = observed.results;
+      results.push(...current);
+      resourceBlocked = observed.resourceBlocked;
+      let failure = observed.failure;
+      try {
+        if (failure) throw failure.error;
+        for (const file of image.files)
+          if (sha256(await readFile(path.join(sandbox, file.path))) !== file.sha256)
+            throw new Error('Native instrumented image drifted.');
+      } catch (error) {
+        failure = { error };
+        throw error;
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              record(`batch-${index}.json`, {
+                schema: 'MutationBatchPilotResult/v2',
+                binding,
+                universe_sha256: plan.universe_sha256,
+                index,
+                elapsed_ms: performance.now() - started,
+                complete: current.length === batch.identities.length && failure === undefined,
+                interrupted: failure !== undefined,
+                budget_exhausted: observed.budgetExhausted,
+                resource_blocked: resourceBlocked ?? null,
+                results: current,
+              });
+              return undefined;
+            },
+          ],
+          failure,
         );
-        if (row.status === 'unknown') break;
       }
-      for (const file of image.files)
-        if (sha256(await readFile(path.join(sandbox, file.path))) !== file.sha256)
-          throw new Error('Native instrumented image drifted.');
-      record(`batch-${index}.json`, {
-        schema: 'MutationBatchPilotResult/v1',
-        binding,
-        universe_sha256: plan.universe_sha256,
-        index,
-        elapsed_ms: performance.now() - started,
-        complete: current.length === batch.identities.length,
-        budget_exhausted: budgetExhausted,
-        results: current,
-      });
       if (current.length !== batch.identities.length || current.some((row) => row.status === 'unknown')) break;
     }
     const current = await readQualityInputs(root, Object.keys(inputs.input_bytes));
@@ -308,12 +365,13 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       unattempted: image.universe.mutants.length - results.length,
     };
     const summary = {
-      schema: 'MutationBatchPilotSummary/v1',
+      schema: 'MutationBatchPilotSummary/v2',
       scope: 'diagnostic-only',
       full_contour_qualification: false,
       binding,
       universe_sha256: plan.universe_sha256,
       baseline_cases: baseline.cases.length,
+      resource_blocked: resourceBlocked ?? null,
       totals,
     };
     record('terminal-summary.json', summary);

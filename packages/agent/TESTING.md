@@ -1023,6 +1023,14 @@ Native receipts still require exact baseline census, process/output closure,
 input/executable/image bindings and body assertion proof. Errors, timeouts and
 unattempted IDs remain separate. Its generated universe, image and diagnostic
 batch summaries are retained under one new `.tmp/mutation-batch-*` operation.
+V2 batch/terminal diagnostics retain a structured storage denial and completed
+observations. A storage denial before a launch leaves that ID unattempted; it
+does not create an UNKNOWN or Killed observation. Parent input/image/executable
+readback still runs before the resource-incomplete terminal summary. Other
+interruptions retain partial rows with `interrupted: true`; record failures keep
+the primary cause through the shared cleanup accumulator. Neither an interrupted
+record nor live progress establishes complete parent qualification. Preserve old
+incomplete artifacts; do not reconstruct them as newly admitted results.
 No old operation is resumed. These schemas are deliberately not contour-progress
 admission: until the complete execution/custody pilot and parent join qualify,
 the ordinary mutation gate and global quality command remain unchanged.

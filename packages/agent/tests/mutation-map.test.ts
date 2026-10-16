@@ -27,8 +27,13 @@ import {
 } from '../tooling/mutation-per-test-evidence.ts';
 import type { MutationPerTestCapture } from '../tooling/mutation-assertion-context.ts';
 import { generateMutationImage } from '../tooling/mutation-generation.ts';
-import { nativeMutationBatchCommand, selectMutationBatchPilot } from '../tooling/mutation-batch-pilot.ts';
+import {
+  collectNativeMutationBatch,
+  nativeMutationBatchCommand,
+  selectMutationBatchPilot,
+} from '../tooling/mutation-batch-pilot.ts';
 import { executeMutationCommand } from '../tooling/mutation-evidence.ts';
+import { CampaignResourceError } from '../tooling/contour-campaign.ts';
 
 const root = path.resolve('/mutation-map-fixture');
 const sources = [
@@ -141,6 +146,124 @@ test('native batch pilot keeps exact declared contours and finite per-batch boun
     ['--contour', 'one', '--tests', 'tests/foreign.ts'],
   ])
     expect(() => selectMutationBatchPilot(args, declared)).toThrow();
+});
+
+// Controlled collector observations qualify bookkeeping only, never mutation kills.
+test('native batch keeps its first observation when storage denies the next launch', async () => {
+  const calls: string[] = [];
+  const progress: number[] = [];
+  const result = await collectNativeMutationBatch(
+    { identities: ['a', 'b'], local_ids: ['1', '2'] },
+    () => 1000,
+    async (id) => {
+      calls.push(id);
+      if (id === '2') throw new CampaignResourceError('/owned', '2147033088');
+      return { status: 'killed' };
+    },
+    (_row, completed) => {
+      progress.push(completed);
+    },
+  );
+  expect(calls).toEqual(['1', '2']);
+  expect(progress).toEqual([1]);
+  expect(result.results).toEqual([{ identity: 'a', local_id: '1', status: 'killed' }]);
+  expect(result.resourceBlocked).toEqual({ observed_path: '/owned', available_bytes: '2147033088' });
+  expect(result.budgetExhausted).toBe(false);
+  expect(result.failure).toBeUndefined();
+});
+
+test('native batch does not launch an unattempted ID after its budget is spent', async () => {
+  let checks = 0;
+  const calls: string[] = [];
+  const result = await collectNativeMutationBatch(
+    { identities: ['a', 'b'], local_ids: ['1', '2'] },
+    () => {
+      if (++checks === 2) throw new Error('budget spent');
+      return 1000;
+    },
+    async (id) => {
+      calls.push(id);
+      return { status: 'passed' };
+    },
+    () => undefined,
+  );
+  expect(calls).toEqual(['1']);
+  expect(result.results).toEqual([{ identity: 'a', local_id: '1', status: 'survived' }]);
+  expect(result.budgetExhausted).toBe(true);
+  expect(result.resourceBlocked).toBeUndefined();
+  expect(result.failure).toBeUndefined();
+});
+
+test('native batch preserves thrown undefined separately from an unattempted ID', async () => {
+  const result = await collectNativeMutationBatch(
+    { identities: ['a', 'b'], local_ids: ['1', '2'] },
+    () => 1000,
+    async (id) => {
+      if (id === '2') throw undefined;
+      return { status: 'passed' };
+    },
+    () => undefined,
+  );
+  expect(result.results).toEqual([{ identity: 'a', local_id: '1', status: 'survived' }]);
+  expect(result.failure).toEqual({ error: undefined });
+  expect(result.resourceBlocked).toBeUndefined();
+  expect(result.budgetExhausted).toBe(false);
+});
+
+test('native batch retains its observation when progress publication itself fails', async () => {
+  const error = new Error('progress capture failed');
+  let calls = 0;
+  const result = await collectNativeMutationBatch(
+    { identities: ['a', 'b'], local_ids: ['1', '2'] },
+    () => 1000,
+    async () => {
+      calls++;
+      return { status: 'killed' };
+    },
+    () => {
+      throw error;
+    },
+  );
+  expect(calls).toBe(1);
+  expect(result.results).toEqual([{ identity: 'a', local_id: '1', status: 'killed' }]);
+  expect(result.failure?.error).toBe(error);
+});
+
+test('native batch stops on UNKNOWN without classifying later IDs', async () => {
+  const calls: string[] = [];
+  const result = await collectNativeMutationBatch(
+    { identities: ['a', 'b', 'c'], local_ids: ['1', '2', '3'] },
+    () => 1000,
+    async (id) => {
+      calls.push(id);
+      return id === '2' ? { status: 'unknown', reason: 'runtime error' } : { status: 'passed' };
+    },
+    () => undefined,
+  );
+  expect(calls).toEqual(['1', '2']);
+  expect(result.results).toEqual([
+    { identity: 'a', local_id: '1', status: 'survived' },
+    { identity: 'b', local_id: '2', status: 'unknown', reason: 'runtime error' },
+  ]);
+  expect(result.failure).toBeUndefined();
+  expect(result.budgetExhausted).toBe(false);
+});
+
+test('native batch rejects a broken identity pairing before invoking the runner', async () => {
+  let calls = 0;
+  await expectRejection(
+    collectNativeMutationBatch(
+      { identities: ['a'], local_ids: ['1', '2'] },
+      () => 1000,
+      async () => {
+        calls++;
+        return { status: 'passed' };
+      },
+      () => undefined,
+    ),
+    'identity pairing',
+  );
+  expect(calls).toBe(0);
 });
 
 test('native mutation sandbox permits nested Bun spawn and private scratch while Source stays read-only', async () => {

@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `f7e8c3f20ba82be67160f95268bf578faa182fbd`. Its32-ID native mutation pilot is terminal with31assertion-confirmed kills,1survivor and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `5ef19ac9b28361d4311bce5833f5bd3a189f2565`. Its64-ID pilot stopped before ID51at the unchanged2GiBstorage floor. Its partial child observations lack final parent readback and are not admitted. The last fully bracketed32-ID diagnostic is f7e8c3f,31Killed/1Survived; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -14,7 +14,40 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
-Latest native ID-batch diagnostic binds publishedf7e8c3f and official SDK
+Latest64-ID diagnostic binds published5ef19ac and official SDK
+run38919637309/attempt1/artifact12054470853, ZIP digest
+`sha256:6596f4d668d5e2841a20150396e98215578966209e0ec84e10707b76666388d2`.
+Outer `native-mutation-pilot-5ef19ac-5NDjYc` closes in241820.968494ms with complete
+captures, closed group and unchanged boot. Inner evidence remains at
+`packages/agent/.tmp/mutation-batch-4ba85fe2-b1b4-44cf-8006-eb961c19aa2f-smRoAL/`.
+The2GiBfloor denied launch51after observing2,147,033,088available bytes. Raw
+progress contains50child classifications,48Killed/2Survived, including32initial
+Killed. Final parent readback and the batch/terminal summary were not reached:
+these counts are unqualified, not a current score, closure or imported projection.
+Original terminal error and raw observations remain unchanged; no attempt resumes.
+
+This exposed a tooling defect: a clean resource denial after observations lost
+their structured partial summary. The collector now distinguishes pre-launch
+resource denial, spent budget, UNKNOWN and exceptional interruption. V2 diagnostics
+retain observed rows, structured resource fields and unattempted IDs, then verify
+parent inputs/image/executable before a resource-incomplete summary. Exceptional
+paths retain partial rows in finally and preserve body/record errors through the
+existing accumulator, including thrown undefined. Unit observations qualify
+bookkeeping only, never numerical mutation evidence. Ordinary gate admission stays
+unchanged; native after-change interruption qualification still needs capacity.
+
+Survivors local266and618 are addressed by persisted current/predecessor owner-kind
+denials and a real gate replacement immediately before the operation callback.
+The latter keeps native held-owner verification and source close, proves the
+receipt verifier was never called, and checks the unchanged row. The apparently
+repeated initial assertActive is retained: this control establishes its ownership
+boundary. No ownership guard is removed to improve a score. Numeric confirmation
+of both fixes remains pending. Focused gate control `23oHWG` passes1/0,6assertions.
+Final affected owner `uAMXU4` passes212/0tests,1184assertions across7files in4.18s,
+with complete captures/closed group/same boot. Strict tooling188files and
+tests467files pass; scoped type-aware lint has zero diagnostics.
+
+Last fully bracketed32-ID diagnostic binds publishedf7e8c3f and official SDK
 run38918679931/attempt1/artifact12053127723, ZIP digest
 `sha256:96b312f674f804c64d30d18bb20ac7f58bf05448629b755b09b63aae1f7a9e37`.
 Outer `native-mutation-pilot-f7e8c3f-Y6eiVH` closes in145684.53728ms with
@@ -24,14 +57,14 @@ Baseline90cases passes;700generated,32attempted,31assertion-confirmed Killed,
 1Survived,0UNKNOWN,668unattempted. This is a bounded diagnostic, not a contour score
 or complete native parent admission. No new full local triple is claimed.
 
-The survivor is local399: removing readiness from PID recording, not its separate
-DB-binding guard. The latest correction changes a real schema after admission,
+Its survivor was local399: removing readiness from PID recording, not its separate
+DB-binding guard. The published correction changes a real schema after admission,
 requires the exact readiness denial with no row/schema mutation, restores the
 schema, then records the PID successfully. Control `95ae4Q` passes1/0test,
 7assertions with complete captures/closed group/same boot. Strict tests467files
 passes; scoped type-aware lint has zero diagnostics. The previous four-file
-owner `F9NuIV` passes112/0tests,707assertions. Source remains unchanged so the
-next32-ID run checks the same canonical selection with new test/tool/SDK binding.
+owner `F9NuIV` passes112/0tests,707assertions. Its child classification is Killed in
+the incomplete64-ID run, which does not supply final parent admission.
 
 Implemented correction scope:
 - Malformed request/evidence digest matrices, exact PID limits, success-return
@@ -58,8 +91,10 @@ budgets include setup/baseline in the first900s batch; outer ownership is bounde
 Generated plans carry no invented engine observations. Partial, survived,
 unattempted and UNKNOWN remain distinct; the ordinary mutation gate is unchanged.
 
-Next: publish the checked readiness regression, prepare its exact SDK, repeat the
-same32IDs, then extend the bounded selection and remeasure coverage. Complete native
+Next: publish the checked interruption/ownership packet and prepare its exact SDK.
+Fresh numeric execution needs restored storage above2GiBplus snapshot/run growth;
+do not launch another known-insufficient producer or lower that floor. Then repeat
+the corrected bounded selection and remeasure coverage. Complete native
 parent join, all700mutants, reviewed frozen correspondence/new-function budgets,
 and same-run CRAP remain open. The private extracted predicate follows the existing
 new-function policy; retained ceilings cannot transfer or reset. One final-check
@@ -72,12 +107,16 @@ Capacity custody receipts remain at:
 - `/workspace/attachments/inactive-profile-core-sparse-retention-20261016.json`
 - `/workspace/attachments/bun-bootstrap-download-cache-retirement-20261016.json`
 - `/workspace/attachments/unused-bun-bootstrap-extraction-cache-retirement-20261016.json`
+- `/workspace/attachments/bun-package-cache-retirement-20261016.log`
 
 Inactive checkout edits are retained in permanent refs with exact working/index
 and untracked bytes. All2,130ignored profile paths keep their identities/sizes/
 modification times. Only unused bootstrap download/extraction cache was removed;
 the active Bun inode/digest, SDKs and failed/UNKNOWN fixtures remain. The2GiB
-producer floor is unchanged. Do not replay old UNKNOWN attempts or reuse their
+producer floor is unchanged. Git repack retains unreachable objects in a cruft
+pack and preserves permanent refs; the native package manager cleared only its
+download cache. These safe recoveries were consumed by the64-ID run. Further
+numeric capacity is an actual dependency GAP. Do not replay old UNKNOWN attempts or reuse their
 sandbox for a new execution.
 
 Detailed earlier correction/pilot facts and original failure locators remain in

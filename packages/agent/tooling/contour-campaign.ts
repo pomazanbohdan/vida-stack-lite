@@ -33,7 +33,7 @@ export function campaignStorageAdmitted(availableBytes: bigint): boolean {
   return availableBytes >= minimumScratchFreeBytes;
 }
 
-class CampaignResourceError extends Error {
+export class CampaignResourceError extends Error {
   constructor(
     readonly observedPath: string,
     readonly availableBytes: string | null,
