@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `f1c895f4e81aa683e430130a6bcbb553d6e91378`. Its focused coverage recheck is terminal; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `630ae8d9fdebdd557957c6f749e88d602e125872`. Its focused coverage recheck is terminal; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,30 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+Service cycle `fe7820d9-5176-4a8d-a517-22862ffce9c1` binds630ae8d and is
+terminal:74/0tests,439assertions; custody exact F52/52,L227/227,S234/234,B123/123
+and launch-capability F3/3,L7/7,S8/8,B16/16. Captures are complete, group closed,
+boot unchanged. Existing projection admission now has395attempts and12/45
+historical exact-coverage contours; complete local triples remain6/45. CRAP
+scope budgets and current mutation remain GAP, so the campaign exits1 despite
+its completed coverage lane. This is not whole-contour or global qualification.
+
+The public installed Stryker10 instrumenter pilot rejected the range/family
+planner: CallExpression batch5 generated6foreign identities when other mutators
+were excluded. Native generation filters depend on the other mutations in scope.
+Original evidence stays in
+`/workspace/attachments/mutation-batch-instrumenter-pilot-630ae8d-20261016.log`
+and its bounded diagnostic sibling. No production runner was switched.
+The helper now packs IDs from one full generation, with no range/exclusion
+configuration. Its streaming digest includes canonical/local-ID correspondence.
+Focused control `jgiCyA` passes after a genuine red control. Static public API
+pilot `/workspace/attachments/mutation-batch-native-id-pilot-20261016.json`
+generates1970Mastra mutants once and confirms all1970local/canonical pairs in
+16disjoint128-ID batches. This is static API membership evidence only, not tests,
+mutation Killed or a current runner admission. The next executable step is a
+bound shared instrumented image and existing Bun receipt/custody owner; retain
+the full argv,900s batch limit and fail-closed final parent reconciliation.
 
 Service cycle `d067eb5c-5c1c-45f0-b19b-3ce741e28524` is terminal onf1c895f:
 73/0tests,438assertions, custody F52/52,L226/226,S233/233,B123/124;
@@ -23,20 +47,10 @@ before safe-integer/positive checks, preserving rejection semantics and adding
 a fractional persisted revision control. No authorization or ownership guard
 is removed. CRAP budgets and mutation remain open.
 
-The existing mutation-map owner now has a planning-only bounded range translator.
-It keeps nested/overlapping same-mutator ranges together and binds every original
-canonical identity exactly once; oversized indivisible groups reject. Red controls
-`nfINAy` and `eoIIHU` demonstrate missing implementation and the
-ordinary canonical-node budget failure; the latter's exact receipt is in
-`/workspace/attachments/mutation-batch-large-red-20261016.log`.
-The correction streams sorted canonical identity digests and parent bindings,
-without widening public JSON budgets. Final focused owner `8APZZ4` passes146/0,
-589assertions with complete captures/closed group/same boot. Static research on
-the retained maps produces16service/23Mastra batches at count limit128; a64limit
-correctly rejects Mastra's indivisible106-mutant Regex node. These counts are
-planning diagnostics, not execution, throughput or accepted mutation results.
-The runner is not switched: current universe capture, child membership and
-parent admission still need qualification under TESTING's existing owners.
+The superseded range translator and its unit controls are retained in published
+630ae8d history. That implementation's mathematical membership checks did not
+establish actual generator compatibility; the public API pilot above rejected it.
+Keep its red/green and large-map failure receipts at their original paths.
 
 Focused cycle `b65d73f8-c303-48d7-90ab-ca8f37af145d` is terminal on62c1fca.
 Mastra passes97/0tests,2635assertions with exact F191/191,L642/642,S686/686,

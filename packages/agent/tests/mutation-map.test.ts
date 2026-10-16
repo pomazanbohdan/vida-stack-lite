@@ -73,7 +73,7 @@ function result(item = plan()): MutantResult {
   };
 }
 
-test('mutation batches keep spanning and nested nodes together and own every canonical identity once', () => {
+test('mutation batches own every generated identity once without changing generation ranges', () => {
   const items = [plan('0'), plan('1'), plan('2'), plan('3', 'src/two.ts')];
   items[0]!.mutant.location = { start: { line: 0, column: 0 }, end: { line: 8, column: 0 } };
   items[1]!.mutant.location = { start: { line: 1, column: 0 }, end: { line: 2, column: 0 } };
@@ -82,14 +82,14 @@ test('mutation batches keep spanning and nested nodes together and own every can
   const planned = planMutationBatches(root, binding, universe, 2);
   expect(planned.qualification).toBe('planning-only');
   expect(planned.batches.map((batch) => batch.identities.length)).toEqual([2, 2]);
-  expect(planned.batches[0]?.mutate).toEqual(['src/one.ts:1:0-9:0']);
+  expect(planned.batches.every((batch) => !('mutate' in batch) && !('excludedMutations' in batch))).toBe(true);
   expect(planned.batches.flatMap((batch) => batch.identities).sort()).toEqual(
     universe.mutants.map((m) => m.identity).sort(),
   );
   expect(
     planMutationBatches(root, binding, { ...universe, mutants: [...universe.mutants].reverse() }, 2).batches,
   ).toEqual(planned.batches);
-  expect(() => planMutationBatches(root, binding, universe, 1)).toThrow('indivisible');
+  expect(planMutationBatches(root, binding, universe, 1).batches).toHaveLength(4);
 });
 
 test('mutation batch planning rejects invalid limits and changed parent identities', () => {
@@ -102,16 +102,22 @@ test('mutation batch planning rejects invalid limits and changed parent identiti
   expect(() =>
     planMutationBatches(root, binding, { ...universe, mutants: [...universe.mutants, universe.mutants[0]] }, 2),
   ).toThrow('duplicate');
+  expect(() => planMutationBatches(root, binding, mutationPartitionMap(root, binding, []), 2)).toThrow('empty');
 });
 
-test('mutation batches separate mutator families at the same Source range', () => {
+test('mutation batches preserve local activation IDs alongside canonical identities', () => {
   const other = plan('1');
   other.mutant.mutatorName = 'BlockStatement';
   const universe = mutationPartitionMap(root, binding, [plan(), other]);
   const planned = planMutationBatches(root, binding, universe, 2);
-  expect(planned.batches).toHaveLength(2);
-  expect(planned.batches.map((batch) => batch.excludedMutations)).toEqual([['BooleanLiteral'], ['BlockStatement']]);
+  expect(planned.batches).toHaveLength(1);
+  expect(planned.batches[0]?.local_ids.slice().sort()).toEqual(['0', '1']);
+  for (const batch of planned.batches)
+    for (const [index, identity] of batch.identities.entries())
+      expect(universe.mutants.find((row) => row.identity === identity)?.local_id).toBe(batch.local_ids[index]);
   expect(planned.universe_sha256).toMatch(/^[a-f0-9]{64}$/u);
+  const renumbered = mutationPartitionMap(root, binding, [plan('999'), other]);
+  expect(planMutationBatches(root, binding, renumbered, 2).universe_sha256).not.toBe(planned.universe_sha256);
 });
 
 test('mutation batch universe binding stays bounded beyond the ordinary canonical node budget', () => {

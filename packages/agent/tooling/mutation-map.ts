@@ -224,75 +224,32 @@ export function validateMutationPartitionMap(
   return { mutants: localIds.size, localIds, sourceCounts };
 }
 
-/** Planning only: range batches cannot establish execution, assertions or a mutation score. */
+/** Plan IDs from one complete generation; never regenerate a subset with different mutator semantics. */
 export function planMutationBatches(root: string, binding: MutationMapBinding, value: unknown, limit: number) {
   if (!Number.isSafeInteger(limit) || limit < 1) throw new Error('Mutation batch limit must be a positive integer.');
   validateMutationPartitionMap(value, root, binding);
   const universe = value as ReturnType<typeof mutationPartitionMap>;
   if (!universe.mutants.length) throw new Error('Mutation batch universe is empty.');
-  const compareText = (left: string, right: string) => (left < right ? -1 : left > right ? 1 : 0);
-  const comparePosition = (left: Location['start'], right: Location['start']) =>
-    left.line - right.line || left.column - right.column;
-  const rows = [...universe.mutants].sort(
-    (left, right) =>
-      compareText(left.mutator, right.mutator) ||
-      compareText(left.source, right.source) ||
-      comparePosition(left.location.start, right.location.start) ||
-      comparePosition(right.location.end, left.location.end) ||
-      compareText(left.identity, right.identity),
+  const rows = [...universe.mutants].sort((left, right) =>
+    left.identity < right.identity ? -1 : left.identity > right.identity ? 1 : 0,
   );
-  type Group = { source: string; mutator: string; location: Location; identities: string[] };
-  const groups: Group[] = [];
-  for (const row of rows) {
-    // These bytes become public Stryker range syntax, never a glob or an exclusion.
-    if (!/^[A-Za-z][A-Za-z0-9]*$/u.test(row.mutator) || !/^src\/[A-Za-z0-9_./-]+\.ts$/u.test(row.source))
-      throw new Error('Mutation batch Source or mutator cannot be represented safely.');
-    const prior = groups.at(-1);
-    if (
-      prior &&
-      prior.source === row.source &&
-      prior.mutator === row.mutator &&
-      comparePosition(row.location.start, prior.location.end) <= 0
-    ) {
-      if (comparePosition(row.location.end, prior.location.end) > 0) prior.location.end = { ...row.location.end };
-      prior.identities.push(row.identity);
-    } else
-      groups.push({
-        source: row.source,
-        mutator: row.mutator,
-        location: structuredClone(row.location),
-        identities: [row.identity],
-      });
-  }
-  const mutators = [...new Set(rows.map((row) => row.mutator))];
-  const batches: { mutator: string; mutate: string[]; excludedMutations: string[]; identities: string[] }[] = [];
-  for (const group of groups) {
-    if (group.identities.length > limit)
-      throw new Error(
-        `Mutation batch has an indivisible ${group.mutator} range with ${group.identities.length} mutants.`,
-      );
-    let batch = batches.at(-1);
-    if (!batch || batch.mutator !== group.mutator || batch.identities.length + group.identities.length > limit) {
-      batch = {
-        mutator: group.mutator,
-        mutate: [],
-        excludedMutations: mutators.filter((name) => name !== group.mutator),
-        identities: [],
-      };
-      batches.push(batch);
-    }
-    const { start, end } = group.location;
-    // Map coordinates are one-based; Stryker range lines are one-based, columns zero-based.
-    batch.mutate.push(`${group.source}:${start.line}:${start.column - 1}-${end.line}:${end.column - 1}`);
-    batch.identities.push(...group.identities);
-  }
+  const batches: { identities: string[]; local_ids: string[] }[] = [];
   const universeHash = createHash('sha256')
-    .update('MutationBatchUniverse/v1\n')
+    .update('MutationBatchUniverse/v2\n')
     .update(canonicalJson(binding))
     .update('\n');
-  for (const identity of rows.map((row) => row.identity).sort()) universeHash.update(identity).update('\n');
+  for (const row of rows) {
+    universeHash.update(canonicalJson({ identity: row.identity, local_id: row.local_id })).update('\n');
+    let batch = batches.at(-1);
+    if (!batch || batch.identities.length === limit) {
+      batch = { identities: [], local_ids: [] };
+      batches.push(batch);
+    }
+    batch.identities.push(row.identity);
+    batch.local_ids.push(row.local_id);
+  }
   return {
-    schema: 'MutationBatchPlan/v1' as const,
+    schema: 'MutationBatchPlan/v2' as const,
     qualification: 'planning-only' as const,
     binding,
     universe_sha256: universeHash.digest('hex'),

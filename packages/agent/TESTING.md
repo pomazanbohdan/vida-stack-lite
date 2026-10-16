@@ -984,18 +984,22 @@ Function/scenario associations without a current shared inventory stay explicit
 gaps; no extra Source parse, scan or hash pass is added for this projection.
 
 `planMutationBatches` in the existing mutation-map owner prepares planning-only
-range/mutator batches from a validated canonical universe. It groups overlapping
-and nested ranges before packing, rejects an indivisible group above the supplied
-count limit, and converts map columns to Stryker's zero-based range columns.
-Its universe digest streams sorted fixed-size canonical identities with the
-parent input binding; large maps do not widen the public canonical JSON budget.
-This helper launches no tests, changes no runner selection and admits no score.
-Activation still requires a current complete generated universe, exact child
-plan membership, exhaustive/disjoint parent reconciliation, full unchanged test
-argv and the existing assertion/custody receipts. A retained timeout map can
-inform static planning research only; it cannot qualify a current batch or
-restore an interrupted attempt. Missing children or any membership drift remain
-GAP/UNKNOWN. The900s partition and independent per-case limits are unchanged.
+ID batches from one validated complete canonical universe. It emits aligned
+canonical identities and local activation IDs with a supplied count limit.
+The universe digest streams sorted identity/local-ID pairs and the parent input
+binding; renumbering revokes that activation plan without changing canonical
+mutant identity. Large maps do not widen the public canonical JSON budget.
+Do not regenerate each batch through ranges or excluded mutator families:
+Core10's CallExpression filtering depends on other generated mutations, and the
+native instrumenter pilot demonstrated foreign mutants from that approach.
+The helper launches no tests, changes no runner selection and admits no score.
+Activation requires one current complete generated/instrumented image, its bound
+bytes and local-ID correspondence, exact child membership, exhaustive/disjoint
+parent reconciliation, full unchanged test argv and existing assertion/custody
+receipts. Public instrumenter static API observations do not qualify Bun execution.
+A retained timeout map can inform static planning research only; it cannot qualify
+a current batch or restore an interrupted attempt. Missing children or any drift
+remain GAP/UNKNOWN. The900s partition and independent per-case limits are unchanged.
 
 Parent receipt validation reuses one partition-local execution observation and
 lifecycle-hook analysis of the already captured immutable test/import bytes.
