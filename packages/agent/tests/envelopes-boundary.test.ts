@@ -1,6 +1,7 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
+import assert from 'node:assert/strict';
 import type { TrustedProjectIdentity, ProjectAuthorizationRequest } from '../src/contracts/public-ingress.js';
 import type {
   RuntimeEnvelope,
@@ -738,6 +739,16 @@ describe('runtime envelope canonicalization boundary', () => {
     expect(overlapping).toEqual(before);
 
     const releasedClaim: CoordinationClaim = { ...overlappingClaim, status: 'released' };
+    const caseAlias = {
+      ...overlapping,
+      claims: [claim, { ...overlappingClaim, resources: ['file:SRC/TASK.TS'] }],
+    } satisfies CoordinationLedger;
+    const aliasResult = expectReturned(() => validateCoordinationLedgerV1(caseAlias));
+    assert.equal(aliasResult.ok, false);
+    assert.deepEqual(
+      aliasResult.issues.map(({ code, path }) => ({ code, path })),
+      [{ code: 'ACTIVE_CLAIM_SCOPE_INVALID', path: '$.claims.1.resources' }],
+    );
     const inactiveOverlap = { ...overlapping, claims: [claim, releasedClaim] } satisfies CoordinationLedger;
     expect(expectReturned(() => validateCoordinationLedgerV1(inactiveOverlap))).toEqual({
       ok: true,
@@ -762,6 +773,35 @@ describe('runtime envelope canonicalization boundary', () => {
       ledger: disjoint,
       issues: [],
     });
+  });
+
+  test('reports duplicate ticket and claim identity diagnostics', async () => {
+    const { validateCoordinationLedgerV1 } = await import('../src/contracts/envelopes.js');
+    const ledger = coordinationLedgerFixture();
+    const ticket = ledger.tickets[0]!;
+    const claim = ledger.claims[0]!;
+    const cases = [
+      {
+        value: { ...ledger, tickets: [ticket, { ...ticket, sequence: 2 }], next_sequence: 3 },
+        code: 'TICKET_ID_DUPLICATE',
+        path: '$.tickets',
+      },
+      {
+        value: { ...ledger, tickets: [ticket, { ...ticket, ticket_id: 'ticket-next' }], next_sequence: 3 },
+        code: 'TICKET_SEQUENCE_DUPLICATE',
+        path: '$.tickets',
+      },
+      { value: { ...ledger, claims: [claim, { ...claim }] }, code: 'CLAIM_ID_DUPLICATE', path: '$.claims' },
+    ];
+    for (const row of cases) {
+      const result = expectReturned(() => validateCoordinationLedgerV1(row.value));
+      assert.equal(result.ok, false);
+      assert.equal(result.ledger, null);
+      assert.deepEqual(
+        result.issues.map(({ code, path }) => ({ code, path })),
+        [{ code: row.code, path: row.path }],
+      );
+    }
   });
 
   test('coordination release history binds contour assurance, batch state, rebind, and retirement', async () => {
@@ -1132,6 +1172,48 @@ describe('runtime envelope canonicalization boundary', () => {
     const restoredEnvelope = expectReturned(() => envelopes.validateRuntimeEnvelope(envelope));
     expect(restoredEnvelope).toEqual(envelope);
     expect(restoredEnvelope).not.toBe(envelope);
+  });
+
+  test('preserves canonicalizer failures without eager message reads or string conversion', async () => {
+    const { validateRuntimeEnvelope } = await import('../src/contracts/envelopes.js');
+    let messageReads = 0;
+    let errorStringConversions = 0;
+    const nonError = {
+      get message() {
+        messageReads++;
+        throw new Error('non-Error message must not be read');
+      },
+      toString() {
+        return 'non-Error canonical failure';
+      },
+    };
+    const nativeError = Object.assign(new Error('native canonical failure'), {
+      toString() {
+        errorStringConversions++;
+        throw new Error('Error must not be stringified');
+      },
+    });
+    for (const [failure, message] of [
+      [null, 'null'],
+      [undefined, 'undefined'],
+      [nonError, 'non-Error canonical failure'],
+      [nativeError, 'native canonical failure'],
+    ] as const) {
+      let ownKeyReads = 0;
+      const input = new Proxy(
+        {},
+        {
+          ownKeys() {
+            ownKeyReads++;
+            throw failure;
+          },
+        },
+      );
+      assert.throws(() => validateRuntimeEnvelope(input), { message: `runtime envelope rejected: ${message}` });
+      assert.equal(ownKeyReads, 1);
+    }
+    assert.equal(messageReads, 0);
+    assert.equal(errorStringConversions, 0);
   });
 
   test('normalizes a non-Error authorization failure before denying', async () => {

@@ -1,5 +1,6 @@
 import { configuredTestContext } from './configured-context.ts';
 import { describe, expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import * as runtime from '../src/index.ts';
 import type { RuntimeEnvelope } from '../src/contracts/envelopes.ts';
 import { expectReturned } from './helpers/expect-rejection.ts';
@@ -299,7 +300,7 @@ describe('machine-checked public export ZOMBIES matrix', () => {
 
   test('Zero: empty public inputs fail closed', () => {
     expect(() => runtime.validateRuntimeConfig(null, repositoryRoot)).toThrow();
-    expect(() => runtime.validateRuntimeEnvelope(null)).toThrow();
+    assert.throws(() => runtime.validateRuntimeEnvelope(null), { message: /runtime envelope rejected/ });
     expect(() => runtime.validateAuthorizationRequest({})).toThrow();
     expect(() => runtime.resolveConfigPath(repositoryRoot, '')).toThrow();
   });
@@ -363,12 +364,14 @@ describe('machine-checked public export ZOMBIES matrix', () => {
 
   test('Boundary: traversal and stale revision edges are rejected', () => {
     expect(() => runtime.resolveConfigPath(repositoryRoot, '../escape.yml')).toThrow();
-    expect(() =>
-      runtime.consumeRuntimeEnvelope(validEnvelope(), {
-        sourceRevision: 'source-2',
-        currentRevision: 1,
-      }),
-    ).toThrow(/stale/);
+    assert.throws(
+      () =>
+        runtime.consumeRuntimeEnvelope(validEnvelope(), {
+          sourceRevision: 'source-2',
+          currentRevision: 1,
+        }),
+      { message: /runtime envelope source revision is stale/ },
+    );
     expect(() =>
       runtime.consumeRuntimeEnvelope(validEnvelope(), {
         sourceRevision: 'source-1',

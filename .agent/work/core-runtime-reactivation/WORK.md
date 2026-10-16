@@ -6218,6 +6218,45 @@ immutable historical snapshots. The resource-conflict deletion remains a static
 proposal requiring its stable-JSON input boundary to be respected. Prepared
 cases and independent reviews are external; no successor Source is qualified yet.
 
+## Envelope shared error owner and next numerical freeze
+
+The public envelope Proxy regression reproduced a masked canonicalizer failure:
+null became a TypeError reading error.message instead of the envelope rejection.
+Owned red s08f5S finished 0/1 in440.421091ms, with complete output, closed group
+and unchanged boot. The Source now reuses the existing forward-controller-values
+errorMessage owner. Null/undefined, a non-Error throwing message getter and an
+Error throwing toString are checked through the actual public boundary with
+native exact-message and zero-side-effect assertions. No new helper is introduced.
+
+The final focused three-file selection atLazTWM passed27/0 in1717.726051ms;
+Source101files and tests459files passed TypeScript. The native fuzz shape guards
+preserve seeds/runs and prevent successful undefined returns from becoming false
+PASS or downstream TypeError. Three duplicate ticket/claim diagnostics and an
+exact case-alias scope denial are covered. The initial alias proposal expected a
+later duplicate diagnostic but actual execution proved the earlier exact-scope
+guard fires; no product change or later-guard coverage is claimed. The intermediate
+failed test edits remain separate from the settled passing result.
+
+The one-file settled static capture quality-envelope-shared-error-inventory-
+20261016.json has81roles. The independently reviewed bounded updater at
+/workspace/attachments/quality-envelope-shared-error-plan-20261016.ts moved only
+the removed local errorMessage original into explicit history, preserving its
+CC1/coverage0/CRAP2/maxCC1/maxCRAP2. The shared helper's existing prospective10/10
+allowance and the historical v1 review remain unchanged; no allowance transfers.
+Remaining addresses and the envelope Source binding are refreshed from that one
+capture. The partial remains non-executable/non-exhaustive:5454retained,
+1660new,91removed,7114current roles. The new envelope-only v2 review key is
+scope_review_main_envelopes_shared_error_20261016. Independent metadata review:
+/workspace/attachments/quality-envelope-shared-error-plan-independent-20261016.md;
+behavior review:quality-envelope-normalizer-root-review-20261016.md. Their static
+scope is distinct from the actual Root red/green evidence above.
+
+Root will publish this correction and bind its immutable per-contour review in
+the existing scoped gate before the fresh exact coverage/CRAP/mutation cycle.
+No current envelope numerical maximum or global acceptance is established yet.
+Five Luna lanes prepare/review disjoint candidates while Root retains all
+checkout writes, final checks and Git; no duplicate AST/hash/full-suite pass.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

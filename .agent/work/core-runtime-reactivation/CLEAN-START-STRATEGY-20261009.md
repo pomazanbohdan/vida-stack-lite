@@ -8,7 +8,7 @@ Deliver the approved Pstack implementation with reproducible source, package, an
 
 ## Known state
 
-- Published predecessor: `775ce21`; current correction details are in WORK.
+- Published predecessor: `ca2136d`; current correction details are in WORK.
 - The maintained handwritten Source migration to TypeScript is complete. Help and inventory repairs are implemented.
 - SDK input formation runs automatically for main. The fresh host/timing pilots used accepted d320564 CI inputs. Changed inputs need matching CI formation; WORK owns run/artifact receipts.
 - Historical run `5b1203f9-3fe9-4854-87ef-29800c3c9270` ended `UNKNOWN` in270137.860ms without a validated report. Preserve its custody and all older UNKNOWN evidence; do not replay it. Current attempts and source bindings are in WORK and the derived contour document.
@@ -60,12 +60,12 @@ The next bounded correction uses two complete source-aligned declarations,
 `main-public-ingress` and `main-envelopes`, in the existing registry. Keep their
 exact original Source/test union and shared fuzz tests. Retain the former parent
 as historical metadata outside active counts, without changing old observations.
-The split is published at64d33d3. The first complete child's exact coverage and
-same-run scoped CRAP passed; its full355-mutant run finished in378086.405582ms
-with262assertion-confirmed Killed,46Survived and47UNKNOWN. It remains unqualified.
-Correct those findings in disjoint worker lanes before advancing; keep original
-receipts and classification unchanged. Do not add another parent join, repeat
-the unchanged campaign or raise its deadline.
+The split is published at64d33d3. The corrected public-ingress child has a complete
+local triple at775ce21, recorded in WORK and the automatic contour document.
+Earlier failures and UNKNOWN receipts retain their original classification.
+Advance to main-envelopes: preserve the shared error-normalizer correction and
+explicit removed-function lineage, then run its complete declared selection.
+Do not add another parent join, repeat an unchanged campaign or raise its deadline.
 Root owns Source, shared helpers, registry,
 frozen-plan metadata, documentation, checks and Git. Workers do not run competing
 checks, numerical producers, builds or installs. Exact outcomes live in WORK;

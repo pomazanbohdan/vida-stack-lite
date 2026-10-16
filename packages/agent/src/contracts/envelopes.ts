@@ -14,6 +14,7 @@ import envelopeSchema from '../../schemas/runtime-envelope.v1.schema.json' with 
 import { Result } from 'neverthrow';
 import z from 'zod';
 import { canonicalJsonDigest, rfc3339TimestampMilliseconds } from './public-ingress.js';
+import { errorMessage } from './forward-controller-values.js';
 
 export interface RuntimeEnvelope<TPayload = unknown> {
   readonly schema: 'RuntimeEnvelope/v1';
@@ -43,9 +44,6 @@ function reject(conditions: readonly boolean[], message: string): void {
   });
 }
 
-function errorMessage(error: unknown): string {
-  return [String(error), (error as Error).message][Number(error instanceof Error)]!;
-}
 function rejectCanonical(message: string): never {
   throw new Error('runtime envelope rejected: ' + message);
 }

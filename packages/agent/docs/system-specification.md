@@ -1506,6 +1506,9 @@ Runtime envelope validation likewise applies its schema to the captured image;
 consumption checks both revisions on that same returned image. Envelope records,
 including nested payload records, have null prototypes and independent identity.
 The envelope image remains mutable; it does not alias caller-owned records.
+Canonicalizer failures preserve the envelope rejection prefix for every thrown
+value, including null and undefined. Error instances use their message without
+string conversion; other thrown values use String without reading a message getter.
 Runtime configuration digests may be reused only for actual
 loader-owned deeply frozen configurations. Every digest read still checks live
 inherited serialization hooks without invoking accessors; current YAML bytes
