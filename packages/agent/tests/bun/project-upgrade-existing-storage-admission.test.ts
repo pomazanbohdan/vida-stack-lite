@@ -259,74 +259,83 @@ describe('native existing-storage admission boundary', () => {
     }
   });
 
-  trackedTest('rejects a real Mastra source change after snapshot capture', async () => {
-    const fixture = freshFixture();
-    const mastraPath = path.join(fixture.root, mastraRelative);
-    const originalBytes = readFileSync(mastraPath);
-    const changedBytes = Buffer.concat([originalBytes, Buffer.from([0])]);
-    let callbackCount = 0;
-    let closeCount = 0;
-    let exactDriftDenial = false;
-    let bodyFailure: { error: unknown } | undefined;
-    try {
-      const failure = await withExistingStorageMergeCapability({
-        repositoryRoot: fixture.root,
-        workspaceId,
-        operationId: binding.operation_id,
-        planDigest: '9'.repeat(64),
-        expectedFenceBinding: binding,
-        receipt: fixture.receipt,
-        hostRelative,
-        mastraRelative,
-        closeHostOwner: () => {
-          closeCount++;
-          closeHostOwner(fixture);
-        },
-        operation: async (capability) => {
-          callbackCount++;
-          capability.assertActive();
-          writeFileSync(mastraPath, changedBytes);
-          expect(readFileSync(mastraPath)).toEqual(changedBytes);
-          capability.assertSourcesUnchanged();
-          return 'unexpectedly admitted changed source';
-        },
-      }).then(
-        () => null,
-        (cause: unknown) => cause,
-      );
-      expect(failure).toBeInstanceOf(Error);
-      expect(String(failure)).toContain('Mastra source changed after capture');
-      expect(callbackCount).toBe(1);
-      expect(closeCount).toBe(1);
-      expect(readFileSync(mastraPath)).toEqual(changedBytes);
-      exactDriftDenial = true;
-    } catch (error) {
-      bodyFailure = { error };
-    }
-
-    let restoreFailure: { error: unknown } | undefined;
-    if (exactDriftDenial) {
+  for (const source of [
+    { label: 'Host', relative: hostRelative, image: 'host' },
+    { label: 'Mastra', relative: mastraRelative, image: 'mastra' },
+  ] as const) {
+    trackedTest(`rejects a real ${source.label} source change after snapshot capture`, async () => {
+      const fixture = freshFixture();
+      const sourcePath = path.join(fixture.root, source.relative);
+      let sourceImage: { original: Buffer<ArrayBuffer>; changed: Buffer<ArrayBuffer> } | undefined;
+      let callbackCount = 0;
+      let closeCount = 0;
+      let exactDriftDenial = false;
+      let bodyFailure: { error: unknown } | undefined;
       try {
-        writeFileSync(mastraPath, originalBytes);
-        expect(readFileSync(mastraPath)).toEqual(originalBytes);
+        const failure = await withExistingStorageMergeCapability({
+          repositoryRoot: fixture.root,
+          workspaceId,
+          operationId: binding.operation_id,
+          planDigest: '9'.repeat(64),
+          expectedFenceBinding: binding,
+          receipt: fixture.receipt,
+          hostRelative,
+          mastraRelative,
+          closeHostOwner: () => {
+            closeCount++;
+            closeHostOwner(fixture);
+          },
+          operation: async (capability) => {
+            callbackCount++;
+            capability.assertActive();
+            expect(capability.binding.held_fence_token_digest).toBe(fixture.receipt.fence.token_digest);
+            const original = Buffer.from(capability[source.image].bytes);
+            sourceImage = { original, changed: Buffer.concat([original, Buffer.from([0])]) };
+            writeFileSync(sourcePath, sourceImage.changed);
+            expect(readFileSync(sourcePath)).toEqual(sourceImage.changed);
+            capability.assertSourcesUnchanged();
+            return `unexpectedly admitted changed ${source.label} source`;
+          },
+        }).then(
+          () => null,
+          (cause: unknown) => cause,
+        );
+        expect(failure).toBeInstanceOf(Error);
+        expect(String(failure)).toContain(`${source.label} source changed after capture`);
+        expect(callbackCount).toBe(1);
+        expect(closeCount).toBe(1);
+        if (!sourceImage) throw new Error('Source image was not captured.');
+        expect(readFileSync(sourcePath)).toEqual(sourceImage.changed);
+        exactDriftDenial = true;
       } catch (error) {
-        restoreFailure = { error };
-        retainedRoots.add(fixture.root);
-        console.error(`Retained unverified source-drift fixture: ${fixture.root}`);
+        bodyFailure = { error };
       }
-    } else {
-      retainedRoots.add(fixture.root);
-      console.error(`Retained failed source-drift fixture: ${fixture.root}`);
-    }
-    if (bodyFailure && restoreFailure)
-      throw new AggregateError(
-        [bodyFailure.error, restoreFailure.error],
-        'Source drift assertion and restoration failed',
-      );
-    if (bodyFailure) throw bodyFailure.error;
-    if (restoreFailure) throw restoreFailure.error;
-    await releaseFence(fixture.root, fixture.receipt);
-  });
+
+      let restoreFailure: { error: unknown } | undefined;
+      if (exactDriftDenial) {
+        try {
+          if (!sourceImage) throw new Error('Source image was not retained for restoration.');
+          writeFileSync(sourcePath, sourceImage.original);
+          expect(readFileSync(sourcePath)).toEqual(sourceImage.original);
+        } catch (error) {
+          restoreFailure = { error };
+          retainedRoots.add(fixture.root);
+          console.error(`Retained unverified source-drift fixture: ${fixture.root}`);
+        }
+      } else {
+        retainedRoots.add(fixture.root);
+        console.error(`Retained failed source-drift fixture: ${fixture.root}`);
+      }
+      if (bodyFailure && restoreFailure)
+        throw new AggregateError(
+          [bodyFailure.error, restoreFailure.error],
+          'Source drift assertion and restoration failed',
+        );
+      if (bodyFailure) throw bodyFailure.error;
+      if (restoreFailure) throw restoreFailure.error;
+      await releaseFence(fixture.root, fixture.receipt);
+    });
+  }
 
   trackedTest('preserves a merge callback failure after releasing native SQLite admission', async () => {
     const fixture = freshFixture();

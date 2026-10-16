@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current activation/evidence packet: `0e0babf`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Its mutation closure remains open: the latest full-image diagnostic is bound to `a740bd2644018e6704aa2eab49a1f810644629c8` and stops at358 of700 IDs:340 assertion-confirmed Killed,17 Survived,1 UNKNOWN,342 unattempted. It is diagnostic-only, without parent qualification; old classifications are unchanged. Older interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `784d0541a31f004ef376daeb076a4b0d0b29c51f`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Native activation has a real one-ID receipt join at784d054, recorded below; full-universe parent admission and mutation closure remain open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -26,21 +26,77 @@ integration, Git and final numeric checks; workers never run competing suites.
 
 | Slot | Contour | Bounded assignment and disposition |
 | --- | --- | --- |
-| 1 | `bun-service-operation-custody` | Independent review identifies56 current roles/55 budget rows, missing isDigest and per-role rationale/pinned-review gaps. A fresh blind lane prepares a rationale proposal without changing caps or Source. |
-| 2 | `bun-lifecycle-state` | The completed data-only attestation analysis is retained; its slot moved to lifecycle analysis, then to the isolated `luna-repair-lifecycle-a740-20261016` writer for the missing allowed +1 review-failure counter boundary. |
-| 3 | `bun-runtime-initialization` | Isolated `luna-repair-init-a740-20261016` writer adds ordinary public-input/selector regressions. Missing trusted Mastra maintenance capability stays GAP; no forged verifier. |
-| 4 | `main-mastra` | Isolated `luna-repair-mastra-a740-20261016` writer corrects real smoke cleanup cause loss and root removal before failed closes settle, with targeted regression cases. |
-| 5 | `bun-project-upgrade-storage-admission` | Isolated `luna-repair-upgrade-admission-a740-20261016` writer adds genuine capability assertions and paired receipt/close failure evidence while preserving real leases, CAS and UNKNOWN. |
+| 1 | Native mutation producer | Complete-universe parent report proposal using the existing capture, image, batch and per-ID receipt owners; no synthetic Stryker status. |
+| 2 | Native mutation readers | Independent provenance-aware map/projection admission proposal; partial native summaries remain rejected. |
+| 3 | Project context | Independent review of same-invocation private profile-owner reuse with initial and final config freshness preserved. |
+| 4 | `bun-cli-toolchain` | Review three added public-boundary tests and the runtime-init unreachable guard removal; identify feasible native gaps only. |
+| 5 | `bun-project-upgrade-storage-admission` | Parameterize the existing drift case for Host and Mastra with post-checkpoint captured bytes and exact retained-fence cleanup. |
 
 Reuse existing partition inventories, scenario matrices and retained failed runs.
 Workers return diffs and unverified dispositions; Root batches the necessary
 checks. Independent frozen review must close its concrete findings before scope
 registration; a completed review with ISSUES is not frozen admission.
-The active a740bd2 700-ID diagnostic owns its immutable measured integration
-checkout. Collect terminal evidence before integrating prepared repairs there.
-Analysis artifacts live under `/workspace/attachments/luna-*-a740-20261016.md`;
-each native lane has its own exact output path. These proposals and preparations
-do not change contour closure or qualify the active run.
+The784d054 final-assurance coverage producer is terminal; its measured checkout
+stayed immutable throughout. Collect terminal evidence before integrating the
+next prepared repair packet there.
+Current proposals live under `/workspace/attachments/luna-*-v6-20261016.md`;
+each lane has its own exact output path. Proposals do not establish closure.
+
+### Current native receipt and final-assurance cost investigation
+
+The784d054 bounded native pilot at `native-activation-pilot-784d054-dBwZKQ`
+is terminal exit1 in29338.924206ms, without timeout/signal/spawn error, with
+complete captures, closed process group and unchanged boot. Inner run
+`e9a75d07-20e6-4c3f-9ed6-743941f9a427` has123 passing baseline cases and a fresh
+complete generated universe of686. Exactly1 ID was attempted and assertion-confirmed
+Killed;685 remain unattempted. Its actual failing body binds local ID427 and
+hit_count4 to the existing parent receipt, output and JUnit joins. This qualifies
+that positive activation seam only. The pilot summary remains diagnostic-only
+with full_contour_qualification:false; it is not a mutation score or new triple.
+
+The final-assurance timeout investigation retains the earlier68.7s failure
+against its20s case exception. Direct fixture profile `quality-rolling-cli-check-hliGyo`
+has71.17s sampled time: fsyncSync self47.53s/66.8%, inclusive59.29s/83.3%.
+The fixture setup took69134.414100ms; prepareLifecycleForCorrection took700.688268ms.
+This localizes guarded filesystem synchronization as the limiter without
+justifying removal of fsync, CAS, ownership or freshness checks.
+
+TESTING's existing retained-host-tmpfs rule is used only for disposable functional
+fixtures. The owned positive control `quality-rolling-cli-check-9HBTbl` passes1/0,
+16 assertions in11907.383114ms; the real case takes10908.74ms within its unchanged20s
+exception. A separate intentional-failure control `quality-rolling-cli-check-dupM4a`
+terminates exit1 in11906.341985ms with complete captures/closed group/same boot.
+After child namespace exit, Root verifies retained fixture
+`/dev/shm/vida-final-correction-fixtures-X4YDyz/vida-absorption-QF7Yey` still exists.
+The temporary throw is removed from Source after that terminal observation.
+Launch receipts record actual tmpfs magic16914836, capacity and cgroup headroom;
+metadata/logs remain disk-backed. These controls are neither mutation kills nor
+power-loss durability proof. Full contour run `c037583d-497b-447d-868f-e35b66df11ad`
+binds784d054 and terminates at `native-coverage-784-final-host-tmpfs-4QWihv`
+exit0 in54416.412325ms, complete captures/closed group/same boot. Its12 tests pass
+with176 assertions; the formerly failing case takes11952.61ms under the unchanged
+20s exception. Actual coverage is F76/94,L226/325,S261/363,B192/305; the contour
+remains open. The maintained projection imports this report as attempt408,
+without adding a full triple or frozen CRAP proof.
+
+Independent project-context review rejects the proposed private profile-owner
+substitution: it would remove a current-config check after caller-owned override
+access. The retained final snapshot alone does not preserve that intermediate
+boundary. No such optimization is applied. The review is
+`/workspace/attachments/luna-project-context-reuse-review-v6-20261016.md`.
+
+The current Source packet removes only the runtime-init selector's proven
+unreachable third-source guard, retaining the under-lock selection and upgrade
+barriers. CLI tests cover malformed non-object manifests, linked embedded roots
+and bounded terminal diagnostics. Independent review adds an explicit empty
+environment to reach manifest parsing regardless of inherited embedded markers.
+The storage drift case now shares one body for Host and Mastra; each restores
+the capability's post-checkpoint bytes only after verified source-specific denial.
+Initial static check catches the test's broad Buffer generic; it is corrected
+to owned ArrayBuffer-backed buffers. Strict501files/TS-only502 then pass.
+The final focused four-file check `quality-rolling-cli-check-1U9G5S` passes92/0
+with205 assertions in41766.718855ms, complete captures, closed process group
+and unchanged boot. This is behavioral evidence, not numeric closure.
 
 Published repair `a740bd2644018e6704aa2eab49a1f810644629c8` passed normal
 precommit and SDK CI run38935284947/attempt1/artifact12060990969, ZIP digest

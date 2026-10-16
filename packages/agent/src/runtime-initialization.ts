@@ -76,7 +76,6 @@ export function readRuntimeInitializationAuthority(
       },
     };
   }
-  if (selected !== PROJECT_CONFIGURATION_PATHS.project) fail('runtime configuration selection is unsupported');
   const receipt = readProjectInitializationReceipt(access).receipt;
   return {
     format: 'RuntimeInitialization/v2',

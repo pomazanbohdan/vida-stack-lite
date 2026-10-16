@@ -14,7 +14,7 @@ import {
 import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { afterEach, test } from 'bun:test';
+import { afterEach, spyOn, test } from 'bun:test';
 import { expectReturned } from './helpers/expect-rejection.ts';
 import {
   boundedSpawnSync,
@@ -1364,4 +1364,90 @@ test('terminal command classification preserves nullable results, status boundar
     () => requireTerminalCommand(throwing, 'throwing result'),
     (error) => error === failure,
   );
+});
+
+test('non-object manifest is rejected before runtime selection or spawn', () => {
+  const { root } = fixture();
+  let passed = false;
+  try {
+    writeFileSync(path.join(root, 'package.json'), '[]');
+    assert.throws(
+      () =>
+        runPinnedBun([], {
+          root,
+          env: {},
+          spawn: () => assert.fail('non-object manifest must fail before a child launch'),
+        }),
+      { message: 'Bun manifest must contain JSON objects.' },
+    );
+    passed = true;
+  } finally {
+    if (!passed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed non-object Bun manifest fixture: ' + root);
+    }
+  }
+});
+
+test('embedded runtime rejects a linked package root', () => {
+  const root = mkdtempSync(path.join(os.tmpdir(), 'runtime-bun-embedded-link-'));
+  temporaryRoots.add(root);
+  let passed = false;
+  try {
+    const pin = expectReturned(() => readPin());
+    writeFileSync(path.join(root, '.bun-version'), `${pin}\n`);
+    writeFileSync(
+      path.join(root, 'package.json'),
+      JSON.stringify({ name: 'vida-agent', packageManager: `bun@${pin}`, engines: { bun: pin } }),
+    );
+    const alias = path.join(root, 'package-root-link');
+    symlinkSync(root, alias, process.platform === 'win32' ? 'junction' : 'dir');
+    assert.throws(
+      () =>
+        standaloneRuntime({
+          BUN_BE_BUN: '1',
+          VIDA_STANDALONE_ROOT: alias,
+          VIDA_STANDALONE_EXECUTABLE: process.execPath,
+        }),
+      { message: 'Embedded package root must be a non-link directory.' },
+    );
+    passed = true;
+  } finally {
+    if (!passed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed linked embedded-root fixture: ' + root);
+    }
+  }
+});
+
+test('bounded child diagnostics report the exact stage and terminal status', () => {
+  let captured = '';
+  const capture = spyOn(process.stderr, 'write').mockImplementation((chunk) => {
+    const text = typeof chunk === 'string' ? chunk : Buffer.from(chunk).toString();
+    assert.ok(Buffer.byteLength(captured) + Buffer.byteLength(text) <= 4096, 'stderr capture is bounded');
+    captured += text;
+    return true;
+  });
+  try {
+    const result = boundedSpawnSync(
+      () => ({ status: 0, signal: null }),
+      'fixture',
+      [],
+      { env: {}, diagnostics: true },
+      'diagnostic fixture',
+    );
+    assert.equal(result.status, 0);
+    assert.equal(result.signal, null);
+    assert.equal(captured.endsWith('\n'), true);
+    const lines = captured.trimEnd().split('\n');
+    assert.equal(lines.length, 1);
+    const diagnostic: unknown = JSON.parse(lines[0]!);
+    assert.ok(typeof diagnostic === 'object' && diagnostic !== null && !Array.isArray(diagnostic));
+    assert.equal(Reflect.get(diagnostic, 'stage'), 'diagnostic fixture');
+    assert.equal(Reflect.get(diagnostic, 'status'), 0);
+    assert.equal(typeof Reflect.get(diagnostic, 'elapsed_ms'), 'number');
+    assert.equal(typeof Reflect.get(diagnostic, 'child_elapsed_ms'), 'number');
+  } finally {
+    capture.mockRestore();
+  }
 });
