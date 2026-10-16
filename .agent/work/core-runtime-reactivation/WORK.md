@@ -6619,6 +6619,38 @@ refreshes current addresses/complexities and two bindings only, preserves every
 original measurement/cap and all counts, and adds the dedicated config scope key.
 Global baseline report admission and all other acceptance gaps remain open.
 
+At published136903fffaf183c1a19bff3536db8e91873ebf49, fresh declared config
+coverage420a221d-7e0b-43a8-a20b-e10c7fb9b5af measures exact F350/350,L965/965,
+S1023/1023,B256/256. Runtime-config contributes232/666/704/164 and project-context
+118/299/319/92. The113test selection passes with2838Bun expectations; native
+assertions are separate from that counter. Owner nkQWbh completes17424.873381ms
+with full capture, no timeout/signal/spawn error, groups closed and same boot.
+Same-run scoped-v2 frozen proof passes against8a90ad9, maxCC16/maxCRAP16 within
+each original ceiling. Both results are imported into the automatic contour ledger.
+Full declared main-config mutation19dd6a2b-4bf8-4b40-abfa-f9389959c1e8 declared
+2878mutants at VVCrAo with the existing separate900s partition budget. Actual
+mutant112 then exposed unhandled registration errors at the YAML suite's describe
+loads (lines692/1252); this cannot establish assertion-confirmed Killed. Root
+stopped only the identity-checked owned namespace to correct that known flaw,
+preserving intent and all partial receipts. The terminal owner records exit143,
+359652.64871ms, complete empty producer stdout/stderr, groups closed and same boot.
+No complete mutation report/score or new local triple exists; this interrupted
+campaign remains unqualified, not PASS. No prior effect or mutant ID is replayed.
+
+The bounded Babel binding codemod migrates the two describe scopes' five eager
+config/contract declarations into33actual dependent bodies/helpers, using the
+existing expectReturned assertion owner. It follows lexical bindings rather than
+text substitution, preserves shadowed locals and creates no ordered setup test or
+global cache. Configured YAML bytes are read once; independent yaml parsing reads
+only the fixture bundle name. Source parsing/loaded-config checks remain in tests.
+Repair-boundary uses the existing side-effect-free root selector with the same
+context-root precedence and asserts its in-test parse. Its previous eager context
+load is removed. The portable standalone fixture branch remains unchanged and is
+not qualified as a standalone mutation route; declared mutation uses configured
+context. Strict test TypeScript passes. Current product Source,350role inventory
+and frozen limits are unchanged, so no duplicate Source AST/hash pass is needed.
+Fresh coverage and mutation must bind the corrected test closure separately.
+
 The ordinary test:config:pinned and test:pinned routes now select the new layout
 file, preserving the moved cases' ordinary execution as well as contour selection.
 The governance compatibility review rejects a proposed deletion: complete from

@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Composer, stringify as stringifyYaml } from 'yaml';
+import { Composer, parse as parseYaml, stringify as stringifyYaml } from 'yaml';
 import { expectReturned } from './helpers/expect-rejection.ts';
 import {
   buildDevelopmentTaskPacket,
@@ -70,12 +70,14 @@ const templateText = (await readFile(path.join(packageRoot, 'templates/agent-run
   .replaceAll('{{REPOSITORY}}', 'creatio-sample')
   .replaceAll('{{PROJECT}}', '3mob')
   .replaceAll('{{BUNDLE}}', 'vida-agent');
-const fixtureBundle = configuredRoot
-  ? parseRuntimeConfigYaml(await readFile(path.join(configuredRoot, 'agent-runtime.config.v1.yaml'), 'utf8')).runtime
-      .bundle
+const configuredAuthorityBytes = configuredRoot
+  ? await readFile(path.join(configuredRoot, 'agent-runtime.config.v1.yaml'))
+  : undefined;
+const fixtureBundle = configuredAuthorityBytes
+  ? configuredBundleFromYaml(configuredAuthorityBytes.toString('utf8'))
   : 'vida-agent';
-const authorityText = configuredRoot
-  ? await readFile(path.join(configuredRoot, 'agent-runtime.config.v1.yaml'), 'utf8')
+const authorityText = configuredAuthorityBytes
+  ? configuredAuthorityBytes.toString('utf8')
   : portableRuntimeConfigText(templateText);
 // TEST SETUP: the template is fixture data, never a runtime configuration fallback.
 const repositoryRoot = configuredRoot ?? (await fixtureRoot(authorityText));
@@ -89,6 +91,19 @@ if (!configuredRoot) {
     await mkdir(path.dirname(path.join(repositoryRoot, file)), { recursive: true });
     await writeFile(path.join(repositoryRoot, file), file.endsWith('.json') ? '{}\n' : 'TEST SETUP fixture\n');
   }
+}
+
+function configuredBundleFromYaml(yaml: string): string {
+  const document: unknown = parseYaml(yaml);
+  if (typeof document !== 'object' || document === null || Array.isArray(document))
+    throw new Error('Configured YAML fixture must be a mapping');
+  const runtime: unknown = Reflect.get(document, 'runtime');
+  if (typeof runtime !== 'object' || runtime === null || Array.isArray(runtime))
+    throw new Error('Configured YAML fixture requires a runtime mapping');
+  const bundle: unknown = Reflect.get(runtime, 'bundle');
+  if (typeof bundle !== 'string' || !/^[A-Za-z0-9._-]+$/.test(bundle))
+    throw new Error('Configured YAML fixture requires a safe runtime bundle');
+  return bundle;
 }
 
 test('loaded config digest rejects new inherited hooks after caching without invoking accessors', async () => {
@@ -689,10 +704,8 @@ describe('one strict YAML authority', () => {
 });
 
 describe('profiles, work items, teams, and workflow graphs', () => {
-  const config = loadRuntimeConfig(repositoryRoot);
-  const sourceConfig = loadRuntimeConfigSource(repositoryRoot);
-
   test('uses Luna xhigh fast for every research profile', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     for (const id of ['researcher', 'web-researcher', 'codebase-mapper']) {
       expect(config.agents.profiles[id]).toMatchObject({
         model: 'gpt-6-luna',
@@ -703,6 +716,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     }
   });
   test('uses Luna max default for the stage-4 blind architect', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     expect(config.agents.profiles.architect).toMatchObject({
       model: 'gpt-6-luna',
       reasoning: 'max',
@@ -714,6 +728,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('normalizes universal Azure, Jira, and internal work item kinds', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     expect(resolveProviderWorkItemKind(config, 'azure', 'Product Backlog Item')).toBe('pbi');
     expect(resolveProviderWorkItemKind(config, 'azure', 'Bug')).toBe('bug');
     expect(resolveProviderWorkItemKind(config, 'jira', 'Story')).toBe('story');
@@ -723,6 +738,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('selects each intent deterministically', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const cases: readonly [WorkItemKind, FlowIntent, string][] = [
       ['research', 'information_research', 'information_research_light'],
       ['bug', 'bug_fix', 'bug_fix'],
@@ -749,6 +765,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     ['evidence_class', 'Runtime'],
     ['profile', 'researcher'],
   ])('direct workflow selection rejects incompatible %s operation declaration', async (field, value) => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const current = await configuredOperationVariant('selectWorkflow', field, value);
     expect(() =>
       selectWorkflowSource(current, {
@@ -762,6 +779,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     ).toThrow(/configured operation.*unavailable: selectWorkflow/);
   });
   test('operation lookup rejects forged configuration and selects the requested registry entry', () => {
+    const sourceConfig = expectReturned(() => loadRuntimeConfigSource(repositoryRoot));
     const forged = parseRuntimeConfigYaml(authorityText);
     expect(() =>
       requireConfiguredOperation(forged, 'selectWorkflow', 'runtime.read', 'read-evidence', 'Decision'),
@@ -771,6 +789,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     ).toBe('selectWorkflow');
   });
   test('direct packet construction rejects a forged configuration before reading packet fields', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const forged = parseRuntimeConfigYaml(authorityText);
     const unreadPacket = {
       packet_id: 'unread-packet',
@@ -819,6 +838,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     );
   });
   test('keeps approval admission in Mastra HITL and rejects a second Edictum required-for list', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     expect(config.governance.edictum.approval).toEqual({ clock_skew_ms: 60000, max_age_ms: 300000 });
     expect(config.orchestration.mastra.hitl.approval_required_for).toEqual(['source.write', 'delivery.execute']);
     const document = mutableClone(parseRuntimeConfigYaml(authorityText));
@@ -832,11 +852,13 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     ['stage', 'selectWorkflow', 'runtime.read', 'source-write', 'Decision'],
     ['evidence', 'selectWorkflow', 'runtime.read', 'read-evidence', 'Runtime'],
   ] as const)('operation lookup rejects %s mismatch', (_kind, id, tool, stage, evidence) => {
+    const sourceConfig = expectReturned(() => loadRuntimeConfigSource(repositoryRoot));
     expect(() => requireConfiguredOperation(sourceConfig, id, tool, stage, evidence)).toThrow(
       'configured operation is unavailable: ' + id,
     );
   });
   test('enforces project and work item kind allowlists before workflow selection', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const base: WorkItemSelection = {
       team: 'default-development',
       kind: 'bug',
@@ -871,6 +893,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     ['risks', ['security']],
     ['labels', ['urgent']],
   ] as const)('workflow selection skips a higher-priority binding with mismatched %s', async (field, value) => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const document = mutableClone(parseRuntimeConfigYaml(authorityText));
     document.teams['shadow-development'] = mutableClone(
       required(document.teams['default-development'], 'default team'),
@@ -899,6 +922,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('workflow selection sorts matching bindings by configured priority', async () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const document = mutableClone(parseRuntimeConfigYaml(authorityText));
     document.workflow_bindings.push({
       ...mutableClone(
@@ -923,6 +947,8 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     ).toBe('priority-bug');
   });
   test('workflow selection rejects malformed input and an unavailable team', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
+    const sourceConfig = expectReturned(() => loadRuntimeConfigSource(repositoryRoot));
     const selection: WorkItemSelection = {
       team: 'default-development',
       kind: 'bug',
@@ -948,6 +974,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     ).toBe(true);
   });
   test('workflow selection distinguishes explicit risk and complete label matching', async () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const document = mutableClone(parseRuntimeConfigYaml(authorityText));
     const bugBinding = required(
       document.workflow_bindings.find((binding) => binding.id === 'bug-default'),
@@ -981,6 +1008,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('configures role-specific instructions and conditional research contours', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     expect(Object.keys(config.agents.role_instructions).sort()).toEqual(
       Object.keys(required(config.teams['default-development'], 'default team').roles).sort(),
     );
@@ -1009,6 +1037,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('keeps research light and source mutation developer-only', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const research = required(config.workflows.information_research_light, 'research workflow');
     expect(research.assurance_profile).toBe('research_light');
     expect(research.stages.every((stage) => ['research', 'synthesize'].includes(stage.kind))).toBe(true);
@@ -1036,6 +1065,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('orders validation, testing, and delivery after development', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     for (const workflowId of ['implementation_new', 'implementation_change', 'bug_fix', 'task_execution']) {
       const compiled = compileDevelopmentWorkflow(config, 'default-development', workflowId);
       const positions = new Map(
@@ -1057,6 +1087,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('rejects unsupported standalone barrier stages while preserving DAG join barriers', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const changed = malformedJson(config);
     setMalformedPath(changed, ['workflows', 'information_research_light', 'stages', 0, 'mode'], 'barrier');
     expect(() => validateRuntimeConfig(changed)).toThrow(
@@ -1067,11 +1098,13 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('rejects source-write capability on a validator', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const changed = malformedJson(config);
     setMalformedPath(changed, ['agents', 'profiles', 'reviewer-correctness', 'mutation_scope'], 'repository_source');
     expect(() => validateRuntimeConfig(changed)).toThrow(/mutation scope|outside developer/i);
   });
   test('rejects source-write tools on read-only policies', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     for (const sourceWriteTool of ['runtime.write', 'source.write']) {
       const changed = malformedJson(config);
       const policyId = required(
@@ -1086,6 +1119,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
     }
   });
   test('requires repository references to be regular files', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const changed = malformedJson(config);
     setMalformedPath(changed, ['repository', 'sidecar'], '.git');
     expect(() => validateRuntimeConfig(changed, repositoryRoot)).toThrow(
@@ -1094,6 +1128,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('rejects duplicate or incomplete current-v1 integration bindings', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     for (const [field, message] of [
       ['id', /integration provider id is duplicated/],
       ['project_id', /integration provider project is duplicated/],
@@ -1115,6 +1150,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('permits equal and nested project roots while retaining unique project identities', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const equal = mutableJsonConfigClone(config);
     required(equal.projects[1], 'second project').project_root = required(
       equal.projects[0],
@@ -1141,6 +1177,7 @@ describe('profiles, work items, teams, and workflow graphs', () => {
   });
 
   test('compiles Mastra from the selected graph and enforces role tools', async () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const result = expectReturned(() =>
       createConfiguredMastra(repositoryRoot, {
         team_id: 'default-development',
@@ -1249,11 +1286,8 @@ describe('profiles, work items, teams, and workflow graphs', () => {
 });
 
 describe('final v1 artifact contracts', () => {
-  const config = loadRuntimeConfig(repositoryRoot);
-  const sourceConfig = loadRuntimeConfigSource(repositoryRoot);
-  const contracts = config.artifact_contracts;
-
   function packetInput(overrides: Partial<DevelopmentTaskPacketInput> = {}): DevelopmentTaskPacketInput {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const workflowId = overrides.workflow_id ?? 'bug_fix';
     const riskFlags = overrides.risk_flags ?? [];
     const workflowKinds: Record<string, WorkItemKind> = {
@@ -1335,6 +1369,7 @@ describe('final v1 artifact contracts', () => {
     );
   });
   test('packet builder rejects an unavailable team and malformed lists after registry validation', () => {
+    const sourceConfig = expectReturned(() => loadRuntimeConfigSource(repositoryRoot));
     expect(() => buildDevelopmentTaskPacketSource(sourceConfig, packetInput({ team_id: 'missing-team' }))).toThrow(
       /packet team is unavailable/,
     );
@@ -1343,6 +1378,7 @@ describe('final v1 artifact contracts', () => {
     );
   });
   test('binds packet workflow, work item selection, and risk flags', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     expect(() =>
       buildDevelopmentTaskPacket(
         config,
@@ -1374,6 +1410,7 @@ describe('final v1 artifact contracts', () => {
   });
 
   test('rejects sensitive packet text and unsafe owned paths', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     expect(() => buildDevelopmentTaskPacket(config, packetInput({ out_of_scope: ['token:abc'] }))).toThrow(
       /sensitive material/,
     );
@@ -1414,6 +1451,7 @@ describe('final v1 artifact contracts', () => {
   });
 
   test('requires digest-bound research artifact references', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     expect(() =>
       buildDevelopmentTaskPacket(config, packetInput({ research_artifact_refs: ['ResearchResult/v1#research'] })),
     ).toThrow(/digest-bound/);
@@ -1434,6 +1472,7 @@ describe('final v1 artifact contracts', () => {
   });
 
   test('root and template bind research roles and stages to complete executable schemas', async () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
     const template = parseRuntimeConfigYaml(
       (await readFile(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
         .replaceAll('{{BUNDLE}}', 'runtime')
@@ -1475,11 +1514,15 @@ describe('final v1 artifact contracts', () => {
     }
   });
   test('contains only final v1 identities', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
+    const contracts = config.artifact_contracts;
     expect(Object.keys(contracts).every((id) => id.endsWith('/v1'))).toBe(true);
     expect(Object.entries(contracts).every(([id, contract]) => id === contract.schema)).toBe(true);
   });
 
   test('developer packet carries research, failures, tests, ownership, and delivery conditions', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
+    const contracts = config.artifact_contracts;
     const fields = new Set(required(contracts['DevelopmentTaskPacket/v1'], 'packet contract').required_fields);
     for (const field of [
       'acceptance',
@@ -1501,6 +1544,8 @@ describe('final v1 artifact contracts', () => {
   });
 
   test('defines validator, tester, failure, and delivery handoffs', () => {
+    const config = expectReturned(() => loadRuntimeConfig(repositoryRoot));
+    const contracts = config.artifact_contracts;
     for (const id of [
       'FailureArtifact/v1',
       'ValidationReceipt/v1',

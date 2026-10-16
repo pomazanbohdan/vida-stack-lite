@@ -10,7 +10,7 @@ import {
 } from '../src/config/project-paths.ts';
 import { canonicalJsonDigest } from '../src/contracts/public-ingress.ts';
 import { validateProjectInitializationReceipt } from '../src/config/project-initialization-record.ts';
-import { configuredTestContext } from './configured-context.ts';
+import { configuredTestRepositoryRoot } from './configured-context.ts';
 import { expectRejection, expectReturned } from './helpers/expect-rejection.ts';
 import { makeFreshRepository } from './helpers/project-upgrade-fixture.js';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
@@ -24,7 +24,7 @@ import {
   validateRuntimeConfigRepairTargetBytes,
 } from '../src/config/runtime-config.ts';
 
-const { repositoryRoot } = configuredTestContext();
+const repositoryRoot = process.env.AGENT_RUNTIME_TEST_CONTEXT_ROOT ?? configuredTestRepositoryRoot();
 const sourceBytes = readFileSync(path.join(repositoryRoot, 'agent-runtime.config.v1.yaml'));
 
 import { captureCoverageConsumerBinding, assertCoverageConsumerBinding } from '../tooling/coverage-consumer-binding.ts';
@@ -50,7 +50,7 @@ function finishActivatedConfigFixture(root: string, passed: boolean, deadlineAt:
 function createLegacyConfigFixture(): { root: string; configFile: string; deadlineAt: number } {
   const deadlineAt = performance.now() + 5000;
   const root = mkdtempSync(path.join(tmpdir(), 'config-repair-cache-'));
-  const config = parseRuntimeConfigYaml(sourceBytes.toString('utf8'));
+  const config = expectReturned(() => parseRuntimeConfigYaml(sourceBytes.toString('utf8')));
   for (const marker of config.repository.root_markers) {
     const target = path.join(root, marker);
     mkdirSync(path.dirname(target), { recursive: true });
