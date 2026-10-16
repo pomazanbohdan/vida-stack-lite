@@ -871,9 +871,12 @@ same capture/tool fingerprint binds exactly four _repository/test-context
 inputs: root runtime config, AGENTS.md, AGENT.sidecar.md and the declared
 documentation-policy JSON. The mutation runner retains their already verified
 buffers and exclusively creates a fresh configured-test-context below that
-invocation's adapter directory. AGENT_RUNTIME_TEST_CONTEXT_ROOT selects it only
-for configuredTestContext(); AGENT_RUNTIME_TEST_REPOSITORY_ROOT keeps the parent
-tooling binding. Never copy .vida, work, databases or leases into this fixture.
+invocation's adapter directory. AGENT_RUNTIME_TEST_CONTEXT_ROOT selects it for
+configuredTestContext() and configured YAML, fuzz and repair fixture reads;
+AGENT_RUNTIME_TEST_REPOSITORY_ROOT keeps the parent Source/tooling binding.
+Fixture readers prefer the context root when present. Do not redirect parent
+input verification to it or read shared repository state as a fixture instead.
+Never copy .vida, work, databases or leases into this fixture.
 Parent admission verifies the deterministic root/digest receipt binding, exact
 layout and bytes before accepting an outcome. Failed materialization launches
 no tests. Retain the root with runner evidence on failure/UNKNOWN; never reuse

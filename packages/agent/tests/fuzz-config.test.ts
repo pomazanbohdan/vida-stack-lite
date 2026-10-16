@@ -8,6 +8,7 @@ import { validateProjectContext, validateResolvedPathProfile } from '../src/conf
 import { resolveConfigPath, validateRuntimeConfig } from '../src/config/runtime-config.ts';
 
 const repositoryRoot =
+  process.env.AGENT_RUNTIME_TEST_CONTEXT_ROOT ??
   process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT ??
   path.resolve(fileURLToPath(new URL('..', import.meta.url)), '..', '..');
 const validators = [

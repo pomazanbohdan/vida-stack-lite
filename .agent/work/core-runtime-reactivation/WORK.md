@@ -6672,6 +6672,50 @@ at72LIr6 in2504.694591ms; mutation attribution still needs an actual fresh campa
 The bun-test skill now explicitly includes describe-time and beforeAll failure
 boundaries in its existing setup guidance.
 
+At published1003bb7,113tests pass and d1c2fa21-6487-474d-8470-56ca4e960fc5 again
+measures exact350/965/1023/256, same-run frozen proof PASS16/16; owner hZ7UkM
+completes18128.338191ms. Both corrected-closure reports are imported separately,
+without combining their Source/test closures. The next mutation8a4af18c-e62d-
+4734-9c23-55a0ad284f8a at Re0H51 passes baseline but Root stops it after finding
+a second test-contour defect. YAML selected TEST_REPOSITORY_ROOT instead of the
+per-invocation TEST_CONTEXT_ROOT sealed by mutationTestEnvironment. Actual mutant112
+now has body AssertionError/node-assert attribution, but its lock-contention cause
+cannot be attributed to the mutant while tests touch the shared repository root.
+Neither that marker nor any raw Killed count qualifies this campaign. The owned
+interruption records exit143,403551.735318ms, full empty producer captures, closed
+groups and same boot; intent, pending map/events and individual receipts remain.
+
+YAML and fuzz now prefer the per-invocation context while retaining ordinary
+repository/portable fallback. Repair-boundary already has the same priority.
+A native control materializes the existing four captured context files, runs all
+five declared tests, and verifies exact context bytes/layout through the existing
+parent verifier afterward. Its initial outer sandbox mounted an external fixture
+read-only and failed; that harness error is retained, not called a product defect.
+The corrected writable owned fixture passes113/0 at0IdMBw in13404.321178ms and
+its four files/layout remain unchanged. A poisoned-global-root negative control
+follows separately; no mutation admission is inferred from this functional control.
+The poisoned-global-root control also passes113/0 at4WXAcC in13380.081819ms:
+TEST_REPOSITORY_ROOT names an absent path while the fresh context remains usable.
+Its exact four files/layout remain unchanged. This proves the declared test set
+uses the sealed context rather than relying on the shared repository fallback.
+TESTING and the bun-test skill now state this fixture/source-root separation.
+
+A bounded first64-receipt review found three113test passing survivor candidates,
+IDs47/66/103, at normalizeProjectRoot's diagnostics and relative-root guard.
+The existing membership case now covers empty, absolute, backslash, parent/dot,
+empty-segment, reserved-name, trailing-dot/space and control-character project_root
+inputs with exact PathProfileError name/code/message. This addresses the analogous
+normalizer boundary rather than copying work_root cases against the wrong helper.
+Current Source and immutable350role budget bindings remain unchanged.
+
+Installed Stryker10 exposes the actual TestRunner plugin API. Its generic command
+runner still supplies All tests. A proposed Bun runner must preserve public test
+IDs and the existing receipt owner; partial native coverage can short-circuit as
+NoCoverage before mutantRun, so it cannot provide the required full fallback.
+The bounded next pilot stays explicit and inactive; no diagnostic flag grants it
+authority. Ready rebind close, lifecycle phase and runtime-expiry candidates remain
+external until Root integrates and checks them under their own closures.
+
 The ordinary test:config:pinned and test:pinned routes now select the new layout
 file, preserving the moved cases' ordinary execution as well as contour selection.
 The governance compatibility review rejects a proposed deletion: complete from

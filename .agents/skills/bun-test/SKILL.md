@@ -41,6 +41,9 @@ For YAML/configured-root fixtures, follow [TESTING's fixture contract](../../../
 Use the bound config's registered and allowed projects; verify targeted negative
 mutations actually occurred before testing rejection. Keep portable-template
 and configured-root checks distinct from complete coverage qualification.
+For mutation fixtures, prefer the sealed `AGENT_RUNTIME_TEST_CONTEXT_ROOT` over
+the parent repository root. Keep parent Source/tool input resolution separate;
+verify the fixture's exact bytes and layout through the existing runner owner.
 
 Start from the contract and the function or boundary that owns it. Map each
 plausible regression to a fixture, a concrete case, and an assertion at that

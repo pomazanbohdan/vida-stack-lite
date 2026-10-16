@@ -65,7 +65,8 @@ import { createRuntimeKernelHost } from '../src/runtime-kernel.ts';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const temporaryRoots: string[] = [];
-const configuredRoot = process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT || undefined;
+const configuredRoot =
+  process.env.AGENT_RUNTIME_TEST_CONTEXT_ROOT || process.env.AGENT_RUNTIME_TEST_REPOSITORY_ROOT || undefined;
 const templateText = (await readFile(path.join(packageRoot, 'templates/agent-runtime.config.template.v1.yaml'), 'utf8'))
   .replaceAll('{{REPOSITORY}}', 'creatio-sample')
   .replaceAll('{{PROJECT}}', '3mob')

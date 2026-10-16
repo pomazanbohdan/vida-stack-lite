@@ -196,6 +196,25 @@ describe('project context path boundary', () => {
       specificity: 2,
     });
     expect(resolveProjectForRepositoryPath(projects, 'services/other')).toMatchObject({ project_id: 'services' });
+    for (const [projectRoot, diagnostic] of [
+      ['', 'must be a non-empty relative path'],
+      ['/absolute', 'must be repository-relative'],
+      ['a\\b', 'must be repository-relative'],
+      ['a/..', 'contains an unsafe path segment'],
+      ['a/.', 'contains an unsafe path segment'],
+      ['./a', 'contains an unsafe path segment'],
+      ['a//b', 'contains an unsafe path segment'],
+      ['a/con', 'contains an unsafe path segment'],
+      ['a/b.', 'contains an unsafe path segment'],
+      ['a/b ', 'contains an unsafe path segment'],
+      ['a/\u0001b', 'contains an unsafe path segment'],
+    ] as const) {
+      assert.throws(() => resolveProjectPathMembership([{ project_id: 'billing', project_root: projectRoot }], '.'), {
+        name: 'PathProfileError',
+        code: pathProfileGap,
+        message: `${pathProfileGap}: project root ${diagnostic}`,
+      });
+    }
     const equalRoots: PathProfileResolutionEntry[] = [
       { project_id: 'aa', project_root: 'packages/a' },
       { project_id: 'bb', project_root: 'packages/a' },
