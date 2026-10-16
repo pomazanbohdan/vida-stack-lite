@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `3f64293`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. The complete native main-runtime-timing producer pilot joins151/151 assertion-confirmed Killed at4b99cc6; proof-aware contour-reader and global admission remain open. Fresh final-assurance measurement at3f64293 improves coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `801cb4c`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. The complete native main-runtime-timing producer pilot joins151/151 assertion-confirmed Killed at4b99cc6; proof-aware contour-reader and global admission remain open. Fresh final-assurance measurement at801cb4c improves coverage and measured entry-CRAP below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -155,6 +155,60 @@ and unchanged boot. Strict501 and TS-only502 pass with zero diagnostics.
 The normal commit hook remains required before publication.
 
 ### Current native receipt and final-assurance cost investigation
+
+The801cb4c shared-reader/recovery packet is committed and pushed through the
+ordinary strict hook. Successful SDK formation run38957998065/attempt1/artifact
+12070589969 binds exact head `801cb4c0e9adfb53053a4e2f03ffe5e988f288d8`,
+archive647147bytes and SHA256
+`aa4cee8e6c847bd54655b674199389b57d0d17e265f59158fa900b63bfd863dc`.
+Fresh `native-coverage-contour-7forzO` completes at that unchanged head in
+53874.356728ms, exit0, full captures, closed process group and unchanged boot.
+A transient shell transport disconnect does not restart the producer; Root
+observes its original terminal result and identical boot after reconnection.
+
+Run `b25d112e-997b-45b1-8a1e-71517c85a03a` passes12/0 with232 assertions.
+Exact focused F/L/S/B are82/94,272/325,307/363 and232/305. Compared with the
+preceding3f64293 run, this adds4 entered functions,31 lines,31 statements and25
+branches. Measured maxCC remains33 and max entry-CRAP falls from132 to33;
+frozen per-function and full coverage qualification remain pending. Root imports
+both the actual diagnostic and BLOCKED operation outcome through the maintained
+owner, producing412automatic attempts. Historical local triples remain6/45.
+
+The next native producer slice preserves exact-key descriptor v3 and runner
+receipts. It saves one `NativeMutationValidationContext/v1` after the existing
+input-byte and executable readback guards, reusing their actual observations.
+It includes the invocation executable, before/after parent identities, captured
+hook selection and full global `inputs.sources` digest metadata. The unchanged
+v1 semantic proof join is wrapped in `NativeMutationPartitionProof/v2` with one
+context artifact reference. Candidate report v1 retains an opaque proof reference;
+future readers must dispatch on the referenced schema and keep v1 historical.
+No new Source/AST/hash pass, descriptor version ladder, per-ID context copy or
+external attestation requirement is introduced. Independent plan and exact-code
+reviews find no concrete blocker. The code review is retained at
+`/workspace/attachments/luna-native-context-code-review-v21-20261016.md` and does
+not establish producer or reader qualification. Actual v2 producer qualification is pending;
+contour/global native admission remains closed.
+
+The next final-assurance test extends the existing public fresh-preparation
+success with direct Source retry of that exact persisted packet before issue.
+It compares the CLI version, packet bytes and Host/ledger versions, then uses
+actual Source drift to check revalidation precedes the cached-existing return.
+Restoration preserves both body and restore failures. The public fresh-creation
+branch is retained; no second fixture or authority is minted. Its development
+check `quality-rolling-cli-check-OkO05a` passes163/0 across4files with898
+assertions in53047.788792ms, complete captures, closed group and unchanged boot.
+The public integration case stays within its90s bound at36785.73ms. The direct
+retry and exact drift denial behave correctly; no product defect is inferred.
+
+The existing pure final-assurance case also derives a genuinely read-only tool
+policy without test.read, then reaches unknown readonly relinquishment with an
+unobserved reply. A valid configured FQDN is allowed for inspection but prevents
+no-egress relinquishment even under the policy name `none`; invalid host strings
+are denied and the UNKNOWN observation remains null. This reuses the same
+configuration capture and existing inspector policy instead of a second fixture
+or new policy identity. `quality-rolling-cli-check-M3ia1D` passes10/0,57 assertions,
+in1272.354704ms with complete capture, closed group and unchanged boot. Strict503,
+TS-only504 and maintained full oxlint pass. The normal hook remains required.
 
 The3f64293 correction packet is committed and pushed through the ordinary strict
 hook. Successful SDK formation run38956295242/attempt1/artifact12069429420 binds

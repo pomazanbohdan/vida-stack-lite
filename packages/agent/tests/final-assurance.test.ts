@@ -66,6 +66,48 @@ test('settled validator inspection permits test.read without granting unknown or
   expect(expectReturned(() => configuredReadonlyAssignment(config, request, 'settled-validation'))).toBe(true);
   expect(configuredReadonlyAssignment(config, request)).toBe(false);
   expect(eligibleReadonlyRelinquishment(config, { request, issue_id: 'unknown', observation: null })).toBe(false);
+  const readonlyConfig: AgentRuntimeConfig = {
+    ...config,
+    agents: {
+      ...config.agents,
+      tool_policies: {
+        ...config.agents.tool_policies,
+        inspect: {
+          ...config.agents.tool_policies.inspect!,
+          allowed_tools: ['runtime.read', 'source.read', 'docs.read', 'web.search'],
+        },
+      },
+    },
+  };
+  expect(configuredReadonlyAssignment(readonlyConfig, request)).toBe(true);
+  const unobservedUnknown = { request, issue_id: 'unknown', observation: null };
+  expect(eligibleReadonlyRelinquishment(readonlyConfig, unobservedUnknown)).toBe(true);
+  const configuredHost: AgentRuntimeConfig = {
+    ...readonlyConfig,
+    agents: {
+      ...readonlyConfig.agents,
+      egress_policies: {
+        ...readonlyConfig.agents.egress_policies,
+        none: { allowed_hosts: ['api.example.org'] },
+      },
+    },
+  };
+  expect(configuredReadonlyAssignment(configuredHost, request)).toBe(true);
+  expect(eligibleReadonlyRelinquishment(configuredHost, unobservedUnknown)).toBe(false);
+  expect(unobservedUnknown.observation).toBeNull();
+  for (const host of ['', '-edge.example', 'edge-.example', 'edge.example.1a']) {
+    const invalidHost: AgentRuntimeConfig = {
+      ...readonlyConfig,
+      agents: {
+        ...readonlyConfig.agents,
+        egress_policies: {
+          ...readonlyConfig.agents.egress_policies,
+          none: { allowed_hosts: [host] },
+        },
+      },
+    };
+    expect(configuredReadonlyAssignment(invalidHost, request)).toBe(false);
+  }
   for (const tool of ['test.execute', 'runtime.write', 'source.write', 'delivery.write', 'unknown']) {
     const candidate: AgentRuntimeConfig = {
       ...config,

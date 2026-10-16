@@ -7,8 +7,7 @@ import { sha256, type InputDigest } from './bun-coverage-evidence.ts';
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
-import type { MutationProcessResult } from './mutation-evidence.ts';
-import { validCapturedOutput } from './mutation-evidence.ts';
+import { validCapturedOutput, type MutationProcessResult, type collectExecutionIdentity } from './mutation-evidence.ts';
 
 type Location = Mutant['location'];
 type ReportedMutant = {
@@ -355,6 +354,20 @@ export type NativeMutationPartitionProof = {
     runner_receipt: NativeMutationArtifactRef;
     launcher_receipt: NativeMutationArtifactRef;
   }[];
+};
+
+export type NativeMutationValidationContext = {
+  schema: 'NativeMutationValidationContext/v1';
+  binding: MutationMapBinding;
+  invocation_executable: string;
+  parent_identity_before: Awaited<ReturnType<typeof collectExecutionIdentity>>;
+  parent_identity_after: Awaited<ReturnType<typeof collectExecutionIdentity>>;
+  hook_files: string[];
+  source_inputs: InputDigest[];
+};
+export type NativeMutationPartitionProofV2 = Omit<NativeMutationPartitionProof, 'schema'> & {
+  schema: 'NativeMutationPartitionProof/v2';
+  validation_context: NativeMutationArtifactRef;
 };
 
 export type NativeMutationProofEvidence = {

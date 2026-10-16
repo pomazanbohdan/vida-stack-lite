@@ -1076,13 +1076,25 @@ duplicate, foreign, partial, survived, UNKNOWN or resource-blocked observations
 produce no passing candidate. The metadata universe digest has one shared owner;
 this join adds no Source scan or test suite.
 
-The separate `NativeMutationPartitionProof/v1` and
-`CandidateNativeMutationReport/v1` identify `native-instrumenter-batches/v1`
-provenance and remain partition-local with `full_qualification:false`. They
-contain no synthetic Stryker statuses or events. Their complete execution pilot
-and downstream proof-reader qualification remain required; current contour and
-final-quality readers reject them. A new schema or passing join-unit fixture is
-not a qualified mutation score, and old diagnostic operations stay diagnostic.
+The in-memory `NativeMutationPartitionProof/v1` join remains the semantic owner.
+The producer writes `NativeMutationPartitionProof/v2` with one referenced
+`NativeMutationValidationContext/v1`, after the existing parent input and
+executable readbacks succeed. It records the invocation executable, actual
+before/after parent identities, captured hook-file selection and complete
+global Source digest rows from `inputs.sources`, distinct from the partition
+subset. Those observations are reused once, without another Source/AST/hash
+pass or a copy in each mutant receipt. Descriptor v3 and runner receipts keep
+their existing contracts. Historical v1 proofs do not acquire this context.
+
+`CandidateNativeMutationReport/v1` keeps its opaque proof artifact reference
+and `native-instrumenter-batches/v1` provenance. Proof and report remain
+partition-local with `full_qualification:false`, without synthetic Stryker
+statuses or events. The context-bearing producer pilot and downstream
+proof-reader qualification remain required; current contour and final-quality
+readers reject them. A future reader must dispatch on the referenced proof
+schema and validate the context/descriptor/receipt closure. A new schema or
+passing join-unit fixture is not a qualified mutation score, and old diagnostic
+operations stay diagnostic.
 
 Mutation artifact byte reads share `tooling/mutation-artifact-reader.ts` rather
 than importing the gate's orchestration. Its default4MiB evidence and explicit

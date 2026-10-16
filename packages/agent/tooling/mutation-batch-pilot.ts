@@ -32,6 +32,8 @@ import {
   type MutationMapBinding,
   type NativeMutationBatchResult,
   type NativeMutationReceiptReference,
+  type NativeMutationValidationContext,
+  type NativeMutationPartitionProofV2,
 } from './mutation-map.ts';
 import { mutationPartitions, mutationPartitionSources, type MutationPartition } from './mutation-partitions.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
@@ -400,7 +402,8 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const current = await readQualityInputs(root, Object.keys(inputs.input_bytes));
     for (const [file, bytes] of current)
       if (!bytes.equals(inputs.input_bytes[file]!)) throw new Error('Native mutation parent inputs drifted.');
-    if (executionIdentityDigest(await parentIdentity()) !== executionIdentityDigest(identity))
+    const observedIdentity = await parentIdentity();
+    if (executionIdentityDigest(observedIdentity) !== executionIdentityDigest(identity))
       throw new Error('Native mutation executable identity drifted.');
     if (results.length !== totals.attempted) throw new Error('Native mutation progress observation count differs.');
     const summary = {
@@ -423,7 +426,21 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         batches,
         receipts,
       });
-      const proofArtifact = record('native-partition-proof.json', proof);
+      const validationContext: NativeMutationValidationContext = {
+        schema: 'NativeMutationValidationContext/v1',
+        binding,
+        invocation_executable: process.execPath,
+        parent_identity_before: identity,
+        parent_identity_after: observedIdentity,
+        hook_files: context.hookFiles,
+        source_inputs: inputs.sources,
+      };
+      const contextualProof: NativeMutationPartitionProofV2 = {
+        ...proof,
+        schema: 'NativeMutationPartitionProof/v2',
+        validation_context: record('validation-context.json', validationContext),
+      };
+      const proofArtifact = record('native-partition-proof.json', contextualProof);
       const report = {
         schema: 'CandidateNativeMutationReport/v1',
         producer_kind: 'native-instrumenter-batches/v1',

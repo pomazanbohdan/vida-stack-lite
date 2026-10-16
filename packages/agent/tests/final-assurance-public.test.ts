@@ -29,6 +29,7 @@ import type { FinalAssuranceReport } from '../src/orchestration/final-assurance.
 import { mastraLedgerStatus } from '../src/orchestration/persistent-session-handoff.ts';
 import {
   finalAssuranceReceiptReferences,
+  prepareFinalAssurance,
   prepareLifecycleForCorrection,
   readCorrectivePlanningJournal,
   validateWorkSessionBindingAndReturnCorrectiveAuthority,
@@ -749,6 +750,64 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     expect(preparedReferences.length).toBeGreaterThan(retainedReferences.length);
     expect(() => validateLifecycleReferencePreservation(retainedReferences, preparedReferences)).not.toThrow();
     expect(response.assurance_status).toBe('ready');
+    const directHostBefore = f.store.readHostStateSnapshot(identity),
+      directJournal = f.store.readWorkSessionJournal(identity),
+      existingAssurance = f.store.readFinalAssurance(identity, 1);
+    if (!directJournal || !existingAssurance || !directHostBefore.workVersion || !directHostBefore.ledgerVersion)
+      throw new Error('Expected persisted public preparation state before direct retry.');
+    const directInput = {
+      root: f.root,
+      config: f.config,
+      store: f.store,
+      identity,
+      journal: { ...directJournal, resume_status: mastraLedgerStatus(directJournal.state) },
+      preparationPath,
+    };
+    const packetReference = currentWork(directHostBefore).lifecycle.references.find(
+      (reference) => reference.kind === 'review_packet' && reference.disposition === 'current',
+    );
+    if (!packetReference) throw new Error('Expected the current public assurance packet reference.');
+    const packetFile = path.join(f.root, packetReference.path),
+      packetBefore = readFileSync(packetFile),
+      directRetry = expectReturned(() => prepareFinalAssurance(directInput));
+    expect(directRetry.version).toEqual(response.state_version);
+    expect(directRetry).toEqual(existingAssurance);
+    const packetValue: unknown = JSON.parse(packetBefore.toString('utf8'));
+    assert.equal(canonicalJson(packetValue), canonicalJson(directRetry.state.packet));
+    expect(readFileSync(packetFile)).toEqual(packetBefore);
+    const directHostAfter = f.store.readHostStateSnapshot(identity);
+    expect(directHostAfter.work).toEqual(directHostBefore.work);
+    expect(directHostAfter.ledger).toEqual(directHostBefore.ledger);
+    expect(directHostAfter.workVersion).toEqual(directHostBefore.workVersion);
+    expect(directHostAfter.ledgerVersion).toEqual(directHostBefore.ledgerVersion);
+
+    writeFileSync(sourceFile, 'Synthetic source drift after assurance publication');
+    let driftFailure: { error: unknown } | undefined;
+    try {
+      expect(() => prepareFinalAssurance(directInput)).toThrow(
+        'GAP-FINAL-ASSURANCE-001: current source differs from accepted focused evidence',
+      );
+    } catch (error) {
+      driftFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            writeFileSync(sourceFile, originalSource);
+            return undefined;
+          },
+        ],
+        driftFailure,
+      );
+    }
+    expect(readFileSync(sourceFile)).toEqual(originalSource);
+    const directHostAfterDrift = f.store.readHostStateSnapshot(identity);
+    expect(directHostAfterDrift.work).toEqual(directHostBefore.work);
+    expect(directHostAfterDrift.ledger).toEqual(directHostBefore.ledger);
+    expect(directHostAfterDrift.workVersion).toEqual(directHostBefore.workVersion);
+    expect(directHostAfterDrift.ledgerVersion).toEqual(directHostBefore.ledgerVersion);
+    expect(readFileSync(packetFile)).toEqual(packetBefore);
     expect(response.next_actions).toHaveLength(3);
     expect(
       currentWork(f.store.readHostStateSnapshot(identity)).lifecycle.references.filter(
