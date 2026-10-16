@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import Ajv2020 from 'ajv/dist/2020.js';
 import type { ErrorObject } from 'ajv';
-import { Composer, CST, Parser, type Document } from 'yaml';
+import { Composer, CST, Parser, isAlias, type Document } from 'yaml';
 import { requireSafeRepositoryAccess, type SafeRepositoryAccess } from './safe-repository-access.js';
 import {
   INITIALIZED_PROJECT_PATHS,
@@ -770,14 +770,7 @@ function assertSafeYamlNode(node: unknown, seen = new WeakSet<object>(), depth =
       const record = node as Record<string, unknown>;
       assertCondition(!seen.has(node as object), 'runtime YAML contains a cycle or alias');
       seen.add(node as object);
-      const prototype: unknown = Object.getPrototypeOf(node);
-      const constructor: unknown =
-        prototype !== null && typeof prototype === 'object' ? Reflect.get(prototype, 'constructor') : undefined;
-      const constructorName = typeof constructor === 'function' ? constructor.name : undefined;
-      assertCondition(
-        ![constructorName === 'Alias', record.type === 'ALIAS'].some(Boolean),
-        'runtime YAML aliases are forbidden',
-      );
+      assertCondition(!isAlias(node), 'runtime YAML aliases are forbidden');
       assertCondition(!yamlText(record.anchor), 'runtime YAML anchors are forbidden');
       assertCondition(!yamlText(record.tag), 'runtime YAML explicit/custom tags are forbidden');
       const items = record.items;
@@ -1149,7 +1142,7 @@ function assertWorkflowAssignments(config: AgentRuntimeConfig, workflowId: strin
     stage.assignments.forEach((assignment) => {
       const profile = config.agents.profiles[assignment.profile];
       assertCondition(Boolean(profile), 'workflow ' + workflowId + ' uses unknown profile ' + assignment.profile);
-      const policy = profile ? config.agents.tool_policies[profile.tools_policy] : undefined;
+      const policy = config.agents.tool_policies[profile!.tools_policy];
       const hasSourceWrite = Boolean(policy && hasSourceWriteTool(policy.allowed_tools));
       const instruction = config.agents.role_instructions[assignment.role];
       assertCondition(
@@ -1157,11 +1150,11 @@ function assertWorkflowAssignments(config: AgentRuntimeConfig, workflowId: strin
         'workflow ' + workflowId + ' role ' + assignment.role + ' has no instruction',
       );
       assertCondition(
-        !stage.consumes.some((artifact) => !(instruction?.consumes.includes(artifact) as boolean)),
+        !stage.consumes.some((artifact) => !instruction!.consumes.includes(artifact)),
         'workflow ' + workflowId + ' role ' + assignment.role + ' cannot consume its stage artifacts',
       );
       assertCondition(
-        !stage.produces.some((artifact) => !(instruction?.produces.includes(artifact) as boolean)),
+        !stage.produces.some((artifact) => !instruction!.produces.includes(artifact)),
         'workflow ' + workflowId + ' role ' + assignment.role + ' cannot produce its stage artifacts',
       );
       const mayWrite = [stage.kind === 'develop', assignment.role === 'developer-orchestrator'].every(Boolean);

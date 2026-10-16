@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import {
   loadProjectContext,
   loadProjectSetContext,
@@ -8,6 +9,7 @@ import {
   pathProfileGap,
   requireAbsoluteRepositoryRoot,
   projectMayScopeRepositoryPath,
+  projectBindingFor,
   resolvePathProfile,
   resolveProjectPathMembership,
   resolveProjectForRepositoryPath,
@@ -66,8 +68,8 @@ let initialRuntimeConfig: string;
 const temporaryRoots: string[] = [];
 
 function binding(context: ProjectContext, selectedProjectId: string): ProjectContextProjectBinding {
-  const result = context.project_bindings.find((entry) => entry.project_id === selectedProjectId);
-  if (result === undefined) throw new Error('project binding fixture is missing: ' + selectedProjectId);
+  const result = projectBindingFor(context, selectedProjectId);
+  if (result === null) throw new Error('project binding fixture is missing: ' + selectedProjectId);
   return result;
 }
 function required<T>(value: T | undefined, label: string): T {
@@ -231,6 +233,28 @@ describe('project context path boundary', () => {
     expect(
       resolveProjectPathMembership(nestedRoots, 'PRODUCTS/FOREIGN/src/main.ts', { platform: 'posix' }).project_ids,
     ).toEqual([]);
+    const implicitRoot: PathProfileResolutionEntry[] = [{ project_id: 'implicit' }];
+    expect(resolveProjectPathMembership(implicitRoot, 'src/main.ts')).toEqual({
+      project_ids: ['implicit'],
+      project_root: '.',
+      specificity: 0,
+    });
+    const overrideRoots: PathProfileResolutionEntry[] = [
+      { project_id: 'root', project_root: '.' },
+      { project_id: 'nested', path_overrides: { project_root: 'services/nested///' } },
+    ];
+    expect(
+      resolveSelectedProjectForRepositoryPath(overrideRoots, 'services/nested/src/main.ts///', ['nested']),
+    ).toEqual({
+      project_id: 'nested',
+      project_root: 'services/nested',
+      specificity: 2,
+    });
+    const missingRoots: PathProfileResolutionEntry[] = [{ project_id: 'first' }, { project_id: 'second' }];
+    expect(() => resolveProjectPathMembership(missingRoots, 'src/main.ts')).toThrow(
+      'multi-project entries require explicit project roots',
+    );
+    expect(() => resolveProjectPathMembership(implicitRoot, '///')).toThrow('repository path must be relative');
     expect(() => resolveProjectForRepositoryPath(projects, 'outside/../root')).toThrow(/unsafe path segment/);
     expect(() => resolveProjectPathMembership(equalRoots, 'packages/a/../foreign')).toThrow(/unsafe path segment/);
   });
@@ -261,7 +285,27 @@ describe('project context path boundary', () => {
     expect(() => normalizeProjectIds(['billing', ''])).toThrow(/project id is invalid/);
   });
 
+  test('denies a caller-owned project identity that drifts after membership admission', () => {
+    let reads = 0;
+    const projects: PathProfileResolutionEntry[] = [
+      {
+        get project_id() {
+          // Membership and configured-ID admission see the same identity; final lookup sees drift.
+          return ++reads <= 7 ? 'selected' : 'drifted';
+        },
+        project_root: 'products',
+      },
+    ];
+    assert.throws(
+      () => resolveSelectedProjectForRepositoryPath(projects, 'products/src/main.ts', ['selected']),
+      (error: unknown) =>
+        error instanceof PathProfileError && error.message === pathProfileGap + ': selected project is not configured',
+    );
+    assert.ok(reads > 7, 'the caller-owned identity must actually drift after configured-ID admission');
+  });
+
   test('binds an exact multi-project context without a primary project', () => {
+    expect(projectBindingFor(project, 'missing-project')).toBeNull();
     const first = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
       secondProjectId,
       projectId,
@@ -619,14 +663,11 @@ describe('project context path boundary', () => {
     expect(() => requireAbsoluteRepositoryRoot(repositoryRoot + path.sep + '.')).toThrow(
       'trusted repository root must be canonical',
     );
-    try {
-      resolve({ work_root: 'a/../b' });
-    } catch (error) {
-      if (!(error instanceof PathProfileError)) throw error;
-      expect(error).toBeInstanceOf(PathProfileError);
-      expect(error.name).toBe('PathProfileError');
-      expect(error.code).toBe(pathProfileGap);
-    }
+    assert.throws(() => resolve({ work_root: 'a/../b' }), {
+      name: 'PathProfileError',
+      code: pathProfileGap,
+      message: `${pathProfileGap}: $trusted_override.paths.work_root contains an unsafe path segment`,
+    });
   });
 
   test('validates each selected project path profile with one filesystem scan', () => {

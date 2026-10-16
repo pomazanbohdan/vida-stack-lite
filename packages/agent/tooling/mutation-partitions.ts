@@ -32,6 +32,7 @@ export function mutationPartitions(options: { includeRetired?: boolean } = {}): 
       name: 'main-config',
       sources: ['src/config/runtime-config.ts', 'src/config/project-context.ts'],
       tests: [
+        'tests/runtime-package-layout.test.ts',
         'tests/project-context-boundary.test.ts',
         'tests/fuzz-config.test.ts',
         'tests/runtime-config-repair-boundary.test.ts',

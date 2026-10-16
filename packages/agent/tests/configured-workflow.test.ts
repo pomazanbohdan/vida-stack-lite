@@ -2722,36 +2722,6 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
     ).toEqual(['source-planner', 'security-prewriter']);
   });
 
-  test('loads and compiles legacy workflow configuration without the new prewrite stage for read-only inspection', async () => {
-    const fixture = mutableFixtureConfig();
-    const workflowIds = ['implementation_new', 'implementation_change', 'bug_fix', 'task_execution'];
-    for (const workflowId of workflowIds) {
-      const workflow = requireFixtureValue(fixture.workflows[workflowId]);
-      const developer = requireFixtureValue(workflow.stages.find((stage) => stage.kind === 'develop'));
-      setFixtureField(
-        workflow,
-        'stages',
-        workflow.stages.filter((stage) => stage.id !== 'review_source_prewrite'),
-      );
-      setFixtureField(
-        workflow,
-        'edges',
-        workflow.edges.filter(([from, to]) => from !== 'review_source_prewrite' && to !== 'review_source_prewrite'),
-      );
-      setFixtureField(developer, 'required_after', ['synthesize_task']);
-      setFixtureField(workflow, 'edges', [...workflow.edges, ['synthesize_task', developer.id]]);
-    }
-    await writeFile(path.join(root, 'agent-runtime.config.v1.yaml'), stringify(fixture));
-    const legacyConfig = loadRuntimeConfig(root);
-    for (const workflowId of workflowIds) {
-      for (const risks of [[], ['high']]) {
-        const compiled = compileDevelopmentWorkflow(legacyConfig, 'default-development', workflowId, risks);
-        expect(compiled.waves.flat().some((stage) => stage.id === 'review_source_prewrite')).toBe(false);
-      }
-    }
-    expect(calls).toHaveLength(0);
-  });
-
   test('rejects a foreign prewrite stage for low and high-risk Source workflows', async () => {
     const fixture = mutableFixtureConfig();
     const workflow = requireFixtureValue(fixture.workflows.implementation_new);
@@ -2805,16 +2775,6 @@ describe('real configured Mastra graph (unit host adapters, not artifact or pers
       },
     ],
     ['whole stage risk-filtered', (stage: WorkflowStage) => setFixtureField(stage, 'risk_flags', ['high'])],
-    [
-      'security filter moved to the whole stage',
-      (stage: WorkflowStage) => {
-        setFixtureField(stage, 'risk_flags', ['security', 'data_loss', 'migration', 'high']);
-        Reflect.deleteProperty(
-          requireFixtureValue(stage.assignments.find((assignment) => assignment.role === 'security-prewriter')),
-          'risk_flags',
-        );
-      },
-    ],
     ['planner and security made serial', (stage: WorkflowStage) => setFixtureField(stage, 'mode', 'single')],
     [
       'planner moved after the security assignment',

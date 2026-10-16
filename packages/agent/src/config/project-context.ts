@@ -186,7 +186,7 @@ function normalizeProjectRoot(value: string | undefined, label: string): string 
 function normalizeRepositoryPath(value: string): string {
   enforce(typeof value === 'string' && value.length > 0, 'repository path must be a non-empty relative path');
   enforce(!path.posix.isAbsolute(value) && !value.includes('\\'), 'repository path must be relative');
-  const normalized = value.replace(/\/+$/, '') || '.';
+  const normalized = value.replace(/\/+$/, '');
   enforce(
     normalized === '.' ||
       normalized

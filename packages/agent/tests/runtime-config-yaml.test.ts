@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, test } from 'bun:test';
+import { afterAll, describe, expect, spyOn, test } from 'bun:test';
 import { configuredTestContext } from './configured-context.ts';
 import { rejectionReason } from './helpers/expect-rejection.ts';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
@@ -6,7 +6,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { stringify as stringifyYaml } from 'yaml';
+import { Composer, stringify as stringifyYaml } from 'yaml';
 import { expectReturned } from './helpers/expect-rejection.ts';
 import {
   buildDevelopmentTaskPacket,
@@ -55,8 +55,11 @@ import {
   validateRuntimeConfig as validateRuntimeConfigSource,
   validateRuntimeConfigRepairTargetBytes,
   parseRuntimeConfigYaml,
+  parseRuntimeConfigDocument,
+  resolveConfigPath,
   requireConfiguredOperation,
   selectWorkflow as selectWorkflowSource,
+  validateWorkflowConfiguration,
 } from '../src/config/runtime-config.ts';
 import { createRuntimeKernelHost } from '../src/runtime-kernel.ts';
 
@@ -483,6 +486,123 @@ describe('one strict YAML authority', () => {
       /tags|tag/i,
     );
     await expectYamlFailure((yaml) => yaml + '\n<<: { forbidden: true }\n', /merge keys are forbidden/i);
+  });
+
+  test('parses explicit empty documents and preserves the default path label', () => {
+    for (const raw of ['', '---\n']) expect(parseRuntimeConfigDocument(raw)).toBeNull();
+    expect(resolveConfigPath(repositoryRoot, 'AGENTS.md')).toBe(path.join(repositoryRoot, 'AGENTS.md'));
+  });
+
+  test('rejects a composer contract failure before consuming a missing document', () => {
+    const compose = spyOn(Composer.prototype, 'compose').mockImplementation(function* () {
+      yield* [];
+    });
+    try {
+      let failure: unknown;
+      try {
+        parseRuntimeConfigDocument('schema: AgentRuntimeConfig/v1\n');
+      } catch (error) {
+        failure = error;
+      }
+      expect(failure instanceof RuntimeConfigError && failure.message === 'runtime YAML document is unavailable').toBe(
+        true,
+      );
+    } finally {
+      compose.mockRestore();
+    }
+  });
+
+  test('denies caller-owned workflow outputs that drift between producer and availability admission', async () => {
+    const candidate = mutableClone(parseRuntimeConfigYaml(authorityText));
+    const workflowId = 'implementation_new';
+    const workflow = required(candidate.workflows[workflowId], 'implementation workflow');
+    const producer = required(
+      workflow.stages.find((stage) => stage.id === 'synthesize_task'),
+      'task synthesizer',
+    );
+    expect(producer.assignments).toHaveLength(1);
+    const original = producer.produces;
+    let reads = 0;
+    Object.defineProperty(producer, 'produces', {
+      enumerable: true,
+      get() {
+        // Assignment, declared-artifact, producer-map, and availability reads see valid arrays.
+        return ++reads === 3 ? [] : original;
+      },
+    });
+    const failure = await rejectionReason(Promise.resolve().then(() => validateWorkflowConfiguration(candidate)));
+    expect(failure).toBeInstanceOf(RuntimeConfigError);
+    expect(failure).toHaveProperty(
+      'message',
+      `workflow ${workflowId} consumes DevelopmentTaskPacket/v1 without a causal producer`,
+    );
+    expect(reads).toBe(4);
+  });
+
+  test('rejects a schema-shaped context skill ref containing traversal dots', () => {
+    const candidate = mutableClone(parseRuntimeConfigYaml(authorityText));
+    const workflow = required(candidate.workflows.information_research_light, 'research workflow');
+    const stage = required(workflow.stages[0], 'research stage');
+    stage.context_skill_refs = ['.codex/skills/a..b/SKILL.md'];
+    expect(() => validateRuntimeConfigSource(candidate)).toThrow(
+      `workflow information_research_light stage ${stage.id} has an unsafe context skill ref`,
+    );
+  });
+
+  test('rejects a literal credential in a schema-permitted dynamic role key', () => {
+    const candidate = mutableClone(parseRuntimeConfigYaml(authorityText));
+    const team = required(candidate.teams['default-development'], 'development team');
+    team.roles.token = 'not-an-opaque-secret';
+    expect(() => validateRuntimeConfigSource(candidate)).toThrow(
+      '$.teams.default-development.roles.token must be an opaque secret reference',
+    );
+  });
+
+  test('loads and compiles legacy workflow configuration without the new prewrite stage for read-only inspection', async () => {
+    const candidate = mutableClone(parseRuntimeConfigYaml(authorityText));
+    const workflowIds = ['implementation_new', 'implementation_change', 'bug_fix', 'task_execution'];
+    for (const workflowId of workflowIds) {
+      const workflow = required(candidate.workflows[workflowId], workflowId);
+      const developer = required(
+        workflow.stages.find((stage) => stage.kind === 'develop'),
+        'developer',
+      );
+      workflow.stages = workflow.stages.filter((stage) => stage.id !== 'review_source_prewrite');
+      workflow.edges = workflow.edges.filter(
+        ([from, to]) => from !== 'review_source_prewrite' && to !== 'review_source_prewrite',
+      );
+      developer.required_after = ['synthesize_task'];
+      workflow.edges.push(['synthesize_task', developer.id]);
+    }
+    const legacyConfig = loadRuntimeConfig(await fixtureRoot(stringifyYaml(candidate)));
+    for (const workflowId of workflowIds) {
+      for (const risks of [[], ['high']]) {
+        const compiled = compileDevelopmentWorkflow(legacyConfig, 'default-development', workflowId, risks);
+        expect(compiled.waves.flat().some((stage) => stage.id === 'review_source_prewrite')).toBe(false);
+      }
+    }
+  });
+
+  test('rejects a read-only bypass shape when security filter moved to the whole stage', async () => {
+    const candidate = mutableClone(parseRuntimeConfigYaml(authorityText));
+    const stage = required(
+      required(candidate.workflows.implementation_new, 'implementation workflow').stages.find(
+        (value) => value.id === 'review_source_prewrite',
+      ),
+      'prewrite stage',
+    );
+    stage.risk_flags = ['security', 'data_loss', 'migration', 'high'];
+    Reflect.deleteProperty(
+      required(
+        stage.assignments.find((assignment) => assignment.role === 'security-prewriter'),
+        'security prewriter',
+      ),
+      'risk_flags',
+    );
+    const root = await fixtureRoot(stringifyYaml(candidate));
+    expect(() => loadRuntimeConfig(root)).toThrow(
+      /permits only the exact configured read-only source planner|cannot produce its stage artifacts/,
+    );
   });
 
   test('rejects unknown fields, malformed scalars, unsafe paths, and literal credentials', async () => {

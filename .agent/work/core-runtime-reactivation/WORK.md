@@ -6579,6 +6579,53 @@ Unit Source/dist layout tests remain distinct from real formed-SDK qualification
 The6.126s activated-reader case has one genuine fresh setup/activation and distinct
 cache/sidecar/receipt probes; no safe deletion or fake fixture reuse was established.
 
+## Config gap closure batch and bounded parallel queue
+
+Root retains the sole Source/check/Git writer. Blind Luna reviews cover actual
+guards, the350role config lineage, next-contour priority, governance gaps and
+runtime-core gaps; they write external proposals only. Governance terminal
+compatibility receives a separate bounded review before any status deletion.
+No worker launches suites, scans, compilers or index refreshes during final checks.
+
+The current config batch replaces parser-owned YAML constructor reflection with
+yaml2.9.1's official isAlias. It removes local profile/instruction fallbacks only
+after their original admission guard, and the empty normalization fallback after
+nonempty relative-path admission. Public caller-owned producer drift and final
+project-membership guards remain, with exact-error witnesses. The first producer
+witness selected a multi-assignment stage incorrectly; its failure remains at
+P7rmpC. The corrected single-assignment synthesis-stage witness passes at qsburE.
+Two pure package-layout cases move out of the expensive access/lease test file
+into runtime-package-layout.test.ts. Its additional original-Source fallback case
+restores module export snapshots and retains body plus cleanup errors. Two existing
+legacy/prewriter scenarios move from configured-workflow.test.ts to the lightweight
+YAML owner without adding duplicate scenarios. The partition includes that new file.
+
+Source, tests and tooling strict TypeScript pass. The complete affected five-file
+development check nUMyiO passes113/0 with2841assertions in14645.47093ms, complete
+capture, closed process groups and unchanged boot. This is not numeric qualification.
+Independent review found a catch-only assertion for a/../b. The product already
+rejects it through invalidPathSegment's dot-ending guard; no new product defect
+was established. Root replaced the weak assertion with exact throws name/code/path
+message. The first expected message omitted the trusted-override pointer and failed
+at WAvmjw; the corrected18test check passes, with both receipts retained.
+
+One settled two-file inventory refresh binds all350current roles. Existing316
+retained+34prospective roles partition it exactly;318original roles partition into
+316retained+two already explicit removals. The review's initial missing-removal
+claim filtered absent file fields incorrectly and was corrected against identity
+prefixes. Nine project-context callbacks move by actual responsibility, not eight;
+one runtime cache-hit callback also retains its original ceiling. The CAS updater
+refreshes current addresses/complexities and two bindings only, preserves every
+original measurement/cap and all counts, and adds the dedicated config scope key.
+Global baseline report admission and all other acceptance gaps remain open.
+
+The ordinary test:config:pinned and test:pinned routes now select the new layout
+file, preserving the moved cases' ordinary execution as well as contour selection.
+The governance compatibility review rejects a proposed deletion: complete from
+reserved legally writes an applied .terminal; only commit_unknown-to-applied uses
+.final. The existing direct-store test covers it. Preserve that validator branch;
+the earlier proposal's unreachable-path premise is false.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
