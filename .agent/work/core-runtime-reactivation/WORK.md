@@ -6314,6 +6314,52 @@ report is recovered or admitted. Root's complete changed three-file selection
 passed33/0 at yHR3r3 in1868.672929ms; tests459files passed TypeScript. Fresh
 coverage/scoped CRAP/full mutation remains required for this corrected payload.
 
+## Envelope second complete cycle and next owned-image correction
+
+Published3be32d1 has fresh exact coverage cc03caaf-9deb-49e6-9d56-94e40efad89c:
+F81/81,L214/214,S234/234,B114/114; ownercc9HOU completed4877.015567ms.
+Same-run scoped CRAP v2 passed against immutable a03c2e2 with every original
+ceiling unchanged. The complete mutation rune20a616e-39ef-44af-8039-0df0fec80d8e
+endedUNKNOWN:831total,696assertion-confirmed Killed,129Survived,6UNKNOWN,
+effective_score0.8375451263537906. Raw702Killed does not supply six missing
+assertion proofs. OwnerIAPxuj completed760796.296674ms without timeout, signal
+or spawn error; capture193710bytes is complete, process groups are closed,
+and bootfb995791-a9a7-4f96-8957-afae18b9ef79 is unchanged. Provenance,
+baseline, report and Source-mismatch arrays are empty. All three reports were
+imported once through the existing contour projection owner. This is progress
+from501/835 confirmed in the previous cycle, not contour/global acceptance.
+Terminal report:/workspace/attachments/quality-mutation-main-envelopes-IAPxuj/stdout.log.
+
+The next prospective P0/P1 packet captures a descriptor-derived owned mutable
+ledger image before direct Ajv/semantic validation. The codec reuses its own
+existing image through a private validator, so it does not capture twice.
+The old substantive validator and diagnostic callback retain their original
+6/6 and2/2 ceilings/measurements on validateCoordinationLedgerImageV1 successors.
+The exported capture facade is a genuinely new role prospectively bounded10/10;
+it receives no original allowance. Use unmapped neverthrow fromThrowable for
+this result-valued capture, avoiding arbitrary error stringification; retain
+the envelope's existing error renderer. Capture failure/encoded-byte overflow
+return one stable SCHEMA_INVALID/$ result. Canonical JSON that reaches Ajv
+retains ordered diagnostics; host clock access remains after schema success.
+
+Independent boundary, caller, adversarial redundancy and preimplementation
+reviews are in /workspace/attachments/quality-ledger-image-independent-review-
+20261016.md,quality-ledger-image-callers-review-20261016.md,
+quality-ledger-redundancy-adversarial-20261016.md and
+quality-ledger-owned-image-root-plan-independent-20261016.md. Root's prospective
+plan is quality-ledger-owned-image-root-plan-20261016.md. The mapper correction
+required by review is explicit in that plan before implementation. Real
+descriptor/live-value red then green, no live gets, alias isolation, mutable
+null-prototype records, hostile capture errors, bounds, clock ordering and
+single codec capture remain required. Only after that boundary is qualified,
+remove independently proved redundant semantic terms in their existing order.
+ledgerRecordId and the accepted-batch nested active-claim callback need explicit
+removal dispositions; all other roles retain their own historical ceilings.
+Do not infer final role counts before the settled one-file inventory/review.
+Apply the reviewed ZOMBIES successful-call assertion wrappers and actual fresh
+terminal findings in the same checked packet. No equivalent-mutant waiver,
+current Runtime cutover or install/unblock is authorized by these Source checks.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed
