@@ -5,7 +5,7 @@ operations or a claim of complete quality/Runtime acceptance.
 
 ## Current state and owners
 
-- Published checkpoint: `9ee5a2d` at origin/main.
+- Published checkpoint: `2df17b0` at origin/main.
   Current repair packet is below. Source is distinct from formation,
   installation and Runtime acceptance.
 - Bun runtime/package pin:1.4.3. Maintained handwritten TS migration,
@@ -6525,6 +6525,59 @@ and dependent test-program failure are retained; capturing the sole partition
 before the callback fixes TS18046 without an unsafe cast or another scan.
 Fresh envelope coverage, same-run scoped CRAP and complete mutation follow
 publication; current changed test/tool inputs have no new numeric claim yet.
+
+## Current config gaps and five independent next lanes
+
+Fresh current main-config coverage d519fff8-52cc-4a5c-bbaf-f2e26678ef49 at
+2df17b0 completes15394.352618ms at OpHBUU, with complete captures, closed groups
+and unchanged boot. Both Sources share the existing inventory/plan bindings;
+no AST or Source hash pass was repeated to prepare the gap packet. Runtime-config
+measures F232/232,L668/669,S705/707,B158/172; project-context measures
+F118/118,L299/299,S318/319,B86/94. All350functions execute. The historical
+12uncovered roles are already reached by the maintained completed-upgrade
+reader fixture; no duplicate fixture/test was added for them.
+
+Root prepared quality-main-config-gap-packet-v2-2df17b0-20261016.json under
+attachments from those actual counters and existing inventories. It preserves
+the previous packet and supplies the owner location for an implicit-else arm.
+Four native Luna lanes own disjoint missed branch IDs: runtime-config early
+0/4/6/10/13/15/17/21; runtime-config late26/29/35/38/48; project-context early
+1/12/19/20; project-context late28/29/46. They prepare only external proposals.
+The fifth lane independently checks scoped lineage readiness for206retained+
+26new runtime-config roles and110retained+8new project-context roles. No static
+cap deficit appears in the reused captured rows; that observation is not a new
+frozen numeric gate or complete role review. Root alone integrates and checks.
+
+The same2df17b0 envelope payload again measures exact F78/78,L211/211,S228/228,
+B96/96 in b226d81e-021a-4e79-b6b6-65ac03ed5c00; same-run scoped CRAP passes
+against e32d956079716a362373bdfa410298eb5339c8fe. Its full739-mutant campaign
+7d45b994-322b-436d-a5f1-8f6bc265be14 completed at owner6IpSWs in572328.919819ms:
+739/739assertion-confirmed Killed,0Survived,0UNKNOWN,effective1,pilot-pass.
+Source/provenance/baseline/report error arrays are empty; complete111843-byte
+output, no timeout/signal/spawn error, groups closed and same boot. Coverage
+ownerubZyWw completed5647.616809ms. The same-run scoped proof has maxCC8/CRAP8,
+within each immutable original/prospective ceiling. The automatic projection
+records the local triple, raising historical local triples from5/45to6/45,
+leaving39unclosed. It still does not claim current global frozen acceptance or
+real Runtime qualification. Source, tests and tool/config inputs stayed frozen;
+the intermediate WORK update was outside their captured closure.
+The strict final commit hook initially rejected one inferred-any
+selection value; its explicit unknown boundary now passes without a bypass.
+The wrong-cwd unstaged commit attempt and all static failures remain retained
+under attachments, and2df17b0 passed the strict hook before push.
+
+Five lanes prepared the next22config branch gaps from the current report. Useful
+same-owner simplifications include the already-validated causal-producer/profile
+fallbacks and the absolute-path-excluded empty normalization fallback; any change
+must preserve original guard order and per-function correspondence. YAML2.9.1's
+official isAlias predicate can replace constructor-name reflection on parser-owned
+nodes. The actual27direct dependency resolutions all match pins; an agent's
+2.9.0 observation came from an unrelated retained dependency tree and was corrected.
+The exported project selector's late guard is retained: caller-owned getter drift
+is observable and needs a public fail-closed test, not a redundant-guard waiver.
+Unit Source/dist layout tests remain distinct from real formed-SDK qualification.
+The6.126s activated-reader case has one genuine fresh setup/activation and distinct
+cache/sidecar/receipt probes; no safe deletion or fake fixture reuse was established.
 
 ## Historical provenance
 
