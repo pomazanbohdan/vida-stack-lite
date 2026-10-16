@@ -1207,10 +1207,17 @@ function lastCompleteTripleClosure(
 
 /** Selection only: same-commit local proofs never establish global acceptance or host freshness. */
 export function selectContourCampaign(snapshot: Snapshot, mode: 'all' | 'unclosed', commit: string) {
+  const currentByContour =
+    mode === 'unclosed'
+      ? Map.groupBy(
+          snapshot.attempts.filter((row) => row.commit === commit),
+          (row) => row.contour,
+        )
+      : undefined;
   return mutationPartitions().filter((partition) => {
     if (partition.environment === 'static') return false;
     if (mode === 'all') return true;
-    const current = snapshot.attempts.filter((row) => row.contour === partition.name && row.commit === commit);
+    const current = currentByContour?.get(partition.name) ?? [];
     return !lastCompleteTripleClosure(
       current.filter((row) => row.lane === 'coverage'),
       current.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation'),
@@ -1234,8 +1241,9 @@ export function renderContourProgress(snapshot: Snapshot): string {
   let coverageFrozenCompleted = 0;
   const body: string[] = [];
   const details: string[] = [];
+  const attemptsByContour = Map.groupBy(snapshot.attempts, (row) => row.contour);
   for (const partition of partitions) {
-    const attempts = snapshot.attempts.filter((row) => row.contour === partition.name);
+    const attempts = attemptsByContour.get(partition.name) ?? [];
     const coverage = attempts.filter((row) => row.lane === 'coverage');
     const mutation = attempts.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation');
     const crap = attempts.filter((row) => row.lane === 'frozen-crap');
@@ -1276,7 +1284,7 @@ export function renderContourProgress(snapshot: Snapshot): string {
     );
   }
   for (const partition of retiredPartitions) {
-    const attempts = snapshot.attempts.filter((row) => row.contour === partition.name);
+    const attempts = attemptsByContour.get(partition.name) ?? [];
     const lastCoverage = attempts.filter((row) => row.lane === 'coverage').at(-1);
     const lastMutation = attempts.filter((row) => row.lane === 'mutation' || row.lane === 'native-mutation').at(-1);
     const lastCrap = attempts.filter((row) => row.lane === 'frozen-crap').at(-1);

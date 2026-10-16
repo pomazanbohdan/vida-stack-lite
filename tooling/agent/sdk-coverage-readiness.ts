@@ -181,6 +181,13 @@ export async function validateSdkTestArchive(
   archiveBytes: Buffer,
   identity: { version: string; bunVersion: string },
 ): Promise<Map<string, Buffer>> {
+  return (await validateSdkTestArchiveContents(archiveBytes, identity)).files;
+}
+
+async function validateSdkTestArchiveContents(
+  archiveBytes: Buffer,
+  identity: { version: string; bunVersion: string },
+): Promise<{ files: Map<string, Buffer>; outputs: OutputRow[] }> {
   if (!Buffer.isBuffer(archiveBytes) || archiveBytes.length > archiveLimit)
     throw new Error('SDK test-input archive exceeds its compressed-size bound.');
   if (
@@ -254,7 +261,7 @@ export async function validateSdkTestArchive(
       throw new Error('SDK test-input output differs from its receipt: ' + row.path);
     result.set(row.path, bytes);
   }
-  return result;
+  return { files: result, outputs: parsed.outputs };
 }
 
 function remaining(timeout: () => number): number {
@@ -716,17 +723,16 @@ export async function ensureSdkCoverageInputs(input: {
   const identity = parseVersionPin(root);
   if (currentSidecar(root, head, identity)) return;
   const fetched = await fetchCurrentArtifact(root, head, input.remainingMs, input.archivePath);
-  const files = await validateSdkTestArchive(fetched.archive, identity);
+  const { files, outputs } = await validateSdkTestArchiveContents(fetched.archive, identity);
   const sdkBytes = files.get(receiptPath);
   if (!sdkBytes) throw new Error('Validated SDK test-input receipt is missing.');
-  const parsed = sdkReceipt(JSON.parse(sdkBytes.toString('utf8')) as unknown, identity);
   publishSdkTestInputs(
     root,
     files,
     {
       ...fetched.receipt,
       sdk_receipt_sha256: sha256(sdkBytes),
-      outputs: parsed.outputs,
+      outputs,
     },
     input.remainingMs,
   );

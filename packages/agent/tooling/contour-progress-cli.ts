@@ -151,6 +151,7 @@ export function recordContourReport(root: string, report: unknown, artifact: str
     // An identical replay is harmless; changed producer evidence for the same run is rejected.
     const before = existsSync(file) ? load(file) : empty;
     const merged = mergeContourProgress(before, [attempt]);
+    if (canonicalJson(before) === canonicalJson(merged)) continue;
     atomic(file, JSON.stringify(merged, null, 2) + '\n');
   }
 }

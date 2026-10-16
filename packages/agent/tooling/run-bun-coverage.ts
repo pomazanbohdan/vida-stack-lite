@@ -1525,6 +1525,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
       const childCoverageMaps: Record<string, unknown>[] = [];
       const processReceipts: { file: string; pid: number; shard_id: 'bun-test'; sha256: string }[] = [];
       const expectedPaths = evidence.sources.map((entry) => path.resolve(root, entry.path)).sort();
+      const expectedPathSet = new Set(expectedPaths);
       const manifestDigest = sha256(readFileSync(manifestPath));
       for (const name of reportFiles) {
         const reportPath = path.join(reportDirectory, name);
@@ -1562,7 +1563,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
         const paths = Object.keys(coverage)
           .map((file) => path.resolve(file))
           .sort();
-        if (paths.some((file) => !expectedPaths.includes(file)))
+        if (paths.some((file) => !expectedPathSet.has(file)))
           reportRejected('Per-process report contains an unexpected source: ' + name);
         childCoverageMaps.push(coverage);
         processReceipts.push({

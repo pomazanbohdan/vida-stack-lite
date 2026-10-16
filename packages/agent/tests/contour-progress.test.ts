@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
@@ -119,6 +119,35 @@ test('synthetic reader projection forms an exact local native pair and replays i
   expect(renderContourProgress(snapshot)).toContain(
     'Separate same-coverage-run local triples with scoped frozen CRAP: **1/' + activeCount + '**.',
   );
+  const foreignReceipt = { ...receipt, commit: 'other-commit' };
+  const hostCoverage = coverage();
+  const mixed = mergeContourProgress(snapshot, [
+    ...contourAttempts(hostCoverage, foreignReceipt),
+    ...contourAttempts(retiredCoverage(), receipt),
+    ...contourAttempts(mutation(), foreignReceipt),
+    ...contourAttempts(frozenCrap(hostCoverage), foreignReceipt),
+  ]);
+  const currentUnclosed = selectContourCampaign(mixed, 'unclosed', receipt.commit).map((row) => row.name);
+  expect(currentUnclosed).not.toContain('main-runtime-timing');
+  expect(currentUnclosed).toContain('main-host');
+  const foreignUnclosed = selectContourCampaign(mixed, 'unclosed', foreignReceipt.commit).map((row) => row.name);
+  expect(foreignUnclosed).toContain('main-runtime-timing');
+  expect(foreignUnclosed).not.toContain('main-host');
+  expect(selectContourCampaign(mixed, 'all', receipt.commit)).toHaveLength(activeCount);
+  const mixedReport = renderContourProgress(mixed);
+  expect(mixedReport).toContain('main-contracts (retired)');
+  expect(mixedReport).toContain(
+    'Separate same-coverage-run local triples with scoped frozen CRAP: **2/' + activeCount + '**.',
+  );
+  for (const foreignLane of ['coverage', 'mutation'] as const) {
+    const splitCommit = mergeContourProgress(empty, [
+      ...contourAttempts(hostCoverage, foreignLane === 'coverage' ? foreignReceipt : receipt),
+      ...contourAttempts(mutation(), foreignLane === 'mutation' ? foreignReceipt : receipt),
+      ...contourAttempts(frozenCrap(hostCoverage), receipt),
+    ]);
+    for (const commit of [receipt.commit, foreignReceipt.commit])
+      expect(selectContourCampaign(splitCommit, 'unclosed', commit).map((row) => row.name)).toContain('main-host');
+  }
   const sameRunStryker = {
     ...attempt,
     lane: 'mutation' as const,
@@ -1431,7 +1460,21 @@ test('file adapter merges independent producer outputs, exports a durable snapsh
   try {
     recordContourReport(root, coverage(), '/retained/coverage.json');
     recordContourReport(root, mutation(), '/retained/mutation.json');
+    const observation = path.join(
+      root,
+      'coverage/bun-unified/contours/observations',
+      [coverage().test_selection.contour, 'coverage', coverage().run_id].join('.') + '.json',
+    );
+    const observationBefore = statSync(observation);
+    const observationBytes = readFileSync(observation, 'utf8');
     recordContourReport(root, coverage(), '/retained/coverage.json');
+    expect(statSync(observation).ino).toBe(observationBefore.ino);
+    expect(readFileSync(observation, 'utf8')).toBe(observationBytes);
+    const conflicting = coverage();
+    conflicting.metrics[0]!.coverage.lines = { covered: 0, total: 1 };
+    expect(() => recordContourReport(root, conflicting, '/retained/changed.json')).toThrow('Conflicting contour run');
+    expect(readFileSync(observation, 'utf8')).toBe(observationBytes);
+    expect(statSync(observation).ino).toBe(observationBefore.ino);
     const output = path.join(root, 'published');
     runContourProgress(['--output', output], root);
     const json = path.join(output, 'CONTOUR-STATUS.json');

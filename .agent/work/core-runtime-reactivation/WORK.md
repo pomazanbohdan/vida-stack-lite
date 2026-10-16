@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `bbb777e`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the current contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Fresh final-assurance and init measurements at236df35 improve coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `e268cf0`, including the reviewed late-assurance binding correction at05952f9 and its exact scoped correspondence pin. Fresh Core coverage and same-run pinned scoped CRAP pass atbbb777e below. Complete native main-runtime-timing producer pilots join151/151 assertion-confirmed Killed at4b99cc6(v1) andaa582b5(context-bearing v2). The offline reader is qualified; the contour adapter imports that retained closure locally below. Global/final-quality native admission remains open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,47 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+### Script optimization and failed-tester correction fixture
+
+Five blind native Luna audits v61-v65 inspected disjoint progress, SDK, coverage,
+mutation and session-script contours without running tools or changing Source.
+Root implements five bounded optimizations: one ordered contour grouping per
+render/selected-commit campaign instead of one full attempt scan per partition;
+one Set for serial process Source membership checks; reuse of the private
+pre-await validated SDK manifest; reuse of validated archive output rows through
+a private richer result while preserving the public Map-returning API; and no
+atomic replacement/fsync for an unchanged observation replay after full merge
+validation. Source/hash/AST passes, byte snapshots, archive/member bounds,
+per-output hashes, receipt checks, closure/commit rules and custody stay intact.
+No wall-time improvement is inferred from these operation-count reductions.
+
+The replay regression RED `quality-rolling-cli-check-HPXjeJ` reaches the intended
+inode replacement assertion (0/1, complete captures/closed group/same boot).
+Final affected check `quality-rolling-cli-check-CSamu4` passes150/0tests,416assertions across
+3files in681.30ms outer, with complete captures, closed process scopes and
+unchanged boot. It also checks retained bytes/inode after conflicting disk replay,
+mixed active/retired evidence and both directions of split-commit lane rejection.
+Blind v66 finds no concrete implementation regression; its two applicable test
+gaps are covered. A hypothetical active/retired shared-name case is unsupported
+by the current distinct-name registry and does not change the old filter semantics.
+Strict505files, TS-only506 and full Oxlint pass; the normal hook checks final staged
+bytes before publication. Moving mutation image readback outside each batch is
+rejected because it delays drift detection. Saving a single launcher directory
+and sharing a writable install cache are not adopted without meaningful benefit
+and qualified isolation, respectively.
+
+The existing final-correction fixture now supports actual failed tester reports
+after successful validators. Undefined outcome still defaults to failed validators;
+the passing label/behavior remains unchanged. The existing public regression is
+parameterized for failed validator and failed tester, retaining real TRACE/PLAN
+CAS denial, unchanged Host/Journal and healthy retry. Tester failure verifies the
+strict persisted verdict and absence of delivery. Root fixes the draft's optional
+default and preserves the passing actor label. `quality-rolling-cli-check-EGAdTS`
+passes2/0cases,125assertions in26135ms, with complete captures/closed group/same
+boot; existing justified20s per-case exceptions remain. These are focused behavior
+checks, not numeric closure. Publish the ready packet before one matching SDK
+formation/preparation and the next fresh assurance/init measurements.
 
 ### Native local projection and next scoped corrections
 

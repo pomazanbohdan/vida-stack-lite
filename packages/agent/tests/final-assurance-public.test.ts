@@ -1188,251 +1188,270 @@ test('direct Source preparation recovers interrupted packet publication from the
   }
 }, 20000);
 
-// Real admission, writer completion and two durable failed validators exceed the default five-second case budget.
-test('failed final correction preparation consumes persisted Host and CAS-bound failed Journal evidence', async () => {
-  const f = await createFailedFinalCorrectionFixture();
-  let completed = false;
-  let bodyFailure: { error: unknown } | undefined;
-  try {
-    const preparation = {
-      root: f.root,
-      config: f.config,
-      store: f.store,
-      identity: f.identity,
-      journal: f.journal,
-      preparationPath: f.preparationPath,
-    };
-    assert.ok(f.tracedHost);
-    assert.ok(f.plannedHost);
-    expect(currentWork(f.tracedHost).lifecycle.phase).toBe('TRACE');
-    expect(currentWork(f.plannedHost).lifecycle.phase).toBe('PLAN');
-    const beforeRace = f.store.readHostStateSnapshot(f.identity),
-      journalBeforeRace = f.store.readWorkSessionJournal(f.identity);
-    for (const staleHost of [f.tracedHost, f.plannedHost]) {
-      expect(staleHost.workVersion).not.toEqual(beforeRace.workVersion);
-      const staleRead = spyOn(f.store, 'readHostStateSnapshot').mockReturnValueOnce(staleHost);
-      let raceFailure: { error: unknown } | undefined;
-      try {
-        expect(() => prepareLifecycleForCorrection(preparation)).toThrow('state compare-and-swap conflict');
-      } catch (error) {
-        raceFailure = { error };
-        throw error;
-      } finally {
-        completeOwnedCleanup(
-          [
-            () => {
-              staleRead.mockRestore();
-              return undefined;
-            },
-          ],
-          raceFailure,
-        );
-      }
-      expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeRace);
-      expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBeforeRace);
-    }
-    const prepared = expectReturned(() => prepareLifecycleForCorrection(preparation));
-    const persisted = f.store.readHostStateSnapshot(f.identity),
-      currentJournal = f.store.readWorkSessionJournal(f.identity),
-      work = currentWork(persisted);
-    if (!currentJournal) throw new Error('Expected the persisted failed-final fixture Journal.');
-    expect(work.lifecycle.phase).toBe('VERIFY');
-    expect(work.lifecycle.assurance.correction_count).toBe(0);
-    expect(work.execution.assignment_attempts).toHaveLength(1);
-    expect(prepared.work).toEqual(persisted.work);
-    expect(prepared.ledger).toEqual(persisted.ledger);
-    expect(prepared.workVersion).toEqual(persisted.workVersion);
-    expect(prepared.ledgerVersion).toEqual(persisted.ledgerVersion);
-    expect(f.journal.state).toEqual(currentJournal.state);
-    expect(f.journal.version).toEqual(currentJournal.version);
-    expect(() => readCorrectivePlanningJournal(f.root, work, f.journal)).toThrow(
-      'corrective planning requested for base execution',
-    );
-
-    const all = [...f.journal.state.items, ...f.journal.state.completed.flatMap((wave) => wave.items)],
-      failed = all.filter((item) => item.observation?.status === 'reported_failed'),
-      writer = all.find((item) => item.request.stage_id === 'develop_task');
-    expect(failed).toHaveLength(2);
-    expect(failed.every((item) => item.request.stage_id === 'validate_focused')).toBe(true);
-    expect(failed.every((item) => item.observation?.issue_id === item.issue_id)).toBe(true);
-    expect(writer?.observation?.status).toBe('reported_complete');
-    expect(writer?.host_reservation).toBeDefined();
-    expect(writer?.observation?.host_attempt_id).toBe(writer?.host_reservation?.receipt.attempt.attempt_id);
-    expect(f.preparationPath).toBe(`.agent/work/${f.identity.work_id}/preparation.json`);
-
-    if (!prepared.workVersion || !prepared.ledgerVersion) throw new Error('Expected persisted preparation versions.');
-    const issued = f.store.authorizeCorrectiveExecution({
-        identity: f.identity,
-        attempt: 1,
-        expectedWork: prepared.workVersion,
-        expectedLedger: prepared.ledgerVersion,
-        expectedJournal: currentJournal.version,
-        stageIds: ['develop_task', 'validate_focused', 'test_task'],
-        userInstructionRef: 'fixture:actual-correction-owner',
+// Real admission, writer completion and durable focused verdicts exceed the default five-second case budget.
+test.each([
+  ['failed', 'validate_focused', 2],
+  ['failed-tester', 'test_task', 1],
+] as const)(
+  'failed final correction preparation consumes persisted Host and CAS-bound failed Journal evidence: %s',
+  async (outcome, failedStage, expectedFailedCount) => {
+    const f = await createFailedFinalCorrectionFixture(outcome);
+    let completed = false;
+    let bodyFailure: { error: unknown } | undefined;
+    try {
+      const preparation = {
+        root: f.root,
         config: f.config,
-      }),
-      authorizedHost = f.store.readHostStateSnapshot(f.identity),
-      authorizedJournal = f.store.readWorkSessionJournal(f.identity);
-    if (!authorizedHost.work || !authorizedHost.workVersion || !authorizedHost.ledgerVersion)
-      throw new Error('Expected the persisted Host correction authorization.');
-    if (!authorizedJournal) throw new Error('Expected the persisted corrective Journal.');
-    const authorizedWork = authorizedHost.work,
-      journal = authorizedJournal,
-      execution = journal.state.corrective_execution;
-    if (!execution) throw new Error('Expected the persisted corrective Journal execution.');
-    if (!authorizedWork.execution.run_id) throw new Error('Expected the persisted base run identity.');
-    const correctiveJournal = {
-      ...journal,
-      resume_status: mastraLedgerStatus(journal.state),
-    };
-    const originalPlanning = readCorrectivePlanningJournal(f.root, authorizedWork, correctiveJournal);
-    assert.equal(canonicalJson(originalPlanning), canonicalJson(f.journal.state));
-    expect(originalPlanning.corrective_execution ?? null).toBeNull();
-    expect(originalPlanning.run_id).toBe(authorizedWork.execution.run_id);
-    expect(() =>
-      readCorrectivePlanningJournal(
-        f.root,
-        {
-          ...authorizedWork,
-          lifecycle: {
-            ...authorizedWork.lifecycle,
-            references: authorizedWork.lifecycle.references.filter(
-              (reference) =>
-                reference.kind !== 'recovery' || reference.artifact_schema !== 'CorrectiveExecutionRecovery/v1',
-            ),
-          },
-        },
-        correctiveJournal,
-      ),
-    ).toThrow('immutable original planning recovery missing');
-    const authorityPath = path.join(f.root, execution.authorization.path),
-      authorityBytes = readFileSync(authorityPath),
-      persistedAuthority: unknown = JSON.parse(authorityBytes.toString('utf8')),
-      validateCurrentAuthority = (root?: string, current: WorkState = authorizedWork) =>
-        validateWorkSessionBindingAndReturnCorrectiveAuthority(
-          current,
-          {
-            attempt: journal.attempt,
-            run_id: journal.state.run_id,
-            corrective_execution: execution,
-          },
-          root,
-        );
-    expect(execution).toEqual(issued);
-    const actualAuthority = validateCurrentAuthority(f.root);
-    assert.deepEqual(actualAuthority, persistedAuthority);
-    expect(actualAuthority).not.toBeNull();
-    expect(actualAuthority?.attempt).toBe(journal.attempt);
-    expect(actualAuthority?.work_id).toBe(authorizedWork.binding.lifecycle_work_id);
-    expect(actualAuthority?.run_id).toBe(authorizedWork.execution.run_id);
-    expect(actualAuthority?.base_run_id).toBe(execution.base_run_id);
-    expect(actualAuthority?.engine_run_id).toBe(execution.engine_run_id);
-    expect(actualAuthority?.correction_generation).toBe(authorizedWork.lifecycle.assurance.correction_count);
-    expect(actualAuthority?.source_revision).toBe(authorizedWork.binding.work_source_revision);
-    expect(actualAuthority?.scope_id).toBe(authorizedWork.binding.scope_id);
-    expect(actualAuthority?.config_digest).toBe(authorizedWork.binding.config_digest);
-    expect(actualAuthority?.implementation_fingerprint).toBe(work.lifecycle.seal?.implementation_fingerprint);
-    expect(actualAuthority?.ac_ids).toEqual(authorizedWork.binding.ac_ids);
-    expect(actualAuthority?.allowed_paths).toEqual([...authorizedWork.lifecycle.scope.allowed_paths]);
-    expect(actualAuthority?.stage_ids).toEqual(execution.stage_ids);
-    expect(actualAuthority?.predecessor_attempt_ids).toEqual(
-      authorizedWork.execution.assignment_attempts
-        .filter((attempt) => attempt.status === 'completed')
-        .map((attempt) => attempt.attempt_id),
-    );
-    expect(actualAuthority?.failed_action_ids).toEqual(failed.map((item) => item.request.action_id));
-    expect(actualAuthority?.user_instruction_ref).toBe('fixture:actual-correction-owner');
-    expect(actualAuthority?.work_version).toEqual(prepared.workVersion);
-    expect(actualAuthority?.ledger_version).toEqual(prepared.ledgerVersion);
-    expect(actualAuthority?.journal_version).toEqual(currentJournal.version);
-    expect(() => validateCurrentAuthority()).toThrow('corrective session binding differs');
+        store: f.store,
+        identity: f.identity,
+        journal: f.journal,
+        preparationPath: f.preparationPath,
+      };
+      assert.ok(f.tracedHost);
+      assert.ok(f.plannedHost);
+      expect(currentWork(f.tracedHost).lifecycle.phase).toBe('TRACE');
+      expect(currentWork(f.plannedHost).lifecycle.phase).toBe('PLAN');
+      const beforeRace = f.store.readHostStateSnapshot(f.identity),
+        journalBeforeRace = f.store.readWorkSessionJournal(f.identity);
+      for (const staleHost of [f.tracedHost, f.plannedHost]) {
+        expect(staleHost.workVersion).not.toEqual(beforeRace.workVersion);
+        const staleRead = spyOn(f.store, 'readHostStateSnapshot').mockReturnValueOnce(staleHost);
+        let raceFailure: { error: unknown } | undefined;
+        try {
+          expect(() => prepareLifecycleForCorrection(preparation)).toThrow('state compare-and-swap conflict');
+        } catch (error) {
+          raceFailure = { error };
+          throw error;
+        } finally {
+          completeOwnedCleanup(
+            [
+              () => {
+                staleRead.mockRestore();
+                return undefined;
+              },
+            ],
+            raceFailure,
+          );
+        }
+        expect(f.store.readHostStateSnapshot(f.identity)).toEqual(beforeRace);
+        expect(f.store.readWorkSessionJournal(f.identity)).toEqual(journalBeforeRace);
+      }
+      const prepared = expectReturned(() => prepareLifecycleForCorrection(preparation));
+      const persisted = f.store.readHostStateSnapshot(f.identity),
+        currentJournal = f.store.readWorkSessionJournal(f.identity),
+        work = currentWork(persisted);
+      if (!currentJournal) throw new Error('Expected the persisted failed-final fixture Journal.');
+      expect(work.lifecycle.phase).toBe('VERIFY');
+      expect(work.lifecycle.assurance.correction_count).toBe(0);
+      expect(work.execution.assignment_attempts).toHaveLength(1);
+      expect(prepared.work).toEqual(persisted.work);
+      expect(prepared.ledger).toEqual(persisted.ledger);
+      expect(prepared.workVersion).toEqual(persisted.workVersion);
+      expect(prepared.ledgerVersion).toEqual(persisted.ledgerVersion);
+      expect(f.journal.state).toEqual(currentJournal.state);
+      expect(f.journal.version).toEqual(currentJournal.version);
+      expect(() => readCorrectivePlanningJournal(f.root, work, f.journal)).toThrow(
+        'corrective planning requested for base execution',
+      );
 
-    const withoutAuthority: WorkState = {
-      ...authorizedWork,
-      lifecycle: {
-        ...authorizedWork.lifecycle,
-        references: authorizedWork.lifecycle.references.filter(
-          (reference) =>
-            !(
-              reference.kind === 'correction_authorization' &&
-              reference.decision === 'approved' &&
-              reference.artifact_schema === execution.authorization.schema &&
-              reference.path === execution.authorization.path &&
-              reference.sha256 === execution.authorization.sha256
-            ),
+      const all = [...f.journal.state.items, ...f.journal.state.completed.flatMap((wave) => wave.items)],
+        failed = all.filter((item) => item.observation?.status === 'reported_failed'),
+        writer = all.find((item) => item.request.stage_id === 'develop_task');
+      expect(failed).toHaveLength(expectedFailedCount);
+      expect(failed.every((item) => item.request.stage_id === failedStage)).toBe(true);
+      expect(failed.every((item) => item.observation?.issue_id === item.issue_id)).toBe(true);
+      if (outcome === 'failed-tester') {
+        expect(
+          all.filter(
+            (item) => item.request.stage_id === 'validate_focused' && item.observation?.status === 'reported_complete',
+          ),
+        ).toHaveLength(2);
+        expect(all.some((item) => item.request.stage_id === 'prepare_delivery')).toBe(false);
+        const tester = failed[0];
+        if (!tester?.observation) throw new Error('Expected the persisted failed tester observation.');
+        const verdict: unknown = JSON.parse(tester.observation.summary);
+        expect(verdict).toMatchObject({ schema: 'VidaTesterVerdict/v1', status: 'fail' });
+      }
+      expect(writer?.observation?.status).toBe('reported_complete');
+      expect(writer?.host_reservation).toBeDefined();
+      expect(writer?.observation?.host_attempt_id).toBe(writer?.host_reservation?.receipt.attempt.attempt_id);
+      expect(f.preparationPath).toBe(`.agent/work/${f.identity.work_id}/preparation.json`);
+
+      if (!prepared.workVersion || !prepared.ledgerVersion) throw new Error('Expected persisted preparation versions.');
+      const issued = f.store.authorizeCorrectiveExecution({
+          identity: f.identity,
+          attempt: 1,
+          expectedWork: prepared.workVersion,
+          expectedLedger: prepared.ledgerVersion,
+          expectedJournal: currentJournal.version,
+          stageIds: ['develop_task', 'validate_focused', 'test_task'],
+          userInstructionRef: 'fixture:actual-correction-owner',
+          config: f.config,
+        }),
+        authorizedHost = f.store.readHostStateSnapshot(f.identity),
+        authorizedJournal = f.store.readWorkSessionJournal(f.identity);
+      if (!authorizedHost.work || !authorizedHost.workVersion || !authorizedHost.ledgerVersion)
+        throw new Error('Expected the persisted Host correction authorization.');
+      if (!authorizedJournal) throw new Error('Expected the persisted corrective Journal.');
+      const authorizedWork = authorizedHost.work,
+        journal = authorizedJournal,
+        execution = journal.state.corrective_execution;
+      if (!execution) throw new Error('Expected the persisted corrective Journal execution.');
+      if (!authorizedWork.execution.run_id) throw new Error('Expected the persisted base run identity.');
+      const correctiveJournal = {
+        ...journal,
+        resume_status: mastraLedgerStatus(journal.state),
+      };
+      const originalPlanning = readCorrectivePlanningJournal(f.root, authorizedWork, correctiveJournal);
+      assert.equal(canonicalJson(originalPlanning), canonicalJson(f.journal.state));
+      expect(originalPlanning.corrective_execution ?? null).toBeNull();
+      expect(originalPlanning.run_id).toBe(authorizedWork.execution.run_id);
+      expect(() =>
+        readCorrectivePlanningJournal(
+          f.root,
+          {
+            ...authorizedWork,
+            lifecycle: {
+              ...authorizedWork.lifecycle,
+              references: authorizedWork.lifecycle.references.filter(
+                (reference) =>
+                  reference.kind !== 'recovery' || reference.artifact_schema !== 'CorrectiveExecutionRecovery/v1',
+              ),
+            },
+          },
+          correctiveJournal,
         ),
-      },
-    };
-    expect(() => validateCurrentAuthority(f.root, withoutAuthority)).toThrow(
-      'consumed Host correction authority missing',
-    );
-    expect(() =>
-      validateCurrentAuthority(f.root, {
-        ...authorizedWork,
-        binding: { ...authorizedWork.binding, scope_id: `${authorizedWork.binding.scope_id}-negative-control` },
-      }),
-    ).toThrow('corrective authority contract differs');
-    const foreignPath = `${authorizedWork.lifecycle.scope.allowed_paths[0]}.foreign`;
-    expect(authorizedWork.lifecycle.scope.allowed_paths).not.toContain(foreignPath);
-    expect(() =>
-      validateCurrentAuthority(f.root, {
+      ).toThrow('immutable original planning recovery missing');
+      const authorityPath = path.join(f.root, execution.authorization.path),
+        authorityBytes = readFileSync(authorityPath),
+        persistedAuthority: unknown = JSON.parse(authorityBytes.toString('utf8')),
+        validateCurrentAuthority = (root?: string, current: WorkState = authorizedWork) =>
+          validateWorkSessionBindingAndReturnCorrectiveAuthority(
+            current,
+            {
+              attempt: journal.attempt,
+              run_id: journal.state.run_id,
+              corrective_execution: execution,
+            },
+            root,
+          );
+      expect(execution).toEqual(issued);
+      const actualAuthority = validateCurrentAuthority(f.root);
+      assert.deepEqual(actualAuthority, persistedAuthority);
+      expect(actualAuthority).not.toBeNull();
+      expect(actualAuthority?.attempt).toBe(journal.attempt);
+      expect(actualAuthority?.work_id).toBe(authorizedWork.binding.lifecycle_work_id);
+      expect(actualAuthority?.run_id).toBe(authorizedWork.execution.run_id);
+      expect(actualAuthority?.base_run_id).toBe(execution.base_run_id);
+      expect(actualAuthority?.engine_run_id).toBe(execution.engine_run_id);
+      expect(actualAuthority?.correction_generation).toBe(authorizedWork.lifecycle.assurance.correction_count);
+      expect(actualAuthority?.source_revision).toBe(authorizedWork.binding.work_source_revision);
+      expect(actualAuthority?.scope_id).toBe(authorizedWork.binding.scope_id);
+      expect(actualAuthority?.config_digest).toBe(authorizedWork.binding.config_digest);
+      expect(actualAuthority?.implementation_fingerprint).toBe(work.lifecycle.seal?.implementation_fingerprint);
+      expect(actualAuthority?.ac_ids).toEqual(authorizedWork.binding.ac_ids);
+      expect(actualAuthority?.allowed_paths).toEqual([...authorizedWork.lifecycle.scope.allowed_paths]);
+      expect(actualAuthority?.stage_ids).toEqual(execution.stage_ids);
+      expect(actualAuthority?.predecessor_attempt_ids).toEqual(
+        authorizedWork.execution.assignment_attempts
+          .filter((attempt) => attempt.status === 'completed')
+          .map((attempt) => attempt.attempt_id),
+      );
+      expect(actualAuthority?.failed_action_ids).toEqual(failed.map((item) => item.request.action_id));
+      expect(actualAuthority?.user_instruction_ref).toBe('fixture:actual-correction-owner');
+      expect(actualAuthority?.work_version).toEqual(prepared.workVersion);
+      expect(actualAuthority?.ledger_version).toEqual(prepared.ledgerVersion);
+      expect(actualAuthority?.journal_version).toEqual(currentJournal.version);
+      expect(() => validateCurrentAuthority()).toThrow('corrective session binding differs');
+
+      const withoutAuthority: WorkState = {
         ...authorizedWork,
         lifecycle: {
           ...authorizedWork.lifecycle,
-          scope: {
-            ...authorizedWork.lifecycle.scope,
-            allowed_paths: [...authorizedWork.lifecycle.scope.allowed_paths, foreignPath],
-          },
+          references: authorizedWork.lifecycle.references.filter(
+            (reference) =>
+              !(
+                reference.kind === 'correction_authorization' &&
+                reference.decision === 'approved' &&
+                reference.artifact_schema === execution.authorization.schema &&
+                reference.path === execution.authorization.path &&
+                reference.sha256 === execution.authorization.sha256
+              ),
+          ),
         },
-      }),
-    ).toThrow('corrective authority contract differs');
-    assert.deepEqual(validateCurrentAuthority(f.root), persistedAuthority);
-    expect(readFileSync(authorityPath)).toEqual(authorityBytes);
-
-    let tamperFailed = false;
-    let tamperFailure: unknown;
-    let restorationFailed = false;
-    let restorationFailure: unknown;
-    try {
-      writeFileSync(authorityPath, Buffer.concat([authorityBytes, Buffer.from([0x20])]));
-      expect(() => validateCurrentAuthority(f.root)).toThrow('corrective authority bytes differ');
-    } catch (error) {
-      tamperFailed = true;
-      tamperFailure = error;
-    } finally {
-      try {
-        writeFileSync(authorityPath, authorityBytes);
-      } catch (error) {
-        restorationFailed = true;
-        restorationFailure = error;
-      }
-    }
-    if (tamperFailed && restorationFailed)
-      throw new AggregateError(
-        [tamperFailure, restorationFailure],
-        'Corrective authority tamper and restoration failed.',
+      };
+      expect(() => validateCurrentAuthority(f.root, withoutAuthority)).toThrow(
+        'consumed Host correction authority missing',
       );
-    if (tamperFailed) throw tamperFailure;
-    if (restorationFailed) throw restorationFailure;
-    expect(readFileSync(authorityPath)).toEqual(authorityBytes);
-    const afterTamperHost = f.store.readHostStateSnapshot(f.identity),
-      afterTamperJournal = f.store.readWorkSessionJournal(f.identity);
-    expect(afterTamperHost).toEqual(authorizedHost);
-    expect(afterTamperJournal).toEqual(authorizedJournal);
-    assert.deepEqual(validateCurrentAuthority(f.root), persistedAuthority);
-    completed = true;
-  } catch (error) {
-    bodyFailure = { error };
-    throw error;
-  } finally {
-    completeOwnedCleanup(
-      [
-        () => {
-          f.close(completed);
-          return undefined;
-        },
-      ],
-      bodyFailure,
-    );
-  }
-}, 20_000);
+      expect(() =>
+        validateCurrentAuthority(f.root, {
+          ...authorizedWork,
+          binding: { ...authorizedWork.binding, scope_id: `${authorizedWork.binding.scope_id}-negative-control` },
+        }),
+      ).toThrow('corrective authority contract differs');
+      const foreignPath = `${authorizedWork.lifecycle.scope.allowed_paths[0]}.foreign`;
+      expect(authorizedWork.lifecycle.scope.allowed_paths).not.toContain(foreignPath);
+      expect(() =>
+        validateCurrentAuthority(f.root, {
+          ...authorizedWork,
+          lifecycle: {
+            ...authorizedWork.lifecycle,
+            scope: {
+              ...authorizedWork.lifecycle.scope,
+              allowed_paths: [...authorizedWork.lifecycle.scope.allowed_paths, foreignPath],
+            },
+          },
+        }),
+      ).toThrow('corrective authority contract differs');
+      assert.deepEqual(validateCurrentAuthority(f.root), persistedAuthority);
+      expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+
+      let tamperFailed = false;
+      let tamperFailure: unknown;
+      let restorationFailed = false;
+      let restorationFailure: unknown;
+      try {
+        writeFileSync(authorityPath, Buffer.concat([authorityBytes, Buffer.from([0x20])]));
+        expect(() => validateCurrentAuthority(f.root)).toThrow('corrective authority bytes differ');
+      } catch (error) {
+        tamperFailed = true;
+        tamperFailure = error;
+      } finally {
+        try {
+          writeFileSync(authorityPath, authorityBytes);
+        } catch (error) {
+          restorationFailed = true;
+          restorationFailure = error;
+        }
+      }
+      if (tamperFailed && restorationFailed)
+        throw new AggregateError(
+          [tamperFailure, restorationFailure],
+          'Corrective authority tamper and restoration failed.',
+        );
+      if (tamperFailed) throw tamperFailure;
+      if (restorationFailed) throw restorationFailure;
+      expect(readFileSync(authorityPath)).toEqual(authorityBytes);
+      const afterTamperHost = f.store.readHostStateSnapshot(f.identity),
+        afterTamperJournal = f.store.readWorkSessionJournal(f.identity);
+      expect(afterTamperHost).toEqual(authorizedHost);
+      expect(afterTamperJournal).toEqual(authorizedJournal);
+      assert.deepEqual(validateCurrentAuthority(f.root), persistedAuthority);
+      completed = true;
+    } catch (error) {
+      bodyFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            f.close(completed);
+            return undefined;
+          },
+        ],
+        bodyFailure,
+      );
+    }
+  },
+  20_000,
+);

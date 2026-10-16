@@ -205,17 +205,17 @@ export function captureSelectedSdkJavascriptOutputsFromCapturedBytes(
   if (!path.isAbsolute(root)) throw new Error('SDK artifact capture root must be absolute.');
   const ownedInputs = snapshotBytes(selectedInputs, 'Selected SDK formation input');
   const ownedArtifacts = snapshotBytes(artifacts, 'SDK artifact');
-  return validateCapturedSdkJavascriptOutputs(root, ownedInputs, ownedArtifacts, selectedInputRows(ownedInputs));
+  const selectedRows = selectedInputRows(ownedInputs);
+  return validateCapturedSdkJavascriptOutputs(validateSelectedManifest(ownedInputs), ownedArtifacts, selectedRows);
 }
 
 function validateCapturedSdkJavascriptOutputs(
-  root: string,
-  ownedInputs: ReadonlyMap<string, Buffer>,
+  selectedManifest: ReturnType<typeof validateSelectedManifest>,
   ownedArtifacts: ReadonlyMap<string, Buffer>,
   selectedRows: ReceiptEntry[],
 ): ReturnType<typeof capturedResult> {
   const outputPaths = expectedJavascriptFiles.map((file) => `dist/src/${file}`).sort();
-  const { manifestValue, selectedPin } = validateSelectedManifest(ownedInputs);
+  const { manifestValue, selectedPin } = selectedManifest;
   const receiptBytes = ownedArtifacts.get('dist/sdk-formation.json');
   if (!receiptBytes) throw new Error('SDK formation output receipt is missing.');
   const receipt = decodeSdkFormationReceipt(JSON.parse(receiptBytes.toString('utf8')) as unknown);
@@ -243,8 +243,8 @@ export async function captureSelectedSdkJavascriptOutputs(
   // Freeze selected bytes and their identities before awaiting the bounded artifact read.
   const ownedInputs = snapshotBytes(selectedInputs, 'Selected SDK formation input');
   const selectedRows = selectedInputRows(ownedInputs);
-  validateSelectedManifest(ownedInputs);
+  const selectedManifest = validateSelectedManifest(ownedInputs);
   const artifacts = await readQualityInputs(root, ['dist/sdk-formation.json', ...outputPaths]);
   const ownedArtifacts = snapshotBytes(artifacts, 'SDK artifact');
-  return validateCapturedSdkJavascriptOutputs(root, ownedInputs, ownedArtifacts, selectedRows);
+  return validateCapturedSdkJavascriptOutputs(selectedManifest, ownedArtifacts, selectedRows);
 }
