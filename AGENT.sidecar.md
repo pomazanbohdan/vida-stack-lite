@@ -77,6 +77,17 @@ orchestration store, standing-orders register or canonical ledger for the same w
 
 Root retains Source integration, shared-file ownership, final checks and Git.
 Native blind Luna is the selected provider/model route for all delegated lanes.
+
+For test-contour repairs, assign exactly one contour to each agent and keep a
+rolling pool of up to five useful lanes. When a lane finishes, reconcile its
+findings and assign the next ready contour; continue until every discovered
+contour finding has a verified fix or an explicit unresolved disposition.
+Give each code-producing lane its own checkout and exact file ownership. During
+numeric measurement, the measured checkout stays immutable: workers may prepare
+fixes in their assigned isolated checkouts, and Root integrates only after the
+affected producers are terminal. Temporary edits followed by restoration also
+violate this rule. Root alone owns Git, shared-file integration and final checks;
+worker proposals and static checks do not establish numeric closure.
 Pstack defaults do not replace that route or authorize external model spending.
 Use prepared worker-contract guidance and disjoint file/output assignments.
 Prompt-only guidance does not establish a sandbox or independent Git authority.

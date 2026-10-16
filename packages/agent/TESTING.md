@@ -1224,6 +1224,15 @@ runtime/compile errors, missing suites and timeouts remain non-kills.
 
 ### Automatic contour progress document
 
+Repair dispatch follows the root sidecar: one agent owns one contour, with up to
+five isolated repair lanes and immediate refill after each terminal handoff.
+Workers search analogous defects within their contour and report shared causes
+to Root; Root owns the shared helper and integration. Keep active measurement
+inputs immutable, including transient edits. Parallel preparation uses separate
+checkouts; integration and numeric rechecks wait for terminal producer custody.
+Track each contour through verified repair or an explicit remaining GAP, without
+promoting a proposal, timeout, UNKNOWN or static check into numeric acceptance.
+
 The explicit campaign command is `bun run test:contours --all` or
 `bun run test:contours --unclosed`. Add `--plan` to inspect the exact registry
 selection without launching tests; `--help` describes the options. The runner
