@@ -293,6 +293,11 @@ phase costs, not only an overrun. Preserve its freshness/CAS checks and document
 the exception in TESTING. Reuse one snapshot for adjacent work/ledger assertions
 only when no effect separates them; never cache live authority across public calls.
 
+Keep pure helper cases independent of filesystem/config initialization they do
+not use. Preserve required setup inside the invoking registered body. For a
+JavaScript type-guard mutation, exercise values that actually reach that guard;
+an earlier public nullish fallback can legitimately normalize null/undefined.
+
 Scope hooks to cases that own the fixture. Await all work and restore mocks and
 resources in `finally`. Keep cleanup in `finally` while preserving the original
 and cleanup errors. Register each test file's own cleanup hook. If a case times

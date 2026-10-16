@@ -1,4 +1,4 @@
-import { test, expect, spyOn } from 'bun:test';
+import { test, expect, mock, spyOn } from 'bun:test';
 import { captureSourceBeforeimages } from './helpers/source-beforeimage-fixture.ts';
 import { expectRejection } from './helpers/expect-rejection.ts';
 import { Database } from 'bun:sqlite';
@@ -17,6 +17,7 @@ import {
 } from 'node:fs';
 import path from 'node:path';
 import { tmpdir } from 'node:os';
+import * as fs from 'node:fs';
 import { spawnSync, type SpawnSyncOptionsWithStringEncoding } from 'node:child_process';
 import {
   cooperativeReadonlyAssignments,
@@ -154,6 +155,104 @@ import type {
 } from './helpers/runtime-config-rebind-fixture.ts';
 
 registerRuntimeConfigFixtureCleanup();
+
+const originalFsExports = { ...fs };
+
+type CloseRegressionStage =
+  | { readonly kind: 'not-run' }
+  | { readonly kind: 'succeeded' }
+  | { readonly kind: 'failed'; readonly error: unknown };
+type CloseRegressionOutcome =
+  | { readonly kind: 'not-run' }
+  | { readonly kind: 'returned'; readonly value: unknown }
+  | { readonly kind: 'threw'; readonly error: unknown };
+
+async function runWithReadAndCloseErrors(
+  args: string[],
+  nativeRuntime: ReturnType<typeof sourceCorrectionNativeFixture>['runtime'],
+  targetPath: string,
+  bodyError: unknown,
+): Promise<{
+  readonly setup: CloseRegressionStage;
+  readonly operation: CloseRegressionOutcome;
+  readonly restoration: CloseRegressionStage;
+  readonly events: readonly string[];
+  readonly closeError: Error;
+}> {
+  const closeError = Error('injected descriptor close failure');
+  const events: string[] = [];
+  let targetFd: number | undefined;
+  let setup: CloseRegressionStage = { kind: 'not-run' };
+  let operation: CloseRegressionOutcome = { kind: 'not-run' };
+  let restoration: CloseRegressionStage = { kind: 'not-run' };
+  try {
+    try {
+      const target = originalFsExports.statSync(targetPath, { bigint: true });
+      const replacement = {
+        ...originalFsExports,
+        readSync: ((...args: Parameters<typeof fs.readSync>): number => {
+          const fd = args[0];
+          const descriptor = originalFsExports.fstatSync(fd, { bigint: true });
+          if (descriptor.dev === target.dev && descriptor.ino === target.ino) {
+            targetFd = fd;
+            events.push('target-read');
+            throw bodyError;
+          }
+          return Reflect.apply(originalFsExports.readSync, originalFsExports, args) as number;
+        }) as typeof fs.readSync,
+        closeSync: ((...args: Parameters<typeof fs.closeSync>): void => {
+          const fd = args[0];
+          if (fd === targetFd) {
+            targetFd = undefined;
+            Reflect.apply(originalFsExports.closeSync, originalFsExports, args);
+            events.push('real-close-completed');
+            events.push('injected-close-error');
+            throw closeError;
+          }
+          Reflect.apply(originalFsExports.closeSync, originalFsExports, args);
+        }) as typeof fs.closeSync,
+      };
+      await mock.module('node:fs', () => replacement);
+      const runner = await sourceCorrectionRebindWithNative(nativeRuntime);
+      setup = { kind: 'succeeded' };
+      try {
+        operation = {
+          kind: 'returned',
+          value: await fixtureCall((fixtureArgs) => runner.runRuntimeConfigRebind(fixtureArgs), args),
+        };
+      } catch (error) {
+        operation = { kind: 'threw', error };
+      }
+    } catch (error) {
+      setup = { kind: 'failed', error };
+    }
+  } finally {
+    try {
+      await mock.module('node:fs', () => originalFsExports);
+      restoration = { kind: 'succeeded' };
+    } catch (error) {
+      restoration = { kind: 'failed', error };
+    }
+  }
+  return { setup, operation, restoration, events, closeError };
+}
+
+function expectCloseRegression(
+  result: Awaited<ReturnType<typeof runWithReadAndCloseErrors>>,
+  bodyError: unknown,
+): void {
+  expect(result.setup.kind).toBe('succeeded');
+  expect(result.restoration.kind).toBe('succeeded');
+  expect(result.events).toEqual(['target-read', 'real-close-completed', 'injected-close-error']);
+  expect(result.operation.kind).toBe('threw');
+  if (result.operation.kind !== 'threw') return;
+  expect(result.operation.error).toBeInstanceOf(AggregateError);
+  if (!(result.operation.error instanceof AggregateError)) return;
+  expect(Array.isArray(result.operation.error.errors)).toBe(true);
+  expect(result.operation.error.errors).toHaveLength(2);
+  expect(result.operation.error.errors[0]).toBe(bodyError);
+  expect(result.operation.error.errors[1]).toBe(result.closeError);
+}
 
 test.each(['PASS', 'FAIL'])(
   'internal recovery %s settles only its review and preserves original rights',
@@ -631,6 +730,83 @@ test(
       expect(databaseState(f)).toEqual(before);
     }, sourceRepairExtendedTimeoutMs),
   sourceRepairExtendedTimeoutMs,
+);
+
+test.each([
+  ['Error', Error('injected retained source read failure')],
+  ['undefined', undefined],
+] as const)(
+  'source correction retained custody read preserves body and close failures (%s)',
+  async (_label, bodyError) => {
+    await withRuntimeConfigFixtureCase(async () => {
+      const fixtureContext = sourceCorrectionFixture();
+      const native = sourceCorrectionNativeFixture(fixtureContext.f, fixtureContext.targetVersion);
+      const runner = await sourceCorrectionRebindWithNative(native.runtime);
+      const prepared = await prepareSourceCorrectionRepair(runner, fixtureContext);
+      const result = await runWithReadAndCloseErrors(
+        prepared.repairArgs('repair-plan'),
+        native.runtime,
+        fixtureContext.sourceBeforeimagesPath,
+        bodyError,
+      );
+      expectCloseRegression(result, bodyError);
+      const restoredRunner = await sourceCorrectionRebindWithNative(native.runtime);
+      expect(
+        checkedRecord(
+          await fixtureCall((args) => restoredRunner.runRuntimeConfigRebind(args), prepared.repairArgs('repair-plan')),
+          'Source repair plan retry',
+        ).status,
+      ).toBe('planned');
+    }, sourceRepairCaseTimeoutMs);
+  },
+  sourceRepairCaseTimeoutMs,
+);
+
+test.each([
+  ['Error', Error('injected native asset read failure')],
+  ['undefined', undefined],
+] as const)(
+  'source correction native asset digest preserves body and close failures (%s)',
+  async (_label, bodyError) => {
+    await withRuntimeConfigFixtureCase(async () => {
+      const fixtureContext = sourceCorrectionFixture();
+      const native = sourceCorrectionNativeFixture(fixtureContext.f, fixtureContext.targetVersion);
+      const runner = await sourceCorrectionRebindWithNative(native.runtime);
+      const prepared = await prepareSourceCorrectionRepair(runner, fixtureContext);
+      const sidecar = checkedRecord(
+        parseFixtureJson(readFileSync(prepared.sidecarPath, 'utf8')),
+        'Source correction sidecar',
+      );
+      const request = checkedSourceCorrectionReportRequest(
+        requiredCliObject(sidecar, 'request', 'source correction request'),
+      );
+      const report = sourceCorrectionExternalReport(prepared.f, request, native);
+      const reportPath = path.join(prepared.f.root, '.tmp/source-correction-report.json');
+      prepared.f.put('.tmp/source-correction-report.json', json(report));
+      const targetPath = path.join(
+        prepared.f.root,
+        checkedString(report.installation_receipt.source_path, 'native installation source path'),
+      );
+      const args = [...prepared.repairArgs('repair-apply'), '--report', reportPath];
+      const result = await runWithReadAndCloseErrors(args, native.runtime, targetPath, bodyError);
+      expectCloseRegression(result, bodyError);
+      expect(
+        checkedString(
+          checkedRecord(parseFixtureJson(readFileSync(prepared.sidecarPath, 'utf8')), 'Source correction sidecar')
+            .status,
+          'Source correction sidecar status',
+        ),
+      ).toBe('requested');
+      const restoredRunner = await sourceCorrectionRebindWithNative(native.runtime);
+      expect(
+        checkedRecord(
+          await fixtureCall((fixtureArgs) => restoredRunner.runRuntimeConfigRebind(fixtureArgs), args),
+          'Source repair apply retry',
+        ).status,
+      ).toBe('applied');
+    }, sourceRepairCaseTimeoutMs);
+  },
+  sourceRepairCaseTimeoutMs,
 );
 
 test(

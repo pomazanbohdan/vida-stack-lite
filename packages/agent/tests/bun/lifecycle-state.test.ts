@@ -925,6 +925,22 @@ describe('current WorkState/v1 lifecycle aggregate', () => {
     expect(() => validateLifecycleProgress(before, after)).toThrow('lifecycle transition contains an untyped mutation');
   });
 
+  test('admits a source plan only during TRACE progress', () => {
+    const trace = expectReturned(() => transitionLifecycleState(initialWork(), 'TRACE', 'Trace the scope.'));
+    const allowed = clone(trace);
+    allowed.revision++;
+    allowed.lifecycle.revision++;
+    allowed.lifecycle.references.push(reference(allowed, 'source_plan', 'phase-source-plan'));
+    expectReturned(() => validateLifecycleProgress(trace, allowed));
+
+    const before = initialWork();
+    const rejected = clone(before);
+    rejected.revision++;
+    rejected.lifecycle.revision++;
+    rejected.lifecycle.references.push(reference(rejected, 'source_plan', 'phase-source-plan-early'));
+    expect(() => validateLifecycleProgress(before, rejected)).toThrow('source_plan cannot be admitted during INTAKE');
+  });
+
   test('rejects creating a lifecycle seal during same-phase PLAN progress', () => {
     let before = expectReturned(() => transitionLifecycleState(initialWork(), 'TRACE', 'Trace the scope.'));
     before = add(

@@ -182,8 +182,7 @@ afterAll(() => {
 });
 
 describe('project context path boundary', () => {
-  test('resolves deepest project membership and requires a selected member for shared roots', async () => {
-    await ensureBoundaryFixture();
+  test('resolves deepest project membership and requires a selected member for shared roots', () => {
     const projects: PathProfileResolutionEntry[] = [
       { project_id: 'root', project_root: '.' },
       { project_id: 'services', project_root: 'services' },
@@ -213,6 +212,15 @@ describe('project context path boundary', () => {
         name: 'PathProfileError',
         code: pathProfileGap,
         message: `${pathProfileGap}: project root ${diagnostic}`,
+      });
+    }
+    for (const projectRoot of [42, true, {}, { length: 1 }, ['services']]) {
+      const entry: PathProfileResolutionEntry = { project_id: 'billing' };
+      Object.defineProperty(entry, 'project_root', { value: projectRoot });
+      assert.throws(() => resolveProjectPathMembership([entry], '.'), {
+        name: 'PathProfileError',
+        code: pathProfileGap,
+        message: `${pathProfileGap}: project root must be a non-empty relative path`,
       });
     }
     const equalRoots: PathProfileResolutionEntry[] = [
@@ -296,8 +304,7 @@ describe('project context path boundary', () => {
     expect(() => resolveProjectPathMembership(equalRoots, 'packages/a/../foreign')).toThrow(/unsafe path segment/);
   });
 
-  test('keeps a nested project boundary when both ancestor and descendant are selected', async () => {
-    await ensureBoundaryFixture();
+  test('keeps a nested project boundary when both ancestor and descendant are selected', () => {
     const projects: PathProfileResolutionEntry[] = [
       { project_id: 'parent', project_root: 'products' },
       { project_id: 'foreign', project_root: 'products/foreign' },
@@ -308,8 +315,7 @@ describe('project context path boundary', () => {
     expect(selected).toEqual({ project_id: 'foreign', project_root: 'products/foreign', specificity: 2 });
   });
 
-  test('does not treat a sibling path prefix as project membership', async () => {
-    await ensureBoundaryFixture();
+  test('does not treat a sibling path prefix as project membership', () => {
     const projects: PathProfileResolutionEntry[] = [{ project_id: 'billing', project_root: 'services/bill' }];
     const membership = expectReturned(() => resolveProjectPathMembership(projects, 'services/billing/src/index.ts'));
     expect(membership).toEqual({ project_ids: [], project_root: null, specificity: -1 });
@@ -318,15 +324,13 @@ describe('project context path boundary', () => {
     );
   });
 
-  test('canonicalizes task project ids without changing project identity', async () => {
-    await ensureBoundaryFixture();
+  test('canonicalizes task project ids without changing project identity', () => {
     expect(normalizeProjectIds(['billing', 'root', 'billing'])).toEqual(['billing', 'root']);
     expect(() => normalizeProjectIds([])).toThrow(/project ids must be non-empty/);
     expect(() => normalizeProjectIds(['billing', ''])).toThrow(/project id is invalid/);
   });
 
-  test('denies a caller-owned project identity that drifts after membership admission', async () => {
-    await ensureBoundaryFixture();
+  test('denies a caller-owned project identity that drifts after membership admission', () => {
     let reads = 0;
     const projects: PathProfileResolutionEntry[] = [
       {

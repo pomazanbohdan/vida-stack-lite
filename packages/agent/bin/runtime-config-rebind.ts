@@ -27,6 +27,7 @@ import { loadProjectSetContext } from '../src/config/project-context.ts';
 import { requireSafeRepositoryAccess } from '../src/config/safe-repository-access.ts';
 import { HostStateStore } from '../src/host-state.ts';
 import { queryWorkspaceRowUnknown, queryWorkspaceRowsUnknown } from '../src/config/workspace-database.ts';
+import { finishWorkspaceDatabaseClose, type DatabaseWorkOutcome } from '../src/config/workspace-database-raw.ts';
 import {
   sessionHandoffDatabasePath,
   sessionBridgeDatabasePath,
@@ -3349,6 +3350,7 @@ function readExternalBytes(file: string, maximum: number, label: string, root?: 
         });
   if (opened !== undefined) requireRebind(opened.ok, `${label} is not a safe root-bound file`);
   const fd = opened === undefined ? openSync(file, flags) : opened.fd;
+  let outcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   try {
     const before = fstatSync(fd, { bigint: true }),
       namedBefore = lstatSync(file, { bigint: true });
@@ -3393,8 +3395,11 @@ function readExternalBytes(file: string, maximum: number, label: string, root?: 
       `${label} changed during read`,
     );
     return bytes;
+  } catch (error) {
+    outcome = { ok: false, error };
+    throw error;
   } finally {
-    closeSync(fd);
+    finishWorkspaceDatabaseClose(fd, outcome, closeSync, `${label} read and descriptor close failed`);
   }
 }
 
@@ -3676,6 +3681,7 @@ function streamedNativeAssetDigest(
       allowedType: 'file',
     });
   requireRebind(opened.ok, 'native installation source asset is unsafe');
+  let outcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
   try {
     const openedMetadata = fstatSync(opened.fd),
       initialDescriptor = fstatSync(opened.fd, { bigint: true }),
@@ -3725,8 +3731,16 @@ function streamedNativeAssetDigest(
       'native installation source asset changed during read',
     );
     return hash.digest('hex');
+  } catch (error) {
+    outcome = { ok: false, error };
+    throw error;
   } finally {
-    closeSync(opened.fd);
+    finishWorkspaceDatabaseClose(
+      opened.fd,
+      outcome,
+      closeSync,
+      'native installation source asset read and descriptor close failed',
+    );
   }
 }
 
