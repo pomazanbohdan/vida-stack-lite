@@ -5825,6 +5825,66 @@ none converts raw events to a score. Before the new first-child measurement,
 settle these inputs and publish. Finish its exact coverage/scoped/mutation gates;
 stop on failure or UNKNOWN and correct that complete child before another.
 
+## First complete public-ingress child and rolling correction queue
+
+The registry/history split is published at64d33d349f586714a512c95343c1364bd0950bf7.
+Its final strict hook passed formatting,489-file TypeScript, lint and Knip; push
+to origin/main succeeded. No product Source changed in that packet.
+
+Fresh full main-public-ingress selection at that commit passed16tests with
+31403assertions: functions20/20, lines81/81, statements93/93 and branches36/36.
+Run6db1bb1e-94a7-4e22-8f82-d94a07795bdf's focused coverage and same-run scoped
+CRAP reports are under packages/agent/coverage/bun-unified/diagnostics. The
+immutable386bf6c9review supplied the original ceilings; scoped proof passed.
+The owned coverage root is
+`/workspace/attachments/quality-declared-main-public-ingress-I59C34`, elapsed
+5037.248551ms, complete capture, closed groups and unchanged boot.
+
+The complete355-mutant run1d8f823f-5ae4-4633-9ce1-e05a2db58eff finished within
+its unchanged deadline. Its original dry run passed. The raw engine reported
+309Killed/46Survived; parent evidence confirms only262Killed, leaving40failures
+without attributable Bun assertion proof and7without the required active-mutant
+snapshot binding. Thus the terminal owner report is UNKNOWN, with262/355
+confirmed Killed (73.80281690140845%),46Survived and47UNKNOWN; it is not a
+passing score. No raw classification or retained evidence was rewritten.
+Receipt validation took1979.089080ms with two identity observations and one
+lifecycle analysis. Owner root
+`/workspace/attachments/quality-mutation-main-public-ingress-wzlTIf` retains the
+terminal report and outer result; physical engine inputs/receipts are in
+`/tmp/quality-mutation-main-public-ingress-HL7ij7/package-tmp/mutation-evidence-1d8f823f-5ae4-4633-9ce1-e05a2db58eff-gFolFL`.
+The outer operation finished in378086.405582ms, exit1, no timeout, complete
+capture, closed process group and unchanged boot. No envelope run follows this
+unqualified stage. The projection now retains115observations, still4/45active
+local triples and41open.
+
+After terminal custody, Root applied the independently reviewed static join
+`/workspace/attachments/quality-lineage-pairs-refresh-v64d-20261016.ts` with its
+beforeimage, intent and completion receipts. It adds22one-to-one retained
+correspondences and refreshes60timing/facade addresses/rationales and two stale
+bindings, without another AST or Source digest capture. Existing5433retained
+measurements, original addresses and ceilings remain unchanged. New pair rows
+omit unavailable measured coverage/CRAP and use reviewed strict original-CC
+floor proposals. Counts are5455retained,1620new,90removed:7075current roles,
+661current and156original dispositions missing, zero stale bindings and the
+same19static deficits. The partial remains explicitly non-executable and
+non-exhaustive; global baseline/runtime qualification stays GAP. Its initial
+candidate attempt rejected a timing/facade packet-shape mismatch before writing
+outputs or checkout bytes; corrected per-file parsing passed independent review.
+
+Completed blind Luna work immediately receives the next ready independent
+scope. Five lanes now own disjoint terminal findings:12schema/timestamp
+survivors,30request-semantic survivors,4builder/freeze survivors,40assertion
+UNKNOWN and7receipt-binding UNKNOWN. Root remains sole Source/check/Git writer;
+workers prepare external copies and never rerun the evidence. The sixth lane
+prepares a descriptor-image integrity correction with its affected callers.
+Proxy findings and fd body-plus-close candidates remain unexecuted proposals,
+not reproduced product fixes. Independent review rejected duplicate assignment
+of retained Host normalizer allowances; the original4/20and27/756remain attached
+to their actual retained functions. Corrected new-role proposals await Root.
+One worker disclosed using Python solely to edit its assigned external report,
+despite the brief; no Source effect or verification credit resulted. Root
+reiterated apply_patch-only report editing and reviewed the actual report bytes.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

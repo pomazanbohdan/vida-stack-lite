@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5433,
+    "retained": 5455,
     "new": 1620,
     "removed": 90,
-    "current_roles": 7053,
+    "current_roles": 7075,
     "source_files": 149
   },
   "source_bindings": [
@@ -39,7 +39,7 @@
     },
     {
       "file": "src/lifecycle/runtime-facade.ts",
-      "sha256": "adcd85941eeaaa1ed8561c407be44dbcdc4a0ea9c32fe3089b3ef07c3f0036e9"
+      "sha256": "cd5b8503ffce3a40b04859a0f7cdf083e7d21bfd8f253c837094ed0b4d2edca4"
     },
     {
       "file": "src/orchestration/admitted-development-packet.ts",
@@ -83,7 +83,7 @@
     },
     {
       "file": "src/runtime-timing.ts",
-      "sha256": "68437d5aa4bb7f57f53997eff4d65ef6fed192e48610a6a26da58cde24c7cc51"
+      "sha256": "7b8aae1369af322245a64209d3b4154991b38bf471055adfc111ddb7e0cbf526"
     },
     {
       "file": "src/workspace-identity.ts",
@@ -3163,7 +3163,7 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains fn:fail at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 34,
         "column": 0,
@@ -3173,7 +3173,8 @@
         "bodyColumn": 38,
         "bodyEndLine": 38,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:stable#0",
@@ -3195,7 +3196,7 @@
       "max_complexity": 4,
       "baseline_crap": 20,
       "max_crap": 20,
-      "rationale": "Retains fn:stable at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 40,
         "column": 7,
@@ -3205,7 +3206,8 @@
         "bodyColumn": 47,
         "bodyEndLine": 50,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:stable#0/closure:CallExpression:arguments[0]#0",
@@ -3227,7 +3229,7 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 46,
         "column": 11,
@@ -3237,7 +3239,8 @@
         "bodyColumn": 20,
         "bodyEndLine": 46,
         "bodyEndColumn": 67
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:digest#0",
@@ -3259,7 +3262,7 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains fn:digest at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 52,
         "column": 0,
@@ -3269,7 +3272,8 @@
         "bodyColumn": 40,
         "bodyEndLine": 54,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:text#0",
@@ -3291,7 +3295,7 @@
       "max_complexity": 3,
       "baseline_crap": 12,
       "max_crap": 12,
-      "rationale": "Retains fn:text at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 56,
         "column": 0,
@@ -3301,7 +3305,8 @@
         "bodyColumn": 52,
         "bodyEndLine": 59,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:optionalText#0",
@@ -3323,7 +3328,7 @@
       "max_complexity": 3,
       "baseline_crap": 12,
       "max_crap": 12,
-      "rationale": "Retains fn:optionalText at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 61,
         "column": 0,
@@ -3333,7 +3338,8 @@
         "bodyColumn": 67,
         "bodyEndLine": 64,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:integerOrNull#0",
@@ -3355,17 +3361,18 @@
       "max_complexity": 5,
       "baseline_crap": 30,
       "max_crap": 30,
-      "rationale": "Retains fn:integerOrNull at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 66,
         "column": 0,
         "start": 2112,
-        "end": 2368,
+        "end": 2372,
         "bodyLine": 66,
-        "bodyColumn": 81,
+        "bodyColumn": 85,
         "bodyEndLine": 70,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:digestOrNull#0",
@@ -3387,17 +3394,18 @@
       "max_complexity": 5,
       "baseline_crap": 30,
       "max_crap": 30,
-      "rationale": "Retains fn:digestOrNull at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 72,
         "column": 0,
-        "start": 2370,
-        "end": 2602,
+        "start": 2374,
+        "end": 2606,
         "bodyLine": 72,
         "bodyColumn": 67,
         "bodyEndLine": 76,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:objectOrEmpty#0",
@@ -3419,17 +3427,18 @@
       "max_complexity": 3,
       "baseline_crap": 12,
       "max_crap": 12,
-      "rationale": "Retains fn:objectOrEmpty at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 78,
         "column": 0,
-        "start": 2604,
-        "end": 2732,
+        "start": 2608,
+        "end": 2736,
         "bodyLine": 78,
         "bodyColumn": 51,
         "bodyEndLine": 80,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:pick#0",
@@ -3451,17 +3460,18 @@
       "max_complexity": 2,
       "baseline_crap": 6,
       "max_crap": 6,
-      "rationale": "Retains fn:pick at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 82,
         "column": 0,
-        "start": 2734,
-        "end": 2878,
+        "start": 2738,
+        "end": 2882,
         "bodyLine": 82,
         "bodyColumn": 78,
         "bodyEndLine": 84,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:identity#0",
@@ -3483,17 +3493,18 @@
       "max_complexity": 6,
       "baseline_crap": 42,
       "max_crap": 42,
-      "rationale": "Retains fn:identity at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 86,
         "column": 0,
-        "start": 2880,
-        "end": 5559,
+        "start": 2884,
+        "end": 5563,
         "bodyLine": 86,
         "bodyColumn": 49,
         "bodyEndLine": 136,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:validateDocumentationStatus#0",
@@ -3515,17 +3526,18 @@
       "max_complexity": 4,
       "baseline_crap": 20,
       "max_crap": 20,
-      "rationale": "Retains fn:validateDocumentationStatus at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 138,
         "column": 0,
-        "start": 5561,
-        "end": 5809,
+        "start": 5565,
+        "end": 5813,
         "bodyLine": 138,
         "bodyColumn": 59,
         "bodyEndLine": 141,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:buildRuntimeAssuranceContext#0",
@@ -3547,17 +3559,18 @@
       "max_complexity": 3,
       "baseline_crap": 12,
       "max_crap": 12,
-      "rationale": "Retains fn:buildRuntimeAssuranceContext at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 143,
         "column": 7,
-        "start": 5818,
-        "end": 6439,
+        "start": 5822,
+        "end": 6443,
         "bodyLine": 143,
         "bodyColumn": 112,
         "bodyEndLine": 156,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:validateRuntimeAssuranceContext#0",
@@ -3579,17 +3592,18 @@
       "max_complexity": 7,
       "baseline_crap": 56,
       "max_crap": 56,
-      "rationale": "Retains fn:validateRuntimeAssuranceContext at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 158,
         "column": 7,
-        "start": 6448,
-        "end": 7160,
+        "start": 6452,
+        "end": 7164,
         "bodyLine": 158,
         "bodyColumn": 89,
         "bodyEndLine": 169,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:compactRuntimeAssuranceContext#0",
@@ -3611,17 +3625,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains fn:compactRuntimeAssuranceContext at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 172,
         "column": 7,
-        "start": 7273,
-        "end": 8326,
+        "start": 7277,
+        "end": 8330,
         "bodyLine": 172,
         "bodyColumn": 75,
         "bodyEndLine": 196,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:statusDelta#0",
@@ -3643,17 +3658,18 @@
       "max_complexity": 3,
       "baseline_crap": 12,
       "max_crap": 12,
-      "rationale": "Retains fn:statusDelta at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 221,
         "column": 7,
-        "start": 8852,
-        "end": 9666,
+        "start": 8856,
+        "end": 9670,
         "bodyLine": 221,
         "bodyColumn": 117,
         "bodyEndLine": 239,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:statusDelta#0/binding:changed/closure:CallExpression:arguments[0]#0",
@@ -3675,17 +3691,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 226,
         "column": 12,
-        "start": 9182,
-        "end": 9227,
+        "start": 9186,
+        "end": 9231,
         "bodyLine": 226,
         "bodyColumn": 23,
         "bodyEndLine": 226,
         "bodyEndColumn": 57
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:statusDelta#0/binding:changed/closure:CallExpression:arguments[0]#1",
@@ -3707,17 +3724,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 227,
         "column": 9,
-        "start": 9238,
-        "end": 9283,
+        "start": 9242,
+        "end": 9287,
         "bodyLine": 227,
         "bodyColumn": 21,
         "bodyEndLine": 227,
         "bodyEndColumn": 53
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:exactFields#0",
@@ -3739,17 +3757,18 @@
       "max_complexity": 5,
       "baseline_crap": 30,
       "max_crap": 30,
-      "rationale": "Retains fn:exactFields at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 241,
         "column": 0,
-        "start": 9668,
-        "end": 9957,
+        "start": 9672,
+        "end": 9961,
         "bodyLine": 241,
         "bodyColumn": 85,
         "bodyEndLine": 249,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:exactFields#0/closure:CallExpression:arguments[0]#0",
@@ -3771,17 +3790,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 247,
         "column": 17,
-        "start": 9911,
-        "end": 9949,
+        "start": 9915,
+        "end": 9953,
         "bodyLine": 247,
         "bodyColumn": 28,
         "bodyEndLine": 247,
         "bodyEndColumn": 55
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:validateDeltaIdentity#0",
@@ -3803,17 +3823,18 @@
       "max_complexity": 10,
       "baseline_crap": 110,
       "max_crap": 110,
-      "rationale": "Retains fn:validateDeltaIdentity at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 251,
         "column": 0,
-        "start": 9959,
-        "end": 11093,
+        "start": 9963,
+        "end": 11097,
         "bodyLine": 251,
         "bodyColumn": 67,
         "bodyEndLine": 281,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:validateDeltaChanges#0",
@@ -3835,17 +3856,18 @@
       "max_complexity": 4,
       "baseline_crap": 20,
       "max_crap": 20,
-      "rationale": "Retains fn:validateDeltaChanges at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 283,
         "column": 0,
-        "start": 11095,
-        "end": 11450,
+        "start": 11099,
+        "end": 11454,
         "bodyLine": 283,
         "bodyColumn": 63,
         "bodyEndLine": 289,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:validateDeltaWatermark#0",
@@ -3867,17 +3889,18 @@
       "max_complexity": 4,
       "baseline_crap": 20,
       "max_crap": 20,
-      "rationale": "Retains fn:validateDeltaWatermark at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 291,
         "column": 0,
-        "start": 11452,
-        "end": 11814,
+        "start": 11456,
+        "end": 11818,
         "bodyLine": 291,
         "bodyColumn": 65,
         "bodyEndLine": 296,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/lifecycle/runtime-facade.ts#fn:validateStatusDelta#0",
@@ -3899,17 +3922,18 @@
       "max_complexity": 3,
       "baseline_crap": 12,
       "max_crap": 12,
-      "rationale": "Retains fn:validateStatusDelta at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/lifecycle/runtime-facade.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves the original facade role and caps. integerOrNull now requires minimum; all eight current callers explicitly pass 1. No numeric freshness established.",
       "current_source_address": {
         "line": 298,
         "column": 7,
-        "start": 11823,
-        "end": 12196,
+        "start": 11827,
+        "end": 12200,
         "bodyLine": 298,
         "bodyColumn": 72,
         "bodyEndLine": 305,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-facade-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/orchestration/completed-source-report-recovery.ts#fn:requireRecovery#0",
@@ -19227,7 +19251,7 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:isObjectLike at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 51,
         "column": 0,
@@ -19237,7 +19261,8 @@
         "bodyColumn": 47,
         "bodyEndLine": 53,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:defined#0",
@@ -19259,7 +19284,7 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:defined at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 54,
         "column": 0,
@@ -19269,7 +19294,8 @@
         "bodyColumn": 59,
         "bodyEndLine": 56,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:defined#0/closure:CallExpression:arguments[0]#0",
@@ -19291,7 +19317,7 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 55,
         "column": 21,
@@ -19301,7 +19327,8 @@
         "bodyColumn": 44,
         "bodyEndLine": 55,
         "bodyEndColumn": 63
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:reject#0",
@@ -19323,7 +19350,7 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:reject at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 57,
         "column": 0,
@@ -19333,7 +19360,8 @@
         "bodyColumn": 71,
         "bodyEndLine": 61,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:reject#0/closure:CallExpression:arguments[0]#0",
@@ -19355,7 +19383,7 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 58,
         "column": 37,
@@ -19365,7 +19393,8 @@
         "bodyColumn": 43,
         "bodyEndLine": 60,
         "bodyEndColumn": 3
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:nextCallId#0",
@@ -19387,7 +19416,7 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:nextCallId at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 62,
         "column": 0,
@@ -19397,7 +19426,8 @@
         "bodyColumn": 30,
         "bodyEndLine": 65,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:readClock#0",
@@ -19419,17 +19449,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:readClock at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 66,
         "column": 0,
         "start": 2177,
-        "end": 2620,
+        "end": 2707,
         "bodyLine": 66,
         "bodyColumn": 103,
-        "bodyEndLine": 74,
+        "bodyEndLine": 76,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:readClock#0/closure:CallExpression:arguments[0]#0",
@@ -19451,7 +19482,7 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 68,
         "column": 10,
@@ -19461,7 +19492,8 @@
         "bodyColumn": 16,
         "bodyEndLine": 68,
         "bodyEndColumn": 35
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:readClock#0/closure:CallExpression:arguments[0]#1",
@@ -19483,17 +19515,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
         "line": 69,
         "column": 10,
         "start": 2356,
-        "end": 2545,
+        "end": 2632,
         "bodyLine": 69,
         "bodyColumn": 21,
-        "bodyEndLine": 72,
+        "bodyEndLine": 74,
         "bodyEndColumn": 5
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:readClock#0/closure:CallExpression:arguments[0]#2",
@@ -19515,17 +19548,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 73,
+        "line": 75,
         "column": 11,
-        "start": 2558,
-        "end": 2616,
-        "bodyLine": 73,
+        "start": 2645,
+        "end": 2703,
+        "bodyLine": 75,
         "bodyColumn": 18,
-        "bodyEndLine": 73,
+        "bodyEndLine": 75,
         "bodyEndColumn": 68
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:safeStringProperty#0",
@@ -19547,17 +19581,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:safeStringProperty at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 75,
+        "line": 77,
         "column": 0,
-        "start": 2621,
-        "end": 3390,
-        "bodyLine": 75,
+        "start": 2708,
+        "end": 3500,
+        "bodyLine": 77,
         "bodyColumn": 97,
-        "bodyEndLine": 88,
+        "bodyEndLine": 91,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:safeStringProperty#0/binding:read/binding:read#0",
@@ -19579,17 +19614,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains binding:read at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 77,
+        "line": 79,
         "column": 15,
-        "start": 2777,
-        "end": 3297,
-        "bodyLine": 77,
+        "start": 2864,
+        "end": 3407,
+        "bodyLine": 79,
         "bodyColumn": 29,
-        "bodyEndLine": 86,
+        "bodyEndLine": 89,
         "bodyEndColumn": 3
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:errorCode#0",
@@ -19611,17 +19647,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:errorCode at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 89,
+        "line": 92,
         "column": 0,
-        "start": 3391,
-        "end": 4270,
-        "bodyLine": 89,
+        "start": 3501,
+        "end": 4380,
+        "bodyLine": 92,
         "bodyColumn": 68,
-        "bodyEndLine": 103,
+        "bodyEndLine": 106,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:errorCode#0/binding:text/binding:text#0",
@@ -19643,17 +19680,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains binding:text at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 90,
+        "line": 93,
         "column": 15,
-        "start": 3476,
-        "end": 3561,
-        "bodyLine": 90,
+        "start": 3586,
+        "end": 3671,
+        "bodyLine": 93,
         "bodyColumn": 38,
-        "bodyEndLine": 90,
+        "bodyEndLine": 93,
         "bodyEndColumn": 100
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:errorCode#0/binding:message/closure:ArrayExpression:elements[0]#0",
@@ -19675,17 +19713,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:ArrayExpression:elements[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 91,
+        "line": 94,
         "column": 25,
-        "start": 3588,
-        "end": 3630,
-        "bodyLine": 91,
+        "start": 3698,
+        "end": 3740,
+        "bodyLine": 94,
         "bodyColumn": 31,
-        "bodyEndLine": 91,
+        "bodyEndLine": 94,
         "bodyEndColumn": 67
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:errorCode#0/binding:match/closure:CallExpression:arguments[0]#0",
@@ -19707,17 +19746,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 101,
+        "line": 104,
         "column": 27,
-        "start": 4146,
-        "end": 4205,
-        "bodyLine": 101,
+        "start": 4256,
+        "end": 4315,
+        "bodyLine": 104,
         "bodyColumn": 42,
-        "bodyEndLine": 101,
+        "bodyEndLine": 104,
         "bodyEndColumn": 86
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:errorCode#0/binding:match/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[0]#0",
@@ -19739,17 +19779,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 101,
+        "line": 104,
         "column": 53,
-        "start": 4172,
-        "end": 4204,
-        "bodyLine": 101,
+        "start": 4282,
+        "end": 4314,
+        "bodyLine": 104,
         "bodyColumn": 63,
-        "bodyEndLine": 101,
+        "bodyEndLine": 104,
         "bodyEndColumn": 85
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:elapsedMilliseconds#0",
@@ -19771,17 +19812,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:elapsedMilliseconds at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 104,
+        "line": 107,
         "column": 0,
-        "start": 4271,
-        "end": 4484,
-        "bodyLine": 104,
+        "start": 4381,
+        "end": 4594,
+        "bodyLine": 107,
         "bodyColumn": 56,
-        "bodyEndLine": 107,
+        "bodyEndLine": 110,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:elapsedMilliseconds#0/closure:ArrayExpression:elements[0]#0",
@@ -19803,17 +19845,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:ArrayExpression:elements[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 106,
+        "line": 109,
         "column": 10,
-        "start": 4382,
-        "end": 4404,
-        "bodyLine": 106,
+        "start": 4492,
+        "end": 4514,
+        "bodyLine": 109,
         "bodyColumn": 16,
-        "bodyEndLine": 106,
+        "bodyEndLine": 109,
         "bodyEndColumn": 32
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:elapsedMilliseconds#0/closure:ArrayExpression:elements[1]#0",
@@ -19835,17 +19878,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:ArrayExpression:elements[1] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 106,
+        "line": 109,
         "column": 34,
-        "start": 4406,
-        "end": 4437,
-        "bodyLine": 106,
+        "start": 4516,
+        "end": 4547,
+        "bodyLine": 109,
         "bodyColumn": 40,
-        "bodyEndLine": 106,
+        "bodyEndLine": 109,
         "bodyEndColumn": 65
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:defaultSink#0",
@@ -19867,17 +19911,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:defaultSink at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 108,
+        "line": 111,
         "column": 0,
-        "start": 4485,
-        "end": 4787,
-        "bodyLine": 108,
+        "start": 4595,
+        "end": 4897,
+        "bodyLine": 111,
         "bodyColumn": 42,
-        "bodyEndLine": 115,
+        "bodyEndLine": 118,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:defaultSink#0/property:record#0",
@@ -19899,17 +19944,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains property:record at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 110,
+        "line": 113,
         "column": 12,
-        "start": 4566,
-        "end": 4778,
-        "bodyLine": 110,
+        "start": 4676,
+        "end": 4888,
+        "bodyLine": 113,
         "bodyColumn": 43,
-        "bodyEndLine": 113,
+        "bodyEndLine": 116,
         "bodyEndColumn": 5
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:emit#0",
@@ -19931,17 +19977,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:emit at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 116,
+        "line": 119,
         "column": 0,
-        "start": 4788,
-        "end": 4953,
-        "bodyLine": 116,
+        "start": 4898,
+        "end": 5063,
+        "bodyLine": 119,
         "bodyColumn": 72,
-        "bodyEndLine": 120,
+        "bodyEndLine": 123,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:emit#0/closure:CallExpression:arguments[0]#0",
@@ -19963,17 +20010,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 118,
+        "line": 121,
         "column": 10,
-        "start": 4897,
-        "end": 4921,
-        "bodyLine": 118,
+        "start": 5007,
+        "end": 5031,
+        "bodyLine": 121,
         "bodyColumn": 16,
-        "bodyEndLine": 118,
+        "bodyEndLine": 121,
         "bodyEndColumn": 34
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:emit#0/closure:CallExpression:arguments[0]#1",
@@ -19995,17 +20043,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 119,
+        "line": 122,
         "column": 11,
-        "start": 4934,
-        "end": 4949,
-        "bodyLine": 119,
+        "start": 5044,
+        "end": 5059,
+        "bodyLine": 122,
         "bodyColumn": 17,
-        "bodyEndLine": 119,
+        "bodyEndLine": 122,
         "bodyEndColumn": 26
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:finish#0",
@@ -20027,17 +20076,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:finish at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 121,
+        "line": 124,
         "column": 0,
-        "start": 4954,
-        "end": 6723,
-        "bodyLine": 131,
+        "start": 5064,
+        "end": 6833,
+        "bodyLine": 134,
         "bodyColumn": 17,
-        "bodyEndLine": 162,
+        "bodyEndLine": 165,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:finish#0/binding:elapsedNs/closure:ArrayExpression:elements[0]#0",
@@ -20059,17 +20109,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:ArrayExpression:elements[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 136,
+        "line": 139,
         "column": 21,
-        "start": 5523,
-        "end": 5556,
-        "bodyLine": 136,
+        "start": 5633,
+        "end": 5666,
+        "bodyLine": 139,
         "bodyColumn": 27,
-        "bodyEndLine": 136,
+        "bodyEndLine": 139,
         "bodyEndColumn": 54
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:finish#0/binding:elapsedNs/closure:ArrayExpression:elements[1]#0",
@@ -20091,17 +20142,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:ArrayExpression:elements[1] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 136,
+        "line": 139,
         "column": 56,
-        "start": 5558,
-        "end": 5566,
-        "bodyLine": 136,
+        "start": 5668,
+        "end": 5676,
+        "bodyLine": 139,
         "bodyColumn": 62,
-        "bodyEndLine": 136,
+        "bodyEndLine": 139,
         "bodyEndColumn": 64
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:finish#0/binding:event/closure:CallExpression:arguments[0]#0",
@@ -20123,17 +20175,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 151,
+        "line": 154,
         "column": 79,
-        "start": 6314,
-        "end": 6340,
-        "bodyLine": 151,
+        "start": 6424,
+        "end": 6450,
+        "bodyLine": 154,
         "bodyColumn": 85,
-        "bodyEndLine": 151,
+        "bodyEndLine": 154,
         "bodyEndColumn": 105
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:finish#0/binding:event/closure:CallExpression:arguments[0]#1",
@@ -20155,17 +20208,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 156,
+        "line": 159,
         "column": 15,
-        "start": 6489,
-        "end": 6546,
-        "bodyLine": 156,
+        "start": 6599,
+        "end": 6656,
+        "bodyLine": 159,
         "bodyColumn": 21,
-        "bodyEndLine": 156,
+        "bodyEndLine": 159,
         "bodyEndColumn": 72
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:finish#0/binding:event/closure:CallExpression:arguments[0]#2",
@@ -20187,17 +20241,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 159,
+        "line": 162,
         "column": 76,
-        "start": 6645,
-        "end": 6670,
-        "bodyLine": 159,
+        "start": 6755,
+        "end": 6780,
+        "bodyLine": 162,
         "bodyColumn": 82,
-        "bodyEndLine": 159,
+        "bodyEndLine": 162,
         "bodyEndColumn": 101
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:defaultRuntimeClock#0",
@@ -20219,17 +20274,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:defaultRuntimeClock at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 163,
+        "line": 166,
         "column": 7,
-        "start": 6731,
-        "end": 6801,
-        "bodyLine": 163,
+        "start": 6841,
+        "end": 6911,
+        "bodyLine": 166,
         "bodyColumn": 52,
-        "bodyEndLine": 165,
+        "bodyEndLine": 168,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:defaultRuntimeTimingSink#0",
@@ -20251,17 +20307,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains fn:defaultRuntimeTimingSink at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 166,
+        "line": 169,
         "column": 7,
-        "start": 6809,
-        "end": 6891,
-        "bodyLine": 166,
+        "start": 6919,
+        "end": 7001,
+        "bodyLine": 169,
         "bodyColumn": 62,
-        "bodyEndLine": 168,
+        "bodyEndLine": 171,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:invokeTimed#0",
@@ -20283,17 +20340,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains fn:invokeTimed at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 169,
+        "line": 172,
         "column": 7,
-        "start": 6899,
-        "end": 7940,
-        "bodyLine": 173,
+        "start": 7009,
+        "end": 8163,
+        "bodyLine": 176,
         "bodyColumn": 14,
-        "bodyEndLine": 193,
+        "bodyEndLine": 198,
         "bodyEndColumn": 1
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:invokeTimed#0/closure:CallExpression:arguments[0]#0",
@@ -20315,17 +20373,18 @@
       "max_complexity": 1,
       "baseline_crap": 1,
       "max_crap": 1,
-      "rationale": "Retains closure:CallExpression:arguments[0] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 184,
+        "line": 189,
         "column": 6,
-        "start": 7597,
-        "end": 7763,
-        "bodyLine": 184,
+        "start": 7820,
+        "end": 7986,
+        "bodyLine": 189,
         "bodyColumn": 23,
-        "bodyEndLine": 187,
+        "bodyEndLine": 192,
         "bodyEndColumn": 7
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/runtime-timing.ts#fn:invokeTimed#0/closure:CallExpression:arguments[1]#0",
@@ -20347,17 +20406,18 @@
       "max_complexity": 1,
       "baseline_crap": 2,
       "max_crap": 2,
-      "rationale": "Retains closure:CallExpression:arguments[1] at the same genuine declaration/callback and complete body span in the byte-identical published/current module src/runtime-timing.ts. Whole module equality retains its containing callable/callsite. Pairing uses name and exact source address in that unchanged image; inventory identity strings label the result and ordinal/body hash are not pairing criteria. Ceiling is copied from genuine b549951 measurement without a current-derived increase.",
+      "rationale": "Independent body/caller review preserves this timing role and all original caps. readClock fulfillment, safeStringProperty.read and invokeTimed changed validation expressions; Source is not byte-identical to the original. No numeric freshness established.",
       "current_source_address": {
-        "line": 188,
+        "line": 193,
         "column": 6,
-        "start": 7771,
-        "end": 7930,
-        "bodyLine": 188,
+        "start": 7994,
+        "end": 8153,
+        "bodyLine": 193,
         "bodyColumn": 23,
-        "bodyEndLine": 191,
+        "bodyEndLine": 196,
         "bodyEndColumn": 7
-      }
+      },
+      "correspondence_review": "/workspace/attachments/quality-timing-refresh-independent-vf790-20261016.md"
     },
     {
       "identity": "src/workspace-identity.ts#class:WorkspaceIdentityError/method:constructor#0",
@@ -176213,6 +176273,688 @@
       "rationale": "Original anchor: .tmp/tooling-research/root-published-baseline-v6/published-worktree/packages/agent/bin/run.mjs:2609. Current anchor: packages/agent/bin/run.ts:5364-5368. Both map snapshot context entries to a waveIndex derived from the wave-N key and retain the value. The enclosing readonly-release operation remains active; the current snapshot parser establishes context before this projection.",
       "primary_ref": "/workspace/attachments/quality-original-run-dispositions-cbd-20261015.md",
       "independent_review_ref": "/workspace/attachments/quality-run-five-actual-review-cbd-20261015.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:originalDeveloper/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:originalDeveloper/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 377,
+        "column": 48,
+        "start": 16649,
+        "end": 16684,
+        "bodyLine": 377,
+        "bodyColumn": 59,
+        "bodyEndLine": 377,
+        "bodyEndColumn": 83
+      },
+      "current_source_address": {
+        "line": 1324,
+        "column": 49,
+        "start": 50836,
+        "end": 50871,
+        "bodyLine": 1324,
+        "bodyColumn": 60,
+        "bodyEndLine": 1324,
+        "bodyEndColumn": 84
+      },
+      "rationale": "Both callbacks find the original developer stage by developerId; caller remains per-workflow prewriter normalization from exactPrewriterTemplateDelta.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:developer/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:developer/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 378,
+        "column": 41,
+        "start": 16728,
+        "end": 16763,
+        "bodyLine": 378,
+        "bodyColumn": 52,
+        "bodyEndLine": 378,
+        "bodyEndColumn": 76
+      },
+      "current_source_address": {
+        "line": 1325,
+        "column": 38,
+        "start": 50912,
+        "end": 50947,
+        "bodyLine": 1325,
+        "bodyColumn": 49,
+        "bodyEndLine": 1325,
+        "bodyEndColumn": 73
+      },
+      "rationale": "Both callbacks find candidate developer stage by developerId; current callback is under extracted per-workflow normalizer called by the same top-level guard.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:reviewStages/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:reviewStages/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 379,
+        "column": 49,
+        "start": 16815,
+        "end": 16863,
+        "bodyLine": 379,
+        "bodyColumn": 60,
+        "bodyEndLine": 379,
+        "bodyEndColumn": 97
+      },
+      "current_source_address": {
+        "line": 1326,
+        "column": 46,
+        "start": 50996,
+        "end": 51044,
+        "bodyLine": 1326,
+        "bodyColumn": 57,
+        "bodyEndLine": 1326,
+        "bodyEndColumn": 94
+      },
+      "rationale": "Both filter target stages for review_source_prewrite; same unique-stage validation role and same per-workflow caller.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:expectedReview/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:expectedReview/closure:OptionalCallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 382,
+        "column": 8,
+        "start": 16986,
+        "end": 17034,
+        "bodyLine": 382,
+        "bodyColumn": 19,
+        "bodyEndLine": 382,
+        "bodyEndColumn": 56
+      },
+      "current_source_address": {
+        "line": 1329,
+        "column": 6,
+        "start": 51159,
+        "end": 51207,
+        "bodyLine": 1329,
+        "bodyColumn": 17,
+        "bodyEndLine": 1329,
+        "bodyEndColumn": 54
+      },
+      "rationale": "Both find the maintained template review_source_prewrite stage; same expected-stage lookup role.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:stageIndex/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:stageIndex/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 384,
+        "column": 50,
+        "start": 17095,
+        "end": 17143,
+        "bodyLine": 384,
+        "bodyColumn": 61,
+        "bodyEndLine": 384,
+        "bodyEndColumn": 98
+      },
+      "current_source_address": {
+        "line": 1331,
+        "column": 47,
+        "start": 51263,
+        "end": 51311,
+        "bodyLine": 1331,
+        "bodyColumn": 58,
+        "bodyEndLine": 1331,
+        "bodyEndColumn": 95
+      },
+      "rationale": "Both find target review stage index; same ordering comparison role.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:expectedStageIndex/closure:OptionalCallExpression:arguments[0]#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:expectedStageIndex/closure:OptionalCallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 386,
+        "column": 8,
+        "start": 17241,
+        "end": 17289,
+        "bodyLine": 386,
+        "bodyColumn": 19,
+        "bodyEndLine": 386,
+        "bodyEndColumn": 56
+      },
+      "current_source_address": {
+        "line": 1333,
+        "column": 6,
+        "start": 51405,
+        "end": 51453,
+        "bodyLine": 1333,
+        "bodyColumn": 17,
+        "bodyEndLine": 1333,
+        "bodyEndColumn": 54
+      },
+      "rationale": "Both find maintained-template review stage index; same ordering comparison role.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#4",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 415,
+        "column": 47,
+        "start": 18384,
+        "end": 18432,
+        "bodyLine": 415,
+        "bodyColumn": 58,
+        "bodyEndLine": 415,
+        "bodyEndColumn": 95
+      },
+      "current_source_address": {
+        "line": 1353,
+        "column": 45,
+        "start": 51903,
+        "end": 51951,
+        "bodyLine": 1353,
+        "bodyColumn": 56,
+        "bodyEndLine": 1353,
+        "bodyEndColumn": 93
+      },
+      "rationale": "Both remove review_source_prewrite from normalized candidate stages after validation; same mutation in extracted per-workflow normalizer.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#5",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/closure:CallExpression:arguments[0]#1",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 418,
+        "column": 32,
+        "start": 18567,
+        "end": 18617,
+        "bodyLine": 418,
+        "bodyColumn": 42,
+        "bodyEndLine": 418,
+        "bodyEndColumn": 82
+      },
+      "current_source_address": {
+        "line": 1356,
+        "column": 30,
+        "start": 52080,
+        "end": 52130,
+        "bodyLine": 1356,
+        "bodyColumn": 40,
+        "bodyEndLine": 1356,
+        "bodyEndColumn": 80
+      },
+      "rationale": "Both filter review_source_prewrite edges from candidate workflow before restoring direct edge; same normalization caller and purpose.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#1",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:prewriterStageBindingsMatch#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 396,
+        "column": 27,
+        "start": 17500,
+        "end": 17548,
+        "bodyLine": 396,
+        "bodyColumn": 38,
+        "bodyEndLine": 396,
+        "bodyEndColumn": 75
+      },
+      "current_source_address": {
+        "line": 1374,
+        "column": 26,
+        "start": 52825,
+        "end": 52873,
+        "bodyLine": 1374,
+        "bodyColumn": 37,
+        "bodyEndLine": 1374,
+        "bodyEndColumn": 74
+      },
+      "rationale": "Both test that original workflow has no review_source_prewrite stage; extracted stage-binding helper is called from normalizePrewriterWorkflow within the original guard path.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:reviewEdges/closure:CallExpression:arguments[0]#0",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:prewriterWorkflowEdgesMatch#0/binding:reviewEdges/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 407,
+        "column": 46,
+        "start": 18046,
+        "end": 18095,
+        "bodyLine": 407,
+        "bodyColumn": 56,
+        "bodyEndLine": 407,
+        "bodyEndColumn": 95
+      },
+      "current_source_address": {
+        "line": 1390,
+        "column": 44,
+        "start": 53631,
+        "end": 53680,
+        "bodyLine": 1390,
+        "bodyColumn": 54,
+        "bodyEndLine": 1390,
+        "bodyEndColumn": 93
+      },
+      "rationale": "Both filter target workflow edges touching review_source_prewrite; moved to extracted edge validator called from normalizePrewriterWorkflow.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#2",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:prewriterWorkflowEdgesMatch#0/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 410,
+        "column": 30,
+        "start": 18200,
+        "end": 18238,
+        "bodyLine": 410,
+        "bodyColumn": 40,
+        "bodyEndLine": 410,
+        "bodyEndColumn": 68
+      },
+      "current_source_address": {
+        "line": 1393,
+        "column": 29,
+        "start": 53783,
+        "end": 53821,
+        "bodyLine": 1393,
+        "bodyColumn": 39,
+        "bodyEndLine": 1393,
+        "bodyEndColumn": 67
+      },
+      "rationale": "Both reject a target edge equal to the original direct synthesize_task-to-developer edge; same edge guard in extracted validator.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#3",
+      "file": "bin/runtime-config-rebind.ts",
+      "current_identity": "bin/runtime-config-rebind.ts#fn:prewriterWorkflowEdgesMatch#0/closure:CallExpression:arguments[0]#1",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 411,
+        "column": 27,
+        "start": 18270,
+        "end": 18308,
+        "bodyLine": 411,
+        "bodyColumn": 37,
+        "bodyEndLine": 411,
+        "bodyEndColumn": 65
+      },
+      "current_source_address": {
+        "line": 1394,
+        "column": 24,
+        "start": 53850,
+        "end": 53888,
+        "bodyLine": 1394,
+        "bodyColumn": 34,
+        "bodyEndLine": 1394,
+        "bodyEndColumn": 62
+      },
+      "rationale": "Both require the original workflow to contain the direct synthesize_task-to-developer edge; same edge guard in extracted validator.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#18",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:isPacketOnlyDevelopmentStage#0",
+      "baseline_complexity": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "source_address": {
+        "line": 5779,
+        "column": 14,
+        "start": 269332,
+        "end": 269482,
+        "bodyLine": 5780,
+        "bodyColumn": 16,
+        "bodyEndLine": 5781,
+        "bodyEndColumn": 67
+      },
+      "current_source_address": {
+        "line": 319,
+        "column": 0,
+        "start": 11906,
+        "end": 12170,
+        "bodyLine": 321,
+        "bodyColumn": 11,
+        "bodyEndLine": 325,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Extracted predicate for a stage consuming DevelopmentTaskPacket/v1 without ImplementationResult/v1; used by issuedStages.some at run.ts:8822.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#21",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:isResearchPreparationUnsafe#0",
+      "baseline_complexity": 3,
+      "max_complexity": 3,
+      "max_crap": 3,
+      "source_address": {
+        "line": 5834,
+        "column": 39,
+        "start": 272018,
+        "end": 272095,
+        "bodyLine": 5834,
+        "bodyColumn": 49,
+        "bodyEndLine": 5834,
+        "bodyEndColumn": 116
+      },
+      "current_source_address": {
+        "line": 328,
+        "column": 0,
+        "start": 12304,
+        "end": 12543,
+        "bodyLine": 330,
+        "bodyColumn": 23,
+        "bodyEndLine": 332,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Predicate for issue_id null, an existing observation, or a host reservation; called by journal.state.items.some at run.ts:8878.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#24",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:isResearchOutputStage#0",
+      "baseline_complexity": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "source_address": {
+        "line": 5991,
+        "column": 16,
+        "start": 280080,
+        "end": 280206,
+        "bodyLine": 5992,
+        "bodyColumn": 18,
+        "bodyEndLine": 5992,
+        "bodyEndColumn": 115
+      },
+      "current_source_address": {
+        "line": 335,
+        "column": 0,
+        "start": 12652,
+        "end": 12885,
+        "bodyLine": 335,
+        "bodyColumn": 113,
+        "bodyEndLine": 337,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Checks whether a possibly absent stage produces ResearchResult/v1 or ResearchSynthesis/v1; called by issuedStages.some at run.ts:9034.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#25/closure:CallExpression:arguments[0]#0",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:isResearchOutputForStage#0",
+      "baseline_complexity": 3,
+      "max_complexity": 3,
+      "max_crap": 3,
+      "source_address": {
+        "line": 6007,
+        "column": 18,
+        "start": 280912,
+        "end": 281099,
+        "bodyLine": 6008,
+        "bodyColumn": 20,
+        "bodyEndLine": 6009,
+        "bodyEndColumn": 117
+      },
+      "current_source_address": {
+        "line": 340,
+        "column": 0,
+        "start": 13018,
+        "end": 13224,
+        "bodyLine": 343,
+        "bodyColumn": 11,
+        "bodyEndLine": 345,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Combines stage ID equality with the research-result or synthesis-result output test; called from stages.some while filtering journal entries at run.ts:9046.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#31",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:addObservationForAction#0",
+      "baseline_complexity": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "source_address": {
+        "line": 6150,
+        "column": 49,
+        "start": 288263,
+        "end": 288375,
+        "bodyLine": 6151,
+        "bodyColumn": 20,
+        "bodyEndLine": 6151,
+        "bodyEndColumn": 102
+      },
+      "current_source_address": {
+        "line": 348,
+        "column": 0,
+        "start": 13404,
+        "end": 13672,
+        "bodyLine": 352,
+        "bodyColumn": 44,
+        "bodyEndLine": 354,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Updates the item whose request.action_id matches the observation action ID, otherwise returns it unchanged; used by preparedDelivery at run.ts:9168.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#36",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:markUncertainResearchStatus#0",
+      "baseline_complexity": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "source_address": {
+        "line": 6449,
+        "column": 60,
+        "start": 302740,
+        "end": 302894,
+        "bodyLine": 6449,
+        "bodyColumn": 71,
+        "bodyEndLine": 6452,
+        "bodyEndColumn": 9
+      },
+      "current_source_address": {
+        "line": 357,
+        "column": 0,
+        "start": 13769,
+        "end": 14014,
+        "bodyLine": 357,
+        "bodyColumn": 107,
+        "bodyEndLine": 362,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Changes research_preparation_incomplete to issued_outcome_uncertain and preserves other statuses; mapped over action statuses at run.ts:9478.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#6",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:describeUncertainIssuedAction#0",
+      "baseline_complexity": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "source_address": {
+        "line": 4300,
+        "column": 17,
+        "start": 198870,
+        "end": 199218,
+        "bodyLine": 4301,
+        "bodyColumn": 14,
+        "bodyEndLine": 4308,
+        "bodyEndColumn": 19
+      },
+      "current_source_address": {
+        "line": 365,
+        "column": 0,
+        "start": 14229,
+        "end": 14690,
+        "bodyLine": 369,
+        "bodyColumn": 27,
+        "bodyEndLine": 377,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Builds an unknown-outcome issued-action description, using describe(item) when issuedNow and the request/issue/logical-action fields otherwise; called while mapping uncertain actions at run.ts:7168 and 9062.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#11",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:isUnissuedKind#0",
+      "baseline_complexity": 2,
+      "max_complexity": 2,
+      "max_crap": 2,
+      "source_address": {
+        "line": 4663,
+        "column": 50,
+        "start": 216777,
+        "end": 216830,
+        "bodyLine": 4663,
+        "bodyColumn": 61,
+        "bodyEndLine": 4663,
+        "bodyEndColumn": 103
+      },
+      "current_source_address": {
+        "line": 380,
+        "column": 0,
+        "start": 14812,
+        "end": 14976,
+        "bodyLine": 380,
+        "bodyColumn": 112,
+        "bodyEndLine": 382,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Selects an action with no issue_id and the requested kind; used for next_actions at run.ts:7590.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#23",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:describeIssuedAction#0",
+      "baseline_complexity": 3,
+      "max_complexity": 3,
+      "max_crap": 3,
+      "source_address": {
+        "line": 5884,
+        "column": 52,
+        "start": 274573,
+        "end": 275460,
+        "bodyLine": 5884,
+        "bodyColumn": 63,
+        "bodyEndLine": 5901,
+        "bodyEndColumn": 13
+      },
+      "current_source_address": {
+        "line": 391,
+        "column": 0,
+        "start": 15402,
+        "end": 16497,
+        "bodyLine": 402,
+        "bodyColumn": 19,
+        "bodyEndLine": 420,
+        "bodyEndColumn": 1
+      },
+      "rationale": "Formats request, issue ID, optional host attempt ID, and optional research activation/bindings; used to construct issuedActions at run.ts:8929.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
+    },
+    {
+      "identity": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#23/closure:CallExpression:arguments[0]#0",
+      "file": "bin/run.ts",
+      "current_identity": "bin/run.ts#fn:describeIssuedAction#0/binding:researchStage/closure:CallExpression:arguments[0]#0",
+      "baseline_complexity": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "source_address": {
+        "line": 5892,
+        "column": 70,
+        "start": 275039,
+        "end": 275084,
+        "bodyLine": 5892,
+        "bodyColumn": 81,
+        "bodyEndLine": 5892,
+        "bodyEndColumn": 115
+      },
+      "current_source_address": {
+        "line": 411,
+        "column": 36,
+        "start": 16180,
+        "end": 16225,
+        "bodyLine": 411,
+        "bodyColumn": 47,
+        "bodyEndLine": 411,
+        "bodyEndColumn": 81
+      },
+      "rationale": "Finds the stage matching item.request.stage_id to determine whether the action is research; nested in describeIssuedAction at run.ts:411.",
+      "cap_basis": "Reviewed strict original Source CC floor; not reconstructed measured baseline CRAP. Original coverage/CRAP report bytes remain absent.",
+      "independent_review": "/workspace/attachments/quality-conservative-pairs-independent-review-vf790-20261016.md"
     }
   ],
   "new_functions": [
@@ -222488,5 +223230,103 @@
     "consolidated_original": "src/runtime-kernel.ts#fn:issueWorkflowExecutionCapability#0/closure:CallExpression:arguments[1]#4/binding:uncertain/closure:CallExpression:arguments[0]#0",
     "removed_stale_new": "src/runtime-kernel.ts#fn:withUnstartedWorkflowCleanup#0",
     "limits": "Static non-exhaustive role dispositions only. No historical measurement reconstructed, no retained cap changed, no complete frozen plan, dynamic CRAP, coverage, mutation or Runtime qualification."
+  },
+  "scope_review_pairs_refresh_20261016": {
+    "inventory": "/workspace/attachments/quality-current-complete-function-inventory-1ca0ec7-20261016.json",
+    "pairs": [
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:originalDeveloper/closure:OptionalCallExpression:arguments[0]#0",
+        "current": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:originalDeveloper/closure:CallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:developer/closure:OptionalCallExpression:arguments[0]#0",
+        "current": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:developer/closure:CallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:reviewStages/closure:OptionalCallExpression:arguments[0]#0",
+        "current": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:reviewStages/closure:CallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:expectedReview/closure:OptionalCallExpression:arguments[0]#0",
+        "current": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:expectedReview/closure:OptionalCallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:stageIndex/closure:OptionalCallExpression:arguments[0]#0",
+        "current": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:stageIndex/closure:CallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:expectedStageIndex/closure:OptionalCallExpression:arguments[0]#0",
+        "current": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/binding:expectedStageIndex/closure:OptionalCallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#4",
+        "current": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/closure:CallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#5",
+        "current": "bin/runtime-config-rebind.ts#fn:normalizePrewriterWorkflow#0/closure:CallExpression:arguments[0]#1"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#1",
+        "current": "bin/runtime-config-rebind.ts#fn:prewriterStageBindingsMatch#0/closure:CallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/binding:reviewEdges/closure:CallExpression:arguments[0]#0",
+        "current": "bin/runtime-config-rebind.ts#fn:prewriterWorkflowEdgesMatch#0/binding:reviewEdges/closure:CallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#2",
+        "current": "bin/runtime-config-rebind.ts#fn:prewriterWorkflowEdgesMatch#0/closure:CallExpression:arguments[0]#0"
+      },
+      {
+        "original": "bin/runtime-config-rebind.mjs#fn:exactPrewriterTemplateDelta#0/closure:CallExpression:arguments[0]#3",
+        "current": "bin/runtime-config-rebind.ts#fn:prewriterWorkflowEdgesMatch#0/closure:CallExpression:arguments[0]#1"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#18",
+        "current": "bin/run.ts#fn:isPacketOnlyDevelopmentStage#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#21",
+        "current": "bin/run.ts#fn:isResearchPreparationUnsafe#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#24",
+        "current": "bin/run.ts#fn:isResearchOutputStage#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#25/closure:CallExpression:arguments[0]#0",
+        "current": "bin/run.ts#fn:isResearchOutputForStage#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#31",
+        "current": "bin/run.ts#fn:addObservationForAction#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#36",
+        "current": "bin/run.ts#fn:markUncertainResearchStatus#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#6",
+        "current": "bin/run.ts#fn:describeUncertainIssuedAction#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#11",
+        "current": "bin/run.ts#fn:isUnissuedKind#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#23",
+        "current": "bin/run.ts#fn:describeIssuedAction#0"
+      },
+      {
+        "original": "bin/run.mjs#fn:run#0/closure:CallExpression:arguments[0]#23/closure:CallExpression:arguments[0]#0",
+        "current": "bin/run.ts#fn:describeIssuedAction#0/binding:researchStage/closure:CallExpression:arguments[0]#0"
+      }
+    ],
+    "refreshed": [
+      "src/runtime-timing.ts",
+      "src/lifecycle/runtime-facade.ts"
+    ],
+    "limits": "Non-exhaustive static correspondence only; unknown original measured fields omitted, existing caps unchanged. No numeric, global, delivery or Runtime qualification."
   }
 }

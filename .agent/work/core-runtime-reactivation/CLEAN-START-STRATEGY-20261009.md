@@ -60,9 +60,12 @@ The next bounded correction uses two complete source-aligned declarations,
 `main-public-ingress` and `main-envelopes`, in the existing registry. Keep their
 exact original Source/test union and shared fuzz tests. Retain the former parent
 as historical metadata outside active counts, without changing old observations.
-Verify/publish the split, then qualify the first complete child through coverage,
-same-run scoped CRAP and assertion-confirmed mutation before advancing. Do not
-add another parent join, repeat the unchanged campaign or raise its deadline.
+The split is published at64d33d3. The first complete child's exact coverage and
+same-run scoped CRAP passed; its full355-mutant run finished in378086.405582ms
+with262assertion-confirmed Killed,46Survived and47UNKNOWN. It remains unqualified.
+Correct those findings in disjoint worker lanes before advancing; keep original
+receipts and classification unchanged. Do not add another parent join, repeat
+the unchanged campaign or raise its deadline.
 Root owns Source, shared helpers, registry,
 frozen-plan metadata, documentation, checks and Git. Workers do not run competing
 checks, numerical producers, builds or installs. Exact outcomes live in WORK;
@@ -106,9 +109,14 @@ Resume from the current captured inventory and reviewed partial in WORK. The
 historical runtime-byte prerequisite is now qualified without executing that
 runtime; current checks remain on Bun1.4.3. Finish the remaining role families
 and unbound Source refreshes rather than recreating inventories.
-The reviewed partial now binds7053roles across149files, with683current and
-178original dispositions still missing. Its original measured report bytes are
-unavailable on this host; static lineage cannot invent those measurements.
+The reviewed partial now binds7075roles across149files, with661current and
+156original dispositions still missing. The22new retained pairs use independently
+reviewed conservative Source-CC-floor ceilings, with unknown measured fields
+omitted. Existing5433retained rows keep their original measurements and caps.
+Independent timing/facade reviews refresh60roles and the last two stale Source
+bindings from the existing capture. All19represented static deficits remain open.
+The original measured report bytes are unavailable on this host; static lineage
+cannot invent those measurements or qualify the full gate.
 Installer27<=31, native loaders4<=4,
 controller target2<=2, Bun resolver34<=37, Host callback3<=3 and terminal guard10<=10,
 admission69<=69 and coverage policy owners8/5/5<=10 have scoped proof.
@@ -123,9 +131,9 @@ join adds96retained and5new roles. Both enforce array
 and counter equality, exact original ceilings and one-to-one correspondence.
 The latest join adds98independently reviewed retained roles, including18
 shifted identities confirmed by actual owner/dataflow review. A changed-owner
-HostState receipt reader remains unbound. Current7731-role inventory leaves
-736current and178original dispositions missing,
-with19represented static overages after sharing the native lane/path string
+HostState receipt reader remains unbound. That earlier7731-role snapshot and
+its736current/178original gaps are historical; the current7736-role join is
+recorded above, with19represented static overages after sharing the native lane/path string
 boundary. Both projections are1<=original1 and the new parser2<=own3.
 Finite child option/environment preparation now shares one condition;
 boundedSpawnSync21<=original21. Reusing one environment selection also closes
