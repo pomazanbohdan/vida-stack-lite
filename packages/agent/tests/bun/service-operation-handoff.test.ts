@@ -30,61 +30,317 @@ const operationId = 'handoff-operation';
 const launchPid = 7312;
 type HandoffVerifier = Parameters<typeof handoffServiceOperationCustody>[7];
 
-test('exclusive reconciliation connections preserve SQLite int64 precision before row normalization', async () => {
-  const fixture = openCustodyFixture('service-reconciliation-integer-transport-');
-  let restoreRawOpen: (() => void) | undefined;
+// Fault-only dependency response: no proof is issued and no operation callback runs.
+// This validates the caller's missing-result denial, not native gate acceptance.
+for (const route of ['handoff', 'reconciliation'] as const) {
+  test(`${route} rejects an inert admission response without a custody result`, async () => {
+    const fixture = openCustodyFixture('service-inert-admission-result-');
+    let restoreAdmission: (() => void) | undefined;
+    let failure: { error: unknown } | undefined;
+    try {
+      let source = fixture.database;
+      if (route === 'handoff') {
+        finishOperation(fixture, 'release-pack-worker');
+        source = expectReturned(() =>
+          openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+        );
+      } else
+        expectReturned(() =>
+          reserveServiceOperationLaunch(
+            fixture.database,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            evidenceDigest,
+          ),
+        );
+      const before = expectReturned(() =>
+        readServiceOperationCustodyForOperation(source, fixture.workspaceId, operationId),
+      );
+      const inert = spyOn(storageAdmission, 'withExclusiveServiceOperationAdmission').mockImplementation(
+        async () => undefined as never,
+      );
+      restoreAdmission = () => inert.mockRestore();
+      let verifierCalls = 0;
+      const operation =
+        route === 'handoff'
+          ? handoffServiceOperationCustody(
+              source,
+              fixture.root,
+              fixture.relative,
+              fixture.workspaceId,
+              operationId,
+              requestDigest,
+              retargetDigest,
+              async () => {
+                verifierCalls++;
+                return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+              },
+            )
+          : reconcileServiceOperationCustody(
+              source,
+              fixture.root,
+              fixture.relative,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              requestDigest,
+              () => {
+                verifierCalls++;
+                return { phase: 'prepared', evidence_digest: evidenceDigest };
+              },
+            );
+      await expectRejection(
+        operation,
+        `Service operation custody: same-operation ${route === 'handoff' ? 'handoff' : 'reconciliation'} did not close`,
+      );
+      restoreAdmission();
+      restoreAdmission = undefined;
+      expect(verifierCalls).toBe(0);
+      const reader = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
+      try {
+        expect(
+          expectReturned(() => readServiceOperationCustodyForOperation(reader, fixture.workspaceId, operationId)),
+        ).toEqual(before);
+      } finally {
+        closeServiceOperationDatabase(reader);
+      }
+    } catch (error) {
+      failure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            restoreAdmission?.();
+            return undefined;
+          },
+          () => {
+            closeServiceOperationDatabase(fixture.database);
+            return undefined;
+          },
+        ],
+        failure,
+      );
+      console.error('SERVICE_CUSTODY_INERT_ADMISSION_FIXTURE_RETAINED', {
+        root: fixture.root,
+        route,
+        externalProcessStarted: false,
+      });
+    }
+  });
+}
+
+for (const route of ['handoff', 'reconciliation', 'reconciliation_unknown'] as const) {
+  test(`exclusive ${route} connections preserve SQLite int64 precision before row normalization`, async () => {
+    const fixture = openCustodyFixture('service-reconciliation-integer-transport-');
+    let restoreRawOpen: (() => void) | undefined;
+    let completed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      fixture.database.exec('PRAGMA journal_mode=WAL');
+      let source = fixture.database;
+      if (route === 'handoff') {
+        finishOperation(fixture, 'release-pack-worker');
+        source = expectReturned(() =>
+          openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+        );
+      } else
+        expectReturned(() =>
+          reserveServiceOperationLaunch(
+            fixture.database,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            evidenceDigest,
+          ),
+        );
+      const integers: (number | bigint | undefined)[] = [];
+      const verificationWriteDenied: boolean[] = [];
+      let verifierEntered = false;
+      const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
+      const watched = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
+        const database = nativeOpen(...args);
+        if (args[0] !== fixture.root || args[1] !== fixture.relative) return database;
+        // Observe real SQLite transport under the real captured source owner.
+        // This vector cannot round-trip through a JavaScript Number.
+        integers.push(database.query<{ value: number | bigint }, []>('SELECT 9007199254740993 AS value').get()?.value);
+        if (!verifierEntered) {
+          let denied = false;
+          try {
+            database.exec('UPDATE agent_host_service_operation_custody SET revision=revision WHERE 0');
+          } catch (error) {
+            if (!(error instanceof Error) || !('code' in error) || error.code !== 'SQLITE_READONLY') throw error;
+            denied = true;
+          }
+          verificationWriteDenied.push(denied);
+        }
+        return database;
+      });
+      restoreRawOpen = () => watched.mockRestore();
+      let prepared: Awaited<ReturnType<typeof reconcileServiceOperationCustody>>;
+      if (route === 'handoff')
+        prepared = await expectAsyncReturned(() =>
+          handoffServiceOperationCustody(
+            source,
+            fixture.root,
+            fixture.relative,
+            fixture.workspaceId,
+            operationId,
+            requestDigest,
+            retargetDigest,
+            async (prior) => {
+              verifierEntered = true;
+              return preparedReceipt(prior);
+            },
+          ),
+        );
+      else if (route === 'reconciliation_unknown') {
+        const receiptFailure = new Error('integer transport receipt unavailable');
+        expect(
+          await rejectionReason(
+            reconcileServiceOperationCustody(
+              source,
+              fixture.root,
+              fixture.relative,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              requestDigest,
+              () => {
+                verifierEntered = true;
+                return Promise.reject(receiptFailure);
+              },
+            ),
+          ),
+        ).toBe(receiptFailure);
+        restoreRawOpen();
+        restoreRawOpen = undefined;
+        const reader = expectReturned(() =>
+          openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+        );
+        try {
+          const row = expectReturned(() =>
+            readServiceOperationCustodyForOperation(reader, fixture.workspaceId, operationId),
+          );
+          expect(row).not.toBeNull();
+          if (!row) throw new Error('Expected persisted UNKNOWN reconciliation row.');
+          prepared = row;
+        } finally {
+          closeServiceOperationDatabase(reader);
+        }
+      } else
+        prepared = await expectAsyncReturned(() =>
+          reconcileServiceOperationCustody(
+            source,
+            fixture.root,
+            fixture.relative,
+            fixture.workspaceId,
+            'release-pack-worker',
+            operationId,
+            requestDigest,
+            () => {
+              verifierEntered = true;
+              return { phase: 'prepared', evidence_digest: evidenceDigest };
+            },
+          ),
+        );
+      restoreRawOpen?.();
+      restoreRawOpen = undefined;
+      expect(integers.length).toBeGreaterThan(0);
+      expect(verificationWriteDenied.length).toBeGreaterThan(0);
+      for (const denied of verificationWriteDenied) expect(denied).toBe(true);
+      for (const value of integers) expect(value).toBe(9007199254740993n);
+      expect(prepared.phase).toBe(route === 'reconciliation_unknown' ? 'unknown' : 'prepared');
+      expect(prepared.owner_token).toBeNull();
+      expect(prepared.launch_pid).toBeNull();
+      expect(prepared.evidence_digest).toBe(route === 'reconciliation_unknown' ? null : evidenceDigest);
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            restoreRawOpen?.();
+            return undefined;
+          },
+          () => {
+            closeServiceOperationDatabase(fixture.database);
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
+      if (completed && route !== 'reconciliation_unknown') rmSync(fixture.root, { recursive: true, force: true });
+      else
+        console.error('SERVICE_CUSTODY_INTEGER_TRANSPORT_FIXTURE_RETAINED', {
+          root: fixture.root,
+          route,
+          completed,
+          externalProcessStarted: false,
+        });
+    }
+  });
+}
+
+test('reconciliation rejects malformed operation keys before verifying or mutating a journal', async () => {
+  const fixture = openCustodyFixture('reconcile-invalid-operation-key-');
+  let reader: Database | undefined;
   let completed = false;
-  let primaryFailure: { error: unknown } | undefined;
+  let failure: { error: unknown } | undefined;
   try {
-    expectReturned(() =>
-      reserveServiceOperationLaunch(
-        fixture.database,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        evidenceDigest,
-      ),
+    closeServiceOperationDatabase(fixture.database);
+    let verifierCalls = 0;
+    for (const key of [
+      { kind: 'release-pack-worker' as const, operation: '!' + operationId, message: 'operation identity is invalid' },
+      { kind: 'invalid-worker' as 'release-pack-worker', operation: operationId, message: 'owner kind is invalid' },
+    ]) {
+      const source = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
+      reader = source;
+      await expectRejection(
+        reconcileServiceOperationCustody(
+          source,
+          fixture.root,
+          fixture.relative,
+          fixture.workspaceId,
+          key.kind,
+          key.operation,
+          requestDigest,
+          () => {
+            verifierCalls++;
+            return { phase: 'prepared', evidence_digest: evidenceDigest };
+          },
+        ),
+        'Service operation custody: ' + key.message,
+      );
+      closeServiceOperationDatabase(source);
+      reader = undefined;
+    }
+    expect(verifierCalls).toBe(0);
+    const reopened = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
     );
-    const integers: (number | bigint | undefined)[] = [];
-    const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
-    const watched = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
-      const database = nativeOpen(...args);
-      // Observe real SQLite transport under the real captured source owner.
-      // This vector cannot round-trip through a JavaScript Number.
-      integers.push(database.query<{ value: number | bigint }, []>('SELECT 9007199254740993 AS value').get()?.value);
-      return database;
-    });
-    restoreRawOpen = () => watched.mockRestore();
-    const prepared = await expectAsyncReturned(() =>
-      reconcileServiceOperationCustody(
-        fixture.database,
-        fixture.root,
-        fixture.relative,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        () => ({ phase: 'prepared', evidence_digest: evidenceDigest }),
-      ),
-    );
-    restoreRawOpen();
-    restoreRawOpen = undefined;
-    expect(integers.length).toBeGreaterThan(0);
-    for (const value of integers) expect(value).toBe(9007199254740993n);
-    expect(prepared.phase).toBe('prepared');
-    expect(prepared.owner_token).toBeNull();
-    expect(prepared.launch_pid).toBeNull();
-    expect(prepared.evidence_digest).toBe(evidenceDigest);
+    reader = reopened;
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId)),
+    ).toBeNull();
     completed = true;
   } catch (error) {
-    primaryFailure = { error };
+    failure = { error };
     throw error;
   } finally {
     completeOwnedCleanup(
       [
         () => {
-          restoreRawOpen?.();
+          if (reader) closeServiceOperationDatabase(reader);
           return undefined;
         },
         () => {
@@ -92,10 +348,49 @@ test('exclusive reconciliation connections preserve SQLite int64 precision befor
           return undefined;
         },
       ],
-      primaryFailure,
+      failure,
     );
     if (completed) rmSync(fixture.root, { recursive: true, force: true });
-    else console.error('Retained failed int64 transport fixture: ' + fixture.root);
+    else console.error('Retained failed reconciliation operation-key fixture: ' + fixture.root);
+  }
+});
+
+test('handoff rejects a malformed prior digest before verifying and preserves its terminal row', async () => {
+  const fixture = openCustodyFixture('handoff-invalid-prior-digest-');
+  let completed = false;
+  let failure: { error: unknown } | undefined;
+  try {
+    const prior = finishOperation(fixture, 'release-pack-worker');
+    let verifierCalls = 0;
+    expect(
+      await expectHandoffFailure(
+        fixture,
+        prior,
+        async () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+        'Service operation custody: prior request digest is invalid',
+        'g'.repeat(64),
+      ),
+    ).toEqual(prior);
+    expect(verifierCalls).toBe(0);
+    completed = true;
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      failure,
+    );
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed handoff prior-digest fixture: ' + fixture.root);
   }
 });
 
@@ -126,6 +421,40 @@ test('handoff and reconciliation reject an unbound connection before closing it 
       reconcileServiceOperationCustody(
         unbound,
         fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest };
+        },
+      ),
+      'Service operation custody: workspace database path binding differs',
+    );
+    expect(verifierCalls).toBe(0);
+    const differentRoot = path.join(fixture.root, 'different-root');
+    await expectRejection(
+      handoffServiceOperationCustody(
+        fixture.database,
+        differentRoot,
+        fixture.relative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        async () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+      ),
+      'Service operation custody: workspace database path binding differs',
+    );
+    await expectRejection(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        differentRoot,
         fixture.relative,
         fixture.workspaceId,
         'release-pack-worker',
@@ -377,76 +706,118 @@ test('verifier rejection and malformed prepared receipt preserve the terminal pa
   }
 });
 
-for (const failCas of [false, true]) {
-  test(`handoff retains ${failCas ? 'CAS and close failures' : 'a close failure after its real CAS'}`, async () => {
-    const fixture = openCustodyFixture('handoff-close-fault-');
-    const cleanupError = new Error('injected exact service connection close failure');
-    let restoreClose: (() => void) | undefined;
-    let reconciled = false;
-    try {
-      const prior = finishOperation(fixture, 'release-pack-worker');
-      const source = expectReturned(() =>
-        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
-      );
-      if (failCas)
-        source.exec(
-          'CREATE TRIGGER reject_handoff BEFORE UPDATE OF owner_kind ON agent_host_service_operation_custody ' +
-            "BEGIN SELECT RAISE(ABORT, 'injected handoff CAS failure'); END",
-        );
-      const failure = await rejectionReason(
-        handoffServiceOperationCustody(
-          source,
-          fixture.root,
-          fixture.relative,
-          fixture.workspaceId,
-          operationId,
-          requestDigest,
-          retargetDigest,
-          async () => {
-            // Install only after the real beforeimage connection has closed.
-            restoreClose = failExactServiceClose(fixture, cleanupError);
-            return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
-          },
-        ),
-      );
-      if (failCas) {
-        expect(failure).toBeInstanceOf(AggregateError);
-        if (!(failure instanceof AggregateError)) throw new Error('CAS and close failures must both survive.');
-        expect(failure.message).toBe('handoff CAS and close failed');
-        const causes: readonly unknown[] = failure.errors;
-        expect(causes).toHaveLength(2);
-        expect(causes[0]).toBeInstanceOf(Error);
-        if (!(causes[0] instanceof Error)) throw new Error('The native CAS failure must survive.');
-        expect(causes[0].message).toContain('injected handoff CAS failure');
-        expect(causes[1]).toBe(cleanupError);
-      } else expect(failure).toBe(cleanupError);
-      restoreClose?.();
-      restoreClose = undefined;
-      retryPendingWorkspaceDatabaseCloses();
-      const reopened = expectReturned(() =>
-        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
-      );
+for (const route of ['handoff', 'reconciliation'] as const) {
+  for (const failCas of [false, true]) {
+    test(`${route} retains ${failCas ? 'CAS and close failures' : 'a close failure after its real CAS'}`, async () => {
+      const fixture = openCustodyFixture('handoff-close-fault-');
+      const cleanupError = new Error('injected exact service connection close failure');
+      let restoreClose: (() => void) | undefined;
+      let reconciled = false;
       try {
-        const row = expectReturned(() =>
-          readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId),
-        );
-        if (failCas) expect(row).toEqual(prior);
-        else {
+        let prior: Awaited<ReturnType<typeof handoffServiceOperationCustody>>;
+        let source = fixture.database;
+        if (route === 'handoff') {
+          prior = finishOperation(fixture, 'release-pack-worker');
+          source = expectReturned(() =>
+            openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+          );
+        } else {
+          expectReturned(() =>
+            reserveServiceOperationLaunch(
+              source,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              requestDigest,
+              evidenceDigest,
+            ),
+          );
+          const row = expectReturned(() =>
+            readServiceOperationCustodyForOperation(source, fixture.workspaceId, operationId),
+          );
           expect(row).not.toBeNull();
-          if (row === null) throw new Error('The committed handoff must remain observable.');
-          expectHandoffLineage(row, prior);
+          if (!row) throw new Error('Expected exact reconciliation beforeimage.');
+          prior = row;
         }
-        reconciled = true;
+        if (failCas)
+          source.exec(
+            'CREATE TRIGGER reject_operation BEFORE UPDATE ON agent_host_service_operation_custody ' +
+              `BEGIN SELECT RAISE(ABORT, 'injected ${route} CAS failure'); END`,
+          );
+        const verify = async () => {
+          // Install only after the real beforeimage connection has closed.
+          restoreClose = failExactServiceClose(fixture, cleanupError);
+          return { phase: 'prepared' as const, evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        };
+        const failure = await rejectionReason(
+          route === 'handoff'
+            ? handoffServiceOperationCustody(
+                source,
+                fixture.root,
+                fixture.relative,
+                fixture.workspaceId,
+                operationId,
+                requestDigest,
+                retargetDigest,
+                verify,
+              )
+            : reconcileServiceOperationCustody(
+                source,
+                fixture.root,
+                fixture.relative,
+                fixture.workspaceId,
+                'release-pack-worker',
+                operationId,
+                requestDigest,
+                verify,
+              ),
+        );
+        if (failCas) {
+          expect(failure).toBeInstanceOf(AggregateError);
+          if (!(failure instanceof AggregateError)) throw new Error('CAS and close failures must both survive.');
+          expect(failure.message).toBe(`${route} CAS and close failed`);
+          const causes: readonly unknown[] = failure.errors;
+          expect(causes).toHaveLength(2);
+          expect(causes[0]).toBeInstanceOf(Error);
+          if (!(causes[0] instanceof Error)) throw new Error('The native CAS failure must survive.');
+          expect(causes[0].message).toContain(`injected ${route} CAS failure`);
+          expect(causes[1]).toBe(cleanupError);
+        } else expect(failure).toBe(cleanupError);
+        restoreClose?.();
+        restoreClose = undefined;
+        retryPendingWorkspaceDatabaseCloses();
+        const reopened = expectReturned(() =>
+          openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+        );
+        try {
+          const row = expectReturned(() =>
+            readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId),
+          );
+          if (failCas) expect(row).toEqual(prior);
+          else {
+            expect(row).not.toBeNull();
+            if (row === null) throw new Error('The committed handoff must remain observable.');
+            if (route === 'handoff') expectHandoffLineage(row, prior);
+            else {
+              expect(row.phase).toBe('prepared');
+              expect(row.revision).toBe(prior.revision + 1);
+              expect(row.request_digest).toBe(prior.request_digest);
+              expect(row.owner_token).toBeNull();
+              expect(row.evidence_digest).toBe(evidenceDigest);
+            }
+          }
+          reconciled = true;
+        } finally {
+          closeServiceOperationDatabase(reopened);
+        }
       } finally {
-        closeServiceOperationDatabase(reopened);
+        restoreClose?.();
+        retryPendingWorkspaceDatabaseCloses();
+        if (reconciled) rmSync(fixture.root, { recursive: true, force: true });
+        else console.error('SERVICE_CUSTODY_CLOSE_FAULT_FIXTURE_RETAINED', fixture.root);
       }
-    } finally {
-      restoreClose?.();
-      retryPendingWorkspaceDatabaseCloses();
-      if (reconciled) rmSync(fixture.root, { recursive: true, force: true });
-      else console.error('SERVICE_CUSTODY_CLOSE_FAULT_FIXTURE_RETAINED', fixture.root);
-    }
-  });
+    });
+  }
 }
 
 test('receipt failure retains its cause when closing the real UNKNOWN connection also fails', async () => {

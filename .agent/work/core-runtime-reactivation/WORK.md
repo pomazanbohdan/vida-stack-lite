@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this evidence packet: `bcbd426887187fcedb747a0c138fe29288b2aa8f`. Its complete 64-ID diagnostic observes 64 assertion-confirmed Killed, 0 Survived and 0 UNKNOWN; 636 of 700 generated IDs remain unattempted. The older 5ef19ac storage-interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `9dfc9cb7c4777cd3c32ea6637bd5d21506b71ee1`. Its full-image diagnostic stops at 224 of 700 IDs: 195 assertion-confirmed Killed, 28 Survived, 1 UNKNOWN, 476 unattempted. Corrections below need a new bound numeric run. The older storage-interrupted observations remain unqualified. The prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -14,26 +14,59 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
-The after-correction diagnostic binds bcbd426 and official SDK
-run38924493666/attempt1/artifact12055553459, ZIP digest
-`sha256:a3989d3bbf6244179b4c128eda4bc89b39b550c10b18d8ce4919b222b52a98fe`.
-Outer `native-mutation-pilot-bcbd426-gMbS97` closes in311965.133984ms with
+The 700-ID diagnostic binds 9dfc9cb and official SDK
+run38925648985/attempt1/artifact12057155406, ZIP digest
+`sha256:bd4d7765dd25b71ef0094041714d722301c94ec0f6db8dc442f382847a62e57a`.
+Outer `native-mutation-full-9dfc9cb-FbLWCn` closes in 1341401.275756 ms with
 complete captures, closed group and unchanged boot. Inner evidence is
-`packages/agent/.tmp/mutation-batch-03bb7d05-98fd-4254-9ae1-c38ea41b6ba4-ZcMf1s/`.
-Baseline97cases passes. All64selected IDs are assertion-confirmed Killed;
-0Survived/0UNKNOWN,636unattempted out of700generated. All four prior survivors
-are now Killed. Parent inputs/image/executable readback complete; no storage
-denial occurs. This diagnostic does not admit a whole-contour score or closure.
+`packages/agent/.tmp/mutation-batch-7c6f2d12-262f-4fa2-8891-ba8f103cea09-3cvEa6/`.
+Baseline 97 cases passes. Batch 0 closes 119 Killed / 9 Survived; batch 1 stops
+after 96 observations: 76 Killed / 19 Survived / 1 UNKNOWN. Totals are
+195 Killed, 28 Survived, 1 UNKNOWN, 476 unattempted. Parent input/image/executable
+readback completes and there is no storage denial. These are diagnostic
+classifications, not a contour score or parent admission.
 
-The same bcbd426 coverage owner `native-coverage-bcbd426-nQ0Gjr` closes in
-18776.213422ms,97/0tests,663assertions, with complete captures/closed group/same
-boot. Report
-`coverage/bun-unified/diagnostics/a8dde706-234a-4a1e-9bb4-b2263b0141d6.focused-coverage.json`
-records F56/56,L235/235,S243/243,B128/128 and observed maxCC10/maxCRAP10.
-The projection owner imports that exact report. The reviewed frozen scope budget
-and complete native parent admission remain open; historical triples stay6/45.
-The next mutation cycle must generate a new complete700-ID image and execute its
-disjoint batches, not resume either retained64-ID operation or combine their rows.
+UNKNOWN local326 changes the public custody opener to read-only. A test-only
+write through that returned handle fails outside an assertion. The fixture now
+asserts the Subject connection's writable capability with a zero-row UPDATE,
+after independent raw schema preparation and before fixture controls use it.
+Failure closes the known connection and retains the original assertion/root.
+Raw filesystem/schema preparation remains outside Subject success assertions.
+The original UNKNOWN stays unchanged; only a new run may confirm its repair.
+
+The 28 survivor corrections cover persisted request/revision/token/evidence
+boundaries, nested transactions, shared and service binding lifetime, wrong roots,
+all key-validation callers, schema readiness at reserve/record/claim, public
+handle identity, prepared-image request identity, PID afterimage validation,
+digest prefixes, missing dependency results and ordered CAS/close causes.
+Existing real-write/readback fault matrices are reused instead of duplicating
+fixtures. Inert admission-response controls issue no proof and invoke no operation;
+they test missing-result denial only and establish no native authorization.
+All CAS, ownership, authorization and UNKNOWN guards remain.
+
+Held-owner workspace observations now use read-only existing connections before
+receipt verification. Apply and UNKNOWN writers stay writable. Real WAL controls
+prove denied pre-verification writes and exact int64 transport in handoff,
+reconciliation and rejected-receipt cleanup; no schema or loader switches.
+Corrected red owner `51SaWV` fails all three write-permission assertions against
+the old access mode; green `xIF66P` and final affected owner `hJphF6` pass.
+The latter passes 111/0 tests, 809 assertions across 3 files in 2.99 s, with complete
+captures, closed group and unchanged boot. Strict tests 467 and tooling 188 pass;
+scoped type-aware lint has no diagnostics. Numeric confirmation remains pending.
+
+Live mutation events now carry cumulative attempted/Killed/Survived/UNKNOWN
+totals and explicit unadmitted scope. The same counters feed the terminal summary,
+with an observation-count check. `completed` is a per-batch observation count,
+not Killed. Earlier commentary that inferred all-Killed from tail rows was wrong;
+the retained terminal artifacts and the totals above are authoritative.
+
+The previously confirmed 64/64 diagnostic and same-input coverage are documented
+at `9dfc9cb7c4777cd3c32ea6637bd5d21506b71ee1:.agent/work/core-runtime-reactivation/WORK.md`.
+The imported bcbd426 report records F56/56,L235/235,S243/243,B128/128 and measured
+maxCC10/maxCRAP10. It predates this repair. The partial lineage has 55 existing
+prospective 10/10 rows for these Sources; the new isDigest disposition and pinned
+independent scope review remain open. No ceiling is reset from current results.
+Historical triples stay 6/45. Next runs use fresh images and operations.
 
 Both active checkouts were clean and published at a60fb28 before the user's
 save-and-cleanup request. Native producers had stopped; prior retired-worktree

@@ -1042,6 +1042,9 @@ interruptions retain partial rows with `interrupted: true`; record failures keep
 the primary cause through the shared cleanup accumulator. Neither an interrupted
 record nor live progress establishes complete parent qualification. Preserve old
 incomplete artifacts; do not reconstruct them as newly admitted results.
+Live progress carries cumulative status totals across batches. Read those totals;
+`completed` counts observations within one batch and does not mean Killed.
+Progress remains explicitly unadmitted until the complete parent readback.
 No old operation is resumed. These schemas are deliberately not contour-progress
 admission: until the complete execution/custody pilot and parent join qualify,
 the ordinary mutation gate and global quality command remain unchanged.

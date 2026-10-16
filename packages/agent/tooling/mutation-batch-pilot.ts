@@ -295,6 +295,14 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     record('baseline.json', baseline);
     if (baseline.status !== 'passed') throw new Error('Native mutation baseline is not a complete passing receipt.');
     const results: NativeBatchRow[] = [];
+    const totals = {
+      generated: image.universe.mutants.length,
+      attempted: 0,
+      killed: 0,
+      survived: 0,
+      unknown: 0,
+      unattempted: image.universe.mutants.length,
+    };
     let resourceBlocked: { observed_path: string; available_bytes: string | null } | undefined;
     for (const [index, batch] of plan.batches.slice(0, maxBatches).entries()) {
       const started = index === 0 ? pilotStarted : performance.now();
@@ -304,13 +312,18 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         () => budget.remaining(),
         (id, remaining) => invoke(id, remaining, baseline.cases),
         (row, completed) => {
+          totals.attempted++;
+          totals[row.status]++;
+          totals.unattempted--;
           console.log(
             JSON.stringify({
               schema: 'MutationBatchPilotProgress/v1',
+              scope: 'live-unadmitted-progress',
               batch: index,
               completed,
               planned: batch.identities.length,
               status: row.status,
+              totals: { ...totals },
             }),
           );
         },
@@ -356,14 +369,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       if (!bytes.equals(inputs.input_bytes[file]!)) throw new Error('Native mutation parent inputs drifted.');
     if (executionIdentityDigest(await parentIdentity()) !== executionIdentityDigest(identity))
       throw new Error('Native mutation executable identity drifted.');
-    const totals = {
-      generated: image.universe.mutants.length,
-      attempted: results.length,
-      killed: results.filter((row) => row.status === 'killed').length,
-      survived: results.filter((row) => row.status === 'survived').length,
-      unknown: results.filter((row) => row.status === 'unknown').length,
-      unattempted: image.universe.mutants.length - results.length,
-    };
+    if (results.length !== totals.attempted) throw new Error('Native mutation progress observation count differs.');
     const summary = {
       schema: 'MutationBatchPilotSummary/v2',
       scope: 'diagnostic-only',

@@ -5,7 +5,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deriveWorkspaceId } from '../../src/workspace-identity.js';
 import { loadRuntimeConfig } from '../../src/config/runtime-config.js';
-import { openServiceOperationDatabase } from '../../src/config/service-operation-custody.js';
+import {
+  closeServiceOperationDatabase,
+  openServiceOperationDatabase,
+} from '../../src/config/service-operation-custody.js';
 import { acquireStorageReadAdmission } from '../../src/config/storage-read-admission.js';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
 import { expectReturned } from './expect-rejection.js';
@@ -60,6 +63,22 @@ export function openCustodyFixture(prefix = 'service-capability-'): ServiceCusto
     // Assert only the Subject's open contract after independent preparation.
     // Filesystem, admission and raw SQLite setup failures remain runtime errors.
     const database = expectReturned(() => openServiceOperationDatabase(root, relative, workspaceId));
+    try {
+      // The Subject returns a writable custody connection. Check that capability
+      // with a zero-row write before independent fixture controls use the handle.
+      expectReturned(() => database.exec('UPDATE agent_host_service_operation_custody SET revision=revision WHERE 0'));
+    } catch (error) {
+      completeOwnedCleanup(
+        [
+          () => {
+            closeServiceOperationDatabase(database);
+            return undefined;
+          },
+        ],
+        { error },
+      );
+      throw error;
+    }
     return { root, workspaceId, relative, database };
   } catch (error) {
     console.error('Retained failed custody fixture preparation: ' + root);

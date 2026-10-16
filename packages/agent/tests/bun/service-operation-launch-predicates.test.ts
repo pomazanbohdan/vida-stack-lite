@@ -122,6 +122,11 @@ describe('service operation launch predicates', () => {
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches('a'.repeat(63), capability))).toBe(false);
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches('a'.repeat(65), capability))).toBe(false);
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(`${'a'.repeat(63)}g`, capability))).toBe(false);
+    for (const prefix of ['x', '!', '\u0000', ' ', '\n']) {
+      expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(prefix + issuedDigest, capability))).toBe(
+        false,
+      );
+    }
   });
 
   test('capability matching rejects malformed and wrong-runtime-type capability values', () => {

@@ -1,6 +1,8 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import * as custodySubject from '../../src/config/service-operation-custody.js';
+import * as storageAdmission from '../../src/config/storage-read-admission.js';
+import * as workspaceRaw from '../../src/config/workspace-database-raw.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
@@ -119,6 +121,32 @@ test('operation keys reject malformed prefixes, suffixes and lengths without ins
           'c'.repeat(64),
         ),
       ).toThrow('Service operation custody: operation identity is invalid');
+      expect(() =>
+        claimReservedServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          invalid,
+          requestDigest,
+          1,
+          capability,
+        ),
+      ).toThrow('Service operation custody: operation identity is invalid');
+      expect(() =>
+        recordServiceOperationLaunchPid(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          invalid,
+          requestDigest,
+          1,
+          1,
+          capability,
+        ),
+      ).toThrow('Service operation custody: operation identity is invalid');
+      expect(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, invalid)).toThrow(
+        'Service operation custody: operation identity is invalid',
+      );
       expect(
         Number(
           fixture.database
@@ -127,6 +155,27 @@ test('operation keys reject malformed prefixes, suffixes and lengths without ins
         ),
       ).toBe(0);
     }
+    expect(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        'g'.repeat(64),
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    ).toThrow('Service operation custody: workspace identity is invalid');
+    expect(() =>
+      claimReservedServiceOperationLaunch(
+        fixture.database,
+        'g'.repeat(64),
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        1,
+        capability,
+      ),
+    ).toThrow('Service operation custody: workspace identity is invalid');
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -143,6 +192,305 @@ test('operation keys reject malformed prefixes, suffixes and lengths without ins
     );
     if (completed) rmSync(fixture.root, { recursive: true, force: true });
     else retainExpectedUnknownFixture(fixture.root, 'operation key boundary control failed');
+  }
+});
+
+for (const closedThrough of ['service', 'admission'] as const) {
+  test(`connections closed through ${closedThrough} reject stale service ownership before SQL`, () => {
+    const fixture = openCustodyFixture('service-closed-binding-');
+    let completed = false;
+    let failure: { error: unknown } | undefined;
+    try {
+      expectReturned(() =>
+        closedThrough === 'service'
+          ? closeServiceOperationDatabase(fixture.database)
+          : storageAdmission.closeWorkspaceDatabaseWithAdmission(fixture.database),
+      );
+      const message =
+        closedThrough === 'service'
+          ? 'Service operation custody: workspace database binding differs'
+          : 'Project storage admission: workspace database lacks a live paired admission lease';
+      expect(() =>
+        reserveServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          'c'.repeat(64),
+        ),
+      ).toThrow(message);
+      expect(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toThrow(
+        message,
+      );
+      expect(() =>
+        claimReservedServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          1,
+          capability,
+        ),
+      ).toThrow(message);
+      completed = true;
+    } catch (error) {
+      failure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            closeServiceOperationDatabase(fixture.database);
+            return undefined;
+          },
+        ],
+        failure,
+      );
+      if (completed) rmSync(fixture.root, { recursive: true, force: true });
+      else retainExpectedUnknownFixture(fixture.root, 'closed service binding control failed');
+    }
+  });
+}
+
+test('stored request, revision, token and evidence defects fail before exposing a custody row', () => {
+  const fixture = openCustodyFixture('service-stored-row-boundaries-');
+  let completed = false;
+  let failure: { error: unknown } | undefined;
+  try {
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    for (const row of [
+      {
+        digest: 'g'.repeat(64),
+        revision: 1,
+        token: null,
+        phase: 'prepared',
+        evidence: 'c'.repeat(64),
+        message: 'stored operation custody row is invalid',
+      },
+      {
+        digest: requestDigest,
+        revision: 1.5,
+        token: null,
+        phase: 'prepared',
+        evidence: 'c'.repeat(64),
+        message: 'stored operation custody row is invalid',
+      },
+      {
+        digest: requestDigest,
+        revision: 0,
+        token: null,
+        phase: 'prepared',
+        evidence: 'c'.repeat(64),
+        message: 'stored operation custody row is invalid',
+      },
+      {
+        digest: requestDigest,
+        revision: 1,
+        token: '!' + capability,
+        phase: 'in_flight',
+        evidence: null,
+        message: 'stored operation custody row is invalid',
+      },
+      {
+        digest: requestDigest,
+        revision: 1,
+        token: null,
+        phase: 'prepared',
+        evidence: 'g'.repeat(64),
+        message: 'stored operation evidence is invalid',
+      },
+      {
+        digest: requestDigest,
+        revision: 1,
+        token: null,
+        phase: 'prepared',
+        evidence: null,
+        message: 'stored operation evidence is invalid',
+      },
+      {
+        digest: requestDigest,
+        revision: 1,
+        token: null,
+        phase: 'unknown',
+        evidence: 'c'.repeat(64),
+        message: 'stored operation evidence is invalid',
+      },
+    ]) {
+      // Model malformed persisted data without changing the owned table schema.
+      fixture.database.exec('PRAGMA ignore_check_constraints=ON');
+      try {
+        fixture.database
+          .query(
+            'UPDATE agent_host_service_operation_custody SET request_digest=?,revision=?,owner_token=?,phase=?,evidence_digest=?,launch_pid=NULL WHERE workspace_id=? AND operation_id=?',
+          )
+          .run(row.digest, row.revision, row.token, row.phase, row.evidence, fixture.workspaceId, operationId);
+      } finally {
+        fixture.database.exec('PRAGMA ignore_check_constraints=OFF');
+      }
+      const before = fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all();
+      expect(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toThrow(
+        'Service operation custody: ' + row.message,
+      );
+      expect(fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual(before);
+    }
+    fixture.database
+      .query('DELETE FROM agent_host_service_operation_custody WHERE workspace_id=? AND operation_id=?')
+      .run(fixture.workspaceId, operationId);
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toBeNull();
+    completed = true;
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      failure,
+    );
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else retainExpectedUnknownFixture(fixture.root, 'stored row boundary control failed');
+  }
+});
+
+test('reservation rejects a caller transaction without ending it or inserting custody', () => {
+  const fixture = openCustodyFixture('service-nested-transaction-');
+  let completed = false;
+  let failure: { error: unknown } | undefined;
+  try {
+    fixture.database.exec('BEGIN IMMEDIATE');
+    expect(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    ).toThrow('Service operation custody: nested transaction is forbidden');
+    expect(fixture.database.inTransaction).toBe(true);
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toBeNull();
+    fixture.database.exec('ROLLBACK');
+    completed = true;
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (fixture.database.inTransaction) fixture.database.exec('ROLLBACK');
+          return undefined;
+        },
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      failure,
+    );
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else retainExpectedUnknownFixture(fixture.root, 'nested transaction denial control failed');
+  }
+});
+
+test('owner close rolls back a suppressed CAS and succeeds only after its trigger is removed', () => {
+  const fixture = openCustodyFixture('service-close-cas-denial-');
+  let handle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
+  let completed = false;
+  let failure: { error: unknown } | undefined;
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    expectReturned(() =>
+      recordServiceOperationLaunchPid(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        reservation.revision,
+        1,
+        reservation.child_capability,
+      ),
+    );
+    const claimed = expectReturned(() =>
+      claimReservedServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        1,
+        reservation.child_capability,
+      ),
+    );
+    handle = claimed;
+    expect(claimed.database).toBe(fixture.database);
+    expect(Object.isFrozen(claimed)).toBe(true);
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    fixture.database.exec(
+      "CREATE TRIGGER suppress_owner_close BEFORE UPDATE ON agent_host_service_operation_custody WHEN OLD.phase='in_flight' AND NEW.phase='prepared' BEGIN SELECT RAISE(IGNORE); END",
+    );
+    expect(() => closeServiceOperationCustody(claimed, 'prepared', 'c'.repeat(64))).toThrow(
+      'Service operation custody: owner compare-and-swap failed',
+    );
+    expect(fixture.database.inTransaction).toBe(false);
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(before);
+    fixture.database.exec('DROP TRIGGER suppress_owner_close');
+    expectReturned(() => closeServiceOperationCustody(claimed, 'prepared', 'c'.repeat(64)));
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId))
+        ?.phase,
+    ).toBe('prepared');
+    completed = true;
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          if (handle) closeServiceOperationCustodyHandle(handle);
+          else closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      failure,
+    );
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else retainExpectedUnknownFixture(fixture.root, 'owner close CAS denial control failed');
   }
 });
 
@@ -1159,6 +1507,9 @@ test('initializer creates the exact empty custody schema in a fresh SQLite datab
   const database = new Database(':memory:');
   let primaryFailure: { error: unknown } | undefined;
   try {
+    expect(() => assertServiceOperationCustodyReady(database)).toThrow(
+      'Service operation custody: owned service table is absent or differs',
+    );
     expectReturned(() => initializeServiceOperationCustodySchema(database));
     expect(
       database
@@ -1604,6 +1955,19 @@ test('record and claim reject invalid PID boundaries without changing the exact 
     expect(
       expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
     ).toEqual(after);
+    expect(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        'd'.repeat(64),
+        'c'.repeat(64),
+      ),
+    ).toThrow('Service operation custody: operation has no exact prepared image available for one-shot launch');
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(after);
     fixture.database.exec(
       'CREATE TRIGGER ignore_prepared_reservation BEFORE UPDATE ON agent_host_service_operation_custody BEGIN SELECT RAISE(IGNORE); END',
     );
@@ -1746,11 +2110,16 @@ for (const fault of [
   {
     name: 'missing recorded row',
     stage: 'record',
-    event: 'UPDATE',
-    action: 'DELETE FROM agent_host_service_operation_custody',
+    projection: 'missing',
     message: 'spawned worker reservation changed',
   },
-]) {
+  {
+    name: 'changed recorded PID',
+    stage: 'record',
+    projection: 'different-pid',
+    message: 'spawned worker reservation changed',
+  },
+] as const) {
   test(`custody rolls back ${fault.name} observed after its real SQLite write`, () => {
     const fixture = openCustodyFixture('service-post-write-fault-');
     let completed = false;
@@ -1787,7 +2156,11 @@ for (const fault of [
                 operationId,
               );
               realRecordedPid = observed?.launch_pid;
-              if (realRecordedPid === 1 || realRecordedPid === 1n) sql += ' AND 0';
+              if (realRecordedPid === 1 || realRecordedPid === 1n)
+                sql =
+                  fault.projection === 'missing'
+                    ? sql + ' AND 0'
+                    : sql.replace('launch_pid,', 'launch_pid+1 AS launch_pid,');
             }
             const statement = nativeQuery<Result, Params>(sql);
             if (sql.startsWith('UPDATE agent_host_service_operation_custody SET launch_pid=')) {
@@ -2008,6 +2381,36 @@ test('PID recording rejects a schema changed after admission and succeeds after 
     expect(
       fixture.database.query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'").get(),
     ).toEqual(schema);
+    expect(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId + '-other',
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    ).toThrow('Service operation custody: owned service table is absent or differs');
+    expect(fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual(before);
+    fixture.database
+      .query('UPDATE agent_host_service_operation_custody SET launch_pid=1 WHERE workspace_id=? AND operation_id=?')
+      .run(fixture.workspaceId, operationId);
+    const beforeClaim = fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all();
+    expect(() =>
+      claimReservedServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        1,
+        reservation.child_capability,
+      ),
+    ).toThrow('Service operation custody: owned service table is absent or differs');
+    expect(fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual(beforeClaim);
+    fixture.database
+      .query('UPDATE agent_host_service_operation_custody SET launch_pid=NULL WHERE workspace_id=? AND operation_id=?')
+      .run(fixture.workspaceId, operationId);
     fixture.database.exec('ALTER TABLE agent_host_service_operation_custody DROP COLUMN unexpected');
     const recorded = expectReturned(() =>
       recordServiceOperationLaunchPid(
@@ -2175,6 +2578,7 @@ test('legacy reserve and direct claim reject before launch and preserve the oper
 test('receipt failure presence is preserved when gate replacement blocks UNKNOWN custody cleanup', async () => {
   for (const receiptFailure of [new Error('receipt observation failed after gate replacement'), undefined]) {
     const fixture = openCustodyFixture();
+    let restoreOpen: (() => void) | undefined;
     try {
       expectReturned(() =>
         reserveServiceOperationLaunch(
@@ -2190,6 +2594,14 @@ test('receipt failure presence is preserved when gate replacement blocks UNKNOWN
         readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
       );
       const gate = path.join(fixture.root, '.vida/storage-admission.v1.sqlite');
+      let gateLost = false;
+      let openedAfterGateLoss = 0;
+      const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
+      const watched = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
+        if (gateLost && args[0] === fixture.root && args[1] === fixture.relative) openedAfterGateLoss++;
+        return nativeOpen(...args);
+      });
+      restoreOpen = () => watched.mockRestore();
       const failure: unknown = await reconcileServiceOperationCustody(
         fixture.database,
         fixture.root,
@@ -2202,12 +2614,16 @@ test('receipt failure presence is preserved when gate replacement blocks UNKNOWN
           await Promise.resolve();
           renameSync(gate, gate + '.retained');
           copyFileSync(gate + '.retained', gate);
+          gateLost = true;
           throw receiptFailure;
         },
       ).then(
         () => undefined,
         (error: unknown) => error,
       );
+      restoreOpen();
+      restoreOpen = undefined;
+      expect(openedAfterGateLoss).toBe(0);
       expect(failure).toBeInstanceOf(AggregateError);
       if (!(failure instanceof AggregateError)) throw new Error('Both receipt and custody errors must be retained.');
       expect(failure.message).toBe('reconciliation receipt failed and UNKNOWN custody cleanup is unresolved');
@@ -2231,6 +2647,7 @@ test('receipt failure presence is preserved when gate replacement blocks UNKNOWN
         closeServiceOperationDatabase(reopened);
       }
     } finally {
+      restoreOpen?.();
       retainExpectedUnknownFixture(fixture.root, 'UNKNOWN cleanup remained unresolved after gate replacement');
     }
   }

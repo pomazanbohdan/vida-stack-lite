@@ -540,7 +540,8 @@ export async function handoffServiceOperationCustody(
     () => undefined,
     async (exclusive) => {
       exclusive.assertActive();
-      const source = openUnadmittedWorkspaceDatabase(root, relative, false, true, exclusive.captureSource);
+      // Held-owner observation has no write authority before receipt verification.
+      const source = openUnadmittedWorkspaceDatabase(root, relative, true, true, exclusive.captureSource);
       const prior = withCleanup(
         () => {
           assertServiceOperationCustodyReady(source);
@@ -624,7 +625,7 @@ export async function reconcileServiceOperationCustody(
     root,
     workspaceId,
     (sourceOwner) => {
-      const database = openUnadmittedWorkspaceDatabase(root, relative, false, true, sourceOwner.captureSource);
+      const database = openUnadmittedWorkspaceDatabase(root, relative, true, true, sourceOwner.captureSource);
       let prior: ServiceOperationCustody | null = null;
       return withCleanup(
         () => {
