@@ -2,7 +2,12 @@ import { expect, test } from 'bun:test';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { contourAttempts, mergeContourProgress, renderContourProgress } from '../tooling/contour-progress.ts';
+import {
+  contourAttempts,
+  mergeContourProgress,
+  renderContourProgress,
+  selectContourCampaign,
+} from '../tooling/contour-progress.ts';
 import { recordContourReport, runContourProgress } from '../tooling/contour-progress-cli.ts';
 import { mutationPartitions } from '../tooling/mutation-partitions.ts';
 
@@ -752,6 +757,14 @@ test('compatible exact coverage, scoped frozen CRAP and assertion-confirmed muta
     ...contourAttempts(frozenCrap(c), receipt),
   ]);
   const report = renderContourProgress(snapshot);
+  expect(selectContourCampaign(snapshot, 'all', receipt.commit)).toHaveLength(activeCount);
+  expect(selectContourCampaign(snapshot, 'unclosed', receipt.commit).map((row) => row.name)).not.toContain('main-host');
+  expect(selectContourCampaign(snapshot, 'unclosed', 'a-new-source-commit')).toHaveLength(activeCount);
+  expect(
+    selectContourCampaign(snapshot, 'all', receipt.commit).some((row) =>
+      ['static', 'retired'].includes(row.environment ?? ''),
+    ),
+  ).toBe(false);
   expect(report).toContain(
     'Historical complete coverage + assertion-confirmed mutation pair closures: **1/' + activeCount + '**',
   );

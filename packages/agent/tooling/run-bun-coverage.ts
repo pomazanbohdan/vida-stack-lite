@@ -88,6 +88,7 @@ export type CurrentCoverageReviewCallback = (input: {
   consumer_configuration?: DeepReadonly<Awaited<ReturnType<typeof captureCoverageConsumerBinding>>>;
 }) => unknown;
 export type RunBunCoverageOptions = {
+  args?: string[];
   focusedDiagnostic?: FocusedDiagnosticSelection;
   reviewCurrentInputs?: CurrentCoverageReviewCallback;
   prepareSdkInputs?: (input: { root: string; remainingMs: () => number }) => Promise<void>;
@@ -877,7 +878,7 @@ export async function runBunCoverage(options: RunBunCoverageOptions = {}): Promi
   // One command-entry allowance covers pin resolution, current typecheck,
   // capture, the direct producer, CRAP and final report work.
   const commandBudget = executionBudget(300_000, 30_000);
-  const rawArgs = process.argv.slice(2);
+  const rawArgs = options.args ?? process.argv.slice(2);
   const wrappedInvocation = rawArgs.length === 1 && rawArgs[0] === '--wrapper-review-clocks';
   const args = wrappedInvocation ? [] : rawArgs;
   if (args.some((arg) => arg !== '--published-baseline=b549951'))

@@ -1224,6 +1224,36 @@ runtime/compile errors, missing suites and timeouts remain non-kills.
 
 ### Automatic contour progress document
 
+The explicit campaign command is `bun run test:contours --all` or
+`bun run test:contours --unclosed`. Add `--plan` to inspect the exact registry
+selection without launching tests; `--help` describes the options. The runner
+requires a clean, immutable Source commit. `--unclosed` includes every executable
+contour without a compatible complete local triple recorded at that same commit;
+historical maxima at older commits do not suppress current checks. Neither this
+selection nor a same-commit triple establishes global or host freshness.
+
+The campaign first runs declared focused coverage and same-run scoped frozen
+CRAP per contour, then every selected partition's existing mutation pilot. It
+preserves full Source/test selections and the existing evidence owners. Missing
+pinned scope reviews remain GAP; failed coverage does not silently skip mutation.
+The outer coverage envelope is330s around its existing300s owner; mutation uses
+its independent900s partition/930s outer envelope. Per-test defaults stay5s.
+These are separate budgets, not a five-minute allowance for the entire campaign.
+
+Linux execution requires `bwrap` and `tini` on PATH, or an installed tini path in
+`VIDA_QUALITY_TINI`. Each child has a private PID namespace, subreaper and retained
+host-backed tmpfs scratch with at least2GiB free. Native mutation evidence stays
+at its real package `.tmp` path; the campaign does not relocate or rewrite it.
+Full captures, boot identity, argv, terminal status, timeout and process-group
+custody are retained in `coverage/contour-campaigns/<run-id>/`. Known failures
+continue; unobserved process termination fences every successor. An interrupted
+campaign is incomplete and never automatically replayed. Execution completion
+does not imply gate success or global mutation qualification: each mutation lane
+retains its pilot scope and requires assertion-confirmed Killed for every mutant.
+Only the final owner publishes the existing contour projection after terminal
+accounting. Fix agents start after that campaign is terminal; build/install and
+hooks do not run the campaign.
+
 `bun run quality:contours` projects existing terminal reports into
 `coverage/bun-unified/contours/CONTOUR-STATUS.md` and its JSON snapshot. It runs
 no suite, AST inventory, Source hashing, compiler or quality gate. The registry

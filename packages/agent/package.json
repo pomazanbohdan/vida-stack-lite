@@ -327,6 +327,8 @@
     "test:portable:pinned": "bun test --timeout 5000 tests/smoke.test.ts tests/property.test.ts tests/portable-instructions.test.ts",
     "quality:contours": "bun bin/bun.ts run quality:contours:pinned",
     "quality:contours:pinned": "bun tooling/contour-progress-cli.ts",
+    "test:contours": "bun bin/bun.ts run test:contours:pinned",
+    "test:contours:pinned": "bun tooling/contour-campaign.ts",
     "test:mutation": "bun bin/bun.ts run test:mutation:pinned",
     "test:mutation:pinned": "bun tooling/mutation-gate.ts",
     "mutation:engine:help": "bun bin/bun.ts run mutation:engine:help:pinned",

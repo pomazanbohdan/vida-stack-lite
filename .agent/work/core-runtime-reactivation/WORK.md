@@ -4,13 +4,32 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published Source base: `86092e26b94029647447a1dfce727314cd30ace7` at `origin/main`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published Source base before the campaign packet: `ab86dd0da323685c90247cf29234294a42fa9de6` at `origin/main`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence: 7,111 roles; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
+
+## Global contour campaign packet
+
+The current user instruction prioritizes an explicit all/unclosed contour campaign
+before the next fix-agent wave. `bun run test:contours --all|--unclosed [--plan]`
+coordinates the existing focused coverage, scoped frozen CRAP and partition
+mutation owners. Selection uses the single active registry and compatible local
+triples at the clean captured Source commit. Older complete triples are retained
+but do not suppress current checks. No missing frozen review is synthesized.
+Known failures continue; unobserved process custody fences successors. Actual
+mutation pilots remain scoped evidence, never a global gate result. Filtering
+stays inactive, and existing per-owner timeouts and full test selections remain.
+
+Focused orchestration/projection checks pass108/0 with338expectations at owned
+`/workspace/attachments/quality-rolling-cli-check-RDzdp5` in794.277987ms, full
+captures, closed groups and unchanged boot. Tooling186files and tests462files
+typechecks pass; CLI help and documentation links pass. These are functional
+checks, not the requested numeric campaign. Its real selection/run follows the
+published packet; exact terminal evidence will replace this pending statement.
 
 ## Current config contour
 

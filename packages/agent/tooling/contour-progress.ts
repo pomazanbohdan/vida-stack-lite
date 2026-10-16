@@ -1016,6 +1016,7 @@ function maximum(attempt: Attempt): boolean {
           Object.values(attempt.coverage).every((row) => row.total > 0 && row.covered === row.total))
   );
 }
+export { maximum as contourAttemptMaximum };
 function cell(value: string): string {
   return value.replaceAll('|', '\\|').replaceAll('\n', ' ');
 }
@@ -1059,6 +1060,20 @@ function lastCompleteTripleClosure(
     if (killed) return [current, killed, frozen];
   }
   return undefined;
+}
+
+/** Selection only: same-commit local proofs never establish global acceptance or host freshness. */
+export function selectContourCampaign(snapshot: Snapshot, mode: 'all' | 'unclosed', commit: string) {
+  return mutationPartitions().filter((partition) => {
+    if (partition.environment === 'static') return false;
+    if (mode === 'all') return true;
+    const current = snapshot.attempts.filter((row) => row.contour === partition.name && row.commit === commit);
+    return !lastCompleteTripleClosure(
+      current.filter((row) => row.lane === 'coverage'),
+      current.filter((row) => row.lane === 'mutation'),
+      current.filter((row) => row.lane === 'frozen-crap'),
+    );
+  });
 }
 
 function attemptRow(row: Attempt): string {

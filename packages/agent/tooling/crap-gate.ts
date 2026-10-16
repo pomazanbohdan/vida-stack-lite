@@ -76,6 +76,22 @@ const scopedBudgetReviews = new Map([
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
+
+/** Choose only an already pinned review; the producer still validates its immutable bytes and exact roles. */
+export function latestScopedCrapBudgetRef(contour: string, sources: readonly string[], plan: unknown): string | null {
+  if (!isRecord(plan)) throw new Error('Expected reviewed lineage plan.');
+  for (const [key, reviewKey] of [...scopedBudgetReviews].reverse()) {
+    const [commit, selectedContour] = key.split(':');
+    if (selectedContour) {
+      if (selectedContour === contour) return commit!;
+      continue;
+    }
+    const review = plan[reviewKey];
+    const files = isRecord(review) && Array.isArray(review.files) ? review.files : [];
+    if (sources.length && sources.every((file) => files.includes(file))) return commit!;
+  }
+  return null;
+}
 function reviewedSourcePaths(value: unknown): string[] {
   if (!Array.isArray(value) || !value.every((entry: unknown): entry is string => typeof entry === 'string'))
     throw new Error('Reviewed v3 Source additions and removals must be explicit path arrays.');

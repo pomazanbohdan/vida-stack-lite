@@ -33,6 +33,15 @@ Migrate current callers to the shared helpers, then delete forward-only duplicat
 
 ### 4. Frozen quality prerequisites and complete run
 
+The2026-10-16 user instruction adds an explicit complete diagnostic campaign via
+`bun run test:contours --unclosed` (`--all` selects every executable contour;
+`--plan` inspects selection). Run current coverage/scoped frozen CRAP first and
+then the full declared mutation selection for each selected contour. Preserve
+the existing unfiltered mutation owner and independent limits; missing scope
+reviews stay GAP. After terminal accounting, dispatch blind Luna fix lanes from
+the actual findings. This does not waive the global admission prerequisites or
+qualify the still-inactive per-test filter.
+
 Complete exact frozen function correspondence against the genuine `b549951` baseline. Complete and review the full CRAP plan before using dynamic CRAP as an acceptance gate. Qualify resource custody and shard behavior before running the complete numeric suite. Require 100% functions, lines, statements, and branches, plus 100% assertion-confirmed Killed mutants. Keep the required tests and SDK in the final input set. Record CRAP results and these outcomes from one admitted current capture. A timeout, incomplete report, partial budget, or split set of focused runs does not satisfy full numeric acceptance.
 
 The global canonical mutant map is implemented across the maintained Source and

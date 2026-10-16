@@ -62,9 +62,12 @@ manual progress ledger is required.
 
 Global canonical mutant maps, complete partition-matrix validation and retained
 plan/event evidence are implemented under the existing test-quality tasks.
-Local main-host qualification does not close full mutation acceptance. Qualify
-native per-test selection before continuing the oversized kernel mutation contour;
-unresolved function/scenario associations remain explicit gaps.
+Local main-host qualification does not close full mutation acceptance. The current
+2026-10-16 user instruction requests all/unclosed contour diagnostics, including
+the full unfiltered kernel selection under its existing mutation limit. Run via
+`test:contours`; its explicit pilot evidence does not activate native per-test
+filtering or replace full qualification. Unresolved function/scenario associations
+remain explicit gaps.
 
 P1 requires 100% functions, lines, statements, and branches, an exhaustive frozen per-function correspondence, a complete reviewed CRAP plan, and 100% assertion-confirmed Killed mutants. Keep the required tests and SDK in the final input set. Survived, uncovered, timed-out, errored, or unreviewed equivalent mutants do not pass. Reuse current captured inputs where the owner supports it. One incomplete or UNKNOWN run is not a numeric result. Do not increase resource limits or remove custody checks to force completion.
 
