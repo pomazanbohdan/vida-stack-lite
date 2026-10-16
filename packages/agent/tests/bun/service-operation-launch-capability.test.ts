@@ -1,5 +1,5 @@
 import { describe, expect, spyOn, test } from 'bun:test';
-import { Database } from 'bun:sqlite';
+import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import * as custodySubject from '../../src/config/service-operation-custody.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -1040,13 +1040,15 @@ test('an exact prepared image can be reserved again with a fresh revision and ca
 });
 
 test('closing a non-live handle is rejected before reading its custody', () => {
-  expect(() =>
-    closeServiceOperationCustody(
-      null as unknown as Parameters<typeof closeServiceOperationCustody>[0],
-      'prepared',
-      null,
-    ),
-  ).toThrow('Service operation custody: live operation handle is required');
+  for (const value of [null, undefined, 0, false, '', () => undefined, {}]) {
+    expect(() =>
+      closeServiceOperationCustody(
+        value as unknown as Parameters<typeof closeServiceOperationCustody>[0],
+        'prepared',
+        null,
+      ),
+    ).toThrow('Service operation custody: live operation handle is required');
+  }
 });
 
 test('custody fixture prepares a real SQLite table independently of the mutable initializer', () => {
@@ -1213,6 +1215,8 @@ test('persisted owner tokens must match their exact phase before a row can be re
     expect(before?.phase).toBe('launching');
     for (const row of [
       { phase: 'launching', token: capability, launchPid: null },
+      { phase: 'launching', token: 'd'.repeat(64), launchPid: 1.5 },
+      { phase: 'launching', token: 'd'.repeat(64), launchPid: Number.MAX_SAFE_INTEGER + 1 },
       { phase: 'in_flight', token: 'd'.repeat(64), launchPid: null },
       { phase: 'in_flight', token: null, launchPid: null },
       { phase: 'prepared', token: capability, launchPid: null },
@@ -1475,6 +1479,23 @@ test('record and claim reject invalid PID boundaries without changing the exact 
     expect(
       expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
     ).toEqual(after);
+    fixture.database.exec(
+      'CREATE TRIGGER ignore_prepared_reservation BEFORE UPDATE ON agent_host_service_operation_custody BEGIN SELECT RAISE(IGNORE); END',
+    );
+    expect(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    ).toThrow('Service operation custody: one-shot launch reservation compare-and-swap failed');
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(after);
+    fixture.database.exec('DROP TRIGGER ignore_prepared_reservation');
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -1581,6 +1602,248 @@ test('reconciliation requires both the exact owner kind and request before invok
     );
   }
 });
+
+for (const fault of [
+  {
+    name: 'missing reservation',
+    stage: 'reserve',
+    event: 'INSERT',
+    action: 'DELETE FROM agent_host_service_operation_custody',
+    message: 'one-shot launch reservation disappeared',
+  },
+  {
+    name: 'changed capability',
+    stage: 'reserve',
+    event: 'INSERT',
+    action: "UPDATE agent_host_service_operation_custody SET owner_token='" + 'd'.repeat(64) + "'",
+    message: 'child launch capability reservation differs',
+  },
+  {
+    name: 'missing recorded row',
+    stage: 'record',
+    event: 'UPDATE',
+    action: 'DELETE FROM agent_host_service_operation_custody',
+    message: 'spawned worker reservation changed',
+  },
+]) {
+  test(`custody rolls back ${fault.name} observed after its real SQLite write`, () => {
+    const fixture = openCustodyFixture('service-post-write-fault-');
+    let completed = false;
+    let closed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    let restoreQuery: (() => void) | undefined;
+    try {
+      const reservation =
+        fault.stage === 'record'
+          ? expectReturned(() =>
+              reserveServiceOperationLaunch(
+                fixture.database,
+                fixture.workspaceId,
+                'release-pack-worker',
+                operationId,
+                requestDigest,
+                'c'.repeat(64),
+              ),
+            )
+          : undefined;
+      const before = expectReturned(() =>
+        readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+      );
+      let realRecordedPid: number | bigint | undefined;
+      if (fault.stage === 'record') {
+        let afterWrite = false;
+        const nativeQuery = fixture.database.query.bind(fixture.database);
+        const query = spyOn(fixture.database, 'query').mockImplementation(
+          <Result, Params extends SQLQueryBindings | SQLQueryBindings[]>(sql: string) => {
+            if (afterWrite && sql.startsWith('SELECT workspace_id,owner_kind,operation_id,')) {
+              afterWrite = false;
+              const observed = nativeQuery<{ launch_pid: number | bigint }, [string, string]>(sql).get(
+                fixture.workspaceId,
+                operationId,
+              );
+              realRecordedPid = observed?.launch_pid;
+              if (realRecordedPid === 1 || realRecordedPid === 1n) sql += ' AND 0';
+            }
+            const statement = nativeQuery<Result, Params>(sql);
+            if (sql.startsWith('UPDATE agent_host_service_operation_custody SET launch_pid=')) {
+              return new Proxy(statement, {
+                get(target, key) {
+                  if (key === 'run')
+                    return (...args: unknown[]) => {
+                      const result: unknown = Reflect.apply(target.run.bind(target), undefined, args);
+                      afterWrite = true;
+                      return result;
+                    };
+                  const member: unknown = Reflect.get(target, key, target);
+                  return typeof member === 'function'
+                    ? (...args: unknown[]): unknown => {
+                        const result: unknown = Reflect.apply(member, target, args);
+                        return result;
+                      }
+                    : member;
+                },
+              });
+            }
+            return statement;
+          },
+        );
+        restoreQuery = () => query.mockRestore();
+      } else {
+        fixture.database.exec(
+          `CREATE TRIGGER custody_afterimage_fault AFTER ${fault.event} ON agent_host_service_operation_custody BEGIN ${fault.action}; END`,
+        );
+      }
+      expect(() =>
+        reservation
+          ? recordServiceOperationLaunchPid(
+              fixture.database,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              requestDigest,
+              reservation.revision,
+              1,
+              reservation.child_capability,
+            )
+          : reserveServiceOperationLaunch(
+              fixture.database,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              requestDigest,
+              'c'.repeat(64),
+            ),
+      ).toThrow('Service operation custody: ' + fault.message);
+      restoreQuery?.();
+      restoreQuery = undefined;
+      if (fault.stage === 'record') expect(Number(realRecordedPid)).toBe(1);
+      expect(fixture.database.inTransaction).toBe(false);
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toEqual(before);
+      if (fault.stage !== 'record') fixture.database.exec('DROP TRIGGER custody_afterimage_fault');
+      fixture.database
+        .query('DELETE FROM agent_host_service_operation_custody WHERE workspace_id=? AND operation_id=?')
+        .run(fixture.workspaceId, operationId);
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toBeNull();
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            restoreQuery?.();
+            return undefined;
+          },
+          () => {
+            closeServiceOperationDatabase(fixture.database);
+            closed = true;
+            return undefined;
+          },
+          () => {
+            if (completed && closed) rmSync(fixture.root, { recursive: true, force: true });
+            else retainExpectedUnknownFixture(fixture.root, 'post-write control failed');
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  });
+}
+
+for (const field of ['workspace_id', 'operation_id'] as const) {
+  test(`read rejects a native query projection with a substituted ${field}`, () => {
+    const fixture = openCustodyFixture('service-read-identity-fault-');
+    const nativeQuery = fixture.database.query.bind(fixture.database);
+    let restoreQuery: (() => void) | undefined;
+    let completed = false;
+    let closed = false;
+    let primaryFailure: { error: unknown } | undefined;
+    try {
+      expectReturned(() =>
+        reserveServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          'c'.repeat(64),
+        ),
+      );
+      const before = expectReturned(() =>
+        readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+      );
+      expect(before?.operation_id).toBe(operationId);
+      let alteredQueries = 0;
+      const value = field === 'workspace_id' ? 'd'.repeat(64) : 'another-operation';
+      const query = spyOn(fixture.database, 'query').mockImplementation(
+        <Result, Params extends SQLQueryBindings | SQLQueryBindings[]>(sql: string) => {
+          if (sql.startsWith('SELECT workspace_id,owner_kind,operation_id,')) {
+            alteredQueries++;
+            sql = sql.replace(
+              'SELECT workspace_id,owner_kind,operation_id,',
+              `SELECT ${field === 'workspace_id' ? "'" + value + "' AS workspace_id" : 'workspace_id'},owner_kind,${field === 'operation_id' ? "'" + value + "' AS operation_id" : 'operation_id'},`,
+            );
+          }
+          return nativeQuery<Result, Params>(sql);
+        },
+      );
+      restoreQuery = () => query.mockRestore();
+      expect(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toThrow(
+        'Service operation custody: stored operation identity differs',
+      );
+      expect(alteredQueries).toBe(1);
+      restoreQuery();
+      restoreQuery = undefined;
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toEqual(before);
+      fixture.database
+        .query('DELETE FROM agent_host_service_operation_custody WHERE workspace_id=? AND operation_id=?')
+        .run(fixture.workspaceId, operationId);
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toBeNull();
+      completed = true;
+    } catch (error) {
+      primaryFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            restoreQuery?.();
+            return undefined;
+          },
+          () => {
+            closeServiceOperationDatabase(fixture.database);
+            closed = true;
+            return undefined;
+          },
+          () => {
+            if (completed && closed) rmSync(fixture.root, { recursive: true, force: true });
+            else retainExpectedUnknownFixture(fixture.root, 'query identity control failed');
+            return undefined;
+          },
+        ],
+        primaryFailure,
+      );
+    }
+  });
+}
 
 test('reservation retains the original failure and rollback failure without committing its row', () => {
   const fixture = openCustodyFixture('service-reservation-rollback-fault-');

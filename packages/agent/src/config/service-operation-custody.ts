@@ -84,13 +84,17 @@ function requireCustody(value: unknown, message: string): asserts value {
 }
 
 function validateKey(workspaceId: string, kind: ServiceOperationKind, operationId: string): void {
-  requireCustody(/^[a-f0-9]{64}$/u.test(workspaceId), 'workspace identity is invalid');
+  requireCustody(isDigest(workspaceId), 'workspace identity is invalid');
   requireCustody(['release-pack-worker', 'release-worker'].includes(kind), 'owner kind is invalid');
   requireCustody(/^[a-z0-9][a-z0-9-]{0,95}$/u.test(operationId), 'operation identity is invalid');
 }
 
 function validateDigest(digest: string, label: string): void {
-  requireCustody(/^[a-f0-9]{64}$/u.test(digest), label + ' is invalid');
+  requireCustody(isDigest(digest), label + ' is invalid');
+}
+
+function isDigest(digest: string | null): boolean {
+  return /^[a-f0-9]{64}$/u.test(String(digest));
 }
 
 function nextRevision(revision: number): number {
@@ -139,7 +143,7 @@ function readRow(database: Database, workspaceId: string, operationId: string): 
   if (!found) return null;
   const revision = Number(found.revision);
   const result = normalizeHandoffRevision(found, revision);
-  assertCustodyRowIdentity(result, workspaceId, result.owner_kind, operationId);
+  assertCustodyRowIdentity(result, workspaceId, operationId);
   assertCustodyRowState(result, revision);
   assertCustodyHandoff(result);
   return result;
@@ -202,24 +206,17 @@ function withCleanup<T>(operation: () => T, cleanup: () => void, message: string
   return value as T;
 }
 
-function assertCustodyRowIdentity(
-  found: ServiceOperationCustody,
-  workspaceId: string,
-  kind: ServiceOperationKind,
-  operationId: string,
-): void {
+function assertCustodyRowIdentity(found: ServiceOperationCustody, workspaceId: string, operationId: string): void {
   requireCustody(
-    found.workspace_id === workspaceId && found.owner_kind === kind && found.operation_id === operationId,
+    found.workspace_id === workspaceId && found.operation_id === operationId,
     'stored operation identity differs',
   );
 }
 
 function assertCustodyRowState(found: ServiceOperationCustody, revision: number): void {
   requireCustody(
-    /^[a-f0-9]{64}$/u.test(found.request_digest) &&
-      (found.owner_token === null ||
-        /^[0-9a-f-]{36}$/u.test(found.owner_token) ||
-        /^[a-f0-9]{64}$/u.test(found.owner_token)) &&
+    isDigest(found.request_digest) &&
+      (found.owner_token === null || /^[0-9a-f-]{36}$/u.test(found.owner_token) || isDigest(found.owner_token)) &&
       Number.isSafeInteger(revision) &&
       revision > 0,
     'stored operation custody row is invalid',
@@ -234,7 +231,7 @@ function assertCustodyOwnerPhase(found: ServiceOperationCustody): void {
       (found.phase === 'in_flight'
         ? found.owner_token !== null && /^[0-9a-f-]{36}$/u.test(found.owner_token)
         : found.phase === 'launching'
-          ? found.owner_token === null || /^[a-f0-9]{64}$/u.test(found.owner_token)
+          ? found.owner_token === null || isDigest(found.owner_token)
           : found.owner_token === null) &&
       (found.phase === 'launching'
         ? found.launch_pid === null || (Number.isSafeInteger(found.launch_pid) && found.launch_pid > 0)
@@ -245,7 +242,7 @@ function assertCustodyOwnerPhase(found: ServiceOperationCustody): void {
 
 function assertCustodyEvidence(found: ServiceOperationCustody): void {
   requireCustody(
-    (found.evidence_digest === null || /^[a-f0-9]{64}$/u.test(found.evidence_digest)) &&
+    (found.evidence_digest === null || isDigest(found.evidence_digest)) &&
       (found.phase === 'launching' || found.phase === 'prepared' || found.phase === 'terminal'
         ? found.evidence_digest !== null
         : found.evidence_digest === null),
@@ -278,9 +275,9 @@ function hasHandoffOwner(found: ServiceOperationCustody): boolean {
 
 function hasHandoffDigests(found: ServiceOperationCustody): boolean {
   return (
-    /^[a-f0-9]{64}$/u.test(found.handoff_digest ?? '') &&
-    /^[a-f0-9]{64}$/u.test(found.handoff_from_request_digest ?? '') &&
-    /^[a-f0-9]{64}$/u.test(found.handoff_from_evidence_digest ?? '')
+    isDigest(found.handoff_digest) &&
+    isDigest(found.handoff_from_request_digest) &&
+    isDigest(found.handoff_from_evidence_digest)
   );
 }
 
@@ -465,7 +462,7 @@ export function closeServiceOperationCustody(
   phase: 'unknown' | 'prepared' | 'terminal',
   evidenceDigest: string | null,
 ): number {
-  const live = handle !== null && typeof handle === 'object' ? liveHandles.get(handle) : undefined;
+  const live = liveHandles.get(handle);
   requireCustody(live !== undefined, 'live operation handle is required');
   requireCustody(['unknown', 'prepared', 'terminal'].includes(phase), 'close phase is invalid');
   requireCustody(phase === 'unknown' ? evidenceDigest === null : evidenceDigest !== null, 'phase evidence is invalid');

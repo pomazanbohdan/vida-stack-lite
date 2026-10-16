@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `5f2f6b7e94fefe33f8ffb90eaa7de359bac096e6`. Its32-ID native mutation pilot is terminal with23assertion-confirmed kills,9survivors and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `fa55cd897a50efc5f5ea18642bf9b69589cc052e`. Its32-ID native mutation pilot is terminal with25assertion-confirmed kills,7survivors and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,52 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+The freshfa55cd8pilot binds official SDK run38916429957/attempt1/artifact12052328885,
+ZIP digest `sha256:0eddc0a88c65933194bed0429f82b99fc8a93244c0972521bade5e432752f880`.
+Outer `native-mutation-pilot-fa55cd8-5GPmrb` closes in220047.803063ms with complete
+captures, closed group and unchanged boot. Inner evidence remains at
+`packages/agent/.tmp/mutation-batch-a4f87bea-0504-4a91-9877-8923ac49b96a-F1ayFe/`.
+Baseline82cases passes;749generated,32attempted,25assertion-confirmed Killed,
+7Survived,0UNKNOWN,717unattempted. Source changes reorder canonical selections;
+these32are not joined with older partial counts or presented as a contour score.
+
+One survivor changes a null fallback to a different equally invalid digest.
+The correction consolidates the nine identical digest patterns into one private
+predicate for supported string/null inputs, eliminating three nullable fallback
+literals. It also removes a redundant pre-WeakMap handle conditional and the
+owner-kind comparison whose expected argument was the same returned owner kind.
+WeakMap membership, selected SQL owner kinds, workspace/operation identity,
+gate ownership, exact row checks and CAS remain. No equivalent mutant is declared
+Killed, and no confirmed product defect is inferred from these observations.
+
+Remaining controls exercise changed reservation capability, vanished afterimage,
+rejected prepared CAS, persisted fractional/unsafe launch PIDs and substituted
+workspace/operation SELECT projections. Native SQL writes and rollback are real;
+the PID afterimage control observes the actual successful update before hiding
+only its subsequent read. A destructive AFTER UPDATE trigger was rejected as a
+fixture: Bun's native changes count includes its extra modification, reaching the
+CAS denial before the intended post-read. The wrong-owner projection test was
+also corrected: this read API accepts either supported owner, with no requested
+owner argument. Both failed controls remain retained. Official Bun SQLite docs
+are retained at `/workspace/attachments/bun-sqlite-official-20261016.md`.
+
+Four-file owner `6HVn5z` passes109/0tests,695assertions in4.27s with complete
+captures/closed group/same boot. Strict tests467files passes. Scoped lint's
+unbound-method/unsafe-return diagnostics prompted an explicit bound real method
+and unknown return in the fixture spy; final lint has zero diagnostics.
+New Source still requires fresh coverage, frozen correspondence/CRAP and mutation
+evidence; these development checks do not close that admission.
+
+The inactive Mastra checkout had2tracked edits and1untracked TypeScript helper,
+with no ignored paths. Its exact working/index/untracked bytes were verified in
+permanent ref `refs/vida-retained-contours/20261016/native-batch-capacity/contour-repair-mastra-20261016`
+before ordinary worktree removal. Receipt:
+`/workspace/attachments/inactive-mastra-capacity-retention-20261016.json`.
+Free space rose2,170,499,072->2,205,597,696bytes; failed/UNKNOWN artifacts were not
+deleted. After the latest pilot available space was2,154,020,864bytes, only about
+6MiBabove the unchanged2GiBfloor. Further execution needs safe capacity, not a
+relaxed storage gate.
 
 The fresh5f2f6b7pilot binds official SDK run38915275682/attempt1/artifact12051797906,
 ZIP digest `sha256:cf368e51bfc4ad907c683d9cd9835f68f77683d2a11e2ccb8afccd7e4679054b`.
