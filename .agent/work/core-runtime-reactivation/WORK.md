@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main parent of this repair packet: `5fdaa1918d8297215b7b16b51c1fd34d2e7d4235`. Its bounded native mutation pilot is terminal with7assertion-confirmed kills,1survivor and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main parent of this repair packet: `5f2f6b7e94fefe33f8ffb90eaa7de359bac096e6`. Its32-ID native mutation pilot is terminal with23assertion-confirmed kills,9survivors and0UNKNOWN; the prior primary campaign remains bound to `708c153`. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -13,6 +13,33 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
 ## Global contour campaign packet
+
+The fresh5f2f6b7pilot binds official SDK run38915275682/attempt1/artifact12051797906,
+ZIP digest `sha256:cf368e51bfc4ad907c683d9cd9835f68f77683d2a11e2ccb8afccd7e4679054b`.
+Outer `native-mutation-pilot-5f2f6b7-yiMycj` closes in192470.854102ms with complete
+captures, closed group and unchanged boot. Inner evidence remains at
+`packages/agent/.tmp/mutation-batch-d7d81725-c077-4c0c-a02e-bbcb8aafe658-VrcPtx/`.
+Baseline79cases passes. All32planned IDs execute:23assertion-confirmed Killed,
+9Survived,0UNKNOWN;719of751remain unattempted. All prior8IDs, including the PID
+guard, are Killed. These are bounded diagnostic outcomes, not a contour score.
+
+The correction groups the survivors into digest/error contracts, persisted
+owner-phase validation, unbound DB claim, exact prepared evidence and reconciliation
+identity, phase/evidence close rejection and missing handoff verifier. Tests
+check unchanged persisted state after denials and valid completion afterward.
+The handoff callback's synthetic frozen owner object was never consumed: the
+held gate's operation already verifies the exact terminal row. It now returns
+undefined, preserving that gate and all exact row/CAS checks without an unused
+allocation. This is behavior-preserving simplification, not a confirmed product bug.
+Four-file owner `Squ7Mp` passes104/0tests,660assertions in4.37s with complete
+captures/closed group/same boot. Strict tests467files passes; scoped type-aware
+lint has zero diagnostics. A new numeric run must bind the changed Source/tests.
+Luna remains provider-limited and Root is the only writer/check owner.
+
+Capacity receipt `/workspace/attachments/bun-bootstrap-download-cache-retirement-20261016.json`
+records removal of the42,015,139-byte download ZIP cache only. Its hash is retained;
+the installed Bun executable, release metadata, SDK inputs and failed/UNKNOWN
+artifacts remain. The2GiB producer floor is unchanged.
 
 The fresh5fdaa19 pilot binds official SDK run38914901509/attempt1/artifact12052580348,
 ZIP digest `sha256:1c19ae8b3aee4591555c7b48ec53f053bcddde000ae5079dce8da8e6048ff8be`.

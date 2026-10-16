@@ -538,7 +538,9 @@ export async function handoffServiceOperationCustody(
   await withExclusiveServiceOperationAdmission(
     root,
     workspaceId,
-    () => Object.freeze({ operation_id: operationId, workspace_id: workspaceId }),
+    // The operation verifies the exact terminal row under this held gate;
+    // it consumes no synthetic owner value from this callback.
+    () => undefined,
     async (exclusive) => {
       exclusive.assertActive();
       const source = openUnadmittedWorkspaceDatabase(root, relative, false, true, exclusive.captureSource);

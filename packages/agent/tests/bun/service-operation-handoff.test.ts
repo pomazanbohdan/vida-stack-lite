@@ -85,6 +85,26 @@ test('handoff rejects a release owner, a different prior request, and a nontermi
   await assertPreparedPackCannotHandoff();
 });
 
+test('handoff rejects a missing verifier before touching the exact terminal pack row', async () => {
+  const fixture = openCustodyFixture('handoff-missing-verifier-');
+  let completed = false;
+  try {
+    const prior = finishOperation(fixture, 'release-pack-worker');
+    expect(
+      await expectHandoffFailure(
+        fixture,
+        prior,
+        undefined as unknown as HandoffVerifier,
+        'Service operation custody: handoff verifier is required',
+      ),
+    ).toEqual(prior);
+    completed = true;
+  } finally {
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('Retained failed missing-verifier fixture: ' + fixture.root);
+  }
+});
+
 test('verifier rejection and malformed prepared receipt preserve the terminal pack row', async () => {
   const fixture = openCustodyFixture('handoff-verifier-failure-');
   try {

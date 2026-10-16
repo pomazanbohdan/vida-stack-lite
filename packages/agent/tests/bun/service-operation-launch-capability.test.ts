@@ -1191,6 +1191,93 @@ for (const role of ['request', 'prepared evidence'] as const) {
   });
 }
 
+test('persisted owner tokens must match their exact phase before a row can be read', () => {
+  const fixture = openCustodyFixture('service-invalid-owner-phase-');
+  let completed = false;
+  let closed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(before?.phase).toBe('launching');
+    for (const row of [
+      { phase: 'launching', token: capability, launchPid: null },
+      { phase: 'in_flight', token: 'd'.repeat(64), launchPid: null },
+      { phase: 'in_flight', token: null, launchPid: null },
+      { phase: 'prepared', token: capability, launchPid: null },
+      { phase: 'terminal', token: null, launchPid: 1 },
+    ]) {
+      fixture.database
+        .query(
+          'UPDATE agent_host_service_operation_custody SET phase=?,owner_token=?,launch_pid=?,evidence_digest=? WHERE workspace_id=? AND operation_id=?',
+        )
+        .run(
+          row.phase,
+          row.token,
+          row.launchPid,
+          row.phase === 'in_flight' ? null : 'c'.repeat(64),
+          fixture.workspaceId,
+          operationId,
+        );
+      expect(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toThrow(
+        'Service operation custody: stored owner phase is invalid',
+      );
+      fixture.database
+        .query(
+          "UPDATE agent_host_service_operation_custody SET phase='launching',owner_token=?,launch_pid=NULL,evidence_digest=? WHERE workspace_id=? AND operation_id=?",
+        )
+        .run(
+          expectReturned(() => serviceOperationLaunchCapabilityDigest(reservation.child_capability)),
+          'c'.repeat(64),
+          fixture.workspaceId,
+          operationId,
+        );
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toEqual(before);
+    }
+    fixture.database
+      .query('DELETE FROM agent_host_service_operation_custody WHERE workspace_id=? AND operation_id=?')
+      .run(fixture.workspaceId, operationId);
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toBeNull();
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          closed = true;
+          return undefined;
+        },
+        () => {
+          if (completed && closed) rmSync(fixture.root, { recursive: true, force: true });
+          else retainExpectedUnknownFixture(fixture.root, 'persisted phase control failed');
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
 test('record and claim reject invalid PID boundaries without changing the exact reservation', () => {
   const fixture = openCustodyFixture('service-invalid-pid-');
   let handle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
@@ -1225,6 +1312,33 @@ test('record and claim reject invalid PID boundaries without changing the exact 
       );
       expect(before?.phase).toBe('launching');
       expect(before?.launch_pid).toBe(stage === 'record' ? null : 1);
+      expect(() =>
+        stage === 'record'
+          ? recordServiceOperationLaunchPid(
+              fixture.database,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              'x' + requestDigest,
+              reservation.revision,
+              1,
+              reservation.child_capability,
+            )
+          : claimReservedServiceOperationLaunch(
+              fixture.database,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              'x' + requestDigest,
+              1,
+              reservation.child_capability,
+            ),
+      ).toThrow('Service operation custody: request digest is invalid');
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toEqual(before);
       for (const invalidPid of invalidPids) {
         expect(() =>
           stage === 'record'
@@ -1271,6 +1385,42 @@ test('record and claim reject invalid PID boundaries without changing the exact 
         expect(recorded.revision).toBe(reservation.revision + 1);
       }
     }
+    const beforeUnboundClaim = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    const unbound = new Database(path.join(fixture.root, fixture.relative));
+    let unboundFailure: { error: unknown } | undefined;
+    try {
+      expect(() =>
+        claimReservedServiceOperationLaunch(
+          unbound,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          1,
+          reservation.child_capability,
+        ),
+      ).toThrow('Service operation custody: workspace database binding differs');
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toEqual(beforeUnboundClaim);
+    } catch (error) {
+      unboundFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            unbound.close();
+            return undefined;
+          },
+        ],
+        unboundFailure,
+      );
+    }
     const claimed = expectReturned(() =>
       claimReservedServiceOperationLaunch(
         fixture.database,
@@ -1287,6 +1437,24 @@ test('record and claim reject invalid PID boundaries without changing the exact 
       expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId))
         ?.phase,
     ).toBe('in_flight');
+    const inFlight = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    for (const close of [
+      { phase: 'prepared' as const, digest: null, message: 'phase evidence is invalid' },
+      { phase: 'terminal' as const, digest: null, message: 'phase evidence is invalid' },
+      { phase: 'unknown' as const, digest: 'c'.repeat(64), message: 'phase evidence is invalid' },
+      { phase: 'prepared' as const, digest: 'not-a-digest', message: 'evidence digest is invalid' },
+    ]) {
+      expect(() => closeServiceOperationCustody(claimed, close.phase, close.digest)).toThrow(
+        'Service operation custody: ' + close.message,
+      );
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toEqual(inFlight);
+    }
     expectReturned(() => closeServiceOperationCustody(claimed, 'prepared', 'c'.repeat(64)));
     const after = expectReturned(() =>
       readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
@@ -1294,6 +1462,19 @@ test('record and claim reject invalid PID boundaries without changing the exact 
     expect(after?.phase).toBe('prepared');
     expect(after?.owner_token).toBeNull();
     expect(after?.launch_pid).toBeNull();
+    expect(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'd'.repeat(64),
+      ),
+    ).toThrow('Service operation custody: operation has no exact prepared image available for one-shot launch');
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(after);
     completed = true;
   } catch (error) {
     primaryFailure = { error };
@@ -1314,6 +1495,85 @@ test('record and claim reject invalid PID boundaries without changing the exact 
               fixture.root,
               'PID boundary control did not prove prepared custody and closed admission',
             );
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
+test('reconciliation requires both the exact owner kind and request before invoking its verifier', async () => {
+  const fixture = openCustodyFixture('service-reconcile-exact-identity-');
+  let database = fixture.database;
+  let completed = false;
+  let closed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(database, fixture.workspaceId, operationId),
+    );
+    expect(before?.phase).toBe('launching');
+    let verifierCalls = 0;
+    for (const identity of [
+      { kind: 'release-worker' as const, digest: requestDigest },
+      { kind: 'release-pack-worker' as const, digest: 'd'.repeat(64) },
+    ]) {
+      await expectRejection(
+        reconcileServiceOperationCustody(
+          database,
+          fixture.root,
+          fixture.relative,
+          fixture.workspaceId,
+          identity.kind,
+          operationId,
+          identity.digest,
+          () => {
+            verifierCalls++;
+            return { phase: 'prepared', evidence_digest: 'c'.repeat(64) };
+          },
+        ),
+        'Service operation custody: same-operation reconciliation is not applicable',
+      );
+      database = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(database, fixture.workspaceId, operationId)),
+      ).toEqual(before);
+      expect(verifierCalls).toBe(0);
+    }
+    database
+      .query('DELETE FROM agent_host_service_operation_custody WHERE workspace_id=? AND operation_id=?')
+      .run(fixture.workspaceId, operationId);
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(database, fixture.workspaceId, operationId)),
+    ).toBeNull();
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(database);
+          closed = true;
+          return undefined;
+        },
+        () => {
+          if (completed && closed) rmSync(fixture.root, { recursive: true, force: true });
+          else retainExpectedUnknownFixture(fixture.root, 'exact reconciliation identity control failed');
           return undefined;
         },
       ],
