@@ -7,6 +7,8 @@ import { sha256, type InputDigest } from './bun-coverage-evidence.ts';
 import { canonicalJson } from '../src/contracts/canonical-json-core.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 import { isRecord } from '../src/contracts/forward-controller-values.ts';
+import type { MutationProcessResult } from './mutation-evidence.ts';
+import { validCapturedOutput } from './mutation-evidence.ts';
 
 type Location = Mutant['location'];
 type ReportedMutant = {
@@ -28,12 +30,13 @@ type MapPartition = {
   sources?: string[];
   requiredReportedSource?: string;
 };
+const maximumMutationMapArtifactBytes = 32 * 1024 * 1024;
 
 export function writeMutationMapArtifact(directory: string, file: string, record: unknown) {
   if (path.basename(file) !== file || !file.endsWith('.json'))
     throw new Error('Mutation map artifact name is invalid.');
   const bytes = Buffer.from(JSON.stringify(record) + '\n');
-  if (bytes.length > 32 * 1024 * 1024) throw new Error('Mutation map artifact exceeds its byte bound.');
+  if (bytes.length > maximumMutationMapArtifactBytes) throw new Error('Mutation map artifact exceeds its byte bound.');
   const fd = openSync(path.join(directory, file), 'wx', 0o600);
   let failure: { error: unknown } | undefined;
   try {
@@ -254,6 +257,18 @@ export function validateMutationPartitionMap(
   return validated;
 }
 
+function mutationBatchUniverseDigest(
+  binding: MutationMapBinding,
+  pairs: readonly { identity: string; local_id: string }[],
+): string {
+  const universeHash = createHash('sha256')
+    .update('MutationBatchUniverse/v2\n')
+    .update(canonicalJson(binding))
+    .update('\n');
+  for (const row of pairs) universeHash.update(canonicalJson(row)).update('\n');
+  return universeHash.digest('hex');
+}
+
 /** Plan IDs from one complete generation; never regenerate a subset with different mutator semantics. */
 export function planMutationBatches(root: string, binding: MutationMapBinding, value: unknown, limit: number) {
   if (!Number.isSafeInteger(limit) || limit < 1) throw new Error('Mutation batch limit must be a positive integer.');
@@ -271,12 +286,7 @@ export function planMutationBatches(root: string, binding: MutationMapBinding, v
     left.identity < right.identity ? -1 : left.identity > right.identity ? 1 : 0,
   );
   const batches: { identities: string[]; local_ids: string[] }[] = [];
-  const universeHash = createHash('sha256')
-    .update('MutationBatchUniverse/v2\n')
-    .update(canonicalJson(binding))
-    .update('\n');
   for (const row of rows) {
-    universeHash.update(canonicalJson({ identity: row.identity, local_id: row.local_id })).update('\n');
     let batch = batches.at(-1);
     if (!batch || batch.identities.length === limit) {
       batch = { identities: [], local_ids: [] };
@@ -289,9 +299,340 @@ export function planMutationBatches(root: string, binding: MutationMapBinding, v
     schema: 'MutationBatchPlan/v2' as const,
     qualification: 'planning-only' as const,
     binding,
-    universe_sha256: universeHash.digest('hex'),
+    universe_sha256: mutationBatchUniverseDigest(
+      binding,
+      rows.map(({ identity, local_id }) => ({ identity, local_id })),
+    ),
     limit,
     batches,
+  };
+}
+
+export type NativeMutationArtifactRef = { file: string; bytes: number; sha256: string };
+export type NativeMutationReceiptReference = {
+  artifact: NativeMutationArtifactRef;
+  launcher: { artifact: NativeMutationArtifactRef; result: MutationProcessResult };
+  binding: MutationMapBinding;
+  tests: readonly string[];
+  active_mutant_id: string | null;
+  activation_hit_count: number;
+};
+export type NativeMutationBatchResult = {
+  schema: 'MutationBatchPilotResult/v2';
+  binding: MutationMapBinding;
+  universe_sha256: string;
+  index: number;
+  elapsed_ms: number;
+  complete: boolean;
+  interrupted: boolean;
+  budget_exhausted: boolean;
+  resource_blocked: { observed_path: string; available_bytes: string | null } | null;
+  results: { identity: string; local_id: string; status: 'killed' | 'survived' | 'unknown' }[];
+};
+export type NativeMutationPartitionProof = {
+  schema: 'NativeMutationPartitionProof/v1';
+  binding: MutationMapBinding;
+  qualification_scope: 'partition';
+  full_qualification: false;
+  tests: string[];
+  universe_sha256: string;
+  artifacts: {
+    generated_image: NativeMutationArtifactRef;
+    batch_plan: NativeMutationArtifactRef;
+    input_descriptor: NativeMutationArtifactRef;
+  };
+  baseline: {
+    artifact: NativeMutationArtifactRef;
+    runner_receipt: NativeMutationArtifactRef;
+    launcher_receipt: NativeMutationArtifactRef;
+    cases: { test_file: string; name: string; outcome: 'passed' | 'skipped' }[];
+  };
+  batches: { index: number; artifact: NativeMutationArtifactRef }[];
+  mutants: {
+    identity: string;
+    local_id: string;
+    outcome: 'assertion-confirmed-killed';
+    runner_receipt: NativeMutationArtifactRef;
+    launcher_receipt: NativeMutationArtifactRef;
+  }[];
+};
+
+export type NativeMutationProofEvidence = {
+  tests: readonly string[];
+  artifacts: {
+    generated_image: NativeMutationArtifactRef;
+    batch_plan: NativeMutationArtifactRef;
+    input_descriptor: NativeMutationArtifactRef;
+  };
+  baseline: {
+    status: 'passed' | 'unknown';
+    cases: readonly { test_file: string; name: string; outcome: 'passed' | 'skipped' | 'failed' | 'error' }[];
+    native_receipt: NativeMutationReceiptReference;
+    artifact: NativeMutationArtifactRef;
+  };
+  batches: readonly { artifact: NativeMutationArtifactRef; value: NativeMutationBatchResult }[];
+  receipts: ReadonlyMap<string, NativeMutationReceiptReference>;
+};
+
+function validateNativeMutationArtifactRef(value: NativeMutationArtifactRef): void {
+  if (
+    !value ||
+    typeof value.file !== 'string' ||
+    !value.file ||
+    path.basename(value.file) !== value.file ||
+    !value.file.endsWith('.json') ||
+    !Number.isSafeInteger(value.bytes) ||
+    value.bytes < 1 ||
+    value.bytes > maximumMutationMapArtifactBytes ||
+    typeof value.sha256 !== 'string' ||
+    !/^[a-f0-9]{64}$/u.test(value.sha256)
+  )
+    throw new Error('Native mutation proof artifact reference is invalid.');
+}
+
+function validateNativeMutationReceipt(
+  value: NativeMutationReceiptReference,
+  binding: MutationMapBinding,
+  tests: readonly string[],
+  activeMutantId: string | null,
+  baseline: boolean,
+): void {
+  validateNativeMutationArtifactRef(value?.artifact);
+  validateNativeMutationArtifactRef(value?.launcher?.artifact);
+  if (
+    canonicalJson(value.binding) !== canonicalJson(binding) ||
+    canonicalJson(value.tests) !== canonicalJson(tests) ||
+    value.active_mutant_id !== activeMutantId ||
+    !Number.isSafeInteger(value.activation_hit_count) ||
+    (baseline ? value.activation_hit_count !== 0 : value.activation_hit_count < 1) ||
+    value.launcher.result.timedOut !== false ||
+    value.launcher.result.signal !== null ||
+    value.launcher.result.spawnError !== null ||
+    value.launcher.result.output_capture?.complete !== true ||
+    !validCapturedOutput(value.launcher.result.output_capture.stdout) ||
+    !validCapturedOutput(value.launcher.result.output_capture.stderr) ||
+    value.launcher.result.processCustody?.scope !== 'owned-process-group' ||
+    value.launcher.result.processCustody.terminationObserved !== true ||
+    value.launcher.result.processCustody?.processGroupTerminationObserved !== true ||
+    !Number.isSafeInteger(value.launcher.result.exitCode) ||
+    (value.launcher.result.exitCode as number) < 0 ||
+    (value.launcher.result.exitCode as number) > 255 ||
+    (baseline && value.launcher.result.exitCode !== 0) ||
+    (!baseline && value.launcher.result.exitCode !== 0 && value.launcher.result.exitCode !== 1)
+  )
+    throw new Error('Native mutation runner receipt does not bind its admitted outcome.');
+}
+
+/** Join only parent-validated native observations; never regenerate Source identities here. */
+export function validateNativeMutationPartitionProof(
+  root: string,
+  binding: MutationMapBinding,
+  universeValue: unknown,
+  planValue: unknown,
+  evidence: NativeMutationProofEvidence,
+): NativeMutationPartitionProof {
+  const tests = evidence.tests;
+  const baselineCases = evidence.baseline.cases;
+  const universe = validateMutationUniverse(universeValue, root, binding, 'MutationGeneratedUniverse/v1');
+  if (
+    !isRecord(universeValue) ||
+    !Array.isArray(universeValue.mutants) ||
+    universeValue.mutants.some((row: unknown) => !isRecord(row) || row.generated_status !== 'Pending')
+  )
+    throw new Error('Native mutation proof requires a pending-only generated universe.');
+  if (
+    !isRecord(planValue) ||
+    planValue.schema !== 'MutationBatchPlan/v2' ||
+    planValue.qualification !== 'planning-only' ||
+    canonicalJson(planValue.binding) !== canonicalJson(binding) ||
+    typeof planValue.universe_sha256 !== 'string' ||
+    !/^[a-f0-9]{64}$/u.test(planValue.universe_sha256) ||
+    !Array.isArray(planValue.batches) ||
+    !planValue.batches.length ||
+    !Number.isSafeInteger(planValue.limit) ||
+    (planValue.limit as number) < 1
+  )
+    throw new Error('Native mutation batch plan does not bind the generated universe.');
+  if (!Array.isArray(evidence.tests) || !tests.length || tests.some((test) => typeof test !== 'string' || !test))
+    throw new Error('Native mutation proof has no complete declared test selection.');
+  if (new Set(tests).size !== tests.length)
+    throw new Error('Native mutation proof test selection contains duplicates.');
+
+  const expected = new Map(universe.localIds);
+  const planned = new Map<string, string>();
+  const plannedIndexes = planValue.batches as unknown[];
+  for (const batch of plannedIndexes) {
+    if (
+      !isRecord(batch) ||
+      !Array.isArray(batch.identities) ||
+      !Array.isArray(batch.local_ids) ||
+      batch.identities.length === 0 ||
+      batch.identities.length !== batch.local_ids.length ||
+      batch.identities.length > (planValue.limit as number)
+    )
+      throw new Error('Native mutation batch plan contains a malformed batch.');
+    for (const [offset, localId] of batch.local_ids.entries()) {
+      const identity: unknown = batch.identities[offset];
+      if (
+        typeof localId !== 'string' ||
+        typeof identity !== 'string' ||
+        planned.has(localId) ||
+        expected.get(localId) !== identity
+      )
+        throw new Error('Native mutation batch plan differs from the exact generated identity pairs.');
+      planned.set(localId, identity);
+    }
+  }
+  if (planned.size !== expected.size) throw new Error('Native mutation batch plan omits generated identity pairs.');
+  const expectedUniverseHash = mutationBatchUniverseDigest(
+    binding,
+    [...expected.entries()]
+      .map(([local_id, identity]) => ({ identity, local_id }))
+      .sort((left, right) => (left.identity < right.identity ? -1 : left.identity > right.identity ? 1 : 0)),
+  );
+  if (planValue.universe_sha256 !== expectedUniverseHash)
+    throw new Error('Native mutation batch plan digest differs from its exact identity pairs.');
+
+  const { artifacts } = evidence;
+  const usedArtifacts = new Set<string>();
+  const registerArtifact = (artifact: NativeMutationArtifactRef) => {
+    validateNativeMutationArtifactRef(artifact);
+    if (usedArtifacts.has(artifact.file)) throw new Error('Native mutation proof artifact reference is duplicated.');
+    usedArtifacts.add(artifact.file);
+  };
+  registerArtifact(artifacts.generated_image);
+  registerArtifact(artifacts.batch_plan);
+  registerArtifact(artifacts.input_descriptor);
+
+  if (
+    evidence.baseline.status !== 'passed' ||
+    !Array.isArray(evidence.baseline.cases) ||
+    !baselineCases.length ||
+    baselineCases.some(
+      (testcase) =>
+        !testcase ||
+        typeof testcase.test_file !== 'string' ||
+        !tests.includes(testcase.test_file) ||
+        typeof testcase.name !== 'string' ||
+        !testcase.name ||
+        (testcase.outcome !== 'passed' && testcase.outcome !== 'skipped'),
+    ) ||
+    !baselineCases.some((testcase) => testcase.outcome === 'passed')
+  )
+    throw new Error('Native mutation baseline lacks a complete passing case census.');
+  const baselineFiles = new Set(baselineCases.map(({ test_file }) => test_file));
+  if (baselineFiles.size !== tests.length || tests.some((test) => !baselineFiles.has(test)))
+    throw new Error('Native mutation baseline census does not cover the exact selected test files.');
+  validateNativeMutationArtifactRef(evidence.baseline.artifact);
+  validateNativeMutationReceipt(evidence.baseline.native_receipt, binding, tests, null, true);
+  registerArtifact(evidence.baseline.artifact);
+  registerArtifact(evidence.baseline.native_receipt.artifact);
+  registerArtifact(evidence.baseline.native_receipt.launcher.artifact);
+
+  if (evidence.batches.length !== plannedIndexes.length)
+    throw new Error('Native mutation batch result set is incomplete.');
+  const observedIndexes = new Set<number>();
+  const observedRows = new Map<string, { identity: string; local_id: string }>();
+  const proofBatches: NativeMutationPartitionProof['batches'] = [];
+  for (const { artifact, value } of evidence.batches) {
+    registerArtifact(artifact);
+    if (
+      !value ||
+      value.schema !== 'MutationBatchPilotResult/v2' ||
+      canonicalJson(value.binding) !== canonicalJson(binding) ||
+      value.universe_sha256 !== planValue.universe_sha256 ||
+      !Number.isSafeInteger(value.index) ||
+      value.index < 0 ||
+      value.index >= plannedIndexes.length ||
+      observedIndexes.has(value.index) ||
+      value.complete !== true ||
+      value.interrupted !== false ||
+      value.budget_exhausted !== false ||
+      value.resource_blocked !== null ||
+      !Array.isArray(value.results)
+    )
+      throw new Error('Native mutation batch is incomplete, interrupted, or differently bound.');
+    const expectedBatch = plannedIndexes[value.index];
+    if (
+      !isRecord(expectedBatch) ||
+      !Array.isArray(expectedBatch.local_ids) ||
+      value.results.length !== expectedBatch.local_ids.length
+    )
+      throw new Error('Native mutation batch result differs from its planned members.');
+    observedIndexes.add(value.index);
+    for (const [offset, row] of value.results.entries()) {
+      const expectedLocalId: unknown = expectedBatch.local_ids[offset];
+      const expectedIdentity: unknown = Array.isArray(expectedBatch.identities)
+        ? expectedBatch.identities[offset]
+        : undefined;
+      if (
+        !row ||
+        row.status !== 'killed' ||
+        typeof row.local_id !== 'string' ||
+        typeof row.identity !== 'string' ||
+        row.local_id !== expectedLocalId ||
+        row.identity !== expectedIdentity ||
+        planned.get(row.local_id) !== row.identity ||
+        expected.get(row.local_id) !== row.identity ||
+        observedRows.has(row.local_id)
+      )
+        throw new Error('Native mutation batch contains a survivor, unknown, duplicate, or foreign pair.');
+      observedRows.set(row.local_id, { identity: row.identity, local_id: row.local_id });
+    }
+    proofBatches.push({ index: value.index, artifact });
+  }
+  if (observedIndexes.size !== plannedIndexes.length || observedRows.size !== expected.size)
+    throw new Error('Native mutation batch indexes or members are not exhaustive.');
+  proofBatches.sort((left, right) => left.index - right.index);
+
+  if (evidence.receipts.size !== expected.size) throw new Error('Native mutation receipt set is incomplete.');
+  const mutants = [...expected.entries()]
+    .map(([localId, identity]) => {
+      const receipt = evidence.receipts.get(localId);
+      if (!receipt) throw new Error('Native mutation receipt is missing for a generated ID.');
+      validateNativeMutationReceipt(receipt, binding, tests, localId, false);
+      registerArtifact(receipt.artifact);
+      registerArtifact(receipt.launcher.artifact);
+      const observed = observedRows.get(localId);
+      if (!observed || observed.identity !== identity)
+        throw new Error('Native mutation receipt has no exact killed identity pair.');
+      return {
+        identity,
+        local_id: localId,
+        outcome: 'assertion-confirmed-killed' as const,
+        runner_receipt: receipt.artifact,
+        launcher_receipt: receipt.launcher.artifact,
+      };
+    })
+    .sort((left, right) =>
+      left.identity < right.identity
+        ? -1
+        : left.identity > right.identity
+          ? 1
+          : left.local_id.localeCompare(right.local_id),
+    );
+  if (mutants.length !== expected.size) throw new Error('Native mutation receipt rows are not exhaustive.');
+
+  return {
+    schema: 'NativeMutationPartitionProof/v1',
+    binding,
+    qualification_scope: 'partition',
+    full_qualification: false,
+    tests: [...tests],
+    universe_sha256: planValue.universe_sha256,
+    artifacts,
+    baseline: {
+      artifact: evidence.baseline.artifact,
+      runner_receipt: evidence.baseline.native_receipt.artifact,
+      launcher_receipt: evidence.baseline.native_receipt.launcher.artifact,
+      cases: baselineCases.map(({ test_file, name, outcome }) => ({
+        test_file,
+        name,
+        outcome: outcome as 'passed' | 'skipped',
+      })),
+    },
+    batches: proofBatches,
+    mutants,
   };
 }
 

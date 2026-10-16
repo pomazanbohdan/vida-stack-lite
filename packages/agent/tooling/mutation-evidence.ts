@@ -678,7 +678,7 @@ export function mutationReceiptMatches(
   ].every(Boolean);
 }
 
-function validCapturedOutput(value: unknown): boolean {
+export function validCapturedOutput(value: unknown): boolean {
   return (
     evidenceRecord(value) &&
     Number.isSafeInteger(value.bytes) &&

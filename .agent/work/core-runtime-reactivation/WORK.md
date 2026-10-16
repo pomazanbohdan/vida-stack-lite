@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `784d0541a31f004ef376daeb076a4b0d0b29c51f`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Native activation has a real one-ID receipt join at784d054, recorded below; full-universe parent admission and mutation closure remain open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `afd9cc9`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. Native activation has a real one-ID receipt join at784d054, recorded below; full-universe parent qualification and mutation closure remain open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -26,11 +26,11 @@ integration, Git and final numeric checks; workers never run competing suites.
 
 | Slot | Contour | Bounded assignment and disposition |
 | --- | --- | --- |
-| 1 | Native mutation producer | Complete-universe parent report proposal using the existing capture, image, batch and per-ID receipt owners; no synthetic Stryker status. |
-| 2 | Native mutation readers | Independent provenance-aware map/projection admission proposal; partial native summaries remain rejected. |
-| 3 | Project context | Independent review of same-invocation private profile-owner reuse with initial and final config freshness preserved. |
-| 4 | `bun-cli-toolchain` | Review three added public-boundary tests and the runtime-init unreachable guard removal; identify feasible native gaps only. |
-| 5 | `bun-project-upgrade-storage-admission` | Parameterize the existing drift case for Host and Mastra with post-checkpoint captured bytes and exact retained-fence cleanup. |
+| 1 | Native mutation producer | Isolated `luna-native-proof-afd9-20261016` writer implements the exact universe/plan/batch/receipt join and its negatives. Root owns producer wiring. |
+| 2 | Native mutation review | Independent review requires both runner and outer launcher receipts, a positive complete baseline census and exact generated-image references; downstream admission stays closed. |
+| 3 | `bun-final-assurance` | Isolated `luna-final-authority-afd9-20261016` writer adds genuine Host corrective authority, missing-root and tampered-byte denials. Root removes redundant adjacent reads before checks. |
+| 4 | `bun-cli-toolchain` | Isolated `luna-toolchain-next-afd9-20261016` writer adds real ancestor-symlink and Linux lowercase-path cases. Root corrects nested fixture-directory creation before checks. |
+| 5 | Bundle-owned upgrade | Read-only current Source review finds no dependency-ready guard relaxation. Legacy overlap/lifetime exclusion remains a real prerequisite; no schema/loader cutover. |
 
 Reuse existing partition inventories, scenario matrices and retained failed runs.
 Workers return diffs and unverified dispositions; Root batches the necessary
@@ -41,6 +41,58 @@ stayed immutable throughout. Collect terminal evidence before integrating the
 next prepared repair packet there.
 Current proposals live under `/workspace/attachments/luna-*-v6-20261016.md`;
 each lane has its own exact output path. Proposals do not establish closure.
+
+The next complete-native slice uses the existing producer's explicit
+`--admit-complete` mode and a distinct partition-local proof/report. It does not
+add a second execution, capture, Source scan or Stryker event stream. Root retains
+shared-file integration; three isolated writers own disjoint exact paths. The
+independent review's missing outer launcher binding is integrated for baseline
+and every ID. Native proof-reader/global qualification remains open. Current
+packet checks are recorded below; the actual complete producer pilot remains
+pending. Do not infer a score.
+
+Root integrates the separate complete native partition candidate and its exact
+negative cases. `confirmRunnerReceipt` returns a reference from its already-read
+validated bytes only on native calls; the producer attaches its actual outer
+launcher record. The proof joins full generated pairs, one shared metadata
+universe digest, complete disjoint batches, positive baseline census, selected
+activation and dual custody references. The existing capture validator also
+rejects truncated outer logs. This is metadata validation, with no new Source
+byte scan, AST/inventory pass or duplicate test execution. Global and contour
+readers remain closed to the new schema pending producer/reader qualification.
+
+Initial strict checks reject fixture nullability/readonly/Buffer typing; Root
+narrows the actual persisted values without casts to successful authority.
+Focused `quality-rolling-cli-check-vqluwh` fails at the new test's post-correction
+seal expectation; authorization correctly cleared it. Root uses the actual
+preauthorization seal instead. Full seven-file check `quality-rolling-cli-check-x2YF29`
+has249 PASS/2 FAIL in54227.378156ms: only the new unsorted directory-set expectation
+and positive baseline fixture's wrong outer exit code fail. Both are corrected;
+failed roots and raw results remain retained. The same set-error search finds
+no analogous unsorted multi-entry assertion in maintained tests.
+
+Blind code review finds no native-proof blocker. Separate final-authority review
+finds that fixture-close failure could mask a body error; Root uses the existing
+cleanup accumulator in finally while rethrowing the tagged body error. This also
+preserves thrown undefined. Five duplicate proof-rejection helpers are reduced
+to one. Adjacent Host/Journal snapshots and pre-tamper authority validation each
+reuse their existing observation when no effect separates assertions.
+
+Final development check `quality-rolling-cli-check-ZHleUk` passes253/0 across8files,
+992 assertions, in53819.203286ms, with full captures, closed process group and
+unchanged boot. The expanded real corrective-authority case takes10104.38ms
+under its unchanged20s bound. Strict501files and TS-only502 pass. This is
+behavioral evidence for the packet, not a full mutation score or frozen closure.
+The first normal precommit then rejects16 type-aware unsafe-any diagnostics
+from Array.isArray widening readonly inputs. Root keeps typed local observations
+and narrows raw plan members as unknown; no rule is disabled. The maintained
+full oxlint owner passes after correction. The affected four-file mutation
+recheck `quality-rolling-cli-check-o2gy7y` passes180/0,782 assertions, in4242.011481ms,
+with complete captures, closed group and unchanged boot. Final hook status is
+established by the ordinary subsequent commit, without a bypass.
+Original core entered-role CRAP ceiling and operation-authorized v2 binding Host
+remain explicit GAPs after separate bounded reviews; no ceiling or verifier is
+invented. An actual complete native producer pilot is the next check.
 
 ### Current native receipt and final-assurance cost investigation
 

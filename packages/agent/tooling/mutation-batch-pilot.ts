@@ -21,10 +21,18 @@ import {
   executeMutationCommand,
   mutationToolInputs,
   testFilesWithLifecycleHooks,
+  validCapturedOutput,
   type MutationJUnitCase,
 } from './mutation-evidence.ts';
 import { mutationLimits } from './mutation-limits.ts';
-import { planMutationBatches, writeMutationMapArtifact, type MutationMapBinding } from './mutation-map.ts';
+import {
+  planMutationBatches,
+  validateNativeMutationPartitionProof,
+  writeMutationMapArtifact,
+  type MutationMapBinding,
+  type NativeMutationBatchResult,
+  type NativeMutationReceiptReference,
+} from './mutation-map.ts';
 import { mutationPartitions, mutationPartitionSources, type MutationPartition } from './mutation-partitions.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
 
@@ -89,6 +97,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
       contour: { type: 'string' },
       'batch-size': { type: 'string', default: '16' },
       'max-batches': { type: 'string', default: '1' },
+      'admit-complete': { type: 'boolean', default: false },
     },
     strict: true,
     allowPositionals: false,
@@ -107,6 +116,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
     partition: selected.partitions[0],
     batchSize: finite(values['batch-size']),
     maxBatches: finite(values['max-batches']),
+    admitComplete: values['admit-complete'] === true,
   };
 }
 
@@ -148,11 +158,11 @@ export function nativeMutationBatchCommand(
   ];
 }
 
-/** Bounded diagnostic only; ordinary gate selection and global admission stay unchanged. */
+/** Complete partition admission is explicit; ordinary gate selection and global admission stay unchanged. */
 async function runMutationBatchPilot(root: string, args: readonly string[]): Promise<void> {
   const pilotStarted = performance.now();
   const firstBudget = executionBudget(mutationLimits.partitionMs, 0);
-  const { partition, batchSize, maxBatches } = selectMutationBatchPilot(args, mutationPartitions());
+  const { partition, batchSize, maxBatches, admitComplete } = selectMutationBatchPilot(args, mutationPartitions());
   const pin = readPin(root);
   checkManifest(root, pin);
   if (process.versions.bun !== pin) throw new Error('Mutation batch pilot requires the pinned Bun.');
@@ -186,8 +196,27 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     if (image.universe.mutants.some((row) => row.generated_status !== 'Pending'))
       throw new Error('Generated dispositions require review before a native batch pilot.');
     const plan = planMutationBatches(root, binding, image.universe, batchSize);
-    record('generated-image.json', image);
-    record('batch-plan.json', plan);
+    const artifacts = {
+      generated_image: record('generated-image.json', image),
+      batch_plan: record('batch-plan.json', plan),
+      input_descriptor: record(`${partition.name}.inputs.json`, {
+        schema: 'MutationInputDescriptor/v3',
+        partition: partition.name,
+        partition_sources: source.sources,
+        partition_source_inputs: source.sourceInputs,
+        partition_source_fingerprint: source.fingerprint,
+        source_fingerprint: inputs.source_fingerprint,
+        tests,
+        test_selection: inputs.test_selection,
+        test_inputs: inputs.test_inputs,
+        tool_inputs: inputs.tool_inputs,
+        input_fingerprint: fingerprint,
+        test_fingerprint: inputs.test_fingerprint,
+        tool_fingerprint: inputs.tool_fingerprint,
+      }),
+    };
+    if (admitComplete && maxBatches < plan.batches.length)
+      throw new Error('Complete native admission requires every planned batch before any test launch.');
     const sandboxRoot = path.join(directory, 'stryker-tmp');
     const sandbox = path.join(sandboxRoot, 'sandbox-native');
     await mkdir(sandbox, { recursive: true });
@@ -203,21 +232,6 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const sandboxTmp = path.join(sandbox, '.tmp');
     await mkdir(sandboxTmp, { recursive: true });
     await symlink(path.join(root, 'node_modules'), path.join(sandbox, 'node_modules'), 'dir');
-    record(`${partition.name}.inputs.json`, {
-      schema: 'MutationInputDescriptor/v3',
-      partition: partition.name,
-      partition_sources: source.sources,
-      partition_source_inputs: source.sourceInputs,
-      partition_source_fingerprint: source.fingerprint,
-      source_fingerprint: inputs.source_fingerprint,
-      tests,
-      test_selection: inputs.test_selection,
-      test_inputs: inputs.test_inputs,
-      tool_inputs: inputs.tool_inputs,
-      input_fingerprint: fingerprint,
-      test_fingerprint: inputs.test_fingerprint,
-      tool_fingerprint: inputs.tool_fingerprint,
-    });
     const environment: NodeJS.ProcessEnv = {
       ...process.env,
       AGENT_RUNTIME_TEST_REPOSITORY_ROOT: repository,
@@ -254,6 +268,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const identity = await parentIdentity();
     const context = { identity, hookFiles: testFilesWithLifecycleHooks(tests, inputs.input_bytes) };
     const command = nativeMutationBatchCommand(bwrap, directory, sandbox, sandboxTmp, process.execPath);
+    const receipts = new Map<string, NativeMutationReceiptReference>();
     const invoke = async (id: string | null, remaining: number, census?: readonly MutationJUnitCase[]) => {
       requireCampaignStorage(directory);
       const key = id === null ? 'dry-run' : sha256(id);
@@ -268,16 +283,18 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
           stderrFile: path.join(directory, `launcher-${key}.stderr.log`),
         },
       );
-      record(`launcher-${key}.json`, result);
+      const launcherArtifact = record(`launcher-${key}.json`, result);
       if (
         result.timedOut ||
         result.signal ||
         result.spawnError ||
         !result.output_capture?.complete ||
+        !validCapturedOutput(result.output_capture.stdout) ||
+        !validCapturedOutput(result.output_capture.stderr) ||
         result.processCustody?.processGroupTerminationObserved !== true
       )
         return { status: 'unknown' as const, reason: 'Native mutation producer or capture did not close cleanly.' };
-      return confirmRunnerReceipt(
+      const outcome = await confirmRunnerReceipt(
         directory,
         runId,
         partition.name,
@@ -292,10 +309,18 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         undefined,
         true,
       );
+      if (outcome.status === 'unknown') return outcome;
+      if (!outcome.native_receipt)
+        return { status: 'unknown' as const, reason: 'Native mutation receipt reference is missing.' };
+      const nativeReceipt = { ...outcome.native_receipt, launcher: { artifact: launcherArtifact, result } };
+      if (id !== null) receipts.set(id, nativeReceipt);
+      return { ...outcome, native_receipt: nativeReceipt };
     };
     const baseline = await invoke(null, firstBudget.remaining(mutationLimits.dryRunEnvelopeMs));
-    record('baseline.json', baseline);
-    if (baseline.status !== 'passed') throw new Error('Native mutation baseline is not a complete passing receipt.');
+    const baselineArtifact = record('baseline.json', baseline);
+    if (baseline.status !== 'passed' || !baseline.native_receipt)
+      throw new Error('Native mutation baseline is not a complete passing receipt.');
+    const batches: Array<Parameters<typeof validateNativeMutationPartitionProof>[4]['batches'][number]> = [];
     const results: NativeBatchRow[] = [];
     const totals = {
       generated: image.universe.mutants.length,
@@ -346,7 +371,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         completeOwnedCleanup(
           [
             () => {
-              record(`batch-${index}.json`, {
+              const value: NativeMutationBatchResult = {
                 schema: 'MutationBatchPilotResult/v2',
                 binding,
                 universe_sha256: plan.universe_sha256,
@@ -357,7 +382,8 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
                 budget_exhausted: observed.budgetExhausted,
                 resource_blocked: resourceBlocked ?? null,
                 results: current,
-              });
+              };
+              batches.push({ artifact: record(`batch-${index}.json`, value), value });
               return undefined;
             },
           ],
@@ -384,6 +410,40 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     };
     record('terminal-summary.json', summary);
     console.log(JSON.stringify(summary));
+    if (admitComplete && !totals.unknown && !totals.survived && !totals.unattempted) {
+      const proof = validateNativeMutationPartitionProof(root, binding, image.universe, plan, {
+        tests,
+        artifacts,
+        baseline: { ...baseline, artifact: baselineArtifact, native_receipt: baseline.native_receipt },
+        batches,
+        receipts,
+      });
+      const proofArtifact = record('native-partition-proof.json', proof);
+      const report = {
+        schema: 'CandidateNativeMutationReport/v1',
+        producer_kind: 'native-instrumenter-batches/v1',
+        qualification_scope: 'partition',
+        full_qualification: false,
+        status: 'pilot-pass',
+        binding,
+        tests,
+        required_effective_score: 1,
+        effective_score: 1,
+        mutants: proof.mutants.length,
+        killed: proof.mutants.length,
+        non_killed: [],
+        unknown_mutants: [],
+        native_partition_proof: proofArtifact,
+      };
+      record('native-partition-report.json', report);
+      console.log(
+        JSON.stringify({
+          schema: 'CandidateNativeMutationReportLocation/v1',
+          directory,
+          report: 'native-partition-report.json',
+        }),
+      );
+    }
     if (totals.unknown || totals.survived || totals.unattempted) process.exitCode = 1;
   } catch (error) {
     completeOwnedCleanup(
@@ -408,7 +468,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
 if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
-      'Diagnostic native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)]. Complete generated universe and full declared test argv; partial/unknown results never qualify a contour.',
+      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete]. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
     );
   else
     await runMutationBatchPilot(

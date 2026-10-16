@@ -18,6 +18,7 @@ import {
   assertGlobalMutationMap,
   confirmPartitionMutationMap,
   writeMutationMapArtifact,
+  type NativeMutationReceiptReference,
 } from './mutation-map.ts';
 import { checkManifest, pinnedEnvironment, readPin } from '../bin/bun.ts';
 import { maintainedSourceInventory } from './maintained-source-inventory.ts';
@@ -122,8 +123,8 @@ export type MutationRunnerResult = {
   stderr_capture: Record<string, unknown>;
 };
 type ReceiptOutcome =
-  | { status: 'passed'; cases: MutationJUnitCase[] }
-  | { status: 'killed' }
+  | { status: 'passed'; cases: MutationJUnitCase[]; native_receipt?: Omit<NativeMutationReceiptReference, 'launcher'> }
+  | { status: 'killed'; native_receipt?: Omit<NativeMutationReceiptReference, 'launcher'> }
   | { status: 'unknown'; reason: string };
 type PartitionIssue = { partition: string; error: string };
 type SourceIssue = { partition: string; source: string };
@@ -400,7 +401,8 @@ export async function confirmRunnerReceipt(
     const testContext = mutationTestContextBinding(path.join(reportDirectory, junitFile), inputs.tool_inputs);
     const sandboxRoot = path.join(reportDirectory, 'stryker-tmp');
     const expectedIdentity = executionIdentityForInvocation(context.identity, command, tests);
-    const receiptBytes = await readBoundedEvidence(reportDirectory, receiptName(partition, mutantId));
+    const receiptFile = receiptName(partition, mutantId);
+    const receiptBytes = await readBoundedEvidence(reportDirectory, receiptFile);
     const receipt: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(receiptBytes));
     const stdoutFile = junitFile.replace(/\.xml$/u, '.stdout.log');
     const stderrFile = junitFile.replace(/\.xml$/u, '.stderr.log');
@@ -482,12 +484,32 @@ export async function confirmRunnerReceipt(
       outcome.outcome,
       requireNativeActivation && mutantId !== null ? (activationHitCount ?? 0) : undefined,
     );
+    let nativeReceipt: Omit<NativeMutationReceiptReference, 'launcher'> | undefined;
+    if (requireNativeActivation && result !== 'unknown') {
+      const source = mutationPartitionSourceBinding(partition, partitionSources, inputs.sources);
+      if (!source) throw new Error('Native receipt partition Source binding is incomplete.');
+      nativeReceipt = {
+        artifact: { file: receiptFile, bytes: receiptBytes.length, sha256: sha256(receiptBytes) },
+        binding: {
+          run_id: runId,
+          partition,
+          input_fingerprint: fingerprint,
+          source_fingerprint: inputs.source_fingerprint,
+          test_fingerprint: inputs.test_fingerprint,
+          tool_fingerprint: inputs.tool_fingerprint,
+          partition_sources: source.sourceInputs,
+        },
+        tests: [...tests],
+        active_mutant_id: mutantId,
+        activation_hit_count: mutantId === null ? 0 : (activationHitCount ?? 0),
+      };
+    }
     if (result === 'passed') {
       if (expectedCases && !mutationJUnitCaseCensusMatches(expectedCases, cases))
         throw new Error('Survived mutant JUnit case outcomes differ from the validated baseline census.');
-      return { status: result, cases };
+      return { status: result, cases, ...(nativeReceipt ? { native_receipt: nativeReceipt } : {}) };
     }
-    if (result === 'killed') return { status: result };
+    if (result === 'killed') return { status: result, ...(nativeReceipt ? { native_receipt: nativeReceipt } : {}) };
     throw new Error('Runner exit status and JUnit outcome disagree or include infrastructure errors.');
   } catch (error) {
     return { status: 'unknown', reason: String(error) };

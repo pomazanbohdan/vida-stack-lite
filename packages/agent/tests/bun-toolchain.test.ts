@@ -234,6 +234,40 @@ test('explicit synchronization preserves other settings and is idempotent', () =
   assert.equal(readFileSync(file, 'utf8'), bytes);
 });
 
+test('Linux sync rejects a package root reached through a real directory symlink', () => {
+  if (process.platform !== 'linux') return;
+  const { root, pin } = fixture();
+  let passed = false;
+  try {
+    const realParent = path.join(root, 'real-parent');
+    const packageRoot = path.join(realParent, 'package-root');
+    mkdirSync(packageRoot, { recursive: true });
+    writeFileSync(path.join(packageRoot, '.bun-version'), `${pin}\n`);
+    const manifest = {
+      name: 'fixture',
+      packageManager: 'bun@0.0.0',
+      engines: { bun: '0.0.0' },
+    };
+    const manifestPath = path.join(packageRoot, 'package.json');
+    const originalManifest = JSON.stringify(manifest);
+    writeFileSync(manifestPath, originalManifest);
+    const aliasParent = path.join(root, 'linked-parent');
+    symlinkSync(realParent, aliasParent, 'dir');
+
+    assert.throws(() => syncPin(path.join(aliasParent, 'package-root')), {
+      message: 'Bun manifest root contains a symbolic link.',
+    });
+    assert.equal(readFileSync(manifestPath, 'utf8'), originalManifest);
+    assert.deepEqual(readdirSync(packageRoot).sort(), ['.bun-version', 'package.json']);
+    passed = true;
+  } finally {
+    if (!passed) {
+      temporaryRoots.delete(root);
+      console.error('Retained failed symlinked Bun manifest root fixture: ' + root);
+    }
+  }
+});
+
 test('invalid pins fail before package resolution', () => {
   const { root, pin } = fixture();
   assert.equal(
@@ -1065,6 +1099,14 @@ test('Windows does not retain competing case variants of PATH', () => {
     ['PATH'],
   );
   assert.equal(env.PATH, `${path.dirname(executable)}${path.delimiter}first`);
+});
+
+test('Linux lowercase path remains caller data while pinnedEnvironment adds PATH', () => {
+  if (process.platform !== 'linux') return;
+  const executable = path.resolve('cache', 'bun');
+  const env = expectReturned(() => pinnedEnvironment(executable, { path: 'caller-path' }));
+  assert.equal(env.path, 'caller-path');
+  assert.equal(env.PATH, `${path.dirname(executable)}${path.delimiter}`);
 });
 
 test('npm is resolved beside Node and ignores an injected npm_execpath', () => {

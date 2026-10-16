@@ -1066,6 +1066,24 @@ No old operation is resumed. These schemas are deliberately not contour-progress
 admission: until the complete execution/custody pilot and parent join qualify,
 the ordinary mutation gate and global quality command remain unchanged.
 
+`--admit-complete` opts into a separate complete-partition candidate proof. Its
+finite `--max-batches` must cover the whole generated plan before baseline tests
+launch. The parent joins exact universe/plan/result pairs, every batch index,
+the complete passing baseline census, selected-branch hits, and both inner runner
+and outer launcher receipts. It preserves generated-image, descriptor and batch
+artifact references plus the existing input/image/executable readbacks. Missing,
+duplicate, foreign, partial, survived, UNKNOWN or resource-blocked observations
+produce no passing candidate. The metadata universe digest has one shared owner;
+this join adds no Source scan or test suite.
+
+The separate `NativeMutationPartitionProof/v1` and
+`CandidateNativeMutationReport/v1` identify `native-instrumenter-batches/v1`
+provenance and remain partition-local with `full_qualification:false`. They
+contain no synthetic Stryker statuses or events. Their complete execution pilot
+and downstream proof-reader qualification remain required; current contour and
+final-quality readers reject them. A new schema or passing join-unit fixture is
+not a qualified mutation score, and old diagnostic operations stay diagnostic.
+
 Parent receipt validation reuses one partition-local execution observation and
 lifecycle-hook analysis of the already captured immutable test/import bytes.
 Each receipt still binds its exact command, tests, sources, tools, JUnit, context

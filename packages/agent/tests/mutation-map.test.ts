@@ -13,9 +13,14 @@ import {
   mutationPartitionMap,
   mutationResultMapRow,
   planMutationBatches,
+  validateNativeMutationPartitionProof,
   mutationGeneratedUniverse,
   validateMutationMapEvents,
   validateMutationPartitionMap,
+  type NativeMutationArtifactRef,
+  type NativeMutationBatchResult,
+  type NativeMutationProofEvidence,
+  type NativeMutationReceiptReference,
   type MutationMapBinding,
 } from '../tooling/mutation-map.ts';
 import { sha256 } from '../tooling/bun-coverage-evidence.ts';
@@ -84,6 +89,106 @@ function result(item = plan()): MutantResult {
   };
 }
 
+function nativeProofFixture() {
+  const items = Array.from({ length: 3 }, (_, index) => {
+    const item = plan(String(index + 10));
+    item.mutant.location = {
+      start: { line: index, column: 0 },
+      end: { line: index, column: 4 },
+    };
+    return item;
+  });
+  const universe = mutationGeneratedUniverse(
+    root,
+    binding,
+    items.map(({ mutant }) => mutant),
+  );
+  const planned = planMutationBatches(root, binding, universe, 2);
+  const tests = ['tests/one.test.ts', 'tests/two.test.ts'];
+  const artifact = (file: string, digest: string): NativeMutationArtifactRef => ({
+    file,
+    bytes: 12,
+    sha256: sha256(digest),
+  });
+  const launcher = (file: string, digest: string, exitCode: number) => ({
+    artifact: artifact(file, digest),
+    result: {
+      exitCode,
+      signal: null,
+      spawnError: null,
+      timedOut: false,
+      processCustody: {
+        pid: 101,
+        scope: 'owned-process-group' as const,
+        terminationObserved: true,
+        processGroupTerminationObserved: true,
+        unrefCalled: false,
+        attempts: [],
+      },
+      output_capture: {
+        complete: true as const,
+        stdout: { bytes: 0, sha256: sha256(''), retained_bytes: 0, truncated: false },
+        stderr: { bytes: 0, sha256: sha256(''), retained_bytes: 0, truncated: false },
+      },
+    },
+  });
+  const receipt = (id: string | null, digest: string) => ({
+    artifact: artifact(id === null ? 'baseline-receipt.json' : `mutant-${id}-receipt.json`, digest),
+    launcher: launcher(
+      id === null ? 'baseline-launcher.json' : `mutant-${id}-launcher.json`,
+      digest,
+      id === null ? 0 : 1,
+    ),
+    binding,
+    tests,
+    active_mutant_id: id,
+    activation_hit_count: id === null ? 0 : 1,
+  });
+  const batches: NativeMutationProofEvidence['batches'][number][] = planned.batches.map((batch, index) => ({
+    artifact: artifact(`batch-${index}.json`, String.fromCharCode(98 + index)),
+    value: {
+      schema: 'MutationBatchPilotResult/v2',
+      binding,
+      universe_sha256: planned.universe_sha256,
+      index,
+      elapsed_ms: 1,
+      complete: true,
+      interrupted: false,
+      budget_exhausted: false,
+      resource_blocked: null,
+      results: batch.local_ids.map((local_id, offset) => ({
+        identity: batch.identities[offset]!,
+        local_id,
+        status: 'killed' as const,
+      })),
+    },
+  }));
+  const receipts = new Map<string, NativeMutationReceiptReference>(
+    universe.mutants.map((row, index) => [row.local_id, receipt(row.local_id, String.fromCharCode(100 + index))]),
+  );
+  const baselineReceipt = receipt(null, 'g');
+  const evidence: NativeMutationProofEvidence & { receipts: typeof receipts } = {
+    tests,
+    artifacts: {
+      generated_image: artifact('generated-image.json', 'h'),
+      batch_plan: artifact('batch-plan.json', 'i'),
+      input_descriptor: artifact('input-descriptor.json', 'j'),
+    },
+    baseline: {
+      status: 'passed',
+      cases: [
+        { test_file: tests[0]!, name: 'baseline case', outcome: 'passed' },
+        { test_file: tests[1]!, name: 'baseline skipped case', outcome: 'skipped' },
+      ],
+      native_receipt: baselineReceipt,
+      artifact: artifact('baseline.json', 'k'),
+    },
+    batches,
+    receipts,
+  };
+  return { universe, planned, evidence };
+}
+
 test('a full generated universe plans activation IDs without inventing a tested engine plan', () => {
   const item = plan('17');
   const generated = mutationGeneratedUniverse(root, binding, [item.mutant]);
@@ -133,6 +238,8 @@ test('native batch pilot keeps exact declared contours and finite per-batch boun
   expect(selected.partition).toBe(declared[0]!);
   expect(selected.batchSize).toBe(8);
   expect(selected.maxBatches).toBe(2);
+  expect(selected.admitComplete).toBe(false);
+  expect(selectMutationBatchPilot(['--contour', 'one', '--admit-complete'], declared).admitComplete).toBe(true);
   expect(() => selectMutationBatchPilot(['--contour', 'one'], [{ ...declared[0]!, environment: 'windows' }])).toThrow(
     'main and Bun',
   );
@@ -357,6 +464,241 @@ test('mutation batches preserve local activation IDs alongside canonical identit
   expect(planned.universe_sha256).toMatch(/^[a-f0-9]{64}$/u);
   const renumbered = mutationPartitionMap(root, binding, [plan('999'), other]);
   expect(planMutationBatches(root, binding, renumbered, 2).universe_sha256).not.toBe(planned.universe_sha256);
+});
+
+test('native partition proof joins exact complete killed pairs and custody references', () => {
+  const fixture = nativeProofFixture();
+  const proof = validateNativeMutationPartitionProof(
+    root,
+    binding,
+    fixture.universe,
+    fixture.planned,
+    fixture.evidence,
+  );
+  expect(proof.schema).toBe('NativeMutationPartitionProof/v1');
+  expect(proof.qualification_scope).toBe('partition');
+  expect(proof.full_qualification).toBe(false);
+  expect(proof.mutants).toHaveLength(fixture.universe.mutants.length);
+  expect(proof.mutants.map(({ local_id }) => local_id).sort()).toEqual(
+    fixture.universe.mutants.map(({ local_id }) => local_id).sort(),
+  );
+  expect(proof.mutants.every((row) => row.outcome === 'assertion-confirmed-killed')).toBe(true);
+  expect(fixture.evidence.baseline.cases).toEqual(proof.baseline.cases);
+  expect(proof.batches.map(({ index }) => index)).toEqual(fixture.planned.batches.map((_, index) => index));
+});
+
+test('native partition proof rejects generated universes with non-pending dispositions', () => {
+  const fixture = nativeProofFixture();
+  fixture.universe = {
+    ...fixture.universe,
+    mutants: fixture.universe.mutants.map((row, index) =>
+      index === 0 ? { ...row, generated_status: 'Ignored' } : row,
+    ),
+  };
+  expect(() =>
+    validateNativeMutationPartitionProof(root, binding, fixture.universe, fixture.planned, fixture.evidence),
+  ).toThrow();
+});
+
+function expectRejectedNativeProof(change: (fixture: ReturnType<typeof nativeProofFixture>) => void): void {
+  const fixture = nativeProofFixture();
+  change(fixture);
+  expect(() =>
+    validateNativeMutationPartitionProof(root, binding, fixture.universe, fixture.planned, fixture.evidence),
+  ).toThrow();
+}
+
+test('native partition proof rejects missing and duplicate IDs even when batch totals match', () => {
+  expectRejectedNativeProof((fixture) => {
+    const first = fixture.evidence.batches[0]!;
+    const foreignBatch = fixture.evidence.batches[1]!;
+    const rows = [...first.value.results];
+    rows[0] = { ...foreignBatch.value.results[0]! };
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0 ? { ...batch, value: { ...batch.value, results: rows } } : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    const first = fixture.evidence.batches[0]!;
+    const rows = [...first.value.results];
+    rows[1] = { ...rows[0]! };
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0 ? { ...batch, value: { ...batch.value, results: rows } } : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    const first = fixture.evidence.batches[0]!;
+    const rows = [...first.value.results];
+    rows[0] = { ...rows[0]!, local_id: 'foreign-id' };
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0 ? { ...batch, value: { ...batch.value, results: rows } } : batch,
+    );
+  });
+});
+
+test('native partition proof rejects swapped pairs, duplicate or missing batch indexes, and incomplete membership', () => {
+  expectRejectedNativeProof((fixture) => {
+    const first = fixture.evidence.batches[0]!;
+    const rows = [...first.value.results];
+    [rows[0], rows[1]] = [rows[1]!, rows[0]!];
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0 ? { ...batch, value: { ...batch.value, results: rows } } : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    const first = fixture.evidence.batches[0]!;
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 1 ? { ...batch, value: { ...batch.value, index: first.value.index } } : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.batches = fixture.evidence.batches.slice(0, -1);
+  });
+});
+
+test('native partition proof rejects wrong receipt IDs and invalid baseline census or activation', () => {
+  expectRejectedNativeProof((fixture) => {
+    const firstId = fixture.universe.mutants[0]!.local_id;
+    const receipt = fixture.evidence.receipts.get(firstId)!;
+    fixture.evidence.receipts.set(firstId, { ...receipt, active_mutant_id: 'different-id' });
+  });
+  expectRejectedNativeProof((fixture) => {
+    const receipt = fixture.evidence.baseline.native_receipt;
+    fixture.evidence.baseline = {
+      ...fixture.evidence.baseline,
+      native_receipt: { ...receipt, active_mutant_id: 'unexpected-activation' },
+    };
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.baseline = { ...fixture.evidence.baseline, status: 'unknown' };
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.baseline = {
+      ...fixture.evidence.baseline,
+      cases: [{ test_file: 'tests/one.test.ts', name: 'failed census', outcome: 'failed' }],
+    };
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.baseline = {
+      ...fixture.evidence.baseline,
+      cases: [{ test_file: 'tests/foreign.test.ts', name: 'foreign census', outcome: 'passed' }],
+    };
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.baseline = {
+      ...fixture.evidence.baseline,
+      cases: [{ test_file: 'tests/one.test.ts', name: 'skipped only', outcome: 'skipped' }],
+    };
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.baseline = {
+      ...fixture.evidence.baseline,
+      cases: fixture.evidence.baseline.cases.slice(0, 1),
+    };
+  });
+});
+
+test('native partition proof rejects survivors, unknown or interrupted batches, and input binding drift', () => {
+  expectRejectedNativeProof((fixture) => {
+    const first = fixture.evidence.batches[0]!;
+    const rows = [...first.value.results];
+    rows[0] = { ...rows[0]!, status: 'survived' } as NativeMutationBatchResult['results'][number];
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0 ? { ...batch, value: { ...batch.value, results: rows } } : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    const first = fixture.evidence.batches[0]!;
+    const rows = [...first.value.results];
+    rows[0] = { ...rows[0]!, status: 'unknown' } as NativeMutationBatchResult['results'][number];
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0 ? { ...batch, value: { ...batch.value, results: rows } } : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0 ? { ...batch, value: { ...batch.value, complete: false, interrupted: true } } : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0 ? { ...batch, value: { ...batch.value, budget_exhausted: true } } : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0
+        ? {
+            ...batch,
+            value: { ...batch.value, resource_blocked: { observed_path: '/owned', available_bytes: '0' } },
+          }
+        : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    fixture.evidence.batches = fixture.evidence.batches.map((batch, index) =>
+      index === 0
+        ? { ...batch, value: { ...batch.value, binding: { ...binding, input_fingerprint: '0'.repeat(64) } } }
+        : batch,
+    );
+  });
+  expectRejectedNativeProof((fixture) => {
+    const changedDigest = '0'.repeat(64);
+    fixture.planned = { ...fixture.planned, universe_sha256: changedDigest };
+    fixture.evidence.batches = fixture.evidence.batches.map((batch) => ({
+      ...batch,
+      value: { ...batch.value, universe_sha256: changedDigest },
+    }));
+  });
+});
+
+test('native partition proof requires outer launcher output and process-group custody', () => {
+  expectRejectedNativeProof((fixture) => {
+    const firstId = fixture.universe.mutants[0]!.local_id;
+    const receipt = fixture.evidence.receipts.get(firstId)!;
+    fixture.evidence.receipts.set(firstId, { ...receipt, launcher: undefined } as unknown as typeof receipt);
+  });
+  expectRejectedNativeProof((fixture) => {
+    const firstId = fixture.universe.mutants[0]!.local_id;
+    const receipt = fixture.evidence.receipts.get(firstId)!;
+    fixture.evidence.receipts.set(firstId, {
+      ...receipt,
+      launcher: { ...receipt.launcher, result: { ...receipt.launcher.result, output_capture: { complete: false } } },
+    });
+  });
+  expectRejectedNativeProof((fixture) => {
+    const firstId = fixture.universe.mutants[0]!.local_id;
+    const receipt = fixture.evidence.receipts.get(firstId)!;
+    const capture = receipt.launcher.result.output_capture;
+    if (!capture?.complete) throw new Error('Expected a complete fixture capture.');
+    fixture.evidence.receipts.set(firstId, {
+      ...receipt,
+      launcher: {
+        ...receipt.launcher,
+        result: {
+          ...receipt.launcher.result,
+          output_capture: { ...capture, stdout: { ...capture.stdout, bytes: 1, truncated: true } },
+        },
+      },
+    });
+  });
+  expectRejectedNativeProof((fixture) => {
+    const firstId = fixture.universe.mutants[0]!.local_id;
+    const receipt = fixture.evidence.receipts.get(firstId)!;
+    fixture.evidence.receipts.set(firstId, {
+      ...receipt,
+      launcher: {
+        ...receipt.launcher,
+        result: {
+          ...receipt.launcher.result,
+          processCustody: {
+            ...receipt.launcher.result.processCustody!,
+            processGroupTerminationObserved: false,
+          },
+        },
+      },
+    });
+  });
 });
 
 test('mutation batch universe binding stays bounded beyond the ordinary canonical node budget', () => {
