@@ -26,8 +26,11 @@ import type { StateVersion } from '../src/host-state.ts';
 import type { HostStateSnapshot, WorkState } from '../src/host-state.ts';
 import type { MastraLedgerItem } from '../src/orchestration/persistent-session-handoff.ts';
 import type { FinalAssuranceReport } from '../src/orchestration/final-assurance.ts';
+import { mastraLedgerStatus } from '../src/orchestration/persistent-session-handoff.ts';
 import {
+  finalAssuranceReceiptReferences,
   prepareLifecycleForCorrection,
+  readCorrectivePlanningJournal,
   validateWorkSessionBindingAndReturnCorrectiveAuthority,
 } from '../src/orchestration/final-assurance.ts';
 import { z } from 'zod';
@@ -869,7 +872,8 @@ test('public final assurance commits three synthetic review reverse pairs at a r
     expect(response.status).toBe('delivery');
     expect(response.runtime_acceptance).toBe('pending_attributable_user_testing');
     expect(response.delivery_gap).toBeNull();
-    const final = currentWork(f.store.readHostStateSnapshot(identity)),
+    const deliveredHost = f.store.readHostStateSnapshot(identity),
+      final = currentWork(deliveredHost),
       current = final.lifecycle.references.filter((ref) => ref.disposition === 'current');
     expect(final.lifecycle.phase).toBe('DELIVERY');
     expect(final.execution.run_id).toBe(runId);
@@ -877,6 +881,25 @@ test('public final assurance commits three synthetic review reverse pairs at a r
       ['review_receipt', 'reverse_validation', 'documentation_clear', 'delivery_manifest'].includes(ref.kind),
     );
     expect(eight).toHaveLength(8);
+    const published = eight.map((reference) => {
+      const file = path.join(f.root, reference.path),
+        bytes = readFileSync(file);
+      expect(createHash('sha256').update(bytes).digest('hex')).toBe(reference.sha256);
+      return { file, bytes };
+    });
+    const reviewedAssurance = f.store.readFinalAssurance(identity, 1);
+    if (!reviewedAssurance) throw new Error('Expected persisted reviewed final assurance.');
+    const sourceReferences = expectReturned(() =>
+      finalAssuranceReceiptReferences(f.root, final, reviewedAssurance.state),
+    );
+    assert.equal(canonicalJson(eight), canonicalJson(sourceReferences));
+    for (const { file, bytes } of published) expect(readFileSync(file)).toEqual(bytes);
+    const afterReferences = f.store.readHostStateSnapshot(identity);
+    expect(afterReferences.work).toEqual(deliveredHost.work);
+    expect(afterReferences.ledger).toEqual(deliveredHost.ledger);
+    expect(afterReferences.workVersion).toEqual(deliveredHost.workVersion);
+    expect(afterReferences.ledgerVersion).toEqual(deliveredHost.ledgerVersion);
+    expect(f.store.readFinalAssurance(identity, 1)).toEqual(reviewedAssurance);
     expect(eight.every((ref) => ref.generation === packet.generation || ref.kind === 'delivery_manifest')).toBe(true);
     expect(response.delivery_manifest?.path).toBe('.agent/work/' + id + '/delivery.json');
     completed = true;
@@ -926,6 +949,9 @@ test('failed final correction preparation consumes persisted Host and CAS-bound 
     expect(prepared.ledgerVersion).toEqual(persisted.ledgerVersion);
     expect(f.journal.state).toEqual(currentJournal.state);
     expect(f.journal.version).toEqual(currentJournal.version);
+    expect(() => readCorrectivePlanningJournal(f.root, work, f.journal)).toThrow(
+      'corrective planning requested for base execution',
+    );
 
     const all = [...f.journal.state.items, ...f.journal.state.completed.flatMap((wave) => wave.items)],
       failed = all.filter((item) => item.observation?.status === 'reported_failed'),
@@ -959,6 +985,30 @@ test('failed final correction preparation consumes persisted Host and CAS-bound 
       execution = journal.state.corrective_execution;
     if (!execution) throw new Error('Expected the persisted corrective Journal execution.');
     if (!authorizedWork.execution.run_id) throw new Error('Expected the persisted base run identity.');
+    const correctiveJournal = {
+      ...journal,
+      resume_status: mastraLedgerStatus(journal.state),
+    };
+    const originalPlanning = readCorrectivePlanningJournal(f.root, authorizedWork, correctiveJournal);
+    assert.equal(canonicalJson(originalPlanning), canonicalJson(f.journal.state));
+    expect(originalPlanning.corrective_execution ?? null).toBeNull();
+    expect(originalPlanning.run_id).toBe(authorizedWork.execution.run_id);
+    expect(() =>
+      readCorrectivePlanningJournal(
+        f.root,
+        {
+          ...authorizedWork,
+          lifecycle: {
+            ...authorizedWork.lifecycle,
+            references: authorizedWork.lifecycle.references.filter(
+              (reference) =>
+                reference.kind !== 'recovery' || reference.artifact_schema !== 'CorrectiveExecutionRecovery/v1',
+            ),
+          },
+        },
+        correctiveJournal,
+      ),
+    ).toThrow('immutable original planning recovery missing');
     const authorityPath = path.join(f.root, execution.authorization.path),
       authorityBytes = readFileSync(authorityPath),
       persistedAuthority: unknown = JSON.parse(authorityBytes.toString('utf8')),

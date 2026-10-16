@@ -1084,6 +1084,14 @@ and downstream proof-reader qualification remain required; current contour and
 final-quality readers reject them. A new schema or passing join-unit fixture is
 not a qualified mutation score, and old diagnostic operations stay diagnostic.
 
+Mutation artifact byte reads share `tooling/mutation-artifact-reader.ts` rather
+than importing the gate's orchestration. Its default4MiB evidence and explicit
+32MiB report bounds retain basename, regular-file, single-link and opened-file
+identity checks. Read and close failures retain their original ordered causes,
+including rejected undefined. Reuse this boundary for persisted-proof readers;
+matching artifact hashes alone do not replace observed runner/assertion custody
+or activate a new numeric admission route.
+
 Parent receipt validation reuses one partition-local execution observation and
 lifecycle-hook analysis of the already captured immutable test/import bytes.
 Each receipt still binds its exact command, tests, sources, tools, JUnit, context

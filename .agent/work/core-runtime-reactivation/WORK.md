@@ -4,7 +4,7 @@ Status date: 2026-10-16. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published main before the current repair packet: `4b99cc6`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. The complete native main-runtime-timing producer pilot now joins151/151 assertion-confirmed Killed at4b99cc6; proof-aware contour-reader and global admission remain open. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
+- Published main before the current repair packet: `3f64293`. Fresh3f84ece custody coverage and same-run pinned scoped CRAP pass below. The complete native main-runtime-timing producer pilot joins151/151 assertion-confirmed Killed at4b99cc6; proof-aware contour-reader and global admission remain open. Fresh final-assurance measurement at3f64293 improves coverage below. Earlier partial and interrupted diagnostics retain their original unqualified dispositions. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -155,6 +155,67 @@ and unchanged boot. Strict501 and TS-only502 pass with zero diagnostics.
 The normal commit hook remains required before publication.
 
 ### Current native receipt and final-assurance cost investigation
+
+The3f64293 correction packet is committed and pushed through the ordinary strict
+hook. Successful SDK formation run38956295242/attempt1/artifact12069429420 binds
+exact head `3f6429345182da9a7e11813f65575b0ab7fedc47`, archive647161bytes and
+SHA256 `0f8e18acf9b6ee1b5801177eb4af24ccd81add4562e93f24be7c5a5cfefd0c83`.
+The maintained readiness owner prepares it without local formation or suites.
+
+Fresh `native-coverage-contour-UUxLCD` completes at that exact unchanged head in
+54700.191766ms, exit0, full nontruncated captures, closed process group and same
+boot. Run `26011d2a-7b91-4bdc-b466-15d9aaa149a8` passes12/0 with207 assertions.
+Its exact focused measurements are F78/94, L241/325, S276/363 and B207/305,
+against the prior76/94,226/325,261/363 and192/305. Measured maxCC33 and entry
+CRAP132 are not frozen admission. The maintained contour owner imports both
+the diagnostic and its actual BLOCKED operation outcome, bringing the automatic
+snapshot to410attempts. The child execution completed; full report/quality
+qualification remains pending. Historical local triples remain6/45.
+
+The next packet extracts the existing mutation gate artifact reader into
+`tooling/mutation-artifact-reader.ts`; callers use a direct import alias without
+a forwarding wrapper. Function correspondence moves readBoundedEvidence to
+readBoundedMutationArtifact and retains isBoundedRegularFile and
+matchesOpenedEvidence in that shared owner. No product Source roles or frozen
+ceilings change. Default4MiB, explicit report32MiB and original guard order stay
+with that owner. A rejected read and a rejected close retain both causes,
+including rejected undefined, rather than allowing finally-close to mask the
+primary failure. Native proof and global admission remain closed.
+
+Real temporary-file controls cover exact bounds, empty/oversize, invalid limits,
+path escape, links/directories/missing files, open rejection, independent read
+and close failures, both failures and restored ordinary reads. Failed or expired
+fixture roots remain retained. The ordinary package files/test phase includes
+the reader and its test once. Independent review's missing-open control is
+implemented; Root also removes the proposal's unconditional failed-root cleanup.
+The final reader-only `quality-rolling-cli-check-owUTa8` passes17/0,70 assertions,
+in32.328407ms with complete capture, closed group and unchanged boot. This is a
+functional check, not a throughput or numeric coverage claim.
+
+The corrective integration case additionally reads actual first-generation
+planning recovery produced by Host authorization. The original proposal fails
+strict checks because a raw Host Journal lacks derived resume_status; Root uses
+the existing mastraLedgerStatus owner without inventing authority. Initial run
+`quality-rolling-cli-check-9PPn7g` passes140 and fails1 only because JSON recovery
+objects have ordinary prototypes while the retained Host snapshot has null
+prototypes. Root compares canonical JSON values; product code is unchanged.
+The corrected `quality-rolling-cli-check-8QzwpC` passes145/0,516 assertions,
+in15960.571352ms, with the unchanged public-delivery case explicitly filtered.
+Base-execution and missing-recovery denials are subsequently added for the same
+real fixture. The final complete selected check is recorded below.
+
+The public final-delivery fixture now also replays direct current-Source receipt
+projection after its actual public DELIVERY commit. It first verifies all8
+persisted reference hashes, then compares exact projected references and existing
+artifact bytes, Host/ledger versions and assurance state. Its six reviewer reports
+remain explicitly synthetic test data, never Runtime acceptance. This extends the
+existing fixture rather than creating or minting a separate successful authority.
+Final five-file `quality-rolling-cli-check-UZdZ6O` passes146/0,666 assertions,
+in49889.398537ms, with full nontruncated captures, closed group and unchanged
+boot. This includes both expanded final-assurance integration cases and all
+shared-reader controls. Strict503files, TS-only504 and maintained full oxlint
+pass with zero diagnostics. The normal hook and fresh measured Source/SDK
+binding remain required before the next numerical result.
 
 The784d054 bounded native pilot at `native-activation-pilot-784d054-dBwZKQ`
 is terminal exit1 in29338.924206ms, without timeout/signal/spawn error, with

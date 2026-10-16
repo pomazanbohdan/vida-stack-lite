@@ -7,10 +7,14 @@ import {
 import { randomUUID } from 'node:crypto';
 import { mutationLimits } from './mutation-limits.ts';
 import { installedStrykerCli } from './mutation-generation.ts';
-import type { Stats } from 'node:fs';
 import { lstat, mkdir, mkdtemp, open, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  readBoundedMutationArtifact as readBoundedEvidence,
+  mutationEvidenceByteLimit as junitByteLimit,
+  mutationArtifactByteLimit as reportByteLimit,
+} from './mutation-artifact-reader.ts';
 import { parse } from '@babel/parser';
 import type { schema } from '@stryker-mutator/api/core';
 import {
@@ -52,8 +56,6 @@ import type {
 } from './mutation-evidence.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const junitByteLimit = 4 * 1024 * 1024;
-const reportByteLimit = 32 * 1024 * 1024;
 const strykerPartitionDeadlineMs = mutationLimits.partitionMs;
 const maximumStrykerDeadlineMs = 4 * 60 * 60 * 1000;
 
@@ -174,52 +176,6 @@ function junitName(partition: string, mutantId: string | null): string {
 function receiptName(partition: string, mutantId: string | null): string {
   const key = mutantId === null ? 'dry-run' : sha256(mutantId);
   return `${partition}-${key}.receipt.json`;
-}
-
-function isBoundedRegularFile(info: Stats, byteLimit: number, allowEmpty: boolean): boolean {
-  return (
-    info.isFile() &&
-    !info.isSymbolicLink() &&
-    info.nlink === 1 &&
-    (allowEmpty || info.size >= 1) &&
-    info.size <= byteLimit
-  );
-}
-
-function matchesOpenedEvidence(opened: Stats, original: Stats): boolean {
-  return (
-    opened.isFile() &&
-    opened.nlink === 1 &&
-    opened.dev === original.dev &&
-    opened.ino === original.ino &&
-    opened.size === original.size
-  );
-}
-
-async function readBoundedEvidence(
-  reportDirectory: string,
-  file: string,
-  byteLimit = junitByteLimit,
-  allowEmpty = false,
-): Promise<Buffer> {
-  if (path.basename(file) !== file) throw new Error('Evidence file name escapes its report directory.');
-  const fullPath = path.join(reportDirectory, file);
-  const info = await lstat(fullPath);
-  if (!isBoundedRegularFile(info, byteLimit, allowEmpty))
-    throw new Error('Evidence file is missing, linked or outside its size bound.');
-  const handle = await open(fullPath, 'r');
-  try {
-    const opened = await handle.stat();
-    if (!matchesOpenedEvidence(opened, info)) throw new Error('Evidence file changed while opening.');
-    const buffer = Buffer.alloc(info.size + 1);
-    const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
-    const after = await handle.stat();
-    if (!matchesOpenedEvidence(after, info) || bytesRead !== info.size || bytesRead > byteLimit)
-      throw new Error('Evidence file changed or exceeded its size bound.');
-    return buffer.subarray(0, bytesRead);
-  } finally {
-    await handle.close();
-  }
 }
 
 async function verifyCapturedOutput(
