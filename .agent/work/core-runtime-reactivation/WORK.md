@@ -6424,6 +6424,65 @@ reviews and missing original report admission remain unchanged. The new v2 key
 is scope_review_main_envelopes_owned_image_20261016. Fresh exact coverage,
 same-run scoped CRAP and complete declared mutation follow publication.
 
+## Owned-image numerical cycle and final bounded correction plan
+
+Published897bf05 has fresh coverage dd1bf2b8-3afe-4a4c-8bb0-0c01ef1fc8b7:
+F79/79,L208/208,S226/226,B96/96. OwnerHSF4PJ completed6307.516953ms,
+complete captures, closed groups and unchanged boot. Same-run scoped v2 CRAP
+passed against immutable019d80647aaf4dbe48dcb7a864c4a5667a0b9d64; original
+ceilings are unchanged, with78retained/1new/4historical removed scope rows.
+The complete mutation run8c26640f-c460-4320-a4be-202548b132ca endedUNKNOWN:
+744total,719assertion-confirmed Killed,22Survived,3UNKNOWN,effective0.9663978494623656.
+Raw722Killed is not the admitted score. OwnerdTDWRc completed682472.368405ms
+without timeout/signal/spawn error, retaining complete127133-byte output;
+groups closed and boot remainedfb995791-a9a7-4f96-8957-afae18b9ef79. Source,
+baseline, provenance and report error arrays are empty. Reports were imported
+through the existing automatic projection owner; no contour/global closure.
+Full report:/workspace/attachments/quality-mutation-main-envelopes-dTDWRc/stdout.log.
+
+Five blind lanes prepare the remaining25rows without another suite/AST/hash pass.
+The three UNKNOWN body-removal mutants share an unguarded result.ok read in the
+new owned-image positive test; assert the result shape before fields, preserving
+their old classification. The queued Source P1 retains one private validated
+active-claim row containing claim, normalized resource keys and parsed expiry.
+Reuse these same-call derivations for cross-claim uniqueness and optional clock
+comparison; retain raw projection/expiry sorting, claim guard order and every
+original cap. Reuse only current ticket keys already validated at its combined
+resource guard; keep future FIFO candidate normalization and its first-error
+pointer. The nested repeated key-map callback needs explicit removal, not an
+allowance transfer. No new callable or clock/authority cache is planned.
+Exact operation oneOf schemas forbid contour_id on release records, so the
+batch assurance lookup can compare the contour ID alone after schema/operation
+binding. Namespace-collision and valid wrong-contour assurance tests must keep
+the meaningful notice/claim/operation distinctions. Other remaining rows need
+specific unsafe-key pointers, exact duplicate/binding diagnostics and queued/
+read-only status controls. No equivalent waiver or classifier change is planned.
+The batch is now integrated. Active claim rows reuse normalized keys and parsed
+expiry in the same invocation; raw resource/expiry projections and lazy future
+FIFO normalization retain their order. Namespace collisions, unsafe resource
+pointers, duplicate/binding diagnostics and queued/read-only controls are explicit.
+The result shape is asserted before fields for the three formerly unconfirmed
+body-deletion failures; old receipts remain unchanged. No new helper, exception,
+classifier change, removed test or raised limit is introduced.
+
+The complete affected three-file selection passes40/0 in2524.652717ms at
+quality-rolling-cli-check-3FohZs, with complete captures, closed groups and same
+boot. Source101/tests459 TypeScript checks pass. Evidence:
+/workspace/attachments/quality-envelope-last25-affected-20261016.log.
+Independent Source/test and actual callback lineage reviews are in attachments
+quality-envelope-last25-actual-independent-20261016.md and
+quality-envelope-validated-rows-actual-lineage-20261016.md. The settled capture
+quality-envelope-validated-rows-inventory-20261016.json has78roles. The bounded
+updater preserves77retained original roles plus the existing prospective10/10
+capture facade. Eight callback identity moves follow actual responsibility;
+one repeated nested mapper is explicitly removed without allowance transfer.
+Global partial counts become5450retained/1661new/95removed/7111current roles,
+149bound Sources. The new scoped review key is
+scope_review_main_envelopes_validated_rows_20261016. Original caps/measurements,
+prior reviews and absent original report admission remain unchanged. Publish
+review and immutable gate pin before fresh coverage, same-run scoped CRAP and
+complete declared mutation. Current changed Source has no new numerical claim.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

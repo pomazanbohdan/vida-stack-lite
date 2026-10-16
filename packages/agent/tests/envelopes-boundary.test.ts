@@ -403,13 +403,8 @@ describe('runtime envelope canonicalization boundary', () => {
     const foreignClaimResult = expectReturned(() =>
       validateCoordinationLedgerV1({ ...ledger, tickets: [ticket, foreign] }),
     );
-    expect(foreignClaimResult).not.toBeNull();
-    expect(typeof foreignClaimResult).toBe('object');
-    expect(Array.isArray(foreignClaimResult.issues)).toBe(true);
-    expect(foreignClaimResult).toMatchObject({
-      ok: false,
-      issues: [{ code: 'TICKET_CLAIM_BINDING_INVALID', path: '$.tickets.1.claim_ids' }],
-    });
+    assertLedgerRejection(foreignClaimResult, 'TICKET_CLAIM_BINDING_INVALID', '$.tickets.1.claim_ids');
+    assert.equal(foreignClaimResult.issues[0]!.message, 'ticket references a claim owned by another ticket');
     const ownClaim = {
       ...claim,
       claim_id: 'claim-foreign-own',
@@ -435,13 +430,8 @@ describe('runtime envelope canonicalization boundary', () => {
         tickets: [ticket, { ...foreign, claim_ids: [ownClaim.claim_id, claim.claim_id] }],
       }),
     );
-    expect(duplicateClaimResult).not.toBeNull();
-    expect(typeof duplicateClaimResult).toBe('object');
-    expect(Array.isArray(duplicateClaimResult.issues)).toBe(true);
-    expect(duplicateClaimResult).toMatchObject({
-      ok: false,
-      issues: [{ code: 'TICKET_CLAIM_BINDING_INVALID', path: '$.tickets.1.claim_ids' }],
-    });
+    assertLedgerRejection(duplicateClaimResult, 'TICKET_CLAIM_BINDING_INVALID', '$.tickets.1.claim_ids');
+    assert.equal(duplicateClaimResult.issues[0]!.message, 'ticket references a claim owned by another ticket');
   });
 
   test('coordination schema rejection retains every diagnostic and leaves a later valid ledger usable', async () => {
@@ -555,6 +545,7 @@ describe('runtime envelope canonicalization boundary', () => {
         },
       }),
     );
+    assert.ok(result !== null && typeof result === 'object');
     assert.equal(result.ok, true);
     if (!result.ok) throw new Error('descriptor image should validate');
     const owned = result.ledger;
@@ -838,6 +829,25 @@ describe('runtime envelope canonicalization boundary', () => {
       expectReturned(() => validateCoordinationLedgerV1(multiNotice)),
       multiNotice,
     );
+    const collidingClaim = { ...claim, claim_id: notice.notice_id };
+    const noticeWithClaimCollision = {
+      ...historicalLedger,
+      tickets: [{ ...owner, claim_ids: [collidingClaim.claim_id] }, contender],
+      claims: [collidingClaim],
+      dispositions: [
+        { ...disposition, subject_kind: 'claim', subject_id: collidingClaim.claim_id, kind: 'recover_expired' },
+      ],
+    };
+    assertLedgerRejection(
+      expectReturned(() => validateCoordinationLedgerV1(noticeWithClaimCollision)),
+      'NOTICE_DISPOSITION_MISSING',
+      '$.notices.0',
+    );
+    const queuedOwner = { ...ledger, tickets: [{ ...owner, status: 'queued' }] };
+    assertLedgerAccepted(
+      expectReturned(() => validateCoordinationLedgerV1(queuedOwner)),
+      queuedOwner,
+    );
 
     const cases: ReadonlyArray<{
       readonly value: unknown;
@@ -1002,6 +1012,22 @@ describe('runtime envelope canonicalization boundary', () => {
         code: 'FIFO_VIOLATION',
         path: '$.tickets.0.active_resources',
       },
+      ...([' resource:unrelated', 'file:../private.ts'] as const).map((badKey) => ({
+        value: {
+          ...ledger,
+          tickets: [
+            activeAfterWaiter,
+            {
+              ...earlierQueued,
+              exclusive_resources: [...owner.exclusive_resources, badKey],
+              blocked_resources: [badKey, ...owner.exclusive_resources],
+            },
+          ],
+          next_sequence: 3,
+        },
+        code: badKey.startsWith('file:') ? 'RESOURCE_PATH_UNSAFE' : 'RESOURCE_KEY_INVALID',
+        path: '$.tickets',
+      })),
       {
         value: { ...ledger, claims: [{ ...claim, ticket_id: 'ticket-absent' }] },
         code: 'CLAIM_TICKET_MISSING',
@@ -1044,6 +1070,48 @@ describe('runtime envelope canonicalization boundary', () => {
       {
         value: {
           ...historicalLedger,
+          notices: [{ ...notice, status: 'open', acknowledgements: [] }],
+          dispositions: [{ ...disposition, subject_id: claim.claim_id }],
+        },
+        code: 'DISPOSITION_SUBJECT_MISSING',
+        path: '$.dispositions.0',
+      },
+      {
+        value: {
+          ...historicalLedger,
+          notices: [{ ...notice, status: 'open', acknowledgements: [] }],
+          dispositions: [
+            { ...disposition, subject_kind: 'claim', kind: 'recover_expired', subject_id: notice.notice_id },
+          ],
+        },
+        code: 'DISPOSITION_SUBJECT_MISSING',
+        path: '$.dispositions.0',
+      },
+      {
+        value: { ...historicalLedger, notices: [{ ...notice, resources: ['file:../private.ts'] }] },
+        code: 'RESOURCE_PATH_UNSAFE',
+        path: '$.notices.0.resources.0',
+      },
+      {
+        value: {
+          ...ledger,
+          tickets: [
+            {
+              ...owner,
+              active_resources: [],
+              expires_at: null,
+              status: 'read_only',
+              blocked_resources: [...owner.exclusive_resources],
+            },
+          ],
+          claims: [{ ...claim, status: 'released' }],
+        },
+        code: 'CLOSED_TICKET_BLOCKED',
+        path: '$.tickets.0.blocked_resources',
+      },
+      {
+        value: {
+          ...historicalLedger,
           notices: [{ ...notice, status: 'acknowledged' }],
           dispositions: [{ ...disposition, subject_id: 'notice-absent' }],
         },
@@ -1071,6 +1139,15 @@ describe('runtime envelope canonicalization boundary', () => {
       validateCoordinationLedgerV1(partiallyOutOfScopeClaimLedger),
     );
     assertLedgerRejection(partiallyOutOfScopeClaimResult, 'ACTIVE_CLAIM_SCOPE_INVALID', '$.claims.0.resources');
+    assert.equal(partiallyOutOfScopeClaimResult.issues[0]!.message, 'active claim exceeds ticket resource scope');
+    const malformedHistoricalClaim = expectReturned(() =>
+      validateCoordinationLedgerV1({
+        ...ledger,
+        tickets: [{ ...owner, active_resources: [], expires_at: null }],
+        claims: [{ ...claim, status: 'released', resources: ['file:../private.ts'] }],
+      }),
+    );
+    assertLedgerRejection(malformedHistoricalClaim, 'RESOURCE_PATH_UNSAFE', '$.claims.0.resources.0');
     const historicalClaimLedger = {
       ...ledger,
       tickets: [
@@ -1138,10 +1215,7 @@ describe('runtime envelope canonicalization boundary', () => {
     } satisfies CoordinationLedger;
     const before = structuredClone(overlapping);
     const result = expectReturned(() => validateCoordinationLedgerV1(overlapping));
-    expect(result.ok).toBe(false);
-    expect(result.issues).toMatchObject([
-      { code: 'ACTIVE_CLAIM_RESOURCE_DUPLICATE', path: '$.tickets.0.active_resources' },
-    ]);
+    assertLedgerRejection(result, 'ACTIVE_CLAIM_RESOURCE_DUPLICATE', '$.tickets.0.active_resources');
     expect(overlapping).toEqual(before);
 
     const releasedClaim: CoordinationClaim = { ...overlappingClaim, status: 'released' };
@@ -1235,12 +1309,7 @@ describe('runtime envelope canonicalization boundary', () => {
     };
     const before = structuredClone(value);
     const result = expectReturned(() => validateCoordinationLedgerV1(value));
-    assert.equal(result.ok, false);
-    assert.equal(result.ledger, null);
-    assert.deepEqual(
-      result.issues.map(({ code, path }) => ({ code, path })),
-      [{ code: 'TICKET_RESOURCE_DUPLICATE', path: '$.tickets.0.exclusive_resources' }],
-    );
+    assertLedgerRejection(result, 'TICKET_RESOURCE_DUPLICATE', '$.tickets.0.exclusive_resources');
     assert.deepEqual(value, before);
   });
 
@@ -1346,6 +1415,16 @@ describe('runtime envelope canonicalization boundary', () => {
         value: { ...base, tickets: [{ ...ticket, contour_keys: aliases }] },
         code: 'TICKET_CONTOUR_DUPLICATE',
         pointer: '$.tickets.0.contour_keys',
+      },
+      {
+        value: { ...base, tickets: [{ ...ticket, contour_keys: ['file:../private.ts'] }] },
+        code: 'RESOURCE_PATH_UNSAFE',
+        pointer: '$.tickets.0.contour_keys.0',
+      },
+      {
+        value: { ...base, tickets: [{ ...ticket, blocked_resources: ['file:../private.ts'] }] },
+        code: 'RESOURCE_PATH_UNSAFE',
+        pointer: '$.tickets.0.resources.1',
       },
       {
         value: { ...base, tickets: [{ ...ticket, blocked_resources: [...ticket.active_resources] }] },
@@ -1694,6 +1773,11 @@ describe('runtime envelope canonicalization boundary', () => {
     };
 
     const ready = makeLedger('ready_for_user_testing');
+    const otherContourIdentity = { ...contourIdentity, contour_id: 'contour-other' };
+    const otherContour = {
+      ...otherContourIdentity,
+      contour_digest: expectReturned(() => canonicalJsonDigest(otherContourIdentity)),
+    };
     const accepted = makeLedger('accepted');
     const feedback = makeLedger('feedback');
     const rejected = makeLedger('rejected');
@@ -1991,6 +2075,11 @@ describe('runtime envelope canonicalization boundary', () => {
         path: '$.operations.1',
       },
       {
+        value: { ...ready, operations: [release, { ...assurance, contour_id: 'contour-missing' }] },
+        code: 'ASSURANCE_CONTOUR_BINDING_INVALID',
+        path: '$.operations.1',
+      },
+      {
         value: { ...ready, operations: [{ ...release, to_ledger_revision: 3 }, assurance] },
         code: 'OPERATION_REVISION_INVALID',
         path: '$.operations.0',
@@ -2027,6 +2116,18 @@ describe('runtime envelope canonicalization boundary', () => {
       },
       {
         value: { ...ready, operations: [release] },
+        code: 'BATCH_ASSURANCE_MISSING',
+        path: '$.batches.0',
+      },
+      {
+        value: {
+          ...ready,
+          contours: [contour, otherContour],
+          operations: [
+            release,
+            { ...assurance, contour_id: otherContour.contour_id, contour_digest: otherContour.contour_digest },
+          ],
+        },
         code: 'BATCH_ASSURANCE_MISSING',
         path: '$.batches.0',
       },

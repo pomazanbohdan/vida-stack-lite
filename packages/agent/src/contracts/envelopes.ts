@@ -330,7 +330,14 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       field + ' identifiers',
     );
 
-  const activeClaimsByTicket = new Map<string, CoordinationClaim[]>();
+  const activeClaimsByTicket = new Map<
+    string,
+    {
+      readonly claim: CoordinationClaim;
+      readonly resourceKeys: readonly string[];
+      readonly leaseExpiry: number;
+    }[]
+  >();
   const tickets = new Map(
     ledger.tickets.map((ticket) => {
       activeClaimsByTicket.set(ticket.ticket_id, []);
@@ -351,16 +358,12 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       `$.claims.${index}`,
       'claim authority binding invalid',
     );
-    uniqueLedgerValues(
-      claim.resources.map((resource, resourceIndex) =>
-        claim.status === 'active'
-          ? ledgerResourceKey(resource, `$.claims.${index}.resources.${resourceIndex}`)
-          : ledgerHistoricalResourceKey(resource, `$.claims.${index}.resources.${resourceIndex}`),
-      ),
-      'CLAIM_RESOURCE_DUPLICATE',
-      `$.claims.${index}.resources`,
-      'claim resources',
+    const resourceKeys = claim.resources.map((resource, resourceIndex) =>
+      claim.status === 'active'
+        ? ledgerResourceKey(resource, `$.claims.${index}.resources.${resourceIndex}`)
+        : ledgerHistoricalResourceKey(resource, `$.claims.${index}.resources.${resourceIndex}`),
     );
+    uniqueLedgerValues(resourceKeys, 'CLAIM_RESOURCE_DUPLICATE', `$.claims.${index}.resources`, 'claim resources');
     if (claim.status === 'active') {
       ledgerRequire(
         claim.resources.every((resource) => ticket.exclusive_resources.includes(resource)),
@@ -368,11 +371,12 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
         `$.claims.${index}.resources`,
         'active claim exceeds ticket resource scope',
       );
-      activeClaimsByTicket.get(claim.ticket_id)!.push(claim);
     }
-    ledgerTimestamp(claim.lease_expires_at, `$.claims.${index}.lease_expires_at`);
+    const leaseExpiry = ledgerTimestamp(claim.lease_expires_at, `$.claims.${index}.lease_expires_at`);
     ledgerTimestamp(claim.created_at, `$.claims.${index}.created_at`);
     ledgerTimestamp(claim.renewed_at, `$.claims.${index}.renewed_at`);
+    if (claim.status === 'active')
+      activeClaimsByTicket.get(claim.ticket_id)!.push({ claim, resourceKeys, leaseExpiry });
   });
 
   ledger.tickets.forEach((ticket, index) => {
@@ -393,10 +397,11 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       `$.tickets.${index}.exclusive_resources`,
       'ticket exclusive resources',
     );
+    const ticketResourceKeys = [...ticket.active_resources, ...ticket.blocked_resources].map(
+      (resource, resourceIndex) => ledgerResourceKey(resource, `$.tickets.${index}.resources.${resourceIndex}`),
+    );
     uniqueLedgerValues(
-      [...ticket.active_resources, ...ticket.blocked_resources].map((resource, resourceIndex) =>
-        ledgerResourceKey(resource, `$.tickets.${index}.resources.${resourceIndex}`),
-      ),
+      ticketResourceKeys,
       'TICKET_ACTIVE_RESOURCE_DUPLICATE',
       `$.tickets.${index}`,
       'ticket resources',
@@ -429,21 +434,19 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
     );
     const activeClaims = activeClaimsByTicket.get(ticket.ticket_id)!;
     uniqueLedgerValues(
-      activeClaims.flatMap((claim) =>
-        claim.resources.map((resource) => ledgerResourceKey(resource, `$.tickets.${index}.active_resources`)),
-      ),
+      activeClaims.flatMap((row) => row.resourceKeys),
       'ACTIVE_CLAIM_RESOURCE_DUPLICATE',
       `$.tickets.${index}.active_resources`,
       'active claim ownership',
     );
-    const projected = activeClaims.flatMap((claim) => claim.resources).sort();
+    const projected = activeClaims.flatMap((row) => row.claim.resources).sort();
     ledgerRequire(
       sameCoordinationStrings(projected, [...ticket.active_resources].sort()),
       'ACTIVE_RESOURCE_PROJECTION_INVALID',
       `$.tickets.${index}.active_resources`,
       'ticket active resource projection differs from claims',
     );
-    const expiry = activeClaims.map((claim) => claim.lease_expires_at).sort()[0] ?? null;
+    const expiry = activeClaims.map((row) => row.claim.lease_expires_at).sort()[0] ?? null;
     ledgerRequire(
       ticket.expires_at === expiry,
       'TICKET_EXPIRY_PROJECTION_INVALID',
@@ -471,14 +474,14 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       );
       if (currentTimeMs !== null)
         ledgerRequire(
-          activeClaims.every((claim) => ledgerTimestamp(claim.lease_expires_at, '$.claims') > currentTimeMs),
+          activeClaims.every((row) => row.leaseExpiry > currentTimeMs),
           'READY_LEASE_EXPIRED',
           `$.tickets.${index}`,
           'ready ticket requires complete current ownership',
         );
     }
-    for (const [resourceIndex, resource] of ticket.active_resources.entries()) {
-      const key = ledgerResourceKey(resource, `$.tickets.${index}.active_resources.${resourceIndex}`);
+    for (const [resourceIndex] of ticket.active_resources.entries()) {
+      const key = ticketResourceKeys[resourceIndex]!;
       const earlier = ledger.tickets.find(
         (candidate) =>
           candidate.sequence < ticket.sequence &&
@@ -671,9 +674,7 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
   });
   ledger.batches.forEach((batch, index) =>
     ledgerRequire(
-      ledger.operations.some(
-        (operation) => operation.kind === 'contour_assurance' && operation.contour_id === batch.contour_id,
-      ),
+      ledger.operations.some((operation) => operation.contour_id === batch.contour_id),
       'BATCH_ASSURANCE_MISSING',
       `$.batches.${index}`,
       'release batch requires contour assurance',

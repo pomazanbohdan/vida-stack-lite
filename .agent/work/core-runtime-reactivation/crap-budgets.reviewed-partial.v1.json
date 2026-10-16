@@ -10,10 +10,10 @@
     "quality_passed": false
   },
   "counts": {
-    "retained": 5451,
+    "retained": 5450,
     "new": 1661,
-    "removed": 94,
-    "current_roles": 7112,
+    "removed": 95,
+    "current_roles": 7111,
     "source_files": 149
   },
   "source_bindings": [
@@ -419,7 +419,7 @@
     },
     {
       "file": "src/contracts/envelopes.ts",
-      "sha256": "79c48fd92f24575736b969d485166f3c319847f4551763d4b7143861d733e703"
+      "sha256": "71f614a1e4fe6792cabbc077d4236215c88de1f2b7012bb34dfc1eb0cbfa65de"
     },
     {
       "file": "src/orchestration/delivered-work-continuation-repair.ts",
@@ -43717,10 +43717,10 @@
         "line": 266,
         "column": 0,
         "start": 10444,
-        "end": 28498,
+        "end": 28504,
         "bodyLine": 266,
         "bodyColumn": 97,
-        "bodyEndLine": 729,
+        "bodyEndLine": 730,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43945,13 +43945,13 @@
         "bodyEndColumn": 83
       },
       "current_source_address": {
-        "line": 335,
+        "line": 342,
         "column": 23,
-        "start": 12484,
-        "end": 12598,
-        "bodyLine": 335,
+        "start": 12611,
+        "end": 12725,
+        "bodyLine": 342,
         "bodyColumn": 35,
-        "bodyEndLine": 338,
+        "bodyEndLine": 345,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -43978,13 +43978,13 @@
         "bodyEndColumn": 77
       },
       "current_source_address": {
-        "line": 340,
+        "line": 347,
         "column": 43,
-        "start": 12649,
-        "end": 12683,
-        "bodyLine": 340,
+        "start": 12776,
+        "end": 12810,
+        "bodyLine": 347,
         "bodyColumn": 54,
-        "bodyEndLine": 340,
+        "bodyEndLine": 347,
         "bodyEndColumn": 77
       },
       "baseline_complexity": 1,
@@ -44011,13 +44011,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 341,
+        "line": 348,
         "column": 24,
-        "start": 12711,
-        "end": 14289,
-        "bodyLine": 341,
+        "start": 12838,
+        "end": 14502,
+        "bodyLine": 348,
         "bodyColumn": 42,
-        "bodyEndLine": 376,
+        "bodyEndLine": 380,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44026,11 +44026,11 @@
       "max_complexity": 9,
       "max_crap": 9,
       "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
-      "current_complexity": 7
+      "current_complexity": 8
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
+      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/binding:resourceKeys/closure:CallExpression:arguments[0]#0",
       "file": "src/contracts/envelopes.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -44044,26 +44044,26 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 355,
-        "column": 26,
-        "start": 13341,
-        "end": 13589,
-        "bodyLine": 356,
-        "bodyColumn": 8,
-        "bodyEndLine": 358,
-        "bodyEndColumn": 97
+        "line": 361,
+        "column": 45,
+        "start": 13463,
+        "end": 13705,
+        "bodyLine": 362,
+        "bodyColumn": 6,
+        "bodyEndLine": 364,
+        "bodyEndColumn": 95
       },
       "baseline_complexity": 2,
       "baseline_coverage": 1,
       "baseline_crap": 2,
       "max_complexity": 2,
       "max_crap": 2,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Validated-row responsibility review maps this existing callback to src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/binding:resourceKeys/closure:CallExpression:arguments[0]#0; preserve its original ceiling and measurements. Binding/ordinal changes do not create a new role.",
       "current_complexity": 2
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#1",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#1",
+      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
       "file": "src/contracts/envelopes.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -44077,13 +44077,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 366,
+        "line": 369,
         "column": 30,
-        "start": 13791,
-        "end": 13850,
-        "bodyLine": 366,
+        "start": 13918,
+        "end": 13977,
+        "bodyLine": 369,
         "bodyColumn": 44,
-        "bodyEndLine": 366,
+        "bodyEndLine": 369,
         "bodyEndColumn": 89
       },
       "baseline_complexity": 1,
@@ -44091,7 +44091,7 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Validated-row responsibility review maps this existing callback to src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0; preserve its original ceiling and measurements. Binding/ordinal changes do not create a new role.",
       "current_complexity": 1
     },
     {
@@ -44110,13 +44110,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 378,
+        "line": 382,
         "column": 25,
-        "start": 14318,
-        "end": 19194,
-        "bodyLine": 378,
+        "start": 14531,
+        "end": 19259,
+        "bodyLine": 382,
         "bodyColumn": 44,
-        "bodyEndLine": 497,
+        "bodyEndLine": 500,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44143,13 +44143,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 381,
+        "line": 385,
         "column": 30,
-        "start": 14466,
-        "end": 14592,
-        "bodyLine": 382,
+        "start": 14679,
+        "end": 14805,
+        "bodyLine": 386,
         "bodyColumn": 8,
-        "bodyEndLine": 382,
+        "bodyEndLine": 386,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -44176,13 +44176,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 389,
+        "line": 393,
         "column": 37,
-        "start": 14775,
-        "end": 14908,
-        "bodyLine": 390,
+        "start": 14988,
+        "end": 15121,
+        "bodyLine": 394,
         "bodyColumn": 8,
-        "bodyEndLine": 390,
+        "bodyEndLine": 394,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -44195,7 +44195,7 @@
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#2",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#2",
+      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:ticketResourceKeys/closure:CallExpression:arguments[0]#0",
       "file": "src/contracts/envelopes.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -44209,26 +44209,26 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 397,
-        "column": 68,
-        "start": 15137,
-        "end": 15250,
-        "bodyLine": 398,
-        "bodyColumn": 8,
-        "bodyEndLine": 398,
-        "bodyEndColumn": 84
+        "line": 401,
+        "column": 6,
+        "start": 15358,
+        "end": 15463,
+        "bodyLine": 401,
+        "bodyColumn": 35,
+        "bodyEndLine": 401,
+        "bodyEndColumn": 111
       },
       "baseline_complexity": 1,
       "baseline_coverage": 1,
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Validated-row responsibility review maps this existing callback to src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/binding:ticketResourceKeys/closure:CallExpression:arguments[0]#0; preserve its original ceiling and measurements. Binding/ordinal changes do not create a new role.",
       "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#3",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#3",
+      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#2",
       "file": "src/contracts/envelopes.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -44242,13 +44242,13 @@
         "bodyEndColumn": 53
       },
       "current_source_address": {
-        "line": 411,
+        "line": 416,
         "column": 70,
-        "start": 15644,
-        "end": 15711,
-        "bodyLine": 412,
+        "start": 15905,
+        "end": 15972,
+        "bodyLine": 417,
         "bodyColumn": 8,
-        "bodyEndLine": 412,
+        "bodyEndLine": 417,
         "bodyEndColumn": 53
       },
       "baseline_complexity": 1,
@@ -44256,12 +44256,12 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Validated-row responsibility review maps this existing callback to src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#2; preserve its original ceiling and measurements. Binding/ordinal changes do not create a new role.",
       "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#4",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#4",
+      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#3",
       "file": "src/contracts/envelopes.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -44275,13 +44275,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 419,
+        "line": 424,
         "column": 29,
-        "start": 15893,
-        "end": 15925,
-        "bodyLine": 419,
+        "start": 16154,
+        "end": 16186,
+        "bodyLine": 424,
         "bodyColumn": 42,
-        "bodyEndLine": 419,
+        "bodyEndLine": 424,
         "bodyEndColumn": 61
       },
       "baseline_complexity": 1,
@@ -44289,12 +44289,12 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Validated-row responsibility review maps this existing callback to src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#3; preserve its original ceiling and measurements. Binding/ordinal changes do not create a new role.",
       "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#5",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#5",
+      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#4",
       "file": "src/contracts/envelopes.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -44308,13 +44308,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 425,
+        "line": 430,
         "column": 29,
-        "start": 16094,
-        "end": 16158,
-        "bodyLine": 425,
+        "start": 16355,
+        "end": 16419,
+        "bodyLine": 430,
         "bodyColumn": 42,
-        "bodyEndLine": 425,
+        "bodyEndLine": 430,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 1,
@@ -44322,12 +44322,12 @@
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Validated-row responsibility review maps this existing callback to src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#4; preserve its original ceiling and measurements. Binding/ordinal changes do not create a new role.",
       "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6",
+      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#5",
       "file": "src/contracts/envelopes.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -44341,54 +44341,21 @@
         "bodyEndColumn": 109
       },
       "current_source_address": {
-        "line": 432,
+        "line": 437,
         "column": 27,
-        "start": 16424,
-        "end": 16544,
-        "bodyLine": 433,
-        "bodyColumn": 8,
-        "bodyEndLine": 433,
-        "bodyEndColumn": 109
+        "start": 16685,
+        "end": 16710,
+        "bodyLine": 437,
+        "bodyColumn": 36,
+        "bodyEndLine": 437,
+        "bodyEndColumn": 52
       },
       "baseline_complexity": 1,
       "baseline_coverage": 1,
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
-      "current_complexity": 1
-    },
-    {
-      "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
-      "file": "src/contracts/envelopes.ts",
-      "name": "closure:CallExpression:arguments[0]",
-      "source_address": {
-        "line": 454,
-        "column": 28,
-        "start": 16962,
-        "end": 17042,
-        "bodyLine": 454,
-        "bodyColumn": 42,
-        "bodyEndLine": 454,
-        "bodyEndColumn": 108
-      },
-      "current_source_address": {
-        "line": 433,
-        "column": 28,
-        "start": 16463,
-        "end": 16543,
-        "bodyLine": 433,
-        "bodyColumn": 42,
-        "bodyEndLine": 433,
-        "bodyEndColumn": 108
-      },
-      "baseline_complexity": 1,
-      "baseline_coverage": 1,
-      "baseline_crap": 1,
-      "max_complexity": 1,
-      "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Validated-row responsibility review maps this existing callback to src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#5; preserve its original ceiling and measurements. Binding/ordinal changes do not create a new role.",
       "current_complexity": 1
     },
     {
@@ -44407,14 +44374,14 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 439,
+        "line": 442,
         "column": 43,
-        "start": 16723,
-        "end": 16749,
-        "bodyLine": 439,
-        "bodyColumn": 54,
-        "bodyEndLine": 439,
-        "bodyEndColumn": 69
+        "start": 16881,
+        "end": 16909,
+        "bodyLine": 442,
+        "bodyColumn": 52,
+        "bodyEndLine": 442,
+        "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
       "baseline_coverage": 1,
@@ -44440,14 +44407,14 @@
         "bodyEndColumn": 69
       },
       "current_source_address": {
-        "line": 446,
+        "line": 449,
         "column": 36,
-        "start": 17052,
-        "end": 17085,
-        "bodyLine": 446,
-        "bodyColumn": 47,
-        "bodyEndLine": 446,
-        "bodyEndColumn": 69
+        "start": 17212,
+        "end": 17247,
+        "bodyLine": 449,
+        "bodyColumn": 45,
+        "bodyEndLine": 449,
+        "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
       "baseline_coverage": 1,
@@ -44459,7 +44426,7 @@
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#7",
-      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#7",
+      "current_identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6",
       "file": "src/contracts/envelopes.ts",
       "name": "closure:CallExpression:arguments[0]",
       "source_address": {
@@ -44473,21 +44440,21 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 474,
+        "line": 477,
         "column": 29,
-        "start": 18223,
-        "end": 18301,
-        "bodyLine": 474,
-        "bodyColumn": 40,
-        "bodyEndLine": 474,
-        "bodyEndColumn": 107
+        "start": 18385,
+        "end": 18425,
+        "bodyLine": 477,
+        "bodyColumn": 38,
+        "bodyEndLine": 477,
+        "bodyEndColumn": 69
       },
       "baseline_complexity": 1,
       "baseline_coverage": 1,
       "baseline_crap": 1,
       "max_complexity": 1,
       "max_crap": 1,
-      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Validated-row responsibility review maps this existing callback to src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6; preserve its original ceiling and measurements. Binding/ordinal changes do not create a new role.",
       "current_complexity": 1
     },
     {
@@ -44506,13 +44473,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 483,
+        "line": 486,
         "column": 8,
-        "start": 18683,
-        "end": 18995,
-        "bodyLine": 484,
+        "start": 18748,
+        "end": 19060,
+        "bodyLine": 487,
         "bodyColumn": 10,
-        "bodyEndLine": 488,
+        "bodyEndLine": 491,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 4,
@@ -44539,13 +44506,13 @@
         "bodyEndColumn": 72
       },
       "current_source_address": {
-        "line": 487,
+        "line": 490,
         "column": 12,
-        "start": 18922,
-        "end": 18982,
-        "bodyLine": 487,
+        "start": 18987,
+        "end": 19047,
+        "bodyLine": 490,
         "bodyColumn": 25,
-        "bodyEndLine": 487,
+        "bodyEndLine": 490,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 1,
@@ -44572,13 +44539,13 @@
         "bodyEndColumn": 88
       },
       "current_source_address": {
-        "line": 499,
+        "line": 502,
         "column": 45,
-        "start": 19243,
-        "end": 19286,
-        "bodyLine": 499,
+        "start": 19308,
+        "end": 19351,
+        "bodyLine": 502,
         "bodyColumn": 56,
-        "bodyEndLine": 499,
+        "bodyEndLine": 502,
         "bodyEndColumn": 88
       },
       "baseline_complexity": 1,
@@ -44605,13 +44572,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 500,
+        "line": 503,
         "column": 25,
-        "start": 19315,
-        "end": 20762,
-        "bodyLine": 500,
+        "start": 19380,
+        "end": 20827,
+        "bodyLine": 503,
         "bodyColumn": 44,
-        "bodyEndLine": 536,
+        "bodyEndLine": 539,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -44638,13 +44605,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 509,
+        "line": 512,
         "column": 20,
-        "start": 19662,
-        "end": 19775,
-        "bodyLine": 510,
+        "start": 19727,
+        "end": 19840,
+        "bodyLine": 513,
         "bodyColumn": 8,
-        "bodyEndLine": 510,
+        "bodyEndLine": 513,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44671,13 +44638,13 @@
         "bodyEndColumn": 114
       },
       "current_source_address": {
-        "line": 517,
+        "line": 520,
         "column": 84,
-        "start": 20000,
-        "end": 20030,
-        "bodyLine": 517,
+        "start": 20065,
+        "end": 20095,
+        "bodyLine": 520,
         "bodyColumn": 95,
-        "bodyEndLine": 517,
+        "bodyEndLine": 520,
         "bodyEndColumn": 114
       },
       "baseline_complexity": 1,
@@ -44704,13 +44671,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 531,
+        "line": 534,
         "column": 33,
-        "start": 20546,
-        "end": 20629,
-        "bodyLine": 531,
+        "start": 20611,
+        "end": 20694,
+        "bodyLine": 534,
         "bodyColumn": 44,
-        "bodyEndLine": 531,
+        "bodyEndLine": 534,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 2,
@@ -44737,13 +44704,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 537,
+        "line": 540,
         "column": 30,
-        "start": 20795,
-        "end": 21144,
-        "bodyLine": 537,
+        "start": 20860,
+        "end": 21209,
+        "bodyLine": 540,
         "bodyColumn": 54,
-        "bodyEndLine": 546,
+        "bodyEndLine": 549,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 6,
@@ -44770,13 +44737,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 548,
+        "line": 551,
         "column": 47,
-        "start": 21195,
-        "end": 21239,
-        "bodyLine": 548,
+        "start": 21260,
+        "end": 21304,
+        "bodyLine": 551,
         "bodyColumn": 58,
-        "bodyEndLine": 548,
+        "bodyEndLine": 551,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44803,13 +44770,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 549,
+        "line": 552,
         "column": 26,
-        "start": 21269,
-        "end": 22405,
-        "bodyLine": 549,
+        "start": 21334,
+        "end": 22470,
+        "bodyLine": 552,
         "bodyColumn": 46,
-        "bodyEndLine": 580,
+        "bodyEndLine": 583,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -44836,13 +44803,13 @@
         "bodyEndColumn": 64
       },
       "current_source_address": {
-        "line": 551,
+        "line": 554,
         "column": 41,
-        "start": 21395,
-        "end": 21418,
-        "bodyLine": 551,
+        "start": 21460,
+        "end": 21483,
+        "bodyLine": 554,
         "bodyColumn": 49,
-        "bodyEndLine": 551,
+        "bodyEndLine": 554,
         "bodyEndColumn": 64
       },
       "baseline_complexity": 1,
@@ -44869,13 +44836,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 559,
+        "line": 562,
         "column": 27,
-        "start": 21626,
-        "end": 21679,
-        "bodyLine": 559,
+        "start": 21691,
+        "end": 21744,
+        "bodyLine": 562,
         "bodyColumn": 39,
-        "bodyEndLine": 559,
+        "bodyEndLine": 562,
         "bodyEndColumn": 80
       },
       "baseline_complexity": 1,
@@ -44902,13 +44869,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 560,
+        "line": 563,
         "column": 89,
-        "start": 21773,
-        "end": 21800,
-        "bodyLine": 560,
+        "start": 21838,
+        "end": 21865,
+        "bodyLine": 563,
         "bodyColumn": 101,
-        "bodyEndLine": 560,
+        "bodyEndLine": 563,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -44935,13 +44902,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 581,
+        "line": 584,
         "column": 25,
-        "start": 22433,
-        "end": 24774,
-        "bodyLine": 581,
+        "start": 22498,
+        "end": 24839,
+        "bodyLine": 584,
         "bodyColumn": 43,
-        "bodyEndLine": 636,
+        "bodyEndLine": 639,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 7,
@@ -44968,13 +44935,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 592,
+        "line": 595,
         "column": 77,
-        "start": 22909,
-        "end": 22939,
-        "bodyLine": 592,
+        "start": 22974,
+        "end": 23004,
+        "bodyLine": 595,
         "bodyColumn": 88,
-        "bodyEndLine": 592,
+        "bodyEndLine": 595,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -45001,13 +44968,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 614,
+        "line": 617,
         "column": 89,
-        "start": 23879,
-        "end": 23906,
-        "bodyLine": 614,
+        "start": 23944,
+        "end": 23971,
+        "bodyLine": 617,
         "bodyColumn": 100,
-        "bodyEndLine": 614,
+        "bodyEndLine": 617,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -45034,13 +45001,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 620,
+        "line": 623,
         "column": 75,
-        "start": 24179,
-        "end": 24202,
-        "bodyLine": 620,
+        "start": 24244,
+        "end": 24267,
+        "bodyLine": 623,
         "bodyColumn": 83,
-        "bodyEndLine": 620,
+        "bodyEndLine": 623,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -45067,13 +45034,13 @@
         "bodyEndColumn": 102
       },
       "current_source_address": {
-        "line": 623,
+        "line": 626,
         "column": 31,
-        "start": 24298,
-        "end": 24339,
-        "bodyLine": 623,
+        "start": 24363,
+        "end": 24404,
+        "bodyLine": 626,
         "bodyColumn": 43,
-        "bodyEndLine": 623,
+        "bodyEndLine": 626,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 5,
@@ -45100,13 +45067,13 @@
         "bodyEndColumn": 70
       },
       "current_source_address": {
-        "line": 630,
+        "line": 633,
         "column": 31,
-        "start": 24567,
-        "end": 24606,
-        "bodyLine": 630,
+        "start": 24632,
+        "end": 24671,
+        "bodyLine": 633,
         "bodyColumn": 43,
-        "bodyEndLine": 630,
+        "bodyEndLine": 633,
         "bodyEndColumn": 70
       },
       "baseline_complexity": 1,
@@ -45133,13 +45100,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 637,
+        "line": 640,
         "column": 28,
-        "start": 24805,
-        "end": 26098,
-        "bodyLine": 637,
+        "start": 24870,
+        "end": 26163,
+        "bodyLine": 640,
         "bodyColumn": 50,
-        "bodyEndLine": 671,
+        "bodyEndLine": 674,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -45166,13 +45133,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 659,
+        "line": 662,
         "column": 24,
-        "start": 25648,
-        "end": 25774,
-        "bodyLine": 660,
+        "start": 25713,
+        "end": 25839,
+        "bodyLine": 663,
         "bodyColumn": 8,
-        "bodyEndLine": 660,
+        "bodyEndLine": 663,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -45199,13 +45166,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 672,
+        "line": 675,
         "column": 25,
-        "start": 26126,
-        "end": 26426,
-        "bodyLine": 673,
+        "start": 26191,
+        "end": 26432,
+        "bodyLine": 676,
         "bodyColumn": 4,
-        "bodyEndLine": 680,
+        "bodyEndLine": 681,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -45232,14 +45199,14 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 675,
-        "column": 8,
-        "start": 26201,
-        "end": 26299,
-        "bodyLine": 675,
-        "bodyColumn": 23,
-        "bodyEndLine": 675,
-        "bodyEndColumn": 106
+        "line": 677,
+        "column": 29,
+        "start": 26257,
+        "end": 26313,
+        "bodyLine": 677,
+        "bodyColumn": 44,
+        "bodyEndLine": 677,
+        "bodyEndColumn": 85
       },
       "baseline_complexity": 3,
       "baseline_coverage": 1,
@@ -45247,7 +45214,7 @@
       "max_complexity": 3,
       "max_crap": 3,
       "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged.",
-      "current_complexity": 2
+      "current_complexity": 1
     },
     {
       "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#14",
@@ -45265,13 +45232,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 682,
+        "line": 683,
         "column": 29,
-        "start": 26462,
-        "end": 27365,
-        "bodyLine": 682,
+        "start": 26468,
+        "end": 27371,
+        "bodyLine": 683,
         "bodyColumn": 52,
-        "bodyEndLine": 702,
+        "bodyEndLine": 703,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -45298,13 +45265,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 699,
+        "line": 700,
         "column": 56,
-        "start": 27228,
-        "end": 27353,
-        "bodyLine": 700,
+        "start": 27234,
+        "end": 27359,
+        "bodyLine": 701,
         "bodyColumn": 6,
-        "bodyEndLine": 700,
+        "bodyEndLine": 701,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -45331,13 +45298,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 703,
+        "line": 704,
         "column": 25,
-        "start": 27393,
-        "end": 28494,
-        "bodyLine": 703,
+        "start": 27399,
+        "end": 28500,
+        "bodyLine": 704,
         "bodyColumn": 44,
-        "bodyEndLine": 728,
+        "bodyEndLine": 729,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 5,
@@ -45364,13 +45331,13 @@
         "bodyEndColumn": 71
       },
       "current_source_address": {
-        "line": 714,
+        "line": 715,
         "column": 29,
-        "start": 27871,
-        "end": 27913,
-        "bodyLine": 714,
+        "start": 27877,
+        "end": 27919,
+        "bodyLine": 715,
         "bodyColumn": 43,
-        "bodyEndLine": 714,
+        "bodyEndLine": 715,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -45397,13 +45364,13 @@
         "bodyEndColumn": 9
       },
       "current_source_address": {
-        "line": 715,
+        "line": 716,
         "column": 30,
-        "start": 27948,
-        "end": 28069,
-        "bodyLine": 715,
+        "start": 27954,
+        "end": 28075,
+        "bodyLine": 716,
         "bodyColumn": 38,
-        "bodyEndLine": 718,
+        "bodyEndLine": 719,
         "bodyEndColumn": 9
       },
       "baseline_complexity": 2,
@@ -45430,13 +45397,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 725,
+        "line": 726,
         "column": 22,
-        "start": 28361,
-        "end": 28482,
-        "bodyLine": 726,
+        "start": 28367,
+        "end": 28488,
+        "bodyLine": 727,
         "bodyColumn": 6,
-        "bodyEndLine": 726,
+        "bodyEndLine": 727,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -45463,13 +45430,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 731,
+        "line": 732,
         "column": 0,
-        "start": 28500,
-        "end": 29361,
-        "bodyLine": 734,
+        "start": 28506,
+        "end": 29367,
+        "bodyLine": 735,
         "bodyColumn": 38,
-        "bodyEndLine": 753,
+        "bodyEndLine": 754,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -45496,13 +45463,13 @@
         "bodyEndColumn": 7
       },
       "current_source_address": {
-        "line": 740,
+        "line": 741,
         "column": 42,
-        "start": 28858,
-        "end": 29067,
-        "bodyLine": 740,
+        "start": 28864,
+        "end": 29073,
+        "bodyLine": 741,
         "bodyColumn": 54,
-        "bodyEndLine": 744,
+        "bodyEndLine": 745,
         "bodyEndColumn": 7
       },
       "baseline_complexity": 2,
@@ -205984,13 +205951,13 @@
       "max_crap": 10,
       "rationale": "New exported descriptor-capture and bounded result facade, prospectively planned/reviewed at published af033f5 before implementation. Existing Ajv/semantic validation and its callback retain their original ceilings on private ImageV1 successors; no allowance transfer or historical measurement is claimed.",
       "current_source_address": {
-        "line": 758,
+        "line": 759,
         "column": 0,
-        "start": 29594,
-        "end": 30252,
-        "bodyLine": 761,
+        "start": 29600,
+        "end": 30258,
+        "bodyLine": 762,
         "bodyColumn": 38,
-        "bodyEndLine": 776,
+        "bodyEndLine": 777,
         "bodyEndColumn": 1
       },
       "current_complexity": 3
@@ -206597,6 +206564,27 @@
       "max_complexity": 1,
       "max_crap": 1,
       "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Earlier projection and closed-ticket invariants already exclude active claims for released tickets; remove the accepted-batch nested active-claim lookup callback without successor or allowance transfer."
+    },
+    {
+      "identity": "src/contracts/envelopes.ts#fn:validateLedgerSemantics#0/closure:CallExpression:arguments[0]#7/closure:CallExpression:arguments[0]#6/closure:CallExpression:arguments[0]#0",
+      "file": "src/contracts/envelopes.ts",
+      "name": "closure:CallExpression:arguments[0]",
+      "source_address": {
+        "line": 454,
+        "column": 28,
+        "start": 16962,
+        "end": 17042,
+        "bodyLine": 454,
+        "bodyColumn": 42,
+        "bodyEndLine": 454,
+        "bodyEndColumn": 108
+      },
+      "baseline_complexity": 1,
+      "baseline_coverage": 1,
+      "baseline_crap": 1,
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Source review confirms this callback remains at the same named parent and semantic callsite; the changed diff does not touch the validateLedgerSemantics callback tree. Identity text labels the reviewed role; ordinal/body-hash matching was not used. Independently reviewed wave3; original measured ceiling unchanged. Remove the nested repeated claim-resource normalization callback. The existing claim validation mapper now supplies its validated invocation-local keys; this deleted later mapper has no successor or allowance transfer."
     }
   ],
   "review": {
@@ -224091,5 +224079,22 @@
     "review_artifact": "/workspace/attachments/quality-ledger-owned-image-v3-final-independent-20261016.md",
     "correspondence": "78 original roles retain exact original ceilings/measurements, including the private substantive validator and diagnostic callback. Three original callables are explicitly removed. The new capture facade uses its previously reviewed prospective10/10, giving79current envelope roles. Every remaining callback is independently reviewed by responsibility.",
     "limits": "Non-executable/non-exhaustive global plan. Original numerical report bytes are not admitted. Current coverage, scoped frozen proof, assertion-confirmed mutation and full global acceptance remain distinct."
+  },
+  "scope_review_main_envelopes_validated_rows_20261016": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [
+      "src/contracts/envelopes.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/contracts/envelopes.ts",
+        "current_path": "src/contracts/envelopes.ts",
+        "rationale": "Invocation-local validated claim rows and current-ticket keys reuse existing guarded normalization; one nested repeated mapper is removed, no callable is added."
+      }
+    ],
+    "independent_review_lane": "blind-native-luna",
+    "review_artifact": "/workspace/attachments/quality-envelope-validated-rows-actual-lineage-20261016.md",
+    "correspondence": "77 retained original roles preserve original ceilings and measurements; one existing prospective capture facade retains 10/10; five historical original callables are removed, including the repeated normalizer. Current envelope scope has 78 roles. Eight callback identity moves follow actual responsibility, including binding and sibling ordinal changes.",
+    "limits": "Global plan remains non-executable/non-exhaustive. No original numeric report is admitted. Current exact coverage, scoped frozen proof, assertion-confirmed mutation and full global acceptance remain separate."
   }
 }
