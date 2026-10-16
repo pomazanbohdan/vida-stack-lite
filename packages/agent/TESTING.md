@@ -983,6 +983,20 @@ global map and its exact Source domain; a local pilot cannot qualify it globally
 Function/scenario associations without a current shared inventory stay explicit
 gaps; no extra Source parse, scan or hash pass is added for this projection.
 
+`planMutationBatches` in the existing mutation-map owner prepares planning-only
+range/mutator batches from a validated canonical universe. It groups overlapping
+and nested ranges before packing, rejects an indivisible group above the supplied
+count limit, and converts map columns to Stryker's zero-based range columns.
+Its universe digest streams sorted fixed-size canonical identities with the
+parent input binding; large maps do not widen the public canonical JSON budget.
+This helper launches no tests, changes no runner selection and admits no score.
+Activation still requires a current complete generated universe, exact child
+plan membership, exhaustive/disjoint parent reconciliation, full unchanged test
+argv and the existing assertion/custody receipts. A retained timeout map can
+inform static planning research only; it cannot qualify a current batch or
+restore an interrupted attempt. Missing children or any membership drift remain
+GAP/UNKNOWN. The900s partition and independent per-case limits are unchanged.
+
 Parent receipt validation reuses one partition-local execution observation and
 lifecycle-hook analysis of the already captured immutable test/import bytes.
 Each receipt still binds its exact command, tests, sources, tools, JUnit, context

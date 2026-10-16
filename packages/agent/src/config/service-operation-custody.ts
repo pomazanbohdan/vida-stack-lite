@@ -285,11 +285,8 @@ function hasHandoffDigests(found: ServiceOperationCustody): boolean {
 }
 
 function hasHandoffPredecessor(found: ServiceOperationCustody): boolean {
-  return (
-    found.handoff_from_phase === 'terminal' &&
-    Number.isSafeInteger(found.handoff_from_revision) &&
-    (found.handoff_from_revision ?? 0) > 0
-  );
+  const revision = found.handoff_from_revision;
+  return found.handoff_from_phase === 'terminal' && revision !== null && Number.isSafeInteger(revision) && revision > 0;
 }
 
 function assertServiceDatabase(database: Database, workspaceId: string): void {

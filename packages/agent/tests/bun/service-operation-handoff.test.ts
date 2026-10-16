@@ -342,6 +342,7 @@ const invalidPersistedHandoffCases = [
   ['absent predecessor evidence digest', 'handoff_from_evidence_digest', null],
   ['predecessor phase', 'handoff_from_phase', 'prepared'],
   ['zero predecessor revision', 'handoff_from_revision', 0],
+  ['fractional predecessor revision', 'handoff_from_revision', 0.5],
   ['absent predecessor revision', 'handoff_from_revision', null],
 ] as const;
 

@@ -10,6 +10,7 @@ import {
   mutationMapIdentity,
   mutationPartitionMap,
   mutationResultMapRow,
+  planMutationBatches,
   validateMutationMapEvents,
   validateMutationPartitionMap,
   type MutationMapBinding,
@@ -71,6 +72,61 @@ function result(item = plan()): MutantResult {
     killedBy: ['test:1'],
   };
 }
+
+test('mutation batches keep spanning and nested nodes together and own every canonical identity once', () => {
+  const items = [plan('0'), plan('1'), plan('2'), plan('3', 'src/two.ts')];
+  items[0]!.mutant.location = { start: { line: 0, column: 0 }, end: { line: 8, column: 0 } };
+  items[1]!.mutant.location = { start: { line: 1, column: 0 }, end: { line: 2, column: 0 } };
+  items[2]!.mutant.location = { start: { line: 9, column: 0 }, end: { line: 9, column: 4 } };
+  const universe = mutationPartitionMap(root, binding, items);
+  const planned = planMutationBatches(root, binding, universe, 2);
+  expect(planned.qualification).toBe('planning-only');
+  expect(planned.batches.map((batch) => batch.identities.length)).toEqual([2, 2]);
+  expect(planned.batches[0]?.mutate).toEqual(['src/one.ts:1:0-9:0']);
+  expect(planned.batches.flatMap((batch) => batch.identities).sort()).toEqual(
+    universe.mutants.map((m) => m.identity).sort(),
+  );
+  expect(
+    planMutationBatches(root, binding, { ...universe, mutants: [...universe.mutants].reverse() }, 2).batches,
+  ).toEqual(planned.batches);
+  expect(() => planMutationBatches(root, binding, universe, 1)).toThrow('indivisible');
+});
+
+test('mutation batch planning rejects invalid limits and changed parent identities', () => {
+  const universe = mutationPartitionMap(root, binding, [plan()]);
+  for (const limit of [0, -1, 1.5, Infinity])
+    expect(() => planMutationBatches(root, binding, universe, limit)).toThrow('batch limit');
+  expect(() => planMutationBatches(root, { ...binding, test_fingerprint: '0'.repeat(64) }, universe, 2)).toThrow(
+    'parent',
+  );
+  expect(() =>
+    planMutationBatches(root, binding, { ...universe, mutants: [...universe.mutants, universe.mutants[0]] }, 2),
+  ).toThrow('duplicate');
+});
+
+test('mutation batches separate mutator families at the same Source range', () => {
+  const other = plan('1');
+  other.mutant.mutatorName = 'BlockStatement';
+  const universe = mutationPartitionMap(root, binding, [plan(), other]);
+  const planned = planMutationBatches(root, binding, universe, 2);
+  expect(planned.batches).toHaveLength(2);
+  expect(planned.batches.map((batch) => batch.excludedMutations)).toEqual([['BooleanLiteral'], ['BlockStatement']]);
+  expect(planned.universe_sha256).toMatch(/^[a-f0-9]{64}$/u);
+});
+
+test('mutation batch universe binding stays bounded beyond the ordinary canonical node budget', () => {
+  const items = Array.from({ length: 1000 }, (_, index) => {
+    const item = plan(String(index));
+    item.mutant.location = { start: { line: index * 2, column: 0 }, end: { line: index * 2, column: 4 } };
+    return item;
+  });
+  const universe = mutationPartitionMap(root, binding, items);
+  const forward = planMutationBatches(root, binding, universe, 64);
+  const reversed = planMutationBatches(root, binding, { ...universe, mutants: [...universe.mutants].reverse() }, 64);
+  expect(forward.universe_sha256).toBe(reversed.universe_sha256);
+  expect(forward.batches.flatMap((batch) => batch.identities)).toHaveLength(1000);
+  expect(new Set(forward.batches.flatMap((batch) => batch.identities)).size).toBe(1000);
+});
 
 test('canonical mutant identity survives local ID renumbering and normalizes the public plan/result coordinate boundary', () => {
   const before = plan();
