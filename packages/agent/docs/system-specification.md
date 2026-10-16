@@ -166,6 +166,11 @@ insufficient for that binding. The three inputs together are limited to 4 MiB;
 YAML and structured snapshots reject nesting beyond 64 levels before traversal
 can overflow. Parsing or conversion alone never grants loaded-config authority.
 
+Project-context construction rechecks the current configuration after the final
+selected path profile's filesystem validation and before returning the context.
+The initial configuration authorization and per-profile path checks remain in
+place. Later configuration changes still require the existing context validation.
+
 Local instructions and their source map live in `.vida/instructions` and
 `.vida/AGENT.sidecar.md`. Work, coordination, planning and temporary state use
 separate operational subdirectories. One path resolver supplies all consumers.

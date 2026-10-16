@@ -840,7 +840,9 @@ export function loadProjectSetContext(
         : { trusted_override: options.trusted_overrides[projectId] }),
     }),
   );
-  return buildProjectSetContext(config, repositoryId, ids, profiles);
+  const context = buildProjectSetContext(config, repositoryId, ids, profiles);
+  assertCurrentConfigSnapshot(root, config, 'project context configuration changed during construction');
+  return context;
 }
 
 function prepareProjectSetContext(

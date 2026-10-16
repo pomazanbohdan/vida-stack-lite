@@ -547,7 +547,7 @@
     },
     {
       "file": "src/config/project-context.ts",
-      "sha256": "9afab1e4936d3ad261bea42b758dda15bcb92ea93f9372e6ed6ae82ddaa9c1be"
+      "sha256": "aa53231d13647cd9cf01de1fa8f7498b8b423199cc4ab498ef8c08270ceca219"
     },
     {
       "file": "bin/capture-completed-readonly.ts",
@@ -101081,10 +101081,10 @@
         "line": 823,
         "column": 7,
         "start": 32336,
-        "end": 33170,
+        "end": 33303,
         "bodyLine": 829,
         "bodyColumn": 18,
-        "bodyEndLine": 844,
+        "bodyEndLine": 846,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 3,
@@ -101110,13 +101110,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 869,
+        "line": 871,
         "column": 35,
-        "start": 34104,
-        "end": 34850,
-        "bodyLine": 869,
+        "start": 34237,
+        "end": 34983,
+        "bodyLine": 871,
         "bodyColumn": 57,
-        "bodyEndLine": 886,
+        "bodyEndLine": 888,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -101142,13 +101142,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 887,
+        "line": 889,
         "column": 52,
-        "start": 34905,
-        "end": 34945,
-        "bodyLine": 887,
+        "start": 35038,
+        "end": 35078,
+        "bodyLine": 889,
         "bodyColumn": 65,
-        "bodyEndLine": 887,
+        "bodyEndLine": 889,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -101174,13 +101174,13 @@
         "bodyEndColumn": 78
       },
       "current_source_address": {
-        "line": 888,
+        "line": 890,
         "column": 45,
-        "start": 34993,
-        "end": 35026,
-        "bodyLine": 888,
+        "start": 35126,
+        "end": 35159,
+        "bodyLine": 890,
         "bodyColumn": 58,
-        "bodyEndLine": 888,
+        "bodyEndLine": 890,
         "bodyEndColumn": 78
       },
       "baseline_complexity": 1,
@@ -101206,13 +101206,13 @@
         "bodyEndColumn": 79
       },
       "current_source_address": {
-        "line": 889,
+        "line": 891,
         "column": 45,
-        "start": 35074,
-        "end": 35108,
-        "bodyLine": 889,
+        "start": 35207,
+        "end": 35241,
+        "bodyLine": 891,
         "bodyColumn": 58,
-        "bodyEndLine": 889,
+        "bodyEndLine": 891,
         "bodyEndColumn": 79
       },
       "baseline_complexity": 1,
@@ -101238,13 +101238,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 891,
+        "line": 893,
         "column": 69,
-        "start": 35253,
-        "end": 35280,
-        "bodyLine": 891,
+        "start": 35386,
+        "end": 35413,
+        "bodyLine": 893,
         "bodyColumn": 82,
-        "bodyEndLine": 891,
+        "bodyEndLine": 893,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -101270,13 +101270,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 914,
+        "line": 916,
         "column": 7,
-        "start": 36078,
-        "end": 36552,
-        "bodyLine": 920,
+        "start": 36211,
+        "end": 36685,
+        "bodyLine": 922,
         "bodyColumn": 18,
-        "bodyEndLine": 924,
+        "bodyEndLine": 926,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -101302,13 +101302,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 926,
+        "line": 928,
         "column": 7,
-        "start": 36561,
-        "end": 36767,
-        "bodyLine": 926,
+        "start": 36694,
+        "end": 36900,
+        "bodyLine": 928,
         "bodyColumn": 115,
-        "bodyEndLine": 928,
+        "bodyEndLine": 930,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -101334,13 +101334,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 927,
+        "line": 929,
         "column": 39,
-        "start": 36710,
-        "end": 36755,
-        "bodyLine": 927,
+        "start": 36843,
+        "end": 36888,
+        "bodyLine": 929,
         "bodyColumn": 52,
-        "bodyEndLine": 927,
+        "bodyEndLine": 929,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -101366,13 +101366,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 929,
+        "line": 931,
         "column": 7,
-        "start": 36775,
-        "end": 37230,
-        "bodyLine": 929,
+        "start": 36908,
+        "end": 37363,
+        "bodyLine": 931,
         "bodyColumn": 109,
-        "bodyEndLine": 936,
+        "bodyEndLine": 938,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -101398,13 +101398,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 971,
+        "line": 973,
         "column": 7,
-        "start": 38795,
-        "end": 39812,
-        "bodyLine": 971,
+        "start": 38928,
+        "end": 39945,
+        "bodyLine": 973,
         "bodyColumn": 102,
-        "bodyEndLine": 983,
+        "bodyEndLine": 985,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 1,
@@ -194647,13 +194647,13 @@
       "max_crap": 10,
       "current_complexity": 3,
       "current_source_address": {
-        "line": 846,
+        "line": 848,
         "column": 0,
-        "start": 33172,
-        "end": 33890,
-        "bodyLine": 851,
+        "start": 33305,
+        "end": 34023,
+        "bodyLine": 853,
         "bodyColumn": 21,
-        "bodyEndLine": 861,
+        "bodyEndLine": 863,
         "bodyEndColumn": 1
       },
       "rationale": "New callable under module scope: reviewed its current body and exact parent/callsite in project-context.ts. It is an extracted helper/callback with no one-to-one original callable at this nested owner and callsite; prospective fixed policy is 10 complexity and 10 CRAP for this callable only."
@@ -194665,13 +194665,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 863,
+        "line": 865,
         "column": 0,
-        "start": 33892,
-        "end": 35979,
-        "bodyLine": 868,
+        "start": 34025,
+        "end": 36112,
+        "bodyLine": 870,
         "bodyColumn": 18,
-        "bodyEndLine": 911,
+        "bodyEndLine": 913,
         "bodyEndColumn": 1
       },
       "rationale": "New callable under module scope: reviewed its current body and exact parent/callsite in project-context.ts. It is an extracted helper/callback with no one-to-one original callable at this nested owner and callsite; prospective fixed policy is 10 complexity and 10 CRAP for this callable only."
@@ -194683,13 +194683,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 938,
+        "line": 940,
         "column": 0,
-        "start": 37232,
-        "end": 37442,
-        "bodyLine": 938,
+        "start": 37365,
+        "end": 37575,
+        "bodyLine": 940,
         "bodyColumn": 62,
-        "bodyEndLine": 941,
+        "bodyEndLine": 943,
         "bodyEndColumn": 1
       },
       "rationale": "New callable under module scope: reviewed its current body and exact parent/callsite in project-context.ts. It is an extracted helper/callback with no one-to-one original callable at this nested owner and callsite; prospective fixed policy is 10 complexity and 10 CRAP for this callable only."
@@ -194701,13 +194701,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 943,
+        "line": 945,
         "column": 0,
-        "start": 37444,
-        "end": 38787,
-        "bodyLine": 947,
+        "start": 37577,
+        "end": 38920,
+        "bodyLine": 949,
         "bodyColumn": 25,
-        "bodyEndLine": 970,
+        "bodyEndLine": 972,
         "bodyEndColumn": 1
       },
       "rationale": "New callable under module scope: reviewed its current body and exact parent/callsite in project-context.ts. It is an extracted helper/callback with no one-to-one original callable at this nested owner and callsite; prospective fixed policy is 10 complexity and 10 CRAP for this callable only."
@@ -221167,5 +221167,23 @@
       "/workspace/attachments/quality-envelopes-unicode-proof-correction-20261015.md"
     ],
     "limits": "One changed-file inventory/hash capture. Other Source bindings reused without fresh qualification. No numeric, global or Runtime acceptance from lineage."
+  },
+  "project_context_construction_fence_20261016": {
+    "schema": "ProjectContextLineageRefresh/v1",
+    "qualification": "not-performed",
+    "file": "src/config/project-context.ts",
+    "previous_sha256": "9afab1e4936d3ad261bea42b758dda15bcb92ea93f9372e6ed6ae82ddaa9c1be",
+    "sha256": "aa53231d13647cd9cf01de1fa8f7498b8b423199cc4ab498ef8c08270ceca219",
+    "inventory": "/workspace/attachments/quality-project-context-byte-inventory-20261016.json",
+    "retained": 110,
+    "added": 8,
+    "current": 118,
+    "exact_identity_set": true,
+    "existing_static_ceilings_respected": true,
+    "caps_changed": false,
+    "scope": "one-file-current-binding-refresh-not-global-or-dynamic-CRAP",
+    "receipt": "/workspace/attachments/quality-project-context-lineage-refresh-receipt-20261016.json",
+    "independent_review": "/workspace/attachments/quality-config-applied-fence-independent-review-20261016.md",
+    "reason": "Retain all existing function roles and frozen allowances; final existing config freshness assertion refuses a snapshot changed during final path validation."
   }
 }

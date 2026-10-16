@@ -5584,6 +5584,41 @@ genuine final observation or retract the candidate. The reproduced canonical
 serialization defect remains the next active correction; its independent review
 and exact frozen-binding refresh remain required before numeric remeasurement.
 
+### Qualified project-context construction fence
+
+The corrected config regression now warms an unchanged selection to count its
+final project's matching bigint lstat observations and injects drift only at the
+last one. Root rejected the earlier first-stat test. The next beforeimage at
+/workspace/attachments/quality-rolling-cli-check-NykhjJ returned a stale context;
+the clarified beforeimage at quality-rolling-cli-check-iklRoL first passed both
+mutation/count assertions, then failed because no PathProfileError was produced.
+Both retain complete output and terminal process custody; neither is a PASS.
+
+Root added one call to the existing assertCurrentConfigSnapshot after context
+assembly and before return. Initial configuration authorization and every
+per-profile check remain. This is a semantic freshness fence, not an atomic
+filesystem snapshot or a removal of authorization reads. The complete boundary
+file passed15tests/195assertions in1817.216852ms at
+/workspace/attachments/quality-rolling-cli-check-mW5eMe; capture was complete,
+groups closed and boot unchanged. The454-file test TypeScript project passed.
+Independent applied-Source review accepted the correction at
+/workspace/attachments/quality-config-applied-fence-independent-review-20261016.md.
+
+The existing static inventory captured only the changed project-context file,
+using one Source buffer for its digest and118function rows. Source SHA:
+aa53231d13647cd9cf01de1fa8f7498b8b423199cc4ab498ef8c08270ceca219.
+The exact partial-plan join retains110original-role correspondences and8added
+roles with no missing/extra IDs; loadProjectSetContext remains CC1 under its
+original3ceiling. The reviewed refresh changes only that Source binding, current
+addresses/current complexities and explanatory metadata. Every frozen allowance
+is unchanged. Receipt:
+/workspace/attachments/quality-project-context-lineage-refresh-receipt-20261016.json;
+independent updater review: quality-project-context-lineage-refresh-review-20261016.md
+under the same root. This static refresh does not establish dynamic CRAP, current
+main-config coverage or mutation, or exhaustive global correspondence. Other
+Source bindings were reused without fresh qualification. The canonical snapshot
+correction is still a reviewed copied candidate and is not included in this fix.
+
 ## Historical provenance
 
 This projection replaces stale status narration. Previous packets, failed

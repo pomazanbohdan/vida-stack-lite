@@ -695,6 +695,66 @@ describe('project context path boundary', () => {
     }
   });
 
+  test('rejects a runtime config change during the final selected project profile scan', () => {
+    const selected = loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [
+      secondProjectId,
+      projectId,
+    ]);
+    const finalProfile = selected.path_profiles.at(-1);
+    if (finalProfile === undefined) throw new Error('final selected project profile is missing');
+    const target = finalProfile.resolved_paths.project_root;
+    const originalStat = fs.lstatSync;
+    const isTargetProfileStat = (args: Parameters<typeof fs.lstatSync>): boolean =>
+      path.resolve(String(args[0])) === target &&
+      args[1] !== null &&
+      typeof args[1] === 'object' &&
+      Reflect.get(args[1], 'bigint') === true;
+    let expectedTargetStats = 0;
+    const warmStats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      if (isTargetProfileStat(args)) expectedTargetStats += 1;
+      return originalStat(...args);
+    }) as typeof fs.lstatSync);
+    try {
+      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [secondProjectId, projectId]);
+    } finally {
+      warmStats.mockRestore();
+    }
+    expect(expectedTargetStats).toBeGreaterThan(0);
+
+    let observedTargetStats = 0;
+    let changed = false;
+    const stats = spyOn(fs, 'lstatSync').mockImplementation(((...args: Parameters<typeof fs.lstatSync>) => {
+      if (isTargetProfileStat(args)) {
+        observedTargetStats += 1;
+        if (!changed && observedTargetStats === expectedTargetStats) {
+          changed = true;
+          writeFileSync(
+            runtimeConfigPath,
+            JSON.stringify({
+              ...structuredClone(config),
+              control: { ...config.control, checkpoint_name: config.control.checkpoint_name + '-changed' },
+            }) + '\n',
+          );
+        }
+      }
+      return originalStat(...args);
+    }) as typeof fs.lstatSync);
+    let failure: unknown;
+    try {
+      loadProjectSetContext(repositoryRoot, config, config.repository.repository_id, [secondProjectId, projectId]);
+    } catch (error) {
+      failure = error;
+    } finally {
+      stats.mockRestore();
+    }
+    expect(changed).toBe(true);
+    expect(observedTargetStats).toBe(expectedTargetStats);
+    expect(failure).toBeInstanceOf(PathProfileError);
+    expect(failure).toMatchObject({
+      message: 'GAP-RTNEW-PATH-PROFILE-001: project context configuration changed during construction',
+    });
+  });
+
   test('binds current-v1 repository and project contours', async () => {
     expect.assertions(13);
     const repositoryConfig = loadConfigFixture({
