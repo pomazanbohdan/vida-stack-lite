@@ -140,6 +140,16 @@ failure/resource causes, including thrown undefined, and distinguish a below-
 minimum allowance from a broken allowance provider. Keep synchronous publication
 and terminal-custody invocation contracts explicit before wiring a real pool.
 
+For a report overlay, qualify actual host bind-source resolution with two held
+workers before adding staging copies. Preserve the runner's logical report,
+sandbox and configured-context paths, and require real mirrored mount targets.
+Publish exact raw output only after native group/capture closure; preserve exit0
+for surviving mutants. Include generated assertion-context and hashed adapter
+modules as well as JUnit, streams, body events, receipt and configured context.
+Pre-read the bounded closure and reject collisions before canonical writes;
+exclusive durable publication failures retain both private and partial roots.
+The unchanged confirmer and persisted proof reader still own admission.
+
 For image schema-order assertions, preserve actual SQLite encoding. A UTF-8
 Buffer comparator is not a general model for UTF-16 BINARY collation. Real
 UTF-16LE/BE images and opposite-order Unicode names expose this difference;

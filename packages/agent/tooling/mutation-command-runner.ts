@@ -142,7 +142,7 @@ function selectedTests(value: string): string[] {
   return tests;
 }
 
-function evidencePaths(reportDirectory: string, partition: string, mutantId: string | undefined) {
+export function mutationRunnerEvidencePaths(reportDirectory: string, partition: string, mutantId: string | undefined) {
   const key = mutantId === undefined ? 'dry-run' : digest(mutantId);
   const basename = `${partition}-${key}`;
   return {
@@ -207,7 +207,7 @@ async function junitDigest(file: string, allowEmpty = false): Promise<{ sha256: 
   }
 }
 
-async function durableCreate(target: string, contents: string | Buffer): Promise<void> {
+export async function durableCreateMutationEvidence(target: string, contents: string | Buffer): Promise<void> {
   const handle = await open(target, 'wx', 0o600);
   try {
     await handle.writeFile(contents);
@@ -452,7 +452,7 @@ export async function materializeMutationTestContext(
     if (!bytes) throw new Error('Mutation test context capture is incomplete.');
     const target = path.join(binding.root, file);
     await mkdir(path.dirname(target), { recursive: true, mode: 0o700 });
-    await durableCreate(target, bytes);
+    await durableCreateMutationEvidence(target, bytes);
   }
 }
 
@@ -611,7 +611,7 @@ async function persistReceipt(
     stdout_capture: capturedStream(receiptData, 'stdout'),
     stderr_capture: capturedStream(receiptData, 'stderr'),
   };
-  await durableCreate(receiptPath, `${JSON.stringify(receipt)}\n`);
+  await durableCreateMutationEvidence(receiptPath, `${JSON.stringify(receipt)}\n`);
 }
 
 function capturedStream(receipt: Record<string, unknown>, stream: 'stdout' | 'stderr'): Record<string, unknown> | null {
@@ -724,7 +724,7 @@ function runnerReceipt(
     process_custody: processResult.processCustody ?? null,
     output_capture: processResult.output_capture ?? null,
     test_context: mutationTestContextBinding(
-      evidencePaths(config.reportDirectory, config.partition, activeMutant).junit,
+      mutationRunnerEvidencePaths(config.reportDirectory, config.partition, activeMutant).junit,
       descriptor?.tool_inputs ?? [],
     ),
   };
@@ -732,7 +732,7 @@ function runnerReceipt(
 
 async function run(): Promise<void> {
   const config = runnerConfig();
-  const paths = evidencePaths(config.reportDirectory, config.partition, activeMutant);
+  const paths = mutationRunnerEvidencePaths(config.reportDirectory, config.partition, activeMutant);
   const command = buildMutationTestCommand(process.execPath, config.tests, paths.junit);
   const { descriptor, rejection, contextInputs } = await verifyInputDescriptor(
     config.root,
@@ -750,7 +750,7 @@ async function run(): Promise<void> {
     adapterDirectory: paths.adapterDirectory,
     testContext: mutationTestContextBinding(paths.junit, descriptor?.tool_inputs ?? []),
   };
-  await durableCreate(paths.bodyEvents, '');
+  await durableCreateMutationEvidence(paths.bodyEvents, '');
   await mkdir(paths.adapterDirectory, { mode: 0o700 });
   const identity = await runnerIdentity(config.root, config.tests, command, descriptor);
   const started = performance.now();

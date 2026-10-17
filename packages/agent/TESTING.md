@@ -1054,8 +1054,9 @@ The package/root input capture is shared, the instrumented image is created once
 and execution is serial in a private sandbox with read-only Source/test/tool files
 and private writable scratch. The full declared test argv runs for each ID.
 The internal `nativeMutationMechanicsWorkerCommand` constructor qualifies inert
-max-two worker mechanics separately from the serial command builder and loop.
-It has no CLI activation or mutation score. Focused controls launch simultaneous
+max-two worker mechanics separately from the default serial command builder.
+The explicit diagnostic route below reuses it; default execution and score
+admission remain unchanged. Focused controls launch simultaneous
 workers under temporary and shared-memory roots and verify input/sibling write
 denial, private output/temp/cache, distinct PID namespaces, actual SIGTERM,
 timeout with a held healthy sibling, no-PID UNKNOWN and an armed detached child.
@@ -1082,8 +1083,8 @@ unobserved termination, async no-PID ambiguity and live effects remain UNKNOWN.
 No complete parallel score is admitted before qualification; two workers do not
 by themselves prove the900s budget.
 
-The separate internal `collectIsolatedNativeMutationBatch` scheduler is also
-inert; it does not replace the serial CLI collector. It snapshots unique paired
+The separate `collectIsolatedNativeMutationBatch` scheduler is used only by the
+explicit diagnostic pilot; it does not replace the default serial collector. It snapshots unique paired
 IDs, limits in-flight invocations to two, and uses the caller's one shared
 remaining-budget provider. Exact minimum allowance is allowed; a nonnegative
 allowance below it leaves that ID unattempted. Invalid or thrown allowance values
@@ -1096,6 +1097,37 @@ progress publishes only the contiguous observed prefix; a non-row gap stops that
 publication while later real sibling rows remain in the returned diagnostic.
 This diagnostic result is not a native mutation proof schema. Real integration
 still needs captured-input/private-output binding and qualified worker resources.
+
+`--isolated-workers` opts into a bounded real-runner diagnostic for
+`bun-project-upgrade-existing-storage-image` only. It cannot combine with complete
+admission, per-test capture or ID selectors. Start with `--batch-size 2
+--max-batches 1`; it preserves the full declared test argv, one input capture,
+one generated image and the existing900s partition deadline. Baseline runs first;
+at most two mutants are then in flight. The copied parent environment is frozen
+before launch; worker-private scratch/cache overrides and mutant ID are explicit.
+This is not complete parallel mutation or global qualification.
+
+The report overlay binds each private output at the original logical operation
+directory, then rebinds the shared sandbox and descriptor read-only, followed by
+private scratch. Actual temp/shm controls establish host bind-source visibility
+through that overlay, unchanged inputs and disjoint outputs. Require canonical
+existing mirrored sandbox/descriptor destinations; deny linked descriptors.
+No copied Source tree or rewritten receipt identity supplies path eligibility.
+
+`publishNativeMutationOutput` requires observed owned-group termination, complete
+valid native captures and exit0 for baseline or exit0/1 for mutants. A surviving
+mutant's exit0 is preserved. This is custody eligibility, not assertion evidence.
+Before any canonical write, capture all five raw runner roles and the complete
+adapter tree, including generated assertion modules and configured context.
+Individual files retain the4MiB reader bound; a worker publication is bounded by
+32MiB aggregate,4096adapter entries, depth8 and1024-character relative paths.
+Accept canonical directories and regular single-link files only, and preflight
+all destination collisions. Parent alone creates directories/files exclusively,
+preserving raw bytes and sync operations. Uncertain native custody leaves private
+outputs unpublished; partial publication failures retain both roots and deny
+confirmation. Closed raw diagnostics can still fail the unchanged runner
+confirmer; copied files alone never mean Killed. The persisted proof reader and
+flat-basename guards are unchanged, and this pilot emits no complete proof.
 
 The explicit `--capture-per-test-diagnostic` mode runs only the complete native
 baseline and binds existing diagnostic-v2 capture through its input fingerprint,

@@ -11,7 +11,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
-- Inert max-two native worker mechanics and a separate bounded scheduler have focused controls; the CLI and mutation loop remain serial. Selected-contour resource review is recorded below; real invocation, sealed inputs and pool integration stay open. These tooling packets change no product Source or numeric contour closure.
+- Native worker mechanics and bounded scheduling now feed an explicit image-only `--isolated-workers` diagnostic, with private logical report overlays and parent-only raw publication. The default remains serial; complete admission/capture/selectors are forbidden in the new route. Real pilot observations are recorded below; full persisted-proof/parallel qualification stays open. These tooling packets change no product Source or numeric contour closure.
 
 ## Global contour campaign packet
 
@@ -2027,6 +2027,52 @@ Keep runner receipts, basename guards and persisted reader checks unchanged if
 this topology preserves their contract. Otherwise require explicit versioned
 routing and independent reader parity; never rewrite receipt identities or relax
 path checks to force admission. This reviewed experiment is still unimplemented.
+
+### Native report overlay and real-runner bridge — 2026-10-17
+
+The packet starts from fetched `f2eaf9612aacbac8012f5e869f4a2517ecf37771` on
+the same boot. Vex/Pstack/installed VIDA entrypoints remain absent; bounded
+current-source reads are the explicit fallback. Cloud reports current enforced
+network policy; proxy/CA settings are preserved. Bun remains1.4.3, Tini0.19.0
+and native bwrap0.12.0. No prior operation or failed namespace is resumed.
+
+Two-worker native probe `native-report-overlay-v209-l0IYcT` establishes that
+bwrap can rebind original host descriptor/sandbox sources after the guest report
+directory is hidden. Both temp and shm pass with held workers, unchanged inputs,
+read-only denial and private output absent from the flat host report root.
+The maintained overlay controls `31rOVA` separately pass2cases in413ms.
+No speculative staging/copy tree is needed. This matches the upstream
+[host-source bind contract](https://github.com/containers/bubblewrap/blob/main/bwrap.xml);
+the local native observation owns qualification of this exact topology.
+
+The optional report overlay validates canonical directory ownership, mirrored
+sandbox/file targets, scratch/cache separation and single-link descriptors.
+The reviewed publisher captures the five raw runner roles and whole adapters
+tree before canonical writes, retaining generated assertion modules as well as
+configured context. It requires closed native custody, preserves mutant exit0
+as a possible survivor, and uses exclusive byte-preserving durable publication.
+The original runner path/receipt generation, confirmer, flat artifact references
+and persisted proof-reader checks remain intact. Native output publication is
+not assertion-confirmed Killed. UNKNOWN native custody leaves private outputs;
+publication failures preserve private and partial roots.
+
+The explicit isolated-worker route is restricted to the reviewed image contour,
+baseline-first and max-two mutants, with one capture/image/deadline and full argv.
+Its complete-admission, capture and ID-selector combinations reject before launch.
+The copied parent environment is frozen; launches record their actual prepared
+command and private root. Detailed multi-worker resource/failure entries persist
+separately, and post-gap sibling observations count once without rescanning prior
+batches. Default serial behavior and numeric gates are preserved.
+
+Completion check `HT3UMQ` passes195tests/1165assertions across seven affected
+files in2033ms with complete captures, closed group and same boot. It covers
+overlay aliases, missing targets, symlink/hardlink denial, both mutant native
+exits, timeout/signal/live/no-PID custody, full adapter bytes, preflight collisions,
+depth/aggregate bounds, scheduler drain and unchanged descriptor/proof controls.
+Blind Luna review finds no remaining code blocker and confirms updated help and
+testing instructions. These are scoped development controls. Actual immutable
+real-runner pilot remains the next qualification; no complete contour proof or
+numerical closure is claimed by this packet.
 
 ### Published admission packet — retained context
 

@@ -38,6 +38,7 @@ import {
 } from './mutation-map.ts';
 import { mutationPartitions, mutationPartitionSources, type MutationPartition } from './mutation-partitions.ts';
 import { completeOwnedCleanup } from './owned-cleanup-completion.ts';
+import { publishNativeMutationOutput } from './native-mutation-output.ts';
 
 type NativeBatchRow = {
   identity: string;
@@ -117,7 +118,7 @@ export type IsolatedNativeBatchResult = {
   failures: { offset: number; phase: 'allowance' | 'invoke' | 'progress'; error: unknown }[];
 };
 
-/** Inert scheduler only: invocation owns terminal custody; the CLI stays serial. */
+/** Bounded diagnostic scheduling: invocation owns terminal custody; the default CLI stays serial. */
 export async function collectIsolatedNativeMutationBatch(
   batch: NativeCollectorArguments[0],
   remaining: NativeCollectorArguments[1],
@@ -219,6 +220,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
       'diagnostic-mutant-id': { type: 'string' },
       'diagnostic-mutant-ids': { type: 'string' },
       'capture-per-test-diagnostic': { type: 'boolean', default: false },
+      'isolated-workers': { type: 'boolean', default: false },
     },
     strict: true,
     allowPositionals: false,
@@ -239,6 +241,18 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
   const diagnosticMutantId = values['diagnostic-mutant-id'];
   const diagnosticMutantIds = values['diagnostic-mutant-ids']?.split(',');
   const perTestCapture = values['capture-per-test-diagnostic'] === true ? ('diagnostic-v2' as const) : undefined;
+  const isolatedWorkers = values['isolated-workers'] === true;
+  if (
+    isolatedWorkers &&
+    (admitComplete ||
+      perTestCapture !== undefined ||
+      diagnosticMutantId !== undefined ||
+      diagnosticMutantIds !== undefined ||
+      selected.partitions[0].name !== 'bun-project-upgrade-existing-storage-image')
+  )
+    throw new Error(
+      'Isolated workers are diagnostic-only for the reviewed image contour, without capture or ID selectors.',
+    );
   if (perTestCapture !== undefined && admitComplete)
     throw new Error('Per-test diagnostic capture cannot use complete admission.');
   if (perTestCapture !== undefined && (diagnosticMutantId !== undefined || diagnosticMutantIds !== undefined))
@@ -270,6 +284,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
     diagnosticMutantId,
     diagnosticMutantIds,
     perTestCapture,
+    isolatedWorkers,
   };
 }
 
@@ -348,7 +363,7 @@ export function nativeMutationBatchCommand(
   ];
 }
 
-/** Inert mechanics qualification only; the native mutant loop remains serial. */
+/** Isolated worker construction; real runner use remains an explicit diagnostic pilot. */
 export function nativeMutationMechanicsWorkerCommand(input: {
   bwrap: string;
   tini: string;
@@ -356,8 +371,9 @@ export function nativeMutationMechanicsWorkerCommand(input: {
   repositoryRoot: string;
   sandbox: string;
   outputRoot: string;
+  reportOverlay?: { directory: string; descriptorFile: string };
 }): string[] {
-  const { bwrap, tini, executable, repositoryRoot, sandbox, outputRoot } = input;
+  const { bwrap, tini, executable, repositoryRoot, sandbox, outputRoot, reportOverlay } = input;
   const temporary = path.join(outputRoot, 'tmp');
   const scratch = path.join(outputRoot, 'scratch');
   const scratchTarget = path.join(sandbox, '.tmp');
@@ -376,6 +392,36 @@ export function nativeMutationMechanicsWorkerCommand(input: {
   for (const directory of [temporary, scratch, scratchTarget])
     if (realpathSync(directory) !== directory || !statSync(directory).isDirectory())
       throw new Error('Native mechanics requires canonical existing directories.');
+  if (reportOverlay) {
+    const { directory, descriptorFile } = reportOverlay;
+    if (
+      realpathSync(directory) !== directory ||
+      !statSync(directory).isDirectory() ||
+      !directory.startsWith(repositoryRoot + path.sep) ||
+      !sandbox.startsWith(directory + path.sep) ||
+      !outputRoot.startsWith(directory + path.sep) ||
+      path.dirname(descriptorFile) !== directory ||
+      !/^[a-z0-9-]+\.inputs\.json$/u.test(path.basename(descriptorFile))
+    )
+      throw new Error('Native report overlay must bind the owned operation and descriptor.');
+    const sandboxTarget = path.join(outputRoot, path.relative(directory, sandbox));
+    if (
+      realpathSync(sandboxTarget) !== sandboxTarget ||
+      !statSync(sandboxTarget).isDirectory() ||
+      [temporary, scratch].some(
+        (source) =>
+          source === sandboxTarget ||
+          source.startsWith(sandboxTarget + path.sep) ||
+          sandboxTarget.startsWith(source + path.sep),
+      )
+    )
+      throw new Error('Native report overlay sandbox destination is invalid.');
+    for (const file of [descriptorFile, path.join(outputRoot, path.basename(descriptorFile))]) {
+      const info = statSync(file);
+      if (realpathSync(file) !== file || !info.isFile() || info.nlink !== 1)
+        throw new Error('Native report overlay descriptor requires canonical single-link files.');
+    }
+  }
   return [
     tini,
     '-s',
@@ -397,12 +443,19 @@ export function nativeMutationMechanicsWorkerCommand(input: {
     '--ro-bind',
     repositoryRoot,
     repositoryRoot,
-    '--ro-bind',
-    sandbox,
-    sandbox,
-    '--bind',
-    outputRoot,
-    outputRoot,
+    ...(reportOverlay
+      ? [
+          '--bind',
+          outputRoot,
+          reportOverlay.directory,
+          '--ro-bind',
+          sandbox,
+          sandbox,
+          '--ro-bind',
+          reportOverlay.descriptorFile,
+          reportOverlay.descriptorFile,
+        ]
+      : ['--ro-bind', sandbox, sandbox, '--bind', outputRoot, outputRoot]),
     '--bind',
     scratch,
     scratchTarget,
@@ -435,14 +488,24 @@ export function nativeMutationMechanicsWorkerCommand(input: {
 async function runMutationBatchPilot(root: string, args: readonly string[]): Promise<void> {
   const pilotStarted = performance.now();
   const partitionBudget = executionBudget(mutationLimits.partitionMs, 0);
-  const { partition, batchSize, maxBatches, admitComplete, diagnosticMutantId, diagnosticMutantIds, perTestCapture } =
-    selectMutationBatchPilot(args, mutationPartitions());
+  const {
+    partition,
+    batchSize,
+    maxBatches,
+    admitComplete,
+    diagnosticMutantId,
+    diagnosticMutantIds,
+    perTestCapture,
+    isolatedWorkers,
+  } = selectMutationBatchPilot(args, mutationPartitions());
   const pin = readPin(root);
   checkManifest(root, pin);
   if (process.versions.bun !== pin) throw new Error('Mutation batch pilot requires the pinned Bun.');
   const repository = repositoryRootForPackage(root);
   const bwrap = Bun.which('bwrap');
+  const tini = isolatedWorkers ? Bun.which('tini') : undefined;
   if (!repository || !bwrap) throw new Error('Mutation batch pilot requires repository layout and bwrap.');
+  if (isolatedWorkers && !tini) throw new Error('Isolated mutation workers require qualified Tini.');
   requireCampaignStorage(root);
   const runId = randomUUID();
   await mkdir(path.join(root, '.tmp'), { recursive: true });
@@ -538,6 +601,10 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     delete environment.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE;
     delete environment.AGENT_MUTATION_PER_TEST_CAPTURE;
     if (perTestCapture !== undefined) environment.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE = perTestCapture;
+    if (isolatedWorkers) {
+      Object.freeze(environment);
+      await mkdir(path.join(directory, 'workers'), { mode: 0o700 });
+    }
     const parentIdentity = () =>
       collectExecutionIdentity({
         executable: process.execPath,
@@ -562,8 +629,40 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const invoke = async (id: string | null, remaining: number, census?: readonly MutationJUnitCase[]) => {
       requireCampaignStorage(directory);
       const key = id === null ? 'dry-run' : sha256(id);
+      let invocation = command;
+      let outputRoot: string | undefined;
+      if (isolatedWorkers) {
+        outputRoot = path.join(directory, 'workers', key);
+        await mkdir(outputRoot, { mode: 0o700 });
+        for (const leaf of [
+          'tmp/bun-transpiler-cache',
+          'tmp/bun-install-cache',
+          'scratch',
+          path.relative(directory, sandbox),
+        ])
+          await mkdir(path.join(outputRoot, leaf), { recursive: true, mode: 0o700 });
+        await writeFile(path.join(outputRoot, `${partition.name}.inputs.json`), '', { flag: 'wx', mode: 0o600 });
+        invocation = nativeMutationMechanicsWorkerCommand({
+          bwrap,
+          tini: tini!,
+          executable: process.execPath,
+          repositoryRoot: repository,
+          sandbox,
+          outputRoot,
+          reportOverlay: { directory, descriptorFile: path.join(directory, `${partition.name}.inputs.json`) },
+        });
+        record(`launcher-${key}.launch.json`, {
+          schema: 'NativeMutationWorkerLaunch/v1',
+          scope: 'diagnostic-only',
+          command: invocation,
+          cwd: sandbox,
+          report_directory: directory,
+          private_output_root: outputRoot,
+          active_mutant_id: id,
+        });
+      }
       const result = await executeMutationCommand(
-        command,
+        invocation,
         sandbox,
         Math.min(id === null ? maximumMutantAllowanceMs : mutantAllowanceMs, remaining),
         {
@@ -584,6 +683,22 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         result.processCustody?.processGroupTerminationObserved !== true
       )
         return { status: 'unknown' as const, reason: 'Native mutation producer or capture did not close cleanly.' };
+      if (outputRoot) {
+        try {
+          await publishNativeMutationOutput({
+            directory,
+            outputRoot,
+            partition: partition.name,
+            mutantId: id,
+            processResult: result,
+          });
+        } catch (error) {
+          return {
+            status: 'unknown' as const,
+            reason: `Native worker output was retained after publication failure: ${String(error)}`,
+          };
+        }
+      }
       const outcome = await confirmRunnerReceipt(
         directory,
         runId,
@@ -628,6 +743,11 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       unknown: 0,
       unattempted: image.universe.mutants.length,
     };
+    const countObservation = (row: NativeBatchRow) => {
+      totals.attempted++;
+      totals[row.status]++;
+      totals.unattempted--;
+    };
     let resourceBlocked: { observed_path: string; available_bytes: string | null } | undefined;
     const batchCount =
       perTestCapture === undefined ? (diagnosticBatchIndices?.length ?? window!.end - window!.start) : 0;
@@ -635,14 +755,15 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       const index = diagnosticBatchIndices?.[position] ?? window!.start + position;
       const batch = plan.batches[index]!;
       const started = position === 0 ? pilotStarted : performance.now();
-      const observed = await collectNativeMutationBatch(
+      let publishedCount = 0;
+      const collect = isolatedWorkers ? collectIsolatedNativeMutationBatch : collectNativeMutationBatch;
+      const collected = await collect(
         batch,
         () => partitionBudget.remaining(),
         (id, remaining) => invoke(id, remaining, baseline.cases),
         (row, completed) => {
-          totals.attempted++;
-          totals[row.status]++;
-          totals.unattempted--;
+          publishedCount++;
+          countObservation(row);
           console.log(
             JSON.stringify({
               schema: 'MutationBatchPilotProgress/v1',
@@ -659,8 +780,31 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         },
         mutantAllowanceMs,
       );
+      const observed =
+        'failures' in collected
+          ? {
+              results: collected.results,
+              budgetExhausted: collected.budgetExhausted,
+              resourceBlocked: collected.resourceBlocks[0],
+              failure: collected.failures.length
+                ? {
+                    error: new AggregateError(
+                      collected.failures.map(({ error }) => error),
+                      'Isolated native workers failed',
+                    ),
+                  }
+                : undefined,
+            }
+          : collected;
+      if ('failures' in collected)
+        record(`batch-${index}.workers.json`, {
+          ...collected,
+          failures: collected.failures.map(({ error, ...scope }) => ({ ...scope, error: String(error) })),
+        });
       const current = observed.results;
       results.push(...current);
+      // A non-row gap suppresses live prefix publication, not later real results.
+      for (const row of current.slice(publishedCount)) countObservation(row);
       resourceBlocked = observed.resourceBlocked;
       let failure = observed.failure;
       try {
@@ -707,6 +851,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       schema: 'MutationBatchPilotSummary/v2',
       scope: 'diagnostic-only',
       full_contour_qualification: false,
+      ...(isolatedWorkers ? { execution_mode: 'isolated-workers-diagnostic', maximum_workers: 2 } : {}),
       binding,
       universe_sha256: plan.universe_sha256,
       baseline_cases: baseline.cases.length,
@@ -805,6 +950,7 @@ if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
       'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--capture-per-test-diagnostic] [--diagnostic-mutant-id <generated local ID> | --diagnostic-mutant-ids <comma-separated generated local IDs>]. Per-test capture is diagnostic-v2 baseline-only: it binds the input fingerprint/descriptor/receipt and full test selection, executes no mutants, and cannot combine with complete admission or mutant selection. Unattempted mutants keep the diagnostic exit nonzero. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
+      '--isolated-workers opts into private report overlays and at most two native workers for bun-project-upgrade-existing-storage-image only. It preserves the full test argv and one deadline, retains private outputs, and forbids complete admission, per-test capture and ID selectors. Default execution remains serial.',
     );
   else
     await runMutationBatchPilot(

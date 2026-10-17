@@ -286,6 +286,27 @@ test('native targeted diagnostics require one immutable-plan mutant and never al
     expect(() => selectMutationBatchPilot(denied, declared)).toThrow();
 });
 
+test('isolated worker pilot is explicit, image-only and cannot supply complete admission or filtering', () => {
+  const name = 'bun-project-upgrade-existing-storage-image';
+  const declared = [
+    { name, sources: ['src/one.ts'], tests: ['tests/one.test.ts'], report: 'one.json', environment: 'bun' },
+  ];
+  expect(selectMutationBatchPilot(['--contour', name], declared).isolatedWorkers).toBe(false);
+  expect(selectMutationBatchPilot(['--contour', name, '--isolated-workers'], declared).isolatedWorkers).toBe(true);
+  for (const suffix of [
+    ['--admit-complete'],
+    ['--capture-per-test-diagnostic'],
+    ['--batch-size', '1', '--diagnostic-mutant-id', '1'],
+    ['--batch-size', '1', '--diagnostic-mutant-ids', '1,2'],
+  ])
+    expect(() => selectMutationBatchPilot(['--contour', name, '--isolated-workers', ...suffix], declared)).toThrow(
+      'diagnostic-only',
+    );
+  expect(() =>
+    selectMutationBatchPilot(['--contour', 'foreign', '--isolated-workers'], [{ ...declared[0]!, name: 'foreign' }]),
+  ).toThrow('reviewed image');
+});
+
 test('native diagnostic ID sets require bounded unique IDs and remain incompatible with single-ID and admission modes', () => {
   const declared = [
     { name: 'one', sources: ['src/one.ts'], tests: ['tests/one.test.ts'], report: 'one.json', environment: 'bun' },

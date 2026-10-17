@@ -579,6 +579,7 @@ export const mutationToolInputs = [
   'tooling/mutation-map.ts',
   'tooling/mutation-generation.ts',
   'tooling/mutation-batch-pilot.ts',
+  'tooling/native-mutation-output.ts',
   'tooling/mutation-map-reporter.ts',
   'tooling/mutation-command-runner.ts',
   'tooling/mutation-evidence.ts',
