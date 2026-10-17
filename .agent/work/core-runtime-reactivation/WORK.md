@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `2997f9c52d5a98c6ea9251c42bbbb95a3794f152` pins the published52-role image cleanup review atb1ecf6b. Fresh numeric qualification is pending. Prior8120162 repairs capture close/cancellation; bde2857 strengthens image assertions, retains explicit external scratch and compacts unchanged progress history; ec3b3ba captures computed transitive closure. The current six-hour script audit repairs campaign outcome binding and surviving-group cleanup with focused/native RED/GREEN evidence below. Current fs-attestation has a reader-validated full7/7 native Killed proof, with zero-callable CRAP applicability still OPEN. Its blocked slot moves to service-operation-custody; active contours are storage image, envelopes and service-operation-custody. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `c41486675244c98e49c74fc2c27833860045dbde` repairs campaign outcome binding and surviving-group cleanup with focused/native RED/GREEN evidence below. Fresh v194 coverage/frozen pairs pass for image52roles, envelopes and service custody, preserving separate BLOCKED parent outcomes. Full mutation qualification remains open. Prior2997f9c pins the image cleanup review atb1ecf6b;8120162 repairs capture close/cancellation; bde2857 strengthens image assertions, retains explicit external scratch and compacts unchanged progress history; ec3b3ba captures computed transitive closure. Current fs-attestation has a reader-validated full7/7 native Killed proof, with zero-callable CRAP applicability still OPEN. Its blocked slot moves to service-operation-custody; active contours are storage image, envelopes and service-operation-custody. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1229,7 +1229,30 @@ Root caught a stale worker full-file proposal that omitted an unrelated data-onl
 test; that canonical case was preserved before GREEN. Sidecar and Bun Test skill
 now require immutable worker bases and bounded diffs, rather than stale whole-file
 replacement. All UNKNOWN, original frozen caps, exact gates and budgets remain.
-Publication checks and fresh52-role image qualification are the next actions.
+Publishedc41486675244c98e49c74fc2c27833860045dbde passes the ordinary strict
+hook, including505-file TypeScript, format, lint and Knip, and is pushed. The
+documentation check passes5documents/62local links with no failures.
+
+The immutable v194 checkout forms SDK inputs once (`Klnnba`,3217ms), without
+suites. Fresh coverage/frozen pairs are imported together through the existing
+owner as projection581, retaining each BLOCKED parent outcome separately:
+
+- Image `d8ZcpI`/`WR7VBN`, run79d48392-7f41-4e45-abe9-956ddc48ac73,
+  62tests/443assertions, exact F52/52,L194/194,S216/216,B56/56;7566ms/1216ms.
+  The separately publishedb1ecf6b review binds all52roles and original/prospective
+  ceilings; measured maxCC9/maxCRAP9 passes without correspondence fallback.
+- Envelopes `LBhCSS`/`unvYRH`, run17a332ec-a295-4b3a-b7be-3dc91fdc3142,
+  47tests/4271assertions, exact78/211/227/103;7879ms/1377ms, maxCC9/maxCRAP9
+  against the original53fac83 review.
+- Service custody `ErqEoD`/`ZDjeUw`, run19a2e5b8-ac2f-4601-bf5e-a37ff3f77f98,
+  123tests/1026assertions, exact56/235/243/123;6597ms/941ms, maxCC9/maxCRAP9
+  against the original8ca2af9 review.
+
+All six producers have full captures, closed groups, unchanged boot/commit and
+clean measured tracked state. Historical full triples remain6/45;39 executable
+contours remain without a complete triple. These pairs do not establish mutation
+closure or global admission. Resume remaining mutation repairs from captured maps;
+no repeated whole suite or reclassification of prior UNKNOWN is authorized here.
 
 ### Published admission packet — retained context
 
