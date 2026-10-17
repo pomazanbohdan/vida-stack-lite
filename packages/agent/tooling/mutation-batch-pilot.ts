@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { realpathSync, statSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
@@ -241,6 +242,89 @@ export function nativeMutationBatchCommand(
     sandboxTmp,
     '--chdir',
     sandbox,
+    executable,
+    '--no-env-file',
+    '--no-install',
+    'tooling/mutation-command-runner.ts',
+  ];
+}
+
+/** Inert mechanics qualification only; the native mutant loop remains serial. */
+export function nativeMutationMechanicsWorkerCommand(input: {
+  bwrap: string;
+  tini: string;
+  executable: string;
+  repositoryRoot: string;
+  sandbox: string;
+  outputRoot: string;
+}): string[] {
+  const { bwrap, tini, executable, repositoryRoot, sandbox, outputRoot } = input;
+  const temporary = path.join(outputRoot, 'tmp');
+  const scratch = path.join(outputRoot, 'scratch');
+  const scratchTarget = path.join(sandbox, '.tmp');
+  for (const directory of [repositoryRoot, sandbox, outputRoot])
+    if (realpathSync(directory) !== directory || !statSync(directory).isDirectory())
+      throw new Error('Native mechanics requires canonical existing directories.');
+  if (
+    ![bwrap, tini, executable].every((file) => path.isAbsolute(file)) ||
+    !sandbox.startsWith(repositoryRoot + path.sep) ||
+    !outputRoot.startsWith(repositoryRoot + path.sep) ||
+    outputRoot === sandbox ||
+    outputRoot.startsWith(sandbox + path.sep) ||
+    sandbox.startsWith(outputRoot + path.sep)
+  )
+    throw new Error('Native mechanics input and output roots must be separate within the repository.');
+  for (const directory of [temporary, scratch, scratchTarget])
+    if (realpathSync(directory) !== directory || !statSync(directory).isDirectory())
+      throw new Error('Native mechanics requires canonical existing directories.');
+  return [
+    tini,
+    '-s',
+    '--',
+    bwrap,
+    '--die-with-parent',
+    '--unshare-pid',
+    '--as-pid-1',
+    '--ro-bind',
+    '/',
+    '/',
+    '--proc',
+    '/proc',
+    '--dev',
+    '/dev',
+    '--bind',
+    temporary,
+    '/tmp',
+    '--ro-bind',
+    repositoryRoot,
+    repositoryRoot,
+    '--ro-bind',
+    sandbox,
+    sandbox,
+    '--bind',
+    outputRoot,
+    outputRoot,
+    '--bind',
+    scratch,
+    scratchTarget,
+    '--setenv',
+    'TMPDIR',
+    '/tmp',
+    '--setenv',
+    'BUN_TMPDIR',
+    '/tmp',
+    '--setenv',
+    'BUN_INSTALL_CACHE_DIR',
+    '/tmp/bun-install-cache',
+    '--setenv',
+    'BUN_RUNTIME_TRANSPILER_CACHE_PATH',
+    '/tmp/bun-transpiler-cache',
+    '--chdir',
+    sandbox,
+    tini,
+    '-s',
+    '-g',
+    '--',
     executable,
     '--no-env-file',
     '--no-install',

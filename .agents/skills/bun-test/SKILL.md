@@ -122,6 +122,15 @@ nested spawn, denied writes, unchanged bytes and owned output/scratch writes.
 A later parent mount can hide an earlier child mount. Preserve failed runs and
 use fresh measured inputs after a correction; never bypass descriptor validation.
 
+For inert mutation-worker isolation, qualify namespace PID1 and host orphan
+reaping together: host Tini `-s`, bwrap `--unshare-pid --as-pid-1`, then inner
+Tini owning Bun. Validate writable mount destinations as well as sources;
+a symlink at `sandbox/.tmp` can redirect a scratch mount. Retain timeout, signal
+and no-PID results distinctly even when a negative-control test passes. Observe
+native init/start identity and actual child proc state before exit; missing
+readiness markers alone do not prove descendant cleanup. These mechanics are
+not real-suite resource independence or pool admission.
+
 For image schema-order assertions, preserve actual SQLite encoding. A UTF-8
 Buffer comparator is not a general model for UTF-16 BINARY collation. Real
 UTF-16LE/BE images and opposite-order Unicode names expose this difference;

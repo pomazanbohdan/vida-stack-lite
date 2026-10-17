@@ -124,13 +124,15 @@ schedule does not activate pending parallel coverage, filtered mutation or a new
 runner. A prospective-cap or correspondence GAP stays open; it cannot inherit
 another function's original allowance or become a closure from a partial score.
 
-The next bounded native speed qualification uses an inert max-two mutation pilot
-under [TESTING's existing native/parallel contract](../../../packages/agent/TESTING.md#completion-commands).
-Keep current serial execution until per-worker PID1/subreaper custody, resource
-independence, immutable input/private output separation and UNKNOWN stop/drain
-controls pass. Start with mechanics, then a reviewed real contour selection;
-do not raise worker count or claim the900s target from arithmetic alone. Root
-retains the same capture, final checks, frozen admission and Git ownership.
+The internal max-two inert worker mechanics now have scoped controls under
+[TESTING's existing native/parallel contract](../../../packages/agent/TESTING.md#completion-commands);
+WORK owns their actual receipts. The next bounded native speed qualification
+reviews selected real-test resources, then integrates captured immutable inputs,
+private per-ID outputs, ordered outcomes, one shared deadline and UNKNOWN
+stop/drain handling. Keep current serial execution and full declared test argv
+until those requirements pass. Do not raise worker count or claim the900s target
+from arithmetic alone. Root retains capture, final checks, frozen admission and
+Git ownership. Inert mechanics do not establish a parallel mutation score.
 
 Use a rolling worker queue: a terminal preparation/review handoff immediately
 releases that worker for the next independent scope or a concrete correction in

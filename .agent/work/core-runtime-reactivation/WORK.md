@@ -11,6 +11,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
+- Inert max-two native worker mechanics have focused controls; the CLI and mutation loop remain serial. Real-test resource qualification and pool integration stay open. This tooling packet changes no product Source or numeric contour closure.
 
 ## Global contour campaign packet
 
@@ -1917,6 +1918,50 @@ UNKNOWN while draining all already-launched siblings in original report order.
 Max-two arithmetic cannot guarantee the527/763-mutant contours within900s; do
 not activate a larger pool or weaken admission on that basis. TESTING owns the
 controls; CLEAR owns this next order. No parallel runtime path is activated.
+
+### Inert native worker mechanics — 2026-10-17
+
+Current boot remains `14b0bfa9-b9d7-4c85-8400-bfdc503d4e35`; fetched main and
+local HEAD were `31aea4b614d429ee537b370af2efb3cf62988b28` before this packet.
+Vex/Pstack executables are absent, so bounded rg/file reads are the explicit
+fallback. The internal worker command constructor is separate from the unchanged
+serial CLI/loop. TESTING owns the isolation contract; no new dependency, runner
+activation, Source inventory scan, raised budget or numeric admission is added.
+
+Missing-export `YzvEYi` executes zero tests and is only an import RED. Initial
+two-worker `1Vewlq` instead reproduces a real timeout/group-reaping failure;
+its failed root `/tmp/native-mutation-mechanics-qdCIWP` remains retained. Adding
+host Tini subreaping around the private namespace fixes this in `bYYlJc`.
+`AVzAoh` retains a fixture capability failure: optional host proc `children` is
+absent. The corrected control observes the namespace-mounted proc directly,
+without a host process scan. This is not classified as a product defect.
+
+Blind Luna review finds a scratch-target alias gap in the new constructor.
+`du0NpW` executes the new negative control and reproduces acceptance of a missing
+target. The fix requires canonical existing directories for `sandbox/.tmp` and
+the writable roots before launch. Missing, symlink and regular-file targets now
+fail before execution; the same reviewer confirms no further actionable issue.
+
+Final owned `m4MmdM` passes106tests/453assertions in1365ms across the mechanics
+and existing mutation-map tests, with complete captures, closed outer group and
+unchanged boot. It verifies two concurrent inert workers on temp/shm, actual
+read-only denial, private backing files, native PID1/namespace observations,
+timeout while a healthy sibling stays held, actual SIGTERM, no-PID UNKNOWN and
+an observed detached child followed by namespace-init death. Expected negatives
+retain raw per-worker `execution.json`: TIMEOUT at
+`/tmp/native-mutation-mechanics-1S19Qp`, UNKNOWN at
+`/tmp/native-mutation-mechanics-0Z78yg` and SIGTERM at
+`/tmp/native-mutation-mechanics-cTs1Cp`. Only successful fixtures are removed
+after all attempted promises settle. Earlier failures stay separate.
+
+The implementation follows upstream [Tini subreaping](https://github.com/krallin/tini#subreaping),
+[bubblewrap isolation](https://github.com/containers/bubblewrap/blob/main/README.md)
+and [PID namespace semantics](https://man7.org/linux/man-pages/man7/pid_namespaces.7.html),
+with actual local command/help and native process observations. The automatic
+projection remains626attempts and historical6/45full triples. No real parallel
+mutants, new coverage/frozen receipt, runtime update or contour closure is claimed.
+Next work is selected real-test resource review and full captured-input/private-
+output pool integration, ordered outcomes and shared-deadline UNKNOWN stop/drain.
 
 ### Published admission packet — retained context
 
