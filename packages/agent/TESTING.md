@@ -1735,6 +1735,10 @@ No automatic tmpfs selection or ephemeral mount is performed. An explicitly
 selected host tmpfs must retain failed roots after namespace exit; it consumes
 host memory and is lost on host reboot/unmount. Keep all fsync calls and do not
 claim power-loss durability from functional or process-recovery tests there.
+The private `/tmp` bind precedes the exact repository and stage binds, preserving
+owned workspace/stage aliases below `/tmp`. Use unique owned stage directories;
+do not pass `/tmp` or a filesystem root as a stage. This ordering grants no
+broader writable root and changes neither resource guards nor retention.
 Do not delete or relocate any prior FAIL/UNKNOWN fixture. Native mutation evidence stays
 at its real package `.tmp` path; the campaign does not relocate or rewrite it.
 Full captures, boot identity, argv, terminal status, timeout and process-group

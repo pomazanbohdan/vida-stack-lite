@@ -51,6 +51,9 @@ test('campaign retains private scratch with its stage instead of accumulating ho
     expect(readFileSync(cacheSentinel, 'utf8')).toBe('private writable cache');
     const index = isolated.command.indexOf(scratch);
     expect(isolated.command.slice(index - 1, index + 2)).toEqual(['--bind', scratch, '/tmp']);
+    const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+    expect(index).toBeLessThan(isolated.command.indexOf(repositoryRoot));
+    expect(index).toBeLessThan(isolated.command.indexOf(stage));
     const filesystem = statfsSync(scratch, { bigint: true });
     expect(isolated.scratch_storage.filesystem_type).toBe(String(filesystem.type));
     expect(BigInt(isolated.scratch_storage.available_bytes)).toBeGreaterThanOrEqual(2n * 1024n ** 3n);

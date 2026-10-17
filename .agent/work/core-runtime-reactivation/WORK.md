@@ -190,6 +190,26 @@ control; no cast or fabricated fallback masks the invariant. Final owned4CvyJ9
 passes127/0cases in2795ms with full captures/closed group/same boot. The hook
 must pass before publication; the rejected commit produced no revision.
 
+### Retained temporary workspace visibility — 2026-10-17
+
+Published7556955 contains the checked custody test corrections. Preserved native
+outputs leave about2GiB free on /dev/shm; host /tmp has about8GiB. Do not delete
+failed/UNKNOWN roots or lower the2GiB storage guard. A retained worktree under
+/tmp exposes an existing isolation defect: mounting private/tmp after repository
+and stage hides their aliases. The real inert stage control rc5cA7 reproduces
+native exit1 ENOENT with full captures/closed group/same boot; its evidence stays.
+
+Root moves the private/tmp bind before the exact repository and owned-stage binds,
+matching the established native worker order. No new mount, helper, flag, runtime
+or storage waiver is introduced. Fresh inert control rtsg5w exits0 and reads its
+private stage marker through the same owned native command. Complete contract
+file yhmvYw passes14/0cases in543ms with full captures/closed group/same boot.
+Independent review finds no current owned-stage resource blocker; command token
+positions are exact Array.indexOf comparisons, confirmed by that real test run.
+Next use a fresh immutable /tmp worktree with real private locked dependencies,
+then fresh coverage/frozen and a shared-baseline diagnostic of721/545/439 before
+another exhaustive native attempt. Existing artifacts remain in place.
+
 ### Isolated full-proof parity preparation — 2026-10-17
 
 Three blind Luna reviews qualify the next bounded selection: fs-safe attestation
