@@ -169,7 +169,12 @@ Inventory /workspace/attachments/initialization-barrier-inventory-v241.json bind
 runtime64c29748775534a19390189288487b13f90653d3ddadbca11ae79723fe76e98e
 and unchanged workspace8ff6bcfa. Review remains independent of numeric acceptance.
 
-Next: finish actual-diff review, publish/pin, then a fresh compatible triple.
+Blind actual-diff review /workspace/attachments/initialization-contracts-review-v241.md
+has no blocker. Publication8af2e35 passes the ordinary hook including strict
+TS511, formatting, lint and Knip. The Source payload is pushed to origin/main;
+the frozen-scope pin follows without changing original limits.
+
+Next: a fresh compatible coverage/frozen/native triple on the published inputs.
 The prepared envelopes successor is the existing fixed-two64-mutant diagnostic
 (--batch-size 2 --max-batches 32, no admission/capture/ID selectors), not a repeat
 of the2-mutant pair. Image retains its actual capacity/custody qualification gap;
