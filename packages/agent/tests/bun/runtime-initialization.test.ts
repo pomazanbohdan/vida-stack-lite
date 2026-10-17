@@ -78,6 +78,29 @@ async function expectInitializationResult<T>(action: () => Promise<T>): Promise<
   return result;
 }
 
+async function expectNoRetryDelay<T>(action: () => Promise<T>): Promise<T> {
+  const originalSleep = Bun.sleep;
+  let retrySleeps = 0;
+  let result!: T;
+  let failure: { readonly error: unknown } | undefined;
+  Bun.sleep = (() => {
+    retrySleeps += 1;
+    throw new Error('Initialization scheduled a forbidden retry delay');
+  }) as typeof Bun.sleep;
+  try {
+    try {
+      result = await action();
+    } catch (error) {
+      failure = { error };
+    }
+  } finally {
+    Bun.sleep = originalSleep;
+  }
+  expect(retrySleeps).toBe(0);
+  if (failure) throw failure.error;
+  return result;
+}
+
 async function expectReadAdmissionExpiry(
   action: () => Promise<unknown>,
   assertRetainedState: () => void,
@@ -580,28 +603,17 @@ test('workspace binding denies an unsafe activation reclaim guard without retryi
   symlinkSync(target, guardPath, 'dir');
   const guardIdentity = lstatSync(guardPath);
   const receiptBytes = readFileSync(receiptPath);
-  const originalSleep = Bun.sleep;
-  let retrySleeps = 0;
-  Bun.sleep = ((...args: Parameters<typeof Bun.sleep>) => {
-    retrySleeps += 1;
-    return originalSleep(...args);
-  }) as typeof Bun.sleep;
   let caught: unknown;
   try {
-    try {
-      await bindRuntimeInitialization(root, store);
-    } catch (error) {
-      caught = error;
-    }
-  } finally {
-    Bun.sleep = originalSleep;
+    await expectNoRetryDelay(() => bindRuntimeInitialization(root, store));
+  } catch (error) {
+    caught = error;
   }
   expect(caught).toBeInstanceOf(RuntimeInitializationBindingError);
   if (caught instanceof RuntimeInitializationBindingError) {
     expect(caught.cause).toBeInstanceOf(Error);
     expect(caught.cause).not.toBeInstanceOf(SafeRepositoryLockContentionError);
   }
-  expect(retrySleeps).toBe(0);
   expect(readFileSync(receiptPath)).toEqual(receiptBytes);
   const retainedGuard = lstatSync(guardPath);
   expect(retainedGuard.dev).toBe(guardIdentity.dev);
@@ -813,7 +825,7 @@ test('binding preserves a non-Error replacement failure and retries only after r
       `${initModuleUrl}?undefined-fault=${randomUUID()}`
     )) as typeof import('../../src/runtime-initialization.ts');
     isolatedBindingError = isolatedInitialization.RuntimeInitializationBindingError;
-    await isolatedInitialization.bindRuntimeInitialization(root, store);
+    await expectNoRetryDelay(() => isolatedInitialization.bindRuntimeInitialization(root, store));
   } catch (error) {
     caught = error;
   } finally {
@@ -982,7 +994,7 @@ test('binding propagates a generic pre-entry lock error without retrying or chan
       `${initModuleUrl}?pre-entry-lock=${randomUUID()}`
     )) as typeof import('../../src/runtime-initialization.ts');
     isolatedBindingError = isolatedInitialization.RuntimeInitializationBindingError;
-    await isolatedInitialization.bindRuntimeInitialization(root, store);
+    await expectNoRetryDelay(() => isolatedInitialization.bindRuntimeInitialization(root, store));
   } catch (error) {
     caught = error;
   } finally {

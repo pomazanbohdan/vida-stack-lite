@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published custody repair and automatic stage publisher: `e494471cf7c5e8989cb947144f1f2db4071acaa0`, scoped pin `6531dc3050285a99056fef7fa8f7e94097b28c24`. Immutable v224 completes the59-role custody local triple: exact F/L/S/B100, same-run frozen9/9 and681/681assertion-confirmed native Killed. All three reports publish automatically through the maintained stage controller and unchanged reader. The derived projection now records7/45historical local triples,38unclosed. Custody's slot passes immediately to initialization; the other active contours remain storage image and envelopes. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Custody's published59-role local triple is exact F/L/S/B100, same-run frozen9/9 and681/681assertion-confirmed native Killed (Source e494471, pin6531dc3, immutable v224). The automatic projection records7/45historical local triples,38unclosed. Active contours are initialization, storage image and envelopes. Initialization's fresh16-role coverage/frozen pass at42e2b1b; actual40 and145 now have owned-body Killed evidence after test repair, while current41 remains UNKNOWN on a case timeout and complete native closure is pending. FS zero-callable CRAP applicability, admission stateful initialization, and image/envelopes isolated complete admission remain OPEN. The derived contour document owns exact receipts and historical closures; WORK records diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -64,6 +64,26 @@ evidence must confirm the repaired owned-body path.
 Blind Luna actual-evidence review approves this fixture boundary and confirms
 no other direct deriveWorkspaceId call remains in hooks. Focused QEC4hy passes
 19/0cases in17577ms, with full captures, closed group and unchanged boot.
+
+Fresh immutable64cc655 native run9e91d67a-36b7-4b02-9811-e5dfbf3baca7, outerhwnvHq,
+confirms145 assertion-Killed in body13 with1owned hit. Next41 (identity0dac3f8c,
+runtime-initialization.ts130–131, entered/non-contention predicate ->false) makes
+that real no-retry case reach its5000ms timeout. Keep UNKNOWN,1Killed and
+160unattempted of162. Actual body/receipt and complete terminal captures stay
+retained; there is no complete native score or increase of the5s allowance.
+
+Root introduces one test-local expectNoRetryDelay owner for the unsafe guard,
+non-Error replacement and generic pre-entry denial cases. Unexpected Bun.sleep
+is a controlled forbidden invocation that rejects immediately, permitting owned
+operation settlement before a zero-call assertion. Restore the method before
+asserting and preserve normal returned values/rejections, including undefined.
+Keep each case's real typed error, cause, one-attempt and unchanged-state checks.
+This removes the timeout-only detection path rather than accepting a timeout as
+Killed. Require fresh actual41 proof; the expiry-helper prototype remains
+unadopted because no current expiry-specific finding has been established.
+Blind Luna approves the actual helper and all3call sites without findings.
+Focused FJc92O passes19/0cases,148assertions in14154ms, complete captures,
+closed group and unchanged boot. Publish before fresh native confirmation.
 
 ### Initialization current evidence and owned-clock repair — 2026-10-17
 

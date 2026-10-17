@@ -507,6 +507,11 @@ Keep a mutation target out of fixture construction when its failure would abort
 `beforeEach`. Build controlled expected data from the independent contract and
 real fixture inputs, then invoke and assert the target inside registered bodies.
 A hook error is UNKNOWN, even when its printed case name looks like a body.
+For a contract that forbids retry, an owned sleep observer may reject an
+unexpected invocation immediately and assert zero calls after restoring the
+method. Preserve ordinary operation errors, including rejected undefined.
+Keep typed error/state assertions and require fresh native proof; a5s timeout
+against a5s production retry deadline cannot establish assertion-confirmed Killed.
 
 For asynchronous case custody, enroll each root before the body can suspend.
 Teardown must observe a pending body directly; a `finally` that marks failure
