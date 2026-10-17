@@ -8,7 +8,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
-- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
+- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,115 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 - Native worker mechanics and bounded scheduling feed an explicit `--isolated-workers` route, with private logical report overlays and parent-only raw publication. Published ce86679 passes a real immutable80-case image baseline and2assertion-confirmed Killed/0Survived/0UNKNOWN/525unattempted of527 in16571ms. Published3d5a60b permits complete admission only for reviewed read-only fs-safe attestation. Fresh isolated run b5632d5f passes5baseline cases and7/7assertion-confirmed Killed in4989ms; unchanged persisted reader accepts the actual closure and rejects four memory-only mismatches. Image remains diagnostic-only; both reject capture/selectors, and default execution stays serial. Broader parallel/resource qualification and FS zero-callable CRAP applicability remain open. These tooling packets change no product Source or numeric contour closure.
@@ -54,6 +54,39 @@ call a dummy target. One existing scoped inventory pass must verify the two new
 identities and preserve every original correspondence after Source settles.
 Then require fresh actual generated SQL/table mutant evidence; a focused PASS,
 this prospective plan or static review alone does not close the activation GAP.
+
+Adoption follows published prospective JSON budget `62e6bf5`. The two owners
+now do real schema/query work only inside operation bodies, and the table name
+is shared by DDL and every native query. The eager primitive export and constant
+are removed; only their two direct internal test consumers migrate. No public
+package barrel, stateful reload, authority or guard/CAS change is introduced.
+Independent blind actual-Source review approves the exact DDL and all12name
+uses, with no missed top-level product string owner in this module.
+
+One existing Babel inventory invocation captures55custody roles, preserving all
+53prior identities and complexities, plus the two prospectively capped1/1 roles.
+The four utility roles are unchanged:59contour roles. Source binding is
+`2db0b7fbf6dda0851cf9807face077119d798231682aedc30d6f45c2fbf9ff1b`.
+The lineage updater consumes that cached inventory, compares actual captured
+Source bytes, validates all old ceilings and exact counts before/after write,
+and creates a new scoped review while retaining historical bindings. Partial
+correspondence is7115roles/1667new/149files; this is not a numeric score.
+
+Owned affected run `G3TfbU` passes212tests across the complete custody selection,
+fresh-projection schema contract and storage-image selection in7789ms, with
+complete captures, closed group and unchanged boot. Exact59-role coverage,
+same-run frozen proof and fresh actual SQL/table mutant qualification follow
+checked publication; no repaired-activation or complete-triple claim yet.
+
+Fresh envelopes isolated diagnostic at immutable3ac41f5, run
+`c78cebc2-94f3-4742-8a26-a96499e211ec`, outer
+`/tmp/vida-isolated-pilot-v215-OWsJUT`, completes10887ms. It confirms47baseline
+cases and current468/178 as2assertion-confirmed Killed/0Survived/0UNKNOWN,
+767unattempted of769. Baseline4671ms yields the unchanged measured19343ms
+mutant allowance. Full captures, owned-group closure, input/executable readbacks,
+same boot/commit and clean checkout pass; no resource/failure entries. Exit1 is
+the intentionally partial denominator, not a complete mutation proof. SDK input
+formation `HmAgrv` completes1851ms without suites. No old artifact is reused.
 
 ### Isolated full-proof parity preparation — 2026-10-17
 

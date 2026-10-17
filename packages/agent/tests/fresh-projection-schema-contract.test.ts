@@ -8,7 +8,7 @@ import type { ClosedDatabaseImage, ExistingMergeBinding } from '../src/config/pr
 import { prepareUnifiedExistingStorageImage } from '../src/config/project-upgrade-existing-storage.js';
 import { prepareInitialWorkspaceDatabaseImage } from '../src/config/project-upgrade-storage.js';
 import { createInMemoryBunSqliteClient } from '../src/orchestration/bun-sqlite-client.js';
-import { serviceOperationCustodySql } from '../src/config/service-operation-custody.js';
+import { serviceOperationCustodySchemaSql } from '../src/config/service-operation-custody.js';
 import { expectRejection } from './helpers/expect-rejection.js';
 
 const operationTable = 'agent_host_task_source_binding_operation';
@@ -124,7 +124,7 @@ function expectFreshServiceCustodyShape(database: Database): void {
       type: 'table',
       name: 'agent_host_service_operation_custody',
       table_name: 'agent_host_service_operation_custody',
-      sql: serviceOperationCustodySql,
+      sql: serviceOperationCustodySchemaSql(),
     },
   ]);
   const columns = database.query<TableColumn, []>('PRAGMA table_info(agent_host_service_operation_custody)').all();
@@ -403,7 +403,7 @@ function makeHostImage(serviceTable: 'absent' | 'malformed' | 'populated' | 'cor
     if (serviceTable === 'malformed') {
       database.exec('CREATE TABLE ' + custodyTable + '(workspace_id TEXT NOT NULL,phase TEXT NOT NULL)');
     } else if (serviceTable === 'populated') {
-      database.exec(serviceOperationCustodySql);
+      database.exec(serviceOperationCustodySchemaSql());
       database
         .query('INSERT INTO ' + custodyTable + ' VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
         .run(

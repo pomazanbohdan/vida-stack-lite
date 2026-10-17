@@ -62,17 +62,24 @@ interface ServiceOperationHandoffProof extends ServiceOperationProof {
   readonly handoff_digest: string;
 }
 
-export const serviceOperationCustodySql =
-  'CREATE TABLE agent_host_service_operation_custody (' +
-  "workspace_id TEXT NOT NULL CHECK(length(workspace_id)=64),owner_kind TEXT NOT NULL CHECK(owner_kind IN ('release-pack-worker','release-worker'))," +
-  'operation_id TEXT NOT NULL,request_digest TEXT NOT NULL CHECK(length(request_digest)=64),' +
-  'owner_token TEXT,revision INTEGER NOT NULL CHECK(revision>0),' +
-  "phase TEXT NOT NULL CHECK(phase IN ('launching','in_flight','unknown','prepared','terminal'))," +
-  'evidence_digest TEXT,launch_pid INTEGER CHECK(launch_pid IS NULL OR launch_pid>0),handoff_digest TEXT,handoff_from_kind TEXT,handoff_from_phase TEXT,' +
-  'handoff_from_request_digest TEXT,handoff_from_revision INTEGER,handoff_from_evidence_digest TEXT,' +
-  'PRIMARY KEY(workspace_id,operation_id))';
+export function serviceOperationCustodySchemaSql(): string {
+  return (
+    'CREATE TABLE ' +
+    serviceOperationCustodyTable() +
+    ' (' +
+    "workspace_id TEXT NOT NULL CHECK(length(workspace_id)=64),owner_kind TEXT NOT NULL CHECK(owner_kind IN ('release-pack-worker','release-worker'))," +
+    'operation_id TEXT NOT NULL,request_digest TEXT NOT NULL CHECK(length(request_digest)=64),' +
+    'owner_token TEXT,revision INTEGER NOT NULL CHECK(revision>0),' +
+    "phase TEXT NOT NULL CHECK(phase IN ('launching','in_flight','unknown','prepared','terminal'))," +
+    'evidence_digest TEXT,launch_pid INTEGER CHECK(launch_pid IS NULL OR launch_pid>0),handoff_digest TEXT,handoff_from_kind TEXT,handoff_from_phase TEXT,' +
+    'handoff_from_request_digest TEXT,handoff_from_revision INTEGER,handoff_from_evidence_digest TEXT,' +
+    'PRIMARY KEY(workspace_id,operation_id))'
+  );
+}
 
-const table = 'agent_host_service_operation_custody';
+function serviceOperationCustodyTable(): string {
+  return 'agent_host_service_operation_custody';
+}
 const liveHandles = new WeakMap<ServiceOperationHandle, LiveServiceOperationHandle>();
 const serviceDatabases = new WeakMap<
   Database,
@@ -108,18 +115,20 @@ export function initializeServiceOperationCustodySchema(database: Database): voi
   requireCustody(database instanceof Database && !database.inTransaction, 'schema requires an unshared database');
   const existing = database
     .query<{ name: string }, [string]>("SELECT name FROM sqlite_master WHERE type='table' AND name=?")
-    .get(table);
-  if (!existing) database.exec(serviceOperationCustodySql);
+    .get(serviceOperationCustodyTable());
+  if (!existing) database.exec(serviceOperationCustodySchemaSql());
   assertServiceOperationCustodyReady(database);
-  const count = database.query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM ' + table).get()!.count;
+  const count = database
+    .query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM ' + serviceOperationCustodyTable())
+    .get()!.count;
   requireCustody(BigInt(count) === 0n, 'prepared service table must be empty');
 }
 
 export function assertServiceOperationCustodyReady(database: Database): void {
   const found = database
     .query<{ sql: string }, [string]>("SELECT sql FROM sqlite_master WHERE type='table' AND name=?")
-    .get(table);
-  requireCustody(found?.sql === serviceOperationCustodySql, 'owned service table is absent or differs');
+    .get(serviceOperationCustodyTable());
+  requireCustody(found?.sql === serviceOperationCustodySchemaSql(), 'owned service table is absent or differs');
 }
 
 function readRow(database: Database, workspaceId: string, operationId: string): ServiceOperationCustody | null {
@@ -136,7 +145,7 @@ function readRow(database: Database, workspaceId: string, operationId: string): 
         'handoff_digest,handoff_from_kind,handoff_from_phase,handoff_from_request_digest,handoff_from_revision,' +
         'handoff_from_evidence_digest ' +
         'FROM ' +
-        table +
+        serviceOperationCustodyTable() +
         " WHERE workspace_id=? AND operation_id=? AND owner_kind IN ('release-pack-worker','release-worker')",
     )
     .get(workspaceId, operationId);
@@ -336,7 +345,7 @@ export function reserveServiceOperationLaunch(
       database
         .query(
           'INSERT INTO ' +
-            table +
+            serviceOperationCustodyTable() +
             "(workspace_id,owner_kind,operation_id,request_digest,owner_token,revision,phase,evidence_digest,launch_pid) VALUES(?,?,?,?,?,1,'launching',?,NULL)",
         )
         .run(workspaceId, kind, operationId, requestDigest, capabilityDigest, evidenceDigest);
@@ -352,7 +361,7 @@ export function reserveServiceOperationLaunch(
       const reserved = database
         .query(
           'UPDATE ' +
-            table +
+            serviceOperationCustodyTable() +
             " SET owner_token=?,revision=?,phase='launching',launch_pid=NULL WHERE workspace_id=? AND owner_kind=? AND operation_id=? AND request_digest=? AND revision=? AND phase='prepared' AND evidence_digest=?",
         )
         .run(capabilityDigest, revision, workspaceId, kind, operationId, requestDigest, prior.revision, evidenceDigest);
@@ -388,7 +397,7 @@ export function recordServiceOperationLaunchPid(
     const recorded = database
       .query(
         'UPDATE ' +
-          table +
+          serviceOperationCustodyTable() +
           " SET launch_pid=?,revision=? WHERE workspace_id=? AND owner_kind=? AND operation_id=? AND request_digest=? AND revision=? AND phase='launching' AND launch_pid IS NULL AND owner_token=?",
       )
       .run(pid, next, workspaceId, kind, operationId, requestDigest, revision, capabilityDigest);
@@ -427,7 +436,7 @@ export function claimReservedServiceOperationLaunch(
     const claimed = database
       .query(
         'UPDATE ' +
-          table +
+          serviceOperationCustodyTable() +
           " SET owner_token=?,revision=?,phase='in_flight',evidence_digest=NULL,launch_pid=NULL WHERE workspace_id=? AND owner_kind=? AND operation_id=? AND request_digest=? AND revision=? AND phase='launching' AND launch_pid=? AND owner_token=?",
       )
       .run(token, revision, workspaceId, kind, operationId, requestDigest, prior.revision, pid, prior.owner_token);
@@ -463,7 +472,7 @@ export function closeServiceOperationCustody(
     const closed = live.database
       .query(
         'UPDATE ' +
-          table +
+          serviceOperationCustodyTable() +
           " SET owner_token=NULL,revision=?,phase=?,evidence_digest=?,launch_pid=NULL WHERE workspace_id=? AND owner_kind=? AND operation_id=? AND request_digest=? AND owner_token=? AND revision=? AND phase='in_flight'",
       )
       .run(
@@ -562,7 +571,7 @@ export async function handoffServiceOperationCustody(
             const handedOff = database
               .query(
                 'UPDATE ' +
-                  table +
+                  serviceOperationCustodyTable() +
                   " SET owner_kind='release-worker',request_digest=?,owner_token=NULL,revision=?,phase='prepared',evidence_digest=?,handoff_digest=?,handoff_from_kind='release-pack-worker',handoff_from_phase='terminal',handoff_from_request_digest=?,handoff_from_revision=?,handoff_from_evidence_digest=? WHERE workspace_id=? AND operation_id=? AND owner_kind='release-pack-worker' AND request_digest=? AND revision=? AND phase='terminal' AND evidence_digest=?",
               )
               .run(
@@ -660,7 +669,7 @@ export async function reconcileServiceOperationCustody(
             const unknown = opened
               .query(
                 'UPDATE ' +
-                  table +
+                  serviceOperationCustodyTable() +
                   " SET owner_token=NULL,revision=?,phase='unknown',evidence_digest=NULL,launch_pid=NULL WHERE workspace_id=? AND owner_kind=? AND operation_id=? AND request_digest=? AND revision=? AND phase=?",
               )
               .run(revision, workspaceId, kind, operationId, requestDigest, row.revision, row.phase);
@@ -691,7 +700,7 @@ export async function reconcileServiceOperationCustody(
             const reconciled = database
               .query(
                 'UPDATE ' +
-                  table +
+                  serviceOperationCustodyTable() +
                   ' SET owner_token=NULL,revision=?,phase=?,evidence_digest=?,launch_pid=NULL WHERE workspace_id=? AND owner_kind=? AND operation_id=? AND request_digest=? AND revision=? AND phase=?',
               )
               .run(
