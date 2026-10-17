@@ -15,6 +15,23 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Global contour campaign packet
 
+### Fresh regression scope and next isolated diagnostics — 2026-10-17
+
+Two independent blind Luna reviews distinguish archived operational replay from
+new mutation evidence after a repair. The full current handoff prohibits replay
+of old issued/UNKNOWN effects; TESTING's rolling cycle expressly requires fresh
+native activation controls. The overbroad semantic-ID prerequisite in the prior
+resource-preparation paragraph is corrected below. Old attempts, effects, locks,
+fixtures and outcomes remain unchanged; unresolved custody still denies reuse.
+
+The opt-in isolated selector adds the reviewed exact envelopes and custody
+selections for diagnostics only. Serial defaults, full argv, one input/image/
+deadline, fixed-two limit, receipt confirmation and FS-only isolated complete
+admission remain intact. Capture, mutant-ID selectors, foreign contours and
+caller test filters reject. Blind actual-diff review finds no code blocker.
+Focused owned run `R2ydEQ` passes118cases/488assertions in1232ms, complete
+captures, closed process group and unchanged boot. Publish before native pilots.
+
 ### Isolated full-proof parity preparation — 2026-10-17
 
 Three blind Luna reviews qualify the next bounded selection: fs-safe attestation
@@ -88,13 +105,22 @@ Private per-process tmp/output/cache and read-only inputs contain those observed
 effects. The stateful import-time SQL activation GAP remains: module WeakMaps
 prevent borrowing the stateless fresh-loader technique without a separate proof.
 
-Next isolated expansion must first bind its selected current canonical rows to
-the archived UNKNOWN fence, including semantic identity when Source changes.
-Envelopes' old110 shortened the reserved-device extension; custody's old SQL/UUID
-UNKNOWNs remain fenced. A new Source hash/local ID alone grants no replay.
-No uncertain selection is launched merely to inspect it afterward; no duplicate
-map generation or full suite is needed for this read-only preparation. The CLI
-allowlist and FS-only complete-admission boundary remain unchanged by this review.
+The archived UNKNOWN fence protects the old attempt, fixture, mutable resource
+and issued effect; assigning a new operation ID never authorizes their replay.
+It does not permanently exclude a semantic mutant from fresh tests of repaired
+Source. The previous semantic-ID interpretation was broader than the handoff's
+operational-effects prohibition and TESTING's rolling repair contract. Independent
+blind review confirms TESTING explicitly requires a fresh native control after
+activation repairs. New measurements use a clean immutable checkout, new run and
+fixtures, preserve every old artifact/outcome, and require observed process-group
+closure before resource reuse. Unresolved or living custody remains fenced.
+Envelopes' old110 and custody's old SQL/UUID UNKNOWN observations stay UNKNOWN;
+fresh repair evidence cannot rewrite or promote those attempts.
+
+The next narrow selector packet admits `main-envelopes` and service custody for
+isolated diagnostics only, using these reviewed private resources and unchanged
+full argv. Capture and ID selectors remain denied; FS alone permits isolated
+complete admission. Root measures new outputs after ordinary checked publication.
 
 ### Current repair packet — 2026-10-17
 

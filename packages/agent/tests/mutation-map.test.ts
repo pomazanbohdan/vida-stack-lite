@@ -293,27 +293,41 @@ test('isolated workers require reviewed contours and reserve complete admission 
   ];
   expect(selectMutationBatchPilot(['--contour', name], declared).isolatedWorkers).toBe(false);
   expect(selectMutationBatchPilot(['--contour', name, '--isolated-workers'], declared).isolatedWorkers).toBe(true);
-  const fsName = 'bun-fs-safe-attestation';
-  const fsDeclared = [{ ...declared[0]!, name: fsName }];
-  expect(
-    selectMutationBatchPilot(['--contour', fsName, '--isolated-workers', '--admit-complete'], fsDeclared),
-  ).toMatchObject({ isolatedWorkers: true, admitComplete: true });
   expect(selectMutationBatchPilot(['--contour', name, '--admit-complete'], declared).admitComplete).toBe(true);
-  expect(() =>
-    selectMutationBatchPilot(['--contour', name, '--isolated-workers', '--admit-complete'], declared),
-  ).toThrow('complete admission is fs-safe attestation only');
-  for (const suffix of [
-    ['--capture-per-test-diagnostic'],
-    ['--batch-size', '1', '--diagnostic-mutant-id', '1'],
-    ['--batch-size', '1', '--diagnostic-mutant-ids', '1,2'],
-  ])
-    for (const partition of [declared, fsDeclared])
+  for (const contour of [name, 'bun-fs-safe-attestation', 'main-envelopes', 'bun-service-operation-custody']) {
+    const partition = [{ ...declared[0]!, name: contour }];
+    expect(selectMutationBatchPilot(['--contour', contour], partition).isolatedWorkers).toBe(false);
+    expect(selectMutationBatchPilot(['--contour', contour, '--isolated-workers'], partition).isolatedWorkers).toBe(
+      true,
+    );
+    const complete = ['--contour', contour, '--isolated-workers', '--admit-complete'];
+    if (contour === 'bun-fs-safe-attestation')
+      expect(selectMutationBatchPilot(complete, partition)).toMatchObject({
+        isolatedWorkers: true,
+        admitComplete: true,
+      });
+    else
+      expect(() => selectMutationBatchPilot(complete, partition)).toThrow(
+        'complete admission is fs-safe attestation only',
+      );
+    for (const suffix of [
+      ['--capture-per-test-diagnostic'],
+      ['--batch-size', '1', '--diagnostic-mutant-id', '1'],
+      ['--batch-size', '1', '--diagnostic-mutant-ids', '1,2'],
+    ])
       expect(() =>
-        selectMutationBatchPilot(['--contour', partition[0]!.name, '--isolated-workers', ...suffix], partition),
+        selectMutationBatchPilot(['--contour', contour, '--isolated-workers', ...suffix], partition),
       ).toThrow('without capture or ID selectors');
+    expect(() =>
+      selectMutationBatchPilot(
+        ['--contour', contour, '--isolated-workers', '--tests', 'tests/foreign.test.ts'],
+        partition,
+      ),
+    ).toThrow();
+  }
   expect(() =>
     selectMutationBatchPilot(['--contour', 'foreign', '--isolated-workers'], [{ ...declared[0]!, name: 'foreign' }]),
-  ).toThrow('reviewed image or fs-safe attestation');
+  ).toThrow('reviewed contour');
 });
 
 test('native diagnostic ID sets require bounded unique IDs and remain incompatible with single-ID and admission modes', () => {

@@ -132,7 +132,9 @@ private per-ID outputs and one shared deadline. The separate inert scheduler
 provides bounded ordered collection and UNKNOWN stop/drain controls. The explicit
 isolated-worker route integrates logical report overlays and parent-only raw
 output publication. Image remains diagnostic-only; reviewed read-only fs-safe
-attestation alone permits complete admission for persisted-reader parity.
+attestation alone permits isolated complete admission for persisted-reader parity.
+Reviewed envelopes and custody resources permit isolated diagnostics only;
+their full argv, private fixtures and stateful-module limits remain in TESTING.
 WORK owns the actual qualification result and its unresolved CRAP applicability.
 The fresh complete fs-safe proof now passes the unchanged persisted reader;
 WORK records its actual closure and memory-only rejection controls. Keep the

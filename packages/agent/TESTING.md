@@ -1099,9 +1099,10 @@ This diagnostic result is not a native mutation proof schema. Real integration
 still needs captured-input/private-output binding and qualified worker resources.
 
 `--isolated-workers` opts into a bounded real-runner diagnostic for
-`bun-project-upgrade-existing-storage-image` or `bun-fs-safe-attestation` only.
+`bun-project-upgrade-existing-storage-image`, `bun-fs-safe-attestation`,
+`main-envelopes` or `bun-service-operation-custody` only.
 Only the reviewed read-only fs-safe attestation contour permits `--admit-complete`
-for persisted-proof parity; image remains diagnostic-only. Neither contour permits
+for persisted-proof parity; the other selections remain diagnostic-only. None permits
 per-test capture or ID selectors. Start diagnostic work with `--batch-size 2
 --max-batches 1`; it preserves the full declared test argv, one input capture,
 one generated image and the existing900s partition deadline. Baseline runs first;
@@ -1137,6 +1138,10 @@ CRAP applicability GAP or qualify broader parallel execution.
 The retained fs-safe proof parity result and its memory-only report/selection
 rejection controls are recorded in WORK. They preserve the actual artifact roots
 and hashes; no producer rerun or artifact rewrite is needed to test the reader.
+Envelope diagnostics retain deterministic fuzz settings, fresh configured context
+and serial child-local spies. Custody diagnostics retain unique private SQLite
+fixture roots and canonical lifetime module state; they do not qualify the open
+import-time SQL activation class. WORK owns the exact reviewed resource findings.
 
 The explicit `--capture-per-test-diagnostic` mode runs only the complete native
 baseline and binds existing diagnostic-v2 capture through its input fingerprint,
@@ -1585,6 +1590,13 @@ do not start duplicate suites, scans, hashes or inventories.
    exact coverage100, qualified frozen correspondence/CRAP and assertion-confirmed
    Killed100 for the same bound inputs; retain freshness/global-admission limits.
    Immediately fill its slot with the next ready contour.
+
+Archived UNKNOWN operations, fixtures and issued effects are never replayed under
+either an old or new ID, and unresolved resource custody still blocks successors.
+This does not ban fresh regression or mutation evidence for repaired Source:
+use a new clean immutable checkout/run and new fixtures, preserve the original
+artifacts and classification, and require observed process-group closure before
+resource reuse. Matching semantic mutant identity alone is not operation replay.
 
 For a stateless module whose mutated initialization runs at import time, load a
 fresh captured module inside the asserting test body. Our Bun1.4.3 file-URL query
