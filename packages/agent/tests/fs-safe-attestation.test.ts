@@ -4,15 +4,17 @@ import { readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import {
-  fsSafeIntegrity,
-  fsSafePackageManifest,
-  fsSafePackageTreeSha256ByNativeTarget,
-  fsSafeVersion,
-} from '../src/config/fs-safe-attestation.ts';
 
 type JsonRecord = Record<string, unknown>;
 type BunLockEntry = readonly [string, string, JsonRecord, string?];
+
+const fsSafeRequire = createRequire(import.meta.url);
+const fsSafeAttestationModulePath = fsSafeRequire.resolve('../src/config/fs-safe-attestation.ts');
+
+function loadFsSafeAttestation(): typeof import('../src/config/fs-safe-attestation.ts') {
+  delete fsSafeRequire.cache[fsSafeAttestationModulePath];
+  return fsSafeRequire(fsSafeAttestationModulePath) as typeof import('../src/config/fs-safe-attestation.ts');
+}
 
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -69,9 +71,14 @@ function installedNativeRoot(packageRoot: string, packageName: string): string {
   return path.dirname(entry);
 }
 
-function packageTreeHash(packageRoot: string, nativeRoot: string, nativeTarget: string): string {
+function packageTreeHash(
+  packageRoot: string,
+  nativeRoot: string,
+  nativeTarget: string,
+  manifest: readonly string[],
+): string {
   const files = [
-    ...fsSafePackageManifest.map((relative) => ({ root: packageRoot, relative, logical: relative })),
+    ...manifest.map((relative) => ({ root: packageRoot, relative, logical: relative })),
     ...['package.json', 'fs-safe-native.node'].map((relative) => ({
       root: nativeRoot,
       relative,
@@ -94,6 +101,7 @@ const projectManifest = readJson(path.join(packageDirectory, 'package.json'));
 const bunLock = readJson5(path.join(packageDirectory, 'bun.lock'));
 
 test('fs-safe version and integrity match the installed package and exact Bun lock entry', () => {
+  const { fsSafeIntegrity, fsSafeVersion } = loadFsSafeAttestation();
   if (!isRecord(rootPackage) || !isRecord(projectManifest)) throw new Error('Package manifest is invalid.');
   const dependencies = recordField(projectManifest, 'dependencies', 'Project dependencies');
   const rootEntry = lockEntry(bunLock, '@openclaw/fs-safe');
@@ -105,6 +113,7 @@ test('fs-safe version and integrity match the installed package and exact Bun lo
 });
 
 test('fs-safe manifest exactly names installed runtime files and package metadata', () => {
+  const { fsSafePackageManifest } = loadFsSafeAttestation();
   const installedFiles = [
     // Declaration files are compiler metadata outside the runtime attestation scope.
     ...enumerateRegularFiles(path.join(packageRoot, 'dist'))
@@ -118,6 +127,7 @@ test('fs-safe manifest exactly names installed runtime files and package metadat
 });
 
 test('every attested native target has a SHA256 tree digest and a dependency at the locked version', () => {
+  const { fsSafePackageTreeSha256ByNativeTarget, fsSafeVersion } = loadFsSafeAttestation();
   const rootEntry = lockEntry(bunLock, '@openclaw/fs-safe');
   const dependencies = recordField(rootEntry[2], 'optionalDependencies', 'fs-safe optional dependencies');
   const prefix = '@openclaw/fs-safe-';
@@ -141,6 +151,7 @@ test
   .each([['linux-x64-gnu'], ['linux-x64-musl']] as const)(
   'fs-safe tree digest matches installed %s package bytes',
   (nativeTarget) => {
+    const { fsSafePackageManifest, fsSafePackageTreeSha256ByNativeTarget, fsSafeVersion } = loadFsSafeAttestation();
     const nativePackageName = `@openclaw/fs-safe-${nativeTarget}`;
     const rootEntry = lockEntry(bunLock, '@openclaw/fs-safe');
     const optionalDependencies = recordField(rootEntry[2], 'optionalDependencies', 'fs-safe optional dependencies');
@@ -156,7 +167,7 @@ test
     expect(nativePackage.version).toBe(fsSafeVersion);
     expect(nativePackage.main).toBe('fs-safe-native.node');
     expect(fsSafePackageTreeSha256ByNativeTarget[nativeTarget]).toBe(
-      packageTreeHash(packageRoot, nativeRoot, nativeTarget),
+      packageTreeHash(packageRoot, nativeRoot, nativeTarget, fsSafePackageManifest),
     );
   },
 );

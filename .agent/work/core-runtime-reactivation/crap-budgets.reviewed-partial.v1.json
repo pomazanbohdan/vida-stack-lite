@@ -479,7 +479,7 @@
     },
     {
       "file": "src/config/project-upgrade-existing-storage.ts",
-      "sha256": "dca61c635331ea343f5779dce06c195479a0d173332f65f4f43ee40905657b99"
+      "sha256": "1f57abfd12d2238f109eb023af28c16f1e2182ad9699a9a61f5ce823e4b75fcf"
     },
     {
       "file": "src/config/service-operation-custody.ts",
@@ -187792,12 +187792,12 @@
       "identity": "src/config/project-upgrade-existing-storage.ts#fn:tableCount#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "current_complexity": 2,
+      "current_complexity": 1,
       "current_source_address": {
         "line": 490,
         "column": 0,
         "start": 19330,
-        "end": 19788,
+        "end": 19773,
         "bodyLine": 490,
         "bodyColumn": 63,
         "bodyEndLine": 497,
@@ -187813,8 +187813,8 @@
       "current_source_address": {
         "line": 499,
         "column": 0,
-        "start": 19790,
-        "end": 19959,
+        "start": 19775,
+        "end": 19944,
         "bodyLine": 499,
         "bodyColumn": 50,
         "bodyEndLine": 501,

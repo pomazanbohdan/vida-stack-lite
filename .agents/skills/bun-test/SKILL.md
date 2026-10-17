@@ -75,6 +75,9 @@ For stateless import-time subjects, follow TESTING's body-local synchronous
 fresh-loader method. Query spelling alone proves neither fresh identity nor ALS
 attribution on Bun1.4.3. Verify the actual generated mutant, snapshot interception
 and exact body-owned activation; a direct suite pass or static review is insufficient.
+Reuse one typed test-local operation forwarder for a stateless subject invoked
+from multiple bodies. Load the exact subject synchronously before the operation;
+never rely on registration order or a different case's fresh load for attribution.
 
 Start from the contract and the function or boundary that owns it. Map each
 plausible regression to a fixture, a concrete case, and an assertion at that
@@ -234,7 +237,8 @@ TESTING and await both registration and restoration. Keep these cases serial.
 Copy original exports with `{ ...fs }` before the first replacement; a live ESM
 namespace is not a restorable snapshot.
 For host-capability provider scenarios, use the existing parent-process cases
-with fresh query imports and scoped restoration of both complete namespaces.
+with qualified body-local synchronous subject loads and scoped restoration of
+both complete provider namespaces.
 This keeps assertions and coverage in the measured process. Module mocks remain
 serial until shard qualification; mock.restore() does not undo mock.module().
 Assert effects and all retained causes, not only the mock calls. Exercise denied

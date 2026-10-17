@@ -9,11 +9,7 @@ import canonicalize from 'canonicalize';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { initializeHostDatabaseSchema } from '../src/host-state.js';
-import {
-  prepareUnifiedExistingStorageImage,
-  type ClosedDatabaseImage,
-  type ExistingMergeBinding,
-} from '../src/config/project-upgrade-existing-storage.js';
+import { type ClosedDatabaseImage, type ExistingMergeBinding } from '../src/config/project-upgrade-existing-storage.js';
 import { createInMemoryBunSqliteClient } from '../src/orchestration/bun-sqlite-client.js';
 import { callWithUntrustedArguments } from './helpers/untrusted-call.ts';
 
@@ -25,6 +21,15 @@ function loadFreshStorageImage(): typeof import('../src/config/project-upgrade-e
   const file = requireStorageImage.resolve('../src/config/project-upgrade-existing-storage.ts');
   delete requireStorageImage.cache[file];
   return requireStorageImage(file) as typeof import('../src/config/project-upgrade-existing-storage.ts');
+}
+
+type PrepareUnifiedExistingStorageImage =
+  typeof import('../src/config/project-upgrade-existing-storage.ts').prepareUnifiedExistingStorageImage;
+
+function prepareUnifiedExistingStorageImage(
+  ...args: Parameters<PrepareUnifiedExistingStorageImage>
+): ReturnType<PrepareUnifiedExistingStorageImage> {
+  return loadFreshStorageImage().prepareUnifiedExistingStorageImage(...args);
 }
 
 function closedImage(database: Database): ClosedDatabaseImage {
@@ -698,6 +703,42 @@ describe('existing storage image preparation', () => {
       merged.close(true);
     }
   });
+
+  test.each([
+    ['Host', /Host logical rows changed during merge/u],
+    ['Mastra', /Mastra logical rows differ after import/u],
+  ] as const)(
+    'rejects a %s row changed in the private target before returning the unified image',
+    async (label, diagnostic) => {
+      const host = makeHost();
+      const mastra = await makeMastra();
+      const exec = Reflect.get(Database.prototype, 'exec') as typeof Database.prototype.exec;
+      const observed: { target?: Database } = {};
+      let changedRows = 0;
+      const mutating = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, ...args) {
+        const result = exec.apply(this, args);
+        if (String(args[0]).includes('CREATE TABLE vida_workspace_storage_migration')) {
+          observed.target = this;
+          changedRows =
+            label === 'Host'
+              ? this.query('UPDATE merge_sequence_fixture SET body=? WHERE id=1').run(Buffer.from([9, 8, 7])).changes
+              : this.query('UPDATE mastra_threads SET title=? WHERE id=?').run(
+                  'changed inside private merge target',
+                  'merge-thread-1',
+                ).changes;
+        }
+        return result;
+      });
+      try {
+        await expectRejection(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)), diagnostic);
+      } finally {
+        mutating.mockRestore();
+      }
+      expect(observed.target).toBeDefined();
+      expect(changedRows).toBe(1);
+      expect(() => observed.target?.query('SELECT 1').get()).toThrow();
+    },
+  );
 
   test('normalizes a WAL Host image copy while binding unchanged raw bytes', async () => {
     await assertWalImageMerge(true, false);

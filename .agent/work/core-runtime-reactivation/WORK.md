@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `7363f4e44b1b80f35ef8686c5ac00dbbdce17f87` fixes private-DB cleanup on client setup failure through one existing initializer owner. Earlier packets retain schema-snapshot reuse atd5ddd22, exact cause/output assertions and body-local envelope initialization atcace59e, and data-only observation repair at33a98d2. The current image follow-up removes a proven duplicate per-row bound check and strengthens canonical encoding/header/initializer tests. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `0d2f1201b4d953c271e2068371cf49630b7ad70a` removes the proven duplicate per-row bound check and strengthens canonical encoding/header/initializer tests. The prior7363f4e packet fixes private-DB cleanup on client setup failure through one existing initializer owner. Earlier packets retain schema-snapshot reuse atd5ddd22, exact cause/output assertions and body-local envelope initialization atcace59e, and data-only observation repair at33a98d2. The current follow-up covers private-target row corruption and body-owned module constants, removes only SQLite COUNT's redundant nonnegative guard, and preserves integer mode. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Active contours are storage image, envelopes and fs-safe-attestation. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -826,7 +826,8 @@ The current map identifies exact Source spans:28 canonical-base64 diagnostic,
 The bounded diagnostic reader now asserts the map's one-based position basis and
 shows exact captured-checkout Source fragments using one cached read per Source,
 avoiding ambiguous line-only paraphrases. It remains diagnostic, not another AST,
-hash or acceptance owner. The latest Source image differs from all prior local IDs.
+hash or acceptance owner. Resolve each repair ID against its current Source-bound
+regenerated map; prior numeric IDs alone do not identify the current mutation.
 
 Independent v158 proves the per-row counter/check redundant: preflight counts the
 same complete pinned Mastra table list under the unchanged total bound; Source
@@ -847,6 +848,70 @@ updated inventory retains50identities and all10/10caps; current Source binding
 is dca61c635331ea343f5779dce06c195479a0d173332f65f4f43ee40905657b99.
 Fresh assertion-confirmed mutation and empty-inventory CRAP applicability remain
 OPEN; no prepared or historical proof is promoted to current global acceptance.
+
+On published0d2f120, image coverage `EQGXOz`, run
+ad1b0080-c804-456d-b124-aa5d83eafa0e, passes40tests/291assertions with exact
+F50/50,L189/189,S211/211,B58/58 in6631ms. Same-run `Jd1Mhg` preserves the
+original883af1d frozen ceilings at maxCC9/maxCRAP9. SDK inputs form once through
+`GsJA8d` without suites. Target diagnostic `FW3tQO`, run
+7a602367-fc9d-4775-868a-a144f685fdeb, confirms all four requested current
+IDs78/73/28/5 as assertion-Killed with a full40-case baseline,0UNKNOWN and
+489unattempted of493 in13937ms. It is diagnostic-only, not a complete score.
+
+Full image `FIqIGE`, runa7f9a8ae-5c89-4b23-8614-05b0152b03d0, terminates in
+52036ms:15Killed,3Survived,1UNKNOWN,474unattempted of493. Captures, outer groups,
+boot and immutable checkout are complete/unchanged. Preserve all v188 bytes.
+Survivors355/522/481 identify final Mastra digest equality, native COUNT's lower
+bound and private inventory integer mode. UNKNOWN0 mutates the module-level byte
+bound; its actual first failing WAL body22 has an assertion cause but zero owned
+activation. Registration order is not execution order. A fresh subject only in
+the first registered helper cannot qualify all actual failing bodies.
+
+The writer adds one parameterized native-target corruption fixture for both Host
+and Mastra: delegate real migration-table creation, change exactly one imported
+row, require its specific logical-row diagnostic, then verify the private target
+closed. The Source digest guards remain. Independent v158 confirms native
+COUNT(*) is nonnegative under the supported private readonly/integrity-checked
+input contract; Root removes only that conjunct and preserves BigInt conversion
+and the maximum-row bound. Retain safeIntegers on the actual client handle:
+bounded review does not prove all internal initialization queries schema-only,
+and no useful product improvement justifies changing its provider mode. No
+artificial flag assertion or mutation exclusion is added; that survivor stays GAP.
+
+The two-file development check `lynGHu` passes47tests/338assertions in2808ms,
+with full captures, closed groups and unchanged boot. It precedes final shared
+body-local preparation forwarding. The one affected inventory/hash update keeps
+all50 Source identities, no additions/removals and original10/10 caps; the new
+Source binding is1f57abfd12d2238f109eb023af28c16f1e2182ad9699a9a61f5ce823e4b75fcf.
+
+Independent fs-safe review keeps executable mutation and the zero-callable CRAP
+applicability GAP explicit. It does not repurpose static-export exemptions or
+manufacture zero scores. Its test-only preparation uses a fresh exact Source
+inside each asserting body; tree hashing consumes that same body's manifest.
+Actual native activation and remaining coverage applicability still need proof.
+
+Final shared image preparation forwarding covers all preparation call sites,
+including WAL and phase-failure helpers, without scattering reload logic. The
+subject remains stateless; each operation gets one exact body-local module and
+native prototype spies remain scoped/restored. Final two-file `yzTJ0Z` passes
+47tests/338assertions in2082ms with full captures, closed groups and unchanged
+boot. This is development evidence; real generated native activation is pending.
+TESTING and the maintained bun-test reference now explain registration-order
+independence and the single typed forwarder, and remove stale query-import advice.
+The normal strict hook rejects a test-local `this` alias after passing format and
+505-file typecheck. The fixture now stores the observed database on its typed
+observation record; focused `b6zoKE` passes both corruption cases after that
+lint correction. Earlier `j2yJ0e` matched zero cases because its filter included
+the display-only `>` separator; it is not passing evidence and remains retained.
+
+Fresh immutable v189 remains bound to0d2f120 for envelopes. Coverage `EJtT1u`,
+rune8237326-024b-414c-890c-28df58cae519, passes47tests/4271assertions with exact
+F78/78,L211/211,S227/227,B103/103 in8059ms. Same-run `q6pwhE` passes original
+53fac83 ceilings at maxCC9/maxCRAP9; `tKvodH` forms required SDK inputs once
+without suites. The canonical reader imports both new coverage/frozen pairs into
+projection544attempts without promoting partial native results or their kills.
+Coverage operation BLOCKED remains separate from its exact focused counters;
+global/final admission and current-compatible complete mutation remain OPEN.
 
 ### Published admission packet — retained context
 

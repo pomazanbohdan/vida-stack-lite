@@ -1472,6 +1472,12 @@ computed entrypoint, exact Source capture and all cases; qualify snapshot-loader
 interception and real generated-mutant activation. Confirm that the module has no
 lifetime state or namespace-identity contract before adopting this fixture isolation.
 Keep package-root identity checks in their integration owner.
+The first registered case need not execute first. For a stateless subject used
+across many bodies, reuse one typed test-local forwarder that synchronously loads
+the exact subject before each operation; all assertions inspect that operation's
+result. A fresh load in only one helper cannot supply activation for another
+failing body. Preserve one module instance within an operation and retain native
+prototype interception. Qualify this route against the actual generated mutant.
 Do not use this fixture for a module owning opaque capabilities or lifetime state:
 restoring its exact `require.cache` entry does not restore subsequent ESM imports'
 identity on the qualified Bun probe. Preserve its canonical owner and leave missing

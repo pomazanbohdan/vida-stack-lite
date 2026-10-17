@@ -492,7 +492,7 @@ function tableCount(database: Database, table: string): number {
   const row = database.query<{ count: number | bigint }, []>('SELECT COUNT(*) AS count FROM ' + quoted).get();
   requireMerge(row !== null, 'table count unavailable: ' + table);
   const count = BigInt(row.count);
-  requireMerge(count >= 0n && count <= BigInt(maxRows), 'table count is unsupported: ' + table);
+  requireMerge(count <= BigInt(maxRows), 'table count is unsupported: ' + table);
   return Number(count);
 }
 
