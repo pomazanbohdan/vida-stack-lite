@@ -703,6 +703,30 @@ selection and treat missing explicit CRAP applicability proof as a GAP; no fake
 function/zero score, generic empty-plan acceptance or mutation exclusion. Envelope
 review finds no further proven Source/assertion change before fresh measurement.
 
+On published d5ddd22, image `16jCAz`, runc386006f-4f75-4fc6-8a6a-f2d4d04ed0a1,
+passesF50/50,L203/203,S226/226,B52/52 with28tests/187assertions in5096ms.
+Same-run original50-role `kCwtQh` passes maxCC7/maxCRAP7 in748ms against883af1d.
+SDK test inputs form via `qvZME8` without suites. Full mutation `iPOyfW`,
+run4a5b41f2-a112-4bcf-8547-874a2e0d3ffe, terminates in40570ms with full28-case
+baseline:11Killed,4Survived,1UNKNOWN,488unattempted of504. Captures/groups/boot
+and checkout are complete/unchanged. Preserve its entire v182 namespace. Current
+local IDs73/264 concern input-size denial and initializer close-cause retention;
+271 mutates the second error-count guard after the single-error throw, and504
+changes the missing-capture diagnostic. Their behavioral applicability needs exact
+review. Local430 replaces the output object and lacks an assertion-confirmed kill.
+They return to the single image writer; no complete mutation score exists.
+
+Attestation `UDnApB`, run91963c9e-ba4b-4d7b-81d4-5418d158fdaf, passes5tests/
+37assertions in2871ms with observedF0/0,L4/4,S4/4,B0/0. Its automatic projection
+initially rejects the correctly empty function inventory. Root reproduces this
+reader defect with RED `EMLXFm`, then accepts consistent empty observations with
+both maxima null and explicit inventory N/A, retaining all positive-denominator
+maximum, frozen CRAP and mutation rules. Whole projection GREEN `UjOgd8` passes
+121tests/399assertions; blind v148 review finds no new admission hole. No CRAP zero,
+exemption or new contour closure is created.
+Projection523attempts imports these coverage observations and the actual image
+frozen receipt; current freshness and global acceptance remain unverified.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

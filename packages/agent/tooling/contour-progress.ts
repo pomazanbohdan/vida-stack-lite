@@ -434,8 +434,7 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
     const functions = measurements.flatMap((row) => rows(row.functions));
     if (new Set(functions.map((row) => text(row.identity))).size !== functions.length)
       throw new Error('Duplicate coverage function identity.');
-    if (functions.length !== coverage.functions.total || !functions.length)
-      throw new Error('Coverage function inventory differs.');
+    if (functions.length !== coverage.functions.total) throw new Error('Coverage function inventory differs.');
     const accepted =
       report.qualification_scope === 'focused-diagnostic' &&
       report.full_qualification === false &&
@@ -456,8 +455,8 @@ export function contourAttempts(value: unknown, receipt: Receipt): Attempt[] {
         status: accepted ? 'focused-diagnostic' : 'unknown',
         accepted,
         coverage,
-        max_cc: Math.max(...functions.map((row) => number(row.complexity))),
-        max_entry_crap: Math.max(...functions.map((row) => number(row.crap))),
+        max_cc: functions.length ? Math.max(...functions.map((row) => number(row.complexity))) : null,
+        max_entry_crap: functions.length ? Math.max(...functions.map((row) => number(row.crap))) : null,
         killed: null,
         mutants: null,
       },
@@ -991,8 +990,9 @@ export function mergeContourProgress(previous: unknown, incoming: Attempt[]): Sn
     if (
       (attempt.lane === 'coverage') !== (attempt.coverage !== null) ||
       (attempt.lane === 'coverage' &&
-        (attempt.max_cc === null ||
-          attempt.max_entry_crap === null ||
+        ((attempt.coverage?.functions.total === 0
+          ? attempt.max_cc !== null || attempt.max_entry_crap !== null
+          : attempt.max_cc === null || attempt.max_entry_crap === null) ||
           attempt.killed !== null ||
           attempt.mutants !== null)) ||
       ((attempt.lane === 'mutation' || attempt.lane === 'native-mutation') &&
@@ -1264,7 +1264,7 @@ export function renderContourProgress(snapshot: Snapshot): string {
     const lastCrap = crap.at(-1);
     const lastOutcome = attempts.filter((row) => row.lane === 'coverage-outcome').at(-1);
     body.push(
-      `| ${partition.name} | ${cell(counts(lastCoverage))} | ${lastCoverage ? `${lastCoverage.max_cc} / ${lastCoverage.max_entry_crap}` : 'unknown'} | ${cell(counts(lastMutation))} | ${lastOutcome?.status ?? 'not imported'} | ${staticOnly ? 'N/A: static exports' : best ? 'local maximum recorded' : 'open / unknown'} | ${lastCrap ? `${lastCrap.max_cc} / ${lastCrap.max_entry_crap}` : 'unknown'} | ${triple ? 'local triple recorded' : 'open / unknown'} |`,
+      `| ${partition.name} | ${cell(counts(lastCoverage))} | ${lastCoverage ? (lastCoverage.coverage?.functions.total === 0 ? 'N/A: no callable functions (coverage inventory)' : `${lastCoverage.max_cc} / ${lastCoverage.max_entry_crap}`) : 'unknown'} | ${cell(counts(lastMutation))} | ${lastOutcome?.status ?? 'not imported'} | ${staticOnly ? 'N/A: static exports' : best ? 'local maximum recorded' : 'open / unknown'} | ${lastCrap ? `${lastCrap.max_cc} / ${lastCrap.max_entry_crap}` : 'unknown'} | ${triple ? 'local triple recorded' : 'open / unknown'} |`,
     );
     if (!attempts.length) continue;
     details.push(

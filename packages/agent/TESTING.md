@@ -1501,6 +1501,10 @@ work while its contour remains OPEN; it is never counted as a closure.
 
 The generated contour JSON/Markdown is the single progress projection. Do not add
 a manual percentage ledger or combine diagnostic kills into a passing score.
+For data-only Source, retain the producer's exact zero function/branch counters
+and represent absent function complexity/entry CRAP as null with an inventory N/A
+label. This observation is not a reviewed scoped CRAP exemption and does not
+satisfy the unchanged positive-denominator maximum or complete-triple gates.
 Build/install run no test suites. Per-case5s defaults and the existing independent
 coverage/mutation envelopes remain unchanged.
 

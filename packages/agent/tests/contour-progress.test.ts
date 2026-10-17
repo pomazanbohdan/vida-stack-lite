@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import {
   contourAttempts,
+  contourAttemptMaximum,
   mergeContourProgress,
   nativeMutationAttempt,
   renderContourProgress,
@@ -549,6 +550,39 @@ function coverageWithTwoFunctions() {
   c.metrics[0]!.functions.push({ identity: 'fixture#second', complexity: 2, coverage: 1, crap: 2 });
   return c;
 }
+
+test('data-only coverage retains observed counters without inventing function complexity or closure', () => {
+  const c = coverage();
+  const source = 'src/config/fs-safe-attestation.ts';
+  const selected = 'tests/fs-safe-attestation.test.ts';
+  c.test_selection = { contour: 'bun-fs-safe-attestation', tests: [selected] };
+  c.sources = [digest(source)];
+  c.module_inputs = [digest(source)];
+  c.test_inputs = [digest(selected)];
+  c.metrics[0]!.file = source;
+  c.metrics[0]!.functions = [];
+  c.metrics[0]!.coverage.functions = { covered: 0, total: 0 };
+  c.metrics[0]!.coverage.branches = { covered: 0, total: 0 };
+  c.metrics[0]!.coverage.lines = { covered: 4, total: 4 };
+  c.metrics[0]!.coverage.statements = { covered: 4, total: 4 };
+  const attempts = contourAttempts(c, receipt);
+  const snapshot = mergeContourProgress(empty, attempts);
+  expect(snapshot.attempts).toHaveLength(1);
+  const observed = snapshot.attempts[0]!;
+  expect(observed.accepted).toBe(true);
+  expect(observed.coverage?.functions).toEqual({ covered: 0, total: 0 });
+  expect(observed.max_cc).toBeNull();
+  expect(observed.max_entry_crap).toBeNull();
+  expect(contourAttemptMaximum(observed)).toBe(false);
+  const document = renderContourProgress(snapshot);
+  expect(document).toContain('0/0 · 4/4 · 4/4 · 0/0');
+  expect(document).toContain('N/A: no callable functions (coverage inventory)');
+  expect(document).toContain(zeroOfActive);
+  expect(() => mergeContourProgress(empty, [{ ...observed, max_cc: 1, max_entry_crap: 1 }])).toThrow();
+  c.metrics[0]!.coverage.functions = { covered: 1, total: 1 };
+  expect(() => contourAttempts(c, receipt)).toThrow('Coverage function inventory differs.');
+});
+
 function frozenCrapV2(c = coverage()) {
   const previous = frozenCrap(c);
   const originalPath = 'src/config/legacy-host-capability.ts';
