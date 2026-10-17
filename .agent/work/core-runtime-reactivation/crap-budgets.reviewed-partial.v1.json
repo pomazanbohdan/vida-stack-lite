@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 5447,
-    "new": 1666,
+    "new": 1667,
     "removed": 98,
-    "current_roles": 7113,
+    "current_roles": 7114,
     "source_files": 149
   },
   "source_bindings": [
@@ -43651,13 +43651,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 282,
+        "line": 293,
         "column": 0,
-        "start": 10938,
-        "end": 29299,
-        "bodyLine": 282,
+        "start": 11245,
+        "end": 29868,
+        "bodyLine": 293,
         "bodyColumn": 97,
-        "bodyEndLine": 753,
+        "bodyEndLine": 771,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 2,
@@ -43684,13 +43684,13 @@
         "bodyEndColumn": 31
       },
       "current_source_address": {
-        "line": 300,
+        "line": 311,
         "column": 6,
-        "start": 11500,
-        "end": 11730,
-        "bodyLine": 301,
+        "start": 11807,
+        "end": 12037,
+        "bodyLine": 312,
         "bodyColumn": 8,
-        "bodyEndLine": 306,
+        "bodyEndLine": 317,
         "bodyEndColumn": 31
       },
       "baseline_complexity": 1,
@@ -43717,13 +43717,13 @@
         "bodyEndColumn": 75
       },
       "current_source_address": {
-        "line": 309,
+        "line": 320,
         "column": 27,
-        "start": 11776,
-        "end": 11824,
-        "bodyLine": 309,
+        "start": 12083,
+        "end": 12131,
+        "bodyLine": 320,
         "bodyColumn": 45,
-        "bodyEndLine": 309,
+        "bodyEndLine": 320,
         "bodyEndColumn": 75
       },
       "baseline_complexity": 1,
@@ -43750,13 +43750,13 @@
         "bodyEndColumn": 51
       },
       "current_source_address": {
-        "line": 316,
+        "line": 327,
         "column": 23,
-        "start": 11997,
-        "end": 12025,
-        "bodyLine": 316,
+        "start": 12304,
+        "end": 12332,
+        "bodyLine": 327,
         "bodyColumn": 35,
-        "bodyEndLine": 316,
+        "bodyEndLine": 327,
         "bodyEndColumn": 51
       },
       "baseline_complexity": 1,
@@ -43783,13 +43783,13 @@
         "bodyEndColumn": 58
       },
       "current_source_address": {
-        "line": 322,
+        "line": 333,
         "column": 23,
-        "start": 12148,
-        "end": 12183,
-        "bodyLine": 322,
+        "start": 12455,
+        "end": 12490,
+        "bodyLine": 333,
         "bodyColumn": 35,
-        "bodyEndLine": 322,
+        "bodyEndLine": 333,
         "bodyEndColumn": 58
       },
       "baseline_complexity": 1,
@@ -43816,13 +43816,13 @@
         "bodyEndColumn": 47
       },
       "current_source_address": {
-        "line": 328,
+        "line": 339,
         "column": 22,
-        "start": 12309,
-        "end": 12334,
-        "bodyLine": 328,
+        "start": 12616,
+        "end": 12641,
+        "bodyLine": 339,
         "bodyColumn": 33,
-        "bodyEndLine": 328,
+        "bodyEndLine": 339,
         "bodyEndColumn": 47
       },
       "baseline_complexity": 1,
@@ -43849,13 +43849,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 343,
+        "line": 354,
         "column": 24,
-        "start": 12736,
-        "end": 12766,
-        "bodyLine": 343,
+        "start": 13043,
+        "end": 13073,
+        "bodyLine": 354,
         "bodyColumn": 35,
-        "bodyEndLine": 343,
+        "bodyEndLine": 354,
         "bodyEndColumn": 54
       },
       "baseline_complexity": 1,
@@ -43882,13 +43882,13 @@
         "bodyEndColumn": 83
       },
       "current_source_address": {
-        "line": 359,
+        "line": 370,
         "column": 23,
-        "start": 13149,
-        "end": 13263,
-        "bodyLine": 359,
+        "start": 13456,
+        "end": 13570,
+        "bodyLine": 370,
         "bodyColumn": 35,
-        "bodyEndLine": 362,
+        "bodyEndLine": 373,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -43915,13 +43915,13 @@
         "bodyEndColumn": 77
       },
       "current_source_address": {
-        "line": 364,
+        "line": 375,
         "column": 43,
-        "start": 13314,
-        "end": 13348,
-        "bodyLine": 364,
+        "start": 13621,
+        "end": 13655,
+        "bodyLine": 375,
         "bodyColumn": 54,
-        "bodyEndLine": 364,
+        "bodyEndLine": 375,
         "bodyEndColumn": 77
       },
       "baseline_complexity": 1,
@@ -43948,13 +43948,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 365,
+        "line": 376,
         "column": 24,
-        "start": 13376,
-        "end": 15287,
-        "bodyLine": 365,
+        "start": 13683,
+        "end": 15594,
+        "bodyLine": 376,
         "bodyColumn": 42,
-        "bodyEndLine": 403,
+        "bodyEndLine": 414,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -43981,13 +43981,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 378,
+        "line": 389,
         "column": 45,
-        "start": 14001,
-        "end": 14243,
-        "bodyLine": 379,
+        "start": 14308,
+        "end": 14550,
+        "bodyLine": 390,
         "bodyColumn": 6,
-        "bodyEndLine": 381,
+        "bodyEndLine": 392,
         "bodyEndColumn": 95
       },
       "baseline_complexity": 2,
@@ -44014,13 +44014,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 386,
+        "line": 397,
         "column": 30,
-        "start": 14456,
-        "end": 14515,
-        "bodyLine": 386,
+        "start": 14763,
+        "end": 14822,
+        "bodyLine": 397,
         "bodyColumn": 44,
-        "bodyEndLine": 386,
+        "bodyEndLine": 397,
         "bodyEndColumn": 89
       },
       "baseline_complexity": 1,
@@ -44047,13 +44047,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 405,
+        "line": 416,
         "column": 25,
-        "start": 15316,
-        "end": 20054,
-        "bodyLine": 405,
+        "start": 15623,
+        "end": 20361,
+        "bodyLine": 416,
         "bodyColumn": 44,
-        "bodyEndLine": 523,
+        "bodyEndLine": 534,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 9,
@@ -44080,13 +44080,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 408,
+        "line": 419,
         "column": 30,
-        "start": 15464,
-        "end": 15590,
-        "bodyLine": 409,
+        "start": 15771,
+        "end": 15897,
+        "bodyLine": 420,
         "bodyColumn": 8,
-        "bodyEndLine": 409,
+        "bodyEndLine": 420,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -44113,13 +44113,13 @@
         "bodyEndColumn": 104
       },
       "current_source_address": {
-        "line": 416,
+        "line": 427,
         "column": 37,
-        "start": 15773,
-        "end": 15906,
-        "bodyLine": 417,
+        "start": 16080,
+        "end": 16213,
+        "bodyLine": 428,
         "bodyColumn": 8,
-        "bodyEndLine": 417,
+        "bodyEndLine": 428,
         "bodyEndColumn": 104
       },
       "baseline_complexity": 1,
@@ -44146,13 +44146,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 424,
+        "line": 435,
         "column": 6,
-        "start": 16143,
-        "end": 16248,
-        "bodyLine": 424,
+        "start": 16450,
+        "end": 16555,
+        "bodyLine": 435,
         "bodyColumn": 35,
-        "bodyEndLine": 424,
+        "bodyEndLine": 435,
         "bodyEndColumn": 111
       },
       "baseline_complexity": 1,
@@ -44179,13 +44179,13 @@
         "bodyEndColumn": 53
       },
       "current_source_address": {
-        "line": 439,
+        "line": 450,
         "column": 70,
-        "start": 16690,
-        "end": 16757,
-        "bodyLine": 440,
+        "start": 16997,
+        "end": 17064,
+        "bodyLine": 451,
         "bodyColumn": 8,
-        "bodyEndLine": 440,
+        "bodyEndLine": 451,
         "bodyEndColumn": 53
       },
       "baseline_complexity": 1,
@@ -44212,13 +44212,13 @@
         "bodyEndColumn": 61
       },
       "current_source_address": {
-        "line": 447,
+        "line": 458,
         "column": 29,
-        "start": 16939,
-        "end": 16971,
-        "bodyLine": 447,
+        "start": 17246,
+        "end": 17278,
+        "bodyLine": 458,
         "bodyColumn": 42,
-        "bodyEndLine": 447,
+        "bodyEndLine": 458,
         "bodyEndColumn": 61
       },
       "baseline_complexity": 1,
@@ -44245,13 +44245,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 453,
+        "line": 464,
         "column": 29,
-        "start": 17140,
-        "end": 17204,
-        "bodyLine": 453,
+        "start": 17447,
+        "end": 17511,
+        "bodyLine": 464,
         "bodyColumn": 42,
-        "bodyEndLine": 453,
+        "bodyEndLine": 464,
         "bodyEndColumn": 93
       },
       "baseline_complexity": 1,
@@ -44278,13 +44278,13 @@
         "bodyEndColumn": 109
       },
       "current_source_address": {
-        "line": 460,
+        "line": 471,
         "column": 27,
-        "start": 17470,
-        "end": 17495,
-        "bodyLine": 460,
+        "start": 17777,
+        "end": 17802,
+        "bodyLine": 471,
         "bodyColumn": 36,
-        "bodyEndLine": 460,
+        "bodyEndLine": 471,
         "bodyEndColumn": 52
       },
       "baseline_complexity": 1,
@@ -44311,13 +44311,13 @@
         "bodyEndColumn": 81
       },
       "current_source_address": {
-        "line": 465,
+        "line": 476,
         "column": 43,
-        "start": 17666,
-        "end": 17694,
-        "bodyLine": 465,
+        "start": 17973,
+        "end": 18001,
+        "bodyLine": 476,
         "bodyColumn": 52,
-        "bodyEndLine": 465,
+        "bodyEndLine": 476,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -44344,13 +44344,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 500,
+        "line": 511,
         "column": 29,
-        "start": 19180,
-        "end": 19220,
-        "bodyLine": 500,
+        "start": 19487,
+        "end": 19527,
+        "bodyLine": 511,
         "bodyColumn": 38,
-        "bodyEndLine": 500,
+        "bodyEndLine": 511,
         "bodyEndColumn": 69
       },
       "baseline_complexity": 1,
@@ -44377,13 +44377,13 @@
         "bodyEndColumn": 11
       },
       "current_source_address": {
-        "line": 509,
+        "line": 520,
         "column": 8,
-        "start": 19543,
-        "end": 19855,
-        "bodyLine": 510,
+        "start": 19850,
+        "end": 20162,
+        "bodyLine": 521,
         "bodyColumn": 10,
-        "bodyEndLine": 514,
+        "bodyEndLine": 525,
         "bodyEndColumn": 11
       },
       "baseline_complexity": 4,
@@ -44410,13 +44410,13 @@
         "bodyEndColumn": 72
       },
       "current_source_address": {
-        "line": 513,
+        "line": 524,
         "column": 12,
-        "start": 19782,
-        "end": 19842,
-        "bodyLine": 513,
+        "start": 20089,
+        "end": 20149,
+        "bodyLine": 524,
         "bodyColumn": 25,
-        "bodyEndLine": 513,
+        "bodyEndLine": 524,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 1,
@@ -44443,13 +44443,13 @@
         "bodyEndColumn": 88
       },
       "current_source_address": {
-        "line": 525,
+        "line": 536,
         "column": 45,
-        "start": 20103,
-        "end": 20146,
-        "bodyLine": 525,
+        "start": 20410,
+        "end": 20453,
+        "bodyLine": 536,
         "bodyColumn": 56,
-        "bodyEndLine": 525,
+        "bodyEndLine": 536,
         "bodyEndColumn": 88
       },
       "baseline_complexity": 1,
@@ -44476,13 +44476,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 526,
+        "line": 537,
         "column": 25,
-        "start": 20175,
-        "end": 21622,
-        "bodyLine": 526,
+        "start": 20482,
+        "end": 21929,
+        "bodyLine": 537,
         "bodyColumn": 44,
-        "bodyEndLine": 562,
+        "bodyEndLine": 573,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -44509,13 +44509,13 @@
         "bodyEndColumn": 84
       },
       "current_source_address": {
-        "line": 535,
+        "line": 546,
         "column": 20,
-        "start": 20522,
-        "end": 20635,
-        "bodyLine": 536,
+        "start": 20829,
+        "end": 20942,
+        "bodyLine": 547,
         "bodyColumn": 8,
-        "bodyEndLine": 536,
+        "bodyEndLine": 547,
         "bodyEndColumn": 84
       },
       "baseline_complexity": 1,
@@ -44542,13 +44542,13 @@
         "bodyEndColumn": 114
       },
       "current_source_address": {
-        "line": 543,
+        "line": 554,
         "column": 84,
-        "start": 20860,
-        "end": 20890,
-        "bodyLine": 543,
+        "start": 21167,
+        "end": 21197,
+        "bodyLine": 554,
         "bodyColumn": 95,
-        "bodyEndLine": 543,
+        "bodyEndLine": 554,
         "bodyEndColumn": 114
       },
       "baseline_complexity": 1,
@@ -44575,13 +44575,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 557,
+        "line": 568,
         "column": 33,
-        "start": 21406,
-        "end": 21489,
-        "bodyLine": 557,
+        "start": 21713,
+        "end": 21796,
+        "bodyLine": 568,
         "bodyColumn": 44,
-        "bodyEndLine": 557,
+        "bodyEndLine": 568,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 2,
@@ -44608,13 +44608,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 563,
+        "line": 574,
         "column": 30,
-        "start": 21655,
-        "end": 22004,
-        "bodyLine": 563,
+        "start": 21962,
+        "end": 22311,
+        "bodyLine": 574,
         "bodyColumn": 54,
-        "bodyEndLine": 572,
+        "bodyEndLine": 583,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 6,
@@ -44641,13 +44641,13 @@
         "bodyEndColumn": 91
       },
       "current_source_address": {
-        "line": 574,
+        "line": 585,
         "column": 47,
-        "start": 22055,
-        "end": 22099,
-        "bodyLine": 574,
+        "start": 22362,
+        "end": 22406,
+        "bodyLine": 585,
         "bodyColumn": 58,
-        "bodyEndLine": 574,
+        "bodyEndLine": 585,
         "bodyEndColumn": 91
       },
       "baseline_complexity": 1,
@@ -44674,13 +44674,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 575,
+        "line": 586,
         "column": 26,
-        "start": 22129,
-        "end": 23265,
-        "bodyLine": 575,
+        "start": 22436,
+        "end": 23572,
+        "bodyLine": 586,
         "bodyColumn": 46,
-        "bodyEndLine": 606,
+        "bodyEndLine": 617,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 2,
@@ -44707,13 +44707,13 @@
         "bodyEndColumn": 64
       },
       "current_source_address": {
-        "line": 577,
+        "line": 588,
         "column": 41,
-        "start": 22255,
-        "end": 22278,
-        "bodyLine": 577,
+        "start": 22562,
+        "end": 22585,
+        "bodyLine": 588,
         "bodyColumn": 49,
-        "bodyEndLine": 577,
+        "bodyEndLine": 588,
         "bodyEndColumn": 64
       },
       "baseline_complexity": 1,
@@ -44740,13 +44740,13 @@
         "bodyEndColumn": 80
       },
       "current_source_address": {
-        "line": 585,
+        "line": 596,
         "column": 27,
-        "start": 22486,
-        "end": 22539,
-        "bodyLine": 585,
+        "start": 22793,
+        "end": 22846,
+        "bodyLine": 596,
         "bodyColumn": 39,
-        "bodyEndLine": 585,
+        "bodyEndLine": 596,
         "bodyEndColumn": 80
       },
       "baseline_complexity": 1,
@@ -44773,13 +44773,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 586,
+        "line": 597,
         "column": 89,
-        "start": 22633,
-        "end": 22660,
-        "bodyLine": 586,
+        "start": 22940,
+        "end": 22967,
+        "bodyLine": 597,
         "bodyColumn": 101,
-        "bodyEndLine": 586,
+        "bodyEndLine": 597,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -44806,13 +44806,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 607,
+        "line": 618,
         "column": 25,
-        "start": 23293,
-        "end": 25634,
-        "bodyLine": 607,
+        "start": 23600,
+        "end": 25941,
+        "bodyLine": 618,
         "bodyColumn": 43,
-        "bodyEndLine": 662,
+        "bodyEndLine": 673,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 7,
@@ -44839,13 +44839,13 @@
         "bodyEndColumn": 107
       },
       "current_source_address": {
-        "line": 618,
+        "line": 629,
         "column": 77,
-        "start": 23769,
-        "end": 23799,
-        "bodyLine": 618,
+        "start": 24076,
+        "end": 24106,
+        "bodyLine": 629,
         "bodyColumn": 88,
-        "bodyEndLine": 618,
+        "bodyEndLine": 629,
         "bodyEndColumn": 107
       },
       "baseline_complexity": 1,
@@ -44872,13 +44872,13 @@
         "bodyEndColumn": 116
       },
       "current_source_address": {
-        "line": 640,
+        "line": 651,
         "column": 89,
-        "start": 24739,
-        "end": 24766,
-        "bodyLine": 640,
+        "start": 25046,
+        "end": 25073,
+        "bodyLine": 651,
         "bodyColumn": 100,
-        "bodyEndLine": 640,
+        "bodyEndLine": 651,
         "bodyEndColumn": 116
       },
       "baseline_complexity": 1,
@@ -44905,13 +44905,13 @@
         "bodyEndColumn": 98
       },
       "current_source_address": {
-        "line": 646,
+        "line": 657,
         "column": 75,
-        "start": 25039,
-        "end": 25062,
-        "bodyLine": 646,
+        "start": 25346,
+        "end": 25369,
+        "bodyLine": 657,
         "bodyColumn": 83,
-        "bodyEndLine": 646,
+        "bodyEndLine": 657,
         "bodyEndColumn": 98
       },
       "baseline_complexity": 1,
@@ -44938,13 +44938,13 @@
         "bodyEndColumn": 102
       },
       "current_source_address": {
-        "line": 649,
+        "line": 660,
         "column": 31,
-        "start": 25158,
-        "end": 25199,
-        "bodyLine": 649,
+        "start": 25465,
+        "end": 25506,
+        "bodyLine": 660,
         "bodyColumn": 43,
-        "bodyEndLine": 649,
+        "bodyEndLine": 660,
         "bodyEndColumn": 72
       },
       "baseline_complexity": 5,
@@ -44971,13 +44971,13 @@
         "bodyEndColumn": 70
       },
       "current_source_address": {
-        "line": 656,
+        "line": 667,
         "column": 31,
-        "start": 25427,
-        "end": 25466,
-        "bodyLine": 656,
+        "start": 25734,
+        "end": 25773,
+        "bodyLine": 667,
         "bodyColumn": 43,
-        "bodyEndLine": 656,
+        "bodyEndLine": 667,
         "bodyEndColumn": 70
       },
       "baseline_complexity": 1,
@@ -45004,13 +45004,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 663,
+        "line": 674,
         "column": 28,
-        "start": 25665,
-        "end": 26958,
-        "bodyLine": 663,
+        "start": 25972,
+        "end": 27527,
+        "bodyLine": 674,
         "bodyColumn": 50,
-        "bodyEndLine": 697,
+        "bodyEndLine": 715,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 3,
@@ -45037,13 +45037,13 @@
         "bodyEndColumn": 97
       },
       "current_source_address": {
-        "line": 685,
+        "line": 703,
         "column": 24,
-        "start": 26508,
-        "end": 26634,
-        "bodyLine": 686,
+        "start": 27077,
+        "end": 27203,
+        "bodyLine": 704,
         "bodyColumn": 8,
-        "bodyEndLine": 686,
+        "bodyEndLine": 704,
         "bodyEndColumn": 97
       },
       "baseline_complexity": 1,
@@ -45070,13 +45070,13 @@
         "bodyEndColumn": 5
       },
       "current_source_address": {
-        "line": 698,
+        "line": 716,
         "column": 25,
-        "start": 26986,
-        "end": 27227,
-        "bodyLine": 699,
+        "start": 27555,
+        "end": 27796,
+        "bodyLine": 717,
         "bodyColumn": 4,
-        "bodyEndLine": 704,
+        "bodyEndLine": 722,
         "bodyEndColumn": 5
       },
       "baseline_complexity": 1,
@@ -45103,13 +45103,13 @@
         "bodyEndColumn": 93
       },
       "current_source_address": {
-        "line": 700,
+        "line": 718,
         "column": 29,
-        "start": 27052,
-        "end": 27108,
-        "bodyLine": 700,
+        "start": 27621,
+        "end": 27677,
+        "bodyLine": 718,
         "bodyColumn": 44,
-        "bodyEndLine": 700,
+        "bodyEndLine": 718,
         "bodyEndColumn": 85
       },
       "baseline_complexity": 3,
@@ -45136,13 +45136,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 706,
+        "line": 724,
         "column": 29,
-        "start": 27263,
-        "end": 28166,
-        "bodyLine": 706,
+        "start": 27832,
+        "end": 28735,
+        "bodyLine": 724,
         "bodyColumn": 52,
-        "bodyEndLine": 726,
+        "bodyEndLine": 744,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 4,
@@ -45169,13 +45169,13 @@
         "bodyEndColumn": 96
       },
       "current_source_address": {
-        "line": 723,
+        "line": 741,
         "column": 56,
-        "start": 28029,
-        "end": 28154,
-        "bodyLine": 724,
+        "start": 28598,
+        "end": 28723,
+        "bodyLine": 742,
         "bodyColumn": 6,
-        "bodyEndLine": 724,
+        "bodyEndLine": 742,
         "bodyEndColumn": 96
       },
       "baseline_complexity": 1,
@@ -45202,13 +45202,13 @@
         "bodyEndColumn": 3
       },
       "current_source_address": {
-        "line": 727,
+        "line": 745,
         "column": 25,
-        "start": 28194,
-        "end": 29295,
-        "bodyLine": 727,
+        "start": 28763,
+        "end": 29864,
+        "bodyLine": 745,
         "bodyColumn": 44,
-        "bodyEndLine": 752,
+        "bodyEndLine": 770,
         "bodyEndColumn": 3
       },
       "baseline_complexity": 5,
@@ -45235,13 +45235,13 @@
         "bodyEndColumn": 71
       },
       "current_source_address": {
-        "line": 738,
+        "line": 756,
         "column": 29,
-        "start": 28672,
-        "end": 28714,
-        "bodyLine": 738,
+        "start": 29241,
+        "end": 29283,
+        "bodyLine": 756,
         "bodyColumn": 43,
-        "bodyEndLine": 738,
+        "bodyEndLine": 756,
         "bodyEndColumn": 71
       },
       "baseline_complexity": 1,
@@ -45268,13 +45268,13 @@
         "bodyEndColumn": 9
       },
       "current_source_address": {
-        "line": 739,
+        "line": 757,
         "column": 30,
-        "start": 28749,
-        "end": 28870,
-        "bodyLine": 739,
+        "start": 29318,
+        "end": 29439,
+        "bodyLine": 757,
         "bodyColumn": 38,
-        "bodyEndLine": 742,
+        "bodyEndLine": 760,
         "bodyEndColumn": 9
       },
       "baseline_complexity": 2,
@@ -45301,13 +45301,13 @@
         "bodyEndColumn": 92
       },
       "current_source_address": {
-        "line": 749,
+        "line": 767,
         "column": 22,
-        "start": 29162,
-        "end": 29283,
-        "bodyLine": 750,
+        "start": 29731,
+        "end": 29852,
+        "bodyLine": 768,
         "bodyColumn": 6,
-        "bodyEndLine": 750,
+        "bodyEndLine": 768,
         "bodyEndColumn": 92
       },
       "baseline_complexity": 1,
@@ -45334,13 +45334,13 @@
         "bodyEndColumn": 1
       },
       "current_source_address": {
-        "line": 755,
+        "line": 773,
         "column": 0,
-        "start": 29301,
-        "end": 30162,
-        "bodyLine": 758,
+        "start": 29870,
+        "end": 30731,
+        "bodyLine": 776,
         "bodyColumn": 38,
-        "bodyEndLine": 777,
+        "bodyEndLine": 795,
         "bodyEndColumn": 1
       },
       "baseline_complexity": 6,
@@ -45367,13 +45367,13 @@
         "bodyEndColumn": 7
       },
       "current_source_address": {
-        "line": 764,
+        "line": 782,
         "column": 42,
-        "start": 29659,
-        "end": 29868,
-        "bodyLine": 764,
+        "start": 30228,
+        "end": 30437,
+        "bodyLine": 782,
         "bodyColumn": 54,
-        "bodyEndLine": 768,
+        "bodyEndLine": 786,
         "bodyEndColumn": 7
       },
       "baseline_complexity": 2,
@@ -206212,13 +206212,13 @@
       "max_crap": 10,
       "rationale": "New exported descriptor-capture and bounded result facade, prospectively planned/reviewed at published af033f5 before implementation. Existing Ajv/semantic validation and its callback retain their original ceilings on private ImageV1 successors; no allowance transfer or historical measurement is claimed.",
       "current_source_address": {
-        "line": 782,
+        "line": 800,
         "column": 0,
-        "start": 30395,
-        "end": 31051,
-        "bodyLine": 785,
+        "start": 30964,
+        "end": 31620,
+        "bodyLine": 803,
         "bodyColumn": 38,
-        "bodyEndLine": 800,
+        "bodyEndLine": 818,
         "bodyEndColumn": 1
       },
       "current_complexity": 3
@@ -206359,6 +206359,25 @@
         "bodyEndColumn": 1
       },
       "current_complexity": 1
+    },
+    {
+      "identity": "src/contracts/envelopes.ts#fn:releaseOperationMatchesTicketIdentity#0",
+      "max_complexity": 4,
+      "max_crap": 4,
+      "rationale": "New private exact release-to-ticket identity invariant, independently frozen at published97cc7b1 under planned_release_ticket_identity_20261017 and existing cohesive-invariant4 guidance. Existing callbacks and original caps stay unchanged; no allowance transfer or candidate-derived budget.",
+      "independent_review": "/workspace/attachments/release-operation-identity-budget-review-v269.md",
+      "plan_ref": "97cc7b1",
+      "current_source_address": {
+        "line": 282,
+        "column": 0,
+        "start": 10938,
+        "end": 11243,
+        "bodyLine": 285,
+        "bodyColumn": 11,
+        "bodyEndLine": 291,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 3
     }
   ],
   "removed_functions": [
@@ -225704,5 +225723,35 @@
     "pre_adoption_context": "Published 1433e74 has no named release identity predicate. An isolated v264 prototype and uncommitted Root copy exist and are explicitly disclosed. This record must be immutable before published tracked Source adoption; it makes no pre-prototype chronology claim.",
     "original_disposition": "No original callable is removed or reused. Preserve all 76 retained envelope roles, their original ceilings, six removals and two existing added roles. Operations callback remains cap7 and validateLedgerSemantics cap2.",
     "adoption_prerequisites": "After publishing this plan, adopt the distinct named helper under one independently frozen4/4 new-role row, review exhaustive correspondence and current Source binding using the existing inventory. Envelope current79=76retained+3added; global7114=7113+1 only after adoption. No baseline/cap transfer or numeric/global qualification follows from this plan."
+  },
+  "scope_review_main_envelopes_release_ticket_identity_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [
+      "src/contracts/envelopes.ts"
+    ],
+    "source_mappings": [
+      {
+        "original_path": "src/contracts/envelopes.ts",
+        "current_path": "src/contracts/envelopes.ts",
+        "rationale": "All prior envelope mappings remain in the same Source owner. One independently planned exact release-ticket identity invariant is a new private predicate; no original callable is removed or reused."
+      }
+    ],
+    "review_artifact": "/workspace/attachments/quality-envelope-validated-rows-actual-lineage-20261016.md",
+    "additional_role_review": "/workspace/attachments/release-operation-identity-budget-review-v269.md",
+    "correspondence": "Original82=76retained+6removed remains unchanged. Current79=76retained+3added (existing capture facade, existing named lease comparator, new exact release-ticket identity predicate). Preserve every original ceiling, both existing added ceilings and all six removals. Original operation callback remainsCC7/cap7 and validatorCC2/cap2; new predicate independently frozen4/4 before published Source adoption. No cap/identity/measurement transfer, global qualification or contour closure.",
+    "limits": "Lineage-only proposal. Exact coverage, scoped frozen CRAP admission and mutation evidence remain separate.",
+    "independent_review_lane": "blind-native-luna-lease-lineage-v149",
+    "prospective_plan_ref": "97cc7b1",
+    "retained": 76,
+    "new_functions": 3,
+    "removed_functions": 6,
+    "prototype_context": "Prior named lease comparator prototype disclosure is unchanged. New release identity prototype existed in isolatedv264 and uncommittedRoot before plan freeze and is explicitly disclosed; published97cc7b1 freezes the reviewed domain/risk4/4 plan before Source adoption, without claiming pre-prototype chronology.",
+    "current_source_bindings": [
+      {
+        "file": "src/contracts/envelopes.ts",
+        "sha256": "6b959082fe88b709ffcdb6e403f279ab33ca57425cd8afee14efb7a7c343679d"
+      }
+    ],
+    "actual_inventory_review": "/workspace/attachments/release-operation-identity-lineage-review-v271.md"
   }
 }

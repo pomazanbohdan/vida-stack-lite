@@ -279,6 +279,17 @@ function ledgerHistoricalResourceKey(resource: string, path: string): string {
   return resource.toLowerCase();
 }
 
+function releaseOperationMatchesTicketIdentity(
+  operation: Readonly<Record<string, unknown>>,
+  ticket: CoordinationTicket,
+): boolean {
+  return (
+    operation.work_id === ticket.work_id &&
+    operation.thread_id === ticket.thread_id &&
+    operation.source_revision === ticket.source_revision
+  );
+}
+
 function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: number | null): void {
   ledgerRequire(
     ledger.tickets.length +
@@ -669,11 +680,18 @@ function validateLedgerSemantics(ledger: CoordinationLedger, currentTimeMs: numb
       'coordination operation revision binding invalid',
     );
     if (operation.kind === 'release') {
+      const ticket = tickets.get(String(operation.ticket_id));
       ledgerRequire(
-        tickets.has(String(operation.ticket_id)),
+        ticket,
         'RELEASE_TICKET_MISSING',
         `$.operations.${index}.ticket_id`,
         'release operation ticket is missing',
+      );
+      ledgerRequire(
+        releaseOperationMatchesTicketIdentity(operation, ticket),
+        'RELEASE_TICKET_BINDING_INVALID',
+        `$.operations.${index}`,
+        'release operation identity differs from its ticket',
       );
       const resources = operation.resources as readonly string[];
       ledgerRequire(

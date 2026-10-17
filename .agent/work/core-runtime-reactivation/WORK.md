@@ -8,7 +8,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
-- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners, after retiring two initialization timer callbacks; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
+- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,114 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners, after retiring two initialization timer callbacks; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 - Native isolated workers retain private logical overlays and parent-only raw publication. Exact image, envelopes, initialization, custody and fs-safe selections permit bounded diagnostics; only reviewed fs-safe attestation, initialization and custody permit complete admission. The actual fs-safe7/7closure passes the unchanged reader with four negative controls. Initialization eligibility follows the closed64-mutant diagnostic and existing private-resource/nested-process controls below. Custody full admission follows the private SQLite controls, fresh SQL/table activation and closed64-mutant diagnostic below. Default execution stays serial, workers remain fixed-two, and capture/ID selectors remain denied. Permission is no proof; broader resource/coverage qualification and FS zero-callable CRAP applicability stay open.
@@ -21,7 +21,7 @@ Current Source retains16roles, original11retained/5active-added/1removed baselin
 dispositions and the separately retired added timer. Async Bun.sleep retries
 keep the original absolute5s deadline, entered boundary, typed/code guards, CAS,
 ownership and error causes. Predicate inlines preserve strict primitive checks.
-Original b549951 ceilings and counts7113roles/149files remain unchanged.
+Original b549951 ceilings and all16initialization roles remain unchanged.
 Published diagnostic history and prior UNKNOWN custody are retained at
 ebc323b:.agent/work/core-runtime-reactivation/WORK.md under this heading;
 that published record links the earlier c525495 history. Do not replay those
@@ -168,19 +168,25 @@ identity. Existing Host producers and progress validation already require the
 exact identity; released tickets are immutable and rebind creates a distinct
 successor. Blind lifecycle review found no valid historical exception.
 
-Freeze planned_release_ticket_identity_20261017 at4/4 under TESTING's existing
+Published97cc7b1 freezes planned_release_ticket_identity_20261017 at4/4 under TESTING's existing
 cohesive-invariant domain/risk guidance, independently reviewed in
 /workspace/attachments/release-operation-identity-budget-review-v269.md. This
 single exact comparison has no parsing/coercion/I/O/effects. The plan is not
 derived from candidate metrics. An isolated v264 prototype and uncommitted Root
 copy are explicitly disclosed; no pre-prototype planning chronology is claimed.
-Publish this plan before tracked Source adoption. No original role is removed or
+The plan precedes this tracked Source adoption. No original role is removed or
 reused, and callback7/7, validator2/2 and all prior ceilings remain frozen.
 
-After the plan is immutable, adopt the new named predicate and three mismatch
-regressions, then use one changed-file AST inventory and reviewed exhaustive
-correspondence. Envelope roles become79=76retained+3added and global7114 only
-on adoption. Current counts remain7113 in this plan checkpoint. Exact coverage,
+Adopt the new named predicate and three mismatch regressions. The single changed
+Source AST inventory at /workspace/attachments/envelopes-release-binding-inventory-v270.json
+finds79roles, all78previous identities, no removed/missing mappings or exceeded
+caps. The new predicate isCC3 within its independent4/4 ceiling; callback7 and
+validator2 remain unchanged. Scope scope_review_main_envelopes_release_ticket_identity_20261017
+binds Source6b959082fe88b709ffcdb6e403f279ab33ca57425cd8afee14efb7a7c343679d,
+79=76retained+3added. Global7114/1667added, original5447retained/98removed and
+149files follow this adoption; no original ceiling or measurement is transferred.
+Focused source-level boundary checklgCWdX passes38cases/0skipped in2968ms,
+with full captures, closed group and unchanged boot. Exact coverage,
 frozen CRAP and full native proof remain separate requirements; no closure is
 implied. Storage-image's bounded analogous review found no new demonstrated gap;
 its four-mutant refill diagnostic remains ready behind the Root numeric owner.

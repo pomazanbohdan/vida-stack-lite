@@ -45,6 +45,8 @@ function assertLedgerRejection(result: CoordinationLedgerValidationResult, code:
   assert.equal(typeof issue.message, 'string');
   assert.ok(issue.message.trim().length > 0);
   assert.equal(issue.message, issue.message.trim());
+  if (code === 'RELEASE_TICKET_BINDING_INVALID')
+    assert.equal(issue.message, 'release operation identity differs from its ticket');
   if (code.endsWith('DUPLICATE')) {
     const labels: Readonly<Record<string, string>> = {
       TICKET_ID_DUPLICATE: 'ticket identifiers',
@@ -2305,6 +2307,21 @@ describe('runtime envelope canonicalization boundary', () => {
         value: { ...ready, operations: [{ ...release, ticket_id: 'ticket-missing' }, assurance] },
         code: 'RELEASE_TICKET_MISSING',
         path: '$.operations.0.ticket_id',
+      },
+      {
+        value: { ...ready, operations: [{ ...release, work_id: 'work-foreign' }, assurance] },
+        code: 'RELEASE_TICKET_BINDING_INVALID',
+        path: '$.operations.0',
+      },
+      {
+        value: { ...ready, operations: [{ ...release, thread_id: 'thread-foreign' }, assurance] },
+        code: 'RELEASE_TICKET_BINDING_INVALID',
+        path: '$.operations.0',
+      },
+      {
+        value: { ...ready, operations: [{ ...release, source_revision: 'source-foreign' }, assurance] },
+        code: 'RELEASE_TICKET_BINDING_INVALID',
+        path: '$.operations.0',
       },
       {
         value: { ...ready, operations: [{ ...release, resources: [] }, assurance] },
