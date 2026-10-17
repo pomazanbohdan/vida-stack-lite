@@ -102,6 +102,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
       'admit-complete': { type: 'boolean', default: false },
       'diagnostic-mutant-id': { type: 'string' },
       'diagnostic-mutant-ids': { type: 'string' },
+      'capture-per-test-diagnostic': { type: 'boolean', default: false },
     },
     strict: true,
     allowPositionals: false,
@@ -121,6 +122,11 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
   const admitComplete = values['admit-complete'] === true;
   const diagnosticMutantId = values['diagnostic-mutant-id'];
   const diagnosticMutantIds = values['diagnostic-mutant-ids']?.split(',');
+  const perTestCapture = values['capture-per-test-diagnostic'] === true ? ('diagnostic-v2' as const) : undefined;
+  if (perTestCapture !== undefined && admitComplete)
+    throw new Error('Per-test diagnostic capture cannot use complete admission.');
+  if (perTestCapture !== undefined && (diagnosticMutantId !== undefined || diagnosticMutantIds !== undefined))
+    throw new Error('Per-test diagnostic capture runs only the complete baseline, without mutant selection.');
   if (
     diagnosticMutantId !== undefined &&
     (!diagnosticMutantId || diagnosticMutantId.length > 200 || batchSize !== 1 || maxBatches !== 1 || admitComplete)
@@ -147,6 +153,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
     admitComplete,
     diagnosticMutantId,
     diagnosticMutantIds,
+    perTestCapture,
   };
 }
 
@@ -225,7 +232,7 @@ export function nativeMutationBatchCommand(
 async function runMutationBatchPilot(root: string, args: readonly string[]): Promise<void> {
   const pilotStarted = performance.now();
   const partitionBudget = executionBudget(mutationLimits.partitionMs, 0);
-  const { partition, batchSize, maxBatches, admitComplete, diagnosticMutantId, diagnosticMutantIds } =
+  const { partition, batchSize, maxBatches, admitComplete, diagnosticMutantId, diagnosticMutantIds, perTestCapture } =
     selectMutationBatchPilot(args, mutationPartitions());
   const pin = readPin(root);
   checkManifest(root, pin);
@@ -243,7 +250,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
   const record = (file: string, value: unknown) => writeMutationMapArtifact(directory, file, value);
   try {
     const inputs = await qualityInputs(root, mutationToolInputs);
-    const fingerprint = qualityFingerprint(inputs);
+    const fingerprint = qualityFingerprint(inputs, perTestCapture);
     const source = mutationPartitionSourceBinding(partition.name, mutationPartitionSources(partition), inputs.sources);
     if (!source || !partition.tests) throw new Error('Mutation batch Source/test binding is incomplete.');
     const tests = partition.tests;
@@ -283,6 +290,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         input_fingerprint: fingerprint,
         test_fingerprint: inputs.test_fingerprint,
         tool_fingerprint: inputs.tool_fingerprint,
+        ...(perTestCapture === undefined ? {} : { per_test_capture: perTestCapture }),
       }),
     };
     if (admitComplete && maxBatches < plan.batches.length)
@@ -326,6 +334,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     delete environment.__STRYKER_ACTIVE_MUTANT__;
     delete environment.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE;
     delete environment.AGENT_MUTATION_PER_TEST_CAPTURE;
+    if (perTestCapture !== undefined) environment.AGENT_MUTATION_PARENT_PER_TEST_CAPTURE = perTestCapture;
     const parentIdentity = () =>
       collectExecutionIdentity({
         executable: process.execPath,
@@ -382,7 +391,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
         source.fingerprint,
         context,
         census,
-        undefined,
+        id === null ? perTestCapture : undefined,
         true,
       );
       if (outcome.status === 'unknown') return outcome;
@@ -412,7 +421,8 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       unattempted: image.universe.mutants.length,
     };
     let resourceBlocked: { observed_path: string; available_bytes: string | null } | undefined;
-    const batchCount = diagnosticBatchIndices?.length ?? window!.end - window!.start;
+    const batchCount =
+      perTestCapture === undefined ? (diagnosticBatchIndices?.length ?? window!.end - window!.start) : 0;
     for (let position = 0; position < batchCount; position++) {
       const index = diagnosticBatchIndices?.[position] ?? window!.start + position;
       const batch = plan.batches[index]!;
@@ -580,7 +590,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
 if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
-      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--diagnostic-mutant-id <generated local ID> | --diagnostic-mutant-ids <comma-separated generated local IDs>]. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
+      'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--capture-per-test-diagnostic] [--diagnostic-mutant-id <generated local ID> | --diagnostic-mutant-ids <comma-separated generated local IDs>]. Per-test capture is diagnostic-v2 baseline-only: it binds the input fingerprint/descriptor/receipt and full test selection, executes no mutants, and cannot combine with complete admission or mutant selection. Unattempted mutants keep the diagnostic exit nonzero. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
     );
   else
     await runMutationBatchPilot(

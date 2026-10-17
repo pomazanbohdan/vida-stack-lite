@@ -1,7 +1,6 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import * as custodySubject from '../../src/config/service-operation-custody.js';
-import * as launchCapabilitySubject from '../../src/config/service-operation-launch-capability.js';
 import * as storageAdmission from '../../src/config/storage-read-admission.js';
 import * as workspaceRaw from '../../src/config/workspace-database-raw.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
@@ -729,6 +728,28 @@ describe('private service launch capability', () => {
         expect(typeof afterDenial).toBe('object');
         expect(afterDenial).toEqual(before);
       }
+      fixture.database.exec(
+        'CREATE TRIGGER ignore_worker_claim BEFORE UPDATE ON agent_host_service_operation_custody ' +
+          "WHEN OLD.phase='launching' AND NEW.phase='in_flight' BEGIN SELECT RAISE(IGNORE); END",
+      );
+      expect(() =>
+        claimReservedServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          reservation.child_capability,
+        ),
+      ).toThrow('Service operation custody: one-shot worker claim compare-and-swap failed');
+      expect(fixture.database.inTransaction).toBe(false);
+      expect(
+        expectReturned(() =>
+          readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+        ),
+      ).toEqual(before);
+      fixture.database.exec('DROP TRIGGER ignore_worker_claim');
       const handle = expectReturned(() =>
         claimReservedServiceOperationLaunch(
           fixture.database,
@@ -792,89 +813,112 @@ describe('private service launch capability', () => {
   });
 });
 
-test('interrupted launching is revoked only by the exact prepared beforeimage', async () => {
-  const fixture = openCustodyFixture();
-  let completed = false;
-  try {
-    const reservation = expectReturned(() =>
-      reserveServiceOperationLaunch(
-        fixture.database,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        'c'.repeat(64),
-      ),
-    );
-    expectReturned(() =>
-      recordServiceOperationLaunchPid(
-        fixture.database,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        reservation.revision,
-        pid,
-        reservation.child_capability,
-      ),
-    );
-    const row = await expectAsyncReturned(() =>
-      reconcileServiceOperationCustody(
-        fixture.database,
-        fixture.root,
-        fixture.relative,
-        fixture.workspaceId,
-        'release-pack-worker',
-        operationId,
-        requestDigest,
-        () => ({ phase: 'prepared', evidence_digest: 'c'.repeat(64) }),
-      ),
-    );
-    expect(row.phase).toBe('prepared');
-    expect(row.owner_token).toBeNull();
-    expect(row.evidence_digest).toBe('c'.repeat(64));
-    const reopened = expectReturned(() =>
-      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
-    );
-    let unexpectedHandle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
-    let assertionFailure: { error: unknown } | undefined;
+for (const receipt of [
+  {
+    fixture: 'prepared-beforeimage',
+    name: 'is revoked only by the exact prepared beforeimage',
+    phase: 'prepared' as const,
+    evidenceDigest: 'c'.repeat(64),
+  },
+  {
+    fixture: 'terminal-receipt',
+    name: 'accepts a terminal receipt with distinct evidence',
+    phase: 'terminal' as const,
+    evidenceDigest: 'd'.repeat(64),
+  },
+]) {
+  test(`interrupted launching ${receipt.name}`, async () => {
+    const fixture = openCustodyFixture(`interrupted-launch-${receipt.fixture}-`);
+    let completed = false;
     try {
-      expect(
-        () =>
-          (unexpectedHandle = claimReservedServiceOperationLaunch(
-            reopened,
-            fixture.workspaceId,
-            'release-pack-worker',
-            operationId,
-            requestDigest,
-            pid,
-            reservation.child_capability,
-          )),
-      ).toThrow('worker does not match the exact one-shot launch reservation');
-    } catch (error) {
-      assertionFailure = { error };
-    } finally {
-      completeOwnedCleanup(
-        [
-          () => {
-            if (unexpectedHandle) closeServiceOperationCustodyHandle(unexpectedHandle);
-            else closeServiceOperationDatabase(reopened);
-          },
-        ],
-        assertionFailure,
+      const reservation = expectReturned(() =>
+        reserveServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          'c'.repeat(64),
+        ),
       );
+      expectReturned(() =>
+        recordServiceOperationLaunchPid(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          reservation.revision,
+          pid,
+          reservation.child_capability,
+        ),
+      );
+      const row = await expectAsyncReturned(() =>
+        reconcileServiceOperationCustody(
+          fixture.database,
+          fixture.root,
+          fixture.relative,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          () => ({ phase: receipt.phase, evidence_digest: receipt.evidenceDigest }),
+        ),
+      );
+      expect(row.phase).toBe(receipt.phase);
+      expect(row.owner_token).toBeNull();
+      expect(row.evidence_digest).toBe(receipt.evidenceDigest);
+      expect(row.revision).toBe(reservation.revision + 2);
+      const reopened = expectReturned(() =>
+        openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+      );
+      let unexpectedHandle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
+      let assertionFailure: { error: unknown } | undefined;
+      try {
+        const persisted = expectReturned(() =>
+          readServiceOperationCustodyForOperation(reopened, fixture.workspaceId, operationId),
+        );
+        expect(persisted).toEqual(row);
+        expect(persisted?.phase).toBe(receipt.phase);
+        expect(persisted?.evidence_digest).toBe(receipt.evidenceDigest);
+        expect(persisted?.revision).toBe(reservation.revision + 2);
+        expect(
+          () =>
+            (unexpectedHandle = claimReservedServiceOperationLaunch(
+              reopened,
+              fixture.workspaceId,
+              'release-pack-worker',
+              operationId,
+              requestDigest,
+              pid,
+              reservation.child_capability,
+            )),
+        ).toThrow('worker does not match the exact one-shot launch reservation');
+      } catch (error) {
+        assertionFailure = { error };
+      } finally {
+        completeOwnedCleanup(
+          [
+            () => {
+              if (unexpectedHandle) closeServiceOperationCustodyHandle(unexpectedHandle);
+              else closeServiceOperationDatabase(reopened);
+            },
+          ],
+          assertionFailure,
+        );
+      }
+      if (assertionFailure) throw assertionFailure.error;
+      completed = true;
+    } finally {
+      if (completed) rmSync(fixture.root, { recursive: true, force: true });
+      else
+        console.error('SERVICE_CUSTODY_FIXTURE_RETAINED', {
+          root: fixture.root,
+          reason: 'interrupted-launch denial assertion or connection close did not complete',
+        });
     }
-    if (assertionFailure) throw assertionFailure.error;
-    completed = true;
-  } finally {
-    if (completed) rmSync(fixture.root, { recursive: true, force: true });
-    else
-      console.error('SERVICE_CUSTODY_FIXTURE_RETAINED', {
-        root: fixture.root,
-        reason: 'interrupted-launch denial assertion or connection close did not complete',
-      });
-  }
-});
+  });
+}
 
 test('ambiguous interrupted launching remains same-operation UNKNOWN with its capability revoked', async () => {
   const fixture = openCustodyFixture();
@@ -1263,6 +1307,9 @@ test('closed in-flight child reconciles only through its exact same-operation re
       const capabilityRequire = createRequire(import.meta.url);
       const capabilityPath = capabilityRequire.resolve('../../src/config/service-operation-launch-capability.js');
       const observedDigests: Array<{ capability: string; digest: string }> = [];
+      const launchCapabilitySubject = capabilityRequire(
+        capabilityPath,
+      ) as typeof import('../../src/config/service-operation-launch-capability.js');
       const digestSpy = spyOn(launchCapabilitySubject, 'serviceOperationLaunchCapabilityDigest').mockImplementation(
         (actualCapability) => {
           const originalModule = capabilityRequire.cache[capabilityPath];
@@ -1329,9 +1376,15 @@ test('closed in-flight child reconciles only through its exact same-operation re
       );
       expect(inFlight?.phase).toBe('in_flight');
       expectReturned(() => closeServiceOperationCustodyHandle(handle));
+      expect(() => closeServiceOperationCustodyHandle(handle)).toThrow(
+        'Service operation custody: live operation handle is required',
+      );
       const source = expectReturned(() =>
         openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
       );
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(source, fixture.workspaceId, operationId)),
+      ).toEqual(inFlight);
       const reconciled = await expectAsyncReturned(() =>
         reconcileServiceOperationCustody(
           source,
@@ -2109,6 +2162,12 @@ test('record and claim reject invalid PID boundaries without changing the exact 
     const inFlight = expectReturned(() =>
       readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
     );
+    expect(() => {
+      Reflect.apply(closeServiceOperationCustody, undefined, [claimed, 'launching', 'c'.repeat(64)]);
+    }).toThrow('Service operation custody: close phase is invalid');
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(inFlight);
     for (const close of [
       { phase: 'prepared' as const, digest: null, message: 'phase evidence is invalid' },
       { phase: 'terminal' as const, digest: null, message: 'phase evidence is invalid' },
@@ -2553,6 +2612,13 @@ test('PID recording rejects a schema changed after admission and succeeds after 
     const schema = fixture.database
       .query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'")
       .get();
+    expect(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)).toThrow(
+      'Service operation custody: owned service table is absent or differs',
+    );
+    expect(fixture.database.query('SELECT * FROM agent_host_service_operation_custody').all()).toEqual(before);
+    expect(
+      fixture.database.query("SELECT sql FROM sqlite_master WHERE name='agent_host_service_operation_custody'").get(),
+    ).toEqual(schema);
     expect(() =>
       recordServiceOperationLaunchPid(
         fixture.database,

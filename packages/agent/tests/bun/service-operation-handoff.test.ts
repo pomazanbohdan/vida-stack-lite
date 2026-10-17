@@ -1765,6 +1765,38 @@ async function assertPreparedPackCannotHandoff(): Promise<void> {
     );
     expect(prepared).toBeObject();
     expect(prepared.phase).toBe('prepared');
+    const reader = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    let reservationFailure: { error: unknown } | undefined;
+    try {
+      expect(() =>
+        reserveServiceOperationLaunch(
+          reader,
+          fixture.workspaceId,
+          'release-worker',
+          operationId,
+          requestDigest,
+          evidenceDigest,
+        ),
+      ).toThrow('Service operation custody: operation has no exact prepared image available for one-shot launch');
+      expect(
+        expectReturned(() => readServiceOperationCustodyForOperation(reader, fixture.workspaceId, operationId)),
+      ).toEqual(prepared);
+    } catch (error) {
+      reservationFailure = { error };
+      throw error;
+    } finally {
+      completeOwnedCleanup(
+        [
+          () => {
+            closeServiceOperationDatabase(reader);
+            return undefined;
+          },
+        ],
+        reservationFailure,
+      );
+    }
     let verifierCalls = 0;
     const verifier: HandoffVerifier = async () => {
       verifierCalls++;
@@ -1778,6 +1810,76 @@ async function assertPreparedPackCannotHandoff(): Promise<void> {
     rmSync(fixture.root, { recursive: true, force: true });
   }
 }
+
+test('same-metadata reconciliation rejects a replaced admission gate before receipt or row effects', async () => {
+  const fixture = openCustodyFixture('reconcile-entry-replaced-gate-');
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        evidenceDigest,
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(before).toBeObject();
+
+    // Keep the exact admitted connection and metadata, but replace the real gate
+    // before entering reconciliation so its database-binding check owns denial.
+    const retainedStatement = fixture.database.query(
+      'SELECT * FROM agent_host_service_operation_custody WHERE workspace_id=? AND operation_id=?',
+    );
+    const nativeBefore = expectReturned(() => retainedStatement.get(fixture.workspaceId, operationId));
+    replaceAdmissionGate(fixture);
+    let verifierCalls = 0;
+    await expectRejection(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest };
+        },
+      ),
+      'Project storage admission: gate file or parent was replaced',
+    );
+    expect(verifierCalls).toBe(0);
+    const retainedRow = expectReturned(() => retainedStatement.get(fixture.workspaceId, operationId));
+    expect(retainedRow).toEqual(nativeBefore);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          console.error('SERVICE_CUSTODY_EXPECTED_UNKNOWN_FIXTURE_RETAINED', {
+            root: fixture.root,
+            reason: 'entry admission gate replacement left the launching owner unresolved',
+            externalProcessStarted: false,
+          });
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
 
 async function expectHandoffFailure(
   fixture: ServiceCustodyFixture,

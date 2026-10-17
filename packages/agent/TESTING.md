@@ -1044,6 +1044,14 @@ Use the existing owned PID1/isolation and SDK-readiness ingress before invocatio
 The package/root input capture is shared, the instrumented image is created once,
 and execution is serial in a private sandbox with read-only Source/test/tool files
 and private writable scratch. The full declared test argv runs for each ID.
+The explicit `--capture-per-test-diagnostic` mode runs only the complete native
+baseline and binds existing diagnostic-v2 capture through its input fingerprint,
+descriptor and receipt owner. It executes no mutants, rejects complete admission
+and mutant-ID selectors, and retains a nonzero diagnostic exit for the unattempted
+universe. Captured baseline names include file tokens; they must not be compared
+directly to capture-free mutant names as if those were an identical outcome census.
+Independent registration, full baseline/canonical joins and any filtered-runner
+controls remain unqualified. Defaults retain the existing full argv and no capture.
 One900s partition deadline covers capture, generation, baseline and every selected
 batch; command/case limits remain with their existing owners. Do not reset this
 deadline between batches: the campaign's930s outer envelope must leave time for

@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `32e47aa1c0928613a1b4329fb529313606dca89b` fixes the reproduced100000-row aggregate canonicalization defect without changing52roles or ceilings; `eda2fa4cfcb833d2f1c3d5aa42766d045e4c2c51` publishes its scoped frozen selector. Fresh v196 storage coverage/frozen proof passes on that exact Source. Actual point diagnostics confirm custody693 and both storage inclusive-boundary mutants Killed; earlier envelope110 and empty-Mastra216 proofs remain historical. These are not full mutation scores. The next correction shares fresh stateless utility forwarding across custody test files, preserving the canonical stateful owner. Earlier script/capture and image cleanup repairs remain published, with receipts below. Active contours are storage image, envelopes and service-operation-custody. FS attestation retains native7/7 but stays OPEN on zero-callable CRAP applicability. Facade91906ff and main-hostfebad42 retain historical compatible triples. Admission remains OPEN on stateful static initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `46421bf3a0e958cbf4330b43538db6bcdcbc588a` shares owned pure-utility activation; product aggregate correction32e47aa and its scoped selector eda2fa4 are published. Fresh v197 pairs pass exact coverage100 and frozen9/9 for all three active contours; parent BLOCKED outcomes remain separate. The full custody attempt records305Killed/7Survived/1UNKNOWN/373unattempted of686 and is fenced. The next checked packet adds seven real guard witnesses and baseline-only native diagnostics; post-publication mutation controls remain pending. UNKNOWN2 is a stateful initialization ownership GAP, not a confirmed kill. Active contours remain storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1406,6 +1406,118 @@ still lacks the independent all-skipped registration probe, full native capture
 join, selected-body/skipped-sibling/required-hook receipt checks and matched
 positive/omitted-body/static-hit controls. Keep current full-selection semantics
 and fixed budgets; diagnostic planning does not authorize filtered mutation proof.
+
+### Shared custody activation publication and three-contour recheck
+
+Published46421bf3a0e958cbf4330b43538db6bcdcbc588a passes the normal strict
+TypeScript/format/lint/Knip hook and is pushed. Immutable v197 forms SDK test
+inputs once (`Oxd1rj`,2344ms; no suites). Fresh complete focused coverage:
+
+- image `BnlRMW`, run4a1db0d3-ae78-4824-90fa-5aef126c143a:65tests/464assertions,
+  8692ms; frozen `M1BUiK`,789ms, pin32e47aa;
+- envelopes `bUoPAe`, runaf7fc619-9fb7-4100-82ca-fadd597462dc:47tests/4271assertions,
+  9879ms; frozen `WIsBir`,1489ms, original53fac83;
+- custody `PdIxR7`, runf6e2f692-196c-484b-a593-7dcab0747e1a:123tests/1028assertions,
+  6626ms; frozen `9UgC2a`,1352ms, original8ca2af9.
+
+All three keep exact F/L/S/B100 and maxCC/CRAP9/9, full captures, closed groups,
+unchanged boot/commit and clean measured inputs. One projection import advances
+to602attempts without new scans/suites; parent BLOCKED outcomes stay separate.
+Their detailed fractions and original reviewed mappings remain with the derived
+projection and frozen owners, not a second manual status table.
+
+Root initially overlapped image/custody coverage on the shared output root.
+`8qBni6` is an EEXIST lock-acquisition denial before a run ID, capture, staging or
+test producer exists; it is retained as a failed launcher, never coverage evidence.
+After the actual lock owner terminates and releases its exact lock normally, the
+new custody invocation above succeeds. No lock is reclaimed/deleted manually,
+and no unresolved attempt is resumed. Keep numeric runtime work sequential on a
+shared output root; parallel author/review preparation remains independent.
+
+A deferred public-index import is rejected as a speculative optimization: actual
+main-envelope baseline JUnit runs zombies first, so its required Interface case
+still pays the same one-time index/context work before later file bail. Preserve
+the seven cases, public namespace identity and configured context. A future native
+pool likewise needs isolated/qualified writable scratch and transpiler cache,
+ordered original plan outcomes, stop-admission/drain controls and real custody/
+resource measurements; per-ID receipt paths alone do not qualify concurrency.
+Current runtime selection/concurrency and budgets are unchanged.
+
+### Custody mutation witnesses and native baseline diagnostics
+
+Full native attempt `fSu9rH`, runf8bf7bdd-3c19-49a2-bb28-50b76b94a626,
+finishes in602310ms on46421bf with313attempted/686:305Killed,7Survived,1UNKNOWN,
+373unattempted and full123-case baseline. Outer output/group/boot/commit custody
+is complete and clean. The UNKNOWN fences v197; retain that checkout and all
+failed roots. Do not reuse it for another producer or interpret313 as a complete
+universe. No complete proof/report is emitted and historical6/45triples stay.
+
+Exact retained descriptions and real fixtures establish these seven repairs:
+
+- 481: second handle close requires its exact non-live denial; existing reopened
+ row proves the in-flight image is unchanged;
+- 491: public reading after admitted table drift requires the readiness denial,
+ leaving actual schema and rows unchanged before existing restoration controls;
+- 449: a malformed runtime phase on a genuine claimed handle requires the phase
+ membership denial and unchanged in-flight row;
+- 434: an actual phase-specific BEFORE UPDATE RAISE(IGNORE) trigger forces the
+ worker-claim CAS to zero; assert exact denial, rollback and unchanged reservation,
+ then drop only that trigger before the original successful claim;
+- 619: retain the prepared-beforeimage launch revocation case and add independent
+ launching-to-terminal reconciliation with distinct valid evidence; verify
+ returned/persisted revision, phase, digest and denial of the stale capability;
+- 341: a genuinely prepared pack row rejects a same-operation/request/evidence
+ reserve for the other owner kind without row change;
+- 310: replace the actual admission gate before entry with unchanged metadata;
+ assert its exact identity denial, zero receipt callbacks, and the same native
+ row through the original still-open connection. Retain this expected UNKNOWN
+ fixture and preserve body/cleanup errors through the existing accumulator.
+
+Independent static review approves the real guard seams; Root execution catches
+fixture defects the review could not prove absent. Failed `A1tv0b` preserves three
+causes: native bigint versus normalized public revision, a connection already
+closed by reconciliation, and a stale utility namespace spy after reordered file
+execution. Capture native before/after on the same statement, reopen an admitted
+reader with exact cleanup, and install the utility spy on actual
+capabilityRequire(path) exports. A dynamic ESM import alone still fails in
+`RMPkpt`. The actual require namespace succeeds in `JrjKmw`:219tests/1354assertions,
+3938ms,0skipped. Keep the fresh pure dependency delegate, actual argument/digest
+observation and canonical stateful custody namespace; no dummy invocation is added.
+
+UNKNOWN2 identity73f51b4c2bbd1f85bd07572e19e8ed367fcc64e4b7d0e003d01d94390f15b3f1
+mutates the exported schema SQL literal at Source68. Raw body14 has a genuine
+node-assert expected-success failure but owned activation0; the broad runner
+reason does not make this a demonstrated compile/runtime error. Keep it UNKNOWN.
+A once-only deferred stateful import is insufficient: the first importing body
+need not be the later failing body. Blind review rejects that shortcut. Do not
+reload opaque custody state or credit earlier/static hits to a different body.
+A safe initialization/evidence owner remains an explicit GAP.
+
+Native `--capture-per-test-diagnostic` now reuses existing diagnostic-v2
+fingerprint, descriptor, baseline capture decoder and receipt/digest owner. Root
+finds a necessary limit during review: capture adds file tokens to baseline case
+names, while capture-free mutants retain original names. Comparing these directly
+would fabricate survivor-census UNKNOWN. The opt-in therefore runs the complete
+baseline only, executes no mutants, rejects mutant selectors/complete admission,
+and leaves the entire universe unattempted with a nonzero diagnostic exit. Default
+commands remain unchanged. No new schema/parser, filtered runner or score is added;
+independent registration/full canonical joins remain GAP. Current official
+[Bun Test documentation](https://bun.com/docs/test) confirms name filtering,
+fail-fast and5000ms per-case timeout; it does not qualify our receipt/custody joins.
+
+Final affected four-file `3MPOak` passes219tests/1356assertions in3789ms,0skipped,
+complete captures, closed group and unchanged boot. Post-publication native
+controls must prove the seven repaired identities and baseline capture ingress;
+ordinary GREEN is not assertion-confirmed mutation. Product Source and reviewed
+roles/caps are unchanged, so no duplicate Source inventory/hash pass is needed.
+The normal strict hook catches Root's expression-bodied close callback returning
+void instead of the cleanup owner's explicit undefined contract. Use the existing
+block/return-undefined form without a cast; `m9VJa6` rechecks the affected handoff
+case in1117ms,1executed/40skipped with complete output/group/boot custody.
+Type-aware lint separately rejects returning Reflect.apply's any value from the
+throw assertion callback. Use a statement-only block; `1CQJxL` verifies the actual
+invalid-PID/phase body in732ms,1executed/48skipped. An earlier wrong name pattern
+`bjiZwZ` is correctly rejected with0executed/49skipped and supplies no PASS proof.
 
 ### Published admission packet — retained context
 

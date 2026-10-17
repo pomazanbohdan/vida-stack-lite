@@ -241,6 +241,17 @@ test('native batch pilot keeps exact declared contours and finite per-batch boun
   expect(selected.batchSize).toBe(8);
   expect(selected.maxBatches).toBe(2);
   expect(selected.admitComplete).toBe(false);
+  expect(selected.perTestCapture).toBeUndefined();
+  const captured = selectMutationBatchPilot(['--contour', 'one', '--capture-per-test-diagnostic'], declared);
+  expect(captured.perTestCapture).toBe('diagnostic-v2');
+  expect(captured.partition).toBe(declared[0]!);
+  expect(() =>
+    selectMutationBatchPilot(['--contour', 'one', '--capture-per-test-diagnostic', '--admit-complete'], declared),
+  ).toThrow('cannot use complete admission');
+  for (const selector of ['--diagnostic-mutant-id', '--diagnostic-mutant-ids'])
+    expect(() =>
+      selectMutationBatchPilot(['--contour', 'one', '--capture-per-test-diagnostic', selector, '1'], declared),
+    ).toThrow('without mutant selection');
   expect(selectMutationBatchPilot(['--contour', 'one', '--admit-complete'], declared).admitComplete).toBe(true);
   expect(() => selectMutationBatchPilot(['--contour', 'one'], [{ ...declared[0]!, environment: 'windows' }])).toThrow(
     'main and Bun',
