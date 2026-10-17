@@ -124,6 +124,14 @@ schedule does not activate pending parallel coverage, filtered mutation or a new
 runner. A prospective-cap or correspondence GAP stays open; it cannot inherit
 another function's original allowance or become a closure from a partial score.
 
+The next bounded native speed qualification uses an inert max-two mutation pilot
+under [TESTING's existing native/parallel contract](../../../packages/agent/TESTING.md#completion-commands).
+Keep current serial execution until per-worker PID1/subreaper custody, resource
+independence, immutable input/private output separation and UNKNOWN stop/drain
+controls pass. Start with mechanics, then a reviewed real contour selection;
+do not raise worker count or claim the900s target from arithmetic alone. Root
+retains the same capture, final checks, frozen admission and Git ownership.
+
 Use a rolling worker queue: a terminal preparation/review handoff immediately
 releases that worker for the next independent scope or a concrete correction in
 the ready queue. A prepared packet is not a closed contour. During a numerical

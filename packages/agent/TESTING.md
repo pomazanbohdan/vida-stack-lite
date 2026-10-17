@@ -1053,6 +1053,20 @@ Use the existing owned PID1/isolation and SDK-readiness ingress before invocatio
 The package/root input capture is shared, the instrumented image is created once,
 and execution is serial in a private sandbox with read-only Source/test/tool files
 and private writable scratch. The full declared test argv runs for each ID.
+The next parallel mutation experiment is an inert max-two diagnostic pilot,
+not an activated campaign mode. Keep the default serial and qualify the
+[parallel resource/PID/custody contract](#parallel-testing-current-status-and-required-contract)
+before real suite concurrency. A fresh `/proc` mount does not create a private
+PID namespace. Each worker needs qualified PID1/subreaper stop/drain ownership;
+separate temporary names alone do not establish resource independence. Share
+only read-only captured image/dependencies/descriptor inputs; separate each
+producer's output, context, logs/events/JUnit, `/tmp`, `.tmp` and transpiler cache.
+Parent alone writes batch/terminal summaries. Require denied sibling/input
+writes, unchanged shared bytes, deterministic input-order reporting, exact/below
+allowance controls and UNKNOWN stopping new launches while accounting for all
+already-launched siblings. Async no-PID ambiguity, signals, timeouts and live
+descendants remain explicit UNKNOWN. No complete parallel score is admitted
+before qualification; two workers do not by themselves prove the900s budget.
 The explicit `--capture-per-test-diagnostic` mode runs only the complete native
 baseline and binds existing diagnostic-v2 capture through its input fingerprint,
 descriptor and receipt owner. It executes no mutants, rejects complete admission

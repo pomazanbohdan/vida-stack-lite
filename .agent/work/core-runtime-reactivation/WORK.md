@@ -1906,6 +1906,18 @@ captures/closed groups/unchanged boot/commit/clean measured checkout. No new
 complete triple, current custody mutation score, global admission or installed
 runtime is inferred. The prior full/UNKNOWN operations remain retained.
 
+The bounded native-pool review confirms current serial ownership is necessary:
+nested `/proc` is not a private PID namespace, the operation root is shared
+writable, and temporary names do not establish resource independence. The next
+P1 step is inert max-two qualification in the existing native owner, preserving
+full argv and the900s deadline. Separate immutable input/image/descriptor roots
+from per-producer output/context/logs/events/JUnit/temp/cache, require qualified
+PID1/subreaper accounting, deny sibling/input writes and stop new launches after
+UNKNOWN while draining all already-launched siblings in original report order.
+Max-two arithmetic cannot guarantee the527/763-mutant contours within900s; do
+not activate a larger pool or weaken admission on that basis. TESTING owns the
+controls; CLEAR owns this next order. No parallel runtime path is activated.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.
