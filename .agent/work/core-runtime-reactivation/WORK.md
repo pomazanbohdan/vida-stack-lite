@@ -356,6 +356,12 @@ canonical realpath/alias denial before launch, and truthful unknown/partial vers
 published-but-receipt-failed status with primary/receipt cause retention. Final
 stage/progress/campaign controls F2ao6p pass141/0 in533ms. This is mechanics only;
 new actual coverage and frozen stages must still demonstrate automatic publication.
+Final blind Luna actual-diff review finds no blocker and confirms the complete
+admission allowlist applies only to isolated workers; serial main/Bun support is
+unchanged. Published e494471 passes the normal strict511-TypeScript and lint hook.
+The two preceding hook failures were test-only optional-property/unknown-return
+type mistakes and are corrected without relaxing rules. The frozen pin below
+binds the published reviewed plan; fresh v224 measurement follows.
 
 Custody author repairs from immutable342d277 are integrated as bounded diffs:
 609 checks the malformed prepared receipt diagnostic and exact persistedUNKNOWN;
