@@ -60,6 +60,42 @@ bringing the automatic projection to627attempts. Historical local triples remain
 `full_qualification:false`, not global/current qualification, a speed comparison,
 FS CRAP applicability, broader stateful resource admission or Runtime acceptance.
 
+### Next product-contour resource preparation — 2026-10-17
+
+Three blind Luna lanes inspect the current registered image, `main-envelopes`
+and `bun-service-operation-custody` selections. No new contract-backed product
+or assertion defect is established by that bounded read-only pass. The image
+validator's shallow nested freeze does not currently expose mutable custody:
+its public coordinator freezes the validated operation and other uses remain
+internal. Do not add a speculative standalone immutability contract from that
+implementation difference alone.
+
+The exact envelope selection has no database, subprocess, network or persistent
+writes. Boundary tests have two process-local spies restored in finally; fuzz
+tests read the unchanged FAST_CHECK_* settings; ZOMBIES imports the broad runtime
+and reads configured context. Separate serial children, private adapters/context,
+temp/cache/output roots and read-only Source/dependencies contain these observed
+effects. Keep full argv, fixed fuzz settings and both configured-root overrides.
+This Source resource review is not a native parallel result or allowlist change.
+
+The three custody tests use unique temporary fixture roots with real file-backed
+admission/custody SQLite databases; initializer cases also use in-memory SQLite.
+The helper copies only captured configuration/instructions from the read-only
+repository. Its configuration cache is process-local; the legacy-adapter denial
+reads repository code and writes only its unique journal root. No environment
+writes, clock overrides, network or spawned children are found in this selection.
+Private per-process tmp/output/cache and read-only inputs contain those observed
+effects. The stateful import-time SQL activation GAP remains: module WeakMaps
+prevent borrowing the stateless fresh-loader technique without a separate proof.
+
+Next isolated expansion must first bind its selected current canonical rows to
+the archived UNKNOWN fence, including semantic identity when Source changes.
+Envelopes' old110 shortened the reserved-device extension; custody's old SQL/UUID
+UNKNOWNs remain fenced. A new Source hash/local ID alone grants no replay.
+No uncertain selection is launched merely to inspect it afterward; no duplicate
+map generation or full suite is needed for this read-only preparation. The CLI
+allowlist and FS-only complete-admission boundary remain unchanged by this review.
+
 ### Current repair packet — 2026-10-17
 
 The current host boot is `14b0bfa9-b9d7-4c85-8400-bfdc503d4e35`. The previous
