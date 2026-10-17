@@ -2058,6 +2058,16 @@ Typed passing reports are synthetic
 caller-report inputs and do not establish native test execution or Runtime
 acceptance. The separate public CLI preparation case remains intact.
 
+The separate-process initialization describe's `beforeEach` has an explicit10s
+cold-start allowance. Its two fresh Bun imports and Host DB opens stay sequential:
+parallel DB opening encountered an active project-upgrade CAS quarantine. The
+retained b07c5670 invocation exceeded the default5s during setup before READY;
+it remains UNKNOWN, never Killed. This exception changes neither the5s test-body
+default nor other hooks, each child's15s owner, or the900/930s mutation budgets.
+Bun's [timeout contract](https://bun.com/docs/test/writing-tests#timeouts) kills
+children when the uncatchable timeout fires; preserve the independent owned drain
+and failure artifacts. Do not add retries or bypass the quarantine to pass setup.
+
 The initialization-authority v2 integration case has an explicit10s exception.
 It creates a fresh project, plans and completes the real bundle-owned upgrade,
 then reads the selected v2 receipt and exact binding. This dependent setup and

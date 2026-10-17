@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's cf118c9 coverage/frozen pair passes exact F/L/S/B100 and original caps; the closed9658bd19 isolated diagnostic confirms64Killed/0Survived/0UNKNOWN/100unattempted of164. Full current native qualification remains pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability, admission stateful initialization and isolated complete admission for image/envelopes remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's fresh1433e74 coverage/frozen pair passes exact F/L/S/B100 and original caps; complete nativeb07c5670 stops70Killed/0Survived/1UNKNOWN/93unattempted of164 on an actual beforeEach timeout. Startup repair and fresh qualification are pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability, admission stateful initialization and isolated complete admission for image/envelopes remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -27,12 +27,12 @@ ebc323b:.agent/work/core-runtime-reactivation/WORK.md under this heading;
 that published record links the earlier c525495 history. Do not replay those
 operations or transfer their local IDs/counters.
 
-Latest complete coverage/frozen pair is immutable127ff84, run
-9a7544d8-8cb0-4e1c-8cc4-4b1affb43e05, stages /dev/shm/contour-stage-34US0u and
-/dev/shm/contour-stage-hglPab. It passes21cases/252assertions, exact F16/16,
+Latest complete coverage/frozen pair is immutable1433e74, run
+11c8fb20-11b8-42ca-a532-abc5cc30f924, stages /dev/shm/contour-stage-actTDp and
+/dev/shm/contour-stage-4fKDue. It passes21cases/252assertions, exact F16/16,
 L84/84,S95/95,B53/53 and original same-run frozen9/9, bound tocf118c9.
-The maintained controller automatically imports both; projection has667
-observations. Follow-up tool changes below require fresh evidence.
+The maintained controller automatically imports both; projection has670
+observations. Follow-up test/Source changes below require fresh evidence.
 
 Full native f3e56044-99dc-43bd-9824-37bdfd8be7bf uses that same clean image at
 /dev/shm/vida-rolling-measure-v242/packages/agent/.tmp/mutation-batch-f3e56044-99dc-43bd-9824-37bdfd8be7bf-1FyNMK.
@@ -94,9 +94,10 @@ unchanged, and no timeout, signal or resource denial is reported. Operation:
 /dev/shm/vida-rolling-measure-v256/packages/agent/.tmp/mutation-batch-9658bd19-7ead-49d4-a910-a18d7e46120f-ZaA6bU.
 This diagnostic remains a non-score result. Existing native mechanics controls
 qualify private temp/output/cache, read-only inputs, Tini/PID1 and observed nested
-descendant cleanup; initialization fixtures supply private SQLite roots. The
-one mutant reaching the racer body fails before `go`; cleanup kills and drains
-both waiting children. The passing baseline exercises their healthy binding path.
+descendant cleanup; initialization fixtures supply private SQLite roots. Of31
+mutant invocations reaching the racer case,30complete its healthy child path;
+one fails before `go`, with both waiting children killed and drained. This is
+distinct from the separately passing baseline and establishes no four-racer claim.
 Blind actual-artifact review confirms eligibility without a four-racer claim.
 The reviewed eligibility change permits initialization complete admission through
 the same unchanged exhaustive-plan/activation/assertion/freshness reader. Capture,
@@ -107,6 +108,26 @@ The eligibility and dependency-boundary packet passes112focused cases/0skipped
 in1326ms at /workspace/attachments/audit-focused-check-kDQTiG, with complete
 captures, closed group and unchanged boot. Documentation link checks also pass.
 Product Source and original frozen ceilings are unchanged by this tooling packet.
+
+Fresh complete nativeb07c5670-6df8-47a2-81cc-7f7be4685a03 at
+/dev/shm/contour-stage-lbkcY1 stops359361ms with70Killed/0Survived/1UNKNOWN and
+93unattempted of164. Captures/group closure/boot/commit/clean inputs all pass;
+the controller correctly denies proof publication. Local112 disables the project
+set guard, but its invocation times out in the separate-process beforeEach after
+5.1s, before either child emits READY; this is not assertion or product-failure
+evidence. A minimal concurrent-start candidate then fails the developer check
+clRpVU on an actual project-upgrade CAS quarantine during concurrent child DB
+open. Keep that retained failure; do not retry/remove the guard or weaken Source.
+The simpler reviewed repair preserves sequential spawn-to-READY startup and gives
+only this describe's setup hook an explicit10s cold-start allowance. Child15s,
+test-body/default5s, all other hooks and900/930s native limits remain unchanged.
+No second startup protocol is added. SDK formation in the developer root also
+correctly denies an existing dist at sdk-formation-y38Uvg; clRpVU is not SDK
+freshness evidence. The fresh isolated checkout must form inputs before checks.
+Old UNKNOWN remains unchanged; fresh evidence is required.
+Focused startup checkv9CS3h passes the one selected race case in5082ms with20
+unselected cases, complete captures, closed group and unchanged boot. This is
+Source-level development evidence only, not SDK freshness or numeric qualification.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
@@ -138,6 +159,31 @@ successor; storage image has a useful four-mutant refill observation, with its
 actual resource/custody and complete-admission gaps still OPEN. Numeric producers
 remain Root-owned and measured checkouts immutable. Historical triples stay7/45,
 38unclosed; global admission, runtime cutover and acceptance are not established.
+
+### Release-ticket identity invariant plan — 2026-10-17
+
+Bounded envelopes review finds a real semantic-validator gap: a release operation
+can reference an existing ticket while carrying another work/thread/source
+identity. Existing Host producers and progress validation already require the
+exact identity; released tickets are immutable and rebind creates a distinct
+successor. Blind lifecycle review found no valid historical exception.
+
+Freeze planned_release_ticket_identity_20261017 at4/4 under TESTING's existing
+cohesive-invariant domain/risk guidance, independently reviewed in
+/workspace/attachments/release-operation-identity-budget-review-v269.md. This
+single exact comparison has no parsing/coercion/I/O/effects. The plan is not
+derived from candidate metrics. An isolated v264 prototype and uncommitted Root
+copy are explicitly disclosed; no pre-prototype planning chronology is claimed.
+Publish this plan before tracked Source adoption. No original role is removed or
+reused, and callback7/7, validator2/2 and all prior ceilings remain frozen.
+
+After the plan is immutable, adopt the new named predicate and three mismatch
+regressions, then use one changed-file AST inventory and reviewed exhaustive
+correspondence. Envelope roles become79=76retained+3added and global7114 only
+on adoption. Current counts remain7113 in this plan checkpoint. Exact coverage,
+frozen CRAP and full native proof remain separate requirements; no closure is
+implied. Storage-image's bounded analogous review found no new demonstrated gap;
+its four-mutant refill diagnostic remains ready behind the Root numeric owner.
 
 ### Fresh regression scope and next isolated diagnostics — 2026-10-17
 

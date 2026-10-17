@@ -1405,7 +1405,7 @@ describe('separate process initialization', () => {
       });
       await racer.ready;
     }
-  });
+  }, 10_000);
 
   test('separate processes bind one pending receipt without changing its identity', async () => {
     let release!: () => void;

@@ -225692,5 +225692,17 @@
     "limitations": "Static Source correspondence only, not numeric admission. Preserve original b549951 measurement and all original/added ceilings. Require fresh exact coverage, same-run frozen proof and complete assertion-confirmed native mutation for the new image. Old UNKNOWN stays historical.",
     "predecessor_review": "8af2e35505ba5f389bc0f5ae1e3472d4a30e86b1:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#scope_review_runtime_initialization_single_barrier_20261017",
     "correspondence": "All16 identities and original11/added5/removal1 dispositions retained. lstat identifies the link itself; !isDirectory already rejects links and all non-directory roots. Remove only the redundant isSymbolicLink disjunct. canonicalRepositoryRoot CC7->6 within original cap7, with exact error, root validation and native realpath preserved. No role, cap, exclusion or responsibility transfer."
+  },
+  "planned_release_ticket_identity_20261017": {
+    "status": "REVIEWED_PLAN_BEFORE_PUBLISHED_SOURCE_ADOPTION_NOT_NUMERIC_ADMISSION",
+    "file": "src/contracts/envelopes.ts",
+    "identity": "src/contracts/envelopes.ts#fn:releaseOperationMatchesTicketIdentity#0",
+    "max_complexity": 4,
+    "max_crap": 4,
+    "basis": "Existing TESTING cohesive-invariant-4 domain/risk guidance: one exact release-to-ticket identity invariant over validated work_id, thread_id and source_revision. No parsing, coercion, I/O or external effects. The ceiling is independently justified by this responsibility, not computed from candidate metrics.",
+    "independent_review": "/workspace/attachments/release-operation-identity-budget-review-v269.md",
+    "pre_adoption_context": "Published 1433e74 has no named release identity predicate. An isolated v264 prototype and uncommitted Root copy exist and are explicitly disclosed. This record must be immutable before published tracked Source adoption; it makes no pre-prototype chronology claim.",
+    "original_disposition": "No original callable is removed or reused. Preserve all 76 retained envelope roles, their original ceilings, six removals and two existing added roles. Operations callback remains cap7 and validateLedgerSemantics cap2.",
+    "adoption_prerequisites": "After publishing this plan, adopt the distinct named helper under one independently frozen4/4 new-role row, review exhaustive correspondence and current Source binding using the existing inventory. Envelope current79=76retained+3added; global7114=7113+1 only after adoption. No baseline/cap transfer or numeric/global qualification follows from this plan."
   }
 }
