@@ -4,14 +4,14 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published product correction: `171e0525d2842e5087740fa015e2a67e9cac250e` reuses the validated custody digest without moving guards or CAS, pinned at `1e9b91750301078c06768d70be395ceb0627dcc4`. Fresh57-role custody F57/57,L236/236,S243/243,B123/123 and same-run frozen9/9 pass with every original ceiling. Image F52/52,L202/202,S224/224,B61/61 and frozen9/9 also pass. The earlier79-case native set confirms6Killed/0Survived/0UNKNOWN/521unattempted of527 after the nested read-only parent mount repair; the new80-case exact4MiB control separately confirms1Killed/0Survived/0UNKNOWN/526unattempted. Do not aggregate these diagnostic sets into a contour score. Custody's earlier11targeted Killed stays bound to older Source; stateful schema2 remains GAP. The prior full image campaign278Killed/34Survived/1UNKNOWN/184unattempted stays fenced. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published custody repair: `0f9162425183f1d7cc5f97b5371c387464e719a1`, scoped pin `cb714989396aab8c19cfd37e95287c6949616cd2`. Lazy schema/table literals preserve canonical lifetime state; new boundary regressions and raw digest comparison preserve guards/CAS. Fresh59-role custody exact F/L/S/B100 and same-run frozen9/9 pass; complete native proof remains pending. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,115 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
-- Native worker mechanics and bounded scheduling feed an explicit `--isolated-workers` route, with private logical report overlays and parent-only raw publication. Published ce86679 passes a real immutable80-case image baseline and2assertion-confirmed Killed/0Survived/0UNKNOWN/525unattempted of527 in16571ms. Published3d5a60b permits complete admission only for reviewed read-only fs-safe attestation. Fresh isolated run b5632d5f passes5baseline cases and7/7assertion-confirmed Killed in4989ms; unchanged persisted reader accepts the actual closure and rejects four memory-only mismatches. Image remains diagnostic-only; both reject capture/selectors, and default execution stays serial. Broader parallel/resource qualification and FS zero-callable CRAP applicability remain open. These tooling packets change no product Source or numeric contour closure.
+- Native isolated workers retain private logical overlays and parent-only raw publication. Exact image, envelopes, custody and fs-safe selections permit bounded diagnostics; only fs-safe attestation and custody permit complete admission. The actual fs-safe7/7closure passes the unchanged reader with four negative controls. Custody full admission follows the private SQLite controls, fresh SQL/table activation and closed64-mutant diagnostic below. Default execution stays serial, workers remain fixed-two, and capture/ID selectors remain denied. Permission is no proof; broader resource/coverage qualification and FS zero-callable CRAP applicability stay open.
 
 ## Global contour campaign packet
 
@@ -24,10 +24,11 @@ native activation controls. The overbroad semantic-ID prerequisite in the prior
 resource-preparation paragraph is corrected below. Old attempts, effects, locks,
 fixtures and outcomes remain unchanged; unresolved custody still denies reuse.
 
-The opt-in isolated selector adds the reviewed exact envelopes and custody
-selections for diagnostics only. Serial defaults, full argv, one input/image/
-deadline, fixed-two limit, receipt confirmation and FS-only isolated complete
-admission remain intact. Capture, mutant-ID selectors, foreign contours and
+Published ddd8d85 added the reviewed exact envelopes and custody selections
+for diagnostics only. At that revision, serial defaults, full argv, one input/
+image/deadline, fixed-two limit, receipt confirmation and FS-only isolated complete
+admission remained intact; the current custody extension is recorded below.
+Capture, mutant-ID selectors, foreign contours and
 caller test filters reject. Blind actual-diff review finds no code blocker.
 Focused owned run `R2ydEQ` passes118cases/488assertions in1232ms, complete
 captures, closed process group and unchanged boot. Publish before native pilots.
@@ -136,12 +137,65 @@ ID selectors, exact assertion/native joins and unchanged persisted reader.
 Permission is not a score; every current mutant must be confirmed Killed and
 all final checks must pass before local closure.
 
+Fresh checked packet0f91624 and its immutable scoped pin cb71498 pass normal
+hooks:509TypeScript files, formatting/lint/Knip/focus guards. Selector-only owned
+run CgyPwN passes99cases in871ms. Both commits are pushed with HEAD=origin/main.
+Detached v219 uses real private locked dependencies; SDK formation flQ8TV takes
+1807ms without suites. Fresh coverage f4f0d20f, outer XKM4ly, passes127/0cases,
+1079assertions with exact F59/59,L236/236,S243/243,B123/123 in6377ms. Same-run
+frozen v3 proof jzm3NX passes original ceilings, maxCC/entryCRAP9/9. The automatic
+projection imports both current reports; global coverage operation remains BLOCKED.
+
+First complete isolated custody attempt8c94700e-a90c-4710-a6c4-38d9db299f7f,
+outer `/tmp/vida-isolated-pilot-v219-7Oq6PZ`, ends332462ms with239Killed/
+2Survived/1UNKNOWN/443unattempted of685. It has full captures, observed owned-group
+termination, unchanged boot/commit/inputs/executable and clean measured checkout.
+The lower universe reflects removed redundant digest expressions, not excluded
+mutants or relabelled Killed. No complete native proof or score is produced.
+The unchanged scheduler stops assignments on UNKNOWN439, whose native reason is
+`JUnit failure is not proven to be a Bun assertion failure.` Retain the actual
+operation, receipts, contexts and all old classifications. Three formerly weak
+assertion mutants120/147/510 are now confirmed Killed in this diagnostic.
+
+Current survivors721 and545 expose missing coercible-object denial and malformed
+handoff-digest diagnostic assertions. Blind Luna prepares bounded regressions in
+the separate cb71498 author worktree. The same lane measures an existing real
+paired-lease denial case at526ms mean in65v218captures and prepares test-only
+immediate native BUSY denial plus healthy retry. Production250ms policy is
+unchanged. Root must review, check and publish before fresh numeric confirmation;
+the existing UNKNOWN is never rewritten as Killed or replayed as an old effect.
+
+Root reviews and applies only the three assigned test diffs against cb71498.
+The UNKNOWN439 image replaces the live-handle record with an empty object;
+its failure was a raw close exception after valid lock assertions. The updated
+case asserts the successful public close through expectReturned, avoids retrying
+that handle on failure and retains the fixture. Coercible-object controls cover
+both capability predicates; malformed handoff digest asserts the exact diagnostic
+and unchanged row. The native lock control now asserts the exact connection and
+BEGIN interception, real denial, restored wrapper and healthy persisted retry.
+No production Source, guard, timeout, frozen role or cap changes in this packet.
+
+Owned jjSjZs passes the complete127cases/1090assertions in3157ms, with full
+captures, closed group and unchanged boot. Comparable focused case observations
+are274.953ms before versus42.438ms after; these are individual observations,
+not a general throughput benchmark. Official SQLite timeout references are
+retained at `/workspace/attachments/sqlite-busy-timeout-reference-v219.html` and
+`/workspace/attachments/sqlite-pragma-reference-v219.html`. TESTING and the project
+Bun skill preserve the distinction from production busy-wait qualification.
+Fresh native confirmation of721/545/439 and the complete universe remains pending.
+
+The normal commit hook rejects one nullable-beforeimage dereference. Root adds
+a real Node assertion that claimed custody is persisted before any fault/lock
+control; no cast or fabricated fallback masks the invariant. Final owned4CvyJ9
+passes127/0cases in2795ms with full captures/closed group/same boot. The hook
+must pass before publication; the rejected commit produced no revision.
+
 ### Isolated full-proof parity preparation — 2026-10-17
 
 Three blind Luna reviews qualify the next bounded selection: fs-safe attestation
 has five read/hash-only baseline cases with no shared writes. Its historical
-seven-mutant result is not fresh evidence. The isolated selector now permits
-complete admission only for this contour; image stays diagnostic-only, both
+seven-mutant result is not fresh evidence. Published3d5a60b first permitted
+isolated complete admission only for this contour; image stayed diagnostic-only, both
 reject capture and ID selectors, and default execution stays serial. Existing
 full-plan-before-launch, exhaustive all-Killed, freshness, proof schema and reader
 owners remain unchanged. No broader resource or coverage parallelism is admitted.
@@ -2606,7 +2660,7 @@ CLEAR and backlog retain the P0/P1/P2 definitions and all stable task IDs. Missi
 ## Evidence boundaries
 
 - The retained capture has exact local coverage and same-run scoped CRAP for its bound inputs. Subsequent changes need fresh evidence. No complete config mutation outcome exists.
-- Partial 7,113-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
+- Partial 7,115-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
 - Historical local contour triples are 6/45; 39 remain unclosed. They stay qualified as historical/local and do not imply a globally ready system.
 - Adapter/unit evidence does not establish physical HostState or native Windows behavior. Formation is not installation; installation is not attributable user Runtime acceptance.
 - Keep failures, expected failures and UNKNOWN outcomes with original classifications and receipts. Do not turn interruption, missing output, timeout or partial counters into PASS or Killed.

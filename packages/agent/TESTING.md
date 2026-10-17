@@ -1974,6 +1974,15 @@ Keep aggregate process budgets separate and preserve their cleanup/report
 allowance. The product operation target remains 2 seconds; neither test defaults
 nor exceptions change it. Do not shorten protocol quarantine to fit a test.
 
+For a functional SQLite lease-denial case, a test-local native exec wrapper may
+set `PRAGMA busy_timeout=0` on the exact gate connection immediately before its
+real `BEGIN EXCLUSIVE`. Keep the actual paired lease held, assert native BUSY,
+no verifier call and unchanged persisted state, restore the wrapper, then release
+the lease and prove a healthy retry. Preserve owned cleanup and failed fixtures.
+This proves immediate lock denial, not the production busy-wait policy; tests
+of that policy retain its real bound. SQLite documents the connection-scoped
+handler and zero-disable behavior in its [busy timeout API](https://www.sqlite.org/c3ref/busy_timeout.html).
+
 Direct Source final-assurance preparation uses a20s composite exception. It
 requires fresh admission, the real writer reservation/report, two configured
 validator reports, the dependent tester/delivery-proposal waves and persisted

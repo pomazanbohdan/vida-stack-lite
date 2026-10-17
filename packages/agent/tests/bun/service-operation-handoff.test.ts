@@ -1334,6 +1334,18 @@ test('verifier rejection and malformed prepared receipt preserve the terminal pa
       /handoff install image digest is invalid/u,
     );
     expect(afterMalformedReceipt).toEqual(prior);
+    const malformedHandoffReceipt: HandoffVerifier = async () => ({
+      phase: 'prepared',
+      evidence_digest: evidenceDigest,
+      handoff_digest: 'invalid',
+    });
+    const afterMalformedHandoffReceipt = await expectHandoffFailure(
+      fixture,
+      prior,
+      malformedHandoffReceipt,
+      'Service operation custody: retarget receipt digest is invalid',
+    );
+    expect(afterMalformedHandoffReceipt).toEqual(prior);
     const wrongPhaseReceipt = (async () => ({
       phase: 'terminal',
       evidence_digest: evidenceDigest,

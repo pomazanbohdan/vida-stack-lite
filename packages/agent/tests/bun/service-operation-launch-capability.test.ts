@@ -1,6 +1,7 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
 import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
 import * as custodySubject from '../../src/config/service-operation-custody.js';
 import {
   serviceOperationLaunchCapabilityDigest,
@@ -1240,6 +1241,12 @@ test('an unresolved receipt keeps its diagnostic and persists UNKNOWN custody', 
 test('an active child paired lease denies exclusive reconciliation without changing its row', async () => {
   const fixture = openCustodyFixture();
   let handle: ReturnType<typeof claimReservedServiceOperationLaunch> | undefined;
+  let retryDatabase: Database | undefined;
+  let retryReader: Database | undefined;
+  let restoreExec: (() => void) | undefined;
+  let fixtureDatabaseClosed = false;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
   try {
     const reservation = expectReturned(() =>
       reserveServiceOperationLaunch(
@@ -1277,9 +1284,23 @@ test('an active child paired lease denies exclusive reconciliation without chang
     const before = expectReturned(() =>
       readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
     );
+    assert(before !== null, 'claimed child custody must remain persisted');
     const reconciliationDatabase = expectReturned(() =>
       openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
     );
+    const nativeExec = Reflect.get(Database.prototype, 'exec') as Database['exec'];
+    const gatePath = path.join(fixture.root, '.vida', storageAdmission.STORAGE_ADMISSION_GATE_FILE);
+    let exclusiveAttempts = 0;
+    let immediateTimeouts = 0;
+    const watchedExec = spyOn(Database.prototype, 'exec').mockImplementation(function (this: Database, sql: string) {
+      if (path.resolve(this.filename) === gatePath && sql === 'BEGIN EXCLUSIVE') {
+        exclusiveAttempts++;
+        nativeExec.call(this, 'PRAGMA busy_timeout=0');
+        immediateTimeouts++;
+      }
+      return nativeExec.call(this, sql);
+    });
+    restoreExec = () => watchedExec.mockRestore();
     let verifierRan = false;
     await expectRejection(
       reconcileServiceOperationCustody(
@@ -1297,15 +1318,79 @@ test('an active child paired lease denies exclusive reconciliation without chang
       ),
       /locked|busy/iu,
     );
+    restoreExec();
+    restoreExec = undefined;
+    expect(exclusiveAttempts).toBe(1);
+    expect(immediateTimeouts).toBe(1);
     expect(verifierRan).toBe(false);
     expect(() => reconciliationDatabase.query('SELECT 1').get()).toThrow();
     expect(
       expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
     ).toEqual(before);
+
+    const releasedHandle = handle!;
+    handle = undefined;
+    expectReturned(() => closeServiceOperationCustodyHandle(releasedHandle));
+    fixtureDatabaseClosed = true;
+    retryDatabase = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    let retryVerifierCalls = 0;
+    const reconciled = await expectAsyncReturned(() =>
+      reconcileServiceOperationCustody(
+        retryDatabase!,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          retryVerifierCalls++;
+          return { phase: 'prepared', evidence_digest: 'c'.repeat(64) };
+        },
+      ).finally(() => {
+        retryDatabase = undefined;
+      }),
+    );
+    expect(retryVerifierCalls).toBe(1);
+    expect(reconciled.phase).toBe('prepared');
+    expect(reconciled.revision).toBe(before.revision + 1);
+    retryReader = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(retryReader!, fixture.workspaceId, operationId)),
+    ).toEqual(reconciled);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
   } finally {
-    if (handle) closeServiceOperationCustodyHandle(handle);
-    else closeServiceOperationDatabase(fixture.database);
-    rmSync(fixture.root, { recursive: true, force: true });
+    completeOwnedCleanup(
+      [
+        () => {
+          restoreExec?.();
+          return undefined;
+        },
+        () => {
+          if (handle) closeServiceOperationCustodyHandle(handle);
+          else if (!fixtureDatabaseClosed) closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          if (retryDatabase) closeServiceOperationDatabase(retryDatabase);
+          return undefined;
+        },
+        () => {
+          if (retryReader) closeServiceOperationDatabase(retryReader);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else console.error('SERVICE_CUSTODY_ACTIVE_CHILD_LEASE_FIXTURE_RETAINED', fixture.root);
   }
 });
 

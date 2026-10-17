@@ -545,6 +545,11 @@ startup, collection, setup and child outcomes separately. Partial reporter rows
 are not complete per-file timing weights. Do not infer speedup from operation
 counts or instrumented wall time.
 
+For a repeated SQLite BUSY wait in a functional lease-denial case, use
+[TESTING's native-denial control](../../../packages/agent/TESTING.md#process-timeout-and-fixture-safety).
+Keep the real lock, exact connection, healthy retry and production timing policy;
+do not replace the native denial with a thrown error.
+
 Check the actual mount backing a private fixture, including bind mounts. Use
 TESTING's retained-host-tmpfs rule for disposable functional/process-recovery
 cases; preserve all fsync calls and failed roots. This is not power-loss

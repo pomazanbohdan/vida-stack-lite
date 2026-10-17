@@ -130,10 +130,27 @@ describe('service operation launch predicates', () => {
   });
 
   test('capability matching rejects malformed and wrong-runtime-type capability values', () => {
+    const coercibleCapability = { toString: () => capability };
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, 'UPPERCASE-UUID'))).toBe(false);
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, null))).toBe(false);
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, 7312))).toBe(false);
     expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, {}))).toBe(false);
+    expect(expectReturned(() => serviceOperationLaunchCapabilityMatches(issuedDigest, coercibleCapability))).toBe(
+      false,
+    );
+    expect(
+      expectReturned(() =>
+        serviceOperationLaunchClaimMatches(
+          launchingImage(),
+          workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          pid,
+          coercibleCapability,
+        ),
+      ),
+    ).toBe(false);
   });
 
   test('deterministic bounded UUID property: the issued token matches and a distinct token does not', () => {
