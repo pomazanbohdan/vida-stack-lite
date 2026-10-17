@@ -109,6 +109,105 @@ export async function collectNativeMutationBatch(
   return { results, budgetExhausted, resourceBlocked, failure };
 }
 
+type NativeCollectorArguments = Parameters<typeof collectNativeMutationBatch>;
+export type IsolatedNativeBatchResult = {
+  results: NativeBatchRow[];
+  budgetExhausted: boolean;
+  resourceBlocks: { offset: number; observed_path: string; available_bytes: string | null }[];
+  failures: { offset: number; phase: 'allowance' | 'invoke' | 'progress'; error: unknown }[];
+};
+
+/** Inert scheduler only: invocation owns terminal custody; the CLI stays serial. */
+export async function collectIsolatedNativeMutationBatch(
+  batch: NativeCollectorArguments[0],
+  remaining: NativeCollectorArguments[1],
+  invoke: NativeCollectorArguments[2],
+  progress: NativeCollectorArguments[3],
+  minimumAllowanceMs = 1,
+): Promise<IsolatedNativeBatchResult> {
+  const identities = [...batch.identities];
+  const ids = [...batch.local_ids];
+  if (
+    identities.length !== ids.length ||
+    [identities, ids].some(
+      (values) =>
+        values.some((value) => typeof value !== 'string' || value.length === 0) ||
+        new Set(values).size !== values.length,
+    )
+  )
+    throw new Error('Isolated native batch requires unique paired identities and IDs.');
+  if (!Number.isSafeInteger(minimumAllowanceMs) || minimumAllowanceMs < 1)
+    throw new Error('Native mutation minimum allowance is invalid.');
+  const rows = new Array<NativeBatchRow | undefined>(ids.length);
+  const outcome: IsolatedNativeBatchResult = { results: [], budgetExhausted: false, resourceBlocks: [], failures: [] };
+  let next = 0;
+  let published = 0;
+  let stopped = false;
+  let publicationFailed = false;
+  const fail = (offset: number, phase: IsolatedNativeBatchResult['failures'][number]['phase'], error: unknown) => {
+    stopped = true;
+    outcome.failures.push({ offset, phase, error });
+  };
+  const worker = async () => {
+    while (!stopped && next < ids.length) {
+      const offset = next;
+      let allowance: number;
+      try {
+        allowance = remaining();
+        if (!Number.isSafeInteger(allowance) || allowance < 0)
+          throw new Error('Isolated native mutation allowance is invalid.');
+      } catch (error) {
+        fail(offset, 'allowance', error);
+        return;
+      }
+      if (allowance < minimumAllowanceMs) {
+        stopped = outcome.budgetExhausted = true;
+        return;
+      }
+      next++;
+      try {
+        const observed = await invoke(ids[offset]!, allowance);
+        const status = observed.status;
+        if (status !== 'passed' && status !== 'killed' && status !== 'unknown')
+          throw new Error('Isolated native mutation outcome is invalid.');
+        rows[offset] = Object.freeze({
+          identity: identities[offset]!,
+          local_id: ids[offset]!,
+          status: status === 'passed' ? 'survived' : status,
+          ...(status === 'unknown' ? { reason: observed.reason } : {}),
+        });
+        if (status === 'unknown') stopped = true;
+      } catch (error) {
+        stopped = true;
+        if (error instanceof CampaignResourceError)
+          outcome.resourceBlocks.push({
+            offset,
+            observed_path: error.observedPath,
+            available_bytes: error.availableBytes,
+          });
+        else fail(offset, 'invoke', error);
+        return;
+      }
+      // A non-row gap stops publication; later sibling observations still return.
+      while (!publicationFailed && rows[published] !== undefined) {
+        const row = rows[published]!;
+        published++;
+        try {
+          progress(row, published);
+        } catch (error) {
+          publicationFailed = true;
+          fail(published - 1, 'progress', error);
+        }
+      }
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  outcome.results = rows.filter((row) => row !== undefined);
+  outcome.resourceBlocks.sort((left, right) => left.offset - right.offset);
+  outcome.failures.sort((left, right) => left.offset - right.offset);
+  return outcome;
+}
+
 export function selectMutationBatchPilot(args: readonly string[], partitions: MutationPartition[]) {
   const { values } = parseArgs({
     args: [...args],

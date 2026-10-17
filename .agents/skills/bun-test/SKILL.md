@@ -131,6 +131,15 @@ native init/start identity and actual child proc state before exit; missing
 readiness markers alone do not prove descendant cleanup. These mechanics are
 not real-suite resource independence or pool admission.
 
+Qualify bounded scheduling with controlled promises rather than sleeps: hold the
+first invocation while later slots finish, then assert refill bounds, input-order
+results and publication. Stop new assignments synchronously on UNKNOWN or a
+failure, but drain every already-started invocation. A missing row from a thrown
+invocation must not discard a later sibling's real result. Keep all indexed
+failure/resource causes, including thrown undefined, and distinguish a below-
+minimum allowance from a broken allowance provider. Keep synchronous publication
+and terminal-custody invocation contracts explicit before wiring a real pool.
+
 For image schema-order assertions, preserve actual SQLite encoding. A UTF-8
 Buffer comparator is not a general model for UTF-16 BINARY collation. Real
 UTF-16LE/BE images and opposite-order Unicode names expose this difference;

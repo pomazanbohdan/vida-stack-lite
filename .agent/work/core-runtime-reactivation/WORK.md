@@ -11,7 +11,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
-- Inert max-two native worker mechanics have focused controls; the CLI and mutation loop remain serial. Real-test resource qualification and pool integration stay open. This tooling packet changes no product Source or numeric contour closure.
+- Inert max-two native worker mechanics and a separate bounded scheduler have focused controls; the CLI and mutation loop remain serial. Selected-contour resource review is recorded below; real invocation, sealed inputs and pool integration stay open. These tooling packets change no product Source or numeric contour closure.
 
 ## Global contour campaign packet
 
@@ -1962,6 +1962,56 @@ projection remains626attempts and historical6/45full triples. No real parallel
 mutants, new coverage/frozen receipt, runtime update or contour closure is claimed.
 Next work is selected real-test resource review and full captured-input/private-
 output pool integration, ordered outcomes and shared-deadline UNKNOWN stop/drain.
+
+### Selected contour resource review — 2026-10-17
+
+Three blind Luna lanes inspect the exact registry selections without executing
+tests or changing files. Image means `bun-project-upgrade-existing-storage-image`,
+not the broader `bun-host-state` selection. Its image tests use in-memory SQLite
+or a unique `existing-storage-wal-*` tmpdir; the direct helpers add no external
+resources. Two simultaneous large fixtures still need actual host-capacity proof.
+Custody's three selected files put databases, admission sidecars and the legacy
+journal under unique tmpdir roots; configuration and the legacy adapter are reads.
+Envelopes' three selected files read configured context and mutate only their
+process-local module cache/spies. None of these exact selections exposes a shared
+writable fixture, SDK producer, subprocess/network/IPC resource requiring a test
+repair in the reviewed closure. Third-party transitive behavior is not exhaustively
+qualified by source inspection.
+
+These findings support the private mounts for inspected resources, conditional on
+sealed, equivalent test environments. In particular preserve the exact
+`FAST_CHECK_*` values and `AGENT_RUNTIME_TEST_*` context across workers. Actual
+worker invocation, `/tmp` backing and capacity, descriptor/output binding,
+ordered scheduling and full UNKNOWN stop/drain remain unqualified. No parallel
+suite, coverage or mutation result is established by these reviews.
+
+### Inert bounded scheduling — 2026-10-17
+
+Published mechanics packet `add2537c5967d0d21357451006cd72429f7f0720` passes the
+ordinary strict pre-commit hook with506TypeScript files and is on origin/main.
+The next packet adds only an internal fixed-two collector alongside the unchanged
+serial collector/CLI. The independent Luna plan check approves a separate owner,
+shared invocation/progress types, indexed rows and explicit multiple failures or
+resource denials. There is no pool-size flag, new timer or real mutation launch.
+TESTING owns its synchronous publication and terminal-custody invocation contract.
+
+Initial `OP04am` passes115tests/444assertions in875ms. Actual-code review then
+finds outcome normalization outside the invoke catch: a throwing result getter
+can escape the worker before sibling custody closes. Single selected control
+`r4V9KS` reproduces the runtime error; its raw JUnit and execution receipt are
+retained, and it is not an assertion-confirmed mutation kill. The correction
+reads status once, validates it and normalizes/stores the row inside the caught
+settlement path, preserving the actual cause and draining the held sibling.
+
+Final `DbNA4I` passes125tests/576assertions across pool, mechanics and existing
+mutation-map in1324ms, complete captures, closed outer group and same boot. The
+controlled-promise cases verify rolling max-two overlap, ordered rows/publication,
+UNKNOWN stop and held-sibling drain, multiple errors/resource denials, thrown
+undefined, publication failure, copied IDs/frozen rows and exact/below/malformed
+allowances. A thrown invocation leaves an explicit publication gap while later
+sibling rows remain retained. No sleeps or suite-size timeout changes are added.
+The real-runner descriptor/private-output bridge and captured proof admission
+remain next; no new numerical contour measurement or closure is claimed.
 
 ### Published admission packet — retained context
 

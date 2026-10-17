@@ -1079,8 +1079,24 @@ writes, unchanged shared bytes, deterministic input-order reporting, exact/below
 allowance controls and UNKNOWN stopping new launches while accounting for all
 already-launched siblings. Keep signals/timeouts as their actual failed outcomes;
 unobserved termination, async no-PID ambiguity and live effects remain UNKNOWN.
-No complete parallel score is admitted
-before qualification; two workers do not by themselves prove the900s budget.
+No complete parallel score is admitted before qualification; two workers do not
+by themselves prove the900s budget.
+
+The separate internal `collectIsolatedNativeMutationBatch` scheduler is also
+inert; it does not replace the serial CLI collector. It snapshots unique paired
+IDs, limits in-flight invocations to two, and uses the caller's one shared
+remaining-budget provider. Exact minimum allowance is allowed; a nonnegative
+allowance below it leaves that ID unattempted. Invalid or thrown allowance values
+retain a failure, not a fabricated timeout. UNKNOWN, resource denial, invoke
+failure or synchronous progress-publication failure stops new assignments while
+both already-started invocations drain. The invocation promise must mean terminal
+custody, not merely child launch. Final rows and multiple failure/resource entries
+retain input order; thrown undefined remains a recorded cause. Synchronous
+progress publishes only the contiguous observed prefix; a non-row gap stops that
+publication while later real sibling rows remain in the returned diagnostic.
+This diagnostic result is not a native mutation proof schema. Real integration
+still needs captured-input/private-output binding and qualified worker resources.
+
 The explicit `--capture-per-test-diagnostic` mode runs only the complete native
 baseline and binds existing diagnostic-v2 capture through its input fingerprint,
 descriptor and receipt owner. It executes no mutants, rejects complete admission

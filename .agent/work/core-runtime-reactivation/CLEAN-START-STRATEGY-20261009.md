@@ -128,9 +128,11 @@ The internal max-two inert worker mechanics now have scoped controls under
 [TESTING's existing native/parallel contract](../../../packages/agent/TESTING.md#completion-commands);
 WORK owns their actual receipts. The next bounded native speed qualification
 reviews selected real-test resources, then integrates captured immutable inputs,
-private per-ID outputs, ordered outcomes, one shared deadline and UNKNOWN
-stop/drain handling. Keep current serial execution and full declared test argv
-until those requirements pass. Do not raise worker count or claim the900s target
+private per-ID outputs and one shared deadline. The separate inert scheduler
+provides bounded ordered collection and UNKNOWN stop/drain controls; it still
+needs real-runner integration and captured evidence qualification. Keep current
+serial execution and full declared test argv until those requirements pass.
+Do not raise worker count or claim the900s target
 from arithmetic alone. Root retains capture, final checks, frozen admission and
 Git ownership. Inert mechanics do not establish a parallel mutation score.
 
