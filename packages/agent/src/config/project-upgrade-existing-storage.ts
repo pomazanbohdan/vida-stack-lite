@@ -12,6 +12,7 @@ import {
   initializeServiceOperationCustodySchema,
 } from './service-operation-custody.js';
 import { z } from 'zod';
+import { finishWorkspaceDatabaseClose, type DatabaseWorkOutcome } from './workspace-database-raw.js';
 
 const maxInputBytes = 4 * 1024 * 1024;
 const maxRows = 100_000;
@@ -312,13 +313,21 @@ function importMastraRows(
       const columns = tableColumns(mastra, table);
       const quoted = '"' + table.replaceAll('"', '""') + '"';
       const statement = target.query(insertSql(table, columns));
+      let outcome: DatabaseWorkOutcome<void> = { ok: true, value: undefined };
       try {
         const selected = columns.map((column) => '"' + column.replaceAll('"', '""') + '"').join(',');
         for (const row of mastra.query('SELECT ' + selected + ' FROM ' + quoted).values() as SqlValue[][]) {
           statement.run(...row);
         }
+      } catch (error) {
+        outcome = { ok: false, error };
       } finally {
-        statement.finalize();
+        finishWorkspaceDatabaseClose(
+          statement,
+          outcome,
+          (ownedStatement) => ownedStatement.finalize(),
+          'Mastra row import and statement finalize failed',
+        );
       }
     }
     if (target.query("SELECT name FROM sqlite_master WHERE type='table' AND name='sqlite_sequence'").get()) {
@@ -476,14 +485,21 @@ async function capturePinnedMastraInventoryAsync(): Promise<SchemaObject[]> {
     'pinned inventory preparation and close failed',
   );
   if (!outcome.ok) throw outcome.error;
-  const closed = Database.deserialize(Buffer.from(outcome.value), { readonly: true, strict: true, safeIntegers: true });
+  const closed = Database.deserialize(Buffer.from(outcome.value), { readonly: true });
+  let catalogOutcome: DatabaseWorkOutcome<SchemaObject[]>;
   try {
     const objects = schema(closed);
     requireMerge(objects.length <= maxTables * 8 && tableNames(objects).length > 0, 'pinned inventory exceeds bounds');
-    return objects;
-  } finally {
-    closed.close(true);
+    catalogOutcome = { ok: true, value: objects };
+  } catch (error) {
+    catalogOutcome = { ok: false, error };
   }
+  return finishWorkspaceDatabaseClose(
+    closed,
+    catalogOutcome,
+    (database) => database.close(true),
+    'pinned inventory catalog and close failed',
+  );
 }
 
 function tableCount(database: Database, table: string): number {

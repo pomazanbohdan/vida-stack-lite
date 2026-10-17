@@ -4,11 +4,11 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked packet: `ec3b3ba66d85368e1f380c0728bbfe523fb8e381` captures computed subjects' full transitive closure and fixes envelope schema-diagnostic activation. The priorbd245b1 packet covers private-target row corruption and body-owned image module constants, removes SQLite COUNT's redundant nonnegative guard, and preserves integer mode;0d2f120 removes the duplicate per-row import bound;7363f4e fixes private-DB cleanup on client setup failure through one existing initializer owner. Earlier packets retain schema-snapshot reuse atd5ddd22 and data-only observation repair at33a98d2. Current fs-attestation has a reader-validated full7/7 native Killed proof, with zero-callable CRAP applicability still OPEN. Its blocked slot moves to service-operation-custody; active contours are storage image, envelopes and service-operation-custody. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest published checked packet: `812016284ce2fce8a6739d79a0ad46d2c7179a01` retains capture failure codes and observed child custody, always attempts native log close and cancels failed readers before releasing them. Its real-child/handle RED/GREEN evidence is below. Priorbde2857 strengthens image integrity/digest/ledger tests, retains external scratch explicitly and compacts the unchanged progress history; ec3b3ba captures computed subjects' transitive closure. Earlier private-DB setup cleanup, validated-schema reuse and body-owned stateless module repairs remain. Current fs-attestation has a reader-validated full7/7 native Killed proof, with zero-callable CRAP applicability still OPEN. Its blocked slot moves to service-operation-custody; active contours are storage image, envelopes and service-operation-custody. Facade has a fresh compatible local triple at91906ff; main-host has one atfebad42. These historical input-bound results are retained. Admission remains OPEN on stateful static-initialization evidence; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
-- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,110 current roles after two explicit Source-added callback retirements; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
+- The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,112 current roles after two explicit Source-added callback retirements and two separately declared SQLite cleanup additions; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
 
@@ -1121,6 +1121,65 @@ complete captures, closed groups and unchanged boot.
 The strict hook also catches an untyped Reflect.apply query-result property in
 the new target fixture. Use the same native handle's typed query directly;
 focused `nMbUPu` rechecks both target faults before retrying the ordinary hook.
+
+Current8120162 v193 forms SDK inputs once through `ejAH8k` without suites. Three
+complete coverage/frozen pairs pass under the explicit retained tmpfs root:
+image `rQ46dE`/`ubx3si`, run0546dcd7-f103-4864-8ece-5d8897e194e8,
+56tests/384assertions, exact50/189/211/56,7102ms and1023ms; envelopes
+`gspec7`/`TvYOtL`, runec89f052-7eee-4829-9b83-771827f0fb2d,47tests/
+4271assertions, exact78/211/227/103,6987ms and1394ms; service-custody
+`8oUc8t`/`7EdK7I`, runc6be957b-3d8f-4bd7-abb6-f4946353dfc2,123tests/
+1026assertions, exact56/235/243/123,5875ms and743ms. Each original frozen
+review preserves maxCC9/maxCRAP9. Projection572imports all three actual pairs;
+BLOCKED parent coverage operations and global admission remain separate.
+All captures/groups/boot/commit observations complete without drift.
+
+Service window `ihA88t`, run2065864c-1c6b-4fbf-ae7b-f67881fc042a, completes
+17088ms with full123-case baseline:4assertion-Killed,0Survived/UNKNOWN,
+682unattempted of686. Envelope diagnostic `dgs27e`, run75b94808-0bf1-403d-
+9c05-ed9b78b8ce72, completes36437ms with full47-case baseline:8/8selected
+assertion-Killed,0Survived/UNKNOWN,755unattempted of763, including current
+runtime-Ajv0/1, local-tool50/51/52/53 and prior90/109. Both retain complete
+captures, closed groups, same boot/checkout; neither supplies a full contour score.
+
+### Storage image catalog and statement cleanup
+
+Reviewing analogous finally blocks finds two more product error-retention
+defects: readonly pinned-catalog query plus database close, and Mastra row import
+plus statement finalize. Real-handle RED `wm4ZKr` passes cleanup-only controls
+but fails both combined controls because the cleanup Error masks the original
+undefined body failure. It retains full captures/closed groups/same boot.
+
+Both Source owners now use the existing generic finishWorkspaceDatabaseClose
+with explicit tagged work outcomes and the exact native cleanup callback. A lone
+body undefined or cleanup Error retains identity; both failures become ordered
+AggregateError causes with the phase-specific message. Finalize stays inside
+the real transaction, preserving rollback. Native queries, values, serialization
+and cleanup all run before acknowledgement faults; observed handles are closed.
+GREEN `2lQY7Q` passes all62image cases/443assertions in3396ms, including
+body-only, cleanup-only and combined cases for each owner.
+
+Independent blind v158 Source review approves both repair semantics and dropping
+only strict/safeIntegers on the reopened readonly catalog's parameterless TEXT/
+NULL sqlite_master query. Keep readonly there and every initial/incoming/target
+option. All column, integer, integrity, ownership and bounds guards remain.
+
+The single affected inventory retains every50existing identity and original10/10
+ceiling. Exactly two new straight-line native cleanup callbacks receive their
+own prospective1/1 ceilings before numeric measurement, with no role/cap transfer.
+Partial correspondence is now7112roles, not complete global proof. Source binding
+is b61dc833f1ae28d465d3a367261aa156ba6853f7f8f38be9b7b9b37d7bf30fa9.
+The separate partial review records both identities; first publish that review,
+then explicitly pin its immutable commit for fresh scoped measurement. Original
+883af1d historical evidence remains unchanged. Numeric acceptance is pending.
+The ordinary hook catches two Buffer.from overload mismatches in the new spy
+input comparisons. One test-local byte-view comparator preserves actual offset/
+length for ArrayBuffer and typed-array inputs without a cast or class-identity
+assumption. `Ru3mS6` rechecks all six exact cleanup controls after this correction.
+Strict lint then rejects implicit any values from native Statement Proxy traps.
+One typed test-local member forwarder delegates native receivers and arguments;
+queried rows remain unknown until use. `S5OdFG` rechecks all six controls after
+this fixture typing correction, without changing product Source or its inventory.
 
 ### Published admission packet — retained context
 

@@ -89,6 +89,20 @@ outcomes and flat ordered body/store/DB causes. Shared-body deletion preserves a
 50identities and prospective ceilings; affected regressions pass. Fresh numeric
 qualification remains OPEN. WORK owns the exact RED/GREEN and mutation receipts.
 
+Within TEST013, real capture fault controls expose skipped native log close after
+sync failure and unread-pipe backpressure after log open/write failure. Published
+8120162 fixes both, preserving observed child custody and ordered capture codes;
+incomplete/failed output still denies mutation admission under unchanged budgets.
+The current image packet also strengthens real SQLite schema/integrity/custody
+and independent digest/ledger assertions. Fresh compatible full mutation remains
+OPEN; historical UNKNOWN namespaces stay retained rather than replayed.
+An analogous image review also confirms two product error-masking defects in
+readonly catalog close and INSERT statement finalization. Shared existing cleanup
+finishing now retains undefined/body/cleanup identities and ordered aggregates;
+real-handle RED/GREEN tests cover both. Existing50caps stay10/10; two new cleanup
+callbacks have separately reviewed prospective1/1 caps, awaiting immutable pin
+and fresh numerical proof. No current score or closure is inferred from this fix.
+
 The `TEST013` task family retains stable IDs `TEST-013-01` through `TEST-013-07`. Its scope includes shrinking and seed/path replay, executable scenarios, independent models, persisted/restart/CAS/fault cases, supported CLI/SDK/inspector paths, and one coordinated local numeric run. Keep the original task-specific acceptance criteria in the historical record.
 
 Fixture import effects and pending/elapsed Source-repair teardown are corrected

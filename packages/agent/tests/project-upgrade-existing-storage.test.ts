@@ -242,6 +242,18 @@ function openUnified(bytesBase64: string): Database {
   );
 }
 
+function serializedBytesEqual(bytes: Parameters<typeof Database.deserialize>[0], expected: Uint8Array): boolean {
+  const view = ArrayBuffer.isView(bytes)
+    ? new Uint8Array(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    : new Uint8Array(bytes);
+  return Buffer.from(view).equals(expected);
+}
+
+function nativeStatementMember(statement: object, property: PropertyKey): unknown {
+  const value: unknown = Reflect.get(statement, property, statement);
+  return typeof value === 'function' ? (...args: unknown[]): unknown => Reflect.apply(value, statement, args) : value;
+}
+
 async function expectPinnedPhaseFailure(
   phase: 'inventory' | 'Host clone',
   faults: { serialize: boolean; storeClose: boolean; databaseClose: boolean },
@@ -407,6 +419,98 @@ test.each([
     querying.mockRestore();
     if (observed.database && ownedCloses === 0) observed.database.close(true);
   }
+});
+
+test.each([
+  ['body and close failures', true, true],
+  ['close failure only', false, true],
+  ['body failure only', true, false],
+] as const)('retains pinned catalog causes for %s', async (_label, failSchemaQuery, failClose) => {
+  const host = makeHost();
+  const mastra = await makeMastra();
+  const bodyError: unknown = undefined;
+  const closeError = new Error('pinned catalog close acknowledgement failed');
+  const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+  const serialize = Reflect.get(Database.prototype, 'serialize') as typeof Database.prototype.serialize;
+  const close = Reflect.get(Database.prototype, 'close') as typeof Database.prototype.close;
+  const deserialize = Database.deserialize.bind(Database);
+  const schemaQuery =
+    'SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master ' +
+    "WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name";
+  const observed: { inventoryBuilder?: Database } = {};
+  let inventoryBytes: Buffer | undefined;
+  let catalog: Database | undefined;
+  let schemaQueryReached = false;
+  let catalogCloseReached = false;
+  const locatingBuilder = spyOn(Database.prototype, 'query').mockImplementation(function (this: Database, sql: string) {
+    if (observed.inventoryBuilder === undefined && sql === 'PRAGMA database_list') observed.inventoryBuilder = this;
+    if (this === catalog && sql === schemaQuery) {
+      const statement = Reflect.apply(query, this, [sql]);
+      return new Proxy(statement, {
+        get(target, property) {
+          if (property === 'all')
+            return (...args: unknown[]) => {
+              const rows: unknown = Reflect.apply(Reflect.get(target, property, target), target, args);
+              schemaQueryReached = true;
+              if (failSchemaQuery) throw bodyError;
+              return rows;
+            };
+          return nativeStatementMember(target, property);
+        },
+      }) as ReturnType<typeof query>;
+    }
+    return Reflect.apply(query, this, [sql]);
+  } as typeof Database.prototype.query);
+  const capturingInventoryBytes = spyOn(Database.prototype, 'serialize').mockImplementation(function (
+    this: Database,
+    ...args
+  ) {
+    const bytes = serialize.apply(this, args);
+    if (this === observed.inventoryBuilder) inventoryBytes = Buffer.from(bytes);
+    return bytes;
+  });
+  const locatingCatalog = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+    const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+    if (
+      inventoryBytes !== undefined &&
+      typeof options !== 'boolean' &&
+      options?.readonly === true &&
+      serializedBytesEqual(bytes, inventoryBytes)
+    )
+      catalog = database;
+    return database;
+  });
+  const failingCatalogClose = spyOn(Database.prototype, 'close').mockImplementation(function (this: Database, ...args) {
+    const result = close.apply(this, args);
+    if (this === catalog) {
+      catalogCloseReached = true;
+      if (failClose) throw closeError;
+    }
+    return result;
+  });
+  let failure: unknown;
+  try {
+    failure = await rejectionReason(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+  } finally {
+    failingCatalogClose.mockRestore();
+    locatingCatalog.mockRestore();
+    capturingInventoryBytes.mockRestore();
+    locatingBuilder.mockRestore();
+  }
+  expect(observed.inventoryBuilder).toBeDefined();
+  expect(inventoryBytes).toBeDefined();
+  expect(catalog).toBeDefined();
+  expect(schemaQueryReached).toBe(true);
+  expect(catalogCloseReached).toBe(true);
+  if (failSchemaQuery && failClose) {
+    expect(failure).toBeInstanceOf(AggregateError);
+    if (!(failure instanceof AggregateError)) throw new Error('Expected the catalog query and close causes.');
+    expect(failure.errors).toHaveLength(2);
+    expect(failure.message).toBe('pinned inventory catalog and close failed');
+    expect(failure.errors[0]).toBe(bodyError);
+    expect(failure.errors[1]).toBe(closeError);
+  } else expect(failure).toBe(failSchemaQuery ? bodyError : closeError);
+  expect(() => catalog?.query('SELECT 1').get()).toThrow();
 });
 
 test('rejects an extra table on the observed Host clone before importing rows', async () => {
@@ -1003,6 +1107,99 @@ describe('existing storage image preparation', () => {
       expect(() => observed.target?.query('SELECT 1').get()).toThrow();
     },
   );
+
+  test.each([
+    ['body and finalize failures', true, true],
+    ['finalize failure only', false, true],
+    ['body failure only', true, false],
+  ] as const)('retains Mastra import causes for %s', async (_label, failRowRead, failFinalize) => {
+    const host = makeHost();
+    const mastra = await makeMastra();
+    const mastraBytes = Buffer.from(mastra.bytes);
+    const bodyError: unknown = undefined;
+    const finalizeError = new Error('Mastra import statement finalization failed');
+    const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+    const deserialize = Database.deserialize.bind(Database);
+    let sourceMastra: Database | undefined;
+    let awaitingThreadInsert = false;
+    let threadInsertPrepared = false;
+    let targetStatementFinalized = false;
+    let rowReadReached = false;
+    let rowsRead = 0;
+    const observed: { target?: Database } = {};
+    const locatingMastra = spyOn(Database, 'deserialize').mockImplementation((bytes, options) => {
+      const database = typeof options === 'boolean' ? deserialize(bytes, options) : deserialize(bytes, options);
+      if (typeof options !== 'boolean' && options?.readonly === true && serializedBytesEqual(bytes, mastraBytes))
+        sourceMastra = database;
+      return database;
+    });
+    const interceptingStatements = spyOn(Database.prototype, 'query').mockImplementation(function (
+      this: Database,
+      sql: string,
+    ) {
+      if (this === sourceMastra && sql === 'PRAGMA table_xinfo("mastra_threads")') awaitingThreadInsert = true;
+      if (this === sourceMastra && awaitingThreadInsert && sql.startsWith('SELECT ')) awaitingThreadInsert = false;
+      const statement = Reflect.apply(query, this, [sql]);
+      if (this !== sourceMastra && awaitingThreadInsert && sql.startsWith('INSERT INTO "mastra_threads"')) {
+        awaitingThreadInsert = false;
+        threadInsertPrepared = true;
+        observed.target = this;
+        return new Proxy(statement, {
+          get(target, property) {
+            if (property === 'finalize')
+              return (...args: unknown[]) => {
+                Reflect.apply(Reflect.get(target, property, target), target, args);
+                targetStatementFinalized = true;
+                if (failFinalize) throw finalizeError;
+              };
+            return nativeStatementMember(target, property);
+          },
+        }) as ReturnType<typeof query>;
+      }
+      if (
+        this === sourceMastra &&
+        threadInsertPrepared &&
+        sql.startsWith('SELECT ') &&
+        sql.includes(' FROM "mastra_threads"')
+      )
+        return new Proxy(statement, {
+          get(target, property) {
+            if (property === 'values')
+              return (...args: unknown[]) => {
+                const rows: unknown = Reflect.apply(Reflect.get(target, property, target), target, args);
+                rowsRead = Array.isArray(rows) ? rows.length : 0;
+                rowReadReached = true;
+                if (failRowRead) throw bodyError;
+                return rows;
+              };
+            return nativeStatementMember(target, property);
+          },
+        }) as ReturnType<typeof query>;
+      return statement;
+    } as typeof Database.prototype.query);
+    let failure: unknown;
+    try {
+      failure = await rejectionReason(prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)));
+    } finally {
+      interceptingStatements.mockRestore();
+      locatingMastra.mockRestore();
+    }
+    expect(sourceMastra).toBeDefined();
+    expect(threadInsertPrepared).toBe(true);
+    expect(rowReadReached).toBe(true);
+    expect(rowsRead).toBeGreaterThan(0);
+    expect(targetStatementFinalized).toBe(true);
+    expect(observed.target).toBeDefined();
+    if (failRowRead && failFinalize) {
+      expect(failure).toBeInstanceOf(AggregateError);
+      if (!(failure instanceof AggregateError)) throw new Error('Expected the row-read and finalization causes.');
+      expect(failure.errors).toHaveLength(2);
+      expect(failure.message).toBe('Mastra row import and statement finalize failed');
+      expect(failure.errors[0]).toBe(bodyError);
+      expect(failure.errors[1]).toBe(finalizeError);
+    } else expect(failure).toBe(failRowRead ? bodyError : finalizeError);
+    expect(() => observed.target?.query('SELECT 1').get()).toThrow();
+  });
 
   test('normalizes a WAL Host image copy while binding unchanged raw bytes', async () => {
     await assertWalImageMerge(true, false);
