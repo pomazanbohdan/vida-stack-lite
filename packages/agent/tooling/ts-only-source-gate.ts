@@ -189,6 +189,10 @@ function visitEntry(
   depth: number,
 ): void {
   const relativePath = `${relativeDirectory}/${name}`;
+  if (isLink && relativePath.endsWith('/node_modules') && GENERATED_BOUNDARIES.has(relativePath)) {
+    state.generatedExcludedPaths.push(relativePath);
+    return;
+  }
   if (isLink) throw new Error(`Maintained source symbolic link is forbidden: ${relativePath}.`);
   if (isGeneratedSourcePath(relativePath) && isDirectory) {
     state.generatedExcludedPaths.push(relativePath);

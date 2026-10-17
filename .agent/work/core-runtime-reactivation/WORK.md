@@ -4,14 +4,14 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's ebc323b coverage/frozen pair passes exact F/L/S/B100 and original caps; native f3e56044 exhausts its budget with107Killed/6Survived/0UNKNOWN/52unattempted of165. Follow-up corrections pass120focused cases; fresh qualification is pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability, admission stateful initialization and isolated complete admission for initialization/image/envelopes remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
+- The automatic projection records7/45historical local triples,38unclosed. Custody's59-role closure is exact F/L/S/B100, frozen9/9 and681/681assertion-confirmed Killed (e494471, pin6531dc3, v224). Active contours are initialization, storage image and envelopes. Initialization's cf118c9 coverage/frozen pair passes exact F/L/S/B100 and original caps; the closed9658bd19 isolated diagnostic confirms64Killed/0Survived/0UNKNOWN/100unattempted of164. Full current native qualification remains pending. No new triple closes. Earlier UNKNOWN outcomes stay retained. FS zero-callable CRAP applicability, admission stateful initialization and isolated complete admission for image/envelopes remain OPEN. The derived document owns exact numeric receipts; WORK owns diagnostic gaps. Global/final-quality admission and Runtime acceptance remain open.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
 - The captured owner inventory before rolling per-file corrections has 7,736 functions / 149 Sources. Reviewed partial correspondence now has 7,113 current roles, including the separately capped shared UUID predicate and two lazy custody literal owners, after retiring two initialization timer callbacks; global qualification remains incomplete. Nineteen represented static deficits remain open. These counters describe correspondence/static review, not coverage, CRAP or mutation.
 - `.vida` loader/init/native cutover and one-database disk cutover remain open. Keep the separate admission DB until lifetime exclusion and bundle-owned repair are qualified.
 - Automatic [contour projection](CONTOUR-STATUS.md) and sibling JSON derive measurements. Do not create or maintain a duplicate manual percentage table. Local completion, currentness, frozen qualification and global acceptance are distinct.
-- Native isolated workers retain private logical overlays and parent-only raw publication. Exact image, envelopes, custody and fs-safe selections permit bounded diagnostics; only fs-safe attestation and custody permit complete admission. The actual fs-safe7/7closure passes the unchanged reader with four negative controls. Custody full admission follows the private SQLite controls, fresh SQL/table activation and closed64-mutant diagnostic below. Default execution stays serial, workers remain fixed-two, and capture/ID selectors remain denied. Permission is no proof; broader resource/coverage qualification and FS zero-callable CRAP applicability stay open.
+- Native isolated workers retain private logical overlays and parent-only raw publication. Exact image, envelopes, initialization, custody and fs-safe selections permit bounded diagnostics; only reviewed fs-safe attestation, initialization and custody permit complete admission. The actual fs-safe7/7closure passes the unchanged reader with four negative controls. Initialization eligibility follows the closed64-mutant diagnostic and existing private-resource/nested-process controls below. Custody full admission follows the private SQLite controls, fresh SQL/table activation and closed64-mutant diagnostic below. Default execution stays serial, workers remain fixed-two, and capture/ID selectors remain denied. Permission is no proof; broader resource/coverage qualification and FS zero-callable CRAP applicability stay open.
 
 ## Global contour campaign packet
 
@@ -27,12 +27,12 @@ ebc323b:.agent/work/core-runtime-reactivation/WORK.md under this heading;
 that published record links the earlier c525495 history. Do not replay those
 operations or transfer their local IDs/counters.
 
-Latest complete coverage/frozen pair is immutableebc323b, run
-588f0e69-b7d6-4611-a513-4e7651f20b09, stages /dev/shm/contour-stage-a2yOSW and
-/dev/shm/contour-stage-DtA9eB. It passes21cases/209assertions, exact F16/16,
-L84/84,S95/95,B55/55 and original same-run frozen9/9, bound to8af2e35.
-The maintained controller automatically imports both; projection has664
-observations. Follow-up Source/test/tool changes below require fresh evidence.
+Latest complete coverage/frozen pair is immutable127ff84, run
+9a7544d8-8cb0-4e1c-8cc4-4b1affb43e05, stages /dev/shm/contour-stage-34US0u and
+/dev/shm/contour-stage-hglPab. It passes21cases/252assertions, exact F16/16,
+L84/84,S95/95,B53/53 and original same-run frozen9/9, bound tocf118c9.
+The maintained controller automatically imports both; projection has667
+observations. Follow-up tool changes below require fresh evidence.
 
 Full native f3e56044-99dc-43bd-9824-37bdfd8be7bf uses that same clean image at
 /dev/shm/vida-rolling-measure-v242/packages/agent/.tmp/mutation-batch-f3e56044-99dc-43bd-9824-37bdfd8be7bf-1FyNMK.
@@ -61,7 +61,7 @@ Actual current survivors and repairs prepared against their exact image:
  after assertions, then perform the existing positive retry and bound no-rewrite
  checks. This neither resumes an operation nor proves zero locks at every target.
 
-Root integrates consolidated v250 without additional cases. The expiry helper is
+Published cf118c9 integrates consolidated v250 without additional cases. The expiry helper is
 renamed expectAdmissionExpiry for both reader and binding-lock boundaries.
 Focused ZNOOa2 passes120/0cases across initialization and the selector in14529ms,
 624assertions, full captures, closed group and unchanged boot. Blind review
@@ -82,13 +82,31 @@ only changed workspace Source and reuses hash-checked runtime rows. Independent
 review /workspace/attachments/workspace-directory-review-v245.md cites the
 maintained fs declarations and POSIX lstat contract. No role/cap/exclusion transfer.
 
-The serial budget gap now justifies a diagnostic-only eligibility preparation:
-initialization may use the existing at-most-two isolated worker mechanism with
-the full declared file, one baseline/image/capture and unchanged900/930s budgets.
-Complete admission remains fs-safe/custody only. Selector denial tests keep
-capture, IDs and incomplete native admission forbidden. First qualify the actual
-2-mutant pair and its private resources/nested-child custody; a later bounded
-window is diagnostic, never complete closure. Permission alone is not speedup.
+The serial budget gap justified the existing at-most-two isolated worker route,
+with the full declared file, one baseline/image/capture and unchanged900/930s
+budgets. Closed paird266b578 at /dev/shm/rolling-contour-ByYmiB confirms2Killed;
+its baseline passes21cases/252assertions and drains both racer children. Both
+mutants bail before the racer body, so it establishes no four-racer stress claim.
+The fresh64-window9658bd19 at /dev/shm/rolling-contour-ZuHzCI closes371418ms,
+exit1 as intentionally partial:64assertion-confirmed Killed,0Survived/UNKNOWN,
+100unattempted of164. All captures/group custody close, boot/commit/inputs stay
+unchanged, and no timeout, signal or resource denial is reported. Operation:
+/dev/shm/vida-rolling-measure-v256/packages/agent/.tmp/mutation-batch-9658bd19-7ead-49d4-a910-a18d7e46120f-ZaA6bU.
+This diagnostic remains a non-score result. Existing native mechanics controls
+qualify private temp/output/cache, read-only inputs, Tini/PID1 and observed nested
+descendant cleanup; initialization fixtures supply private SQLite roots. The
+one mutant reaching the racer body fails before `go`; cleanup kills and drains
+both waiting children. The passing baseline exercises their healthy binding path.
+Blind actual-artifact review confirms eligibility without a four-racer claim.
+The reviewed eligibility change permits initialization complete admission through
+the same unchanged exhaustive-plan/activation/assertion/freshness reader. Capture,
+IDs, incomplete proof and image/envelopes complete admission remain forbidden.
+Permission alone is neither complete closure nor a measured speedup.
+
+The eligibility and dependency-boundary packet passes112focused cases/0skipped
+in1326ms at /workspace/attachments/audit-focused-check-kDQTiG, with complete
+captures, closed group and unchanged boot. Documentation link checks also pass.
+Product Source and original frozen ceilings are unchanged by this tooling packet.
 
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
@@ -99,15 +117,23 @@ continues through the unchanged persisted reader. This visibility gap remains OP
 Resource cleanup v251 removes37720463bytes from one closed .pile directory;
 v240 removed131510834bytes/5directories. Source, dependencies, DBs, fixtures,
 receipts and every failed/UNKNOWN outcome remain. Future dependency reuse is
-only a proposal under the existing trusted locked-dependency/read-only path.
-The standalone fingerprint command rejects a node_modules symlink and is not
-bypassed. No new per-process dependency attestation or cache substitute is claimed.
+limited to the existing trusted locked-dependency/read-only path. A fresh v254
+linked-dependency trial formed SDK inputs without suites, but coverage failed
+before tests because the TS-only walker rejected the declared generated dependency
+boundary before excluding it. No report or numeric evidence was produced. The
+reviewed two-file fix excludes only the exact agent/plugin node_modules links,
+never traverses their vendor JS targets, and keeps Source/unknown/generated-output
+links rejected. The standalone fingerprint command's separate link rejection is
+unchanged. No per-process dependency attestation or cache substitute is claimed.
+The failed v254 root remains intact. v256 used real copied dependencies. The
+overlay output preflight also correctly denied2128056320bytes below the existing
+2GiB floor; subsequent retained output uses /dev/shm without lowering that floor.
 
 Published cf118c9 passes the ordinary strict hook and is pushed to origin/main.
 The following pin binds the same reviewed scope without changing any ceiling.
 
-Next: fresh coverage/frozen and
-the bounded isolated diagnostic. Envelopes has a prepared fixed-two64-mutant
+Next: publish the checked tooling packet, then fresh coverage/frozen and
+the complete isolated initialization universe. Envelopes has a prepared fixed-two64-mutant
 successor; storage image has a useful four-mutant refill observation, with its
 actual resource/custody and complete-admission gaps still OPEN. Numeric producers
 remain Root-owned and measured checkouts immutable. Historical triples stay7/45,

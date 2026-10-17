@@ -76,6 +76,45 @@ describe('TS-only maintained source gate', () => {
     expect(result.violations.map(({ path: file }) => file)).toEqual(['packages/agent/src/dist/handwritten.js']);
   });
 
+  test('excludes links only at the declared package dependency roots', () => {
+    const root = fixture();
+    const baseline = scanMaintainedSources(root);
+    for (const relative of ['packages/agent/node_modules', 'packages/plugin/node_modules']) {
+      const target = path.join(root, 'external', relative.replaceAll('/', '-'));
+      mkdirSync(target, { recursive: true });
+      writeFileSync(path.join(target, 'vendor.js'), 'export const vendor = true;\n');
+      symlinkSync(target, path.join(root, relative), 'dir');
+    }
+
+    const result = scanMaintainedSources(root);
+
+    expect(result.generatedExcludedPaths).toEqual(['packages/agent/node_modules', 'packages/plugin/node_modules']);
+    expect(result.counts.files).toBe(baseline.counts.files);
+    expect(result.counts.typescript).toBe(baseline.counts.typescript);
+    expect(result.counts.javascriptViolations).toBe(baseline.counts.javascriptViolations);
+    expect(result.codeFiles).toEqual(baseline.codeFiles);
+    expect(result.typescriptFiles).toEqual(baseline.typescriptFiles);
+    expect(result.violations).toEqual(baseline.violations);
+  });
+
+  test('continues to reject links at source, unknown dependency, and other generated boundaries', () => {
+    for (const relative of [
+      'packages/agent/src/linked',
+      'tests/agent/node_modules',
+      'packages/agent/.tmp',
+      'packages/agent/dist',
+    ]) {
+      const root = fixture();
+      const target = path.join(root, 'external', relative.replaceAll('/', '-'));
+      mkdirSync(target, { recursive: true });
+      const link = path.join(root, relative);
+      mkdirSync(path.dirname(link), { recursive: true });
+      symlinkSync(target, link, 'dir');
+
+      expect(() => scanMaintainedSources(root)).toThrow(/symbolic link/i);
+    }
+  });
+
   test('finds handwritten JavaScript even when a parent Git ignore rule would hide it', () => {
     const root = fixture();
     put(root, '.gitignore', 'packages/agent/tests/ignored.js\n');

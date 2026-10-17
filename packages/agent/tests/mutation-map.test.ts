@@ -286,7 +286,7 @@ test('native targeted diagnostics require one immutable-plan mutant and never al
     expect(() => selectMutationBatchPilot(denied, declared)).toThrow();
 });
 
-test('isolated workers reserve complete admission for reviewed attestation and custody contours', () => {
+test('isolated workers reserve complete admission for reviewed attestation, initialization and custody contours', () => {
   const name = 'bun-project-upgrade-existing-storage-image';
   const declared = [
     { name, sources: ['src/one.ts'], tests: ['tests/one.test.ts'], report: 'one.json', environment: 'bun' },
@@ -307,14 +307,18 @@ test('isolated workers reserve complete admission for reviewed attestation and c
       true,
     );
     const complete = ['--contour', contour, '--isolated-workers', '--admit-complete'];
-    if (contour === 'bun-fs-safe-attestation' || contour === 'bun-service-operation-custody')
+    if (
+      contour === 'bun-fs-safe-attestation' ||
+      contour === 'bun-service-operation-custody' ||
+      contour === 'bun-runtime-initialization'
+    )
       expect(selectMutationBatchPilot(complete, partition)).toMatchObject({
         isolatedWorkers: true,
         admitComplete: true,
       });
     else
       expect(() => selectMutationBatchPilot(complete, partition)).toThrow(
-        'complete admission is fs-safe attestation or service-operation custody only',
+        'complete admission is fs-safe attestation, runtime initialization or service-operation custody only',
       );
     for (const suffix of [
       ['--capture-per-test-diagnostic'],

@@ -730,6 +730,10 @@ The `quality:ts-only:pinned` gate enumerates declared Source roots and
 rejects JS/MJS/CJS/JSX implementations, including untracked or Git-ignored Source.
 Generated JavaScript is allowed only at declared compiler/SDK/delivery output
 boundaries; native shell/PowerShell adapters retain their platform contract.
+The filename scanner excludes the exact declared package `node_modules` roots
+before rejecting links; it never traverses those dependency targets. All other
+links remain rejected. This does not attest dependencies or change the separate
+standalone fingerprint command's link policy.
 The gate runs before costly final suites and stays FAIL while legacy violations
 remain. Do not add legacy exceptions or reduce selection to make it pass.
 
@@ -1102,11 +1106,14 @@ still needs captured-input/private-output binding and qualified worker resources
 `bun-project-upgrade-existing-storage-image`, `bun-fs-safe-attestation`,
 `main-envelopes`, `bun-service-operation-custody` or
 `bun-runtime-initialization` only. Runtime initialization runs its full declared
-test file in each invocation; its worker-resource and nested-child custody
-qualification remains pending. This permission does not claim a performance
-improvement or permit complete admission for that contour.
-Only the reviewed fs-safe attestation and service-operation custody contours permit
-`--admit-complete`; the other selections remain diagnostic-only. Custody's first
+test file in each invocation. Its first complete pilot follows the existing
+private temp/output/SQLite and nested-process mechanics controls, a passing
+21-case baseline with both racer children drained, and the closed64-mutant
+isolated diagnostic recorded in WORK. The diagnostic itself is not a score or
+evidence that four racer children ran concurrently.
+Only the reviewed fs-safe attestation, runtime initialization and service-operation
+custody contours permit `--admit-complete`; image-upgrade and main-envelopes remain
+diagnostic-only. Custody's first
 complete pilot follows actual private-database resource controls, fresh SQL/table
 activation controls and a closed64-mutant isolated diagnostic. Admission still
 requires the complete current universe and unchanged persisted-proof reader;
@@ -1145,7 +1152,7 @@ preserving raw bytes and sync operations. Uncertain native custody leaves privat
 outputs unpublished; partial publication failures retain both roots and deny
 confirmation. Closed raw diagnostics can still fail the unchanged runner
 confirmer; copied files alone never mean Killed. The persisted proof reader and
-flat-basename guards are unchanged. Complete attestation and custody admission retain
+flat-basename guards are unchanged. Complete attestation, initialization and custody admission retain
 the existing exhaustive-plan, all-Killed and freshness gates and emits the same
 context-bearing proof. Verify that actual retained closure through the unchanged
 reader, separately from synthetic controls. This does not resolve its zero-callable
