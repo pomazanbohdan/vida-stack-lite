@@ -852,7 +852,7 @@ test('binding preserves a non-Error replacement failure and retries only after r
   caseCompleted = true;
 });
 
-test('binding retries one pre-entry lock collision and performs exactly one real receipt replacement', async () => {
+async function expectPreEntryLockRetry(code: 'EEXIST' | 'file_lock_timeout'): Promise<unknown> {
   const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
   const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
   const originalSafeExports = Object.freeze({ ...(await import('../../src/config/safe-repository-access.ts')) });
@@ -872,7 +872,7 @@ test('binding retries one pre-entry lock collision and performs exactly one real
           withExclusiveLockAsync: async <T>(target: string, label: string, operation: () => Promise<T>) => {
             if (target !== receiptRelative) return access.withExclusiveLockAsync(target, label, operation);
             lockAttempts++;
-            if (lockAttempts === 1) throw Object.assign(new Error('pre-entry lock collision'), { code: 'EEXIST' });
+            if (lockAttempts === 1) throw Object.assign(new Error('pre-entry lock collision'), { code });
             return access.withExclusiveLockAsync(target, label, async () => {
               callbackEntries++;
               return operation();
@@ -889,7 +889,6 @@ test('binding retries one pre-entry lock collision and performs exactly one real
       `${initModuleUrl}?pre-entry-retry=${randomUUID()}`
     )) as typeof import('../../src/runtime-initialization.ts');
     const bound = await expectAsyncReturned(() => isolated.bindRuntimeInitialization(root, store));
-    expect(bound).toEqual({ ...receipt, workspace_binding_status: 'bound' });
     expect(readFileSync(receiptPath, 'utf8')).toBe(JSON.stringify(bound, null, 2) + '\n');
     expect({ lockAttempts, callbackEntries, replacements }).toEqual({
       lockAttempts: 2,
@@ -897,9 +896,25 @@ test('binding retries one pre-entry lock collision and performs exactly one real
       replacements: 1,
     });
     expect(database!.query('SELECT * FROM agent_host_state').all()).toEqual(hostBefore);
+    return bound;
   } finally {
     await mock.module(safeModuleUrl, () => originalSafeExports);
   }
+}
+
+test('binding retries one pre-entry EEXIST collision and performs exactly one real receipt replacement', async () => {
+  expect(await expectAsyncReturned(() => expectPreEntryLockRetry('EEXIST'))).toEqual({
+    ...receipt,
+    workspace_binding_status: 'bound',
+  });
+  caseCompleted = true;
+});
+
+test('binding retries one pre-entry file_lock_timeout collision and performs exactly one real receipt replacement', async () => {
+  expect(await expectAsyncReturned(() => expectPreEntryLockRetry('file_lock_timeout'))).toEqual({
+    ...receipt,
+    workspace_binding_status: 'bound',
+  });
   caseCompleted = true;
 });
 

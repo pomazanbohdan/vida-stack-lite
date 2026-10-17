@@ -182,7 +182,9 @@ async function main(): Promise<void> {
       terminal.tracked_status_after ||
       !contourStagePublicationAdmitted(result, selectedLane)
     )
-      throw new Error('Stage publication lacks unchanged inputs or terminal process/capture custody.');
+      throw new Error(
+        `Stage publication denied: boot_unchanged=${terminal.boot_after === boot}, commit_unchanged=${terminal.commit_after === commit}, clean_inputs=${!terminal.tracked_status_after}, process=${campaignProcessState(result)}, exit=${result.exitCode}, capture_complete=${result.output_capture?.complete === true}, group_closed=${result.processCustody?.processGroupTerminationObserved === true}.`,
+      );
     const reportArgs = contourStageReportArguments(
       selectedLane,
       readFileSync(path.join(directory, 'stdout.log'), 'utf8'),

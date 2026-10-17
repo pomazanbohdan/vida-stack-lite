@@ -512,6 +512,11 @@ unexpected invocation immediately and assert zero calls after restoring the
 method. Preserve ordinary operation errors, including rejected undefined.
 Keep typed error/state assertions and require fresh native proof; a5s timeout
 against a5s production retry deadline cannot establish assertion-confirmed Killed.
+The current function audit indexes literal test names and direct body assertions.
+For a small scenario table, keep named wrappers with meaningful result assertions
+and share the expensive scenario body. Mark fixture success after each wrapper's
+assertions. Bun-valid interpolated registration alone does not establish audit
+recognition; helper execution and static links remain different evidence.
 
 For asynchronous case custody, enroll each root before the body can suspend.
 Teardown must observe a pending body directly; a `finally` that marks failure

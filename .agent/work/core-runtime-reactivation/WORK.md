@@ -85,6 +85,44 @@ Blind Luna approves the actual helper and all3call sites without findings.
 Focused FJc92O passes19/0cases,148assertions in14154ms, complete captures,
 closed group and unchanged boot. Publish before fresh native confirmation.
 
+Published e31db89 fresh diagnostic aa52c914-97ff-4d2a-9961-f14735795377, outerDaTxrU,
+confirms actual41 as assertion-Killed. The same19-case baseline and complete
+31870ms terminal run also tests actual28 (identityca998718, file_lock_timeout
+literal ->empty): it Survives. Keep1Killed/1Survived/160unattempted of162, not a
+score. The preceding UNKNOWN attempts retain their original classifications.
+Root expands the existing pre-entry lock test over both supported raw codes,
+EEXIST and file_lock_timeout, retaining the real lease, exactly2attempts,
+1callback/1replacement, exact bound receipt and unchanged Host state. This is a
+missing behavioral case, not a reason to rewrite the eager Set or relax gates.
+Source and all16function roles/ceilings stay unchanged; fresh native28 proof is
+required. The next envelopes numeric task, after this producer is terminal,
+is the existing fixed-two isolated64-mutant diagnostic (`--batch-size 2
+--max-batches 32` without admission/capture/ID selectors), not another2-mutant
+pilot. Complete isolated admission remains unavailable until its actual custody
+qualification and narrow policy/selector review; image capacity qualification
+remains separate and does not require replaying the unchanged v210pair.
+Blind Luna notes that interpolated test registration is Bun-valid but invisible
+to the current audit's literal-name case index. Root retains two literal named
+wrappers with direct exact-bound-result assertions and one shared scenario owner.
+Only each wrapper marks its fixture complete after all assertions. The initial
+20-case prototype IAeqlB passed152assertions in14058ms; final literal-wrapper
+verification and fresh numeric evidence follow. This keeps shared setup without
+inventing static function/test proof or another audit parser.
+Final literal-wrapper ACoiOR passes20/0cases,152assertions in14095ms with full
+capture, closed group and unchanged boot; blind Luna final-diff review has no
+findings. Numeric Source inputs still require fresh full evidence after publication.
+The first publication hook passed TS511 and formatting but native tsgolint was
+SIGKILLed. No commit or push followed that failed check. The host then used about
+15.4GB of its17.18GB cgroup; this observation alone does not identify the signal
+cause. With no live Bun/quality owner, exact disposable .pile cleanup manifest
+`/workspace/attachments/closed-transpiler-cache-cleanup-v232.json` removes
+3043461375bytes across336cache directories. Source, dependencies, fixtures, DBs,
+receipts and UNKNOWN outcomes stay intact; memory falls to about12.0GB. Repeat
+the unchanged hook. The stage publisher's denial message now exposes actual
+input/process/capture/group flags; failed mutation no longer prints a generic
+claim of missing custody when its captures and group are actually complete.
+Publication/classification and all proof gates stay unchanged.
+
 ### Initialization current evidence and owned-clock repair — 2026-10-17
 
 Fresh immutable6531dc3 initialization run70ef92f8-ec9c-463d-8b25-f44d7d9c2994
