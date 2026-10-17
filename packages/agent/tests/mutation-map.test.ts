@@ -35,6 +35,7 @@ import { generateMutationImage } from '../tooling/mutation-generation.ts';
 import {
   collectNativeMutationBatch,
   nativeMutationBatchCommand,
+  nativeMutationCommandAllowance,
   selectMutationBatchPilot,
   selectNativeMutationBatchIndices,
   selectNativeMutationBatchWindow,
@@ -341,6 +342,15 @@ test('targeted batch keeps its original plan index and leaves the full universe 
 });
 
 // Controlled collector observations qualify bookkeeping only, never mutation kills.
+test('native mutant allowance uses the measured baseline policy within the existing ceiling', () => {
+  expect(nativeMutationCommandAllowance(0)).toBe(10_000);
+  expect(nativeMutationCommandAllowance(1.25)).toBe(10_003);
+  expect(nativeMutationCommandAllowance(90_000)).toBe(190_000);
+  expect(nativeMutationCommandAllowance(200_000)).toBe(190_000);
+  for (const invalid of [NaN, Infinity, -Infinity, -1, Number.MAX_SAFE_INTEGER + 1])
+    expect(() => nativeMutationCommandAllowance(invalid)).toThrow('baseline elapsed time is invalid');
+});
+
 test('native batch keeps its first observation when storage denies the next launch', async () => {
   const calls: string[] = [];
   const progress: number[] = [];
@@ -383,6 +393,56 @@ test('native batch does not launch an unattempted ID after its budget is spent',
   expect(result.results).toEqual([{ identity: 'a', local_id: '1', status: 'survived' }]);
   expect(result.budgetExhausted).toBe(true);
   expect(result.resourceBlocked).toBeUndefined();
+  expect(result.failure).toBeUndefined();
+});
+
+test('native batch refuses a truncated allowance before launching a producer', async () => {
+  const calls: Array<{ id: string; allowance: number }> = [];
+  const minimumAllowance = 20_000;
+  const result = await collectNativeMutationBatch(
+    { identities: ['a', 'b'], local_ids: ['1', '2'] },
+    () => (calls.length === 0 ? minimumAllowance : minimumAllowance - 1),
+    async (id, allowance) => {
+      calls.push({ id, allowance });
+      return { status: 'passed' };
+    },
+    () => undefined,
+    minimumAllowance,
+  );
+  expect(calls).toEqual([{ id: '1', allowance: minimumAllowance }]);
+  expect(result.results).toEqual([{ identity: 'a', local_id: '1', status: 'survived' }]);
+  expect(result.budgetExhausted).toBe(true);
+  expect(result.resourceBlocked).toBeUndefined();
+  expect(result.failure).toBeUndefined();
+});
+
+test('native batch validates its minimum and leaves an undersized first allowance unattempted', async () => {
+  let calls = 0;
+  const invoke = async () => {
+    calls++;
+    return { status: 'passed' as const };
+  };
+  for (const invalid of [0, -1, 1.5, Infinity, NaN])
+    await expectRejection(
+      collectNativeMutationBatch(
+        { identities: ['a'], local_ids: ['1'] },
+        () => 10_000,
+        invoke,
+        () => undefined,
+        invalid,
+      ),
+      'minimum allowance is invalid',
+    );
+  const result = await collectNativeMutationBatch(
+    { identities: ['a'], local_ids: ['1'] },
+    () => 9_999,
+    invoke,
+    () => undefined,
+    10_000,
+  );
+  expect(calls).toBe(0);
+  expect(result.results).toEqual([]);
+  expect(result.budgetExhausted).toBe(true);
   expect(result.failure).toBeUndefined();
 });
 

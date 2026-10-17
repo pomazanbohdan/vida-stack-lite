@@ -438,12 +438,15 @@ test.each([
 });
 
 test.each([
-  ['body and close failures', true, true],
-  ['close failure only', false, true],
-  ['body failure only', true, false],
-] as const)('retains pinned catalog causes for %s', async (_label, failSchemaQuery, failClose) => {
+  ['body and close failures', true, true, false],
+  ['close failure only', false, true, false],
+  ['body failure only', true, false, false],
+  ['empty inventory bound denial', false, false, true],
+] as const)('retains pinned catalog causes for %s', async (_label, failSchemaQuery, failClose, emptyInventory) => {
   const host = makeHost();
   const mastra = await makeMastra();
+  const hostBefore = Buffer.from(host.bytes);
+  const mastraBefore = Buffer.from(mastra.bytes);
   const bodyError: unknown = undefined;
   const closeError = new Error('pinned catalog close acknowledgement failed');
   const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
@@ -458,6 +461,7 @@ test.each([
   let catalog: Database | undefined;
   let schemaQueryReached = false;
   let catalogCloseReached = false;
+  let originalCatalogRows: unknown;
   const locatingBuilder = spyOn(Database.prototype, 'query').mockImplementation(function (this: Database, sql: string) {
     if (observed.inventoryBuilder === undefined && sql === 'PRAGMA database_list') observed.inventoryBuilder = this;
     if (this === catalog && sql === schemaQuery) {
@@ -468,7 +472,9 @@ test.each([
             return (...args: unknown[]) => {
               const rows: unknown = Reflect.apply(Reflect.get(target, property, target), target, args);
               schemaQueryReached = true;
+              originalCatalogRows = rows;
               if (failSchemaQuery) throw bodyError;
+              if (emptyInventory) return [];
               return rows;
             };
           return nativeStatementMember(target, property);
@@ -518,7 +524,14 @@ test.each([
   expect(catalog).toBeDefined();
   expect(schemaQueryReached).toBe(true);
   expect(catalogCloseReached).toBe(true);
-  if (failSchemaQuery && failClose) {
+  if (emptyInventory) {
+    expect(Array.isArray(originalCatalogRows)).toBe(true);
+    if (!Array.isArray(originalCatalogRows)) throw new Error('Expected native pinned catalog rows.');
+    expect(originalCatalogRows.length).toBeGreaterThan(0);
+    expect(failure).toBeInstanceOf(Error);
+    if (!(failure instanceof Error)) throw new Error('Expected pinned inventory bound denial.');
+    expect(failure.message).toBe('Existing storage merge: pinned inventory exceeds bounds');
+  } else if (failSchemaQuery && failClose) {
     expect(failure).toBeInstanceOf(AggregateError);
     if (!(failure instanceof AggregateError)) throw new Error('Expected the catalog query and close causes.');
     expect(failure.errors).toHaveLength(2);
@@ -526,6 +539,8 @@ test.each([
     expect(failure.errors[0]).toBe(bodyError);
     expect(failure.errors[1]).toBe(closeError);
   } else expect(failure).toBe(failSchemaQuery ? bodyError : closeError);
+  expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+  expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
   expect(() => catalog?.query('SELECT 1').get()).toThrow();
 });
 
@@ -1613,6 +1628,93 @@ describe('existing storage image preparation', () => {
       prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
       /schema inventory exceeds bound/u,
     );
+  });
+
+  test('rejects a Mastra schema exceeding the 1024-object inventory bound and preserves its source bytes', async () => {
+    const initializedMastra = await makeMastra();
+    const database = Database.deserialize(Buffer.from(initializedMastra.bytes), { strict: true, safeIntegers: true });
+    let mastra: ClosedDatabaseImage;
+    try {
+      const table = database
+        .query<{ name: string }, []>(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name NOT GLOB 'sqlite_*' ORDER BY name LIMIT 1",
+        )
+        .get()?.name;
+      if (table === undefined) throw new Error('Mastra fixture has no supported table for schema-bound indexes');
+      const column = database
+        .query<{ name: string }, []>('PRAGMA table_info("' + table.replaceAll('"', '""') + '")')
+        .get()?.name;
+      if (column === undefined) throw new Error('Mastra fixture table has no column for schema-bound indexes');
+      const quotedTable = '"' + table.replaceAll('"', '""') + '"';
+      const quotedColumn = '"' + column.replaceAll('"', '""') + '"';
+      database.exec(
+        Array.from(
+          { length: 1025 },
+          (_, index) =>
+            'CREATE VIEW merge_mastra_schema_bound_fixture_' +
+            index +
+            ' AS SELECT ' +
+            quotedColumn +
+            ' FROM ' +
+            quotedTable,
+        ).join(';'),
+      );
+      const objectCount = database
+        .query<{ count: bigint }, []>("SELECT COUNT(*) AS count FROM sqlite_master WHERE name NOT GLOB 'sqlite_*'")
+        .get()?.count;
+      if (objectCount === undefined || objectCount <= 1024n)
+        throw new Error('Mastra fixture did not exceed the schema object bound');
+      mastra = closedImage(database);
+    } finally {
+      database.close(true);
+    }
+    const host = makeHost();
+    expect(mastra.size).toBeLessThan(4 * 1024 * 1024);
+    const before = Buffer.from(mastra.bytes);
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /schema inventory exceeds bound/u,
+    );
+    expect(Buffer.from(mastra.bytes).equals(before)).toBe(true);
+  });
+
+  test('rejects a merged serialized image above 4 MiB when both source images are below the input bound', async () => {
+    const hostDatabase = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
+    let host: ClosedDatabaseImage;
+    try {
+      hostDatabase.exec('CREATE TABLE merge_output_size_host_fixture(payload BLOB NOT NULL)');
+      hostDatabase.query('INSERT INTO merge_output_size_host_fixture(payload) VALUES(zeroblob(?))').run(2_300_000);
+      host = closedImage(hostDatabase);
+    } finally {
+      hostDatabase.close(true);
+    }
+
+    const mastraDatabase = Database.deserialize(Buffer.from((await makeMastra()).bytes), {
+      strict: true,
+      safeIntegers: true,
+    });
+    let mastra: ClosedDatabaseImage;
+    try {
+      const updated = mastraDatabase
+        .query('UPDATE mastra_threads SET metadata=? WHERE id=?')
+        .run(JSON.stringify({ payload: 'm'.repeat(2_300_000) }), 'merge-thread-1');
+      expect(updated.changes).toBe(1);
+      mastra = closedImage(mastraDatabase);
+    } finally {
+      mastraDatabase.close(true);
+    }
+
+    expect(host.size).toBeLessThan(4 * 1024 * 1024);
+    expect(mastra.size).toBeLessThan(4 * 1024 * 1024);
+    expect(host.size + mastra.size).toBeGreaterThan(4 * 1024 * 1024);
+    const hostBefore = Buffer.from(host.bytes);
+    const mastraBefore = Buffer.from(mastra.bytes);
+    await expectRejection(
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      /unified image exceeds bounded journal capacity/u,
+    );
+    expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+    expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
   });
 
   test('rejects 100001 rows in one table at the per-table count guard', async () => {

@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked Source: `c8d952a328519c6c2c64db2e6fea22849ccabfaf`, scoped pin `dd2a713ac61c14c59c0f3499a7b13578753f8713`. SQLite literal-prefix, clone BINARY ordering and Unicode device-extension repairs pass123behavior tests and the normal strict hook. Shared UUID predicate replaces order-dependent cache/spy workarounds. Fresh custody F57/57,L236/236,S243/243,B123/123 and same-run frozen maxCC/CRAP9/9 pass;11targeted mutants are assertion-confirmed Killed,676unattempted/687, no complete score. Stateful schema2 remains GAP. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. Previous-envelope native campaign stops at108Killed/0Survived/0UNKNOWN/655unattempted on the disk reserve; it remains partial. Fresh repaired image/envelope numeric checks are active. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published product Source: `4dbd30e24403e51c4c83fead7dd4c8e4be0cff68`, scoped pin `256e3d8a8cdadb91379e243f458819be001bb08b`. SQLite catalog, native encoding/BINARY ordering and Unicode device-path repairs are checked and pushed. Latest image F52/52,L202/202,S224/224,B61/61 and same-run frozen9/9 pass; envelope and custody exact coverage/frozen pairs remain recorded separately. Custody11targeted mutants are assertion-confirmed Killed,676unattempted/687, no complete score. Stateful schema2 remains GAP. Latest image native campaign is partial:278Killed/34Survived/1UNKNOWN/184unattempted at900s; its checkout is fenced. Three new meaningful guard witnesses and a pre-launch derived-budget repair are checked pending publication and fresh native controls. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1710,6 +1710,64 @@ same fault adapter. Read the method through the existing Reflect boundary and
 return an explicitly unknown forwarded property; `FiJaiP` passes the actual
 fault case in1016ms before the strict hook is rerun. No lint rule is suppressed.
 
+### Bounded image campaign findings and native budget correction
+
+Encoding Source4dbd30e and scope/skill packet256e3d8 pass the normal505-file
+strict TypeScript/format/lint/Knip hooks and are pushed. Fetch origin/main and
+ff-only reconciliation report already up to date. Updated project Bun skill
+records literal internal-prefix SQL, real Unicode/UTF-16 fixtures, native bigint
+and typed fault forwarding. No environment/runtime installation follows.
+
+Immutable v201 native image `Vf3DUw`, runa962f9ff-45e8-4b51-9258-50c3f7172e36,
+terminates901153ms with68baseline cases,497generated,313attempted:
+278assertion-confirmed Killed,34Survived,1UNKNOWN,184unattempted. Outer capture,
+groups, boot, commit and clean checkout are complete; outer timed_out is false.
+Last183, identitya98c808106174b583b6c726ddd24a0edff64dc0b07abf9bcaeea47d3261fcfc3,
+has producer/capture-not-closed UNKNOWN at the900s partition boundary. Preserve
+that classification and fence v201; no full score or closure. Terminal survivor
+identity list: /workspace/attachments/storage-image-survivors-v201-terminal.json.
+Option/hidden-column candidates need actual semantic analysis; do not mirror
+constructor options, assume every Survived is a product defect, or exclude them
+to manufacture100%. The earlier live option interpretations were corrected
+against exact Source positions before any action.
+
+After all v201 writers terminate, Root prepares a new physical dependency copy
+in /dev/shm/vida-rolling-measure-v202 at256e3d8, preserving overlay disk reserve.
+Its writable bind, executable tmpfs and independent /tmp scratch are qualified by
+SDK test-input formation `uV9ihQ`,2931ms; exact coverage `FqSF2N`,8756ms; and
+same-run frozen `bFDkQw`,754ms. Run351410e6-ae03-42f3-a709-bd72247ea5c1 reports
+F52/52,L202/202,S224/224,B61/61,maxCC9/maxCRAP9 against4dbd30e, retaining all
+50ordinary10/10 and both cleanup1/1 caps. Projection614imports the pair with its
+separate BLOCKED parent. Complete output/groups/boot/commit/clean checkout are
+observed. This changes measurement storage only; no archived state is copied,
+no cache/node_modules hardlinks are shared, and no existing gate is relaxed.
+
+One blind Luna author supplies three image witness candidates. Root consolidates
+the empty-inventory control into the existing identified native catalog/cleanup
+scenario, rather than intercepting the first Host schema query. Use1025small
+views on an actual Mastra table so the schema guard is reached below4MiB; an
+index-per-object version failed fixture size and is not defect proof. Reuse the
+existing Mastra fixture and native thread metadata update for combined output
+capacity, removing duplicate SDK initialization/cleanup. Both input images stay
+below4MiB, while their merged output exceeds4MiB; beforeimages remain unchanged.
+Independent author review approves the corrected actual guard/fault identities.
+
+Blind budget review confirms the native pilot ignored the already documented
+mutationLimits factor2/overhead10000 and admitted any positive remainder.
+Genuine collector RED `CWSAHY` launches the second producer with a truncated
+allowance. Root measures one complete passing baseline invoke/receipt, derives
+ceil(baselineElapsed*2)+10000 capped at the existing190000pilot envelope, and
+uses the SAME allowance for timeout and pre-launch collector floor. Record its
+actual values in the existing diagnostic summary. Default per-test5000,
+coverage300000, partition900000 and outer930000 stay unchanged. Below-floor IDs
+are unattempted only before invocation; actual started timeouts/errors/UNKNOWN
+retain their classification and cleanup owners. An overconservative fixed
+190000floor is not enabled. Independent review confirms full production wiring.
+Zero/fractional/saturated/invalid elapsed, below/exact floor, preserved prior
+observations and existing UNKNOWN controls pass. Combined `1K2qTy` passes
+171tests/0skipped,854assertions in5555ms with complete custody. Three new image
+controls are reviewed behavior, not yet native Killed or a complete score.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.
@@ -1999,7 +2057,7 @@ CLEAR and backlog retain the P0/P1/P2 definitions and all stable task IDs. Missi
 ## Evidence boundaries
 
 - The retained capture has exact local coverage and same-run scoped CRAP for its bound inputs. Subsequent changes need fresh evidence. No complete config mutation outcome exists.
-- Partial 7,112-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
+- Partial 7,113-role correspondence and 19 static deficits do not satisfy exact global correspondence or numeric admission. The original measured report/admission is still missing.
 - Historical local contour triples are 6/45; 39 remain unclosed. They stay qualified as historical/local and do not imply a globally ready system.
 - Adapter/unit evidence does not establish physical HostState or native Windows behavior. Formation is not installation; installation is not attributable user Runtime acceptance.
 - Keep failures, expected failures and UNKNOWN outcomes with original classifications and receipts. Do not turn interruption, missing output, timeout or partial counters into PASS or Killed.

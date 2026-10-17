@@ -45,14 +45,26 @@ type NativeBatchRow = {
   reason?: string;
 };
 
+export function nativeMutationCommandAllowance(baselineElapsedMs: number): number {
+  if (!Number.isFinite(baselineElapsedMs) || baselineElapsedMs < 0 || baselineElapsedMs > Number.MAX_SAFE_INTEGER)
+    throw new Error('Native mutation baseline elapsed time is invalid.');
+  return Math.min(
+    mutationLimits.commandMs + mutationLimits.mutantOverheadMs,
+    Math.ceil(baselineElapsedMs * mutationLimits.mutantTimeoutFactor) + mutationLimits.mutantOverheadMs,
+  );
+}
+
 /** Preserve observed rows when a later launch is denied, interrupted or budget-spent. */
 export async function collectNativeMutationBatch(
   batch: { identities: readonly string[]; local_ids: readonly string[] },
   remaining: () => number,
   invoke: (id: string, remaining: number) => Promise<{ status: 'passed' | 'killed' | 'unknown'; reason?: string }>,
   progress: (row: NativeBatchRow, completed: number) => void,
+  minimumAllowanceMs = 1,
 ) {
   if (batch.identities.length !== batch.local_ids.length) throw new Error('Native batch identity pairing differs.');
+  if (!Number.isSafeInteger(minimumAllowanceMs) || minimumAllowanceMs < 1)
+    throw new Error('Native mutation minimum allowance is invalid.');
   const results: NativeBatchRow[] = [];
   let budgetExhausted = false;
   let resourceBlocked: { observed_path: string; available_bytes: string | null } | undefined;
@@ -63,6 +75,10 @@ export async function collectNativeMutationBatch(
       try {
         allowance = remaining();
       } catch {
+        budgetExhausted = true;
+        break;
+      }
+      if (allowance < minimumAllowanceMs) {
         budgetExhausted = true;
         break;
       }
@@ -354,13 +370,15 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
     const context = { identity, hookFiles: testFilesWithLifecycleHooks(tests, inputs.input_bytes) };
     const command = nativeMutationBatchCommand(bwrap, directory, sandbox, sandboxTmp, process.execPath);
     const receipts = new Map<string, NativeMutationReceiptReference>();
+    const maximumMutantAllowanceMs = mutationLimits.commandMs + mutationLimits.mutantOverheadMs;
+    let mutantAllowanceMs = maximumMutantAllowanceMs;
     const invoke = async (id: string | null, remaining: number, census?: readonly MutationJUnitCase[]) => {
       requireCampaignStorage(directory);
       const key = id === null ? 'dry-run' : sha256(id);
       const result = await executeMutationCommand(
         command,
         sandbox,
-        Math.min(mutationLimits.commandMs + 10_000, remaining),
+        Math.min(id === null ? maximumMutantAllowanceMs : mutantAllowanceMs, remaining),
         {
           ownedProcessGroup: true,
           env: id === null ? environment : { ...environment, __STRYKER_ACTIVE_MUTANT__: id },
@@ -406,10 +424,13 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       if (id !== null) receipts.set(id, nativeReceipt);
       return { ...outcome, native_receipt: nativeReceipt };
     };
+    const baselineStarted = performance.now();
     const baseline = await invoke(null, partitionBudget.remaining(mutationLimits.dryRunEnvelopeMs));
+    const baselineElapsedMs = performance.now() - baselineStarted;
     const baselineArtifact = record('baseline.json', baseline);
     if (baseline.status !== 'passed' || !baseline.native_receipt)
       throw new Error('Native mutation baseline is not a complete passing receipt.');
+    mutantAllowanceMs = nativeMutationCommandAllowance(baselineElapsedMs);
     const batches: Array<Parameters<typeof validateNativeMutationPartitionProof>[4]['batches'][number]> = [];
     const results: NativeBatchRow[] = [];
     const totals = {
@@ -449,6 +470,7 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
             }),
           );
         },
+        mutantAllowanceMs,
       );
       const current = observed.results;
       results.push(...current);
@@ -501,6 +523,11 @@ async function runMutationBatchPilot(root: string, args: readonly string[]): Pro
       binding,
       universe_sha256: plan.universe_sha256,
       baseline_cases: baseline.cases.length,
+      budget: {
+        baseline_elapsed_ms: baselineElapsedMs,
+        mutant_allowance_ms: mutantAllowanceMs,
+        maximum_mutant_allowance_ms: maximumMutantAllowanceMs,
+      },
       resource_blocked: resourceBlocked ?? null,
       totals,
       ...(diagnosticMutantId !== undefined

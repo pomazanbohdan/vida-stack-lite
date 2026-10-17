@@ -303,6 +303,15 @@ interrupts a command before a complete receipt, the result remains timeout or
 UNKNOWN; never infer an assertion-confirmed kill. Split oversized scopes rather
 than raising all budgets. Changed limit/tool inputs require fresh affected proof.
 
+The native batch pilot applies that same factor/overhead policy to one measured
+complete passing baseline, retaining its existing190000ms command-plus-overhead
+ceiling. Its diagnostic summary records the elapsed baseline and derived
+allowance. Before each producer starts, the shared remainder must cover that
+whole allowance; otherwise the remaining IDs stay budget-spent and unattempted.
+This never resets the partition deadline or reclassifies an already-started
+UNKNOWN. Actual hangs, incomplete captures and failed custody retain their
+existing outcome. Per-test and coverage deadlines stay with their current owners.
+
 Keep assertion diagnostics bounded for large payloads. A missing-throw Bun
 `toThrow` assertion can serialize a multi-megabyte return into stderr and JUnit,
 exceeding receipt bounds. Use native `assert.throws` with the expected error
