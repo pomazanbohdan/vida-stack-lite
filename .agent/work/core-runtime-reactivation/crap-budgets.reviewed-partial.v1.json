@@ -479,7 +479,7 @@
     },
     {
       "file": "src/config/project-upgrade-existing-storage.ts",
-      "sha256": "8678bbca51ea0dbaaa6a47f14a8e361f16b912f827487e91f2e4e0e3d0683444"
+      "sha256": "4a3414f13731b022ac65462b640ee8cadefe340974420bcc70dacd27ff6d2c4d"
     },
     {
       "file": "src/config/service-operation-custody.ts",
@@ -187724,15 +187724,15 @@
       "identity": "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "current_complexity": 6,
+      "current_complexity": 9,
       "current_source_address": {
         "line": 402,
         "column": 7,
         "start": 16004,
-        "end": 19191,
+        "end": 19733,
         "bodyLine": 406,
         "bodyColumn": 33,
-        "bodyEndLine": 473,
+        "bodyEndLine": 485,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 383. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187741,16 +187741,16 @@
       "identity": "src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:expectedCloneSchema/closure:CallExpression:arguments[0]#0",
       "max_complexity": 10,
       "max_crap": 10,
-      "current_complexity": 1,
+      "current_complexity": 2,
       "current_source_address": {
-        "line": 428,
+        "line": 434,
         "column": 84,
-        "start": 17439,
-        "end": 17543,
-        "bodyLine": 429,
-        "bodyColumn": 6,
-        "bodyEndLine": 429,
-        "bodyEndColumn": 94
+        "start": 17789,
+        "end": 18091,
+        "bodyLine": 434,
+        "bodyColumn": 94,
+        "bodyEndLine": 442,
+        "bodyEndColumn": 5
       },
       "rationale": "New inline callback role under src/config/project-upgrade-existing-storage.ts#fn:prepareUnifiedExistingStorageImage#0/binding:expectedCloneSchema. The immediate parent and surrounding current Source lines 401-403 identify its lexical owner and callsite operation; this callback participates in the current in-memory Host/pinned-Mastra merge implementation. The published baseline has no original module or responsibility-equivalent owner. No allowance is inferred from a same-named or syntactically similar helper."
     },
@@ -187760,13 +187760,13 @@
       "max_crap": 10,
       "current_complexity": 2,
       "current_source_address": {
-        "line": 475,
+        "line": 487,
         "column": 0,
-        "start": 19193,
-        "end": 19359,
-        "bodyLine": 475,
+        "start": 19735,
+        "end": 19901,
+        "bodyLine": 487,
         "bodyColumn": 80,
-        "bodyEndLine": 481,
+        "bodyEndLine": 493,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 456. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187777,13 +187777,13 @@
       "max_crap": 10,
       "current_complexity": 4,
       "current_source_address": {
-        "line": 483,
+        "line": 495,
         "column": 0,
-        "start": 19361,
-        "end": 20316,
-        "bodyLine": 483,
+        "start": 19903,
+        "end": 20858,
+        "bodyLine": 495,
         "bodyColumn": 76,
-        "bodyEndLine": 506,
+        "bodyEndLine": 518,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 464. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187794,13 +187794,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 508,
+        "line": 520,
         "column": 0,
-        "start": 20318,
-        "end": 20761,
-        "bodyLine": 508,
+        "start": 20860,
+        "end": 21303,
+        "bodyLine": 520,
         "bodyColumn": 63,
-        "bodyEndLine": 515,
+        "bodyEndLine": 527,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 502. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -187811,13 +187811,13 @@
       "max_crap": 10,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 517,
+        "line": 529,
         "column": 0,
-        "start": 20763,
-        "end": 20932,
-        "bodyLine": 517,
+        "start": 21305,
+        "end": 21474,
+        "bodyLine": 529,
         "bodyColumn": 50,
-        "bodyEndLine": 519,
+        "bodyEndLine": 531,
         "bodyEndColumn": 1
       },
       "rationale": "New storage-merge declaration at current Source line 511. This standalone role implements the current in-memory Host/pinned-Mastra schema merge, whose module and responsibility-equivalent owner are absent from the published baseline. No allowance is inferred from a same-named helper in another file."
@@ -206334,13 +206334,13 @@
       "max_crap": 1,
       "current_complexity": 1,
       "current_source_address": {
-        "line": 503,
+        "line": 515,
         "column": 4,
-        "start": 20225,
-        "end": 20259,
-        "bodyLine": 503,
+        "start": 20767,
+        "end": 20801,
+        "bodyLine": 515,
         "bodyColumn": 18,
-        "bodyEndLine": 503,
+        "bodyEndLine": 515,
         "bodyEndColumn": 38
       },
       "rationale": "New straight-line cleanup callback delegates the exact owned SQLite statement finalizer or readonly catalog close through the existing shared finisher. Source-reviewed by blind Luna v158 and Root before numeric measurement. Prospective1/1 ceiling; no original or retired role/cap is transferred."
@@ -225104,5 +225104,39 @@
       "/workspace/attachments/literal-boundary-repair-review-v201-20261017.md"
     ],
     "correction": "Reserved device-name extensions consume all Unicode characters and require actual segment end. Bare nonreserved Unicode basenames remain allowed. All78 roles and their original correspondence/caps are retained."
+  },
+  "scope_review_storage_image_native_encoding_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "contour": "bun-project-upgrade-existing-storage-image",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/project-upgrade-existing-storage.ts"
+    ],
+    "removed_source_paths": [],
+    "current_source_bindings": [
+      {
+        "file": "src/config/project-upgrade-existing-storage.ts",
+        "sha256": "4a3414f13731b022ac65462b640ee8cadefe340974420bcc70dacd27ff6d2c4d"
+      }
+    ],
+    "reviewed_source_context": "34e52e62b07f6b1af2b9d183c0d00336a64dcb26 plus reviewed internal aggregate canonicalization repair",
+    "review_artifacts": [
+      "/workspace/attachments/storage-image-native-encoding-review-v202-20261017.md"
+    ],
+    "selected_rows": {
+      "retained": 0,
+      "new": 52,
+      "removed": 0
+    },
+    "independent_review_lane": "blind-native-luna-repair-packet-review-v195",
+    "added_cleanup_roles": [
+      "src/config/project-upgrade-existing-storage.ts#fn:importMastraRows#0/closure:CallExpression:arguments[0]#0/closure:CallExpression:arguments[2]#0",
+      "src/config/project-upgrade-existing-storage.ts#fn:capturePinnedMastraInventoryAsync#0/closure:CallExpression:arguments[2]#0"
+    ],
+    "limits": "Literal/comparator repair only; no added/retired/reassigned function, increased allowance or current numeric claim. Existing complete correspondence, historical provenance and prior reviews remain applicable. Require an immutable scope pin and fresh exact coverage/same-run frozen proof. Mutation and Runtime acceptance remain separate.",
+    "correction": "Retain the same52 callable responsibilities and all50original10/10 plus two1/1 cleanup ceilings. Existing clone comparator uses the native SQLite UTF-8/UTF-16LE/UTF-16BE encoding, preserving valid UTF-16 images and BINARY ordering. No role/cap transfer, exclusion, input encoding restriction or numeric claim."
   }
 }

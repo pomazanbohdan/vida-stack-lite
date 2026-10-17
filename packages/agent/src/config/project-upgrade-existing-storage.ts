@@ -425,9 +425,21 @@ export async function prepareUnifiedExistingStorageImage(
     if (!pinned.ok) throw pinned.error;
     const withPinnedSchema = pinned.value;
     target = Database.deserialize(Buffer.from(withPinnedSchema), { strict: true, safeIntegers: true });
-    const expectedCloneSchema = [...inventory.hostSchema, ...inventory.pinned].sort((a, b) =>
-      Buffer.compare(Buffer.from(a.type + '\0' + a.name), Buffer.from(b.type + '\0' + b.name)),
+    const schemaEncoding = target.query<{ encoding: string }, []>('PRAGMA encoding').get()?.encoding;
+    requireMerge(
+      schemaEncoding === 'UTF-8' || schemaEncoding === 'UTF-16le' || schemaEncoding === 'UTF-16be',
+      'SQLite schema encoding is unsupported',
     );
+    const bufferEncoding = schemaEncoding === 'UTF-8' ? 'utf8' : 'utf16le';
+    const expectedCloneSchema = [...inventory.hostSchema, ...inventory.pinned].sort((a, b) => {
+      const left = Buffer.from(a.type + '\0' + a.name, bufferEncoding);
+      const right = Buffer.from(b.type + '\0' + b.name, bufferEncoding);
+      if (schemaEncoding === 'UTF-16be') {
+        left.swap16();
+        right.swap16();
+      }
+      return Buffer.compare(left, right);
+    });
     requireMerge(
       canonicalJson(schema(target)) === canonicalJson(expectedCloneSchema),
       'cloned Host plus pinned schema closure differs',

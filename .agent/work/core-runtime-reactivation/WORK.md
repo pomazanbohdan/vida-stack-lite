@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published checked Source: `fb6fdbdc39c4c1615b561a46a98c75d73df26763`, scoped pin `f063bab6018976820b79a460dd7201bb6d94ad96`. Shared UUID predicate replaces order-dependent cache/spy workarounds. Fresh custody F57/57,L236/236,S243/243,B123/123 and same-run frozen maxCC/CRAP9/9 pass;11targeted mutants are assertion-confirmed Killed,676unattempted/687, no complete score. Stateful schema2 remains GAP. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. Current literal-boundary repairs are under verification, and an independent immutable envelope native campaign is running. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published checked Source: `c8d952a328519c6c2c64db2e6fea22849ccabfaf`, scoped pin `dd2a713ac61c14c59c0f3499a7b13578753f8713`. SQLite literal-prefix, clone BINARY ordering and Unicode device-extension repairs pass123behavior tests and the normal strict hook. Shared UUID predicate replaces order-dependent cache/spy workarounds. Fresh custody F57/57,L236/236,S243/243,B123/123 and same-run frozen maxCC/CRAP9/9 pass;11targeted mutants are assertion-confirmed Killed,676unattempted/687, no complete score. Stateful schema2 remains GAP. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. Previous-envelope native campaign stops at108Killed/0Survived/0UNKNOWN/655unattempted on the disk reserve; it remains partial. Fresh repaired image/envelope numeric checks are active. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -1632,6 +1632,83 @@ the final123-case check. One existing inventory/hash pass refreshes only the
 three changed Sources: image52, admission47, envelopes78; all identities/caps
 and partial counts remain unchanged. Fresh numeric evidence for these repairs
 is still pending publication, scoped pins and an immutable checkout.
+
+Source repairc8d952a and fixed scoped selectordd2a713 pass the normal505-file
+strict TypeScript/format/lint/Knip hooks and are pushed. The prior immutable v200
+envelope campaign `PMaAuK`, run909f7995-b215-4110-9b2a-26683a7ad027, completes
+384602ms with108assertion-confirmed Killed,0Survived,0UNKNOWN,655unattempted/763,
+47baseline cases. It stops safely on1924194304available bytes at the2GiB reserve.
+Root's preparation of the next physical dependency copy reduced that reserve;
+do not describe this as a product failure, timeout or complete score. Captures,
+groups, boot, commit and tracked checkout custody remain complete. No old
+attempt is resumed. Before starting fresh v201 operations, Root clears21exact
+inactive regenerable Bun cache namespaces under TESTING policy, retaining all
+Source, installed dependencies, descriptors and failed/UNKNOWN receipts. Custody
+manifest: /workspace/attachments/inactive-bun-cache-cleanup-v201-20261017.json.
+Available overlay space returns to2.4GiB, tmpfs scratch to8.3GiB. No measurement
+root is prepared during a later active native campaign on that output volume.
+
+Fresh v201 dd2a713 forms SDK test inputs once (`4XS2oO`,2144ms). Envelope
+coverage `eAU7Od`, runf1bbbebd-bd67-49cc-b7cb-5c8e7b2b36d1, completes7920ms:
+F78/78,L211/211,S227/227,B103/103. Same-run frozen `dQT5HN` passes1342ms at
+maxCC9/maxCRAP9 under c8d952a's unchanged original correspondence and ceilings.
+Image coverage `YaZQcX`, runf3be455c-e71a-49dc-abb4-56062b6aea62, completes9085ms:
+F52/52,L194/194,S216/216,B54/54. Same-run frozen `KxF5rI` passes858ms at9/9,
+preserving50ordinary10/10 and both cleanup1/1 ceilings. The two fewer branch
+arms come from replacing the locale-dependent OR comparator, with the same
+callable responsibility and no excluded branch. Projection611imports both
+actual pairs; their separate BLOCKED parents stay visible. All operations have
+complete captures, closed groups, unchanged boot/commit and clean measured
+checkout. Historical full triples remain6/45; native image qualification is
+running next against this immutable Source, not inferred from coverage.
+
+Static performance review locates repeated envelope setup: retained47-case
+baseline4.62s includes zombies1.64s (body work about0.05s), boundary2.71s and
+fuzz0.27s. Body-local fresh subject loading compiles both Ajv validators again;
+that loading currently owns activation. No cache/mock/filter/reorder shortcut
+is enabled without preserving that proof. Do not reduce assertion sets, fixed
+property counts, limits or counter ownership merely to improve duration.
+
+### Native SQLite encoding follow-up
+
+The broader image review challenges the UTF-8 comparator assumption. SQLite
+supports UTF-8, UTF-16LE and UTF-16BE images; no input contract limits encoding.
+Native BINARY order follows the database encoding, while JS result strings are
+decoded. Root's real two-image control `mdMr5s` passes BE but fails LE at cloned
+schema closure for ordinary names xÿ/xĀ. This is an actual supported-input bug,
+not malformed fixture data. References: https://www.sqlite.org/datatype3.html,
+https://www.sqlite.org/pragma.html#pragma_encoding and
+https://www.sqlite.org/c3ref/column_blob.html.
+
+Keep the same clone comparator and its responsibility. Read the native encoding
+once, fail closed for an unsupported native metadata value, and compare UTF-8
+or UTF-16LE bytes with BE byte swapping as appropriate. The real LE/BE controls
+check retained native encoding, both rows and integrity. A separate native
+metadata fault proves denial, unchanged input images and healthy subsequent
+retry. Full image file `HD7Xfk` passes71tests/0skipped,502assertions in5329ms,
+with complete captures, closed group and unchanged boot. One existing image-only
+inventory/hash pass keeps all52identities,50ordinary10/10 and two cleanup1/1
+ceilings; maxCC9 remains within its unchanged allowance. Current Source hash is
+4a3414f13731b022ac65462b640ee8cadefe340974420bcc70dacd27ff6d2c4d.
+Fresh scoped numeric proof needs its own published pin; v201 remains immutable
+and measures the preceding8678bbca Source. Its live Survived candidates are
+unadmitted until the native owner terminates; they are not Killed or exclusions.
+
+The package-wide analogue search finds one remaining maintained test catalog
+oracle in fresh-projection-schema-contract; correct its literal-prefix query
+too. Focused `FP8H6x` passes7tests/130assertions/0skipped in1447ms with complete
+custody. Independent blind Luna confirms native-encoding comparator correctness,
+unchanged52roles/caps and cleanup at
+/workspace/attachments/storage-image-native-encoding-review-v202-20261017.md.
+The normal hook first rejects one generic mock-signature mismatch in the new
+encoding fault adapter; preserve the generic native method signature explicitly
+at that controlled test boundary. Focused follow-up `7Vrgyg` rechecks the actual
+fault case before the normal hook is rerun. Source bytes and inventory do not
+change for this type-only test correction.
+The next hook passes TypeScript but rejects unbound-method/unsafe-return in the
+same fault adapter. Read the method through the existing Reflect boundary and
+return an explicitly unknown forwarded property; `FiJaiP` passes the actual
+fault case in1016ms before the strict hook is rerun. No lint rule is suppressed.
 
 ### Published admission packet — retained context
 

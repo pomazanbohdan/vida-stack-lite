@@ -57,7 +57,7 @@ interface CountRow {
 function schemaSnapshot(database: Database): SchemaObject[] {
   return database
     .query<SchemaObject, []>(
-      "SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY type,name",
+      "SELECT type,name,tbl_name AS table_name,sql FROM sqlite_master WHERE name NOT GLOB 'sqlite_*' ORDER BY type,name",
     )
     .all();
 }

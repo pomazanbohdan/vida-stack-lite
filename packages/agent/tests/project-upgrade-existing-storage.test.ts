@@ -1029,6 +1029,74 @@ describe('existing storage image preparation', () => {
     }
   });
 
+  test.each(['UTF-16le', 'UTF-16be'] as const)(
+    'preserves native %s Host schema ordering and Unicode table rows',
+    async (encoding) => {
+      const database = new Database(':memory:', { strict: true, safeIntegers: true });
+      let host: ClosedDatabaseImage;
+      try {
+        database.exec("PRAGMA encoding='" + encoding + "'");
+        initializeHostDatabaseSchema(database);
+        database.exec('CREATE TABLE "xÿ"(payload TEXT NOT NULL); CREATE TABLE "xĀ"(payload TEXT NOT NULL)');
+        database.query('INSERT INTO "xÿ" VALUES(?)').run('first Unicode row');
+        database.query('INSERT INTO "xĀ" VALUES(?)').run('second Unicode row');
+        expect(database.query('PRAGMA encoding').values()).toEqual([[encoding]]);
+        host = closedImage(database);
+      } finally {
+        database.close(true);
+      }
+      const mastra = await makeMastra();
+      const image = await expectAsyncReturned(() =>
+        prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+      );
+      const merged = openUnified(image.bytes_base64);
+      try {
+        expect(merged.query('PRAGMA encoding').values()).toEqual([[encoding]]);
+        expect(merged.query('SELECT payload FROM "xÿ"').values()).toEqual([['first Unicode row']]);
+        expect(merged.query('SELECT payload FROM "xĀ"').values()).toEqual([['second Unicode row']]);
+        expect(merged.query('PRAGMA integrity_check').values()).toEqual([['ok']]);
+      } finally {
+        merged.close(true);
+      }
+    },
+  );
+
+  test('rejects unsupported native schema encoding without changing either input image', async () => {
+    const host = makeHost();
+    const mastra = await makeMastra();
+    const hostBefore = Buffer.from(host.bytes);
+    const mastraBefore = Buffer.from(mastra.bytes);
+    const query = Reflect.get(Database.prototype, 'query') as typeof Database.prototype.query;
+    const faultyEncodingQuery = function (this: Database, sql: string) {
+      const statement = Reflect.apply(query, this, [sql]);
+      if (sql !== 'PRAGMA encoding') return statement;
+      return new Proxy(statement, {
+        get(target, property) {
+          if (property === 'get') return () => ({ encoding: 'UTF-32' });
+          const original: unknown = Reflect.get(target, property, target);
+          return original;
+        },
+      });
+    };
+    const encodingFault = spyOn(Database.prototype, 'query').mockImplementation(
+      faultyEncodingQuery as typeof Database.prototype.query,
+    );
+    try {
+      await expectRejection(
+        prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+        /SQLite schema encoding is unsupported/u,
+      );
+    } finally {
+      encodingFault.mockRestore();
+    }
+    expect(Buffer.from(host.bytes).equals(hostBefore)).toBe(true);
+    expect(Buffer.from(mastra.bytes).equals(mastraBefore)).toBe(true);
+    const healthy = await expectAsyncReturned(() =>
+      prepareUnifiedExistingStorageImage(host, mastra, binding(host, mastra)),
+    );
+    expect(healthy.schema).toBe('VidaUnifiedWorkspaceImage/v1');
+  });
+
   test('accepts a healthy Host schema above sixteen objects within the supported bounds', async () => {
     const database = Database.deserialize(Buffer.from(makeHost().bytes), { strict: true, safeIntegers: true });
     let host: ClosedDatabaseImage;
