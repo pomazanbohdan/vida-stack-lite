@@ -1806,6 +1806,32 @@ in4701ms with full capture/groups/unchanged boot. These are behavior controls,
 not native mutant confirmations. Product Source and frozen role budgets do not
 change; no speculative virtual-table contract or option-mirror tests are added.
 
+Fresh immutable v204 at40416cc has SDK-inputs `ibD6lG`2159ms, coverage
+`m9dIh5`7921ms, run425fa00c-009f-4fcc-9d2e-dd9234016901, and frozen
+`WgGvwo`706ms against4dbd30e. Exact F52/52,L202/202,S224/224,B61/61 and
+maxCC9/maxCRAP9 remain; projection620imports the pair and its independent
+BLOCKED parent. Full captures/groups/boot/commit/clean checkout are observed.
+Native set `ozg10e`, run7b7d20a6-7921-40fa-87cd-c03863cf4064, stops1979ms
+before tests: dependency imports succeed, but the retained receipt rejects
+`tool-inputs` with input-drift because `_repository/*` parent files are still
+hidden by fresh `/dev`. Its baseline remains UNKNOWN with0attempted mutants;
+fence v204 and preserve its bytes. Do not combine it with any other run.
+
+The coherent correction replaces the dependency-only bind with one read-only
+bind of the SAME qualified repository root used by parent capture verification.
+It follows `/tmp` and precedes the writable operation directory, read-only
+sandbox and writable private scratch. This restores the original host-read-only
+view for the captured project without exposing writable parent Source, adding26
+file mounts or weakening snapshot validation. Expanded real controls contain
+their operation inside the parent root. RED `GZa6IA` detects the parent mount
+masking writable operation output; final `zI1REv` passes98/0tests in870ms with
+context/dependency reads, nested spawn, denied parent/Source/dependency writes,
+unchanged bytes and writable operation/scratch. Earlier `64aVnC` tested context
+visibility only; it did not model the nested operation and was not final proof.
+Independent review approves the required hierarchy. Fresh native qualification
+is still pending; product Source, role caps and existing UNKNOWN results stay
+unchanged.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

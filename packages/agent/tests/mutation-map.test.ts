@@ -519,17 +519,21 @@ test('native batch rejects a broken identity pairing before invoking the runner'
 });
 
 test.each(['temporary', 'shared-memory'])(
-  'native mutation sandbox keeps %s dependencies visible and read-only with nested Bun spawn',
+  'native mutation sandbox keeps %s parent inputs visible and read-only with nested Bun spawn',
   async (storage) => {
-    const directory = mkdtempSync(path.join(tmpdir(), 'native-mutation-sandbox-control-'));
-    const dependencies = mkdtempSync(
+    const parentRoot = mkdtempSync(
       path.join(storage === 'shared-memory' ? '/dev/shm' : tmpdir(), 'native-mutation-dependencies-'),
     );
+    mkdirSync(path.join(parentRoot, '.tmp'));
+    const directory = mkdtempSync(path.join(parentRoot, '.tmp', 'native-mutation-sandbox-control-'));
+    const dependencies = path.join(parentRoot, 'node_modules');
+    const parentInput = path.join(parentRoot, 'captured-context.json');
     const sandbox = path.join(directory, 'sandbox-control');
     const scratch = path.join(sandbox, '.tmp');
     mkdirSync(path.join(sandbox, 'tooling'), { recursive: true });
     mkdirSync(scratch);
-    mkdirSync(path.join(dependencies, 'native-control'));
+    mkdirSync(path.join(dependencies, 'native-control'), { recursive: true });
+    writeFileSync(parentInput, '{"captured":true}');
     writeFileSync(
       path.join(dependencies, 'native-control/package.json'),
       '{"name":"native-control","exports":"./index.ts"}',
@@ -542,13 +546,18 @@ test.each(['temporary', 'shared-memory'])(
       `
     import{writeFileSync}from'node:fs';
     import{value}from'native-control';
+    const parentInput=${JSON.stringify(parentInput)};
+    writeFileSync(${JSON.stringify(path.join(directory, 'operation.txt'))},'operation');
+    const parentContext=JSON.parse(await Bun.file(parentInput).text());
+    let parentReadonly=false;
+    try{writeFileSync(parentInput,'invalid')}catch(error){parentReadonly=error.code==='EROFS'||error.code==='EACCES'}
     let sourceReadonly=false;
     try{writeFileSync('subject.ts','invalid')}catch(error){sourceReadonly=error.code==='EROFS'||error.code==='EACCES'}
     let dependenciesReadonly=false;
     try{writeFileSync('node_modules/native-control/index.ts','invalid')}catch(error){dependenciesReadonly=error.code==='EROFS'||error.code==='EACCES'}
     writeFileSync('.tmp/owned.txt','scratch');
     const child=Bun.spawn([process.execPath,'--no-install','-e',"import{value}from'native-control';if(value!==41)process.exit(1)"],{stdout:'pipe',stderr:'pipe'});
-    console.log(JSON.stringify({sourceReadonly,dependenciesReadonly,value,exit:await child.exited,scratch:await Bun.file('.tmp/owned.txt').text()}));
+    console.log(JSON.stringify({sourceReadonly,dependenciesReadonly,parentReadonly,parentContext,value,exit:await child.exited,scratch:await Bun.file('.tmp/owned.txt').text()}));
   `,
     );
     let completed = false;
@@ -556,7 +565,7 @@ test.each(['temporary', 'shared-memory'])(
       const bwrap = Bun.which('bwrap');
       if (!bwrap) throw new Error('Native sandbox control requires bwrap.');
       const result = await executeMutationCommand(
-        nativeMutationBatchCommand(bwrap, directory, sandbox, scratch, process.execPath, dependencies),
+        nativeMutationBatchCommand(bwrap, directory, sandbox, scratch, process.execPath, parentRoot),
         sandbox,
         3000,
         {
@@ -573,6 +582,8 @@ test.each(['temporary', 'shared-memory'])(
       expect(observed).toEqual({
         sourceReadonly: true,
         dependenciesReadonly: true,
+        parentReadonly: true,
+        parentContext: { captured: true },
         value: 41,
         exit: 0,
         scratch: 'scratch',
@@ -581,12 +592,14 @@ test.each(['temporary', 'shared-memory'])(
       expect(await Bun.file(path.join(dependencies, 'native-control/index.ts')).text()).toBe(
         'export const value = 41;\n',
       );
+      expect(await Bun.file(parentInput).text()).toBe('{"captured":true}');
+      expect(await Bun.file(path.join(directory, 'operation.txt')).text()).toBe('operation');
       completed = true;
     } finally {
       if (completed) {
         rmSync(directory, { recursive: true, force: true });
-        rmSync(dependencies, { recursive: true, force: true });
-      } else console.error('NATIVE_SANDBOX_CONTROL_RETAINED', directory, dependencies);
+        rmSync(parentRoot, { recursive: true, force: true });
+      } else console.error('NATIVE_SANDBOX_CONTROL_RETAINED', directory, parentRoot);
     }
   },
 );

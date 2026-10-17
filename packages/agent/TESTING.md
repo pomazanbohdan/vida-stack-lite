@@ -1069,15 +1069,17 @@ times remain separate observations. Storage admission reuses the unchanged2GiB
 campaign owner. Use the existing integer execution-budget owner rather than
 subtracting floating clock values at launch. Nested bwrap includes fresh `/dev` and `/proc` mounts:
 binding `/` alone denies `/dev/null` and prevents Bun's own child spawn. Mount
-private `/tmp` and the writable operation directory before the exact package
-dependency-root read-only bind, then the sandbox's final read-only and
-writable-scratch bindings. Pass the dependency root explicitly: a sandbox
-`node_modules` symlink alone cannot preserve a `/dev/shm` checkout through a
-nested `/dev` reset, and an earlier dependency mount under `/tmp` would be
-covered by its later writable mount. The real inert controls verify imports
-from both temporary and shared-memory dependency roots, nested Bun imports/spawn,
-denied Source/dependency writes, unchanged bytes and allowed private scratch
-writes; option-string inspection alone does not qualify it.
+private `/tmp`, then bind the qualified repository root read-only, then the
+owned operation directory writable, followed by the sandbox's final read-only
+and writable-scratch bindings. Pass the same repository root used for parent
+capture verification explicitly. A dependency-only bind cannot expose captured
+`_repository/*` inputs through a nested `/dev` reset. The repository bind must
+follow `/tmp` to retain its read-only boundary, while the nested operation bind
+must follow that parent to retain writable output. The real inert controls use
+both temporary and shared-memory parent roots, exercise context/dependency reads,
+nested Bun imports/spawn, denied Source/dependency/context writes, unchanged bytes
+and allowed owned-operation/private-scratch writes; option-string inspection
+alone does not qualify it. Parent snapshot and descriptor validation stay intact.
 Native receipts still require exact baseline census, process/output closure,
 input/executable/image bindings and body assertion proof. Errors, timeouts and
 unattempted IDs remain separate. Its generated universe, image and diagnostic
