@@ -646,12 +646,15 @@ type ReplacementFailureResult = {
   readonly injectedContention: SafeRepositoryLockContentionError | undefined;
   readonly injectedCause: Error | undefined;
   readonly receiptBytes: Buffer<ArrayBuffer>;
+  readonly guardIdentity: { readonly dev: number; readonly ino: number } | undefined;
 };
 
 async function captureReplacementFailure(
-  failureMode: 'undefined' | 'typed-contention',
+  failureMode: 'undefined' | 'typed-contention' | 'real-guard-contention',
 ): Promise<ReplacementFailureResult> {
   const receiptBytes = readFileSync(receiptPath);
+  const guardPath = path.join(path.dirname(receiptPath), '.' + path.basename(receiptPath) + '.cas.lock.reclaim');
+  expect(existsSync(guardPath)).toBe(false);
   const safeModuleUrl = new URL('../../src/config/safe-repository-access.ts', import.meta.url).href;
   const initModuleUrl = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
   await import('../../src/runtime-initialization.ts');
@@ -664,6 +667,7 @@ async function captureReplacementFailure(
       : undefined;
   let isolatedBindingError: typeof RuntimeInitializationBindingError | undefined;
   let replaceAttempts = 0;
+  let guardIdentity: { readonly dev: number; readonly ino: number } | undefined;
   let caught: unknown;
   try {
     await mock.module(safeModuleUrl, () => ({
@@ -671,11 +675,18 @@ async function captureReplacementFailure(
       requireSafeRepositoryAccess: (requestedRoot: string) => {
         const access = originalSafeExports.requireSafeRepositoryAccess(requestedRoot);
         if (path.resolve(requestedRoot) !== path.resolve(root)) return access;
+        const replaceAtomic = access.replaceAtomicAsync;
         return {
           ...access,
-          replaceAtomicAsync: async () => {
+          replaceAtomicAsync: async (...args: Parameters<typeof replaceAtomic>) => {
             replaceAttempts += 1;
             if (injectedContention !== undefined) throw injectedContention;
+            if (failureMode === 'real-guard-contention') {
+              mkdirSync(guardPath);
+              const stats = lstatSync(guardPath);
+              guardIdentity = { dev: stats.dev, ino: stats.ino };
+              return replaceAtomic(...args);
+            }
             throw undefined;
           },
         };
@@ -702,7 +713,7 @@ async function captureReplacementFailure(
   expect(caught).toMatchObject({ name: 'RuntimeInitializationBindingError', code: 'GAP-RUNTIME-INIT-BIND-001' });
   expect(replaceAttempts).toBe(1);
   expect(readFileSync(receiptPath)).toEqual(receiptBytes);
-  return { caught, injectedContention, injectedCause, receiptBytes };
+  return { caught, injectedContention, injectedCause, receiptBytes, guardIdentity };
 }
 
 test('workspace binding does not retry typed contention from the receipt replacement effect', async () => {
@@ -710,8 +721,7 @@ test('workspace binding does not retry typed contention from the receipt replace
     caseCompleted = true;
     return;
   }
-  const { caught, injectedContention, injectedCause, receiptBytes } =
-    await captureReplacementFailure('typed-contention');
+  const { caught, injectedContention, injectedCause } = await captureReplacementFailure('typed-contention');
   expect(injectedContention).toBeInstanceOf(SafeRepositoryLockContentionError);
   expect(injectedCause).toBeInstanceOf(Error);
   if (injectedContention === undefined || injectedCause === undefined)
@@ -719,95 +729,15 @@ test('workspace binding does not retry typed contention from the receipt replace
   expect(injectedContention.cause).toBe(injectedCause);
   expect(injectedCause.message).toBe('replacement owner still holds the receipt lock');
   expect(caught.cause).toBe(injectedContention);
+  const realContention = await captureReplacementFailure('real-guard-contention');
+  expect(realContention.caught.cause).toBeInstanceOf(SafeRepositoryLockContentionError);
+  expect(readFileSync(receiptPath)).toEqual(realContention.receiptBytes);
+  const guardIdentity = realContention.guardIdentity;
+  if (guardIdentity === undefined) throw new Error('real replacement contention did not create a reclaim guard');
   const guardPath = path.join(path.dirname(receiptPath), '.' + path.basename(receiptPath) + '.cas.lock.reclaim');
-  const safeAccessModule = new URL('../../src/config/safe-repository-access.js', import.meta.url).href;
-  const hostModule = new URL('../../src/host-state.ts', import.meta.url).href;
-  const admissionModule = new URL('../../src/config/storage-read-admission.ts', import.meta.url).href;
-  const initModule = new URL('../../src/runtime-initialization.ts', import.meta.url).href;
-  const program = `
-    import { mock } from 'bun:test';
-    import { lstatSync, mkdirSync } from 'node:fs';
-    import path from 'node:path';
-    const safeModuleUrl = ${JSON.stringify(safeAccessModule)};
-    const actualSafe = Object.freeze({ ...await import(safeModuleUrl) });
-    const access = actualSafe.requireSafeRepositoryAccess(${JSON.stringify(root)});
-    const replaceAtomic = access.replaceAtomicAsync;
-    let replaceAttempts = 0;
-    let guardIdentity;
-    access.replaceAtomicAsync = async (...args) => {
-      replaceAttempts += 1;
-      mkdirSync(${JSON.stringify(guardPath)});
-      const guardStats = lstatSync(${JSON.stringify(guardPath)});
-      guardIdentity = { dev: guardStats.dev, ino: guardStats.ino };
-      return replaceAtomic(...args);
-    };
-    await mock.module(safeModuleUrl, () => ({
-      ...actualSafe,
-      requireSafeRepositoryAccess: (requestedRoot) =>
-        path.resolve(requestedRoot) === ${JSON.stringify(root)}
-          ? access
-          : actualSafe.requireSafeRepositoryAccess(requestedRoot),
-    }));
-    const { HostStateStore, openHostStateDatabase } = await import(${JSON.stringify(hostModule)});
-    const { closeWorkspaceDatabaseWithAdmission } = await import(${JSON.stringify(admissionModule)});
-    const { bindRuntimeInitialization } = await import(${JSON.stringify(initModule)});
-    const db = openHostStateDatabase(${JSON.stringify(root)}, '.agent/host.sqlite', ${JSON.stringify(receipt.workspace_id)});
-    try {
-      const store = new HostStateStore(db, ${JSON.stringify(receipt.workspace_id)});
-      let caught;
-      try {
-        await bindRuntimeInitialization(${JSON.stringify(root)}, store);
-      } catch (error) {
-        caught = error;
-      }
-      console.log(JSON.stringify({
-        replaceAttempts,
-        typedCause: caught?.cause instanceof actualSafe.SafeRepositoryLockContentionError,
-        wrapped: caught?.name === 'RuntimeInitializationBindingError',
-        guardIdentity,
-      }));
-    } finally {
-      closeWorkspaceDatabaseWithAdmission(db);
-    }
-  `;
-  let stdout = '';
-  let stderr = '';
-  await new Promise<void>((resolve, reject) => {
-    const child = execFile(
-      process.execPath,
-      ['-e', program],
-      {
-        cwd: tmpdir(),
-        timeout: 4500,
-        windowsHide: true,
-      },
-      (error, output, errors) => {
-        stdout = output;
-        stderr = errors;
-        if (error) reject(new Error(`isolated replacement contention child failed: ${stderr || error.message}`));
-        else resolve();
-      },
-    );
-    child.on('error', reject);
-  });
-  const observed: unknown = JSON.parse(stdout.trim().split('\n').at(-1)!);
-  expect(observed).toMatchObject({ replaceAttempts: 1, typedCause: true, wrapped: true });
-  expect(readFileSync(receiptPath)).toEqual(receiptBytes);
-  if (
-    typeof observed !== 'object' ||
-    observed === null ||
-    !('guardIdentity' in observed) ||
-    typeof observed.guardIdentity !== 'object' ||
-    observed.guardIdentity === null ||
-    !('dev' in observed.guardIdentity) ||
-    typeof observed.guardIdentity.dev !== 'number' ||
-    !('ino' in observed.guardIdentity) ||
-    typeof observed.guardIdentity.ino !== 'number'
-  )
-    throw new Error('isolated replacement contention child did not report guard identity');
   const retainedGuard = lstatSync(guardPath);
-  expect(retainedGuard.dev).toBe(observed.guardIdentity.dev);
-  expect(retainedGuard.ino).toBe(observed.guardIdentity.ino);
+  expect(retainedGuard.dev).toBe(guardIdentity.dev);
+  expect(retainedGuard.ino).toBe(guardIdentity.ino);
   const currentGuard = lstatSync(guardPath);
   if (currentGuard.dev === retainedGuard.dev && currentGuard.ino === retainedGuard.ino) rmdirSync(guardPath);
   caseCompleted = true;
