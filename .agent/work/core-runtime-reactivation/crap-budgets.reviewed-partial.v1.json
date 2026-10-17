@@ -225150,6 +225150,27 @@
     "limits": "Literal/comparator repair only; no added/retired/reassigned function, increased allowance or current numeric claim. Existing complete correspondence, historical provenance and prior reviews remain applicable. Require an immutable scope pin and fresh exact coverage/same-run frozen proof. Mutation and Runtime acceptance remain separate.",
     "correction": "Retain the same52 callable responsibilities and all50original10/10 plus two1/1 cleanup ceilings. Existing clone comparator uses the native SQLite UTF-8/UTF-16LE/UTF-16BE encoding, preserving valid UTF-16 images and BINARY ordering. No role/cap transfer, exclusion, input encoding restriction or numeric claim."
   },
+  "planned_custody_lazy_literals_20261017": {
+    "status": "PROSPECTIVE_BEFORE_TRACKED_NAMED_IMPLEMENTATION_NOT_NUMERIC_ADMISSION",
+    "file": "src/config/service-operation-custody.ts",
+    "roles": [
+      {
+        "identity": "src/config/service-operation-custody.ts#fn:serviceOperationCustodySchemaSql#0",
+        "max_complexity": 1,
+        "max_crap": 1
+      },
+      {
+        "identity": "src/config/service-operation-custody.ts#fn:serviceOperationCustodyTable#0",
+        "max_complexity": 1,
+        "max_crap": 1
+      }
+    ],
+    "basis": "One straight-return schema builder composes the existing exact SQL fragments with one straight-return shared canonical table-name owner. Both execute in actual operation bodies; neither is eagerly invoked or cached at module initialization. No branches, loops, mutable state, authority or side effects. Independently justified1/1 ceilings, not derived from current candidate measurements or transferred from prior roles.",
+    "independent_review": "/workspace/attachments/custody-lazy-literals-plan-review-v214-20261017.md",
+    "pre_implementation_context": "Published3ac41f5 records the design before canonical implementation. Current custody still has the eager SQL/table strings and53roles; its unchanged utility has4roles. The prior v199 factory retained an eager primitive export and was not adopted. Remove that eager export rather than recreating its initialization-owned call.",
+    "original_disposition": "Preserve all57existing contour roles, all56original10/10 ceilings and the shared UUID predicate1/1. Add2independently capped roles; remove/reuse no callable and transfer/reset no allowance. Keep canonical lifetime WeakMaps, guards, SQL bytes and CAS ordering.",
+    "adoption_prerequisites": "Migrate only the two direct internal test consumers of the primitive export; preserve independent fixture SQL. Reuse the existing Babel inventory owner once for the changed Source, validate exact existing/new identity correspondence and retained caps. Require affected behavior, exact coverage, same-run scoped frozen proof and actual generated SQL/table literal activation/assertion evidence before claiming qualification. No global admission follows."
+  },
   "scope_review_custody_digest_reuse_20261017": {
     "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
     "files": [],
