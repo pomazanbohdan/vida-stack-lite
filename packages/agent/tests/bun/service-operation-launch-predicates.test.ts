@@ -153,6 +153,22 @@ describe('service operation launch predicates', () => {
     ).toBe(false);
   });
 
+  test('capability matching denies runtime digest objects without coercion or throwing', () => {
+    let coercions = 0;
+    const coercibleDigest = {
+      toString() {
+        coercions++;
+        return issuedDigest;
+      },
+    };
+    expect(
+      expectReturned((): unknown =>
+        Reflect.apply(serviceOperationLaunchCapabilityMatches, undefined, [coercibleDigest, capability]),
+      ),
+    ).toBe(false);
+    expect(coercions).toBe(0);
+  });
+
   test('deterministic bounded UUID property: the issued token matches and a distinct token does not', () => {
     const hex = '0123456789abcdef'.split('');
     const uuid = fc

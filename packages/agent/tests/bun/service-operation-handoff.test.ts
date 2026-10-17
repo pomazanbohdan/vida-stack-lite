@@ -424,7 +424,7 @@ test('handoff rejects malformed prior and new request digests before verifying a
   }
 });
 
-test('handoff and reconciliation reject an unbound connection before closing it or verifying receipts', async () => {
+test('handoff and reconciliation reject unbound connections and mismatched database paths before receipt verification', async () => {
   const fixture = openCustodyFixture('service-path-binding-');
   const unbound = new Database(path.join(fixture.root, fixture.relative));
   let completed = false;
@@ -464,6 +464,21 @@ test('handoff and reconciliation reject an unbound connection before closing it 
       'Service operation custody: workspace database path binding differs',
     );
     expect(verifierCalls).toBe(0);
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(before).toBeObject();
+    if (!before) throw new Error('The exact database path binding beforeimage must remain present.');
     const differentRoot = path.join(fixture.root, 'different-root');
     await expectRejection(
       handoffServiceOperationCustody(
@@ -498,10 +513,44 @@ test('handoff and reconciliation reject an unbound connection before closing it 
       'Service operation custody: workspace database path binding differs',
     );
     expect(verifierCalls).toBe(0);
+    const differentRelative = fixture.relative + '.other';
+    await expectRejection(
+      handoffServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        differentRelative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        async () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+      ),
+      'Service operation custody: workspace database path binding differs',
+    );
+    await expectRejection(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        differentRelative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest };
+        },
+      ),
+      'Service operation custody: workspace database path binding differs',
+    );
+    expect(verifierCalls).toBe(0);
     expect(unbound.query<{ alive: number }, []>('SELECT 1 AS alive').get()?.alive).toBe(1);
     expect(
       expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
-    ).toBeNull();
+    ).toEqual(before);
     completed = true;
   } catch (error) {
     primaryFailure = { error };

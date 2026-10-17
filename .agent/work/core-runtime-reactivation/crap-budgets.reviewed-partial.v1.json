@@ -177365,7 +177365,7 @@
         "line": 23,
         "column": 7,
         "start": 783,
-        "end": 1205,
+        "end": 1216,
         "bodyLine": 23,
         "bodyColumn": 117,
         "bodyEndLine": 32,
@@ -177381,8 +177381,8 @@
       "current_source_address": {
         "line": 34,
         "column": 7,
-        "start": 1214,
-        "end": 1807,
+        "start": 1225,
+        "end": 1818,
         "bodyLine": 42,
         "bodyColumn": 14,
         "bodyEndLine": 53,
@@ -225335,6 +225335,42 @@
       "/workspace/attachments/custody-claim-predicate-review-v221-20261017.md"
     ],
     "correspondence": "All59existing roles and frozen ceilings retained. Generic null-narrowing predicate preserves the caller subtype and its existing runtime null guard; remove only the redundant caller null conjunct. One substantive claim transaction callback complexity drops by1; no new/removed/reused callable, baseline recapture or allowance transfer.",
+    "limits": "Static scoped lineage only. Fresh same-run exact coverage, original frozen proof and complete assertion-confirmed native mutation remain required. Previous574inner results have incomplete outer custody/capture and are not a complete admitted score.",
+    "prospective_plan": "62e6bf5:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_lazy_literals_20261017"
+  },
+  "scope_review_custody_digest_type_guard_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/service-operation-custody.ts",
+      "src/config/service-operation-launch-capability.ts"
+    ],
+    "removed_source_paths": [],
+    "reviewed_current_sources": [
+      {
+        "path": "src/config/service-operation-custody.ts",
+        "sha256": "20618e019ff9fbca2272e62e0179e46191454d9898cb5d63a5f5a3e6f596edcd"
+      },
+      {
+        "path": "src/config/service-operation-launch-capability.ts",
+        "sha256": "c4a80033697c87a3f778ee06a3bafb3347ed19784f92f8e9c096937538d44257"
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/luna-review-custody-budget-draft-a740-20261016.md",
+      "/workspace/attachments/luna-custody-baseline-correspondence-a740-20261016.md",
+      "/workspace/attachments/custody-uuid-predicate-review-v199-20261017.md",
+      "/workspace/attachments/custody-digest-reuse-review-v206-20261017.md",
+      "/workspace/attachments/custody-lazy-literals-plan-review-v214-20261017.md",
+      "/workspace/attachments/custody-lazy-literals-source-review-v216-20261017.md",
+      "/workspace/attachments/custody-survivor-repair-review-v219-20261017.md",
+      "/workspace/attachments/custody-claim-predicate-review-v221-20261017.md",
+      "/workspace/attachments/custody-digest-type-guard-review-v224.md"
+    ],
+    "correspondence": "All59existing roles and original ceilings retained. Replace redundant null-only digest guard with an explicit primitive-string guard; preserve API string|null, validation order, hex regex, hash and timingSafeEqual. Four utility identities and complexities unchanged. No baseline recapture, allowance transfer or mutation exclusion.",
     "limits": "Static scoped lineage only. Fresh same-run exact coverage, original frozen proof and complete assertion-confirmed native mutation remain required. Previous574inner results have incomplete outer custody/capture and are not a complete admitted score.",
     "prospective_plan": "62e6bf5:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_lazy_literals_20261017"
   }

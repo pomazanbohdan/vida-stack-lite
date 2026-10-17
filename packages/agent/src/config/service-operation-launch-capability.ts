@@ -22,7 +22,7 @@ export function serviceOperationLaunchCapabilityDigest(capability: string): stri
 
 export function serviceOperationLaunchCapabilityMatches(expectedDigest: string | null, capability: unknown): boolean {
   if (
-    expectedDigest === null ||
+    typeof expectedDigest !== 'string' ||
     !/^[a-f0-9]{64}$/u.test(expectedDigest) ||
     typeof capability !== 'string' ||
     !isServiceOperationLaunchCapability(capability)

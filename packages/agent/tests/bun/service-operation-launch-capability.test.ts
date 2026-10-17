@@ -425,6 +425,72 @@ test('stored request, revision, token and evidence defects fail before exposing 
   }
 });
 
+test('a launching row without a capability remains readable but cannot be claimed', () => {
+  const fixture = openCustodyFixture('service-launching-without-capability-');
+  let completed = false;
+  let failure: { error: unknown } | undefined;
+  try {
+    const reservation = expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    fixture.database
+      .query('UPDATE agent_host_service_operation_custody SET owner_token=NULL WHERE workspace_id=? AND operation_id=?')
+      .run(fixture.workspaceId, operationId);
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(before).toBeObject();
+    if (!before) throw new Error('Expected a readable launching row without a child capability.');
+    expect(before).toMatchObject({
+      workspace_id: fixture.workspaceId,
+      owner_kind: 'release-pack-worker',
+      operation_id: operationId,
+      request_digest: requestDigest,
+      revision: reservation.revision,
+      phase: 'launching',
+      owner_token: null,
+      launch_pid: null,
+    });
+    expect(() =>
+      claimReservedServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        pid,
+        reservation.child_capability,
+      ),
+    ).toThrow('Service operation custody: worker does not match the exact one-shot launch reservation');
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId)),
+    ).toEqual(before);
+    completed = true;
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+      ],
+      failure,
+    );
+    if (completed) rmSync(fixture.root, { recursive: true, force: true });
+    else retainExpectedUnknownFixture(fixture.root, 'launching row without capability control failed');
+  }
+});
+
 test('reservation rejects a caller transaction without ending it or inserting custody', () => {
   const fixture = openCustodyFixture('service-nested-transaction-');
   let completed = false;
@@ -1229,6 +1295,81 @@ test('an unresolved receipt keeps its diagnostic and persists UNKNOWN custody', 
         },
         () => {
           retainExpectedUnknownFixture(fixture.root, 'unresolved receipt remained UNKNOWN');
+          return undefined;
+        },
+      ],
+      failure,
+    );
+  }
+});
+
+test('an invalid prepared receipt digest keeps its diagnostic and persists exact UNKNOWN custody', async () => {
+  const fixture = openCustodyFixture('service-invalid-receipt-digest-');
+  let failure: { error: unknown } | undefined;
+  try {
+    expectReturned(() =>
+      reserveServiceOperationLaunch(
+        fixture.database,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        'c'.repeat(64),
+      ),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(fixture.database, fixture.workspaceId, operationId),
+    );
+    expect(before).toBeObject();
+    if (!before) throw new Error('Expected the exact launching reservation before receipt validation.');
+    await expectRejection(
+      reconcileServiceOperationCustody(
+        fixture.database,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        'release-pack-worker',
+        operationId,
+        requestDigest,
+        () => ({ phase: 'prepared', evidence_digest: 'not-a-digest' }),
+      ),
+      'Service operation custody: existing operation receipt digest is invalid',
+    );
+    const reader = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    try {
+      const row = expectReturned(() =>
+        readServiceOperationCustodyForOperation(reader, fixture.workspaceId, operationId),
+      );
+      expect(row).toBeObject();
+      if (!row) throw new Error('Expected invalid receipt cleanup to persist UNKNOWN custody.');
+      expect(row).toMatchObject({
+        workspace_id: fixture.workspaceId,
+        owner_kind: 'release-pack-worker',
+        operation_id: operationId,
+        request_digest: requestDigest,
+        revision: before.revision + 1,
+        phase: 'unknown',
+        owner_token: null,
+        evidence_digest: null,
+        launch_pid: null,
+      });
+    } finally {
+      closeServiceOperationDatabase(reader);
+    }
+  } catch (error) {
+    failure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          retainExpectedUnknownFixture(fixture.root, 'invalid receipt digest persisted UNKNOWN custody');
           return undefined;
         },
       ],

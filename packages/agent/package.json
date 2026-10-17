@@ -335,6 +335,8 @@
     "quality:contours:pinned": "bun tooling/contour-progress-cli.ts",
     "test:contours": "bun bin/bun.ts run test:contours:pinned",
     "test:contours:pinned": "bun tooling/contour-campaign.ts",
+    "test:contour:stage": "bun bin/bun.ts run test:contour:stage:pinned",
+    "test:contour:stage:pinned": "bun tooling/contour-stage.ts",
     "test:mutation": "bun bin/bun.ts run test:mutation:pinned",
     "test:mutation:pinned": "bun tooling/mutation-gate.ts",
     "mutation:batch:pilot": "bun bin/bun.ts run mutation:batch:pilot:pinned",

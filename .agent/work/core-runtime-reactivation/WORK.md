@@ -341,6 +341,36 @@ boundary; the private rolling launcher requires a separate Root import. TESTING
 now makes canonical artifact presence an explicit recorded-stage boundary rather
 than treating a produced report as an automatic import.
 
+The maintained `packages/agent/tooling/contour-stage.ts` now replaces the private
+rolling stage wrapper for new runs. Root's one controller records unchanged
+immutable inputs and observed terminal custody, then automatically imports the
+exact producer location into an explicit canonical output through the existing
+CLI. Coverage/outcome pairing and persisted native validation stay unchanged.
+Missing output, incomplete custody and publication failures stay nonzero; partial
+native summaries are retained without a score. No watcher, directory crawler,
+Source/hash/AST pass or duplicate suite is introduced. Controls qPpvNr pass139/0
+across stage/progress/campaign files in493ms with full capture/closed groups/same
+boot. Actual new-stage coverage/frozen and native results remain pending.
+Independent review adds mandatory paired coverage import for frozen stages,
+canonical realpath/alias denial before launch, and truthful unknown/partial versus
+published-but-receipt-failed status with primary/receipt cause retention. Final
+stage/progress/campaign controls F2ao6p pass141/0 in533ms. This is mechanics only;
+new actual coverage and frozen stages must still demonstrate automatic publication.
+
+Custody author repairs from immutable342d277 are integrated as bounded diffs:
+609 checks the malformed prepared receipt diagnostic and exact persistedUNKNOWN;
+308 exercises the same bound database/root with a different relative path and
+checks verifier non-entry/unchanged row;184 proves the explicitly allowed launching
+row with null token remains readable while denying claims. Initial focused KzwGka
+passes130/0cases in3675ms. The redundant null-only matcher guard becomes an explicit
+primitive-string guard. An invalid runtime digest object is denied without coercion
+or throwing; existing valid/null behavior and comparison order stay intact. Blind
+Luna reviews the actual diff; the one changed-Source inventory pass confirms the
+same four utility identities and complexities. All59contour roles/caps are retained
+under `scope_review_custody_digest_type_guard_20261017`. No survivor is excluded or
+credited Killed. Final focused zR4VvR passes135/0cases across stage and custody in
+3644ms. Normal static checks, publication and fresh numeric proof follow.
+
 ### Isolated full-proof parity preparation — 2026-10-17
 
 Three blind Luna reviews qualify the next bounded selection: fs-safe attestation

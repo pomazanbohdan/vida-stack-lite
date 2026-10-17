@@ -1825,13 +1825,37 @@ The campaign uses that same coverage/outcome pairing and retains each report's
 lane when assembling imports. Missing or mismatched outcome bindings fail before
 publication; do not downgrade a coverage import to generic `--report`.
 
-A private or single-stage launcher does not imply projection publication. After
-the producer reaches a recorded terminal state, Root imports its attributable
-reports through this same CLI and confirms their artifact paths in the canonical
-snapshot before reporting the stage as recorded. Preserve partial and UNKNOWN
-receipts without claiming a closure. Audit a suspected omission against retained
-report paths and the existing snapshot; do not rerun tests or rescan Source to
-repair an import gap.
+Use the maintained single-stage controller from a clean immutable measurement
+checkout for rolling contour work:
+
+```sh
+bun run test:contour:stage --contour bun-service-operation-custody --lane coverage --output /absolute/canonical/.agent/work/core-runtime-reactivation
+bun run test:contour:stage --contour bun-service-operation-custody --lane frozen-crap --coverage-run /absolute/retained/focused-coverage.json --budget-ref <published-reviewed-commit> --output /absolute/canonical/.agent/work/core-runtime-reactivation
+bun run test:contour:stage --contour bun-service-operation-custody --lane mutation --isolated-workers --output /absolute/canonical/.agent/work/core-runtime-reactivation
+```
+
+Root alone runs this controller and serializes publication. `--output` must be an
+existing canonical directory outside the measured checkout; its existing JSON is
+merged automatically. `--snapshot <JSON>` optionally supplies an additional explicit
+snapshot. The controller retains launch and terminal process/capture receipts,
+checks unchanged boot/commit/clean inputs, then imports the exact structured
+producer report location through the existing CLI. Coverage always imports its
+paired outcome; native mutation always uses the persisted proof reader. A missing
+report or publication error produces a retained error and nonzero command exit.
+The frozen stage also imports its input coverage/outcome pair, so an earlier missed
+import is repaired idempotently. A publication exception remains unknown/partial
+because JSON may already have committed; a subsequent receipt failure preserves
+the primary error. Neither case asserts that nothing was written.
+Failed coverage retains its actual operation status. Partial/UNKNOWN native
+summaries are retained and never imported as a score or closure. Native workers
+remain subject to their existing allowlist; the flag grants no admission.
+The native controller uses batches of128 to reduce parent barriers while keeping
+the same complete selection, fixed worker limit and900/930-second budgets. This
+is an execution setting, not a measured speedup or a new timeout allowance.
+
+Arbitrary private launchers still require an explicit Root import after terminal
+custody. Audit a suspected omission against retained report paths and the existing
+snapshot; do not rerun tests or rescan Source to repair an import gap.
 
 Focused development launchers retain native JUnit and report actual executed and
 skipped case counts with their terminal result. A zero-match/skip-only selection
