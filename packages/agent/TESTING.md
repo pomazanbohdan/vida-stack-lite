@@ -1825,6 +1825,14 @@ The campaign uses that same coverage/outcome pairing and retains each report's
 lane when assembling imports. Missing or mismatched outcome bindings fail before
 publication; do not downgrade a coverage import to generic `--report`.
 
+A private or single-stage launcher does not imply projection publication. After
+the producer reaches a recorded terminal state, Root imports its attributable
+reports through this same CLI and confirms their artifact paths in the canonical
+snapshot before reporting the stage as recorded. Preserve partial and UNKNOWN
+receipts without claiming a closure. Audit a suspected omission against retained
+report paths and the existing snapshot; do not rerun tests or rescan Source to
+repair an import gap.
+
 Focused development launchers retain native JUnit and report actual executed and
 skipped case counts with their terminal result. A zero-match/skip-only selection
 does not verify a repair. Reuse the existing JUnit reader; this census does not

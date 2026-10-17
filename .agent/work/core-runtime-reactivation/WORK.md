@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest published custody repair: `0f9162425183f1d7cc5f97b5371c387464e719a1`, scoped pin `cb714989396aab8c19cfd37e95287c6949616cd2`. Lazy schema/table literals preserve canonical lifetime state; new boundary regressions and raw digest comparison preserve guards/CAS. Fresh59-role custody exact F/L/S/B100 and same-run frozen9/9 pass; complete native proof remains pending. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
+- Latest published custody repair: `fd0507b040bb931b11d58d574401433b73a7e8f7`, scoped pin `342d277ddf63db7122a3f592669c78ed2de1a83c`. Lazy schema/table literals preserve canonical lifetime state; new boundary regressions and raw digest comparison preserve guards/CAS. Fresh59-role custody exact F/L/S/B100 and same-run frozen9/9 pass; complete native proof remains pending. Active contours are storage image, envelopes and custody; historical6/45triples are unchanged. FS attestation remains OPEN on zero-callable CRAP applicability despite native7/7. Admission remains OPEN on stateful initialization; initialization remains OPEN on qualified child-only activation. The derived contour document owns exact receipts and historical closures. Global/final-quality admission remains open; Source, formation, installation and Runtime acceptance are distinct.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -284,6 +284,62 @@ scope_review_custody_claim_predicate_20261017 binds current Source20618e01/8ddd0
 Review: `/workspace/attachments/custody-claim-predicate-review-v221-20261017.md`.
 No mutant is excluded or relabelled, and no frozen baseline/cap is reset. Fresh
 exact coverage/frozen and actual native controls remain required after publication.
+
+Checked publication fd0507b and scoped pin342d277 both pass the normal strict
+509TypeScript hook and are pushed. Fresh immutable v221 SDK formation5CvvyC takes
+1821ms without suites. Coverage d0e4b1e7/8EHG1x completes7813ms:128/0cases,
+1104assertions, exact F59/59,L236/236,S243/243,B121/121. Same-run v3 frozen proof
+xE5ZXs passes in1062ms against fd0507b, maxCC/entryCRAP9/9 and all original ceilings.
+The existing projection imports both current reports; operation/global gates stay
+BLOCKED and no new triple is claimed.
+
+The first external v221 observer fails after launch on an unavailable proc children
+path. Root records an exact executable/command/start-time-bound stop intent for
+only its Tini184345 at outerU3GqXc, requestsTERM and observes that Tini/bwrap defunct;
+preserve that attempt and all fixtures as UNKNOWN. No old effect is retried.
+Replacement observer v222 records controller identity before launch, omits the
+fragile proc read, disposes its20s liveness timer on completion and retains the
+existing native process/capture owner. Liveness is not numeric proof.
+
+Fresh native run0c3309bb-21a2-436c-9738-b53362f3dfca, outer
+`/tmp/vida-isolated-pilot-v222-Npmutg`, uses the unchanged checked immutable342d277
+and current680mutant universe. The five removed generated expressions belong to
+the actual redundant caller guard deletion, not excluded or credited outcomes.
+No source, fixture or effect from an old run is reused. The outer terminal records
+882596ms, exit1, full captures, observed owned-group closure, unchanged boot/commit
+and clean inputs. The native diagnostic records610/680attempted:606Killed,
+4Survived,0UNKNOWN,70unattempted. This is incomplete and never a score or closure.
+Survivors609(receipt diagnostic) and308(relative path binding) have prepared
+regressions in the isolated author checkout;184 is under bounded review. Survivor
+709 is an equivalent null guard whose removal still leaves regex rejection;
+it remains Survived, without exclusion or Killed credit. Independent timing review
+finds the new reconciliation double-fault case costs39.957ms (~1% of baseline
+JUnit time), with no BUSY/drain wait; keep that contract control unchanged.
+
+### Contour projection completeness correction — 2026-10-17
+
+The user's completeness question exposed an import gap, not a Markdown counter
+calculation error. Read-only audit v223 compares the owner-rendered Markdown with
+its JSON and enumerates112retained coverage/frozen reports in76registered
+worktrees. Four reports from facade runs a0312fd8 at3a323b9 and58b5295a at12f8815
+were not imported. Their existing terminal evidence is recorded below in the
+earlier facade packets. Both coverage/outcome pairs and their same-run scoped
+frozen reports are now imported through the unchanged CLI with their actual
+commits, bringing the snapshot to645observations. No tests, Source/AST/hash scan
+or new admission is used. These are additional observations for an already counted
+contour: historical exact coverage15/45, same-run coverage/frozen14/45 and complete
+local triples6/45 remain unchanged; current freshness remains unverified.
+
+Discovery receipt: `/workspace/attachments/contour-projection-audit-v223.json`.
+Post-import verification `/workspace/attachments/contour-projection-backfill-v223.json`
+confirms all four paths are present and Markdown matches the645-observation JSON.
+Independent blind Luna read-only review confirms the counts and finds no definite
+false accounting. This audit
+covers retained registered-worktree coverage/frozen reports, not every historical
+chat or mutation receipt. The maintained campaign publishes at its terminal
+boundary; the private rolling launcher requires a separate Root import. TESTING
+now makes canonical artifact presence an explicit recorded-stage boundary rather
+than treating a produced report as an automatic import.
 
 ### Isolated full-proof parity preparation — 2026-10-17
 
