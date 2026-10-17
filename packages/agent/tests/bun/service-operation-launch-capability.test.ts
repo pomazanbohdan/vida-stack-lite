@@ -353,6 +353,14 @@ test('stored request, revision, token and evidence defects fail before exposing 
       {
         digest: requestDigest,
         revision: 1,
+        token: capability + 'x',
+        phase: 'in_flight',
+        evidence: null,
+        message: 'stored operation custody row is invalid',
+      },
+      {
+        digest: requestDigest,
+        revision: 1,
         token: null,
         phase: 'prepared',
         evidence: 'g'.repeat(64),

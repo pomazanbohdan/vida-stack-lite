@@ -799,6 +799,100 @@ test('reconciliation rechecks a gate replaced immediately before its operation c
   }
 });
 
+test('handoff rechecks a gate replaced immediately before its operation callback', async () => {
+  const fixture = openCustodyFixture('handoff-entry-gate-replacement-');
+  let restoreAdmission: (() => void) | undefined;
+  let restoreRawOpen: (() => void) | undefined;
+  let reader: Database | undefined;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    finishOperation(fixture, 'release-pack-worker');
+    const source = expectReturned(() =>
+      openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId),
+    );
+    const before = expectReturned(() =>
+      readServiceOperationCustodyForOperation(source, fixture.workspaceId, operationId),
+    );
+    const nativeAdmission = storageAdmission.withExclusiveServiceOperationAdmission;
+    let interleavings = 0;
+    let verifierCalls = 0;
+    let openedAfterGateLoss = 0;
+    const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
+    const watchedOpen = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
+      if (interleavings > 0 && args[0] === fixture.root && args[1] === fixture.relative) openedAfterGateLoss++;
+      return nativeOpen(...args);
+    });
+    restoreRawOpen = () => watchedOpen.mockRestore();
+    const interleave: typeof nativeAdmission = (root, workspaceId, verify, operation) =>
+      nativeAdmission(root, workspaceId, verify, async (proof) => {
+        replaceAdmissionGate(fixture);
+        interleavings++;
+        return operation(proof);
+      });
+    const admission = spyOn(storageAdmission, 'withExclusiveServiceOperationAdmission').mockImplementation(interleave);
+    restoreAdmission = () => admission.mockRestore();
+    const failure = await rejectionReason(
+      handoffServiceOperationCustody(
+        source,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        async () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+      ),
+    );
+    restoreAdmission();
+    restoreAdmission = undefined;
+    restoreRawOpen();
+    restoreRawOpen = undefined;
+    expect(interleavings).toBe(1);
+    expect(verifierCalls).toBe(0);
+    expect(openedAfterGateLoss).toBe(0);
+    const cause: unknown = failure instanceof AggregateError ? failure.errors[0] : failure;
+    expect(cause).toBeInstanceOf(Error);
+    if (!(cause instanceof Error)) throw new Error('Expected the real gate identity denial.');
+    expect(cause.message).toBe('Project storage admission: gate file or parent was replaced');
+    reader = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(reader!, fixture.workspaceId, operationId)),
+    ).toEqual(before);
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          restoreAdmission?.();
+          return undefined;
+        },
+        () => {
+          restoreRawOpen?.();
+          return undefined;
+        },
+        () => {
+          if (reader) closeServiceOperationDatabase(reader);
+          return undefined;
+        },
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          console.error('SERVICE_CUSTODY_HANDOFF_ENTRY_GATE_REPLACEMENT_FIXTURE_RETAINED', fixture.root);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
+});
+
 test('terminal pack custody transfers to one prepared release image with exact lineage and no owner token', async () => {
   const fixture = openCustodyFixture('handoff-positive-');
   try {
@@ -1067,6 +1161,115 @@ test('handoff keeps its source-read diagnostic when owned source cleanup also fa
     throw error;
   }
   if (completed) rmSync(fixture.root, { recursive: true, force: true });
+});
+
+test('handoff stops before receipt verification when a valid source read cannot close', async () => {
+  const fixture = openCustodyFixture('handoff-valid-read-close-fault-');
+  let source: Database | undefined;
+  let reader: Database | undefined;
+  let ownedSource: Database | undefined;
+  let restoreRawOpen: (() => void) | undefined;
+  let restoreClose: (() => void) | undefined;
+  let completed = false;
+  let primaryFailure: { error: unknown } | undefined;
+  try {
+    const prior = finishOperation(fixture, 'release-pack-worker');
+    source = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+
+    const nativeOpen = workspaceRaw.openUnadmittedWorkspaceDatabase;
+    const watchedOpen = spyOn(workspaceRaw, 'openUnadmittedWorkspaceDatabase').mockImplementation((...args) => {
+      const database = nativeOpen(...args);
+      if (ownedSource === undefined && args[0] === fixture.root && args[1] === fixture.relative) ownedSource = database;
+      return database;
+    });
+    restoreRawOpen = () => watchedOpen.mockRestore();
+
+    const closeError = new Error('injected handoff source close failure after successful read');
+    let closeFaultReached = false;
+    const nativeClose = Reflect.get(Database.prototype, 'close') as Database['close'];
+    const watchedClose = spyOn(Database.prototype, 'close').mockImplementation(function (
+      this: Database,
+      force?: boolean,
+    ): void {
+      if (this === ownedSource && !closeFaultReached) {
+        closeFaultReached = true;
+        throw closeError;
+      }
+      nativeClose.call(this, force);
+    });
+    restoreClose = () => watchedClose.mockRestore();
+
+    let verifierCalls = 0;
+    const failure = await rejectionReason(
+      handoffServiceOperationCustody(
+        source,
+        fixture.root,
+        fixture.relative,
+        fixture.workspaceId,
+        operationId,
+        requestDigest,
+        retargetDigest,
+        async () => {
+          verifierCalls++;
+          return { phase: 'prepared', evidence_digest: evidenceDigest, handoff_digest: handoffDigest };
+        },
+      ).finally(() => {
+        source = undefined;
+      }),
+    );
+    expect(closeFaultReached).toBe(true);
+    expect(verifierCalls).toBe(0);
+    expect(failure).toBe(closeError);
+
+    restoreClose();
+    restoreClose = undefined;
+    restoreRawOpen();
+    restoreRawOpen = undefined;
+    retryPendingWorkspaceDatabaseCloses();
+    reader = expectReturned(() => openServiceOperationDatabase(fixture.root, fixture.relative, fixture.workspaceId));
+    expect(
+      expectReturned(() => readServiceOperationCustodyForOperation(reader!, fixture.workspaceId, operationId)),
+    ).toEqual(prior);
+    completed = true;
+  } catch (error) {
+    primaryFailure = { error };
+    throw error;
+  } finally {
+    completeOwnedCleanup(
+      [
+        () => {
+          restoreClose?.();
+          return undefined;
+        },
+        () => {
+          restoreRawOpen?.();
+          return undefined;
+        },
+        () => {
+          retryPendingWorkspaceDatabaseCloses();
+          return undefined;
+        },
+        () => {
+          if (source !== undefined) closeServiceOperationDatabase(source);
+          return undefined;
+        },
+        () => {
+          if (reader !== undefined) closeServiceOperationDatabase(reader);
+          return undefined;
+        },
+        () => {
+          closeServiceOperationDatabase(fixture.database);
+          return undefined;
+        },
+        () => {
+          if (completed) rmSync(fixture.root, { recursive: true, force: true });
+          else console.error('Retained handoff valid-read close fixture: ' + fixture.root);
+          return undefined;
+        },
+      ],
+      primaryFailure,
+    );
+  }
 });
 
 test('handoff rejects a release owner, a different prior request, and a nonterminal pack row without mutation', async () => {

@@ -1101,8 +1101,12 @@ still needs captured-input/private-output binding and qualified worker resources
 `--isolated-workers` opts into a bounded real-runner diagnostic for
 `bun-project-upgrade-existing-storage-image`, `bun-fs-safe-attestation`,
 `main-envelopes` or `bun-service-operation-custody` only.
-Only the reviewed read-only fs-safe attestation contour permits `--admit-complete`
-for persisted-proof parity; the other selections remain diagnostic-only. None permits
+Only the reviewed fs-safe attestation and service-operation custody contours permit
+`--admit-complete`; the other selections remain diagnostic-only. Custody's first
+complete pilot follows actual private-database resource controls, fresh SQL/table
+activation controls and a closed64-mutant isolated diagnostic. Admission still
+requires the complete current universe and unchanged persisted-proof reader;
+this permission alone establishes no passing score or global qualification. None permits
 per-test capture or ID selectors. Start diagnostic work with `--batch-size 2
 --max-batches 1`; it preserves the full declared test argv, one input capture,
 one generated image and the existing900s partition deadline. Baseline runs first;
@@ -1130,7 +1134,7 @@ preserving raw bytes and sync operations. Uncertain native custody leaves privat
 outputs unpublished; partial publication failures retain both roots and deny
 confirmation. Closed raw diagnostics can still fail the unchanged runner
 confirmer; copied files alone never mean Killed. The persisted proof reader and
-flat-basename guards are unchanged. Complete fs-safe attestation admission retains
+flat-basename guards are unchanged. Complete attestation and custody admission retain
 the existing exhaustive-plan, all-Killed and freshness gates and emits the same
 context-bearing proof. Verify that actual retained closure through the unchanged
 reader, separately from synthetic controls. This does not resolve its zero-callable

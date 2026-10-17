@@ -17,7 +17,7 @@ function isServiceOperationLaunchCapability(capability: string): boolean {
 export function serviceOperationLaunchCapabilityDigest(capability: string): string {
   if (!isServiceOperationLaunchCapability(capability))
     throw new Error('Service operation launch capability is invalid.');
-  return createHash('sha256').update(capability, 'utf8').digest('hex');
+  return createHash('sha256').update(capability).digest('hex');
 }
 
 export function serviceOperationLaunchCapabilityMatches(expectedDigest: string | null, capability: unknown): boolean {
@@ -28,10 +28,7 @@ export function serviceOperationLaunchCapabilityMatches(expectedDigest: string |
     !isServiceOperationLaunchCapability(capability)
   )
     return false;
-  return timingSafeEqual(
-    Buffer.from(expectedDigest, 'hex'),
-    Buffer.from(createHash('sha256').update(capability, 'utf8').digest('hex'), 'hex'),
-  );
+  return timingSafeEqual(Buffer.from(expectedDigest, 'hex'), createHash('sha256').update(capability).digest());
 }
 
 export function serviceOperationLaunchClaimMatches(

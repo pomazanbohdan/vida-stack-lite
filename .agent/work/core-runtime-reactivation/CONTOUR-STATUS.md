@@ -28,7 +28,7 @@ F/L/S/B are covered/total; CC/CRAP are measured maxima using function-entry-bina
 | main-mastra | 191/191 · 642/642 · 686/686 · 205/205 | 8 / 8 | unknown (unknown) | BLOCKED | open / unknown | unknown | open / unknown |
 | main-exports | unknown | unknown | unknown | not imported | N/A: static exports | unknown | open / unknown |
 | bun-fs-safe-attestation | 0/0 · 4/4 · 4/4 · 0/0 | N/A: no callable functions (coverage inventory) | 7/7 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | open / unknown | unknown | open / unknown |
-| bun-service-operation-custody | 57/57 · 236/236 · 243/243 · 123/123 | 9 / 9 | unknown (unknown) | BLOCKED | open / unknown | 9 / 9 | open / unknown |
+| bun-service-operation-custody | 59/59 · 236/236 · 243/243 · 123/123 | 9 / 9 | unknown (unknown) | BLOCKED | open / unknown | 9 / 9 | open / unknown |
 | bun-host-state | unknown | unknown | unknown | UNKNOWN | open / unknown | unknown | open / unknown |
 | bun-session-handoff | 189/277 · 509/877 · 560/959 · 382/791 | 29 / 870 | unknown | BLOCKED | open / unknown | unknown | open / unknown |
 | bun-runtime-facade | 23/23 · 89/89 · 103/103 · 96/96 | 9 / 9 | 311/311 (pilot-pass; reader-validated native assertion-confirmed partition proof; local only) | BLOCKED | local maximum recorded | 9 / 9 | local triple recorded |
@@ -510,6 +510,9 @@ Current freshness: unverified; this projection never rehashes Source/tests/confi
 | coverage-outcome | a63c83c5-cc3a-4235-b9df-141e6ffcd13f | 1e9b91750301078c06768d70be395ceb0627dcc4 | 2026-10-17T16:05:09.434Z | BLOCKED; unqualified; selection unbound | no metric evidence | /dev/shm/vida-rolling-measure-v206/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/a63c83c5-cc3a-4235-b9df-141e6ffcd13f.json |
 | coverage | a63c83c5-cc3a-4235-b9df-141e6ffcd13f | 1e9b91750301078c06768d70be395ceb0627dcc4 | 2026-10-17T16:05:09.434Z | focused-diagnostic; owner accepted locally; selection bound | 57/57 · 236/236 · 243/243 · 123/123 | /dev/shm/vida-rolling-measure-v206/packages/agent/coverage/bun-unified/diagnostics/a63c83c5-cc3a-4235-b9df-141e6ffcd13f.focused-coverage.json |
 | frozen-crap | a63c83c5-cc3a-4235-b9df-141e6ffcd13f | 1e9b91750301078c06768d70be395ceb0627dcc4 | 2026-10-17T16:05:09.434Z | scoped-proof-pass; owner accepted locally; selection bound | 9 / 9 (scoped proof; owner measured) | /dev/shm/vida-rolling-measure-v206/packages/agent/coverage/bun-unified/diagnostics/a63c83c5-cc3a-4235-b9df-141e6ffcd13f.scoped-crap.json |
+| coverage | f052548d-95f2-443f-b20a-96ae0b146c66 | 1997612532863b88c81513fe6c0d0cc2aa164486 | 2026-10-17T18:13:21.740Z | focused-diagnostic; owner accepted locally; selection bound | 59/59 · 236/236 · 243/243 · 123/123 | /dev/shm/vida-rolling-measure-v217/packages/agent/coverage/bun-unified/diagnostics/f052548d-95f2-443f-b20a-96ae0b146c66.focused-coverage.json |
+| coverage-outcome | f052548d-95f2-443f-b20a-96ae0b146c66 | 1997612532863b88c81513fe6c0d0cc2aa164486 | 2026-10-17T18:13:21.754Z | BLOCKED; unqualified; selection unbound | no metric evidence | /dev/shm/vida-rolling-measure-v217/packages/agent/coverage/bun-unified/diagnostics/operation-outcomes/f052548d-95f2-443f-b20a-96ae0b146c66.json |
+| frozen-crap | f052548d-95f2-443f-b20a-96ae0b146c66 | 1997612532863b88c81513fe6c0d0cc2aa164486 | 2026-10-17T18:14:42.877Z | scoped-proof-pass; owner accepted locally; selection bound | 9 / 9 (scoped proof; owner measured) | /dev/shm/vida-rolling-measure-v217/packages/agent/coverage/bun-unified/diagnostics/f052548d-95f2-443f-b20a-96ae0b146c66.scoped-crap.json |
 
 Bindings, counters and failed/UNKNOWN observations are retained in the sibling JSON snapshot.
 

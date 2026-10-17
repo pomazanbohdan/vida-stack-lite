@@ -244,7 +244,8 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
   const isolatedWorkers = values['isolated-workers'] === true;
   if (
     isolatedWorkers &&
-    ((admitComplete && selected.partitions[0].name !== 'bun-fs-safe-attestation') ||
+    ((admitComplete &&
+      !['bun-fs-safe-attestation', 'bun-service-operation-custody'].includes(selected.partitions[0].name)) ||
       perTestCapture !== undefined ||
       diagnosticMutantId !== undefined ||
       diagnosticMutantIds !== undefined ||
@@ -256,7 +257,7 @@ export function selectMutationBatchPilot(args: readonly string[], partitions: Mu
       ].includes(selected.partitions[0].name))
   )
     throw new Error(
-      'Isolated workers require a reviewed contour, without capture or ID selectors; complete admission is fs-safe attestation only.',
+      'Isolated workers require a reviewed contour, without capture or ID selectors; complete admission is fs-safe attestation or service-operation custody only.',
     );
   if (perTestCapture !== undefined && admitComplete)
     throw new Error('Per-test diagnostic capture cannot use complete admission.');
@@ -955,7 +956,7 @@ if (import.meta.main) {
   if (process.argv.length === 3 && process.argv[2] === '--help')
     console.log(
       'Native mutation batches: --contour <exact declared name> [--batch-size 1..128 (default16)] [--max-batches 1..128 (default1)] [--admit-complete] [--capture-per-test-diagnostic] [--diagnostic-mutant-id <generated local ID> | --diagnostic-mutant-ids <comma-separated generated local IDs>]. Per-test capture is diagnostic-v2 baseline-only: it binds the input fingerprint/descriptor/receipt and full test selection, executes no mutants, and cannot combine with complete admission or mutant selection. Unattempted mutants keep the diagnostic exit nonzero. Targeted diagnostics require batch-size1/max-batches1, retain the complete plan and full test baseline, and cannot use complete admission. ID sets allow1..32 unique IDs and share one budget across selected mutants. Explicit admission requires every planned batch before tests launch, then exact baseline, activation and receipt joins. Partial/unknown results stay diagnostic; no global qualification.',
-      '--isolated-workers opts into private report overlays and at most two native workers for bun-project-upgrade-existing-storage-image, bun-fs-safe-attestation, main-envelopes or bun-service-operation-custody. Only fs-safe attestation permits complete admission. It preserves the full test argv and one deadline, retains private outputs, and forbids per-test capture and ID selectors. Default execution remains serial.',
+      '--isolated-workers opts into private report overlays and at most two native workers for bun-project-upgrade-existing-storage-image, bun-fs-safe-attestation, main-envelopes or bun-service-operation-custody. Only fs-safe attestation and service-operation custody permit complete admission. It preserves the full test argv and one deadline, retains private outputs, and forbids per-test capture and ID selectors. Default execution remains serial.',
     );
   else
     await runMutationBatchPilot(

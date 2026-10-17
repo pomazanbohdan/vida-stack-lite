@@ -177348,7 +177348,7 @@
         "line": 17,
         "column": 7,
         "start": 504,
-        "end": 782,
+        "end": 774,
         "bodyLine": 17,
         "bodyColumn": 83,
         "bodyEndLine": 21,
@@ -177364,11 +177364,11 @@
       "current_source_address": {
         "line": 23,
         "column": 7,
-        "start": 791,
-        "end": 1259,
+        "start": 783,
+        "end": 1205,
         "bodyLine": 23,
         "bodyColumn": 117,
-        "bodyEndLine": 35,
+        "bodyEndLine": 32,
         "bodyEndColumn": 1
       },
       "current_complexity": 5
@@ -177379,13 +177379,13 @@
       "max_crap": 10,
       "rationale": "Matches all reservation identity fields, phase, PID and capability as one claim predicate. Obligation: Claim tests require exact workspace, owner, operation, request, PID, launching phase and capability together.",
       "current_source_address": {
-        "line": 37,
+        "line": 34,
         "column": 7,
-        "start": 1268,
-        "end": 1845,
-        "bodyLine": 45,
+        "start": 1214,
+        "end": 1791,
+        "bodyLine": 42,
         "bodyColumn": 11,
-        "bodyEndLine": 56,
+        "bodyEndLine": 53,
         "bodyEndColumn": 1
       },
       "current_complexity": 8
@@ -225267,6 +225267,40 @@
     ],
     "correspondence": "Preserve all53 existing custody roles and four unchanged capability utility roles, with all56original10/10 ceilings and shared UUID predicate1/1. Add only two lazy schema/table owners, each prospectively1/1 at62e6bf5, making59contour roles. No callable is removed/reused; no allowance transfers. Existing53measured complexities equal cached Source-bound v206 inventory. Exact SQL bytes, native query/guard/CAS order and canonical lifetime WeakMaps remain; remove eager SQL/table initialization rather than recreating an eager factory export.",
     "limits": "Static scoped Source correspondence only. Require fresh immutable exact59-role coverage, same-run frozen proof and actual generated lazy SQL/table activation/assertion evidence. Prior UNKNOWNs and global/final admission remain unchanged; no complete triple from a partial diagnostic.",
+    "prospective_plan": "62e6bf5:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_lazy_literals_20261017"
+  },
+  "scope_review_custody_raw_digest_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/service-operation-custody.ts",
+      "src/config/service-operation-launch-capability.ts"
+    ],
+    "removed_source_paths": [],
+    "reviewed_current_sources": [
+      {
+        "path": "src/config/service-operation-custody.ts",
+        "sha256": "2db0b7fbf6dda0851cf9807face077119d798231682aedc30d6f45c2fbf9ff1b"
+      },
+      {
+        "path": "src/config/service-operation-launch-capability.ts",
+        "sha256": "7c89d171501f52156454ceb34ce952527941bd64b8e7932a285e838f1b142e8e"
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/luna-review-custody-budget-draft-a740-20261016.md",
+      "/workspace/attachments/luna-custody-baseline-correspondence-a740-20261016.md",
+      "/workspace/attachments/custody-uuid-predicate-review-v199-20261017.md",
+      "/workspace/attachments/custody-digest-reuse-review-v206-20261017.md",
+      "/workspace/attachments/custody-lazy-literals-plan-review-v214-20261017.md",
+      "/workspace/attachments/custody-lazy-literals-source-review-v216-20261017.md",
+      "/workspace/attachments/custody-survivor-repair-review-v219-20261017.md"
+    ],
+    "correspondence": "All59existing roles/ceilings remain:53custody plus3utility roles10/10, shared UUID predicate and2lazy literal owners1/1. No new/removed/reused callable or allowance transfer. Remove explicit defaultUTF8 options and avoid hexencoding/decoding the computed digest before native constant-time Buffercomparison. Public digest remains lowercasehex. Fourutility complexities/identities are unchanged; cached55custody rows/Sourcebinding remain valid.",
+    "limits": "Static scoped lineage only. Require fresh immutable59-role exactcoverage, same-run originalfrozenproof and actual causal native controls after assertion repairs. Prior60/4/0/625 diagnostic is historical at1997612 and cannot be relabelled as repaired/current100; no complete score or Runtime admission.",
     "prospective_plan": "62e6bf5:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_lazy_literals_20261017"
   }
 }

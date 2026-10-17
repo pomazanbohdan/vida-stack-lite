@@ -88,6 +88,54 @@ same boot/commit and clean checkout pass; no resource/failure entries. Exit1 is
 the intentionally partial denominator, not a complete mutation proof. SDK input
 formation `HmAgrv` completes1851ms without suites. No old artifact is reused.
 
+### Current custody diagnostics and survivor repair — 2026-10-17
+
+Published1997612 is measured in fresh detached v217 with a real private copy of
+the locked dependencies. Earlier v216 coverage preflight rejects its dependency
+symlink before tests; retain that failure and keep the no-symlink guard. SDK
+input formation gUzF7n completes1921ms without suites. Fresh coverage run
+`f052548d-95f2-443f-b20a-96ae0b146c66`, outer uUsa76, completes5784ms:
+125/0cases,1063assertions, exact F59/59,L236/236,S243/243,B123/123. Same-run
+scoped v3 frozen proof cjSY7c passes at original ceilings, maxCC/entryCRAP9/9.
+The focused coverage operation still says BLOCKED on broader gates; exact local
+counters do not establish global admission. Both reports enter the automatic
+projection through its existing CLI. Historical6/45triples remain unchanged.
+
+Closed native controls separately confirm the two actual current SQL/table
+literal mutants1/11 as assertion-confirmed Killed in run cc42ce72, with687of689
+unattempted. The fixed-two ordinary pair confirms another2Killed but does not
+combine into a synthetic score. Expanded run
+`9e215f8e-875b-4bc5-bea5-d87a6590c755`, outer
+`/tmp/vida-isolated-pilot-v218-GPA8d1`, completes86887ms:125baseline cases,
+60Killed/4Survived/0UNKNOWN/625unattempted of689. Captures, owned-group closure,
+input/executable readbacks, boot/commit and clean measured checkout pass. No
+resource blocks occur. Preserve every original row and private output.
+
+Actual image joins expose three assertion gaps: cleanup failure must stop before
+receipt verification, a trailing owner-token byte must fail the common row guard,
+and replaced admission must fail before opening the raw handoff database. Blind
+Luna authors the real-boundary regressions in a separate1997612 worktree; Root
+reviews/applies the bounded two-file patch. Owned complete custody run Die5bF
+passes127cases/1079assertions in3246ms with full captures/closed group/same boot.
+Fresh native confirmation remains required before claiming these gaps closed.
+
+The fourth survivor changes only redundant UTF8 hashing of validated ASCII UUIDs.
+Root simplifies that owner and removes the matcher's hex encode/decode roundtrip;
+public hex digest, validation and timingSafeEqual stay unchanged. No fabricated
+test or equivalent-Killed waiver is added. Current utility hash is
+7c89d171501f52156454ceb34ce952527941bd64b8e7932a285e838f1b142e8e.
+Cached custody inventory plus one changed-utility inventory preserve all59roles,
+complexities and ceilings in scope_review_custody_raw_digest_20261017. Review:
+`/workspace/attachments/custody-survivor-repair-review-v219-20261017.md`.
+
+The next first complete isolated custody pilot is permitted narrowly alongside
+fs-safe attestation after independent resource/activation review. Image and
+envelopes remain isolated diagnostic-only. Preserve serial defaults, fixed-two
+workers, full argv, one900s budget, all planned batches before tests, no capture/
+ID selectors, exact assertion/native joins and unchanged persisted reader.
+Permission is not a score; every current mutant must be confirmed Killed and
+all final checks must pass before local closure.
+
 ### Isolated full-proof parity preparation — 2026-10-17
 
 Three blind Luna reviews qualify the next bounded selection: fs-safe attestation
