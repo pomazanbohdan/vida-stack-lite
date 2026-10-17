@@ -102,8 +102,8 @@ async function expectNoRetryDelay<T>(action: () => Promise<T>): Promise<T> {
   } finally {
     Bun.sleep = originalSleep;
   }
-  expect(retrySleeps).toBe(0);
   if (failure) throw failure.error;
+  expect(retrySleeps).toBe(0);
   return result;
 }
 

@@ -644,6 +644,11 @@ and always restore/finalize retained probes in finally. A malformed serialized
 journal-header fixture must actually fail Bun's native parser (3/3 does;0/0 does
 not); rebind its digest and prove both source images remain unchanged. These
 native observations do not substitute for assertion-confirmed mutation results.
+When a test helper retains an action failure, restore its owned resources and
+rethrow that same failure before any success-path assertion. A later successful
+matcher can consume causal assertion evidence; it must not mask the primary
+failure before mutation attribution. Keep success-only invariants on the normal
+completion path, without weakening the reader's UNKNOWN classification.
 Shared work-and-close helpers preserve single and
 combined failures; async work must settle before close. Await the owned promise
 explicitly before a matcher instead of awaiting a synchronous matcher result.

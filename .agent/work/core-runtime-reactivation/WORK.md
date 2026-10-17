@@ -301,6 +301,29 @@ The complete affected image file Z7NNLu passes87cases/0skips in4780ms, with
 complete capture/group closure. Independent initialization review finds no
 retry-denial or fixture-custody blocker; it is static, not a mutation result.
 
+Fresh immutable85b09b0 forms SDK inputs without suites in1903ms. Initialization
+runbc04eddf-a0ea-412b-8c42-104abd63d757 passes21cases/273assertions and exact
+F16/16,L84/84,S95/95,B53/53; same-run frozen cf118c9 passes9/9. These are focused
+local proofs; the wider operation receipt remains BLOCKED and no triple closes.
+Full native8703f0b1-c64f-47b7-b121-9fe6312f8b55 at /tmp/contour-stage-goJslA
+stops8Killed/0Survived/1UNKNOWN/155unattempted of164. Current115 empties the
+integrations-stale diagnostic. Body12 activates it and fails the exact message
+assertion, but expectNoRetryDelay catches that assertion and executes a later
+successful matcher before rethrowing it; the reader correctly rejects the lost
+causal marker. The test helper now restores resources and rethrows the primary
+action failure before its success-only zero-sleep assertion. Focused0WyvHB
+passes the two affected denial/retry cases,47assertions,1809ms; no mutation result
+is inferred. Captures, owned group, boot, commit and clean measured inputs remain
+attributable. Historical UNKNOWN stays unchanged.
+
+Fresh image run3ec5ac23-a0d0-4e32-9eba-81b0d3dcf9dd on the same immutable bytes
+passes87cases/665assertions and exact F49/49,L203/203,S222/222,B61/61. Same-run
+frozen cac34ce now validates the actual shared-quote Source binding,49current
+roles and max9/9. Neither focused pair substitutes for complete native proof.
+Independent image review finds no justified test patch for impossible native
+empty COUNT/table_xinfo results or unestablished FTS support; those observed
+survivors remain unqualified, never silently excluded or credited as Killed.
+
 No partial MutationBatchPilotSummary is routed through native proof admission.
 The current projection lacks per-status terminal diagnostic fields; the proposed
 cross-artifact partial-proof join would add another proof authority, so it is
