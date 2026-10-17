@@ -191,6 +191,16 @@ frozen CRAP and full native proof remain separate requirements; no closure is
 implied. Storage-image's bounded analogous review found no new demonstrated gap;
 its four-mutant refill diagnostic remains ready behind the Root numeric owner.
 
+Source adoption7475791 is published after the immutable97cc7b1 plan. The first
+ordinary hook reaches passing format/strict511-file typing, then tsgolint receives
+SIGKILL with cgroup OOM counters present. No check is bypassed. The repeated full
+hook passes with a transient per-command GOMEMLIMIT=768MiB; this is not a required
+repository/deployment environment setting. Disposable-cache cleanupv273 finds
+zero remaining eligible .pile directories and preserves all other bytes. The
+following scope pin binds7475791 without changing any ceiling. Next form fresh
+isolated SDK inputs, then verify current initialization project-set mutation
+and collect a new compatible coverage/frozen/full-native triple.
+
 ### Fresh regression scope and next isolated diagnostics — 2026-10-17
 
 Two independent blind Luna reviews distinguish archived operational replay from
