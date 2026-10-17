@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Published implementation main: `cd006a23ae0c74528393783c0ee64e719627e3af`; audit fixes, three-contour policy, survivor controls and reviewed facade correspondence passed ordinary strict pre-commit and were pushed. The exact published review is being pinned for fresh measurement. Runtime initialization, storage admission and existing-storage image have historical local exact coverage plus same-run scoped frozen CRAP. Their complete mutation closures remain open. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Published implementation main: `52fc50e71d7305fe18b554b6ddb1fccf8e86a577`; audit fixes, three-contour policy, survivor controls and reviewed facade correspondence passed ordinary strict pre-commit and were pushed. The pinned facade review and fresh compatible local triple are recorded below. Runtime initialization, storage admission and existing-storage image still need complete mutation closures. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -20,7 +20,8 @@ The current host boot is `14b0bfa9-b9d7-4c85-8400-bfdc503d4e35`. The previous
 host's uncommitted follow-up packet and scratch evidence did not survive its
 replacement. Published `b7fa92f` remains intact. Do not describe missing local
 measurements or prepared patches as retained/current. Published projection keeps
-467 attempts; no numeric closure has been added on this host.
+467 attempts at that recovery point. Subsequent current-host results are recorded
+below through the canonical projection, without recovering lost scratch evidence.
 
 The full external `1-AUDIT.md` supplied through the user attachment was read.
 Its F/C/O/D labels identify that report, not replacement backlog IDs. Native Bun
@@ -53,8 +54,9 @@ Strict TypeScript505files and TS-only506Sources pass with0diagnostics; Oxlint
 passes. Final six-file `PCtpGp` passes81tests/1044assertions in167928ms, with full
 captures, closed process groups, unchanged boot and successful contained cleanup.
 It includes normal resource reads, single and dual errors, historical facade
-identity and both real capture regressions/retry. Strict commit and fresh numeric
-qualification are pending. Development checks do not update contour maxima.
+identity and both real capture regressions/retry. Ordinary strict publication
+followed; fresh numeric results are recorded below. Development checks do not
+update contour maxima.
 
 External C02 remains a contract question: do not change maxAttempts admission
 without establishing inclusive/exclusive intent. O01 early budget bounds, O02
@@ -180,6 +182,45 @@ budget ref through the existing v2 route; historical pins remain unchanged.
 captures/groups and same boot. No tool protocol, retained ceiling or global-plan
 qualification is relaxed. A formatting-only hook rejection was corrected and the
 ordinary strict hook then passed before publication; no hook was bypassed.
+
+### Fresh facade closure and immediate slot refill
+
+All three facade survivors are repaired before the fresh complete measurement of
+published52fc50e. SDK preparation `ZXzU6Z` forms inputs without suites. Coverage
+`dv4qzh`, run `ea03a1ad-232e-4860-8f08-b1cd4177e146`, has exact F23/23,L89/89,
+S103/103,B96/96 in3293ms. Same-run frozen v2 `xmtAyt` passes unchanged per-role
+ceilings at maxCC9/maxCRAP9 using immutable review cd006a2. Complete native
+`2aduNj`, run `7634c51a-2ae5-4351-8d30-c544f836709d`, passes311/311
+assertion-confirmed Killed in260985ms, no survivors or UNKNOWN. Root observes
+complete captures, closed groups, unchanged boot and immutable inputs. The native
+proof reader imports the passing parent report; diagnostic315/318 kills from the
+earlier run are not combined with it.
+
+The canonical projection records this compatible local triple. Facade's slot is
+immediately refilled with `bun-runtime-initialization` in isolated v156. Active
+contours are initialization, envelopes and storage-admission, one blind Luna
+writer per contour and one Root numeric owner. Historical unique local triples
+remain6/45 because facade was already in that set; this fresh closure does not
+establish global freshness, global qualification or Runtime acceptance.
+
+Storage-admission coverage `w9xEDp`, run
+`8b472c71-c834-4f1c-bf0e-13e5ef0b87a0`, passes exact F18/18,L98/98,S101/101,B17/17
+in11814ms. Same-run frozen `vcAxE1` passes unchanged caps at maxCC5/maxCRAP5 using
+review d6cab7c. Both reports are imported; mutation is still pending. Both digest
+cross-link assertions are present in primary and v153 at the actual declared
+`tests/bun/project-upgrade-existing-storage-admission.test.ts` path; a contrary
+worker snapshot observation was reconciled without duplicating assertions.
+
+Before adopting a named envelope comparator into tracked Source, the canonical
+partial plan now freezes its distinct cohesive ordering role at4/4, justified by
+the three-key chronological invariant and independent v149 review. The isolated
+prototype is disclosed; this is prospective before tracked named adoption, not a
+claim that no prototype existed. Preserve the removed unary mapper's historical
+1/1 ceiling with no transfer. Current78 reconciles as76retained plus the existing
+separately capped capture facade plus the new named comparator. Publish this plan
+before adoption and retain GAP until explicit dispositions, independent review,
+immutable pinning and fresh numeric checks pass. No active budget row changes in
+this planning step.
 
 ### Published admission packet — retained context
 

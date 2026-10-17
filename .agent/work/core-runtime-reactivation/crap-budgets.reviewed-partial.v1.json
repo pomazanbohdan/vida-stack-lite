@@ -224814,5 +224814,17 @@
     "review_artifact": "/workspace/attachments/facade-lineage-review-v155.md",
     "correspondence": "Original24 = retained23 + removed1; current23 = retained23 + new0. The removed stable key-map identity is explicit and its full prior frozen disposition is retained as historical data. All other original identities, measurements, ceilings and rationales are byte-for-byte unchanged.",
     "limits": "Source correspondence only. No increased ceiling, candidate-derived baseline, historical numeric admission or global qualification. Existing v2 scoped proof must independently establish exhaustive exact function/coverage joins; complete assertion-confirmed mutation remains separate."
+  },
+  "planned_named_lease_ordering_20261017": {
+    "status": "PROSPECTIVE_BEFORE_TRACKED_NAMED_IMPLEMENTATION_NOT_NUMERIC_ADMISSION",
+    "file": "src/contracts/envelopes.ts",
+    "identity": "src/contracts/envelopes.ts#fn:compareClaimLeaseExpiry#0",
+    "max_complexity": 4,
+    "max_crap": 4,
+    "basis": "TESTING cohesive-invariant-4 design guidance and the supported chronological expiry contract: a single lexicographic decision over validated epoch milliseconds, submillisecond remainder and deterministic ASCII wire tie. The three-level ordering is one cohesive invariant, with no loops, external effects, parsing or authorization decision in the comparator. This ceiling is justified by the domain/risk contract rather than computed from candidate metrics.",
+    "independent_review": "/workspace/attachments/lease-named-comparator-review-v149.md",
+    "pre_implementation_context": "Published 52fc50e has no named compareClaimLeaseExpiry callable. The existing inline repair remains numerically unqualified. An isolated candidate prototype exists at audit-lease-projection-v139; this record must be published and reviewed before adopting its named implementation into tracked Source.",
+    "original_disposition": "The genuine b549951 unary claim-to-wire mapper is removed, not renamed into the pairwise comparator. Preserve its complete original frozen row and allowance as history, with no transfer or increase.",
+    "adoption_prerequisites": "After this prospective record is immutable, adopt a distinct named callable identity, explicit old-mapper removal and new-role disposition under the existing v2 protocol. Keep 76 retained original roles, five prior removals, the sixth mapper removal and the existing independently capped capture facade unchanged. Expected current78 = retained76 + existing capture facade + named comparator. No identity reset, dummy wrapper, global qualification or passing score follows from this plan."
   }
 }
