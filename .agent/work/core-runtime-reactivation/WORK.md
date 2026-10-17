@@ -1793,6 +1793,19 @@ private scratch writes. No wider writable repository mount, dependency copy,
 resolver bypass or timeout increase is introduced. Source image/hash/role caps
 are unchanged; fresh native qualification remains required.
 
+The nested dependency correction is published at664d207. A separate bounded
+Luna survivor review identifies meaningful digest and cause-preservation gaps:
+canonicalIntegerValue `{}` can collapse distinct large integers, while empty
+failure outcomes retain thrown undefined but lose non-undefined errors. Root
+integrates only the assigned test diff, retaining all existing guards. Two real
+Host images differ only in one integer cell and must have distinct logical row
+digests with exact reopened values. Existing Mastra import and identified pinned
+catalog fault matrices add Error-only and Error-plus-cleanup cases with exact
+cause identity; existing undefined cases remain. Focused `jZre2y` passes79/0tests
+in4701ms with full capture/groups/unchanged boot. These are behavior controls,
+not native mutant confirmations. Product Source and frozen role budgets do not
+change; no speculative virtual-table contract or option-mirror tests are added.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.
