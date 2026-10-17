@@ -1560,6 +1560,30 @@ so those two added roles/work do not eliminate the full static-ownership class.
 Source2 remains GAP. Do not treat a prospective cap, prototype, static approval,
 baseline capture or7point controls as current full quality admission.
 
+### Shared UUID predicate adoption after published prospective budget
+
+Prospective budget3afc640 is published before canonical adoption. Root adopts
+only the private UUID predicate, shared by the two existing grammar checks;
+custody Source remains byte-identical at767fd4ae. The same literal, guard order,
+error, SHA-256 and constant-time comparison semantics remain. Both test files
+now import actual Source directly. Delete the35-line cache-reload helper and
+the order-dependent digest spy; the real reservation instead asserts its token
+against an independent SHA-256 of the returned capability.
+
+Blind Luna custody_literal_owners_review_v199 approves the exact bounded diff
+and finds no remaining deleted-helper references. Root focused owner `sfSNhp`
+passes219tests/0skipped in3657ms, with complete output, closed process group and
+unchanged boot. One existing Babel inventory/hash pass updates only the changed
+utility: four exact roles, currentCC1/2/5/8, hash3a91303ceea6091c06ba2b1df991297cab2072927c7226b9e81cab2cc73cd725.
+Three existing10/10 ceilings remain; only the prospective predicate receives1/1.
+Partial correspondence becomes7113roles/1665new/149files. The unchanged custody
+global binding573dfc76 is an older partial locator; do not silently refresh its
+addresses or rescan53roles. The new scoped review separately binds the actual
+unchanged767fd4ae custody Source and reviewed utility bytes, retaining the old
+scope as historical. Current coverage, frozen numeric proof and native mutation
+controls are pending a separately published immutable scoped pin. SQL2 remains
+an explicit initialization-ownership GAP; no full triple is added here.
+
 ### Published admission packet — retained context
 
 The following captures describe the published admission packet through b7fa92f.

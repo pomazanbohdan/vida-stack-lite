@@ -6,7 +6,7 @@ import {
   serviceOperationLaunchCapabilityDigest,
   serviceOperationLaunchCapabilityMatches,
   serviceOperationLaunchClaimMatches,
-} from '../helpers/service-launch-capability.js';
+} from '../../src/config/service-operation-launch-capability.js';
 
 const workspaceId = 'a'.repeat(64);
 const requestDigest = 'b'.repeat(64);

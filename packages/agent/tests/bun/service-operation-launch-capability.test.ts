@@ -1,6 +1,12 @@
 import { describe, expect, spyOn, test } from 'bun:test';
 import { Database, type SQLQueryBindings } from 'bun:sqlite';
+import { createHash } from 'node:crypto';
 import * as custodySubject from '../../src/config/service-operation-custody.js';
+import {
+  serviceOperationLaunchCapabilityDigest,
+  serviceOperationLaunchCapabilityMatches,
+  serviceOperationLaunchClaimMatches,
+} from '../../src/config/service-operation-launch-capability.js';
 import * as storageAdmission from '../../src/config/storage-read-admission.js';
 import * as workspaceRaw from '../../src/config/workspace-database-raw.js';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
@@ -24,11 +30,6 @@ import {
 import { expectAsyncReturned, expectRejection, expectReturned } from '../helpers/expect-rejection.js';
 import { openCustodyFixture, serviceCustodyFixtureSql } from '../helpers/service-custody-fixture.js';
 import { completeOwnedCleanup } from '../../tooling/owned-cleanup-completion.js';
-import {
-  serviceOperationLaunchCapabilityDigest,
-  serviceOperationLaunchCapabilityMatches,
-  serviceOperationLaunchClaimMatches,
-} from '../helpers/service-launch-capability.js';
 
 const workspaceId = 'a'.repeat(64);
 const requestDigest = 'b'.repeat(64);
@@ -1304,50 +1305,19 @@ test('closed in-flight child reconciles only through its exact same-operation re
   for (const receiptPhase of ['prepared', 'terminal'] as const) {
     const fixture = openCustodyFixture(`closed-child-${receiptPhase}-`);
     try {
-      const capabilityRequire = createRequire(import.meta.url);
-      const capabilityPath = capabilityRequire.resolve('../../src/config/service-operation-launch-capability.js');
-      const observedDigests: Array<{ capability: string; digest: string }> = [];
-      const launchCapabilitySubject = capabilityRequire(
-        capabilityPath,
-      ) as typeof import('../../src/config/service-operation-launch-capability.js');
-      const digestSpy = spyOn(launchCapabilitySubject, 'serviceOperationLaunchCapabilityDigest').mockImplementation(
-        (actualCapability) => {
-          const originalModule = capabilityRequire.cache[capabilityPath];
-          if (!originalModule) throw new Error('The stateless launch capability module is not in its original cache.');
-          delete capabilityRequire.cache[capabilityPath];
-          try {
-            const freshUtility = capabilityRequire(
-              capabilityPath,
-            ) as typeof import('../../src/config/service-operation-launch-capability.js');
-            const digest = freshUtility.serviceOperationLaunchCapabilityDigest(actualCapability);
-            observedDigests.push({ capability: actualCapability, digest });
-            return digest;
-          } finally {
-            capabilityRequire.cache[capabilityPath] = originalModule;
-          }
-        },
+      const reservation = expectReturned(() =>
+        reserveServiceOperationLaunch(
+          fixture.database,
+          fixture.workspaceId,
+          'release-pack-worker',
+          operationId,
+          requestDigest,
+          'c'.repeat(64),
+        ),
       );
-      let reservation: ReturnType<typeof reserveServiceOperationLaunch>;
-      try {
-        reservation = expectReturned(() =>
-          reserveServiceOperationLaunch(
-            fixture.database,
-            fixture.workspaceId,
-            'release-pack-worker',
-            operationId,
-            requestDigest,
-            'c'.repeat(64),
-          ),
-        );
-        expect(
-          observedDigests.some(
-            (observed) =>
-              observed.capability === reservation.child_capability && observed.digest === reservation.owner_token,
-          ),
-        ).toBe(true);
-      } finally {
-        digestSpy.mockRestore();
-      }
+      expect(reservation.owner_token).toBe(
+        createHash('sha256').update(reservation.child_capability, 'utf8').digest('hex'),
+      );
       expectReturned(() =>
         recordServiceOperationLaunchPid(
           fixture.database,

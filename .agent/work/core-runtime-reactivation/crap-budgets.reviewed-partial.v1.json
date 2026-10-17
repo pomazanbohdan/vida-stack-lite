@@ -11,9 +11,9 @@
   },
   "counts": {
     "retained": 5448,
-    "new": 1664,
+    "new": 1665,
     "removed": 97,
-    "current_roles": 7112,
+    "current_roles": 7113,
     "source_files": 149
   },
   "source_bindings": [
@@ -127,7 +127,7 @@
     },
     {
       "file": "src/config/service-operation-launch-capability.ts",
-      "sha256": "f84391052658e7b78b8e0ded3b4f1a34112aef6684b375d0871f5e857b597c24"
+      "sha256": "3a91303ceea6091c06ba2b1df991297cab2072927c7226b9e81cab2cc73cd725"
     },
     {
       "file": "src/orchestration/mastra-session-ledger-codec.ts",
@@ -177345,13 +177345,13 @@
       "max_crap": 10,
       "rationale": "Accepts only UUID-shaped one-shot capabilities and hashes them before persistence. Obligation: `service-operation-launch-capability.test.ts` and `service-operation-launch-predicates.test.ts`: malformed capability rejects; persisted token is a digest, not the secret.",
       "current_source_address": {
-        "line": 15,
+        "line": 17,
         "column": 7,
-        "start": 427,
-        "end": 689,
-        "bodyLine": 15,
+        "start": 504,
+        "end": 782,
+        "bodyLine": 17,
         "bodyColumn": 83,
-        "bodyEndLine": 18,
+        "bodyEndLine": 21,
         "bodyEndColumn": 1
       },
       "current_complexity": 2
@@ -177362,13 +177362,13 @@
       "max_crap": 10,
       "rationale": "Validates expected digest and candidate capability, hashes candidate, then compares fixed-length digests in constant time. Obligation: Predicate and custody claim tests: null/malformed/wrong capability cannot authorize a launch.",
       "current_source_address": {
-        "line": 20,
+        "line": 23,
         "column": 7,
-        "start": 698,
-        "end": 1154,
-        "bodyLine": 20,
+        "start": 791,
+        "end": 1259,
+        "bodyLine": 23,
         "bodyColumn": 117,
-        "bodyEndLine": 32,
+        "bodyEndLine": 35,
         "bodyEndColumn": 1
       },
       "current_complexity": 5
@@ -177379,13 +177379,13 @@
       "max_crap": 10,
       "rationale": "Matches all reservation identity fields, phase, PID and capability as one claim predicate. Obligation: Claim tests require exact workspace, owner, operation, request, PID, launching phase and capability together.",
       "current_source_address": {
-        "line": 34,
+        "line": 37,
         "column": 7,
-        "start": 1163,
-        "end": 1740,
-        "bodyLine": 42,
+        "start": 1268,
+        "end": 1845,
+        "bodyLine": 45,
         "bodyColumn": 11,
-        "bodyEndLine": 53,
+        "bodyEndLine": 56,
         "bodyEndColumn": 1
       },
       "current_complexity": 8
@@ -206333,6 +206333,23 @@
         "bodyEndColumn": 38
       },
       "rationale": "New straight-line cleanup callback delegates the exact owned SQLite statement finalizer or readonly catalog close through the existing shared finisher. Source-reviewed by blind Luna v158 and Root before numeric measurement. Prospective1/1 ceiling; no original or retired role/cap is transferred."
+    },
+    {
+      "identity": "src/config/service-operation-launch-capability.ts#fn:isServiceOperationLaunchCapability#0",
+      "max_complexity": 1,
+      "max_crap": 1,
+      "rationale": "Private shared UUID grammar predicate under the prospective1/1 plan published at3afc640. Existing three utility roles retain all caps and responsibility. No allowance transfer. Exact fixed grammar executes in its real caller rather than a module-cache test workaround.",
+      "current_source_address": {
+        "line": 13,
+        "column": 0,
+        "start": 343,
+        "end": 495,
+        "bodyLine": 13,
+        "bodyColumn": 73,
+        "bodyEndLine": 15,
+        "bodyEndColumn": 1
+      },
+      "current_complexity": 1
     }
   ],
   "removed_functions": [
@@ -224979,5 +224996,35 @@
     "pre_implementation_context": "Published8536c35 has3utility roles and a module-level regex. The disclosed isolated v199 prototype exists; only its UUID predicate is proposed. This record must be immutable before tracked adoption. The wider SQL/table factories remain isolated and unadopted.",
     "original_disposition": "Preserve all3existing utility responsibilities/ceilings and the unchanged53custody roles. Remove no callable, transfer no allowance, reset no identity. Custody Source bytes remain unchanged.",
     "adoption_prerequisites": "After publication adopt only the named predicate, remove order-dependent test cache/namespace workarounds, and let the existing Babel inventory owner update exact addresses/hash for this one changedSource. Add1new independently capped role; preserve all existing correspondence and caps. Require affected behavior, exact coverage, scoped frozen proof and actual native controls. No global admission or complete mutation score follows from this plan."
+  },
+  "scope_review_custody_uuid_predicate_20261017": {
+    "status": "SOURCE_LINEAGE_ONLY_NON_EXECUTABLE_NOT_EXHAUSTIVE",
+    "files": [],
+    "source_mapping_kind": "reviewed-pairs",
+    "source_mappings": [],
+    "identity_reuses": [],
+    "new_source_paths": [
+      "src/config/service-operation-custody.ts",
+      "src/config/service-operation-launch-capability.ts"
+    ],
+    "removed_source_paths": [],
+    "reviewed_current_sources": [
+      {
+        "path": "src/config/service-operation-custody.ts",
+        "sha256": "767fd4ae5f447cdbeb5d0f6012985efbc81ae2b21c3711c9f3c668224d280fbc"
+      },
+      {
+        "path": "src/config/service-operation-launch-capability.ts",
+        "sha256": "3a91303ceea6091c06ba2b1df991297cab2072927c7226b9e81cab2cc73cd725"
+      }
+    ],
+    "review_artifacts": [
+      "/workspace/attachments/luna-review-custody-budget-draft-a740-20261016.md",
+      "/workspace/attachments/luna-custody-baseline-correspondence-a740-20261016.md",
+      "/workspace/attachments/custody-uuid-predicate-review-v199-20261017.md"
+    ],
+    "correspondence": "Preserve all56 Source-added roles and all55 existing10/10 caps plus isDigest1/1. Add only private isServiceOperationLaunchCapability under its independently published1/1 cap:57 roles total. No original counterpart, removal, role reuse or cap transfer. Custody Source remains byte-identical; only utility addresses and hash change.",
+    "limits": "Static scoped correspondence only. Require a later immutable Source pin, exact57-role coverage, same-run frozen proof and native assertion-confirmed mutation controls. Existing global partial status, historical mutation UNKNOWN and stateful initialization GAP remain unchanged.",
+    "prospective_plan": "3afc640:.agent/work/core-runtime-reactivation/crap-budgets.reviewed-partial.v1.json#planned_custody_uuid_predicate_20261017"
   }
 }

@@ -10,10 +10,13 @@ interface ServiceOperationLaunchClaimImage {
   readonly launch_pid: number | null;
 }
 
-const capabilityPattern = /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/u;
+function isServiceOperationLaunchCapability(capability: string): boolean {
+  return /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/u.test(capability);
+}
 
 export function serviceOperationLaunchCapabilityDigest(capability: string): string {
-  if (!capabilityPattern.test(capability)) throw new Error('Service operation launch capability is invalid.');
+  if (!isServiceOperationLaunchCapability(capability))
+    throw new Error('Service operation launch capability is invalid.');
   return createHash('sha256').update(capability, 'utf8').digest('hex');
 }
 
@@ -22,7 +25,7 @@ export function serviceOperationLaunchCapabilityMatches(expectedDigest: string |
     expectedDigest === null ||
     !/^[a-f0-9]{64}$/u.test(expectedDigest) ||
     typeof capability !== 'string' ||
-    !capabilityPattern.test(capability)
+    !isServiceOperationLaunchCapability(capability)
   )
     return false;
   return timingSafeEqual(
