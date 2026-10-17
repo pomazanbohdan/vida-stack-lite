@@ -4,7 +4,7 @@ Status date: 2026-10-17. Current execution and evidence record. This document do
 
 ## Current state and owners
 
-- Latest checked Source/test packet: `3a323b95dd7d93f8f95e0ed2209644e9b1022afc`, pushed through ordinary strict pre-commit. It includes admission request ownership, a single mutation partition deadline, real short-read/public-gate controls, three shared failure phases, sealed package-asset resolution, envelope ordering regressions and body-local mutation activation attribution. Active facade, envelopes and storage admission need complete fresh mutation closures under that protocol. Initialization remains OPEN on qualified child-only activation evidence; its idle slot is used for facade repair. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
+- Latest checked Source/test packet: `91906ff31a6497ac290a988e67ea913aec4af7da`, pushed through ordinary strict pre-commit. It includes admission request ownership/digest reuse, a single mutation partition deadline, real short-read/public-gate controls, three shared failure phases, sealed package-asset resolution, envelope ordering regressions, body-local mutation activation and synchronous stateless facade loading with exact dependency capture. Facade has a fresh compatible local triple under that protocol. Its slot is immediately refilled with storage image; active contours are storage image, envelopes and storage admission. Initialization remains OPEN on qualified child-only activation evidence. The derived contour document owns exact receipts and historical closures. Global/final-quality admission stays open. Source, formation, installation and Runtime acceptance are distinct states.
 - Bun pin: 1.4.3. Maintained handwritten TypeScript migration, help/inventory repairs and Vitest retirement are implemented. Old 1,271 CLI diagnostics and JavaScript counts are historical.
 - Authority/order: [CLEAR strategy](CLEAN-START-STRATEGY-20261009.md) owns execution order; [backlog](../vida-013-planning-20261002/BACKLOG-PRIORITIES-20261006.md) owns stable task IDs and priority boundaries; lifecycle owns execution/effects; TESTING owns evidence gates; root sidecar's documentation-maintenance protocol owns active documentation upkeep.
 - Root owns Source integration, checks, Git and final numeric admission. Preserve unrelated untracked BASE/root bun.lock, history, and failed/UNKNOWN evidence. Build/install run no suites. Do not replay old DB, lease, attempt or effect operations.
@@ -533,6 +533,55 @@ control now includes a real schema-initialization mutant, requires fresh namespa
 identity and observes exactly two owned hits from two synchronous loads before its
 schema assertion fails. `e7lWLc` passes that expanded control in931ms. Explicit
 entrypoint capture remains; loader interception still needs fresh numeric proof.
+
+On immutable `91906ff`, `g211Rd` coverage runf3f2cd17-bc4e-4d77-acc7-e097ff6a8365
+passesF23/23,L89/89,S103/103,B96/96 in2670ms; same-run original frozen `75VXGW`
+passes maxCC9/maxCRAP9 in641ms. The projection now records504attempts, retaining
+the owner's separate BLOCKED global outcome. `Skvp9z`,
+run030af3b1-400d-4102-add3-8e5a08b64c4c, confirms the exact schema mutant1 as
+assertion-confirmed Killed with the full14-case baseline;310mutants remain
+unattempted in that diagnostic. The complete311 native request follows, and only
+its actual terminal proof can close/refill this slot. Final affected
+`xWnCZR` passes88adapter/projection tests with815assertions in4142ms. The Source
+facade is unchanged; snapshot-loader rejection, Source digest and original frozen
+role correspondence remain enforced.
+
+### Fresh body-local facade closure and immediate refill
+
+Complete native `OzkCtC`, run41dee777-04bd-4004-a85f-b22e665ac6e9, terminates in
+247771ms:311generated,311attempted,311assertion-confirmed Killed,0Survived,
+0UNKNOWN,0unattempted and a full14-case passing baseline. The ordinary native
+parent produces its candidate report; the offline proof reader accepts it and
+the projection joins it to the same `91906ff` exact coverage/original frozen pair.
+The measured checkout, boot and captures remain unchanged/complete, with closed
+owned process groups. The projection records505attempts. This requalifies the
+already historical facade contour under the corrected body-owned protocol;
+unique historical local triples remain6/45, not a newly invented seventh closure.
+
+Root immediately refills that lane with `bun-project-upgrade-existing-storage-image`
+in isolated `rolling-storage-image-v173`; its blind Luna owns only the declared
+Source and existing tests. Storage admission and envelopes retain their slots.
+Initialization stays OPEN on child-only activation; no parent wrapper fabricates
+that missing proof. Global freshness, frozen admission and Runtime remain separate.
+
+Envelopes' bounded performance review finds no redundant expensive test fixture
+that can be dropped safely. It identifies a possible Bun runtime transpiler cache
+restriction in the nested native sandbox. The
+[official Bun environment documentation](https://bun.com/docs/runtime/environment-variables)
+describes content-addressed transpiled output/sourcemaps for files over4KiB and
+explicit empty/0 cache disable values. Independent v158 confirms an operation-local
+private cache could propagate through existing runner/test environments without
+cross-operation reuse; preserve explicit disable values. This remains a bounded
+optimization candidate, with no measured speedup or implementation claim. Keep
+the current numeric checkout immutable and stabilize tooling before adopting it.
+
+Admission's fresh `91906ff` coverage `ZrYZbC`,
+rund971ebb7-8520-4874-9ed7-5daef45043af, passes28tests/320assertions and exact
+F18/18,L102/102,S105/105,B17/17 in17488ms. Same-run original frozen `SfAkqx`
+passes maxCC5/maxCRAP5 in734ms. The canonical projection now has508attempts;
+its separate global outcome stays BLOCKED. A fresh full native admission request
+starts on those immutable bytes; historical IDs and partial diagnostics are not
+combined into its score.
 
 ### Published admission packet — retained context
 

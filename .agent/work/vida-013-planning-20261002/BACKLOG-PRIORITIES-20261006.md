@@ -54,16 +54,18 @@ Current audit corrections and unresolved per-field validation, cleanup analogues
 and optimization candidates are recorded once in WORK, under the existing P0/P1
 and TEST013 tasks; external report labels do not replace their stable IDs.
 
-The fresh facade triple has refilled its slot with runtime initialization; the
-other active lanes are envelopes and storage admission. Admission's caller-owned
+The fresh body-local facade triple at91906ff has refilled its slot with storage
+image; the other active lanes are envelopes and storage admission. Initialization
+remains OPEN on qualified child-only activation evidence. Admission's caller-owned
 request defect now has real RED/GREEN evidence and a bounded snapshot correction.
 Its interrupted mutation attempt stays UNKNOWN. The native pilot now shares one
 partition deadline across all batches; fresh numeric qualification remains open.
-All three active contours have fresh exact coverage/frozen pairs. Envelope's five
+The storage-image lane reuses its recorded pair as history and needs fresh evidence.
+Envelope's five
 new survivors have targeted native Killed confirmations, and admission's real
 initial/exclusive/checkpoint dual-error phases share their fixture and exact owned cleanup.
-Initialization's native setup exposed a project-context/package-asset reader mixup;
-the test-only correction preserves the sealed input contract and needs fresh proof.
+Initialization's package-asset reader correction preserves the sealed input
+contract; its remaining activation gap is distinct from setup and generic failures.
 Full compatible mutation closures remain OPEN; diagnostic sets are not unioned.
 WORK owns the exact receipts and pending equivalent/unattempted mutant analysis.
 

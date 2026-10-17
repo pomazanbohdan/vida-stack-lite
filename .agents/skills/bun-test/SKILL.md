@@ -71,6 +71,10 @@ computed-module seeds, which static imports cannot discover. Synthetic fixtures
 derive declared Source/tool overlaps from their input owner. Configured-context
 fixtures use a real `packages/agent` layout and the declared repository context
 files; unrelated temporary directories cannot represent that admitted namespace.
+For stateless import-time subjects, follow TESTING's body-local synchronous
+fresh-loader method. Query spelling alone proves neither fresh identity nor ALS
+attribution on Bun1.4.3. Verify the actual generated mutant, snapshot interception
+and exact body-owned activation; a direct suite pass or static review is insufficient.
 
 Start from the contract and the function or boundary that owns it. Map each
 plausible regression to a fixture, a concrete case, and an assertion at that
